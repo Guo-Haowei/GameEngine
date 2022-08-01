@@ -740,7 +740,7 @@ int luaD_pcall(lua_State* L, Pfunc func, void* u,
 ** Execute a protected parser.
 */
 struct SParser { /* data to 'f_parser' */
-    ZIO* z;
+    Zio* z;
     Buffer buff; /* dynamic structure used by the scanner */
     Dyndata dyd;  /* dynamic structures used by the parser */
     const char* mode;
@@ -760,7 +760,7 @@ static void f_parser(lua_State* L, void* ud)
 {
     LClosure* cl;
     struct SParser* p = cast(struct SParser*, ud);
-    int c = zgetc(p->z); /* read first character */
+    int c = p->z->GetChar(); /* read first character */
     if (c == LUA_SIGNATURE[0]) {
         checkmode(L, p->mode, "binary");
         cl = luaU_undump(L, p->z, p->name);
@@ -772,7 +772,7 @@ static void f_parser(lua_State* L, void* ud)
     luaF_initupvals(L, cl);
 }
 
-int luaD_protectedparser(lua_State* L, ZIO* z, const char* name,
+int luaD_protectedparser(lua_State* L, Zio* z, const char* name,
     const char* mode)
 {
     struct SParser p;

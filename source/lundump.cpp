@@ -28,7 +28,7 @@
 
 typedef struct {
     lua_State* L;
-    ZIO* Z;
+    Zio* Z;
     const char* name;
 } LoadState;
 
@@ -46,8 +46,10 @@ static l_noret error(LoadState* S, const char* why)
 
 static void LoadBlock(LoadState* S, void* b, size_t size)
 {
-    if (luaZ_read(S->Z, b, size) != 0)
+    if (S->Z->Read(b, size) != 0)
+    {
         error(S, "truncated");
+    }
 }
 
 #define LoadVar(S, x) LoadVector(S, &x, 1)
@@ -255,7 +257,7 @@ static void checkHeader(LoadState* S)
 /*
 ** load precompiled chunk
 */
-LClosure* luaU_undump(lua_State* L, ZIO* Z, const char* name)
+LClosure* luaU_undump(lua_State* L, Zio* Z, const char* name)
 {
     LoadState S;
     LClosure* cl;

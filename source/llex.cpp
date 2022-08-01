@@ -26,7 +26,7 @@
 #include "ltable.h"
 #include "lzio.h"
 
-#define next(ls) (ls->current = zgetc(ls->z))
+#define next(ls) (ls->current = ls->z->GetChar())
 
 #define currIsNewline(ls) (ls->current == '\n' || ls->current == '\r')
 
@@ -152,7 +152,7 @@ static void inclinenumber(LexState* ls)
         lexerror(ls, "chunk has too many lines", 0);
 }
 
-void luaX_setinput(lua_State* L, LexState* ls, ZIO* z, TString* source,
+void luaX_setinput(lua_State* L, LexState* ls, Zio* z, TString* source,
     int firstchar)
 {
     ls->t.token = 0;

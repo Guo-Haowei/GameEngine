@@ -1,68 +1,58 @@
-/*
-** $Id: lzio.c,v 1.37.1.1 2017/04/19 17:20:42 roberto Exp $
-** Buffered streams
-** See Copyright Notice in lua.h
-*/
-
-#define lzio_c
-#define LUA_CORE
-
-#include "lprefix.h"
-
-#include <string.h>
-
-#include "lua.h"
-
-#include "llimits.h"
-#include "lmem.h"
-#include "lstate.h"
 #include "lzio.h"
 
-int luaZ_fill(ZIO* z)
+#include <cstring>
+
+namespace lua {
+
+int Zio::Fill()
 {
     size_t size;
-    lua_State* L = z->L;
     const char* buff;
-    lua_unlock(L);
-    buff = z->reader(L, z->data, &size);
-    lua_lock(L);
-    if (buff == NULL || size == 0)
-    {
+    lua_unlock(m_state);
+    buff = m_reader(m_state, m_data, &size);
+    lua_lock(m_state);
+    if (buff == NULL || size == 0) {
         return EOZ;
     }
-    z->n = size - 1; /* discount char being returned */
-    z->p = buff;
-    return cast_uchar(*(z->p++));
+    m_unread = size - 1; /* discount char being returned */
+    m_cursor = buff;
+    return (unsigned char)(*(m_cursor++));
 }
 
-void luaZ_init(lua_State* L, ZIO* z, lua_Reader reader, void* data)
+void Zio::Init(lua_State* state, lua_Reader reader, void* data)
 {
-    z->L = L;
-    z->reader = reader;
-    z->data = data;
-    z->n = 0;
-    z->p = NULL;
+    m_state = state;
+    m_reader = reader;
+    m_data = data;
+    m_unread = 0;
+    m_cursor = nullptr;
 }
 
-/* --------------------------------------------------------------- read --- */
-size_t luaZ_read(ZIO* z, void* b, size_t n)
+size_t Zio::Read(void* b, size_t n)
 {
     while (n) {
-        size_t m;
-        if (z->n == 0) {             /* no bytes in buffer? */
-            if (luaZ_fill(z) == EOZ) /* try to read more */
-                return n;            /* no more input; return number of missing bytes */
-            else {
-                z->n++; /* luaZ_fill consumed first byte; put it back */
-                z->p--;
+        if (m_unread == 0) {
+            if (Fill() == EOZ) {
+                return m_unread; /* no more input; return number of missing bytes */
+            } else {
+                /* luaZ_fill consumed first byte; put it back */
+                ++m_unread;
+                --m_cursor;
             }
         }
-        m = (n <= z->n) ? n : z->n; /* min. between n and z->n */
-        memcpy(b, z->p, m);
-        z->n -= m;
-        z->p += m;
+        const size_t m = (n <= m_unread) ? n : m_unread; /* min. between n and z->n */
+        memcpy(b, m_cursor, m);
+        m_unread -= m;
+        m_cursor += m;
         b = (char*)b + m;
         n -= m;
     }
     return 0;
+}
+
+int Zio::GetChar()
+{
+    return m_unread-- > 0 ? *m_cursor++ : Fill();
+}
+
 }

@@ -1643,7 +1643,7 @@ static void mainfunc(LexState* ls, FuncState* fs)
     close_func(ls);
 }
 
-LClosure* luaY_parser(lua_State* L, ZIO* z, Buffer* buff, Dyndata* dyd, const char* name, int firstchar)
+LClosure* luaY_parser(lua_State* L, Zio* z, Buffer* buff, Dyndata* dyd, const char* name, int firstchar)
 {
     LexState lexstate;
     FuncState funcstate;
