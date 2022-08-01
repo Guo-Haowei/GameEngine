@@ -87,7 +87,7 @@ typedef struct LexState {
     struct FuncState* fs; /* current function (parser) */
     struct lua_State* L;
     ZIO* z;              /* input stream */
-    Mbuffer* buff;       /* buffer for tokens */
+    Buffer* buff;       /* buffer for tokens */
     Table* h;            /* to avoid collection/reuse strings */
     struct Dyndata* dyd; /* dynamic structures used by the parser */
     TString* source;     /* current source name */
