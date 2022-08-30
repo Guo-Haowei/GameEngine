@@ -26,6 +26,8 @@
 #include "lstring.h"
 #include "ltable.h"
 
+#include <vector>
+
 /* maximum number of local variables per function (must be smaller
    than 250, due to the bytecode format) */
 #define MAXVARS 200
@@ -58,13 +60,12 @@ static void expr(LexState* ls, expdesc* v);
 static l_noret semerror(LexState* ls, const char* msg)
 {
     ls->t.token = 0; /* remove "near <token>" from final message */
-    luaX_syntaxerror(ls, msg);
+    ls->SyntaxError(msg);
 }
 
 static l_noret error_expected(LexState* ls, int token)
 {
-    luaX_syntaxerror(ls,
-        luaO_pushfstring(ls->L, "%s expected", luaX_token2str(ls, token)));
+    ls->SyntaxError(luaO_pushfstring(ls->L, "%s expected", ls->TokenToStr(token)));
 }
 
 static l_noret errorlimit(FuncState* fs, int limit, const char* what)
@@ -77,7 +78,7 @@ static l_noret errorlimit(FuncState* fs, int limit, const char* what)
         : luaO_pushfstring(L, "function at line %d", line);
     msg = luaO_pushfstring(L, "too many %s (limit is %d) in %s",
         what, limit, where);
-    luaX_syntaxerror(fs->ls, msg);
+    fs->ls->SyntaxError(msg);
 }
 
 static void checklimit(FuncState* fs, int v, int l, const char* what)
@@ -107,10 +108,11 @@ static void checknext(LexState* ls, int c)
     luaX_next(ls);
 }
 
-#define check_condition(ls, c, msg)    \
-    {                                  \
-        if (!(c))                      \
-            luaX_syntaxerror(ls, msg); \
+#define check_condition(ls, c, msg) \
+    {                               \
+        if (!(c)) {                 \
+            (ls)->SyntaxError(msg); \
+        }                           \
     }
 
 static void check_match(LexState* ls, int what, int who, int where)
@@ -119,7 +121,7 @@ static void check_match(LexState* ls, int what, int who, int where)
         if (where == ls->linenumber)
             error_expected(ls, what);
         else {
-            luaX_syntaxerror(ls, luaO_pushfstring(ls->L, "%s expected (to close %s at line %d)", luaX_token2str(ls, what), luaX_token2str(ls, who), where));
+            ls->SyntaxError(luaO_pushfstring(ls->L, "%s expected (to close %s at line %d)", ls->TokenToStr(what), ls->TokenToStr(who), where));
         }
     }
 }
@@ -765,7 +767,7 @@ static void parlist(LexState* ls)
                 break;
             }
             default:
-                luaX_syntaxerror(ls, "<name> or '...' expected");
+                ls->SyntaxError("<name> or '...' expected");
             }
         } while (!f->is_vararg && testnext(ls, ','));
     }
@@ -836,7 +838,7 @@ static void funcargs(LexState* ls, expdesc* f, int line)
         break;
     }
     default: {
-        luaX_syntaxerror(ls, "function arguments expected");
+        ls->SyntaxError("function arguments expected");
     }
     }
     lua_assert(f->k == VNONRELOC);
@@ -877,7 +879,7 @@ static void primaryexp(LexState* ls, expdesc* v)
         return;
     }
     default: {
-        luaX_syntaxerror(ls, "unexpected symbol");
+        ls->SyntaxError("unexpected symbol");
     }
     }
 }
@@ -1398,7 +1400,7 @@ static void forstat(LexState* ls, int line)
         forlist(ls, varname);
         break;
     default:
-        luaX_syntaxerror(ls, "'=' or 'in' expected");
+        ls->SyntaxError("'=' or 'in' expected");
     }
     check_match(ls, TK_END, TK_FOR, line);
     leaveblock(fs); /* loop scope ('break' jumps to this point) */
@@ -1660,7 +1662,25 @@ LClosure* luaY_parser(lua_State* L, Zio* z, Buffer* buff, Dyndata* dyd, const ch
     lexstate.buff = buff;
     lexstate.dyd = dyd;
     dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
-    luaX_setinput(L, &lexstate, z, funcstate.f->source, firstchar);
+
+    std::vector<char> buffer;
+    // Add first character
+    buffer.push_back(firstchar);
+    // Add body
+    for (;;) {
+        int c = z->GetChar();
+        buffer.push_back(c);
+        if (c == EOZ) {
+            break;
+        }
+    }
+    // Add guard '\0'
+    for (int i = 0; i < 8; ++i) {
+        buffer.push_back(0);
+    }
+
+    const char* text = buffer.data();
+    luaX_setinput(L, &lexstate, funcstate.f->source, firstchar, text);
     mainfunc(&lexstate, &funcstate);
     lua_assert(!funcstate.prev && funcstate.nups == 1 && !lexstate.fs);
     /* all scopes should be correctly finished */

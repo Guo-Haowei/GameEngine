@@ -9,6 +9,7 @@
 
 #include "lobject.h"
 #include "lzio.h"
+#include <vector>
 
 #define FIRST_RESERVED 257
 
@@ -78,28 +79,43 @@ typedef struct Token {
 
 /* state of the lexer plus state of the parser when shared by all
    functions */
-typedef struct LexState {
-    int current;          /* current character (charint) */
+class LexState {
+public:
     int linenumber;       /* input line counter */
     int lastline;         /* line of last token 'consumed' */
     Token t;              /* current token */
     Token lookahead;      /* look ahead token */
     struct FuncState* fs; /* current function (parser) */
     struct lua_State* L;
-    Zio* z;              /* input stream */
     Buffer* buff;       /* buffer for tokens */
     Table* h;            /* to avoid collection/reuse strings */
     struct Dyndata* dyd; /* dynamic structures used by the parser */
     TString* source;     /* current source name */
     TString* envn;       /* environment variable name */
-} LexState;
+
+    const char* m_text; // original text input
+    const char* m_cur;  // cursor of text
+
+    const char* TokenToStr(int token);
+    l_noret SyntaxError(const char* s);
+// private:
+    l_noret LexError(const char* msg, int token);
+    int Lex(SemInfo* seminfo);
+
+    // @TODO: rename to consume
+    bool Expect(char c);
+
+    void Save(int c);
+    void Next();
+    void SaveAndNext();
+    bool IsCurNewline();
+};
+// @TODO: make member
+LUAI_FUNC void luaX_setinput(lua_State* L, LexState* ls, TString* source, int firstchar, const char* text);
 
 LUAI_FUNC void luaX_init(lua_State* L);
-LUAI_FUNC void luaX_setinput(lua_State* L, LexState* ls, Zio* z,TString* source, int firstchar);
 LUAI_FUNC TString* luaX_newstring(LexState* ls, const char* str, size_t l);
 LUAI_FUNC void luaX_next(LexState* ls);
 LUAI_FUNC int luaX_lookahead(LexState* ls);
-LUAI_FUNC l_noret luaX_syntaxerror(LexState* ls, const char* s);
-LUAI_FUNC const char* luaX_token2str(LexState* ls, int token);
 
 #endif
