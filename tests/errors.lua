@@ -61,10 +61,10 @@ assert(doit("function a (... , ...) end"))
 assert(doit("function a (, ...) end"))
 assert(doit("local t={}; t = t[#t] + 1"))
 
-checksyntax([[
-  local a = {4
+-- checksyntax([[
+--   local a = {4
 
-]], "'}' expected (to close '{' at line 1)", "<eof>", 3)
+-- ]], "'}' expected (to close '{' at line 1)", "<eof>", 3)
 
 
 -- tests for better error messages

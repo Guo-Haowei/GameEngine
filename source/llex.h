@@ -10,11 +10,16 @@
 #include "lobject.h"
 #include "lzio.h"
 
+#include <string>
+#include <vector>
+
 #define FIRST_RESERVED 257
 
 #if !defined(LUA_ENV)
 #define LUA_ENV "_ENV"
 #endif
+
+constexpr int NUM_GUARD_ZEROS = 8;
 
 /*
 * WARNING: if you change the order of this enumeration,
@@ -73,29 +78,44 @@ typedef union {
 
 typedef struct Token {
     int token;
+    std::string raw;
+
     SemInfo seminfo;
 } Token;
 
 /* state of the lexer plus state of the parser when shared by all
    functions */
-typedef struct LexState {
-    int current;          /* current character (charint) */
+class LexState {
+public:
     int linenumber;       /* input line counter */
     int lastline;         /* line of last token 'consumed' */
     Token t;              /* current token */
     Token lookahead;      /* look ahead token */
     struct FuncState* fs; /* current function (parser) */
     struct lua_State* L;
-    Zio* z;              /* input stream */
-    Buffer* buff;       /* buffer for tokens */
+    Buffer* buff;        /* buffer for tokens */
     Table* h;            /* to avoid collection/reuse strings */
     struct Dyndata* dyd; /* dynamic structures used by the parser */
     TString* source;     /* current source name */
     TString* envn;       /* environment variable name */
-} LexState;
+
+    void setBuffer(const std::vector<char>& input);
+
+    // private:
+    std::vector<char> m_buffer;
+    char* m_p;
+
+    void lexOne(Token& tok);
+    int peek();
+    int next();
+
+    bool tryReadLongPunct(Token& tok);
+    void readNumeral(Token& tok);
+    void readIdent(Token& tok);
+};
 
 LUAI_FUNC void luaX_init(lua_State* L);
-LUAI_FUNC void luaX_setinput(lua_State* L, LexState* ls, Zio* z,TString* source, int firstchar);
+LUAI_FUNC void luaX_setinput(lua_State* L, LexState* ls, TString* source, const std::vector<char>& input);
 LUAI_FUNC TString* luaX_newstring(LexState* ls, const char* str, size_t l);
 LUAI_FUNC void luaX_next(LexState* ls);
 LUAI_FUNC int luaX_lookahead(LexState* ls);

@@ -26,6 +26,9 @@
 #include "lstring.h"
 #include "ltable.h"
 
+#include <iostream>
+#include <vector>
+
 /* maximum number of local variables per function (must be smaller
    than 250, due to the bytecode format) */
 #define MAXVARS 200
@@ -1660,7 +1663,26 @@ LClosure* luaY_parser(lua_State* L, Zio* z, Buffer* buff, Dyndata* dyd, const ch
     lexstate.buff = buff;
     lexstate.dyd = dyd;
     dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
-    luaX_setinput(L, &lexstate, z, funcstate.f->source, firstchar);
+
+    std::vector<char> buffer;
+    // Add first character
+    buffer.push_back(firstchar);
+    // Add body
+    for (;;) {
+        int c = z->GetChar();
+        buffer.push_back(c);
+        if (c == EOZ) {
+            break;
+        }
+    }
+    // Add guard zeros
+    for (int i = 0; i < NUM_GUARD_ZEROS; ++i) {
+        buffer.push_back(0);
+    }
+
+    // std::cout << buffer.data() << std::endl;
+
+    luaX_setinput(L, &lexstate, funcstate.f->source, buffer);
     mainfunc(&lexstate, &funcstate);
     lua_assert(!funcstate.prev && funcstate.nups == 1 && !lexstate.fs);
     /* all scopes should be correctly finished */

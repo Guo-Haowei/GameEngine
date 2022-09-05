@@ -34,3 +34,9 @@ add_executable(luacppc
     lvm.cpp
     lzio.cpp
 )
+
+if(MSVC)
+    target_compile_options(luacppc PRIVATE /W4)
+else()
+    target_compile_options(luacppc PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()

@@ -1,3 +1,7 @@
+cd build
+cmake --build .
+cd ..
+
 for FILE in ./tests/*.lua
 do
     echo "Running test ${FILE}"
