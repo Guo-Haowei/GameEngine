@@ -236,14 +236,6 @@ assert(a == "[===[[=[]]=][====[]]===]===")
 a = [=[]]]]]]]]]=]
 assert(a == "]]]]]]]]")
 
-
---[===[
-x y z [==[ blu foo
-]==
-]
-]=]==]
-error error]=]===]
-
 -- generate all strings of four of these chars
 local x = {"=", "[", "]", "\n"}
 local len = 4

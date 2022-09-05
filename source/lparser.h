@@ -98,12 +98,13 @@ typedef struct Dyndata {
 
 /* control of blocks */
 struct BlockCnt; /* defined in lparser.c */
+class LexState;
 
 /* state needed to generate code for a given function */
 typedef struct FuncState {
     Proto* f;               /* current function header */
     struct FuncState* prev; /* enclosing function */
-    struct LexState* ls;    /* lexical state */
+    LexState* ls;           /* lexical state */
     struct BlockCnt* bl;    /* chain of current blocks */
     int pc;                 /* next position to code (equivalent to 'ncode') */
     int lasttarget;         /* 'label' of last 'jump label' */

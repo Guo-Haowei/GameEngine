@@ -46,7 +46,7 @@ assert(type(ipairs{}) == 'function' and ipairs{} == ipairs{})
 if not T then
   (Message or print)
     ('\n >>> testC not active: skipping tests for table sizes <<<\n')
-else --[
+else
 -- testing table sizes
 
 local function log2 (x) return math.log(x, 2) end
@@ -436,7 +436,7 @@ end
 if not T then
   (Message or print)
     ('\n >>> testC not active: skipping tests for table library on non-tables <<<\n')
-else --[
+else
   local debug = require'debug'
   local tab = {10, 20, 30}
   local mt = {}
