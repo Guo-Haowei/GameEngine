@@ -93,7 +93,7 @@ public:
     Token lookahead;      /* look ahead token */
     struct FuncState* fs; /* current function (parser) */
     struct lua_State* L;
-    Buffer* buff;        /* buffer for tokens */
+    // Buffer* buff;        /* buffer for tokens */
     Table* h;            /* to avoid collection/reuse strings */
     struct Dyndata* dyd; /* dynamic structures used by the parser */
     TString* source;     /* current source name */
@@ -106,12 +106,25 @@ public:
     char* m_p;
 
     void lexOne(Token& tok);
-    int peek();
-    int next();
+    char peek() const;
+    char next();
+
+    bool currIsNewline() const;
+    void incLineNumber();
 
     bool tryReadLongPunct(Token& tok);
     void readNumeral(Token& tok);
     void readIdent(Token& tok);
+    void readString(int del, SemInfo* seminfo);
+
+    // string escapes
+    int getHex();
+    char readHex();
+    void utf8esc();
+    int readDecEsc();
+
+    size_t skipSep();
+    void escCheck(int c, const char* msg);
 };
 
 LUAI_FUNC void luaX_init(lua_State* L);

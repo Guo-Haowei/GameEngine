@@ -122,16 +122,14 @@ do local f = function () end end
 
 
 print("functions with errors")
-prog = [[
-do
-  a = 10;
-  function foo(x,y)
-    a = sin(a+0.456-0.23e-12);
-    return function (z) return sin(%x+z) end
-  end
-  local x = function (w) a=a+w; end
-end
-]]
+prog = 'do\
+  a = 10;\
+  function foo(x,y)\
+    a = sin(a+0.456-0.23e-12);\
+    return function (z) return sin(%x+z) end\
+  end\
+  local x = function (w) a=a+w; end\
+end'
 do
   local step = 1
   if _soft then step = 13 end

@@ -30,8 +30,6 @@
 #include <cctype>
 #include <iostream>
 
-#define currIsNewline(ls) (ls->peek() == '\n' || ls->peek() == '\r')
-
 // TODO: refactor
 #define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 
@@ -46,23 +44,7 @@ static const char* const luaX_tokens[] = {
     "<number>", "<integer>", "<name>", "<string>"
 };
 
-#define save_and_next(ls) (save(ls, ls->peek()), ls->next())
-
 static l_noret lexerror(LexState* ls, const char* msg, int token);
-
-static void save(LexState* ls, int c)
-{
-    Buffer& b = *ls->buff;
-    if (b.GetLength() + 1 > b.GetCapacity()) {
-        if (b.GetCapacity() >= MAX_SIZE / 2) {
-            lexerror(ls, "lexical element too long", 0);
-        }
-        b.Resize(ls->L, b.GetCapacity() * 2);
-    }
-    const size_t length = b.GetLength();
-    b.GetBuffer()[length] = static_cast<char>(c);
-    b.SetLength(length + 1);
-}
 
 void luaX_init(lua_State* L)
 {
@@ -90,6 +72,7 @@ const char* luaX_token2str(LexState* ls, int token)
     }
 }
 
+#if 0
 static const char* txtToken(LexState* ls, int token)
 {
     switch (token) {
@@ -97,18 +80,22 @@ static const char* txtToken(LexState* ls, int token)
     case TK_STRING:
     case TK_FLT:
     case TK_INT:
-        save(ls, '\0');
-        return luaO_pushfstring(ls->L, "'%s'", ls->buff->GetBuffer());
+        // return luaO_pushfstring(ls->L, "'%s'", ls->buff->GetBuffer());
+        assert(0 && "TODO");
+        break;
     default:
         return luaX_token2str(ls, token);
     }
 }
+#endif
 
 static l_noret lexerror(LexState* ls, const char* msg, int token)
 {
     msg = luaG_addinfo(ls->L, msg, ls->source, ls->linenumber);
-    if (token)
-        luaO_pushfstring(ls->L, "%s near %s", msg, txtToken(ls, token));
+    if (token) {
+        // luaO_pushfstring(ls->L, "%s near %s", msg, txtToken(ls, token));
+        // assert(0 && "TODO");
+    }
     luaD_throw(ls->L, LUA_ERRSYNTAX);
 }
 
@@ -152,7 +139,7 @@ void LexState::setBuffer(const std::vector<char>& input)
     m_p = m_buffer.data();
 }
 
-int LexState::peek()
+char LexState::peek() const
 {
     if (m_p < m_buffer.data() + m_buffer.size() - NUM_GUARD_ZEROS) {
         return *m_p;
@@ -160,23 +147,32 @@ int LexState::peek()
     return EOZ;
 }
 
-int LexState::next()
+char LexState::next()
 {
-    int c = peek();
+    char c = peek();
     if (c != EOZ) {
         ++m_p;
     }
     return c;
 }
-static void inclinenumber(LexState* ls)
+
+bool LexState::currIsNewline() const
 {
-    int old = ls->peek();
-    assert(currIsNewline(ls));
-    ls->next(); /* skip '\n' or '\r' */
-    if (currIsNewline(ls) && ls->peek() != old)
-        ls->next(); /* skip '\n\r' or '\r\n' */
-    if (++ls->linenumber >= MAX_INT)
-        lexerror(ls, "chunk has too many lines", 0);
+    char c = peek();
+    return c == '\r' || c == '\n';
+}
+
+void LexState::incLineNumber()
+{
+    char old = peek();
+    assert(currIsNewline());
+    next(); /* skip '\n' or '\r' */
+    if (currIsNewline() && peek() != old) {
+        next(); /* skip '\n\r' or '\r\n' */
+    }
+    if (++linenumber >= MAX_INT) {
+        lexerror(this, "chunk has too many lines", 0);
+    }
 }
 
 void luaX_setinput(lua_State* L, LexState* ls, TString* source, const std::vector<char>& input)
@@ -190,7 +186,6 @@ void luaX_setinput(lua_State* L, LexState* ls, TString* source, const std::vecto
     ls->lastline = 1;
     ls->source = source;
     ls->envn = luaS_newliteral(L, LUA_ENV); /* get env name */
-    ls->buff->Resize(ls->L, LUA_MINBUFFER); /* initialize buffer */
 
     ls->setBuffer(input);
 }
@@ -210,8 +205,7 @@ void LexState::readNumeral(Token& tok)
 {
     TValue obj;
     const char* start = m_p;
-    bool isFirstDot = *start == '.';
-    m_p += static_cast<int>(isFirstDot);
+    m_p += *start == '.';
 
     const char* expo = "Ee";
     assert(lisdigit(peek()));
@@ -256,172 +250,156 @@ void LexState::readNumeral(Token& tok)
 ** If sequence is well formed, return its number of '='s + 2; otherwise,
 ** return 1 if there is no '='s or 0 otherwise (an unfinished '[==...').
 */
-static size_t skip_sep(LexState* ls)
+// @TODO: support long string
+size_t LexState::skipSep()
 {
     size_t count = 0;
-    int s = ls->peek();
+    int s = peek();
     assert(s == '[' || s == ']');
-    save_and_next(ls);
-    while (ls->peek() == '=') {
-        save_and_next(ls);
+    // save_and_next(ls);
+    next();
+    while (peek() == '=') {
+        // save_and_next(ls);
+        next();
         count++;
     }
-    return (ls->peek() == s) ? count + 2
-        : (count == 0)       ? 1
-                             : 0;
+    return (peek() == s) ? count + 2
+        : (count == 0)   ? 1
+                         : 0;
 }
 
-static void esccheck(LexState* ls, int c, const char* msg)
+void LexState::escCheck(int c, const char* msg)
 {
     if (!c) {
-        if (ls->peek() != EOZ)
-            save_and_next(ls); /* add peek() to buffer for error message */
-        lexerror(ls, msg, TK_STRING);
+        if (peek() != EOZ) {
+            next();
+            // save_and_next(ls); /* add peek() to buffer for error message */
+        }
+        lexerror(this, msg, TK_STRING);
     }
 }
 
-static int gethexa(LexState* ls)
+int LexState::getHex()
 {
-    save_and_next(ls);
-    esccheck(ls, lisxdigit(ls->peek()), "hexadecimal digit expected");
-    return luaO_hexavalue(ls->peek());
+    next();
+    char c = peek();
+    assert(lisxdigit(c));
+    // esccheck(, lisxdigit(ls->peek()), "hexadecimal digit expected");
+    return luaO_hexavalue(c);
 }
 
-static int readhexaesc(LexState* ls)
+char LexState::readHex()
 {
-    int r = gethexa(ls);
-    r = (r << 4) + gethexa(ls);
-    ls->buff->Remove(2); /* remove saved chars from buffer */
-    return r;
+    int r = getHex();
+    r = (r << 4) + getHex();
+    assert(r >= 0 && r < 256);
+    return static_cast<char>(r);
 }
 
-static unsigned long readutf8esc(LexState* ls)
+void LexState::utf8esc()
 {
-    unsigned long r;
-    int i = 4;         /* chars to be removed: '\', 'u', '{', and first digit */
-    save_and_next(ls); /* skip 'u' */
-    esccheck(ls, ls->peek() == '{', "missing '{'");
-    r = gethexa(ls); /* must have at least one digit */
-    while ((save_and_next(ls), lisxdigit(ls->peek()))) {
-        i++;
-        r = (r << 4) + luaO_hexavalue(ls->peek());
-        esccheck(ls, r <= 0x10FFFF, "UTF-8 value too large");
-    }
-    esccheck(ls, ls->peek() == '}', "missing '}'");
-    ls->next();          /* skip '}' */
-    ls->buff->Remove(i); /* remove saved chars from buffer */
-    return r;
+    assert(0 && "utf8 not supported yet");
 }
 
-static void utf8esc(LexState* ls)
-{
-    char buff[UTF8BUFFSZ];
-    int n = luaO_utf8esc(buff, readutf8esc(ls));
-    for (; n > 0; n--) /* add 'buff' to string */
-        save(ls, buff[UTF8BUFFSZ - n]);
-}
-
-static int readdecesc(LexState* ls)
+// @TODO: refactor
+int LexState::readDecEsc()
 {
     int i;
-    int r = 0;                                        /* result accumulator */
-    for (i = 0; i < 3 && lisdigit(ls->peek()); i++) { /* read up to 3 digits */
-        r = 10 * r + ls->peek() - '0';
-        save_and_next(ls);
+    int r = 0;                                    /* result accumulator */
+    for (i = 0; i < 3 && lisdigit(peek()); i++) { /* read up to 3 digits */
+        r = 10 * r + peek() - '0';
+        next();
     }
-    esccheck(ls, r <= UCHAR_MAX, "decimal escape too large");
-    ls->buff->Remove(i); /* remove read digits from buffer */
+    escCheck(r <= UCHAR_MAX, "decimal escape too large");
     return r;
 }
 
-static void read_string(LexState* ls, int del, SemInfo* seminfo)
+void LexState::readString(int del, SemInfo* seminfo)
 {
-    save_and_next(ls); /* keep delimiter (for error messages) */
-    while (ls->peek() != del) {
-        switch (ls->peek()) {
-        case EOZ:
-            lexerror(ls, "unfinished string", TK_EOS);
-            break; /* to avoid warnings */
-        case '\n':
-        case '\r':
-            lexerror(ls, "unfinished string", TK_STRING);
-            break;             /* to avoid warnings */
-        case '\\': {           /* escape sequences */
-            int c;             /* final character to be saved */
-            save_and_next(ls); /* keep '\\' for error messages */
-            switch (ls->peek()) {
-            case 'a':
-                c = '\a';
-                goto read_save;
-            case 'b':
-                c = '\b';
-                goto read_save;
-            case 'f':
-                c = '\f';
-                goto read_save;
-            case 'n':
-                c = '\n';
-                goto read_save;
-            case 'r':
-                c = '\r';
-                goto read_save;
-            case 't':
-                c = '\t';
-                goto read_save;
-            case 'v':
-                c = '\v';
-                goto read_save;
-            case 'x':
-                c = readhexaesc(ls);
-                goto read_save;
-            case 'u':
-                utf8esc(ls);
-                goto no_save;
-            case '\n':
-            case '\r':
-                inclinenumber(ls);
-                c = '\n';
-                goto only_save;
-            case '\\':
-            case '\"':
-            case '\'':
-                c = ls->peek();
-                goto read_save;
-            case EOZ:
-                goto no_save;        /* will raise an error next loop */
-            case 'z': {              /* zap following span of spaces */
-                ls->buff->Remove(1); /* remove '\\' */
-                ls->next();          /* skip the 'z' */
-                while (lisspace(ls->peek())) {
-                    if (currIsNewline(ls))
-                        inclinenumber(ls);
-                    else
-                        ls->next();
-                }
-                goto no_save;
-            }
-            default: {
-                esccheck(ls, lisdigit(ls->peek()), "invalid escape sequence");
-                c = readdecesc(ls); /* digital escape '\ddd' */
-                goto only_save;
-            }
-            }
-        read_save:
-            ls->next();
-            /* go through */
-        only_save:
-            ls->buff->Remove(1); /* remove '\\' */
-            save(ls, c);
-            /* go through */
-        no_save:
+    std::vector<char> buffer;
+    next(); // skip opening ' or "
+
+    for (;;) {
+        char c = peek();
+
+        if (c == del) {
             break;
         }
-        default:
-            save_and_next(ls);
+        if (c == EOZ) {
+            lexerror(this, "unfinished string", TK_EOS);
         }
+        if (c == '\r' || c == '\n') {
+            lexerror(this, "unfinished string", TK_STRING);
+        }
+
+        if (c == '\\') {
+            next(); // skip '\\'
+            c = peek();
+            if (c == 'x') {
+                buffer.push_back(readHex());
+                continue;
+            }
+
+            if (c == 'u') {
+                utf8esc();
+                continue;
+            }
+
+            if (c == '\r' || c == '\n') {
+                incLineNumber();
+                buffer.push_back('\n');
+                continue;
+            }
+
+            if (c == 'z') {
+                next(); // skip 'z'
+                while (lisspace(peek())) {
+                    if (currIsNewline()) {
+                        incLineNumber();
+                    } else {
+                        next();
+                    }
+                }
+                continue;
+            }
+
+            if (c >= 'a' && c <= 'z') {
+                // clang-format off
+                static const char escapes[] = {
+                    '\a', '\b', -1, -1, -1, '\f', -1,
+                    -1, -1, -1, -1, -1, -1, '\n',
+                    -1, -1, -1, '\r', -1, '\t',
+                    -1, '\v', -1, -1, -1, -1,
+                };
+                // clang-format on
+                char escaped = escapes[c - 'a'];
+                if (escaped != -1) {
+                    buffer.push_back(escaped);
+                    next();
+                    continue;
+                }
+            }
+
+            if (strchr("\'\"\\", c)) {
+                buffer.push_back(c);
+                next();
+                continue;
+            }
+
+            if (c == EOZ) {
+                continue; // raise exception
+            }
+
+            escCheck(lisdigit(c), "invalid escape sequence");
+            buffer.push_back(static_cast<char>(readDecEsc())); // digital escape '\ddd'
+            continue;
+        }
+
+        buffer.push_back(next());
     }
-    save_and_next(ls); /* skip delimiter */
-    seminfo->ts = luaX_newstring(ls, ls->buff->GetBuffer() + 1, ls->buff->GetLength() - 2);
+    next(); // skip closing ' or "
+
+    seminfo->ts = luaX_newstring(this, buffer.data(), buffer.size());
 }
 
 bool LexState::tryReadLongPunct(Token& tok)
@@ -486,7 +464,6 @@ void LexState::lexOne(Token& tok)
 {
     SemInfo* seminfo = &tok.seminfo;
 
-    buff->Reset();
     for (;;) {
         int c = peek();
 
@@ -505,7 +482,7 @@ void LexState::lexOne(Token& tok)
 
         if (strncmp(m_p, "--", 2) == 0) {
             m_p += 2;
-            while (!currIsNewline(this) && peek() != EOZ) {
+            while (!currIsNewline() && peek() != EOZ) {
                 next();
             }
             continue;
@@ -534,7 +511,7 @@ void LexState::lexOne(Token& tok)
 
         // long string or simply '['
         if (c == '[') {
-            size_t sep = skip_sep(this);
+            size_t sep = skipSep();
             if (sep >= 2) {
                 assert(0 && "long string not supported");
                 exit(0);
@@ -549,7 +526,7 @@ void LexState::lexOne(Token& tok)
         // short literal strings
         if (strchr("\"'", c)) {
             tok.token = TK_STRING;
-            read_string(this, c, seminfo);
+            readString(c, seminfo);
             return;
         }
 

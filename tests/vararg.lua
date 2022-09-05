@@ -96,17 +96,16 @@ assert(a==nil and b==nil and c==nil and d==nil and e==nil)
 
 
 -- varargs for main chunks
-f = load[[ return {...} ]]
+f = load ' return {...} '
 x = f(2,3)
 assert(x[1] == 2 and x[2] == 3 and x[3] == nil)
 
 
-f = load[[
-  local x = {...}
-  for i=1,select('#', ...) do assert(x[i] == select(i, ...)) end
-  assert(x[select('#', ...)+1] == nil)
-  return true
-]]
+f = load 'local x = {...}\
+  for i=1,select('#', ...) do assert(x[i] == select(i, ...)) end\
+  assert(x[select('#', ...)+1] == nil)\
+  return true\
+'
 
 assert(f("a", "b", nil, {}, assert))
 assert(f())

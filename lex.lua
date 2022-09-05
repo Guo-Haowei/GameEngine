@@ -6,10 +6,9 @@ function main()
     local c = 12.2 * 2.8e+1 - 0x12p+2
     local d = .2 + .3
     print('hello')
-    print("a: " .. tostring(a))
-    print("b: " .. tostring(b))
-    print("c: " .. tostring(c))
-    print("d: " .. tostring(d))
+    print("a: " .. tostring(a) .. "\nb: " .. tostring(b))
+    print("c: " .. tostring(c) .. "\
+d: " .. tostring(d))
 end
 
 main()

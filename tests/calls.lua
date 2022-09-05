@@ -290,15 +290,14 @@ assert(assert(load("return XX + ...", nil, nil, {XX = 13}))(4) == 17)
 
 
 -- test generic load with nested functions
-x = [[
-  return function (x)
-    return function (y)
-     return function (z)
-       return x+y+z
-     end
-   end
-  end
-]]
+x = "\
+  return function (x)\
+    return function (y)\
+     return function (z)\
+       return x+y+z\
+     end\
+   end\
+  end"
 
 a = assert(load(read1(x)))
 assert(a()(2)(3)(10) == 15)

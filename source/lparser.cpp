@@ -1660,7 +1660,6 @@ LClosure* luaY_parser(lua_State* L, Zio* z, Buffer* buff, Dyndata* dyd, const ch
     luaC_objbarrier(L, cl, cl->p);
     funcstate.f->source = luaS_new(L, name); /* create and anchor TString */
     lua_assert(iswhite(funcstate.f));        /* do not need barrier here */
-    lexstate.buff = buff;
     lexstate.dyd = dyd;
     dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
 

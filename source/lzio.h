@@ -6,12 +6,13 @@
 
 namespace lua {
 
-constexpr int EOZ = -1; /* end of stream */
+constexpr char EOZ = -1; /* end of stream */
 
 class Buffer {
 public:
     void Init(lua_State* state)
     {
+        (void)state;
         m_buffer = nullptr;
         m_capacity = 0;
     }
@@ -83,7 +84,7 @@ struct Zio {
 
 // @TODO: cleanup
 using lua::Buffer;
-using lua::Zio;
 using lua::EOZ;
+using lua::Zio;
 
 #define zgetc(z) (((z)->n--) > 0 ? cast_uchar(*(z)->p++) : luaZ_fill(z))
