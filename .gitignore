@@ -1,6 +1,13 @@
-*.s
 *.exe
+
 tmp.*
 *.out
+# user
+*.scene
+*.ini
 build/
+user/
+project/
+
+# vscode
 .vscode/
