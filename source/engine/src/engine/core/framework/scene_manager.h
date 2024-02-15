@@ -18,13 +18,12 @@ public:
 
     void request_scene(std::string_view path, ImporterName importer);
 
-    void on_scene_changed(Scene* new_scene);
-
     void set_loading_scene(Scene* scene) {
         m_loading_scene.store(scene);
     }
 
     uint32_t get_revision() const { return m_revision; }
+    void bump_revision() { ++m_revision; }
 
     static Scene& get_scene();
 

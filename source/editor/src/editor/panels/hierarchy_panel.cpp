@@ -1,9 +1,13 @@
 #include "hierarchy_panel.h"
 
+#include <imgui/imgui_internal.h>
+
 #include "../editor_layer.h"
-#include "imgui/imgui_internal.h"
+#include "core/framework/scene_manager.h"
 
 namespace my {
+
+#define POPUP_NAME_ID "SCENE_PANEL_POPUP"
 
 class HierarchyCreator {
 public:
@@ -51,7 +55,8 @@ void HierarchyCreator::DrawNode(const Scene& scene, HierarchyNode* pHier, ImGuiT
         if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
             m_editor_layer.select_entity(id);
         } else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
-            ImGui::OpenPopup("my dummy popup");
+            m_editor_layer.select_entity(id);
+            ImGui::OpenPopup(POPUP_NAME_ID);
         }
     }
 
@@ -104,15 +109,38 @@ bool HierarchyCreator::Build(const Scene& scene) {
 }
 
 void HierarchyPanel::update_internal(Scene& scene) {
+    // @TODO: on scene change, rebuild hierarchy
     HierarchyCreator creator(m_editor);
 
-    // right click popup
-    if (ImGui::BeginPopup("my dummy popup")) {
-        ImGui::MenuItem("Close");
-        ImGui::EndPopup();
-    }
+    draw_popup(scene);
 
     creator.Draw(scene);
+}
+
+void HierarchyPanel::draw_popup(Scene& scene) {
+    auto selected = m_editor.get_selected_entity();
+
+    if (ImGui::BeginPopup(POPUP_NAME_ID)) {
+        if (ImGui::BeginMenu("add child##" POPUP_NAME_ID)) {
+            if (ImGui::MenuItem("add entity##" POPUP_NAME_ID)) {
+                LOG_WARN("@TODO: implement");
+            }
+            if (ImGui::MenuItem("add light##" POPUP_NAME_ID)) {
+                LOG_WARN("@TODO: implement");
+            }
+            if (ImGui::MenuItem("add cube##" POPUP_NAME_ID)) {
+                auto id = scene.create_cube_entity("my cube");
+                scene.attach_component(id, selected);
+                SceneManager::singleton().bump_revision();
+            }
+
+            ImGui::EndMenu();
+        }
+        if (ImGui::MenuItem("delete##" POPUP_NAME_ID)) {
+            LOG_WARN("@TODO: implement");
+        }
+        ImGui::EndPopup();
+    }
 }
 
 }  // namespace my

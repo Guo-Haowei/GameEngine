@@ -53,7 +53,7 @@ void Viewer::select_entity(Scene& scene, const CameraComponent& camera) {
         return;
     }
 
-    if (input::is_button_pressed(MOUSE_BUTTON_RIGHT)) {
+    if (input::is_button_pressed(MOUSE_BUTTON_LEFT)) {
         auto [window_x, window_y] = DisplayServer::singleton().get_window_pos();
         vec2 clicked = input::get_cursor();
         clicked.x = (clicked.x + window_x - m_canvas_min.x) / m_canvas_size.x;
@@ -161,11 +161,11 @@ void Viewer::update_internal(Scene& scene) {
 
     // Update state
     if (m_editor.get_selected_entity().is_valid()) {
-        if (input::is_key_pressed(KEY_T)) {
+        if (input::is_key_pressed(KEY_Z)) {
             m_editor.set_state(EditorLayer::STATE_TRANSLATE);
-        } else if (input::is_key_pressed(KEY_R)) {
+        } else if (input::is_key_pressed(KEY_X)) {
             m_editor.set_state(EditorLayer::STATE_ROTATE);
-        } else if (input::is_key_pressed(KEY_S)) {
+        } else if (input::is_key_pressed(KEY_C)) {
             m_editor.set_state(EditorLayer::STATE_SCALE);
         }
     }

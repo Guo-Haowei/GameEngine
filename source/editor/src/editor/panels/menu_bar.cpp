@@ -54,7 +54,6 @@ static void import_recent(ImporterName importer) {
             SceneManager::singleton().request_scene(file, importer);
         }
     }
-    ImGui::EndMenu();
 }
 
 static void save_project(bool open_dialog) {
@@ -98,12 +97,14 @@ void menu_bar() {
             }
             if (ImGui::BeginMenu("Import Recent (Assimp)")) {
                 import_recent(IMPORTER_ASSIMP);
+                ImGui::EndMenu();
             }
             if (ImGui::MenuItem("Import (TinyGLTF)")) {
                 import_scene(IMPORTER_TINYGLTF);
             }
             if (ImGui::BeginMenu("Import Recent (TinyGLTF)")) {
                 import_recent(IMPORTER_TINYGLTF);
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }

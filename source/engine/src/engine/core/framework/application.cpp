@@ -102,7 +102,6 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_WARN("TODO: editor add/remove component");
     LOG_ERROR("TODO: cloth physics");
     LOG_WARN("TODO: cascade bounding box");
     LOG_ERROR("TODO: FXAA");

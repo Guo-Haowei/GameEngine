@@ -327,6 +327,7 @@ Entity Scene::create_cube_entity(const std::string& name, Entity material_id, co
         mesh.indices.push_back(indices[i + 1]);
     }
 
+    mesh.create_render_data();
     return entity;
 }
 

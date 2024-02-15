@@ -158,7 +158,6 @@ void SceneManager::update(float dt) {
         Timer timer;
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
         m_app->get_event_queue().dispatch_event(event);
-        on_scene_changed(m_scene);
         LOG("[SceneManager] Detected scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.get_duration_string());
         m_last_revision = m_revision;
     }
@@ -245,26 +244,6 @@ void SceneManager::request_scene(std::string_view path, ImporterName importer) {
         Scene* new_scene = static_cast<Scene*>(scene);
         SceneManager::singleton().set_loading_scene(new_scene);
     });
-}
-
-void SceneManager::on_scene_changed(Scene*) {
-#if 0
-    // @TODO: refactor the following
-    const int voxelTextureSize = DVAR_GET_INT(r_voxel_size);
-    DEV_ASSERT(math::is_power_of_two(voxelTextureSize));
-    DEV_ASSERT(voxelTextureSize <= 256);
-
-    const vec3 center = new_scene->m_bound.center();
-    const vec3 size = new_scene->m_bound.size();
-    const float worldSize = glm::max(size.x, glm::max(size.y, size.z));
-    const float texelSize = 1.0f / static_cast<float>(voxelTextureSize);
-    const float voxelSize = worldSize * texelSize;
-
-    g_perFrameCache.cache.c_world_center = center;
-    g_perFrameCache.cache.c_world_size_half = 0.5f * worldSize;
-    g_perFrameCache.cache.c_texel_size = texelSize;
-    g_perFrameCache.cache.c_voxel_size = voxelSize;
-#endif
 }
 
 Scene& SceneManager::get_scene() {

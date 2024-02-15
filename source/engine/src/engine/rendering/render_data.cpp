@@ -65,7 +65,9 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
         draw.armature_id = mesh.armature_id;
         draw.world_matrix = world_matrix;
         const MeshData* mesh_data = g_meshes.get_or_null(mesh.gpu_resource);
-        DEV_ASSERT(mesh_data);
+        if (!mesh_data) {
+            continue;
+        }
         draw.mesh_data = mesh_data;
 
         for (const auto& subset : mesh.subsets) {

@@ -9,6 +9,9 @@ public:
 
 protected:
     void update_internal(Scene& scene) override;
+
+private:
+    void draw_popup(Scene& scene);
 };
 
 }  // namespace my
