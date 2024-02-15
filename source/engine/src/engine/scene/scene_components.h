@@ -24,7 +24,7 @@ public:
     const std::string& get_name() const { return m_name; }
     std::string& get_name_ref() { return m_name; }
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     std::string m_name;
@@ -68,7 +68,7 @@ public:
 
     void update_transform_parented(const TransformComponent& parent);
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     uint32_t m_flags = DIRTY;
@@ -88,7 +88,7 @@ class HierarchyComponent {
 public:
     ecs::Entity GetParent() const { return m_parent_id; }
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     ecs::Entity m_parent_id;
@@ -135,7 +135,7 @@ public:
         m_center = center;
     }
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     uint32_t m_flags = DIRTY;
@@ -220,7 +220,7 @@ struct MeshComponent {
     void create_render_data();
     std::vector<char> generate_combined_buffer() const;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ struct MaterialComponent {
     // Non-serialized
     mutable RID gpu_resource;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -266,7 +266,7 @@ struct LightComponent {
     float energy = 10.0f;
     Type type = LIGHT_TYPE_NONE;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -284,7 +284,7 @@ struct ObjectComponent {
     /// mesh
     ecs::Entity mesh_id;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -330,7 +330,7 @@ struct AnimationComponent {
     std::vector<Channel> channels;
     std::vector<Sampler> samplers;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -348,7 +348,7 @@ struct ArmatureComponent {
     // Non-Serialized
     std::vector<mat4> bone_transforms;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -375,7 +375,7 @@ struct RigidBodyComponent {
     CollisionShape shape;
     Parameter param;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 }  // namespace vct

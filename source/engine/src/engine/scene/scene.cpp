@@ -512,43 +512,45 @@ void Scene::update_armature(uint32_t index) {
     }
 };
 
+static constexpr uint32_t SCENE_VERSION = 1;
+static constexpr uint32_t SCENE_MAGIC_NUMBER = 'xScn';
+
 bool Scene::serialize(Archive& archive) {
-    // guard and seed
-    static const char guard[] = "xScn";
+    uint32_t version = UINT_MAX;
     bool is_read_mode = !archive.is_write_mode();
     if (is_read_mode) {
-        std::string read;
-        archive >> read;
-        if (read != guard) {
-            return false;
-        }
-
+        uint32_t magic;
         uint32_t seed = Entity::MAX_ID;
+
+        archive >> magic;
+        ERR_FAIL_COND_V_MSG(magic != SCENE_MAGIC_NUMBER, false, "file corrupted");
+        archive >> version;
+        ERR_FAIL_COND_V_MSG(version > SCENE_MAGIC_NUMBER, false, std::format("file version {} is greater than max version {}", version, SCENE_VERSION));
         archive >> seed;
         Entity::set_seed(seed);
+
+        // scene data
+        archive >> m_root;
+        archive >> m_bound;
     } else {
-        archive << guard;
+        archive << SCENE_MAGIC_NUMBER;
+        archive << SCENE_VERSION;
         archive << Entity::get_seed();
+        archive << m_root;
+        archive << m_bound;
     }
 
-    m_root.serialize(archive);
-    if (is_read_mode) {
-        archive.read(m_bound);
-    } else {
-        archive.write(m_bound);
-    }
-
-    serialize<NameComponent>(archive);
-    serialize<TransformComponent>(archive);
-    serialize<HierarchyComponent>(archive);
-    serialize<MaterialComponent>(archive);
-    serialize<MeshComponent>(archive);
-    serialize<ObjectComponent>(archive);
-    serialize<CameraComponent>(archive);
-    serialize<LightComponent>(archive);
-    serialize<ArmatureComponent>(archive);
-    serialize<AnimationComponent>(archive);
-    serialize<RigidBodyComponent>(archive);
+    serialize<NameComponent>(archive, version);
+    serialize<TransformComponent>(archive, version);
+    serialize<HierarchyComponent>(archive, version);
+    serialize<MaterialComponent>(archive, version);
+    serialize<MeshComponent>(archive, version);
+    serialize<ObjectComponent>(archive, version);
+    serialize<CameraComponent>(archive, version);
+    serialize<LightComponent>(archive, version);
+    serialize<ArmatureComponent>(archive, version);
+    serialize<AnimationComponent>(archive, version);
+    serialize<RigidBodyComponent>(archive, version);
 
     return true;
 }
