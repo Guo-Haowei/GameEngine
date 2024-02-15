@@ -175,7 +175,7 @@ public:                                                                         
     // @TODO: fix
     void Component_DetachChildren(ecs::Entity parent);
 
-    CameraComponent& get_main_camera();
+    ecs::Entity get_main_camera();
 
     struct RayIntersectionResult {
         ecs::Entity entity;

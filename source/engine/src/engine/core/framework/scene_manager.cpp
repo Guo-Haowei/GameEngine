@@ -160,9 +160,12 @@ void SceneManager::update(float dt) {
     auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
 
     // @TODO: refactor this
-    CameraComponent& camera = scene.get_main_camera();
+    Entity camera_id = scene.get_main_camera();
+    CameraComponent* camera = scene.get_component<CameraComponent>(camera_id);
+    DEV_ASSERT(camera);
+
     if (frameW > 0 && frameH > 0) {
-        camera.set_dimension((float)frameW, (float)frameH);
+        camera->set_dimension((float)frameW, (float)frameH);
     }
 
     scene.update(dt);
@@ -183,10 +186,10 @@ void SceneManager::update(float dt) {
     g_perFrameCache.cache.c_sun_direction = light_dir;
     g_perFrameCache.cache.c_light_color = light_component.color * light_component.energy;
 
-    g_perFrameCache.cache.c_camera_position = camera.get_eye();
-    g_perFrameCache.cache.c_view_matrix = camera.get_view_matrix();
-    g_perFrameCache.cache.c_projection_matrix = camera.get_projection_matrix();
-    g_perFrameCache.cache.c_projection_view_matrix = camera.get_projection_view_matrix();
+    g_perFrameCache.cache.c_camera_position = camera->get_position();
+    g_perFrameCache.cache.c_view_matrix = camera->get_view_matrix();
+    g_perFrameCache.cache.c_projection_matrix = camera->get_projection_matrix();
+    g_perFrameCache.cache.c_projection_view_matrix = camera->get_projection_view_matrix();
 
     g_perFrameCache.cache.c_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
     g_perFrameCache.cache.c_debug_texture_id = DVAR_GET_INT(r_debug_texture);
@@ -208,7 +211,7 @@ void SceneManager::update(float dt) {
     DEV_ASSERT(math::is_power_of_two(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    vec3 world_center = camera.get_center();
+    vec3 world_center = camera->get_position();
     const float world_size = DVAR_GET_FLOAT(r_world_size);
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = world_size * texel_size;

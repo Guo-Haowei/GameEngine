@@ -65,10 +65,15 @@ void TransformComponent::update_transform_parented(const TransformComponent& par
 //--------------------------------------------------------------------------------------------------
 // Camera Component
 //--------------------------------------------------------------------------------------------------
-void CameraComponent::update() {
+void CameraComponent::update(const mat4& world_matrix) {
     if (is_dirty()) {
         const float aspect = m_width / m_height;
-        m_view_matrix = glm::lookAt(m_eye, m_center, vec3(0, 1, 0));
+        vec3 up = glm::normalize(vec3(world_matrix * vec4(0, 1, 0, 0)));
+        m_front = glm::normalize(vec3(world_matrix * vec4(0, 0, -1, 0)));
+        m_right = glm::normalize(vec3(world_matrix * vec4(1, 0, 0, 0)));
+
+        m_position = world_matrix * vec4(0, 0, 0, 1);
+        m_view_matrix = glm::lookAt(m_position, m_position + m_front, up);
         m_projection_matrix = glm::perspective(m_fovy.to_rad(), aspect, m_near, m_far);
         m_projection_view_matrix = m_projection_matrix * m_view_matrix;
         set_dirty(false);

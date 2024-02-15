@@ -34,11 +34,9 @@ void Viewer::update_data() {
     m_focused = ImGui::IsWindowHovered();
 }
 
-void Viewer::update_camera(CameraComponent& camera, float dt) {
+void Viewer::update_camera(float dt, CameraComponent& camera, TransformComponent& transform) {
     if (m_focused) {
-        // @TODO:
-        m_camera_controller.set_camera(&camera);
-        m_camera_controller.move(dt);
+        m_camera_controller.move(dt, camera, transform);
     }
 }
 
@@ -59,7 +57,7 @@ void Viewer::select_entity(Scene& scene, const CameraComponent& camera) {
 
             const mat4 inversed_projection_view = glm::inverse(camera.get_projection_view_matrix());
 
-            const vec3 ray_start = camera.get_eye();
+            const vec3 ray_start = camera.get_position();
             const vec3 direction = glm::normalize(vec3(inversed_projection_view * vec4(clicked.x, -clicked.y, 1.0f, 1.0f)));
             const vec3 ray_end = ray_start + direction * camera.get_far();
             Ray ray(ray_start, ray_end);
@@ -143,11 +141,13 @@ void Viewer::draw_gui(Scene& scene, CameraComponent& camera) {
 }
 
 void Viewer::update_internal(Scene& scene) {
-    CameraComponent& camera = scene.get_main_camera();
+    auto camera_id = scene.get_main_camera();
+    CameraComponent& camera = *scene.get_component<CameraComponent>(camera_id);
+    TransformComponent& camera_transform = *scene.get_component<TransformComponent>(camera_id);
 
     update_data();
 
-    update_camera(camera, scene.m_delta_time);
+    update_camera(scene.m_delta_time, camera, camera_transform);
 
     select_entity(scene, camera);
 

@@ -45,6 +45,7 @@ public:
 
     const vec3& get_translation() const { return m_translation; }
     void set_translation(const vec3& t) { m_translation = t; }
+    void increase_translation(const vec3& t) { m_translation += t; }
 
     const vec4& get_rotation() const { return m_rotation; }
     void set_rotation(const vec4& r) { m_rotation = r; }
@@ -73,9 +74,9 @@ public:
 private:
     uint32_t m_flags = DIRTY;
 
-    vec3 m_scale = vec3(1);              // local scale
-    vec3 m_translation = vec3(0);        // local translation
-    vec4 m_rotation = vec4(0, 0, 0, 1);  // local rotation
+    vec3 m_scale{ 1 };              // local scale
+    vec3 m_translation{ 0 };        // local translation
+    vec4 m_rotation{ 0, 0, 0, 1 };  // local rotation
 
     // Non-serialized attributes
     mat4 m_world_matrix = mat4(1);
@@ -110,7 +111,7 @@ public:
     static constexpr float DEFAULT_FAR = 100.0f;
     static constexpr Degree DEFAULT_FOV{ 50.0f };
 
-    void update();
+    void update(const mat4& world_matrix);
 
     void set_dimension(float width, float height);
 
@@ -122,34 +123,26 @@ public:
     const mat4& get_view_matrix() const { return m_view_matrix; }
     const mat4& get_projection_matrix() const { return m_projection_matrix; }
     const mat4& get_projection_view_matrix() const { return m_projection_view_matrix; }
-
-    const vec3& get_eye() const { return m_eye; }
-    const vec3& get_center() const { return m_center; }
-
-    void set_eye(const vec3& eye) {
-        set_dirty();
-        m_eye = eye;
-    }
-    void set_center(const vec3& center) {
-        set_dirty();
-        m_center = center;
-    }
+    const vec3& get_position() const { return m_position; }
+    const vec3& get_front() const { return m_front; }
+    const vec3& get_right() const { return m_right; }
 
     void serialize(Archive& archive, uint32_t version);
 
 private:
     uint32_t m_flags = DIRTY;
 
+    Degree m_fovy{ DEFAULT_FOV };
     float m_near = DEFAULT_NEAR;
     float m_far = DEFAULT_FAR;
-    Degree m_fovy{ DEFAULT_FOV };
     float m_width = 0.0f;
     float m_height = 0.0f;
 
-    vec3 m_eye;
-    vec3 m_center{ 0, 0, 0 };
-
     // Non-serlialized
+    vec3 m_position;
+    vec3 m_front;
+    vec3 m_right;
+
     mat4 m_view_matrix;
     mat4 m_projection_matrix;
     mat4 m_projection_view_matrix;

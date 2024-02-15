@@ -37,10 +37,10 @@ void Scene::update(float dt) {
     // animation
     JS_PARALLEL_FOR(ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
     ctx.wait();
-    // transform
+    // transform, update local matrix from position, rotation and scale
     JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, update_transformation(index));
     ctx.wait();
-    // hierarchy
+    // hierarchy, update world matrix based on hierarchy
     JS_PARALLEL_FOR(ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
     ctx.wait();
     // armature
@@ -52,8 +52,10 @@ void Scene::update(float dt) {
 
     // update camera
     for (int idx = 0; idx < get_count<CameraComponent>(); ++idx) {
+        Entity camera_id = get_entity<CameraComponent>(idx);
         CameraComponent& camera = get_component_array<CameraComponent>()[idx];
-        camera.update();
+        TransformComponent* camera_transform = get_component<TransformComponent>(camera_id);
+        camera.update(camera_transform->get_world_matrix());
     }
 }
 
@@ -113,6 +115,10 @@ Entity Scene::create_camera_entity(const std::string& name,
     camera.m_far = far_plane;
     camera.m_fovy = fovy;
     camera.set_dirty();
+
+    // create transform
+    // TransformComponent& transform = create<TransformComponent>(entity);
+    create<TransformComponent>(entity);
 
     return entity;
 }
@@ -595,9 +601,9 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& ray) {
     return result;
 }
 
-CameraComponent& Scene::get_main_camera() {
+Entity Scene::get_main_camera() {
     DEV_ASSERT(get_count<CameraComponent>());
-    return get_component_array<CameraComponent>()[0];
+    return get_entity<CameraComponent>(0);
 }
 
 }  // namespace vct
