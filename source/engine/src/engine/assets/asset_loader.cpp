@@ -9,7 +9,7 @@
 #include "core/os/timer.h"
 #include "scene/scene.h"
 
-namespace vct::asset_loader {
+namespace my::asset_loader {
 
 using LoadFunc = std::expected<void, std::string> (*)(const std::string& asset_path, void* asset);
 
@@ -54,16 +54,14 @@ bool initialize() {
         "@res://glsl/fullscreen.vert",
         "@res://glsl/fxaa.frag",
         "@res://glsl/gbuffer.frag",
-        "@res://glsl/pbr.glsl",
-        "@res://glsl/shadow.glsl",
         "@res://glsl/ssao.frag",
         "@res://glsl/textureCB.glsl",
-        "@res://glsl/lighting_vxgi.frag",
+        "@res://glsl/lighting.frag",
         "@res://glsl/debug/texture.frag",
-        "@res://glsl/voxel/voxelization.vert",
-        "@res://glsl/voxel/voxelization.geom",
-        "@res://glsl/voxel/voxelization.frag",
-        "@res://glsl/voxel/post.comp",
+        "@res://glsl/vxgi/voxelization.vert",
+        "@res://glsl/vxgi/voxelization.geom",
+        "@res://glsl/vxgi/voxelization.frag",
+        "@res://glsl/vxgi/post.comp",
     };
 
     Timer timer;
@@ -149,16 +147,16 @@ std::shared_ptr<File> load_file_sync(const std::string& path) {
 //
 // auto load_scene_assimp(const std::string& asset_path, void* data) -> std::expected<void, std::string> {
 //    DEV_ASSERT(data);
-//    auto scene = (reinterpret_cast<vct::Scene*>(data));
+//    auto scene = (reinterpret_cast<my::Scene*>(data));
 //
-//    vct::SceneImporterAssimp loader(*scene, asset_path);
+//    my::SceneImporterAssimp loader(*scene, asset_path);
 //    return loader.import();
 //}
 
 auto load_scene_tinygltf(const std::string& asset_path, void* data) -> std::expected<void, std::string> {
     DEV_ASSERT(data);
-    auto scene = (reinterpret_cast<vct::Scene*>(data));
-    vct::SceneImporterTinyGLTF loader(*scene, asset_path);
+    auto scene = (reinterpret_cast<my::Scene*>(data));
+    my::SceneImporterTinyGLTF loader(*scene, asset_path);
     return loader.import();
 }
 
@@ -216,4 +214,4 @@ void worker_main() {
     }
 }
 
-}  // namespace vct::asset_loader
+}  // namespace my::asset_loader

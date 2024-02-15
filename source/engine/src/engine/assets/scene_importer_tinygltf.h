@@ -6,7 +6,7 @@ struct Animation;
 struct Mesh;
 }  // namespace tinygltf
 
-namespace vct {
+namespace my {
 
 class SceneImporterTinyGLTF : public SceneImporter {
 public:
@@ -24,4 +24,4 @@ protected:
     std::shared_ptr<tinygltf::Model> m_model;
 };
 
-}  // namespace vct
+}  // namespace my

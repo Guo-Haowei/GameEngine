@@ -2,21 +2,21 @@
 #include "image.h"
 #include "scene_importer.h"
 
-namespace vct {
+namespace my {
 class Scene;
-}  // namespace vct
+}  // namespace my
 
 // @TODO: make it asset manager, and load with multiple threads
 
-namespace vct {
+namespace my {
 
 struct File {
     std::vector<char> buffer;
 };
 
-}  // namespace vct
+}  // namespace my
 
-namespace vct::asset_loader {
+namespace my::asset_loader {
 
 using ImportSuccessFunc = void (*)(void*);
 using ImportErrorFunc = void (*)(const std::string& error);
@@ -34,4 +34,4 @@ std::shared_ptr<Image> find_image(const std::string& path);
 
 void worker_main();
 
-}  // namespace vct::asset_loader
+}  // namespace my::asset_loader

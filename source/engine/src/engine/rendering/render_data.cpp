@@ -6,10 +6,10 @@
 #include "r_cbuffers.h"
 #include "scene/scene.h"
 
-extern vct::RIDAllocator<MeshData> g_meshes;
-extern vct::RIDAllocator<MaterialData> g_materials;
+extern my::RIDAllocator<MeshData> g_meshes;
+extern my::RIDAllocator<MaterialData> g_materials;
 
-namespace vct {
+namespace my {
 
 void RenderData::clear() {
     scene = nullptr;
@@ -65,7 +65,9 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
         draw.armature_id = mesh.armature_id;
         draw.world_matrix = world_matrix;
         const MeshData* mesh_data = g_meshes.get_or_null(mesh.gpu_resource);
-        DEV_ASSERT(mesh_data);
+        if (!mesh_data) {
+            continue;
+        }
         draw.mesh_data = mesh_data;
 
         for (const auto& subset : mesh.subsets) {
@@ -90,4 +92,4 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
     }
 }
 
-}  // namespace vct
+}  // namespace my

@@ -4,7 +4,7 @@
 #include "core/math/geomath.h"
 #include "core/os/threads.h"
 
-namespace vct::jobsystem {
+namespace my::jobsystem {
 
 static struct
 {
@@ -90,4 +90,4 @@ void Context::wait() {
     }
 }
 
-}  // namespace vct::jobsystem
+}  // namespace my::jobsystem

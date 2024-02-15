@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct::thread {
+namespace my::thread {
 
 using ThreadMainFunc = std::function<void()>;
 
@@ -30,4 +30,4 @@ bool is_main_thread();
 
 uint32_t get_thread_id();
 
-}  // namespace vct::thread
+}  // namespace my::thread

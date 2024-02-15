@@ -6,7 +6,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace vct {
+namespace my {
 
 static WORD find_color_attribute(LogLevel level) {
     switch (level) {
@@ -72,4 +72,4 @@ void CompositeLogger::retrieve_log(std::vector<Log>& buffer) {
     m_log_history_mutex.unlock();
 }
 
-}  // namespace vct
+}  // namespace my

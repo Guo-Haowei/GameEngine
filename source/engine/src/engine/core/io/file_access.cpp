@@ -1,6 +1,6 @@
 #include "file_access.h"
 
-namespace vct {
+namespace my {
 
 FileAccess::CreateFunc FileAccess::s_create_func[ACCESS_MAX];
 
@@ -62,4 +62,4 @@ std::string FileAccess::fix_path(std::string_view path) {
     return fixed_path;
 }
 
-}  // namespace vct
+}  // namespace my

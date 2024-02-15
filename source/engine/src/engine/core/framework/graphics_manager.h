@@ -5,8 +5,9 @@
 #include "rendering/GpuTexture.h"
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
+#include "rendering/render_graph/render_graph.h"
 
-namespace vct {
+namespace my {
 
 struct RenderData;
 
@@ -14,6 +15,7 @@ class GraphicsManager : public Singleton<GraphicsManager>, public Module, public
 public:
     enum {
         RENDER_GRAPH_NONE,
+        RENDER_GRAPH_DEFAULT,
         RENDER_GRAPH_VXGI,
         RENDER_GRAPH_VXGI_DEBUG,
     };
@@ -33,11 +35,15 @@ public:
 
     std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
 
+    const RenderGraph& get_active_render_graph() { return m_render_graph; }
+
 private:
     GpuTexture m_lightIcons[MAX_LIGHT_ICON];
     int m_method = RENDER_GRAPH_NONE;
 
     std::shared_ptr<RenderData> m_render_data;
+
+    RenderGraph m_render_graph;
 };
 
-}  // namespace vct
+}  // namespace my

@@ -2,14 +2,14 @@
 
 #include "core/io/file_access_unix.h"
 
-namespace vct {
+namespace my {
 
 void OS::initialize() {
     FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCE);
     FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
     FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
-    add_logger(std::make_shared<vct::StdLogger>());
+    add_logger(std::make_shared<my::StdLogger>());
 }
 
 void OS::finalize() {
@@ -26,4 +26,4 @@ void OS::print(LogLevel level, std::string_view message) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

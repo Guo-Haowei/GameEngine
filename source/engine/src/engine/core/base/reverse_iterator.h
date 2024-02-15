@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 template<typename T, typename Base>
 class ReverseIterator {
@@ -30,4 +30,4 @@ private:
     Base m_base_iterator;
 };
 
-}  // namespace vct
+}  // namespace my

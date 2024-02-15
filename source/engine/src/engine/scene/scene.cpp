@@ -6,7 +6,7 @@
 #include "core/io/archive.h"
 #include "core/systems/job_system.h"
 
-namespace vct {
+namespace my {
 
 using ecs::Entity;
 using jobsystem::Context;
@@ -327,6 +327,7 @@ Entity Scene::create_cube_entity(const std::string& name, Entity material_id, co
         mesh.indices.push_back(indices[i + 1]);
     }
 
+    mesh.create_render_data();
     return entity;
 }
 
@@ -601,9 +602,9 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& ray) {
     return result;
 }
 
-Entity Scene::get_main_camera() {
+Entity Scene::get_main_camera() const {
     DEV_ASSERT(get_count<CameraComponent>());
     return get_entity<CameraComponent>(0);
 }
 
-}  // namespace vct
+}  // namespace my

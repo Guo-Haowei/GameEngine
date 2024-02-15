@@ -1,6 +1,6 @@
 #include "aabb.h"
 
-namespace vct {
+namespace my {
 
 #if 0
  *        E__________________ H
@@ -58,4 +58,4 @@ void AABB::from_center_size(const vec3& center, const vec3& size) {
     m_max = center + half;
 }
 
-}  // namespace vct
+}  // namespace my

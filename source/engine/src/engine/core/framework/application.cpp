@@ -23,7 +23,7 @@
 #define DEFINE_DVAR
 #include "core/framework/common_dvars.h"
 
-namespace vct {
+namespace my {
 
 static void register_common_dvars() {
 #define REGISTER_DVAR
@@ -102,9 +102,8 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_WARN("TODO: editor add/remove component");
     LOG_ERROR("TODO: cloth physics");
-    LOG_WARN("TODO: better camera controller (both orbit and 3rd person)");
+    LOG_WARN("TODO: cascade bounding box");
     LOG_ERROR("TODO: FXAA");
     LOG_WARN("TODO: TAA");
     LOG_ERROR("TODO: soft shadow");
@@ -181,4 +180,4 @@ int Application::run(int argc, const char** argv) {
     return 0;
 }
 
-}  // namespace vct
+}  // namespace my

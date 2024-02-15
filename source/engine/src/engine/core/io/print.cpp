@@ -3,7 +3,7 @@
 #include "core/os/os.h"
 #include "core/os/threads.h"
 
-namespace vct {
+namespace my {
 
 void print_impl(LogLevel level, const std::string& message) {
     OS* os = OS::singleton_ptr();
@@ -32,4 +32,4 @@ void log_impl(LogLevel level, const std::string& message) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

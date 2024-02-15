@@ -1,6 +1,6 @@
 #include "error.h"
 
-namespace vct {
+namespace my {
 
 const char* error_to_string(ErrorCode err) {
     static const char* s_error_names[] = {
@@ -14,4 +14,4 @@ const char* error_to_string(ErrorCode err) {
     return s_error_names[static_cast<int>(err)];
 }
 
-}  // namespace vct
+}  // namespace my

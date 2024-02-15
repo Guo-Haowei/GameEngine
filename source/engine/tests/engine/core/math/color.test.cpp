@@ -1,6 +1,6 @@
 #include "core/math/color.h"
 
-namespace vct::math {
+namespace my::math {
 
 TEST(Color, to_rgb) {
     auto c = Color::hex(ColorCode::COLOR_RED);
@@ -8,4 +8,4 @@ TEST(Color, to_rgb) {
     EXPECT_EQ(rgb, ColorCode::COLOR_RED);
 }
 
-}  // namespace vct::math
+}  // namespace my::math

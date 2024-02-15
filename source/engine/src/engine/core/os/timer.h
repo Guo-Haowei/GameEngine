@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 inline constexpr uint64_t kMillisecond = 1000000;
 inline constexpr uint64_t kSecond = kMillisecond * 1000;
@@ -37,4 +37,4 @@ protected:
     TimePoint m_start_point{};
 };
 
-}  // namespace vct
+}  // namespace my

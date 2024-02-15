@@ -4,7 +4,7 @@
 
 struct GLFWwindow;
 
-namespace vct {
+namespace my {
 
 class DisplayServerGLFW : public DisplayServer {
 public:
@@ -35,4 +35,4 @@ private:
     inline static std::unordered_map<int, KeyCode> s_key_mapping;
 };
 
-}  // namespace vct
+}  // namespace my

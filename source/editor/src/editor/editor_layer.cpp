@@ -15,7 +15,7 @@
 #include "panels/viewer.h"
 #include "servers/display_server.h"
 
-namespace vct {
+namespace my {
 
 EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<RenderGraphEditor>(*this));
@@ -92,4 +92,4 @@ void EditorLayer::update(float) {
 void EditorLayer::render() {
 }
 
-}  // namespace vct
+}  // namespace my

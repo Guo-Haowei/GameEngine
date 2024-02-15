@@ -9,8 +9,7 @@ in vec2 pass_uv;
 in vec4 pass_light_space_positions[NUM_CASCADES];
 
 #include "common.glsl"
-#include "pbr.glsl"
-#include "shadow.glsl"
+#include "common/lighting.glsl"
 
 void main() {
     vec4 albedo = c_albedo_color;
@@ -32,48 +31,16 @@ void main() {
 
     vec3 world_position = pass_position;
 
+    const vec3 N = normalize(pass_normal);
+    const vec3 L = c_sun_direction;
+    const vec3 V = normalize(c_camera_position - world_position);
+    const vec3 H = normalize(V + L);
+    const float NdotV = max(dot(N, V), 0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
-    vec3 Lo = vec3(0.0);
-
-    vec3 N = normalize(pass_normal);
-    // vec3 L = normalize(LightPos - world_position);
-    vec3 L = c_sun_direction;
-    vec3 V = normalize(c_camera_position - world_position);
-    vec3 H = normalize(V + L);
-
     vec3 radiance = c_light_color;
+    vec3 Lo = lighting(N, L, V, radiance, F0, roughness, metallic, albedo, world_position);
 
-    float NdotL = max(dot(N, L), 0.0);
-    float NdotH = max(dot(N, H), 0.0);
-    float NdotV = max(dot(N, V), 0.0);
-
-    // cook-torrance brdf
-    float NDF = distributionGGX(NdotH, roughness);
-    float G = geometrySmith(NdotV, NdotL, roughness);
-    vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
-
-    vec3 nom = NDF * G * F;
-    float denom = 4 * NdotV * NdotL;
-
-    // vec3 specular = nom / max(denom, 0.001);
-    vec3 specular = vec3(0);
-
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metallic;
-
-    Lo += (kD * albedo.rgb / PI + specular) * radiance * NdotL;
-
-    const float ambient = 0.3;
-
-    float shadow = 0.0;
-    float clipSpaceZ = (c_projection_view_matrix * vec4(pass_position, 1.0)).z;
-
-    // use lowest cascade for voxel
-    vec4 lightSpacePos = pass_light_space_positions[2];
-    shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
-
-    vec3 color = (1.0 - shadow) * Lo + ambient * albedo.rgb;
+    vec3 color = lighting(N, L, V, radiance, F0, roughness, metallic, albedo, world_position);
 
     ///////////////////////////////////////////////////////////////////////////
 

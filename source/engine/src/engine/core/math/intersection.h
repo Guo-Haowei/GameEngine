@@ -1,7 +1,7 @@
 #pragma once
 #include "geomath.h"
 
-namespace vct {
+namespace my {
 
 class Ray;
 class AABB;
@@ -12,4 +12,4 @@ public:
     static bool ray_triangle(const vec3& a, const vec3& b, const vec3& c, Ray& ray);
 };
 
-}  // namespace vct
+}  // namespace my

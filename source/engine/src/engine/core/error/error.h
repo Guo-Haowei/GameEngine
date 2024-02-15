@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 enum ErrorCode : uint16_t {
 #define ERROR_CODE_ENUM
@@ -40,8 +40,8 @@ private:
     std::string m_message;
 };
 
-#define VCT_ERROR(VALUE, ...) std::unexpected(::vct::Error(__FILE__, __FUNCTION__, __LINE__, VALUE, ##__VA_ARGS__))
+#define VCT_ERROR(VALUE, ...) std::unexpected(::my::Error(__FILE__, __FUNCTION__, __LINE__, VALUE, ##__VA_ARGS__))
 ;
 const char* error_to_string(ErrorCode err);
 
-}  // namespace vct
+}  // namespace my

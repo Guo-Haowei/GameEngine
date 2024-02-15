@@ -6,7 +6,7 @@
 #include "core/framework/scene_manager.h"
 #include "platform/windows/dialog.h"
 
-namespace vct {
+namespace my {
 
 // @TODO: fix this
 static std::vector<std::string> quick_dirty_split(std::string str, std::string token) {
@@ -54,7 +54,6 @@ static void import_recent(ImporterName importer) {
             SceneManager::singleton().request_scene(file, importer);
         }
     }
-    ImGui::EndMenu();
 }
 
 static void save_project(bool open_dialog) {
@@ -98,12 +97,14 @@ void menu_bar() {
             }
             if (ImGui::BeginMenu("Import Recent (Assimp)")) {
                 import_recent(IMPORTER_ASSIMP);
+                ImGui::EndMenu();
             }
             if (ImGui::MenuItem("Import (TinyGLTF)")) {
                 import_scene(IMPORTER_TINYGLTF);
             }
             if (ImGui::BeginMenu("Import Recent (TinyGLTF)")) {
                 import_recent(IMPORTER_TINYGLTF);
+                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }
@@ -126,4 +127,4 @@ void menu_bar() {
     }
 }
 
-}  // namespace vct
+}  // namespace my

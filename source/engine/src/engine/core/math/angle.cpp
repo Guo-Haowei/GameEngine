@@ -1,7 +1,7 @@
 #pragma once
 #include "angle.h"
 
-namespace vct {
+namespace my {
 
 Degree& Degree::operator=(const Radians& rad) {
     m_value = rad.to_degree();
@@ -13,4 +13,4 @@ Radians& Radians::operator=(const Degree& degree) {
     return *this;
 }
 
-}  // namespace vct
+}  // namespace my

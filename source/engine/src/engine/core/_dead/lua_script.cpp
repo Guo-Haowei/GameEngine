@@ -8,11 +8,11 @@ extern "C" {
 
 #include "core/dynamic_variable/dynamic_variable.h"
 
-#define FIND_DVAR_OR_RETURN(variable, name)                                 \
-    vct::DynamicVariable* variable = vct::DynamicVariable::find_dvar(name); \
-    if (!variable) {                                                        \
-        LOG_ERROR("dvar '{}' not found!", name);                            \
-        return 0;                                                           \
+#define FIND_DVAR_OR_RETURN(variable, name)                               \
+    my::DynamicVariable* variable = my::DynamicVariable::find_dvar(name); \
+    if (!variable) {                                                      \
+        LOG_ERROR("dvar '{}' not found!", name);                          \
+        return 0;                                                         \
     }
 
 #define SET_DVAR(expr)                     \

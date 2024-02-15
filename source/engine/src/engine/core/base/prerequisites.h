@@ -1,7 +1,7 @@
 #pragma once
 #include <cassert>
 
-namespace vct {
+namespace my {
 
 #ifdef _DEBUG
 inline constexpr bool kIsDebug = true;
@@ -17,4 +17,4 @@ constexpr std::size_t check_out_of_range_if_debug(size_t i, size_t range) {
     return kIsDebug ? check_out_of_range(i, range) : i;
 }
 
-}  // namespace vct
+}  // namespace my

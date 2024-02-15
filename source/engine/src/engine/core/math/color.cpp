@@ -1,6 +1,6 @@
 #include "color.h"
 
-namespace vct {
+namespace my {
 
 uint32_t Color::to_rgb() const {
     uint32_t c = (uint8_t)std::round(r * 255.0f);
@@ -42,4 +42,4 @@ Color Color::hex_rgba(uint32_t hex) {
     return Color(r, g, b, a);
 }
 
-}  // namespace vct
+}  // namespace my

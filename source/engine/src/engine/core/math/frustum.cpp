@@ -2,7 +2,7 @@
 
 #include "aabb.h"
 
-namespace vct {
+namespace my {
 
 // https://stackoverflow.com/questions/12836967/extracting-view-frustum-planes-hartmann-gribbs-method
 Frustum::Frustum(const mat4& PV) {
@@ -55,4 +55,4 @@ bool Frustum::intersects(const AABB& box) const {
     return true;
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct::math {
+namespace my::math {
 
 template<typename T, class = typename std::enable_if<std::is_integral<T>::value>::type>
 constexpr inline T align(T size, T alignment) {
@@ -27,4 +27,4 @@ constexpr inline uint32_t next_power_of_two(uint32_t x) {
     return ++x;
 }
 
-}  // namespace vct::math
+}  // namespace my::math

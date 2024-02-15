@@ -1,21 +1,17 @@
 #include "render_graph_editor.h"
 
-#include "GraphEditor.h"
-#include "rendering/render_graph/render_graph.h"
+#include "core/framework/graphics_manager.h"
 
-// @TODO: fix
-extern vct::RenderGraph g_render_graph;
+namespace my {
 
-namespace vct {
-
-struct RenderGraphEditorDelegate : public GraphEditor::Delegate {
-
+class RenderGraphEditorDelegate : public GraphEditor::Delegate {
+public:
     RenderGraphEditorDelegate(const RenderGraph& graph) {
         float x_offset = 0.0f;
         for (auto& level : graph.m_levels) {
             float y_offset = 0.0f;
             for (int id : level) {
-                const std::shared_ptr<vct::RenderPass>& pass = graph.m_render_passes[id];
+                const std::shared_ptr<my::RenderPass>& pass = graph.m_render_passes[id];
 
                 mNodes.push_back(
                     {
@@ -134,21 +130,19 @@ struct RenderGraphEditorDelegate : public GraphEditor::Delegate {
     std::vector<GraphEditor::Link> mLinks;
 };
 
-void RenderGraphEditor::update_internal(vct::Scene&) {
-    // Graph Editor
-    static GraphEditor::Options options;
-    static vct::RenderGraphEditorDelegate delegate(g_render_graph);
-    static GraphEditor::ViewState viewState;
-    static GraphEditor::FitOnScreen fit = GraphEditor::Fit_None;
+RenderGraphEditor::RenderGraphEditor(EditorLayer& editor) : Panel("Render Graph", editor) {
+    m_delegate = std::make_shared<RenderGraphEditorDelegate>(GraphicsManager::singleton().get_active_render_graph());
+}
 
+void RenderGraphEditor::update_internal(my::Scene&) {
     if (ImGui::Button("Fit all nodes")) {
-        fit = GraphEditor::Fit_AllNodes;
+        m_fit = GraphEditor::Fit_AllNodes;
     }
     ImGui::SameLine();
     if (ImGui::Button("Fit selected nodes")) {
-        fit = GraphEditor::Fit_SelectedNodes;
+        m_fit = GraphEditor::Fit_SelectedNodes;
     }
-    GraphEditor::Show(delegate, options, viewState, true, &fit);
+    GraphEditor::Show(*m_delegate.get(), m_options, m_view_state, true, &m_fit);
 }
 
-}  // namespace vct
+}  // namespace my

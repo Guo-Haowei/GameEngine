@@ -17,6 +17,7 @@
 #include "vsinput.glsl.h"
 
 // @TODO: refactor
+#include "rendering/render_graph/render_graph_default.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
 
 /// textures
@@ -25,8 +26,8 @@ GpuTexture g_normalVoxel;
 MeshData g_box;
 
 // @TODO: fix this
-vct::RIDAllocator<MeshData> g_meshes;
-vct::RIDAllocator<MaterialData> g_materials;
+my::RIDAllocator<MeshData> g_meshes;
+my::RIDAllocator<MaterialData> g_materials;
 
 static GLuint g_noiseTexture;
 
@@ -43,7 +44,7 @@ static inline void bind_to_slot(GLuint buffer, int slot, int size) {
     glEnableVertexAttribArray(slot);
 }
 
-namespace vct {
+namespace my {
 
 static void APIENTRY gl_debug_callback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
@@ -266,21 +267,26 @@ void GraphicsManager::createGpuResources() {
     R_CreateEditorResource();
 
     // create a dummy box data
-    create_mesh_data(vct::make_box_mesh(), g_box);
+    create_mesh_data(my::make_box_mesh(), g_box);
 
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
         m_method = RENDER_GRAPH_VXGI;
     } else if (method == "vxgi_debug") {
         m_method = RENDER_GRAPH_VXGI_DEBUG;
+    } else if (method == "default") {
+        m_method = RENDER_GRAPH_DEFAULT;
     }
 
     switch (m_method) {
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI:
-            create_render_graph_vxgi(g_render_graph);
+        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
+            create_render_graph_default(m_render_graph);
             break;
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-            create_render_graph_vxgi_debug(g_render_graph);
+        case my::GraphicsManager::RENDER_GRAPH_VXGI:
+            create_render_graph_vxgi(m_render_graph);
+            break;
+        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
+            create_render_graph_vxgi_debug(m_render_graph);
             break;
         default:
             CRASH_NOW();
@@ -312,40 +318,44 @@ void GraphicsManager::createGpuResources() {
 
     // @TODO: refactor
     std::shared_ptr<RenderPass> pass;
-    pass = g_render_graph.find_pass(SHADOW_PASS);
+    pass = m_render_graph.find_pass(SHADOW_PASS);
     if (pass) {
         cache.c_shadow_map = gl::MakeTextureResident(pass->get_depth_attachment());
     }
-    pass = g_render_graph.find_pass(SSAO_PASS);
+
+    pass = m_render_graph.find_pass(SSAO_PASS);
     if (pass) {
         cache.c_ssao_map = gl::MakeTextureResident(pass->get_color_attachment(0));
     }
-
-    switch (m_method) {
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI:
-            pass = g_render_graph.find_pass(LIGHTING_PASS);
-            break;
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-            pass = g_render_graph.find_pass(VXGI_DEBUG_PASS);
-            break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-    if (pass) {
-        cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
-    }
-    pass = g_render_graph.find_pass(FXAA_PASS);
+    pass = m_render_graph.find_pass(FXAA_PASS);
     if (pass) {
         cache.c_fxaa_image = gl::MakeTextureResident(pass->get_color_attachment(0));
     }
 
-    pass = g_render_graph.find_pass(GBUFFER_PASS);
+    pass = m_render_graph.find_pass(GBUFFER_PASS);
     if (pass) {
         cache.c_gbuffer_depth_map = gl::MakeTextureResident(pass->get_depth_attachment());
         cache.c_gbuffer_position_metallic_map = gl::MakeTextureResident(pass->get_color_attachment(0));
         cache.c_gbuffer_normal_roughness_map = gl::MakeTextureResident(pass->get_color_attachment(1));
         cache.c_gbuffer_albedo_map = gl::MakeTextureResident(pass->get_color_attachment(2));
+    }
+
+    switch (m_method) {
+        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
+            // pass = m_render_graph.find_pass(LIGHTING_PASS);
+            // cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
+            break;
+        case my::GraphicsManager::RENDER_GRAPH_VXGI:
+            pass = m_render_graph.find_pass(LIGHTING_PASS);
+            cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
+            break;
+        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
+            pass = m_render_graph.find_pass(VXGI_DEBUG_PASS);
+            cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
+            break;
+        default:
+            CRASH_NOW();
+            break;
     }
 
     g_constantCache.Update();
@@ -373,10 +383,12 @@ struct MaterialCache {
 
 uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI:
-            return g_render_graph.find_pass(FINAL_PASS)->get_color_attachment(0);
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-            return g_render_graph.find_pass(FXAA_PASS)->get_color_attachment(0);
+        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
+            return m_render_graph.find_pass(LIGHTING_PASS)->get_color_attachment(0);
+        case my::GraphicsManager::RENDER_GRAPH_VXGI:
+            return m_render_graph.find_pass(FINAL_PASS)->get_color_attachment(0);
+        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
+            return m_render_graph.find_pass(FXAA_PASS)->get_color_attachment(0);
         default:
             CRASH_NOW();
             return 0;
@@ -388,7 +400,7 @@ void GraphicsManager::render() {
     m_render_data->update(&scene);
 
     g_perFrameCache.Update();
-    g_render_graph.execute();
+    m_render_graph.execute();
 }
 
 void GraphicsManager::destroyGpuResources() {
@@ -468,7 +480,7 @@ static void APIENTRY gl_debug_callback(GLenum source, GLenum type, unsigned int 
             break;
     }
 
-    vct::log_impl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", message, id, sourceStr, typeStr));
+    my::log_impl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", message, id, sourceStr, typeStr));
 }
 
-}  // namespace vct
+}  // namespace my

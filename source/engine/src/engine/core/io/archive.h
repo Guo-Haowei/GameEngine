@@ -1,7 +1,7 @@
 #pragma once
 #include "file_access.h"
 
-namespace vct {
+namespace my {
 
 class Archive {
 public:
@@ -83,4 +83,4 @@ private:
     std::string m_path;
 };
 
-}  // namespace vct
+}  // namespace my

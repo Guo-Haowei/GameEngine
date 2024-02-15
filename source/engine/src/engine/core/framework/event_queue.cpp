@@ -1,5 +1,5 @@
 #include "event_queue.h"
 
-namespace vct {
+namespace my {
 
-}  // namespace vct
+}  // namespace my

@@ -1,7 +1,7 @@
 #pragma once
 #include "panel.h"
 
-namespace vct {
+namespace my {
 
 class ConsolePanel : public Panel {
 public:
@@ -15,4 +15,4 @@ private:
     bool m_scroll_to_bottom = false;
 };
 
-}  // namespace vct
+}  // namespace my

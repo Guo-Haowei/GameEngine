@@ -7,7 +7,7 @@ struct aiMaterial;
 struct aiScene;
 struct aiAnimation;
 
-namespace vct {
+namespace my {
 
 class SceneImporterAssimp : public SceneImporter {
 public:
@@ -25,4 +25,4 @@ protected:
     std::vector<ecs::Entity> m_meshes;
 };
 
-}  // namespace vct
+}  // namespace my

@@ -2,7 +2,7 @@
 
 #include "rendering/GLPrerequisites.h"
 
-namespace vct {
+namespace my {
 
 void RenderPass::execute() {
     bind();
@@ -147,4 +147,4 @@ uint32_t RenderPassGL::get_depth_attachment() {
     return m_depth_attachment;
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 enum ColorCode : uint32_t {
     COLOR_GREEN = 0x80E080,
@@ -34,4 +34,4 @@ struct Color {
     static Color hex_rgba(uint32_t hex);
 };
 
-}  // namespace vct
+}  // namespace my

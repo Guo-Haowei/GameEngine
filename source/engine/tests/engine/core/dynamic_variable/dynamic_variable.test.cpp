@@ -2,7 +2,7 @@
 
 #include "core/io/archive.h"
 
-namespace vct {
+namespace my {
 
 #define DEFINE_DVAR
 #include "test_dvars.h"
@@ -148,4 +148,4 @@ TEST(DynamicVariable, ivec4) {
     EXPECT_EQ(value, ivec4(7, 8, 9, 10));
 }
 
-}  // namespace vct
+}  // namespace my

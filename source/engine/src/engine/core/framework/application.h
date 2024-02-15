@@ -4,7 +4,7 @@
 #include "core/framework/module.h"
 #include "core/os/os.h"
 
-namespace vct {
+namespace my {
 
 class DisplayServer;
 class GraphicsManager;
@@ -46,4 +46,4 @@ private:
     std::vector<Module*> m_modules;
 };
 
-}  // namespace vct
+}  // namespace my

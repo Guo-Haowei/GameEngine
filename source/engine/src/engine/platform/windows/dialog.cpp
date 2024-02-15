@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <commdlg.h>
 
-namespace vct {
+namespace my {
 
 std::string open_file_dialog(const std::vector<const char*>& filters) {
     std::string filterStr;
@@ -78,4 +78,4 @@ bool open_save_dialog(std::filesystem::path& inout_path) {
     return false;
 }
 
-}  // namespace vct
+}  // namespace my

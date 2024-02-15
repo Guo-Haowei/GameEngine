@@ -32,7 +32,6 @@ void lighting_pass_func();
 void fxaa_pass_func();
 void final_pass_func();
 
-void create_render_graph_vxgi(RenderGraph& graph);
-void create_render_graph_vxgi_debug(RenderGraph& graph);
+void create_render_graph_default(RenderGraph& graph);
 
 }  // namespace my

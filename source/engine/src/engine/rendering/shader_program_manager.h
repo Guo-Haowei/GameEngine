@@ -2,7 +2,7 @@
 #include "core/base/singleton.h"
 #include "rendering/shader_program.h"
 
-namespace vct {
+namespace my {
 
 enum ProgramType {
     PROGRAM_DPETH_STATIC,
@@ -30,4 +30,4 @@ private:
     ShaderProgram create(const ProgramCreateInfo& info);
 };
 
-}  // namespace vct
+}  // namespace my

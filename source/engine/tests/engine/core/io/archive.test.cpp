@@ -3,7 +3,7 @@
 #include "core/io/file_access_unix.h"
 #include "scene/scene_components.h"
 
-namespace vct {
+namespace my {
 
 TEST(Archive, open_read) {
     FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
@@ -104,4 +104,4 @@ TEST(Archive, write_and_read) {
 //     ASSERT_TRUE(fs::remove(TAG_COMPONENT_SERIALIZE_TEST_FILE));
 // }
 
-}  // namespace vct
+}  // namespace my

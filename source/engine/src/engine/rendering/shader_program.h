@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 struct ProgramCreateInfo {
     std::string_view vs;
@@ -20,4 +20,4 @@ private:
     friend class ShaderProgramManager;
 };
 
-}  // namespace vct
+}  // namespace my

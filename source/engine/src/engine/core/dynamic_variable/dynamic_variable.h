@@ -6,7 +6,7 @@ enum DvarFlags {
     DVAR_FLAG_SERIALIZE = 1,
 };
 
-namespace vct {
+namespace my {
 
 enum VariantType {
     VARIANT_TYPE_INVALID = 0,
@@ -93,7 +93,7 @@ private:
     friend class DynamicVariableManager;
 };
 
-}  // namespace vct
+}  // namespace my
 
 #define DVAR_GET_BOOL(name)    (!!(DVAR_##name).as_int())
 #define DVAR_GET_INT(name)     (DVAR_##name).as_int()

@@ -1,6 +1,6 @@
 #include "engine/core/error/error.h"
 
-namespace vct {
+namespace my {
 
 TEST(error, constructor_no_string) {
     constexpr size_t LINE_NUMBER = __LINE__;
@@ -18,4 +18,4 @@ TEST(error, constructor_with_format) {
     EXPECT_EQ(err.get_message(), "(1=2=3)");
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #include "ray.h"
 
-namespace vct {
+namespace my {
 
 Ray Ray::inverse(const mat4& inverseMatrix) const {
     vec3 inversed_start = vec3(inverseMatrix * vec4(m_start, 1.0f));
@@ -10,4 +10,4 @@ Ray Ray::inverse(const mat4& inverseMatrix) const {
     return inversed_ray;
 }
 
-}  // namespace vct
+}  // namespace my

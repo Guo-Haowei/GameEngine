@@ -9,7 +9,7 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/rendering_dvars.h"
 
-namespace vct {
+namespace my {
 
 bool DisplayServerGLFW::initialize() {
     DisplayServerGLFW::initialize_key_mapping();
@@ -280,6 +280,6 @@ void DisplayServerGLFW::initialize_key_mapping() {
     s_key_mapping[GLFW_KEY_MENU] = KEY_MENU;
 }
 
-}  // namespace vct
+}  // namespace my
 
 #include "imgui/backends/imgui_impl_glfw.cpp"

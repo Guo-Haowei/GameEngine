@@ -3,7 +3,7 @@
 #include "aabb.h"
 #include "ray.h"
 
-namespace vct {
+namespace my {
 
 bool TestIntersection::ray_aabb(const AABB& aabb, Ray& ray) {
     const vec3 direction = ray.m_end - ray.m_start;
@@ -59,4 +59,4 @@ bool TestIntersection::ray_triangle(const vec3& a, const vec3& b, const vec3& c,
     return true;
 }
 
-}  // namespace vct
+}  // namespace my

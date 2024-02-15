@@ -12,7 +12,7 @@
 
 #include "rendering/r_cbuffers.h"
 
-namespace vct {
+namespace my {
 
 using ecs::Entity;
 
@@ -114,6 +114,9 @@ bool SceneManager::initialize() {
         }
     }
     m_loading_scene.store(scene);
+    if (try_swap_scene()) {
+        m_scene->update(0.0f);
+    }
 
     return true;
 }
@@ -131,7 +134,7 @@ static mat4 R_HackLightSpaceMatrix(const vec3& lightDir) {
     return P * V;
 }
 
-void SceneManager::update(float dt) {
+bool SceneManager::try_swap_scene() {
     Scene* new_scene = m_loading_scene.load();
     if (new_scene) {
         if (m_scene) {
@@ -142,14 +145,19 @@ void SceneManager::update(float dt) {
         }
         m_loading_scene.store(nullptr);
         ++m_revision;
+        return true;
     }
+    return false;
+}
+
+void SceneManager::update(float dt) {
+    try_swap_scene();
 
     if (m_last_revision < m_revision) {
         // @TODO: profiler
         Timer timer;
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
         m_app->get_event_queue().dispatch_event(event);
-        on_scene_changed(m_scene);
         LOG("[SceneManager] Detected scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.get_duration_string());
         m_last_revision = m_revision;
     }
@@ -211,8 +219,16 @@ void SceneManager::update(float dt) {
     DEV_ASSERT(math::is_power_of_two(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    vec3 world_center = camera->get_position();
-    const float world_size = DVAR_GET_FLOAT(r_world_size);
+    vec3 world_center = scene.m_bound.center();
+    vec3 aabb_size = scene.m_bound.size();
+    float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
+
+    const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
+    if (world_size > max_world_size) {
+        world_center = camera->get_position();
+        world_size = max_world_size;
+    }
+
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = world_size * texel_size;
 
@@ -230,29 +246,9 @@ void SceneManager::request_scene(std::string_view path, ImporterName importer) {
     });
 }
 
-void SceneManager::on_scene_changed(Scene*) {
-#if 0
-    // @TODO: refactor the following
-    const int voxelTextureSize = DVAR_GET_INT(r_voxel_size);
-    DEV_ASSERT(math::is_power_of_two(voxelTextureSize));
-    DEV_ASSERT(voxelTextureSize <= 256);
-
-    const vec3 center = new_scene->m_bound.center();
-    const vec3 size = new_scene->m_bound.size();
-    const float worldSize = glm::max(size.x, glm::max(size.y, size.z));
-    const float texelSize = 1.0f / static_cast<float>(voxelTextureSize);
-    const float voxelSize = worldSize * texelSize;
-
-    g_perFrameCache.cache.c_world_center = center;
-    g_perFrameCache.cache.c_world_size_half = 0.5f * worldSize;
-    g_perFrameCache.cache.c_texel_size = texelSize;
-    g_perFrameCache.cache.c_voxel_size = voxelSize;
-#endif
-}
-
 Scene& SceneManager::get_scene() {
     assert(singleton().m_scene);
     return *singleton().m_scene;
 }
 
-}  // namespace vct
+}  // namespace my

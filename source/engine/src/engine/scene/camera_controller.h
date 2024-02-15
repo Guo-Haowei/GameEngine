@@ -2,11 +2,13 @@
 #include "core/math/angle.h"
 #include "scene/scene_components.h"
 
-namespace vct {
+namespace my {
 
 class CameraController {
 public:
     void move(float dt, CameraComponent& camera, TransformComponent& transform);
+
+    void setup(const TransformComponent& transform);
 
 private:
     Radians m_pitch;
@@ -14,4 +16,4 @@ private:
     bool m_initialized = false;
 };
 
-}  // namespace vct
+}  // namespace my

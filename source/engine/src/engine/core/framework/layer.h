@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 class Layer {
 public:
@@ -16,4 +16,4 @@ protected:
     std::string m_name;
 };
 
-}  // namespace vct
+}  // namespace my

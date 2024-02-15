@@ -2,7 +2,7 @@
 
 #include "core/io/print.h"
 
-namespace vct {
+namespace my {
 
 auto Archive::open_mode(const std::string& path, bool write_mode) -> std::expected<void, Error<ErrorCode>> {
     m_path = path;
@@ -55,4 +55,4 @@ Archive& Archive::write_string(const char* data, size_t length) {
     return *this;
 }
 
-}  // namespace vct
+}  // namespace my

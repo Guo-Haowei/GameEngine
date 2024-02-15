@@ -1,7 +1,7 @@
 #pragma once
 #include "scene/scene.h"
 
-namespace vct {
+namespace my {
 
 enum ImporterName {
     IMPORTER_TINYGLTF,
@@ -28,4 +28,4 @@ protected:
     std::string m_error;
 };
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #include "dynamic_variable.h"
 
-namespace vct {
+namespace my {
 
 void DynamicVariable::register_int(std::string_view key, int value) {
     m_int = value;
@@ -259,4 +259,4 @@ void DynamicVariable::register_dvar(std::string_view key, DynamicVariable* dvar)
     s_map.insert(std::make_pair(keyStr, dvar));
 }
 
-}  // namespace vct
+}  // namespace my

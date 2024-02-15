@@ -1,9 +1,9 @@
 #include "viewer.h"
 
-#include "ImGuizmo.h"
-#include "imgui/imgui_internal.h"
 // @TODO: fix path
 #include "../editor_layer.h"
+#include "ImGuizmo.h"
+#include "imgui/imgui_internal.h"
 
 // @TODO: refactor
 #include "core/framework/common_dvars.h"
@@ -13,7 +13,15 @@
 #include "core/math/ray.h"
 #include "servers/display_server.h"
 
-namespace vct {
+namespace my {
+
+Viewer::Viewer(EditorLayer& editor) : Panel("Viewer", editor) {
+    const Scene& scene = SceneManager::get_scene();
+    auto camera_id = scene.get_main_camera();
+    const TransformComponent& transform = *scene.get_component<TransformComponent>(camera_id);
+    // @TODO: fix camera snap bug
+    m_camera_controller.setup(transform);
+}
 
 void Viewer::update_data() {
     auto [frame_width, frame_height] = DisplayServer::singleton().get_frame_size();
@@ -45,7 +53,7 @@ void Viewer::select_entity(Scene& scene, const CameraComponent& camera) {
         return;
     }
 
-    if (input::is_button_pressed(MOUSE_BUTTON_RIGHT)) {
+    if (input::is_button_pressed(MOUSE_BUTTON_LEFT)) {
         auto [window_x, window_y] = DisplayServer::singleton().get_window_pos();
         vec2 clicked = input::get_cursor();
         clicked.x = (clicked.x + window_x - m_canvas_min.x) / m_canvas_size.x;
@@ -153,11 +161,11 @@ void Viewer::update_internal(Scene& scene) {
 
     // Update state
     if (m_editor.get_selected_entity().is_valid()) {
-        if (input::is_key_pressed(KEY_T)) {
+        if (input::is_key_pressed(KEY_Z)) {
             m_editor.set_state(EditorLayer::STATE_TRANSLATE);
-        } else if (input::is_key_pressed(KEY_R)) {
+        } else if (input::is_key_pressed(KEY_X)) {
             m_editor.set_state(EditorLayer::STATE_ROTATE);
-        } else if (input::is_key_pressed(KEY_S)) {
+        } else if (input::is_key_pressed(KEY_C)) {
             m_editor.set_state(EditorLayer::STATE_SCALE);
         }
     }
@@ -165,4 +173,4 @@ void Viewer::update_internal(Scene& scene) {
     draw_gui(scene, camera);
 }
 
-}  // namespace vct
+}  // namespace my

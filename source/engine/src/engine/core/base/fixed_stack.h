@@ -5,7 +5,7 @@
 #include "prerequisites.h"
 #include "reverse_iterator.h"
 
-namespace vct {
+namespace my {
 
 template<typename T, size_t N>
 class FixedStack {
@@ -73,4 +73,4 @@ protected:
     T m_data[N];
 };
 
-}  // namespace vct
+}  // namespace my

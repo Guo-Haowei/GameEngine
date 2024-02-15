@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 class Application;
 
@@ -20,4 +20,4 @@ protected:
     friend class Application;
 };
 
-}  // namespace vct
+}  // namespace my

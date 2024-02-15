@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 enum PixelFormat {
     FORMAT_R8_UINT,
@@ -39,4 +39,4 @@ public:
     std::vector<uint8_t> buffer;
 };
 
-}  // namespace vct
+}  // namespace my

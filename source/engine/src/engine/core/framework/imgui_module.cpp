@@ -4,7 +4,7 @@
 
 #include "assets/asset_loader.h"
 
-namespace vct {
+namespace my {
 
 bool ImGuiModule::initialize() {
     IMGUI_CHECKVERSION();
@@ -73,4 +73,4 @@ void ImGuiModule::finalize() {
     ImGui::DestroyContext();
 }
 
-}  // namespace vct
+}  // namespace my

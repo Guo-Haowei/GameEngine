@@ -4,7 +4,7 @@
 #include "core/base/singleton.h"
 #include "print.h"
 
-namespace vct {
+namespace my {
 
 class ILogger {
 public:
@@ -48,4 +48,4 @@ private:
     int m_channels = LOG_LEVEL_ALL;
 };
 
-}  // namespace vct
+}  // namespace my

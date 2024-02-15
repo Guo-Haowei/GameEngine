@@ -1,6 +1,6 @@
 #include "render_graph.h"
 
-namespace vct {
+namespace my {
 
 void RenderGraph::add_pass(RenderPassDesc& desc) {
     std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPassGL>();
@@ -12,7 +12,7 @@ void RenderGraph::add_pass(RenderPassDesc& desc) {
     m_render_pass_lookup[name] = (int)m_render_passes.size() - 1;
 }
 
-std::shared_ptr<RenderPass> RenderGraph::find_pass(const std::string& name) {
+std::shared_ptr<RenderPass> RenderGraph::find_pass(const std::string& name) const {
     auto it = m_render_pass_lookup.find(name);
     if (it == m_render_pass_lookup.end()) {
         return nullptr;
@@ -72,4 +72,4 @@ void RenderGraph::execute() {
     }
 }
 
-}  // namespace vct
+}  // namespace my

@@ -2,7 +2,7 @@
 #include "core/base/singleton.h"
 #include "core/io/logger.h"
 
-namespace vct {
+namespace my {
 
 class OS : public Singleton<OS> {
 public:
@@ -17,4 +17,4 @@ protected:
     CompositeLogger m_logger;
 };
 
-}  // namespace vct
+}  // namespace my

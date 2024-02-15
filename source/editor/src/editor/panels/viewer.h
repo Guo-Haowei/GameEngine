@@ -2,11 +2,11 @@
 #include "panel.h"
 #include "scene/camera_controller.h"
 
-namespace vct {
+namespace my {
 
 class Viewer : public Panel {
 public:
-    Viewer(EditorLayer& editor) : Panel("Viewer", editor) {}
+    Viewer(EditorLayer& editor);
 
 protected:
     void update_internal(Scene& scene) override;
@@ -24,4 +24,4 @@ private:
     CameraController m_camera_controller;
 };
 
-}  // namespace vct
+}  // namespace my

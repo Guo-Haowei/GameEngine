@@ -2,7 +2,7 @@
 
 #include "core/io/print.h"
 
-namespace vct {
+namespace my {
 
 RID RIDAllocatorBase::allocate_rid_internal() {
     if (m_alloc_count == m_alloc_max) {
@@ -123,4 +123,4 @@ void RIDAllocatorBase::free_chunks() {
     m_free_list.reset();
 }
 
-}  // namespace vct
+}  // namespace my

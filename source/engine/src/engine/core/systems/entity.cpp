@@ -1,6 +1,6 @@
 #include "entity.h"
 
-namespace vct::ecs {
+namespace my::ecs {
 
 const Entity Entity::INVALID{};
 
@@ -26,4 +26,4 @@ void Entity::set_seed(uint32_t seed) {
     s_id = seed;
 }
 
-}  // namespace vct::ecs
+}  // namespace my::ecs

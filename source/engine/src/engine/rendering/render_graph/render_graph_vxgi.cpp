@@ -12,25 +12,20 @@
 #include "rendering/render_data.h"
 #include "rendering/shader_program_manager.h"
 
-/// textures
-vct::RenderGraph g_render_graph;
-
-uint32_t g_final_image;
-
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
 
 extern void FillMaterialCB(const MaterialData* mat, MaterialConstantBuffer& cb);
 
-extern vct::RIDAllocator<MeshData> g_meshes;
-extern vct::RIDAllocator<MaterialData> g_materials;
+extern my::RIDAllocator<MeshData> g_meshes;
+extern my::RIDAllocator<MaterialData> g_materials;
 
-namespace vct {
+namespace my {
 
 // @TODO: refactor render passes
 void shadow_pass_func() {
-    const vct::Scene& scene = SceneManager::get_scene();
+    const my::Scene& scene = SceneManager::get_scene();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -227,14 +222,14 @@ void final_pass_func() {
 }
 
 void debug_vxgi_pass_func() {
-    auto [width, height] = vct::DisplayServer::singleton().get_frame_size();
+    auto [width, height] = my::DisplayServer::singleton().get_frame_size();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, width, height);
     // glDisable(GL_CULL_FACE);
     // glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    const auto& program = vct::ShaderProgramManager::get(vct::PROGRAM_DEBUG_VOXEL);
+    const auto& program = my::ShaderProgramManager::get(my::PROGRAM_DEBUG_VOXEL);
     program.bind();
 
     glBindVertexArray(g_box.vao);
@@ -390,4 +385,4 @@ void create_render_graph_vxgi_debug(RenderGraph& graph) {
     graph.compile();
 }
 
-}  // namespace vct
+}  // namespace my

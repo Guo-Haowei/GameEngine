@@ -2,7 +2,7 @@
 #include "box.h"
 #include "intersection.h"
 
-namespace vct {
+namespace my {
 
 class AABB : public Box3 {
 public:
@@ -19,4 +19,4 @@ public:
     friend class TestIntersection;
 };
 
-}  // namespace vct
+}  // namespace my

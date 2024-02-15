@@ -1,7 +1,7 @@
 #pragma once
 #include "geomath.h"
 
-namespace vct {
+namespace my {
 
 struct Plane {
     vec3 m_normal;
@@ -13,4 +13,4 @@ struct Plane {
     float distance(const vec3& p) const { return glm::dot(p, m_normal) + m_dist; }
 };
 
-}  // namespace vct
+}  // namespace my

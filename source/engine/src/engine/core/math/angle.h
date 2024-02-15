@@ -1,7 +1,7 @@
 #pragma once
 #include "geomath.h"
 
-namespace vct {
+namespace my {
 
 class Radians;
 class Degree;
@@ -97,4 +97,4 @@ private:
     float m_value;
 };
 
-}  // namespace vct
+}  // namespace my

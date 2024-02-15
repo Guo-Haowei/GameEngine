@@ -1,7 +1,7 @@
 #pragma once
 #include "panel.h"
 
-namespace vct {
+namespace my {
 
 class HierarchyPanel : public Panel {
 public:
@@ -9,6 +9,9 @@ public:
 
 protected:
     void update_internal(Scene& scene) override;
+
+private:
+    void draw_popup(Scene& scene);
 };
 
-}  // namespace vct
+}  // namespace my

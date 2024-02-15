@@ -1,7 +1,7 @@
 #pragma once
 #include "core/math/box.h"
 
-namespace vct::math {
+namespace my::math {
 
 TEST(Box, constructor) {
     Box3 box{ vec3(1), vec3(10) };
@@ -50,4 +50,4 @@ TEST(Box, center_and_size) {
     EXPECT_EQ(box.size(), vec3(15));
 }
 
-}  // namespace vct::math
+}  // namespace my::math

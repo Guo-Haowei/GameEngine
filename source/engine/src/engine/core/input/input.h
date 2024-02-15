@@ -2,7 +2,7 @@
 #include "core/math/geomath.h"
 #include "input_code.h"
 
-namespace vct::input {
+namespace my::input {
 
 void begin_frame();
 void end_frame();
@@ -25,4 +25,4 @@ void set_key(int key, bool pressed);
 void set_cursor(float x, float y);
 void set_wheel(float x, float y);
 
-};  // namespace vct::input
+};  // namespace my::input
