@@ -15,6 +15,14 @@
 
 namespace vct {
 
+Viewer::Viewer(EditorLayer& editor, const Scene& scene) : Panel("Viewer", editor) {
+    auto camera_id = scene.get_main_camera();
+    const TransformComponent& transform = *scene.get_component<TransformComponent>(camera_id);
+
+    // @TODO: fix camera snap bug
+    m_camera_controller.setup(transform);
+}
+
 void Viewer::update_data() {
     auto [frame_width, frame_height] = DisplayServer::singleton().get_frame_size();
     const float ratio = (float)frame_width / frame_height;

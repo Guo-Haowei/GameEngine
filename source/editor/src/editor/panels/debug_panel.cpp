@@ -37,9 +37,6 @@ void DebugPanel::update_internal(Scene&) {
     DVAR_SET_INT(r_debug_texture, debug_texture);
     ImGui::Separator();
 
-    ImGui::DragFloat("World size", (float*)DVAR_GET_POINTER(r_world_size), 1.0f, 1.0f, 100.0f);
-    ImGui::Separator();
-
     ImGui::Text("SSAO");
     ImGui::Checkbox("Enable SSAO", (bool*)(DVAR_GET_POINTER(r_enableSsao)));
     ImGui::Text("SSAO Kernal Radius");

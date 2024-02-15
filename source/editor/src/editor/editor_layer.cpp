@@ -24,7 +24,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<DebugPanel>(*this));
     add_panel(std::make_shared<HierarchyPanel>(*this));
     add_panel(std::make_shared<PropertyPanel>(*this));
-    add_panel(std::make_shared<Viewer>(*this));
+    add_panel(std::make_shared<Viewer>(*this, SceneManager::get_scene()));
 }
 
 void EditorLayer::add_panel(std::shared_ptr<Panel> panel) {

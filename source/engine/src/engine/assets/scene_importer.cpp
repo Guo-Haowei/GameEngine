@@ -34,6 +34,7 @@ auto SceneImporter::import() -> std::expected<void, std::string> {
         mesh.create_render_data();
     }
 
+    // @TODO: move things here
     // update bounding box
     m_scene.update(0.0f);
     m_scene.m_bound.make_invalid();

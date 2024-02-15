@@ -114,6 +114,9 @@ bool SceneManager::initialize() {
         }
     }
     m_loading_scene.store(scene);
+    if (try_swap_scene()) {
+        m_scene->update(0.0f);
+    }
 
     return true;
 }
@@ -131,7 +134,7 @@ static mat4 R_HackLightSpaceMatrix(const vec3& lightDir) {
     return P * V;
 }
 
-void SceneManager::update(float dt) {
+bool SceneManager::try_swap_scene() {
     Scene* new_scene = m_loading_scene.load();
     if (new_scene) {
         if (m_scene) {
@@ -142,7 +145,13 @@ void SceneManager::update(float dt) {
         }
         m_loading_scene.store(nullptr);
         ++m_revision;
+        return true;
     }
+    return false;
+}
+
+void SceneManager::update(float dt) {
+    try_swap_scene();
 
     if (m_last_revision < m_revision) {
         // @TODO: profiler
@@ -211,8 +220,16 @@ void SceneManager::update(float dt) {
     DEV_ASSERT(math::is_power_of_two(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    vec3 world_center = camera->get_position();
-    const float world_size = DVAR_GET_FLOAT(r_world_size);
+    vec3 world_center = scene.m_bound.center();
+    vec3 aabb_size = scene.m_bound.size();
+    float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
+
+    const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
+    if (world_size > max_world_size) {
+        world_center = camera->get_position();
+        world_size = max_world_size;
+    }
+
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = world_size * texel_size;
 

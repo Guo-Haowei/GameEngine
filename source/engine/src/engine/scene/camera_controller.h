@@ -8,6 +8,8 @@ class CameraController {
 public:
     void move(float dt, CameraComponent& camera, TransformComponent& transform);
 
+    void setup(const TransformComponent& transform);
+
 private:
     Radians m_pitch;
     Radians m_roll;

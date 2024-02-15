@@ -29,6 +29,8 @@ public:
     static Scene& get_scene();
 
 private:
+    bool try_swap_scene();
+
     Scene* m_scene = nullptr;
     std::atomic<Scene*> m_loading_scene = nullptr;
 

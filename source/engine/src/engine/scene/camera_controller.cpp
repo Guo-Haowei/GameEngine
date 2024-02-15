@@ -4,15 +4,17 @@
 
 namespace vct {
 
-void CameraController::move(float dt, CameraComponent& camera, TransformComponent& transform) {
-    // @TODO: smooth movement
+void CameraController::setup(const TransformComponent& transform) {
     const mat4& local_matrix = transform.get_local_matrix();
     if (!m_initialized) {
         m_pitch = Radians{ std::asin(-local_matrix[1][0]) };                     // y-axis
         m_roll = Radians{ std::atan2(local_matrix[1][2], local_matrix[2][2]) };  // x-axis
         m_initialized = true;
     }
+}
 
+void CameraController::move(float dt, CameraComponent& camera, TransformComponent& transform) {
+    // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
     auto translate_camera = [&]() {
         float move_speed = 10 * dt;
@@ -79,10 +81,7 @@ void CameraController::move(float dt, CameraComponent& camera, TransformComponen
         return false;
     };
 
-    bool dirty = false;
-    dirty = dirty || translate_camera();
-    dirty = dirty || rotate_camera();
-
+    bool dirty = translate_camera() | rotate_camera();
     if (dirty) {
         camera.set_dirty();
     }
