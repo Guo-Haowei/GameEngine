@@ -1,7 +1,7 @@
 #pragma once
 #include "core/base/rid.h"
 #include "core/math/aabb.h"
-#include "core/math/degree.h"
+#include "core/math/angle.h"
 #include "core/systems/entity.h"
 
 namespace vct {

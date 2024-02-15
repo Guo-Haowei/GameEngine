@@ -11,8 +11,8 @@ protected:
     void update_internal(Scene& scene) override;
 
 private:
-    bool mAutoScroll = true;
-    bool mScrollToBottom = false;
+    bool m_auto_scroll = true;
+    bool m_scroll_to_bottom = false;
 };
 
 }  // namespace vct

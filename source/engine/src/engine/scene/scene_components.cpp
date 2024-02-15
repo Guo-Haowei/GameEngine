@@ -73,6 +73,7 @@ void CameraComponent::update(const mat4& world_matrix) {
         m_right = glm::normalize(vec3(world_matrix * vec4(1, 0, 0, 0)));
 
         m_position = world_matrix * vec4(0, 0, 0, 1);
+        // @TODO: use transform matrix instead
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, up);
         m_projection_matrix = glm::perspective(m_fovy.to_rad(), aspect, m_near, m_far);
         m_projection_view_matrix = m_projection_matrix * m_view_matrix;

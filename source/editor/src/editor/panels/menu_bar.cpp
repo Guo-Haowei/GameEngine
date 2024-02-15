@@ -26,7 +26,7 @@ static std::vector<std::string> quick_dirty_split(std::string str, std::string t
 }
 
 static void import_scene(ImporterName importer) {
-    std::vector<const char*> filters = { ".gltf" };
+    std::vector<const char*> filters = { ".gltf", ".obj" };
     auto path = open_file_dialog(filters);
 
     if (path.empty()) {
@@ -75,9 +75,9 @@ static void save_project(bool open_dialog) {
         return;
     }
 
-    scene.serialize(archive);
-
-    LOG("scene saved to '{}'", path.string());
+    if (scene.serialize(archive)) {
+        LOG_OK("scene saved to '{}'", path.string());
+    }
 }
 
 void menu_bar() {

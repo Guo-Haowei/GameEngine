@@ -1,17 +1,17 @@
 #pragma once
-#include "core/math/degree.h"
+#include "core/math/angle.h"
 #include "scene/scene_components.h"
 
 namespace vct {
 
 class CameraController {
 public:
-    static constexpr float MAX_SCROLL_SPEED = 100.0f;
-
     void move(float dt, CameraComponent& camera, TransformComponent& transform);
 
 private:
-    float m_scroll_speed = 0.0f;
+    Radians m_pitch;
+    Radians m_roll;
+    bool m_initialized = false;
 };
 
 }  // namespace vct
