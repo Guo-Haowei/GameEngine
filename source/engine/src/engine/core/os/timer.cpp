@@ -1,6 +1,6 @@
 #include "timer.h"
 
-namespace vct {
+namespace my {
 
 void Timer::start() { m_start_point = Clock::now(); }
 
@@ -19,4 +19,4 @@ std::string Timer::get_duration_string() const {
     return std::format("{:.2f} seconds", duration.to_second());
 }
 
-}  // namespace vct
+}  // namespace my

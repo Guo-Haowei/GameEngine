@@ -4,22 +4,22 @@
 #include "core/math/color.h"
 #include "imgui/imgui.h"
 
-namespace vct {
+namespace my {
 
 static ImVec4 log_level_to_color(LogLevel level) {
     Color color = Color::hex(ColorCode::COLOR_WHITE);
     switch (level) {
-        case vct::LOG_LEVEL_VERBOSE:
+        case my::LOG_LEVEL_VERBOSE:
             color = Color::hex(ColorCode::COLOR_SILVER);
             break;
-        case vct::LOG_LEVEL_OK:
+        case my::LOG_LEVEL_OK:
             color = Color::hex(ColorCode::COLOR_GREEN);
             break;
-        case vct::LOG_LEVEL_WARN:
+        case my::LOG_LEVEL_WARN:
             color = Color::hex(ColorCode::COLOR_YELLOW);
             break;
-        case vct::LOG_LEVEL_ERROR:
-        case vct::LOG_LEVEL_FATAL:
+        case my::LOG_LEVEL_ERROR:
+        case my::LOG_LEVEL_FATAL:
             color = Color::hex(ColorCode::COLOR_RED);
             break;
         default:
@@ -39,8 +39,8 @@ void ConsolePanel::update_internal(Scene&) {
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));  // Tighten spacing
 
-    std::vector<vct::CompositeLogger::Log> logs;
-    vct::CompositeLogger::singleton().retrieve_log(logs);
+    std::vector<my::CompositeLogger::Log> logs;
+    my::CompositeLogger::singleton().retrieve_log(logs);
     for (const auto& log : logs) {
         ImGui::PushStyleColor(ImGuiCol_Text, log_level_to_color(log.level));
         ImGui::TextUnformatted(log.buffer);
@@ -64,4 +64,4 @@ void ConsolePanel::update_internal(Scene&) {
     ImGui::SetItemDefaultFocus();
 }
 
-}  // namespace vct
+}  // namespace my

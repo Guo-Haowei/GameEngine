@@ -1,7 +1,7 @@
 #pragma once
 #include "scene_components.h"
 
-namespace vct {
+namespace my {
 
 //--------------------------------------------------------------------------------------------------
 // Transform Component
@@ -174,4 +174,4 @@ std::vector<char> MeshComponent::generate_combined_buffer() const {
     return result;
 }
 
-}  // namespace vct
+}  // namespace my

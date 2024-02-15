@@ -2,7 +2,7 @@
 
 #include "core/os/os.h"
 
-namespace vct {
+namespace my {
 
 #include "test_dvars.h"
 
@@ -176,4 +176,4 @@ TEST(DynamicVariableParser, multiple_set_fail) {
     EXPECT_EQ(parser.get_error(), "invalid arguments: +set test_vec4 1");
 }
 
-}  // namespace vct
+}  // namespace my

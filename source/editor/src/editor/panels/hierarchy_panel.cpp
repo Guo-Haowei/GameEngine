@@ -3,7 +3,7 @@
 #include "../editor_layer.h"
 #include "imgui/imgui_internal.h"
 
-namespace vct {
+namespace my {
 
 class HierarchyCreator {
 public:
@@ -115,4 +115,4 @@ void HierarchyPanel::update_internal(Scene& scene) {
     creator.Draw(scene);
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 class SpinLock {
 public:
@@ -31,4 +31,4 @@ protected:
     T& m_lock;
 };
 
-}  // namespace vct
+}  // namespace my

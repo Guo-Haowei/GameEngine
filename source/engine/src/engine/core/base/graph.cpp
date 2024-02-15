@@ -1,7 +1,7 @@
 #pragma once
 #include "graph.h"
 
-namespace vct {
+namespace my {
 
 bool Graph::has_edge(int from, int to) const {
     return m_adj[from].find(to) != m_adj[from].end();
@@ -142,4 +142,4 @@ std::vector<std::vector<int>> Graph::build_level() const {
     return levels;
 }
 
-}  // namespace vct
+}  // namespace my

@@ -2,7 +2,7 @@
 
 #include "core/os/os.h"
 
-namespace vct {
+namespace my {
 
 static struct {
     IntrusiveList<ErrorHandlerListNode> error_handlers;
@@ -60,4 +60,4 @@ void report_error_index_impl(std::string_view function, std::string_view file, i
     report_error_impl(function, file, line, error2, detail);
 }
 
-}  // namespace vct
+}  // namespace my

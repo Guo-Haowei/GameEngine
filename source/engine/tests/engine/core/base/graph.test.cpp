@@ -1,6 +1,6 @@
 #include "core/base/graph.h"
 
-namespace vct {
+namespace my {
 
 TEST(Graph, has_cycle) {
     Graph graph(5);
@@ -105,4 +105,4 @@ TEST(Graph, sort_level) {
     return;
 }
 
-}  // namespace vct
+}  // namespace my

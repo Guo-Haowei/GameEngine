@@ -6,7 +6,7 @@
 #include "core/io/archive.h"
 #include "core/systems/job_system.h"
 
-namespace vct {
+namespace my {
 
 using ecs::Entity;
 using jobsystem::Context;
@@ -606,4 +606,4 @@ Entity Scene::get_main_camera() const {
     return get_entity<CameraComponent>(0);
 }
 
-}  // namespace vct
+}  // namespace my

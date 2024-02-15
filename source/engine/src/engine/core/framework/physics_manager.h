@@ -10,7 +10,7 @@ class btSequentialImpulseConstraintSolver;
 class btDiscreteDynamicsWorld;
 class btCollisionShape;
 
-namespace vct {
+namespace my {
 
 class Scene;
 
@@ -38,4 +38,4 @@ protected:
     std::vector<btCollisionShape*> m_collision_shapes;
 };
 
-}  // namespace vct
+}  // namespace my

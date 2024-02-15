@@ -3,7 +3,7 @@
 #include "core/input/input.h"
 #include "imgui/imgui_internal.h"
 
-namespace vct {
+namespace my {
 
 void Panel::update(Scene& scene) {
     if (ImGui::Begin(m_name.c_str())) {
@@ -12,4 +12,4 @@ void Panel::update(Scene& scene) {
     ImGui::End();
 }
 
-}  // namespace vct
+}  // namespace my

@@ -2,7 +2,7 @@
 
 #include "asset_loader.h"
 
-namespace vct {
+namespace my {
 
 SceneImporter::SceneImporter(Scene& scene, const std::string& file_path, const char* loader_name)
     : m_scene(scene), m_file_path(file_path), m_loader_name(loader_name) {
@@ -57,4 +57,4 @@ auto SceneImporter::import() -> std::expected<void, std::string> {
     return std::expected<void, std::string>();
 }
 
-}  // namespace vct
+}  // namespace my

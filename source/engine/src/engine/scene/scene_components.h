@@ -4,7 +4,7 @@
 #include "core/math/angle.h"
 #include "core/systems/entity.h"
 
-namespace vct {
+namespace my {
 
 class Archive;
 class Scene;
@@ -371,4 +371,4 @@ struct RigidBodyComponent {
     void serialize(Archive& archive, uint32_t version);
 };
 
-}  // namespace vct
+}  // namespace my

@@ -2,7 +2,7 @@
 
 #include "core/input/input.h"
 
-namespace vct {
+namespace my {
 
 void CameraController::setup(const TransformComponent& transform) {
     const mat4& local_matrix = transform.get_local_matrix();
@@ -87,4 +87,4 @@ void CameraController::move(float dt, CameraComponent& camera, TransformComponen
     }
 }
 
-}  // namespace vct
+}  // namespace my

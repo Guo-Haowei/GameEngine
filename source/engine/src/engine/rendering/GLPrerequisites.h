@@ -9,7 +9,7 @@
 
 #include "assets/image.h"
 
-namespace vct {
+namespace my {
 
 inline GLuint format_to_gl_format(PixelFormat format) {
     switch (format) {
@@ -94,4 +94,4 @@ inline GLuint format_to_gl_data_type(PixelFormat format) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,8 +1,8 @@
 #pragma once
 #include "core/math/frustum.h"
 
-namespace vct::math {
+namespace my::math {
 
 // @TODO:
 
-}  // namespace vct::math
+}  // namespace my::math

@@ -1,7 +1,7 @@
 #pragma once
 #include "file_access_unix.h"
 
-namespace vct {
+namespace my {
 
 FileAccessUnix::~FileAccessUnix() { close(); }
 
@@ -71,4 +71,4 @@ bool FileAccessUnix::write_buffer(const void* data, size_t size) {
     return true;
 }
 
-}  // namespace vct
+}  // namespace my

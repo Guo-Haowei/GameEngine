@@ -2,7 +2,7 @@
 #include "core/base/graph.h"
 #include "render_pass.h"
 
-namespace vct {
+namespace my {
 
 class RenderGraph {
 public:
@@ -25,4 +25,4 @@ private:
     friend struct RenderGraphEditorDelegate;
 };
 
-}  // namespace vct
+}  // namespace my

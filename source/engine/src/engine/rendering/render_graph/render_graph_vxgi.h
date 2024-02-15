@@ -22,9 +22,9 @@
 #define DEBUG_VXGI_OUTPUT_DEPTH      "debug_vxgi_output_depth"
 
 // @TODO: refactor
-extern vct::RenderGraph g_render_graph;
+extern my::RenderGraph g_render_graph;
 
-namespace vct {
+namespace my {
 
 void shadow_pass_func();
 void gbuffer_pass_func();
@@ -38,4 +38,4 @@ void final_pass_func();
 void create_render_graph_vxgi(RenderGraph& graph);
 void create_render_graph_vxgi_debug(RenderGraph& graph);
 
-}  // namespace vct
+}  // namespace my

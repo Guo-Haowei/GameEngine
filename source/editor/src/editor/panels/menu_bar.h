@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 void menu_bar();
 

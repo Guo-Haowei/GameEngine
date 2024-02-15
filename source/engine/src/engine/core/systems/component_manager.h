@@ -2,11 +2,11 @@
 #include "core/io/archive.h"
 #include "entity.h"
 
-namespace vct {
+namespace my {
 class Scene;
 }
 
-namespace vct::ecs {
+namespace my::ecs {
 
 class IComponentManager {
     IComponentManager(const IComponentManager&) = delete;
@@ -79,7 +79,7 @@ public:
     // virtual void serialize(wi::Archive& archive, EntitySerializer& seri) = 0;
     // virtual void Component_Serialize(Entity entity, wi::Archive& archive, EntitySerializer& seri) = 0;
     void remove(const Entity& entity) override {
-        vct::unused(entity);
+        my::unused(entity);
         DEV_ASSERT(0);
     }
 
@@ -207,4 +207,4 @@ private:
     friend class Scene;
 };
 
-}  // namespace vct::ecs
+}  // namespace my::ecs

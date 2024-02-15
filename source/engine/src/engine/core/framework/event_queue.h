@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 class EventListener;
 class Scene;
@@ -81,4 +81,4 @@ private:
     std::vector<EventListener*> m_listeners;
 };
 
-}  // namespace vct
+}  // namespace my

@@ -1,9 +1,9 @@
 #include "editor_layer.h"
 
-class Editor : public vct::Application {
+class Editor : public my::Application {
 public:
     void init_layers() override {
-        add_layer(std::make_shared<vct::EditorLayer>());
+        add_layer(std::make_shared<my::EditorLayer>());
     }
 };
 

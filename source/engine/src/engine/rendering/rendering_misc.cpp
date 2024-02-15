@@ -3,11 +3,11 @@
 #define DEFINE_DVAR
 #include "rendering_dvars.h"
 
-namespace vct {
+namespace my {
 
 void register_rendering_dvars() {
 #define REGISTER_DVAR
 #include "rendering_dvars.h"
 }
 
-}  // namespace vct
+}  // namespace my

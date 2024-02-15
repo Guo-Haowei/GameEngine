@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 enum MouseButton : uint8_t {
     MOUSE_BUTTON_LEFT = 0,
@@ -133,4 +133,4 @@ enum KeyCode : uint16_t {
     KEY_MAX,
 };
 
-}  // namespace vct
+}  // namespace my

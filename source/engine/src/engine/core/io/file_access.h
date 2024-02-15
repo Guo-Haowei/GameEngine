@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 class FileAccess {
 public:
@@ -59,4 +59,4 @@ private:
     }
 };
 
-}  // namespace vct
+}  // namespace my

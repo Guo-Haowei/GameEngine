@@ -1,6 +1,6 @@
 #include "core/io/file_access_unix.h"
 
-namespace vct {
+namespace my {
 
 static std::string s_buffer;
 class FileAccessFoo : public FileAccessUnix {
@@ -31,4 +31,4 @@ TEST(file_access, make_default) {
     s_buffer.clear();
 }
 
-}  // namespace vct
+}  // namespace my

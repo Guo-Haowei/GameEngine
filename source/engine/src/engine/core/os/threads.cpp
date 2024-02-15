@@ -10,7 +10,7 @@
 #include "core/io/print.h"
 #include "core/systems/job_system.h"
 
-namespace vct::thread {
+namespace my::thread {
 
 struct ThreadObject {
     const char* name;
@@ -97,4 +97,4 @@ uint32_t get_thread_id() {
     return g_thread_id;
 }
 
-}  // namespace vct::thread
+}  // namespace my::thread

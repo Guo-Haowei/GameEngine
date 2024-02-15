@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct::jobsystem {
+namespace my::jobsystem {
 
 struct JobArgs {
     uint32_t job_index;
@@ -36,4 +36,4 @@ void finalize();
 
 void worker_main();
 
-}  // namespace vct::jobsystem
+}  // namespace my::jobsystem

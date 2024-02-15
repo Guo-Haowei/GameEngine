@@ -2,7 +2,7 @@
 
 #include "core/os/os.h"
 
-namespace vct {
+namespace my {
 
 class TestLogger : public ILogger {
 public:
@@ -23,4 +23,4 @@ TEST(print, print_impl) {
     EXPECT_EQ(logger->get_buffer(), "1, c, 200");
 }
 
-}  // namespace vct
+}  // namespace my

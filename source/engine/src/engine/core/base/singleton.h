@@ -1,7 +1,7 @@
 #pragma once
 #include "noncopyable.h"
 
-namespace vct {
+namespace my {
 
 template<typename T>
 class Singleton : public NonCopyable {
@@ -30,4 +30,4 @@ protected:
     inline static T* s_singleton;
 };
 
-}  // namespace vct
+}  // namespace my

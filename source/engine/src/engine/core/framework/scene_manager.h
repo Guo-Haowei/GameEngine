@@ -4,7 +4,7 @@
 #include "core/framework/module.h"
 #include "scene/scene.h"
 
-namespace vct {
+namespace my {
 
 class Application;
 
@@ -38,4 +38,4 @@ private:
     uint32_t m_last_revision = 0;
 };
 
-}  // namespace vct
+}  // namespace my

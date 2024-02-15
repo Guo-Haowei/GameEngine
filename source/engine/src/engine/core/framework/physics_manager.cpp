@@ -8,7 +8,7 @@
 #include "bullet3/btBulletDynamicsCommon.h"
 #pragma warning(pop)
 
-namespace vct {
+namespace my {
 
 bool PhysicsManager::initialize() {
     return true;
@@ -157,4 +157,4 @@ void PhysicsManager::clean_world() {
         m_collision_shapes.clear();
     }
 }
-}  // namespace vct
+}  // namespace my

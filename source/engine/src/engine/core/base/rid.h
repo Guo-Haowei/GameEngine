@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 // Resource's unique identifier
 class RID {
@@ -25,4 +25,4 @@ private:
     friend class RIDAllocatorBase;
 };
 
-}  // namespace vct
+}  // namespace my

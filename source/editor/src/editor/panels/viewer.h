@@ -2,7 +2,7 @@
 #include "panel.h"
 #include "scene/camera_controller.h"
 
-namespace vct {
+namespace my {
 
 class Viewer : public Panel {
 public:
@@ -24,4 +24,4 @@ private:
     CameraController m_camera_controller;
 };
 
-}  // namespace vct
+}  // namespace my

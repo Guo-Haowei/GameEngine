@@ -6,7 +6,7 @@
 #include "assets/asset_loader.h"
 #include "rendering/GLPrerequisites.h"
 
-namespace vct {
+namespace my {
 
 static ShaderProgramManager *g_shader_program_manager = new ShaderProgramManager();
 static std::vector<ShaderProgram> s_shader_cache;
@@ -62,7 +62,7 @@ static GLuint create_shader(std::string_view file, GLenum type) {
     const char *sources[] = { extras, fullsource.c_str() };
 
     GLuint shader = glCreateShader(type);
-    glShaderSource(shader, vct::array_length(sources), sources, nullptr);
+    glShaderSource(shader, my::array_length(sources), sources, nullptr);
     glCompileShader(shader);
 
     GLint status = GL_FALSE, length = 0;
@@ -216,4 +216,4 @@ const ShaderProgram &ShaderProgramManager::get(ProgramType type) {
     return s_shader_cache[std::to_underlying(type)];
 }
 
-}  // namespace vct
+}  // namespace my

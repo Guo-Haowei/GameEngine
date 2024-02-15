@@ -1,7 +1,7 @@
 #pragma once
 #include "panel.h"
 
-namespace vct {
+namespace my {
 
 class RenderGraphEditor : public Panel {
 public:
@@ -11,4 +11,4 @@ protected:
     void update_internal(Scene& scene) override;
 };
 
-}  // namespace vct
+}  // namespace my

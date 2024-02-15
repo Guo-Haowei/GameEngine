@@ -1,8 +1,8 @@
 #pragma once
 #include "core/math/aabb.h"
 
-namespace vct::math {
+namespace my::math {
 
 // @TODO:
 
-}  // namespace vct::math
+}  // namespace my::math

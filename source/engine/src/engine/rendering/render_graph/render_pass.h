@@ -2,7 +2,7 @@
 #include "assets/image.h"
 #include "core/base/fixed_stack.h"
 
-namespace vct {
+namespace my {
 
 struct RenderTargetDesc {
     std::string name;
@@ -70,4 +70,4 @@ protected:
     uint32_t m_fbo_handle = 0;
 };
 
-}  // namespace vct
+}  // namespace my

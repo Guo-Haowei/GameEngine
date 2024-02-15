@@ -5,9 +5,9 @@
 #endif  // !_STR
 #define _STR(x) #x
 
-#define ON_SCOPE_EXIT(FUNC) auto __on_scope_exit_call = ::vct::MakeScopeDrop(FUNC)
+#define ON_SCOPE_EXIT(FUNC) auto __on_scope_exit_call = ::my::MakeScopeDrop(FUNC)
 
-namespace vct {
+namespace my {
 
 inline constexpr size_t KB = 1024;
 inline constexpr size_t MB = 1024 * KB;
@@ -36,4 +36,4 @@ ScopeDrop<FUNC> MakeScopeDrop(FUNC func) {
     return ScopeDrop<FUNC>(func);
 }
 
-}  // namespace vct
+}  // namespace my

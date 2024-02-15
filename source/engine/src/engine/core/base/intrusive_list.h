@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 template<typename T>
 struct IntrusiveListNode {
@@ -158,4 +158,4 @@ protected:
     size_t m_size;
 };
 
-}  // namespace vct
+}  // namespace my

@@ -4,7 +4,7 @@
 #include "core/systems/component_manager.h"
 #include "scene_components.h"
 
-namespace vct {
+namespace my {
 
 class Scene : public NonCopyable {
 public:
@@ -197,4 +197,4 @@ private:
     void update_armature(uint32_t index);
 };
 
-}  // namespace vct
+}  // namespace my

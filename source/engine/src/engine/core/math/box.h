@@ -1,7 +1,7 @@
 #pragma once
 #include "core/math/geomath.h"
 
-namespace vct {
+namespace my {
 
 template<size_t N>
 class Box {
@@ -66,4 +66,4 @@ protected:
 using Box2 = Box<2>;
 using Box3 = Box<3>;
 
-}  // namespace vct
+}  // namespace my

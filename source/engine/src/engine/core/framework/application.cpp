@@ -23,7 +23,7 @@
 #define DEFINE_DVAR
 #include "core/framework/common_dvars.h"
 
-namespace vct {
+namespace my {
 
 static void register_common_dvars() {
 #define REGISTER_DVAR
@@ -181,4 +181,4 @@ int Application::run(int argc, const char** argv) {
     return 0;
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #include "engine/core/base/intrusive_list.h"
 
-namespace vct {
+namespace my {
 
 class MyList : public IntrusiveList<int> {
 public:
@@ -179,4 +179,4 @@ TEST(intrusive_list, iterator) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

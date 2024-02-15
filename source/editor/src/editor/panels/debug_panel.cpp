@@ -5,7 +5,7 @@
 #include "rendering/rendering_dvars.h"
 #include "scene/scene.h"
 
-namespace vct {
+namespace my {
 
 void DebugPanel::update_internal(Scene&) {
     ImGui::Text("Voxel GI");
@@ -50,4 +50,4 @@ void DebugPanel::update_internal(Scene&) {
     ImGui::Checkbox("toggle grid visibility", (bool*)(DVAR_GET_POINTER(grid_visibility)));
 }
 
-}  // namespace vct
+}  // namespace my

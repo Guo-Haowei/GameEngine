@@ -7,7 +7,7 @@
 // #include "core/math/math.h"
 #include "core/os/spin_lock.h"
 
-namespace vct {
+namespace my {
 
 template<bool TREAD_SAFE>
 class RIDAllocatorLock {
@@ -271,4 +271,4 @@ protected:
 //    }
 //}
 
-}  // namespace vct
+}  // namespace my

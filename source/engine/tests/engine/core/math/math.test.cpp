@@ -1,6 +1,6 @@
 #include "core/math/math.h"
 
-namespace vct::math {
+namespace my::math {
 
 TEST(align, roundup) {
     EXPECT_EQ(align(1, 4), 4);
@@ -81,4 +81,4 @@ TEST(next_power_of_two, compile_time) {
     static_assert(next_power_of_two(17) == 32);
 }
 
-}  // namespace vct::math
+}  // namespace my::math

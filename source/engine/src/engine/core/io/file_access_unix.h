@@ -1,7 +1,7 @@
 #pragma once
 #include "file_access.h"
 
-namespace vct {
+namespace my {
 
 class FileAccessUnix : public FileAccess {
 public:
@@ -19,4 +19,4 @@ protected:
     FILE* m_file_handle{ nullptr };
 };
 
-}  // namespace vct
+}  // namespace my

@@ -6,10 +6,10 @@
 #include "r_cbuffers.h"
 #include "scene/scene.h"
 
-extern vct::RIDAllocator<MeshData> g_meshes;
-extern vct::RIDAllocator<MaterialData> g_materials;
+extern my::RIDAllocator<MeshData> g_meshes;
+extern my::RIDAllocator<MaterialData> g_materials;
 
-namespace vct {
+namespace my {
 
 void RenderData::clear() {
     scene = nullptr;
@@ -90,4 +90,4 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
     }
 }
 
-}  // namespace vct
+}  // namespace my

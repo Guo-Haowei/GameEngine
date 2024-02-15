@@ -2,7 +2,7 @@
 #include "gl_utils.h"
 #include "scene/scene.h"
 
-namespace vct {
+namespace my {
 
 struct RenderData {
     using FilterObjectFunc = bool (*)(const ObjectComponent& object);
@@ -40,4 +40,4 @@ private:
     void fill(const Scene* p_scene, const mat4& projection_view_matrix, FilterObjectFunc filter, Pass& pass);
 };
 
-}  // namespace vct
+}  // namespace my

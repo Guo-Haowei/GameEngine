@@ -2,7 +2,7 @@
 
 #include "core/os/os.h"
 
-namespace vct {
+namespace my {
 
 class TestOS : public OS {
 public:
@@ -318,4 +318,4 @@ TEST(error_macros, DEV_ASSERT_INDEX) {
     remove_error_handler(&handler);
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #include "render_graph.h"
 
-namespace vct {
+namespace my {
 
 void RenderGraph::add_pass(RenderPassDesc& desc) {
     std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPassGL>();
@@ -72,4 +72,4 @@ void RenderGraph::execute() {
     }
 }
 
-}  // namespace vct
+}  // namespace my

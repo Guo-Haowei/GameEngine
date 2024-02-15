@@ -6,7 +6,7 @@
 #include "core/framework/scene_manager.h"
 #include "platform/windows/dialog.h"
 
-namespace vct {
+namespace my {
 
 // @TODO: fix this
 static std::vector<std::string> quick_dirty_split(std::string str, std::string token) {
@@ -126,4 +126,4 @@ void menu_bar() {
     }
 }
 
-}  // namespace vct
+}  // namespace my

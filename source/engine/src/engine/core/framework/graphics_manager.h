@@ -6,7 +6,7 @@
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
 
-namespace vct {
+namespace my {
 
 struct RenderData;
 
@@ -40,4 +40,4 @@ private:
     std::shared_ptr<RenderData> m_render_data;
 };
 
-}  // namespace vct
+}  // namespace my

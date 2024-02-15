@@ -4,7 +4,7 @@
 
 #include "core/io/archive.h"
 
-namespace vct {
+namespace my {
 
 static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
 
@@ -250,4 +250,4 @@ bool DynamicVariableManager::parse(const std::vector<std::string>& commands) {
     return ok;
 }
 
-}  // namespace vct
+}  // namespace my

@@ -25,8 +25,8 @@ GpuTexture g_normalVoxel;
 MeshData g_box;
 
 // @TODO: fix this
-vct::RIDAllocator<MeshData> g_meshes;
-vct::RIDAllocator<MaterialData> g_materials;
+my::RIDAllocator<MeshData> g_meshes;
+my::RIDAllocator<MaterialData> g_materials;
 
 static GLuint g_noiseTexture;
 
@@ -43,7 +43,7 @@ static inline void bind_to_slot(GLuint buffer, int slot, int size) {
     glEnableVertexAttribArray(slot);
 }
 
-namespace vct {
+namespace my {
 
 static void APIENTRY gl_debug_callback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
@@ -266,7 +266,7 @@ void GraphicsManager::createGpuResources() {
     R_CreateEditorResource();
 
     // create a dummy box data
-    create_mesh_data(vct::make_box_mesh(), g_box);
+    create_mesh_data(my::make_box_mesh(), g_box);
 
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
@@ -276,10 +276,10 @@ void GraphicsManager::createGpuResources() {
     }
 
     switch (m_method) {
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI:
+        case my::GraphicsManager::RENDER_GRAPH_VXGI:
             create_render_graph_vxgi(g_render_graph);
             break;
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
+        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
             create_render_graph_vxgi_debug(g_render_graph);
             break;
         default:
@@ -322,10 +322,10 @@ void GraphicsManager::createGpuResources() {
     }
 
     switch (m_method) {
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI:
+        case my::GraphicsManager::RENDER_GRAPH_VXGI:
             pass = g_render_graph.find_pass(LIGHTING_PASS);
             break;
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
+        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
             pass = g_render_graph.find_pass(VXGI_DEBUG_PASS);
             break;
         default:
@@ -373,9 +373,9 @@ struct MaterialCache {
 
 uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI:
+        case my::GraphicsManager::RENDER_GRAPH_VXGI:
             return g_render_graph.find_pass(FINAL_PASS)->get_color_attachment(0);
-        case vct::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
+        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
             return g_render_graph.find_pass(FXAA_PASS)->get_color_attachment(0);
         default:
             CRASH_NOW();
@@ -468,7 +468,7 @@ static void APIENTRY gl_debug_callback(GLenum source, GLenum type, unsigned int 
             break;
     }
 
-    vct::log_impl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", message, id, sourceStr, typeStr));
+    my::log_impl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", message, id, sourceStr, typeStr));
 }
 
-}  // namespace vct
+}  // namespace my

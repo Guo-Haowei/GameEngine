@@ -39,7 +39,7 @@ bool dummy_write_image(const std::string*,
 
 }  // namespace tinygltf
 
-namespace vct {
+namespace my {
 
 void SceneImporterTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     if (node_index < 0 || m_entity_map.count(node_index)) {
@@ -671,4 +671,4 @@ void SceneImporterTinyGLTF::process_animation(const tinygltf::Animation& gltf_an
     }
 }
 
-}  // namespace vct
+}  // namespace my

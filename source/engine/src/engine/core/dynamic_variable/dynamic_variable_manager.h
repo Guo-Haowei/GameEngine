@@ -1,7 +1,7 @@
 #pragma once
 #include "dynamic_variable.h"
 
-namespace vct {
+namespace my {
 
 //--------------------------------------------------------------------------------------------------
 // Dynamic Varialbe Parser
@@ -48,4 +48,4 @@ public:
     static void dump_dvars();
 };
 
-}  // namespace vct
+}  // namespace my

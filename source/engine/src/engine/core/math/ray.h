@@ -1,7 +1,7 @@
 #pragma once
 #include "intersection.h"
 
-namespace vct {
+namespace my {
 
 class Ray {
 public:
@@ -25,4 +25,4 @@ private:
     friend class TestIntersection;
 };
 
-}  // namespace vct
+}  // namespace my

@@ -7,7 +7,7 @@
 #include "r_cbuffers.h"
 #include "shader_program_manager.h"
 
-using namespace vct;
+using namespace my;
 
 struct VertexPoint3D {
     vec3 position;
@@ -53,7 +53,7 @@ static inline void FillTextureIconBuffer(std::vector<TextureVertex>& iconBuffer,
     constexpr float kScale = 0.07f;
     const vec2 scale(kScale, aspect * kScale);
 
-    for (size_t idx = 0; idx < vct::array_length(indices); ++idx) {
+    for (size_t idx = 0; idx < my::array_length(indices); ++idx) {
         TextureVertex vertex = kVertices[indices[idx]];
         vertex.pos *= scale;
         vertex.pos += offset;

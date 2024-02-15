@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 class Graph {
 public:
@@ -28,4 +28,4 @@ private:
     const int m_num_vertex;
 };
 
-}  // namespace vct
+}  // namespace my

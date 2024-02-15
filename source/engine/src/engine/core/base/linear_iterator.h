@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 template<typename T>
 class LinearIterator {
@@ -41,4 +41,4 @@ private:
     T* m_ptr = nullptr;
 };
 
-}  // namespace vct
+}  // namespace my

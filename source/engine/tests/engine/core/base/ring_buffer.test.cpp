@@ -1,6 +1,6 @@
 #include "engine/core/base/ring_buffer.h"
 
-namespace vct {
+namespace my {
 
 TEST(ring_buffer, constructor) {
     RingBuffer<int, 4> rb;
@@ -204,4 +204,4 @@ TEST(ring_buffer, reverse_const_iterator) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

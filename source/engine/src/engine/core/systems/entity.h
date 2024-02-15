@@ -1,7 +1,7 @@
 #pragma once
 #include "core/io/archive.h"
 
-namespace vct::ecs {
+namespace my::ecs {
 
 class Entity {
 public:
@@ -39,25 +39,25 @@ private:
     inline static std::atomic<uint32_t> s_id = MAX_ID;
 };
 
-}  // namespace vct::ecs
+}  // namespace my::ecs
 
 namespace std {
 
 template<>
-struct hash<vct::ecs::Entity> {
-    std::size_t operator()(const vct::ecs::Entity& entity) const { return std::hash<uint32_t>{}(entity.get_id()); }
+struct hash<my::ecs::Entity> {
+    std::size_t operator()(const my::ecs::Entity& entity) const { return std::hash<uint32_t>{}(entity.get_id()); }
 };
 
 template<>
-struct less<vct::ecs::Entity> {
-    constexpr bool operator()(const vct::ecs::Entity& lhs, const vct::ecs::Entity& rhs) const {
+struct less<my::ecs::Entity> {
+    constexpr bool operator()(const my::ecs::Entity& lhs, const my::ecs::Entity& rhs) const {
         return lhs.get_id() < rhs.get_id();
     }
 };
 
 template<>
-struct equal_to<vct::ecs::Entity> {
-    constexpr bool operator()(const vct::ecs::Entity& lhs, const vct::ecs::Entity& rhs) const {
+struct equal_to<my::ecs::Entity> {
+    constexpr bool operator()(const my::ecs::Entity& lhs, const my::ecs::Entity& rhs) const {
         return lhs.get_id() == rhs.get_id();
     }
 };

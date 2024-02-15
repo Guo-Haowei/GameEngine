@@ -12,7 +12,7 @@
 
 #include "rendering/r_cbuffers.h"
 
-namespace vct {
+namespace my {
 
 using ecs::Entity;
 
@@ -272,4 +272,4 @@ Scene& SceneManager::get_scene() {
     return *singleton().m_scene;
 }
 
-}  // namespace vct
+}  // namespace my

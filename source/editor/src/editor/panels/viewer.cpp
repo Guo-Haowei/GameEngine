@@ -13,7 +13,7 @@
 #include "core/math/ray.h"
 #include "servers/display_server.h"
 
-namespace vct {
+namespace my {
 
 Viewer::Viewer(EditorLayer& editor, const Scene& scene) : Panel("Viewer", editor) {
     auto camera_id = scene.get_main_camera();
@@ -173,4 +173,4 @@ void Viewer::update_internal(Scene& scene) {
     draw_gui(scene, camera);
 }
 
-}  // namespace vct
+}  // namespace my

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace vct {
+namespace my {
 
 class NonCopyable {
 public:
@@ -12,4 +12,4 @@ protected:
     ~NonCopyable() = default;
 };
 
-}  // namespace vct
+}  // namespace my

@@ -2,7 +2,7 @@
 #include "geomath.h"
 #include "plane.h"
 
-namespace vct {
+namespace my {
 
 class AABB;
 
@@ -28,4 +28,4 @@ private:
     friend class IntersectionTest;
 };
 
-}  // namespace vct
+}  // namespace my

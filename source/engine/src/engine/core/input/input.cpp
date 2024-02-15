@@ -2,7 +2,7 @@
 
 #include <bitset>
 
-namespace vct::input {
+namespace my::input {
 
 static struct {
     std::bitset<KEY_MAX> keys;
@@ -91,4 +91,4 @@ void set_wheel(float x, float y) {
     s_glob.wheel.x = x;
     s_glob.wheel.y = y;
 }
-}  // namespace vct::input
+}  // namespace my::input

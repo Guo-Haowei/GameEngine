@@ -1,7 +1,7 @@
 #pragma once
 #include "core/framework/module.h"
 
-namespace vct {
+namespace my {
 
 class ImGuiModule : public Module {
 public:
@@ -14,4 +14,4 @@ protected:
     std::string m_ini_path;
 };
 
-}  // namespace vct
+}  // namespace my

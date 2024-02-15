@@ -6,7 +6,7 @@
 
 #include <assimp/Importer.hpp>
 
-namespace vct {
+namespace my {
 
 bool SceneImporterAssimp::import_impl() {
     Assimp::Importer importer;
@@ -163,4 +163,4 @@ ecs::Entity SceneImporterAssimp::process_node(const aiNode* node, ecs::Entity pa
     return entity;
 }
 
-}  // namespace vct
+}  // namespace my

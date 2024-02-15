@@ -2,7 +2,7 @@
 
 #include <latch>
 
-namespace vct {
+namespace my {
 
 struct Object {
     Object() {
@@ -143,4 +143,4 @@ TEST(RIDAllocator, concurrency) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

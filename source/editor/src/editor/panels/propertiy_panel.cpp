@@ -4,7 +4,7 @@
 #include "ImGuizmo/ImGuizmo.h"
 #include "imgui/imgui_internal.h"
 
-namespace vct {
+namespace my {
 
 static constexpr float DEFAULT_COLUMN_WIDTH = 100.0f;
 
@@ -204,6 +204,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         if (dirty) {
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(transformMatrix));
+            // @TODO: change position, scale and rotation instead
             transform.set_local_transform(transformMatrix);
         }
     });
@@ -273,4 +274,4 @@ void PropertyPanel::update_internal(Scene& scene) {
     });
 }
 
-}  // namespace vct
+}  // namespace my

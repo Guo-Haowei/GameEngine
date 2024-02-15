@@ -1,6 +1,6 @@
 #include "core/base/fixed_stack.h"
 
-namespace vct {
+namespace my {
 
 TEST(fixed_stack, constructor) {
     FixedStack<int, 7> stack;
@@ -140,4 +140,4 @@ TEST(fixed_stack, reverse_const_iterator) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

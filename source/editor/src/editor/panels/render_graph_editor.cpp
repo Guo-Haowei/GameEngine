@@ -4,9 +4,9 @@
 #include "rendering/render_graph/render_graph.h"
 
 // @TODO: fix
-extern vct::RenderGraph g_render_graph;
+extern my::RenderGraph g_render_graph;
 
-namespace vct {
+namespace my {
 
 struct RenderGraphEditorDelegate : public GraphEditor::Delegate {
 
@@ -15,7 +15,7 @@ struct RenderGraphEditorDelegate : public GraphEditor::Delegate {
         for (auto& level : graph.m_levels) {
             float y_offset = 0.0f;
             for (int id : level) {
-                const std::shared_ptr<vct::RenderPass>& pass = graph.m_render_passes[id];
+                const std::shared_ptr<my::RenderPass>& pass = graph.m_render_passes[id];
 
                 mNodes.push_back(
                     {
@@ -134,10 +134,10 @@ struct RenderGraphEditorDelegate : public GraphEditor::Delegate {
     std::vector<GraphEditor::Link> mLinks;
 };
 
-void RenderGraphEditor::update_internal(vct::Scene&) {
+void RenderGraphEditor::update_internal(my::Scene&) {
     // Graph Editor
     static GraphEditor::Options options;
-    static vct::RenderGraphEditorDelegate delegate(g_render_graph);
+    static my::RenderGraphEditorDelegate delegate(g_render_graph);
     static GraphEditor::ViewState viewState;
     static GraphEditor::FitOnScreen fit = GraphEditor::Fit_None;
 
@@ -151,4 +151,4 @@ void RenderGraphEditor::update_internal(vct::Scene&) {
     GraphEditor::Show(delegate, options, viewState, true, &fit);
 }
 
-}  // namespace vct
+}  // namespace my

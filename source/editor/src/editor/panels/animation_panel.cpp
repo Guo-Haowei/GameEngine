@@ -3,7 +3,7 @@
 #include "imgui/imgui_internal.h"
 #include "scene/scene.h"
 
-namespace vct {
+namespace my {
 
 void AnimationPanel::update_internal(Scene& scene) {
     for (int i = 0; i < scene.get_count<AnimationComponent>(); ++i) {
@@ -27,4 +27,4 @@ void AnimationPanel::update_internal(Scene& scene) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

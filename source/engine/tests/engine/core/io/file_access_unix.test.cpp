@@ -1,6 +1,6 @@
 #include "core/io/file_access_unix.h"
 
-namespace vct {
+namespace my {
 
 TEST(file_access_unix, open_read_fail) {
     FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
@@ -74,4 +74,4 @@ TEST(file_access_unix, write_read_buffer) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

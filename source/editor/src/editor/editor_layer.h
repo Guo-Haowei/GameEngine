@@ -4,7 +4,7 @@
 #include "panels/panel.h"
 #include "scene/scene.h"
 
-namespace vct {
+namespace my {
 
 class EditorLayer : public Layer, public NonCopyable {
 public:
@@ -35,4 +35,4 @@ private:
     State m_state{ STATE_PICKING };
 };
 
-}  // namespace vct
+}  // namespace my

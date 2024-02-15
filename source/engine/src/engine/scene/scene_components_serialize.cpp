@@ -2,7 +2,7 @@
 #include "core/io/archive.h"
 #include "scene_components.h"
 
-namespace vct {
+namespace my {
 
 // @TODO: version control
 [[maybe_unused]] static inline uint32_t VERSION = 1;
@@ -184,4 +184,4 @@ void RigidBodyComponent::serialize(Archive& archive, uint32_t) {
     }
 }
 
-}  // namespace vct
+}  // namespace my

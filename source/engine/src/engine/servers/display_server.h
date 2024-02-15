@@ -4,7 +4,7 @@
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
 
-namespace vct {
+namespace my {
 
 class DisplayServer : public Singleton<DisplayServer>, public Module {
 public:
@@ -19,4 +19,4 @@ public:
     virtual void present() = 0;
 };
 
-}  // namespace vct
+}  // namespace my
