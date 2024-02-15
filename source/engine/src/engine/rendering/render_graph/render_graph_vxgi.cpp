@@ -12,11 +12,6 @@
 #include "rendering/render_data.h"
 #include "rendering/shader_program_manager.h"
 
-/// textures
-my::RenderGraph g_render_graph;
-
-uint32_t g_final_image;
-
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;

@@ -6,7 +6,7 @@ namespace my {
 
 class Viewer : public Panel {
 public:
-    Viewer(EditorLayer& editor, const Scene& scene);
+    Viewer(EditorLayer& editor);
 
 protected:
     void update_internal(Scene& scene) override;

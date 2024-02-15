@@ -1,15 +1,11 @@
 #include "render_graph_editor.h"
 
-#include "GraphEditor.h"
-#include "rendering/render_graph/render_graph.h"
-
-// @TODO: fix
-extern my::RenderGraph g_render_graph;
+#include "core/framework/graphics_manager.h"
 
 namespace my {
 
-struct RenderGraphEditorDelegate : public GraphEditor::Delegate {
-
+class RenderGraphEditorDelegate : public GraphEditor::Delegate {
+public:
     RenderGraphEditorDelegate(const RenderGraph& graph) {
         float x_offset = 0.0f;
         for (auto& level : graph.m_levels) {
@@ -134,21 +130,19 @@ struct RenderGraphEditorDelegate : public GraphEditor::Delegate {
     std::vector<GraphEditor::Link> mLinks;
 };
 
-void RenderGraphEditor::update_internal(my::Scene&) {
-    // Graph Editor
-    static GraphEditor::Options options;
-    static my::RenderGraphEditorDelegate delegate(g_render_graph);
-    static GraphEditor::ViewState viewState;
-    static GraphEditor::FitOnScreen fit = GraphEditor::Fit_None;
+RenderGraphEditor::RenderGraphEditor(EditorLayer& editor) : Panel("Render Graph", editor) {
+    m_delegate = std::make_shared<RenderGraphEditorDelegate>(GraphicsManager::singleton().get_active_render_graph());
+}
 
+void RenderGraphEditor::update_internal(my::Scene&) {
     if (ImGui::Button("Fit all nodes")) {
-        fit = GraphEditor::Fit_AllNodes;
+        m_fit = GraphEditor::Fit_AllNodes;
     }
     ImGui::SameLine();
     if (ImGui::Button("Fit selected nodes")) {
-        fit = GraphEditor::Fit_SelectedNodes;
+        m_fit = GraphEditor::Fit_SelectedNodes;
     }
-    GraphEditor::Show(delegate, options, viewState, true, &fit);
+    GraphEditor::Show(*m_delegate.get(), m_options, m_view_state, true, &m_fit);
 }
 
 }  // namespace my

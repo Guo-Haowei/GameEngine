@@ -1,9 +1,9 @@
 #include "viewer.h"
 
-#include "ImGuizmo.h"
-#include "imgui/imgui_internal.h"
 // @TODO: fix path
 #include "../editor_layer.h"
+#include "ImGuizmo.h"
+#include "imgui/imgui_internal.h"
 
 // @TODO: refactor
 #include "core/framework/common_dvars.h"
@@ -15,10 +15,10 @@
 
 namespace my {
 
-Viewer::Viewer(EditorLayer& editor, const Scene& scene) : Panel("Viewer", editor) {
+Viewer::Viewer(EditorLayer& editor) : Panel("Viewer", editor) {
+    const Scene& scene = SceneManager::get_scene();
     auto camera_id = scene.get_main_camera();
     const TransformComponent& transform = *scene.get_component<TransformComponent>(camera_id);
-
     // @TODO: fix camera snap bug
     m_camera_controller.setup(transform);
 }

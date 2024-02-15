@@ -1,14 +1,15 @@
 #pragma once
 #include "core/base/graph.h"
+#include "core/base/noncopyable.h"
 #include "render_pass.h"
 
 namespace my {
 
-class RenderGraph {
+class RenderGraph : public NonCopyable {
 public:
     void add_pass(RenderPassDesc& desc);
 
-    std::shared_ptr<RenderPass> find_pass(const std::string& name);
+    std::shared_ptr<RenderPass> find_pass(const std::string& name) const;
 
     void compile();
 
@@ -22,7 +23,7 @@ private:
 
     std::map<std::string, int> m_render_pass_lookup;
 
-    friend struct RenderGraphEditorDelegate;
+    friend class RenderGraphEditorDelegate;
 };
 
 }  // namespace my

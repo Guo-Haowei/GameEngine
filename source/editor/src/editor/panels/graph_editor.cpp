@@ -25,7 +25,7 @@
 //
 
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "GraphEditor.h"
+#include "graph_editor.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"

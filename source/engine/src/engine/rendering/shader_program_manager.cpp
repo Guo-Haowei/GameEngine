@@ -51,18 +51,19 @@ static GLuint create_shader(std::string_view file, GLenum type) {
         return 0;
     }
 
-    std::string fullsource = process_shader(source);
-    constexpr const char extras[] =
+    std::string fullsource =
         "#version 460 core\n"
         "#extension GL_NV_gpu_shader5 : require\n"
         "#extension GL_NV_shader_atomic_float : enable\n"
         "#extension GL_NV_shader_atomic_fp16_vector : enable\n"
         "#extension GL_ARB_bindless_texture : require\n"
         "";
-    const char *sources[] = { extras, fullsource.c_str() };
+
+    fullsource.append(process_shader(source));
+    const char *sources[] = { fullsource.c_str() };
 
     GLuint shader = glCreateShader(type);
-    glShaderSource(shader, my::array_length(sources), sources, nullptr);
+    glShaderSource(shader, 1, sources, nullptr);
     glCompileShader(shader);
 
     GLint status = GL_FALSE, length = 0;
@@ -168,7 +169,7 @@ bool ShaderProgramManager::initialize() {
     {
         ProgramCreateInfo info;
         info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/lighting_vxgi.frag";
+        info.ps = "@res://glsl/lighting.frag";
         s_shader_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
@@ -185,20 +186,20 @@ bool ShaderProgramManager::initialize() {
     }
     {
         ProgramCreateInfo info;
-        info.vs = "@res://glsl/voxel/voxelization.vert";
-        info.gs = "@res://glsl/voxel/voxelization.geom";
-        info.ps = "@res://glsl/voxel/voxelization.frag";
+        info.vs = "@res://glsl/vxgi/voxelization.vert";
+        info.gs = "@res://glsl/vxgi/voxelization.geom";
+        info.ps = "@res://glsl/vxgi/voxelization.frag";
         s_shader_cache[PROGRAM_VOXELIZATION] = create(info);
     }
     {
         ProgramCreateInfo info;
-        info.cs = "@res://glsl/voxel/post.comp";
+        info.cs = "@res://glsl/vxgi/post.comp";
         s_shader_cache[PROGRAM_VOXELIZATION_POST] = create(info);
     }
     {
         ProgramCreateInfo info;
-        info.vs = "@res://glsl/voxel/visualization.vert";
-        info.ps = "@res://glsl/voxel/visualization.frag";
+        info.vs = "@res://glsl/vxgi/visualization.vert";
+        info.ps = "@res://glsl/vxgi/visualization.frag";
         s_shader_cache[PROGRAM_DEBUG_VOXEL] = create(info);
     }
 

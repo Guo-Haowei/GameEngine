@@ -54,16 +54,14 @@ bool initialize() {
         "@res://glsl/fullscreen.vert",
         "@res://glsl/fxaa.frag",
         "@res://glsl/gbuffer.frag",
-        "@res://glsl/pbr.glsl",
-        "@res://glsl/shadow.glsl",
         "@res://glsl/ssao.frag",
         "@res://glsl/textureCB.glsl",
-        "@res://glsl/lighting_vxgi.frag",
+        "@res://glsl/lighting.frag",
         "@res://glsl/debug/texture.frag",
-        "@res://glsl/voxel/voxelization.vert",
-        "@res://glsl/voxel/voxelization.geom",
-        "@res://glsl/voxel/voxelization.frag",
-        "@res://glsl/voxel/post.comp",
+        "@res://glsl/vxgi/voxelization.vert",
+        "@res://glsl/vxgi/voxelization.geom",
+        "@res://glsl/vxgi/voxelization.frag",
+        "@res://glsl/vxgi/post.comp",
     };
 
     Timer timer;
