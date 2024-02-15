@@ -63,8 +63,8 @@ public:                                                                         
         return m_##T##s.create(entity);                                                          \
     }                                                                                            \
     template<>                                                                                   \
-    void serialize<T>(Archive & archive) {                                                       \
-        return m_##T##s.serialize(archive);                                                      \
+    void serialize<T>(Archive & archive, uint32_t version) {                                     \
+        return m_##T##s.serialize(archive, version);                                             \
     }                                                                                            \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
@@ -114,7 +114,7 @@ public:                                                                         
         return *(T*)(nullptr);
     }
     template<typename T>
-    void serialize(Archive&) {
+    void serialize(Archive&, uint32_t) {
     }
 
     ecs::ComponentLibrary m_component_lib;
@@ -175,7 +175,7 @@ public:                                                                         
     // @TODO: fix
     void Component_DetachChildren(ecs::Entity parent);
 
-    CameraComponent& get_main_camera();
+    ecs::Entity get_main_camera();
 
     struct RayIntersectionResult {
         ecs::Entity entity;

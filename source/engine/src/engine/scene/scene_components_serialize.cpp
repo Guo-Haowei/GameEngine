@@ -7,7 +7,7 @@ namespace vct {
 // @TODO: version control
 [[maybe_unused]] static inline uint32_t VERSION = 1;
 
-void NameComponent::serialize(Archive& archive) {
+void NameComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << m_name;
     } else {
@@ -15,7 +15,7 @@ void NameComponent::serialize(Archive& archive) {
     }
 }
 
-void TransformComponent::serialize(Archive& archive) {
+void TransformComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << m_flags;
         archive << m_scale;
@@ -30,11 +30,11 @@ void TransformComponent::serialize(Archive& archive) {
     }
 }
 
-void HierarchyComponent::serialize(Archive& archive) {
+void HierarchyComponent::serialize(Archive& archive, uint32_t) {
     m_parent_id.serialize(archive);
 }
 
-void CameraComponent::serialize(Archive& archive) {
+void CameraComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << m_flags;
         archive << m_near;
@@ -53,7 +53,7 @@ void CameraComponent::serialize(Archive& archive) {
     }
 }
 
-void MeshComponent::serialize(Archive& archive) {
+void MeshComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << flags;
         archive << indices;
@@ -85,7 +85,7 @@ void MeshComponent::serialize(Archive& archive) {
     }
 }
 
-void MaterialComponent::serialize(Archive& archive) {
+void MaterialComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << metallic;
         archive << roughness;
@@ -109,7 +109,7 @@ void MaterialComponent::serialize(Archive& archive) {
     // @TODO: request image
 }
 
-void LightComponent::serialize(Archive& archive) {
+void LightComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << type;
         archive << color;
@@ -121,11 +121,11 @@ void LightComponent::serialize(Archive& archive) {
     }
 }
 
-void ObjectComponent::serialize(Archive& archive) {
+void ObjectComponent::serialize(Archive& archive, uint32_t) {
     mesh_id.serialize(archive);
 }
 
-void AnimationComponent::serialize(Archive& archive) {
+void AnimationComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << flags;
         archive << start;
@@ -160,7 +160,7 @@ void AnimationComponent::serialize(Archive& archive) {
     }
 }
 
-void ArmatureComponent::serialize(Archive& archive) {
+void ArmatureComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << flags;
         archive << bone_collection;
@@ -172,7 +172,7 @@ void ArmatureComponent::serialize(Archive& archive) {
     }
 }
 
-void RigidBodyComponent::serialize(Archive& archive) {
+void RigidBodyComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << shape;
         archive << param;

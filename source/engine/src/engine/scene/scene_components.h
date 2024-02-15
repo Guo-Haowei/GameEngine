@@ -1,7 +1,7 @@
 #pragma once
 #include "core/base/rid.h"
 #include "core/math/aabb.h"
-#include "core/math/degree.h"
+#include "core/math/angle.h"
 #include "core/systems/entity.h"
 
 namespace vct {
@@ -24,7 +24,7 @@ public:
     const std::string& get_name() const { return m_name; }
     std::string& get_name_ref() { return m_name; }
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     std::string m_name;
@@ -45,6 +45,7 @@ public:
 
     const vec3& get_translation() const { return m_translation; }
     void set_translation(const vec3& t) { m_translation = t; }
+    void increase_translation(const vec3& t) { m_translation += t; }
 
     const vec4& get_rotation() const { return m_rotation; }
     void set_rotation(const vec4& r) { m_rotation = r; }
@@ -68,14 +69,14 @@ public:
 
     void update_transform_parented(const TransformComponent& parent);
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     uint32_t m_flags = DIRTY;
 
-    vec3 m_scale = vec3(1);              // local scale
-    vec3 m_translation = vec3(0);        // local translation
-    vec4 m_rotation = vec4(0, 0, 0, 1);  // local rotation
+    vec3 m_scale{ 1 };              // local scale
+    vec3 m_translation{ 0 };        // local translation
+    vec4 m_rotation{ 0, 0, 0, 1 };  // local rotation
 
     // Non-serialized attributes
     mat4 m_world_matrix = mat4(1);
@@ -88,7 +89,7 @@ class HierarchyComponent {
 public:
     ecs::Entity GetParent() const { return m_parent_id; }
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     ecs::Entity m_parent_id;
@@ -110,7 +111,7 @@ public:
     static constexpr float DEFAULT_FAR = 100.0f;
     static constexpr Degree DEFAULT_FOV{ 50.0f };
 
-    void update();
+    void update(const mat4& world_matrix);
 
     void set_dimension(float width, float height);
 
@@ -122,34 +123,26 @@ public:
     const mat4& get_view_matrix() const { return m_view_matrix; }
     const mat4& get_projection_matrix() const { return m_projection_matrix; }
     const mat4& get_projection_view_matrix() const { return m_projection_view_matrix; }
+    const vec3& get_position() const { return m_position; }
+    const vec3& get_front() const { return m_front; }
+    const vec3& get_right() const { return m_right; }
 
-    const vec3& get_eye() const { return m_eye; }
-    const vec3& get_center() const { return m_center; }
-
-    void set_eye(const vec3& eye) {
-        set_dirty();
-        m_eye = eye;
-    }
-    void set_center(const vec3& center) {
-        set_dirty();
-        m_center = center;
-    }
-
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 
 private:
     uint32_t m_flags = DIRTY;
 
+    Degree m_fovy{ DEFAULT_FOV };
     float m_near = DEFAULT_NEAR;
     float m_far = DEFAULT_FAR;
-    Degree m_fovy{ DEFAULT_FOV };
     float m_width = 0.0f;
     float m_height = 0.0f;
 
-    vec3 m_eye;
-    vec3 m_center{ 0, 0, 0 };
-
     // Non-serlialized
+    vec3 m_position;
+    vec3 m_front;
+    vec3 m_right;
+
     mat4 m_view_matrix;
     mat4 m_projection_matrix;
     mat4 m_projection_view_matrix;
@@ -220,7 +213,7 @@ struct MeshComponent {
     void create_render_data();
     std::vector<char> generate_combined_buffer() const;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -248,7 +241,7 @@ struct MaterialComponent {
     // Non-serialized
     mutable RID gpu_resource;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -266,7 +259,7 @@ struct LightComponent {
     float energy = 10.0f;
     Type type = LIGHT_TYPE_NONE;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -284,7 +277,7 @@ struct ObjectComponent {
     /// mesh
     ecs::Entity mesh_id;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -330,7 +323,7 @@ struct AnimationComponent {
     std::vector<Channel> channels;
     std::vector<Sampler> samplers;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -348,7 +341,7 @@ struct ArmatureComponent {
     // Non-Serialized
     std::vector<mat4> bone_transforms;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -375,7 +368,7 @@ struct RigidBodyComponent {
     CollisionShape shape;
     Parameter param;
 
-    void serialize(Archive& archive);
+    void serialize(Archive& archive, uint32_t version);
 };
 
 }  // namespace vct

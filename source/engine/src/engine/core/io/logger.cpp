@@ -10,6 +10,8 @@ namespace vct {
 
 static WORD find_color_attribute(LogLevel level) {
     switch (level) {
+        case LOG_LEVEL_OK:
+            return FOREGROUND_GREEN;
         case LOG_LEVEL_WARN:
             return FOREGROUND_RED | FOREGROUND_GREEN;
         case LOG_LEVEL_ERROR:

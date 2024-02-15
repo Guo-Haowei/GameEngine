@@ -3,6 +3,7 @@
 namespace vct {
 
 enum ColorCode : uint32_t {
+    COLOR_GREEN = 0x80E080,
     COLOR_YELLOW = 0xE0E080,
     COLOR_RED = 0xE08080,
     COLOR_PALEGREEN = 0x98FB98,

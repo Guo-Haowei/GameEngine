@@ -154,13 +154,13 @@ public:
 
     T& operator[](size_t idx) { return get_component(idx); }
 
-    void serialize(Archive& archive) {
+    void serialize(Archive& archive, uint32_t version) {
         size_t count;
         if (archive.is_write_mode()) {
             count = static_cast<uint32_t>(m_component_array.size());
             archive << count;
             for (auto& component : m_component_array) {
-                component.serialize(archive);
+                component.serialize(archive, version);
             }
             for (auto& entity : m_entity_array) {
                 entity.serialize(archive);
@@ -171,7 +171,7 @@ public:
             m_component_array.resize(count);
             m_entity_array.resize(count);
             for (size_t i = 0; i < count; ++i) {
-                m_component_array[i].serialize(archive);
+                m_component_array[i].serialize(archive, version);
             }
             for (size_t i = 0; i < count; ++i) {
                 m_entity_array[i].serialize(archive);

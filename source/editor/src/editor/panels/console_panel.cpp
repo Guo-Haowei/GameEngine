@@ -12,11 +12,13 @@ static ImVec4 log_level_to_color(LogLevel level) {
         case vct::LOG_LEVEL_VERBOSE:
             color = Color::hex(ColorCode::COLOR_SILVER);
             break;
+        case vct::LOG_LEVEL_OK:
+            color = Color::hex(ColorCode::COLOR_GREEN);
+            break;
         case vct::LOG_LEVEL_WARN:
             color = Color::hex(ColorCode::COLOR_YELLOW);
             break;
         case vct::LOG_LEVEL_ERROR:
-            [[fallthrough]];
         case vct::LOG_LEVEL_FATAL:
             color = Color::hex(ColorCode::COLOR_RED);
             break;
@@ -45,10 +47,10 @@ void ConsolePanel::update_internal(Scene&) {
         ImGui::PopStyleColor();
     }
 
-    if (mScrollToBottom || (mAutoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())) {
+    if (m_scroll_to_bottom || (m_auto_scroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())) {
         ImGui::SetScrollHereY(1.0f);
     }
-    mScrollToBottom = false;
+    m_scroll_to_bottom = false;
 
     ImGui::PopStyleVar();
     ImGui::EndChild();

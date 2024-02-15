@@ -13,7 +13,7 @@ protected:
 
 private:
     void update_data();
-    void update_camera(CameraComponent& camera, float dt);
+    void update_camera(float dt, CameraComponent& camera, TransformComponent& transform);
     void select_entity(Scene& scene, const CameraComponent& camera);
     void draw_gui(Scene& scene, CameraComponent& camera);
 
