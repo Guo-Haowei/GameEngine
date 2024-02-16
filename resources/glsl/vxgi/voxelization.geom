@@ -4,16 +4,12 @@ layout( triangle_strip, max_vertices = 3 ) out;
 in vec3 pass_positions[];
 in vec3 pass_normals[];
 in vec2 pass_uvs[];
-in vec4 pass_light_space_positions0[];
-in vec4 pass_light_space_positions1[];
-in vec4 pass_light_space_positions2[];
 
 #include "cbuffer.glsl.h"
 
 out vec3 pass_position;
 out vec3 pass_normal;
 out vec2 pass_uv;
-out vec4 pass_light_space_positions[NUM_CASCADES];
 
 void main()
 {
@@ -52,9 +48,6 @@ void main()
         pass_position                 = pass_positions[i];
         pass_normal                   = pass_normals[i];
         pass_uv                       = pass_uvs[i];
-        pass_light_space_positions[0] = pass_light_space_positions0[i];
-        pass_light_space_positions[1] = pass_light_space_positions1[i];
-        pass_light_space_positions[2] = pass_light_space_positions2[i];
         gl_Position                   = vec4( output_positions[i].xy, 1.0, 1.0 );
         EmitVertex();
     }

@@ -256,9 +256,17 @@ struct LightComponent {
         LIGHT_TYPE_MAX,
     };
 
+    Type type = LIGHT_TYPE_OMNI;
     vec3 color = vec3(1);
     float energy = 10.0f;
-    Type type = LIGHT_TYPE_OMNI;
+
+    // @TODO: serialize
+    // @TODO: edit
+    struct {
+        float constant;
+        float linear;
+        float quadratic;
+    } atten;
 
     void serialize(Archive& archive, uint32_t version);
 };

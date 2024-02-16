@@ -71,6 +71,7 @@ void HierarchyCreator::DrawNode(const Scene& scene, HierarchyNode* pHier, ImGuiT
 }
 
 bool HierarchyCreator::Build(const Scene& scene) {
+    // @TODO: on scene change instead of build every frame
     const size_t hierarchy_count = scene.get_count<HierarchyComponent>();
     if (hierarchy_count == 0) {
         return false;

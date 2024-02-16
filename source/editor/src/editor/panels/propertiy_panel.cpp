@@ -179,6 +179,9 @@ void PropertyPanel::update_internal(Scene& scene) {
 
         ImGui::DragFloat3("color:", &light.color.x);
         ImGui::DragFloat("energy:", &light.energy);
+        ImGui::InputFloat("atten.constant", &light.atten.constant);
+        ImGui::DragFloat("atten.linear", &light.atten.linear, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("atten.quadratic", &light.atten.quadratic, 0.01f, 0.0f, 1.0f);
     });
 
     TransformComponent* transformComponent = scene.get_component<TransformComponent>(id);

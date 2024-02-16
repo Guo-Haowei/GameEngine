@@ -43,7 +43,7 @@ void shadow_pass_func() {
 
         if (has_bone) {
             auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_NUMBER);
+            DEV_ASSERT(armature.bone_transforms.size() <= SHADER_BONE_MAX);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
@@ -88,7 +88,7 @@ void voxelization_pass_func() {
 
         if (has_bone) {
             auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_NUMBER);
+            DEV_ASSERT(armature.bone_transforms.size() <= SHADER_BONE_MAX);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
@@ -143,7 +143,7 @@ void gbuffer_pass_func() {
 
         if (has_bone) {
             auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_NUMBER);
+            DEV_ASSERT(armature.bone_transforms.size() <= SHADER_BONE_MAX);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();

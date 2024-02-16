@@ -37,14 +37,38 @@ void main() {
     }
 
     const vec3 N = normal_roughness.xyz;
-    const vec3 L = c_sun_direction;
     const vec3 V = normalize(c_camera_position - world_position);
-    const vec3 H = normalize(V + L);
     const float NdotV = max(dot(N, V), 0.0);
+    vec3 Lo = vec3(0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
+    for (int idx = 0; idx < c_light_count; ++idx) {
+        int light_type = c_lights[idx].type;
+        vec3 L = vec3(0.0);
+        float atten = 1.0;
+        if (light_type == 0) {
+            L = c_lights[idx].position;
+        } else if (light_type == 1) {
+            vec3 delta = -world_position + c_lights[idx].position;
+            L = normalize(delta);
+            float dist = length(delta);
+            atten = (c_lights[idx].atten_constant + c_lights[idx].atten_linear * dist +
+                     c_lights[idx].atten_quadratic * (dist * dist));
+            atten = 1.0 / atten;
+        }
 
-    const vec3 radiance = c_light_color;
-    vec3 Lo = lighting(N, L, V, radiance, F0, roughness, metallic, albedo, world_position);
+        const vec3 H = normalize(V + L);
+        const vec3 radiance = c_lights[idx].color;
+        vec3 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
+        // @TODO: shadow
+        if (c_lights[idx].cast_shadow == 1) {
+            const float NdotL = max(dot(N, L), 0.0);
+            vec4 lightSpacePos = c_lights[idx].light_matricies[0] * vec4(world_position, 1.0);
+            float shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
+            direct_lighting = (1.0 - shadow) * direct_lighting;
+        }
+        Lo += direct_lighting;
+    }
+    Lo += 0.2 * albedo.rgb;
 
     const float ao = c_enable_ssao == 0 ? 1.0 : texture(c_ssao_map, uv).r;
 

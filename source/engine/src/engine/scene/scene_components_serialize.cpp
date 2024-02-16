@@ -109,15 +109,22 @@ void MaterialComponent::serialize(Archive& archive, uint32_t) {
     // @TODO: request image
 }
 
-void LightComponent::serialize(Archive& archive, uint32_t) {
+void LightComponent::serialize(Archive& archive, uint32_t version) {
+    unused(version);
     if (archive.is_write_mode()) {
         archive << type;
         archive << color;
         archive << energy;
+        archive << atten.constant;
+        archive << atten.linear;
+        archive << atten.quadratic;
     } else {
         archive >> type;
         archive >> color;
         archive >> energy;
+        archive >> atten.constant;
+        archive >> atten.linear;
+        archive >> atten.quadratic;
     }
 }
 
