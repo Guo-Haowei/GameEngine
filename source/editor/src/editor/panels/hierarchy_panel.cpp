@@ -117,8 +117,14 @@ void HierarchyPanel::update_internal(Scene& scene) {
     creator.Draw(scene);
 }
 
+static std::string gen_name(std::string_view name) {
+    static int s_counter = 0;
+    return std::format("{}_{}", name, ++s_counter);
+}
+
 void HierarchyPanel::draw_popup(Scene& scene) {
     auto selected = m_editor.get_selected_entity();
+    // @TODO: save commands for undo
 
     if (ImGui::BeginPopup(POPUP_NAME_ID)) {
         if (ImGui::BeginMenu("add child##" POPUP_NAME_ID)) {
@@ -126,18 +132,23 @@ void HierarchyPanel::draw_popup(Scene& scene) {
                 LOG_WARN("@TODO: implement");
             }
             if (ImGui::MenuItem("add light##" POPUP_NAME_ID)) {
-                LOG_WARN("@TODO: implement");
+                auto id = scene.create_pointlight_entity(gen_name("light"), vec3{ 0 });
+                scene.attach_component(id, selected);
+                // @TODO: set selected
+                m_editor.select_entity(id);
+                SceneManager::singleton().bump_revision();
             }
             if (ImGui::MenuItem("add cube##" POPUP_NAME_ID)) {
-                auto id = scene.create_cube_entity("my cube");
+                auto id = scene.create_cube_entity(gen_name("cube"));
                 scene.attach_component(id, selected);
+                m_editor.select_entity(id);
                 SceneManager::singleton().bump_revision();
             }
 
             ImGui::EndMenu();
         }
         if (ImGui::MenuItem("delete##" POPUP_NAME_ID)) {
-            LOG_WARN("@TODO: implement");
+            scene.remove_entity(selected);
         }
         ImGui::EndPopup();
     }

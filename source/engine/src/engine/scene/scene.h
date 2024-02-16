@@ -6,6 +6,10 @@
 
 namespace my {
 
+namespace jobsystem {
+class Context;
+}
+
 class Scene : public NonCopyable {
 public:
     static constexpr const char* EXTENSION = ".scene";
@@ -133,7 +137,6 @@ public:                                                                         
 
     bool serialize(Archive& archive);
 
-    // Non-serialized attributes
     void update(float deltaTime);
 
     void merge(Scene& other);
@@ -170,10 +173,7 @@ public:                                                                         
 
     void attach_component(ecs::Entity entity) { attach_component(entity, m_root); }
 
-    void detach_component(ecs::Entity entity);
-
-    // @TODO: fix
-    void Component_DetachChildren(ecs::Entity parent);
+    void remove_entity(ecs::Entity entity);
 
     ecs::Entity get_main_camera() const;
 
@@ -183,18 +183,21 @@ public:                                                                         
 
     RayIntersectionResult Intersects(Ray& ray);
 
+    const AABB& get_bound() const { return m_bound; }
+    // @TODO: refactor
     ecs::Entity m_root;
     float m_delta_time = 0.0f;
-
-    // @TODO: refactor
-    AABB m_bound;
-    ecs::Entity m_selected;
 
 private:
     void update_transformation(uint32_t index);
     void update_hierarchy(uint32_t index);
     void update_animation(uint32_t index);
     void update_armature(uint32_t index);
+
+    void run_hierarchy_update_system(jobsystem::Context& ctx);
+    void run_object_update_system(jobsystem::Context& ctx);
+
+    AABB m_bound;
 };
 
 }  // namespace my

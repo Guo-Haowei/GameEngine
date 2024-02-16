@@ -126,8 +126,8 @@ void SceneManager::finalize() {}
 // @TODO: fix
 static mat4 R_HackLightSpaceMatrix(const vec3& lightDir) {
     const Scene& scene = SceneManager::get_scene();
-    const vec3 center = scene.m_bound.center();
-    const vec3 extents = scene.m_bound.size();
+    const vec3 center = scene.get_bound().center();
+    const vec3 extents = scene.get_bound().size();
     const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
     const mat4 V = glm::lookAt(center + glm::normalize(lightDir) * size, center, vec3(0, 1, 0));
     const mat4 P = glm::ortho(-size, size, -size, size, 0.0f, 2.0f * size);
@@ -219,8 +219,8 @@ void SceneManager::update(float dt) {
     DEV_ASSERT(math::is_power_of_two(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    vec3 world_center = scene.m_bound.center();
-    vec3 aabb_size = scene.m_bound.size();
+    vec3 world_center = scene.get_bound().center();
+    vec3 aabb_size = scene.get_bound().size();
     float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
 
     const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);

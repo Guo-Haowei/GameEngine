@@ -12,7 +12,9 @@ using ecs::Entity;
 using jobsystem::Context;
 
 // static constexpr uint32_t kSmallSubtaskGroupSize = 64;
-static constexpr uint32_t kSmallSubtaskGroupSize = 16;
+static constexpr uint32_t kSmallSubtaskGroupSize = 64;
+static constexpr uint32_t kSceneVersion = 2;  // don't serialize scene.m_bound
+static constexpr uint32_t kSceneMagicNumber = 'xScn';
 
 // @TODO: refactor
 #if 1
@@ -34,6 +36,8 @@ void Scene::update(float dt) {
 
     Context ctx;
 
+    // @TODO: refactor
+
     // animation
     JS_PARALLEL_FOR(ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
     ctx.wait();
@@ -41,14 +45,14 @@ void Scene::update(float dt) {
     JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, update_transformation(index));
     ctx.wait();
     // hierarchy, update world matrix based on hierarchy
-    JS_PARALLEL_FOR(ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
+    run_hierarchy_update_system(ctx);
     ctx.wait();
     // armature
     JS_PARALLEL_FOR(ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
     ctx.wait();
 
-    // update bounding boxes
-    // RunObjectUpdateSystem();
+    // update bounding box
+    run_object_update_system(ctx);
 
     // update camera
     for (int idx = 0; idx < get_count<CameraComponent>(); ++idx) {
@@ -115,40 +119,32 @@ Entity Scene::create_camera_entity(const std::string& name,
     camera.m_far = far_plane;
     camera.m_fovy = fovy;
     camera.set_dirty();
-
-    // create transform
-    // TransformComponent& transform = create<TransformComponent>(entity);
     create<TransformComponent>(entity);
-
     return entity;
 }
 
 Entity Scene::create_pointlight_entity(const std::string& name, const vec3& position, const vec3& color,
                                        const float energy) {
     Entity entity = create_name_entity(name);
-    (void)name;
-    (void)position;
-    (void)color;
-    (void)energy;
-    // TransformComponent& transComponent = create<TransformComponent>(entity);
-    // transComponent.SetPosition(position);
-    // LightComponent& lightComponent = create<LightComponent>(entity);
-    // lightComponent.type = LIGHT_TYPE_POINT;
-    // lightComponent.color = color;
-    // lightComponent.energy = energy;
-    CRASH_NOW();
+    TransformComponent& transform = create<TransformComponent>(entity);
+    transform.set_translation(position);
+    transform.set_dirty();
 
+    LightComponent& light_component = create<LightComponent>(entity);
+    light_component.type = LightComponent::LIGHT_TYPE_POINT;
+    light_component.color = color;
+    light_component.energy = energy;
     return entity;
 }
 
 Entity Scene::create_omnilight_entity(const std::string& name, const vec3& color, const float energy) {
     Entity entity = create_name_entity(name);
     create<TransformComponent>(entity);
+
     LightComponent& light = create<LightComponent>(entity);
-    // light.type = LIGHT_TYPE_OMNI;
+    light.type = LightComponent::LIGHT_TYPE_OMNI;
     light.color = color;
     light.energy = energy;
-
     return entity;
 }
 
@@ -336,23 +332,18 @@ void Scene::attach_component(Entity child, Entity parent) {
     DEV_ASSERT(parent.is_valid());
 
     // if child already has a parent, detach it
-    if (m_HierarchyComponents.contains(child)) {
+    if (contains<HierarchyComponent>(child)) {
         CRASH_NOW_MSG("Unlikely to happen at this point");
-        detach_component(child);
     }
 
-    HierarchyComponent& hier = m_HierarchyComponents.create(child);
+    HierarchyComponent& hier = create<HierarchyComponent>(child);
     hier.m_parent_id = parent;
 }
 
-void Scene::detach_component(Entity entity) {
-    unused(entity);
-    CRASH_NOW_MSG("TODO");
-}
-
-void Scene::Component_DetachChildren(Entity parent) {
-    unused(parent);
-    CRASH_NOW_MSG("TODO");
+void Scene::remove_entity(Entity entity) {
+    m_HierarchyComponents.remove(entity);
+    m_TransformComponents.remove(entity);
+    m_ObjectComponents.remove(entity);
 }
 
 void Scene::update_animation(uint32_t index) {
@@ -455,30 +446,32 @@ void Scene::update_transformation(uint32_t index) {
 }
 
 void Scene::update_hierarchy(uint32_t index) {
-    Entity child = get_entity<HierarchyComponent>(index);
-    TransformComponent* childTrans = get_component<TransformComponent>(child);
-    if (childTrans) {
-        const HierarchyComponent* hier = &m_HierarchyComponents[index];
-        Entity parent = hier->m_parent_id;
-        mat4 W = childTrans->get_local_matrix();
+    Entity self_id = get_entity<HierarchyComponent>(index);
+    TransformComponent* self_transform = get_component<TransformComponent>(self_id);
 
-        while (parent.is_valid()) {
-            TransformComponent* parentTrans = get_component<TransformComponent>(parent);
-            if (parentTrans) {
-                W = parentTrans->get_local_matrix() * W;
-            }
-
-            if ((hier = get_component<HierarchyComponent>(parent)) != nullptr) {
-                parent = hier->m_parent_id;
-                DEV_ASSERT(parent.is_valid());
-            } else {
-                parent.make_invalid();
-            }
-        }
-
-        childTrans->set_world_matrix(W);
-        childTrans->set_dirty(false);
+    if (!self_transform) {
+        return;
     }
+
+    mat4 world_matrix = self_transform->get_local_matrix();
+    const HierarchyComponent* hierarchy = &m_HierarchyComponents[index];
+    Entity parent = hierarchy->m_parent_id;
+
+    while (parent.is_valid()) {
+        TransformComponent* parent_transform = get_component<TransformComponent>(parent);
+        DEV_ASSERT(parent_transform);
+        world_matrix = parent_transform->get_local_matrix() * world_matrix;
+
+        if ((hierarchy = get_component<HierarchyComponent>(parent)) != nullptr) {
+            parent = hierarchy->m_parent_id;
+            DEV_ASSERT(parent.is_valid());
+        } else {
+            parent.make_invalid();
+        }
+    }
+
+    self_transform->set_world_matrix(world_matrix);
+    self_transform->set_dirty(false);
 }
 
 void Scene::update_armature(uint32_t index) {
@@ -519,9 +512,6 @@ void Scene::update_armature(uint32_t index) {
     }
 };
 
-static constexpr uint32_t SCENE_VERSION = 1;
-static constexpr uint32_t SCENE_MAGIC_NUMBER = 'xScn';
-
 bool Scene::serialize(Archive& archive) {
     uint32_t version = UINT_MAX;
     bool is_read_mode = !archive.is_write_mode();
@@ -530,21 +520,20 @@ bool Scene::serialize(Archive& archive) {
         uint32_t seed = Entity::MAX_ID;
 
         archive >> magic;
-        ERR_FAIL_COND_V_MSG(magic != SCENE_MAGIC_NUMBER, false, "file corrupted");
+        ERR_FAIL_COND_V_MSG(magic != kSceneMagicNumber, false, "file corrupted");
         archive >> version;
-        ERR_FAIL_COND_V_MSG(version > SCENE_MAGIC_NUMBER, false, std::format("file version {} is greater than max version {}", version, SCENE_VERSION));
+        ERR_FAIL_COND_V_MSG(version > kSceneMagicNumber, false, std::format("file version {} is greater than max version {}", version, kSceneVersion));
         archive >> seed;
         Entity::set_seed(seed);
 
         // scene data
         archive >> m_root;
-        archive >> m_bound;
     } else {
-        archive << SCENE_MAGIC_NUMBER;
-        archive << SCENE_VERSION;
+        archive << kSceneMagicNumber;
+        archive << kSceneVersion;
         archive << Entity::get_seed();
+        // scene data
         archive << m_root;
-        archive << m_bound;
     }
 
     serialize<NameComponent>(archive, version);
@@ -600,6 +589,32 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& ray) {
     }
 
     return result;
+}
+
+void Scene::run_hierarchy_update_system(Context& ctx) {
+    JS_PARALLEL_FOR(ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
+}
+
+void Scene::run_object_update_system(jobsystem::Context&) {
+    m_bound.make_invalid();
+
+    const uint32_t num_object = (uint32_t)get_count<ObjectComponent>();
+    for (uint32_t i = 0; i < num_object; ++i) {
+        ecs::Entity entity = get_entity<ObjectComponent>(i);
+        if (!contains<TransformComponent>(entity)) {
+            continue;
+        }
+
+        const ObjectComponent& obj = get_component_array<ObjectComponent>()[i];
+        const TransformComponent& transform = *get_component<TransformComponent>(entity);
+        DEV_ASSERT(contains<MeshComponent>(obj.mesh_id));
+        const MeshComponent& mesh = *get_component<MeshComponent>(obj.mesh_id);
+
+        mat4 M = transform.get_world_matrix();
+        AABB aabb = mesh.local_bound;
+        aabb.apply_matrix(M);
+        m_bound.union_box(aabb);
+    }
 }
 
 Entity Scene::get_main_camera() const {

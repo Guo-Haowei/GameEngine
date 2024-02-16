@@ -43,7 +43,7 @@ void RenderData::update(const Scene* p_scene) {
             return !(object.flags & ObjectComponent::RENDERABLE);
         },
         [&](const AABB& aabb) {
-            return scene->m_bound.intersects(aabb);
+            return scene->get_bound().intersects(aabb);
         });
     fill(
         p_scene,
@@ -63,13 +63,16 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
     Frustum frustum{ projection_view_matrix };
     uint32_t num_objects = (uint32_t)scene->get_count<ObjectComponent>();
     for (uint32_t i = 0; i < num_objects; ++i) {
+        ecs::Entity entity = scene->get_entity<ObjectComponent>(i);
+        if (!scene->contains<TransformComponent>(entity)) {
+            continue;
+        }
+
         const ObjectComponent& obj = scene->get_component_array<ObjectComponent>()[i];
         if (func1(obj)) {
             continue;
         }
 
-        ecs::Entity entity = scene->get_entity<ObjectComponent>(i);
-        DEV_ASSERT(scene->contains<TransformComponent>(entity));
         const TransformComponent& transform = *scene->get_component<TransformComponent>(entity);
         DEV_ASSERT(scene->contains<MeshComponent>(obj.mesh_id));
         const MeshComponent& mesh = *scene->get_component<MeshComponent>(obj.mesh_id);

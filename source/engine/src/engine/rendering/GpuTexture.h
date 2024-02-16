@@ -1,6 +1,7 @@
 #pragma once
 #include "GLPrerequisites.h"
 
+// @TODO: refactor
 struct Texture2DCreateInfo {
     GLenum wrapS = 0;
     GLenum wrapT = 0;

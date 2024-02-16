@@ -94,6 +94,8 @@ public:
 private:
     ecs::Entity m_parent_id;
 
+    // Non-serialized attributes
+
     friend class Scene;
 };
 
@@ -249,15 +251,14 @@ struct MaterialComponent {
 //--------------------------------------------------------------------------------------------------
 struct LightComponent {
     enum Type {
-        LIGHT_TYPE_NONE,
-        LIGHT_TYPE_POINT,
         LIGHT_TYPE_OMNI,
+        LIGHT_TYPE_POINT,
         LIGHT_TYPE_MAX,
     };
 
     vec3 color = vec3(1);
     float energy = 10.0f;
-    Type type = LIGHT_TYPE_NONE;
+    Type type = LIGHT_TYPE_OMNI;
 
     void serialize(Archive& archive, uint32_t version);
 };

@@ -85,8 +85,6 @@ void EditorLayer::update(float) {
     for (auto& it : m_panels) {
         it->update(scene);
     }
-
-    scene.m_selected = m_selected;
 }
 
 void EditorLayer::render() {
