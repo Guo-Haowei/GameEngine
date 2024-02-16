@@ -14,6 +14,7 @@ public:
 
     void from_center_size(const vec3& center, const vec3& size);
 
+    bool intersects(const AABB& aabb) const { return TestIntersection::aabb_aabb(*this, aabb); }
     bool intersects(Ray& ray) const { return TestIntersection::ray_aabb(*this, ray); }
 
     friend class TestIntersection;

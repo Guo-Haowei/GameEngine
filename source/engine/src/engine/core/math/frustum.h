@@ -1,6 +1,6 @@
 #pragma once
-#include "geomath.h"
-#include "plane.h"
+#include "core/math/geomath.h"
+#include "core/math/plane.h"
 
 namespace my {
 
@@ -9,7 +9,7 @@ class AABB;
 class Frustum {
 public:
     Frustum() = default;
-    Frustum(const mat4& PV);
+    Frustum(const mat4& projection_view_matrix);
 
     Plane& operator[](int i) { return reinterpret_cast<Plane*>(this)[i]; }
 

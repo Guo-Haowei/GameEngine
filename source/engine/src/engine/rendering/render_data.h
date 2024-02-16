@@ -5,7 +5,8 @@
 namespace my {
 
 struct RenderData {
-    using FilterObjectFunc = bool (*)(const ObjectComponent& object);
+    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& object)>;
+    using FilterObjectFunc2 = std::function<bool(const AABB& object_aabb)>;
 
     struct SubMesh {
         uint32_t index_count;
@@ -30,6 +31,7 @@ struct RenderData {
     const Scene* scene = nullptr;
 
     Pass shadow_pass;
+    Pass voxel_pass;
     Pass main_pass;
 
     void update(const Scene* p_scene);
@@ -37,7 +39,7 @@ struct RenderData {
 private:
     void clear();
 
-    void fill(const Scene* p_scene, const mat4& projection_view_matrix, FilterObjectFunc filter, Pass& pass);
+    void fill(const Scene* p_scene, const mat4& projection_view_matrix, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2);
 };
 
 }  // namespace my

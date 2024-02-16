@@ -53,7 +53,7 @@ void Viewer::select_entity(Scene& scene, const CameraComponent& camera) {
         return;
     }
 
-    if (input::is_button_pressed(MOUSE_BUTTON_LEFT)) {
+    if (input::is_button_pressed(MOUSE_BUTTON_RIGHT)) {
         auto [window_x, window_y] = DisplayServer::singleton().get_window_pos();
         vec2 clicked = input::get_cursor();
         clicked.x = (clicked.x + window_x - m_canvas_min.x) / m_canvas_size.x;

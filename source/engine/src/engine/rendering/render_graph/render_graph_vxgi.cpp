@@ -81,7 +81,7 @@ void voxelization_pass_func() {
     ShaderProgramManager::get(PROGRAM_VOXELIZATION).bind();
 
     auto render_data = GraphicsManager::singleton().get_render_data();
-    RenderData::Pass& pass = render_data->main_pass;
+    RenderData::Pass& pass = render_data->voxel_pass;
 
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
