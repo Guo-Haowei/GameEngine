@@ -34,26 +34,7 @@ auto SceneImporter::import() -> std::expected<void, std::string> {
         mesh.create_render_data();
     }
 
-    // @TODO: move things here
-    // update bounding box
     m_scene.update(0.0f);
-    m_scene.m_bound.make_invalid();
-
-    const uint32_t numObjects = (uint32_t)m_scene.get_count<ObjectComponent>();
-    for (uint32_t i = 0; i < numObjects; ++i) {
-        const ObjectComponent& obj = m_scene.get_component_array<ObjectComponent>()[i];
-        ecs::Entity entity = m_scene.get_entity<ObjectComponent>(i);
-        DEV_ASSERT(m_scene.contains<TransformComponent>(entity));
-        const TransformComponent& transform = *m_scene.get_component<TransformComponent>(entity);
-        DEV_ASSERT(m_scene.contains<MeshComponent>(obj.mesh_id));
-        const MeshComponent& mesh = *m_scene.get_component<MeshComponent>(obj.mesh_id);
-
-        mat4 M = transform.get_world_matrix();
-        AABB aabb = mesh.local_bound;
-        aabb.apply_matrix(M);
-        m_scene.m_bound.union_box(aabb);
-    }
-
     return std::expected<void, std::string>();
 }
 

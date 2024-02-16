@@ -5,6 +5,16 @@
 
 namespace my {
 
+bool TestIntersection::aabb_aabb(const AABB& aabb1, const AABB& aabb2) {
+    AABB tmp{ aabb1 };
+    tmp.intersect_box(aabb2);
+    bool result = true;
+    result = result && tmp.m_min.x < tmp.m_max.x;
+    result = result && tmp.m_min.y < tmp.m_max.y;
+    result = result && tmp.m_min.z < tmp.m_max.z;
+    return result;
+}
+
 bool TestIntersection::ray_aabb(const AABB& aabb, Ray& ray) {
     const vec3 direction = ray.m_end - ray.m_start;
 

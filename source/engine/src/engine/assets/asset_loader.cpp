@@ -144,21 +144,6 @@ std::shared_ptr<File> load_file_sync(const std::string& path) {
     s_glob.text_cache[path] = text;
     return text;
 }
-//
-// auto load_scene_assimp(const std::string& asset_path, void* data) -> std::expected<void, std::string> {
-//    DEV_ASSERT(data);
-//    auto scene = (reinterpret_cast<my::Scene*>(data));
-//
-//    my::SceneImporterAssimp loader(*scene, asset_path);
-//    return loader.import();
-//}
-
-auto load_scene_tinygltf(const std::string& asset_path, void* data) -> std::expected<void, std::string> {
-    DEV_ASSERT(data);
-    auto scene = (reinterpret_cast<my::Scene*>(data));
-    my::SceneImporterTinyGLTF loader(*scene, asset_path);
-    return loader.import();
-}
 
 static void load_scene_internal(LoadTask& task) {
     LOG("[asset_loader] Loading scene '{}'...", task.asset_path);

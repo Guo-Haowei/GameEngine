@@ -1,0 +1,63 @@
+#pragma once
+#include "core/base/noncopyable.h"
+#include "core/math/angle.h"
+#include "core/math/geomath.h"
+
+namespace my {
+
+class Archive;
+
+class Camera : public NonCopyable {
+public:
+    enum : uint32_t {
+        NONE = 0,
+        DIRTY = 1,
+    };
+
+    static constexpr float kDefaultNear = 0.1f;
+    static constexpr float kDefaultFar = 100.0f;
+    static constexpr Degree kDefaultFovy{ 50.0f };
+
+    void update();
+
+    void set_dimension(float width, float height);
+
+    bool is_dirty() const { return m_flags & DIRTY; }
+    void set_dirty(bool dirty = true) { dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
+
+    float get_near() const { return m_near; }
+    float get_far() const { return m_far; }
+    const mat4& get_view_matrix() const { return m_view_matrix; }
+    const mat4& get_projection_matrix() const { return m_projection_matrix; }
+    const mat4& get_projection_view_matrix() const { return m_projection_view_matrix; }
+    const vec3& get_position() const { return m_position; }
+    const vec3& get_right() const { return m_right; }
+    const vec3 get_front() const { return m_front; }
+
+    void serialize(Archive& archive, uint32_t version);
+
+private:
+    uint32_t m_flags = DIRTY;
+
+    Degree m_fovy{ kDefaultFovy };
+    float m_near = kDefaultNear;
+    float m_far = kDefaultFar;
+    float m_width = 0.0f;
+    float m_height = 0.0f;
+    Degree m_pitch;  // x-axis
+    Degree m_yaw;    // y-axis
+    vec3 m_position{ 0 };
+
+    // Non-serlialized
+    vec3 m_front;
+    vec3 m_right;
+
+    mat4 m_view_matrix;
+    mat4 m_projection_matrix;
+    mat4 m_projection_view_matrix;
+
+    friend class Scene;
+    friend class CameraController;
+};
+
+}  // namespace my

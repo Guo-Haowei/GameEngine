@@ -72,7 +72,7 @@ static GLuint create_shader(std::string_view file, GLenum type) {
     if (length > 0) {
         std::vector<char> buffer(length + 1);
         glGetShaderInfoLog(shader, length, nullptr, buffer.data());
-        LOG_ERROR("[glsl] failed to compile shader '{}'\ndetails:\n{}", file, buffer.data());
+        LOG_FATAL("[glsl] failed to compile shader '{}'\ndetails:\n{}", file, buffer.data());
     }
 
     if (status == GL_FALSE) {
@@ -121,7 +121,7 @@ ShaderProgram ShaderProgramManager::create(const ProgramCreateInfo &info) {
     if (length > 0) {
         std::vector<char> buffer(length + 1);
         glGetProgramInfoLog(programID, length, nullptr, buffer.data());
-        LOG_ERROR("[glsl] failed to link program\ndetails:\n{}", buffer.data());
+        LOG_FATAL("[glsl] failed to link program\ndetails:\n{}", buffer.data());
     }
 
     if (status == GL_FALSE) {

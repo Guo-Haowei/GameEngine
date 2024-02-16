@@ -63,7 +63,7 @@ float Shadow(sampler2D shadowMap, const in vec4 position_light, float NdotL
 }
 
 // @TODO: refactor
-vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec4 albedo, vec3 world_position) {
+vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec4 albedo) {
     vec3 Lo = vec3(0.0, 0.0, 0.0);
     const vec3 H = normalize(V + L);
     const float NdotL = max(dot(N, L), 0.0);
@@ -83,27 +83,29 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     const vec3 kS = F;
     const vec3 kD = (1.0 - metallic) * (vec3(1.0) - kS);
 
-    vec3 directLight = (kD * albedo.rgb / PI + specular) * radiance * NdotL;
+    vec3 direct_lighting = (kD * albedo.rgb / PI + specular) * radiance * NdotL;
 
-    float shadow = 0.0;
-#if ENABLE_CSM
-    // float clipSpaceZ = ( c_projection_view_matrix * worldPos ).z;
-    // for ( int idx = 0; idx < NUM_CASCADES; ++idx )
-    // {
-    //     if ( clipSpaceZ <= c_cascade_clip_z[idx + 1] )
-    //     {
-    //         vec4 lightSpacePos = c_light_matricies[idx] * worldPos;
-    //         shadow             = Shadow( c_shadow_map, lightSpacePos, NdotL, idx );
-    //         break;
-    //     }
-    // }
-#else
-    vec4 lightSpacePos = c_light_matricies[0] * vec4(world_position, 1.0);
-    shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
-#endif
-    Lo += (1.0 - shadow) * directLight;
+    return direct_lighting;
+    //     //
+    //     float shadow = 0.0;
+    // #if ENABLE_CSM
+    //     // float clipSpaceZ = ( c_projection_view_matrix * worldPos ).z;
+    //     // for ( int idx = 0; idx < NUM_CASCADES; ++idx )
+    //     // {
+    //     //     if ( clipSpaceZ <= c_cascade_clip_z[idx + 1] )
+    //     //     {
+    //     //         vec4 lightSpacePos = c_light_matricies[idx] * worldPos;
+    //     //         shadow             = Shadow( c_shadow_map, lightSpacePos, NdotL, idx );
+    //     //         break;
+    //     //     }
+    //     // }
+    // #else
+    //     vec4 lightSpacePos = c_sun_light_matricies[0] * vec4(world_position, 1.0);
+    //     shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
+    // #endif
+    //     Lo += (1.0 - shadow) * directLight;
 
-    // @TODO: HACK
-    Lo += 0.2 * albedo.rgb;  // ambient
-    return Lo;
+    //     // @TODO: HACK
+    //     Lo += 0.2 * albedo.rgb;  // ambient
+    //     return Lo;
 }

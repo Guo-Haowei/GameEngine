@@ -5,36 +5,36 @@
 namespace my {
 
 // https://stackoverflow.com/questions/12836967/extracting-view-frustum-planes-hartmann-gribbs-method
-Frustum::Frustum(const mat4& PV) {
-    m_left.m_normal.x = PV[0][3] + PV[0][0];
-    m_left.m_normal.y = PV[1][3] + PV[1][0];
-    m_left.m_normal.z = PV[2][3] + PV[2][0];
-    m_left.m_dist = PV[3][3] + PV[3][0];
+Frustum::Frustum(const mat4& project_view_matrix) {
+    m_left.m_normal.x = project_view_matrix[0][3] + project_view_matrix[0][0];
+    m_left.m_normal.y = project_view_matrix[1][3] + project_view_matrix[1][0];
+    m_left.m_normal.z = project_view_matrix[2][3] + project_view_matrix[2][0];
+    m_left.m_dist = project_view_matrix[3][3] + project_view_matrix[3][0];
 
-    m_right.m_normal.x = PV[0][3] - PV[0][0];
-    m_right.m_normal.y = PV[1][3] - PV[1][0];
-    m_right.m_normal.z = PV[2][3] - PV[2][0];
-    m_right.m_dist = PV[3][3] - PV[3][0];
+    m_right.m_normal.x = project_view_matrix[0][3] - project_view_matrix[0][0];
+    m_right.m_normal.y = project_view_matrix[1][3] - project_view_matrix[1][0];
+    m_right.m_normal.z = project_view_matrix[2][3] - project_view_matrix[2][0];
+    m_right.m_dist = project_view_matrix[3][3] - project_view_matrix[3][0];
 
-    m_top.m_normal.x = PV[0][3] - PV[0][1];
-    m_top.m_normal.y = PV[1][3] - PV[1][1];
-    m_top.m_normal.z = PV[2][3] - PV[2][1];
-    m_top.m_dist = PV[3][3] - PV[3][1];
+    m_top.m_normal.x = project_view_matrix[0][3] - project_view_matrix[0][1];
+    m_top.m_normal.y = project_view_matrix[1][3] - project_view_matrix[1][1];
+    m_top.m_normal.z = project_view_matrix[2][3] - project_view_matrix[2][1];
+    m_top.m_dist = project_view_matrix[3][3] - project_view_matrix[3][1];
 
-    m_bottom.m_normal.x = PV[0][3] + PV[0][1];
-    m_bottom.m_normal.y = PV[1][3] + PV[1][1];
-    m_bottom.m_normal.z = PV[2][3] + PV[2][1];
-    m_bottom.m_dist = PV[3][3] + PV[3][1];
+    m_bottom.m_normal.x = project_view_matrix[0][3] + project_view_matrix[0][1];
+    m_bottom.m_normal.y = project_view_matrix[1][3] + project_view_matrix[1][1];
+    m_bottom.m_normal.z = project_view_matrix[2][3] + project_view_matrix[2][1];
+    m_bottom.m_dist = project_view_matrix[3][3] + project_view_matrix[3][1];
 
-    m_near.m_normal.x = PV[0][3] + PV[0][2];
-    m_near.m_normal.y = PV[1][3] + PV[1][2];
-    m_near.m_normal.z = PV[2][3] + PV[2][2];
-    m_near.m_dist = PV[3][3] + PV[3][2];
+    m_near.m_normal.x = project_view_matrix[0][3] + project_view_matrix[0][2];
+    m_near.m_normal.y = project_view_matrix[1][3] + project_view_matrix[1][2];
+    m_near.m_normal.z = project_view_matrix[2][3] + project_view_matrix[2][2];
+    m_near.m_dist = project_view_matrix[3][3] + project_view_matrix[3][2];
 
-    m_far.m_normal.x = PV[0][3] - PV[0][2];
-    m_far.m_normal.y = PV[1][3] - PV[1][2];
-    m_far.m_normal.z = PV[2][3] - PV[2][2];
-    m_far.m_dist = PV[3][3] - PV[3][2];
+    m_far.m_normal.x = project_view_matrix[0][3] - project_view_matrix[0][2];
+    m_far.m_normal.y = project_view_matrix[1][3] - project_view_matrix[1][2];
+    m_far.m_normal.z = project_view_matrix[2][3] - project_view_matrix[2][2];
+    m_far.m_dist = project_view_matrix[3][3] - project_view_matrix[3][2];
 }
 
 bool Frustum::intersects(const AABB& box) const {

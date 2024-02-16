@@ -2514,6 +2514,13 @@ void draw_grid(const mat4& projection_view_matrix, const mat4& matrix, const flo
                 ImU32 col = IM_COL32(0x80, 0x80, 0x80, 0xFF);
                 col = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? IM_COL32(0x90, 0x90, 0x90, 0xFF) : col;
                 col = (fabsf(f) < FLT_EPSILON) ? IM_COL32(0x40, 0x40, 0x40, 0xFF) : col;
+                if (f == 0.0f) {
+                    if (dir == 1) {
+                        col = IM_COL32(0x90, 0x30, 0x30, 0xFF);
+                    } else {
+                        col = IM_COL32(0x30, 0x30, 0x90, 0xFF);
+                    }
+                }
 
                 float thickness = 1.f;
                 thickness = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? 1.5f : thickness;

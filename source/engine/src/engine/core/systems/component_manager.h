@@ -76,15 +76,18 @@ public:
         merge((ComponentManager<T>&)other);
     }
 
-    // virtual void serialize(wi::Archive& archive, EntitySerializer& seri) = 0;
-    // virtual void Component_Serialize(Entity entity, wi::Archive& archive, EntitySerializer& seri) = 0;
     void remove(const Entity& entity) override {
-        my::unused(entity);
-        DEV_ASSERT(0);
+        auto it = m_lookup.find(entity);
+        if (it == m_lookup.end()) {
+            return;
+        }
+
+        size_t index = it->second;
+        m_lookup.erase(it);
+        DEV_ASSERT_INDEX(index, m_entity_array.size());
+        m_entity_array[index] = Entity::INVALID;
     }
 
-    // virtual void Remove_KeepSorted(Entity entity) = 0;
-    // virtual void MoveItem(size_t index_from, size_t index_to) = 0;
     bool contains(const Entity& entity) const override {
         if (m_lookup.empty()) {
             return false;

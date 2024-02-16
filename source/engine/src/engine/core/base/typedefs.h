@@ -1,8 +1,11 @@
 #pragma once
 
+#define DISABLE_OPTIMIZATION() __pragma(optimize("", off))
+#define ENABLE_OPTIMIZATION()  __pragma(optimize("", on))
+
 #ifdef _STR
 #undef _STR
-#endif  // !_STR
+#endif
 #define _STR(x) #x
 
 #define ON_SCOPE_EXIT(FUNC) auto __on_scope_exit_call = ::my::MakeScopeDrop(FUNC)

@@ -15,41 +15,66 @@ void RenderData::clear() {
     scene = nullptr;
     shadow_pass.clear();
     main_pass.clear();
+    voxel_pass.clear();
 }
 
 void RenderData::update(const Scene* p_scene) {
     clear();
     scene = p_scene;
 
+    // @TODO: HACK
+    Light& light = g_perFrameCache.cache.c_lights[0];
+    Frustum light_frustum(light.light_matricies[0]);
+    Frustum camera_frustum(g_perFrameCache.cache.c_projection_view_matrix);
+
     fill(
         p_scene,
-        g_perFrameCache.cache.c_light_matricies[0],
+        light.light_matricies[0],
+        shadow_pass,
         [](const ObjectComponent& object) {
             return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
         },
-        shadow_pass);
+        [&](const AABB& aabb) {
+            return light_frustum.intersects(aabb);
+        });
     fill(
         p_scene,
         g_perFrameCache.cache.c_projection_view_matrix,
+        voxel_pass,
         [](const ObjectComponent& object) {
             return !(object.flags & ObjectComponent::RENDERABLE);
         },
-        main_pass);
+        [&](const AABB& aabb) {
+            return scene->get_bound().intersects(aabb);
+        });
+    fill(
+        p_scene,
+        g_perFrameCache.cache.c_projection_view_matrix,
+        main_pass,
+        [](const ObjectComponent& object) {
+            return !(object.flags & ObjectComponent::RENDERABLE);
+        },
+        [&](const AABB& aabb) {
+            return camera_frustum.intersects(aabb);
+        });
 }
 
-void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, FilterObjectFunc filter, Pass& pass) {
+void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
     scene = p_scene;
     pass.projection_view_matrix = projection_view_matrix;
     Frustum frustum{ projection_view_matrix };
     uint32_t num_objects = (uint32_t)scene->get_count<ObjectComponent>();
     for (uint32_t i = 0; i < num_objects; ++i) {
-        const ObjectComponent& obj = scene->get_component_array<ObjectComponent>()[i];
-        if (filter(obj)) {
+        ecs::Entity entity = scene->get_entity<ObjectComponent>(i);
+        if (!scene->contains<TransformComponent>(entity)) {
             continue;
         }
 
-        ecs::Entity entity = scene->get_entity<ObjectComponent>(i);
-        DEV_ASSERT(scene->contains<TransformComponent>(entity));
+        const ObjectComponent& obj = scene->get_component_array<ObjectComponent>()[i];
+        if (func1(obj)) {
+            continue;
+        }
+
         const TransformComponent& transform = *scene->get_component<TransformComponent>(entity);
         DEV_ASSERT(scene->contains<MeshComponent>(obj.mesh_id));
         const MeshComponent& mesh = *scene->get_component<MeshComponent>(obj.mesh_id);
@@ -57,7 +82,7 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
         const mat4& world_matrix = transform.get_world_matrix();
         AABB aabb = mesh.local_bound;
         aabb.apply_matrix(world_matrix);
-        if (!frustum.intersects(aabb)) {
+        if (!func2(aabb)) {
             continue;
         }
 

@@ -16,11 +16,6 @@
 namespace my {
 
 Viewer::Viewer(EditorLayer& editor) : Panel("Viewer", editor) {
-    const Scene& scene = SceneManager::get_scene();
-    auto camera_id = scene.get_main_camera();
-    const TransformComponent& transform = *scene.get_component<TransformComponent>(camera_id);
-    // @TODO: fix camera snap bug
-    m_camera_controller.setup(transform);
 }
 
 void Viewer::update_data() {
@@ -42,18 +37,12 @@ void Viewer::update_data() {
     m_focused = ImGui::IsWindowHovered();
 }
 
-void Viewer::update_camera(float dt, CameraComponent& camera, TransformComponent& transform) {
-    if (m_focused) {
-        m_camera_controller.move(dt, camera, transform);
-    }
-}
-
-void Viewer::select_entity(Scene& scene, const CameraComponent& camera) {
+void Viewer::select_entity(Scene& scene, const Camera& camera) {
     if (!m_focused) {
         return;
     }
 
-    if (input::is_button_pressed(MOUSE_BUTTON_LEFT)) {
+    if (input::is_button_pressed(MOUSE_BUTTON_RIGHT)) {
         auto [window_x, window_y] = DisplayServer::singleton().get_window_pos();
         vec2 clicked = input::get_cursor();
         clicked.x = (clicked.x + window_x - m_canvas_min.x) / m_canvas_size.x;
@@ -77,7 +66,7 @@ void Viewer::select_entity(Scene& scene, const CameraComponent& camera) {
     }
 }
 
-void Viewer::draw_gui(Scene& scene, CameraComponent& camera) {
+void Viewer::draw_gui(Scene& scene, Camera& camera) {
     const mat4 view_matrix = camera.get_view_matrix();
     const mat4 projection_matrix = camera.get_projection_matrix();
     const mat4 projection_view_matrix = camera.get_projection_view_matrix();
@@ -149,13 +138,13 @@ void Viewer::draw_gui(Scene& scene, CameraComponent& camera) {
 }
 
 void Viewer::update_internal(Scene& scene) {
-    auto camera_id = scene.get_main_camera();
-    CameraComponent& camera = *scene.get_component<CameraComponent>(camera_id);
-    TransformComponent& camera_transform = *scene.get_component<TransformComponent>(camera_id);
+    Camera& camera = *scene.m_camera;
 
     update_data();
 
-    update_camera(scene.m_delta_time, camera, camera_transform);
+    if (m_focused) {
+        m_camera_controller.move(scene.m_delta_time, camera);
+    }
 
     select_entity(scene, camera);
 

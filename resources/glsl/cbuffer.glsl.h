@@ -1,12 +1,15 @@
 #ifndef CBUFFER_INCLUDED
 #define CBUFFER_INCLUDED
 
-#define NUM_CASCADES    3
-#define NUM_SSAO_KERNEL 64
+#define SHADER_LIGHT_MAX       16
+#define SHADER_BONE_MAX        128
+#define SHADER_SSAO_KERNEL_MAX 64
 
-#define MAX_MATERIALS   300
-#define MAX_LIGHT_ICON  4
-#define MAX_BONE_NUMBER 128
+// @TODO: rename
+#define NUM_CASCADES 3
+
+#define MAX_MATERIALS  300
+#define MAX_LIGHT_ICON 4
 
 // constant buffer
 #ifdef __cplusplus
@@ -32,22 +35,33 @@ typedef struct {
 #define Sampler2DArray sampler2D
 #endif
 
+struct Light {
+    vec3 color;
+    int type;
+    vec3 position;  // direction
+    int cast_shadow;
+    float atten_constant;
+    float atten_linear;
+    float atten_quadratic;
+    float padding;
+    mat4 light_matricies[NUM_CASCADES];
+    // @TODO: shadow map
+};
+
 CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     mat4 c_view_matrix;
     mat4 c_projection_matrix;
     mat4 c_projection_view_matrix;
 
+    Light c_lights[SHADER_LIGHT_MAX];
+
+    vec3 _c_padding_0;
+    int c_light_count;
+
     vec3 c_camera_position;
-    int c_debug_csm;
-
-    vec3 c_sun_direction;
-    int c_enable_vxgi;
-
-    vec3 c_light_color;
     float c_voxel_size;
 
     vec4 c_cascade_clip_z;
-    mat4 c_light_matricies[NUM_CASCADES];
 
     vec3 c_world_center;
     float c_world_size_half;
@@ -62,9 +76,10 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     int c_ssao_noise_size;
     float c_texel_size;
 
-    vec2 _c_padding0;
     int c_enable_ssao;
     int c_enable_fxaa;
+    int c_enable_vxgi;
+    int c_debug_csm;
 };
 
 CONSTANT_BUFFER(PerBatchConstantBuffer, 1) {
@@ -86,7 +101,7 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
 };
 
 CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
-    vec4 c_ssao_kernels[NUM_SSAO_KERNEL];
+    vec4 c_ssao_kernels[SHADER_SSAO_KERNEL_MAX];
     sampler2D c_shadow_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
@@ -105,7 +120,7 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
 };
 
 CONSTANT_BUFFER(BoneConstantBuffer, 4) {
-    mat4 c_bones[MAX_BONE_NUMBER];
+    mat4 c_bones[SHADER_BONE_MAX];
 };
 
 #endif

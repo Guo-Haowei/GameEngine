@@ -4,9 +4,6 @@
 
 namespace my {
 
-// @TODO: version control
-[[maybe_unused]] static inline uint32_t VERSION = 1;
-
 void NameComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << m_name;
@@ -32,25 +29,6 @@ void TransformComponent::serialize(Archive& archive, uint32_t) {
 
 void HierarchyComponent::serialize(Archive& archive, uint32_t) {
     m_parent_id.serialize(archive);
-}
-
-void CameraComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
-        archive << m_flags;
-        archive << m_near;
-        archive << m_far;
-        archive << m_fovy;
-        archive << m_width;
-        archive << m_height;
-    } else {
-        archive >> m_flags;
-        archive >> m_near;
-        archive >> m_far;
-        archive >> m_fovy;
-        archive >> m_width;
-        archive >> m_height;
-        set_dirty();
-    }
 }
 
 void MeshComponent::serialize(Archive& archive, uint32_t) {
@@ -109,15 +87,22 @@ void MaterialComponent::serialize(Archive& archive, uint32_t) {
     // @TODO: request image
 }
 
-void LightComponent::serialize(Archive& archive, uint32_t) {
+void LightComponent::serialize(Archive& archive, uint32_t version) {
+    unused(version);
     if (archive.is_write_mode()) {
         archive << type;
         archive << color;
         archive << energy;
+        archive << atten.constant;
+        archive << atten.linear;
+        archive << atten.quadratic;
     } else {
         archive >> type;
         archive >> color;
         archive >> energy;
+        archive >> atten.constant;
+        archive >> atten.linear;
+        archive >> atten.quadratic;
     }
 }
 

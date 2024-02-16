@@ -4,6 +4,7 @@
 
 #include "core/framework/common_dvars.h"
 #include "core/framework/scene_manager.h"
+#include "core/input/input.h"
 #include "platform/windows/dialog.h"
 
 namespace my {
@@ -80,6 +81,13 @@ static void save_project(bool open_dialog) {
 }
 
 void menu_bar() {
+    // @TODO: input system, key s handled here, don't handle it in viewer
+    if (input::is_key_down(KEY_LEFT_CONTROL)) {
+        if (input::is_key_pressed(KEY_S)) {
+            save_project(false);
+        }
+    }
+
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Save", "Ctrl+S")) {

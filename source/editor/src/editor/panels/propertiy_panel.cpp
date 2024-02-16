@@ -166,11 +166,22 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::EndPopup();
     }
 
-    LightComponent* lightComponent = scene.get_component<LightComponent>(id);
-    DrawComponent("Light", lightComponent, [&](LightComponent& light) {
-        ImGui::Text("Light Component");
+    LightComponent* light_component = scene.get_component<LightComponent>(id);
+    DrawComponent("Light", light_component, [&](LightComponent& light) {
+        static const char* types[] = {
+            "omni light",
+            "point light"
+        };
+
+        if (ImGui::Combo("MyCombo", (int*)(&light_component->type), types, IM_ARRAYSIZE(types))) {
+            // @TODO: set dirty
+        }
+
         ImGui::DragFloat3("color:", &light.color.x);
         ImGui::DragFloat("energy:", &light.energy);
+        ImGui::InputFloat("atten.constant", &light.atten.constant);
+        ImGui::DragFloat("atten.linear", &light.atten.linear, 0.01f, 0.0f, 1.0f);
+        ImGui::DragFloat("atten.quadratic", &light.atten.quadratic, 0.01f, 0.0f, 1.0f);
     });
 
     TransformComponent* transformComponent = scene.get_component<TransformComponent>(id);
@@ -180,25 +191,36 @@ void PropertyPanel::update_internal(Scene& scene) {
         vec3 rotation;
         vec3 scale;
         // @TODO: fix
+        // DO NOT USE IMGUIZMO
         ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transformMatrix), glm::value_ptr(translation),
                                               glm::value_ptr(rotation), glm::value_ptr(scale));
 
         bool dirty = false;
-        bool wantTranslation = true;
-        bool wantRotation = true;
-        bool wantScale = true;
-        if (lightComponent) {
-            wantTranslation = false;
-            wantScale = false;
+        bool want_translation = true;
+        bool want_rotation = true;
+        bool want_scale = true;
+        if (light_component) {
+            switch (light_component->type) {
+                case LightComponent::LIGHT_TYPE_OMNI:
+                    want_translation = false;
+                    want_scale = false;
+                    break;
+                case LightComponent::LIGHT_TYPE_POINT:
+                    want_rotation = false;
+                    want_scale = false;
+                    break;
+                default:
+                    break;
+            }
         }
 
-        if (wantTranslation) {
+        if (want_translation) {
             dirty |= draw_vec3_control("translation", translation);
         }
-        if (wantRotation) {
+        if (want_rotation) {
             dirty |= draw_vec3_control("rotation", rotation);
         }
-        if (wantScale) {
+        if (want_scale) {
             dirty |= draw_vec3_control("scale", scale, 1.0f);
         }
         if (dirty) {
