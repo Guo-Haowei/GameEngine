@@ -2,7 +2,8 @@
 #include "core/base/noncopyable.h"
 #include "core/math/ray.h"
 #include "core/systems/component_manager.h"
-#include "scene_components.h"
+#include "scene/camera.h"
+#include "scene/scene_components.h"
 
 namespace my {
 
@@ -129,7 +130,6 @@ public:                                                                         
     REGISTER_COMPONENT(MaterialComponent, 0);
     REGISTER_COMPONENT(MeshComponent, 0);
     REGISTER_COMPONENT(ObjectComponent, 0);
-    REGISTER_COMPONENT(CameraComponent, 0);
     REGISTER_COMPONENT(LightComponent, 0);
     REGISTER_COMPONENT(ArmatureComponent, 0);
     REGISTER_COMPONENT(AnimationComponent, 0);
@@ -141,16 +141,16 @@ public:                                                                         
 
     void merge(Scene& other);
 
+    void create_camera(float width, float height,
+                       float near_plane = Camera::kDefaultNear,
+                       float far_plane = Camera::kDefaultFar,
+                       Degree fovy = Camera::kDefaultFovy);
+
     ecs::Entity create_name_entity(const std::string& name);
     ecs::Entity create_transform_entity(const std::string& name);
     ecs::Entity create_object_entity(const std::string& name);
     ecs::Entity create_mesh_entity(const std::string& name);
     ecs::Entity create_material_entity(const std::string& name);
-
-    ecs::Entity create_camera_entity(const std::string& name, float width, float height,
-                                     float nearPlane = CameraComponent::DEFAULT_NEAR,
-                                     float farPlane = CameraComponent::DEFAULT_FAR,
-                                     Degree fovy = CameraComponent::DEFAULT_FOV);
 
     ecs::Entity create_pointlight_entity(const std::string& name, const vec3& position, const vec3& color = vec3(1),
                                          const float energy = 10.0f);
@@ -175,8 +175,6 @@ public:                                                                         
 
     void remove_entity(ecs::Entity entity);
 
-    ecs::Entity get_main_camera() const;
-
     struct RayIntersectionResult {
         ecs::Entity entity;
     };
@@ -187,6 +185,7 @@ public:                                                                         
     // @TODO: refactor
     ecs::Entity m_root;
     float m_delta_time = 0.0f;
+    std::shared_ptr<Camera> m_camera;
 
 private:
     void update_transformation(uint32_t index);

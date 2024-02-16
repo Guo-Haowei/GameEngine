@@ -100,59 +100,6 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------------
-// Camera Component
-//--------------------------------------------------------------------------------------------------
-class CameraComponent {
-public:
-    enum : uint32_t {
-        NONE = 0,
-        DIRTY = 1,
-    };
-
-    static constexpr float DEFAULT_NEAR = 0.1f;
-    static constexpr float DEFAULT_FAR = 100.0f;
-    static constexpr Degree DEFAULT_FOV{ 50.0f };
-
-    void update(const mat4& world_matrix);
-
-    void set_dimension(float width, float height);
-
-    bool is_dirty() const { return m_flags & DIRTY; }
-    void set_dirty(bool dirty = true) { dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
-
-    float get_near() const { return m_near; }
-    float get_far() const { return m_far; }
-    const mat4& get_view_matrix() const { return m_view_matrix; }
-    const mat4& get_projection_matrix() const { return m_projection_matrix; }
-    const mat4& get_projection_view_matrix() const { return m_projection_view_matrix; }
-    const vec3& get_position() const { return m_position; }
-    const vec3& get_front() const { return m_front; }
-    const vec3& get_right() const { return m_right; }
-
-    void serialize(Archive& archive, uint32_t version);
-
-private:
-    uint32_t m_flags = DIRTY;
-
-    Degree m_fovy{ DEFAULT_FOV };
-    float m_near = DEFAULT_NEAR;
-    float m_far = DEFAULT_FAR;
-    float m_width = 0.0f;
-    float m_height = 0.0f;
-
-    // Non-serlialized
-    vec3 m_position;
-    vec3 m_front;
-    vec3 m_right;
-
-    mat4 m_view_matrix;
-    mat4 m_projection_matrix;
-    mat4 m_projection_view_matrix;
-
-    friend class Scene;
-};
-
-//--------------------------------------------------------------------------------------------------
 // Mesh Component
 //--------------------------------------------------------------------------------------------------
 struct MeshComponent {

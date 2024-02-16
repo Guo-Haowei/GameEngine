@@ -1,8 +1,5 @@
 #include "Scene.h"
 
-#include <thread>
-
-// #include "Core/Timer.h"
 #include "core/io/archive.h"
 #include "core/systems/job_system.h"
 
@@ -56,12 +53,8 @@ void Scene::update(float dt) {
     // update bounding box
     run_object_update_system(ctx);
 
-    // update camera
-    for (int idx = 0; idx < get_count<CameraComponent>(); ++idx) {
-        Entity camera_id = get_entity<CameraComponent>(idx);
-        CameraComponent& camera = get_component_array<CameraComponent>()[idx];
-        TransformComponent* camera_transform = get_component<TransformComponent>(camera_id);
-        camera.update(camera_transform->get_world_matrix());
+    if (m_camera) {
+        m_camera->update();
     }
 }
 
@@ -74,6 +67,23 @@ void Scene::merge(Scene& other) {
     }
 
     m_bound.union_box(other.m_bound);
+}
+
+void Scene::create_camera(float width,
+                          float height,
+                          float near_plane,
+                          float far_plane,
+                          Degree fovy) {
+    m_camera = std::make_shared<Camera>();
+    m_camera->m_width = width;
+    m_camera->m_height = height;
+    m_camera->m_near = near_plane;
+    m_camera->m_far = far_plane;
+    m_camera->m_fovy = fovy;
+    m_camera->m_pitch = Degree{ -10.0f };
+    m_camera->m_yaw = Degree{ -90.0f };
+    m_camera->m_position = vec3{ 0, 2, 6 };
+    m_camera->set_dirty();
 }
 
 Entity Scene::create_name_entity(const std::string& name) {
@@ -104,24 +114,6 @@ Entity Scene::create_mesh_entity(const std::string& name) {
 Entity Scene::create_material_entity(const std::string& name) {
     Entity entity = create_name_entity(name);
     create<MaterialComponent>(entity);
-    return entity;
-}
-
-Entity Scene::create_camera_entity(const std::string& name,
-                                   float width,
-                                   float height,
-                                   float near_plane,
-                                   float far_plane,
-                                   Degree fovy) {
-    Entity entity = create_name_entity(name);
-    CameraComponent& camera = create<CameraComponent>(entity);
-    camera.m_width = width;
-    camera.m_height = height;
-    camera.m_near = near_plane;
-    camera.m_far = far_plane;
-    camera.m_fovy = fovy;
-    camera.set_dirty();
-    create<TransformComponent>(entity);
     return entity;
 }
 
@@ -534,15 +526,17 @@ bool Scene::serialize(Archive& archive) {
         archive >> seed;
         Entity::set_seed(seed);
 
-        // scene data
-        archive >> m_root;
     } else {
         archive << kSceneMagicNumber;
         archive << kSceneVersion;
         archive << Entity::get_seed();
-        // scene data
-        archive << m_root;
     }
+
+    m_root.serialize(archive);
+    if (is_read_mode) {
+        m_camera = std::make_shared<Camera>();
+    }
+    m_camera->serialize(archive, version);
 
     serialize<NameComponent>(archive, version);
     serialize<TransformComponent>(archive, version);
@@ -550,7 +544,6 @@ bool Scene::serialize(Archive& archive) {
     serialize<MaterialComponent>(archive, version);
     serialize<MeshComponent>(archive, version);
     serialize<ObjectComponent>(archive, version);
-    serialize<CameraComponent>(archive, version);
     serialize<LightComponent>(archive, version);
     serialize<ArmatureComponent>(archive, version);
     serialize<AnimationComponent>(archive, version);
@@ -623,11 +616,6 @@ void Scene::run_object_update_system(jobsystem::Context&) {
         aabb.apply_matrix(M);
         m_bound.union_box(aabb);
     }
-}
-
-Entity Scene::get_main_camera() const {
-    DEV_ASSERT(get_count<CameraComponent>());
-    return get_entity<CameraComponent>(0);
 }
 
 }  // namespace my

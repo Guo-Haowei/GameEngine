@@ -28,6 +28,8 @@ static bool deserialize_scene(Scene* scene, const std::string& path) {
 static void create_empty_scene(Scene* scene) {
     Entity::set_seed(Entity::INVALID_ID + 1);
 
+    scene->create_camera(800.0f, 600.0f);
+
     auto root = scene->create_transform_entity("world");
     scene->m_root = root;
     {
@@ -38,11 +40,6 @@ static void create_empty_scene(Scene* scene) {
         transform->set_local_transform(r);
 
         scene->attach_component(light, root);
-    }
-
-    {
-        auto camera = scene->create_camera_entity("camera", 800.0f, 600.0f);
-        scene->attach_component(camera);
     }
 }
 
@@ -168,8 +165,7 @@ void SceneManager::update(float dt) {
     auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
 
     // @TODO: refactor this
-    Entity camera_id = scene.get_main_camera();
-    CameraComponent* camera = scene.get_component<CameraComponent>(camera_id);
+    auto camera = scene.m_camera;
     DEV_ASSERT(camera);
 
     if (frameW > 0 && frameH > 0) {
