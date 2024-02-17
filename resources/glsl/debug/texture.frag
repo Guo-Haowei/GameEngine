@@ -26,10 +26,6 @@ void main() {
             out_color = vec4(texture(c_gbuffer_normal_roughness_map, pass_uv).aaa, 1.0);
             break;
         }
-        case 8: {
-            out_color = vec4(texture(c_shadow_map, pass_uv).rrr, 1.0);
-            break;
-        }
         case 9: {
             out_color = vec4(texture(c_ssao_map, pass_uv).rrr, 1.0);
             break;

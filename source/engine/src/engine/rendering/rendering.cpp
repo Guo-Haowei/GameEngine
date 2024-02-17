@@ -18,6 +18,102 @@ namespace my {
 
 [[nodiscard]] static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plane, float p_far_plane, const Camera& p_camera) {
     // frustum corners in camera space
+    Degree half_fovy = p_camera.get_fovy() * 0.5f;
+    Degree half_fovx = p_camera.get_fovy() * 0.5f * p_camera.get_aspect();
+    float tangent_half_fovy = half_fovy.tan();
+    float tangent_half_fovx = half_fovx.tan();
+
+    float xn = tangent_half_fovx * p_near_plane;
+    float yn = tangent_half_fovy * p_near_plane;
+    float xf = tangent_half_fovx * p_far_plane;
+    float yf = tangent_half_fovy * p_far_plane;
+
+    // clang-foramt off
+    enum { A = 0,
+           B,
+           C,
+           D,
+           E,
+           F,
+           G,
+           H };
+    // clang-foramt on
+
+    std::array<vec4, 8> corners{
+        // near face
+        vec4(+xn, +yn, p_near_plane, 1.0),
+        vec4(-xn, +yn, p_near_plane, 1.0),
+        vec4(+xn, -yn, p_near_plane, 1.0),
+        vec4(-xn, -yn, p_near_plane, 1.0),
+
+        // far face
+        vec4(+xf, +yf, p_far_plane, 1.0),
+        vec4(-xf, +yf, p_far_plane, 1.0),
+        vec4(+xf, -yf, p_far_plane, 1.0),
+        vec4(-xf, -yf, p_far_plane, 1.0)
+    };
+
+    vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
+    // vec3 light_up = glm::normalize(p_light_matrix * vec4(0, 1, 0, 0));
+    vec3 light_up = vec3(0, 1, 0);
+    mat4 light_view = glm::lookAt(2.0f * light_dir, vec3(0), light_up);
+    // mat4 light_view = glm::lookAt(100.0f * light_dir, vec3(0), light_up);
+    mat4 inv_view = glm::inverse(p_camera.get_view_matrix());
+
+    AABB aabb;
+    // frustum in world space, then to light space
+    for (vec4& point : corners) {
+        point = light_view * inv_view * point;
+        aabb.expand_point(point);
+    }
+
+    float min_x = aabb.get_min().x;
+    float max_x = aabb.get_max().x;
+    float min_y = aabb.get_min().y;
+    float max_y = aabb.get_max().y;
+    float min_z = aabb.get_min().z;
+    float max_z = aabb.get_max().z;
+
+    min_z -= 20.f;
+    max_z += 20.f;
+
+    // constexpr float z_mult = 10.0f;
+    // if (min_z < 0) {
+    //     min_z *= z_mult;
+    // } else {
+    //     min_z /= z_mult;
+    // }
+    // if (max_z < 0) {
+    //     max_z /= z_mult;
+    // } else {
+    //     max_z *= z_mult;
+    // }
+
+    mat4 light_projection = glm::ortho(min_x, max_x, min_y, max_y, min_z, max_z);
+    return light_projection * light_view;
+
+    /*
+      F(-x,+y)_______________________ E(+x,+y)
+            /|                      /|
+           / |                     / |
+          /  |                    /  |
+       -x/___|___________________/A(+x,+y)
+         |   |                   |   |
+         |   |                   |   |
+         |   |                   |   |
+         |   |___________________|___| <--- far
+         |  /                    |  /
+         | /                     | /
+        D|/______________________| <--- near
+     */
+
+    // vec3 center = 0.5f * (obb[E] + obb[D]);
+
+    // mat4 light_view = glm::lookAt(center + yf * light_dir, center, )
+
+    // now we want the light to be perpendicular
+
+#if 0
     mat4 proj = glm::perspective(p_camera.get_fovy().to_rad(), p_camera.get_aspect(), p_near_plane, p_far_plane);
     const auto inv = glm::inverse(proj * p_camera.get_view_matrix());
 
@@ -52,36 +148,16 @@ namespace my {
         aabb.expand_point(corner);
     }
 
-    float min_x = aabb.get_min().x;
-    float max_x = aabb.get_max().x;
-    float min_y = aabb.get_min().y;
-    float max_y = aabb.get_max().y;
-    float min_z = aabb.get_min().z;
-    float max_z = aabb.get_max().z;
+    //constexpr float factor = 0.3f;
+    //float size_x = max_x - min_x;
+    //float size_y = max_y - min_y;
+    //min_x -= factor * size_x;
+    //max_x += factor * size_x;
+    //min_y -= factor * size_y;
+    //max_y += factor * size_y;
 
-    constexpr float z_mult = 10.0f;
-    if (min_z < 0) {
-        min_z *= z_mult;
-    } else {
-        min_z /= z_mult;
-    }
-    if (max_z < 0) {
-        max_z /= z_mult;
-    } else {
-        max_z *= z_mult;
-    }
-    constexpr float factor = 0.3f;
-    float size_x = max_x - min_x;
-    float size_y = max_y - min_y;
-    min_x -= factor * size_x;
-    max_x += factor * size_x;
-    min_y -= factor * size_y;
-    max_y += factor * size_y;
 
-    const mat4 light_projection = glm::ortho(min_x, max_x, min_y, max_y, min_z, max_z);
-    return light_projection * light_view;
-
-#if 0
+//#if 0
     const glm::mat4 light_projection_matrix = glm::ortho(min_x, max_x, min_y, max_y, min_z, max_z);
 
     const mat4 projection_matrix = glm::perspective(p_camera.get_fovy().to_rad(), p_camera.get_aspect(), p_near_plane, p_far_plane);
@@ -111,7 +187,7 @@ namespace my {
     std::vector<glm::mat4> ret;
     for (int i = 0; i < SC_NUM_CASCADES; ++i) {
         float z_near = p_camera.get_near();
-        z_near = i == 0 ? z_near : p_cascade_end[i - 1];
+        // z_near = i == 0 ? z_near : p_cascade_end[i - 1];
         ret.push_back(get_light_space_matrix(p_light_matrix, z_near, p_cascade_end[i], p_camera));
     }
     return ret;
@@ -152,7 +228,7 @@ void fill_constant_buffers(const Scene& scene) {
         switch (light_component.type) {
             case LightComponent::LIGHT_TYPE_OMNI: {
                 mat4 light_matrix = light_transform->get_local_matrix();
-                vec3 light_dir = glm::normalize(light_matrix * vec4(0, 1, 0, 0));
+                vec3 light_dir = glm::normalize(light_matrix * vec4(0, 0, 1, 0));
                 light.cast_shadow = true;
                 light.position = light_dir;
 

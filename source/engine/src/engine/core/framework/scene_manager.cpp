@@ -35,8 +35,7 @@ static void create_empty_scene(Scene* scene) {
         auto light = scene->create_omnilight_entity("omni light", vec3(1), 20.f);
         auto transform = scene->get_component<TransformComponent>(light);
         DEV_ASSERT(transform);
-        mat4 r = glm::rotate(glm::radians(30.0f), glm::vec3(0, 0, 1));
-        transform->set_local_transform(r);
+        transform->rotate(vec3(glm::radians(80.0f), 0.0f, 0.0f));
 
         scene->attach_component(light, root);
     }

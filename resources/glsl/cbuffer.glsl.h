@@ -103,7 +103,8 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
 
 CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
     vec4 c_ssao_kernels[SC_NUM_SSAO_KERNELS];
-    sampler2D c_shadow_map;
+    sampler2D _c_padding2;
+    // sampler2D c_shadow_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
     sampler3D c_voxel_emissive_map;
@@ -115,6 +116,7 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
     sampler2D c_kernel_noise_map;
     sampler2D c_fxaa_image;
     sampler2D c_fxaa_input_image;
+    Sampler2DArray c_shadow_maps[SC_NUM_CASCADES];
     Sampler2DArray c_albedo_maps[MAX_MATERIALS];
     Sampler2DArray c_normal_maps[MAX_MATERIALS];
     Sampler2DArray c_pbr_maps[MAX_MATERIALS];

@@ -329,7 +329,9 @@ void GraphicsManager::createGpuResources() {
         }
     };
 
-    make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
+    for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
+        make_resident(RT_RES_SHADOW_MAP + std::to_string(idx), cache.c_shadow_maps[idx].data);
+    }
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_FXAA, cache.c_fxaa_image);
     make_resident(RT_RES_GBUFFER_POSITION, cache.c_gbuffer_position_metallic_map);

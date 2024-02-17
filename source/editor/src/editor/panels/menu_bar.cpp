@@ -159,27 +159,6 @@ void MenuBar::update(Scene&) {
             }
             ImGui::EndMenu();
         }
-        ImGui::Separator();
-        if (ImGui::BeginMenu("Windows")) {
-            if (ImGui::BeginMenu("Viewer")) {
-                int debug_texture = DVAR_GET_INT(r_debug_texture);
-                int old_value = debug_texture;
-                ImGui::RadioButton("Final image", &debug_texture, DISPLAY_FXAA_IMAGE);
-                ImGui::RadioButton("Depth Map", &debug_texture, DISPLAY_GBUFFER_DEPTH);
-
-                ImGui::RadioButton("Voxel: Color", &debug_texture, DISPLAY_GBUFFER_BASE_COLOR);
-                ImGui::RadioButton("Voxel: Normal", &debug_texture, DISPLAY_GBUFFER_NORMAL);
-
-                ImGui::RadioButton("SSAO Map", &debug_texture, DISPLAY_SSAO);
-                ImGui::RadioButton("Shadow Map", &debug_texture, DISPLAY_SHADOW_MAP);
-                ImGui::EndMenu();
-                if (debug_texture != old_value) {
-                    DVAR_SET_INT(r_debug_texture, debug_texture);
-                    m_editor.set_displayed_image(get_displayed_image(debug_texture));
-                }
-            }
-            ImGui::EndMenu();
-        }
         ImGui::EndMenuBar();
     }
 }

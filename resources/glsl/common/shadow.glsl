@@ -11,7 +11,7 @@ int find_cascade(const in vec3 p_pos_world) {
     return SC_NUM_CASCADES - 1;
 }
 
-float cascade_shadow(sampler2D p_shadow_map,
+float cascade_shadow(sampler2D p_shadow_maps,
                      const in vec3 p_pos_world,
                      float p_NdotL,
                      int p_level) {
@@ -20,25 +20,24 @@ float cascade_shadow(sampler2D p_shadow_map,
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
     if (current_depth > 1.0) {
-        return 1.0;
+        return 0.0;
     }
 
-    int x = p_level % 2;
-    int y = 1 - p_level / 2;
-    coords.xy += vec2(x, y);
-    coords *= 0.5;
+    float closest_depth = texture(p_shadow_maps, coords.xy).r;
+    return current_depth > closest_depth ? 1.0 : 0.0;
 
+#if 0
     float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(p_shadow_map, 0);
+    ivec2 i_texel_size = textureSize(p_shadow_maps, 0);
+    vec2 texel_size = 1.0 / vec2(i_texel_size.x, i_texel_size.y);
 
     float bias = max(0.005 * (1.0 - p_NdotL), 0.0005);
 
     const int SAMPLE_STEP = 1;
     for (int x = -SAMPLE_STEP; x <= SAMPLE_STEP; ++x) {
         for (int y = -SAMPLE_STEP; y <= SAMPLE_STEP; ++y) {
-            vec2 offset = vec2(x, y) * texelSize;
-            float closest_depth = texture(p_shadow_map, coords.xy + offset).r;
-
+            vec2 offset = vec2(x, y) * texel_size;
+            float closest_depth = texture(p_shadow_maps, coords.xy + offset).r;
             shadow += current_depth - bias > closest_depth ? 1.0 : 0.0;
         }
     }
@@ -46,4 +45,5 @@ float cascade_shadow(sampler2D p_shadow_map,
     const float samples = float(2 * SAMPLE_STEP + 1);
     shadow /= samples * samples;
     return shadow;
+#endif
 }

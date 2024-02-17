@@ -8,6 +8,7 @@
 #include "panels/animation_panel.h"
 #include "panels/console_panel.h"
 #include "panels/debug_panel.h"
+#include "panels/debug_texture.h"
 #include "panels/hierarchy_panel.h"
 #include "panels/propertiy_panel.h"
 #include "panels/render_graph_editor.h"
@@ -21,6 +22,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<AnimationPanel>(*this));
     add_panel(std::make_shared<ConsolePanel>(*this));
     add_panel(std::make_shared<DebugPanel>(*this));
+    add_panel(std::make_shared<DebugTexturePanel>(*this));
     add_panel(std::make_shared<HierarchyPanel>(*this));
     add_panel(std::make_shared<PropertyPanel>(*this));
     add_panel(std::make_shared<Viewer>(*this));

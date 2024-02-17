@@ -58,6 +58,7 @@ public:
     float get_degree() const { return m_value; }
     float sin() const { return glm::sin(to_rad()); }
     float cos() const { return glm::cos(to_rad()); }
+    float tan() const { return glm::tan(to_rad()); }
 
 private:
     float m_value;
@@ -105,6 +106,7 @@ public:
     float get_rad() const { return m_value; }
     float sin() const { return glm::sin(m_value); }
     float cos() const { return glm::cos(m_value); }
+    float tan() const { return glm::tan(m_value); }
 
 private:
     float m_value;
