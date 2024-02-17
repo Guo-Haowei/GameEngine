@@ -26,38 +26,6 @@ float geometrySmith(float NdotV, float NdotL, float roughness) {
 
 vec3 fresnelSchlick(float cosTheta, const in vec3 F0) { return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0); }
 
-// no filter
-float Shadow(sampler2D shadowMap, const in vec4 position_light, float NdotL
-             //, int level
-) {
-    vec3 coords = position_light.xyz / position_light.w;
-    coords = 0.5 * coords + 0.5;
-
-    // coords.x /= float( SC_NUM_CASCADES );
-    // coords.x += float( level ) / float( SC_NUM_CASCADES );
-
-    float current_depth = coords.z;
-
-    float shadow = 0.0;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-
-    float bias = max(0.005 * (1.0 - NdotL), 0.0005);
-
-    const int SAMPLE_STEP = 1;
-    for (int x = -SAMPLE_STEP; x <= SAMPLE_STEP; ++x) {
-        for (int y = -SAMPLE_STEP; y <= SAMPLE_STEP; ++y) {
-            vec2 offset = vec2(x, y) * texelSize;
-            float closest_depth = texture(shadowMap, coords.xy + offset).r;
-
-            shadow += coords.z - bias > closest_depth ? 1.0 : 0.0;
-        }
-    }
-
-    const float samples = float(2 * SAMPLE_STEP + 1);
-    shadow /= samples * samples;
-    return shadow;
-}
-
 // @TODO: refactor
 vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec4 albedo) {
     vec3 Lo = vec3(0.0, 0.0, 0.0);
@@ -82,26 +50,4 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     vec3 direct_lighting = (kD * albedo.rgb / PI + specular) * radiance * NdotL;
 
     return direct_lighting;
-    //     //
-    //     float shadow = 0.0;
-    // #if ENABLE_CSM
-    //     // float clipSpaceZ = ( c_projection_view_matrix * worldPos ).z;
-    //     // for ( int idx = 0; idx < SC_NUM_CASCADES; ++idx )
-    //     // {
-    //     //     if ( clipSpaceZ <= c_cascade_clip_z[idx + 1] )
-    //     //     {
-    //     //         vec4 lightSpacePos = c_light_matricies[idx] * worldPos;
-    //     //         shadow             = Shadow( c_shadow_map, lightSpacePos, NdotL, idx );
-    //     //         break;
-    //     //     }
-    //     // }
-    // #else
-    //     vec4 lightSpacePos = c_sun_light_matricies[0] * vec4(world_position, 1.0);
-    //     shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
-    // #endif
-    //     Lo += (1.0 - shadow) * directLight;
-
-    //     // @TODO: HACK
-    //     Lo += 0.2 * albedo.rgb;  // ambient
-    //     return Lo;
 }

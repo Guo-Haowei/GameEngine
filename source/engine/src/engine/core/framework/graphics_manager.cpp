@@ -1,11 +1,13 @@
 #pragma once
 #include "graphics_manager.h"
 
+// @TODO: remove
 #include <random>
 
 #include "core/math/geometry.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/render_data.h"
+#include "rendering/rendering.h"
 /////
 #include "core/base/rid_owner.h"
 #include "core/framework/scene_manager.h"
@@ -397,6 +399,8 @@ uint32_t GraphicsManager::get_final_image() const {
 
 void GraphicsManager::render() {
     Scene& scene = SceneManager::singleton().get_scene();
+    fill_constant_buffers(scene);
+
     m_render_data->update(&scene);
 
     g_perFrameCache.Update();

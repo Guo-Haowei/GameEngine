@@ -13,7 +13,9 @@ namespace my {
 
 void RenderData::clear() {
     scene = nullptr;
-    shadow_pass.clear();
+    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+        shadow_passes[i].clear();
+    }
     main_pass.clear();
     voxel_pass.clear();
 }
@@ -22,22 +24,26 @@ void RenderData::update(const Scene* p_scene) {
     clear();
     scene = p_scene;
 
-    // main light
+    // cascaded shadow map
+    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+        mat4 light_matrix = g_perFrameCache.cache.c_main_light_matrices[i];
+        Frustum light_frustum(light_matrix);
+        fill(
+            p_scene,
+            light_matrix,
+            shadow_passes[i],
+            [](const ObjectComponent& object) {
+                return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
+            },
+            [&](const AABB& aabb) {
+                return light_frustum.intersects(aabb);
+            });
+    }
 
     // @TODO: HACK
-    Frustum light_frustum(g_perFrameCache.cache.c_main_light_matrices[0]);
     Frustum camera_frustum(g_perFrameCache.cache.c_projection_view_matrix);
 
-    fill(
-        p_scene,
-        g_perFrameCache.cache.c_main_light_matrices[0],
-        shadow_pass,
-        [](const ObjectComponent& object) {
-            return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
-        },
-        [&](const AABB& aabb) {
-            return light_frustum.intersects(aabb);
-        });
+    // main pass
     fill(
         p_scene,
         g_perFrameCache.cache.c_projection_view_matrix,

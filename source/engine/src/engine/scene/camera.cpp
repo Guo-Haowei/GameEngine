@@ -6,8 +6,6 @@ namespace my {
 
 void Camera::update() {
     if (is_dirty()) {
-        const float aspect = m_width / m_height;
-
         m_front.x = m_yaw.cos() * m_pitch.cos();
         m_front.y = m_pitch.sin();
         m_front.z = m_yaw.sin() * m_pitch.cos();
@@ -17,13 +15,13 @@ void Camera::update() {
         // @TODO: use transpose
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
 
-        m_projection_matrix = glm::perspective(m_fovy.to_rad(), aspect, m_near, m_far);
+        m_projection_matrix = glm::perspective(m_fovy.to_rad(), get_aspect(), m_near, m_far);
         m_projection_view_matrix = m_projection_matrix * m_view_matrix;
         set_dirty(false);
     }
 }
 
-void Camera::set_dimension(float width, float height) {
+void Camera::set_dimension(int width, int height) {
     if (m_width != width || m_height != height) {
         m_width = width;
         m_height = height;

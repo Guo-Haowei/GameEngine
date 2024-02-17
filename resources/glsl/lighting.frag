@@ -7,6 +7,7 @@ layout(location = 0) in vec2 pass_uv;
 
 #include "common.glsl"
 #include "common/lighting.glsl"
+#include "common/shadow.glsl"
 
 #if ENABLE_VXGI
 #include "vxgi/vxgi.glsl"
@@ -36,6 +37,8 @@ void main() {
         albedo.rgb = vec3(0.6);
     }
 
+    const int cascade_level = find_cascade(world_position);
+
     const vec3 N = normal_roughness.xyz;
     const vec3 V = normalize(c_camera_position - world_position);
     const float NdotV = max(dot(N, V), 0.0);
@@ -62,8 +65,7 @@ void main() {
         // @TODO: shadow
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
-            vec4 lightSpacePos = c_main_light_matrices[0] * vec4(world_position, 1.0);
-            float shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
+            float shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }
         Lo += direct_lighting;
@@ -97,26 +99,21 @@ void main() {
 
     // debug CSM
     if (c_debug_csm == 1) {
-        vec4 fragPosViewSpace = c_view_matrix * vec4(world_position, 1.0);
-        float depthValue = abs(fragPosViewSpace.z);
-
-        int layer = SC_NUM_CASCADES;
-        for (int i = 0; i < SC_NUM_CASCADES; ++i) {
-            if (depthValue < c_cascade_plane_distances[i]) {
-                layer = i;
-                break;
-            }
-        }
 
         float alpha = 0.2;
-        if (layer == 0) {
-            color = mix(color, vec3(1, 0, 0), alpha);
-        } else if (layer == 1) {
-            color = mix(color, vec3(0, 1, 0), alpha);
-        } else if (layer == 2) {
-            color = mix(color, vec3(0, 0, 1), alpha);
-        } else if (layer == 3) {
-            color = mix(color, vec3(1, 0, 1), alpha);
+        switch (cascade_level) {
+            case 0:
+                color = mix(color, vec3(1, 0, 0), alpha);
+                break;
+            case 1:
+                color = mix(color, vec3(0, 1, 0), alpha);
+                break;
+            case 2:
+                color = mix(color, vec3(0, 0, 1), alpha);
+                break;
+            default:
+                color = mix(color, vec3(1, 1, 0), alpha);
+                break;
         }
     }
 

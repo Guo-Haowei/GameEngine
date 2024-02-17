@@ -33,31 +33,38 @@ void shadow_pass_func() {
     glClear(GL_DEPTH_BUFFER_BIT);
 
     const int res = DVAR_GET_INT(r_shadow_res);
-    glViewport(0, 0, res, res);
 
-    auto render_data = GraphicsManager::singleton().get_render_data();
-    RenderData::Pass& pass = render_data->shadow_pass;
+    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+        int x = res * (i % 2);
+        int y = res * (1 - i / 2);
+        int w = res;
+        int h = res;
+        glViewport(x, y, w, h);
 
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.armature_id.is_valid();
+        auto render_data = GraphicsManager::singleton().get_render_data();
+        RenderData::Pass& pass = render_data->shadow_passes[i];
 
-        if (has_bone) {
-            auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= SC_BONE_MAX);
+        for (const auto& draw : pass.draws) {
+            const bool has_bone = draw.armature_id.is_valid();
 
-            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.Update();
+            if (has_bone) {
+                auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
+                DEV_ASSERT(armature.bone_transforms.size() <= SC_BONE_MAX);
+
+                memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
+                g_boneCache.Update();
+            }
+
+            const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
+            program.bind();
+
+            g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
+            g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
+            g_perBatchCache.Update();
+
+            glBindVertexArray(draw.mesh_data->vao);
+            glDrawElements(GL_TRIANGLES, draw.mesh_data->count, GL_UNSIGNED_INT, 0);
         }
-
-        const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
-        program.bind();
-
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
-        g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
-        g_perBatchCache.Update();
-
-        glBindVertexArray(draw.mesh_data->vao);
-        glDrawElements(GL_TRIANGLES, draw.mesh_data->count, GL_UNSIGNED_INT, 0);
     }
 
     glCullFace(GL_BACK);
@@ -243,17 +250,17 @@ void debug_vxgi_pass_func() {
 void create_render_graph_vxgi(RenderGraph& graph) {
     auto [w, h] = DisplayServer::singleton().get_frame_size();
 
-    const int res = DVAR_GET_INT(r_shadow_res);
-    DEV_ASSERT(math::is_power_of_two(res));
-
     // @TODO: split resource
     {  // shadow pass
+        const int res = DVAR_GET_INT(r_shadow_res);
+        DEV_ASSERT(math::is_power_of_two(res));
+
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
         desc.depth_attachment = RenderTargetDesc{ SHADOW_PASS_OUTPUT, FORMAT_D32_FLOAT };
         desc.func = shadow_pass_func;
-        desc.width = res;
-        desc.height = res;
+        desc.width = 2 * res;
+        desc.height = 2 * res;
 
         graph.add_pass(desc);
     }

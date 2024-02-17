@@ -9,6 +9,7 @@ in vec2 pass_uv;
 
 #include "common.glsl"
 #include "common/lighting.glsl"
+#include "common/shadow.glsl"
 
 void main() {
     vec4 albedo = c_albedo_color;
@@ -29,6 +30,8 @@ void main() {
     }
 
     vec3 world_position = pass_position;
+
+    const int cascade_level = find_cascade(world_position);
 
     const vec3 N = normalize(pass_normal);
     const vec3 V = normalize(c_camera_position - world_position);
@@ -57,8 +60,7 @@ void main() {
         // @TODO: shadow
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
-            vec4 lightSpacePos = c_main_light_matrices[0] * vec4(world_position, 1.0);
-            float shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
+            float shadow = cascade_shadow(c_shadow_map, world_position, NdotL, SC_NUM_CASCADES - 1);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }
         Lo += direct_lighting;

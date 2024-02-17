@@ -11,20 +11,29 @@ namespace my {
 
 using CheckBoxFunc = void (*)(void);
 
+// @TODO: move it some where
+static void disable_widget() {
+    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+}
+
+static void enable_widget() {
+    ImGui::PopItemFlag();
+    ImGui::PopStyleVar();
+}
+
 static void dvar_checkbox(DynamicVariable& dvar, CheckBoxFunc func = nullptr) {
     ImGui::Checkbox(dvar.get_desc(), (bool*)dvar.as_pointer());
     if (func) {
         const bool disabled = !dvar.as_int();
         if (disabled) {
-            ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+            disable_widget();
         }
 
         func();
 
         if (disabled) {
-            ImGui::PopItemFlag();
-            ImGui::PopStyleVar();
+            enable_widget();
         }
     }
     ImGui::Separator();

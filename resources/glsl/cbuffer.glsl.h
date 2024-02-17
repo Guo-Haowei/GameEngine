@@ -31,7 +31,7 @@ typedef struct {
     uint64_t data;
     uint64_t padding;
 } Sampler2DArray;
-static_assert(sizeof(vec4) == SC_NUM_CASCADES * sizeof(float));
+static_assert(SC_NUM_CASCADES == 4);
 #else
 #define Sampler2DArray sampler2D
 #endif
