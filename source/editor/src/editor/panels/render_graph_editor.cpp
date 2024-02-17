@@ -2,6 +2,8 @@
 
 #include "core/framework/graphics_manager.h"
 
+using namespace my::rg;
+
 namespace my {
 
 class RenderGraphEditorDelegate : public GraphEditor::Delegate {
@@ -11,7 +13,7 @@ public:
         for (auto& level : graph.m_levels) {
             float y_offset = 0.0f;
             for (int id : level) {
-                const std::shared_ptr<my::RenderPass>& pass = graph.m_render_passes[id];
+                const std::shared_ptr<RenderPass>& pass = graph.m_render_passes[id];
 
                 mNodes.push_back(
                     {

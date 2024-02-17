@@ -10,7 +10,7 @@ class Panel {
 public:
     Panel(const std::string& name, EditorLayer& editor) : m_name(name), m_editor(editor) {}
 
-    void update(my::Scene&);
+    virtual void update(my::Scene&);
 
 protected:
     virtual void update_internal(my::Scene&) {}

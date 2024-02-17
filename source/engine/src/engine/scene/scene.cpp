@@ -69,8 +69,8 @@ void Scene::merge(Scene& other) {
     m_bound.union_box(other.m_bound);
 }
 
-void Scene::create_camera(float width,
-                          float height,
+void Scene::create_camera(int width,
+                          int height,
                           float near_plane,
                           float far_plane,
                           Degree fovy) {

@@ -13,6 +13,20 @@ public:
 
     Degree& operator=(const Radians& rad);
 
+    Degree operator*(float v) const {
+        return Degree{ m_value * v };
+    }
+    Degree operator/(float v) const {
+        return Degree{ m_value / v };
+    }
+    Degree& operator*=(float v) {
+        m_value *= v;
+        return *this;
+    }
+    Degree& operator/=(float v) {
+        m_value /= v;
+        return *this;
+    }
     Degree& operator+=(Degree v) {
         m_value += v.m_value;
         return *this;
@@ -70,7 +84,6 @@ public:
         m_value /= v;
         return *this;
     }
-
     Radians& operator+=(Radians v) {
         m_value += v.m_value;
         return *this;

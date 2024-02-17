@@ -20,13 +20,19 @@ public:
 
     void update();
 
-    void set_dimension(float width, float height);
+    void set_dimension(int width, int height);
 
     bool is_dirty() const { return m_flags & DIRTY; }
     void set_dirty(bool dirty = true) { dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
 
+    Degree get_fovy() const { return m_fovy; }
     float get_near() const { return m_near; }
+    void set_near(float z_near) { m_near = z_near; }
     float get_far() const { return m_far; }
+    void set_far(float z_far) { m_far = z_far; }
+    int get_width() const { return m_width; }
+    int get_height() const { return m_height; }
+    float get_aspect() const { return (float)m_width / m_height; }
     const mat4& get_view_matrix() const { return m_view_matrix; }
     const mat4& get_projection_matrix() const { return m_projection_matrix; }
     const mat4& get_projection_view_matrix() const { return m_projection_view_matrix; }
@@ -42,8 +48,8 @@ private:
     Degree m_fovy{ kDefaultFovy };
     float m_near = kDefaultNear;
     float m_far = kDefaultFar;
-    float m_width = 0.0f;
-    float m_height = 0.0f;
+    int m_width = 0;
+    int m_height = 0;
     Degree m_pitch;  // x-axis
     Degree m_yaw;    // y-axis
     vec3 m_position{ 0 };

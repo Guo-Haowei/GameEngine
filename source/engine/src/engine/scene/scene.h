@@ -141,7 +141,7 @@ public:                                                                         
 
     void merge(Scene& other);
 
-    void create_camera(float width, float height,
+    void create_camera(int width, int height,
                        float near_plane = Camera::kDefaultNear,
                        float far_plane = Camera::kDefaultFar,
                        Degree fovy = Camera::kDefaultFovy);

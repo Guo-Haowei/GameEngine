@@ -1,6 +1,15 @@
 #pragma once
 
+#ifdef BIT
+#undef BIT
+#endif
+#define BIT(x) my::math::bit(x)
+
 namespace my::math {
+
+constexpr inline uint64_t bit(uint64_t a) {
+    return (1llu << a) >> 1llu;
+}
 
 template<typename T, class = typename std::enable_if<std::is_integral<T>::value>::type>
 constexpr inline T align(T size, T alignment) {

@@ -9,7 +9,6 @@
 #include "panels/console_panel.h"
 #include "panels/debug_panel.h"
 #include "panels/hierarchy_panel.h"
-#include "panels/menu_bar.h"
 #include "panels/propertiy_panel.h"
 #include "panels/render_graph_editor.h"
 #include "panels/viewer.h"
@@ -25,6 +24,8 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<HierarchyPanel>(*this));
     add_panel(std::make_shared<PropertyPanel>(*this));
     add_panel(std::make_shared<Viewer>(*this));
+
+    m_menu_bar = std::make_shared<MenuBar>(*this);
 }
 
 void EditorLayer::add_panel(std::shared_ptr<Panel> panel) {
@@ -36,7 +37,7 @@ void EditorLayer::select_entity(ecs::Entity selected) {
     m_state = STATE_PICKING;
 }
 
-void EditorLayer::dock_space() {
+void EditorLayer::dock_space(Scene& scene) {
     ImGui::GetMainViewport();
 
     static bool opt_padding = false;
@@ -73,15 +74,15 @@ void EditorLayer::dock_space() {
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    menu_bar();
+    m_menu_bar->update(scene);
 
     ImGui::End();
     return;
 }
 
 void EditorLayer::update(float) {
-    dock_space();
     Scene& scene = SceneManager::get_scene();
+    dock_space(scene);
     for (auto& it : m_panels) {
         it->update(scene);
     }

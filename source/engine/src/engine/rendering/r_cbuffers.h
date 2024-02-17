@@ -1,6 +1,5 @@
 #pragma once
 #include "gl_utils.h"
-#include "r_defines.h"
 
 // inline include
 #include "cbuffer.glsl.h"

@@ -7,6 +7,7 @@ layout(location = 0) in vec2 pass_uv;
 
 #include "common.glsl"
 #include "common/lighting.glsl"
+#include "common/shadow.glsl"
 
 #if ENABLE_VXGI
 #include "vxgi/vxgi.glsl"
@@ -36,6 +37,8 @@ void main() {
         albedo.rgb = vec3(0.6);
     }
 
+    const int cascade_level = find_cascade(world_position);
+
     const vec3 N = normal_roughness.xyz;
     const vec3 V = normalize(c_camera_position - world_position);
     const float NdotV = max(dot(N, V), 0.0);
@@ -62,8 +65,7 @@ void main() {
         // @TODO: shadow
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
-            vec4 lightSpacePos = c_lights[idx].light_matricies[0] * vec4(world_position, 1.0);
-            float shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
+            float shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }
         Lo += direct_lighting;
@@ -95,12 +97,32 @@ void main() {
     color = color / (color + 1.0);
     color = pow(color, vec3(gamma));
 
+    // debug CSM
+    if (c_debug_csm == 1) {
+
+        float alpha = 0.2;
+        switch (cascade_level) {
+            case 0:
+                color = mix(color, vec3(1, 0, 0), alpha);
+                break;
+            case 1:
+                color = mix(color, vec3(0, 1, 0), alpha);
+                break;
+            case 2:
+                color = mix(color, vec3(0, 0, 1), alpha);
+                break;
+            default:
+                color = mix(color, vec3(1, 1, 0), alpha);
+                break;
+        }
+    }
+
     out_color = vec4(color, 1.0);
 
 #if ENABLE_CSM
     if (c_debug_csm != 0) {
         vec3 mask = vec3(0.1);
-        for (int idx = 0; idx < NUM_CASCADES; ++idx) {
+        for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
             if (clipSpaceZ <= c_cascade_clip_z[idx + 1]) {
                 mask[idx] = 0.7;
                 break;

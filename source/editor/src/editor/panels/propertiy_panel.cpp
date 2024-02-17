@@ -8,7 +8,7 @@ namespace my {
 
 static constexpr float DEFAULT_COLUMN_WIDTH = 100.0f;
 
-static bool draw_vec3_control(const std::string& label, glm::vec3& values, float resetValue = 0.0f,
+static bool draw_vec3_control(const std::string& label, glm::vec3& values, bool enabled = true, float resetValue = 0.0f,
                               float columnWidth = DEFAULT_COLUMN_WIDTH);
 // static bool draw_drag_float(const char* tag, float* p, float speed, float min, float max,
 //                             float columnWidth = DEFAULT_COLUMN_WIDTH);
@@ -51,8 +51,13 @@ static void DrawComponent(const std::string& name, T* component, UIFunction uiFu
     }
 }
 
-static bool draw_vec3_control(const std::string& label, glm::vec3& values, float resetValue, float columnWidth) {
+static bool draw_vec3_control(const std::string& label, glm::vec3& values, bool enabled, float resetValue, float columnWidth) {
     bool dirty = false;
+
+    if (!enabled) {
+        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+    }
 
     ImGuiIO& io = ImGui::GetIO();
     auto boldFont = io.Fonts->Fonts[0];
@@ -118,6 +123,11 @@ static bool draw_vec3_control(const std::string& label, glm::vec3& values, float
     ImGui::PopStyleVar();
 
     ImGui::Columns(1);
+
+    if (!enabled) {
+        ImGui::PopItemFlag();
+        ImGui::PopStyleVar();
+    }
 
     ImGui::PopID();
     return dirty;
@@ -214,15 +224,9 @@ void PropertyPanel::update_internal(Scene& scene) {
             }
         }
 
-        if (want_translation) {
-            dirty |= draw_vec3_control("translation", translation);
-        }
-        if (want_rotation) {
-            dirty |= draw_vec3_control("rotation", rotation);
-        }
-        if (want_scale) {
-            dirty |= draw_vec3_control("scale", scale, 1.0f);
-        }
+        dirty |= draw_vec3_control("translation", translation, want_translation);
+        dirty |= draw_vec3_control("rotation", rotation, want_rotation);
+        dirty |= draw_vec3_control("scale", scale, want_scale, 1.0f);
         if (dirty) {
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(transformMatrix));

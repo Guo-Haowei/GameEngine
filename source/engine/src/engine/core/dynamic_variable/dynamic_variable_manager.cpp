@@ -19,7 +19,7 @@ void DynamicVariableManager::serialize() {
     auto writer = std::move(*res);
 
     for (auto const& [key, dvar] : DynamicVariable::s_map) {
-        if (dvar->m_flags & DVAR_FLAG_SERIALIZE) {
+        if (dvar->m_flags & DVAR_FLAG_CACHE) {
             auto line = std::format("+set {} {}\n", dvar->m_name, dvar->value_to_string());
             writer->write_buffer(line.data(), line.length());
         }

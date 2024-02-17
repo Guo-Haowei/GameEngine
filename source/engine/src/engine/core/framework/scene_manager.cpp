@@ -6,7 +6,6 @@
 #include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
 #include "core/os/timer.h"
-#include "rendering/rendering_dvars.h"
 #include "servers/display_server.h"
 // @TODO: fix
 
@@ -28,7 +27,7 @@ static bool deserialize_scene(Scene* scene, const std::string& path) {
 static void create_empty_scene(Scene* scene) {
     Entity::set_seed(Entity::INVALID_ID + 1);
 
-    scene->create_camera(800.0f, 600.0f);
+    scene->create_camera(800, 600);
 
     auto root = scene->create_transform_entity("world");
     scene->m_root = root;
@@ -120,17 +119,6 @@ bool SceneManager::initialize() {
 
 void SceneManager::finalize() {}
 
-// @TODO: fix
-static mat4 R_HackLightSpaceMatrix(const vec3& lightDir) {
-    const Scene& scene = SceneManager::get_scene();
-    const vec3 center = scene.get_bound().center();
-    const vec3 extents = scene.get_bound().size();
-    const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
-    const mat4 V = glm::lookAt(center + glm::normalize(lightDir) * size, center, vec3(0, 1, 0));
-    const mat4 P = glm::ortho(-size, size, -size, size, 0.0f, 2.0f * size);
-    return P * V;
-}
-
 bool SceneManager::try_swap_scene() {
     Scene* new_scene = m_loading_scene.load();
     if (new_scene) {
@@ -165,92 +153,15 @@ void SceneManager::update(float dt) {
     auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
 
     // @TODO: refactor this
-    auto camera = scene.m_camera;
-    DEV_ASSERT(camera);
+    DEV_ASSERT(scene.m_camera);
+    Camera& camera = *scene.m_camera.get();
 
+    // @TODO: event
     if (frameW > 0 && frameH > 0) {
-        camera->set_dimension((float)frameW, (float)frameH);
+        camera.set_dimension(frameW, frameH);
     }
 
     scene.update(dt);
-
-    auto& cache = g_perFrameCache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), SHADER_LIGHT_MAX);
-    DEV_ASSERT(light_count);
-
-    cache.c_light_count = light_count;
-
-    for (uint32_t idx = 0; idx < light_count; ++idx) {
-        const LightComponent& light_component = scene.get_component_array<LightComponent>()[idx];
-        auto light_entity = scene.get_entity<LightComponent>(idx);
-        const TransformComponent* light_transform = scene.get_component<TransformComponent>(light_entity);
-        DEV_ASSERT(light_transform);
-
-        Light& light = cache.c_lights[idx];
-        light.cast_shadow = false;
-        light.type = light_component.type;
-        light.color = light_component.color * light_component.energy;
-        switch (light_component.type) {
-            case LightComponent::LIGHT_TYPE_OMNI: {
-                vec3 light_dir = light_transform->get_local_matrix() * vec4(0, 1, 0, 0);
-                mat4 lightPV = R_HackLightSpaceMatrix(light_dir);
-                light.cast_shadow = true;
-                light.position = light_dir;
-                light.light_matricies[0] = light.light_matricies[1] = light.light_matricies[2] = lightPV;
-            } break;
-            case LightComponent::LIGHT_TYPE_POINT: {
-                light.atten_constant = light_component.atten.constant;
-                light.atten_linear = light_component.atten.linear;
-                light.atten_quadratic = light_component.atten.quadratic;
-                light.position = light_transform->get_translation();
-            } break;
-            default:
-                break;
-        }
-    }
-
-    cache.c_camera_position = camera->get_position();
-    cache.c_view_matrix = camera->get_view_matrix();
-    cache.c_projection_matrix = camera->get_projection_matrix();
-    cache.c_projection_view_matrix = camera->get_projection_view_matrix();
-
-    cache.c_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
-    cache.c_debug_texture_id = DVAR_GET_INT(r_debug_texture);
-    cache.c_no_texture = DVAR_GET_BOOL(r_no_texture);
-    cache.c_screen_width = frameW;
-    cache.c_screen_height = frameH;
-
-    // SSAO
-    cache.c_ssao_kernel_size = DVAR_GET_INT(r_ssaoKernelSize);
-    cache.c_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
-    cache.c_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
-    cache.c_enable_ssao = DVAR_GET_BOOL(r_enableSsao);
-
-    // c_fxaa_image
-    cache.c_enable_fxaa = DVAR_GET_BOOL(r_enableFXAA);
-
-    // @TODO: refactor the following
-    const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
-    DEV_ASSERT(math::is_power_of_two(voxel_texture_size));
-    DEV_ASSERT(voxel_texture_size <= 256);
-
-    vec3 world_center = scene.get_bound().center();
-    vec3 aabb_size = scene.get_bound().size();
-    float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
-
-    const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
-    if (world_size > max_world_size) {
-        world_center = camera->get_position();
-        world_size = max_world_size;
-    }
-
-    const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
-    const float voxel_size = world_size * texel_size;
-
-    cache.c_world_center = world_center;
-    cache.c_world_size_half = 0.5f * world_size;
-    cache.c_texel_size = texel_size;
-    cache.c_voxel_size = voxel_size;
 }
 
 void SceneManager::request_scene(std::string_view path, ImporterName importer) {

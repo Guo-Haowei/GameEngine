@@ -30,7 +30,7 @@ struct RenderData {
 
     const Scene* scene = nullptr;
 
-    Pass shadow_pass;
+    std::array<Pass, 4> shadow_passes;
     Pass voxel_pass;
     Pass main_pass;
 
