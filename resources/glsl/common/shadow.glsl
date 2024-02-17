@@ -23,10 +23,6 @@ float cascade_shadow(sampler2D p_shadow_maps,
         return 0.0;
     }
 
-    float closest_depth = texture(p_shadow_maps, coords.xy).r;
-    return current_depth > closest_depth ? 1.0 : 0.0;
-
-#if 0
     float shadow = 0.0;
     ivec2 i_texel_size = textureSize(p_shadow_maps, 0);
     vec2 texel_size = 1.0 / vec2(i_texel_size.x, i_texel_size.y);
@@ -45,5 +41,4 @@ float cascade_shadow(sampler2D p_shadow_maps,
     const float samples = float(2 * SAMPLE_STEP + 1);
     shadow /= samples * samples;
     return shadow;
-#endif
 }

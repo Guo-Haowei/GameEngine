@@ -40,10 +40,7 @@ void RenderData::update(const Scene* p_scene) {
             });
     }
 
-    // @TODO: HACK
-    Frustum camera_frustum(g_perFrameCache.cache.c_projection_view_matrix);
-
-    // main pass
+    // voxel pass
     fill(
         p_scene,
         g_perFrameCache.cache.c_projection_view_matrix,
@@ -52,8 +49,13 @@ void RenderData::update(const Scene* p_scene) {
             return !(object.flags & ObjectComponent::RENDERABLE);
         },
         [&](const AABB& aabb) {
-            return scene->get_bound().intersects(aabb);
+            unused(aabb);
+            // return scene->get_bound().intersects(aabb);
+            return true;
         });
+
+    Frustum camera_frustum(g_perFrameCache.cache.c_projection_view_matrix);
+    // main pass
     fill(
         p_scene,
         g_perFrameCache.cache.c_projection_view_matrix,
