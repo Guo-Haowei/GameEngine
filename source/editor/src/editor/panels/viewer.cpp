@@ -7,10 +7,10 @@
 
 // @TODO: refactor
 #include "core/framework/common_dvars.h"
-#include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
 #include "core/math/ray.h"
+#include "rendering/rendering_dvars.h"
 #include "servers/display_server.h"
 
 namespace my {
@@ -81,7 +81,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     ImVec2 top_left(m_canvas_min.x, m_canvas_min.y);
     ImVec2 bottom_right(top_left.x + m_canvas_size.x, top_left.y + m_canvas_size.y);
 
-    uint64_t final_image = GraphicsManager::singleton().get_final_image();
+    uint64_t final_image = m_editor.get_displayed_image();
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)final_image, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
 
     // draw grid

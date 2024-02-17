@@ -2,10 +2,14 @@
 
 #include <imgui/imgui.h>
 
+#include "../editor_layer.h"
 #include "core/framework/common_dvars.h"
+#include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
 #include "platform/windows/dialog.h"
+#include "rendering/render_graph/render_graph_vxgi.h"
+#include "rendering/rendering_dvars.h"
 
 namespace my {
 
@@ -80,7 +84,31 @@ static void save_project(bool open_dialog) {
     }
 }
 
-void menu_bar() {
+static uint64_t get_displayed_image(int e) {
+    auto& rg = GraphicsManager::singleton().get_active_render_graph();
+    switch (e) {
+        case DISPLAY_FXAA_IMAGE:
+            return rg.find_resouce(RT_RES_FXAA)->get_handle();
+        case DISPLAY_GBUFFER_DEPTH:
+            return rg.find_resouce(RT_RES_GBUFFER_DEPTH)->get_handle();
+        case DISPLAY_GBUFFER_BASE_COLOR:
+            return rg.find_resouce(RT_RES_GBUFFER_BASE_COLOR)->get_handle();
+        case DISPLAY_GBUFFER_NORMAL:
+            return rg.find_resouce(RT_RES_GBUFFER_NORMAL)->get_handle();
+        case DISPLAY_SSAO:
+            return rg.find_resouce(RT_RES_SSAO)->get_handle();
+        case DISPLAY_SHADOW_MAP:
+            return rg.find_resouce(RT_RES_SHADOW_MAP)->get_handle();
+        default:
+            return 0;
+    }
+}
+
+void MenuBar::update(Scene&) {
+    if (m_editor.get_displayed_image() == 0) {
+        m_editor.set_displayed_image(get_displayed_image(DVAR_GET_INT(r_debug_texture)));
+    }
+
     // @TODO: input system, key s handled here, don't handle it in viewer
     if (input::is_key_down(KEY_LEFT_CONTROL)) {
         if (input::is_key_pressed(KEY_S)) {
@@ -128,6 +156,27 @@ void menu_bar() {
             if (ImGui::MenuItem("copy", "CTRL+C")) {
             }
             if (ImGui::MenuItem("Paste", "CTRL+V")) {
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::Separator();
+        if (ImGui::BeginMenu("Windows")) {
+            if (ImGui::BeginMenu("Viewer")) {
+                int debug_texture = DVAR_GET_INT(r_debug_texture);
+                int old_value = debug_texture;
+                ImGui::RadioButton("Final image", &debug_texture, DISPLAY_FXAA_IMAGE);
+                ImGui::RadioButton("Depth Map", &debug_texture, DISPLAY_GBUFFER_DEPTH);
+
+                ImGui::RadioButton("Voxel: Color", &debug_texture, DISPLAY_GBUFFER_BASE_COLOR);
+                ImGui::RadioButton("Voxel: Normal", &debug_texture, DISPLAY_GBUFFER_NORMAL);
+
+                ImGui::RadioButton("SSAO Map", &debug_texture, DISPLAY_SSAO);
+                ImGui::RadioButton("Shadow Map", &debug_texture, DISPLAY_SHADOW_MAP);
+                ImGui::EndMenu();
+                if (debug_texture != old_value) {
+                    DVAR_SET_INT(r_debug_texture, debug_texture);
+                    m_editor.set_displayed_image(get_displayed_image(debug_texture));
+                }
             }
             ImGui::EndMenu();
         }

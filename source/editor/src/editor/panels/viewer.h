@@ -15,6 +15,7 @@ private:
     void update_data();
     void select_entity(Scene& scene, const Camera& camera);
     void draw_gui(Scene& scene, Camera& camera);
+    void update_display_image();
 
     vec2 m_canvas_min;
     vec2 m_canvas_size;

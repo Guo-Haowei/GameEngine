@@ -11,7 +11,6 @@
 /////
 #include "core/base/rid_owner.h"
 #include "core/framework/scene_manager.h"
-#include "rendering/r_defines.h"
 #include "rendering/r_editor.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/shader_program_manager.h"
@@ -21,6 +20,9 @@
 // @TODO: refactor
 #include "rendering/render_graph/render_graph_default.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
+
+using my::rg::RenderGraph;
+using my::rg::RenderPass;
 
 /// textures
 GpuTexture g_albedoVoxel;
@@ -319,46 +321,40 @@ void GraphicsManager::createGpuResources() {
     cache.c_voxel_normal_map = gl::MakeTextureResident(g_normalVoxel.GetHandle());
 
     // @TODO: refactor
-    std::shared_ptr<RenderPass> pass;
-    pass = m_render_graph.find_pass(SHADOW_PASS);
-    if (pass) {
-        cache.c_shadow_map = gl::MakeTextureResident(pass->get_depth_attachment());
-    }
 
-    pass = m_render_graph.find_pass(SSAO_PASS);
-    if (pass) {
-        cache.c_ssao_map = gl::MakeTextureResident(pass->get_color_attachment(0));
-    }
-    pass = m_render_graph.find_pass(FXAA_PASS);
-    if (pass) {
-        cache.c_fxaa_image = gl::MakeTextureResident(pass->get_color_attachment(0));
-    }
+    auto make_resident = [&](const std::string& name, sampler2D& id) {
+        std::shared_ptr<rg::Resource> resource = m_render_graph.find_resouce(name);
+        if (resource) {
+            id = gl::MakeTextureResident(resource->get_handle());
+        }
+    };
 
-    pass = m_render_graph.find_pass(GBUFFER_PASS);
-    if (pass) {
-        cache.c_gbuffer_depth_map = gl::MakeTextureResident(pass->get_depth_attachment());
-        cache.c_gbuffer_position_metallic_map = gl::MakeTextureResident(pass->get_color_attachment(0));
-        cache.c_gbuffer_normal_roughness_map = gl::MakeTextureResident(pass->get_color_attachment(1));
-        cache.c_gbuffer_albedo_map = gl::MakeTextureResident(pass->get_color_attachment(2));
-    }
+    make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
+    make_resident(RT_RES_SSAO, cache.c_ssao_map);
+    make_resident(RT_RES_FXAA, cache.c_fxaa_image);
+    make_resident(RT_RES_GBUFFER_POSITION, cache.c_gbuffer_position_metallic_map);
+    make_resident(RT_RES_GBUFFER_NORMAL, cache.c_gbuffer_normal_roughness_map);
+    make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.c_gbuffer_albedo_map);
+    make_resident(RT_RES_GBUFFER_DEPTH, cache.c_gbuffer_depth_map);
+    make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
 
-    switch (m_method) {
-        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
-            // pass = m_render_graph.find_pass(LIGHTING_PASS);
-            // cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
-            break;
-        case my::GraphicsManager::RENDER_GRAPH_VXGI:
-            pass = m_render_graph.find_pass(LIGHTING_PASS);
-            cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
-            break;
-        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-            pass = m_render_graph.find_pass(VXGI_DEBUG_PASS);
-            cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
-            break;
-        default:
-            CRASH_NOW();
-            break;
-    }
+    // switch (m_method) {
+    //     case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
+    //         // pass = m_render_graph.find_pass(LIGHTING_PASS);
+    //         // cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
+    //         break;
+    //     case my::GraphicsManager::RENDER_GRAPH_VXGI:
+    //         resource = m_render_graph.find_pass(LIGHTING_PASS);
+    //         cache.c_fxaa_input_image = gl::MakeTextureResident(resource->get_color_attachment(0));
+    //         break;
+    //     case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
+    //         resource = m_render_graph.find_pass(VXGI_DEBUG_PASS);
+    //         cache.c_fxaa_input_image = gl::MakeTextureResident(resource->get_color_attachment(0));
+    //         break;
+    //     default:
+    //         CRASH_NOW();
+    //         break;
+    // }
 
     g_constantCache.Update();
 }
@@ -385,12 +381,10 @@ struct MaterialCache {
 
 uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {
-        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
-            return m_render_graph.find_pass(LIGHTING_PASS)->get_color_attachment(0);
         case my::GraphicsManager::RENDER_GRAPH_VXGI:
-            return m_render_graph.find_pass(FINAL_PASS)->get_color_attachment(0);
+            return m_render_graph.find_resouce(RT_RES_FXAA)->get_handle();
+        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
         case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-            return m_render_graph.find_pass(FXAA_PASS)->get_color_attachment(0);
         default:
             CRASH_NOW();
             return 0;

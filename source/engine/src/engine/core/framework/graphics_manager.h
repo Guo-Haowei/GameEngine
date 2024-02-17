@@ -35,7 +35,7 @@ public:
 
     std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
 
-    const RenderGraph& get_active_render_graph() { return m_render_graph; }
+    const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
 
 private:
     GpuTexture m_lightIcons[MAX_LIGHT_ICON];
@@ -43,7 +43,7 @@ private:
 
     std::shared_ptr<RenderData> m_render_data;
 
-    RenderGraph m_render_graph;
+    rg::RenderGraph m_render_graph;
 };
 
 }  // namespace my

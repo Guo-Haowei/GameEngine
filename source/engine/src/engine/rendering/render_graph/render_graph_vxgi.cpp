@@ -21,7 +21,7 @@ extern void FillMaterialCB(const MaterialData* mat, MaterialConstantBuffer& cb);
 extern my::RIDAllocator<MeshData> g_meshes;
 extern my::RIDAllocator<MaterialData> g_materials;
 
-namespace my {
+namespace my::rg {
 
 // @TODO: refactor render passes
 void shadow_pass_func() {
@@ -83,6 +83,9 @@ void voxelization_pass_func() {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glViewport(0, 0, voxel_size, voxel_size);
 
+    // @TODO: fix
+    constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
+    constexpr int IMAGE_VOXEL_NORMAL_SLOT = 1;
     g_albedoVoxel.bindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT);
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
     ShaderProgramManager::get(PROGRAM_VOXELIZATION).bind();
@@ -249,35 +252,60 @@ void debug_vxgi_pass_func() {
 
 void create_render_graph_vxgi(RenderGraph& graph) {
     auto [w, h] = DisplayServer::singleton().get_frame_size();
+    const int shadow_res = DVAR_GET_INT(r_shadow_res);
+    DEV_ASSERT(math::is_power_of_two(shadow_res));
 
-    // @TODO: split resource
+    auto main_shadow_map = graph.create_resource(ResourceDesc{ RT_RES_SHADOW_MAP,
+                                                               FORMAT_D32_FLOAT,
+                                                               RT_DEPTH_ATTACHMENT,  // @TODO: change to RT_SHADDW_MAP_ARRAY
+                                                               2 * shadow_res, 2 * shadow_res });
+    auto gbuffer_attachment0 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_POSITION,
+                                                                   FORMAT_R16G16B16A16_FLOAT,
+                                                                   RT_COLOR_ATTACHMENT,
+                                                                   w, h });
+    auto gbuffer_attachment1 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_NORMAL,
+                                                                   FORMAT_R16G16B16A16_FLOAT,
+                                                                   RT_COLOR_ATTACHMENT,
+                                                                   w, h });
+    auto gbuffer_attachment2 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_BASE_COLOR,
+                                                                   FORMAT_R8G8B8A8_UINT,
+                                                                   RT_COLOR_ATTACHMENT,
+                                                                   w, h });
+    auto gbuffer_depth = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_DEPTH,
+                                                             FORMAT_D32_FLOAT,
+                                                             RT_DEPTH_ATTACHMENT,
+                                                             w, h });
+    auto ssao_attachment = graph.create_resource(ResourceDesc{ RT_RES_SSAO,
+                                                               FORMAT_R32_FLOAT,
+                                                               RT_COLOR_ATTACHMENT,
+                                                               w, h });
+    auto lighting_attachment = graph.create_resource(ResourceDesc{ RT_RES_LIGHTING,
+                                                                   FORMAT_R8G8B8A8_UINT,
+                                                                   RT_COLOR_ATTACHMENT,
+                                                                   w, h });
+    auto fxaa_attachment = graph.create_resource(ResourceDesc{ RT_RES_FXAA,
+                                                               FORMAT_R8G8B8A8_UINT,
+                                                               RT_COLOR_ATTACHMENT,
+                                                               w, h });
+    auto view_attachment = graph.create_resource(ResourceDesc{ RT_RES_FINAL_IMAGE,
+                                                               FORMAT_R8G8B8A8_UINT,
+                                                               RT_COLOR_ATTACHMENT,
+                                                               w, h });
+
     {  // shadow pass
-        const int res = DVAR_GET_INT(r_shadow_res);
-        DEV_ASSERT(math::is_power_of_two(res));
-
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
-        desc.depth_attachment = RenderTargetDesc{ SHADOW_PASS_OUTPUT, FORMAT_D32_FLOAT };
+        desc.depth_attachment = main_shadow_map;
         desc.func = shadow_pass_func;
-        desc.width = 2 * res;
-        desc.height = 2 * res;
-
         graph.add_pass(desc);
     }
     {  // gbuffer pass
         RenderPassDesc desc;
         desc.name = GBUFFER_PASS;
         desc.dependencies = {};
-        desc.color_attachments = {
-            RenderTargetDesc{ GBUFFER_PASS_OUTPUT_POSITION, FORMAT_R16G16B16A16_FLOAT },
-            RenderTargetDesc{ GBUFFER_PASS_OUTPUT_NORMAL, FORMAT_R16G16B16A16_FLOAT },
-            RenderTargetDesc{ GBUFFER_PASS_OUTPUT_ALBEDO, FORMAT_R8G8B8A8_UINT },
-        };
-        desc.depth_attachment = RenderTargetDesc{ GBUFFER_PASS_OUTPUT_DEPTH, FORMAT_D32_FLOAT };
+        desc.color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 };
+        desc.depth_attachment = gbuffer_depth;
         desc.func = gbuffer_pass_func;
-        desc.width = w;
-        desc.height = h;
-
         graph.add_pass(desc);
     }
     {  // voxel pass
@@ -286,59 +314,49 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
         desc.func = voxelization_pass_func;
-
         graph.add_pass(desc);
     }
     {  // ssao pass
         RenderPassDesc desc;
         desc.name = SSAO_PASS;
         desc.dependencies = { GBUFFER_PASS };
-        desc.color_attachments = { RenderTargetDesc{ SSAO_PASS_OUTPUT, FORMAT_R32_FLOAT } };
+        desc.color_attachments = { ssao_attachment };
         desc.func = ssao_pass_func;
-        desc.width = w;
-        desc.height = h;
-
         graph.add_pass(desc);
     }
     {  // lighting pass
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
         desc.dependencies = { GBUFFER_PASS, SHADOW_PASS, SSAO_PASS, VOXELIZATION_PASS };
-        desc.color_attachments = { RenderTargetDesc{ LIGHTING_PASS_OUTPUT, FORMAT_R8G8B8A8_UINT } };
+        desc.color_attachments = { lighting_attachment };
         desc.func = lighting_pass_func;
-        desc.width = w;
-        desc.height = h;
-
         graph.add_pass(desc);
     }
     {  // fxaa pass
         RenderPassDesc desc;
         desc.name = FXAA_PASS;
         desc.dependencies = { LIGHTING_PASS };
-        desc.color_attachments = { RenderTargetDesc{ FXAA_PASS_OUTPUT, FORMAT_R8G8B8A8_UINT } };
+        desc.color_attachments = { fxaa_attachment };
         desc.func = fxaa_pass_func;
-        desc.width = w;
-        desc.height = h;
-
         graph.add_pass(desc);
     }
-    {  // vier pass(final pass)
-        RenderPassDesc desc;
-        desc.name = FINAL_PASS;
-        desc.dependencies = { FXAA_PASS };
-        desc.color_attachments = { RenderTargetDesc{ "viewer_map", FORMAT_R8G8B8A8_UINT } };
-        desc.width = w;
-        desc.height = h;
-        desc.func = final_pass_func;
+    //{  // viewer pass(final pass)
+    //    RenderPassDesc desc;
+    //    desc.name = FINAL_PASS;
+    //    desc.dependencies = { FXAA_PASS };
+    //    desc.color_attachments = { view_attachment };
+    //    desc.func = final_pass_func;
 
-        graph.add_pass(desc);
-    }
+    //    graph.add_pass(desc);
+    //}
 
     // @TODO: allow recompile
     graph.compile();
 }
 
 void create_render_graph_vxgi_debug(RenderGraph& graph) {
+    unused(graph);
+#if 0
     // @TODO: split resource
     auto [w, h] = DisplayServer::singleton().get_frame_size();
 
@@ -348,7 +366,7 @@ void create_render_graph_vxgi_debug(RenderGraph& graph) {
     {  // shadow pass
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
-        desc.depth_attachment = RenderTargetDesc{ SHADOW_PASS_OUTPUT, FORMAT_D32_FLOAT };
+        desc.depth_attachment = ResourceDesc{ SHADOW_PASS_OUTPUT, FORMAT_D32_FLOAT, RT_SHADDW_MAP_ARRAY };
         desc.func = shadow_pass_func;
         desc.width = res;
         desc.height = res;
@@ -368,8 +386,8 @@ void create_render_graph_vxgi_debug(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.name = VXGI_DEBUG_PASS;
         desc.dependencies = { SHADOW_PASS, VOXELIZATION_PASS };
-        desc.color_attachments = { RenderTargetDesc{ LIGHTING_PASS_OUTPUT, FORMAT_R8G8B8A8_UINT } };
-        desc.depth_attachment = { RenderTargetDesc{ "depth", FORMAT_D32_FLOAT } };
+        desc.color_attachments = { ResourceDesc{ LIGHTING_PASS_OUTPUT, FORMAT_R8G8B8A8_UINT, RT_COLOR_ATTACHMENT } };
+        desc.depth_attachment = { ResourceDesc{ "depth", FORMAT_D32_FLOAT, RT_DEPTH_ATTACHMENT } };
         desc.func = debug_vxgi_pass_func;
         desc.width = w;
         desc.height = h;
@@ -380,7 +398,7 @@ void create_render_graph_vxgi_debug(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.name = FXAA_PASS;
         desc.dependencies = { VXGI_DEBUG_PASS };
-        desc.color_attachments = { RenderTargetDesc{ FXAA_PASS_OUTPUT, FORMAT_R8G8B8A8_UINT } };
+        desc.color_attachments = { ResourceDesc{ FXAA_PASS_OUTPUT, FORMAT_R8G8B8A8_UINT, RT_COLOR_ATTACHMENT } };
         desc.func = fxaa_pass_func;
         desc.width = w;
         desc.height = h;
@@ -390,6 +408,7 @@ void create_render_graph_vxgi_debug(RenderGraph& graph) {
 
     // @TODO: allow recompile
     graph.compile();
+#endif
 }
 
-}  // namespace my
+}  // namespace my::rg

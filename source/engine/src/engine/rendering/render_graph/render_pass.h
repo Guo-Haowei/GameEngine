@@ -1,13 +1,7 @@
 #pragma once
-#include "assets/image.h"
-#include "core/base/fixed_stack.h"
+#include "resource.h"
 
-namespace my {
-
-struct RenderTargetDesc {
-    std::string name;
-    PixelFormat format;
-};
+namespace my::rg {
 
 using RenderPassFunc = void (*)();
 
@@ -20,11 +14,9 @@ struct RenderPassDesc {
     RenderPassType type = RENDER_PASS_SHADING;
     std::string name;
     std::vector<std::string> dependencies;
-    std::vector<RenderTargetDesc> color_attachments;
-    std::optional<RenderTargetDesc> depth_attachment;
+    std::vector<std::shared_ptr<Resource>> color_attachments;
+    std::shared_ptr<Resource> depth_attachment;
     RenderPassFunc func = nullptr;
-    int width;
-    int height;
 };
 
 class RenderPass {
@@ -35,8 +27,6 @@ public:
 
     virtual void bind() = 0;
     virtual void unbind() = 0;
-    virtual uint32_t get_color_attachment(int index) = 0;
-    virtual uint32_t get_depth_attachment() = 0;
 
     const std::string& get_name() const { return m_name; }
 
@@ -59,15 +49,9 @@ public:
     void bind() override;
     void unbind() override;
 
-    uint32_t get_color_attachment(int index) override;
-    uint32_t get_depth_attachment() override;
-
 protected:
     void create_internal(RenderPassDesc& pass_desc) override;
-
-    FixedStack<uint32_t, 8> m_color_attachments;
-    uint32_t m_depth_attachment = 0;
-    uint32_t m_fbo_handle = 0;
+    uint32_t m_handle = 0;
 };
 
-}  // namespace my
+}  // namespace my::rg
