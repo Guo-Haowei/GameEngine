@@ -64,7 +64,8 @@ inline GLuint format_to_gl_internal_format(PixelFormat format) {
         case FORMAT_R32G32B32A32_FLOAT:
             return GL_RGBA32F;
         case FORMAT_D32_FLOAT:
-            return GL_DEPTH_COMPONENT;
+            // return GL_DEPTH_COMPONENT;
+            return GL_DEPTH_COMPONENT32F;
         default:
             CRASH_NOW();
             return 0;

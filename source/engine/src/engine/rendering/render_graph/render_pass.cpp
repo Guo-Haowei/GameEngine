@@ -8,7 +8,7 @@ void RenderPass::execute() {
     bind();
 
     if (m_func) {
-        m_func();
+        m_func(m_layer);
     }
 
     unbind();
@@ -17,13 +17,8 @@ void RenderPass::execute() {
 void RenderPass::create_internal(RenderPassDesc& desc) {
     m_name = std::move(desc.name);
     m_inputs = std::move(desc.dependencies);
-    for (const auto& output : desc.color_attachments) {
-        m_outputs.emplace_back(output->get_desc().name);
-    }
-    if (desc.depth_attachment) {
-        m_outputs.emplace_back(desc.depth_attachment->get_desc().name);
-    }
     m_func = desc.func;
+    m_layer = desc.layer;
 }
 
 void RenderPassGL::create_internal(RenderPassDesc& desc) {
@@ -56,6 +51,7 @@ void RenderPassGL::create_internal(RenderPassDesc& desc) {
                 );
             } break;
             default:
+                CRASH_NOW();
                 break;
         }
         attachments.push_back(attachment);
@@ -69,13 +65,22 @@ void RenderPassGL::create_internal(RenderPassDesc& desc) {
     }
 
     if (desc.depth_attachment) {
-        glFramebufferTexture2D(
-            GL_FRAMEBUFFER,                       // target
-            GL_DEPTH_ATTACHMENT,                  // attachment
-            GL_TEXTURE_2D,                        // texture target
-            desc.depth_attachment->get_handle(),  // texture
-            0                                     // level
-        );
+        const auto& depth_desc = desc.depth_attachment->get_desc();
+        switch (depth_desc.type) {
+            case RT_SHADOW_MAP:
+            case RT_DEPTH_ATTACHMENT: {
+                glFramebufferTexture2D(
+                    GL_FRAMEBUFFER,                       // target
+                    GL_DEPTH_ATTACHMENT,                  // attachment
+                    GL_TEXTURE_2D,                        // texture target
+                    desc.depth_attachment->get_handle(),  // texture
+                    0                                     // level
+                );
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
     }
 
     DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);

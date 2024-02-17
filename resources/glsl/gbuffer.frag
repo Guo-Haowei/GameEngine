@@ -14,7 +14,7 @@ void main() {
     vec4 albedo = c_albedo_color;
 
     if (c_has_albedo_map != 0) {
-        albedo = texture(c_albedo_maps[c_texture_map_idx], ps_in.uv);
+        albedo = texture(c_albedo_maps[c_texture_map_idx], ps_in.uv, 0);
     }
     if (albedo.a < 0.001) {
         discard;

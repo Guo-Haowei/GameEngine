@@ -90,6 +90,14 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         ImGuizmo::draw_grid(projection_view_matrix, identity, 10.0f);
     }
 
+    // draw light
+    const LightComponent& light = scene.get_component_array<LightComponent>()[0];
+    DEV_ASSERT(light.type == LightComponent::LIGHT_TYPE_OMNI);
+    if (TransformComponent* transform_component = scene.get_component<TransformComponent>(scene.get_entity<LightComponent>(0)); transform_component) {
+        mat4 transform = transform_component->get_world_matrix();
+        ImGuizmo::draw_cone_wireframe(projection_view_matrix, transform);
+    }
+
     // draw aabb
     ecs::Entity id = m_editor.get_selected_entity();
     TransformComponent* transform_component = scene.get_component<TransformComponent>(id);

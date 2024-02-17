@@ -2532,6 +2532,40 @@ void draw_grid(const mat4& projection_view_matrix, const mat4& matrix, const flo
     }
 }
 
+void draw_cone_wireframe(const mat4& projection_view_matrix, const mat4& matrix) {
+    // clang-format off
+    enum { A = 0, B = 1, C = 2, D = 3, E = 4 };
+    // clang-format on
+
+    constexpr float size = 0.5f;
+    constexpr std::array<vec4, 5> points = {
+        vec4(-size, +size, -size, 1.0f),  // A
+        vec4(-size, -size, -size, 1.0f),  // B
+        vec4(+size, -size, -size, 1.0f),  // C
+        vec4(+size, +size, -size, 1.0f),  // D
+        vec4(0.0f, 0.0f, +size, 1.0f),    // E
+    };
+
+    constexpr std::array<uint32_t, 16> indices = { A, B, B, C, C, D, D, A, E, A, E, B, E, C, E, D };
+    matrix_t viewProjection = *(matrix_t*)(glm::value_ptr(projection_view_matrix));
+    vec_t frustum[6];
+    ComputeFrustumPlanes(frustum, viewProjection.m16);
+
+    matrix_t res = viewProjection;
+    for (size_t index = 0; index < indices.size(); index += 2) {
+        vec4 p0 = matrix * points[indices[index]];
+        vec4 p1 = matrix * points[indices[index + 1]];
+        vec_t ptA = makeVect(p0.x, p0.y, p0.z);
+        vec_t ptB = makeVect(p1.x, p1.y, p1.z);
+
+        if (clip_line(ptA, ptB, frustum)) {
+            ImU32 col = IM_COL32(0xFF, 0xFF, 0xFF, 0xFF);
+            float thickness = 2.f;
+            gContext.mDrawList->AddLine(worldToPos(ptA, res), worldToPos(ptB, res), col, thickness);
+        }
+    }
+}
+
 void draw_box_wireframe(const mat4& projection_view_matrix, const mat4& matrix) {
     // clang-format off
     enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };

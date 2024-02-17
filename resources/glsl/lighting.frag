@@ -65,7 +65,7 @@ void main() {
         // @TODO: shadow
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
-            float shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
+            float shadow = cascade_shadow(c_shadow_maps[cascade_level], world_position, NdotL, cascade_level);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }
         Lo += direct_lighting;

@@ -7,8 +7,6 @@ enum ResourceType {
     RT_COLOR_ATTACHMENT,
     RT_DEPTH_ATTACHMENT,
     RT_SHADOW_MAP,
-    RT_SHADDW_MAP_ARRAY,
-    RT_SHADDW_MAP_CUBE,
 };
 
 struct ResourceDesc {
@@ -18,7 +16,7 @@ struct ResourceDesc {
     int width;
     int height;
 
-    ResourceDesc(const char* p_name, PixelFormat p_format, ResourceType p_type, int p_width, int p_height)
+    ResourceDesc(const std::string& p_name, PixelFormat p_format, ResourceType p_type, int p_width, int p_height)
         : name(p_name), format(p_format), type(p_type), width(p_width), height(p_height) {
     }
 };

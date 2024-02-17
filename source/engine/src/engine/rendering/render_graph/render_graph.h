@@ -17,6 +17,8 @@ public:
 
     void execute();
 
+    const auto& get_resources() const { return m_resource_lookup; }
+
 private:
     std::vector<std::shared_ptr<RenderPass>> m_render_passes;
     std::vector<int> m_sorted_order;

@@ -5,6 +5,7 @@
 namespace my::rg {
 
 static GLuint create_resource_impl(const ResourceDesc& desc) {
+    constexpr float shadow_boarder[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     GLuint texture_id = 0;
     GLenum type = GL_TEXTURE_2D;
     glGenTextures(1, &texture_id);
@@ -43,12 +44,25 @@ static GLuint create_resource_impl(const ResourceDesc& desc) {
             glBindTexture(type, 0);
         } break;
         case RT_SHADOW_MAP: {
-            // float border[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-            // glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border);
-            CRASH_NOW();
+            glBindTexture(type, texture_id);
+
+            glTexImage2D(
+                type,
+                0,
+                format_to_gl_internal_format(desc.format),
+                desc.width,
+                desc.height,
+                0,
+                format_to_gl_format(desc.format),
+                format_to_gl_data_type(desc.format),
+                nullptr);
+
+            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            glTexParameterfv(type, GL_TEXTURE_BORDER_COLOR, shadow_boarder);
         } break;
-        case RT_SHADDW_MAP_ARRAY:
-        case RT_SHADDW_MAP_CUBE:
         default:
             CRASH_NOW();
             break;
