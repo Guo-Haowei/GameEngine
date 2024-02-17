@@ -224,10 +224,10 @@ void SceneManager::update(float dt) {
     cache.c_ssao_kernel_size = DVAR_GET_INT(r_ssaoKernelSize);
     cache.c_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
     cache.c_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
-    cache.c_enable_ssao = DVAR_GET_BOOL(r_enableSsao);
+    cache.c_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
 
     // c_fxaa_image
-    cache.c_enable_fxaa = DVAR_GET_BOOL(r_enableFXAA);
+    cache.c_enable_fxaa = DVAR_GET_BOOL(r_enable_fxaa);
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);

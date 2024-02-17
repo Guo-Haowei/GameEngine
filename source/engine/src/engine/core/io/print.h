@@ -1,4 +1,5 @@
 #pragma once
+#include "core/math/math.h"
 
 #define LOG_VERBOSE(FMT, ...)   ::my::log_impl(::my::LOG_LEVEL_VERBOSE, FMT, ##__VA_ARGS__)
 #define LOG(FMT, ...)           ::my::log_impl(::my::LOG_LEVEL_NORMAL, FMT, ##__VA_ARGS__)
@@ -16,15 +17,18 @@
 namespace my {
 
 enum LogLevel : uint8_t {
-    // clang-format off
-    LOG_LEVEL_VERBOSE   = 0b000001,
-    LOG_LEVEL_NORMAL    = 0b000010,
-    LOG_LEVEL_OK        = 0b000100,
-    LOG_LEVEL_WARN      = 0b001000,
-    LOG_LEVEL_ERROR     = 0b010000,
-    LOG_LEVEL_FATAL     = 0b100000,
-    LOG_LEVEL_ALL       = 0b111111,
-    // clang-format on
+    LOG_LEVEL_VERBOSE = BIT(1),
+    LOG_LEVEL_NORMAL = BIT(2),
+    LOG_LEVEL_OK = BIT(3),
+    LOG_LEVEL_WARN = BIT(4),
+    LOG_LEVEL_ERROR = BIT(5),
+    LOG_LEVEL_FATAL = BIT(6),
+    LOG_LEVEL_ALL = LOG_LEVEL_VERBOSE |
+                    LOG_LEVEL_NORMAL |
+                    LOG_LEVEL_OK |
+                    LOG_LEVEL_WARN |
+                    LOG_LEVEL_ERROR |
+                    LOG_LEVEL_FATAL,
 };
 
 void print_impl(LogLevel level, const std::string& message);

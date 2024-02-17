@@ -2,6 +2,33 @@
 
 namespace my::math {
 
+TEST(bit, compile_time) {
+    static_assert(bit(0) == 0);
+    static_assert(bit(1) == 1);
+    static_assert(bit(2) == 2);
+    static_assert(bit(3) == 4);
+    static_assert(bit(31) == 1llu << 30);
+    SUCCEED();
+}
+
+TEST(bit, run_time) {
+    EXPECT_EQ(bit(0), 0);
+    EXPECT_EQ(bit(1), 1);
+    EXPECT_EQ(bit(2), 2);
+    EXPECT_EQ(bit(3), 4);
+    EXPECT_EQ(bit(4), 8);
+    EXPECT_EQ(bit(5), 16);
+    EXPECT_EQ(bit(6), 32);
+    EXPECT_EQ(bit(7), 64);
+    EXPECT_EQ(bit(8), 128);
+    EXPECT_EQ(bit(9), 256);
+    EXPECT_EQ(bit(30), 1llu << 29);
+    EXPECT_EQ(bit(31), 1llu << 30);
+    EXPECT_EQ(bit(32), 1llu << 31);
+    EXPECT_EQ(bit(62), 1llu << 61);
+    EXPECT_EQ(bit(63), 1llu << 62);
+}
+
 TEST(align, roundup) {
     EXPECT_EQ(align(1, 4), 4);
     EXPECT_EQ(align(2, 4), 4);

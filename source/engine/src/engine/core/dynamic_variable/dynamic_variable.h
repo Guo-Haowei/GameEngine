@@ -2,8 +2,8 @@
 #include "core/math/geomath.h"
 
 enum DvarFlags {
-    DVAR_FLAG_NONE = 0,
-    DVAR_FLAG_SERIALIZE = 1,
+    DVAR_FLAG_NONE = BIT(0),
+    DVAR_FLAG_CACHE = BIT(1),
 };
 
 namespace my {
@@ -67,6 +67,7 @@ public:
 
     VariantType get_type() const { return m_type; }
     const char* get_desc() const { return m_desc; }
+    uint32_t get_flags() const { return m_flags; }
 
     static DynamicVariable* find_dvar(const std::string& name);
     static void register_dvar(std::string_view key, DynamicVariable* dvar);
