@@ -5,6 +5,7 @@ DVAR_BOOL(r_enable_fxaa, DVAR_FLAG_CACHE, "Enalbe fxaa", true);
 DVAR_BOOL(r_enable_vxgi, DVAR_FLAG_CACHE, "Enable vxgi", true);
 DVAR_BOOL(r_enable_ssao, DVAR_FLAG_CACHE, "Enable ssao", true);
 DVAR_BOOL(r_no_texture, DVAR_FLAG_CACHE, "No texture", false);
+DVAR_BOOL(r_debug_csm, DVAR_FLAG_CACHE, "Debug csm", false);
 
 // GFX
 DVAR_STRING(r_backend, 0, "Renderer backend", "opengl");

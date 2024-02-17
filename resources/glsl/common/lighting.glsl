@@ -26,10 +26,6 @@ float geometrySmith(float NdotV, float NdotL, float roughness) {
 
 vec3 fresnelSchlick(float cosTheta, const in vec3 F0) { return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0); }
 
-#ifndef NUM_CASCADES
-#define NUM_CASCADES 3
-#endif
-
 // no filter
 float Shadow(sampler2D shadowMap, const in vec4 position_light, float NdotL
              //, int level
@@ -37,8 +33,8 @@ float Shadow(sampler2D shadowMap, const in vec4 position_light, float NdotL
     vec3 coords = position_light.xyz / position_light.w;
     coords = 0.5 * coords + 0.5;
 
-    // coords.x /= float( NUM_CASCADES );
-    // coords.x += float( level ) / float( NUM_CASCADES );
+    // coords.x /= float( SC_NUM_CASCADES );
+    // coords.x += float( level ) / float( SC_NUM_CASCADES );
 
     float current_depth = coords.z;
 
@@ -90,7 +86,7 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     //     float shadow = 0.0;
     // #if ENABLE_CSM
     //     // float clipSpaceZ = ( c_projection_view_matrix * worldPos ).z;
-    //     // for ( int idx = 0; idx < NUM_CASCADES; ++idx )
+    //     // for ( int idx = 0; idx < SC_NUM_CASCADES; ++idx )
     //     // {
     //     //     if ( clipSpaceZ <= c_cascade_clip_z[idx + 1] )
     //     //     {

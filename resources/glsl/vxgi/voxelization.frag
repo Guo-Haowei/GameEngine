@@ -57,7 +57,7 @@ void main() {
         // @TODO: shadow
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
-            vec4 lightSpacePos = c_lights[idx].light_matricies[0] * vec4(world_position, 1.0);
+            vec4 lightSpacePos = c_main_light_matrices[0] * vec4(world_position, 1.0);
             float shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }

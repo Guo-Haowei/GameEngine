@@ -22,14 +22,15 @@ void RenderData::update(const Scene* p_scene) {
     clear();
     scene = p_scene;
 
+    // main light
+
     // @TODO: HACK
-    Light& light = g_perFrameCache.cache.c_lights[0];
-    Frustum light_frustum(light.light_matricies[0]);
+    Frustum light_frustum(g_perFrameCache.cache.c_main_light_matrices[0]);
     Frustum camera_frustum(g_perFrameCache.cache.c_projection_view_matrix);
 
     fill(
         p_scene,
-        light.light_matricies[0],
+        g_perFrameCache.cache.c_main_light_matrices[0],
         shadow_pass,
         [](const ObjectComponent& object) {
             return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);

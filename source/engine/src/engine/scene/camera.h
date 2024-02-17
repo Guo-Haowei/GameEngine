@@ -25,8 +25,11 @@ public:
     bool is_dirty() const { return m_flags & DIRTY; }
     void set_dirty(bool dirty = true) { dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
 
+    Degree get_fovy() const { return m_fovy; }
     float get_near() const { return m_near; }
     float get_far() const { return m_far; }
+    float get_width() const { return m_width; }
+    float get_height() const { return m_height; }
     const mat4& get_view_matrix() const { return m_view_matrix; }
     const mat4& get_projection_matrix() const { return m_projection_matrix; }
     const mat4& get_projection_view_matrix() const { return m_projection_view_matrix; }

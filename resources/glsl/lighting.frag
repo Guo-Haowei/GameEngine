@@ -62,7 +62,7 @@ void main() {
         // @TODO: shadow
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
-            vec4 lightSpacePos = c_lights[idx].light_matricies[0] * vec4(world_position, 1.0);
+            vec4 lightSpacePos = c_main_light_matrices[0] * vec4(world_position, 1.0);
             float shadow = Shadow(c_shadow_map, lightSpacePos, NdotL);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }
@@ -95,12 +95,37 @@ void main() {
     color = color / (color + 1.0);
     color = pow(color, vec3(gamma));
 
+    // debug CSM
+    if (c_debug_csm == 1) {
+        vec4 fragPosViewSpace = c_view_matrix * vec4(world_position, 1.0);
+        float depthValue = abs(fragPosViewSpace.z);
+
+        int layer = SC_NUM_CASCADES;
+        for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+            if (depthValue < c_cascade_plane_distances[i]) {
+                layer = i;
+                break;
+            }
+        }
+
+        float alpha = 0.2;
+        if (layer == 0) {
+            color = mix(color, vec3(1, 0, 0), alpha);
+        } else if (layer == 1) {
+            color = mix(color, vec3(0, 1, 0), alpha);
+        } else if (layer == 2) {
+            color = mix(color, vec3(0, 0, 1), alpha);
+        } else if (layer == 3) {
+            color = mix(color, vec3(1, 0, 1), alpha);
+        }
+    }
+
     out_color = vec4(color, 1.0);
 
 #if ENABLE_CSM
     if (c_debug_csm != 0) {
         vec3 mask = vec3(0.1);
-        for (int idx = 0; idx < NUM_CASCADES; ++idx) {
+        for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
             if (clipSpaceZ <= c_cascade_clip_z[idx + 1]) {
                 mask[idx] = 0.7;
                 break;

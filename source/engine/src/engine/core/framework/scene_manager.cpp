@@ -12,6 +12,80 @@
 
 #include "rendering/r_cbuffers.h"
 
+// @TODO: refactor
+namespace my {
+
+[[nodiscard]] std::vector<vec4> getFrustumCornersWorldSpace(const mat4& projview) {
+    const auto inv = glm::inverse(projview);
+
+    std::vector<vec4> frustumCorners;
+    for (unsigned int x = 0; x < 2; ++x) {
+        for (unsigned int y = 0; y < 2; ++y) {
+            for (unsigned int z = 0; z < 2; ++z) {
+                const glm::vec4 pt = inv * glm::vec4(2.0f * x - 1.0f, 2.0f * y - 1.0f, 2.0f * z - 1.0f, 1.0f);
+                frustumCorners.push_back(pt / pt.w);
+            }
+        }
+    }
+
+    return frustumCorners;
+}
+
+[[nodiscard]] static mat4 getLightSpaceMatrix(vec3 lightDir, float nearPlane, float farPlane, Camera& camera) {
+    const mat4 proj = glm::perspective(camera.get_fovy().to_rad(), camera.get_width() / camera.get_height(), nearPlane, farPlane);
+    const auto corners = getFrustumCornersWorldSpace(proj * camera.get_view_matrix());
+
+    glm::vec3 center = glm::vec3(0, 0, 0);
+    for (const auto& v : corners) {
+        center += glm::vec3(v);
+    }
+    center /= corners.size();
+
+    const auto lightView = glm::lookAt(center + lightDir, center, glm::vec3(0.0f, 1.0f, 0.0f));
+
+    float minX = std::numeric_limits<float>::max();
+    float maxX = std::numeric_limits<float>::lowest();
+    float minY = std::numeric_limits<float>::max();
+    float maxY = std::numeric_limits<float>::lowest();
+    float minZ = std::numeric_limits<float>::max();
+    float maxZ = std::numeric_limits<float>::lowest();
+    for (const auto& v : corners) {
+        const auto trf = lightView * v;
+        minX = std::min(minX, trf.x);
+        maxX = std::max(maxX, trf.x);
+        minY = std::min(minY, trf.y);
+        maxY = std::max(maxY, trf.y);
+        minZ = std::min(minZ, trf.z);
+        maxZ = std::max(maxZ, trf.z);
+    }
+
+    // Tune this parameter according to the scene
+    constexpr float zMult = 10.0f;
+    if (minZ < 0) {
+        minZ *= zMult;
+    } else {
+        minZ /= zMult;
+    }
+    if (maxZ < 0) {
+        maxZ /= zMult;
+    } else {
+        maxZ *= zMult;
+    }
+
+    const glm::mat4 lightProjection = glm::ortho(minX, maxX, minY, maxY, minZ, maxZ);
+    return lightProjection * lightView;
+}
+
+[[nodiscard]] std::vector<glm::mat4> getLightSpaceMatrices(vec3 light_dir, Camera& camera, const std::vector<float>& shadowCascadeLevels) {
+    DEV_ASSERT(shadowCascadeLevels.size() == SC_NUM_CASCADES + 1);
+    std::vector<glm::mat4> ret;
+    for (size_t i = 1; i < shadowCascadeLevels.size(); ++i) {
+        ret.push_back(getLightSpaceMatrix(light_dir, shadowCascadeLevels[i - 1], shadowCascadeLevels[i], camera));
+    }
+    return ret;
+}
+}  // namespace my
+
 namespace my {
 
 using ecs::Entity;
@@ -121,15 +195,15 @@ bool SceneManager::initialize() {
 void SceneManager::finalize() {}
 
 // @TODO: fix
-static mat4 R_HackLightSpaceMatrix(const vec3& lightDir) {
-    const Scene& scene = SceneManager::get_scene();
-    const vec3 center = scene.get_bound().center();
-    const vec3 extents = scene.get_bound().size();
-    const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
-    const mat4 V = glm::lookAt(center + glm::normalize(lightDir) * size, center, vec3(0, 1, 0));
-    const mat4 P = glm::ortho(-size, size, -size, size, 0.0f, 2.0f * size);
-    return P * V;
-}
+// static mat4 R_HackLightSpaceMatrix(const vec3& lightDir) {
+//    const Scene& scene = SceneManager::get_scene();
+//    const vec3 center = scene.get_bound().center();
+//    const vec3 extents = scene.get_bound().size();
+//    const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
+//    const mat4 V = glm::lookAt(center + glm::normalize(lightDir) * size, center, vec3(0, 1, 0));
+//    const mat4 P = glm::ortho(-size, size, -size, size, 0.0f, 2.0f * size);
+//    return P * V;
+//}
 
 bool SceneManager::try_swap_scene() {
     Scene* new_scene = m_loading_scene.load();
@@ -165,20 +239,27 @@ void SceneManager::update(float dt) {
     auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
 
     // @TODO: refactor this
-    auto camera = scene.m_camera;
-    DEV_ASSERT(camera);
+    DEV_ASSERT(scene.m_camera);
+    Camera& camera = *scene.m_camera.get();
 
     if (frameW > 0 && frameH > 0) {
-        camera->set_dimension((float)frameW, (float)frameH);
+        camera.set_dimension((float)frameW, (float)frameH);
     }
 
     scene.update(dt);
 
+    // THESE SHOULDN'T BE HERE
     auto& cache = g_perFrameCache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), SHADER_LIGHT_MAX);
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), SC_LIGHT_MAX);
     DEV_ASSERT(light_count);
 
     cache.c_light_count = light_count;
+
+    // auto camera = scene.m_camera;
+    std::vector<mat4> light_matrices;
+    const float z_near = camera.get_near();
+    const float z_far = camera.get_far();
+    const std::vector<float> shadowCascadeLevels{ z_near, z_far / 20.0f, z_far / 10.0f, z_far / 2.0f, z_far };
 
     for (uint32_t idx = 0; idx < light_count; ++idx) {
         const LightComponent& light_component = scene.get_component_array<LightComponent>()[idx];
@@ -193,10 +274,10 @@ void SceneManager::update(float dt) {
         switch (light_component.type) {
             case LightComponent::LIGHT_TYPE_OMNI: {
                 vec3 light_dir = light_transform->get_local_matrix() * vec4(0, 1, 0, 0);
-                mat4 lightPV = R_HackLightSpaceMatrix(light_dir);
                 light.cast_shadow = true;
                 light.position = light_dir;
-                light.light_matricies[0] = light.light_matricies[1] = light.light_matricies[2] = lightPV;
+
+                light_matrices = getLightSpaceMatrices(-light_dir, camera, shadowCascadeLevels);
             } break;
             case LightComponent::LIGHT_TYPE_POINT: {
                 light.atten_constant = light_component.atten.constant;
@@ -209,14 +290,24 @@ void SceneManager::update(float dt) {
         }
     }
 
-    cache.c_camera_position = camera->get_position();
-    cache.c_view_matrix = camera->get_view_matrix();
-    cache.c_projection_matrix = camera->get_projection_matrix();
-    cache.c_projection_view_matrix = camera->get_projection_view_matrix();
+    DEV_ASSERT(light_matrices.size() == SC_NUM_CASCADES);
+    if (!light_matrices.empty()) {
+        for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
+            cache.c_main_light_matrices[idx] = light_matrices[idx];
+            cache.c_cascade_plane_distances[idx] = shadowCascadeLevels[idx + 1];
+        }
+    }
+
+    cache.c_camera_position = camera.get_position();
+    cache.c_view_matrix = camera.get_view_matrix();
+    cache.c_projection_matrix = camera.get_projection_matrix();
+    cache.c_projection_view_matrix = camera.get_projection_view_matrix();
 
     cache.c_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
     cache.c_debug_texture_id = DVAR_GET_INT(r_debug_texture);
     cache.c_no_texture = DVAR_GET_BOOL(r_no_texture);
+    cache.c_debug_csm = DVAR_GET_BOOL(r_debug_csm);
+
     cache.c_screen_width = frameW;
     cache.c_screen_height = frameH;
 
@@ -240,7 +331,7 @@ void SceneManager::update(float dt) {
 
     const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
     if (world_size > max_world_size) {
-        world_center = camera->get_position();
+        world_center = camera.get_position();
         world_size = max_world_size;
     }
 

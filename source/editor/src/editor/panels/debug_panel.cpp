@@ -66,6 +66,7 @@ void DebugPanel::update_internal(Scene&) {
         ImGui::SliderFloat("Kernal Radius", (float*)(DVAR_GET_POINTER(r_ssaoKernelRadius)), 0.1f, 5.0f);
     });
 
+    dvar_checkbox(DVAR_r_debug_csm);
     dvar_checkbox(DVAR_r_enable_fxaa);
     dvar_checkbox(DVAR_grid_visibility);
 }
