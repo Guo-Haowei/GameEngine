@@ -109,6 +109,7 @@ IMGUI_API void DrawCubes(const float* view, const float* projection, const float
 
 IMGUI_API void draw_grid(const mat4& projection_view_matrix, const mat4& matrix, const float gridSize);
 IMGUI_API void draw_box_wireframe(const mat4& projection_view_matrix, const mat4& matrix);
+IMGUI_API void draw_cone_wireframe(const mat4& projection_view_matrix, const mat4& matrix);
 
 // call it when you want a gizmo
 // Needs view and projection matrices.

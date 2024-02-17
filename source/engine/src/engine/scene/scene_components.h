@@ -197,6 +197,7 @@ struct MaterialComponent {
 // Light Component
 //--------------------------------------------------------------------------------------------------
 struct LightComponent {
+    // @TODO: share with shader
     enum Type {
         LIGHT_TYPE_OMNI,
         LIGHT_TYPE_POINT,
