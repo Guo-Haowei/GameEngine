@@ -27,17 +27,6 @@ void R_DrawQuad() {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void FillMaterialCB(const MaterialData *mat, MaterialConstantBuffer &cb) {
-    cb.c_albedo_color = mat->albedoColor;
-    cb.c_metallic = mat->metallic;
-    cb.c_roughness = mat->roughness;
-    cb.c_has_albedo_map = mat->albedoMap.GetHandle() != 0;
-    cb.c_has_normal_map = mat->materialMap.GetHandle() != 0;
-    cb.c_has_pbr_map = mat->materialMap.GetHandle() != 0;
-    cb.c_texture_map_idx = mat->textureMapIdx;
-    cb.c_reflect_power = mat->reflectPower;
-}
-
 namespace gl {
 
 //------------------------------------------------------------------------------

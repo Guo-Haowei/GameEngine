@@ -1,7 +1,7 @@
 #include "debug_texture.h"
 
-#include "../editor_layer.h"
 #include "core/framework/graphics_manager.h"
+#include "editor/editor_layer.h"
 
 namespace my {
 

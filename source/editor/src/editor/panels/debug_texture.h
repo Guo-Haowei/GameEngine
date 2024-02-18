@@ -1,11 +1,11 @@
 #pragma once
-#include "panel.h"
+#include "editor/editor_window.h"
 
 namespace my {
 
-class DebugTexturePanel : public Panel {
+class DebugTexturePanel : public EditorWindow {
 public:
-    DebugTexturePanel(EditorLayer& editor) : Panel("DebugTexture", editor) {}
+    DebugTexturePanel(EditorLayer& editor) : EditorWindow("DebugTexture", editor) {}
 
 protected:
     void update_internal(Scene& scene) override;

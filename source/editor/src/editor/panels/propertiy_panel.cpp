@@ -1,17 +1,11 @@
 #include "propertiy_panel.h"
 
-#include "../editor_layer.h"
 #include "ImGuizmo/ImGuizmo.h"
-#include "imgui/imgui_internal.h"
+#include "core/framework/scene_manager.h"
+#include "editor/editor_layer.h"
+#include "editor/widget.h"
 
 namespace my {
-
-static constexpr float DEFAULT_COLUMN_WIDTH = 100.0f;
-
-static bool draw_vec3_control(const std::string& label, glm::vec3& values, bool enabled = true, float resetValue = 0.0f,
-                              float columnWidth = DEFAULT_COLUMN_WIDTH);
-// static bool draw_drag_float(const char* tag, float* p, float speed, float min, float max,
-//                             float columnWidth = DEFAULT_COLUMN_WIDTH);
 
 template<typename T, typename UIFunction>
 static void DrawComponent(const std::string& name, T* component, UIFunction uiFunction) {
@@ -51,98 +45,17 @@ static void DrawComponent(const std::string& name, T* component, UIFunction uiFu
     }
 }
 
-static bool draw_vec3_control(const std::string& label, glm::vec3& values, bool enabled, float resetValue, float columnWidth) {
-    bool dirty = false;
-
-    if (!enabled) {
-        ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+template<typename... Args>
+static bool draw_vec3_control_disabled(bool disabled, Args&&... args) {
+    if (disabled) {
+        push_disabled();
     }
-
-    ImGuiIO& io = ImGui::GetIO();
-    auto boldFont = io.Fonts->Fonts[0];
-
-    ImGui::PushID(label.c_str());
-
-    ImGui::Columns(2);
-    ImGui::SetColumnWidth(0, columnWidth);
-    ImGui::Text(label.c_str());
-    ImGui::NextColumn();
-
-    ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2{ 0, 0 });
-
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.9f, 0.2f, 0.2f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.8f, 0.1f, 0.15f, 1.0f });
-    ImGui::PushFont(boldFont);
-
-    if (ImGui::Button("X")) {
-        values.x = resetValue;
-        dirty = true;
+    bool dirty = draw_vec3_control(std::forward<Args>(args)...);
+    if (disabled) {
+        pop_disabled();
     }
-    ImGui::PopFont();
-    ImGui::PopStyleColor(3);
-
-    ImGui::SameLine();
-    dirty |= ImGui::DragFloat("##X", &values.x, 0.1f, 0.0f, 0.0f, "%.2f");
-    ImGui::PopItemWidth();
-    ImGui::SameLine();
-
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.3f, 0.8f, 0.3f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.2f, 0.7f, 0.2f, 1.0f });
-    ImGui::PushFont(boldFont);
-    if (ImGui::Button("Y")) {
-        values.y = resetValue;
-        dirty = true;
-    }
-    ImGui::PopFont();
-    ImGui::PopStyleColor(3);
-
-    ImGui::SameLine();
-    dirty |= ImGui::DragFloat("##Y", &values.y, 0.1f, 0.0f, 0.0f, "%.2f");
-    ImGui::PopItemWidth();
-    ImGui::SameLine();
-
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4{ 0.2f, 0.35f, 0.9f, 1.0f });
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4{ 0.1f, 0.25f, 0.8f, 1.0f });
-    ImGui::PushFont(boldFont);
-    if (ImGui::Button("Z")) {
-        values.z = resetValue;
-        dirty = true;
-    }
-    ImGui::PopFont();
-    ImGui::PopStyleColor(3);
-
-    ImGui::SameLine();
-    dirty |= ImGui::DragFloat("##Z", &values.z, 0.1f, 0.0f, 0.0f, "%.2f");
-    ImGui::PopItemWidth();
-
-    ImGui::PopStyleVar();
-
-    ImGui::Columns(1);
-
-    if (!enabled) {
-        ImGui::PopItemFlag();
-        ImGui::PopStyleVar();
-    }
-
-    ImGui::PopID();
     return dirty;
-}
-
-// static bool draw_drag_float(const char* tag, float* p, float speed, float min, float max, float columnWidth) {
-//     ImGui::Columns(2);
-//     ImGui::SetColumnWidth(0, columnWidth);
-//     ImGui::Text(tag);
-//     ImGui::NextColumn();
-//     auto dragFloatTag = std::format("##{}", tag);
-//     bool dirty = ImGui::DragFloat(dragFloatTag.c_str(), p, speed, min, max);
-//     ImGui::Columns(1);
-//     return dirty;
-// }
+};
 
 void PropertyPanel::update_internal(Scene& scene) {
     ecs::Entity id = m_editor.get_selected_entity();
@@ -164,7 +77,7 @@ void PropertyPanel::update_internal(Scene& scene) {
 
     ImGui::SameLine();
     ImGui::PushItemWidth(-1);
-    if (ImGui::Button("Add Component")) {
+    if (ImGui::Button("+")) {
         ImGui::OpenPopup("AddComponentPopup");
     }
 
@@ -176,57 +89,49 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::EndPopup();
     }
 
+    TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
     LightComponent* light_component = scene.get_component<LightComponent>(id);
-    DrawComponent("Light", light_component, [&](LightComponent& light) {
-        static const char* types[] = {
-            "omni light",
-            "point light"
-        };
+    ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
+    MeshComponent* mesh_component = object_component ? scene.get_component<MeshComponent>(object_component->mesh_id) : nullptr;
+    auto material_id = mesh_component ? mesh_component->subsets[0].material_id : ecs::Entity::INVALID;
+    MaterialComponent* material_component = scene.get_component<MaterialComponent>(material_id);
+    RigidBodyComponent* rigid_body_component = scene.get_component<RigidBodyComponent>(id);
 
-        if (ImGui::Combo("MyCombo", (int*)(&light_component->type), types, IM_ARRAYSIZE(types))) {
-            // @TODO: set dirty
+    bool disable_translation = false;
+    bool disable_rotation = false;
+    bool disable_scale = false;
+    if (light_component) {
+        switch (light_component->type) {
+            case LightComponent::LIGHT_TYPE_OMNI:
+                disable_translation = true;
+                disable_scale = true;
+                break;
+            case LightComponent::LIGHT_TYPE_POINT:
+                disable_rotation = true;
+                disable_scale = true;
+                break;
+            default:
+                CRASH_NOW();
+                break;
         }
+    }
 
-        ImGui::DragFloat3("color:", &light.color.x);
-        ImGui::DragFloat("energy:", &light.energy);
-        ImGui::InputFloat("atten.constant", &light.atten.constant);
-        ImGui::DragFloat("atten.linear", &light.atten.linear, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("atten.quadratic", &light.atten.quadratic, 0.01f, 0.0f, 1.0f);
-    });
-
-    TransformComponent* transformComponent = scene.get_component<TransformComponent>(id);
-    DrawComponent("Transform", transformComponent, [&](TransformComponent& transform) {
+    DrawComponent("Transform", transform_component, [&](TransformComponent& transform) {
         mat4 transformMatrix = transform.get_local_matrix();
         vec3 translation;
         vec3 rotation;
         vec3 scale;
+
         // @TODO: fix
         // DO NOT USE IMGUIZMO
         ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transformMatrix), glm::value_ptr(translation),
                                               glm::value_ptr(rotation), glm::value_ptr(scale));
 
         bool dirty = false;
-        bool want_translation = true;
-        bool want_rotation = true;
-        bool want_scale = true;
-        if (light_component) {
-            switch (light_component->type) {
-                case LightComponent::LIGHT_TYPE_OMNI:
-                    want_translation = false;
-                    want_scale = false;
-                    break;
-                case LightComponent::LIGHT_TYPE_POINT:
-                    want_rotation = false;
-                    want_scale = false;
-                    break;
-                default:
-                    break;
-            }
-        }
 
-        dirty |= draw_vec3_control("translation", translation, want_translation);
-        dirty |= draw_vec3_control("rotation", rotation, want_rotation);
-        dirty |= draw_vec3_control("scale", scale, want_scale, 1.0f);
+        dirty |= draw_vec3_control_disabled(disable_translation, "translation", translation);
+        dirty |= draw_vec3_control_disabled(disable_rotation, "rotation", rotation);
+        dirty |= draw_vec3_control_disabled(disable_scale, "scale", scale, 1.0f);
         if (dirty) {
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(transformMatrix));
@@ -235,8 +140,26 @@ void PropertyPanel::update_internal(Scene& scene) {
         }
     });
 
-    RigidBodyComponent* rigidBodyComponent = scene.get_component<RigidBodyComponent>(id);
-    DrawComponent("RigidBody", rigidBodyComponent, [](RigidBodyComponent& rigidbody) {
+    DrawComponent("Light", light_component, [&](LightComponent& light) {
+        static const char* types[] = {
+            "omni light",
+            "point light"
+        };
+
+        bool dirty = false;
+
+        if (ImGui::Combo("MyCombo", (int*)(&light_component->type), types, IM_ARRAYSIZE(types))) {
+            // @TODO: set dirty
+        }
+
+        dirty |= draw_color_control("color:", light.color);
+        dirty |= draw_drag_float("energy:", light.energy, 1.0f, 0.1f, 100.0f);
+        dirty |= draw_drag_float("constant", light.atten.constant, 0.1f, 0.0f, 1.0f);
+        dirty |= draw_drag_float("linear", light.atten.linear, 0.1f, 0.0f, 1.0f);
+        dirty |= draw_drag_float("quadratic", light.atten.quadratic, 0.1f, 0.0f, 1.0f);
+    });
+
+    DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
         switch (rigidbody.shape) {
             case RigidBodyComponent::SHAPE_BOX: {
                 const auto& half = rigidbody.param.box.half_size;
@@ -259,45 +182,46 @@ void PropertyPanel::update_internal(Scene& scene) {
     //     camera.m_fovy = glm::radians(fovy);
     // });
 
-    ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
     DrawComponent("Object", object_component, [&](ObjectComponent& object) {
-        MeshComponent* mesh = scene.get_component<MeshComponent>(object.mesh_id);
-        NameComponent* meshName = scene.get_component<NameComponent>(object.mesh_id);
-        ImGui::Text("Mesh Component (%d)", object.mesh_id);
-        if (mesh) {
-            const char* meshNameStr = meshName ? meshName->get_name().c_str() : "untitled";
-            ImGui::Text("mesh %s (%zu submesh)", meshNameStr, mesh->subsets.size());
-            ImGui::Text("%zu triangles", mesh->indices.size() / 3);
-            ImGui::Text("v:%zu, n:%zu, u:%zu, b:%zu", mesh->positions.size(), mesh->normals.size(),
-                        mesh->texcoords_0.size(), mesh->weights_0.size());
+        bool hide = !(object.flags & ObjectComponent::RENDERABLE);
+        bool cast_shadow = object.flags & ObjectComponent::CAST_SHADOW;
+        ImGui::Checkbox("Hide", &hide);
+        ImGui::Checkbox("Cast shadow", &cast_shadow);
+        object.flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
+    });
 
-            bool hide = !(object_component->flags & ObjectComponent::RENDERABLE);
-            bool cast_shadow = object_component->flags & ObjectComponent::CAST_SHADOW;
-            ImGui::Checkbox("Hide", &hide);
-            ImGui::Checkbox("Cast shadow", &cast_shadow);
+    DrawComponent("Mesh", mesh_component, [&](MeshComponent& mesh) {
+        ImGui::Text("%zu triangles", mesh.indices.size() / 3);
+        ImGui::Text("v:%zu, n:%zu, u:%zu, b:%zu", mesh.positions.size(), mesh.normals.size(),
+                    mesh.texcoords_0.size(), mesh.weights_0.size());
+    });
 
-            object_component->flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
-
-            // if (mesh->armature_id.is_valid()) {
-            //     TagComponent* animation_name = scene.get_component<TagComponent>(mesh->armature_id);
-            //     AnimationComponent& animation = *scene.get_component<AnimationComponent>(mesh->armature_id);
-            //     ImGui::Text("Animation %s", animation_name->get_tag().c_str());
-            //     if (!animation.is_playing()) {
-            //         if (ImGui::Button("Play")) {
-            //             animation.flags |= AnimationComponent::PLAYING;
-            //         }
-            //     } else {
-            //         if (ImGui::Button("Stop")) {
-            //             animation.flags &= ~AnimationComponent::PLAYING;
-            //         }
-            //     }
-            //     if (ImGui::SliderFloat("Frame", &animation.timer, animation.start, animation.end)) {
-            //         animation.flags |= AnimationComponent::PLAYING;
-            //     }
-            //     ImGui::Separator();
-            // }
+    DrawComponent("Material", material_component, [&](MaterialComponent& material) {
+        vec3 color = material.base_color;
+        if (draw_color_control("Color", color)) {
+            material.base_color = vec4(color, material.base_color.a);
         }
     });
+
+    // @TODO: animation
+    // if (mesh->armature_id.is_valid()) {
+    //     TagComponent* animation_name = scene.get_component<TagComponent>(mesh->armature_id);
+    //     AnimationComponent& animation = *scene.get_component<AnimationComponent>(mesh->armature_id);
+    //     ImGui::Text("Animation %s", animation_name->get_tag().c_str());
+    //     if (!animation.is_playing()) {
+    //         if (ImGui::Button("Play")) {
+    //             animation.flags |= AnimationComponent::PLAYING;
+    //         }
+    //     } else {
+    //         if (ImGui::Button("Stop")) {
+    //             animation.flags &= ~AnimationComponent::PLAYING;
+    //         }
+    //     }
+    //     if (ImGui::SliderFloat("Frame", &animation.timer, animation.start, animation.end)) {
+    //         animation.flags |= AnimationComponent::PLAYING;
+    //     }
+    //     ImGui::Separator();
+    // }
 }
 
 }  // namespace my

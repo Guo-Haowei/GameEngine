@@ -1,12 +1,12 @@
 #pragma once
-#include "graph_editor.h"
-#include "panel.h"
+#include "editor/editor_window.h"
+#include "editor/utility/graph_editor.h"
 
 namespace my {
 
 class RenderGraphEditorDelegate;
 
-class RenderGraphEditor : public Panel {
+class RenderGraphEditor : public EditorWindow {
 public:
     RenderGraphEditor(EditorLayer& editor);
 

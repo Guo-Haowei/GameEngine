@@ -5,14 +5,14 @@
 /////////////////////
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
-#include "panels/animation_panel.h"
-#include "panels/console_panel.h"
-#include "panels/debug_panel.h"
-#include "panels/debug_texture.h"
-#include "panels/hierarchy_panel.h"
-#include "panels/propertiy_panel.h"
-#include "panels/render_graph_editor.h"
-#include "panels/viewer.h"
+#include "editor/panels/animation_panel.h"
+#include "editor/panels/console_panel.h"
+#include "editor/panels/debug_panel.h"
+#include "editor/panels/debug_texture.h"
+#include "editor/panels/hierarchy_panel.h"
+#include "editor/panels/propertiy_panel.h"
+#include "editor/panels/render_graph_editor.h"
+#include "editor/panels/viewer.h"
 #include "servers/display_server.h"
 
 namespace my {
@@ -30,7 +30,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     m_menu_bar = std::make_shared<MenuBar>(*this);
 }
 
-void EditorLayer::add_panel(std::shared_ptr<Panel> panel) {
+void EditorLayer::add_panel(std::shared_ptr<EditorWindow> panel) {
     m_panels.emplace_back(panel);
 }
 
@@ -76,7 +76,7 @@ void EditorLayer::dock_space(Scene& scene) {
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    m_menu_bar->update(scene);
+    m_menu_bar->draw(scene);
 
     ImGui::End();
     return;
@@ -88,9 +88,92 @@ void EditorLayer::update(float) {
     for (auto& it : m_panels) {
         it->update(scene);
     }
+    flush_commands(scene);
 }
 
 void EditorLayer::render() {
+}
+
+void EditorLayer::add_object(EditorCommandName name, ecs::Entity parent) {
+    auto command = std::make_shared<EditorCommandAdd>(name);
+    command->parent = parent;
+    buffer_command(command);
+}
+
+void EditorLayer::add_plane(ecs::Entity parent) {
+    add_object(EDITOR_COMMAND_ADD_MESH_PLANE, parent);
+}
+
+void EditorLayer::add_cube(ecs::Entity parent) {
+    add_object(EDITOR_COMMAND_ADD_MESH_CUBE, parent);
+}
+
+void EditorLayer::add_sphere(ecs::Entity parent) {
+    add_object(EDITOR_COMMAND_ADD_MESH_SPHERE, parent);
+}
+
+void EditorLayer::add_point_light(ecs::Entity parent) {
+    add_object(EDITOR_COMMAND_ADD_LIGHT_POINT, parent);
+}
+
+void EditorLayer::add_omin_light(ecs::Entity parent) {
+    add_object(EDITOR_COMMAND_ADD_LIGHT_OMNI, parent);
+}
+
+void EditorLayer::buffer_command(std::shared_ptr<EditorCommand> command) {
+    m_command_buffer.emplace_back(std::move(command));
+}
+
+static std::string gen_name(std::string_view name) {
+    static int s_counter = 0;
+    return std::format("{}_{}", name, ++s_counter);
+}
+
+void EditorLayer::flush_commands(Scene& scene) {
+    while (!m_command_buffer.empty()) {
+        auto command = m_command_buffer.front();
+        m_command_buffer.pop_front();
+        do {
+            EditorCommandAdd* add_command = dynamic_cast<EditorCommandAdd*>(command.get());
+            if (add_command) {
+                if (!add_command->parent.is_valid()) {
+                    add_command->parent == scene.m_root;
+                }
+
+                ecs::Entity id;
+                switch (add_command->name) {
+                    case EDITOR_COMMAND_ADD_LIGHT_OMNI:
+                        id = scene.create_omnilight_entity(gen_name("OmniLight"));
+                        break;
+                    case EDITOR_COMMAND_ADD_LIGHT_POINT:
+                        id = scene.create_pointlight_entity(gen_name("Pointlight"), vec3(0, 1, 0));
+                        break;
+                    case EDITOR_COMMAND_ADD_MESH_PLANE:
+                        id = scene.create_cube_entity(gen_name("Plane"));
+                        break;
+                    case EDITOR_COMMAND_ADD_MESH_CUBE:
+                        id = scene.create_cube_entity(gen_name("Cube"));
+                        break;
+                    case EDITOR_COMMAND_ADD_MESH_SPHERE:
+                        id = scene.create_sphere_entity(gen_name("Sphere"));
+                        break;
+                    default:
+                        CRASH_NOW();
+                        break;
+                }
+
+                scene.attach_component(id, add_command->parent);
+                select_entity(id);
+                SceneManager::singleton().bump_revision();
+                break;
+            }
+        } while (0);
+        m_command_history.push_back(command);
+    }
+}
+
+void EditorLayer::undo_command(Scene&) {
+    CRASH_NOW();
 }
 
 }  // namespace my

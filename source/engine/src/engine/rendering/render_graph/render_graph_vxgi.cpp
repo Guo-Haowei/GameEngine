@@ -16,10 +16,9 @@ extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
 
-extern void FillMaterialCB(const MaterialData* mat, MaterialConstantBuffer& cb);
+extern void dummy_fill_material_buffer(const my::MaterialComponent* material, MaterialConstantBuffer& cb);
 
 extern my::RIDAllocator<MeshData> g_meshes;
-extern my::RIDAllocator<MaterialData> g_materials;
 
 namespace my::rg {
 
@@ -105,7 +104,8 @@ void voxelization_pass_func(int) {
         glBindVertexArray(draw.mesh_data->vao);
 
         for (const auto& subset : draw.subsets) {
-            FillMaterialCB(subset.material_data, g_materialCache.cache);
+            // @TODO:
+            dummy_fill_material_buffer(subset.material, g_materialCache.cache);
             g_materialCache.Update();
 
             glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));
@@ -163,7 +163,7 @@ void gbuffer_pass_func(int) {
         glBindVertexArray(draw.mesh_data->vao);
 
         for (const auto& subset : draw.subsets) {
-            FillMaterialCB(subset.material_data, g_materialCache.cache);
+            dummy_fill_material_buffer(subset.material, g_materialCache.cache);
             g_materialCache.Update();
 
             glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));
@@ -228,9 +228,8 @@ void final_pass_func(int) {
 void debug_vxgi_pass_func(int) {
     auto [width, height] = my::DisplayServer::singleton().get_frame_size();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // @TODO: stop using window width and height
     glViewport(0, 0, width, height);
-    // glDisable(GL_CULL_FACE);
-    // glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
     const auto& program = my::ShaderProgramManager::get(my::PROGRAM_DEBUG_VOXEL);

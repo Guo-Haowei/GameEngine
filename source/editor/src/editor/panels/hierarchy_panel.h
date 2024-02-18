@@ -1,11 +1,11 @@
 #pragma once
-#include "panel.h"
+#include "editor/editor_window.h"
 
 namespace my {
 
-class HierarchyPanel : public Panel {
+class HierarchyPanel : public EditorWindow {
 public:
-    HierarchyPanel(EditorLayer& editor) : Panel("Scene", editor) {}
+    HierarchyPanel(EditorLayer& editor) : EditorWindow("Scene", editor) {}
 
 protected:
     void update_internal(Scene& scene) override;

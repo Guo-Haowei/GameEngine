@@ -27,9 +27,6 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "graph_editor.h"
 
-#include "imgui.h"
-#include "imgui_internal.h"
-
 namespace GraphEditor {
 
 static inline float Distance(const ImVec2& a, const ImVec2& b) {
