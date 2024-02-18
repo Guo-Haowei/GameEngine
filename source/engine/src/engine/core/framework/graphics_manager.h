@@ -17,7 +17,6 @@ public:
         RENDER_GRAPH_NONE,
         RENDER_GRAPH_DEFAULT,
         RENDER_GRAPH_VXGI,
-        RENDER_GRAPH_VXGI_DEBUG,
     };
 
     GraphicsManager() : Module("GraphicsManager") {}

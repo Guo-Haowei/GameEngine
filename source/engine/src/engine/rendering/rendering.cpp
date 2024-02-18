@@ -221,7 +221,7 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_projection_view_matrix = camera.get_projection_view_matrix();
 
     cache.c_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
-    cache.c_debug_texture_id = DVAR_GET_INT(r_debug_texture);
+    cache.c_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
     cache.c_no_texture = DVAR_GET_BOOL(r_no_texture);
     cache.c_debug_csm = DVAR_GET_BOOL(r_debug_csm);
 

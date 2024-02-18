@@ -26,6 +26,5 @@
 namespace my::rg {
 
 void create_render_graph_vxgi(RenderGraph& graph);
-void create_render_graph_vxgi_debug(RenderGraph& graph);
 
 }  // namespace my::rg

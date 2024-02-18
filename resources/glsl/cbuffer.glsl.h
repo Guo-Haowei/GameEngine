@@ -62,7 +62,7 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     vec3 c_world_center;
     float c_world_size_half;
 
-    int c_debug_texture_id;
+    int c_debug_voxel_id;
     int c_no_texture;
     int c_screen_width;
     int c_screen_height;

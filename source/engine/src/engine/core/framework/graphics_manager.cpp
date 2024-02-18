@@ -283,8 +283,6 @@ void GraphicsManager::createGpuResources() {
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
         m_method = RENDER_GRAPH_VXGI;
-    } else if (method == "vxgi_debug") {
-        m_method = RENDER_GRAPH_VXGI_DEBUG;
     } else if (method == "default") {
         m_method = RENDER_GRAPH_DEFAULT;
     }
@@ -295,9 +293,6 @@ void GraphicsManager::createGpuResources() {
             break;
         case my::GraphicsManager::RENDER_GRAPH_VXGI:
             create_render_graph_vxgi(m_render_graph);
-            break;
-        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-            create_render_graph_vxgi_debug(m_render_graph);
             break;
         default:
             CRASH_NOW();
@@ -392,7 +387,6 @@ uint32_t GraphicsManager::get_final_image() const {
         case my::GraphicsManager::RENDER_GRAPH_VXGI:
             return m_render_graph.find_resouce(RT_RES_FXAA)->get_handle();
         case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
-        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
         default:
             CRASH_NOW();
             return 0;
