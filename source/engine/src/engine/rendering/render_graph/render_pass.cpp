@@ -8,7 +8,7 @@ void RenderPass::execute() {
     bind();
 
     if (m_func) {
-        m_func(m_width, m_height, m_layer);
+        m_func(m_width, m_height);
     }
 
     unbind();
@@ -18,7 +18,6 @@ void RenderPass::create_internal(RenderPassDesc& desc) {
     m_name = std::move(desc.name);
     m_inputs = std::move(desc.dependencies);
     m_func = desc.func;
-    m_layer = desc.layer;
 }
 
 void RenderPassGL::create_internal(RenderPassDesc& desc) {

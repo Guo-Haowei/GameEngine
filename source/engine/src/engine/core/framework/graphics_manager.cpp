@@ -331,9 +331,7 @@ void GraphicsManager::createGpuResources() {
         }
     };
 
-    for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
-        make_resident(RT_RES_SHADOW_MAP + std::to_string(idx), cache.c_shadow_maps[idx].data);
-    }
+    make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_FXAA, cache.c_fxaa_image);
     make_resident(RT_RES_GBUFFER_POSITION, cache.c_gbuffer_position_metallic_map);
@@ -342,45 +340,8 @@ void GraphicsManager::createGpuResources() {
     make_resident(RT_RES_GBUFFER_DEPTH, cache.c_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
 
-    // switch (m_method) {
-    //     case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
-    //         // pass = m_render_graph.find_pass(LIGHTING_PASS);
-    //         // cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
-    //         break;
-    //     case my::GraphicsManager::RENDER_GRAPH_VXGI:
-    //         resource = m_render_graph.find_pass(LIGHTING_PASS);
-    //         cache.c_fxaa_input_image = gl::MakeTextureResident(resource->get_color_attachment(0));
-    //         break;
-    //     case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-    //         resource = m_render_graph.find_pass(VXGI_DEBUG_PASS);
-    //         cache.c_fxaa_input_image = gl::MakeTextureResident(resource->get_color_attachment(0));
-    //         break;
-    //     default:
-    //         CRASH_NOW();
-    //         break;
-    // }
-
     g_constantCache.Update();
 }
-// struct MaterialCache {
-//     vec4 albedo_color;  // if it doesn't have albedo color, then it's alpha is 0.0f
-//     float metallic = 0.0f;
-//     float roughness = 0.0f;
-//     float has_metallic_roughness_texture = 0.0f;
-//     float has_normal_texture = 0.0f;
-//     float reflect = 0.0f;
-//
-//     MaterialCache& operator=(const MaterialData& mat) {
-//         albedo_color = mat.albedoColor;
-//         roughness = mat.roughness;
-//         metallic = mat.metallic;
-//         reflect = mat.reflectPower;
-//         has_metallic_roughness_texture = mat.materialMap.GetHandle() == 0 ? 0.0f : 1.0f;
-//         has_normal_texture = mat.normalMap.GetHandle() == 0 ? 0.0f : 1.0f;
-//
-//         return *this;
-//     }
-// };
 
 uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {

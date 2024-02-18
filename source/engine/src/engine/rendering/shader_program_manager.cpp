@@ -187,12 +187,6 @@ bool ShaderProgramManager::initialize() {
     }
     {
         ProgramCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/debug/texture.frag";
-        s_shader_cache[PROGRAM_FINAL_IMAGE] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
         info.vs = "@res://glsl/vxgi/voxelization.vert";
         info.gs = "@res://glsl/vxgi/voxelization.geom";
         info.ps = "@res://glsl/vxgi/voxelization.frag";

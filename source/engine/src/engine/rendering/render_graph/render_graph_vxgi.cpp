@@ -23,7 +23,7 @@ extern my::RIDAllocator<MeshData> g_meshes;
 namespace my::rg {
 
 // @TODO: refactor render passes
-void shadow_pass_func(int width, int height, int layer) {
+void shadow_pass_func(int width, int height) {
     const my::Scene& scene = SceneManager::get_scene();
 
     glEnable(GL_DEPTH_TEST);
@@ -31,38 +31,41 @@ void shadow_pass_func(int width, int height, int layer) {
     glCullFace(GL_FRONT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    glViewport(0, 0, width, height);
+    int actual_width = width / NUM_CASCADE_MAX;
+    for (int cascade_idx = 0; cascade_idx < NUM_CASCADE_MAX; ++cascade_idx) {
+        glViewport(cascade_idx * actual_width, 0, actual_width, height);
 
-    auto render_data = GraphicsManager::singleton().get_render_data();
-    RenderData::Pass& pass = render_data->shadow_passes[layer];
+        auto render_data = GraphicsManager::singleton().get_render_data();
+        RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
 
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.armature_id.is_valid();
+        for (const auto& draw : pass.draws) {
+            const bool has_bone = draw.armature_id.is_valid();
 
-        if (has_bone) {
-            auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
+            if (has_bone) {
+                auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
+                DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
 
-            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.Update();
+                memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
+                g_boneCache.Update();
+            }
+
+            const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
+            program.bind();
+
+            g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
+            g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
+            g_perBatchCache.Update();
+
+            glBindVertexArray(draw.mesh_data->vao);
+            glDrawElements(GL_TRIANGLES, draw.mesh_data->count, GL_UNSIGNED_INT, 0);
         }
 
-        const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
-        program.bind();
-
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
-        g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
-        g_perBatchCache.Update();
-
-        glBindVertexArray(draw.mesh_data->vao);
-        glDrawElements(GL_TRIANGLES, draw.mesh_data->count, GL_UNSIGNED_INT, 0);
+        glCullFace(GL_BACK);
+        glUseProgram(0);
     }
-
-    glCullFace(GL_BACK);
-    glUseProgram(0);
 }
 
-void voxelization_pass_func(int width, int height, int) {
+void voxelization_pass_func(int width, int height) {
     unused(width);
     unused(height);
 
@@ -131,7 +134,7 @@ void voxelization_pass_func(int width, int height, int) {
     g_normalVoxel.genMipMap();
 }
 
-void gbuffer_pass_func(int width, int height, int) {
+void gbuffer_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
 
     glEnable(GL_DEPTH_TEST);
@@ -173,7 +176,7 @@ void gbuffer_pass_func(int width, int height, int) {
     glUseProgram(0);
 }
 
-void ssao_pass_func(int width, int height, int) {
+void ssao_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
 
     const auto& shader = ShaderProgramManager::get(PROGRAM_SSAO);
@@ -187,10 +190,9 @@ void ssao_pass_func(int width, int height, int) {
     shader.unbind();
 }
 
-void debug_vxgi_pass_func(int width, int height, int) {
+void debug_vxgi_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // @TODO: stop using window width and height
     glEnable(GL_DEPTH_TEST);
 
     const auto& program = my::ShaderProgramManager::get(my::PROGRAM_DEBUG_VOXEL);
@@ -204,9 +206,9 @@ void debug_vxgi_pass_func(int width, int height, int) {
     program.unbind();
 }
 
-void lighting_pass_func(int width, int height, int) {
+void lighting_pass_func(int width, int height) {
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
-        debug_vxgi_pass_func(width, height, 1);
+        debug_vxgi_pass_func(width, height);
         return;
     }
 
@@ -218,7 +220,7 @@ void lighting_pass_func(int width, int height, int) {
     program.unbind();
 }
 
-void fxaa_pass_func(int width, int height, int) {
+void fxaa_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -228,29 +230,11 @@ void fxaa_pass_func(int width, int height, int) {
     program.unbind();
 }
 
-void final_pass_func(int width, int height, int) {
-    glClearColor(.1f, .1f, .1f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    const auto& program = ShaderProgramManager::get(PROGRAM_FINAL_IMAGE);
-
-    program.bind();
-    glDisable(GL_DEPTH_TEST);
-    glViewport(0, 0, width, height);
-
-    R_DrawQuad();
-
-    program.unbind();
-}
-
 void create_render_graph_vxgi(RenderGraph& graph) {
     auto [w, h] = DisplayServer::singleton().get_frame_size();
     // @TODO: fix this
     w /= 2;
     h /= 2;
-
-    const int shadow_res = DVAR_GET_INT(r_shadow_res);
-    int num_cascades = 4;
-    DEV_ASSERT(math::is_power_of_two(shadow_res));
 
     auto gbuffer_attachment0 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_POSITION,
                                                                    FORMAT_R16G16B16A16_FLOAT,
@@ -285,21 +269,19 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     //                                                            RT_COLOR_ATTACHMENT,
     //                                                            w, h });
 
-    std::vector<std::string> shadow_passes;
     {  // shadow pass
-        for (int i = 0; i < num_cascades; ++i) {
-            auto shadow_map = graph.create_resource(ResourceDesc{ RT_RES_SHADOW_MAP + std::to_string(i),
-                                                                  FORMAT_D32_FLOAT,
-                                                                  RT_SHADOW_MAP,
-                                                                  shadow_res, shadow_res });
-            RenderPassDesc desc;
-            desc.name = SHADOW_PASS + std::to_string(i);
-            shadow_passes.push_back(desc.name);
-            desc.depth_attachment = shadow_map;
-            desc.func = shadow_pass_func;
-            desc.layer = i;
-            graph.add_pass(desc);
-        }
+        const int shadow_res = DVAR_GET_INT(r_shadow_res);
+        DEV_ASSERT(math::is_power_of_two(shadow_res));
+
+        auto shadow_map = graph.create_resource(ResourceDesc{ RT_RES_SHADOW_MAP,
+                                                              FORMAT_D32_FLOAT,
+                                                              RT_SHADOW_MAP,
+                                                              NUM_CASCADE_MAX * shadow_res, shadow_res });
+        RenderPassDesc desc;
+        desc.name = SHADOW_PASS;
+        desc.depth_attachment = shadow_map;
+        desc.func = shadow_pass_func;
+        graph.add_pass(desc);
     }
     {  // gbuffer pass
         RenderPassDesc desc;
@@ -314,7 +296,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.type = RENDER_PASS_COMPUTE;
         desc.name = VOXELIZATION_PASS;
-        desc.dependencies = shadow_passes;
+        desc.dependencies = { SHADOW_PASS };
         desc.func = voxelization_pass_func;
         graph.add_pass(desc);
     }
@@ -329,10 +311,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     {  // lighting pass
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
-        desc.dependencies = shadow_passes;
-        desc.dependencies.push_back(GBUFFER_PASS);
-        desc.dependencies.push_back(SSAO_PASS);
-        desc.dependencies.push_back(VOXELIZATION_PASS);
+        desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
         desc.color_attachments = { lighting_attachment };
         desc.depth_attachment = gbuffer_depth;
         desc.func = lighting_pass_func;
