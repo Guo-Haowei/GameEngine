@@ -275,7 +275,6 @@ void GraphicsManager::createGpuResources() {
     create_ssao_resource();
 
     R_Alloc_Cbuffers();
-    R_CreateEditorResource();
 
     // create a dummy box data
     create_mesh_data(my::make_box_mesh(), g_box);
@@ -365,7 +364,6 @@ void GraphicsManager::render() {
 }
 
 void GraphicsManager::destroyGpuResources() {
-    R_DestroyEditorResource();
     R_Destroy_Cbuffers();
 
     glDeleteTextures(1, &g_noiseTexture);

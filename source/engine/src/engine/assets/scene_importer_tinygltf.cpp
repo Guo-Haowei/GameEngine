@@ -191,6 +191,13 @@ bool SceneImporterTinyGLTF::import_impl() {
         auto alphaCutoff = x.additionalValues.find("alphaCutoff");
         auto alphaMode = x.additionalValues.find("alphaMode");
 
+        if (baseColorFactor != x.values.end()) {
+            const auto& number_array = baseColorFactor->second.number_array;
+            for (int idx = 0; idx < (int)number_array.size(); ++idx) {
+                material.base_color[idx] = (float)number_array[idx];
+            }
+        }
+
         if (baseColorTexture != x.values.end()) {
             auto& tex = m_model->textures[baseColorTexture->second.TextureIndex()];
             int img_source = tex.source;

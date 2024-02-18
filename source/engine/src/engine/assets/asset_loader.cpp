@@ -3,7 +3,7 @@
 #include "assets/image_loader.h"
 #include "assets/scene_importer_assimp.h"
 #include "assets/scene_importer_tinygltf.h"
-#include "core/base/thread_safe_ring_buffer.h"
+#include "core/base/concurrent_queue.h"
 #include "core/io/file_access.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
@@ -26,7 +26,7 @@ static struct {
     std::condition_variable wake_condition;
     std::mutex wake_mutex;
     // @TODO: better thread safe queue
-    ThreadSafeRingBuffer<LoadTask, 128> job_queue;
+    ConcurrentQueue<LoadTask> job_queue;
 
     // image
     std::map<std::string, std::shared_ptr<Image>> image_cache;
@@ -81,7 +81,7 @@ void finalize() {
 }
 
 void load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error) {
-    s_glob.job_queue.push_back({ importer, path, on_success, on_error });
+    s_glob.job_queue.push({ importer, path, on_success, on_error });
     s_glob.wake_condition.notify_all();
 }
 
@@ -176,7 +176,7 @@ static void load_scene_internal(LoadTask& task) {
 
 static bool work() {
     LoadTask task;
-    if (!s_glob.job_queue.pop_front(task)) {
+    if (!s_glob.job_queue.pop(task)) {
         return false;
     }
 

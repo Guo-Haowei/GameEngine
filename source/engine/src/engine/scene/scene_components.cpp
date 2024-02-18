@@ -94,6 +94,13 @@ void vertex_attrib(MeshComponent::VertexAttribute& attrib, const std::vector<T>&
 }
 
 void MeshComponent::create_render_data() {
+    // @HACK: fill dummy textures
+    if (texcoords_0.empty()) {
+        for (size_t i = 0; i < normals.size(); ++i) {
+            texcoords_0.emplace_back(vec2(0, 0));
+        }
+    }
+
     DEV_ASSERT(texcoords_0.size());
     DEV_ASSERT(normals.size());
     // AABB
