@@ -2,7 +2,7 @@
 
 #include <imgui/imgui.h>
 
-#include "assets/asset_loader.h"
+#include "core/framework/asset_manager.h"
 
 namespace my {
 

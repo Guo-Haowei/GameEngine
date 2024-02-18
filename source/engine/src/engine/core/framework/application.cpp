@@ -3,8 +3,8 @@
 #include "imgui/imgui.h"
 // @TODO: refactor
 
-#include "assets/asset_loader.h"
 #include "core/dynamic_variable/dynamic_variable_manager.h"
+#include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
 #include "core/framework/graphics_manager.h"
 #include "core/framework/imgui_module.h"
@@ -22,6 +22,9 @@
 
 #define DEFINE_DVAR
 #include "core/framework/common_dvars.h"
+
+// @TODO: rename
+#include "core/framework/asset_manager.h"
 
 namespace my {
 
@@ -47,12 +50,14 @@ void Application::register_module(Module* module) {
 }
 
 void Application::setup_modules() {
+    m_asset_manager = std::make_shared<AssetManager>();
     m_scene_manager = std::make_shared<SceneManager>();
     m_physics_manager = std::make_shared<PhysicsManager>();
     m_imgui_module = std::make_shared<ImGuiModule>();
     m_display_server = std::make_shared<DisplayServerGLFW>();
     m_graphics_manager = std::make_shared<GraphicsManager>();
 
+    register_module(m_asset_manager.get());
     register_module(m_scene_manager.get());
     register_module(m_physics_manager.get());
     register_module(m_imgui_module.get());
@@ -79,7 +84,6 @@ int Application::run(int argc, const char** argv) {
 
     thread::initialize();
     jobsystem::initialize();
-    asset_loader::initialize();
 
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->get_name());
@@ -118,6 +122,8 @@ int Application::run(int argc, const char** argv) {
         m_display_server->new_frame();
 
         input::begin_frame();
+
+        m_asset_manager->update();
 
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.get_duration().to_second());
@@ -169,7 +175,6 @@ int Application::run(int argc, const char** argv) {
         LOG_VERBOSE("module '{}' finalized", module->get_name());
     }
 
-    asset_loader::finalize();
     jobsystem::finalize();
     thread::finailize();
 

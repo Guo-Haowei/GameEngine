@@ -3,7 +3,7 @@
 #include <sstream>
 #include <vector>
 
-#include "assets/asset_loader.h"
+#include "core/framework/asset_manager.h"
 #include "rendering/GLPrerequisites.h"
 
 namespace my {

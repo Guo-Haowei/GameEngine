@@ -1,6 +1,6 @@
 #include "scene_importer.h"
 
-#include "asset_loader.h"
+#include "core/framework/asset_manager.h"
 
 namespace my {
 
@@ -23,7 +23,7 @@ auto SceneImporter::import() -> std::expected<void, std::string> {
         for (int i = 0; i < array_length(material.textures); ++i) {
             const std::string& image_path = material.textures[i].name;
             if (!image_path.empty()) {
-                asset_loader::load_image_sync(image_path);
+                AssetManager::singleton().load_image_async(image_path);
             }
         }
     }

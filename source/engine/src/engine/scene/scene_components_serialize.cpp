@@ -1,4 +1,4 @@
-#include "assets/asset_loader.h"
+#include "core/framework/asset_manager.h"
 #include "core/io/archive.h"
 #include "scene_components.h"
 
@@ -79,7 +79,7 @@ void MaterialComponent::serialize(Archive& archive, uint32_t) {
             std::string& texture = textures[i].name;
             archive >> texture;
             if (!texture.empty()) {
-                asset_loader::load_image_sync(textures[i].name);
+                textures[i].handle = AssetManager::singleton().load_image_async(textures[i].name);
             }
         }
     }

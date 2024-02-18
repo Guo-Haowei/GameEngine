@@ -2,8 +2,8 @@
 
 #include <imgui/imgui.h>
 
-#include "assets/asset_loader.h"
 #include "core/framework/application.h"
+#include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
 #include "core/os/timer.h"
 #include "servers/display_server.h"

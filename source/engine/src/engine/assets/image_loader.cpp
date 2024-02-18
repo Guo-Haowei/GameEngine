@@ -4,7 +4,7 @@
 
 namespace my {
 
-std::shared_ptr<Image> load_image(const std::string& path) {
+Image* load_image(const std::string& path) {
 
     int width = 0;
     int height = 0;
@@ -25,7 +25,7 @@ std::shared_ptr<Image> load_image(const std::string& path) {
 
     stbi_image_free(data);
 
-    PixelFormat format;
+    PixelFormat format = FORMAT_UNKNOWN;
     switch (num_channels) {
         case 1:
             format = FORMAT_R8_UINT;
@@ -44,7 +44,7 @@ std::shared_ptr<Image> load_image(const std::string& path) {
             break;
     }
 
-    return std::make_shared<Image>(format, width, height, num_channels, buffer);
+    return new Image(format, width, height, num_channels, buffer);
 }
 
 }  // namespace my

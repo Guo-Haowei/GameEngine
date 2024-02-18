@@ -7,7 +7,7 @@
 #endif
 #include <glad/glad.h>
 
-#include "assets/image.h"
+#include "rendering/pixel_format.h"
 
 namespace my {
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "GpuTexture.h"
 
-#include "assets/asset_loader.h"
+#include "core/framework/asset_manager.h"
 
 using std::string;
 
@@ -47,8 +47,9 @@ void GpuTexture::create3DEmpty(const Texture3DCreateInfo& info) {
 }
 
 void GpuTexture::create_texture2d_from_image(const std::string& path) {
-    auto image = my::asset_loader::find_image(path);
-    DEV_ASSERT(image);
+    auto handle = my::AssetManager::singleton().find_image(path);
+    DEV_ASSERT(handle);
+    my::Image* image = handle->data;
 
     m_type = GL_TEXTURE_2D;
     glGenTextures(1, &mHandle);

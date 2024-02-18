@@ -1,4 +1,5 @@
 #pragma once
+#include "assets/asset_handle.h"
 #include "core/base/rid.h"
 #include "core/math/aabb.h"
 #include "core/math/angle.h"
@@ -180,6 +181,7 @@ struct MaterialComponent {
 
     struct TextureMap {
         std::string name;
+        ImageHandle* handle = nullptr;
     };
     TextureMap textures[TEXTURE_MAX];
 

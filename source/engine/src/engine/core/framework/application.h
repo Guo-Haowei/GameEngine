@@ -6,6 +6,7 @@
 
 namespace my {
 
+class AssetManager;
 class DisplayServer;
 class GraphicsManager;
 class ImGuiModule;
@@ -37,6 +38,7 @@ private:
 
     EventQueue m_event_queue;
 
+    std::shared_ptr<AssetManager> m_asset_manager;
     std::shared_ptr<SceneManager> m_scene_manager;
     std::shared_ptr<PhysicsManager> m_physics_manager;
     std::shared_ptr<DisplayServer> m_display_server;
