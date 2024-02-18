@@ -30,7 +30,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     m_menu_bar = std::make_shared<MenuBar>(*this);
 }
 
-void EditorLayer::add_panel(std::shared_ptr<Panel> panel) {
+void EditorLayer::add_panel(std::shared_ptr<EditorWindow> panel) {
     m_panels.emplace_back(panel);
 }
 
@@ -76,7 +76,7 @@ void EditorLayer::dock_space(Scene& scene) {
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    m_menu_bar->update(scene);
+    m_menu_bar->draw(scene);
 
     ImGui::End();
     return;

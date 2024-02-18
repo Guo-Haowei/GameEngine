@@ -1,17 +1,14 @@
 #pragma once
-#include "panel.h"
+#include "editor/editor_item.h"
+#include "scene/scene.h"
 
 namespace my {
 
-class MenuBar : public Panel {
+class MenuBar : public EditorItem {
 public:
-    MenuBar(EditorLayer& editor) : Panel("MenuBar", editor) {}
+    MenuBar(EditorLayer& editor) : EditorItem(editor) {}
 
-    // @TODO: fix this ugly shit
-    void update(Scene& scene) override;
-
-protected:
-    void update_internal(Scene&) override {}
+    void draw(Scene& scene);
 };
 
 }  // namespace my

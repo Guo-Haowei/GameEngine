@@ -228,9 +228,8 @@ void final_pass_func(int) {
 void debug_vxgi_pass_func(int) {
     auto [width, height] = my::DisplayServer::singleton().get_frame_size();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // @TODO: stop using window width and height
     glViewport(0, 0, width, height);
-    // glDisable(GL_CULL_FACE);
-    // glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
     const auto& program = my::ShaderProgramManager::get(my::PROGRAM_DEBUG_VOXEL);

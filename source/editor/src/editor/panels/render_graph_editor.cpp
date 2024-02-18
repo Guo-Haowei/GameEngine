@@ -132,7 +132,7 @@ public:
     std::vector<GraphEditor::Link> mLinks;
 };
 
-RenderGraphEditor::RenderGraphEditor(EditorLayer& editor) : Panel("Render Graph", editor) {
+RenderGraphEditor::RenderGraphEditor(EditorLayer& editor) : EditorWindow("Render Graph", editor) {
     m_delegate = std::make_shared<RenderGraphEditorDelegate>(GraphicsManager::singleton().get_active_render_graph());
 }
 

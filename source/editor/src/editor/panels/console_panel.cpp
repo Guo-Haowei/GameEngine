@@ -2,7 +2,6 @@
 
 #include "core/io/logger.h"
 #include "core/math/color.h"
-#include "imgui/imgui.h"
 
 namespace my {
 

@@ -1,10 +1,10 @@
 #pragma once
-#include "panel.h"
+#include "editor/editor_window.h"
 #include "scene/camera_controller.h"
 
 namespace my {
 
-class Viewer : public Panel {
+class Viewer : public EditorWindow {
 public:
     Viewer(EditorLayer& editor);
 

@@ -1,12 +1,10 @@
 #include "menu_bar.h"
 
-#include <imgui/imgui.h>
-
-#include "../editor_layer.h"
 #include "core/framework/common_dvars.h"
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
+#include "editor/editor_layer.h"
 #include "platform/windows/dialog.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
 #include "rendering/rendering_dvars.h"
@@ -104,7 +102,7 @@ static uint64_t get_displayed_image(int e) {
     }
 }
 
-void MenuBar::update(Scene&) {
+void MenuBar::draw(Scene&) {
     if (m_editor.get_displayed_image() == 0) {
         m_editor.set_displayed_image(get_displayed_image(DVAR_GET_INT(r_debug_texture)));
     }

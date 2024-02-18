@@ -1,21 +1,19 @@
 #include "viewer.h"
 
-// @TODO: fix path
-#include "../editor_layer.h"
-#include "ImGuizmo.h"
-#include "imgui/imgui_internal.h"
+#include <imgui/imgui_internal.h>
 
-// @TODO: refactor
 #include "core/framework/common_dvars.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
 #include "core/math/ray.h"
+#include "editor/editor_layer.h"
+#include "editor/utility/imguizmo.h"
 #include "rendering/rendering_dvars.h"
 #include "servers/display_server.h"
 
 namespace my {
 
-Viewer::Viewer(EditorLayer& editor) : Panel("Viewer", editor) {
+Viewer::Viewer(EditorLayer& editor) : EditorWindow("Viewer", editor) {
 }
 
 void Viewer::update_data() {

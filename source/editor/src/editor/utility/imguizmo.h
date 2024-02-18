@@ -55,9 +55,6 @@
 #define IMGUIZMO_NAMESPACE ImGuizmo
 #endif
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_internal.h>
-
 #include "core/math/geomath.h"
 
 namespace IMGUIZMO_NAMESPACE {

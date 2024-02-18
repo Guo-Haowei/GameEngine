@@ -2,8 +2,8 @@
 
 #include <imgui/imgui_internal.h>
 
-#include "../editor_layer.h"
 #include "core/framework/scene_manager.h"
+#include "editor/editor_layer.h"
 
 namespace my {
 

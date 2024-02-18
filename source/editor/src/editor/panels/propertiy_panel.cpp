@@ -1,7 +1,7 @@
 #include "propertiy_panel.h"
 
-#include "../editor_layer.h"
 #include "ImGuizmo/ImGuizmo.h"
+#include "editor/editor_layer.h"
 #include "imgui/imgui_internal.h"
 
 namespace my {

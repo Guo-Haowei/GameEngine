@@ -1,8 +1,8 @@
 #pragma once
 #include "core/base/noncopyable.h"
 #include "core/framework/application.h"
+#include "editor/editor_window.h"
 #include "panels/menu_bar.h"
-#include "panels/panel.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -41,10 +41,10 @@ public:
 
 private:
     void dock_space(Scene& scene);
-    void add_panel(std::shared_ptr<Panel> panel);
+    void add_panel(std::shared_ptr<EditorWindow> panel);
 
     std::shared_ptr<MenuBar> m_menu_bar;
-    std::vector<std::shared_ptr<Panel>> m_panels;
+    std::vector<std::shared_ptr<EditorWindow>> m_panels;
     ecs::Entity m_selected;
     State m_state{ STATE_PICKING };
 
