@@ -14,6 +14,24 @@ struct File {
 
 class Scene;
 
+using ImportSuccessFunc = void (*)(void*);
+using ImportErrorFunc = void (*)(const std::string& error);
+
+enum LoadTaskType {
+    LOAD_TASK_ASSIMP_SCENE,
+    LOAD_TASK_TINYGLTF_SCENE,
+    LOAD_TASK_IMAGE,
+};
+
+struct LoadTask {
+    LoadTaskType type;
+    // @TODO: better string
+    std::string asset_path;
+    ImportSuccessFunc on_success;
+    ImportErrorFunc on_error;
+    void* userdata;
+};
+
 class AssetManager : public Singleton<AssetManager>, public Module {
 public:
     AssetManager() : Module("AssetManager") {}
@@ -22,27 +40,23 @@ public:
     void finalize() override;
     void update();
 
+    void load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error = nullptr);
+
     ImageHandle* load_image_sync(const std::string& path);
     ImageHandle* load_image_async(const std::string& path);
     ImageHandle* find_image(const std::string& path);
 
+    std::shared_ptr<File> load_file_sync(const std::string& path);
+    std::shared_ptr<File> find_file(const std::string& path);
+
+    static void worker_main();
+
 private:
+    Image* load_image_sync_internal(const std::string& path);
+    void enqueue_async_load_task(LoadTask& task);
+
     std::map<std::string, std::unique_ptr<ImageHandle>> m_image_cache;
     std::mutex m_image_cache_lock;
 };
 
 }  // namespace my
-
-namespace my::asset_loader {
-
-using ImportSuccessFunc = void (*)(void*);
-using ImportErrorFunc = void (*)(const std::string& error);
-
-void load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error = nullptr);
-
-std::shared_ptr<File> load_file_sync(const std::string& path);
-std::shared_ptr<File> find_file(const std::string& path);
-
-void worker_main();
-
-}  // namespace my::asset_loader

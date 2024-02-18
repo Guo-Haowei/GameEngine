@@ -31,7 +31,7 @@ static std::string process_shader(const std::string &source, int depth) {
 
             file_to_include = "@res://glsl/" + file_to_include;
             // @TODO: nested include
-            auto buffer = asset_loader::load_file_sync(file_to_include);
+            auto buffer = AssetManager::singleton().load_file_sync(file_to_include);
             DEV_ASSERT(buffer);
             std::string extra(buffer->buffer.begin(), buffer->buffer.end());
             if (extra.empty()) {
@@ -49,7 +49,7 @@ static std::string process_shader(const std::string &source, int depth) {
 }
 
 static GLuint create_shader(std::string_view file, GLenum type) {
-    auto source_binary = asset_loader::load_file_sync(std::string(file));
+    auto source_binary = AssetManager::singleton().load_file_sync(std::string(file));
     DEV_ASSERT(source_binary);
 
     std::string source(source_binary->buffer.begin(), source_binary->buffer.end());

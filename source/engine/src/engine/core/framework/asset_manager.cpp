@@ -1,33 +1,15 @@
 #include "asset_manager.h"
 
-#include "assets/image_loader.h"
 #include "assets/scene_importer_assimp.h"
 #include "assets/scene_importer_tinygltf.h"
+#include "assets/stb_image.h"
 #include "core/framework/graphics_manager.h"
 #include "core/io/file_access.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "scene/scene.h"
 
-using LoadFunc = std::expected<void, std::string> (*)(const std::string& asset_path, void* asset);
-
-using namespace my;
-using namespace my::asset_loader;
-
-enum LoadTaskType {
-    LOAD_TASK_ASSIMP_SCENE,
-    LOAD_TASK_TINYGLTF_SCENE,
-    LOAD_TASK_IMAGE,
-};
-
-struct LoadTask {
-    LoadTaskType type;
-    // @TODO: better string
-    std::string asset_path;
-    ImportSuccessFunc on_success;
-    ImportErrorFunc on_error;
-    void* userdata;
-};
+namespace my {
 
 static struct {
     // @TODO: better wake up
@@ -38,68 +20,14 @@ static struct {
     // file
     std::map<std::string, std::shared_ptr<File>> text_cache;
 
-    // @TODO: refactor
     ConcurrentQueue<ImageHandle*> loaded_images;
 } s_glob;
 
-namespace my::asset_loader {
-
-void load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error) {
-    auto type = importer == IMPORTER_TINYGLTF ? LOAD_TASK_TINYGLTF_SCENE : LOAD_TASK_ASSIMP_SCENE;
-    s_glob.job_queue.push({ type, path, on_success, on_error });
-    s_glob.wake_condition.notify_one();
-}
-std::shared_ptr<File> find_file(const std::string& path) {
-    auto found = s_glob.text_cache.find(path);
-    if (found != s_glob.text_cache.end()) {
-        return found->second;
-    }
-
-    return nullptr;
-}
-
-std::shared_ptr<File> load_file_sync(const std::string& path) {
-    auto found = s_glob.text_cache.find(path);
-    if (found != s_glob.text_cache.end()) {
-        return found->second;
-    }
-
-    auto res = FileAccess::open(path, FileAccess::READ);
-    if (!res) {
-        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", path, res.error().get_message());
-        return nullptr;
-    }
-
-    std::shared_ptr<FileAccess> file_access = *res;
-
-    const size_t size = file_access->get_length();
-
-    std::vector<char> buffer;
-    buffer.resize(size);
-    file_access->read_buffer(buffer.data(), size);
-    auto text = std::make_shared<File>();
-    text->buffer = std::move(buffer);
-    s_glob.text_cache[path] = text;
-    return text;
-}
-
-static void load_image_internal(const std::string& path, ImageHandle* handle) {
-    handle->data = load_image(path);
-    handle->state = ASSET_STATE_READY;
-    s_glob.loaded_images.push(handle);
-}
-
-static void load_image_internal(LoadTask& task) {
-    load_image_internal(task.asset_path, (ImageHandle*)task.userdata);
-}
-
+// @TODO: refactor
 static void load_scene_internal(LoadTask& task) {
-    LOG("[asset_loader] Loading scene '{}'...", task.asset_path);
-
     Scene* scene = new Scene;
     std::expected<void, std::string> res;
 
-    Timer timer;
     if (task.type == LOAD_TASK_TINYGLTF_SCENE) {
         SceneImporterTinyGLTF loader(*scene, task.asset_path);
         res = loader.import();
@@ -117,42 +45,8 @@ static void load_scene_internal(LoadTask& task) {
         }
         return;
     }
-
-    LOG("[asset_loader] Scene '{}' loaded in {}", task.asset_path, timer.get_duration_string());
     task.on_success(scene);
 }
-
-static bool work() {
-    LoadTask task;
-    if (!s_glob.job_queue.pop(task)) {
-        return false;
-    }
-
-    if (task.type == LOAD_TASK_IMAGE) {
-        load_image_internal(task);
-    } else {
-        load_scene_internal(task);
-    }
-
-    return true;
-}
-
-void worker_main() {
-    for (;;) {
-        if (thread::is_shutdown_requested()) {
-            break;
-        }
-
-        if (!work()) {
-            std::unique_lock<std::mutex> lock(s_glob.wake_mutex);
-            s_glob.wake_condition.wait(lock);
-        }
-    }
-}
-
-}  // namespace my::asset_loader
-
-namespace my {
 
 bool AssetManager::initialize() {
     // @TODO: dir_access
@@ -205,8 +99,12 @@ void AssetManager::update() {
         loaded_images.pop();
         DEV_ASSERT(image->state == ASSET_STATE_READY);
         GraphicsManager::singleton().create_texture(image);
-        // @TODO: create GPU resource
     }
+}
+
+void AssetManager::enqueue_async_load_task(LoadTask& task) {
+    s_glob.job_queue.push(std::move(task));
+    s_glob.wake_condition.notify_one();
 }
 
 ImageHandle* AssetManager::find_image(const std::string& path) {
@@ -221,18 +119,21 @@ ImageHandle* AssetManager::find_image(const std::string& path) {
 }
 
 ImageHandle* AssetManager::load_image_async(const std::string& path) {
-    std::lock_guard guard(m_image_cache_lock);
+    m_image_cache_lock.lock();
 
     auto found = m_image_cache.find(path);
     if (found != m_image_cache.end()) {
         LOG_VERBOSE("image {} found in cache", path);
-        return found->second.get();
+        auto ret = found->second.get();
+        m_image_cache_lock.unlock();
+        return ret;
     }
 
     auto handle = std::make_unique<AssetHandle<Image>>();
     handle->state = ASSET_STATE_LOADING;
     ImageHandle* ret = handle.get();
     m_image_cache[path] = std::move(handle);
+    m_image_cache_lock.unlock();
 
     LoadTask task;
     task.type = LOAD_TASK_IMAGE;
@@ -240,9 +141,7 @@ ImageHandle* AssetManager::load_image_async(const std::string& path) {
     task.on_error = nullptr;
     task.userdata = ret;
     task.asset_path = path;
-
-    s_glob.job_queue.push(task);
-    s_glob.wake_condition.notify_one();
+    enqueue_async_load_task(task);
     return ret;
 }
 
@@ -258,11 +157,127 @@ ImageHandle* AssetManager::load_image_sync(const std::string& path) {
 
     // LOG_VERBOSE("image {} not found in cache, loading...", path);
     auto handle = std::make_unique<AssetHandle<Image>>();
-    handle->data = load_image(path);
+    handle->data = load_image_sync_internal(path);
     handle->state = ASSET_STATE_READY;
     ImageHandle* ret = handle.get();
     m_image_cache[path] = std::move(handle);
+    GraphicsManager::singleton().create_texture(ret);
     return ret;
+}
+
+void AssetManager::load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error) {
+    LoadTask task;
+    task.type = importer == IMPORTER_TINYGLTF ? LOAD_TASK_TINYGLTF_SCENE : LOAD_TASK_ASSIMP_SCENE;
+    task.asset_path = path;
+    task.on_success = on_success;
+    task.on_error = on_error;
+    enqueue_async_load_task(task);
+}
+
+Image* AssetManager::load_image_sync_internal(const std::string& path) {
+    int width = 0;
+    int height = 0;
+    int num_channels = 0;
+
+    uint8_t* data = stbi_load(path.c_str(), &width, &height, &num_channels, 0);
+    if (width % 4 != 0 || height % 4 != 0) {
+        stbi_image_free(data);
+        data = stbi_load(path.c_str(), &width, &height, &num_channels, 4);
+        num_channels = 4;
+    }
+    DEV_ASSERT(data);
+
+    std::vector<uint8_t> buffer;
+
+    buffer.resize(width * height * num_channels);
+    memcpy(buffer.data(), data, buffer.size());
+
+    stbi_image_free(data);
+
+    PixelFormat format = FORMAT_UNKNOWN;
+    switch (num_channels) {
+        case 1:
+            format = FORMAT_R8_UINT;
+            break;
+        case 2:
+            format = FORMAT_R8G8_UINT;
+            break;
+        case 3:
+            format = FORMAT_R8G8B8_UINT;
+            break;
+        case 4:
+            format = FORMAT_R8G8B8A8_UINT;
+            break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+
+    return new Image(format, width, height, num_channels, buffer);
+}
+
+void AssetManager::worker_main() {
+    for (;;) {
+        if (thread::is_shutdown_requested()) {
+            break;
+        }
+
+        LoadTask task;
+        if (!s_glob.job_queue.pop(task)) {
+            std::unique_lock<std::mutex> lock(s_glob.wake_mutex);
+            s_glob.wake_condition.wait(lock);
+            continue;
+        }
+
+        // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
+        // Timer timer;
+        switch (task.type) {
+            case LOAD_TASK_IMAGE: {
+                auto handle = (ImageHandle*)task.userdata;
+                handle->data = AssetManager::singleton().load_image_sync_internal(task.asset_path);
+                handle->state = ASSET_STATE_READY;
+                s_glob.loaded_images.push(handle);
+            } break;
+            default:
+                load_scene_internal(task);
+                break;
+        }
+        // LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.asset_path, timer.get_duration_string());
+    }
+}
+
+std::shared_ptr<File> AssetManager::find_file(const std::string& path) {
+    auto found = s_glob.text_cache.find(path);
+    if (found != s_glob.text_cache.end()) {
+        return found->second;
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<File> AssetManager::load_file_sync(const std::string& path) {
+    auto found = s_glob.text_cache.find(path);
+    if (found != s_glob.text_cache.end()) {
+        return found->second;
+    }
+
+    auto res = FileAccess::open(path, FileAccess::READ);
+    if (!res) {
+        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", path, res.error().get_message());
+        return nullptr;
+    }
+
+    std::shared_ptr<FileAccess> file_access = *res;
+
+    const size_t size = file_access->get_length();
+
+    std::vector<char> buffer;
+    buffer.resize(size);
+    file_access->read_buffer(buffer.data(), size);
+    auto text = std::make_shared<File>();
+    text->buffer = std::move(buffer);
+    s_glob.text_cache[path] = text;
+    return text;
 }
 
 }  // namespace my
