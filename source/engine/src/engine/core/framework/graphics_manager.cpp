@@ -80,7 +80,6 @@ bool GraphicsManager::initialize() {
     createGpuResources();
 
     g_meshes.set_description("GPU-Mesh-Allocator");
-    m_texture_allocator.set_description("GPU-Materials");
 
     m_render_data = std::make_shared<RenderData>();
     return true;
@@ -151,12 +150,11 @@ static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
 void GraphicsManager::create_texture(ImageHandle* handle) {
     DEV_ASSERT(handle && handle->data);
     Image* image = handle->data;
-    RID rid = m_texture_allocator.make_rid();
-    Texture* texture = m_texture_allocator.get_or_null(rid);
-    image->gpu_resource = rid;
 
-    glGenTextures(1, &texture->handle);
-    glBindTexture(GL_TEXTURE_2D, texture->handle);
+    GLuint texture_id = 0;
+
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -175,8 +173,10 @@ void GraphicsManager::create_texture(ImageHandle* handle) {
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    texture->resident_handle = glGetTextureHandleARB(texture->handle);
-    glMakeTextureHandleResidentARB(texture->resident_handle);
+    GLuint64 resident_id = glGetTextureHandleARB(texture_id);
+    glMakeTextureHandleResidentARB(resident_id);
+    image->texture.handle = texture_id;
+    image->texture.resident_handle = resident_id;
 }
 
 void GraphicsManager::event_received(std::shared_ptr<Event> event) {
@@ -342,13 +342,11 @@ void GraphicsManager::fill_material_constant_buffer(const MaterialComponent* mat
         }
 
         Image* image = handle->data;
-        if (image->gpu_resource.is_null()) {
+        if (image->texture.handle == 0) {
             return false;
         }
 
-        Texture* texture = m_texture_allocator.get_or_null(image->gpu_resource);
-        DEV_ASSERT(texture);
-        out_handle = texture->resident_handle;
+        out_handle = image->texture.resident_handle;
         return true;
     };
 

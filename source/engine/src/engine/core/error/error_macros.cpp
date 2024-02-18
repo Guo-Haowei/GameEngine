@@ -4,9 +4,7 @@
 
 namespace my {
 
-static struct {
-    IntrusiveList<ErrorHandlerListNode> error_handlers;
-} s_glob;
+IntrusiveList<ErrorHandlerListNode> s_error_handlers;
 
 void global_lock() {}
 void global_unlock() {}
@@ -16,14 +14,14 @@ bool add_error_handler(ErrorHandler* handler) {
     remove_error_handler(handler);
 
     global_lock();
-    s_glob.error_handlers.node_push_front(handler);
+    s_error_handlers.node_push_front(handler);
     global_unlock();
     return true;
 }
 
 bool remove_error_handler(const ErrorHandler* handler) {
     global_lock();
-    s_glob.error_handlers.node_remove(handler);
+    s_error_handlers.node_remove(handler);
     global_unlock();
     return true;
 }
@@ -44,7 +42,7 @@ void report_error_impl(std::string_view function, std::string_view file, int lin
 
     global_lock();
 
-    for (auto& handler : s_glob.error_handlers) {
+    for (auto& handler : s_error_handlers) {
         handler.error_func(handler.user_data, function, file, line, error);
     }
 

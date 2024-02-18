@@ -1,5 +1,6 @@
 #include "debug_texture.h"
 
+#include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
 #include "editor/editor_layer.h"
 
@@ -31,6 +32,16 @@ void DebugTexturePanel::update_internal(Scene& scene) {
     vec2 dim{ desc.width, desc.height };
     ImGui::DragInt("zoom level", &zoom, 1, 10, 300);
     dim *= zoom * 0.01f;
+
+#if 0
+    {
+        // @HACK
+        auto image = AssetManager::singleton().find_image("@res://images/pointlight.png");
+        DEV_ASSERT(image);
+        handle = image->data.load()->texture.handle;
+    }
+#endif
+
     ImGui::Image((ImTextureID)handle, ImVec2(dim.x, dim.y), ImVec2(0, 1), ImVec2(1, 0));
 }
 

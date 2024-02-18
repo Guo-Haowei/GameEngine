@@ -21,7 +21,7 @@ static struct {
     std::map<std::string, std::shared_ptr<File>> text_cache;
 
     ConcurrentQueue<ImageHandle*> loaded_images;
-} s_glob;
+} s_asset_manager_glob;
 
 // @TODO: refactor
 static void load_scene_internal(LoadTask& task) {
@@ -89,11 +89,11 @@ bool AssetManager::initialize() {
 }
 
 void AssetManager::finalize() {
-    s_glob.wake_condition.notify_all();
+    s_asset_manager_glob.wake_condition.notify_all();
 }
 
 void AssetManager::update() {
-    auto loaded_images = s_glob.loaded_images.pop_all();
+    auto loaded_images = s_asset_manager_glob.loaded_images.pop_all();
     while (!loaded_images.empty()) {
         auto image = loaded_images.front();
         loaded_images.pop();
@@ -103,8 +103,8 @@ void AssetManager::update() {
 }
 
 void AssetManager::enqueue_async_load_task(LoadTask& task) {
-    s_glob.job_queue.push(std::move(task));
-    s_glob.wake_condition.notify_one();
+    s_asset_manager_glob.job_queue.push(std::move(task));
+    s_asset_manager_glob.wake_condition.notify_one();
 }
 
 ImageHandle* AssetManager::find_image(const std::string& path) {
@@ -179,13 +179,30 @@ Image* AssetManager::load_image_sync_internal(const std::string& path) {
     int height = 0;
     int num_channels = 0;
 
-    uint8_t* data = stbi_load(path.c_str(), &width, &height, &num_channels, 0);
+    auto res = FileAccess::open(path, FileAccess::READ);
+    if (!res) {
+        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", path, res.error().get_message());
+        return nullptr;
+    }
+
+    std::shared_ptr<FileAccess> file_access = *res;
+    int buffer_length = (int)file_access->get_length();
+    std::vector<uint8_t> file_buffer;
+    file_buffer.resize(buffer_length);
+    file_access->read_buffer(file_buffer.data(), buffer_length);
+
+    uint8_t* data = stbi_load_from_memory(file_buffer.data(), buffer_length, &width, &height, &num_channels, 0);
+    if (!data) {
+        LOG_ERROR("failed to load image '{}'", path);
+        return nullptr;
+    }
+    DEV_ASSERT(data);
+
     if (width % 4 != 0 || height % 4 != 0) {
         stbi_image_free(data);
         data = stbi_load(path.c_str(), &width, &height, &num_channels, 4);
         num_channels = 4;
     }
-    DEV_ASSERT(data);
 
     std::vector<uint8_t> buffer;
 
@@ -223,9 +240,9 @@ void AssetManager::worker_main() {
         }
 
         LoadTask task;
-        if (!s_glob.job_queue.pop(task)) {
-            std::unique_lock<std::mutex> lock(s_glob.wake_mutex);
-            s_glob.wake_condition.wait(lock);
+        if (!s_asset_manager_glob.job_queue.pop(task)) {
+            std::unique_lock<std::mutex> lock(s_asset_manager_glob.wake_mutex);
+            s_asset_manager_glob.wake_condition.wait(lock);
             continue;
         }
 
@@ -236,7 +253,7 @@ void AssetManager::worker_main() {
                 auto handle = (ImageHandle*)task.userdata;
                 handle->data = AssetManager::singleton().load_image_sync_internal(task.asset_path);
                 handle->state = ASSET_STATE_READY;
-                s_glob.loaded_images.push(handle);
+                s_asset_manager_glob.loaded_images.push(handle);
             } break;
             default:
                 load_scene_internal(task);
@@ -247,8 +264,8 @@ void AssetManager::worker_main() {
 }
 
 std::shared_ptr<File> AssetManager::find_file(const std::string& path) {
-    auto found = s_glob.text_cache.find(path);
-    if (found != s_glob.text_cache.end()) {
+    auto found = s_asset_manager_glob.text_cache.find(path);
+    if (found != s_asset_manager_glob.text_cache.end()) {
         return found->second;
     }
 
@@ -256,8 +273,8 @@ std::shared_ptr<File> AssetManager::find_file(const std::string& path) {
 }
 
 std::shared_ptr<File> AssetManager::load_file_sync(const std::string& path) {
-    auto found = s_glob.text_cache.find(path);
-    if (found != s_glob.text_cache.end()) {
+    auto found = s_asset_manager_glob.text_cache.find(path);
+    if (found != s_asset_manager_glob.text_cache.end()) {
         return found->second;
     }
 
@@ -276,7 +293,7 @@ std::shared_ptr<File> AssetManager::load_file_sync(const std::string& path) {
     file_access->read_buffer(buffer.data(), size);
     auto text = std::make_shared<File>();
     text->buffer = std::move(buffer);
-    s_glob.text_cache[path] = text;
+    s_asset_manager_glob.text_cache[path] = text;
     return text;
 }
 

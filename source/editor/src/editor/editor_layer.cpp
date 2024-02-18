@@ -3,6 +3,7 @@
 #include "imgui/imgui_internal.h"
 #include "rendering/r_cbuffers.h"
 /////////////////////
+#include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
 #include "editor/panels/animation_panel.h"
@@ -28,6 +29,16 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<Viewer>(*this));
 
     m_menu_bar = std::make_shared<MenuBar>(*this);
+
+    // load assets
+    const char* light_icons[] = {
+        "@res://images/arealight.png",
+        "@res://images/pointlight.png",
+    };
+
+    for (int i = 0; i < array_length(light_icons); ++i) {
+        AssetManager::singleton().load_image_sync(light_icons[i]);
+    }
 }
 
 void EditorLayer::add_panel(std::shared_ptr<EditorWindow> panel) {
