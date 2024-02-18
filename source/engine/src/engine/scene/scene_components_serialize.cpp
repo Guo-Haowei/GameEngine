@@ -69,18 +69,16 @@ void MaterialComponent::serialize(Archive& archive, uint32_t) {
         archive << roughness;
         archive << base_color;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
-            archive << textures[i].name;
+            archive << textures[i].path;
         }
     } else {
         archive >> metallic;
         archive >> roughness;
         archive >> base_color;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
-            std::string& texture = textures[i].name;
-            archive >> texture;
-            if (!texture.empty()) {
-                textures[i].handle = AssetManager::singleton().load_image_async(textures[i].name);
-            }
+            std::string path;
+            archive >> path;
+            request_image((TextureSlot)i, path);
         }
     }
 

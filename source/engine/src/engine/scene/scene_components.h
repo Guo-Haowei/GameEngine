@@ -180,8 +180,9 @@ struct MaterialComponent {
     };
 
     struct TextureMap {
-        std::string name;
-        ImageHandle* handle = nullptr;
+        std::string path;
+        // Non-serialized
+        ImageHandle* image = nullptr;
     };
     TextureMap textures[TEXTURE_MAX];
 
@@ -190,8 +191,7 @@ struct MaterialComponent {
     float roughness = 1.0f;
     vec4 base_color = vec4(1);
 
-    // Non-serialized
-    mutable RID gpu_resource;
+    void request_image(TextureSlot slot, const std::string& path);
 
     void serialize(Archive& archive, uint32_t version);
 };

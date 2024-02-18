@@ -14,7 +14,7 @@ void main() {
     vec4 albedo = c_albedo_color;
 
     if (c_has_albedo_map != 0) {
-        albedo = texture(c_albedo_maps[c_texture_map_idx], ps_in.uv, 0);
+        albedo = texture(c_albedo_map, ps_in.uv, 0);
     }
     if (albedo.a < 0.001) {
         discard;
@@ -24,7 +24,7 @@ void main() {
     float roughness = c_roughness;
     if (c_has_pbr_map != 0) {
         // g roughness, b metallic
-        vec3 mr = texture(c_pbr_maps[c_texture_map_idx], ps_in.uv).rgb;
+        vec3 mr = texture(c_pbr_map, ps_in.uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }
@@ -35,7 +35,7 @@ void main() {
     // TODO: get rid of branching
     vec3 N;
     if (c_has_normal_map != 0) {
-        N = normalize(ps_in.TBN * (2.0 * texture(c_normal_maps[c_texture_map_idx], ps_in.uv).xyz - 1.0));
+        N = normalize(ps_in.TBN * (2.0 * texture(c_normal_map, ps_in.uv).xyz - 1.0));
     } else {
         N = ps_in.TBN[2];
     }

@@ -59,16 +59,17 @@ void SceneImporterAssimp::process_material(aiMaterial& material) {
     if (path.empty()) {
         path = getMaterialPath(aiTextureType_DIFFUSE, 0);
     }
-    materialComponent->textures[MaterialComponent::TEXTURE_BASE].name = path;
+    materialComponent->request_image(MaterialComponent::TEXTURE_BASE, path);
 
     path = getMaterialPath(aiTextureType_NORMALS, 0);
     if (path.empty()) {
         path = getMaterialPath(aiTextureType_HEIGHT, 0);
     }
-    materialComponent->textures[MaterialComponent::TEXTURE_NORMAL].name = path;
 
-    materialComponent->textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].name =
-        getMaterialPath(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
+    materialComponent->request_image(MaterialComponent::TEXTURE_NORMAL, path);
+
+    path = getMaterialPath(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
+    materialComponent->request_image(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, path);
 
     m_materials.emplace_back(material_id);
 }

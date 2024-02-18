@@ -46,34 +46,6 @@ void GpuTexture::create3DEmpty(const Texture3DCreateInfo& info) {
     glTexStorage3D(m_type, info.mipLevel, m_format, info.size, info.size, info.size);
 }
 
-void GpuTexture::create_texture2d_from_image(const std::string& path) {
-    auto handle = my::AssetManager::singleton().find_image(path);
-    DEV_ASSERT(handle);
-    my::Image* image = handle->data;
-
-    m_type = GL_TEXTURE_2D;
-    glGenTextures(1, &mHandle);
-    glBindTexture(m_type, mHandle);
-    glTexParameteri(m_type, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(m_type, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(m_type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(m_type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D(
-        m_type,
-        0,
-        format_to_gl_internal_format(image->format),
-        image->width,
-        image->height,
-        0,
-        format_to_gl_format(image->format),
-        format_to_gl_data_type(image->format),
-        image->buffer.data());
-
-    glGenerateMipmap(m_type);
-    glBindTexture(m_type, 0);
-}
-
 void GpuTexture::destroy() {
     if (mHandle != 0) {
         glDeleteTextures(1, &mHandle);

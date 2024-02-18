@@ -3,7 +3,7 @@
 #include "assets/image_loader.h"
 #include "assets/scene_importer_assimp.h"
 #include "assets/scene_importer_tinygltf.h"
-#include "core/base/concurrent_queue.h"
+#include "core/framework/graphics_manager.h"
 #include "core/io/file_access.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
@@ -37,6 +37,9 @@ static struct {
     ConcurrentQueue<LoadTask> job_queue;
     // file
     std::map<std::string, std::shared_ptr<File>> text_cache;
+
+    // @TODO: refactor
+    ConcurrentQueue<ImageHandle*> loaded_images;
 } s_glob;
 
 namespace my::asset_loader {
@@ -80,14 +83,14 @@ std::shared_ptr<File> load_file_sync(const std::string& path) {
     return text;
 }
 
-static void load_image_internal(LoadTask& task) {
-    ImageHandle* handle = (ImageHandle*)task.userdata;
-
-    handle->data = load_image(task.asset_path);
+static void load_image_internal(const std::string& path, ImageHandle* handle) {
+    handle->data = load_image(path);
     handle->state = ASSET_STATE_READY;
+    s_glob.loaded_images.push(handle);
+}
 
-    // @TODO: callbacks
-    LOG_OK("image '{}' loaded", task.asset_path);
+static void load_image_internal(LoadTask& task) {
+    load_image_internal(task.asset_path, (ImageHandle*)task.userdata);
 }
 
 static void load_scene_internal(LoadTask& task) {
@@ -196,7 +199,14 @@ void AssetManager::finalize() {
 }
 
 void AssetManager::update() {
-    // TODO: check status
+    auto loaded_images = s_glob.loaded_images.pop_all();
+    while (!loaded_images.empty()) {
+        auto image = loaded_images.front();
+        loaded_images.pop();
+        DEV_ASSERT(image->state == ASSET_STATE_READY);
+        GraphicsManager::singleton().create_texture(image);
+        // @TODO: create GPU resource
+    }
 }
 
 ImageHandle* AssetManager::find_image(const std::string& path) {

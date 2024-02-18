@@ -9,13 +9,6 @@ struct MeshData {
     uint32_t count = 0;
 };
 
-struct MaterialData {
-    GpuTexture albedoMap;
-    GpuTexture materialMap;
-    GpuTexture normalMap;
-    int textureMapIdx;
-};
-
 void R_CreateQuad();
 void R_DrawQuad();
 

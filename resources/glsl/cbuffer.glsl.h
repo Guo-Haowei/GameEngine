@@ -2,10 +2,6 @@
 #define CBUFFER_INCLUDED
 #include "shader_defines.h"
 
-// @TODO: refactor
-#define MAX_MATERIALS  300
-#define MAX_LIGHT_ICON 4
-
 // constant buffer
 #ifdef __cplusplus
 #define CONSTANT_BUFFER(name, reg) \
@@ -91,10 +87,14 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
     int c_has_albedo_map;
     int c_has_pbr_map;
 
+    vec2 _c_padding1;
     int c_has_normal_map;
-    int c_texture_map_idx;
     float c_reflect_power;
-    int _c_padding1;
+
+    sampler2D c_albedo_map;
+    sampler2D c_normal_map;
+    sampler2D c_pbr_map;
+    sampler2D _c_dummy_padding;
 };
 
 CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
@@ -111,9 +111,6 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
     sampler2D c_kernel_noise_map;
     sampler2D c_fxaa_image;
     sampler2D c_fxaa_input_image;
-    Sampler2DArray c_albedo_maps[MAX_MATERIALS];
-    Sampler2DArray c_normal_maps[MAX_MATERIALS];
-    Sampler2DArray c_pbr_maps[MAX_MATERIALS];
 };
 
 CONSTANT_BUFFER(BoneConstantBuffer, 4) {

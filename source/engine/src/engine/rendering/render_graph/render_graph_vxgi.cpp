@@ -16,9 +16,6 @@ extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
 
-// @TODO: refactor this
-extern void dummy_fill_material_buffer(const my::MaterialComponent* material, MaterialConstantBuffer& cb);
-
 extern my::RIDAllocator<MeshData> g_meshes;
 
 namespace my::rg {
@@ -110,8 +107,7 @@ void voxelization_pass_func(int width, int height) {
         glBindVertexArray(draw.mesh_data->vao);
 
         for (const auto& subset : draw.subsets) {
-            // @TODO:
-            dummy_fill_material_buffer(subset.material, g_materialCache.cache);
+            GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
             g_materialCache.Update();
 
             glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));
@@ -168,7 +164,7 @@ void gbuffer_pass_func(int width, int height) {
         glBindVertexArray(draw.mesh_data->vao);
 
         for (const auto& subset : draw.subsets) {
-            dummy_fill_material_buffer(subset.material, g_materialCache.cache);
+            GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
             g_materialCache.Update();
 
             glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));

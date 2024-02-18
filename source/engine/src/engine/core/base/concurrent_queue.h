@@ -27,7 +27,9 @@ public:
     std::queue<T> pop_all() {
         std::queue<T> ret;
         m_mutex.lock();
-        m_queue.swap(ret);
+        if (!m_queue.empty()) {
+            m_queue.swap(ret);
+        }
         m_mutex.unlock();
         return ret;
     }

@@ -1,6 +1,8 @@
 #pragma once
 #include "scene_components.h"
 
+#include "core/framework/asset_manager.h"
+
 namespace my {
 
 //--------------------------------------------------------------------------------------------------
@@ -152,6 +154,16 @@ std::vector<char> MeshComponent::generate_combined_buffer() const {
     safe_copy(attributes[VertexAttribute::WEIGHTS_0], weights_0.data());
     safe_copy(attributes[VertexAttribute::COLOR_0], color_0.data());
     return result;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Mesh Component
+//--------------------------------------------------------------------------------------------------
+void MaterialComponent::request_image(TextureSlot slot, const std::string& path) {
+    if (!path.empty()) {
+        textures[slot].path = path;
+        textures[slot].image = AssetManager::singleton().load_image_async(path);
+    }
 }
 
 }  // namespace my

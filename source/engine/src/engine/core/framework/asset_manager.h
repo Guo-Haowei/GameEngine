@@ -1,6 +1,7 @@
 #pragma once
 #include "assets/image.h"
 #include "assets/scene_importer.h"
+#include "core/base/concurrent_queue.h"
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
 
