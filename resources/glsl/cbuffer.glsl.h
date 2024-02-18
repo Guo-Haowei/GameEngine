@@ -53,19 +53,20 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     mat4 c_main_light_matrices[NUM_CASCADE_MAX];
     vec4 c_cascade_plane_distances;
 
-    vec3 _c_padding_0;
+    vec2 _c_padding_0;
     int c_light_count;
+    int c_enable_csm;
+
+    int c_debug_voxel_id;
+    int c_no_texture;
+    int c_screen_width;
+    int c_screen_height;
 
     vec3 c_camera_position;
     float c_voxel_size;
 
     vec3 c_world_center;
     float c_world_size_half;
-
-    int c_debug_voxel_id;
-    int c_no_texture;
-    int c_screen_width;
-    int c_screen_height;
 
     int c_ssao_kernel_size;
     float c_ssao_kernel_radius;

@@ -2,6 +2,10 @@
 #define SHADOW_GLSL_INCLUDED
 
 int find_cascade(const in vec3 p_pos_world) {
+    if (c_enable_csm == 0) {
+        return 0;
+    }
+
     vec4 pos_view = c_view_matrix * vec4(p_pos_world, 1.0);
     float depth = abs(pos_view.z);
 
@@ -41,7 +45,6 @@ float cascade_shadow(sampler2D p_shadow_map,
     }
 
     float shadow = 0.0;
-    // ivec2 i_texel_size = textureSize(p_shadow_map, 0);
     vec2 texel_size = 1.0 / vec2(textureSize(p_shadow_map, 0));
 
     // @TODO: better bias

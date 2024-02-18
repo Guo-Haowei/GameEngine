@@ -16,6 +16,7 @@ extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
 
+// @TODO: refactor this
 extern void dummy_fill_material_buffer(const my::MaterialComponent* material, MaterialConstantBuffer& cb);
 
 extern my::RIDAllocator<MeshData> g_meshes;
@@ -24,6 +25,7 @@ namespace my::rg {
 
 // @TODO: refactor render passes
 void shadow_pass_func(int width, int height) {
+    // @TODO: for each light source, render shadow
     const my::Scene& scene = SceneManager::get_scene();
 
     glEnable(GL_DEPTH_TEST);

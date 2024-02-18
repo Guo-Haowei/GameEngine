@@ -102,6 +102,8 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
+    LOG_OK("TODO: update voxels only when scene is dirty");
+
     LOG_ERROR("TODO: cloth physics");
     LOG_WARN("TODO: TAA");
     LOG_ERROR("TODO: soft shadow");
