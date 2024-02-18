@@ -11,10 +11,9 @@
 #include "rendering/shader_program_manager.h"
 #include "servers/display_server.h"
 
-extern void FillMaterialCB(const MaterialData* mat, MaterialConstantBuffer& cb);
+extern void dummy_fill_material_buffer(const my::MaterialComponent* material, MaterialConstantBuffer& cb);
 
 extern my::RIDAllocator<MeshData> g_meshes;
-extern my::RIDAllocator<MaterialData> g_materials;
 
 namespace my::rg {
 

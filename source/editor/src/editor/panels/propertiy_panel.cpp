@@ -1,6 +1,7 @@
 #include "propertiy_panel.h"
 
 #include "ImGuizmo/ImGuizmo.h"
+#include "core/framework/scene_manager.h"
 #include "editor/editor_layer.h"
 #include "editor/widget.h"
 
@@ -88,7 +89,14 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::EndPopup();
     }
 
+    TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
     LightComponent* light_component = scene.get_component<LightComponent>(id);
+    ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
+    MeshComponent* mesh_component = object_component ? scene.get_component<MeshComponent>(object_component->mesh_id) : nullptr;
+    auto material_id = mesh_component ? mesh_component->subsets[0].material_id : ecs::Entity::INVALID;
+    MaterialComponent* material_component = scene.get_component<MaterialComponent>(material_id);
+    RigidBodyComponent* rigid_body_component = scene.get_component<RigidBodyComponent>(id);
+
     bool disable_translation = false;
     bool disable_rotation = false;
     bool disable_scale = false;
@@ -108,8 +116,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         }
     }
 
-    TransformComponent* transformComponent = scene.get_component<TransformComponent>(id);
-    DrawComponent("Transform", transformComponent, [&](TransformComponent& transform) {
+    DrawComponent("Transform", transform_component, [&](TransformComponent& transform) {
         mat4 transformMatrix = transform.get_local_matrix();
         vec3 translation;
         vec3 rotation;
@@ -152,8 +159,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         dirty |= draw_drag_float("quadratic", light.atten.quadratic, 0.1f, 0.0f, 1.0f);
     });
 
-    RigidBodyComponent* rigidBodyComponent = scene.get_component<RigidBodyComponent>(id);
-    DrawComponent("RigidBody", rigidBodyComponent, [](RigidBodyComponent& rigidbody) {
+    DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
         switch (rigidbody.shape) {
             case RigidBodyComponent::SHAPE_BOX: {
                 const auto& half = rigidbody.param.box.half_size;
@@ -176,45 +182,46 @@ void PropertyPanel::update_internal(Scene& scene) {
     //     camera.m_fovy = glm::radians(fovy);
     // });
 
-    ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
     DrawComponent("Object", object_component, [&](ObjectComponent& object) {
-        MeshComponent* mesh = scene.get_component<MeshComponent>(object.mesh_id);
-        NameComponent* meshName = scene.get_component<NameComponent>(object.mesh_id);
-        ImGui::Text("Mesh Component (%d)", object.mesh_id);
-        if (mesh) {
-            const char* meshNameStr = meshName ? meshName->get_name().c_str() : "untitled";
-            ImGui::Text("mesh %s (%zu submesh)", meshNameStr, mesh->subsets.size());
-            ImGui::Text("%zu triangles", mesh->indices.size() / 3);
-            ImGui::Text("v:%zu, n:%zu, u:%zu, b:%zu", mesh->positions.size(), mesh->normals.size(),
-                        mesh->texcoords_0.size(), mesh->weights_0.size());
+        bool hide = !(object.flags & ObjectComponent::RENDERABLE);
+        bool cast_shadow = object.flags & ObjectComponent::CAST_SHADOW;
+        ImGui::Checkbox("Hide", &hide);
+        ImGui::Checkbox("Cast shadow", &cast_shadow);
+        object.flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
+    });
 
-            bool hide = !(object_component->flags & ObjectComponent::RENDERABLE);
-            bool cast_shadow = object_component->flags & ObjectComponent::CAST_SHADOW;
-            ImGui::Checkbox("Hide", &hide);
-            ImGui::Checkbox("Cast shadow", &cast_shadow);
+    DrawComponent("Mesh", mesh_component, [&](MeshComponent& mesh) {
+        ImGui::Text("%zu triangles", mesh.indices.size() / 3);
+        ImGui::Text("v:%zu, n:%zu, u:%zu, b:%zu", mesh.positions.size(), mesh.normals.size(),
+                    mesh.texcoords_0.size(), mesh.weights_0.size());
+    });
 
-            object_component->flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
-
-            // if (mesh->armature_id.is_valid()) {
-            //     TagComponent* animation_name = scene.get_component<TagComponent>(mesh->armature_id);
-            //     AnimationComponent& animation = *scene.get_component<AnimationComponent>(mesh->armature_id);
-            //     ImGui::Text("Animation %s", animation_name->get_tag().c_str());
-            //     if (!animation.is_playing()) {
-            //         if (ImGui::Button("Play")) {
-            //             animation.flags |= AnimationComponent::PLAYING;
-            //         }
-            //     } else {
-            //         if (ImGui::Button("Stop")) {
-            //             animation.flags &= ~AnimationComponent::PLAYING;
-            //         }
-            //     }
-            //     if (ImGui::SliderFloat("Frame", &animation.timer, animation.start, animation.end)) {
-            //         animation.flags |= AnimationComponent::PLAYING;
-            //     }
-            //     ImGui::Separator();
-            // }
+    DrawComponent("Material", material_component, [&](MaterialComponent& material) {
+        vec3 color = material.base_color;
+        if (draw_color_control("Color", color)) {
+            material.base_color = vec4(color, material.base_color.a);
         }
     });
+
+    // @TODO: animation
+    // if (mesh->armature_id.is_valid()) {
+    //     TagComponent* animation_name = scene.get_component<TagComponent>(mesh->armature_id);
+    //     AnimationComponent& animation = *scene.get_component<AnimationComponent>(mesh->armature_id);
+    //     ImGui::Text("Animation %s", animation_name->get_tag().c_str());
+    //     if (!animation.is_playing()) {
+    //         if (ImGui::Button("Play")) {
+    //             animation.flags |= AnimationComponent::PLAYING;
+    //         }
+    //     } else {
+    //         if (ImGui::Button("Stop")) {
+    //             animation.flags &= ~AnimationComponent::PLAYING;
+    //         }
+    //     }
+    //     if (ImGui::SliderFloat("Frame", &animation.timer, animation.start, animation.end)) {
+    //         animation.flags |= AnimationComponent::PLAYING;
+    //     }
+    //     ImGui::Separator();
+    // }
 }
 
 }  // namespace my

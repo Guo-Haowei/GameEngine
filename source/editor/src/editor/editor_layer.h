@@ -3,7 +3,7 @@
 #include "core/framework/application.h"
 #include "editor/editor_command.h"
 #include "editor/editor_window.h"
-#include "editor/panels/menu_bar.h"
+#include "editor/menu_bar.h"
 #include "scene/scene.h"
 
 namespace my {

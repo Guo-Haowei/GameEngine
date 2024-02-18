@@ -5,14 +5,14 @@
 /////////////////////
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
-#include "panels/animation_panel.h"
-#include "panels/console_panel.h"
-#include "panels/debug_panel.h"
-#include "panels/debug_texture.h"
-#include "panels/hierarchy_panel.h"
-#include "panels/propertiy_panel.h"
-#include "panels/render_graph_editor.h"
-#include "panels/viewer.h"
+#include "editor/panels/animation_panel.h"
+#include "editor/panels/console_panel.h"
+#include "editor/panels/debug_panel.h"
+#include "editor/panels/debug_texture.h"
+#include "editor/panels/hierarchy_panel.h"
+#include "editor/panels/propertiy_panel.h"
+#include "editor/panels/render_graph_editor.h"
+#include "editor/panels/viewer.h"
 #include "servers/display_server.h"
 
 namespace my {

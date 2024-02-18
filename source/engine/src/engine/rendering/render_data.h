@@ -11,7 +11,7 @@ struct RenderData {
     struct SubMesh {
         uint32_t index_count;
         uint32_t index_offset;
-        const MaterialData* material_data;
+        const MaterialComponent* material;
     };
 
     struct Mesh {

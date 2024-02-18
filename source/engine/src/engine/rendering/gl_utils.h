@@ -13,10 +13,6 @@ struct MaterialData {
     GpuTexture albedoMap;
     GpuTexture materialMap;
     GpuTexture normalMap;
-    vec4 albedoColor;
-    float metallic;
-    float roughness;
-    float reflectPower;
     int textureMapIdx;
 };
 

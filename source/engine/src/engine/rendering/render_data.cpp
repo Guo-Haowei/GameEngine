@@ -7,7 +7,6 @@
 #include "scene/scene.h"
 
 extern my::RIDAllocator<MeshData> g_meshes;
-extern my::RIDAllocator<MaterialData> g_materials;
 
 namespace my {
 
@@ -111,14 +110,10 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
                 continue;
             }
 
-            const MaterialComponent& material = *scene->get_component<MaterialComponent>(subset.material_id);
-            const MaterialData* mat_data = g_materials.get_or_null(material.gpu_resource);
-            DEV_ASSERT(mat_data);
-
             SubMesh sub_mesh;
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
-            sub_mesh.material_data = mat_data;
+            sub_mesh.material = scene->get_component<MaterialComponent>(subset.material_id);
             draw.subsets.emplace_back(std::move(sub_mesh));
         }
 

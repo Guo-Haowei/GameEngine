@@ -35,7 +35,17 @@ my::RIDAllocator<MaterialData> g_materials;
 
 static GLuint g_noiseTexture;
 
-extern void FillMaterialCB(const MaterialData* mat, MaterialConstantBuffer& cb);
+// @TODO: refactor
+void dummy_fill_material_buffer(const my::MaterialComponent* material, MaterialConstantBuffer& cb) {
+    MaterialData* mat = g_materials.get_or_null(material->gpu_resource);
+    cb.c_albedo_color = material->base_color;
+    cb.c_metallic = material->metallic;
+    cb.c_roughness = material->roughness;
+    cb.c_has_albedo_map = mat->albedoMap.GetHandle() != 0;
+    cb.c_has_normal_map = mat->materialMap.GetHandle() != 0;
+    cb.c_has_pbr_map = mat->materialMap.GetHandle() != 0;
+    cb.c_texture_map_idx = mat->textureMapIdx;
+}
 
 template<typename T>
 static void buffer_storage(GLuint buffer, const std::vector<T>& data) {
@@ -186,7 +196,6 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
 
         {
             const std::string& textureMap = material_component.textures[MaterialComponent::TEXTURE_BASE].name;
-            material->albedoColor = material_component.base_color;
             if (!textureMap.empty()) {
                 material->albedoMap.create_texture2d_from_image(textureMap);
                 g_constantCache.cache.c_albedo_maps[idx].data = gl::MakeTextureResident(material->albedoMap.GetHandle());
@@ -195,8 +204,6 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
 
         {
             const std::string& textureMap = material_component.textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].name;
-            material->metallic = material_component.metallic;
-            material->roughness = material_component.roughness;
             if (!textureMap.empty()) {
                 material->materialMap.create_texture2d_from_image(textureMap);
                 g_constantCache.cache.c_pbr_maps[idx].data = gl::MakeTextureResident(material->materialMap.GetHandle());
@@ -360,26 +367,25 @@ void GraphicsManager::createGpuResources() {
 
     g_constantCache.Update();
 }
-
-struct MaterialCache {
-    vec4 albedo_color;  // if it doesn't have albedo color, then it's alpha is 0.0f
-    float metallic = 0.0f;
-    float roughness = 0.0f;
-    float has_metallic_roughness_texture = 0.0f;
-    float has_normal_texture = 0.0f;
-    float reflect = 0.0f;
-
-    MaterialCache& operator=(const MaterialData& mat) {
-        albedo_color = mat.albedoColor;
-        roughness = mat.roughness;
-        metallic = mat.metallic;
-        reflect = mat.reflectPower;
-        has_metallic_roughness_texture = mat.materialMap.GetHandle() == 0 ? 0.0f : 1.0f;
-        has_normal_texture = mat.normalMap.GetHandle() == 0 ? 0.0f : 1.0f;
-
-        return *this;
-    }
-};
+// struct MaterialCache {
+//     vec4 albedo_color;  // if it doesn't have albedo color, then it's alpha is 0.0f
+//     float metallic = 0.0f;
+//     float roughness = 0.0f;
+//     float has_metallic_roughness_texture = 0.0f;
+//     float has_normal_texture = 0.0f;
+//     float reflect = 0.0f;
+//
+//     MaterialCache& operator=(const MaterialData& mat) {
+//         albedo_color = mat.albedoColor;
+//         roughness = mat.roughness;
+//         metallic = mat.metallic;
+//         reflect = mat.reflectPower;
+//         has_metallic_roughness_texture = mat.materialMap.GetHandle() == 0 ? 0.0f : 1.0f;
+//         has_normal_texture = mat.normalMap.GetHandle() == 0 ? 0.0f : 1.0f;
+//
+//         return *this;
+//     }
+// };
 
 uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {
