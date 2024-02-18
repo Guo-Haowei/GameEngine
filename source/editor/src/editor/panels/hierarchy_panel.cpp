@@ -7,8 +7,7 @@
 
 namespace my {
 
-#define POPUP_NAME_ID "SCENE_PANEL_POPUP"
-
+// @TODO: do not traverse every frame
 class HierarchyCreator {
 public:
     struct HierarchyNode {
@@ -20,23 +19,23 @@ public:
 
     HierarchyCreator(EditorLayer& editor) : m_editor_layer(editor) {}
 
-    void Draw(const Scene& scene) {
-        if (Build(scene)) {
+    void update(const Scene& scene) {
+        if (build(scene)) {
             DEV_ASSERT(m_root);
-            DrawNode(scene, m_root, ImGuiTreeNodeFlags_DefaultOpen);
+            draw_node(scene, m_root, ImGuiTreeNodeFlags_DefaultOpen);
         }
     }
 
 private:
-    bool Build(const Scene& scene);
-    void DrawNode(const Scene& scene, HierarchyNode* pNode, ImGuiTreeNodeFlags flags = 0);
+    bool build(const Scene& scene);
+    void draw_node(const Scene& scene, HierarchyNode* pNode, ImGuiTreeNodeFlags flags = 0);
 
     std::map<ecs::Entity, std::shared_ptr<HierarchyNode>> m_nodes;
     HierarchyNode* m_root = nullptr;
     EditorLayer& m_editor_layer;
 };
 
-void HierarchyCreator::DrawNode(const Scene& scene, HierarchyNode* pHier, ImGuiTreeNodeFlags flags) {
+void HierarchyCreator::draw_node(const Scene& scene, HierarchyNode* pHier, ImGuiTreeNodeFlags flags) {
     DEV_ASSERT(pHier);
     ecs::Entity id = pHier->entity;
     const NameComponent* name_component = scene.get_component<NameComponent>(id);
@@ -64,13 +63,13 @@ void HierarchyCreator::DrawNode(const Scene& scene, HierarchyNode* pHier, ImGuiT
         float indentWidth = 8.f;
         ImGui::Indent(indentWidth);
         for (auto& child : pHier->children) {
-            DrawNode(scene, child);
+            draw_node(scene, child);
         }
         ImGui::Unindent(indentWidth);
     }
 }
 
-bool HierarchyCreator::Build(const Scene& scene) {
+bool HierarchyCreator::build(const Scene& scene) {
     // @TODO: on scene change instead of build every frame
     const size_t hierarchy_count = scene.get_count<HierarchyComponent>();
     if (hierarchy_count == 0) {
@@ -115,41 +114,17 @@ void HierarchyPanel::update_internal(Scene& scene) {
 
     draw_popup(scene);
 
-    creator.Draw(scene);
+    creator.update(scene);
 }
 
-static std::string gen_name(std::string_view name) {
-    static int s_counter = 0;
-    return std::format("{}_{}", name, ++s_counter);
-}
-
-void HierarchyPanel::draw_popup(Scene& scene) {
+void HierarchyPanel::draw_popup(Scene&) {
     auto selected = m_editor.get_selected_entity();
     // @TODO: save commands for undo
 
     if (ImGui::BeginPopup(POPUP_NAME_ID)) {
-        if (ImGui::BeginMenu("add child##" POPUP_NAME_ID)) {
-            if (ImGui::MenuItem("add entity##" POPUP_NAME_ID)) {
-                LOG_WARN("@TODO: implement");
-            }
-            if (ImGui::MenuItem("add light##" POPUP_NAME_ID)) {
-                auto id = scene.create_pointlight_entity(gen_name("light"), vec3{ 0 });
-                scene.attach_component(id, selected);
-                // @TODO: set selected
-                m_editor.select_entity(id);
-                SceneManager::singleton().bump_revision();
-            }
-            if (ImGui::MenuItem("add cube##" POPUP_NAME_ID)) {
-                auto id = scene.create_cube_entity(gen_name("cube"));
-                scene.attach_component(id, selected);
-                m_editor.select_entity(id);
-                SceneManager::singleton().bump_revision();
-            }
-
-            ImGui::EndMenu();
-        }
-        if (ImGui::MenuItem("delete##" POPUP_NAME_ID)) {
-            scene.remove_entity(selected);
+        open_add_entity_popup(selected);
+        if (ImGui::MenuItem("Delete")) {
+            LOG_WARN("@TODO: not implement");
         }
         ImGui::EndPopup();
     }

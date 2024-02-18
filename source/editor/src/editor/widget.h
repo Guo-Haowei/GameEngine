@@ -1,5 +1,6 @@
 #pragma once
 #include "core/math/geomath.h"
+#include "scene/scene.h"
 
 namespace my {
 
@@ -24,5 +25,7 @@ bool draw_color_control(const char* p_lable,
                         glm::vec3& p_out_vec3,
                         float p_reset_value = 1.0f,
                         float p_column_width = kDefaultColumnWidth);
+
+void scene_add_dropdown(Scene& scene);
 
 }  // namespace my

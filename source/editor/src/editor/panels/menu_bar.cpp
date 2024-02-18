@@ -157,6 +157,8 @@ void MenuBar::draw(Scene&) {
             }
             ImGui::EndMenu();
         }
+        ImGui::Separator();
+        EditorItem::open_add_entity_popup(ecs::Entity::INVALID);
         ImGui::EndMenuBar();
     }
 }

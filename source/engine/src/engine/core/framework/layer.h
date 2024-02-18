@@ -1,8 +1,9 @@
 #pragma once
+#include "core/base/noncopyable.h"
 
 namespace my {
 
-class Layer {
+class Layer : public NonCopyable {
 public:
     Layer(const std::string& name = "Layer") : m_name(name) {}
 
