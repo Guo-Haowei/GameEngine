@@ -5,30 +5,20 @@
 
 namespace my {
 
-// @TODO: fix
-// static mat4 R_HackLightSpaceMatrix(const vec3& lightDir) {
-//    const Scene& scene = SceneManager::get_scene();
-//    const vec3 center = scene.get_bound().center();
-//    const vec3 extents = scene.get_bound().size();
-//    const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
-//    const mat4 V = glm::lookAt(center + glm::normalize(lightDir) * size, center, vec3(0, 1, 0));
-//    const mat4 P = glm::ortho(-size, size, -size, size, 0.0f, 2.0f * size);
-//    return P * V;
-//}
+mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_matrix) {
+    const vec3 center = p_world_bound.center();
+    const vec3 extents = p_world_bound.size();
+    const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
 
-#if 1
+    vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
+    vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
+
+    const mat4 V = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
+    const mat4 P = glm::ortho(-size, size, -size, size, 0.0f, 2.0f * size);
+    return P * V;
+}
+
 static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plane, float p_far_plane, const Camera& p_camera) {
-    // frustum corners in camera space
-    // Degree half_fovy = p_camera.get_fovy() * 0.5f;
-    // Degree half_fovx = p_camera.get_fovy() * 0.5f * p_camera.get_aspect();
-    // float tangent_half_fovy = half_fovy.tan();
-    // float tangent_half_fovx = half_fovx.tan();
-
-    // float xn = tangent_half_fovx * p_near_plane;
-    // float yn = tangent_half_fovy * p_near_plane;
-    // float xf = tangent_half_fovx * p_far_plane;
-    // float yf = tangent_half_fovy * p_far_plane;
-
     const auto proj = glm::perspective(
         p_camera.get_fovy().to_rad(),
         p_camera.get_aspect(),
@@ -59,7 +49,6 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
 
     vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
     vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
-    // vec3 light_up = vec3(0, 1, 0);
     mat4 light_view = glm::lookAt(center + light_dir, center, light_up);
 
     AABB aabb;
@@ -91,65 +80,16 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
     return light_projection * light_view;
 }
 
-#else
-static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plane, float p_far_plane, const Camera& p_camera) {
-    // frustum corners in camera space
-    Degree half_fovy = p_camera.get_fovy() * 0.5f;
-    Degree half_fovx = p_camera.get_fovy() * 0.5f * p_camera.get_aspect();
-    float tangent_half_fovy = half_fovy.tan();
-    float tangent_half_fovx = half_fovx.tan();
-
-    float xn = tangent_half_fovx * p_near_plane;
-    float yn = tangent_half_fovy * p_near_plane;
-    float xf = tangent_half_fovx * p_far_plane;
-    float yf = tangent_half_fovy * p_far_plane;
-
-    std::array<vec4, 8> corners{
-        // near face
-        vec4(+xn, +yn, p_near_plane, 1.0f),
-        vec4(-xn, +yn, p_near_plane, 1.0f),
-        vec4(+xn, -yn, p_near_plane, 1.0f),
-        vec4(-xn, -yn, p_near_plane, 1.0f),
-
-        // far face
-        vec4(+xf, +yf, p_far_plane, 1.0f),
-        vec4(-xf, +yf, p_far_plane, 1.0f),
-        vec4(+xf, -yf, p_far_plane, 1.0f),
-        vec4(-xf, -yf, p_far_plane, 1.0f)
-    };
-
-    vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
-    vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
-    // vec3 light_up = vec3(0, 1, 0);
-    mat4 light_view = glm::lookAt(2.0f * light_dir, vec3(0), light_up);
-    // mat4 light_view = glm::lookAt(100.0f * light_dir, vec3(0), light_up);
-    mat4 inv_view = glm::inverse(p_camera.get_view_matrix());
-
-    AABB aabb;
-    // frustum in world space, then to light space
-    for (vec4& point : corners) {
-        point = light_view * inv_view * point;
-        aabb.expand_point(point);
-    }
-
-    float min_x = aabb.get_min().x;
-    float max_x = aabb.get_max().x;
-    float min_y = aabb.get_min().y;
-    float max_y = aabb.get_max().y;
-    float min_z = aabb.get_min().z;
-    float max_z = aabb.get_max().z;
-
-    mat4 light_projection = glm::ortho(min_x, max_x, min_y, max_y, min_z, max_z);
-    return light_projection * light_view;
-}
-#endif
-
-std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Camera& p_camera, const vec4& p_cascade_end) {
+std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Camera& p_camera, const vec4& p_cascade_end, const AABB& world_bound) {
     std::vector<glm::mat4> ret;
-    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
-        float z_near = p_camera.get_near();
-        // z_near = i == 0 ? z_near : p_cascade_end[i - 1];
-        ret.push_back(get_light_space_matrix(p_light_matrix, z_near, p_cascade_end[i], p_camera));
+    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
+        if (!DVAR_GET_BOOL(r_enable_csm)) {
+            ret.push_back(light_space_matrix_world(world_bound, p_light_matrix));
+        } else {
+            float z_near = p_camera.get_near();
+            // z_near = i == 0 ? z_near : p_cascade_end[i - 1];
+            ret.push_back(get_light_space_matrix(p_light_matrix, z_near, p_cascade_end[i], p_camera));
+        }
     }
     return ret;
 }
@@ -159,7 +99,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     // THESE SHOULDN'T BE HERE
     auto& cache = g_perFrameCache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), SC_LIGHT_MAX);
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), NUM_LIGHT_MAX);
     DEV_ASSERT(light_count);
 
     cache.c_light_count = light_count;
@@ -171,7 +111,7 @@ void fill_constant_buffers(const Scene& scene) {
         camera.set_far(cascade_end.w);
         camera.set_dirty();
     }
-    for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
+    for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
         float left = idx == 0 ? camera.get_near() : cascade_end[idx - 1];
         DEV_ASSERT(left < cascade_end[idx]);
     }
@@ -187,15 +127,15 @@ void fill_constant_buffers(const Scene& scene) {
         light.type = light_component.type;
         light.color = light_component.color * light_component.energy;
         switch (light_component.type) {
-            case LightComponent::LIGHT_TYPE_OMNI: {
+            case LIGHT_TYPE_OMNI: {
                 mat4 light_matrix = light_transform->get_local_matrix();
                 vec3 light_dir = glm::normalize(light_matrix * vec4(0, 0, 1, 0));
                 light.cast_shadow = true;
                 light.position = light_dir;
 
-                light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end);
+                light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, scene.get_bound());
             } break;
-            case LightComponent::LIGHT_TYPE_POINT: {
+            case LIGHT_TYPE_POINT: {
                 light.atten_constant = light_component.atten.constant;
                 light.atten_linear = light_component.atten.linear;
                 light.atten_quadratic = light_component.atten.quadratic;
@@ -206,9 +146,9 @@ void fill_constant_buffers(const Scene& scene) {
         }
     }
 
-    DEV_ASSERT(light_matrices.size() == SC_NUM_CASCADES);
+    DEV_ASSERT(light_matrices.size() == NUM_CASCADE_MAX);
     if (!light_matrices.empty()) {
-        for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
+        for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
             cache.c_main_light_matrices[idx] = light_matrices[idx];
         }
     }
@@ -221,9 +161,10 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_projection_view_matrix = camera.get_projection_view_matrix();
 
     cache.c_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
-    cache.c_debug_texture_id = DVAR_GET_INT(r_debug_texture);
+    cache.c_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
     cache.c_no_texture = DVAR_GET_BOOL(r_no_texture);
     cache.c_debug_csm = DVAR_GET_BOOL(r_debug_csm);
+    cache.c_enable_csm = DVAR_GET_BOOL(r_enable_csm);
 
     cache.c_screen_width = (int)camera.get_width();
     cache.c_screen_height = (int)camera.get_height();

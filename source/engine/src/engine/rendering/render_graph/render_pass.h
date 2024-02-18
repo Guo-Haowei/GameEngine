@@ -3,7 +3,7 @@
 
 namespace my::rg {
 
-using RenderPassFunc = void (*)(int);
+using RenderPassFunc = void (*)(int width, int height);
 
 enum RenderPassType {
     RENDER_PASS_SHADING,
@@ -17,7 +17,6 @@ struct RenderPassDesc {
     std::vector<std::shared_ptr<Resource>> color_attachments;
     std::shared_ptr<Resource> depth_attachment;
     RenderPassFunc func = nullptr;
-    int layer = 0;
 };
 
 class RenderPass {
@@ -38,6 +37,8 @@ protected:
     std::vector<std::string> m_inputs;
     RenderPassFunc m_func;
     int m_layer;
+    int m_width;
+    int m_height;
 
     friend class RenderGraph;
 };

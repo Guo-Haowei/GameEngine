@@ -14,33 +14,12 @@ struct VertexPoint3D {
     vec3 color;
 };
 
-static MeshData g_imageBuffer;
-
 struct TextureVertex {
     vec2 pos;
     vec2 uv;
 };
 
-static void CreateImageBuffer() {
-    MeshData& mesh = g_imageBuffer;
-    glGenVertexArrays(1, &mesh.vao);
-    glGenBuffers(1, mesh.vbos);
-    glBindVertexArray(mesh.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbos[0]);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(TextureVertex), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TextureVertex), (void*)(sizeof(vec2)));
-    glEnableVertexAttribArray(1);
-    glBindVertexArray(0);
-}
-
-void R_CreateEditorResource() {
-    CreateImageBuffer();
-}
-
-void R_DestroyEditorResource() {
-}
-
+// @TODO: fix
 static inline void FillTextureIconBuffer(std::vector<TextureVertex>& iconBuffer, const vec2& offset, float aspect) {
     constexpr TextureVertex kVertices[] = {
         { vec2(-1, +1), vec2(0, 0) },  // top-left

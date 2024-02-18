@@ -1,8 +1,10 @@
 #pragma once
+#include "assets/asset_handle.h"
 #include "core/base/rid.h"
 #include "core/math/aabb.h"
 #include "core/math/angle.h"
 #include "core/systems/entity.h"
+#include "shader_defines.h"
 
 namespace my {
 
@@ -178,7 +180,9 @@ struct MaterialComponent {
     };
 
     struct TextureMap {
-        std::string name;
+        std::string path;
+        // Non-serialized
+        ImageHandle* image = nullptr;
     };
     TextureMap textures[TEXTURE_MAX];
 
@@ -187,8 +191,7 @@ struct MaterialComponent {
     float roughness = 1.0f;
     vec4 base_color = vec4(1);
 
-    // Non-serialized
-    mutable RID gpu_resource;
+    void request_image(TextureSlot slot, const std::string& path);
 
     void serialize(Archive& archive, uint32_t version);
 };
@@ -197,14 +200,7 @@ struct MaterialComponent {
 // Light Component
 //--------------------------------------------------------------------------------------------------
 struct LightComponent {
-    // @TODO: share with shader
-    enum Type {
-        LIGHT_TYPE_OMNI,
-        LIGHT_TYPE_POINT,
-        LIGHT_TYPE_MAX,
-    };
-
-    Type type = LIGHT_TYPE_OMNI;
+    int type = LIGHT_TYPE_OMNI;
     vec3 color = vec3(1);
     float energy = 10.0f;
 

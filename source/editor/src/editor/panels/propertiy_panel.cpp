@@ -102,11 +102,11 @@ void PropertyPanel::update_internal(Scene& scene) {
     bool disable_scale = false;
     if (light_component) {
         switch (light_component->type) {
-            case LightComponent::LIGHT_TYPE_OMNI:
+            case LIGHT_TYPE_OMNI:
                 disable_translation = true;
                 disable_scale = true;
                 break;
-            case LightComponent::LIGHT_TYPE_POINT:
+            case LIGHT_TYPE_POINT:
                 disable_rotation = true;
                 disable_scale = true;
                 break;

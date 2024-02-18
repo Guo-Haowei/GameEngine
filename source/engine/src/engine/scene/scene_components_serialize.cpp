@@ -1,4 +1,4 @@
-#include "assets/asset_loader.h"
+#include "core/framework/asset_manager.h"
 #include "core/io/archive.h"
 #include "scene_components.h"
 
@@ -69,18 +69,16 @@ void MaterialComponent::serialize(Archive& archive, uint32_t) {
         archive << roughness;
         archive << base_color;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
-            archive << textures[i].name;
+            archive << textures[i].path;
         }
     } else {
         archive >> metallic;
         archive >> roughness;
         archive >> base_color;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
-            std::string& texture = textures[i].name;
-            archive >> texture;
-            if (!texture.empty()) {
-                asset_loader::load_image_sync(textures[i].name);
-            }
+            std::string path;
+            archive >> path;
+            request_image((TextureSlot)i, path);
         }
     }
 

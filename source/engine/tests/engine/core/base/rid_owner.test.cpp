@@ -1,7 +1,5 @@
 #include "core/base/rid_owner.h"
 
-#include <latch>
-
 namespace my {
 
 struct Object {

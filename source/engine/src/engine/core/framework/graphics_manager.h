@@ -1,4 +1,6 @@
 #pragma once
+#include "assets/image.h"
+#include "core/base/rid_owner.h"
 #include "core/base/singleton.h"
 #include "core/framework/event_queue.h"
 #include "core/framework/module.h"
@@ -6,10 +8,17 @@
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graph.h"
+#include "scene/scene_components.h"
 
 namespace my {
 
 struct RenderData;
+
+// @TODO: refactor
+struct Texture {
+    GLuint handle;
+    GLuint64 resident_handle;
+};
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
@@ -17,13 +26,14 @@ public:
         RENDER_GRAPH_NONE,
         RENDER_GRAPH_DEFAULT,
         RENDER_GRAPH_VXGI,
-        RENDER_GRAPH_VXGI_DEBUG,
     };
 
     GraphicsManager() : Module("GraphicsManager") {}
 
     bool initialize();
     void finalize();
+
+    void create_texture(ImageHandle* image);
 
     void event_received(std::shared_ptr<Event> event) override;
 
@@ -37,13 +47,16 @@ public:
 
     const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
 
+    // @TODO: refactor this
+    void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb);
+
 private:
-    GpuTexture m_lightIcons[MAX_LIGHT_ICON];
     int m_method = RENDER_GRAPH_NONE;
 
     std::shared_ptr<RenderData> m_render_data;
 
     rg::RenderGraph m_render_graph;
+    RIDAllocator<Texture> m_texture_allocator;
 };
 
 }  // namespace my

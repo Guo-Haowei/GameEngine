@@ -14,10 +14,10 @@ void main() {
     int y = (gl_InstanceID / voxel_texture_size) % voxel_texture_size;
     int z = gl_InstanceID / (voxel_texture_size * voxel_texture_size);
     vec4 color;
-    if (c_debug_texture_id == 1) {
-        color = imageLoad(u_albedo_texture, ivec3(x, y, z));
-    } else {
+    if (c_debug_voxel_id == 1) {
         color = imageLoad(u_normal_texture, ivec3(x, y, z));
+    } else {
+        color = imageLoad(u_albedo_texture, ivec3(x, y, z));
     }
 
     if (color.a < 0.0001) {

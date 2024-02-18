@@ -2,7 +2,7 @@
 
 #include <imgui/imgui.h>
 
-#include "assets/asset_loader.h"
+#include "core/framework/asset_manager.h"
 
 namespace my {
 
@@ -17,7 +17,7 @@ bool ImGuiModule::initialize() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    auto asset = asset_loader::load_file_sync("@res://fonts/DroidSans.ttf");
+    auto asset = AssetManager::singleton().load_file_sync("@res://fonts/DroidSans.ttf");
     DEV_ASSERT(asset);
     ImFontConfig font_cfg;
     font_cfg.FontDataOwnedByAtlas = false;

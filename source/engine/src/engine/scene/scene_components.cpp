@@ -1,6 +1,8 @@
 #pragma once
 #include "scene_components.h"
 
+#include "core/framework/asset_manager.h"
+
 namespace my {
 
 //--------------------------------------------------------------------------------------------------
@@ -94,6 +96,13 @@ void vertex_attrib(MeshComponent::VertexAttribute& attrib, const std::vector<T>&
 }
 
 void MeshComponent::create_render_data() {
+    // @HACK: fill dummy textures
+    if (texcoords_0.empty()) {
+        for (size_t i = 0; i < normals.size(); ++i) {
+            texcoords_0.emplace_back(vec2(0, 0));
+        }
+    }
+
     DEV_ASSERT(texcoords_0.size());
     DEV_ASSERT(normals.size());
     // AABB
@@ -145,6 +154,16 @@ std::vector<char> MeshComponent::generate_combined_buffer() const {
     safe_copy(attributes[VertexAttribute::WEIGHTS_0], weights_0.data());
     safe_copy(attributes[VertexAttribute::COLOR_0], color_0.data());
     return result;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Mesh Component
+//--------------------------------------------------------------------------------------------------
+void MaterialComponent::request_image(TextureSlot slot, const std::string& path) {
+    if (!path.empty()) {
+        textures[slot].path = path;
+        textures[slot].image = AssetManager::singleton().load_image_async(path);
+    }
 }
 
 }  // namespace my

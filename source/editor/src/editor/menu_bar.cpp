@@ -82,29 +82,11 @@ static void save_project(bool open_dialog) {
     }
 }
 
-static uint64_t get_displayed_image(int e) {
-    auto& rg = GraphicsManager::singleton().get_active_render_graph();
-    switch (e) {
-        case DISPLAY_FXAA_IMAGE:
-            return rg.find_resouce(RT_RES_FXAA)->get_handle();
-        case DISPLAY_GBUFFER_DEPTH:
-            return rg.find_resouce(RT_RES_GBUFFER_DEPTH)->get_handle();
-        case DISPLAY_GBUFFER_BASE_COLOR:
-            return rg.find_resouce(RT_RES_GBUFFER_BASE_COLOR)->get_handle();
-        case DISPLAY_GBUFFER_NORMAL:
-            return rg.find_resouce(RT_RES_GBUFFER_NORMAL)->get_handle();
-        case DISPLAY_SSAO:
-            return rg.find_resouce(RT_RES_SSAO)->get_handle();
-        case DISPLAY_SHADOW_MAP:
-            return rg.find_resouce(RT_RES_SHADOW_MAP)->get_handle();
-        default:
-            return 0;
-    }
-}
-
 void MenuBar::draw(Scene&) {
     if (m_editor.get_displayed_image() == 0) {
-        m_editor.set_displayed_image(get_displayed_image(DVAR_GET_INT(r_debug_texture)));
+        auto& rg = GraphicsManager::singleton().get_active_render_graph();
+        uint32_t handle = rg.find_resouce(RT_RES_FXAA)->get_handle();
+        m_editor.set_displayed_image(handle);
     }
 
     // @TODO: input system, key s handled here, don't handle it in viewer

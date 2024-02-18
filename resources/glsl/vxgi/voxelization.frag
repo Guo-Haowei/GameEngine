@@ -9,12 +9,11 @@ in vec2 pass_uv;
 
 #include "common.glsl"
 #include "common/lighting.glsl"
-#include "common/shadow.glsl"
 
 void main() {
     vec4 albedo = c_albedo_color;
     if (c_has_albedo_map != 0) {
-        albedo = texture(c_albedo_maps[c_texture_map_idx], pass_uv);
+        albedo = texture(c_albedo_map, pass_uv);
     }
     if (albedo.a < 0.001) {
         discard;
@@ -24,7 +23,7 @@ void main() {
     float roughness = c_roughness;
     if (c_has_pbr_map != 0) {
         // g roughness, b metallic
-        vec3 mr = texture(c_pbr_maps[c_texture_map_idx], pass_uv).rgb;
+        vec3 mr = texture(c_pbr_map, pass_uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }
@@ -61,7 +60,7 @@ void main() {
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
             const int cascade_level = find_cascade(world_position);
-            float shadow = cascade_shadow(c_shadow_maps[cascade_level], world_position, NdotL, cascade_level);
+            float shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }
         Lo += direct_lighting;

@@ -125,7 +125,7 @@ Entity Scene::create_pointlight_entity(const std::string& name, const vec3& posi
     transform.set_dirty();
 
     LightComponent& light = create<LightComponent>(entity);
-    light.type = LightComponent::LIGHT_TYPE_POINT;
+    light.type = LIGHT_TYPE_POINT;
     light.color = color;
     light.energy = energy;
     light.atten.constant = 1.0f;
@@ -139,7 +139,7 @@ Entity Scene::create_omnilight_entity(const std::string& name, const vec3& color
     create<TransformComponent>(entity);
 
     LightComponent& light = create<LightComponent>(entity);
-    light.type = LightComponent::LIGHT_TYPE_OMNI;
+    light.type = LIGHT_TYPE_OMNI;
     light.color = color;
     light.energy = energy;
     light.atten.constant = 1.0f;

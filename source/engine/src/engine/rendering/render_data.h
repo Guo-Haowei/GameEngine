@@ -12,6 +12,7 @@ struct RenderData {
         uint32_t index_count;
         uint32_t index_offset;
         const MaterialComponent* material;
+        uint32_t flags;
     };
 
     struct Mesh {
@@ -30,7 +31,8 @@ struct RenderData {
 
     const Scene* scene = nullptr;
 
-    std::array<Pass, 4> shadow_passes;
+    // @TODO: save pass item somewhere and use index instead of keeping many copies
+    std::array<Pass, NUM_CASCADE_MAX> shadow_passes;
     Pass voxel_pass;
     Pass main_pass;
 

@@ -43,13 +43,23 @@ void DebugPanel::update_internal(Scene&) {
 
     dvar_checkbox(DVAR_r_enable_vxgi);
     dvar_checkbox(DVAR_r_no_texture);
+    dvar_checkbox(DVAR_r_debug_vxgi, []() {
+        ImGui::Text("Display voxel");
+        int value = DVAR_GET_INT(r_debug_vxgi_voxel);
+        ImGui::RadioButton("lighting", &value, 0);
+        ImGui::SameLine();
+        ImGui::RadioButton("Normal", &value, 1);
+        DVAR_SET_INT(r_debug_vxgi_voxel, value);
+    });
 
     dvar_checkbox(DVAR_r_enable_ssao, []() {
         ImGui::Text("SSAO Kernal Radius");
         ImGui::SliderFloat("Kernal Radius", (float*)(DVAR_GET_POINTER(r_ssaoKernelRadius)), 0.1f, 5.0f);
     });
 
-    dvar_checkbox(DVAR_r_debug_csm);
+    dvar_checkbox(DVAR_r_enable_csm, []() {
+        ImGui::Checkbox("Debug CSM", (bool*)DVAR_GET_POINTER(r_debug_csm));
+    });
     dvar_checkbox(DVAR_r_enable_fxaa);
     dvar_checkbox(DVAR_grid_visibility);
 

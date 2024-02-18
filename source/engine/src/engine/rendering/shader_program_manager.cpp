@@ -3,15 +3,21 @@
 #include <sstream>
 #include <vector>
 
-#include "assets/asset_loader.h"
+#include "core/framework/asset_manager.h"
 #include "rendering/GLPrerequisites.h"
 
 namespace my {
 
+// @TODO: fix
 static ShaderProgramManager *g_shader_program_manager = new ShaderProgramManager();
 static std::vector<ShaderProgram> s_shader_cache;
 
-static std::string process_shader(const std::string &source) {
+static std::string process_shader(const std::string &source, int depth) {
+    constexpr int max_depth = 100;
+    if (depth >= max_depth) {
+        LOG_FATAL("maximum include depth {} exceeded", max_depth);
+    }
+
     std::string result;
     std::stringstream ss(source);
     for (std::string line; std::getline(ss, line);) {
@@ -24,13 +30,14 @@ static std::string process_shader(const std::string &source) {
             std::string file_to_include(quote1 + 1, quote2);
 
             file_to_include = "@res://glsl/" + file_to_include;
-            auto buffer = asset_loader::load_file_sync(file_to_include);
+            // @TODO: nested include
+            auto buffer = AssetManager::singleton().load_file_sync(file_to_include);
             DEV_ASSERT(buffer);
             std::string extra(buffer->buffer.begin(), buffer->buffer.end());
             if (extra.empty()) {
                 LOG_ERROR("[filesystem] failed to read shader '{}'", file_to_include);
             }
-            result.append(extra.data());
+            result.append(process_shader(extra, depth + 1));
         } else {
             result.append(line);
         }
@@ -42,7 +49,7 @@ static std::string process_shader(const std::string &source) {
 }
 
 static GLuint create_shader(std::string_view file, GLenum type) {
-    auto source_binary = asset_loader::load_file_sync(std::string(file));
+    auto source_binary = AssetManager::singleton().load_file_sync(std::string(file));
     DEV_ASSERT(source_binary);
 
     std::string source(source_binary->buffer.begin(), source_binary->buffer.end());
@@ -59,7 +66,7 @@ static GLuint create_shader(std::string_view file, GLenum type) {
         "#extension GL_ARB_bindless_texture : require\n"
         "";
 
-    fullsource.append(process_shader(source));
+    fullsource.append(process_shader(source, 0));
     const char *sources[] = { fullsource.c_str() };
 
     GLuint shader = glCreateShader(type);
@@ -177,12 +184,6 @@ bool ShaderProgramManager::initialize() {
         info.vs = "@res://glsl/fullscreen.vert";
         info.ps = "@res://glsl/fxaa.frag";
         s_shader_cache[PROGRAM_FXAA] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/debug/texture.frag";
-        s_shader_cache[PROGRAM_FINAL_IMAGE] = create(info);
     }
     {
         ProgramCreateInfo info;

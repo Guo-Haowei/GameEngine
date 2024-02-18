@@ -9,6 +9,7 @@
 #include "rendering/render_data.h"
 #include "rendering/rendering.h"
 /////
+#include "assets/image.h"
 #include "core/base/rid_owner.h"
 #include "core/framework/scene_manager.h"
 #include "rendering/r_editor.h"
@@ -31,22 +32,12 @@ MeshData g_box;
 
 // @TODO: fix this
 my::RIDAllocator<MeshData> g_meshes;
-my::RIDAllocator<MaterialData> g_materials;
 
 static GLuint g_noiseTexture;
 
-// @TODO: refactor
-void dummy_fill_material_buffer(const my::MaterialComponent* material, MaterialConstantBuffer& cb) {
-    MaterialData* mat = g_materials.get_or_null(material->gpu_resource);
-    cb.c_albedo_color = material->base_color;
-    cb.c_metallic = material->metallic;
-    cb.c_roughness = material->roughness;
-    cb.c_has_albedo_map = mat->albedoMap.GetHandle() != 0;
-    cb.c_has_normal_map = mat->materialMap.GetHandle() != 0;
-    cb.c_has_pbr_map = mat->materialMap.GetHandle() != 0;
-    cb.c_texture_map_idx = mat->textureMapIdx;
-}
+using namespace my;
 
+// @TODO: refactor
 template<typename T>
 static void buffer_storage(GLuint buffer, const std::vector<T>& data) {
     glNamedBufferStorage(buffer, sizeof(T) * data.size(), data.data(), 0);
@@ -89,7 +80,7 @@ bool GraphicsManager::initialize() {
     createGpuResources();
 
     g_meshes.set_description("GPU-Mesh-Allocator");
-    g_materials.set_description("GPU-Material-Allocator");
+    m_texture_allocator.set_description("GPU-Materials");
 
     m_render_data = std::make_shared<RenderData>();
     return true;
@@ -157,6 +148,37 @@ static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
     glBindVertexArray(0);
 }
 
+void GraphicsManager::create_texture(ImageHandle* handle) {
+    DEV_ASSERT(handle && handle->data);
+    Image* image = handle->data;
+    RID rid = m_texture_allocator.make_rid();
+    Texture* texture = m_texture_allocator.get_or_null(rid);
+    image->gpu_resource = rid;
+
+    glGenTextures(1, &texture->handle);
+    glBindTexture(GL_TEXTURE_2D, texture->handle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 format_to_gl_internal_format(image->format),
+                 image->width,
+                 image->height,
+                 0,
+                 format_to_gl_format(image->format),
+                 format_to_gl_data_type(image->format),
+                 image->buffer.data());
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    texture->resident_handle = glGetTextureHandleARB(texture->handle);
+    glMakeTextureHandleResidentARB(texture->resident_handle);
+}
+
 void GraphicsManager::event_received(std::shared_ptr<Event> event) {
     SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(event.get());
     if (!e) {
@@ -175,51 +197,6 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
         RID rid = g_meshes.make_rid();
         mesh.gpu_resource = rid;
         create_mesh_data(mesh, *g_meshes.get_or_null(rid));
-    }
-
-    // create material
-    DEV_ASSERT(scene.get_count<MaterialComponent>() < array_length(g_constantCache.cache.c_albedo_maps));
-
-    for (int idx = 0; idx < scene.get_count<MaterialComponent>(); ++idx) {
-        const MaterialComponent& material_component = scene.get_component_array<MaterialComponent>()[idx];
-        if (material_component.gpu_resource.is_valid()) {
-            ecs::Entity entity = scene.get_entity<MaterialComponent>(idx);
-            const NameComponent& name = *scene.get_component<NameComponent>(entity);
-            LOG_WARN("[begin_scene] material '{}' (idx: {}) already has gpu resource", name.get_name(), idx);
-            continue;
-        }
-
-        RID rid = g_materials.make_rid();
-        material_component.gpu_resource = rid;
-        MaterialData* material = g_materials.get_or_null(rid);
-        DEV_ASSERT(material);
-
-        {
-            const std::string& textureMap = material_component.textures[MaterialComponent::TEXTURE_BASE].name;
-            if (!textureMap.empty()) {
-                material->albedoMap.create_texture2d_from_image(textureMap);
-                g_constantCache.cache.c_albedo_maps[idx].data = gl::MakeTextureResident(material->albedoMap.GetHandle());
-            }
-        }
-
-        {
-            const std::string& textureMap = material_component.textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].name;
-            if (!textureMap.empty()) {
-                material->materialMap.create_texture2d_from_image(textureMap);
-                g_constantCache.cache.c_pbr_maps[idx].data = gl::MakeTextureResident(material->materialMap.GetHandle());
-            }
-        }
-
-        {
-            const std::string& textureMap = material_component.textures[MaterialComponent::TEXTURE_NORMAL].name;
-            if (!textureMap.empty()) {
-                material->normalMap.create_texture2d_from_image(textureMap);
-                g_constantCache.cache.c_normal_maps[idx].data = gl::MakeTextureResident(material->normalMap.GetHandle());
-                // LOG("material has bump {}", mat->normalTexture.c_str());
-            }
-        }
-
-        material->textureMapIdx = idx;
     }
 
     g_constantCache.Update();
@@ -275,7 +252,6 @@ void GraphicsManager::createGpuResources() {
     create_ssao_resource();
 
     R_Alloc_Cbuffers();
-    R_CreateEditorResource();
 
     // create a dummy box data
     create_mesh_data(my::make_box_mesh(), g_box);
@@ -283,8 +259,6 @@ void GraphicsManager::createGpuResources() {
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
         m_method = RENDER_GRAPH_VXGI;
-    } else if (method == "vxgi_debug") {
-        m_method = RENDER_GRAPH_VXGI_DEBUG;
     } else if (method == "default") {
         m_method = RENDER_GRAPH_DEFAULT;
     }
@@ -295,9 +269,6 @@ void GraphicsManager::createGpuResources() {
             break;
         case my::GraphicsManager::RENDER_GRAPH_VXGI:
             create_render_graph_vxgi(m_render_graph);
-            break;
-        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-            create_render_graph_vxgi_debug(m_render_graph);
             break;
         default:
             CRASH_NOW();
@@ -336,9 +307,7 @@ void GraphicsManager::createGpuResources() {
         }
     };
 
-    for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
-        make_resident(RT_RES_SHADOW_MAP + std::to_string(idx), cache.c_shadow_maps[idx].data);
-    }
+    make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_FXAA, cache.c_fxaa_image);
     make_resident(RT_RES_GBUFFER_POSITION, cache.c_gbuffer_position_metallic_map);
@@ -347,56 +316,45 @@ void GraphicsManager::createGpuResources() {
     make_resident(RT_RES_GBUFFER_DEPTH, cache.c_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
 
-    // switch (m_method) {
-    //     case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
-    //         // pass = m_render_graph.find_pass(LIGHTING_PASS);
-    //         // cache.c_fxaa_input_image = gl::MakeTextureResident(pass->get_color_attachment(0));
-    //         break;
-    //     case my::GraphicsManager::RENDER_GRAPH_VXGI:
-    //         resource = m_render_graph.find_pass(LIGHTING_PASS);
-    //         cache.c_fxaa_input_image = gl::MakeTextureResident(resource->get_color_attachment(0));
-    //         break;
-    //     case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
-    //         resource = m_render_graph.find_pass(VXGI_DEBUG_PASS);
-    //         cache.c_fxaa_input_image = gl::MakeTextureResident(resource->get_color_attachment(0));
-    //         break;
-    //     default:
-    //         CRASH_NOW();
-    //         break;
-    // }
-
     g_constantCache.Update();
 }
-// struct MaterialCache {
-//     vec4 albedo_color;  // if it doesn't have albedo color, then it's alpha is 0.0f
-//     float metallic = 0.0f;
-//     float roughness = 0.0f;
-//     float has_metallic_roughness_texture = 0.0f;
-//     float has_normal_texture = 0.0f;
-//     float reflect = 0.0f;
-//
-//     MaterialCache& operator=(const MaterialData& mat) {
-//         albedo_color = mat.albedoColor;
-//         roughness = mat.roughness;
-//         metallic = mat.metallic;
-//         reflect = mat.reflectPower;
-//         has_metallic_roughness_texture = mat.materialMap.GetHandle() == 0 ? 0.0f : 1.0f;
-//         has_normal_texture = mat.normalMap.GetHandle() == 0 ? 0.0f : 1.0f;
-//
-//         return *this;
-//     }
-// };
 
 uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {
         case my::GraphicsManager::RENDER_GRAPH_VXGI:
             return m_render_graph.find_resouce(RT_RES_FXAA)->get_handle();
         case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
-        case my::GraphicsManager::RENDER_GRAPH_VXGI_DEBUG:
         default:
             CRASH_NOW();
             return 0;
     }
+}
+
+void GraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
+    cb.c_albedo_color = material->base_color;
+    cb.c_metallic = material->metallic;
+    cb.c_roughness = material->roughness;
+
+    auto set_texture = [&](int idx, sampler2D& out_handle) {
+        ImageHandle* handle = material->textures[idx].image;
+        if (!handle || handle->state != ASSET_STATE_READY) {
+            return false;
+        }
+
+        Image* image = handle->data;
+        if (image->gpu_resource.is_null()) {
+            return false;
+        }
+
+        Texture* texture = m_texture_allocator.get_or_null(image->gpu_resource);
+        DEV_ASSERT(texture);
+        out_handle = texture->resident_handle;
+        return true;
+    };
+
+    cb.c_has_albedo_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_albedo_map);
+    cb.c_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normal_map);
+    cb.c_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_pbr_map);
 }
 
 void GraphicsManager::render() {
@@ -410,7 +368,6 @@ void GraphicsManager::render() {
 }
 
 void GraphicsManager::destroyGpuResources() {
-    R_DestroyEditorResource();
     R_Destroy_Cbuffers();
 
     glDeleteTextures(1, &g_noiseTexture);

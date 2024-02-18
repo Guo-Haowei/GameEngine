@@ -191,6 +191,13 @@ bool SceneImporterTinyGLTF::import_impl() {
         auto alphaCutoff = x.additionalValues.find("alphaCutoff");
         auto alphaMode = x.additionalValues.find("alphaMode");
 
+        if (baseColorFactor != x.values.end()) {
+            const auto& number_array = baseColorFactor->second.number_array;
+            for (int idx = 0; idx < (int)number_array.size(); ++idx) {
+                material.base_color[idx] = (float)number_array[idx];
+            }
+        }
+
         if (baseColorTexture != x.values.end()) {
             auto& tex = m_model->textures[baseColorTexture->second.TextureIndex()];
             int img_source = tex.source;
@@ -198,7 +205,7 @@ bool SceneImporterTinyGLTF::import_impl() {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.textures[MaterialComponent::TEXTURE_BASE].name = m_search_path + img.uri;
+            material.request_image(MaterialComponent::TEXTURE_BASE, m_search_path + img.uri);
 
             // @TODO:
             // material.mTextures[MaterialComponent::Base].image = g_assetManager->LoadImageSync(searchName);
@@ -211,7 +218,7 @@ bool SceneImporterTinyGLTF::import_impl() {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.textures[MaterialComponent::TEXTURE_NORMAL].name = m_search_path + img.uri;
+            material.request_image(MaterialComponent::TEXTURE_NORMAL, m_search_path + img.uri);
             // material.mTextures[MaterialComponent::Normal].image = g_assetManager->LoadImageSync(searchName);
             //  material.textures[MaterialComponent::NORMAL_MAP].uvset = normalTexture->second.TextureTexCoord();
         }
@@ -222,7 +229,7 @@ bool SceneImporterTinyGLTF::import_impl() {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].name = m_search_path + img.uri;
+            material.request_image(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_search_path + img.uri);
             // material.mTextures[MaterialComponent::MetallicRoughness].resource = ;
         }
 #if 0
