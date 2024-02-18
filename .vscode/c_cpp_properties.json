@@ -11,7 +11,8 @@
                 "${workspaceRoot}/thirdparty/glm/",
                 "${workspaceRoot}/thirdparty/imgui/",
                 "${workspaceRoot}/thirdparty/",
-                "${workspaceRoot}/source/engine/src/engine/"
+                "${workspaceRoot}/source/engine/src/engine/",
+                "${workspaceRoot}/source/editor/src/"
             ],
             "forcedInclude": [
                 "${workspaceRoot}/source/engine/src/engine/pch.h",
