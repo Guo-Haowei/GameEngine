@@ -103,15 +103,12 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     LOG_ERROR("TODO: cloth physics");
-    LOG_WARN("TODO: cascade bounding box");
-    LOG_ERROR("TODO: FXAA");
     LOG_WARN("TODO: TAA");
     LOG_ERROR("TODO: soft shadow");
     LOG_WARN("TODO: path tracer here");
     LOG_ERROR("TODO: migrate PBR code here");
     LOG_WARN("TODO: fix multiple objects play same animation");
     LOG_ERROR("TODO: link object with animation");
-    LOG_WARN("TODO: render texels around camera");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;

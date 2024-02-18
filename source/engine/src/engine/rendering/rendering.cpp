@@ -146,7 +146,7 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
 
 std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Camera& p_camera, const vec4& p_cascade_end) {
     std::vector<glm::mat4> ret;
-    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
         float z_near = p_camera.get_near();
         // z_near = i == 0 ? z_near : p_cascade_end[i - 1];
         ret.push_back(get_light_space_matrix(p_light_matrix, z_near, p_cascade_end[i], p_camera));
@@ -159,7 +159,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     // THESE SHOULDN'T BE HERE
     auto& cache = g_perFrameCache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), SC_LIGHT_MAX);
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), NUM_LIGHT_MAX);
     DEV_ASSERT(light_count);
 
     cache.c_light_count = light_count;
@@ -171,7 +171,7 @@ void fill_constant_buffers(const Scene& scene) {
         camera.set_far(cascade_end.w);
         camera.set_dirty();
     }
-    for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
+    for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
         float left = idx == 0 ? camera.get_near() : cascade_end[idx - 1];
         DEV_ASSERT(left < cascade_end[idx]);
     }
@@ -187,7 +187,7 @@ void fill_constant_buffers(const Scene& scene) {
         light.type = light_component.type;
         light.color = light_component.color * light_component.energy;
         switch (light_component.type) {
-            case LightComponent::LIGHT_TYPE_OMNI: {
+            case LIGHT_TYPE_OMNI: {
                 mat4 light_matrix = light_transform->get_local_matrix();
                 vec3 light_dir = glm::normalize(light_matrix * vec4(0, 0, 1, 0));
                 light.cast_shadow = true;
@@ -195,7 +195,7 @@ void fill_constant_buffers(const Scene& scene) {
 
                 light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end);
             } break;
-            case LightComponent::LIGHT_TYPE_POINT: {
+            case LIGHT_TYPE_POINT: {
                 light.atten_constant = light_component.atten.constant;
                 light.atten_linear = light_component.atten.linear;
                 light.atten_quadratic = light_component.atten.quadratic;
@@ -206,9 +206,9 @@ void fill_constant_buffers(const Scene& scene) {
         }
     }
 
-    DEV_ASSERT(light_matrices.size() == SC_NUM_CASCADES);
+    DEV_ASSERT(light_matrices.size() == NUM_CASCADE_MAX);
     if (!light_matrices.empty()) {
-        for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
+        for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
             cache.c_main_light_matrices[idx] = light_matrices[idx];
         }
     }

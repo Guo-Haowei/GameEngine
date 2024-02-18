@@ -23,7 +23,7 @@ extern my::RIDAllocator<MeshData> g_meshes;
 namespace my::rg {
 
 // @TODO: refactor render passes
-void shadow_pass_func(int layer) {
+void shadow_pass_func(int width, int height, int layer) {
     const my::Scene& scene = SceneManager::get_scene();
 
     glEnable(GL_DEPTH_TEST);
@@ -31,9 +31,7 @@ void shadow_pass_func(int layer) {
     glCullFace(GL_FRONT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    const int res = DVAR_GET_INT(r_shadow_res);
-
-    glViewport(0, 0, res, res);
+    glViewport(0, 0, width, height);
 
     auto render_data = GraphicsManager::singleton().get_render_data();
     RenderData::Pass& pass = render_data->shadow_passes[layer];
@@ -43,7 +41,7 @@ void shadow_pass_func(int layer) {
 
         if (has_bone) {
             auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= SC_BONE_MAX);
+            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
@@ -64,7 +62,10 @@ void shadow_pass_func(int layer) {
     glUseProgram(0);
 }
 
-void voxelization_pass_func(int) {
+void voxelization_pass_func(int width, int height, int) {
+    unused(width);
+    unused(height);
+
     g_albedoVoxel.clear();
     g_normalVoxel.clear();
 
@@ -91,7 +92,7 @@ void voxelization_pass_func(int) {
 
         if (has_bone) {
             auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= SC_BONE_MAX);
+            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
@@ -130,9 +131,8 @@ void voxelization_pass_func(int) {
     g_normalVoxel.genMipMap();
 }
 
-void gbuffer_pass_func(int) {
-    auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
-    glViewport(0, 0, frameW, frameH);
+void gbuffer_pass_func(int width, int height, int) {
+    glViewport(0, 0, width, height);
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -147,7 +147,7 @@ void gbuffer_pass_func(int) {
 
         if (has_bone) {
             auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= SC_BONE_MAX);
+            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
@@ -173,9 +173,8 @@ void gbuffer_pass_func(int) {
     glUseProgram(0);
 }
 
-void ssao_pass_func(int) {
-    auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
-    glViewport(0, 0, frameW, frameH);
+void ssao_pass_func(int width, int height, int) {
+    glViewport(0, 0, width, height);
 
     const auto& shader = ShaderProgramManager::get(PROGRAM_SSAO);
 
@@ -188,9 +187,8 @@ void ssao_pass_func(int) {
     shader.unbind();
 }
 
-void lighting_pass_func(int) {
-    auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
-    glViewport(0, 0, frameW, frameH);
+void lighting_pass_func(int width, int height, int) {
+    glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
 
     const auto& program = ShaderProgramManager::get(PROGRAM_LIGHTING_VXGI);
@@ -199,9 +197,8 @@ void lighting_pass_func(int) {
     program.unbind();
 }
 
-void fxaa_pass_func(int) {
-    auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
-    glViewport(0, 0, frameW, frameH);
+void fxaa_pass_func(int width, int height, int) {
+    glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
 
     const auto& program = ShaderProgramManager::get(PROGRAM_FXAA);
@@ -210,23 +207,21 @@ void fxaa_pass_func(int) {
     program.unbind();
 }
 
-void final_pass_func(int) {
-    auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
+void final_pass_func(int width, int height, int) {
     glClearColor(.1f, .1f, .1f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     const auto& program = ShaderProgramManager::get(PROGRAM_FINAL_IMAGE);
 
     program.bind();
     glDisable(GL_DEPTH_TEST);
-    glViewport(0, 0, frameW, frameH);
+    glViewport(0, 0, width, height);
 
     R_DrawQuad();
 
     program.unbind();
 }
 
-void debug_vxgi_pass_func(int) {
-    auto [width, height] = my::DisplayServer::singleton().get_frame_size();
+void debug_vxgi_pass_func(int width, int height, int) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // @TODO: stop using window width and height
     glViewport(0, 0, width, height);
@@ -245,6 +240,9 @@ void debug_vxgi_pass_func(int) {
 
 void create_render_graph_vxgi(RenderGraph& graph) {
     auto [w, h] = DisplayServer::singleton().get_frame_size();
+    w /= 2;
+    h /= 2;
+
     const int shadow_res = DVAR_GET_INT(r_shadow_res);
     int num_cascades = 4;
     DEV_ASSERT(math::is_power_of_two(shadow_res));

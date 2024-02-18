@@ -3,6 +3,7 @@
 #include "core/math/aabb.h"
 #include "core/math/angle.h"
 #include "core/systems/entity.h"
+#include "shader_defines.h"
 
 namespace my {
 
@@ -197,14 +198,7 @@ struct MaterialComponent {
 // Light Component
 //--------------------------------------------------------------------------------------------------
 struct LightComponent {
-    // @TODO: share with shader
-    enum Type {
-        LIGHT_TYPE_OMNI,
-        LIGHT_TYPE_POINT,
-        LIGHT_TYPE_MAX,
-    };
-
-    Type type = LIGHT_TYPE_OMNI;
+    int type = LIGHT_TYPE_OMNI;
     vec3 color = vec3(1);
     float energy = 10.0f;
 

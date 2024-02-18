@@ -26,11 +26,12 @@ void DebugTexturePanel::update_internal(Scene& scene) {
     const auto& desc = resource->get_desc();
     uint64_t handle = resource->get_handle();
 
+    // @TODO: zoom
+    static int zoom = 100;
     vec2 dim{ desc.width, desc.height };
-    dim *= 0.5f;
+    ImGui::DragInt("zoom level", &zoom, 1, 10, 300);
+    dim *= zoom * 0.01f;
     ImGui::Image((ImTextureID)handle, ImVec2(dim.x, dim.y), ImVec2(0, 1), ImVec2(1, 0));
-
-    ImGui::Separator();
 }
 
 }  // namespace my

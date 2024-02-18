@@ -12,7 +12,7 @@ namespace my {
 
 void RenderData::clear() {
     scene = nullptr;
-    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
         shadow_passes[i].clear();
     }
     main_pass.clear();
@@ -24,7 +24,7 @@ void RenderData::update(const Scene* p_scene) {
     scene = p_scene;
 
     // cascaded shadow map
-    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
         mat4 light_matrix = g_perFrameCache.cache.c_main_light_matrices[i];
         Frustum light_frustum(light_matrix);
         fill(

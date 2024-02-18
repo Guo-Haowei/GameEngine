@@ -8,7 +8,7 @@ void RenderPass::execute() {
     bind();
 
     if (m_func) {
-        m_func(m_layer);
+        m_func(m_width, m_height, m_layer);
     }
 
     unbind();
@@ -30,6 +30,18 @@ void RenderPassGL::create_internal(RenderPassDesc& desc) {
 
     glGenFramebuffers(1, &m_handle);
     bind();
+
+    // @TODO: allow resizing
+    const ResourceDesc* resource_desc = nullptr;
+    if (desc.depth_attachment) {
+        resource_desc = &(desc.depth_attachment->get_desc());
+    } else if (!desc.color_attachments.empty()) {
+        resource_desc = &(desc.color_attachments[0]->get_desc());
+    }
+    if (resource_desc) {
+        m_width = resource_desc->width;
+        m_height = resource_desc->height;
+    }
 
     // create color attachments
     uint32_t color_attachment_count = static_cast<uint32_t>(desc.color_attachments.size());

@@ -1,13 +1,8 @@
 #ifndef CBUFFER_INCLUDED
 #define CBUFFER_INCLUDED
+#include "shader_defines.h"
 
-#define SC_LIGHT_MAX        16
-#define SC_BONE_MAX         128
-#define SC_NUM_SSAO_KERNELS 64
-#define SC_NUM_CASCADES     4
-
-// @TODO: rename
-
+// @TODO: refactor
 #define MAX_MATERIALS  300
 #define MAX_LIGHT_ICON 4
 
@@ -31,7 +26,7 @@ typedef struct {
     uint64_t data;
     uint64_t padding;
 } Sampler2DArray;
-static_assert(SC_NUM_CASCADES == 4);
+static_assert(NUM_CASCADE_MAX == 4);
 #else
 #define Sampler2DArray sampler2D
 #endif
@@ -53,9 +48,9 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     mat4 c_projection_matrix;
     mat4 c_projection_view_matrix;
 
-    Light c_lights[SC_LIGHT_MAX];
+    Light c_lights[NUM_LIGHT_MAX];
 
-    mat4 c_main_light_matrices[SC_NUM_CASCADES];
+    mat4 c_main_light_matrices[NUM_CASCADE_MAX];
     vec4 c_cascade_plane_distances;
 
     vec3 _c_padding_0;
@@ -102,7 +97,7 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
 };
 
 CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
-    vec4 c_ssao_kernels[SC_NUM_SSAO_KERNELS];
+    vec4 c_ssao_kernels[NUM_SSAO_KERNEL_MAX];
     sampler2D _c_padding2;
     // sampler2D c_shadow_map;
     sampler3D c_voxel_map;
@@ -116,14 +111,14 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
     sampler2D c_kernel_noise_map;
     sampler2D c_fxaa_image;
     sampler2D c_fxaa_input_image;
-    Sampler2DArray c_shadow_maps[SC_NUM_CASCADES];
+    Sampler2DArray c_shadow_maps[NUM_CASCADE_MAX];
     Sampler2DArray c_albedo_maps[MAX_MATERIALS];
     Sampler2DArray c_normal_maps[MAX_MATERIALS];
     Sampler2DArray c_pbr_maps[MAX_MATERIALS];
 };
 
 CONSTANT_BUFFER(BoneConstantBuffer, 4) {
-    mat4 c_bones[SC_BONE_MAX];
+    mat4 c_bones[NUM_BONE_MAX];
 };
 
 #endif

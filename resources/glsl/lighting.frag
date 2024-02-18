@@ -48,9 +48,9 @@ void main() {
         int light_type = c_lights[idx].type;
         vec3 L = vec3(0.0);
         float atten = 1.0;
-        if (light_type == 0) {
+        if (light_type == LIGHT_TYPE_OMNI) {
             L = c_lights[idx].position;
-        } else if (light_type == 1) {
+        } else if (light_type == LIGHT_TYPE_POINT) {
             vec3 delta = -world_position + c_lights[idx].position;
             L = normalize(delta);
             float dist = length(delta);
@@ -122,7 +122,7 @@ void main() {
 #if ENABLE_CSM
     if (c_debug_csm != 0) {
         vec3 mask = vec3(0.1);
-        for (int idx = 0; idx < SC_NUM_CASCADES; ++idx) {
+        for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
             if (clipSpaceZ <= c_cascade_clip_z[idx + 1]) {
                 mask[idx] = 0.7;
                 break;

@@ -51,3 +51,5 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
 
     return direct_lighting;
 }
+
+#include "common/shadow.glsl"

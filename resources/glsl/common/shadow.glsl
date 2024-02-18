@@ -1,14 +1,17 @@
+#ifndef SHADOW_GLSL_INCLUDED
+#define SHADOW_GLSL_INCLUDED
+
 int find_cascade(const in vec3 p_pos_world) {
     vec4 pos_view = c_view_matrix * vec4(p_pos_world, 1.0);
     float depth = abs(pos_view.z);
 
-    for (int i = 0; i < SC_NUM_CASCADES; ++i) {
+    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
         if (depth < c_cascade_plane_distances[i]) {
             return i;
         }
     }
 
-    return SC_NUM_CASCADES - 1;
+    return NUM_CASCADE_MAX - 1;
 }
 
 float cascade_shadow(sampler2D p_shadow_maps,
@@ -19,6 +22,18 @@ float cascade_shadow(sampler2D p_shadow_maps,
     vec3 coords = pos_light.xyz / pos_light.w;
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
+
+#if 0
+    float lower = 0.01;
+    float upper = 0.99;
+    if (coords.x < lower || coords.x > upper) {
+        return 0.0;
+    }
+    if (coords.y < lower || coords.y > upper) {
+        return 0.0;
+    }
+#endif
+
     if (current_depth > 1.0) {
         return 0.0;
     }
@@ -42,3 +57,5 @@ float cascade_shadow(sampler2D p_shadow_maps,
     shadow /= samples * samples;
     return shadow;
 }
+
+#endif

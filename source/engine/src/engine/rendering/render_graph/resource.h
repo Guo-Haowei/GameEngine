@@ -25,7 +25,7 @@ class Resource {
 public:
     Resource(const ResourceDesc& p_desc) : m_desc(p_desc) {}
 
-    const ResourceDesc get_desc() const { return m_desc; }
+    const ResourceDesc& get_desc() const { return m_desc; }
     uint32_t get_handle() const { return m_handle; }
 
 private:

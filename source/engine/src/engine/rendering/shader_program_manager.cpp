@@ -8,10 +8,16 @@
 
 namespace my {
 
+// @TODO: fix
 static ShaderProgramManager *g_shader_program_manager = new ShaderProgramManager();
 static std::vector<ShaderProgram> s_shader_cache;
 
-static std::string process_shader(const std::string &source) {
+static std::string process_shader(const std::string &source, int depth) {
+    constexpr int max_depth = 100;
+    if (depth >= max_depth) {
+        LOG_FATAL("maximum include depth {} exceeded", max_depth);
+    }
+
     std::string result;
     std::stringstream ss(source);
     for (std::string line; std::getline(ss, line);) {
@@ -24,13 +30,14 @@ static std::string process_shader(const std::string &source) {
             std::string file_to_include(quote1 + 1, quote2);
 
             file_to_include = "@res://glsl/" + file_to_include;
+            // @TODO: nested include
             auto buffer = asset_loader::load_file_sync(file_to_include);
             DEV_ASSERT(buffer);
             std::string extra(buffer->buffer.begin(), buffer->buffer.end());
             if (extra.empty()) {
                 LOG_ERROR("[filesystem] failed to read shader '{}'", file_to_include);
             }
-            result.append(extra.data());
+            result.append(process_shader(extra, depth + 1));
         } else {
             result.append(line);
         }
@@ -59,7 +66,7 @@ static GLuint create_shader(std::string_view file, GLenum type) {
         "#extension GL_ARB_bindless_texture : require\n"
         "";
 
-    fullsource.append(process_shader(source));
+    fullsource.append(process_shader(source, 0));
     const char *sources[] = { fullsource.c_str() };
 
     GLuint shader = glCreateShader(type);

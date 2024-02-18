@@ -9,7 +9,6 @@ in vec2 pass_uv;
 
 #include "common.glsl"
 #include "common/lighting.glsl"
-#include "common/shadow.glsl"
 
 void main() {
     vec4 albedo = c_albedo_color;

@@ -3,7 +3,7 @@
 
 namespace my::rg {
 
-using RenderPassFunc = void (*)(int);
+using RenderPassFunc = void (*)(int width, int height, int);
 
 enum RenderPassType {
     RENDER_PASS_SHADING,
@@ -38,6 +38,8 @@ protected:
     std::vector<std::string> m_inputs;
     RenderPassFunc m_func;
     int m_layer;
+    int m_width;
+    int m_height;
 
     friend class RenderGraph;
 };
