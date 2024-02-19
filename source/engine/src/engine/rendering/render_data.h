@@ -29,12 +29,20 @@ struct RenderData {
         void clear() { draws.clear(); }
     };
 
+    struct LightBillboard {
+        mat4 transform;
+        int type;
+        Image* image;
+    };
+
     const Scene* scene = nullptr;
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<Pass, NUM_CASCADE_MAX> shadow_passes;
     Pass voxel_pass;
     Pass main_pass;
+    // @TODO: array
+    std::vector<LightBillboard> light_billboards;
 
     void update(const Scene* p_scene);
 

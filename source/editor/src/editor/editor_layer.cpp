@@ -34,6 +34,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     const char* light_icons[] = {
         "@res://images/arealight.png",
         "@res://images/pointlight.png",
+        "@res://images/omnilight.png",
     };
 
     for (int i = 0; i < array_length(light_icons); ++i) {

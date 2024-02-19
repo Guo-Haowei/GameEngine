@@ -29,8 +29,11 @@ using my::rg::RenderPass;
 /// textures
 GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
+
+// @TODO: refactor
 MeshData g_box;
 MeshData g_skybox;
+MeshData g_billboard;
 
 // @TODO: fix this
 my::RIDAllocator<MeshData> g_meshes;
@@ -276,6 +279,7 @@ void GraphicsManager::createGpuResources() {
     R_Alloc_Cbuffers();
 
     // create a dummy box data
+    create_mesh_data(make_plane_mesh(0.3f), g_billboard);
     create_mesh_data(make_box_mesh(), g_box);
     create_mesh_data(make_box_mesh(20.f), g_skybox);
 

@@ -15,5 +15,10 @@ vec2 sample_spherical_map(in vec3 v) {
 
 void main() {
     vec2 uv = sample_spherical_map(normalize(pass_position));
-    out_color = vec4(texture(c_skybox_map, uv).rgb, 1.0);
+    vec3 color = texture(c_skybox_map, uv).rgb;
+    // const float gamma = 2.2;
+    // color = color / (color + 1.0);
+    // color = pow(color, vec3(gamma));
+
+    out_color = vec4(color, 1.0);
 }

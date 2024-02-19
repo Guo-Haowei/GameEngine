@@ -1,6 +1,7 @@
 #include "render_data.h"
 
 #include "core/base/rid_owner.h"
+#include "core/framework/asset_manager.h"
 #include "core/math/frustum.h"
 #include "gl_utils.h"
 #include "r_cbuffers.h"
@@ -65,6 +66,42 @@ void RenderData::update(const Scene* p_scene) {
         [&](const AABB& aabb) {
             return camera_frustum.intersects(aabb);
         });
+
+    // @TODO: cache pointers
+    ImageHandle* point_light = AssetManager::singleton().find_image("@res://images/pointlight.png");
+    DEV_ASSERT(point_light);
+    Image* point_light_image = point_light->get();
+
+    ImageHandle* omni_light = AssetManager::singleton().find_image("@res://images/omnilight.png");
+    DEV_ASSERT(omni_light);
+    Image* omni_light_image = omni_light->get();
+
+    // lights
+    light_billboards.clear();
+    for (uint32_t idx = 0; idx < (uint32_t)scene->get_count<LightComponent>(); ++idx) {
+        auto light_id = scene->get_entity<LightComponent>(idx);
+        const LightComponent& light = scene->get_component_array<LightComponent>()[idx];
+        const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
+        DEV_ASSERT(transform);
+        LightBillboard billboard;
+        vec3 translation = transform->get_translation();
+        switch (light.type) {
+            case LIGHT_TYPE_OMNI:
+                translation += vec3(0, 1, 0);
+                billboard.image = omni_light_image;
+                break;
+            case LIGHT_TYPE_POINT:
+                billboard.image = point_light_image;
+                break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+        billboard.transform = glm::translate(translation);
+        billboard.type = light.type;
+
+        light_billboards.emplace_back(billboard);
+    }
 }
 
 void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {

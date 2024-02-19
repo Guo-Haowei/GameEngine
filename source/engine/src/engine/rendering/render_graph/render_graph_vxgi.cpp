@@ -16,6 +16,7 @@ extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
 extern MeshData g_skybox;
+extern MeshData g_billboard;
 
 extern my::RIDAllocator<MeshData> g_meshes;
 
@@ -227,9 +228,25 @@ void lighting_pass_func(int width, int height) {
         ShaderProgramManager::get(PROGRAM_SKY_BOX).bind();
         glBindVertexArray(g_skybox.vao);
         glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
-        glCullFace(GL_BACK);
+        glDisable(GL_CULL_FACE);
     }
-    glDepthFunc(GL_LESS);
+
+    ShaderProgramManager::get(PROGRAM_BILLBOARD).bind();
+    // draw billboards
+    auto render_data = GraphicsManager::singleton().get_render_data();
+
+    for (const auto& light : render_data->light_billboards) {
+        // @TODO: sort same materials
+        g_perBatchCache.cache.c_model_matrix = light.transform;
+        g_perBatchCache.Update();
+        g_materialCache.cache.c_albedo_map = light.image ? light.image->texture.resident_handle : 0;
+        g_materialCache.Update();
+
+        glBindVertexArray(g_billboard.vao);
+        glDrawElementsInstanced(GL_TRIANGLES, g_billboard.count, GL_UNSIGNED_INT, 0, 1);
+    }
+
+    // glDepthFunc(GL_LESS);
     glUseProgram(0);
 }
 
@@ -241,6 +258,8 @@ void fxaa_pass_func(int width, int height) {
     program.bind();
     R_DrawQuad();
     program.unbind();
+
+    // @TODO: draw gui stuff to the anti-aliased
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {
@@ -277,10 +296,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                FORMAT_R8G8B8A8_UINT,
                                                                RT_COLOR_ATTACHMENT,
                                                                w, h });
-    // auto view_attachment = graph.create_resource(ResourceDesc{ RT_RES_FINAL_IMAGE,
-    //                                                            FORMAT_R8G8B8A8_UINT,
-    //                                                            RT_COLOR_ATTACHMENT,
-    //                                                            w, h });
 
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);

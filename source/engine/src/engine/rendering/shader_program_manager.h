@@ -17,6 +17,7 @@ enum ProgramType {
     PROGRAM_FXAA,
     PROGRAM_DEBUG_VOXEL,
     PROGRAM_SKY_BOX,
+    PROGRAM_BILLBOARD,
     PROGRAM_MAX,
 };
 

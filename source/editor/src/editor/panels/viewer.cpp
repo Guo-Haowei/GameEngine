@@ -114,13 +114,14 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     auto draw_gizmo = [&](ImGuizmo::OPERATION operation) {
         if (transform_component) {
             mat4 local = transform_component->get_local_matrix();
-            ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
-                                 glm::value_ptr(projection_matrix),
-                                 operation,
-                                 ImGuizmo::LOCAL,
-                                 glm::value_ptr(local),
-                                 nullptr, nullptr, nullptr, nullptr);
-            transform_component->set_local_transform(local);
+            if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
+                                     glm::value_ptr(projection_matrix),
+                                     operation,
+                                     ImGuizmo::LOCAL,
+                                     glm::value_ptr(local),
+                                     nullptr, nullptr, nullptr, nullptr)) {
+                transform_component->set_local_transform(local);
+            }
         }
     };
 

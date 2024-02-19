@@ -48,7 +48,6 @@ bool AssetManager::initialize() {
         "@res://glsl/fxaa.frag",
         "@res://glsl/gbuffer.frag",
         "@res://glsl/ssao.frag",
-        "@res://glsl/textureCB.glsl",
         "@res://glsl/lighting.frag",
         "@res://glsl/debug/texture.frag",
         "@res://glsl/vxgi/voxelization.vert",
