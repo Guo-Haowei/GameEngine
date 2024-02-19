@@ -250,8 +250,7 @@ static void create_ssao_resource() {
 }
 
 void GraphicsManager::createGpuResources() {
-    auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
-    unused(skybox);
+    AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
     // @TODO: enviroment
 
     create_ssao_resource();
@@ -259,7 +258,7 @@ void GraphicsManager::createGpuResources() {
     R_Alloc_Cbuffers();
 
     // create a dummy box data
-    create_mesh_data(my::make_box_mesh(), g_box);
+    create_mesh_data(make_box_mesh(), g_box);
 
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {

@@ -1,4 +1,5 @@
-#include "loader.h"
+#include "assets/loader.h"
+#include "scene/scene.h"
 
 namespace tinygltf {
 class Model;

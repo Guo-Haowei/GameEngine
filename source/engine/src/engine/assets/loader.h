@@ -1,5 +1,4 @@
 #pragma once
-#include "scene/scene.h"
 
 namespace my {
 
@@ -15,6 +14,7 @@ protected:
     std::string m_file_name;
     std::string m_file_path;
     std::string m_base_path;
+    std::string m_extension;
     std::string m_error;
 };
 

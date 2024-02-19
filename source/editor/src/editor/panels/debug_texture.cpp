@@ -33,12 +33,16 @@ void DebugTexturePanel::update_internal(Scene& scene) {
     ImGui::DragInt("zoom level", &zoom, 1, 10, 300);
     dim *= zoom * 0.01f;
 
-#if 0
+#if 1
     {
         // @HACK
-        auto image = AssetManager::singleton().find_image("@res://images/pointlight.png");
-        DEV_ASSERT(image);
-        handle = image->data.load()->texture.handle;
+        auto image_handle = AssetManager::singleton().find_image("@res://env/sky.hdr");
+        // auto image = AssetManager::singleton().find_image("@res://images/pointlight.png");
+        DEV_ASSERT(image_handle);
+        auto image = image_handle->get();
+        if (image) {
+            handle = image->texture.handle;
+        }
     }
 #endif
 

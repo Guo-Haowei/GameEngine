@@ -1,8 +1,8 @@
 #include "asset_manager.h"
 
 #include "assets/loader_assimp.h"
+#include "assets/loader_stbi.h"
 #include "assets/loader_tinygltf.h"
-#include "assets/stb_image.h"
 #include "core/framework/graphics_manager.h"
 #include "core/io/file_access.h"
 #include "core/os/threads.h"
@@ -26,6 +26,10 @@ static struct {
 bool AssetManager::initialize() {
     Loader<Scene>::register_loader(".obj", LoaderAssimp::create);
     Loader<Scene>::register_loader(".gltf", LoaderTinyGLTF::create);
+
+    Loader<Image>::register_loader(".png", LoaderSTBI8::create);
+    Loader<Image>::register_loader(".jpg", LoaderSTBI8::create);
+    Loader<Image>::register_loader(".hdr", LoaderSTBI32::create);
 
     // @TODO: dir_access
     // @TODO: async
@@ -101,7 +105,6 @@ ImageHandle* AssetManager::load_image_async(const std::string& path) {
 
     auto found = m_image_cache.find(path);
     if (found != m_image_cache.end()) {
-        LOG_VERBOSE("image {} found in cache", path);
         auto ret = found->second.get();
         m_image_cache_lock.unlock();
         return ret;
@@ -115,8 +118,15 @@ ImageHandle* AssetManager::load_image_async(const std::string& path) {
 
     LoadTask task;
     task.type = LOAD_TASK_IMAGE;
-    task.on_success = nullptr;
-    task.on_error = nullptr;
+    task.on_success = [](void* asset, void* userdata) {
+        Image* image = reinterpret_cast<Image*>(asset);
+        ImageHandle* handle = reinterpret_cast<ImageHandle*>(userdata);
+        DEV_ASSERT(image);
+        DEV_ASSERT(handle);
+
+        handle->set(image);
+        s_asset_manager_glob.loaded_images.push(handle);
+    };
     task.userdata = ret;
     task.asset_path = path;
     enqueue_async_load_task(task);
@@ -128,86 +138,54 @@ ImageHandle* AssetManager::load_image_sync(const std::string& path) {
 
     auto found = m_image_cache.find(path);
     if (found != m_image_cache.end()) {
-        LOG_VERBOSE("image {} found in cache", path);
         DEV_ASSERT(found->second->state.load() == ASSET_STATE_READY);
         return found->second.get();
     }
 
     // LOG_VERBOSE("image {} not found in cache, loading...", path);
     auto handle = std::make_unique<AssetHandle<Image>>();
-    handle->data = load_image_sync_internal(path);
-    handle->state = ASSET_STATE_READY;
+    auto loader = Loader<Image>::create(path);
+    if (!loader) {
+        return nullptr;
+    }
+
+    Image* image = new Image;
+    if (!loader->load(image)) {
+        delete image;
+        return nullptr;
+    }
+    handle->set(image);
     ImageHandle* ret = handle.get();
     m_image_cache[path] = std::move(handle);
     GraphicsManager::singleton().create_texture(ret);
     return ret;
 }
 
-void AssetManager::load_scene_async(const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error) {
+void AssetManager::load_scene_async(const std::string& path, LoadSuccessFunc on_success) {
     LoadTask task;
+    task.type = LOAD_TASK_SCENE;
     task.asset_path = path;
     task.on_success = on_success;
-    task.on_error = on_error;
+    task.userdata = nullptr;
     enqueue_async_load_task(task);
 }
 
-Image* AssetManager::load_image_sync_internal(const std::string& path) {
-    int width = 0;
-    int height = 0;
-    int num_channels = 0;
-
-    auto res = FileAccess::open(path, FileAccess::READ);
-    if (!res) {
-        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", path, res.error().get_message());
-        return nullptr;
+template<typename T>
+static void load_asset(LoadTask& task) {
+    T* asset = new T;
+    auto loader = Loader<T>::create(task.asset_path);
+    if (!loader) {
+        LOG_ERROR("[AssetManager] not loader found for '{}'", task.asset_path);
+        return;
     }
 
-    std::shared_ptr<FileAccess> file_access = *res;
-    int buffer_length = (int)file_access->get_length();
-    std::vector<uint8_t> file_buffer;
-    file_buffer.resize(buffer_length);
-    file_access->read_buffer(file_buffer.data(), buffer_length);
-
-    uint8_t* data = stbi_load_from_memory(file_buffer.data(), buffer_length, &width, &height, &num_channels, 0);
-    if (!data) {
-        LOG_ERROR("failed to load image '{}'", path);
-        return nullptr;
+    Timer timer;
+    if (loader->load(asset)) {
+        task.on_success(asset, task.userdata);
+        LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.asset_path, timer.get_duration_string());
+    } else {
+        LOG_FATAL("[AssetManager] failed to load '{}', details: {}", task.asset_path, loader->get_error());
     }
-    DEV_ASSERT(data);
-
-    if (width % 4 != 0 || height % 4 != 0) {
-        stbi_image_free(data);
-        data = stbi_load(path.c_str(), &width, &height, &num_channels, 4);
-        num_channels = 4;
-    }
-
-    std::vector<uint8_t> buffer;
-
-    buffer.resize(width * height * num_channels);
-    memcpy(buffer.data(), data, buffer.size());
-
-    stbi_image_free(data);
-
-    PixelFormat format = FORMAT_UNKNOWN;
-    switch (num_channels) {
-        case 1:
-            format = FORMAT_R8_UINT;
-            break;
-        case 2:
-            format = FORMAT_R8G8_UINT;
-            break;
-        case 3:
-            format = FORMAT_R8G8B8_UINT;
-            break;
-        case 4:
-            format = FORMAT_R8G8B8A8_UINT;
-            break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-
-    return new Image(format, width, height, num_channels, buffer);
 }
 
 void AssetManager::worker_main() {
@@ -224,35 +202,18 @@ void AssetManager::worker_main() {
         }
 
         // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
-        // Timer timer;
         switch (task.type) {
             case LOAD_TASK_IMAGE: {
-                auto handle = (ImageHandle*)task.userdata;
-                handle->data = AssetManager::singleton().load_image_sync_internal(task.asset_path);
-                handle->state = ASSET_STATE_READY;
-                s_asset_manager_glob.loaded_images.push(handle);
+                load_asset<Image>(task);
             } break;
-            default: {
-                Scene* scene = new Scene;
-                std::expected<void, std::string> res;
-
-               auto loader = Loader<Scene>::create(task.asset_path);
-                DEV_ASSERT(loader);
-
-                bool ok = loader->load(scene);
-                if (!ok) {
-                    const std::string& error = loader->get_error();
-                    if (task.on_error) {
-                        task.on_error(error);
-                    } else {
-                        LOG_FATAL("{}", res.error());
-                    }
-                    return;
-                }
-                task.on_success(scene);
+            case LOAD_TASK_SCENE: {
+                LOG_VERBOSE("[AssetManager] start loading scene {}", task.asset_path);
+                load_asset<Scene>(task);
             } break;
+            default:
+                CRASH_NOW();
+                break;
         }
-        // LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.asset_path, timer.get_duration_string());
     }
 }
 

@@ -1,5 +1,6 @@
 #pragma once
-#include "loader.h"
+#include "assets/loader.h"
+#include "scene/scene.h"
 
 struct aiMesh;
 struct aiNode;
