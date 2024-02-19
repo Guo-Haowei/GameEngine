@@ -80,13 +80,18 @@ void RenderPassGL::create_internal(RenderPassDesc& desc) {
         switch (depth_desc.type) {
             case RT_SHADOW_MAP:
             case RT_DEPTH_ATTACHMENT: {
-                glFramebufferTexture2D(
-                    GL_FRAMEBUFFER,                       // target
-                    GL_DEPTH_ATTACHMENT,                  // attachment
-                    GL_TEXTURE_2D,                        // texture target
-                    desc.depth_attachment->get_handle(),  // texture
-                    0                                     // level
+                glFramebufferTexture2D(GL_FRAMEBUFFER,                       // target
+                                       GL_DEPTH_ATTACHMENT,                  // attachment
+                                       GL_TEXTURE_2D,                        // texture target
+                                       desc.depth_attachment->get_handle(),  // texture
+                                       0                                     // level
                 );
+            } break;
+            case RT_SHADOW_CUBE_MAP: {
+                glFramebufferTexture(GL_FRAMEBUFFER,
+                                     GL_DEPTH_ATTACHMENT,
+                                     desc.depth_attachment->get_handle(),
+                                     0);
             } break;
             default:
                 CRASH_NOW();

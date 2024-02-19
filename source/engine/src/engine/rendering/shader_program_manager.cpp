@@ -157,15 +157,29 @@ bool ShaderProgramManager::initialize() {
     }
     {
         ProgramCreateInfo info;
-        info.vs = "@res://glsl/depth_static.vert";
+        info.vs = "@res://glsl/shadow_static.vert.glsl";
         info.ps = "@res://glsl/depth.frag";
         s_shader_cache[PROGRAM_DPETH_STATIC] = create(info);
     }
     {
         ProgramCreateInfo info;
-        info.vs = "@res://glsl/depth_animated.vert";
+        info.vs = "@res://glsl/shadow_animated.vert.glsl";
         info.ps = "@res://glsl/depth.frag";
         s_shader_cache[PROGRAM_DPETH_ANIMATED] = create(info);
+    }
+    {
+        ProgramCreateInfo info;
+        info.vs = "@res://glsl/point_shadow_static.vert.glsl";
+        info.gs = "@res://glsl/point_shadow.geom.glsl";
+        info.ps = "@res://glsl/point_shadow.frag.glsl";
+        s_shader_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
+    }
+    {
+        ProgramCreateInfo info;
+        info.vs = "@res://glsl/point_shadow_animated.vert.glsl";
+        info.gs = "@res://glsl/point_shadow.geom.glsl";
+        info.ps = "@res://glsl/point_shadow.frag.glsl";
+        s_shader_cache[PROGRAM_POINT_SHADOW_ANIMATED] = create(info);
     }
     {
         ProgramCreateInfo info;

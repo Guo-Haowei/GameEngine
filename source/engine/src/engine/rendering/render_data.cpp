@@ -13,16 +13,85 @@ namespace my {
 
 void RenderData::clear() {
     scene = nullptr;
-    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
-        shadow_passes[i].clear();
+
+    for (auto& pass : shadow_passes) {
+        pass.clear();
     }
+
+    point_shadow_pass.clear();
     main_pass.clear();
     voxel_pass.clear();
+}
+
+void RenderData::point_light_draw_data() {
+    // HACK: only allow one point light shadow
+    bool exists_point_shadow = false;
+    // point shadow map
+    for (int light_idx = 0; light_idx < (int)scene->get_count<LightComponent>(); ++light_idx) {
+        auto light_id = scene->get_entity<LightComponent>(light_idx);
+        const LightComponent& light = scene->get_component_array<LightComponent>()[light_idx];
+        if (light.type == LIGHT_TYPE_POINT && light.cast_shadow()) {
+            DEV_ASSERT_MSG(!exists_point_shadow, "at most one point light casts shadow");
+            exists_point_shadow = true;
+
+            const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
+            DEV_ASSERT(transform);
+            vec3 position = transform->get_translation();
+            // @TODO: calc near and far based on attenuation
+            const float near_plane = 1.0f;
+            // @TODO: OMG SO UGLY
+            const float far_plane = 25.0f;
+            const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+            std::array<glm::mat4, 6> light_space_matrices = {
+                projection * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+                projection * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+                projection * glm::lookAt(position, position + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+                projection * glm::lookAt(position, position + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
+                projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+                projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
+            };
+
+            for (int idx = 0; idx < 6; ++idx) {
+                g_perFrameCache.cache.c_point_light_matrices[idx] = light_space_matrices[idx];
+            }
+            g_perFrameCache.cache.c_point_light_far = 25.0f;
+            g_perFrameCache.cache.c_point_light_position = position;
+
+            std::array<Frustum, 6> frustums = {
+                Frustum{ light_space_matrices[0] },
+                Frustum{ light_space_matrices[1] },
+                Frustum{ light_space_matrices[2] },
+                Frustum{ light_space_matrices[3] },
+                Frustum{ light_space_matrices[4] },
+                Frustum{ light_space_matrices[5] },
+            };
+
+            fill(
+                scene,
+                mat4(1),
+                point_shadow_pass,
+                [](const ObjectComponent& object) {
+                    return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
+                },
+                [&](const AABB& aabb) {
+                    for (const auto& frustum : frustums) {
+                        if (frustum.intersects(aabb)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+        }
+    }
+
+    has_point_light = exists_point_shadow;
 }
 
 void RenderData::update(const Scene* p_scene) {
     clear();
     scene = p_scene;
+
+    point_light_draw_data();
 
     // cascaded shadow map
     for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
@@ -107,7 +176,6 @@ void RenderData::update(const Scene* p_scene) {
 void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
     scene = p_scene;
     pass.projection_view_matrix = projection_view_matrix;
-    Frustum frustum{ projection_view_matrix };
     uint32_t num_objects = (uint32_t)scene->get_count<ObjectComponent>();
     for (uint32_t i = 0; i < num_objects; ++i) {
         ecs::Entity entity = scene->get_entity<ObjectComponent>(i);
@@ -116,6 +184,7 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
         }
 
         const ObjectComponent& obj = scene->get_component_array<ObjectComponent>()[i];
+        // ????
         if (func1(obj)) {
             continue;
         }
@@ -143,7 +212,7 @@ void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, 
         for (const auto& subset : mesh.subsets) {
             aabb = subset.local_bound;
             aabb.apply_matrix(world_matrix);
-            if (!frustum.intersects(aabb)) {
+            if (!func2(aabb)) {
                 continue;
             }
 

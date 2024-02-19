@@ -88,6 +88,7 @@ void MaterialComponent::serialize(Archive& archive, uint32_t) {
 void LightComponent::serialize(Archive& archive, uint32_t version) {
     unused(version);
     if (archive.is_write_mode()) {
+        archive << flags;
         archive << type;
         archive << color;
         archive << energy;
@@ -95,6 +96,9 @@ void LightComponent::serialize(Archive& archive, uint32_t version) {
         archive << atten.linear;
         archive << atten.quadratic;
     } else {
+        if (version >= 4) {
+            archive >> flags;
+        }
         archive >> type;
         archive >> color;
         archive >> energy;

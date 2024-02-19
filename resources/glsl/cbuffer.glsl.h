@@ -46,6 +46,11 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
 
     Light c_lights[NUM_LIGHT_MAX];
 
+    // @TODO: these are temporary point light shit
+    mat4 c_point_light_matrices[6];
+    vec3 c_point_light_position;
+    float c_point_light_far;
+
     mat4 c_main_light_matrices[NUM_CASCADE_MAX];
     vec4 c_cascade_plane_distances;
 

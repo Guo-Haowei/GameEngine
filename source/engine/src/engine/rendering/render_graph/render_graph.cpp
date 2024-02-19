@@ -15,8 +15,7 @@ static GLuint create_resource_impl(const ResourceDesc& desc) {
             glTexImage2D(type,                                       // target
                          0,                                          // level
                          format_to_gl_internal_format(desc.format),  // internal format
-                         desc.width,                                 // width
-                         desc.height,                                // height
+                         desc.width, desc.height,                    // dimension
                          0,                                          // boarder
                          format_to_gl_format(desc.format),           // format
                          format_to_gl_data_type(desc.format),        // type
@@ -31,8 +30,7 @@ static GLuint create_resource_impl(const ResourceDesc& desc) {
             glTexImage2D(type,                                       // target
                          0,                                          // level
                          format_to_gl_internal_format(desc.format),  // internal format
-                         desc.width,                                 // width
-                         desc.height,                                // height
+                         desc.width, desc.height,                    // dimension
                          0,                                          // boarder
                          format_to_gl_format(desc.format),           // format
                          format_to_gl_data_type(desc.format),        // type
@@ -45,17 +43,14 @@ static GLuint create_resource_impl(const ResourceDesc& desc) {
         } break;
         case RT_SHADOW_MAP: {
             glBindTexture(type, texture_id);
-
-            glTexImage2D(
-                type,
-                0,
-                format_to_gl_internal_format(desc.format),
-                desc.width,
-                desc.height,
-                0,
-                format_to_gl_format(desc.format),
-                format_to_gl_data_type(desc.format),
-                nullptr);
+            glTexImage2D(type,
+                         0,
+                         format_to_gl_internal_format(desc.format),
+                         desc.width, desc.height,
+                         0,
+                         format_to_gl_format(desc.format),
+                         format_to_gl_data_type(desc.format),
+                         nullptr);
 
             glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
             glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -63,10 +58,30 @@ static GLuint create_resource_impl(const ResourceDesc& desc) {
             glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
             glTexParameterfv(type, GL_TEXTURE_BORDER_COLOR, shadow_boarder);
         } break;
+        case RT_SHADOW_CUBE_MAP: {
+            type = GL_TEXTURE_CUBE_MAP;
+            glBindTexture(type, texture_id);
+            for (int i = 0; i < 6; ++i) {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                             0,
+                             format_to_gl_internal_format(desc.format),
+                             desc.width, desc.height,
+                             0,
+                             format_to_gl_format(desc.format),
+                             format_to_gl_data_type(desc.format),
+                             nullptr);
+            }
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        } break;
         default:
             CRASH_NOW();
             break;
     }
+    glBindTexture(type, 0);
     return texture_id;
 }
 

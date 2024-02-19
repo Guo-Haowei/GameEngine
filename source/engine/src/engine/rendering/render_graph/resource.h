@@ -7,6 +7,7 @@ enum ResourceType {
     RT_COLOR_ATTACHMENT,
     RT_DEPTH_ATTACHMENT,
     RT_SHADOW_MAP,
+    RT_SHADOW_CUBE_MAP,
 };
 
 struct ResourceDesc {

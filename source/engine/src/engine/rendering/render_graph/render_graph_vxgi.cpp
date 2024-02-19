@@ -22,7 +22,47 @@ extern my::RIDAllocator<MeshData> g_meshes;
 
 namespace my::rg {
 
-// @TODO: refactor render passes
+// @TODO: refactor render passes to have multiple frame buffers
+void point_shadow_pass_func(int, int) {
+    auto render_data = GraphicsManager::singleton().get_render_data();
+    if (!render_data->has_point_light) {
+        return;
+    }
+
+    const Scene& scene = SceneManager::get_scene();
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
+    glViewport(0, 0, shadow_res, shadow_res);
+
+    RenderData::Pass& pass = render_data->point_shadow_pass;
+
+    for (const auto& draw : pass.draws) {
+        const bool has_bone = draw.armature_id.is_valid();
+
+        if (has_bone) {
+            auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
+            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
+
+            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
+            g_boneCache.Update();
+        }
+
+        const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
+        program.bind();
+
+        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
+        g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
+        g_perBatchCache.Update();
+
+        glBindVertexArray(draw.mesh_data->vao);
+        glDrawElements(GL_TRIANGLES, draw.mesh_data->count, GL_UNSIGNED_INT, 0);
+    }
+}
+
 void shadow_pass_func(int width, int height) {
     // @TODO: for each light source, render shadow
     const Scene& scene = SceneManager::get_scene();
@@ -33,10 +73,11 @@ void shadow_pass_func(int width, int height) {
     glClear(GL_DEPTH_BUFFER_BIT);
 
     int actual_width = width / NUM_CASCADE_MAX;
+    auto render_data = GraphicsManager::singleton().get_render_data();
+
     for (int cascade_idx = 0; cascade_idx < NUM_CASCADE_MAX; ++cascade_idx) {
         glViewport(cascade_idx * actual_width, 0, actual_width, height);
 
-        auto render_data = GraphicsManager::singleton().get_render_data();
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
 
         for (const auto& draw : pass.draws) {
@@ -296,7 +337,20 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                FORMAT_R8G8B8A8_UINT,
                                                                RT_COLOR_ATTACHMENT,
                                                                w, h });
+    {  // point shadow
+        const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
+        DEV_ASSERT(math::is_power_of_two(shadow_res));
 
+        auto shadow_map = graph.create_resource(ResourceDesc{ RT_RES_POINT_SHADOW_MAP,
+                                                              FORMAT_D32_FLOAT,
+                                                              RT_SHADOW_CUBE_MAP,
+                                                              shadow_res, shadow_res });
+        RenderPassDesc desc;
+        desc.name = POINT_SHADOW_PASS;
+        desc.depth_attachment = shadow_map;
+        desc.func = point_shadow_pass_func;
+        graph.add_pass(desc);
+    }
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
@@ -307,6 +361,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                               NUM_CASCADE_MAX * shadow_res, shadow_res });
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
+        desc.dependencies = { POINT_SHADOW_PASS };
         desc.depth_attachment = shadow_map;
         desc.func = shadow_pass_func;
         graph.add_pass(desc);
@@ -314,7 +369,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     {  // gbuffer pass
         RenderPassDesc desc;
         desc.name = GBUFFER_PASS;
-        desc.dependencies = {};
+        desc.dependencies = { SHADOW_PASS };
         desc.color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 };
         desc.depth_attachment = gbuffer_depth;
         desc.func = gbuffer_pass_func;

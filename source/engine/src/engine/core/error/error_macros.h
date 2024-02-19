@@ -103,6 +103,13 @@ void report_error_index_impl(std::string_view function, std::string_view file, i
     } else                                                                                                    \
         ((void)0)
 
+#define DEV_ASSERT_MSG(EXPR, MSG)                                                                                  \
+    if (!(EXPR)) [[unlikely]] {                                                                                    \
+        my::report_error_impl(__FUNCTION__, __FILE__, __LINE__, "FATAL: DEV_ASSERT failed (" _STR(EXPR) ")", MSG); \
+        GENERATE_TRAP();                                                                                           \
+    } else                                                                                                         \
+        ((void)0)
+
 #define DEV_ASSERT_INDEX(INDEX, BOUND)                                                                               \
     if (int64_t index_ = (int64_t)(INDEX), bound_ = (int64_t)(BOUND); index_ < 0 || index_ >= bound_) [[unlikely]] { \
         my::report_error_index_impl(__FUNCTION__, __FILE__, __LINE__, "FATAL: DEV_ASSERT_INDEX failed ", index_,     \
