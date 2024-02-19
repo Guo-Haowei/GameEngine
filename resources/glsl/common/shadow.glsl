@@ -30,8 +30,8 @@ float cascade_shadow(sampler2D p_shadow_map,
     coords.x /= NUM_CASCADE_MAX;
 
 #if 0
-    float lower = 0.01;
-    float upper = 0.99;
+    float lower = 0.001;
+    float upper = 0.999;
     if (coords.x < lower || coords.x > upper) {
         return 0.0;
     }

@@ -1,7 +1,7 @@
 #include "asset_manager.h"
 
-#include "assets/scene_importer_assimp.h"
-#include "assets/scene_importer_tinygltf.h"
+#include "assets/loader_assimp.h"
+#include "assets/loader_tinygltf.h"
 #include "assets/stb_image.h"
 #include "core/framework/graphics_manager.h"
 #include "core/io/file_access.h"
@@ -23,32 +23,10 @@ static struct {
     ConcurrentQueue<ImageHandle*> loaded_images;
 } s_asset_manager_glob;
 
-// @TODO: refactor
-static void load_scene_internal(LoadTask& task) {
-    Scene* scene = new Scene;
-    std::expected<void, std::string> res;
-
-    if (task.type == LOAD_TASK_TINYGLTF_SCENE) {
-        SceneImporterTinyGLTF loader(*scene, task.asset_path);
-        res = loader.import();
-    } else {
-        SceneImporterAssimp loader(*scene, task.asset_path);
-        res = loader.import();
-    }
-
-    if (!res) {
-        std::string error = std::move(res.error());
-        if (task.on_error) {
-            task.on_error(error);
-        } else {
-            LOG_FATAL("{}", res.error());
-        }
-        return;
-    }
-    task.on_success(scene);
-}
-
 bool AssetManager::initialize() {
+    Loader<Scene>::register_loader(".obj", LoaderAssimp::create);
+    Loader<Scene>::register_loader(".gltf", LoaderTinyGLTF::create);
+
     // @TODO: dir_access
     // @TODO: async
     // force load all shaders
@@ -165,9 +143,8 @@ ImageHandle* AssetManager::load_image_sync(const std::string& path) {
     return ret;
 }
 
-void AssetManager::load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error) {
+void AssetManager::load_scene_async(const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error) {
     LoadTask task;
-    task.type = importer == IMPORTER_TINYGLTF ? LOAD_TASK_TINYGLTF_SCENE : LOAD_TASK_ASSIMP_SCENE;
     task.asset_path = path;
     task.on_success = on_success;
     task.on_error = on_error;
@@ -255,9 +232,25 @@ void AssetManager::worker_main() {
                 handle->state = ASSET_STATE_READY;
                 s_asset_manager_glob.loaded_images.push(handle);
             } break;
-            default:
-                load_scene_internal(task);
-                break;
+            default: {
+                Scene* scene = new Scene;
+                std::expected<void, std::string> res;
+
+               auto loader = Loader<Scene>::create(task.asset_path);
+                DEV_ASSERT(loader);
+
+                bool ok = loader->load(scene);
+                if (!ok) {
+                    const std::string& error = loader->get_error();
+                    if (task.on_error) {
+                        task.on_error(error);
+                    } else {
+                        LOG_FATAL("{}", res.error());
+                    }
+                    return;
+                }
+                task.on_success(scene);
+            } break;
         }
         // LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.asset_path, timer.get_duration_string());
     }

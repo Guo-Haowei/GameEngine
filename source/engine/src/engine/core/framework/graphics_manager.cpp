@@ -11,6 +11,7 @@
 /////
 #include "assets/image.h"
 #include "core/base/rid_owner.h"
+#include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "rendering/r_editor.h"
 #include "rendering/rendering_dvars.h"
@@ -249,6 +250,10 @@ static void create_ssao_resource() {
 }
 
 void GraphicsManager::createGpuResources() {
+    auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
+    unused(skybox);
+    // @TODO: enviroment
+
     create_ssao_resource();
 
     R_Alloc_Cbuffers();

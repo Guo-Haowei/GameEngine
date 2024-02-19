@@ -163,10 +163,11 @@ void SceneManager::update(float dt) {
     scene.update(dt);
 }
 
-void SceneManager::request_scene(std::string_view path, ImporterName importer) {
-    AssetManager::singleton().load_scene_async(importer, std::string(path), [](void* scene) {
+void SceneManager::request_scene(std::string_view path) {
+    AssetManager::singleton().load_scene_async(std::string(path), [](void* scene) {
         DEV_ASSERT(scene);
         Scene* new_scene = static_cast<Scene*>(scene);
+        new_scene->update(0.0f);
         SceneManager::singleton().set_loading_scene(new_scene);
     });
 }

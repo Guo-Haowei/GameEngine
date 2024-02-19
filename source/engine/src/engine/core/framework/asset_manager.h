@@ -1,6 +1,5 @@
 #pragma once
 #include "assets/image.h"
-#include "assets/scene_importer.h"
 #include "core/base/concurrent_queue.h"
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
@@ -40,7 +39,7 @@ public:
     void finalize() override;
     void update();
 
-    void load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error = nullptr);
+    void load_scene_async(const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error = nullptr);
 
     ImageHandle* load_image_sync(const std::string& path);
     ImageHandle* load_image_async(const std::string& path);

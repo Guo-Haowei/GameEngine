@@ -63,8 +63,9 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
     float min_z = aabb.get_min().z;
     float max_z = aabb.get_max().z;
 
+    // @TODO: find a better way to do it
     // Tune this parameter according to the scene
-    constexpr float zMult = 10.0f;
+    constexpr float zMult = 20.0f;
     if (min_z < 0) {
         min_z *= zMult;
     } else {
@@ -87,7 +88,7 @@ std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Cam
             ret.push_back(light_space_matrix_world(world_bound, p_light_matrix));
         } else {
             float z_near = p_camera.get_near();
-            // z_near = i == 0 ? z_near : p_cascade_end[i - 1];
+            z_near = i == 0 ? z_near : p_cascade_end[i - 1];
             ret.push_back(get_light_space_matrix(p_light_matrix, z_near, p_cascade_end[i], p_camera));
         }
     }
