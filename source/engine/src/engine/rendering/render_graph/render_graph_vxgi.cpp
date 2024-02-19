@@ -246,8 +246,8 @@ void fxaa_pass_func(int width, int height) {
 void create_render_graph_vxgi(RenderGraph& graph) {
     auto [w, h] = DisplayServer::singleton().get_frame_size();
     // @TODO: fix this
-    w /= 2;
-    h /= 2;
+    // w /= 2;
+    // h /= 2;
 
     auto gbuffer_attachment0 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_POSITION,
                                                                    FORMAT_R16G16B16A16_FLOAT,

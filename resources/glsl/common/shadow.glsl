@@ -18,6 +18,31 @@ int find_cascade(const in vec3 p_pos_world) {
     return NUM_CASCADE_MAX - 1;
 }
 
+float cascade_shadow_voxel(sampler2D p_shadow_map,
+                           const in vec3 p_pos_world,
+                           float p_NdotL,
+                           int p_level) {
+    vec4 pos_light = c_main_light_matrices[p_level] * vec4(p_pos_world, 1.0);
+    vec3 coords = pos_light.xyz / pos_light.w;
+    coords = 0.5 * coords + 0.5;  // [0, 1]
+    float current_depth = coords.z;
+    coords.x += p_level;
+    coords.x /= NUM_CASCADE_MAX;
+
+    if (current_depth > 1.0) {
+        return 0.0;
+    }
+
+    float shadow = 0.0;
+    vec2 texel_size = 1.0 / vec2(textureSize(p_shadow_map, 0));
+
+    float bias = max(0.005 * (1.0 - p_NdotL), 0.0005);
+    float closest_depth = texture(p_shadow_map, coords.xy).r;
+    shadow += current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+    return shadow;
+}
+
 float cascade_shadow(sampler2D p_shadow_map,
                      const in vec3 p_pos_world,
                      float p_NdotL,
