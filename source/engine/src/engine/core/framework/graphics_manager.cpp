@@ -30,6 +30,7 @@ using my::rg::RenderPass;
 GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
 MeshData g_box;
+MeshData g_skybox;
 
 // @TODO: fix this
 my::RIDAllocator<MeshData> g_meshes;
@@ -156,10 +157,6 @@ void GraphicsManager::create_texture(ImageHandle* handle) {
 
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     glTexImage2D(GL_TEXTURE_2D,
                  0,
@@ -171,7 +168,27 @@ void GraphicsManager::create_texture(ImageHandle* handle) {
                  format_to_gl_data_type(image->format),
                  image->buffer.data());
 
-    glGenerateMipmap(GL_TEXTURE_2D);
+    // @TODO: filter
+    // @HACK: dummy filter
+    switch (image->format) {
+        case FORMAT_R32_FLOAT:
+        case FORMAT_R32G32_FLOAT:
+        case FORMAT_R32G32B32_FLOAT:
+        case FORMAT_R32G32B32A32_FLOAT: {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        } break;
+        default: {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        } break;
+    }
+
     glBindTexture(GL_TEXTURE_2D, 0);
 
     GLuint64 resident_id = glGetTextureHandleARB(texture_id);
@@ -250,7 +267,8 @@ static void create_ssao_resource() {
 }
 
 void GraphicsManager::createGpuResources() {
-    AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
+    auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
+    g_constantCache.cache.c_skybox_map = skybox->get()->texture.resident_handle;
     // @TODO: enviroment
 
     create_ssao_resource();
@@ -259,6 +277,7 @@ void GraphicsManager::createGpuResources() {
 
     // create a dummy box data
     create_mesh_data(make_box_mesh(), g_box);
+    create_mesh_data(make_box_mesh(20.f), g_skybox);
 
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {

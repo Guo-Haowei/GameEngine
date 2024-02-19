@@ -39,7 +39,6 @@ bool AssetManager::initialize() {
         "@res://fonts/DroidSans.ttf",
         "@res://glsl/vsinput.glsl.h",
         "@res://glsl/cbuffer.glsl.h",
-        "@res://glsl/common.glsl",
         "@res://glsl/mesh_static.vert",
         "@res://glsl/mesh_animated.vert",
         "@res://glsl/depth_static.vert",

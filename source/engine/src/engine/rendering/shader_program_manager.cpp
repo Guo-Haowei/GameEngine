@@ -203,6 +203,12 @@ bool ShaderProgramManager::initialize() {
         info.ps = "@res://glsl/vxgi/visualization.frag";
         s_shader_cache[PROGRAM_DEBUG_VOXEL] = create(info);
     }
+    {
+        ProgramCreateInfo info;
+        info.vs = "@res://glsl/cube_map.vert.glsl";
+        info.ps = "@res://glsl/cube_map.frag.glsl";
+        s_shader_cache[PROGRAM_SKY_BOX] = create(info);
+    }
 
     return true;
 }

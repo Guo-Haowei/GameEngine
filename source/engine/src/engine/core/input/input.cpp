@@ -73,12 +73,12 @@ const vec2& get_cursor() { return s_glob.cursor; }
 const vec2& get_wheel() { return s_glob.wheel; }
 
 void set_button(int button, bool pressed) {
-    DEV_ASSERT_INDEX(button, MOUSE_BUTTON_MAX);
+    ERR_FAIL_INDEX(button, MOUSE_BUTTON_MAX);
     s_glob.buttons[button] = pressed;
 }
 
 void set_key(int key, bool pressed) {
-    DEV_ASSERT_INDEX(key, KEY_MAX);
+    ERR_FAIL_INDEX(key, KEY_MAX);
     s_glob.keys[key] = pressed;
 }
 

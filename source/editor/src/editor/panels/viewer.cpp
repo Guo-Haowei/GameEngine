@@ -82,18 +82,19 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     uint64_t final_image = m_editor.get_displayed_image();
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)final_image, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
 
-    // draw grid
-    mat4 identity(1);
-    if (DVAR_GET_BOOL(grid_visibility)) {
+    bool draw_grid = DVAR_GET_BOOL(grid_visibility);
+    if (draw_grid) {
+        mat4 identity(1);
+        // draw grid
         ImGuizmo::draw_grid(projection_view_matrix, identity, 10.0f);
-    }
 
-    // draw light
-    const LightComponent& light = scene.get_component_array<LightComponent>()[0];
-    DEV_ASSERT(light.type == LIGHT_TYPE_OMNI);
-    if (TransformComponent* transform_component = scene.get_component<TransformComponent>(scene.get_entity<LightComponent>(0)); transform_component) {
-        mat4 transform = transform_component->get_world_matrix();
-        ImGuizmo::draw_cone_wireframe(projection_view_matrix, transform);
+        // draw light
+        const LightComponent& light = scene.get_component_array<LightComponent>()[0];
+        DEV_ASSERT(light.type == LIGHT_TYPE_OMNI);
+        if (TransformComponent* transform_component = scene.get_component<TransformComponent>(scene.get_entity<LightComponent>(0)); transform_component) {
+            mat4 transform = transform_component->get_world_matrix();
+            ImGuizmo::draw_cone_wireframe(projection_view_matrix, transform);
+        }
     }
 
     // draw aabb

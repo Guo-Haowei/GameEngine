@@ -5,7 +5,7 @@ float distributionGGX(float NdotH, float roughness) {
 
     float nom = a2;
     float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-    denom = PI * denom * denom;
+    denom = MY_PI * denom * denom;
 
     return nom / denom;
 }
@@ -47,7 +47,7 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     const vec3 kS = F;
     const vec3 kD = (1.0 - metallic) * (vec3(1.0) - kS);
 
-    vec3 direct_lighting = (kD * albedo.rgb / PI + specular) * radiance * NdotL;
+    vec3 direct_lighting = (kD * albedo.rgb / MY_PI + specular) * radiance * NdotL;
 
     return direct_lighting;
 }

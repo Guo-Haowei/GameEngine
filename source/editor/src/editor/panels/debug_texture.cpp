@@ -33,7 +33,7 @@ void DebugTexturePanel::update_internal(Scene& scene) {
     ImGui::DragInt("zoom level", &zoom, 1, 10, 300);
     dim *= zoom * 0.01f;
 
-#if 1
+#if 0
     {
         // @HACK
         auto image_handle = AssetManager::singleton().find_image("@res://env/sky.hdr");

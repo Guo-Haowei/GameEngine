@@ -7,7 +7,6 @@ in vec3 pass_position;
 in vec3 pass_normal;
 in vec2 pass_uv;
 
-#include "common.glsl"
 #include "common/lighting.glsl"
 
 void main() {

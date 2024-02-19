@@ -15,6 +15,7 @@
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
+extern MeshData g_skybox;
 
 extern my::RIDAllocator<MeshData> g_meshes;
 
@@ -23,7 +24,7 @@ namespace my::rg {
 // @TODO: refactor render passes
 void shadow_pass_func(int width, int height) {
     // @TODO: for each light source, render shadow
-    const my::Scene& scene = SceneManager::get_scene();
+    const Scene& scene = SceneManager::get_scene();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -193,7 +194,7 @@ void debug_vxgi_pass_func(int width, int height) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
-    const auto& program = my::ShaderProgramManager::get(my::PROGRAM_DEBUG_VOXEL);
+    const auto& program = ShaderProgramManager::get(PROGRAM_DEBUG_VOXEL);
     program.bind();
 
     glBindVertexArray(g_box.vao);
@@ -211,11 +212,25 @@ void lighting_pass_func(int width, int height) {
     }
 
     glViewport(0, 0, width, height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     const auto& program = ShaderProgramManager::get(PROGRAM_LIGHTING_VXGI);
     program.bind();
     R_DrawQuad();
-    program.unbind();
+
+    {
+        // @DEBUG SKYBOX
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        ShaderProgramManager::get(PROGRAM_SKY_BOX).bind();
+        glBindVertexArray(g_skybox.vao);
+        glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
+        glCullFace(GL_BACK);
+    }
+    glDepthFunc(GL_LESS);
+    glUseProgram(0);
 }
 
 void fxaa_pass_func(int width, int height) {

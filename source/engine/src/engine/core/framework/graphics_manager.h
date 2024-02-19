@@ -27,7 +27,8 @@ public:
     bool initialize();
     void finalize();
 
-    void create_texture(ImageHandle* image);
+    // @TODO: filter
+    void create_texture(ImageHandle* handle);
 
     void event_received(std::shared_ptr<Event> event) override;
 
