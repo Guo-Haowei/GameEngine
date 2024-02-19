@@ -14,12 +14,6 @@ namespace my {
 
 struct RenderData;
 
-// @TODO: refactor
-struct Texture {
-    GLuint handle;
-    GLuint64 resident_handle;
-};
-
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     enum {
@@ -33,7 +27,8 @@ public:
     bool initialize();
     void finalize();
 
-    void create_texture(ImageHandle* image);
+    // @TODO: filter
+    void create_texture(ImageHandle* handle);
 
     void event_received(std::shared_ptr<Event> event) override;
 
@@ -56,7 +51,6 @@ private:
     std::shared_ptr<RenderData> m_render_data;
 
     rg::RenderGraph m_render_graph;
-    RIDAllocator<Texture> m_texture_allocator;
 };
 
 }  // namespace my

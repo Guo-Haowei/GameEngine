@@ -108,11 +108,12 @@ int Application::run(int argc, const char** argv) {
 
     LOG_OK("TODO: update voxels only when scene is dirty");
 
+    LOG_ERROR("TODO: (in progress) PBR code here");
+
+    LOG_WARN("TODO: path tracer here");
     LOG_ERROR("TODO: cloth physics");
     LOG_WARN("TODO: TAA");
     LOG_ERROR("TODO: soft shadow");
-    LOG_WARN("TODO: path tracer here");
-    LOG_ERROR("TODO: migrate PBR code here");
     LOG_WARN("TODO: fix multiple objects play same animation");
     LOG_ERROR("TODO: link object with animation");
 

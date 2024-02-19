@@ -7,7 +7,6 @@ in vec3 pass_position;
 in vec3 pass_normal;
 in vec2 pass_uv;
 
-#include "common.glsl"
 #include "common/lighting.glsl"
 
 void main() {
@@ -59,8 +58,8 @@ void main() {
         // @TODO: shadow
         if (c_lights[idx].cast_shadow == 1) {
             const float NdotL = max(dot(N, L), 0.0);
-            const int cascade_level = find_cascade(world_position);
-            float shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
+            const int cascade_level = NUM_CASCADE_MAX - 2;
+            float shadow = cascade_shadow_voxel(c_shadow_map, world_position, NdotL, cascade_level);
             direct_lighting = (1.0 - shadow) * direct_lighting;
         }
         Lo += direct_lighting;

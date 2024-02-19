@@ -4,11 +4,11 @@ struct DiffuseCone {
 };
 
 const DiffuseCone g_diffuse_cones[6] =
-    DiffuseCone[6](DiffuseCone(vec3(0.0, 1.0, 0.0), PI / 4.0), DiffuseCone(vec3(0.0, 0.5, 0.866025), 3.0 * PI / 20.0),
-                   DiffuseCone(vec3(0.823639, 0.5, 0.267617), 3.0 * PI / 20.0),
-                   DiffuseCone(vec3(0.509037, 0.5, -0.7006629), 3.0 * PI / 20.0),
-                   DiffuseCone(vec3(-0.50937, 0.5, -0.7006629), 3.0 * PI / 20.0),
-                   DiffuseCone(vec3(-0.823639, 0.5, 0.267617), 3.0 * PI / 20.0));
+    DiffuseCone[6](DiffuseCone(vec3(0.0, 1.0, 0.0), MY_PI / 4.0), DiffuseCone(vec3(0.0, 0.5, 0.866025), 3.0 * MY_PI / 20.0),
+                   DiffuseCone(vec3(0.823639, 0.5, 0.267617), 3.0 * MY_PI / 20.0),
+                   DiffuseCone(vec3(0.509037, 0.5, -0.7006629), 3.0 * MY_PI / 20.0),
+                   DiffuseCone(vec3(-0.50937, 0.5, -0.7006629), 3.0 * MY_PI / 20.0),
+                   DiffuseCone(vec3(-0.823639, 0.5, 0.267617), 3.0 * MY_PI / 20.0));
 
 vec3 trace_cones(vec3 from, vec3 direction, float aperture) {
     float max_dist = 2.0 * c_world_size_half;
@@ -60,7 +60,7 @@ vec3 cone_specular(vec3 position, vec3 direction, float roughness) {
     // TODO: brdf lookup
     float aperture = 0.0374533;
 
-    aperture = clamp(tan(0.5 * PI * roughness), aperture, 0.5 * PI);
+    aperture = clamp(tan(0.5 * MY_PI * roughness), aperture, 0.5 * MY_PI);
 
     vec3 specular = trace_cones(position, direction, aperture);
 

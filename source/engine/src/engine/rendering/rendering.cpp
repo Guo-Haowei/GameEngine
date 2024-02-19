@@ -14,7 +14,7 @@ mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_mat
     vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
 
     const mat4 V = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
-    const mat4 P = glm::ortho(-size, size, -size, size, 0.0f, 2.0f * size);
+    const mat4 P = glm::ortho(-size, size, -size, size, -size, 3.0f * size);
     return P * V;
 }
 
@@ -49,12 +49,15 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
 
     vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
     vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
-    mat4 light_view = glm::lookAt(center + light_dir, center, light_up);
+    vec3 eye = center + light_dir;
+    mat4 light_view = glm::lookAt(eye, center, light_up);
 
     AABB aabb;
     for (const vec4& point : corners) {
         aabb.expand_point(vec3(light_view * point));
     }
+
+    vec3 aabb_center = aabb.center();
 
     float min_x = aabb.get_min().x;
     float max_x = aabb.get_max().x;
@@ -63,18 +66,11 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
     float min_z = aabb.get_min().z;
     float max_z = aabb.get_max().z;
 
-    // Tune this parameter according to the scene
-    constexpr float zMult = 10.0f;
-    if (min_z < 0) {
-        min_z *= zMult;
-    } else {
-        min_z /= zMult;
-    }
-    if (max_z < 0) {
-        max_z /= zMult;
-    } else {
-        max_z *= zMult;
-    }
+    // HACK: extend min and max z
+    // use a more math way to do it
+    float dz = 2.f * (max_z - min_z);
+    min_z -= dz;
+    max_z += dz;
 
     mat4 light_projection = glm::ortho(min_x, max_x, min_y, max_y, min_z, max_z);
     return light_projection * light_view;

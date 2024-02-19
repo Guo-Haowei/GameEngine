@@ -3,8 +3,6 @@
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out vec4 out_color;
 
-#include "common.glsl"
-
 // implementation https://blog.simonrodriguez.fr/articles/2016/07/implementing_fxaa.html
 
 float rgb_to_luma(vec3 rgb) {

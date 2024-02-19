@@ -35,7 +35,10 @@ static void create_empty_scene(Scene* scene) {
         auto light = scene->create_omnilight_entity("omni light", vec3(1), 20.f);
         auto transform = scene->get_component<TransformComponent>(light);
         DEV_ASSERT(transform);
-        transform->rotate(vec3(glm::radians(80.0f), 0.0f, 0.0f));
+        constexpr float rx = glm::radians(-80.0f);
+        constexpr float ry = glm::radians(0.0f);
+        constexpr float rz = glm::radians(0.0f);
+        transform->rotate(vec3(rx, ry, rz));
 
         scene->attach_component(light, root);
     }
@@ -163,10 +166,11 @@ void SceneManager::update(float dt) {
     scene.update(dt);
 }
 
-void SceneManager::request_scene(std::string_view path, ImporterName importer) {
-    AssetManager::singleton().load_scene_async(importer, std::string(path), [](void* scene) {
+void SceneManager::request_scene(std::string_view path) {
+    AssetManager::singleton().load_scene_async(std::string(path), [](void* scene, void*) {
         DEV_ASSERT(scene);
         Scene* new_scene = static_cast<Scene*>(scene);
+        new_scene->update(0.0f);
         SceneManager::singleton().set_loading_scene(new_scene);
     });
 }

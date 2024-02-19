@@ -1,6 +1,14 @@
 #ifndef SHADER_DEFINES_INCLUDED
 #define SHADER_DEFINES_INCLUDED
 
+#ifndef MY_PI
+#define MY_PI 3.141592653589793
+#endif
+
+#ifndef MY_TWO_PI
+#define MY_TWO_PI 6.283185307179586
+#endif
+
 // light type
 #define LIGHT_TYPE_OMNI  0
 #define LIGHT_TYPE_POINT 1

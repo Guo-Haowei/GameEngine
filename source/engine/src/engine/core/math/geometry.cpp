@@ -22,6 +22,30 @@ namespace my {
 enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };
 // clang-format on
 
+MeshComponent make_plane_mesh(float size) {
+    MeshComponent mesh;
+    mesh.positions = {
+        vec3(-size, +size, 0.0f),  // A
+        vec3(-size, -size, 0.0f),  // B
+        vec3(+size, -size, 0.0f),  // C
+        vec3(+size, +size, 0.0f),  // D
+    };
+
+    mesh.texcoords_0 = {
+        vec2(1, 0),  // top-left
+        vec2(0, 0),  // bottom-left
+        vec2(0, 1),  // bottom-right
+        vec2(1, 1),  // top-right
+    };
+
+    mesh.indices = {
+        A, B, D,  // ABD
+        D, B, C,  // DBC
+    };
+
+    return mesh;
+}
+
 MeshComponent make_box_mesh(float size) {
     MeshComponent mesh;
     mesh.positions = {

@@ -4,6 +4,7 @@
 
 namespace my {
 
+// @TODO: change to pipeline manager
 enum ProgramType {
     PROGRAM_DPETH_STATIC,
     PROGRAM_DPETH_ANIMATED,
@@ -15,6 +16,8 @@ enum ProgramType {
     PROGRAM_LIGHTING_VXGI,
     PROGRAM_FXAA,
     PROGRAM_DEBUG_VOXEL,
+    PROGRAM_SKY_BOX,
+    PROGRAM_BILLBOARD,
     PROGRAM_MAX,
 };
 

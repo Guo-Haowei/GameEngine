@@ -1,6 +1,5 @@
 #pragma once
 #include "assets/image.h"
-#include "assets/scene_importer.h"
 #include "core/base/concurrent_queue.h"
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
@@ -14,21 +13,18 @@ struct File {
 
 class Scene;
 
-using ImportSuccessFunc = void (*)(void*);
-using ImportErrorFunc = void (*)(const std::string& error);
+using LoadSuccessFunc = void (*)(void* asset, void* userdata);
 
 enum LoadTaskType {
-    LOAD_TASK_ASSIMP_SCENE,
-    LOAD_TASK_TINYGLTF_SCENE,
     LOAD_TASK_IMAGE,
+    LOAD_TASK_SCENE,
 };
 
 struct LoadTask {
     LoadTaskType type;
     // @TODO: better string
     std::string asset_path;
-    ImportSuccessFunc on_success;
-    ImportErrorFunc on_error;
+    LoadSuccessFunc on_success;
     void* userdata;
 };
 
@@ -40,7 +36,7 @@ public:
     void finalize() override;
     void update();
 
-    void load_scene_async(ImporterName importer, const std::string& path, ImportSuccessFunc on_success, ImportErrorFunc on_error = nullptr);
+    void load_scene_async(const std::string& path, LoadSuccessFunc on_success);
 
     ImageHandle* load_image_sync(const std::string& path);
     ImageHandle* load_image_async(const std::string& path);
@@ -52,7 +48,6 @@ public:
     static void worker_main();
 
 private:
-    Image* load_image_sync_internal(const std::string& path);
     void enqueue_async_load_task(LoadTask& task);
 
     std::map<std::string, std::unique_ptr<ImageHandle>> m_image_cache;

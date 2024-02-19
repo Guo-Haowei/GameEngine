@@ -1,5 +1,4 @@
 #pragma once
-#include "assets/scene_importer.h"
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
 #include "scene/scene.h"
@@ -16,7 +15,7 @@ public:
     void finalize() override;
     void update(float dt);
 
-    void request_scene(std::string_view path, ImporterName importer);
+    void request_scene(std::string_view path);
 
     void set_loading_scene(Scene* scene) {
         m_loading_scene.store(scene);

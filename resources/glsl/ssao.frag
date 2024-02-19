@@ -3,8 +3,6 @@
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float occlusion;
 
-#include "common.glsl"
-
 void main() {
     const float bias = 0.01;
 

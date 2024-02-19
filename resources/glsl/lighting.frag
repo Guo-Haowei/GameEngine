@@ -5,7 +5,6 @@
 layout(location = 0) out vec4 out_color;
 layout(location = 0) in vec2 pass_uv;
 
-#include "common.glsl"
 #include "common/lighting.glsl"
 
 #if ENABLE_VXGI

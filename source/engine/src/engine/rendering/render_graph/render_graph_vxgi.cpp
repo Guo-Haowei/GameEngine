@@ -15,6 +15,8 @@
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
+extern MeshData g_skybox;
+extern MeshData g_billboard;
 
 extern my::RIDAllocator<MeshData> g_meshes;
 
@@ -23,7 +25,7 @@ namespace my::rg {
 // @TODO: refactor render passes
 void shadow_pass_func(int width, int height) {
     // @TODO: for each light source, render shadow
-    const my::Scene& scene = SceneManager::get_scene();
+    const Scene& scene = SceneManager::get_scene();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -193,7 +195,7 @@ void debug_vxgi_pass_func(int width, int height) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
-    const auto& program = my::ShaderProgramManager::get(my::PROGRAM_DEBUG_VOXEL);
+    const auto& program = ShaderProgramManager::get(PROGRAM_DEBUG_VOXEL);
     program.bind();
 
     glBindVertexArray(g_box.vao);
@@ -211,11 +213,41 @@ void lighting_pass_func(int width, int height) {
     }
 
     glViewport(0, 0, width, height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     const auto& program = ShaderProgramManager::get(PROGRAM_LIGHTING_VXGI);
     program.bind();
     R_DrawQuad();
-    program.unbind();
+
+    {
+        // @DEBUG SKYBOX
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        ShaderProgramManager::get(PROGRAM_SKY_BOX).bind();
+        glBindVertexArray(g_skybox.vao);
+        glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
+        glDisable(GL_CULL_FACE);
+    }
+
+    ShaderProgramManager::get(PROGRAM_BILLBOARD).bind();
+    // draw billboards
+    auto render_data = GraphicsManager::singleton().get_render_data();
+
+    for (const auto& light : render_data->light_billboards) {
+        // @TODO: sort same materials
+        g_perBatchCache.cache.c_model_matrix = light.transform;
+        g_perBatchCache.Update();
+        g_materialCache.cache.c_albedo_map = light.image ? light.image->texture.resident_handle : 0;
+        g_materialCache.Update();
+
+        glBindVertexArray(g_billboard.vao);
+        glDrawElementsInstanced(GL_TRIANGLES, g_billboard.count, GL_UNSIGNED_INT, 0, 1);
+    }
+
+    // glDepthFunc(GL_LESS);
+    glUseProgram(0);
 }
 
 void fxaa_pass_func(int width, int height) {
@@ -226,13 +258,15 @@ void fxaa_pass_func(int width, int height) {
     program.bind();
     R_DrawQuad();
     program.unbind();
+
+    // @TODO: draw gui stuff to the anti-aliased
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {
     auto [w, h] = DisplayServer::singleton().get_frame_size();
     // @TODO: fix this
-    w /= 2;
-    h /= 2;
+    // w /= 2;
+    // h /= 2;
 
     auto gbuffer_attachment0 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_POSITION,
                                                                    FORMAT_R16G16B16A16_FLOAT,
@@ -262,10 +296,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                FORMAT_R8G8B8A8_UINT,
                                                                RT_COLOR_ATTACHMENT,
                                                                w, h });
-    // auto view_attachment = graph.create_resource(ResourceDesc{ RT_RES_FINAL_IMAGE,
-    //                                                            FORMAT_R8G8B8A8_UINT,
-    //                                                            RT_COLOR_ATTACHMENT,
-    //                                                            w, h });
 
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);

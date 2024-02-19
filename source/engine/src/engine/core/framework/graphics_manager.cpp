@@ -11,6 +11,7 @@
 /////
 #include "assets/image.h"
 #include "core/base/rid_owner.h"
+#include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "rendering/r_editor.h"
 #include "rendering/rendering_dvars.h"
@@ -28,7 +29,11 @@ using my::rg::RenderPass;
 /// textures
 GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
+
+// @TODO: refactor
 MeshData g_box;
+MeshData g_skybox;
+MeshData g_billboard;
 
 // @TODO: fix this
 my::RIDAllocator<MeshData> g_meshes;
@@ -80,7 +85,6 @@ bool GraphicsManager::initialize() {
     createGpuResources();
 
     g_meshes.set_description("GPU-Mesh-Allocator");
-    m_texture_allocator.set_description("GPU-Materials");
 
     m_render_data = std::make_shared<RenderData>();
     return true;
@@ -151,16 +155,11 @@ static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
 void GraphicsManager::create_texture(ImageHandle* handle) {
     DEV_ASSERT(handle && handle->data);
     Image* image = handle->data;
-    RID rid = m_texture_allocator.make_rid();
-    Texture* texture = m_texture_allocator.get_or_null(rid);
-    image->gpu_resource = rid;
 
-    glGenTextures(1, &texture->handle);
-    glBindTexture(GL_TEXTURE_2D, texture->handle);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    GLuint texture_id = 0;
+
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
 
     glTexImage2D(GL_TEXTURE_2D,
                  0,
@@ -172,11 +171,33 @@ void GraphicsManager::create_texture(ImageHandle* handle) {
                  format_to_gl_data_type(image->format),
                  image->buffer.data());
 
-    glGenerateMipmap(GL_TEXTURE_2D);
+    // @TODO: filter
+    // @HACK: dummy filter
+    switch (image->format) {
+        case FORMAT_R32_FLOAT:
+        case FORMAT_R32G32_FLOAT:
+        case FORMAT_R32G32B32_FLOAT:
+        case FORMAT_R32G32B32A32_FLOAT: {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        } break;
+        default: {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        } break;
+    }
+
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    texture->resident_handle = glGetTextureHandleARB(texture->handle);
-    glMakeTextureHandleResidentARB(texture->resident_handle);
+    GLuint64 resident_id = glGetTextureHandleARB(texture_id);
+    glMakeTextureHandleResidentARB(resident_id);
+    image->texture.handle = texture_id;
+    image->texture.resident_handle = resident_id;
 }
 
 void GraphicsManager::event_received(std::shared_ptr<Event> event) {
@@ -249,12 +270,18 @@ static void create_ssao_resource() {
 }
 
 void GraphicsManager::createGpuResources() {
+    auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
+    g_constantCache.cache.c_skybox_map = skybox->get()->texture.resident_handle;
+    // @TODO: enviroment
+
     create_ssao_resource();
 
     R_Alloc_Cbuffers();
 
     // create a dummy box data
-    create_mesh_data(my::make_box_mesh(), g_box);
+    create_mesh_data(make_plane_mesh(0.3f), g_billboard);
+    create_mesh_data(make_box_mesh(), g_box);
+    create_mesh_data(make_box_mesh(20.f), g_skybox);
 
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
@@ -342,13 +369,11 @@ void GraphicsManager::fill_material_constant_buffer(const MaterialComponent* mat
         }
 
         Image* image = handle->data;
-        if (image->gpu_resource.is_null()) {
+        if (image->texture.handle == 0) {
             return false;
         }
 
-        Texture* texture = m_texture_allocator.get_or_null(image->gpu_resource);
-        DEV_ASSERT(texture);
-        out_handle = texture->resident_handle;
+        out_handle = image->texture.resident_handle;
         return true;
     };
 

@@ -28,7 +28,7 @@ static std::vector<std::string> quick_dirty_split(std::string str, std::string t
     return result;
 }
 
-static void import_scene(ImporterName importer) {
+static void import_scene() {
     std::vector<const char*> filters = { ".gltf", ".obj" };
     auto path = open_file_dialog(filters);
 
@@ -36,7 +36,7 @@ static void import_scene(ImporterName importer) {
         return;
     }
 
-    SceneManager::singleton().request_scene(path, importer);
+    SceneManager::singleton().request_scene(path);
 
     std::string files(DVAR_GET_STRING(recent_files));
     if (!files.empty()) {
@@ -47,14 +47,14 @@ static void import_scene(ImporterName importer) {
     DVAR_SET_STRING(recent_files, files);
 }
 
-static void import_recent(ImporterName importer) {
+static void import_recent() {
     std::string recent_files(DVAR_GET_STRING(recent_files));
 
     auto files = quick_dirty_split(recent_files, ";");
 
     for (const auto& file : files) {
         if (ImGui::MenuItem(file.c_str())) {
-            SceneManager::singleton().request_scene(file, importer);
+            SceneManager::singleton().request_scene(file);
         }
     }
 }
@@ -108,18 +108,11 @@ void MenuBar::draw(Scene&) {
         }
         ImGui::Separator();
         if (ImGui::BeginMenu("Import")) {
-            if (ImGui::MenuItem("Import (Assimp)")) {
-                import_scene(IMPORTER_ASSIMP);
+            if (ImGui::MenuItem("Import")) {
+                import_scene();
             }
-            if (ImGui::BeginMenu("Import Recent (Assimp)")) {
-                import_recent(IMPORTER_ASSIMP);
-                ImGui::EndMenu();
-            }
-            if (ImGui::MenuItem("Import (TinyGLTF)")) {
-                import_scene(IMPORTER_TINYGLTF);
-            }
-            if (ImGui::BeginMenu("Import Recent (TinyGLTF)")) {
-                import_recent(IMPORTER_TINYGLTF);
+            if (ImGui::BeginMenu("Import Recent")) {
+                import_recent();
                 ImGui::EndMenu();
             }
             ImGui::EndMenu();
