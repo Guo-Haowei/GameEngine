@@ -152,6 +152,10 @@ void PropertyPanel::update_internal(Scene& scene) {
             // @TODO: set dirty
         }
 
+        bool cast_shadow = light.flags & LightComponent::CAST_SHADOW;
+        ImGui::Checkbox("Cast shadow", &cast_shadow);
+        light.flags = (cast_shadow ? LightComponent::CAST_SHADOW : 0);
+
         dirty |= draw_color_control("color:", light.color);
         dirty |= draw_drag_float("energy:", light.energy, 1.0f, 0.1f, 100.0f);
         dirty |= draw_drag_float("constant", light.atten.constant, 0.1f, 0.0f, 1.0f);

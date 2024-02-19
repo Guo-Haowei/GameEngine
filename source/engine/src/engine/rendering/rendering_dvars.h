@@ -22,6 +22,7 @@ DVAR_FLOAT(r_vxgi_max_world_size, 0, "Maxium voxel size when using vxgi", 40.0f)
 DVAR_INT(r_debug_vxgi_voxel, DVAR_FLAG_CACHE, "", 0);
 
 // shadow
+DVAR_INT(r_point_shadow_res, 0, "Point shadow resolution", 1024);
 DVAR_INT(r_shadow_res, 0, "Shadow resolution", 1024 * 2);
 
 // SSAO

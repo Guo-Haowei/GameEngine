@@ -37,8 +37,13 @@ struct RenderData {
 
     const Scene* scene = nullptr;
 
+    // @TODO: fix this ugly shit
+    Pass point_shadow_pass;
+    bool has_point_light;
+
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<Pass, NUM_CASCADE_MAX> shadow_passes;
+
     Pass voxel_pass;
     Pass main_pass;
     // @TODO: array
@@ -49,6 +54,7 @@ struct RenderData {
 private:
     void clear();
 
+    void point_light_draw_data();
     void fill(const Scene* p_scene, const mat4& projection_view_matrix, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2);
 };
 

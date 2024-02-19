@@ -12,7 +12,8 @@ using jobsystem::Context;
 static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // version 2: don't serialize scene.m_bound
 // version 3: light component atten
-static constexpr uint32_t kSceneVersion = 3;
+// version 4: light component flags
+static constexpr uint32_t kSceneVersion = 4;
 static constexpr uint32_t kSceneMagicNumber = 'xScn';
 
 // @TODO: refactor

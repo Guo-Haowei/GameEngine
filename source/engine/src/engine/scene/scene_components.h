@@ -106,13 +106,11 @@ private:
 //--------------------------------------------------------------------------------------------------
 struct MeshComponent {
     enum : uint32_t {
-        NONE = 0,
-        RENDERABLE = 1 << 0,
-        DOUBLE_SIDED = 1 << 1,
-        DYNAMIC = 1 << 2,
+        NONE = BIT(0),
+        RENDERABLE = BIT(1),
+        DOUBLE_SIDED = BIT(2),
+        DYNAMIC = BIT(3),
     };
-
-    uint32_t flags = RENDERABLE;
 
     struct VertexAttribute {
         enum NAME {
@@ -134,6 +132,7 @@ struct MeshComponent {
         bool is_valid() const { return size_in_byte != 0; }
     };
 
+    uint32_t flags = RENDERABLE;
     std::vector<uint32_t> indices;
     std::vector<vec3> positions;
     std::vector<vec3> normals;
@@ -200,6 +199,15 @@ struct MaterialComponent {
 // Light Component
 //--------------------------------------------------------------------------------------------------
 struct LightComponent {
+    enum : uint32_t {
+        NONE = BIT(0),
+        DIRTY = BIT(1),
+        CAST_SHADOW = BIT(2),
+    };
+
+    bool cast_shadow() const { return flags & CAST_SHADOW; }
+
+    uint32_t flags = NONE;
     int type = LIGHT_TYPE_OMNI;
     vec3 color = vec3(1);
     float energy = 10.0f;
@@ -219,10 +227,10 @@ struct LightComponent {
 // Object Compoinent
 //--------------------------------------------------------------------------------------------------
 struct ObjectComponent {
-    enum FLAGS {
-        NONE = 0,
-        RENDERABLE = 1 << 0,
-        CAST_SHADOW = 1 << 1,
+    enum : uint32_t {
+        NONE = BIT(0),
+        RENDERABLE = BIT(1),
+        CAST_SHADOW = BIT(2),
     };
 
     uint32_t flags = RENDERABLE | CAST_SHADOW;

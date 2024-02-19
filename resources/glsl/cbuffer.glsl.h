@@ -18,6 +18,7 @@ struct ConstantBufferBase {
 #ifdef __cplusplus
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
+using samplerCube = uint64_t;
 typedef struct {
     uint64_t data;
     uint64_t padding;
@@ -45,6 +46,11 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     mat4 c_projection_view_matrix;
 
     Light c_lights[NUM_LIGHT_MAX];
+
+    // @TODO: these are temporary point light shit
+    mat4 c_point_light_matrices[6];
+    vec3 c_point_light_position;
+    float c_point_light_far;
 
     mat4 c_main_light_matrices[NUM_CASCADE_MAX];
     vec4 c_cascade_plane_distances;
@@ -99,6 +105,10 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
 
 CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
     vec4 c_ssao_kernels[NUM_SSAO_KERNEL_MAX];
+
+    samplerCube c_point_shadow_map;
+    sampler2D _c_another_padding;
+
     sampler2D c_shadow_map;
     sampler2D c_skybox_map;
     sampler3D c_voxel_map;
