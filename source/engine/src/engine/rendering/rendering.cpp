@@ -136,6 +136,7 @@ void fill_constant_buffers(const Scene& scene) {
                 light.atten_linear = light_component.atten.linear;
                 light.atten_quadratic = light_component.atten.quadratic;
                 light.position = light_transform->get_translation();
+                light.cast_shadow = light_component.cast_shadow();
             } break;
             default:
                 break;
