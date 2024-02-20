@@ -111,6 +111,9 @@ void shadow_pass_func(int width, int height) {
 void voxelization_pass_func(int width, int height) {
     unused(width);
     unused(height);
+    if (!DVAR_GET_BOOL(r_enable_vxgi)) {
+        return;
+    }
 
     g_albedoVoxel.clear();
     g_normalVoxel.clear();

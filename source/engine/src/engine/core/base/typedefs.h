@@ -1,7 +1,25 @@
 #pragma once
 
+#define IN_USE     &&
+#define NOT_IN_USE &&!
+#define USE_IF(x)  &&((x) ? 1 : 0) &&
+#define USING(x)   (1 x 1)
+
+#if defined(_DEBUG) || defined(DDEBUG)
+#define DEBUG_BUILD   IN_USE
+#define RELEASE_BUILD NOT_IN_USE
+#else
+#define DEBUG_BUILD   NOT_IN_USE
+#define RELEASE_BUILD IN_USE
+#endif
+
+#if USING(DEBUG_BUILD)
+#define DISABLE_OPTIMIZATION() static_assert(0, "DISABLE_OPTIMIZATION() should not been used width DEBUG_BUILD")
+#define ENABLE_OPTIMIZATION()  static_assert(0, "ENABLE_OPTIMIZATION() should not been used width DEBUG_BUILD")
+#else
 #define DISABLE_OPTIMIZATION() __pragma(optimize("", off))
 #define ENABLE_OPTIMIZATION()  __pragma(optimize("", on))
+#endif
 
 #ifdef _STR
 #undef _STR
