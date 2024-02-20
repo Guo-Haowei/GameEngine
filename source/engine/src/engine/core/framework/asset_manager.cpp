@@ -37,23 +37,6 @@ bool AssetManager::initialize() {
 #if 0
     const std::string preload[] = {
         "@res://fonts/DroidSans.ttf",
-        "@res://glsl/vsinput.glsl.h",
-        "@res://glsl/cbuffer.glsl.h",
-        "@res://glsl/mesh_static.vert",
-        "@res://glsl/mesh_animated.vert",
-        "@res://glsl/depth_static.vert",
-        "@res://glsl/depth_animated.vert",
-        "@res://glsl/depth.frag",
-        "@res://glsl/fullscreen.vert",
-        "@res://glsl/fxaa.frag",
-        "@res://glsl/gbuffer.frag",
-        "@res://glsl/ssao.frag",
-        "@res://glsl/lighting.frag",
-        "@res://glsl/debug/texture.frag",
-        "@res://glsl/vxgi/voxelization.vert",
-        "@res://glsl/vxgi/voxelization.geom",
-        "@res://glsl/vxgi/voxelization.frag",
-        "@res://glsl/vxgi/post.comp",
     };
 
     Timer timer;

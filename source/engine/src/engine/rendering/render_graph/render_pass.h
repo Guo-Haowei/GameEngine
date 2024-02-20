@@ -5,11 +5,6 @@ namespace my::rg {
 
 using RenderPassFunc = void (*)(int width, int height);
 
-enum RenderPassType {
-    RENDER_PASS_SHADING,
-    RENDER_PASS_COMPUTE,
-};
-
 struct SubPassDesc {
     std::vector<std::shared_ptr<Resource>> color_attachments;
     std::shared_ptr<Resource> depth_attachment;
@@ -17,7 +12,6 @@ struct SubPassDesc {
 };
 
 struct RenderPassDesc {
-    RenderPassType type = RENDER_PASS_SHADING;
     std::string name;
     std::vector<std::string> dependencies;
     std::vector<SubPassDesc> subpasses;

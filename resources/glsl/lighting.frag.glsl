@@ -15,18 +15,18 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float ShadowCalculation(vec3 fragPos) {
+float point_shadow_calculation(vec3 p_frag_pos) {
     // get vector between fragment position and light position
-    vec3 fragToLight = fragPos - c_point_light_position;
+    vec3 frag_to_light = p_frag_pos - c_point_light_position;
     // use the light to fragment vector to sample from the depth map
-    float closestDepth = texture(c_point_shadow_map, fragToLight).r;
+    float closest_depth = texture(c_point_shadow_map, frag_to_light).r;
     // it is currently in linear range between [0,1]. Re-transform back to original value
-    closestDepth *= c_point_light_far;
+    closest_depth *= c_point_light_far;
     // now get current linear depth as the length between the fragment and light position
-    float currentDepth = length(fragToLight);
+    float current_depth = length(frag_to_light);
     // now test for shadows
     float bias = 0.05;
-    float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+    float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
 
     return shadow;
 }
@@ -58,42 +58,47 @@ void main() {
     const float NdotV = max(dot(N, V), 0.0);
     vec3 Lo = vec3(0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
+    float shadow = 0.0;
     for (int idx = 0; idx < c_light_count; ++idx) {
+        Light light = c_lights[idx];
         int light_type = c_lights[idx].type;
-        vec3 L = vec3(0.0);
-        float atten = 1.0;
-        if (light_type == LIGHT_TYPE_OMNI) {
-            L = c_lights[idx].position;
+        vec3 direct_lighting = vec3(0.0);
+        switch (light.type) {
+            case LIGHT_TYPE_OMNI: {
+                vec3 L = light.position;
+                float atten = 1.0;
 
-            const vec3 H = normalize(V + L);
-            const vec3 radiance = c_lights[idx].color;
-            vec3 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
-            // @TODO: shadow
-            if (c_lights[idx].cast_shadow == 1) {
-                const float NdotL = max(dot(N, L), 0.0);
-                float shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
-                direct_lighting = (1.0 - shadow) * direct_lighting;
-            }
-            Lo += direct_lighting;
-        } else if (light_type == LIGHT_TYPE_POINT) {
-            vec3 delta = -world_position + c_lights[idx].position;
-            L = normalize(delta);
-            float dist = length(delta);
-            atten = (c_lights[idx].atten_constant + c_lights[idx].atten_linear * dist +
-                     c_lights[idx].atten_quadratic * (dist * dist));
-            atten = 1.0 / atten;
-            if (atten > 0.01) {
                 const vec3 H = normalize(V + L);
-                const vec3 radiance = c_lights[idx].color;
-                vec3 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
-                if (c_lights[idx].cast_shadow == 1) {
-                    float shadow = ShadowCalculation(world_position);
-                    direct_lighting = (1.0 - shadow) * direct_lighting;
+                const vec3 radiance = light.color;
+                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
+                if (light.cast_shadow == 1) {
+                    const float NdotL = max(dot(N, L), 0.0);
+                    shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
+                    direct_lighting *= (1.0 - shadow);
                 }
-                Lo += direct_lighting;
-            }
+            } break;
+            case LIGHT_TYPE_POINT: {
+                vec3 delta = -world_position + light.position;
+                float dist = length(delta);
+                float atten = (light.atten_constant + light.atten_linear * dist +
+                               light.atten_quadratic * (dist * dist));
+                atten = 1.0 / atten;
+                if (atten > 0.01) {
+                    vec3 L = normalize(delta);
+                    const vec3 H = normalize(V + L);
+                    const vec3 radiance = c_lights[idx].color;
+                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
+                    if (light.cast_shadow == 1) {
+                        shadow = point_shadow_calculation(world_position);
+                    }
+                }
+            } break;
+            default:
+                break;
         }
+        Lo += (1.0 - shadow) * direct_lighting;
     }
+    // dummy ambient
     Lo += 0.2 * albedo.rgb;
 
     const float ao = c_enable_ssao == 0 ? 1.0 : texture(c_ssao_map, uv).r;

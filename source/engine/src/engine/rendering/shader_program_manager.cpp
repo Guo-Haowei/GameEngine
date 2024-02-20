@@ -190,7 +190,7 @@ bool ShaderProgramManager::initialize() {
     {
         ProgramCreateInfo info;
         info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/lighting.frag";
+        info.ps = "@res://glsl/lighting.frag.glsl";
         s_shader_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {

@@ -337,22 +337,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                FORMAT_R8G8B8A8_UINT,
                                                                RT_COLOR_ATTACHMENT,
                                                                w, h });
-    {  // point shadow
-        const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
-        DEV_ASSERT(math::is_power_of_two(shadow_res));
-
-        auto shadow_map = graph.create_resource(ResourceDesc{ RT_RES_POINT_SHADOW_MAP,
-                                                              FORMAT_D32_FLOAT,
-                                                              RT_SHADOW_CUBE_MAP,
-                                                              shadow_res, shadow_res });
-        RenderPassDesc desc;
-        desc.name = POINT_SHADOW_PASS;
-        desc.subpasses.emplace_back(SubPassDesc{
-            .depth_attachment = shadow_map,
-            .func = point_shadow_pass_func,
-        });
-        graph.add_pass(desc);
-    }
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
@@ -361,9 +345,20 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                               FORMAT_D32_FLOAT,
                                                               RT_SHADOW_MAP,
                                                               NUM_CASCADE_MAX * shadow_res, shadow_res });
+        const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
+        DEV_ASSERT(math::is_power_of_two(point_shadow_res));
+
+        auto point_shadow_map = graph.create_resource(ResourceDesc{ RT_RES_POINT_SHADOW_MAP,
+                                                                    FORMAT_D32_FLOAT,
+                                                                    RT_SHADOW_CUBE_MAP,
+                                                                    point_shadow_res, point_shadow_res });
+
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
-        desc.dependencies = { POINT_SHADOW_PASS };
+        desc.subpasses.emplace_back(SubPassDesc{
+            .depth_attachment = point_shadow_map,
+            .func = point_shadow_pass_func,
+        });
         desc.subpasses.emplace_back(SubPassDesc{
             .depth_attachment = shadow_map,
             .func = shadow_pass_func,
@@ -373,7 +368,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     {  // gbuffer pass
         RenderPassDesc desc;
         desc.name = GBUFFER_PASS;
-        desc.dependencies = { SHADOW_PASS };
         desc.subpasses.emplace_back(SubPassDesc{
             .color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 },
             .depth_attachment = gbuffer_depth,
@@ -383,7 +377,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     }
     {  // voxel pass
         RenderPassDesc desc;
-        desc.type = RENDER_PASS_COMPUTE;
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
         desc.subpasses.emplace_back(SubPassDesc{
