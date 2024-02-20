@@ -347,8 +347,10 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                               shadow_res, shadow_res });
         RenderPassDesc desc;
         desc.name = POINT_SHADOW_PASS;
-        desc.depth_attachment = shadow_map;
-        desc.func = point_shadow_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .depth_attachment = shadow_map,
+            .func = point_shadow_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // shadow pass
@@ -362,17 +364,21 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
         desc.dependencies = { POINT_SHADOW_PASS };
-        desc.depth_attachment = shadow_map;
-        desc.func = shadow_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .depth_attachment = shadow_map,
+            .func = shadow_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // gbuffer pass
         RenderPassDesc desc;
         desc.name = GBUFFER_PASS;
         desc.dependencies = { SHADOW_PASS };
-        desc.color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 };
-        desc.depth_attachment = gbuffer_depth;
-        desc.func = gbuffer_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 },
+            .depth_attachment = gbuffer_depth,
+            .func = gbuffer_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // voxel pass
@@ -380,32 +386,40 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.type = RENDER_PASS_COMPUTE;
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
-        desc.func = voxelization_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .func = voxelization_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // ssao pass
         RenderPassDesc desc;
         desc.name = SSAO_PASS;
         desc.dependencies = { GBUFFER_PASS };
-        desc.color_attachments = { ssao_attachment };
-        desc.func = ssao_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { ssao_attachment },
+            .func = ssao_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // lighting pass
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
         desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
-        desc.color_attachments = { lighting_attachment };
-        desc.depth_attachment = gbuffer_depth;
-        desc.func = lighting_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { lighting_attachment },
+            .depth_attachment = gbuffer_depth,
+            .func = lighting_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // fxaa pass
         RenderPassDesc desc;
         desc.name = FXAA_PASS;
         desc.dependencies = { LIGHTING_PASS };
-        desc.color_attachments = { fxaa_attachment };
-        desc.func = fxaa_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { fxaa_attachment },
+            .func = fxaa_pass_func,
+        });
         graph.add_pass(desc);
     }
 
