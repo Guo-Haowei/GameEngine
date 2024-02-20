@@ -36,8 +36,8 @@ struct Light {
     float atten_constant;
     float atten_linear;
     float atten_quadratic;
-    float padding;
-    // @TODO: shadow map
+    float far_plane;  // far plane of point light shadow
+    mat4 matrices[6];
 };
 
 CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
@@ -47,11 +47,7 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
 
     Light c_lights[NUM_LIGHT_MAX];
 
-    // @TODO: these are temporary point light shit
-    mat4 c_point_light_matrices[6];
-    vec3 c_point_light_position;
-    float c_point_light_far;
-
+    // @TODO: move it to Light
     mat4 c_main_light_matrices[NUM_CASCADE_MAX];
     vec4 c_cascade_plane_distances;
 
@@ -84,6 +80,9 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
 CONSTANT_BUFFER(PerBatchConstantBuffer, 1) {
     mat4 c_projection_view_model_matrix;
     mat4 c_model_matrix;
+
+    vec3 _c_ddddd_padding;
+    int c_light_index;  // HACK: shouldn't be here
 };
 
 CONSTANT_BUFFER(MaterialConstantBuffer, 2) {

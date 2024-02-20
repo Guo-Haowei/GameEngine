@@ -15,16 +15,11 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float point_shadow_calculation(vec3 p_frag_pos) {
-    // get vector between fragment position and light position
-    vec3 frag_to_light = p_frag_pos - c_point_light_position;
-    // use the light to fragment vector to sample from the depth map
+float point_shadow_calculation(vec3 p_frag_pos, vec3 p_light_position, float p_light_far) {
+    vec3 frag_to_light = p_frag_pos - p_light_position;
     float closest_depth = texture(c_point_shadow_map, frag_to_light).r;
-    // it is currently in linear range between [0,1]. Re-transform back to original value
-    closest_depth *= c_point_light_far;
-    // now get current linear depth as the length between the fragment and light position
+    closest_depth *= p_light_far;
     float current_depth = length(frag_to_light);
-    // now test for shadows
     float bias = 0.05;
     float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
 
@@ -89,7 +84,7 @@ void main() {
                     const vec3 radiance = c_lights[idx].color;
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
                     if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(world_position);
+                        shadow = point_shadow_calculation(world_position, light.position, light.far_plane);
                     }
                 }
             } break;

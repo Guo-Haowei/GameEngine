@@ -25,6 +25,7 @@ struct RenderData {
     struct Pass {
         mat4 projection_view_matrix;
         std::vector<Mesh> draws;
+        int light_index;
 
         void clear() { draws.clear(); }
     };

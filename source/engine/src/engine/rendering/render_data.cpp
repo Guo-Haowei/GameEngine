@@ -38,25 +38,8 @@ void RenderData::point_light_draw_data() {
             DEV_ASSERT(transform);
             vec3 position = transform->get_translation();
             // @TODO: calc near and far based on attenuation
-            const float near_plane = 1.0f;
-            // @TODO: OMG SO UGLY
-            const float far_plane = 25.0f;
-            const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
-            std::array<glm::mat4, 6> light_space_matrices = {
-                projection * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-            };
 
-            for (int idx = 0; idx < 6; ++idx) {
-                g_perFrameCache.cache.c_point_light_matrices[idx] = light_space_matrices[idx];
-            }
-            g_perFrameCache.cache.c_point_light_far = 25.0f;
-            g_perFrameCache.cache.c_point_light_position = position;
-
+            const mat4* light_space_matrices = g_perFrameCache.cache.c_lights[light_idx].matrices;
             std::array<Frustum, 6> frustums = {
                 Frustum{ light_space_matrices[0] },
                 Frustum{ light_space_matrices[1] },
@@ -65,6 +48,8 @@ void RenderData::point_light_draw_data() {
                 Frustum{ light_space_matrices[4] },
                 Frustum{ light_space_matrices[5] },
             };
+
+            point_shadow_pass.light_index = light_idx;
 
             fill(
                 scene,

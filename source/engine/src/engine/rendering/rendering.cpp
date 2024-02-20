@@ -135,8 +135,21 @@ void fill_constant_buffers(const Scene& scene) {
                 light.atten_constant = light_component.atten.constant;
                 light.atten_linear = light_component.atten.linear;
                 light.atten_quadratic = light_component.atten.quadratic;
-                light.position = light_transform->get_translation();
+                const vec3 position = light_transform->get_translation();
+                light.position = position;
                 light.cast_shadow = light_component.cast_shadow();
+                constexpr float far_plane = 25.0f;
+                light.far_plane = far_plane;
+                if (light.cast_shadow) {
+                    constexpr float near_plane = 1.0f;
+                    const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                    light.matrices[0] = projection * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+                    light.matrices[1] = projection * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+                    light.matrices[2] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+                    light.matrices[3] = projection * glm::lookAt(position, position + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+                    light.matrices[4] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+                    light.matrices[5] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+                }
             } break;
             default:
                 break;

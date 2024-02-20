@@ -56,6 +56,7 @@ void point_shadow_pass_func(int, int) {
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
+        g_perBatchCache.cache.c_light_index = pass.light_index;
         g_perBatchCache.Update();
 
         glBindVertexArray(draw.mesh_data->vao);
