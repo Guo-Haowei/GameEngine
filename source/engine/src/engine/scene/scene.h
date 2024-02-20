@@ -189,6 +189,7 @@ public:                                                                         
 
     RayIntersectionResult select(Ray& ray);
     RayIntersectionResult intersects(Ray& ray);
+    bool ray_object_intersect(ecs::Entity object_id, Ray& ray);
 
     const AABB& get_bound() const { return m_bound; }
     // @TODO: refactor

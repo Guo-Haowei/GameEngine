@@ -27,9 +27,9 @@ void MeshColliderComponent::serialize(Archive& archive, uint32_t version) {
     unused(version);
 
     if (archive.is_write_mode()) {
-        archive << mesh_id;
+        archive << object_id;
     } else {
-        archive >> mesh_id;
+        archive >> object_id;
     }
 }
 

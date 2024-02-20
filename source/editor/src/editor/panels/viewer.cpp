@@ -59,6 +59,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             const vec3 ray_end = ray_start + direction * camera.get_far();
             Ray ray(ray_start, ray_end);
 
+            // const auto intersection_result = scene.intersects(ray);
             const auto intersection_result = scene.select(ray);
 
             m_editor.select_entity(intersection_result.entity);
@@ -106,9 +107,11 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         if (const BoxColliderComponent* collider = scene.get_component<BoxColliderComponent>(id); collider) {
             aabb = collider->box;
         }
-        // @TODO: fix
         if (const MeshColliderComponent* collider = scene.get_component<MeshColliderComponent>(id); collider) {
-            if (const MeshComponent* mesh = scene.get_component<MeshComponent>(collider->mesh_id); mesh) {
+            if (const ObjectComponent* object = scene.get_component<ObjectComponent>(collider->object_id); object) {
+                MeshComponent* mesh = scene.get_component<MeshComponent>(object->mesh_id);
+                transform_component = scene.get_component<TransformComponent>(collider->object_id);
+                DEV_ASSERT(transform_component);
                 aabb = mesh->local_bound;
             }
         }

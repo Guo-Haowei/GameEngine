@@ -605,9 +605,9 @@ Scene::RayIntersectionResult Scene::select(Ray& ray) {
             continue;
         }
 
-        mat4 inversed_model = glm::inverse(transform->get_world_matrix());
-        Ray inversed_ray = ray.inverse(inversed_model);
         if (const auto* collider = get_component<BoxColliderComponent>(entity); collider) {
+            mat4 inversed_model = glm::inverse(transform->get_world_matrix());
+            Ray inversed_ray = ray.inverse(inversed_model);
             if (inversed_ray.intersects(collider->box)) {
                 result.entity = entity;
                 ray.copy_dist(inversed_ray);
@@ -616,72 +616,57 @@ Scene::RayIntersectionResult Scene::select(Ray& ray) {
         }
 
         if (const auto* collider = get_component<MeshColliderComponent>(entity); collider) {
-            MeshComponent* mesh = get_component<MeshComponent>(collider->mesh_id);
-            if (!mesh) {
-                continue;
-            }
-
-            Ray inversedRayAABB = inversed_ray;  // make a copy, we don't want dist to be modified by AABB
-            // Perform aabb test
-            if (!inversedRayAABB.intersects(mesh->local_bound)) {
-                continue;
-            }
-
-            // @TODO: test submesh intersection
-
-            // Test every single triange
-            for (size_t i = 0; i < mesh->indices.size(); i += 3) {
-                const vec3& A = mesh->positions[mesh->indices[i]];
-                const vec3& B = mesh->positions[mesh->indices[i + 1]];
-                const vec3& C = mesh->positions[mesh->indices[i + 2]];
-                if (inversed_ray.intersects(A, B, C)) {
-                    ray.copy_dist(inversed_ray);
-                    result.entity = entity;
-                    break;
-                }
+            if (ray_object_intersect(collider->object_id, ray)) {
+                result.entity = entity;
             }
             continue;
         }
-        CRASH_NOW_MSG("???");
+        CRASH_NOW_MSG("????");
     }
     return result;
+}
+
+bool Scene::ray_object_intersect(Entity object_id, Ray& ray) {
+    ObjectComponent* object = get_component<ObjectComponent>(object_id);
+    MeshComponent* mesh = get_component<MeshComponent>(object->mesh_id);
+    TransformComponent* transform = get_component<TransformComponent>(object_id);
+    DEV_ASSERT(mesh && transform);
+
+    if (!transform || !mesh) {
+        return false;
+    }
+
+    mat4 inversedModel = glm::inverse(transform->get_world_matrix());
+    Ray inversedRay = ray.inverse(inversedModel);
+    Ray inversedRayAABB = inversedRay;  // make a copy, we don't want dist to be modified by AABB
+    // Perform aabb test
+    if (!inversedRayAABB.intersects(mesh->local_bound)) {
+        return false;
+    }
+
+    // @TODO: test submesh intersection
+
+    // Test every single triange
+    for (size_t i = 0; i < mesh->indices.size(); i += 3) {
+        const vec3& A = mesh->positions[mesh->indices[i]];
+        const vec3& B = mesh->positions[mesh->indices[i + 1]];
+        const vec3& C = mesh->positions[mesh->indices[i + 2]];
+        if (inversedRay.intersects(A, B, C)) {
+            ray.copy_dist(inversedRay);
+            return true;
+        }
+    }
+    return false;
 }
 
 Scene::RayIntersectionResult Scene::intersects(Ray& ray) {
     RayIntersectionResult result;
 
     // @TODO: box collider
-    for (int objIdx = 0; objIdx < get_count<ObjectComponent>(); ++objIdx) {
-        Entity entity = get_entity<ObjectComponent>(objIdx);
-        ObjectComponent& object = get_component_array<ObjectComponent>()[objIdx];
-        MeshComponent* mesh = get_component<MeshComponent>(object.mesh_id);
-        TransformComponent* transform = get_component<TransformComponent>(entity);
-        DEV_ASSERT(mesh && transform);
-
-        if (!transform || !mesh) {
-            continue;
-        }
-
-        mat4 inversedModel = glm::inverse(transform->get_world_matrix());
-        Ray inversedRay = ray.inverse(inversedModel);
-        Ray inversedRayAABB = inversedRay;  // make a copy, we don't want dist to be modified by AABB
-        // Perform aabb test
-        if (!inversedRayAABB.intersects(mesh->local_bound)) {
-            continue;
-        }
-
-        // @TODO: test submesh intersection
-
-        // Test every single triange
-        for (size_t i = 0; i < mesh->indices.size(); i += 3) {
-            const vec3& A = mesh->positions[mesh->indices[i]];
-            const vec3& B = mesh->positions[mesh->indices[i + 1]];
-            const vec3& C = mesh->positions[mesh->indices[i + 2]];
-            if (inversedRay.intersects(A, B, C)) {
-                ray.copy_dist(inversedRay);
-                result.entity = entity;
-                break;
-            }
+    for (int object_idx = 0; object_idx < get_count<ObjectComponent>(); ++object_idx) {
+        Entity entity = get_entity<ObjectComponent>(object_idx);
+        if (ray_object_intersect(entity, ray)) {
+            result.entity = entity;
         }
     }
 
