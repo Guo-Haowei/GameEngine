@@ -149,21 +149,7 @@ void SceneManager::update(float dt) {
         m_last_revision = m_revision;
     }
 
-    // @TODO: refactor
-    Scene& scene = SceneManager::get_scene();
-
-    auto [frameW, frameH] = DisplayServer::singleton().get_frame_size();
-
-    // @TODO: refactor this
-    DEV_ASSERT(scene.m_camera);
-    Camera& camera = *scene.m_camera.get();
-
-    // @TODO: event
-    if (frameW > 0 && frameH > 0) {
-        camera.set_dimension(frameW, frameH);
-    }
-
-    scene.update(dt);
+    SceneManager::get_scene().update(dt);
 }
 
 void SceneManager::request_scene(std::string_view path) {

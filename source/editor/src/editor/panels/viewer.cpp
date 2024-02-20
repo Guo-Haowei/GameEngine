@@ -17,7 +17,9 @@ Viewer::Viewer(EditorLayer& editor) : EditorWindow("Viewer", editor) {
 }
 
 void Viewer::update_data() {
-    auto [frame_width, frame_height] = DisplayServer::singleton().get_frame_size();
+    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    int frame_width = frame_size.x;
+    int frame_height = frame_size.y;
     const float ratio = (float)frame_width / frame_height;
     m_canvas_size.x = ImGui::GetWindowSize().x;
     m_canvas_size.y = ImGui::GetWindowSize().y;

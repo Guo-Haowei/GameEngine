@@ -306,10 +306,9 @@ void fxaa_pass_func(int width, int height) {
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {
-    // @TODO: fix this
-    // w /= 2;
-    // h /= 2;
-    auto [w, h] = DisplayServer::singleton().get_frame_size();
+    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    int w = frame_size.x;
+    int h = frame_size.y;
 
     GraphicsManager& gm = GraphicsManager::singleton();
 

@@ -159,7 +159,7 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     // @TODO: fix
-    auto [w, h] = DisplayServer::singleton().get_frame_size();
+    auto [w, h] = DisplayServer::singleton().get_window_size();
     DVAR_SET_IVEC2(window_resolution, w, h);
     auto [x, y] = DisplayServer::singleton().get_window_pos();
     DVAR_SET_IVEC2(window_position, x, y);

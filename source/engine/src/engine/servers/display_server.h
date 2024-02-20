@@ -12,7 +12,7 @@ public:
 
     virtual bool should_close() = 0;
 
-    virtual std::tuple<int, int> get_frame_size() = 0;
+    virtual std::tuple<int, int> get_window_size() = 0;
     virtual std::tuple<int, int> get_window_pos() = 0;
 
     virtual void new_frame() = 0;
