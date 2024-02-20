@@ -190,7 +190,7 @@ bool ShaderProgramManager::initialize() {
     {
         ProgramCreateInfo info;
         info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/lighting.frag";
+        info.ps = "@res://glsl/lighting.frag.glsl";
         s_shader_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
@@ -201,20 +201,27 @@ bool ShaderProgramManager::initialize() {
     }
     {
         ProgramCreateInfo info;
-        info.vs = "@res://glsl/vxgi/voxelization.vert";
-        info.gs = "@res://glsl/vxgi/voxelization.geom";
-        info.ps = "@res://glsl/vxgi/voxelization.frag";
-        s_shader_cache[PROGRAM_VOXELIZATION] = create(info);
+        info.vs = "@res://glsl/vxgi/voxelization_static.vert.glsl";
+        info.gs = "@res://glsl/vxgi/voxelization.geom.glsl";
+        info.ps = "@res://glsl/vxgi/voxelization.frag.glsl";
+        s_shader_cache[PROGRAM_VOXELIZATION_STATIC] = create(info);
     }
     {
         ProgramCreateInfo info;
-        info.cs = "@res://glsl/vxgi/post.comp";
+        info.vs = "@res://glsl/vxgi/voxelization_animated.vert.glsl";
+        info.gs = "@res://glsl/vxgi/voxelization.geom.glsl";
+        info.ps = "@res://glsl/vxgi/voxelization.frag.glsl";
+        s_shader_cache[PROGRAM_VOXELIZATION_ANIMATED] = create(info);
+    }
+    {
+        ProgramCreateInfo info;
+        info.cs = "@res://glsl/vxgi/post.comp.glsl";
         s_shader_cache[PROGRAM_VOXELIZATION_POST] = create(info);
     }
     {
         ProgramCreateInfo info;
-        info.vs = "@res://glsl/vxgi/visualization.vert";
-        info.ps = "@res://glsl/vxgi/visualization.frag";
+        info.vs = "@res://glsl/vxgi/visualization.vert.glsl";
+        info.ps = "@res://glsl/vxgi/visualization.frag.glsl";
         s_shader_cache[PROGRAM_DEBUG_VOXEL] = create(info);
     }
     {

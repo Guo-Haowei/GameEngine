@@ -37,7 +37,12 @@ public:
         }
     }
 
-    void clear() { m_size = 0; }
+    void clear() {
+        for (int i = 0; i < m_size; ++i) {
+            m_data[i].~T();
+        }
+        m_size = 0;
+    }
     void resize(size_t new_size) { m_size = new_size; }
 
     bool empty() const { return m_size == 0; }

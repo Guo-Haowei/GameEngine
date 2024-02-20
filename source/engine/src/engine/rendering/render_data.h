@@ -1,4 +1,5 @@
 #pragma once
+#include "core/base/fixed_stack.h"
 #include "gl_utils.h"
 #include "scene/scene.h"
 
@@ -25,6 +26,7 @@ struct RenderData {
     struct Pass {
         mat4 projection_view_matrix;
         std::vector<Mesh> draws;
+        int light_index;
 
         void clear() { draws.clear(); }
     };
@@ -38,11 +40,10 @@ struct RenderData {
     const Scene* scene = nullptr;
 
     // @TODO: fix this ugly shit
-    Pass point_shadow_pass;
-    bool has_point_light;
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
-    std::array<Pass, NUM_CASCADE_MAX> shadow_passes;
+    std::array<Pass, MAX_CASCADE_COUNT> shadow_passes;
+    FixedStack<Pass, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
 
     Pass voxel_pass;
     Pass main_pass;

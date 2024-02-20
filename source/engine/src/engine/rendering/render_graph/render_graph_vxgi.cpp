@@ -23,9 +23,10 @@ extern my::RIDAllocator<MeshData> g_meshes;
 namespace my::rg {
 
 // @TODO: refactor render passes to have multiple frame buffers
-void point_shadow_pass_func(int, int) {
+// const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
+void point_shadow_pass_func(int width, int height, int pass_id) {
     auto render_data = GraphicsManager::singleton().get_render_data();
-    if (!render_data->has_point_light) {
+    if (render_data->point_shadow_passes.size() <= pass_id) {
         return;
     }
 
@@ -35,17 +36,16 @@ void point_shadow_pass_func(int, int) {
     glCullFace(GL_FRONT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
-    glViewport(0, 0, shadow_res, shadow_res);
+    glViewport(0, 0, width, height);
 
-    RenderData::Pass& pass = render_data->point_shadow_pass;
+    RenderData::Pass& pass = render_data->point_shadow_passes[pass_id];
 
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
 
         if (has_bone) {
             auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
+            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
@@ -56,6 +56,7 @@ void point_shadow_pass_func(int, int) {
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
+        g_perBatchCache.cache.c_light_index = pass.light_index;
         g_perBatchCache.Update();
 
         glBindVertexArray(draw.mesh_data->vao);
@@ -72,10 +73,10 @@ void shadow_pass_func(int width, int height) {
     glCullFace(GL_FRONT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    int actual_width = width / NUM_CASCADE_MAX;
+    int actual_width = width / MAX_CASCADE_COUNT;
     auto render_data = GraphicsManager::singleton().get_render_data();
 
-    for (int cascade_idx = 0; cascade_idx < NUM_CASCADE_MAX; ++cascade_idx) {
+    for (int cascade_idx = 0; cascade_idx < MAX_CASCADE_COUNT; ++cascade_idx) {
         glViewport(cascade_idx * actual_width, 0, actual_width, height);
 
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
@@ -85,7 +86,7 @@ void shadow_pass_func(int width, int height) {
 
             if (has_bone) {
                 auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
-                DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
+                DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
                 memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
                 g_boneCache.Update();
@@ -127,7 +128,6 @@ void voxelization_pass_func(int width, int height) {
     constexpr int IMAGE_VOXEL_NORMAL_SLOT = 1;
     g_albedoVoxel.bindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT);
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
-    ShaderProgramManager::get(PROGRAM_VOXELIZATION).bind();
 
     auto render_data = GraphicsManager::singleton().get_render_data();
     RenderData::Pass& pass = render_data->voxel_pass;
@@ -137,11 +137,13 @@ void voxelization_pass_func(int width, int height) {
 
         if (has_bone) {
             auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
+            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
         }
+
+        ShaderProgramManager::get(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC).bind();
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -191,7 +193,7 @@ void gbuffer_pass_func(int width, int height) {
 
         if (has_bone) {
             auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= NUM_BONE_MAX);
+            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
             g_boneCache.Update();
@@ -337,75 +339,102 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                FORMAT_R8G8B8A8_UINT,
                                                                RT_COLOR_ATTACHMENT,
                                                                w, h });
-    {  // point shadow
-        const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
-        DEV_ASSERT(math::is_power_of_two(shadow_res));
-
-        auto shadow_map = graph.create_resource(ResourceDesc{ RT_RES_POINT_SHADOW_MAP,
-                                                              FORMAT_D32_FLOAT,
-                                                              RT_SHADOW_CUBE_MAP,
-                                                              shadow_res, shadow_res });
-        RenderPassDesc desc;
-        desc.name = POINT_SHADOW_PASS;
-        desc.depth_attachment = shadow_map;
-        desc.func = point_shadow_pass_func;
-        graph.add_pass(desc);
-    }
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
+        const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
+        DEV_ASSERT(math::is_power_of_two(point_shadow_res));
 
         auto shadow_map = graph.create_resource(ResourceDesc{ RT_RES_SHADOW_MAP,
                                                               FORMAT_D32_FLOAT,
                                                               RT_SHADOW_MAP,
-                                                              NUM_CASCADE_MAX * shadow_res, shadow_res });
+                                                              MAX_CASCADE_COUNT * shadow_res, shadow_res });
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
-        desc.dependencies = { POINT_SHADOW_PASS };
-        desc.depth_attachment = shadow_map;
-        desc.func = shadow_pass_func;
+
+        RenderPassFunc funcs[] = {
+            [](int width, int height) {
+                point_shadow_pass_func(width, height, 0);
+            },
+            [](int width, int height) {
+                point_shadow_pass_func(width, height, 1);
+            },
+            [](int width, int height) {
+                point_shadow_pass_func(width, height, 2);
+            },
+            [](int width, int height) {
+                point_shadow_pass_func(width, height, 3);
+            },
+        };
+
+        static_assert(array_length(funcs) == MAX_LIGHT_CAST_SHADOW_COUNT);
+
+        for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
+            auto point_shadow_map = graph.create_resource(ResourceDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
+                                                                        FORMAT_D32_FLOAT,
+                                                                        RT_SHADOW_CUBE_MAP,
+                                                                        point_shadow_res, point_shadow_res });
+
+            desc.subpasses.emplace_back(SubPassDesc{
+                .depth_attachment = point_shadow_map,
+                .func = funcs[i],
+            });
+        }
+
+        desc.subpasses.emplace_back(SubPassDesc{
+            .depth_attachment = shadow_map,
+            .func = shadow_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // gbuffer pass
         RenderPassDesc desc;
         desc.name = GBUFFER_PASS;
-        desc.dependencies = { SHADOW_PASS };
-        desc.color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 };
-        desc.depth_attachment = gbuffer_depth;
-        desc.func = gbuffer_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 },
+            .depth_attachment = gbuffer_depth,
+            .func = gbuffer_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // voxel pass
         RenderPassDesc desc;
-        desc.type = RENDER_PASS_COMPUTE;
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
-        desc.func = voxelization_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .func = voxelization_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // ssao pass
         RenderPassDesc desc;
         desc.name = SSAO_PASS;
         desc.dependencies = { GBUFFER_PASS };
-        desc.color_attachments = { ssao_attachment };
-        desc.func = ssao_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { ssao_attachment },
+            .func = ssao_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // lighting pass
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
         desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
-        desc.color_attachments = { lighting_attachment };
-        desc.depth_attachment = gbuffer_depth;
-        desc.func = lighting_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { lighting_attachment },
+            .depth_attachment = gbuffer_depth,
+            .func = lighting_pass_func,
+        });
         graph.add_pass(desc);
     }
     {  // fxaa pass
         RenderPassDesc desc;
         desc.name = FXAA_PASS;
         desc.dependencies = { LIGHTING_PASS };
-        desc.color_attachments = { fxaa_attachment };
-        desc.func = fxaa_pass_func;
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { fxaa_attachment },
+            .func = fxaa_pass_func,
+        });
         graph.add_pass(desc);
     }
 

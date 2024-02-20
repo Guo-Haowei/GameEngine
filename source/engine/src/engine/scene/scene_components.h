@@ -4,7 +4,7 @@
 #include "core/math/aabb.h"
 #include "core/math/angle.h"
 #include "core/systems/entity.h"
-#include "shader_defines.h"
+#include "shader_constants.h"
 
 namespace my {
 
@@ -211,6 +211,9 @@ struct LightComponent {
     int type = LIGHT_TYPE_OMNI;
     vec3 color = vec3(1);
     float energy = 10.0f;
+
+    // Non-serialized
+    float max_distance;
 
     // @TODO: serialize
     // @TODO: edit

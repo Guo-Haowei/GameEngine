@@ -4,93 +4,88 @@
 
 namespace my::rg {
 
-void RenderPass::execute() {
-    bind();
-
-    if (m_func) {
-        m_func(m_width, m_height);
-    }
-
-    unbind();
-}
-
 void RenderPass::create_internal(RenderPassDesc& desc) {
     m_name = std::move(desc.name);
     m_inputs = std::move(desc.dependencies);
-    m_func = desc.func;
 }
 
-void RenderPassGL::create_internal(RenderPassDesc& desc) {
-    RenderPass::create_internal(desc);
+void RenderPassGL::create_subpass(const SubPassDesc& subpass_desc) {
+    SubpassData subpass;
+    subpass.func = subpass_desc.func;
+    subpass.handle = 0;
 
-    if (desc.type == RENDER_PASS_COMPUTE) {
+    const int num_depth_attachment = subpass_desc.depth_attachment != nullptr;
+    const int num_color_attachment = (int)subpass_desc.color_attachments.size();
+    if (!num_depth_attachment && !num_color_attachment) {
+        m_subpasses.emplace_back(subpass);
         return;
     }
 
-    glGenFramebuffers(1, &m_handle);
-    bind();
-
-    // @TODO: allow resizing
-    const ResourceDesc* resource_desc = nullptr;
-    if (desc.depth_attachment) {
-        resource_desc = &(desc.depth_attachment->get_desc());
-    } else if (!desc.color_attachments.empty()) {
-        resource_desc = &(desc.color_attachments[0]->get_desc());
-    }
-    if (resource_desc) {
-        m_width = resource_desc->width;
-        m_height = resource_desc->height;
+    if (num_depth_attachment) {
+        const ResourceDesc& desc = subpass_desc.depth_attachment->get_desc();
+        subpass.width = desc.width;
+        subpass.height = desc.height;
+    } else {
+        const ResourceDesc& desc = subpass_desc.color_attachments[0]->get_desc();
+        subpass.width = desc.width;
+        subpass.height = desc.height;
     }
 
-    // create color attachments
-    uint32_t color_attachment_count = static_cast<uint32_t>(desc.color_attachments.size());
-    std::vector<GLuint> attachments;
-    attachments.reserve(color_attachment_count);
-    for (uint32_t i = 0; i < color_attachment_count; ++i) {
-        const auto& color_attachment = desc.color_attachments[i];
+    glGenFramebuffers(1, &subpass.handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, subpass.handle);
 
-        GLuint attachment = GL_COLOR_ATTACHMENT0 + i;
-        switch (color_attachment->get_desc().type) {
-            case RT_COLOR_ATTACHMENT: {
-                // bind to frame buffer
-                glFramebufferTexture2D(
-                    GL_FRAMEBUFFER,                  // target
-                    attachment,                      // attachment
-                    GL_TEXTURE_2D,                   // texture target
-                    color_attachment->get_handle(),  // texture
-                    0                                // level
-                );
-            } break;
-            default:
-                CRASH_NOW();
-                break;
-        }
-        attachments.push_back(attachment);
-    }
-
-    if (attachments.empty()) {
+    if (!num_color_attachment) {
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
     } else {
-        glDrawBuffers(static_cast<uint32_t>(attachments.size()), attachments.data());
+        // create color attachments
+        std::vector<GLuint> attachments;
+        attachments.reserve(num_color_attachment);
+        for (int i = 0; i < num_color_attachment; ++i) {
+            const auto& color_attachment = subpass_desc.color_attachments[i];
+
+            GLuint attachment = GL_COLOR_ATTACHMENT0 + i;
+            switch (color_attachment->get_desc().type) {
+                case RT_COLOR_ATTACHMENT: {
+                    // bind to frame buffer
+                    glFramebufferTexture2D(
+                        GL_FRAMEBUFFER,                  // target
+                        attachment,                      // attachment
+                        GL_TEXTURE_2D,                   // texture target
+                        color_attachment->get_handle(),  // texture
+                        0                                // level
+                    );
+                } break;
+                default:
+                    CRASH_NOW();
+                    break;
+            }
+            attachments.push_back(attachment);
+        }
+
+        if (attachments.empty()) {
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+        } else {
+            glDrawBuffers(num_color_attachment, attachments.data());
+        }
     }
 
-    if (desc.depth_attachment) {
-        const auto& depth_desc = desc.depth_attachment->get_desc();
-        switch (depth_desc.type) {
+    if (auto depth_attachment = subpass_desc.depth_attachment; depth_attachment) {
+        switch (depth_attachment->get_desc().type) {
             case RT_SHADOW_MAP:
             case RT_DEPTH_ATTACHMENT: {
-                glFramebufferTexture2D(GL_FRAMEBUFFER,                       // target
-                                       GL_DEPTH_ATTACHMENT,                  // attachment
-                                       GL_TEXTURE_2D,                        // texture target
-                                       desc.depth_attachment->get_handle(),  // texture
-                                       0                                     // level
+                glFramebufferTexture2D(GL_FRAMEBUFFER,                  // target
+                                       GL_DEPTH_ATTACHMENT,             // attachment
+                                       GL_TEXTURE_2D,                   // texture target
+                                       depth_attachment->get_handle(),  // texture
+                                       0                                // level
                 );
             } break;
             case RT_SHADOW_CUBE_MAP: {
                 glFramebufferTexture(GL_FRAMEBUFFER,
                                      GL_DEPTH_ATTACHMENT,
-                                     desc.depth_attachment->get_handle(),
+                                     depth_attachment->get_handle(),
                                      0);
             } break;
             default:
@@ -100,15 +95,26 @@ void RenderPassGL::create_internal(RenderPassDesc& desc) {
     }
 
     DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-    unbind();
-}
 
-void RenderPassGL::bind() {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_handle);
-}
-
-void RenderPassGL::unbind() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    m_subpasses.emplace_back(subpass);
+}
+
+void RenderPassGL::create_internal(RenderPassDesc& desc) {
+    RenderPass::create_internal(desc);
+
+    for (const auto& subpass_desc : desc.subpasses) {
+        create_subpass(subpass_desc);
+    }
+}
+
+void RenderPassGL::execute() {
+    for (auto& subpass : m_subpasses) {
+        glBindFramebuffer(GL_FRAMEBUFFER, subpass.handle);
+        DEV_ASSERT(subpass.func);
+        subpass.func(subpass.width, subpass.height);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
 }  // namespace my::rg

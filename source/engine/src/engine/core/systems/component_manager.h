@@ -157,9 +157,11 @@ public:
 
     T& operator[](size_t idx) { return get_component(idx); }
 
-    void serialize(Archive& archive, uint32_t version) {
+    bool serialize(Archive& archive, uint32_t version) {
+        constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;
         if (archive.is_write_mode()) {
+            archive << magic;
             count = static_cast<uint32_t>(m_component_array.size());
             archive << count;
             for (auto& component : m_component_array) {
@@ -169,6 +171,12 @@ public:
                 entity.serialize(archive);
             }
         } else {
+            uint64_t read_magic;
+            archive >> read_magic;
+            if (read_magic != magic) {
+                return false;
+            }
+
             clear();
             archive >> count;
             m_component_array.resize(count);
@@ -181,6 +189,8 @@ public:
                 m_lookup[m_entity_array[i]] = i;
             }
         }
+
+        return true;
     }
 
 private:

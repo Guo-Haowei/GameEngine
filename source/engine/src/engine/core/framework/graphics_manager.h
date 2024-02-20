@@ -42,6 +42,8 @@ public:
 
     const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
 
+    std::shared_ptr<rg::Resource> find_resource(const std::string& name);
+
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb);
 

@@ -1,9 +1,7 @@
 #pragma once
 #include "render_graph.h"
 
-// @TODO: merge shadow passes
 #define SHADOW_PASS       "shadow_pass"
-#define POINT_SHADOW_PASS "point_shadow_pass"
 #define VOXELIZATION_PASS "voxelization_pass"
 #define VXGI_DEBUG_PASS   "debug_vxgi_pass"
 #define GBUFFER_PASS      "gbuffer_pass"

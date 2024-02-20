@@ -18,45 +18,22 @@ void RenderData::clear() {
         pass.clear();
     }
 
-    point_shadow_pass.clear();
+    point_shadow_passes.clear();
     main_pass.clear();
     voxel_pass.clear();
 }
 
 void RenderData::point_light_draw_data() {
-    // HACK: only allow one point light shadow
-    bool exists_point_shadow = false;
     // point shadow map
     for (int light_idx = 0; light_idx < (int)scene->get_count<LightComponent>(); ++light_idx) {
         auto light_id = scene->get_entity<LightComponent>(light_idx);
         const LightComponent& light = scene->get_component_array<LightComponent>()[light_idx];
         if (light.type == LIGHT_TYPE_POINT && light.cast_shadow()) {
-            DEV_ASSERT_MSG(!exists_point_shadow, "at most one point light casts shadow");
-            exists_point_shadow = true;
-
             const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
             DEV_ASSERT(transform);
             vec3 position = transform->get_translation();
-            // @TODO: calc near and far based on attenuation
-            const float near_plane = 1.0f;
-            // @TODO: OMG SO UGLY
-            const float far_plane = 25.0f;
-            const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
-            std::array<glm::mat4, 6> light_space_matrices = {
-                projection * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-                projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-            };
 
-            for (int idx = 0; idx < 6; ++idx) {
-                g_perFrameCache.cache.c_point_light_matrices[idx] = light_space_matrices[idx];
-            }
-            g_perFrameCache.cache.c_point_light_far = 25.0f;
-            g_perFrameCache.cache.c_point_light_position = position;
-
+            const mat4* light_space_matrices = g_perFrameCache.cache.c_lights[light_idx].matrices;
             std::array<Frustum, 6> frustums = {
                 Frustum{ light_space_matrices[0] },
                 Frustum{ light_space_matrices[1] },
@@ -66,10 +43,11 @@ void RenderData::point_light_draw_data() {
                 Frustum{ light_space_matrices[5] },
             };
 
+            Pass pass;
             fill(
                 scene,
                 mat4(1),
-                point_shadow_pass,
+                pass,
                 [](const ObjectComponent& object) {
                     return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
                 },
@@ -81,10 +59,10 @@ void RenderData::point_light_draw_data() {
                     }
                     return false;
                 });
+            pass.light_index = light_idx;
+            point_shadow_passes.push_back(pass);
         }
     }
-
-    has_point_light = exists_point_shadow;
 }
 
 void RenderData::update(const Scene* p_scene) {
@@ -94,7 +72,7 @@ void RenderData::update(const Scene* p_scene) {
     point_light_draw_data();
 
     // cascaded shadow map
-    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
+    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
         mat4 light_matrix = g_perFrameCache.cache.c_main_light_matrices[i];
         Frustum light_frustum(light_matrix);
         fill(

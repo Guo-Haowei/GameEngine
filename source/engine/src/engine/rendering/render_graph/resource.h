@@ -28,10 +28,12 @@ public:
 
     const ResourceDesc& get_desc() const { return m_desc; }
     uint32_t get_handle() const { return m_handle; }
+    uint64_t get_resident_handle() const { return m_resident_handle; }
 
 private:
     const ResourceDesc m_desc;
     uint32_t m_handle = 0;
+    uint64_t m_resident_handle = 0;
 
     friend class RenderGraph;
 };
