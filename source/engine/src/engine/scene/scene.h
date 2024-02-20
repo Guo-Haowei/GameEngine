@@ -68,7 +68,7 @@ public:                                                                         
         return m_##T##s.create(entity);                                                          \
     }                                                                                            \
     template<>                                                                                   \
-    void serialize<T>(Archive & archive, uint32_t version) {                                     \
+    bool serialize<T>(Archive & archive, uint32_t version) {                                     \
         return m_##T##s.serialize(archive, version);                                             \
     }                                                                                            \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
@@ -119,7 +119,8 @@ public:                                                                         
         return *(T*)(nullptr);
     }
     template<typename T>
-    void serialize(Archive&, uint32_t) {
+    bool serialize(Archive&, uint32_t) {
+        return false;
     }
 
     ecs::ComponentLibrary m_component_lib;

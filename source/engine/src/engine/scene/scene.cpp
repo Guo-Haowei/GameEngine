@@ -10,10 +10,12 @@ using jobsystem::Context;
 
 // static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 static constexpr uint32_t kSmallSubtaskGroupSize = 64;
+// kSceneVersion history
 // version 2: don't serialize scene.m_bound
 // version 3: light component atten
 // version 4: light component flags
-static constexpr uint32_t kSceneVersion = 4;
+// version 5: add validation
+static constexpr uint32_t kSceneVersion = 5;
 static constexpr uint32_t kSceneMagicNumber = 'xScn';
 
 // @TODO: refactor
@@ -562,18 +564,18 @@ bool Scene::serialize(Archive& archive) {
     }
     m_camera->serialize(archive, version);
 
-    serialize<NameComponent>(archive, version);
-    serialize<TransformComponent>(archive, version);
-    serialize<HierarchyComponent>(archive, version);
-    serialize<MaterialComponent>(archive, version);
-    serialize<MeshComponent>(archive, version);
-    serialize<ObjectComponent>(archive, version);
-    serialize<LightComponent>(archive, version);
-    serialize<ArmatureComponent>(archive, version);
-    serialize<AnimationComponent>(archive, version);
-    serialize<RigidBodyComponent>(archive, version);
-
-    return true;
+    bool ok = true;
+    ok = ok && serialize<NameComponent>(archive, version);
+    ok = ok && serialize<TransformComponent>(archive, version);
+    ok = ok && serialize<HierarchyComponent>(archive, version);
+    ok = ok && serialize<MaterialComponent>(archive, version);
+    ok = ok && serialize<MeshComponent>(archive, version);
+    ok = ok && serialize<ObjectComponent>(archive, version);
+    ok = ok && serialize<LightComponent>(archive, version);
+    ok = ok && serialize<ArmatureComponent>(archive, version);
+    ok = ok && serialize<AnimationComponent>(archive, version);
+    ok = ok && serialize<RigidBodyComponent>(archive, version);
+    return ok;
 }
 
 Scene::RayIntersectionResult Scene::Intersects(Ray& ray) {
