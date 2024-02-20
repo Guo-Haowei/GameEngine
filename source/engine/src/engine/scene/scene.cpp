@@ -615,6 +615,33 @@ Scene::RayIntersectionResult Scene::select(Ray& ray) {
             continue;
         }
 
+        if (const auto* collider = get_component<MeshColliderComponent>(entity); collider) {
+            MeshComponent* mesh = get_component<MeshComponent>(collider->mesh_id);
+            if (!mesh) {
+                continue;
+            }
+
+            Ray inversedRayAABB = inversed_ray;  // make a copy, we don't want dist to be modified by AABB
+            // Perform aabb test
+            if (!inversedRayAABB.intersects(mesh->local_bound)) {
+                continue;
+            }
+
+            // @TODO: test submesh intersection
+
+            // Test every single triange
+            for (size_t i = 0; i < mesh->indices.size(); i += 3) {
+                const vec3& A = mesh->positions[mesh->indices[i]];
+                const vec3& B = mesh->positions[mesh->indices[i + 1]];
+                const vec3& C = mesh->positions[mesh->indices[i + 2]];
+                if (inversed_ray.intersects(A, B, C)) {
+                    ray.copy_dist(inversed_ray);
+                    result.entity = entity;
+                    break;
+                }
+            }
+            continue;
+        }
         CRASH_NOW_MSG("???");
     }
     return result;

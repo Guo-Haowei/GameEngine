@@ -222,7 +222,18 @@ void PropertyPanel::update_internal(Scene& scene) {
     });
 
     DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
-        ImGui::Text("entity %llu", collider.mesh_collider.get_id());
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "%d", collider.mesh_id.get_id());
+        ImGui::Columns(2);
+        ImGui::SetColumnWidth(0, kDefaultColumnWidth);
+        ImGui::Text("Mesh ID");
+        ImGui::NextColumn();
+        ImGui::InputText("##ID", buffer, sizeof(buffer));
+        ImGui::Columns(1);
+        ecs::Entity entity{ (uint32_t)std::stoi(buffer) };
+        if (scene.get_component<MeshComponent>(entity) != nullptr) {
+            collider.mesh_id = entity;
+        }
     });
 
     DrawComponent("Material", material_component, [&](MaterialComponent& material) {

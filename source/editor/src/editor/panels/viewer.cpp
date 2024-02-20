@@ -99,7 +99,6 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         }
     }
 
-    // draw aabb
     ecs::Entity id = m_editor.get_selected_entity();
     TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
     if (transform_component) {
@@ -107,7 +106,12 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         if (const BoxColliderComponent* collider = scene.get_component<BoxColliderComponent>(id); collider) {
             aabb = collider->box;
         }
-        // @TODO: mesh
+        // @TODO: fix
+        if (const MeshColliderComponent* collider = scene.get_component<MeshColliderComponent>(id); collider) {
+            if (const MeshComponent* mesh = scene.get_component<MeshComponent>(collider->mesh_id); mesh) {
+                aabb = mesh->local_bound;
+            }
+        }
 
         if (aabb.is_valid()) {
             aabb.apply_matrix(transform_component->get_world_matrix());

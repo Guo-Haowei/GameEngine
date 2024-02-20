@@ -8,6 +8,7 @@
 #include "core/input/input.h"
 #include "editor/panels/animation_panel.h"
 #include "editor/panels/console_panel.h"
+#include "editor/panels/content_browser.h"
 #include "editor/panels/debug_panel.h"
 #include "editor/panels/debug_texture.h"
 #include "editor/panels/hierarchy_panel.h"
@@ -27,6 +28,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<HierarchyPanel>(*this));
     add_panel(std::make_shared<PropertyPanel>(*this));
     add_panel(std::make_shared<Viewer>(*this));
+    add_panel(std::make_shared<ContentBrowser>(*this));
 
     m_menu_bar = std::make_shared<MenuBar>(*this);
 
