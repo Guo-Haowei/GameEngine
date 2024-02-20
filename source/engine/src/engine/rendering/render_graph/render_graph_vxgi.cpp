@@ -306,49 +306,51 @@ void fxaa_pass_func(int width, int height) {
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {
-    auto [w, h] = DisplayServer::singleton().get_frame_size();
     // @TODO: fix this
     // w /= 2;
     // h /= 2;
+    auto [w, h] = DisplayServer::singleton().get_frame_size();
 
-    auto gbuffer_attachment0 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_POSITION,
-                                                                   FORMAT_R16G16B16A16_FLOAT,
-                                                                   RT_COLOR_ATTACHMENT,
-                                                                   w, h });
-    auto gbuffer_attachment1 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_NORMAL,
-                                                                   FORMAT_R16G16B16A16_FLOAT,
-                                                                   RT_COLOR_ATTACHMENT,
-                                                                   w, h });
-    auto gbuffer_attachment2 = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_BASE_COLOR,
-                                                                   FORMAT_R8G8B8A8_UINT,
-                                                                   RT_COLOR_ATTACHMENT,
-                                                                   w, h });
-    auto gbuffer_depth = graph.create_resource(ResourceDesc{ RT_RES_GBUFFER_DEPTH,
-                                                             FORMAT_D32_FLOAT,
-                                                             RT_DEPTH_ATTACHMENT,
-                                                             w, h });
-    auto ssao_attachment = graph.create_resource(ResourceDesc{ RT_RES_SSAO,
-                                                               FORMAT_R32_FLOAT,
-                                                               RT_COLOR_ATTACHMENT,
-                                                               w, h });
-    auto lighting_attachment = graph.create_resource(ResourceDesc{ RT_RES_LIGHTING,
-                                                                   FORMAT_R8G8B8A8_UINT,
-                                                                   RT_COLOR_ATTACHMENT,
-                                                                   w, h });
-    auto fxaa_attachment = graph.create_resource(ResourceDesc{ RT_RES_FXAA,
-                                                               FORMAT_R8G8B8A8_UINT,
-                                                               RT_COLOR_ATTACHMENT,
-                                                               w, h });
+    GraphicsManager& gm = GraphicsManager::singleton();
+
+    auto gbuffer_attachment0 = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
+                                                                    FORMAT_R16G16B16A16_FLOAT,
+                                                                    RT_COLOR_ATTACHMENT,
+                                                                    w, h });
+    auto gbuffer_attachment1 = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
+                                                                    FORMAT_R16G16B16A16_FLOAT,
+                                                                    RT_COLOR_ATTACHMENT,
+                                                                    w, h });
+    auto gbuffer_attachment2 = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
+                                                                    FORMAT_R8G8B8A8_UINT,
+                                                                    RT_COLOR_ATTACHMENT,
+                                                                    w, h });
+    auto gbuffer_depth = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
+                                                              FORMAT_D32_FLOAT,
+                                                              RT_DEPTH_ATTACHMENT,
+                                                              w, h });
+    auto ssao_attachment = gm.create_resource(RenderTargetDesc{ RT_RES_SSAO,
+                                                                FORMAT_R32_FLOAT,
+                                                                RT_COLOR_ATTACHMENT,
+                                                                w, h });
+    auto lighting_attachment = gm.create_resource(RenderTargetDesc{ RT_RES_LIGHTING,
+                                                                    FORMAT_R8G8B8A8_UINT,
+                                                                    RT_COLOR_ATTACHMENT,
+                                                                    w, h });
+    auto fxaa_attachment = gm.create_resource(RenderTargetDesc{ RT_RES_FXAA,
+                                                                FORMAT_R8G8B8A8_UINT,
+                                                                RT_COLOR_ATTACHMENT,
+                                                                w, h });
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
         const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
         DEV_ASSERT(math::is_power_of_two(point_shadow_res));
 
-        auto shadow_map = graph.create_resource(ResourceDesc{ RT_RES_SHADOW_MAP,
-                                                              FORMAT_D32_FLOAT,
-                                                              RT_SHADOW_MAP,
-                                                              MAX_CASCADE_COUNT * shadow_res, shadow_res });
+        auto shadow_map = gm.create_resource(RenderTargetDesc{ RT_RES_SHADOW_MAP,
+                                                               FORMAT_D32_FLOAT,
+                                                               RT_SHADOW_MAP,
+                                                               MAX_CASCADE_COUNT * shadow_res, shadow_res });
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
 
@@ -370,10 +372,10 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         static_assert(array_length(funcs) == MAX_LIGHT_CAST_SHADOW_COUNT);
 
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-            auto point_shadow_map = graph.create_resource(ResourceDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
-                                                                        FORMAT_D32_FLOAT,
-                                                                        RT_SHADOW_CUBE_MAP,
-                                                                        point_shadow_res, point_shadow_res });
+            auto point_shadow_map = gm.create_resource(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
+                                                                         FORMAT_D32_FLOAT,
+                                                                         RT_SHADOW_CUBE_MAP,
+                                                                         point_shadow_res, point_shadow_res });
 
             desc.subpasses.emplace_back(SubPassDesc{
                 .depth_attachment = point_shadow_map,

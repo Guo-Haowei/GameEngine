@@ -327,7 +327,7 @@ void GraphicsManager::createGpuResources() {
 
     // @TODO: refactor
     auto make_resident = [&](const std::string& name, uint64_t& id) {
-        std::shared_ptr<rg::Resource> resource = m_render_graph.find_resouce(name);
+        std::shared_ptr<RenderTarget> resource = find_resource(name);
         if (resource) {
             id = resource->get_resident_handle();
         } else {
@@ -350,7 +350,7 @@ void GraphicsManager::createGpuResources() {
 uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {
         case my::GraphicsManager::RENDER_GRAPH_VXGI:
-            return m_render_graph.find_resouce(RT_RES_FXAA)->get_handle();
+            return find_resource(RT_RES_FXAA)->get_handle();
         case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
         default:
             CRASH_NOW();
@@ -358,8 +358,106 @@ uint32_t GraphicsManager::get_final_image() const {
     }
 }
 
-std::shared_ptr<rg::Resource> GraphicsManager::find_resource(const std::string& name) {
-    return m_render_graph.find_resouce(name);
+// @TODO: refactor
+static GLuint create_resource_impl(const RenderTargetDesc& desc) {
+    constexpr float shadow_boarder[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    GLuint texture_id = 0;
+    GLenum type = GL_TEXTURE_2D;
+    glGenTextures(1, &texture_id);
+    switch (desc.type) {
+        case RT_COLOR_ATTACHMENT: {
+            glBindTexture(type, texture_id);
+            glTexImage2D(type,                                       // target
+                         0,                                          // level
+                         format_to_gl_internal_format(desc.format),  // internal format
+                         desc.width, desc.height,                    // dimension
+                         0,                                          // boarder
+                         format_to_gl_format(desc.format),           // format
+                         format_to_gl_data_type(desc.format),        // type
+                         nullptr                                     // pixels
+            );
+            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glBindTexture(type, 0);
+        } break;
+        case RT_DEPTH_ATTACHMENT: {
+            glBindTexture(type, texture_id);
+            glTexImage2D(type,                                       // target
+                         0,                                          // level
+                         format_to_gl_internal_format(desc.format),  // internal format
+                         desc.width, desc.height,                    // dimension
+                         0,                                          // boarder
+                         format_to_gl_format(desc.format),           // format
+                         format_to_gl_data_type(desc.format),        // type
+                         nullptr                                     // pixels
+            );
+
+            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glBindTexture(type, 0);
+        } break;
+        case RT_SHADOW_MAP: {
+            glBindTexture(type, texture_id);
+            glTexImage2D(type,
+                         0,
+                         format_to_gl_internal_format(desc.format),
+                         desc.width, desc.height,
+                         0,
+                         format_to_gl_format(desc.format),
+                         format_to_gl_data_type(desc.format),
+                         nullptr);
+
+            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+            glTexParameterfv(type, GL_TEXTURE_BORDER_COLOR, shadow_boarder);
+        } break;
+        case RT_SHADOW_CUBE_MAP: {
+            type = GL_TEXTURE_CUBE_MAP;
+            glBindTexture(type, texture_id);
+            for (int i = 0; i < 6; ++i) {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                             0,
+                             format_to_gl_internal_format(desc.format),
+                             desc.width, desc.height,
+                             0,
+                             format_to_gl_format(desc.format),
+                             format_to_gl_data_type(desc.format),
+                             nullptr);
+            }
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        } break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+    glBindTexture(type, 0);
+    return texture_id;
+}
+
+std::shared_ptr<RenderTarget> GraphicsManager::create_resource(const RenderTargetDesc& desc) {
+    DEV_ASSERT(m_resource_lookup.find(desc.name) == m_resource_lookup.end());
+    std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(desc);
+
+    resource->m_handle = create_resource_impl(resource->m_desc);
+    resource->m_resident_handle = glGetTextureHandleARB(resource->m_handle);
+    glMakeTextureHandleResidentARB(resource->m_resident_handle);
+
+    m_resource_lookup[resource->m_desc.name] = resource;
+    return resource;
+}
+
+std::shared_ptr<RenderTarget> GraphicsManager::find_resource(const std::string& name) const {
+    auto it = m_resource_lookup.find(name);
+    if (it == m_resource_lookup.end()) {
+        return nullptr;
+    }
+    return it->second;
 }
 
 void GraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {

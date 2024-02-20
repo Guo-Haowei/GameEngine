@@ -22,11 +22,11 @@ void RenderPassGL::create_subpass(const SubPassDesc& subpass_desc) {
     }
 
     if (num_depth_attachment) {
-        const ResourceDesc& desc = subpass_desc.depth_attachment->get_desc();
+        const RenderTargetDesc& desc = subpass_desc.depth_attachment->get_desc();
         subpass.width = desc.width;
         subpass.height = desc.height;
     } else {
-        const ResourceDesc& desc = subpass_desc.color_attachments[0]->get_desc();
+        const RenderTargetDesc& desc = subpass_desc.color_attachments[0]->get_desc();
         subpass.width = desc.width;
         subpass.height = desc.height;
     }

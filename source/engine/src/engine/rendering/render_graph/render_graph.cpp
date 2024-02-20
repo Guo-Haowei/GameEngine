@@ -4,87 +4,6 @@
 
 namespace my::rg {
 
-static GLuint create_resource_impl(const ResourceDesc& desc) {
-    constexpr float shadow_boarder[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    GLuint texture_id = 0;
-    GLenum type = GL_TEXTURE_2D;
-    glGenTextures(1, &texture_id);
-    switch (desc.type) {
-        case RT_COLOR_ATTACHMENT: {
-            glBindTexture(type, texture_id);
-            glTexImage2D(type,                                       // target
-                         0,                                          // level
-                         format_to_gl_internal_format(desc.format),  // internal format
-                         desc.width, desc.height,                    // dimension
-                         0,                                          // boarder
-                         format_to_gl_format(desc.format),           // format
-                         format_to_gl_data_type(desc.format),        // type
-                         nullptr                                     // pixels
-            );
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glBindTexture(type, 0);
-        } break;
-        case RT_DEPTH_ATTACHMENT: {
-            glBindTexture(type, texture_id);
-            glTexImage2D(type,                                       // target
-                         0,                                          // level
-                         format_to_gl_internal_format(desc.format),  // internal format
-                         desc.width, desc.height,                    // dimension
-                         0,                                          // boarder
-                         format_to_gl_format(desc.format),           // format
-                         format_to_gl_data_type(desc.format),        // type
-                         nullptr                                     // pixels
-            );
-
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glBindTexture(type, 0);
-        } break;
-        case RT_SHADOW_MAP: {
-            glBindTexture(type, texture_id);
-            glTexImage2D(type,
-                         0,
-                         format_to_gl_internal_format(desc.format),
-                         desc.width, desc.height,
-                         0,
-                         format_to_gl_format(desc.format),
-                         format_to_gl_data_type(desc.format),
-                         nullptr);
-
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-            glTexParameterfv(type, GL_TEXTURE_BORDER_COLOR, shadow_boarder);
-        } break;
-        case RT_SHADOW_CUBE_MAP: {
-            type = GL_TEXTURE_CUBE_MAP;
-            glBindTexture(type, texture_id);
-            for (int i = 0; i < 6; ++i) {
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                             0,
-                             format_to_gl_internal_format(desc.format),
-                             desc.width, desc.height,
-                             0,
-                             format_to_gl_format(desc.format),
-                             format_to_gl_data_type(desc.format),
-                             nullptr);
-            }
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        } break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-    glBindTexture(type, 0);
-    return texture_id;
-}
-
 void RenderGraph::add_pass(RenderPassDesc& desc) {
     std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPassGL>();
     render_pass->create_internal(desc);
@@ -93,26 +12,6 @@ void RenderGraph::add_pass(RenderPassDesc& desc) {
     const std::string& name = render_pass->m_name;
     DEV_ASSERT(m_render_pass_lookup.find(name) == m_render_pass_lookup.end());
     m_render_pass_lookup[name] = (int)m_render_passes.size() - 1;
-}
-
-std::shared_ptr<Resource> RenderGraph::create_resource(const ResourceDesc& desc) {
-    DEV_ASSERT(m_resource_lookup.find(desc.name) == m_resource_lookup.end());
-    std::shared_ptr<Resource> resource = std::make_shared<Resource>(desc);
-
-    resource->m_handle = create_resource_impl(resource->m_desc);
-    resource->m_resident_handle = glGetTextureHandleARB(resource->m_handle);
-    glMakeTextureHandleResidentARB(resource->m_resident_handle);
-
-    m_resource_lookup[resource->m_desc.name] = resource;
-    return resource;
-}
-
-std::shared_ptr<Resource> RenderGraph::find_resouce(const std::string& name) const {
-    auto it = m_resource_lookup.find(name);
-    if (it == m_resource_lookup.end()) {
-        return nullptr;
-    }
-    return it->second;
 }
 
 std::shared_ptr<RenderPass> RenderGraph::find_pass(const std::string& name) const {
