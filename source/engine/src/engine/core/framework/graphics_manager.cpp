@@ -326,16 +326,16 @@ void GraphicsManager::createGpuResources() {
     cache.c_voxel_normal_map = gl::MakeTextureResident(g_normalVoxel.GetHandle());
 
     // @TODO: refactor
-
-    auto make_resident = [&](const std::string& name, sampler2D& id) {
+    auto make_resident = [&](const std::string& name, uint64_t& id) {
         std::shared_ptr<rg::Resource> resource = m_render_graph.find_resouce(name);
         if (resource) {
-            id = gl::MakeTextureResident(resource->get_handle());
+            id = resource->get_resident_handle();
+        } else {
+            id = 0;
         }
     };
 
     make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
-    make_resident(RT_RES_POINT_SHADOW_MAP, cache.c_point_shadow_map);
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_FXAA, cache.c_fxaa_image);
     make_resident(RT_RES_GBUFFER_POSITION, cache.c_gbuffer_position_metallic_map);
@@ -356,6 +356,10 @@ uint32_t GraphicsManager::get_final_image() const {
             CRASH_NOW();
             return 0;
     }
+}
+
+std::shared_ptr<rg::Resource> GraphicsManager::find_resource(const std::string& name) {
+    return m_render_graph.find_resouce(name);
 }
 
 void GraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {

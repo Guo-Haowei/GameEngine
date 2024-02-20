@@ -1,6 +1,8 @@
 #include "rendering.h"
 
+#include "core/framework/graphics_manager.h"
 #include "rendering/r_cbuffers.h"
+#include "rendering/render_graph/render_graph_vxgi.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
@@ -78,7 +80,7 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
 
 std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Camera& p_camera, const vec4& p_cascade_end, const AABB& world_bound) {
     std::vector<glm::mat4> ret;
-    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
+    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
         if (!DVAR_GET_BOOL(r_enable_csm)) {
             ret.push_back(light_space_matrix_world(world_bound, p_light_matrix));
         } else {
@@ -95,7 +97,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     // THESE SHOULDN'T BE HERE
     auto& cache = g_perFrameCache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), NUM_LIGHT_MAX);
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), MAX_LIGHT_COUNT);
     DEV_ASSERT(light_count);
 
     cache.c_light_count = light_count;
@@ -107,11 +109,12 @@ void fill_constant_buffers(const Scene& scene) {
         camera.set_far(cascade_end.w);
         camera.set_dirty();
     }
-    for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
+    for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
         float left = idx == 0 ? camera.get_near() : cascade_end[idx - 1];
         DEV_ASSERT(left < cascade_end[idx]);
     }
 
+    int num_point_light_cast_shadow = 0;
     for (uint32_t idx = 0; idx < light_count; ++idx) {
         const LightComponent& light_component = scene.get_component_array<LightComponent>()[idx];
         auto light_entity = scene.get_entity<LightComponent>(idx);
@@ -138,17 +141,24 @@ void fill_constant_buffers(const Scene& scene) {
                 const vec3 position = light_transform->get_translation();
                 light.position = position;
                 light.cast_shadow = light_component.cast_shadow();
-                constexpr float far_plane = 25.0f;
-                light.far_plane = far_plane;
                 if (light.cast_shadow) {
-                    constexpr float near_plane = 1.0f;
-                    const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                    CRASH_COND_MSG(num_point_light_cast_shadow >= MAX_LIGHT_CAST_SHADOW_COUNT, "Can have at most " _STR(MAX_LIGHT_CAST_SHADOW_COUNT) " point lights that cast shadow");
+
+                    constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
+                    light.max_distance = light_component.max_distance;
+                    const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, light.max_distance);
                     light.matrices[0] = projection * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
                     light.matrices[1] = projection * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
                     light.matrices[2] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
                     light.matrices[3] = projection * glm::lookAt(position, position + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
                     light.matrices[4] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
                     light.matrices[5] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+
+                    // @TODO: allocate
+                    auto resource = GraphicsManager::singleton().find_resource(RT_RES_POINT_SHADOW_MAP + std::to_string(num_point_light_cast_shadow));
+                    light.shadow_map.data = resource->get_resident_handle();
+
+                    ++num_point_light_cast_shadow;
                 }
             } break;
             default:
@@ -156,9 +166,9 @@ void fill_constant_buffers(const Scene& scene) {
         }
     }
 
-    DEV_ASSERT(light_matrices.size() == NUM_CASCADE_MAX);
+    DEV_ASSERT(light_matrices.size() == MAX_CASCADE_COUNT);
     if (!light_matrices.empty()) {
-        for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
+        for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
             cache.c_main_light_matrices[idx] = light_matrices[idx];
         }
     }

@@ -18,26 +18,20 @@ void RenderData::clear() {
         pass.clear();
     }
 
-    point_shadow_pass.clear();
+    point_shadow_passes.clear();
     main_pass.clear();
     voxel_pass.clear();
 }
 
 void RenderData::point_light_draw_data() {
-    // HACK: only allow one point light shadow
-    bool exists_point_shadow = false;
     // point shadow map
     for (int light_idx = 0; light_idx < (int)scene->get_count<LightComponent>(); ++light_idx) {
         auto light_id = scene->get_entity<LightComponent>(light_idx);
         const LightComponent& light = scene->get_component_array<LightComponent>()[light_idx];
         if (light.type == LIGHT_TYPE_POINT && light.cast_shadow()) {
-            DEV_ASSERT_MSG(!exists_point_shadow, "at most one point light casts shadow");
-            exists_point_shadow = true;
-
             const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
             DEV_ASSERT(transform);
             vec3 position = transform->get_translation();
-            // @TODO: calc near and far based on attenuation
 
             const mat4* light_space_matrices = g_perFrameCache.cache.c_lights[light_idx].matrices;
             std::array<Frustum, 6> frustums = {
@@ -49,12 +43,11 @@ void RenderData::point_light_draw_data() {
                 Frustum{ light_space_matrices[5] },
             };
 
-            point_shadow_pass.light_index = light_idx;
-
+            Pass pass;
             fill(
                 scene,
                 mat4(1),
-                point_shadow_pass,
+                pass,
                 [](const ObjectComponent& object) {
                     return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
                 },
@@ -66,10 +59,10 @@ void RenderData::point_light_draw_data() {
                     }
                     return false;
                 });
+            pass.light_index = light_idx;
+            point_shadow_passes.push_back(pass);
         }
     }
-
-    has_point_light = exists_point_shadow;
 }
 
 void RenderData::update(const Scene* p_scene) {
@@ -79,7 +72,7 @@ void RenderData::update(const Scene* p_scene) {
     point_light_draw_data();
 
     // cascaded shadow map
-    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
+    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
         mat4 light_matrix = g_perFrameCache.cache.c_main_light_matrices[i];
         Frustum light_frustum(light_matrix);
         fill(

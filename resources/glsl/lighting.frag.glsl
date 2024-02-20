@@ -15,17 +15,6 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float point_shadow_calculation(vec3 p_frag_pos, vec3 p_light_position, float p_light_far) {
-    vec3 frag_to_light = p_frag_pos - p_light_position;
-    float closest_depth = texture(c_point_shadow_map, frag_to_light).r;
-    closest_depth *= p_light_far;
-    float current_depth = length(frag_to_light);
-    float bias = 0.05;
-    float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
-
-    return shadow;
-}
-
 void main() {
     const vec2 uv = pass_uv;
     float depth = texture(c_gbuffer_depth_map, uv).r;
@@ -54,9 +43,9 @@ void main() {
     vec3 Lo = vec3(0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
     float shadow = 0.0;
-    for (int idx = 0; idx < c_light_count; ++idx) {
-        Light light = c_lights[idx];
-        int light_type = c_lights[idx].type;
+    for (int light_idx = 0; light_idx < c_light_count; ++light_idx) {
+        Light light = c_lights[light_idx];
+        int light_type = c_lights[light_idx].type;
         vec3 direct_lighting = vec3(0.0);
         switch (light.type) {
             case LIGHT_TYPE_OMNI: {
@@ -81,10 +70,10 @@ void main() {
                 if (atten > 0.01) {
                     vec3 L = normalize(delta);
                     const vec3 H = normalize(V + L);
-                    const vec3 radiance = c_lights[idx].color;
+                    const vec3 radiance = c_lights[light_idx].color;
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
                     if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(world_position, light.position, light.far_plane);
+                        shadow = point_shadow_calculation(world_position, light_idx);
                     }
                 }
             } break;
@@ -146,9 +135,9 @@ void main() {
 #if ENABLE_CSM
     if (c_debug_csm != 0) {
         vec3 mask = vec3(0.1);
-        for (int idx = 0; idx < NUM_CASCADE_MAX; ++idx) {
-            if (clipSpaceZ <= c_cascade_clip_z[idx + 1]) {
-                mask[idx] = 0.7;
+        for (int light_idx = 0; light_idx < MAX_CASCADE_COUNT; ++light_idx) {
+            if (clipSpaceZ <= c_cascade_clip_z[light_idx + 1]) {
+                mask[light_idx] = 0.7;
                 break;
             }
         }

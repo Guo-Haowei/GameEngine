@@ -188,12 +188,16 @@ public:                                                                         
     std::shared_ptr<Camera> m_camera;
 
 private:
-    void update_transformation(uint32_t index);
+    void update_light(uint32_t index);
     void update_hierarchy(uint32_t index);
     void update_animation(uint32_t index);
     void update_armature(uint32_t index);
 
+    void run_light_update_system(jobsystem::Context& ctx);
+    void run_transformation_update_system(jobsystem::Context& ctx);
     void run_hierarchy_update_system(jobsystem::Context& ctx);
+    void run_animation_update_system(jobsystem::Context& ctx);
+    void run_armature_update_system(jobsystem::Context& ctx);
     void run_object_update_system(jobsystem::Context& ctx);
 
     AABB m_bound;

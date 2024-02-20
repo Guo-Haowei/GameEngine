@@ -16,8 +16,11 @@
 #define LIGHT_TYPE_AREA  3
 #define LIGHT_TYPE_MAX   4
 
-#define NUM_LIGHT_MAX       16
-#define NUM_BONE_MAX        128
-#define NUM_SSAO_KERNEL_MAX 64
-#define NUM_CASCADE_MAX     4
+#define MAX_LIGHT_COUNT             16
+#define MAX_BONE_COUNT              128
+#define MAX_SSAO_KERNEL_COUNT       64
+#define MAX_CASCADE_COUNT           4
+#define MAX_LIGHT_CAST_SHADOW_COUNT 4
+
+#define LIGHT_SHADOW_MIN_DISTANCE 0.1f
 #endif

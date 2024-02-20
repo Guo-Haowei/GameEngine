@@ -98,7 +98,11 @@ void RenderGraph::add_pass(RenderPassDesc& desc) {
 std::shared_ptr<Resource> RenderGraph::create_resource(const ResourceDesc& desc) {
     DEV_ASSERT(m_resource_lookup.find(desc.name) == m_resource_lookup.end());
     std::shared_ptr<Resource> resource = std::make_shared<Resource>(desc);
+
     resource->m_handle = create_resource_impl(resource->m_desc);
+    resource->m_resident_handle = glGetTextureHandleARB(resource->m_handle);
+    glMakeTextureHandleResidentARB(resource->m_resident_handle);
+
     m_resource_lookup[resource->m_desc.name] = resource;
     return resource;
 }

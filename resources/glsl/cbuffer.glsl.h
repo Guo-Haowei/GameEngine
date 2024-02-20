@@ -1,6 +1,6 @@
 #ifndef CBUFFER_INCLUDED
 #define CBUFFER_INCLUDED
-#include "shader_defines.h"
+#include "shader_constants.h"
 
 // constant buffer
 #ifdef __cplusplus
@@ -18,14 +18,11 @@ struct ConstantBufferBase {
 #ifdef __cplusplus
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
-using samplerCube = uint64_t;
 typedef struct {
     uint64_t data;
     uint64_t padding;
-} Sampler2DArray;
-static_assert(NUM_CASCADE_MAX == 4);
-#else
-#define Sampler2DArray sampler2D
+} samplerCube;
+static_assert(MAX_CASCADE_COUNT == 4);
 #endif
 
 struct Light {
@@ -36,7 +33,8 @@ struct Light {
     float atten_constant;
     float atten_linear;
     float atten_quadratic;
-    float far_plane;  // far plane of point light shadow
+    float max_distance;  // max distance the light affects
+    samplerCube shadow_map;
     mat4 matrices[6];
 };
 
@@ -45,10 +43,10 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     mat4 c_projection_matrix;
     mat4 c_projection_view_matrix;
 
-    Light c_lights[NUM_LIGHT_MAX];
+    Light c_lights[MAX_LIGHT_COUNT];
 
     // @TODO: move it to Light
-    mat4 c_main_light_matrices[NUM_CASCADE_MAX];
+    mat4 c_main_light_matrices[MAX_CASCADE_COUNT];
     vec4 c_cascade_plane_distances;
 
     vec2 _c_padding_0;
@@ -103,10 +101,7 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
 };
 
 CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
-    vec4 c_ssao_kernels[NUM_SSAO_KERNEL_MAX];
-
-    samplerCube c_point_shadow_map;
-    sampler2D _c_another_padding;
+    vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
     sampler2D c_shadow_map;
     sampler2D c_skybox_map;
@@ -125,7 +120,7 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
 };
 
 CONSTANT_BUFFER(BoneConstantBuffer, 4) {
-    mat4 c_bones[NUM_BONE_MAX];
+    mat4 c_bones[MAX_BONE_COUNT];
 };
 
 #endif

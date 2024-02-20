@@ -36,19 +36,18 @@ void Scene::update(float dt) {
 
     Context ctx;
 
-    // @TODO: refactor
-
     // animation
-    JS_PARALLEL_FOR(ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
+    run_light_update_system(ctx);
+    run_animation_update_system(ctx);
     ctx.wait();
     // transform, update local matrix from position, rotation and scale
-    JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, update_transformation(index));
+    run_transformation_update_system(ctx);
     ctx.wait();
     // hierarchy, update world matrix based on hierarchy
     run_hierarchy_update_system(ctx);
     ctx.wait();
     // armature
-    JS_PARALLEL_FOR(ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
+    run_armature_update_system(ctx);
     ctx.wait();
 
     // update bounding box
@@ -199,6 +198,7 @@ Entity Scene::create_cube_entity(const std::string& name, Entity material_id, co
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
 
+    // @TODO: move it to somewhere else
     // clang-format off
     constexpr uint32_t indices[] = {
         0,          1,          2,          0,          2,          3,
@@ -442,10 +442,6 @@ void Scene::update_animation(uint32_t index) {
     }
 }
 
-void Scene::update_transformation(uint32_t index) {
-    m_TransformComponents[index].update_transform();
-}
-
 void Scene::update_hierarchy(uint32_t index) {
     Entity self_id = get_entity<HierarchyComponent>(index);
     TransformComponent* self_transform = get_component<TransformComponent>(self_id);
@@ -473,6 +469,33 @@ void Scene::update_hierarchy(uint32_t index) {
 
     self_transform->set_world_matrix(world_matrix);
     self_transform->set_dirty(false);
+}
+
+void Scene::update_light(uint32_t index) {
+    Entity self_id = get_entity<LightComponent>(index);
+    LightComponent& light = m_LightComponents[index];
+
+    constexpr float atten_factor_inv = 1.0f / 0.01f;
+    if (light.atten.linear == 0.0f && light.atten.quadratic == 0.0f) {
+        light.max_distance = 1000.0f;
+    } else {
+        // (constant + linear * x + quad * x^2) * atten_factor = 1
+        // quad * x^2 + linear * x + constant - 1.0 / atten_factor = 0
+        const float a = light.atten.quadratic;
+        const float b = light.atten.linear;
+        const float c = light.atten.constant - atten_factor_inv;
+
+        float discriminant = b * b - 4 * a * c;
+        if (discriminant < 0.0f) {
+            __debugbreak();
+        }
+
+        float sqrt_d = glm::sqrt(discriminant);
+        float root1 = (-b + sqrt_d) / (2 * a);
+        float root2 = (-b - sqrt_d) / (2 * a);
+        light.max_distance = root1 > 0.0f ? root1 : root2;
+        light.max_distance = glm::max(LIGHT_SHADOW_MIN_DISTANCE + 1.0f, light.max_distance);
+    }
 }
 
 void Scene::update_armature(uint32_t index) {
@@ -591,6 +614,23 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& ray) {
     }
 
     return result;
+}
+
+void Scene::run_light_update_system(Context& ctx) {
+    JS_PARALLEL_FOR(ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, update_light(index));
+}
+
+void Scene::run_transformation_update_system(Context& ctx) {
+    JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
+    // JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, get_component_array<TransformComponent>()[index].update_transform());
+}
+
+void Scene::run_animation_update_system(Context& ctx) {
+    JS_PARALLEL_FOR(ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
+}
+
+void Scene::run_armature_update_system(Context& ctx) {
+    JS_PARALLEL_FOR(ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
 }
 
 void Scene::run_hierarchy_update_system(Context& ctx) {

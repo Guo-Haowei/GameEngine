@@ -10,6 +10,7 @@ public:
     void add_pass(RenderPassDesc& desc);
     std::shared_ptr<RenderPass> find_pass(const std::string& name) const;
 
+    // @TODO: graph should not own resource, move to graphics manager
     std::shared_ptr<Resource> create_resource(const ResourceDesc& desc);
     std::shared_ptr<Resource> find_resouce(const std::string& name) const;
 

@@ -9,13 +9,27 @@ int find_cascade(const in vec3 p_pos_world) {
     vec4 pos_view = c_view_matrix * vec4(p_pos_world, 1.0);
     float depth = abs(pos_view.z);
 
-    for (int i = 0; i < NUM_CASCADE_MAX; ++i) {
+    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
         if (depth < c_cascade_plane_distances[i]) {
             return i;
         }
     }
 
-    return NUM_CASCADE_MAX - 1;
+    return MAX_CASCADE_COUNT - 1;
+}
+
+float point_shadow_calculation(vec3 p_frag_pos, int p_light_index) {
+    vec3 light_position = c_lights[p_light_index].position;
+    float light_far = c_lights[p_light_index].max_distance;
+
+    vec3 frag_to_light = p_frag_pos - light_position;
+    float closest_depth = texture(c_lights[p_light_index].shadow_map, frag_to_light).r;
+    closest_depth *= light_far;
+    float current_depth = length(frag_to_light);
+    float bias = 0.05;
+    float shadow = current_depth - bias > closest_depth ? 1.0 : 0.0;
+
+    return shadow;
 }
 
 float cascade_shadow_voxel(sampler2D p_shadow_map,
@@ -27,7 +41,7 @@ float cascade_shadow_voxel(sampler2D p_shadow_map,
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
     coords.x += p_level;
-    coords.x /= NUM_CASCADE_MAX;
+    coords.x /= MAX_CASCADE_COUNT;
 
     if (current_depth > 1.0) {
         return 0.0;
@@ -52,7 +66,7 @@ float cascade_shadow(sampler2D p_shadow_map,
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
     coords.x += p_level;
-    coords.x /= NUM_CASCADE_MAX;
+    coords.x /= MAX_CASCADE_COUNT;
 
 #if 0
     float lower = 0.001;

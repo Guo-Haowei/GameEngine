@@ -161,6 +161,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         dirty |= draw_drag_float("constant", light.atten.constant, 0.1f, 0.0f, 1.0f);
         dirty |= draw_drag_float("linear", light.atten.linear, 0.1f, 0.0f, 1.0f);
         dirty |= draw_drag_float("quadratic", light.atten.quadratic, 0.1f, 0.0f, 1.0f);
+        ImGui::Text("max distance: %0.3f", light.max_distance);
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
