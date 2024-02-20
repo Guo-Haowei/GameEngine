@@ -1,13 +1,13 @@
 #pragma once
-#include "resource.h"
+#include "rendering/render_target.h"
 
 namespace my::rg {
 
 using RenderPassFunc = void (*)(int width, int height);
 
 struct SubPassDesc {
-    std::vector<std::shared_ptr<Resource>> color_attachments;
-    std::shared_ptr<Resource> depth_attachment;
+    std::vector<std::shared_ptr<RenderTarget>> color_attachments;
+    std::shared_ptr<RenderTarget> depth_attachment;
     RenderPassFunc func = nullptr;
 };
 

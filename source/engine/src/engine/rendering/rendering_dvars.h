@@ -1,5 +1,7 @@
 #include "core/dynamic_variable/dynamic_variable_begin.h"
 
+DVAR_IVEC2(resolution, 0, "Frame resolution", 1280, 720);
+
 // Debug switch
 DVAR_BOOL(r_enable_fxaa, DVAR_FLAG_CACHE, "Enalbe FXAA", true);
 DVAR_BOOL(r_enable_vxgi, DVAR_FLAG_CACHE, "Enable VXGI", true);

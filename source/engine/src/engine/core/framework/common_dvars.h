@@ -14,6 +14,6 @@ DVAR_BOOL(verbose, 0, "Print verbose log", true);
 DVAR_STRING(recent_files, DVAR_FLAG_CACHE, "A list of recent opened scenes", "");
 
 // gui
-DVAR_BOOL(grid_visibility, DVAR_FLAG_CACHE, "Show editor grid", true);
+DVAR_BOOL(show_editor, DVAR_FLAG_CACHE, "Show editor", true);
 
 #include "core/dynamic_variable/dynamic_variable_end.h"

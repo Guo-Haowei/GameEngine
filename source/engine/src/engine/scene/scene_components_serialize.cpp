@@ -4,29 +4,6 @@
 
 namespace my {
 
-void NameComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
-        archive << m_name;
-    } else {
-        archive >> m_name;
-    }
-}
-
-void TransformComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
-        archive << m_flags;
-        archive << m_scale;
-        archive << m_translation;
-        archive << m_rotation;
-    } else {
-        archive >> m_flags;
-        archive >> m_scale;
-        archive >> m_translation;
-        archive >> m_rotation;
-        set_dirty();
-    }
-}
-
 void HierarchyComponent::serialize(Archive& archive, uint32_t) {
     m_parent_id.serialize(archive);
 }

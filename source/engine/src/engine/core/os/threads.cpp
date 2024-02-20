@@ -25,9 +25,9 @@ static struct
     std::atomic_bool shutdown_requested;
     std::array<ThreadObject, THREAD_MAX> threads = {
         ThreadObject{ "main" },
-        ThreadObject{ "asset worker 0", AssetManager::worker_main },
-        ThreadObject{ "asset worker 1", AssetManager::worker_main },
-        ThreadObject{ "asset worker 2", AssetManager::worker_main },
+        ThreadObject{ "render thread", []() {} },
+        ThreadObject{ "asset thread 1", AssetManager::worker_main },
+        ThreadObject{ "asset thread 2", AssetManager::worker_main },
         ThreadObject{ "js worker 0", jobsystem::worker_main },
         ThreadObject{ "js worker 1", jobsystem::worker_main },
         ThreadObject{ "js worker 2", jobsystem::worker_main },
@@ -37,7 +37,7 @@ static struct
         ThreadObject{ "js worker 6", jobsystem::worker_main },
         ThreadObject{ "js worker 7", jobsystem::worker_main },
     };
-} s_glob;
+} s_thread_glob;
 
 bool initialize() {
     g_thread_id = THREAD_MAIN;
@@ -45,7 +45,7 @@ bool initialize() {
     std::latch latch{ THREAD_MAX - 1 };
 
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
-        ThreadObject& thread = s_glob.threads[id];
+        ThreadObject& thread = s_thread_glob.threads[id];
         thread.id = id;
         thread.thread = std::thread(
             [&](ThreadObject* object) {
@@ -78,17 +78,17 @@ bool initialize() {
 
 void finailize() {
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
-        auto& thread = s_glob.threads[id];
+        auto& thread = s_thread_glob.threads[id];
         thread.thread.join();
     }
 }
 
 bool is_shutdown_requested() {
-    return s_glob.shutdown_requested;
+    return s_thread_glob.shutdown_requested;
 }
 
 void request_shutdown() {
-    s_glob.shutdown_requested = true;
+    s_thread_glob.shutdown_requested = true;
 }
 
 bool is_main_thread() {

@@ -17,7 +17,9 @@ Viewer::Viewer(EditorLayer& editor) : EditorWindow("Viewer", editor) {
 }
 
 void Viewer::update_data() {
-    auto [frame_width, frame_height] = DisplayServer::singleton().get_frame_size();
+    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    int frame_width = frame_size.x;
+    int frame_height = frame_size.y;
     const float ratio = (float)frame_width / frame_height;
     m_canvas_size.x = ImGui::GetWindowSize().x;
     m_canvas_size.y = ImGui::GetWindowSize().y;
@@ -57,7 +59,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             const vec3 ray_end = ray_start + direction * camera.get_far();
             Ray ray(ray_start, ray_end);
 
-            const auto intersection_result = scene.Intersects(ray);
+            const auto intersection_result = scene.select(ray);
 
             m_editor.select_entity(intersection_result.entity);
         }
@@ -82,7 +84,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     uint64_t final_image = m_editor.get_displayed_image();
     ImGui::GetWindowDrawList()->AddImage((ImTextureID)final_image, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
 
-    bool draw_grid = DVAR_GET_BOOL(grid_visibility);
+    bool draw_grid = DVAR_GET_BOOL(show_editor);
     if (draw_grid) {
         mat4 identity(1);
         // draw grid
@@ -100,6 +102,21 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     // draw aabb
     ecs::Entity id = m_editor.get_selected_entity();
     TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
+    if (transform_component) {
+        AABB aabb;
+        if (const BoxColliderComponent* collider = scene.get_component<BoxColliderComponent>(id); collider) {
+            aabb = collider->box;
+        }
+        // @TODO: mesh
+
+        if (aabb.is_valid()) {
+            aabb.apply_matrix(transform_component->get_world_matrix());
+
+            const mat4 model_matrix = glm::translate(mat4(1), aabb.center()) * glm::scale(mat4(1), aabb.size());
+            ImGuizmo::draw_box_wireframe(projection_view_matrix, model_matrix);
+        }
+    }
+#if 0
     ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
     if (object_component && transform_component) {
         auto mesh_component = scene.get_component<MeshComponent>(object_component->mesh_id);
@@ -110,6 +127,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         const mat4 model_matrix = glm::translate(mat4(1), aabb.center()) * glm::scale(mat4(1), aabb.size());
         ImGuizmo::draw_box_wireframe(projection_view_matrix, model_matrix);
     }
+#endif
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION operation) {
         if (transform_component) {
@@ -117,7 +135,8 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
             if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
                                      glm::value_ptr(projection_matrix),
                                      operation,
-                                     ImGuizmo::LOCAL,
+                                     // ImGuizmo::LOCAL,
+                                     ImGuizmo::WORLD,
                                      glm::value_ptr(local),
                                      nullptr, nullptr, nullptr, nullptr)) {
                 transform_component->set_local_transform(local);

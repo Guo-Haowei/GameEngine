@@ -42,7 +42,8 @@ public:
 
     const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
 
-    std::shared_ptr<rg::Resource> find_resource(const std::string& name);
+    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc);
+    std::shared_ptr<RenderTarget> find_resource(const std::string& name) const;
 
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb);
@@ -53,6 +54,8 @@ private:
     std::shared_ptr<RenderData> m_render_data;
 
     rg::RenderGraph m_render_graph;
+
+    std::map<std::string, std::shared_ptr<RenderTarget>> m_resource_lookup;
 };
 
 }  // namespace my

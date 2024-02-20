@@ -95,7 +95,7 @@ void DisplayServerGLFW::new_frame() {
     ImGui_ImplGlfw_NewFrame();
 }
 
-std::tuple<int, int> DisplayServerGLFW::get_frame_size() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
+std::tuple<int, int> DisplayServerGLFW::get_window_size() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
 
 std::tuple<int, int> DisplayServerGLFW::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
 

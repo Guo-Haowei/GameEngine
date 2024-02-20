@@ -10,7 +10,7 @@ class DisplayServerGLFW : public DisplayServer {
 public:
     bool should_close() override;
 
-    std::tuple<int, int> get_frame_size() override;
+    std::tuple<int, int> get_window_size() override;
     std::tuple<int, int> get_window_pos() override;
 
     void new_frame() override;

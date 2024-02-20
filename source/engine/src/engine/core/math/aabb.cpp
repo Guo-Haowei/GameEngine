@@ -52,10 +52,12 @@ void AABB::apply_matrix(const mat4& mat4) {
     m_max = new_box.m_max;
 }
 
-void AABB::from_center_size(const vec3& center, const vec3& size) {
-    vec3 half = 0.5f * size;
-    m_min = center - half;
-    m_max = center + half;
+AABB AABB::from_center_size(const vec3& p_center, const vec3& p_size) {
+    AABB box;
+    vec3 half_size = 0.5f * p_size;
+    box.m_min = p_center - half_size;
+    box.m_max = p_center + half_size;
+    return box;
 }
 
 }  // namespace my

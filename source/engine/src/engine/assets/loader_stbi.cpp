@@ -45,10 +45,22 @@ bool LoaderSTBIBase::load_impl(Image* image, bool is_float, STBILoadFunc func) {
         return false;
     }
 
+    const size_t pixel_size = is_float ? sizeof(float) : sizeof(uint8_t);
+    // HACK: reload image with 4 channels, width not divisible by 4 crashes glTexImage()
+    if ((width * pixel_size) % 4 != 0) {
+        stbi_image_free(pixels);
+        pixels = (uint8_t*)func(file_buffer.data(), buffer_length, &width, &height, &num_channels, 4);
+        if (!pixels) {
+            m_error = std::format("stbi: failed to load image '{}'", m_file_path);
+            return false;
+        }
+        num_channels = 4;
+        LOG_WARN("Image '{}' ({}x{}) are reloaded with 4 components", m_file_path, width, height);
+    }
+
     int num_pixels = width * height * num_channels;
     std::vector<uint8_t> buffer;
-    const size_t pixel_size = is_float ? sizeof(float) : sizeof(uint8_t);
-    buffer.reserve(pixel_size * num_pixels);
+    buffer.resize(pixel_size * num_pixels);
     memcpy(buffer.data(), pixels, pixel_size * num_pixels);
     stbi_image_free(pixels);
 

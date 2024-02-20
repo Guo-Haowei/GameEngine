@@ -9,6 +9,7 @@ namespace my {
 void DebugTexturePanel::update_internal(Scene& scene) {
     unused(scene);
 
+#if 0
     const auto& graph = GraphicsManager::singleton().get_active_render_graph();
     const auto& resources = graph.get_resources();
 
@@ -33,7 +34,6 @@ void DebugTexturePanel::update_internal(Scene& scene) {
     ImGui::DragInt("zoom level", &zoom, 1, 10, 300);
     dim *= zoom * 0.01f;
 
-#if 0
     {
         // @HACK
         auto image_handle = AssetManager::singleton().find_image("@res://env/sky.hdr");
@@ -44,9 +44,9 @@ void DebugTexturePanel::update_internal(Scene& scene) {
             handle = image->texture.handle;
         }
     }
-#endif
 
     ImGui::Image((ImTextureID)handle, ImVec2(dim.x, dim.y), ImVec2(0, 1), ImVec2(1, 0));
+#endif
 }
 
 }  // namespace my

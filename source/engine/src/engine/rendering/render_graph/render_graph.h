@@ -11,14 +11,10 @@ public:
     std::shared_ptr<RenderPass> find_pass(const std::string& name) const;
 
     // @TODO: graph should not own resource, move to graphics manager
-    std::shared_ptr<Resource> create_resource(const ResourceDesc& desc);
-    std::shared_ptr<Resource> find_resouce(const std::string& name) const;
 
     void compile();
 
     void execute();
-
-    const auto& get_resources() const { return m_resource_lookup; }
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_render_passes;
@@ -27,7 +23,6 @@ private:
     std::vector<std::vector<int>> m_levels;
 
     std::map<std::string, int> m_render_pass_lookup;
-    std::map<std::string, std::shared_ptr<Resource>> m_resource_lookup;
 
     friend class RenderGraphEditorDelegate;
 };
