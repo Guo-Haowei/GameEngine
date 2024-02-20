@@ -3,6 +3,8 @@
 #include "core/math/ray.h"
 #include "core/systems/component_manager.h"
 #include "scene/camera.h"
+#include "scene/collider_component.h"
+#include "scene/name_component.h"
 #include "scene/scene_components.h"
 
 namespace my {
@@ -135,6 +137,9 @@ public:                                                                         
     REGISTER_COMPONENT(ArmatureComponent, 0);
     REGISTER_COMPONENT(AnimationComponent, 0);
     REGISTER_COMPONENT(RigidBodyComponent, 0);
+    REGISTER_COMPONENT(SelectableComponent, 0);
+    REGISTER_COMPONENT(BoxColliderComponent, 0);
+    REGISTER_COMPONENT(MeshColliderComponent, 0);
 
     bool serialize(Archive& archive);
 
@@ -148,6 +153,7 @@ public:                                                                         
                        Degree fovy = Camera::kDefaultFovy);
 
     ecs::Entity create_name_entity(const std::string& name);
+    ecs::Entity create_box_selectable(const std::string& name, const AABB& aabb);
     ecs::Entity create_transform_entity(const std::string& name);
     ecs::Entity create_object_entity(const std::string& name);
     ecs::Entity create_mesh_entity(const std::string& name);
@@ -180,7 +186,8 @@ public:                                                                         
         ecs::Entity entity;
     };
 
-    RayIntersectionResult Intersects(Ray& ray);
+    RayIntersectionResult select(Ray& ray);
+    RayIntersectionResult intersects(Ray& ray);
 
     const AABB& get_bound() const { return m_bound; }
     // @TODO: refactor

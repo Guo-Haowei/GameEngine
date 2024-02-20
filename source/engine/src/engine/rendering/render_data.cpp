@@ -2,6 +2,7 @@
 
 #include "core/base/rid_owner.h"
 #include "core/framework/asset_manager.h"
+#include "core/framework/common_dvars.h"
 #include "core/math/frustum.h"
 #include "gl_utils.h"
 #include "r_cbuffers.h"
@@ -125,29 +126,30 @@ void RenderData::update(const Scene* p_scene) {
 
     // lights
     light_billboards.clear();
-    for (uint32_t idx = 0; idx < (uint32_t)scene->get_count<LightComponent>(); ++idx) {
-        auto light_id = scene->get_entity<LightComponent>(idx);
-        const LightComponent& light = scene->get_component_array<LightComponent>()[idx];
-        const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
-        DEV_ASSERT(transform);
-        LightBillboard billboard;
-        vec3 translation = transform->get_translation();
-        switch (light.type) {
-            case LIGHT_TYPE_OMNI:
-                translation += vec3(0, 1, 0);
-                billboard.image = omni_light_image;
-                break;
-            case LIGHT_TYPE_POINT:
-                billboard.image = point_light_image;
-                break;
-            default:
-                CRASH_NOW();
-                break;
-        }
-        billboard.transform = glm::translate(translation);
-        billboard.type = light.type;
+    if (DVAR_GET_BOOL(show_editor)) {
+        for (uint32_t idx = 0; idx < (uint32_t)scene->get_count<LightComponent>(); ++idx) {
+            auto light_id = scene->get_entity<LightComponent>(idx);
+            const LightComponent& light = scene->get_component_array<LightComponent>()[idx];
+            const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
+            DEV_ASSERT(transform);
+            LightBillboard billboard;
+            vec3 translation = transform->get_translation();
+            switch (light.type) {
+                case LIGHT_TYPE_OMNI:
+                    billboard.image = omni_light_image;
+                    break;
+                case LIGHT_TYPE_POINT:
+                    billboard.image = point_light_image;
+                    break;
+                default:
+                    CRASH_NOW();
+                    break;
+            }
+            billboard.transform = glm::translate(translation);
+            billboard.type = light.type;
 
-        light_billboards.emplace_back(billboard);
+            light_billboards.emplace_back(billboard);
+        }
     }
 }
 

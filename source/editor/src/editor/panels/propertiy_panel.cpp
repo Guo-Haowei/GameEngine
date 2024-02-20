@@ -86,6 +86,16 @@ void PropertyPanel::update_internal(Scene& scene) {
             LOG_ERROR("TODO: implement add component");
             ImGui::CloseCurrentPopup();
         }
+        if (ImGui::BeginMenu("Selectable")) {
+            // @TODO: check if exists, if exists, disable
+            if (ImGui::MenuItem("Box Collider")) {
+                m_editor.add_component(COMPONENT_TYPE_BOX_COLLIDER, id);
+            }
+            if (ImGui::MenuItem("Mesh Collider")) {
+                m_editor.add_component(COMPONENT_TYPE_MESH_COLLIDER, id);
+            }
+            ImGui::EndMenu();
+        }
         ImGui::EndPopup();
     }
 
@@ -96,6 +106,8 @@ void PropertyPanel::update_internal(Scene& scene) {
     auto material_id = mesh_component ? mesh_component->subsets[0].material_id : ecs::Entity::INVALID;
     MaterialComponent* material_component = scene.get_component<MaterialComponent>(material_id);
     RigidBodyComponent* rigid_body_component = scene.get_component<RigidBodyComponent>(id);
+    BoxColliderComponent* box_collider = scene.get_component<BoxColliderComponent>(id);
+    MeshColliderComponent* mesh_collider = scene.get_component<MeshColliderComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -199,6 +211,18 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::Text("%zu triangles", mesh.indices.size() / 3);
         ImGui::Text("v:%zu, n:%zu, u:%zu, b:%zu", mesh.positions.size(), mesh.normals.size(),
                     mesh.texcoords_0.size(), mesh.weights_0.size());
+    });
+
+    DrawComponent("Box Collider", box_collider, [&](BoxColliderComponent& collider) {
+        vec3 center = collider.box.center();
+        vec3 size = collider.box.size();
+        if (draw_vec3_control("size", size)) {
+            collider.box = AABB::from_center_size(center, size);
+        }
+    });
+
+    DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
+        ImGui::Text("entity %llu", collider.mesh_collider.get_id());
     });
 
     DrawComponent("Material", material_component, [&](MaterialComponent& material) {

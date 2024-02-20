@@ -3,7 +3,7 @@
 
 namespace my {
 
-template<size_t N>
+template<int N>
 class Box {
     using vec_type = glm::vec<N, float, glm::defaultp>;
     using self_type = Box<N>;
@@ -16,6 +16,15 @@ public:
     void make_invalid() {
         m_min = vec_type(std::numeric_limits<float>::infinity());
         m_max = vec_type(-std::numeric_limits<float>::infinity());
+    }
+
+    bool is_valid() {
+        for (int i = 0; i < N; ++i) {
+            if (m_min[i] >= m_max[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void make_valid() {

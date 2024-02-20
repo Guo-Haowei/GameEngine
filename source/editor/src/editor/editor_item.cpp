@@ -11,7 +11,7 @@ void EditorItem::open_add_entity_popup(ecs::Entity parent) {
                 LOG_ERROR("not implemented");
             }
             if (ImGui::MenuItem("Cube")) {
-                m_editor.add_cube(parent);
+                m_editor.add_entity(ENTITY_TYPE_CUBE, parent);
             }
             if (ImGui::MenuItem("Sphere")) {
                 LOG_ERROR("not implemented");
@@ -20,7 +20,7 @@ void EditorItem::open_add_entity_popup(ecs::Entity parent) {
         }
         if (ImGui::BeginMenu("Light")) {
             if (ImGui::MenuItem("Point")) {
-                m_editor.add_point_light(parent);
+                m_editor.add_entity(ENTITY_TYPE_POINT_LIGHT, parent);
             }
             if (ImGui::MenuItem("Sun")) {
                 LOG_ERROR("not implemented");

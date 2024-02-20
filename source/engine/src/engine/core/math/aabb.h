@@ -12,10 +12,10 @@ public:
 
     void apply_matrix(const mat4& mat);
 
-    void from_center_size(const vec3& center, const vec3& size);
-
     bool intersects(const AABB& aabb) const { return TestIntersection::aabb_aabb(*this, aabb); }
     bool intersects(Ray& ray) const { return TestIntersection::ray_aabb(*this, ray); }
+
+    static AABB from_center_size(const vec3& p_center, const vec3& p_size);
 
     friend class TestIntersection;
 };

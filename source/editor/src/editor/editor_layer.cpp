@@ -105,30 +105,16 @@ void EditorLayer::update(float) {
 void EditorLayer::render() {
 }
 
-void EditorLayer::add_object(EditorCommandName name, ecs::Entity parent) {
-    auto command = std::make_shared<EditorCommandAdd>(name);
-    command->parent = parent;
+void EditorLayer::add_component(ComponentType type, ecs::Entity target) {
+    auto command = std::make_shared<EditorCommandAddComponent>(type);
+    command->target = target;
     buffer_command(command);
 }
 
-void EditorLayer::add_plane(ecs::Entity parent) {
-    add_object(EDITOR_COMMAND_ADD_MESH_PLANE, parent);
-}
-
-void EditorLayer::add_cube(ecs::Entity parent) {
-    add_object(EDITOR_COMMAND_ADD_MESH_CUBE, parent);
-}
-
-void EditorLayer::add_sphere(ecs::Entity parent) {
-    add_object(EDITOR_COMMAND_ADD_MESH_SPHERE, parent);
-}
-
-void EditorLayer::add_point_light(ecs::Entity parent) {
-    add_object(EDITOR_COMMAND_ADD_LIGHT_POINT, parent);
-}
-
-void EditorLayer::add_omin_light(ecs::Entity parent) {
-    add_object(EDITOR_COMMAND_ADD_LIGHT_OMNI, parent);
+void EditorLayer::add_entity(EntityType name, ecs::Entity parent) {
+    auto command = std::make_shared<EditorCommandAddEntity>(name);
+    command->parent = parent;
+    buffer_command(command);
 }
 
 void EditorLayer::buffer_command(std::shared_ptr<EditorCommand> command) {
@@ -142,30 +128,25 @@ static std::string gen_name(std::string_view name) {
 
 void EditorLayer::flush_commands(Scene& scene) {
     while (!m_command_buffer.empty()) {
-        auto command = m_command_buffer.front();
+        auto task = m_command_buffer.front();
         m_command_buffer.pop_front();
         do {
-            EditorCommandAdd* add_command = dynamic_cast<EditorCommandAdd*>(command.get());
-            if (add_command) {
-                if (!add_command->parent.is_valid()) {
-                    add_command->parent == scene.m_root;
-                }
-
+            if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
                 ecs::Entity id;
-                switch (add_command->name) {
-                    case EDITOR_COMMAND_ADD_LIGHT_OMNI:
+                switch (add_command->entity_type) {
+                    case ENTITY_TYPE_OMNI_LIGHT:
                         id = scene.create_omnilight_entity(gen_name("OmniLight"));
                         break;
-                    case EDITOR_COMMAND_ADD_LIGHT_POINT:
+                    case ENTITY_TYPE_POINT_LIGHT:
                         id = scene.create_pointlight_entity(gen_name("Pointlight"), vec3(0, 1, 0));
                         break;
-                    case EDITOR_COMMAND_ADD_MESH_PLANE:
+                    case ENTITY_TYPE_PLANE:
                         id = scene.create_cube_entity(gen_name("Plane"));
                         break;
-                    case EDITOR_COMMAND_ADD_MESH_CUBE:
+                    case ENTITY_TYPE_CUBE:
                         id = scene.create_cube_entity(gen_name("Cube"));
                         break;
-                    case EDITOR_COMMAND_ADD_MESH_SPHERE:
+                    case ENTITY_TYPE_SPHERE:
                         id = scene.create_sphere_entity(gen_name("Sphere"));
                         break;
                     default:
@@ -173,13 +154,30 @@ void EditorLayer::flush_commands(Scene& scene) {
                         break;
                 }
 
-                scene.attach_component(id, add_command->parent);
+                scene.attach_component(id, add_command->parent.is_valid() ? add_command->parent : scene.m_root);
                 select_entity(id);
                 SceneManager::singleton().bump_revision();
                 break;
             }
+            if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {
+                DEV_ASSERT(command->target.is_valid());
+                switch (command->component_type) {
+                    case COMPONENT_TYPE_BOX_COLLIDER: {
+                        scene.create<SelectableComponent>(command->target);
+                        auto& collider = scene.create<BoxColliderComponent>(command->target);
+                        collider.box = AABB::from_center_size(vec3(0), vec3(1));
+                    } break;
+                    case COMPONENT_TYPE_MESH_COLLIDER:
+                        scene.create<SelectableComponent>(command->target);
+                        scene.create<MeshColliderComponent>(command->target);
+                        break;
+                    default:
+                        CRASH_NOW();
+                        break;
+                }
+            }
         } while (0);
-        m_command_history.push_back(command);
+        m_command_history.push_back(task);
     }
 }
 
