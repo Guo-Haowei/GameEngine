@@ -21,7 +21,6 @@ enum {
 class EditorLayer : public Layer {
 public:
     enum State {
-        STATE_PICKING,
         STATE_TRANSLATE,
         STATE_ROTATE,
         STATE_SCALE,
@@ -60,7 +59,7 @@ private:
     std::shared_ptr<MenuBar> m_menu_bar;
     std::vector<std::shared_ptr<EditorWindow>> m_panels;
     ecs::Entity m_selected;
-    State m_state{ STATE_PICKING };
+    State m_state{ STATE_TRANSLATE };
 
     uint64_t m_displayed_image = 0;
     std::list<std::shared_ptr<EditorCommand>> m_command_buffer;

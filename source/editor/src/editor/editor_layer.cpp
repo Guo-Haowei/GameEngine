@@ -48,7 +48,6 @@ void EditorLayer::add_panel(std::shared_ptr<EditorWindow> panel) {
 
 void EditorLayer::select_entity(ecs::Entity selected) {
     m_selected = selected;
-    m_state = STATE_PICKING;
 }
 
 void EditorLayer::dock_space(Scene& scene) {
