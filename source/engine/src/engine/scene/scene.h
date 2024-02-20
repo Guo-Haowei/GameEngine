@@ -6,6 +6,7 @@
 #include "scene/collider_component.h"
 #include "scene/name_component.h"
 #include "scene/scene_components.h"
+#include "scene/transform_component.h"
 
 namespace my {
 
