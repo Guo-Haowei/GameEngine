@@ -73,7 +73,7 @@ void main() {
                     const vec3 radiance = c_lights[light_idx].color;
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
                     if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(world_position, light_idx);
+                        shadow = point_shadow_calculation(world_position, light_idx, c_camera_position);
                     }
                 }
             } break;
