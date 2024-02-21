@@ -17,40 +17,36 @@ struct RenderData;
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
-    enum {
+    enum RenderGraph {
         RENDER_GRAPH_NONE,
         RENDER_GRAPH_BASE_COLOR,
         RENDER_GRAPH_VXGI,
     };
 
-    GraphicsManager() : Module("GraphicsManager") {}
+    GraphicsManager(std::string_view p_name) : Module(p_name) {}
 
-    bool initialize();
-    void finalize();
+    virtual void render() = 0;
 
     // @TODO: filter
-    void create_texture(ImageHandle* handle);
+    virtual void create_texture(ImageHandle* handle) = 0;
 
     void event_received(std::shared_ptr<Event> event) override;
 
-    void createGpuResources();
-    void render();
-    void destroyGpuResources();
+    virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc) = 0;
 
-    uint32_t get_final_image() const;
+    virtual uint32_t get_final_image() const = 0;
 
     std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
 
     const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
 
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc);
-    std::shared_ptr<RenderTarget> find_resource(const std::string& name) const;
+    virtual std::shared_ptr<RenderTarget> find_resource(const std::string& name) const = 0;
 
     // @TODO: refactor this
-    void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb);
+    virtual void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) = 0;
 
-private:
-    int m_method = RENDER_GRAPH_NONE;
+protected:
+    RenderGraph m_method = RENDER_GRAPH_NONE;
 
     std::shared_ptr<RenderData> m_render_data;
 
