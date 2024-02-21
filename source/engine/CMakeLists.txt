@@ -16,6 +16,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/imgui
+    ${PROJECT_SOURCE_DIR}/thirdparty/optick/
     ${PROJECT_SOURCE_DIR}/thirdparty
     ${PROJECT_SOURCE_DIR}/resources/glsl
     ${CMAKE_CURRENT_SOURCE_DIR}/src/engine
@@ -26,7 +27,8 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
     -DROOT_FOLDER="${PROJECT_SOURCE_DIR}/"
 )
 
-target_link_libraries(${TARGET_NAME} PUBLIC imgui glfw glad lua bullet)
+target_link_libraries(${TARGET_NAME} PUBLIC
+    imgui glfw glad lua bullet optick)
 
 target_set_warning_level(${TARGET_NAME})
 

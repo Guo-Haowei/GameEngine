@@ -10,6 +10,7 @@
                 "${workspaceRoot}/thirdparty/glfw/include",
                 "${workspaceRoot}/thirdparty/glm/",
                 "${workspaceRoot}/thirdparty/imgui/",
+                "${workspaceRoot}/thirdparty/optick/src/",
                 "${workspaceRoot}/thirdparty/",
                 "${workspaceRoot}/source/engine/src/engine/",
                 "${workspaceRoot}/source/editor/src/"

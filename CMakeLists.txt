@@ -27,6 +27,11 @@ message(STATUS "Configuring Bullet3...")
 add_subdirectory(thirdparty/bullet3)
 set_target_properties(bullet PROPERTIES FOLDER thirdparty)
 
+################################################################################
+message(STATUS "Configuring optick...")
+add_subdirectory(thirdparty/optick)
+set_target_properties(optick PROPERTIES FOLDER thirdparty)
+
 include(cmake/build-lua.cmake)
 include(cmake/build-imgui.cmake)
 

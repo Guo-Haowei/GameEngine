@@ -15,6 +15,7 @@
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
 #include "drivers/glfw/glfw_display_manager.h"
+#include "optick/optick.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/rendering_misc.h"
 
@@ -120,6 +121,9 @@ int Application::run(int argc, const char** argv) {
     bool imgui_built = ImGui::GetIO().Fonts->IsBuilt();
 
     while (!DisplayManager::singleton().should_close()) {
+        OPTICK_FRAME("MainThread");
+        OPTICK_EVENT("Frame");
+
         m_display_server->new_frame();
 
         input::begin_frame();
@@ -143,12 +147,18 @@ int Application::run(int argc, const char** argv) {
             ImGui::Render();
         }
 
-        m_scene_manager->update(dt);
+        {
+            OPTICK_EVENT("Scene");
+            m_scene_manager->update(dt);
+        }
         timer.start();
 
         m_physics_manager->update(dt);
 
-        m_graphics_manager->render();
+        {
+            OPTICK_EVENT("Rendering");
+            m_graphics_manager->render();
+        }
 
         m_display_server->present();
 

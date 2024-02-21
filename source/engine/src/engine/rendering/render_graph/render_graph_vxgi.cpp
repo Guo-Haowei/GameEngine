@@ -2,6 +2,7 @@
 
 #include "core/base/rid_owner.h"
 #include "core/math/frustum.h"
+#include "optick/optick.h"
 #include "rendering/rendering_dvars.h"
 
 // @TODO: refactor
@@ -24,6 +25,8 @@ namespace my::rg {
 // @TODO: refactor render passes to have multiple frame buffers
 // const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
 void point_shadow_pass_func(int width, int height, int pass_id) {
+    OPTICK_EVENT();
+
     auto render_data = GraphicsManager::singleton().get_render_data();
     if (render_data->point_shadow_passes.size() <= pass_id) {
         return;
@@ -63,6 +66,8 @@ void point_shadow_pass_func(int width, int height, int pass_id) {
 }
 
 void shadow_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     // @TODO: for each light source, render shadow
     const Scene& scene = SceneManager::get_scene();
 
@@ -106,6 +111,8 @@ void shadow_pass_func(int width, int height) {
 }
 
 void voxelization_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     unused(width);
     unused(height);
     if (!DVAR_GET_BOOL(r_enable_vxgi)) {
@@ -178,6 +185,8 @@ void voxelization_pass_func(int width, int height) {
 }
 
 void gbuffer_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
 
     glEnable(GL_DEPTH_TEST);
@@ -219,6 +228,8 @@ void gbuffer_pass_func(int width, int height) {
 }
 
 void ssao_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_SSAO);
@@ -227,6 +238,8 @@ void ssao_pass_func(int width, int height) {
 }
 
 void lighting_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -235,6 +248,8 @@ void lighting_pass_func(int width, int height) {
 }
 
 void debug_vxgi_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     // glClear(GL_COLOR_BUFFER_BIT);
@@ -249,6 +264,8 @@ void debug_vxgi_pass_func(int width, int height) {
 }
 
 void fxaa_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     // HACK:
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
         debug_vxgi_pass_func(width, height);
