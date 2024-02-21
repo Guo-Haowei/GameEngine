@@ -286,20 +286,12 @@ void GraphicsManager::createGpuResources() {
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
         m_method = RENDER_GRAPH_VXGI;
-    } else if (method == "default") {
-        m_method = RENDER_GRAPH_DEFAULT;
-    }
-
-    switch (m_method) {
-        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
-            create_render_graph_default(m_render_graph);
-            break;
-        case my::GraphicsManager::RENDER_GRAPH_VXGI:
-            create_render_graph_vxgi(m_render_graph);
-            break;
-        default:
-            CRASH_NOW();
-            break;
+        create_render_graph_vxgi(m_render_graph);
+    } else if (method == "base_color") {
+        m_method = RENDER_GRAPH_BASE_COLOR;
+        create_render_graph_default(m_render_graph);
+    } else {
+        CRASH_NOW();
     }
 
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
@@ -351,7 +343,7 @@ uint32_t GraphicsManager::get_final_image() const {
     switch (m_method) {
         case my::GraphicsManager::RENDER_GRAPH_VXGI:
             return find_resource(RT_RES_FXAA)->get_handle();
-        case my::GraphicsManager::RENDER_GRAPH_DEFAULT:
+        case my::GraphicsManager::RENDER_GRAPH_BASE_COLOR:
         default:
             CRASH_NOW();
             return 0;

@@ -9,7 +9,14 @@ static MeshData g_quad;
 
 void R_CreateQuad() {
     // clang-format off
-    float points[] = { -1.0f, +1.0f, -1.0f, -1.0f, +1.0f, +1.0f, +1.0f, +1.0f, -1.0f, -1.0f, +1.0f, -1.0f, };
+    float points[] = {
+        -1.0f, +1.0f,
+        -1.0f, -1.0f,
+        +1.0f, +1.0f,
+        +1.0f, +1.0f,
+        -1.0f, -1.0f,
+        +1.0f, -1.0f,
+    };
     // clang-format on
     glGenVertexArrays(1, &g_quad.vao);
     glGenBuffers(1, g_quad.vbos);

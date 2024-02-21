@@ -19,7 +19,7 @@ class GraphicsManager : public Singleton<GraphicsManager>, public Module, public
 public:
     enum {
         RENDER_GRAPH_NONE,
-        RENDER_GRAPH_DEFAULT,
+        RENDER_GRAPH_BASE_COLOR,
         RENDER_GRAPH_VXGI,
     };
 

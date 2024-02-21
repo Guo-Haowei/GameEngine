@@ -83,11 +83,6 @@ static void save_project(bool open_dialog) {
 }
 
 void MenuBar::update(Scene&) {
-    if (m_editor.get_displayed_image() == 0) {
-        uint32_t handle = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_handle();
-        m_editor.set_displayed_image(handle);
-    }
-
     // @TODO: input system, key s handled here, don't handle it in viewer
     if (input::is_key_down(KEY_LEFT_CONTROL)) {
         if (input::is_key_pressed(KEY_S)) {

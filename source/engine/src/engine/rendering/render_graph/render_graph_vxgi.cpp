@@ -236,10 +236,20 @@ void ssao_pass_func(int width, int height) {
     shader.unbind();
 }
 
+void lighting_pass_func(int width, int height) {
+    glViewport(0, 0, width, height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+    const auto& program = ShaderProgramManager::get(PROGRAM_LIGHTING_VXGI);
+    program.bind();
+    R_DrawQuad();
+}
+
 void debug_vxgi_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
+    // glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const auto& program = ShaderProgramManager::get(PROGRAM_DEBUG_VOXEL);
     program.bind();
@@ -252,21 +262,25 @@ void debug_vxgi_pass_func(int width, int height) {
     program.unbind();
 }
 
-void lighting_pass_func(int width, int height) {
+void fxaa_pass_func(int width, int height) {
+    // HACK:
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
         debug_vxgi_pass_func(width, height);
-        return;
+    } else {
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // glDisable(GL_DEPTH_TEST);
+        const auto& program = ShaderProgramManager::get(PROGRAM_FXAA);
+        program.bind();
+        R_DrawQuad();
+        program.unbind();
     }
 
-    glViewport(0, 0, width, height);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    const auto& program = ShaderProgramManager::get(PROGRAM_LIGHTING_VXGI);
-    program.bind();
-    R_DrawQuad();
 
+    // @TODO: draw gui stuff to the anti-aliased
     {
         // @DEBUG SKYBOX
         glEnable(GL_CULL_FACE);
@@ -294,18 +308,6 @@ void lighting_pass_func(int width, int height) {
 
     // glDepthFunc(GL_LESS);
     glUseProgram(0);
-}
-
-void fxaa_pass_func(int width, int height) {
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    const auto& program = ShaderProgramManager::get(PROGRAM_FXAA);
-    program.bind();
-    R_DrawQuad();
-    program.unbind();
-
-    // @TODO: draw gui stuff to the anti-aliased
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {
@@ -426,7 +428,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
         desc.subpasses.emplace_back(SubPassDesc{
             .color_attachments = { lighting_attachment },
-            .depth_attachment = gbuffer_depth,
             .func = lighting_pass_func,
         });
         graph.add_pass(desc);
@@ -437,6 +438,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.dependencies = { LIGHTING_PASS };
         desc.subpasses.emplace_back(SubPassDesc{
             .color_attachments = { fxaa_attachment },
+            .depth_attachment = gbuffer_depth,
             .func = fxaa_pass_func,
         });
         graph.add_pass(desc);

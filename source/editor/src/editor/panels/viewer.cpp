@@ -10,6 +10,9 @@
 #include "editor/utility/imguizmo.h"
 #include "rendering/rendering_dvars.h"
 #include "servers/display_server.h"
+// @TODO: refactor this
+#include "core/framework/graphics_manager.h"
+#include "rendering/render_graph/render_graph_vxgi.h"
 
 namespace my {
 
@@ -82,8 +85,9 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     ImVec2 top_left(m_canvas_min.x, m_canvas_min.y);
     ImVec2 bottom_right(top_left.x + m_canvas_size.x, top_left.y + m_canvas_size.y);
 
-    uint64_t final_image = m_editor.get_displayed_image();
-    ImGui::GetWindowDrawList()->AddImage((ImTextureID)final_image, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
+    // @TODO: fix this
+    uint64_t handle = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_handle();
+    ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
 
     bool draw_grid = DVAR_GET_BOOL(show_editor);
     if (draw_grid) {
