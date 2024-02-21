@@ -8,6 +8,7 @@
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graph.h"
+#include "scene/material_component.h"
 #include "scene/scene_components.h"
 
 namespace my {

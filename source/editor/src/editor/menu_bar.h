@@ -6,9 +6,9 @@ namespace my {
 
 class MenuBar : public EditorItem {
 public:
-    MenuBar(EditorLayer& editor) : EditorItem(editor) {}
+    MenuBar(EditorLayer& p_editor) : EditorItem(p_editor) {}
 
-    void draw(Scene& scene);
+    void update(Scene& p_scene) override;
 };
 
 }  // namespace my

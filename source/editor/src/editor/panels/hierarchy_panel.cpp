@@ -7,6 +7,8 @@
 
 namespace my {
 
+#define POPUP_NAME_ID "SCENE_PANEL_POPUP"
+
 // @TODO: do not traverse every frame
 class HierarchyCreator {
 public:
@@ -35,7 +37,7 @@ private:
     EditorLayer& m_editor_layer;
 };
 
-namespace imgui_util {
+namespace panel_util {
 
 }
 

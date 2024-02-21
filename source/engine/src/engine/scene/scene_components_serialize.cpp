@@ -40,28 +40,6 @@ void MeshComponent::serialize(Archive& archive, uint32_t) {
     }
 }
 
-void MaterialComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
-        archive << metallic;
-        archive << roughness;
-        archive << base_color;
-        for (int i = 0; i < TEXTURE_MAX; ++i) {
-            archive << textures[i].path;
-        }
-    } else {
-        archive >> metallic;
-        archive >> roughness;
-        archive >> base_color;
-        for (int i = 0; i < TEXTURE_MAX; ++i) {
-            std::string path;
-            archive >> path;
-            request_image((TextureSlot)i, path);
-        }
-    }
-
-    // @TODO: request image
-}
-
 void LightComponent::serialize(Archive& archive, uint32_t version) {
     unused(version);
     if (archive.is_write_mode()) {

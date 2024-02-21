@@ -44,15 +44,16 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     }
 }
 
-void EditorLayer::add_panel(std::shared_ptr<EditorWindow> panel) {
-    m_panels.emplace_back(panel);
+void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {
+    m_panels.emplace_back(p_panel);
 }
 
-void EditorLayer::select_entity(ecs::Entity selected) {
-    m_selected = selected;
+void EditorLayer::select_entity(ecs::Entity p_selected) {
+    m_selected = p_selected;
 }
 
-void EditorLayer::dock_space(Scene& scene) {
+// @TODO: make this an item
+void EditorLayer::dock_space(Scene& p_scene) {
     ImGui::GetMainViewport();
 
     static bool opt_padding = false;
@@ -89,7 +90,7 @@ void EditorLayer::dock_space(Scene& scene) {
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    m_menu_bar->draw(scene);
+    m_menu_bar->update(p_scene);
 
     ImGui::End();
     return;

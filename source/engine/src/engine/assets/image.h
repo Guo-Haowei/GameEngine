@@ -22,4 +22,6 @@ public:
     Texture texture;
 };
 
+using ImageHandle = AssetHandle<Image>;
+
 }  // namespace my

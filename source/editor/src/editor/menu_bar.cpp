@@ -82,7 +82,7 @@ static void save_project(bool open_dialog) {
     }
 }
 
-void MenuBar::draw(Scene&) {
+void MenuBar::update(Scene&) {
     if (m_editor.get_displayed_image() == 0) {
         uint32_t handle = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_handle();
         m_editor.set_displayed_image(handle);

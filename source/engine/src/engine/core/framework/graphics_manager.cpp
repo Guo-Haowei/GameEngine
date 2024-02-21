@@ -466,6 +466,10 @@ void GraphicsManager::fill_material_constant_buffer(const MaterialComponent* mat
     cb.c_roughness = material->roughness;
 
     auto set_texture = [&](int idx, sampler2D& out_handle) {
+        if (!material->textures[idx].enabled) {
+            return false;
+        }
+
         ImageHandle* handle = material->textures[idx].image;
         if (!handle || handle->state != ASSET_STATE_READY) {
             return false;

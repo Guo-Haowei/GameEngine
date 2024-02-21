@@ -94,35 +94,6 @@ struct MeshComponent {
 };
 
 //--------------------------------------------------------------------------------------------------
-// Material Component
-//--------------------------------------------------------------------------------------------------
-struct MaterialComponent {
-    // @TODO: refactor
-    enum TextureSlot {
-        TEXTURE_BASE,
-        TEXTURE_NORMAL,
-        TEXTURE_METALLIC_ROUGHNESS,
-        TEXTURE_MAX,
-    };
-
-    struct TextureMap {
-        std::string path;
-        // Non-serialized
-        ImageHandle* image = nullptr;
-    };
-    TextureMap textures[TEXTURE_MAX];
-
-    // @TODO: refactor
-    float metallic = 0.0f;
-    float roughness = 1.0f;
-    vec4 base_color = vec4(1);
-
-    void request_image(TextureSlot slot, const std::string& path);
-
-    void serialize(Archive& archive, uint32_t version);
-};
-
-//--------------------------------------------------------------------------------------------------
 // Light Component
 //--------------------------------------------------------------------------------------------------
 struct LightComponent {

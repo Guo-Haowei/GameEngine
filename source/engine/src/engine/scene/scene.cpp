@@ -16,7 +16,8 @@ static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // version 4: light component flags
 // version 5: add validation
 // version 6: add collider component
-static constexpr uint32_t kSceneVersion = 6;
+// version 7: add enabled to material
+static constexpr uint32_t kSceneVersion = 7;
 static constexpr uint32_t kSceneMagicNumber = 'xScn';
 
 // @TODO: refactor
