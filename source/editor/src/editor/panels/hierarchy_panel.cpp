@@ -7,6 +7,8 @@
 
 namespace my {
 
+#define POPUP_NAME_ID "SCENE_PANEL_POPUP"
+
 // @TODO: do not traverse every frame
 class HierarchyCreator {
 public:
@@ -35,19 +37,24 @@ private:
     EditorLayer& m_editor_layer;
 };
 
-void HierarchyCreator::draw_node(const Scene& scene, HierarchyNode* pHier, ImGuiTreeNodeFlags flags) {
-    DEV_ASSERT(pHier);
-    ecs::Entity id = pHier->entity;
-    const NameComponent* name_component = scene.get_component<NameComponent>(id);
+namespace panel_util {
+
+}
+
+// @TODO: make it an widget
+void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
+    DEV_ASSERT(p_hier);
+    ecs::Entity id = p_hier->entity;
+    const NameComponent* name_component = p_scene.get_component<NameComponent>(id);
     const char* name = name_component ? name_component->get_name().c_str() : "Untitled";
 
     auto nodeTag = std::format("##{}", id.get_id());
     auto tag = std::format("{}{}", name, nodeTag);
 
-    flags |= ImGuiTreeNodeFlags_NoTreePushOnOpen;
-    flags |= pHier->children.empty() ? ImGuiTreeNodeFlags_Leaf : 0;
-    flags |= m_editor_layer.get_selected_entity() == id ? ImGuiTreeNodeFlags_Selected : 0;
-    bool expanded = ImGui::TreeNodeEx(nodeTag.c_str(), flags);
+    p_flags |= ImGuiTreeNodeFlags_NoTreePushOnOpen;
+    p_flags |= p_hier->children.empty() ? ImGuiTreeNodeFlags_Leaf : 0;
+    p_flags |= m_editor_layer.get_selected_entity() == id ? ImGuiTreeNodeFlags_Selected : 0;
+    bool expanded = ImGui::TreeNodeEx(nodeTag.c_str(), p_flags);
     ImGui::SameLine();
     ImGui::Selectable(tag.c_str());
     if (ImGui::IsItemHovered()) {
@@ -62,8 +69,8 @@ void HierarchyCreator::draw_node(const Scene& scene, HierarchyNode* pHier, ImGui
     if (expanded) {
         float indentWidth = 8.f;
         ImGui::Indent(indentWidth);
-        for (auto& child : pHier->children) {
-            draw_node(scene, child);
+        for (auto& child : p_hier->children) {
+            draw_node(p_scene, child);
         }
         ImGui::Unindent(indentWidth);
     }

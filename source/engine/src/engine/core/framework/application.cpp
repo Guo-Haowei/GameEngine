@@ -14,17 +14,15 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
+#include "drivers/glfw/glfw_display_manager.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/rendering_misc.h"
-#include "rendering/shader_program_manager.h"
-#include "servers/display_server.h"
-#include "servers/display_server_glfw.h"
-
-#define DEFINE_DVAR
-#include "core/framework/common_dvars.h"
 
 // @TODO: rename
 #include "core/framework/asset_manager.h"
+
+#define DEFINE_DVAR
+#include "core/framework/common_dvars.h"
 
 namespace my {
 
@@ -54,8 +52,9 @@ void Application::setup_modules() {
     m_scene_manager = std::make_shared<SceneManager>();
     m_physics_manager = std::make_shared<PhysicsManager>();
     m_imgui_module = std::make_shared<ImGuiModule>();
-    m_display_server = std::make_shared<DisplayServerGLFW>();
-    m_graphics_manager = std::make_shared<GraphicsManager>();
+    m_display_server = std::make_shared<GLFWDisplayManager>();
+    // @TODO: select proper graphics manager
+    m_graphics_manager = GraphicsManager::create();
 
     register_module(m_asset_manager.get());
     register_module(m_scene_manager.get());
@@ -94,8 +93,6 @@ int Application::run(int argc, const char** argv) {
         LOG("module '{}' initialized\n", module->get_name());
     }
 
-    ShaderProgramManager::singleton().initialize();
-
     init_layers();
     for (auto& layer : m_layers) {
         layer->attach();
@@ -119,7 +116,10 @@ int Application::run(int argc, const char** argv) {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-    while (!DisplayServer::singleton().should_close()) {
+
+    bool imgui_built = ImGui::GetIO().Fonts->IsBuilt();
+
+    while (!DisplayManager::singleton().should_close()) {
         m_display_server->new_frame();
 
         input::begin_frame();
@@ -130,15 +130,18 @@ int Application::run(int argc, const char** argv) {
         float dt = static_cast<float>(timer.get_duration().to_second());
         dt = glm::min(dt, 0.1f);
 
-        ImGui::NewFrame();
-        for (auto& layer : m_layers) {
-            layer->update(dt);
-        }
+        // to avoid empty renderer crash
+        if (imgui_built) {
+            ImGui::NewFrame();
+            for (auto& layer : m_layers) {
+                layer->update(dt);
+            }
 
-        for (auto& layer : m_layers) {
-            layer->render();
+            for (auto& layer : m_layers) {
+                layer->render();
+            }
+            ImGui::Render();
         }
-        ImGui::Render();
 
         m_scene_manager->update(dt);
         timer.start();
@@ -149,8 +152,6 @@ int Application::run(int argc, const char** argv) {
 
         m_display_server->present();
 
-        ImGui::EndFrame();
-
         input::end_frame();
     }
 
@@ -159,16 +160,15 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     // @TODO: fix
-    auto [w, h] = DisplayServer::singleton().get_window_size();
+    auto [w, h] = DisplayManager::singleton().get_window_size();
     DVAR_SET_IVEC2(window_resolution, w, h);
-    auto [x, y] = DisplayServer::singleton().get_window_pos();
+    auto [x, y] = DisplayManager::singleton().get_window_pos();
     DVAR_SET_IVEC2(window_position, x, y);
 
     // @TODO: move it to request shutdown
     thread::request_shutdown();
 
     // finalize
-    ShaderProgramManager::singleton().finalize();
 
     for (int index = (int)m_modules.size() - 1; index >= 0; --index) {
         Module* module = m_modules[index];

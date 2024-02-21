@@ -3,13 +3,16 @@
 #include <imgui/imgui_internal.h>
 
 #include "core/framework/common_dvars.h"
+#include "core/framework/display_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
 #include "core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
 #include "rendering/rendering_dvars.h"
-#include "servers/display_server.h"
+// @TODO: refactor this
+#include "core/framework/graphics_manager.h"
+#include "rendering/render_graph/render_graph_vxgi.h"
 
 namespace my {
 
@@ -43,7 +46,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
     }
 
     if (input::is_button_pressed(MOUSE_BUTTON_RIGHT)) {
-        auto [window_x, window_y] = DisplayServer::singleton().get_window_pos();
+        auto [window_x, window_y] = DisplayManager::singleton().get_window_pos();
         vec2 clicked = input::get_cursor();
         clicked.x = (clicked.x + window_x - m_canvas_min.x) / m_canvas_size.x;
         clicked.y = (clicked.y + window_y - m_canvas_min.y) / m_canvas_size.y;
@@ -59,6 +62,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             const vec3 ray_end = ray_start + direction * camera.get_far();
             Ray ray(ray_start, ray_end);
 
+            // const auto intersection_result = scene.intersects(ray);
             const auto intersection_result = scene.select(ray);
 
             m_editor.select_entity(intersection_result.entity);
@@ -81,8 +85,9 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     ImVec2 top_left(m_canvas_min.x, m_canvas_min.y);
     ImVec2 bottom_right(top_left.x + m_canvas_size.x, top_left.y + m_canvas_size.y);
 
-    uint64_t final_image = m_editor.get_displayed_image();
-    ImGui::GetWindowDrawList()->AddImage((ImTextureID)final_image, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
+    // @TODO: fix this
+    uint64_t handle = GraphicsManager::singleton().get_final_image();
+    ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
 
     bool draw_grid = DVAR_GET_BOOL(show_editor);
     if (draw_grid) {
@@ -99,7 +104,6 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         }
     }
 
-    // draw aabb
     ecs::Entity id = m_editor.get_selected_entity();
     TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
     if (transform_component) {
@@ -107,7 +111,14 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         if (const BoxColliderComponent* collider = scene.get_component<BoxColliderComponent>(id); collider) {
             aabb = collider->box;
         }
-        // @TODO: mesh
+        if (const MeshColliderComponent* collider = scene.get_component<MeshColliderComponent>(id); collider) {
+            if (const ObjectComponent* object = scene.get_component<ObjectComponent>(collider->object_id); object) {
+                MeshComponent* mesh = scene.get_component<MeshComponent>(object->mesh_id);
+                transform_component = scene.get_component<TransformComponent>(collider->object_id);
+                DEV_ASSERT(transform_component);
+                aabb = mesh->local_bound;
+            }
+        }
 
         if (aabb.is_valid()) {
             aabb.apply_matrix(transform_component->get_world_matrix());

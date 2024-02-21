@@ -19,7 +19,7 @@ struct BoxColliderComponent {
 };
 
 struct MeshColliderComponent {
-    ecs::Entity mesh_collider;
+    ecs::Entity object_id;
 
     void serialize(Archive& archive, uint32_t version);
 };

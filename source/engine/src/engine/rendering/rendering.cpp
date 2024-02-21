@@ -135,17 +135,18 @@ void fill_constant_buffers(const Scene& scene) {
                 light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, scene.get_bound());
             } break;
             case LIGHT_TYPE_POINT: {
+                // @TODO: there's a bug in shadow map allocation
                 light.atten_constant = light_component.atten.constant;
                 light.atten_linear = light_component.atten.linear;
                 light.atten_quadratic = light_component.atten.quadratic;
                 const vec3 position = light_transform->get_translation();
                 light.position = position;
                 light.cast_shadow = light_component.cast_shadow();
+                constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
+                light.max_distance = light_component.max_distance;
                 if (light.cast_shadow) {
                     CRASH_COND_MSG(num_point_light_cast_shadow >= MAX_LIGHT_CAST_SHADOW_COUNT, "Can have at most " _STR(MAX_LIGHT_CAST_SHADOW_COUNT) " point lights that cast shadow");
 
-                    constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
-                    light.max_distance = light_component.max_distance;
                     const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, light.max_distance);
                     light.matrices[0] = projection * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
                     light.matrices[1] = projection * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
@@ -156,7 +157,7 @@ void fill_constant_buffers(const Scene& scene) {
 
                     // @TODO: allocate
                     auto resource = GraphicsManager::singleton().find_resource(RT_RES_POINT_SHADOW_MAP + std::to_string(num_point_light_cast_shadow));
-                    light.shadow_map.data = resource->get_resident_handle();
+                    light.shadow_map.data = resource ? resource->get_resident_handle() : 0;
 
                     ++num_point_light_cast_shadow;
                 }

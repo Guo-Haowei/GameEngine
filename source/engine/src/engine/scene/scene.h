@@ -4,6 +4,7 @@
 #include "core/systems/component_manager.h"
 #include "scene/camera.h"
 #include "scene/collider_component.h"
+#include "scene/material_component.h"
 #include "scene/name_component.h"
 #include "scene/scene_components.h"
 #include "scene/transform_component.h"
@@ -189,6 +190,7 @@ public:                                                                         
 
     RayIntersectionResult select(Ray& ray);
     RayIntersectionResult intersects(Ray& ray);
+    bool ray_object_intersect(ecs::Entity object_id, Ray& ray);
 
     const AABB& get_bound() const { return m_bound; }
     // @TODO: refactor

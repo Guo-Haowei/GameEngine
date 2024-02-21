@@ -1,8 +1,10 @@
 #include "propertiy_panel.h"
 
+// @TODO: remove this
 #include "ImGuizmo/ImGuizmo.h"
 #include "core/framework/scene_manager.h"
 #include "editor/editor_layer.h"
+#include "editor/panels/panel_util.h"
 #include "editor/widget.h"
 
 namespace my {
@@ -64,16 +66,13 @@ void PropertyPanel::update_internal(Scene& scene) {
         return;
     }
 
-    NameComponent* tagComponent = scene.get_component<NameComponent>(id);
-    if (!tagComponent) {
+    NameComponent* name_component = scene.get_component<NameComponent>(id);
+    if (!name_component) {
         LOG_WARN("Entity {} does not have name", id.get_id());
         return;
     }
 
-    std::string tag = tagComponent->get_name();
-    if (ImGui::InputText("##Tag", tag.data(), tag.capacity(), ImGuiInputTextFlags_EnterReturnsTrue)) {
-        tagComponent->set_name(tag);
-    }
+    panel_util::edit_name(name_component);
 
     ImGui::SameLine();
     ImGui::PushItemWidth(-1);
@@ -164,7 +163,7 @@ void PropertyPanel::update_internal(Scene& scene) {
             // @TODO: set dirty
         }
 
-        bool cast_shadow = light.flags & LightComponent::CAST_SHADOW;
+        bool cast_shadow = light.cast_shadow();
         ImGui::Checkbox("Cast shadow", &cast_shadow);
         light.flags = (cast_shadow ? LightComponent::CAST_SHADOW : 0);
 
@@ -222,7 +221,18 @@ void PropertyPanel::update_internal(Scene& scene) {
     });
 
     DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
-        ImGui::Text("entity %llu", collider.mesh_collider.get_id());
+        char buffer[256];
+        snprintf(buffer, sizeof(buffer), "%d", collider.object_id.get_id());
+        ImGui::Columns(2);
+        ImGui::SetColumnWidth(0, kDefaultColumnWidth);
+        ImGui::Text("Mesh ID");
+        ImGui::NextColumn();
+        ImGui::InputText("##ID", buffer, sizeof(buffer));
+        ImGui::Columns(1);
+        ecs::Entity entity{ (uint32_t)std::stoi(buffer) };
+        if (scene.get_component<ObjectComponent>(entity) != nullptr) {
+            collider.object_id = entity;
+        }
     });
 
     DrawComponent("Material", material_component, [&](MaterialComponent& material) {

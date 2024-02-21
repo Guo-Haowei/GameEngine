@@ -15,4 +15,5 @@ void main() {
         color = pow(color, vec3(gamma));
         out_color.rgb = color;
     }
+    out_color.a = 1.0;
 }

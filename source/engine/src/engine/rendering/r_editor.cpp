@@ -5,7 +5,6 @@
 #include "core/math/geometry.h"
 #include "gl_utils.h"
 #include "r_cbuffers.h"
-#include "shader_program_manager.h"
 
 using namespace my;
 

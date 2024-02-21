@@ -35,7 +35,7 @@ private:
     uint32_t m_handle = 0;
     uint64_t m_resident_handle = 0;
 
-    friend class GraphicsManager;
+    friend class GLGraphicsManager;
 };
 
 }  // namespace my

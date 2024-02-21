@@ -32,27 +32,27 @@ public:
     void update(float dt) override;
     void render() override;
 
-    void select_entity(ecs::Entity selected);
+    void select_entity(ecs::Entity p_selected);
     ecs::Entity get_selected_entity() const { return m_selected; }
     State get_state() const { return m_state; }
-    void set_state(State state) { m_state = state; }
+    void set_state(State p_state) { m_state = p_state; }
 
     uint64_t get_displayed_image() const { return m_displayed_image; }
     void set_displayed_image(uint64_t p_image) { m_displayed_image = p_image; }
 
-    void add_component(ComponentType type, ecs::Entity target);
-    void add_entity(EntityType type, ecs::Entity parent);
+    void add_component(ComponentType p_type, ecs::Entity p_target);
+    void add_entity(EntityType p_type, ecs::Entity p_parent);
 
 private:
-    void dock_space(Scene& scene);
-    void add_panel(std::shared_ptr<EditorWindow> panel);
+    void dock_space(Scene& p_scene);
+    void add_panel(std::shared_ptr<EditorItem> p_panel);
 
-    void buffer_command(std::shared_ptr<EditorCommand> command);
-    void flush_commands(Scene& scene);
-    void undo_command(Scene& scene);
+    void buffer_command(std::shared_ptr<EditorCommand> p_command);
+    void flush_commands(Scene& p_scene);
+    void undo_command(Scene& p_scene);
 
     std::shared_ptr<MenuBar> m_menu_bar;
-    std::vector<std::shared_ptr<EditorWindow>> m_panels;
+    std::vector<std::shared_ptr<EditorItem>> m_panels;
     ecs::Entity m_selected;
     State m_state{ STATE_TRANSLATE };
 

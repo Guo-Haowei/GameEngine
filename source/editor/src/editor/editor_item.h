@@ -5,15 +5,15 @@ namespace my {
 
 class EditorLayer;
 
-#define POPUP_NAME_ID "SCENE_PANEL_POPUP"
-
 class EditorItem {
 public:
-    EditorItem(EditorLayer& editor) : m_editor(editor) {}
+    EditorItem(EditorLayer& p_editor) : m_editor(p_editor) {}
     virtual ~EditorItem() = default;
 
+    virtual void update(Scene&) = 0;
+
 protected:
-    void open_add_entity_popup(ecs::Entity parent);
+    void open_add_entity_popup(ecs::Entity p_parent);
 
     EditorLayer& m_editor;
 };

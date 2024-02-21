@@ -1,12 +1,11 @@
 #pragma once
-#include "core/base/singleton.h"
-#include "rendering/shader_program.h"
 
 namespace my {
 
-// @TODO: change to pipeline manager
-enum ProgramType {
+enum PipelineStateName {
     // @TODO: split render passes to static and dynamic
+    PROGRAM_BASE_COLOR_STATIC,
+    PROGRAM_BASE_COLOR_ANIMATED,
     PROGRAM_DPETH_STATIC,
     PROGRAM_DPETH_ANIMATED,
     PROGRAM_POINT_SHADOW_STATIC,
@@ -22,18 +21,7 @@ enum ProgramType {
     PROGRAM_DEBUG_VOXEL,
     PROGRAM_SKY_BOX,
     PROGRAM_BILLBOARD,
-    PROGRAM_MAX,
+    PIPELINE_STATE_MAX,
 };
 
-class ShaderProgramManager : public Singleton<ShaderProgramManager> {
-public:
-    bool initialize();
-    void finalize();
-
-    static const ShaderProgram& get(ProgramType type);
-
-private:
-    ShaderProgram create(const ProgramCreateInfo& info);
-};
-
-}  // namespace my
+}

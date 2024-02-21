@@ -3,14 +3,13 @@
 #include "core/base/rid_owner.h"
 #include "core/math/frustum.h"
 #include "rendering/rendering_dvars.h"
-#include "servers/display_server.h"
 
 // @TODO: refactor
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
-#include "rendering/shader_program_manager.h"
 
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
@@ -51,8 +50,7 @@ void point_shadow_pass_func(int width, int height, int pass_id) {
             g_boneCache.Update();
         }
 
-        const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
-        program.bind();
+        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -92,8 +90,7 @@ void shadow_pass_func(int width, int height) {
                 g_boneCache.Update();
             }
 
-            const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
-            program.bind();
+            GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
             g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
             g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -146,7 +143,7 @@ void voxelization_pass_func(int width, int height) {
             g_boneCache.Update();
         }
 
-        ShaderProgramManager::get(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC).bind();
+        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -165,7 +162,7 @@ void voxelization_pass_func(int width, int height) {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     // post process
-    ShaderProgramManager::get(PROGRAM_VOXELIZATION_POST).bind();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_VOXELIZATION_POST);
 
     constexpr GLuint workGroupX = 512;
     constexpr GLuint workGroupY = 512;
@@ -202,8 +199,7 @@ void gbuffer_pass_func(int width, int height) {
             g_boneCache.Update();
         }
 
-        const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
-        program.bind();
+        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -225,59 +221,61 @@ void gbuffer_pass_func(int width, int height) {
 void ssao_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
 
-    const auto& shader = ShaderProgramManager::get(PROGRAM_SSAO);
-
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_SSAO);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    shader.bind();
-
     R_DrawQuad();
+}
 
-    shader.unbind();
+void lighting_pass_func(int width, int height) {
+    glViewport(0, 0, width, height);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_LIGHTING_VXGI);
+    R_DrawQuad();
 }
 
 void debug_vxgi_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
+    // glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const auto& program = ShaderProgramManager::get(PROGRAM_DEBUG_VOXEL);
-    program.bind();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_DEBUG_VOXEL);
 
     glBindVertexArray(g_box.vao);
 
     const int size = DVAR_GET_INT(r_voxel_size);
     glDrawElementsInstanced(GL_TRIANGLES, g_box.count, GL_UNSIGNED_INT, 0, size * size * size);
-
-    program.unbind();
 }
 
-void lighting_pass_func(int width, int height) {
+void fxaa_pass_func(int width, int height) {
+    // HACK:
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
         debug_vxgi_pass_func(width, height);
-        return;
+    } else {
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // glDisable(GL_DEPTH_TEST);
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_FXAA);
+        R_DrawQuad();
     }
 
-    glViewport(0, 0, width, height);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
-    const auto& program = ShaderProgramManager::get(PROGRAM_LIGHTING_VXGI);
-    program.bind();
-    R_DrawQuad();
 
+    // @TODO: draw gui stuff to the anti-aliased
     {
         // @DEBUG SKYBOX
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
-        ShaderProgramManager::get(PROGRAM_SKY_BOX).bind();
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_SKY_BOX);
         glBindVertexArray(g_skybox.vao);
         glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
         glDisable(GL_CULL_FACE);
     }
 
-    ShaderProgramManager::get(PROGRAM_BILLBOARD).bind();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_BILLBOARD);
     // draw billboards
     auto render_data = GraphicsManager::singleton().get_render_data();
 
@@ -296,63 +294,51 @@ void lighting_pass_func(int width, int height) {
     glUseProgram(0);
 }
 
-void fxaa_pass_func(int width, int height) {
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    const auto& program = ShaderProgramManager::get(PROGRAM_FXAA);
-    program.bind();
-    R_DrawQuad();
-    program.unbind();
-
-    // @TODO: draw gui stuff to the anti-aliased
-}
-
 void create_render_graph_vxgi(RenderGraph& graph) {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
     int h = frame_size.y;
 
-    GraphicsManager& gm = GraphicsManager::singleton();
+    GraphicsManager& manager = GraphicsManager::singleton();
 
-    auto gbuffer_attachment0 = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
-                                                                    FORMAT_R16G16B16A16_FLOAT,
-                                                                    RT_COLOR_ATTACHMENT,
-                                                                    w, h });
-    auto gbuffer_attachment1 = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
-                                                                    FORMAT_R16G16B16A16_FLOAT,
-                                                                    RT_COLOR_ATTACHMENT,
-                                                                    w, h });
-    auto gbuffer_attachment2 = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
-                                                                    FORMAT_R8G8B8A8_UINT,
-                                                                    RT_COLOR_ATTACHMENT,
-                                                                    w, h });
-    auto gbuffer_depth = gm.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
-                                                              FORMAT_D32_FLOAT,
-                                                              RT_DEPTH_ATTACHMENT,
-                                                              w, h });
-    auto ssao_attachment = gm.create_resource(RenderTargetDesc{ RT_RES_SSAO,
-                                                                FORMAT_R32_FLOAT,
-                                                                RT_COLOR_ATTACHMENT,
-                                                                w, h });
-    auto lighting_attachment = gm.create_resource(RenderTargetDesc{ RT_RES_LIGHTING,
-                                                                    FORMAT_R8G8B8A8_UINT,
-                                                                    RT_COLOR_ATTACHMENT,
-                                                                    w, h });
-    auto fxaa_attachment = gm.create_resource(RenderTargetDesc{ RT_RES_FXAA,
-                                                                FORMAT_R8G8B8A8_UINT,
-                                                                RT_COLOR_ATTACHMENT,
-                                                                w, h });
+    auto gbuffer_attachment0 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
+                                                                         FORMAT_R16G16B16A16_FLOAT,
+                                                                         RT_COLOR_ATTACHMENT,
+                                                                         w, h });
+    auto gbuffer_attachment1 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
+                                                                         FORMAT_R16G16B16A16_FLOAT,
+                                                                         RT_COLOR_ATTACHMENT,
+                                                                         w, h });
+    auto gbuffer_attachment2 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
+                                                                         FORMAT_R8G8B8A8_UINT,
+                                                                         RT_COLOR_ATTACHMENT,
+                                                                         w, h });
+    auto gbuffer_depth = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
+                                                                   FORMAT_D32_FLOAT,
+                                                                   RT_DEPTH_ATTACHMENT,
+                                                                   w, h });
+    auto ssao_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_SSAO,
+                                                                     FORMAT_R32_FLOAT,
+                                                                     RT_COLOR_ATTACHMENT,
+                                                                     w, h });
+    auto lighting_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_LIGHTING,
+                                                                         FORMAT_R8G8B8A8_UINT,
+                                                                         RT_COLOR_ATTACHMENT,
+                                                                         w, h });
+    auto fxaa_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FXAA,
+                                                                     FORMAT_R8G8B8A8_UINT,
+                                                                     RT_COLOR_ATTACHMENT,
+                                                                     w, h });
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
         const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
         DEV_ASSERT(math::is_power_of_two(point_shadow_res));
 
-        auto shadow_map = gm.create_resource(RenderTargetDesc{ RT_RES_SHADOW_MAP,
-                                                               FORMAT_D32_FLOAT,
-                                                               RT_SHADOW_MAP,
-                                                               MAX_CASCADE_COUNT * shadow_res, shadow_res });
+        auto shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_SHADOW_MAP,
+                                                                    FORMAT_D32_FLOAT,
+                                                                    RT_SHADOW_MAP,
+                                                                    MAX_CASCADE_COUNT * shadow_res, shadow_res });
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
 
@@ -374,10 +360,10 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         static_assert(array_length(funcs) == MAX_LIGHT_CAST_SHADOW_COUNT);
 
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-            auto point_shadow_map = gm.create_resource(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
-                                                                         FORMAT_D32_FLOAT,
-                                                                         RT_SHADOW_CUBE_MAP,
-                                                                         point_shadow_res, point_shadow_res });
+            auto point_shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
+                                                                              FORMAT_D32_FLOAT,
+                                                                              RT_SHADOW_CUBE_MAP,
+                                                                              point_shadow_res, point_shadow_res });
 
             desc.subpasses.emplace_back(SubPassDesc{
                 .depth_attachment = point_shadow_map,
@@ -426,7 +412,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
         desc.subpasses.emplace_back(SubPassDesc{
             .color_attachments = { lighting_attachment },
-            .depth_attachment = gbuffer_depth,
             .func = lighting_pass_func,
         });
         graph.add_pass(desc);
@@ -437,6 +422,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.dependencies = { LIGHTING_PASS };
         desc.subpasses.emplace_back(SubPassDesc{
             .color_attachments = { fxaa_attachment },
+            .depth_attachment = gbuffer_depth,
             .func = fxaa_pass_func,
         });
         graph.add_pass(desc);

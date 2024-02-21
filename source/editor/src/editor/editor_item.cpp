@@ -4,14 +4,14 @@
 
 namespace my {
 
-void EditorItem::open_add_entity_popup(ecs::Entity parent) {
+void EditorItem::open_add_entity_popup(ecs::Entity p_parent) {
     if (ImGui::BeginMenu("Add")) {
         if (ImGui::BeginMenu("Mesh")) {
             if (ImGui::MenuItem("Plane")) {
                 LOG_ERROR("not implemented");
             }
             if (ImGui::MenuItem("Cube")) {
-                m_editor.add_entity(ENTITY_TYPE_CUBE, parent);
+                m_editor.add_entity(ENTITY_TYPE_CUBE, p_parent);
             }
             if (ImGui::MenuItem("Sphere")) {
                 LOG_ERROR("not implemented");
@@ -20,7 +20,7 @@ void EditorItem::open_add_entity_popup(ecs::Entity parent) {
         }
         if (ImGui::BeginMenu("Light")) {
             if (ImGui::MenuItem("Point")) {
-                m_editor.add_entity(ENTITY_TYPE_POINT_LIGHT, parent);
+                m_editor.add_entity(ENTITY_TYPE_POINT_LIGHT, p_parent);
             }
             if (ImGui::MenuItem("Sun")) {
                 LOG_ERROR("not implemented");

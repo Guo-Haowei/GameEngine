@@ -8,13 +8,13 @@
 #include "core/input/input.h"
 #include "editor/panels/animation_panel.h"
 #include "editor/panels/console_panel.h"
+#include "editor/panels/content_browser.h"
 #include "editor/panels/debug_panel.h"
 #include "editor/panels/debug_texture.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_editor.h"
 #include "editor/panels/viewer.h"
-#include "servers/display_server.h"
 
 namespace my {
 
@@ -27,6 +27,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<HierarchyPanel>(*this));
     add_panel(std::make_shared<PropertyPanel>(*this));
     add_panel(std::make_shared<Viewer>(*this));
+    add_panel(std::make_shared<ContentBrowser>(*this));
 
     m_menu_bar = std::make_shared<MenuBar>(*this);
 
@@ -42,15 +43,16 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     }
 }
 
-void EditorLayer::add_panel(std::shared_ptr<EditorWindow> panel) {
-    m_panels.emplace_back(panel);
+void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {
+    m_panels.emplace_back(p_panel);
 }
 
-void EditorLayer::select_entity(ecs::Entity selected) {
-    m_selected = selected;
+void EditorLayer::select_entity(ecs::Entity p_selected) {
+    m_selected = p_selected;
 }
 
-void EditorLayer::dock_space(Scene& scene) {
+// @TODO: make this an item
+void EditorLayer::dock_space(Scene& p_scene) {
     ImGui::GetMainViewport();
 
     static bool opt_padding = false;
@@ -87,7 +89,7 @@ void EditorLayer::dock_space(Scene& scene) {
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    m_menu_bar->draw(scene);
+    m_menu_bar->update(p_scene);
 
     ImGui::End();
     return;

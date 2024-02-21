@@ -126,7 +126,8 @@ void RenderData::update(const Scene* p_scene) {
 
     // lights
     light_billboards.clear();
-    if (DVAR_GET_BOOL(show_editor)) {
+    // if (DVAR_GET_BOOL(show_editor))
+    {
         for (uint32_t idx = 0; idx < (uint32_t)scene->get_count<LightComponent>(); ++idx) {
             auto light_id = scene->get_entity<LightComponent>(idx);
             const LightComponent& light = scene->get_component_array<LightComponent>()[idx];

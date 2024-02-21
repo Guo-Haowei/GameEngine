@@ -1,12 +1,12 @@
 #pragma once
+#include "core/framework/display_manager.h"
 #include "core/input/input_code.h"
-#include "display_server.h"
 
 struct GLFWwindow;
 
 namespace my {
 
-class DisplayServerGLFW : public DisplayServer {
+class GLFWDisplayManager : public DisplayManager {
 public:
     bool should_close() override;
 

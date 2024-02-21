@@ -1,4 +1,4 @@
-#include "display_server_glfw.h"
+#include "glfw_display_manager.h"
 
 #include <GLFW/glfw3.h>
 
@@ -11,8 +11,8 @@
 
 namespace my {
 
-bool DisplayServerGLFW::initialize() {
-    DisplayServerGLFW::initialize_key_mapping();
+bool GLFWDisplayManager::initialize() {
+    GLFWDisplayManager::initialize_key_mapping();
 
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
@@ -67,41 +67,29 @@ bool DisplayServerGLFW::initialize() {
     return true;
 }
 
-void DisplayServerGLFW::finalize() {
+void GLFWDisplayManager::finalize() {
     ImGui_ImplGlfw_Shutdown();
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
-bool DisplayServerGLFW::should_close() {
+bool GLFWDisplayManager::should_close() {
     return glfwWindowShouldClose(m_window);
 }
 
-void DisplayServerGLFW::new_frame() {
+void GLFWDisplayManager::new_frame() {
     glfwPollEvents();
     glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
     glfwGetWindowPos(m_window, &m_window_pos.x, &m_window_pos.y);
 
-    // title
-    auto title = std::format("{} | Pos: {}x{} | Size: {}x{} | FPS: {:.1f}",
-                             "Editor",
-                             m_window_pos.x,
-                             m_window_pos.y,
-                             m_frame_size.x,
-                             m_frame_size.y,
-                             ImGui::GetIO().Framerate);
-    glfwSetWindowTitle(m_window, title.c_str());
-
     ImGui_ImplGlfw_NewFrame();
 }
 
-std::tuple<int, int> DisplayServerGLFW::get_window_size() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
+std::tuple<int, int> GLFWDisplayManager::get_window_size() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
 
-std::tuple<int, int> DisplayServerGLFW::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
+std::tuple<int, int> GLFWDisplayManager::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
 
-void DisplayServerGLFW::present() {
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+void GLFWDisplayManager::present() {
     GLFWwindow* oldContext = glfwGetCurrentContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
@@ -110,13 +98,13 @@ void DisplayServerGLFW::present() {
     glfwSwapBuffers(m_window);
 }
 
-void DisplayServerGLFW::cursor_pos_cb(GLFWwindow* window, double x, double y) {
+void GLFWDisplayManager::cursor_pos_cb(GLFWwindow* window, double x, double y) {
     ImGui_ImplGlfw_CursorPosCallback(window, x, y);
     // if (!ImGui::GetIO().WantCaptureMouse)
     { input::set_cursor(static_cast<float>(x), static_cast<float>(y)); }
 }
 
-void DisplayServerGLFW::mouse_button_cb(GLFWwindow* window, int button, int action, int mods) {
+void GLFWDisplayManager::mouse_button_cb(GLFWwindow* window, int button, int action, int mods) {
     ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
@@ -129,7 +117,7 @@ void DisplayServerGLFW::mouse_button_cb(GLFWwindow* window, int button, int acti
     }
 }
 
-void DisplayServerGLFW::key_cb(GLFWwindow* window, int keycode, int scancode, int action, int mods) {
+void GLFWDisplayManager::key_cb(GLFWwindow* window, int keycode, int scancode, int action, int mods) {
     ImGui_ImplGlfw_KeyCallback(window, keycode, scancode, action, mods);
 
     // if (!ImGui::GetIO().WantCaptureKeyboard)
@@ -145,14 +133,14 @@ void DisplayServerGLFW::key_cb(GLFWwindow* window, int keycode, int scancode, in
     }
 }
 
-void DisplayServerGLFW::scroll_cb(GLFWwindow* window, double xoffset, double yoffset) {
+void GLFWDisplayManager::scroll_cb(GLFWwindow* window, double xoffset, double yoffset) {
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     { input::set_wheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
 }
 
-void DisplayServerGLFW::initialize_key_mapping() {
+void GLFWDisplayManager::initialize_key_mapping() {
     if (!s_key_mapping.empty()) {
         return;
     }

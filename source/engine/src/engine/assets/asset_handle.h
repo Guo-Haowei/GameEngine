@@ -2,15 +2,14 @@
 
 namespace my {
 
-class Image;
-
 enum AssetLoadingState : uint32_t {
     ASSET_STATE_LOADING,
     ASSET_STATE_READY,
 };
 
 template<typename T>
-struct AssetHandle {
+class AssetHandle {
+public:
     std::atomic<T*> data = nullptr;
     std::atomic<AssetLoadingState> state = ASSET_STATE_LOADING;
 
@@ -26,7 +25,5 @@ struct AssetHandle {
         return true;
     }
 };
-
-using ImageHandle = AssetHandle<Image>;
 
 }  // namespace my
