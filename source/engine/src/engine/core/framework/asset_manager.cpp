@@ -165,7 +165,7 @@ static void load_asset(LoadTask& task) {
         task.on_success(asset, task.userdata);
         LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.asset_path, timer.get_duration_string());
     } else {
-        LOG_FATAL("[AssetManager] failed to load '{}', details: {}", task.asset_path, loader->get_error());
+        LOG_ERROR("[AssetManager] failed to load '{}', details: {}", task.asset_path, loader->get_error());
     }
 }
 
