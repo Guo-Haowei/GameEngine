@@ -16,14 +16,26 @@ PipelineState* PipelineStateManager::find(PipelineStateName p_name) {
 bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/mesh_static.vert";
-        info.ps = "@res://glsl/gbuffer.frag";
+        info.vs = "@res://glsl/mesh_static.vert.glsl";
+        info.ps = "@res://glsl/base_color.frag.glsl";
+        m_cache[PROGRAM_BASE_COLOR_STATIC] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/mesh_animated.vert.glsl";
+        info.ps = "@res://glsl/base_color.frag.glsl";
+        m_cache[PROGRAM_BASE_COLOR_ANIMATED] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/mesh_static.vert.glsl";
+        info.ps = "@res://glsl/gbuffer.frag.glsl";
         m_cache[PROGRAM_GBUFFER_STATIC] = create(info);
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/mesh_animated.vert";
-        info.ps = "@res://glsl/gbuffer.frag";
+        info.vs = "@res://glsl/mesh_animated.vert.glsl";
+        info.ps = "@res://glsl/gbuffer.frag.glsl";
         m_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
     }
     {

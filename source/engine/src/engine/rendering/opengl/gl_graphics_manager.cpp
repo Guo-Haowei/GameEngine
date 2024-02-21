@@ -17,10 +17,9 @@
 #include "rendering/r_cbuffers.h"
 #include "rendering/r_editor.h"
 #include "rendering/rendering_dvars.h"
-#include "servers/display_server.h"
 #include "vsinput.glsl.h"
 // @TODO: refactor
-#include "rendering/render_graph/render_graph_default.h"
+#include "rendering/render_graph/render_graph_base_color.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
 
 using my::rg::RenderGraph;
@@ -292,7 +291,7 @@ void GLGraphicsManager::createGpuResources() {
         create_render_graph_vxgi(m_render_graph);
     } else if (method == "base_color") {
         m_method = RENDER_GRAPH_BASE_COLOR;
-        create_render_graph_default(m_render_graph);
+        create_render_graph_base_color(m_render_graph);
     } else {
         CRASH_NOW();
     }
@@ -342,11 +341,12 @@ void GLGraphicsManager::createGpuResources() {
     g_constantCache.Update();
 }
 
-uint32_t GLGraphicsManager::get_final_image() const {
+uint64_t GLGraphicsManager::get_final_image() const {
     switch (m_method) {
         case my::GLGraphicsManager::RENDER_GRAPH_VXGI:
             return find_resource(RT_RES_FXAA)->get_handle();
         case my::GLGraphicsManager::RENDER_GRAPH_BASE_COLOR:
+            return find_resource(RT_RES_BASE_COLOR)->get_handle();
         default:
             CRASH_NOW();
             return 0;

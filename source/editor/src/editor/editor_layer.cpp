@@ -15,7 +15,6 @@
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_editor.h"
 #include "editor/panels/viewer.h"
-#include "servers/display_server.h"
 
 namespace my {
 

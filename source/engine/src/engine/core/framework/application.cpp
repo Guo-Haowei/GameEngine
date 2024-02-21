@@ -14,10 +14,9 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
+#include "drivers/glfw/glfw_display_manager.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/rendering_misc.h"
-#include "servers/display_server.h"
-#include "servers/display_server_glfw.h"
 
 // @TODO: rename
 #include "core/framework/asset_manager.h"
@@ -53,7 +52,7 @@ void Application::setup_modules() {
     m_scene_manager = std::make_shared<SceneManager>();
     m_physics_manager = std::make_shared<PhysicsManager>();
     m_imgui_module = std::make_shared<ImGuiModule>();
-    m_display_server = std::make_shared<DisplayServerGLFW>();
+    m_display_server = std::make_shared<GLFWDisplayManager>();
     // @TODO: select proper graphics manager
     m_graphics_manager = GraphicsManager::create();
 
@@ -120,7 +119,7 @@ int Application::run(int argc, const char** argv) {
 
     bool imgui_built = ImGui::GetIO().Fonts->IsBuilt();
 
-    while (!DisplayServer::singleton().should_close()) {
+    while (!DisplayManager::singleton().should_close()) {
         m_display_server->new_frame();
 
         input::begin_frame();
@@ -161,9 +160,9 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     // @TODO: fix
-    auto [w, h] = DisplayServer::singleton().get_window_size();
+    auto [w, h] = DisplayManager::singleton().get_window_size();
     DVAR_SET_IVEC2(window_resolution, w, h);
-    auto [x, y] = DisplayServer::singleton().get_window_pos();
+    auto [x, y] = DisplayManager::singleton().get_window_pos();
     DVAR_SET_IVEC2(window_position, x, y);
 
     // @TODO: move it to request shutdown

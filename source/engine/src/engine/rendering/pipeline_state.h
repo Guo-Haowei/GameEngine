@@ -4,6 +4,8 @@ namespace my {
 
 enum PipelineStateName {
     // @TODO: split render passes to static and dynamic
+    PROGRAM_BASE_COLOR_STATIC,
+    PROGRAM_BASE_COLOR_ANIMATED,
     PROGRAM_DPETH_STATIC,
     PROGRAM_DPETH_ANIMATED,
     PROGRAM_POINT_SHADOW_STATIC,

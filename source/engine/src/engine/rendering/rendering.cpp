@@ -157,7 +157,7 @@ void fill_constant_buffers(const Scene& scene) {
 
                     // @TODO: allocate
                     auto resource = GraphicsManager::singleton().find_resource(RT_RES_POINT_SHADOW_MAP + std::to_string(num_point_light_cast_shadow));
-                    light.shadow_map.data = resource->get_resident_handle();
+                    light.shadow_map.data = resource ? resource->get_resident_handle() : 0;
 
                     ++num_point_light_cast_shadow;
                 }

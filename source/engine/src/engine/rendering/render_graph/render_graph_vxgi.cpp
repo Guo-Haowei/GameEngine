@@ -3,7 +3,6 @@
 #include "core/base/rid_owner.h"
 #include "core/math/frustum.h"
 #include "rendering/rendering_dvars.h"
-#include "servers/display_server.h"
 
 // @TODO: refactor
 #include "core/framework/graphics_manager.h"

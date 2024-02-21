@@ -39,7 +39,8 @@ static void dvar_checkbox(DynamicVariable& dvar, CheckBoxFunc func = nullptr) {
 }
 
 void DebugPanel::update_internal(Scene&) {
-    ImGui::Text("Graphics Debug");
+    ImGui::Text("Debug");
+    ImGui::Text("Frame rate:%.2f", ImGui::GetIO().Framerate);
 
     dvar_checkbox(DVAR_r_enable_vxgi);
     dvar_checkbox(DVAR_r_no_texture);

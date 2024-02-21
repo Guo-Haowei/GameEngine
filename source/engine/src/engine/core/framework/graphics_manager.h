@@ -37,7 +37,7 @@ public:
 
     virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc) = 0;
 
-    virtual uint32_t get_final_image() const = 0;
+    virtual uint64_t get_final_image() const = 0;
 
     virtual std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const = 0;
 

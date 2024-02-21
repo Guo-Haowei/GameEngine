@@ -91,8 +91,10 @@ void LoaderAssimp::process_mesh(const aiMesh& mesh) {
         mesh_component.positions.emplace_back(vec3(position.x, position.y, position.z));
         auto& normal = mesh.mNormals[i];
         mesh_component.normals.emplace_back(vec3(normal.x, normal.y, normal.z));
-        auto& tangent = mesh.mTangents[i];
-        mesh_component.tangents.emplace_back(vec3(tangent.x, tangent.y, tangent.z));
+        if (mesh.mTangents) {
+            auto& tangent = mesh.mTangents[i];
+            mesh_component.tangents.emplace_back(vec3(tangent.x, tangent.y, tangent.z));
+        }
 
         if (has_uv) {
             auto& uv = mesh.mTextureCoords[0][i];

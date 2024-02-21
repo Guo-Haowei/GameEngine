@@ -6,9 +6,9 @@
 
 namespace my {
 
-class DisplayServer : public Singleton<DisplayServer>, public Module {
+class DisplayManager : public Singleton<DisplayManager>, public Module {
 public:
-    DisplayServer() : Module("DisplayManager") {}
+    DisplayManager() : Module("DisplayManager") {}
 
     virtual bool should_close() = 0;
 

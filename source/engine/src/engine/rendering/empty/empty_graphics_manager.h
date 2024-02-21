@@ -13,7 +13,7 @@ public:
     // @TODO: filter
     void create_texture(ImageHandle*) override {}
 
-    uint32_t get_final_image() const override { return 0; }
+    uint64_t get_final_image() const override { return 0; }
 
     std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&) override { return nullptr; }
     std::shared_ptr<RenderTarget> find_resource(const std::string&) const override { return nullptr; }

@@ -14,7 +14,7 @@ public:
     // @TODO: filter
     void create_texture(ImageHandle* handle) final;
 
-    uint32_t get_final_image() const final;
+    uint64_t get_final_image() const final;
 
     std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc) final;
     std::shared_ptr<RenderTarget> find_resource(const std::string& name) const final;
