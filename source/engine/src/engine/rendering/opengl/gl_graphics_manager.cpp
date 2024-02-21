@@ -12,6 +12,8 @@
 #include "core/base/rid_owner.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
+#include "rendering/gl_utils.h"
+#include "rendering/r_cbuffers.h"
 #include "rendering/r_editor.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/shader_program_manager.h"
@@ -57,7 +59,7 @@ namespace my {
 
 static void APIENTRY gl_debug_callback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
-bool OpenGLGraphicsManager::initialize() {
+bool GLGraphicsManager::initialize() {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
         return false;
@@ -89,7 +91,7 @@ bool OpenGLGraphicsManager::initialize() {
     return true;
 }
 
-void OpenGLGraphicsManager::finalize() {
+void GLGraphicsManager::finalize() {
     destroyGpuResources();
 
     ImGui_ImplOpenGL3_Shutdown();
@@ -151,7 +153,7 @@ static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
     glBindVertexArray(0);
 }
 
-void OpenGLGraphicsManager::create_texture(ImageHandle* handle) {
+void GLGraphicsManager::create_texture(ImageHandle* handle) {
     DEV_ASSERT(handle && handle->data);
     Image* image = handle->data;
 
@@ -199,18 +201,12 @@ void OpenGLGraphicsManager::create_texture(ImageHandle* handle) {
     image->texture.resident_handle = resident_id;
 }
 
-void OpenGLGraphicsManager::event_received(std::shared_ptr<Event> event) {
-    SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(event.get());
-    if (!e) {
-        return;
-    }
-
-    const Scene& scene = *e->get_scene();
-    for (size_t idx = 0; idx < scene.get_count<MeshComponent>(); ++idx) {
-        const MeshComponent& mesh = scene.get_component_array<MeshComponent>()[idx];
+void GLGraphicsManager::on_scene_change(const Scene& p_scene) {
+    for (size_t idx = 0; idx < p_scene.get_count<MeshComponent>(); ++idx) {
+        const MeshComponent& mesh = p_scene.get_component_array<MeshComponent>()[idx];
         if (mesh.gpu_resource.is_valid()) {
-            ecs::Entity entity = scene.get_entity<MeshComponent>(idx);
-            const NameComponent& name = *scene.get_component<NameComponent>(entity);
+            ecs::Entity entity = p_scene.get_entity<MeshComponent>(idx);
+            const NameComponent& name = *p_scene.get_component<NameComponent>(entity);
             LOG_WARN("[begin_scene] mesh '{}' (idx: {}) already has gpu resource", name.get_name(), idx);
             continue;
         }
@@ -268,7 +264,7 @@ static void create_ssao_resource() {
     g_noiseTexture = noiseTexture;
 }
 
-void OpenGLGraphicsManager::createGpuResources() {
+void GLGraphicsManager::createGpuResources() {
     auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
     g_constantCache.cache.c_skybox_map = skybox->get()->texture.resident_handle;
     // @TODO: enviroment
@@ -338,11 +334,11 @@ void OpenGLGraphicsManager::createGpuResources() {
     g_constantCache.Update();
 }
 
-uint32_t OpenGLGraphicsManager::get_final_image() const {
+uint32_t GLGraphicsManager::get_final_image() const {
     switch (m_method) {
-        case my::OpenGLGraphicsManager::RENDER_GRAPH_VXGI:
+        case my::GLGraphicsManager::RENDER_GRAPH_VXGI:
             return find_resource(RT_RES_FXAA)->get_handle();
-        case my::OpenGLGraphicsManager::RENDER_GRAPH_BASE_COLOR:
+        case my::GLGraphicsManager::RENDER_GRAPH_BASE_COLOR:
         default:
             CRASH_NOW();
             return 0;
@@ -431,7 +427,7 @@ static GLuint create_resource_impl(const RenderTargetDesc& desc) {
     return texture_id;
 }
 
-std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const RenderTargetDesc& desc) {
+std::shared_ptr<RenderTarget> GLGraphicsManager::create_resource(const RenderTargetDesc& desc) {
     DEV_ASSERT(m_resource_lookup.find(desc.name) == m_resource_lookup.end());
     std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(desc);
 
@@ -443,7 +439,7 @@ std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const Rende
     return resource;
 }
 
-std::shared_ptr<RenderTarget> OpenGLGraphicsManager::find_resource(const std::string& name) const {
+std::shared_ptr<RenderTarget> GLGraphicsManager::find_resource(const std::string& name) const {
     auto it = m_resource_lookup.find(name);
     if (it == m_resource_lookup.end()) {
         return nullptr;
@@ -451,7 +447,7 @@ std::shared_ptr<RenderTarget> OpenGLGraphicsManager::find_resource(const std::st
     return it->second;
 }
 
-void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
+void GLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
     cb.c_albedo_color = material->base_color;
     cb.c_metallic = material->metallic;
     cb.c_roughness = material->roughness;
@@ -480,7 +476,7 @@ void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponen
     cb.c_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_pbr_map);
 }
 
-void OpenGLGraphicsManager::render() {
+void GLGraphicsManager::render() {
     Scene& scene = SceneManager::singleton().get_scene();
     fill_constant_buffers(scene);
 
@@ -490,7 +486,7 @@ void OpenGLGraphicsManager::render() {
     m_render_graph.execute();
 }
 
-void OpenGLGraphicsManager::destroyGpuResources() {
+void GLGraphicsManager::destroyGpuResources() {
     R_Destroy_Cbuffers();
 
     glDeleteTextures(1, &g_noiseTexture);

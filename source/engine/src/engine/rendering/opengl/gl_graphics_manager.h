@@ -2,32 +2,28 @@
 
 namespace my {
 
-class OpenGLGraphicsManager : public GraphicsManager {
+class GLGraphicsManager : public GraphicsManager {
 public:
-    OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager") {}
+    GLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager") {}
 
-    bool initialize() override;
-    void finalize() override;
-    void render();
+    bool initialize() final;
+    void finalize() final;
+    void render() final;
 
     // @TODO: filter
-    void create_texture(ImageHandle* handle);
+    void create_texture(ImageHandle* handle) final;
 
-    void event_received(std::shared_ptr<Event> event) override;
+    uint32_t get_final_image() const final;
 
-    uint32_t get_final_image() const;
-
-    std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
-
-    const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
-
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc);
-    std::shared_ptr<RenderTarget> find_resource(const std::string& name) const;
+    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc) final;
+    std::shared_ptr<RenderTarget> find_resource(const std::string& name) const final;
 
     // @TODO: refactor this
-    void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb);
+    void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) final;
 
 protected:
+    void on_scene_change(const Scene& p_scene) final;
+
     void createGpuResources();
     void destroyGpuResources();
 };

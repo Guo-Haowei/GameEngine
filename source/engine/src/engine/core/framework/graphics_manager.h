@@ -1,15 +1,14 @@
 #pragma once
 #include "assets/image.h"
-#include "core/base/rid_owner.h"
 #include "core/base/singleton.h"
 #include "core/framework/event_queue.h"
 #include "core/framework/module.h"
-#include "rendering/GpuTexture.h"
-#include "rendering/gl_utils.h"
-#include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graph.h"
 #include "scene/material_component.h"
 #include "scene/scene_components.h"
+
+// @TODO: refactor
+struct MaterialConstantBuffer;
 
 namespace my {
 
@@ -27,25 +26,29 @@ public:
 
     virtual void render() = 0;
 
+    // @TODO: thread safety ?
+    void event_received(std::shared_ptr<Event> p_event) final;
+
     // @TODO: filter
-    virtual void create_texture(ImageHandle* handle) = 0;
+    virtual void create_texture(ImageHandle* p_handle) = 0;
 
-    void event_received(std::shared_ptr<Event> event) override;
-
-    virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc) = 0;
+    virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc) = 0;
 
     virtual uint32_t get_final_image() const = 0;
 
-    std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
-
-    const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
-
-    virtual std::shared_ptr<RenderTarget> find_resource(const std::string& name) const = 0;
+    virtual std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const = 0;
 
     // @TODO: refactor this
-    virtual void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) = 0;
+    virtual void fill_material_constant_buffer(const MaterialComponent* p_material, MaterialConstantBuffer& p_cb) = 0;
+
+    std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
+    const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
+
+    static std::shared_ptr<GraphicsManager> create();
 
 protected:
+    virtual void on_scene_change(const Scene& p_scene) = 0;
+
     RenderGraph m_method = RENDER_GRAPH_NONE;
 
     std::shared_ptr<RenderData> m_render_data;

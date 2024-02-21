@@ -6,6 +6,7 @@
 #include "core/dynamic_variable/dynamic_variable_manager.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
+#include "core/framework/graphics_manager.h"
 #include "core/framework/imgui_module.h"
 #include "core/framework/physics_manager.h"
 #include "core/framework/scene_manager.h"
@@ -19,8 +20,6 @@
 #include "servers/display_server.h"
 #include "servers/display_server_glfw.h"
 
-// @TODO: refactor
-#include "rendering/opengl/gl_graphics_manager.h"
 // @TODO: rename
 #include "core/framework/asset_manager.h"
 
@@ -56,7 +55,8 @@ void Application::setup_modules() {
     m_physics_manager = std::make_shared<PhysicsManager>();
     m_imgui_module = std::make_shared<ImGuiModule>();
     m_display_server = std::make_shared<DisplayServerGLFW>();
-    m_graphics_manager = std::make_shared<OpenGLGraphicsManager>();
+    // @TODO: select proper graphics manager
+    m_graphics_manager = GraphicsManager::create();
 
     register_module(m_asset_manager.get());
     register_module(m_scene_manager.get());
