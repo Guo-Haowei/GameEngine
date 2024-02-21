@@ -3,6 +3,7 @@
 #include "core/base/singleton.h"
 #include "core/framework/event_queue.h"
 #include "core/framework/module.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/render_graph/render_graph.h"
 #include "scene/material_component.h"
 #include "scene/scene_components.h"
@@ -29,6 +30,8 @@ public:
     // @TODO: thread safety ?
     void event_received(std::shared_ptr<Event> p_event) final;
 
+    void set_pipeline_state(PipelineStateName p_name);
+
     // @TODO: filter
     virtual void create_texture(ImageHandle* p_handle) = 0;
 
@@ -48,6 +51,7 @@ public:
 
 protected:
     virtual void on_scene_change(const Scene& p_scene) = 0;
+    virtual void set_pipeline_state_impl(PipelineStateName p_name) = 0;
 
     RenderGraph m_method = RENDER_GRAPH_NONE;
 
@@ -56,6 +60,8 @@ protected:
     rg::RenderGraph m_render_graph;
 
     std::map<std::string, std::shared_ptr<RenderTarget>> m_resource_lookup;
+
+    PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
 };
 
 }  // namespace my

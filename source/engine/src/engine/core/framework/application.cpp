@@ -16,7 +16,6 @@
 #include "core/systems/job_system.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/rendering_misc.h"
-#include "rendering/shader_program_manager.h"
 #include "servers/display_server.h"
 #include "servers/display_server_glfw.h"
 
@@ -95,8 +94,6 @@ int Application::run(int argc, const char** argv) {
         LOG("module '{}' initialized\n", module->get_name());
     }
 
-    ShaderProgramManager::singleton().initialize();
-
     init_layers();
     for (auto& layer : m_layers) {
         layer->attach();
@@ -120,6 +117,9 @@ int Application::run(int argc, const char** argv) {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
+
+    bool imgui_built = ImGui::GetIO().Fonts->IsBuilt();
+
     while (!DisplayServer::singleton().should_close()) {
         m_display_server->new_frame();
 
@@ -131,15 +131,18 @@ int Application::run(int argc, const char** argv) {
         float dt = static_cast<float>(timer.get_duration().to_second());
         dt = glm::min(dt, 0.1f);
 
-        ImGui::NewFrame();
-        for (auto& layer : m_layers) {
-            layer->update(dt);
-        }
+        // to avoid empty renderer crash
+        if (imgui_built) {
+            ImGui::NewFrame();
+            for (auto& layer : m_layers) {
+                layer->update(dt);
+            }
 
-        for (auto& layer : m_layers) {
-            layer->render();
+            for (auto& layer : m_layers) {
+                layer->render();
+            }
+            ImGui::Render();
         }
-        ImGui::Render();
 
         m_scene_manager->update(dt);
         timer.start();
@@ -149,8 +152,6 @@ int Application::run(int argc, const char** argv) {
         m_graphics_manager->render();
 
         m_display_server->present();
-
-        ImGui::EndFrame();
 
         input::end_frame();
     }
@@ -169,7 +170,6 @@ int Application::run(int argc, const char** argv) {
     thread::request_shutdown();
 
     // finalize
-    ShaderProgramManager::singleton().finalize();
 
     for (int index = (int)m_modules.size() - 1; index >= 0; --index) {
         Module* module = m_modules[index];

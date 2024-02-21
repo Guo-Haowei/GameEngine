@@ -8,9 +8,9 @@
 // @TODO: refactor
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
+#include "rendering/pipeline_state.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
-#include "rendering/shader_program_manager.h"
 
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
@@ -51,8 +51,7 @@ void point_shadow_pass_func(int width, int height, int pass_id) {
             g_boneCache.Update();
         }
 
-        const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
-        program.bind();
+        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -92,8 +91,7 @@ void shadow_pass_func(int width, int height) {
                 g_boneCache.Update();
             }
 
-            const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
-            program.bind();
+            GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
             g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
             g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -146,7 +144,7 @@ void voxelization_pass_func(int width, int height) {
             g_boneCache.Update();
         }
 
-        ShaderProgramManager::get(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC).bind();
+        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -165,7 +163,7 @@ void voxelization_pass_func(int width, int height) {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     // post process
-    ShaderProgramManager::get(PROGRAM_VOXELIZATION_POST).bind();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_VOXELIZATION_POST);
 
     constexpr GLuint workGroupX = 512;
     constexpr GLuint workGroupY = 512;
@@ -202,8 +200,7 @@ void gbuffer_pass_func(int width, int height) {
             g_boneCache.Update();
         }
 
-        const auto& program = ShaderProgramManager::get(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
-        program.bind();
+        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
         g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
@@ -225,23 +222,16 @@ void gbuffer_pass_func(int width, int height) {
 void ssao_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
 
-    const auto& shader = ShaderProgramManager::get(PROGRAM_SSAO);
-
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_SSAO);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    shader.bind();
-
     R_DrawQuad();
-
-    shader.unbind();
 }
 
 void lighting_pass_func(int width, int height) {
     glViewport(0, 0, width, height);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
-    const auto& program = ShaderProgramManager::get(PROGRAM_LIGHTING_VXGI);
-    program.bind();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_LIGHTING_VXGI);
     R_DrawQuad();
 }
 
@@ -251,15 +241,12 @@ void debug_vxgi_pass_func(int width, int height) {
     // glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const auto& program = ShaderProgramManager::get(PROGRAM_DEBUG_VOXEL);
-    program.bind();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_DEBUG_VOXEL);
 
     glBindVertexArray(g_box.vao);
 
     const int size = DVAR_GET_INT(r_voxel_size);
     glDrawElementsInstanced(GL_TRIANGLES, g_box.count, GL_UNSIGNED_INT, 0, size * size * size);
-
-    program.unbind();
 }
 
 void fxaa_pass_func(int width, int height) {
@@ -271,10 +258,8 @@ void fxaa_pass_func(int width, int height) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // glDisable(GL_DEPTH_TEST);
-        const auto& program = ShaderProgramManager::get(PROGRAM_FXAA);
-        program.bind();
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_FXAA);
         R_DrawQuad();
-        program.unbind();
     }
 
     glEnable(GL_DEPTH_TEST);
@@ -285,13 +270,13 @@ void fxaa_pass_func(int width, int height) {
         // @DEBUG SKYBOX
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
-        ShaderProgramManager::get(PROGRAM_SKY_BOX).bind();
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_SKY_BOX);
         glBindVertexArray(g_skybox.vao);
         glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
         glDisable(GL_CULL_FACE);
     }
 
-    ShaderProgramManager::get(PROGRAM_BILLBOARD).bind();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_BILLBOARD);
     // draw billboards
     auto render_data = GraphicsManager::singleton().get_render_data();
 

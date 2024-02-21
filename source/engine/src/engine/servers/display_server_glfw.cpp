@@ -100,8 +100,6 @@ std::tuple<int, int> DisplayServerGLFW::get_window_size() { return std::tuple<in
 std::tuple<int, int> DisplayServerGLFW::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
 
 void DisplayServerGLFW::present() {
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
     GLFWwindow* oldContext = glfwGetCurrentContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();

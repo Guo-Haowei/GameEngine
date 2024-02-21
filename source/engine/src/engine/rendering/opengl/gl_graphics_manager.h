@@ -1,4 +1,5 @@
 #include "core/framework/graphics_manager.h"
+#include "rendering/pipeline_state_manager.h"
 
 namespace my {
 
@@ -23,9 +24,12 @@ public:
 
 protected:
     void on_scene_change(const Scene& p_scene) final;
+    void set_pipeline_state_impl(PipelineStateName p_name) final;
 
     void createGpuResources();
     void destroyGpuResources();
+
+    std::shared_ptr<PipelineStateManager> m_pipeline_state_manager;
 };
 
 }  // namespace my

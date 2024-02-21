@@ -8,7 +8,6 @@
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
 #include "rendering/rendering_dvars.h"
-#include "rendering/shader_program_manager.h"
 #include "servers/display_server.h"
 
 extern my::RIDAllocator<MeshData> g_meshes;

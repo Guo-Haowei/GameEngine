@@ -1,16 +1,8 @@
-#include "shader_program_manager.h"
-
-#include <sstream>
-#include <vector>
+#include "gl_pipeline_state_manager.h"
 
 #include "core/framework/asset_manager.h"
-#include "rendering/GLPrerequisites.h"
 
 namespace my {
-
-// @TODO: fix
-static ShaderProgramManager *g_shader_program_manager = new ShaderProgramManager();
-static std::vector<ShaderProgram> s_shader_cache;
 
 static std::string process_shader(const std::string &source, int depth) {
     constexpr int max_depth = 100;
@@ -90,7 +82,7 @@ static GLuint create_shader(std::string_view file, GLenum type) {
     return shader;
 }
 
-ShaderProgram ShaderProgramManager::create(const ProgramCreateInfo &info) {
+std::shared_ptr<PipelineState> GLPipelineStateManager::create(const PipelineCreateInfo &info) {
     GLuint programID = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
@@ -136,119 +128,9 @@ ShaderProgram ShaderProgramManager::create(const ProgramCreateInfo &info) {
         programID = 0;
     }
 
-    ShaderProgram program;
-    program.m_handle = programID;
+    auto program = std::make_shared<GLPipelineState>();
+    program->program_id = programID;
     return program;
-}
-
-bool ShaderProgramManager::initialize() {
-    s_shader_cache.resize(static_cast<int>(ProgramType::PROGRAM_MAX));
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/mesh_static.vert";
-        info.ps = "@res://glsl/gbuffer.frag";
-        s_shader_cache[PROGRAM_GBUFFER_STATIC] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/mesh_animated.vert";
-        info.ps = "@res://glsl/gbuffer.frag";
-        s_shader_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/shadow_static.vert.glsl";
-        info.ps = "@res://glsl/depth.frag";
-        s_shader_cache[PROGRAM_DPETH_STATIC] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/shadow_animated.vert.glsl";
-        info.ps = "@res://glsl/depth.frag";
-        s_shader_cache[PROGRAM_DPETH_ANIMATED] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/point_shadow_static.vert.glsl";
-        info.gs = "@res://glsl/point_shadow.geom.glsl";
-        info.ps = "@res://glsl/point_shadow.frag.glsl";
-        s_shader_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/point_shadow_animated.vert.glsl";
-        info.gs = "@res://glsl/point_shadow.geom.glsl";
-        info.ps = "@res://glsl/point_shadow.frag.glsl";
-        s_shader_cache[PROGRAM_POINT_SHADOW_ANIMATED] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/ssao.frag";
-        s_shader_cache[PROGRAM_SSAO] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/lighting.frag.glsl";
-        s_shader_cache[PROGRAM_LIGHTING_VXGI] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
-        info.ps = "@res://glsl/fxaa.frag";
-        s_shader_cache[PROGRAM_FXAA] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/vxgi/voxelization_static.vert.glsl";
-        info.gs = "@res://glsl/vxgi/voxelization.geom.glsl";
-        info.ps = "@res://glsl/vxgi/voxelization.frag.glsl";
-        s_shader_cache[PROGRAM_VOXELIZATION_STATIC] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/vxgi/voxelization_animated.vert.glsl";
-        info.gs = "@res://glsl/vxgi/voxelization.geom.glsl";
-        info.ps = "@res://glsl/vxgi/voxelization.frag.glsl";
-        s_shader_cache[PROGRAM_VOXELIZATION_ANIMATED] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.cs = "@res://glsl/vxgi/post.comp.glsl";
-        s_shader_cache[PROGRAM_VOXELIZATION_POST] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/vxgi/visualization.vert.glsl";
-        info.ps = "@res://glsl/vxgi/visualization.frag.glsl";
-        s_shader_cache[PROGRAM_DEBUG_VOXEL] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/cube_map.vert.glsl";
-        info.ps = "@res://glsl/cube_map.frag.glsl";
-        s_shader_cache[PROGRAM_SKY_BOX] = create(info);
-    }
-    {
-        ProgramCreateInfo info;
-        info.vs = "@res://glsl/billboard.vert.glsl";
-        info.ps = "@res://glsl/texture.frag.glsl";
-        s_shader_cache[PROGRAM_BILLBOARD] = create(info);
-    }
-
-    return true;
-}
-
-void ShaderProgramManager::finalize() {
-    for (auto it : s_shader_cache) {
-        glDeleteProgram(it.m_handle);
-    }
-}
-
-const ShaderProgram &ShaderProgramManager::get(ProgramType type) {
-    DEV_ASSERT_INDEX(type, s_shader_cache.size());
-    return s_shader_cache[std::to_underlying(type)];
 }
 
 }  // namespace my

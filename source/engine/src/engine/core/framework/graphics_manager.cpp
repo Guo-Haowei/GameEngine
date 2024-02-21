@@ -13,8 +13,15 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
 }
 
 std::shared_ptr<GraphicsManager> GraphicsManager::create() {
-    return std::make_shared<EmptyGraphicsManager>();
-    // return std::make_shared<GLGraphicsManager>();
+    // return std::make_shared<EmptyGraphicsManager>();
+    return std::make_shared<GLGraphicsManager>();
+}
+
+void GraphicsManager::set_pipeline_state(PipelineStateName p_name) {
+    if (m_last_pipeline_name != p_name) {
+        set_pipeline_state_impl(p_name);
+        m_last_pipeline_name = p_name;
+    }
 }
 
 }  // namespace my

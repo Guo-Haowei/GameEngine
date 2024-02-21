@@ -13,13 +13,12 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "rendering/gl_utils.h"
+#include "rendering/opengl/gl_pipeline_state_manager.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/r_editor.h"
 #include "rendering/rendering_dvars.h"
-#include "rendering/shader_program_manager.h"
 #include "servers/display_server.h"
 #include "vsinput.glsl.h"
-
 // @TODO: refactor
 #include "rendering/render_graph/render_graph_default.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
@@ -88,13 +87,22 @@ bool GLGraphicsManager::initialize() {
     g_meshes.set_description("GPU-Mesh-Allocator");
 
     m_render_data = std::make_shared<RenderData>();
-    return true;
+
+    m_pipeline_state_manager = std::make_shared<GLPipelineStateManager>();
+    return m_pipeline_state_manager->initialize();
 }
 
 void GLGraphicsManager::finalize() {
+    m_pipeline_state_manager->finalize();
+
     destroyGpuResources();
 
     ImGui_ImplOpenGL3_Shutdown();
+}
+
+void GLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
+    auto pipeline = reinterpret_cast<GLPipelineState*>(m_pipeline_state_manager->find(p_name));
+    glUseProgram(pipeline->program_id);
 }
 
 static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
@@ -484,6 +492,8 @@ void GLGraphicsManager::render() {
 
     g_perFrameCache.Update();
     m_render_graph.execute();
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void GLGraphicsManager::destroyGpuResources() {
