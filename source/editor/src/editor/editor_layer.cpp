@@ -6,7 +6,6 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
-#include "editor/panels/animation_panel.h"
 #include "editor/panels/console_panel.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/debug_panel.h"
@@ -20,7 +19,6 @@ namespace my {
 
 EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<RenderGraphEditor>(*this));
-    add_panel(std::make_shared<AnimationPanel>(*this));
     add_panel(std::make_shared<ConsolePanel>(*this));
     add_panel(std::make_shared<DebugPanel>(*this));
     add_panel(std::make_shared<DebugTexturePanel>(*this));

@@ -49,9 +49,10 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     mat4 c_main_light_matrices[MAX_CASCADE_COUNT];
     vec4 c_cascade_plane_distances;
 
-    vec2 _c_padding_0;
     int c_light_count;
     int c_enable_csm;
+    int c_display_method;
+    int _c_padding_0;
 
     int c_debug_voxel_id;
     int c_no_texture;
@@ -87,12 +88,13 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
     vec4 c_albedo_color;
     float c_metallic;
     float c_roughness;
+    float c_reflect_power;
+    int _c_padding1;
+
     int c_has_albedo_map;
     int c_has_pbr_map;
-
-    vec2 _c_padding1;
     int c_has_normal_map;
-    float c_reflect_power;
+    int c_display_channel;
 
     sampler2D c_albedo_map;
     sampler2D c_normal_map;

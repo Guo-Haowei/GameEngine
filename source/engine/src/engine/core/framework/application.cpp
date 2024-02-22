@@ -3,6 +3,7 @@
 #include "imgui/imgui.h"
 // @TODO: refactor
 
+#include "core/debugger/profiler.h"
 #include "core/dynamic_variable/dynamic_variable_manager.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
@@ -120,6 +121,8 @@ int Application::run(int argc, const char** argv) {
     bool imgui_built = ImGui::GetIO().Fonts->IsBuilt();
 
     while (!DisplayManager::singleton().should_close()) {
+        OPTICK_FRAME("MainThread");
+
         m_display_server->new_frame();
 
         input::begin_frame();
@@ -128,7 +131,8 @@ int Application::run(int argc, const char** argv) {
 
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.get_duration().to_second());
-        dt = glm::min(dt, 0.1f);
+        dt = glm::min(dt, 0.5f);
+        timer.start();
 
         // to avoid empty renderer crash
         if (imgui_built) {
@@ -144,7 +148,6 @@ int Application::run(int argc, const char** argv) {
         }
 
         m_scene_manager->update(dt);
-        timer.start();
 
         m_physics_manager->update(dt);
 

@@ -98,7 +98,7 @@ void fill_constant_buffers(const Scene& scene) {
     // THESE SHOULDN'T BE HERE
     auto& cache = g_perFrameCache.cache;
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), MAX_LIGHT_COUNT);
-    DEV_ASSERT(light_count);
+    // DEV_ASSERT(light_count);
 
     cache.c_light_count = light_count;
 
@@ -129,7 +129,7 @@ void fill_constant_buffers(const Scene& scene) {
             case LIGHT_TYPE_OMNI: {
                 mat4 light_matrix = light_transform->get_local_matrix();
                 vec3 light_dir = glm::normalize(light_matrix * vec4(0, 0, 1, 0));
-                light.cast_shadow = true;
+                light.cast_shadow = light_component.cast_shadow();
                 light.position = light_dir;
 
                 light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, scene.get_bound());
@@ -167,7 +167,6 @@ void fill_constant_buffers(const Scene& scene) {
         }
     }
 
-    DEV_ASSERT(light_matrices.size() == MAX_CASCADE_COUNT);
     if (!light_matrices.empty()) {
         for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
             cache.c_main_light_matrices[idx] = light_matrices[idx];

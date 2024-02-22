@@ -1,18 +1,13 @@
 #include "camera.h"
 
 #include "core/io/archive.h"
-#include "rendering/rendering_dvars.h"
 
 namespace my {
 
-Camera::Camera() {
-    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-    m_width = frame_size.x;
-    m_height = frame_size.y;
-}
-
 void Camera::update() {
     if (is_dirty()) {
+        LOG("camera width is: {}, camera hight is {}", m_width, m_height);
+
         m_front.x = m_yaw.cos() * m_pitch.cos();
         m_front.y = m_pitch.sin();
         m_front.z = m_yaw.sin() * m_pitch.cos();
@@ -58,10 +53,6 @@ void Camera::serialize(Archive& archive, uint32_t) {
         archive >> m_yaw;
         archive >> m_position;
 
-        // @TODO: fix this
-        ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-        m_width = frame_size.x;
-        m_height = frame_size.y;
         set_dirty();
     }
 }

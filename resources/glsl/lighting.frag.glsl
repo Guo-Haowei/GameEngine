@@ -98,7 +98,8 @@ void main() {
 
         // specular cone
         vec3 coneDirection = reflect(-V, N);
-        vec3 specular = metallic * cone_specular(world_position, coneDirection, roughness);
+        vec3 specular = vec3(0);
+        specular = metallic * cone_specular(world_position, coneDirection, roughness);
         Lo += (kD * diffuse + specular) * ao;
     }
 #endif

@@ -1,6 +1,7 @@
 #include "render_graph_vxgi.h"
 
 #include "core/base/rid_owner.h"
+#include "core/debugger/profiler.h"
 #include "core/math/frustum.h"
 #include "rendering/rendering_dvars.h"
 
@@ -24,6 +25,8 @@ namespace my::rg {
 // @TODO: refactor render passes to have multiple frame buffers
 // const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
 void point_shadow_pass_func(int width, int height, int pass_id) {
+    OPTICK_EVENT();
+
     auto render_data = GraphicsManager::singleton().get_render_data();
     if (render_data->point_shadow_passes.size() <= pass_id) {
         return;
@@ -63,6 +66,8 @@ void point_shadow_pass_func(int width, int height, int pass_id) {
 }
 
 void shadow_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     // @TODO: for each light source, render shadow
     const Scene& scene = SceneManager::get_scene();
 
@@ -106,6 +111,8 @@ void shadow_pass_func(int width, int height) {
 }
 
 void voxelization_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     unused(width);
     unused(height);
     if (!DVAR_GET_BOOL(r_enable_vxgi)) {
@@ -178,6 +185,8 @@ void voxelization_pass_func(int width, int height) {
 }
 
 void gbuffer_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
 
     glEnable(GL_DEPTH_TEST);
@@ -219,6 +228,8 @@ void gbuffer_pass_func(int width, int height) {
 }
 
 void ssao_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_SSAO);
@@ -227,6 +238,8 @@ void ssao_pass_func(int width, int height) {
 }
 
 void lighting_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -235,6 +248,8 @@ void lighting_pass_func(int width, int height) {
 }
 
 void debug_vxgi_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     // glClear(GL_COLOR_BUFFER_BIT);
@@ -249,6 +264,8 @@ void debug_vxgi_pass_func(int width, int height) {
 }
 
 void fxaa_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
     // HACK:
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
         debug_vxgi_pass_func(width, height);
@@ -294,6 +311,25 @@ void fxaa_pass_func(int width, int height) {
     glUseProgram(0);
 }
 
+void final_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // @TODO:
+    g_materialCache.cache.c_albedo_map = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_resident_handle();
+    g_materialCache.cache.c_display_channel = DISPLAY_CHANNEL_RGB;
+    // g_materialCache.cache.c_display_channel = DISPLAY_CHANNEL_RRR;
+    g_materialCache.Update();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_IMAGE_2D);
+
+    // @TODO:
+    R_DrawQuad();
+}
+
 void create_render_graph_vxgi(RenderGraph& graph) {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
@@ -329,6 +365,11 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                      FORMAT_R8G8B8A8_UINT,
                                                                      RT_COLOR_ATTACHMENT,
                                                                      w, h });
+    auto final_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
+                                                                      FORMAT_R8G8B8A8_UINT,
+                                                                      RT_COLOR_ATTACHMENT,
+                                                                      w, h });
+
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
@@ -424,6 +465,17 @@ void create_render_graph_vxgi(RenderGraph& graph) {
             .color_attachments = { fxaa_attachment },
             .depth_attachment = gbuffer_depth,
             .func = fxaa_pass_func,
+        });
+        graph.add_pass(desc);
+    }
+    {
+        // final pass
+        RenderPassDesc desc;
+        desc.name = FINAL_PASS;
+        desc.dependencies = { FXAA_PASS };
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { final_attachment },
+            .func = final_pass_func,
         });
         graph.add_pass(desc);
     }

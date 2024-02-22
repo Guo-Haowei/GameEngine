@@ -3,6 +3,7 @@
 // @TODO: remove
 #include <random>
 
+#include "core/debugger/profiler.h"
 #include "core/math/geometry.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/render_data.h"
@@ -344,7 +345,8 @@ void GLGraphicsManager::createGpuResources() {
 uint64_t GLGraphicsManager::get_final_image() const {
     switch (m_method) {
         case my::GLGraphicsManager::RENDER_GRAPH_VXGI:
-            return find_resource(RT_RES_FXAA)->get_handle();
+            // return find_resource(RT_RES_FXAA)->get_handle();
+            return find_resource(RT_RES_FINAL)->get_handle();
         case my::GLGraphicsManager::RENDER_GRAPH_BASE_COLOR:
             return find_resource(RT_RES_BASE_COLOR)->get_handle();
         default:
@@ -485,6 +487,8 @@ void GLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* m
 }
 
 void GLGraphicsManager::render() {
+    OPTICK_EVENT();
+
     Scene& scene = SceneManager::singleton().get_scene();
     fill_constant_buffers(scene);
 
@@ -493,7 +497,10 @@ void GLGraphicsManager::render() {
     g_perFrameCache.Update();
     m_render_graph.execute();
 
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    {
+        OPTICK_EVENT("ImGui_ImplOpenGL3_RenderDrawData");
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
 }
 
 void GLGraphicsManager::destroyGpuResources() {

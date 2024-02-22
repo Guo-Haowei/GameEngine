@@ -11,3 +11,6 @@ project/
 
 # vscode
 .vscode/
+
+# cmake
+CMakeFiles/

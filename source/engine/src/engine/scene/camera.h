@@ -18,8 +18,6 @@ public:
     static constexpr float kDefaultFar = 100.0f;
     static constexpr Degree kDefaultFovy{ 50.0f };
 
-    Camera();
-
     void update();
 
     void set_dimension(int width, int height);

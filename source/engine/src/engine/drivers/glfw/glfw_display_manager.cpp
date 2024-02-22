@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include "core/debugger/profiler.h"
 #include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
 #include "core/input/input.h"
@@ -90,6 +91,8 @@ std::tuple<int, int> GLFWDisplayManager::get_window_size() { return std::tuple<i
 std::tuple<int, int> GLFWDisplayManager::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
 
 void GLFWDisplayManager::present() {
+    OPTICK_EVENT();
+
     GLFWwindow* oldContext = glfwGetCurrentContext();
     ImGui::UpdatePlatformWindows();
     ImGui::RenderPlatformWindowsDefault();
