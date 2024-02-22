@@ -7,6 +7,7 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
 #include "core/os/timer.h"
+#include "rendering/rendering_dvars.h"
 // @TODO: fix
 
 #include "rendering/r_cbuffers.h"
@@ -27,20 +28,21 @@ static bool deserialize_scene(Scene* scene, const std::string& path) {
 static void create_empty_scene(Scene* scene) {
     Entity::set_seed(Entity::INVALID_ID + 1);
 
-    scene->create_camera(800, 600);
+    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    scene->create_camera(frame_size.x, frame_size.y);
 
     auto root = scene->create_transform_entity("world");
     scene->m_root = root;
     {
-        auto light = scene->create_omnilight_entity("omni light", vec3(1), 20.f);
-        auto transform = scene->get_component<TransformComponent>(light);
-        DEV_ASSERT(transform);
-        constexpr float rx = glm::radians(-80.0f);
-        constexpr float ry = glm::radians(0.0f);
-        constexpr float rz = glm::radians(0.0f);
-        transform->rotate(vec3(rx, ry, rz));
+        // auto light = scene->create_omnilight_entity("omni light", vec3(1), 20.f);
+        // auto transform = scene->get_component<TransformComponent>(light);
+        // DEV_ASSERT(transform);
+        // constexpr float rx = glm::radians(-80.0f);
+        // constexpr float ry = glm::radians(0.0f);
+        // constexpr float rz = glm::radians(0.0f);
+        // transform->rotate(vec3(rx, ry, rz));
 
-        scene->attach_component(light, root);
+        // scene->attach_component(light, root);
     }
 }
 

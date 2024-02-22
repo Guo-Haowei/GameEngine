@@ -311,6 +311,25 @@ void fxaa_pass_func(int width, int height) {
     glUseProgram(0);
 }
 
+void final_pass_func(int width, int height) {
+    OPTICK_EVENT();
+
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // @TODO:
+    g_materialCache.cache.c_albedo_map = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_resident_handle();
+    g_materialCache.cache.c_display_channel = DISPLAY_CHANNEL_RGB;
+    // g_materialCache.cache.c_display_channel = DISPLAY_CHANNEL_RRR;
+    g_materialCache.Update();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_IMAGE_2D);
+
+    // @TODO:
+    R_DrawQuad();
+}
+
 void create_render_graph_vxgi(RenderGraph& graph) {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
@@ -346,6 +365,11 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                      FORMAT_R8G8B8A8_UINT,
                                                                      RT_COLOR_ATTACHMENT,
                                                                      w, h });
+    auto final_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
+                                                                      FORMAT_R8G8B8A8_UINT,
+                                                                      RT_COLOR_ATTACHMENT,
+                                                                      w, h });
+
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
@@ -441,6 +465,17 @@ void create_render_graph_vxgi(RenderGraph& graph) {
             .color_attachments = { fxaa_attachment },
             .depth_attachment = gbuffer_depth,
             .func = fxaa_pass_func,
+        });
+        graph.add_pass(desc);
+    }
+    {
+        // final pass
+        RenderPassDesc desc;
+        desc.name = FINAL_PASS;
+        desc.dependencies = { FXAA_PASS };
+        desc.subpasses.emplace_back(SubPassDesc{
+            .color_attachments = { final_attachment },
+            .func = final_pass_func,
         });
         graph.add_pass(desc);
     }

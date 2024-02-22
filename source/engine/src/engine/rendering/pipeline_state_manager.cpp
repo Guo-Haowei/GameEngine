@@ -66,19 +66,19 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
+        info.vs = "@res://glsl/fullscreen.vert.glsl";
         info.ps = "@res://glsl/ssao.frag";
         m_cache[PROGRAM_SSAO] = create(info);
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
+        info.vs = "@res://glsl/fullscreen.vert.glsl";
         info.ps = "@res://glsl/lighting.frag.glsl";
         m_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert";
+        info.vs = "@res://glsl/fullscreen.vert.glsl";
         info.ps = "@res://glsl/fxaa.frag";
         m_cache[PROGRAM_FXAA] = create(info);
     }
@@ -118,6 +118,12 @@ bool PipelineStateManager::initialize() {
         info.vs = "@res://glsl/billboard.vert.glsl";
         info.ps = "@res://glsl/texture.frag.glsl";
         m_cache[PROGRAM_BILLBOARD] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/fullscreen.vert.glsl";
+        info.ps = "@res://glsl/image.frag.glsl";
+        m_cache[PROGRAM_IMAGE_2D] = create(info);
     }
 
     return true;

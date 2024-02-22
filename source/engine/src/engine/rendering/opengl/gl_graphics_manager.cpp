@@ -345,7 +345,8 @@ void GLGraphicsManager::createGpuResources() {
 uint64_t GLGraphicsManager::get_final_image() const {
     switch (m_method) {
         case my::GLGraphicsManager::RENDER_GRAPH_VXGI:
-            return find_resource(RT_RES_FXAA)->get_handle();
+            // return find_resource(RT_RES_FXAA)->get_handle();
+            return find_resource(RT_RES_FINAL)->get_handle();
         case my::GLGraphicsManager::RENDER_GRAPH_BASE_COLOR:
             return find_resource(RT_RES_BASE_COLOR)->get_handle();
         default:

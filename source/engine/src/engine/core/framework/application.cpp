@@ -122,7 +122,6 @@ int Application::run(int argc, const char** argv) {
 
     while (!DisplayManager::singleton().should_close()) {
         OPTICK_FRAME("MainThread");
-        OPTICK_EVENT("Frame");
 
         m_display_server->new_frame();
 
@@ -132,7 +131,7 @@ int Application::run(int argc, const char** argv) {
 
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.get_duration().to_second());
-        dt = glm::min(dt, 0.1f);
+        dt = glm::min(dt, 0.5f);
         timer.start();
 
         // to avoid empty renderer crash

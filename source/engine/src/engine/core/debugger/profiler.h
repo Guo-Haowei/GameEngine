@@ -1,5 +1,6 @@
 #pragma once
 
+// #define USE_PROFILER NOT_IN_USE
 #define USE_PROFILER IN_USE
 
 #if USING(USE_PROFILER)
