@@ -1,8 +1,8 @@
 #include "render_graph_vxgi.h"
 
 #include "core/base/rid_owner.h"
+#include "core/debugger/profiler.h"
 #include "core/math/frustum.h"
-#include "optick/optick.h"
 #include "rendering/rendering_dvars.h"
 
 // @TODO: refactor

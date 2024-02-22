@@ -3,6 +3,7 @@
 #include "imgui/imgui.h"
 // @TODO: refactor
 
+#include "core/debugger/profiler.h"
 #include "core/dynamic_variable/dynamic_variable_manager.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
@@ -15,7 +16,6 @@
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
 #include "drivers/glfw/glfw_display_manager.h"
-#include "optick/optick.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/rendering_misc.h"
 
@@ -133,6 +133,7 @@ int Application::run(int argc, const char** argv) {
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.get_duration().to_second());
         dt = glm::min(dt, 0.1f);
+        timer.start();
 
         // to avoid empty renderer crash
         if (imgui_built) {
@@ -147,18 +148,11 @@ int Application::run(int argc, const char** argv) {
             ImGui::Render();
         }
 
-        {
-            OPTICK_EVENT("Scene");
-            m_scene_manager->update(dt);
-        }
-        timer.start();
+        m_scene_manager->update(dt);
 
         m_physics_manager->update(dt);
 
-        {
-            OPTICK_EVENT("Rendering");
-            m_graphics_manager->render();
-        }
+        m_graphics_manager->render();
 
         m_display_server->present();
 

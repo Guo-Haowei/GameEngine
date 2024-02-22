@@ -2,6 +2,7 @@
 
 #include <imgui/imgui.h>
 
+#include "core/debugger/profiler.h"
 #include "core/framework/application.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
@@ -137,6 +138,8 @@ bool SceneManager::try_swap_scene() {
 }
 
 void SceneManager::update(float dt) {
+    OPTICK_EVENT();
+
     try_swap_scene();
 
     if (m_last_revision < m_revision) {
