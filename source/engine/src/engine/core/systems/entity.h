@@ -29,7 +29,7 @@ public:
 
     static Entity create();
     static uint32_t get_seed();
-    static void set_seed(uint32_t seed);
+    static void set_seed(uint32_t seed = INVALID_ID + 1);
 
     static const Entity INVALID;
 

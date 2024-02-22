@@ -14,6 +14,7 @@ void Entity::serialize(Archive& archive) {
 
 Entity Entity::create() {
     CRASH_COND_MSG(s_id.load() == MAX_ID, "max number of entity allocated, did you forget to call set_seed()?");
+    CRASH_COND_MSG(s_id.load() == 0, "seed id is 0, did you forget to call set_seed()?");
     Entity entity(s_id.fetch_add(1));
     return entity;
 }

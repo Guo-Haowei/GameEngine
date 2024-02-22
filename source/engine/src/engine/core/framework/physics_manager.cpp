@@ -79,9 +79,13 @@ void PhysicsManager::create_world(const Scene& scene) {
 
         btCollisionShape* shape = nullptr;
         switch (rigid_body.shape) {
-            case RigidBodyComponent::SHAPE_BOX: {
+            case RigidBodyComponent::SHAPE_CUBE: {
                 const vec3& half = rigid_body.param.box.half_size;
                 shape = new btBoxShape(btVector3(half.x, half.y, half.z));
+                break;
+            }
+            case RigidBodyComponent::SHAPE_SPHERE: {
+                shape = new btSphereShape(rigid_body.param.sphere.radius);
                 break;
             }
             default:

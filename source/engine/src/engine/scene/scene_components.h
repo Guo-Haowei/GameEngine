@@ -148,7 +148,7 @@ struct RigidBodyComponent {
     enum CollisionShape {
         SHAPE_UNKNOWN,
         SHAPE_SPHERE,
-        SHAPE_BOX,
+        SHAPE_CUBE,
         SHAPE_MAX,
     };
 
