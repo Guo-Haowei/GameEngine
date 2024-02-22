@@ -110,11 +110,9 @@ void shadow_pass_func(int width, int height) {
     }
 }
 
-void voxelization_pass_func(int width, int height) {
+void voxelization_pass_func(int, int) {
     OPTICK_EVENT();
 
-    unused(width);
-    unused(height);
     if (!DVAR_GET_BOOL(r_enable_vxgi)) {
         return;
     }

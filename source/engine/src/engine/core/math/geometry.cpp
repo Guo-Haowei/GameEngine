@@ -133,76 +133,51 @@ MeshComponent make_cube_mesh(const vec3& p_scale) {
     return mesh;
 }
 
-MeshComponent make_sphere_mesh(float radius, int rings, int sectors) {
-    unused(radius);
-    unused(rings);
-    unused(sectors);
-
+MeshComponent make_sphere_mesh(float p_radius, int p_rings, int p_sectors) {
     MeshComponent mesh;
 
-    const int p_sectors = 80;  // vertex grid size
-    const int p_rings = 40;
+    auto& indices = mesh.indices;
+    constexpr float pi = glm::pi<float>();
+    for (int step_x = 0; step_x <= p_sectors; ++step_x) {
+        for (int step_y = 0; step_y <= p_rings; ++step_y) {
+            const float x_seg = (float)step_x / (float)p_sectors;
+            const float y_seg = (float)step_y / (float)p_rings;
+            const vec3 normal{
+                std::cos(x_seg * 2.0f * pi) * std::sin(y_seg * pi),
+                std::cos(y_seg * pi),
+                std::sin(x_seg * 2.0f * pi) * std::sin(y_seg * pi)
+            };
 
-    mesh.indices.resize(p_sectors * (p_rings - 1) * 6);
-
-    const float M_PI = glm::pi<float>();
-
-    float a, b, da, db;
-    float p_radius = 0.5f;
-    int ia, ib, ix, iy;
-    da = 2.0f * M_PI / float(p_sectors);
-    db = M_PI / float(p_rings - 1);
-    // [Generate sphere point data]
-    // spherical angles a,b covering whole sphere surface
-    for (ix = 0, b = -0.5 * M_PI, ib = 0; ib < p_rings; ++ib, b += db)
-        for (a = 0.0, ia = 0; ia < p_sectors; ia++, a += da, ix += 3) {
-            // unit sphere
-            const float x = glm::cos(b) * glm::cos(a);
-            const float y = glm::cos(b) * glm::sin(a);
-            const float z = glm::sin(b);
-
-            const vec3 normal = glm::normalize(vec3{ x, y, z });
             mesh.positions.push_back(p_radius * normal);
             mesh.normals.push_back(normal);
-            mesh.texcoords_0.push_back(vec2(0));
+            mesh.texcoords_0.push_back(vec2(x_seg, y_seg));
         }
-    // [Generate GL_TRIANGLE indices]
-    for (ix = 0, iy = 0, ib = 1; ib < p_rings; ib++) {
-        for (ia = 1; ia < p_sectors; ia++, iy++) {
-            // first half of QUAD
-            mesh.indices[ix] = iy;
-            ix++;
-            mesh.indices[ix] = iy + 1;
-            ix++;
-            mesh.indices[ix] = iy + p_sectors;
-            ix++;
-            // second half of QUAD
-            mesh.indices[ix] = iy + p_sectors;
-            ix++;
-            mesh.indices[ix] = iy + 1;
-            ix++;
-            mesh.indices[ix] = iy + p_sectors + 1;
-            ix++;
+    }
+
+    for (int y = 0; y < p_rings; ++y) {
+        for (int x = 0; x < p_sectors; ++x) {
+            /*
+            a - b
+            |   |
+            c - d
+            */
+            uint32_t a = (y * (p_sectors + 1) + x);
+            uint32_t b = (y * (p_sectors + 1) + x + 1);
+            uint32_t c = ((y + 1) * (p_sectors + 1) + x);
+            uint32_t d = ((y + 1) * (p_sectors + 1) + x + 1);
+
+            indices.push_back(a);
+            indices.push_back(c);
+            indices.push_back(b);
+
+            indices.push_back(b);
+            indices.push_back(c);
+            indices.push_back(d);
         }
-        // first half of QUAD
-        mesh.indices[ix] = iy;
-        ix++;
-        mesh.indices[ix] = iy + 1 - p_sectors;
-        ix++;
-        mesh.indices[ix] = iy + p_sectors;
-        ix++;
-        // second half of QUAD
-        mesh.indices[ix] = iy + p_sectors;
-        ix++;
-        mesh.indices[ix] = iy - p_sectors + 1;
-        ix++;
-        mesh.indices[ix] = iy + 1;
-        ix++;
-        iy++;
     }
 
     MeshComponent::MeshSubset subset;
-    subset.index_count = (uint32_t)mesh.indices.size();
+    subset.index_count = static_cast<uint32_t>(indices.size());
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
