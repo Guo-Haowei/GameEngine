@@ -7,6 +7,7 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
 #include "core/os/timer.h"
+#include "lua_binding/lua_scene_binding.h"
 #include "rendering/rendering_dvars.h"
 // @TODO: fix
 
@@ -26,7 +27,7 @@ static bool deserialize_scene(Scene* scene, const std::string& path) {
 }
 
 static void create_empty_scene(Scene* scene) {
-    Entity::set_seed(Entity::INVALID_ID + 1);
+    Entity::set_seed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     scene->create_camera(frame_size.x, frame_size.y);
@@ -46,73 +47,30 @@ static void create_empty_scene(Scene* scene) {
     }
 }
 
-static void create_physics_test(Scene* scene) {
-    create_empty_scene(scene);
-
-    {
-        vec3 half(3.f, .02f, 3.f);
-        ecs::Entity ground = scene->create_cube_entity("Ground", half);
-        scene->attach_component(ground, scene->m_root);
-        RigidBodyComponent& rigidBody = scene->create<RigidBodyComponent>(ground);
-
-        rigidBody.shape = RigidBodyComponent::SHAPE_BOX;
-        rigidBody.mass = 0.0f;
-        rigidBody.param.box.half_size = half;
-    }
-
-    for (int t = 0; t < 16; ++t) {
-        int x = t % 8;
-        int y = t / 8;
-        vec3 translate = vec3(x - 3.f, 5 - 1.f * y, 0.0f);
-        vec3 half = vec3(0.25f);
-
-        // random rotation
-        auto random_angle = []() {
-            return glm::radians<float>(float(rand() % 180));
-        };
-        float rx = random_angle();
-        float ry = random_angle();
-        float rz = random_angle();
-        mat4 R = glm::rotate(rx, vec3(1, 0, 0)) *
-                 glm::rotate(ry, vec3(0, 1, 0)) *
-                 glm::rotate(rz, vec3(0, 0, 1));
-
-        vec3 _s, _t;
-        vec4 rotation;
-        decompose(R, _s, rotation, _t);
-
-        std::string name = "Cube" + std::to_string(t);
-        auto material_id = scene->create_material_entity(name);
-        MaterialComponent& material = *scene->get_component<MaterialComponent>(material_id);
-        material.base_color = vec4((float)x / 8, (float)y / 8, 0.8f, 1.0f);
-
-        auto cube_id = scene->create_cube_entity(name, material_id, half, glm::translate(translate) * R);
-        scene->attach_component(cube_id, scene->m_root);
-
-        RigidBodyComponent& rigid_body = scene->create<RigidBodyComponent>(cube_id);
-        rigid_body.shape = RigidBodyComponent::SHAPE_BOX;
-        rigid_body.mass = 1.0f;
-        rigid_body.param.box.half_size = half;
-    }
-}
-
 bool SceneManager::initialize() {
     // create an empty scene
     Scene* scene = new Scene;
 
     // @TODO: fix
-    if (DVAR_GET_BOOL(test_physics)) {
-        create_physics_test(scene);
+    const std::string& path = DVAR_GET_STRING(project);
+    if (path.empty()) {
+        create_empty_scene(scene);
     } else {
-        const std::string& path = DVAR_GET_STRING(project);
-        if (path.empty()) {
+        // @TODO: clean this up
+
+        bool ok = true;
+        std::filesystem::path sys_path{ path };
+        if (sys_path.extension() == ".lua") {
             create_empty_scene(scene);
+            ok = load_lua_scene(path, scene);
         } else {
-            if (!deserialize_scene(scene, path)) {
-                LOG_FATAL("failed to deserialize scene '{}'", path);
-            }
+            ok = deserialize_scene(scene, path);
+        }
+        if (!ok) {
+            LOG_FATAL("failed to deserialize scene '{}'", path);
         }
     }
+
     m_loading_scene.store(scene);
     if (try_swap_scene()) {
         m_scene->update(0.0f);

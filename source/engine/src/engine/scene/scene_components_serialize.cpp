@@ -8,38 +8,6 @@ void HierarchyComponent::serialize(Archive& archive, uint32_t) {
     m_parent_id.serialize(archive);
 }
 
-void MeshComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
-        archive << flags;
-        archive << indices;
-        archive << positions;
-        archive << normals;
-        archive << tangents;
-        archive << texcoords_0;
-        archive << texcoords_1;
-        archive << joints_0;
-        archive << weights_0;
-        archive << color_0;
-        archive << subsets;
-        archive << armature_id;
-    } else {
-        archive >> flags;
-        archive >> indices;
-        archive >> positions;
-        archive >> normals;
-        archive >> tangents;
-        archive >> texcoords_0;
-        archive >> texcoords_1;
-        archive >> joints_0;
-        archive >> weights_0;
-        archive >> color_0;
-        archive >> subsets;
-        archive >> armature_id;
-
-        create_render_data();
-    }
-}
-
 void LightComponent::serialize(Archive& archive, uint32_t version) {
     unused(version);
     if (archive.is_write_mode()) {

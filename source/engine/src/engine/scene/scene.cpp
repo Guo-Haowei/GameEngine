@@ -1,6 +1,7 @@
 #include "Scene.h"
 
 #include "core/io/archive.h"
+#include "core/math/geometry.h"
 #include "core/systems/job_system.h"
 
 namespace my {
@@ -162,183 +163,55 @@ Entity Scene::create_omnilight_entity(const std::string& name, const vec3& color
     return entity;
 }
 
-Entity Scene::create_sphere_entity(const std::string& name, float radius, const mat4& transform) {
-    Entity matID = create_material_entity(name + ":mat");
-    return create_sphere_entity(name, matID, radius, transform);
+Entity Scene::create_cube_entity(const std::string& p_name,
+                                 const vec3& p_scale,
+                                 const mat4& p_transform) {
+    Entity material_id = create_material_entity(p_name + ":mat");
+    return create_cube_entity(p_name, material_id, p_scale, p_transform);
 }
 
-Entity Scene::create_sphere_entity(const std::string& name, Entity material_id, float radius,
-                                   const mat4& transform) {
-    CRASH_NOW();
-    (void)name;
-    (void)material_id;
-    (void)radius;
-    (void)transform;
-    Entity entity = create_object_entity(name);
-    // TransformComponent& trans = *get_component<TransformComponent>(entity);
-    // ObjectComponent& obj = *get_component<ObjectComponent>(entity);
-    // trans.MatrixTransform(transform);
+Entity Scene::create_cube_entity(const std::string& p_name,
+                                 Entity p_material_id,
+                                 const vec3& p_scale,
+                                 const mat4& p_transform) {
+    ecs::Entity entity = create_object_entity(p_name);
+    TransformComponent& trans = *get_component<TransformComponent>(entity);
+    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    trans.matrix_transform(p_transform);
 
-    // Entity meshID = Entity_CreateMesh(name + ":mesh");
-    // obj.meshID = meshID;
+    ecs::Entity mesh_id = create_mesh_entity(p_name + ":mesh");
+    object.mesh_id = mesh_id;
 
-    // MeshComponent& mesh = *get_component<MeshComponent>(meshID);
-
-    // fill_sphere_data(mesh, radius);
-
-    // MeshComponent::MeshSubset subset;
-    // subset.materialID = materialID;
-    // subset.indexCount = static_cast<uint32_t>(mesh.mIndices.size());
-    // subset.indexOffset = 0;
-    // mesh.mSubsets.emplace_back(subset);
+    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
+    mesh = make_cube_mesh(p_scale);
+    mesh.subsets[0].material_id = p_material_id;
 
     return entity;
 }
 
-Entity Scene::create_cube_entity(const std::string& name, const vec3& scale, const mat4& transform) {
-    Entity material_id = create_material_entity(name + ":mat");
-    return create_cube_entity(name, material_id, scale, transform);
+Entity Scene::create_sphere_entity(const std::string& p_name,
+                                   float p_radius,
+                                   const mat4& p_transform) {
+    Entity material_id = create_material_entity(p_name + ":mat");
+    return create_sphere_entity(p_name, material_id, p_radius, p_transform);
 }
 
-Entity Scene::create_cube_entity(const std::string& name, Entity material_id, const vec3& scale,
-                                 const mat4& transform) {
-    ecs::Entity entity = create_object_entity(name);
+Entity Scene::create_sphere_entity(const std::string& p_name,
+                                   Entity p_material_id,
+                                   float p_radius,
+                                   const mat4& p_transform) {
+    ecs::Entity entity = create_object_entity(p_name);
     TransformComponent& trans = *get_component<TransformComponent>(entity);
-    ObjectComponent& obj = *get_component<ObjectComponent>(entity);
-    trans.matrix_transform(transform);
+    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    trans.matrix_transform(p_transform);
 
-    ecs::Entity mesh_id = create_mesh_entity(name + ":mesh");
-    obj.mesh_id = mesh_id;
+    ecs::Entity mesh_id = create_mesh_entity(p_name + ":mesh");
+    object.mesh_id = mesh_id;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
+    mesh = make_sphere_mesh(p_radius, 20, 20);
+    mesh.subsets[0].material_id = p_material_id;
 
-    // @TODO: move it to somewhere else
-    // clang-format off
-    constexpr uint32_t indices[] = {
-        0,          1,          2,          0,          2,          3,
-        0 + 4,      2 + 4,      1 + 4,      0 + 4,      3 + 4,      2 + 4,  // swapped winding
-        0 + 4 * 2,  1 + 4 * 2,  2 + 4 * 2,  0 + 4 * 2,  2 + 4 * 2,  3 + 4 * 2,
-        0 + 4 * 3,  2 + 4 * 3,  1 + 4 * 3,  0 + 4 * 3,  3 + 4 * 3,  2 + 4 * 3, // swapped winding
-        0 + 4 * 4,  2 + 4 * 4,  1 + 4 * 4,  0 + 4 * 4,  3 + 4 * 4,  2 + 4 * 4, // swapped winding
-        0 + 4 * 5,  1 + 4 * 5,  2 + 4 * 5,  0 + 4 * 5,  2 + 4 * 5,  3 + 4 * 5,
-    };
-    // clang-format on
-
-    const vec3& s = scale;
-    mesh.positions = {
-        // -Z
-        vec3(-s.x, +s.y, -s.z),
-        vec3(-s.x, -s.y, -s.z),
-        vec3(+s.x, -s.y, -s.z),
-        vec3(+s.x, +s.y, -s.z),
-
-        // +Z
-        vec3(-s.x, +s.y, +s.z),
-        vec3(-s.x, -s.y, +s.z),
-        vec3(+s.x, -s.y, +s.z),
-        vec3(+s.x, +s.y, +s.z),
-
-        // -X
-        vec3(-s.x, -s.y, +s.z),
-        vec3(-s.x, -s.y, -s.z),
-        vec3(-s.x, +s.y, -s.z),
-        vec3(-s.x, +s.y, +s.z),
-
-        // +X
-        vec3(+s.x, -s.y, +s.z),
-        vec3(+s.x, -s.y, -s.z),
-        vec3(+s.x, +s.y, -s.z),
-        vec3(+s.x, +s.y, +s.z),
-
-        // -Y
-        vec3(-s.x, -s.y, +s.z),
-        vec3(-s.x, -s.y, -s.z),
-        vec3(+s.x, -s.y, -s.z),
-        vec3(+s.x, -s.y, +s.z),
-
-        // +Y
-        vec3(-s.x, +s.y, +s.z),
-        vec3(-s.x, +s.y, -s.z),
-        vec3(+s.x, +s.y, -s.z),
-        vec3(+s.x, +s.y, +s.z),
-    };
-
-    mesh.texcoords_0 = {
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
-
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
-
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
-
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
-
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
-
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
-    };
-
-    mesh.normals = {
-        vec3(0, 0, -1),
-        vec3(0, 0, -1),
-        vec3(0, 0, -1),
-        vec3(0, 0, -1),
-
-        vec3(0, 0, 1),
-        vec3(0, 0, 1),
-        vec3(0, 0, 1),
-        vec3(0, 0, 1),
-
-        vec3(-1, 0, 0),
-        vec3(-1, 0, 0),
-        vec3(-1, 0, 0),
-        vec3(-1, 0, 0),
-
-        vec3(1, 0, 0),
-        vec3(1, 0, 0),
-        vec3(1, 0, 0),
-        vec3(1, 0, 0),
-
-        vec3(0, -1, 0),
-        vec3(0, -1, 0),
-        vec3(0, -1, 0),
-        vec3(0, -1, 0),
-
-        vec3(0, 1, 0),
-        vec3(0, 1, 0),
-        vec3(0, 1, 0),
-        vec3(0, 1, 0),
-    };
-    MeshComponent::MeshSubset subset;
-    subset.material_id = material_id;
-    subset.index_count = array_length(indices);
-    subset.index_offset = 0;
-    mesh.subsets.emplace_back(subset);
-
-    for (int i = 0; i < array_length(indices); i += 3) {
-        mesh.indices.push_back(indices[i]);
-        mesh.indices.push_back(indices[i + 2]);
-        mesh.indices.push_back(indices[i + 1]);
-    }
-
-    mesh.create_render_data();
     return entity;
 }
 

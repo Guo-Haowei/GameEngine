@@ -1,13 +1,8 @@
 #pragma once
-#include "scene_components.h"
-
-#include "core/framework/asset_manager.h"
+#include "mesh_component.h"
 
 namespace my {
 
-//--------------------------------------------------------------------------------------------------
-// Mesh Component
-//--------------------------------------------------------------------------------------------------
 static size_t get_stride(MeshComponent::VertexAttribute::NAME name) {
     switch (name) {
         case MeshComponent::VertexAttribute::POSITION:
@@ -95,6 +90,38 @@ std::vector<char> MeshComponent::generate_combined_buffer() const {
     safe_copy(attributes[VertexAttribute::WEIGHTS_0], weights_0.data());
     safe_copy(attributes[VertexAttribute::COLOR_0], color_0.data());
     return result;
+}
+
+void MeshComponent::serialize(Archive& archive, uint32_t) {
+    if (archive.is_write_mode()) {
+        archive << flags;
+        archive << indices;
+        archive << positions;
+        archive << normals;
+        archive << tangents;
+        archive << texcoords_0;
+        archive << texcoords_1;
+        archive << joints_0;
+        archive << weights_0;
+        archive << color_0;
+        archive << subsets;
+        archive << armature_id;
+    } else {
+        archive >> flags;
+        archive >> indices;
+        archive >> positions;
+        archive >> normals;
+        archive >> tangents;
+        archive >> texcoords_0;
+        archive >> texcoords_1;
+        archive >> joints_0;
+        archive >> weights_0;
+        archive >> color_0;
+        archive >> subsets;
+        archive >> armature_id;
+
+        create_render_data();
+    }
 }
 
 }  // namespace my

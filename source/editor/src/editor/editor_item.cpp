@@ -14,7 +14,7 @@ void EditorItem::open_add_entity_popup(ecs::Entity p_parent) {
                 m_editor.add_entity(ENTITY_TYPE_CUBE, p_parent);
             }
             if (ImGui::MenuItem("Sphere")) {
-                LOG_ERROR("not implemented");
+                m_editor.add_entity(ENTITY_TYPE_SPHERE, p_parent);
             }
             ImGui::EndMenu();
         }

@@ -2,6 +2,189 @@
 
 namespace my {
 
+MeshComponent make_cube_mesh(const vec3& p_scale) {
+    MeshComponent mesh;
+    // clang-format off
+    constexpr uint32_t indices[] = {
+        0,          1,          2,          0,          2,          3,
+        0 + 4,      2 + 4,      1 + 4,      0 + 4,      3 + 4,      2 + 4,  // swapped winding
+        0 + 4 * 2,  1 + 4 * 2,  2 + 4 * 2,  0 + 4 * 2,  2 + 4 * 2,  3 + 4 * 2,
+        0 + 4 * 3,  2 + 4 * 3,  1 + 4 * 3,  0 + 4 * 3,  3 + 4 * 3,  2 + 4 * 3, // swapped winding
+        0 + 4 * 4,  2 + 4 * 4,  1 + 4 * 4,  0 + 4 * 4,  3 + 4 * 4,  2 + 4 * 4, // swapped winding
+        0 + 4 * 5,  1 + 4 * 5,  2 + 4 * 5,  0 + 4 * 5,  2 + 4 * 5,  3 + 4 * 5,
+    };
+    // clang-format on
+
+    const vec3& s = p_scale;
+    mesh.positions = {
+        // -Z
+        vec3(-s.x, +s.y, -s.z),
+        vec3(-s.x, -s.y, -s.z),
+        vec3(+s.x, -s.y, -s.z),
+        vec3(+s.x, +s.y, -s.z),
+
+        // +Z
+        vec3(-s.x, +s.y, +s.z),
+        vec3(-s.x, -s.y, +s.z),
+        vec3(+s.x, -s.y, +s.z),
+        vec3(+s.x, +s.y, +s.z),
+
+        // -X
+        vec3(-s.x, -s.y, +s.z),
+        vec3(-s.x, -s.y, -s.z),
+        vec3(-s.x, +s.y, -s.z),
+        vec3(-s.x, +s.y, +s.z),
+
+        // +X
+        vec3(+s.x, -s.y, +s.z),
+        vec3(+s.x, -s.y, -s.z),
+        vec3(+s.x, +s.y, -s.z),
+        vec3(+s.x, +s.y, +s.z),
+
+        // -Y
+        vec3(-s.x, -s.y, +s.z),
+        vec3(-s.x, -s.y, -s.z),
+        vec3(+s.x, -s.y, -s.z),
+        vec3(+s.x, -s.y, +s.z),
+
+        // +Y
+        vec3(-s.x, +s.y, +s.z),
+        vec3(-s.x, +s.y, -s.z),
+        vec3(+s.x, +s.y, -s.z),
+        vec3(+s.x, +s.y, +s.z),
+    };
+
+    mesh.texcoords_0 = {
+        vec2(0, 0),
+        vec2(0, 1),
+        vec2(1, 1),
+        vec2(1, 0),
+
+        vec2(0, 0),
+        vec2(0, 1),
+        vec2(1, 1),
+        vec2(1, 0),
+
+        vec2(0, 0),
+        vec2(0, 1),
+        vec2(1, 1),
+        vec2(1, 0),
+
+        vec2(0, 0),
+        vec2(0, 1),
+        vec2(1, 1),
+        vec2(1, 0),
+
+        vec2(0, 0),
+        vec2(0, 1),
+        vec2(1, 1),
+        vec2(1, 0),
+
+        vec2(0, 0),
+        vec2(0, 1),
+        vec2(1, 1),
+        vec2(1, 0),
+    };
+
+    mesh.normals = {
+        vec3(0, 0, -1),
+        vec3(0, 0, -1),
+        vec3(0, 0, -1),
+        vec3(0, 0, -1),
+
+        vec3(0, 0, 1),
+        vec3(0, 0, 1),
+        vec3(0, 0, 1),
+        vec3(0, 0, 1),
+
+        vec3(-1, 0, 0),
+        vec3(-1, 0, 0),
+        vec3(-1, 0, 0),
+        vec3(-1, 0, 0),
+
+        vec3(1, 0, 0),
+        vec3(1, 0, 0),
+        vec3(1, 0, 0),
+        vec3(1, 0, 0),
+
+        vec3(0, -1, 0),
+        vec3(0, -1, 0),
+        vec3(0, -1, 0),
+        vec3(0, -1, 0),
+
+        vec3(0, 1, 0),
+        vec3(0, 1, 0),
+        vec3(0, 1, 0),
+        vec3(0, 1, 0),
+    };
+
+    for (int i = 0; i < array_length(indices); i += 3) {
+        mesh.indices.push_back(indices[i]);
+        mesh.indices.push_back(indices[i + 2]);
+        mesh.indices.push_back(indices[i + 1]);
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = array_length(indices);
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.create_render_data();
+    return mesh;
+}
+
+MeshComponent make_sphere_mesh(float p_radius, int p_rings, int p_sectors) {
+    MeshComponent mesh;
+
+    auto& indices = mesh.indices;
+    constexpr float pi = glm::pi<float>();
+    for (int step_x = 0; step_x <= p_sectors; ++step_x) {
+        for (int step_y = 0; step_y <= p_rings; ++step_y) {
+            const float x_seg = (float)step_x / (float)p_sectors;
+            const float y_seg = (float)step_y / (float)p_rings;
+            const vec3 normal{
+                std::cos(x_seg * 2.0f * pi) * std::sin(y_seg * pi),
+                std::cos(y_seg * pi),
+                std::sin(x_seg * 2.0f * pi) * std::sin(y_seg * pi)
+            };
+
+            mesh.positions.push_back(p_radius * normal);
+            mesh.normals.push_back(normal);
+            mesh.texcoords_0.push_back(vec2(x_seg, y_seg));
+        }
+    }
+
+    for (int y = 0; y < p_rings; ++y) {
+        for (int x = 0; x < p_sectors; ++x) {
+            /*
+            a - b
+            |   |
+            c - d
+            */
+            uint32_t a = (y * (p_sectors + 1) + x);
+            uint32_t b = (y * (p_sectors + 1) + x + 1);
+            uint32_t c = ((y + 1) * (p_sectors + 1) + x);
+            uint32_t d = ((y + 1) * (p_sectors + 1) + x + 1);
+
+            indices.push_back(a);
+            indices.push_back(c);
+            indices.push_back(b);
+
+            indices.push_back(b);
+            indices.push_back(c);
+            indices.push_back(d);
+        }
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.create_render_data();
+    return mesh;
+}
+
 /**
  *        E__________________ H
  *       /|                 /|
@@ -94,67 +277,6 @@ MeshComponent make_box_wireframe_mesh(float size) {
     mesh.indices = { A, B, B, C, C, D, D, A, E, F, F, G, G, H, H, E, A, E, B, F, D, H, C, G };
 
     return mesh;
-}
-
-// clang-format off
-void boxWithNormal(std::vector<vec3>& outPoints, std::vector<vec3>& outNomrals, std::vector<unsigned int>& outIndices, float size)
-{
-    outPoints.clear();
-    outPoints = {
-        { -size, +size, +size }, // A
-        { -size, -size, +size }, // B
-        { +size, -size, +size }, // C
-        { +size, +size, +size }, // D
-
-        { -size, +size, -size }, // E
-        { -size, -size, -size }, // F
-        { +size, -size, -size }, // G
-        { +size, +size, -size }, // H
-
-        { -size, +size, -size }, // E 8
-        { -size, -size, -size }, // F 9
-        { -size, -size, +size }, // B 10
-        { -size, +size, +size }, // A 11
-
-        { +size, +size, -size }, // H 12
-        { +size, -size, -size }, // G 13
-        { +size, -size, +size }, // C 14
-        { +size, +size, +size }, // D 15
-
-        { -size, +size, -size }, // E 16
-        { -size, +size, +size }, // A 17
-        { +size, +size, +size }, // D 18
-        { +size, +size, -size }, // H 19
-
-        { -size, -size, -size }, // F 20
-        { -size, -size, +size }, // B 21
-        { +size, -size, +size }, // C 22
-        { +size, -size, -size }, // G 23
-    };
-
-    constexpr vec3 UnitX(1, 0, 0);
-    constexpr vec3 UnitY(0, 1, 0);
-    constexpr vec3 UnitZ(0, 0, 1);
-
-    outNomrals.clear();
-    outNomrals = {
-        +UnitZ, +UnitZ, +UnitZ, +UnitZ,
-        -UnitZ, -UnitZ, -UnitZ, -UnitZ,
-        -UnitX, -UnitX, -UnitX, -UnitX,
-        +UnitX, +UnitX, +UnitX, +UnitX,
-        +UnitY, +UnitY, +UnitY, +UnitY,
-        -UnitY, -UnitY, -UnitY, -UnitY,
-    };
-
-    outIndices.clear();
-    outIndices = {
-        0, 1, 3, 3, 1, 2,
-        4, 7, 5, 7, 6, 5,
-        8, 9, 11, 9, 10, 11,
-        15, 14, 13, 15, 13, 12,
-        16, 17, 18, 16, 18, 19,
-        21, 20, 22, 20, 23, 22,
-    };
 }
 
 }  // namespace my
