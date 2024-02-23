@@ -1,5 +1,5 @@
 #pragma once
-#include "GLPrerequisites.h"
+#include "rendering/opengl/opengl_prerequisites.h"
 
 // @TODO: refactor
 struct Texture2DCreateInfo {

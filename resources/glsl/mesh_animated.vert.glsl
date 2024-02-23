@@ -4,7 +4,9 @@
 out struct PS_INPUT {
     vec3 position;
     vec2 uv;
-    mat3 TBN;
+    vec3 T;
+    vec3 B;
+    vec3 N;
 } ps_in;
 
 void main() {
@@ -25,5 +27,7 @@ void main() {
 
     ps_in.position = world_position.xyz;
     ps_in.uv = in_uv;
-    ps_in.TBN = mat3(T, B, N);
+    ps_in.T = T;
+    ps_in.B = B;
+    ps_in.N = N;
 }

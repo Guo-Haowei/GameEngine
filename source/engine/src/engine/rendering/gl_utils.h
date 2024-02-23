@@ -33,7 +33,6 @@ struct ConstantBuffer {
     }
 
     void CreateAndBind() {
-        static_assert(sizeof(T) % 16 == 0);
         mHandle = CreateAndBindConstantBuffer(cache.get_slot(), sizeof(T));
     }
 

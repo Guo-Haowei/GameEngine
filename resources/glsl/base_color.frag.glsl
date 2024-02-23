@@ -3,7 +3,9 @@ layout(location = 0) out vec4 out_color;
 in struct PS_INPUT {
     vec3 position;
     vec2 uv;
-    mat3 TBN;
+    vec3 T;
+    vec3 B;
+    vec3 N;
 } ps_in;
 
 #include "cbuffer.glsl.h"

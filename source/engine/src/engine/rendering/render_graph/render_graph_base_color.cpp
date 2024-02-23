@@ -2,6 +2,7 @@
 
 // @TODO: refactor
 #include "core/base/rid_owner.h"
+#include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
@@ -13,7 +14,14 @@ extern my::RIDAllocator<MeshData> g_meshes;
 
 namespace my::rg {
 
-void base_color_pass(int width, int height) {
+void base_color_pass(const Subpass* p_subpass) {
+    OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    DEV_ASSERT(!p_subpass->color_attachments.empty());
+    auto depth_buffer = p_subpass->depth_attachment;
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+
     glViewport(0, 0, width, height);
 
     glEnable(GL_DEPTH_TEST);
@@ -61,22 +69,23 @@ void create_render_graph_base_color(RenderGraph& graph) {
 
     auto color_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_BASE_COLOR,
                                                                       FORMAT_R8G8B8A8_UINT,
-                                                                      RT_COLOR_ATTACHMENT,
+                                                                      RT_COLOR_ATTACHMENT_2D,
                                                                       w, h });
     auto depth_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_BASE_COLOR_DEPTH,
                                                                       FORMAT_D32_FLOAT,
-                                                                      RT_DEPTH_ATTACHMENT,
+                                                                      RT_DEPTH_ATTACHMENT_2D,
                                                                       w, h });
 
     {  // base color
         RenderPassDesc desc;
         desc.name = BASE_COLOR_PASS;
-        desc.subpasses.emplace_back(SubPassDesc{
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { color_attachment },
             .depth_attachment = depth_attachment,
             .func = base_color_pass,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
 
     graph.compile();

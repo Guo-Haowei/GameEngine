@@ -35,6 +35,7 @@ static bool try_get_vec3(const sol::table& p_table, const std::string& p_key, ve
 
 static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_components) {
     Entity id;
+    Entity material_id;
 
     static int s_counter = 0;
     std::string name = std::format("Untitled-{}", ++s_counter);
@@ -51,15 +52,40 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         }
     }
 
+    auto create_material = [&]() {
+        return p_scene->create_material_entity(name + "-material");
+    };
+
+    if (sol::optional<sol::table> table = p_components["material"]; table) {
+        material_id = create_material();
+        MaterialComponent* material = p_scene->get_component<MaterialComponent>(material_id);
+        vec3 color{ 1 };
+        bool ok = true;
+        ok = ok && try_get_float(*table, "roughness", material->roughness);
+        ok = ok && try_get_float(*table, "metallic", material->metallic);
+        DEV_ASSERT(ok);
+        if (try_get_vec3(*table, "base_color", color)) {
+            material->base_color = vec4(color, 1.0f);
+        }
+    }
+
     if (sol::optional<sol::table> table = p_components["cube"]; table) {
         vec3 size{ 0.5f };
         try_get_vec3(*table, "size", size);
-        id = p_scene->create_cube_entity(name, size);
+        if (!material_id.is_valid()) {
+            material_id = create_material();
+        }
+
+        id = p_scene->create_cube_entity(name, material_id, size);
     }
     if (sol::optional<sol::table> table = p_components["sphere"]; table) {
         float radius{ 0.5f };
         try_get_float(*table, "radius", radius);
-        id = p_scene->create_sphere_entity(name, radius);
+        if (!material_id.is_valid()) {
+            material_id = create_material();
+        }
+
+        id = p_scene->create_sphere_entity(name, material_id, radius);
     }
 
     if (sol::optional<sol::table> table = p_components["transform"]; table) {
@@ -70,14 +96,14 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         try_get_vec3(*table, "rotate", rotate);
         try_get_vec3(*table, "scale", scale);
 
-        TransformComponent* transform_component = p_scene->get_component<TransformComponent>(id);
-        if (!transform_component) {
-            transform_component = &p_scene->create<TransformComponent>(id);
+        TransformComponent* transform = p_scene->get_component<TransformComponent>(id);
+        if (!transform) {
+            transform = &p_scene->create<TransformComponent>(id);
         }
-        transform_component->set_translation(translate);
+        transform->set_translation(translate);
         // transform_component.set_rotation(rotate);
-        transform_component->set_scale(scale);
-        transform_component->set_dirty();
+        transform->set_scale(scale);
+        transform->set_dirty();
     }
 
     if (sol::optional<sol::table> table = p_components["rigid_body"]; table) {
@@ -121,18 +147,15 @@ bool load_lua_scene(const std::string& p_path, Scene* p_scene) {
     // add additional package path
     std::string package_path = lua["package"]["path"];
 
-    //// Add a new search directory
-    std::string new_search_dir{ ROOT_FOLDER };
-    // @TODO: fix
-    new_search_dir.append("scripts/?.lua;");
-    lua["package"]["path"] = new_search_dir + package_path;
+    // add search directory
+    std::filesystem::path new_search_dir{ __FILE__ };
+    new_search_dir = new_search_dir.remove_filename();
+    new_search_dir.append("?.lua;");
+    lua["package"]["path"] = new_search_dir.string() + package_path;
 
-    sol::protected_function_result result = lua.script_file(p_path);
-    if (result.valid()) {
-        return result.get<bool>();
-    }
+    lua.script_file(p_path);
 
-    return false;
+    return true;
 }
 
 }  // namespace my

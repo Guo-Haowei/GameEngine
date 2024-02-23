@@ -7,8 +7,8 @@ namespace my::rg {
 
 class RenderGraph : public NonCopyable {
 public:
-    void add_pass(RenderPassDesc& desc);
-    std::shared_ptr<RenderPass> find_pass(const std::string& name) const;
+    std::shared_ptr<RenderPass> create_pass(RenderPassDesc& p_desc);
+    std::shared_ptr<RenderPass> find_pass(const std::string& p_name) const;
 
     // @TODO: graph should not own resource, move to graphics manager
 

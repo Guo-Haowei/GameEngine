@@ -5,9 +5,13 @@
 // constant buffer
 #ifdef __cplusplus
 #define CONSTANT_BUFFER(name, reg) \
-    struct name : public ConstantBufferBase<reg>
-template<int N>
+    struct name : public ConstantBufferBase<name, reg>
+
+template<typename T, int N>
 struct ConstantBufferBase {
+    ConstantBufferBase() {
+        static_assert(sizeof(T) % 16 == 0);
+    }
     constexpr int get_slot() { return N; }
 };
 #else
@@ -18,10 +22,11 @@ struct ConstantBufferBase {
 #ifdef __cplusplus
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
-typedef struct {
-    uint64_t data;
-    uint64_t padding;
-} samplerCube;
+using samplerCube = uint64_t;
+// struct samplerCube {
+//     uint64_t data;
+//     uint64_t padding;
+// };
 static_assert(MAX_CASCADE_COUNT == 4);
 #endif
 
@@ -30,11 +35,13 @@ struct Light {
     int type;
     vec3 position;  // direction
     int cast_shadow;
+    samplerCube shadow_map;
     float atten_constant;
     float atten_linear;
+
+    vec2 padding;
     float atten_quadratic;
     float max_distance;  // max distance the light affects
-    samplerCube shadow_map;
     mat4 matrices[6];
 };
 
@@ -89,12 +96,11 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
     float c_metallic;
     float c_roughness;
     float c_reflect_power;
-    int _c_padding1;
-
     int c_has_albedo_map;
+
+    vec2 _c_padding1;
     int c_has_pbr_map;
     int c_has_normal_map;
-    int c_display_channel;
 
     sampler2D c_albedo_map;
     sampler2D c_normal_map;
@@ -123,6 +129,16 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
 
 CONSTANT_BUFFER(BoneConstantBuffer, 4) {
     mat4 c_bones[MAX_BONE_COUNT];
+};
+
+// @TODO: make it more general, something like 2D draw
+CONSTANT_BUFFER(DebugDrawConstantBuffer, 5) {
+    vec2 c_debug_draw_pos;
+    vec2 c_debug_draw_size;
+
+    sampler2D c_debug_draw_map;
+    int c_display_channel;
+    int c_another_padding;
 };
 
 #endif

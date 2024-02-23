@@ -1,7 +1,7 @@
 #include "graphics_manager.h"
 
 #include "rendering/empty/empty_graphics_manager.h"
-#include "rendering/opengl/gl_graphics_manager.h"
+#include "rendering/opengl/opengl_graphics_manager.h"
 
 namespace my {
 
@@ -13,8 +13,7 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
 }
 
 std::shared_ptr<GraphicsManager> GraphicsManager::create() {
-    // return std::make_shared<EmptyGraphicsManager>();
-    return std::make_shared<GLGraphicsManager>();
+    return std::make_shared<OpenGLGraphicsManager>();
 }
 
 void GraphicsManager::set_pipeline_state(PipelineStateName p_name) {
