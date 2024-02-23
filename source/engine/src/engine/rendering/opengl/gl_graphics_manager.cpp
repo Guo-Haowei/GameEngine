@@ -15,6 +15,7 @@
 #include "core/framework/scene_manager.h"
 #include "rendering/gl_utils.h"
 #include "rendering/opengl/gl_pipeline_state_manager.h"
+#include "rendering/opengl/gl_subpass.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/r_editor.h"
 #include "rendering/rendering_dvars.h"
@@ -457,6 +458,91 @@ std::shared_ptr<RenderTarget> GLGraphicsManager::find_resource(const std::string
     return it->second;
 }
 
+std::shared_ptr<Subpass> GLGraphicsManager::create_subpass(const SubpassDesc& p_desc) {
+    auto subpass = std::make_shared<GLSubpass>();
+    subpass->func = p_desc.func;
+    subpass->color_attachments = p_desc.color_attachments;
+    subpass->depth_attachment = p_desc.depth_attachment;
+    GLuint fbo_handle = 0;
+
+    const int num_depth_attachment = p_desc.depth_attachment != nullptr;
+    const int num_color_attachment = (int)p_desc.color_attachments.size();
+    if (!num_depth_attachment && !num_color_attachment) {
+        return subpass;
+    }
+
+    glGenFramebuffers(1, &fbo_handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle);
+
+    if (!num_color_attachment) {
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+    } else {
+        // create color attachments
+        std::vector<GLuint> attachments;
+        attachments.reserve(num_color_attachment);
+        for (int i = 0; i < num_color_attachment; ++i) {
+            const auto& color_attachment = p_desc.color_attachments[i];
+
+            GLuint attachment = GL_COLOR_ATTACHMENT0 + i;
+            switch (color_attachment->get_desc().type) {
+                case RT_COLOR_ATTACHMENT: {
+                    // bind to frame buffer
+                    glFramebufferTexture2D(
+                        GL_FRAMEBUFFER,                  // target
+                        attachment,                      // attachment
+                        GL_TEXTURE_2D,                   // texture target
+                        color_attachment->get_handle(),  // texture
+                        0                                // level
+                    );
+                } break;
+                default:
+                    CRASH_NOW();
+                    break;
+            }
+            attachments.push_back(attachment);
+        }
+
+        if (attachments.empty()) {
+            glDrawBuffer(GL_NONE);
+            glReadBuffer(GL_NONE);
+        } else {
+            glDrawBuffers(num_color_attachment, attachments.data());
+        }
+    }
+
+    // @TODO: move it to bind and unbind
+    if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
+        switch (depth_attachment->get_desc().type) {
+            case RT_SHADOW_MAP:
+            case RT_DEPTH_ATTACHMENT: {
+                glFramebufferTexture2D(GL_FRAMEBUFFER,                  // target
+                                       GL_DEPTH_ATTACHMENT,             // attachment
+                                       GL_TEXTURE_2D,                   // texture target
+                                       depth_attachment->get_handle(),  // texture
+                                       0                                // level
+                );
+            } break;
+            case RT_SHADOW_CUBE_MAP: {
+                glFramebufferTexture(GL_FRAMEBUFFER,
+                                     GL_DEPTH_ATTACHMENT,
+                                     depth_attachment->get_handle(),
+                                     0);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
+    DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    subpass->m_handle = fbo_handle;
+    return subpass;
+}
+
 void GLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
     cb.c_albedo_color = material->base_color;
     cb.c_metallic = material->metallic;
@@ -496,6 +582,9 @@ void GLGraphicsManager::render() {
 
     g_perFrameCache.Update();
     m_render_graph.execute();
+
+    // @TODO: move it somewhere else
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     {
         OPTICK_EVENT("ImGui_ImplOpenGL3_RenderDrawData");

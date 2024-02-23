@@ -6,14 +6,13 @@ namespace my::rg {
 struct RenderPassDesc {
     std::string name;
     std::vector<std::string> dependencies;
-    std::vector<SubpassDesc> subpasses;
 };
 
 class RenderPass {
 public:
-    virtual ~RenderPass() = default;
+    void add_sub_pass(std::shared_ptr<Subpass> p_subpass);
 
-    virtual void execute() = 0;
+    void execute();
 
     const std::string& get_name() const { return m_name; }
 
@@ -22,23 +21,9 @@ protected:
 
     std::string m_name;
     std::vector<std::string> m_inputs;
-    int m_layer;
-    int m_width;
-    int m_height;
+    std::vector<std::shared_ptr<Subpass>> m_subpasses;
 
     friend class RenderGraph;
-};
-
-// @TODO: refactor
-class RenderPassGL : public RenderPass {
-public:
-    void execute() override;
-
-protected:
-    void create_internal(RenderPassDesc& pass_desc) override;
-    void create_subpass(const SubpassDesc& subpass_desc);
-
-    std::vector<std::shared_ptr<Subpass>> m_subpasses;
 };
 
 }  // namespace my::rg

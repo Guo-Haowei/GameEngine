@@ -24,23 +24,27 @@ namespace my::rg {
 
 // @TODO: refactor render passes to have multiple frame buffers
 // const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
-void point_shadow_pass_func(int width, int height, int pass_id) {
+void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto render_data = GraphicsManager::singleton().get_render_data();
-    if (render_data->point_shadow_passes.size() <= pass_id) {
+    if (render_data->point_shadow_passes.size() <= p_pass_id) {
         return;
     }
 
+    // prepare render data
+    p_subpass->set_render_target();
+    auto [width, height] = p_subpass->depth_attachment->get_size();
+    glViewport(0, 0, width, height);
+
+    // @TODO: fix this
     const Scene& scene = SceneManager::get_scene();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    glViewport(0, 0, width, height);
-
-    RenderData::Pass& pass = render_data->point_shadow_passes[pass_id];
+    RenderData::Pass& pass = render_data->point_shadow_passes[p_pass_id];
 
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
@@ -65,8 +69,11 @@ void point_shadow_pass_func(int width, int height, int pass_id) {
     }
 }
 
-void shadow_pass_func(int width, int height) {
+void shadow_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    auto [width, height] = p_subpass->depth_attachment->get_size();
 
     // @TODO: for each light source, render shadow
     const Scene& scene = SceneManager::get_scene();
@@ -110,7 +117,7 @@ void shadow_pass_func(int width, int height) {
     }
 }
 
-void voxelization_pass_func(int, int) {
+void voxelization_pass_func(const Subpass*) {
     OPTICK_EVENT();
 
     if (!DVAR_GET_BOOL(r_enable_vxgi)) {
@@ -182,8 +189,11 @@ void voxelization_pass_func(int, int) {
     g_normalVoxel.genMipMap();
 }
 
-void gbuffer_pass_func(int width, int height) {
+void gbuffer_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    auto [width, height] = p_subpass->depth_attachment->get_size();
 
     glViewport(0, 0, width, height);
 
@@ -225,8 +235,13 @@ void gbuffer_pass_func(int width, int height) {
     glUseProgram(0);
 }
 
-void ssao_pass_func(int width, int height) {
+void ssao_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    DEV_ASSERT(!p_subpass->color_attachments.empty());
+    auto depth_buffer = p_subpass->depth_attachment;
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
 
@@ -235,8 +250,13 @@ void ssao_pass_func(int width, int height) {
     R_DrawQuad();
 }
 
-void lighting_pass_func(int width, int height) {
+void lighting_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    DEV_ASSERT(!p_subpass->color_attachments.empty());
+    auto depth_buffer = p_subpass->depth_attachment;
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -245,8 +265,13 @@ void lighting_pass_func(int width, int height) {
     R_DrawQuad();
 }
 
-void debug_vxgi_pass_func(int width, int height) {
+void debug_vxgi_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    DEV_ASSERT(!p_subpass->color_attachments.empty());
+    auto depth_buffer = p_subpass->depth_attachment;
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
@@ -261,12 +286,17 @@ void debug_vxgi_pass_func(int width, int height) {
     glDrawElementsInstanced(GL_TRIANGLES, g_box.count, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
-void fxaa_pass_func(int width, int height) {
+void fxaa_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    DEV_ASSERT(!p_subpass->color_attachments.empty());
+    auto depth_buffer = p_subpass->depth_attachment;
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     // HACK:
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
-        debug_vxgi_pass_func(width, height);
+        debug_vxgi_pass_func(p_subpass);
     } else {
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -309,8 +339,13 @@ void fxaa_pass_func(int width, int height) {
     glUseProgram(0);
 }
 
-void final_pass_func(int width, int height) {
+void final_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
+
+    p_subpass->set_render_target();
+    DEV_ASSERT(!p_subpass->color_attachments.empty());
+    auto depth_buffer = p_subpass->depth_attachment;
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
     glDisable(GL_DEPTH_TEST);
@@ -380,19 +415,20 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                     MAX_CASCADE_COUNT * shadow_res, shadow_res });
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
+        auto pass = graph.create_pass(desc);
 
         SubPassFunc funcs[] = {
-            [](int width, int height) {
-                point_shadow_pass_func(width, height, 0);
+            [](const Subpass* p_subpass) {
+                point_shadow_pass_func(p_subpass, 0);
             },
-            [](int width, int height) {
-                point_shadow_pass_func(width, height, 1);
+            [](const Subpass* p_subpass) {
+                point_shadow_pass_func(p_subpass, 1);
             },
-            [](int width, int height) {
-                point_shadow_pass_func(width, height, 2);
+            [](const Subpass* p_subpass) {
+                point_shadow_pass_func(p_subpass, 2);
             },
-            [](int width, int height) {
-                point_shadow_pass_func(width, height, 3);
+            [](const Subpass* p_subpass) {
+                point_shadow_pass_func(p_subpass, 3);
             },
         };
 
@@ -404,78 +440,85 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                               RT_SHADOW_CUBE_MAP,
                                                                               point_shadow_res, point_shadow_res });
 
-            desc.subpasses.emplace_back(SubpassDesc{
+            auto subpass = manager.create_subpass(SubpassDesc{
                 .depth_attachment = point_shadow_map,
                 .func = funcs[i],
             });
+            pass->add_sub_pass(subpass);
         }
 
-        desc.subpasses.emplace_back(SubpassDesc{
+        auto subpass = manager.create_subpass(SubpassDesc{
             .depth_attachment = shadow_map,
             .func = shadow_pass_func,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
     {  // gbuffer pass
         RenderPassDesc desc;
         desc.name = GBUFFER_PASS;
-        desc.subpasses.emplace_back(SubpassDesc{
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 },
             .depth_attachment = gbuffer_depth,
             .func = gbuffer_pass_func,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
     {  // voxel pass
         RenderPassDesc desc;
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
-        desc.subpasses.emplace_back(SubpassDesc{
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
             .func = voxelization_pass_func,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
     {  // ssao pass
         RenderPassDesc desc;
         desc.name = SSAO_PASS;
         desc.dependencies = { GBUFFER_PASS };
-        desc.subpasses.emplace_back(SubpassDesc{
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { ssao_attachment },
             .func = ssao_pass_func,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
     {  // lighting pass
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
         desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
-        desc.subpasses.emplace_back(SubpassDesc{
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { lighting_attachment },
             .func = lighting_pass_func,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
     {  // fxaa pass
         RenderPassDesc desc;
         desc.name = FXAA_PASS;
         desc.dependencies = { LIGHTING_PASS };
-        desc.subpasses.emplace_back(SubpassDesc{
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { fxaa_attachment },
             .depth_attachment = gbuffer_depth,
             .func = fxaa_pass_func,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
     {
         // final pass
         RenderPassDesc desc;
         desc.name = FINAL_PASS;
         desc.dependencies = { FXAA_PASS };
-        desc.subpasses.emplace_back(SubpassDesc{
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { final_attachment },
             .func = final_pass_func,
         });
-        graph.add_pass(desc);
+        pass->add_sub_pass(subpass);
     }
 
     // @TODO: allow recompile

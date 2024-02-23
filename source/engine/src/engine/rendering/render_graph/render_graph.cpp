@@ -2,14 +2,15 @@
 
 namespace my::rg {
 
-void RenderGraph::add_pass(RenderPassDesc& desc) {
-    std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPassGL>();
+std::shared_ptr<RenderPass> RenderGraph::create_pass(RenderPassDesc& desc) {
+    std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPass>();
     render_pass->create_internal(desc);
     m_render_passes.emplace_back(render_pass);
 
     const std::string& name = render_pass->m_name;
     DEV_ASSERT(m_render_pass_lookup.find(name) == m_render_pass_lookup.end());
     m_render_pass_lookup[name] = (int)m_render_passes.size() - 1;
+    return render_pass;
 }
 
 std::shared_ptr<RenderPass> RenderGraph::find_pass(const std::string& name) const {

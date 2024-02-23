@@ -11,13 +11,15 @@ public:
     void finalize() final;
     void render() final;
 
+    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc) final;
+    std::shared_ptr<RenderTarget> find_resource(const std::string& name) const final;
+
+    std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) override;
+
     // @TODO: filter
     void create_texture(ImageHandle* handle) final;
 
     uint64_t get_final_image() const final;
-
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& desc) final;
-    std::shared_ptr<RenderTarget> find_resource(const std::string& name) const final;
 
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) final;

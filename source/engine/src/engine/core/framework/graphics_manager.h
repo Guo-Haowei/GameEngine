@@ -27,20 +27,22 @@ public:
 
     virtual void render() = 0;
 
-    // @TODO: thread safety ?
-    void event_received(std::shared_ptr<Event> p_event) final;
-
     void set_pipeline_state(PipelineStateName p_name);
-
-    // @TODO: sampler
-    virtual void create_texture(ImageHandle* p_handle) = 0;
 
     virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc) = 0;
     virtual std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const = 0;
 
+    virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
+
+    // @TODO: sampler
+    virtual void create_texture(ImageHandle* p_handle) = 0;
+
     // virtual std::shared_ptr<rg::Subpass> create_subpass(const rg::SubpassDesc& p_desc) = 0;
 
     virtual uint64_t get_final_image() const = 0;
+
+    // @TODO: thread safety ?
+    void event_received(std::shared_ptr<Event> p_event) final;
 
     // @TODO: refactor this
     virtual void fill_material_constant_buffer(const MaterialComponent* p_material, MaterialConstantBuffer& p_cb) = 0;
