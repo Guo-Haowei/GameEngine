@@ -5,9 +5,13 @@
 // constant buffer
 #ifdef __cplusplus
 #define CONSTANT_BUFFER(name, reg) \
-    struct name : public ConstantBufferBase<reg>
-template<int N>
+    struct name : public ConstantBufferBase<name, reg>
+
+template<typename T, int N>
 struct ConstantBufferBase {
+    ConstantBufferBase() {
+        static_assert(sizeof(T) % 16 == 0);
+    }
     constexpr int get_slot() { return N; }
 };
 #else
@@ -18,10 +22,11 @@ struct ConstantBufferBase {
 #ifdef __cplusplus
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
-typedef struct {
-    uint64_t data;
-    uint64_t padding;
-} samplerCube;
+using samplerCube = uint64_t;
+// struct samplerCube {
+//     uint64_t data;
+//     uint64_t padding;
+// };
 static_assert(MAX_CASCADE_COUNT == 4);
 #endif
 
@@ -30,11 +35,13 @@ struct Light {
     int type;
     vec3 position;  // direction
     int cast_shadow;
+    samplerCube shadow_map;
     float atten_constant;
     float atten_linear;
+
+    vec2 padding;
     float atten_quadratic;
     float max_distance;  // max distance the light affects
-    samplerCube shadow_map;
     mat4 matrices[6];
 };
 

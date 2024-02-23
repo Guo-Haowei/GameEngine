@@ -4,9 +4,9 @@
 namespace my {
 
 enum RenderTargetType {
-    RT_COLOR_ATTACHMENT,
-    RT_DEPTH_ATTACHMENT,
-    RT_SHADOW_MAP,
+    RT_COLOR_ATTACHMENT_2D,
+    RT_DEPTH_ATTACHMENT_2D,
+    RT_SHADOW_2D,
     RT_SHADOW_CUBE_MAP,
 };
 
@@ -37,7 +37,7 @@ private:
     uint32_t m_handle = 0;
     uint64_t m_resident_handle = 0;
 
-    friend class GLGraphicsManager;
+    friend class OpenGLGraphicsManager;
 };
 
 }  // namespace my

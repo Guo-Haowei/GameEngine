@@ -1,5 +1,5 @@
 #pragma once
-#include "rendering/render_graph/sub_pass.h"
+#include "rendering/render_graph/subpass.h"
 
 namespace my::rg {
 

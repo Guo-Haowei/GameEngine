@@ -351,8 +351,8 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
 
     g_debug_draw_cache.cache.c_debug_draw_size = size;
     g_debug_draw_cache.cache.c_debug_draw_pos = pos;
-    g_debug_draw_cache.cache.c_debug_draw_map = p_handle;
     g_debug_draw_cache.cache.c_display_channel = p_channel;
+    g_debug_draw_cache.cache.c_debug_draw_map = p_handle;
     g_debug_draw_cache.Update();
     R_DrawQuad();
 }
@@ -373,9 +373,10 @@ void final_pass_func(const Subpass* p_subpass) {
     // @TODO: clean up
     auto final_image_handle = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
-#if 0
+
+#if 1
     auto shadow_map_handle = GraphicsManager::singleton().find_resource(RT_RES_SHADOW_MAP)->get_resident_handle();
-    debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RGB, width, height, 800, 200);
+    debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 800, 200);
 #endif
 }
 
@@ -388,35 +389,35 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
     auto gbuffer_attachment0 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
                                                                          FORMAT_R16G16B16A16_FLOAT,
-                                                                         RT_COLOR_ATTACHMENT,
+                                                                         RT_COLOR_ATTACHMENT_2D,
                                                                          w, h });
     auto gbuffer_attachment1 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
                                                                          FORMAT_R16G16B16A16_FLOAT,
-                                                                         RT_COLOR_ATTACHMENT,
+                                                                         RT_COLOR_ATTACHMENT_2D,
                                                                          w, h });
     auto gbuffer_attachment2 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
                                                                          FORMAT_R8G8B8A8_UINT,
-                                                                         RT_COLOR_ATTACHMENT,
+                                                                         RT_COLOR_ATTACHMENT_2D,
                                                                          w, h });
     auto gbuffer_depth = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
                                                                    FORMAT_D32_FLOAT,
-                                                                   RT_DEPTH_ATTACHMENT,
+                                                                   RT_DEPTH_ATTACHMENT_2D,
                                                                    w, h });
     auto ssao_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_SSAO,
                                                                      FORMAT_R32_FLOAT,
-                                                                     RT_COLOR_ATTACHMENT,
+                                                                     RT_COLOR_ATTACHMENT_2D,
                                                                      w, h });
     auto lighting_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_LIGHTING,
                                                                          FORMAT_R8G8B8A8_UINT,
-                                                                         RT_COLOR_ATTACHMENT,
+                                                                         RT_COLOR_ATTACHMENT_2D,
                                                                          w, h });
     auto fxaa_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FXAA,
                                                                      FORMAT_R8G8B8A8_UINT,
-                                                                     RT_COLOR_ATTACHMENT,
+                                                                     RT_COLOR_ATTACHMENT_2D,
                                                                      w, h });
     auto final_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
                                                                       FORMAT_R8G8B8A8_UINT,
-                                                                      RT_COLOR_ATTACHMENT,
+                                                                      RT_COLOR_ATTACHMENT_2D,
                                                                       w, h });
 
     {  // shadow pass
@@ -427,7 +428,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
         auto shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_SHADOW_MAP,
                                                                     FORMAT_D32_FLOAT,
-                                                                    RT_SHADOW_MAP,
+                                                                    RT_SHADOW_2D,
                                                                     MAX_CASCADE_COUNT * shadow_res, shadow_res });
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;

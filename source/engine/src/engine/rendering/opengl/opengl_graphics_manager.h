@@ -3,9 +3,9 @@
 
 namespace my {
 
-class GLGraphicsManager : public GraphicsManager {
+class OpenGLGraphicsManager : public GraphicsManager {
 public:
-    GLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager") {}
+    OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager") {}
 
     bool initialize() final;
     void finalize() final;

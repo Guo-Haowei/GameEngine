@@ -1,6 +1,6 @@
 #include "render_pass.h"
 
-#include "rendering/GLPrerequisites.h"
+#include "rendering/opengl/opengl_prerequisites.h"
 
 namespace my::rg {
 

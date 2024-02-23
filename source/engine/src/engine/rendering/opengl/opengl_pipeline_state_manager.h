@@ -1,20 +1,20 @@
 #pragma once
-#include "rendering/GLPrerequisites.h"
+#include "rendering/opengl/opengl_prerequisites.h"
 #include "rendering/pipeline_state_manager.h"
 
 namespace my {
 
-struct GLPipelineState : public PipelineState {
+struct OpenGLPipelineState : public PipelineState {
     GLuint program_id;
 
-    ~GLPipelineState() {
+    ~OpenGLPipelineState() {
         if (program_id) {
             glDeleteProgram(program_id);
         }
     }
 };
 
-class GLPipelineStateManager : public PipelineStateManager {
+class OpenGLPipelineStateManager : public PipelineStateManager {
 protected:
     std::shared_ptr<PipelineState> create(const PipelineCreateInfo& info) final;
 };

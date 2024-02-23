@@ -1,4 +1,4 @@
-#include "gl_pipeline_state_manager.h"
+#include "opengl_pipeline_state_manager.h"
 
 #include "core/framework/asset_manager.h"
 
@@ -82,7 +82,7 @@ static GLuint create_shader(std::string_view file, GLenum type) {
     return shader;
 }
 
-std::shared_ptr<PipelineState> GLPipelineStateManager::create(const PipelineCreateInfo &info) {
+std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const PipelineCreateInfo &info) {
     GLuint programID = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
@@ -128,7 +128,7 @@ std::shared_ptr<PipelineState> GLPipelineStateManager::create(const PipelineCrea
         programID = 0;
     }
 
-    auto program = std::make_shared<GLPipelineState>();
+    auto program = std::make_shared<OpenGLPipelineState>();
     program->program_id = programID;
     return program;
 }
