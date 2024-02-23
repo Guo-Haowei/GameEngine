@@ -121,8 +121,8 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert.glsl";
-        info.ps = "@res://glsl/image.frag.glsl";
+        info.vs = "@res://glsl/debug_draw_texture.vert.glsl";
+        info.ps = "@res://glsl/debug_draw_texture.frag.glsl";
         m_cache[PROGRAM_IMAGE_2D] = create(info);
     }
 

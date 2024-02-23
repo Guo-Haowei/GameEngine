@@ -89,12 +89,11 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
     float c_metallic;
     float c_roughness;
     float c_reflect_power;
-    int _c_padding1;
-
     int c_has_albedo_map;
+
+    vec2 _c_padding1;
     int c_has_pbr_map;
     int c_has_normal_map;
-    int c_display_channel;
 
     sampler2D c_albedo_map;
     sampler2D c_normal_map;
@@ -123,6 +122,16 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
 
 CONSTANT_BUFFER(BoneConstantBuffer, 4) {
     mat4 c_bones[MAX_BONE_COUNT];
+};
+
+// @TODO: make it more general, something like 2D draw
+CONSTANT_BUFFER(DebugDrawConstantBuffer, 5) {
+    vec2 c_debug_draw_pos;
+    vec2 c_debug_draw_size;
+
+    sampler2D c_debug_draw_map;
+    int c_display_channel;
+    int c_another_padding;
 };
 
 #endif

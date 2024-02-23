@@ -6,6 +6,7 @@ gl::ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 
 gl::ConstantBuffer<MaterialConstantBuffer> g_materialCache;
 gl::ConstantBuffer<BoneConstantBuffer> g_boneCache;
+gl::ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
 void R_Alloc_Cbuffers() {
     g_perFrameCache.CreateAndBind();
@@ -13,6 +14,7 @@ void R_Alloc_Cbuffers() {
     g_materialCache.CreateAndBind();
     g_constantCache.CreateAndBind();
     g_boneCache.CreateAndBind();
+    g_debug_draw_cache.CreateAndBind();
 }
 
 void R_Destroy_Cbuffers() {
@@ -21,4 +23,5 @@ void R_Destroy_Cbuffers() {
     g_constantCache.Destroy();
     g_perBatchCache.Destroy();
     g_boneCache.Destroy();
+    g_debug_draw_cache.Destroy();
 }

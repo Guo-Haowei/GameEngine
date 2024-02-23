@@ -339,28 +339,44 @@ void fxaa_pass_func(const Subpass* p_subpass) {
     glUseProgram(0);
 }
 
+// @TODO: refactor
+static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width, int p_screen_height, int p_width, int p_height) {
+    float half_width_ndc = (float)p_width / p_screen_width;
+    float half_height_ndc = (float)p_height / p_screen_height;
+
+    vec2 size = vec2(half_width_ndc, half_height_ndc);
+    vec2 pos;
+    pos.x = 1.0f - half_width_ndc;
+    pos.y = 1.0f - half_height_ndc;
+
+    g_debug_draw_cache.cache.c_debug_draw_size = size;
+    g_debug_draw_cache.cache.c_debug_draw_pos = pos;
+    g_debug_draw_cache.cache.c_debug_draw_map = p_handle;
+    g_debug_draw_cache.cache.c_display_channel = p_channel;
+    g_debug_draw_cache.Update();
+    R_DrawQuad();
+}
+
 void final_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     p_subpass->set_render_target();
     DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
     glDisable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // @TODO:
-    g_materialCache.cache.c_albedo_map = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_resident_handle();
-    g_materialCache.cache.c_display_channel = DISPLAY_CHANNEL_RGB;
-    // g_materialCache.cache.c_display_channel = DISPLAY_CHANNEL_RRR;
-    g_materialCache.Update();
-
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_IMAGE_2D);
 
-    // @TODO:
-    R_DrawQuad();
+    // @TODO: clean up
+    auto final_image_handle = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_resident_handle();
+    debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
+#if 0
+    auto shadow_map_handle = GraphicsManager::singleton().find_resource(RT_RES_SHADOW_MAP)->get_resident_handle();
+    debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RGB, width, height, 800, 200);
+#endif
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {

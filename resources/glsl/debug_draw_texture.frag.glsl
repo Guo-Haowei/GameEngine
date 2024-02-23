@@ -7,13 +7,13 @@ void main() {
     vec3 color = vec3(0.0);
     switch (c_display_channel) {
         case DISPLAY_CHANNEL_RGB:
-            color = texture(c_albedo_map, pass_uv).rgb;
+            color = texture(c_debug_draw_map, pass_uv).rgb;
             break;
         case DISPLAY_CHANNEL_RRR:
-            color = texture(c_albedo_map, pass_uv).rrr;
+            color = texture(c_debug_draw_map, pass_uv).rrr;
             break;
         case DISPLAY_CHANNEL_AAA:
-            color = texture(c_albedo_map, pass_uv).aaa;
+            color = texture(c_debug_draw_map, pass_uv).aaa;
             break;
         default:
             break;
