@@ -121,11 +121,11 @@ bool load_lua_scene(const std::string& p_path, Scene* p_scene) {
     // add additional package path
     std::string package_path = lua["package"]["path"];
 
-    //// Add a new search directory
-    std::string new_search_dir{ ROOT_FOLDER };
-    // @TODO: fix
-    new_search_dir.append("scripts/?.lua;");
-    lua["package"]["path"] = new_search_dir + package_path;
+    // add search directory
+    std::filesystem::path new_search_dir{ __FILE__ };
+    new_search_dir = new_search_dir.remove_filename();
+    new_search_dir.append("?.lua;");
+    lua["package"]["path"] = new_search_dir.string() + package_path;
 
     sol::protected_function_result result = lua.script_file(p_path);
     if (result.valid()) {

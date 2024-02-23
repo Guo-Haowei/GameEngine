@@ -12,4 +12,4 @@ Vector3.ZERO = Vector3:create(0, 0, 0)
 Vector3.HALF = Vector3:create(0.5, 0.5, 0.5)
 Vector3.ONE = Vector3:create(1, 1, 1)
 
-return Vector3
+return { Vector3 = Vector3 }
