@@ -1,7 +1,5 @@
 #include "render_graph.h"
 
-#include "rendering/GLPrerequisites.h"
-
 namespace my::rg {
 
 void RenderGraph::add_pass(RenderPassDesc& desc) {

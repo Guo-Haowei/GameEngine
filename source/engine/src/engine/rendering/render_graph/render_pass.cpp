@@ -9,10 +9,11 @@ void RenderPass::create_internal(RenderPassDesc& desc) {
     m_inputs = std::move(desc.dependencies);
 }
 
-void RenderPassGL::create_subpass(const SubPassDesc& subpass_desc) {
-    SubpassData subpass;
-    subpass.func = subpass_desc.func;
-    subpass.handle = 0;
+void RenderPassGL::create_subpass(const SubpassDesc& subpass_desc) {
+    auto subpass = std::make_shared<Subpass>();
+
+    subpass->func = subpass_desc.func;
+    subpass->handle = 0;
 
     const int num_depth_attachment = subpass_desc.depth_attachment != nullptr;
     const int num_color_attachment = (int)subpass_desc.color_attachments.size();
@@ -23,16 +24,16 @@ void RenderPassGL::create_subpass(const SubPassDesc& subpass_desc) {
 
     if (num_depth_attachment) {
         const RenderTargetDesc& desc = subpass_desc.depth_attachment->get_desc();
-        subpass.width = desc.width;
-        subpass.height = desc.height;
+        subpass->width = desc.width;
+        subpass->height = desc.height;
     } else {
         const RenderTargetDesc& desc = subpass_desc.color_attachments[0]->get_desc();
-        subpass.width = desc.width;
-        subpass.height = desc.height;
+        subpass->width = desc.width;
+        subpass->height = desc.height;
     }
 
-    glGenFramebuffers(1, &subpass.handle);
-    glBindFramebuffer(GL_FRAMEBUFFER, subpass.handle);
+    glGenFramebuffers(1, &subpass->handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, subpass->handle);
 
     if (!num_color_attachment) {
         glDrawBuffer(GL_NONE);
@@ -110,9 +111,9 @@ void RenderPassGL::create_internal(RenderPassDesc& desc) {
 
 void RenderPassGL::execute() {
     for (auto& subpass : m_subpasses) {
-        glBindFramebuffer(GL_FRAMEBUFFER, subpass.handle);
-        DEV_ASSERT(subpass.func);
-        subpass.func(subpass.width, subpass.height);
+        glBindFramebuffer(GL_FRAMEBUFFER, subpass->handle);
+        DEV_ASSERT(subpass->func);
+        subpass->func(subpass->width, subpass->height);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 }

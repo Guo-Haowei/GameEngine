@@ -1,20 +1,12 @@
 #pragma once
-#include "rendering/render_target.h"
+#include "rendering/render_graph/sub_pass.h"
 
 namespace my::rg {
-
-using RenderPassFunc = void (*)(int width, int height);
-
-struct SubPassDesc {
-    std::vector<std::shared_ptr<RenderTarget>> color_attachments;
-    std::shared_ptr<RenderTarget> depth_attachment;
-    RenderPassFunc func = nullptr;
-};
 
 struct RenderPassDesc {
     std::string name;
     std::vector<std::string> dependencies;
-    std::vector<SubPassDesc> subpasses;
+    std::vector<SubpassDesc> subpasses;
 };
 
 class RenderPass {
@@ -30,7 +22,6 @@ protected:
 
     std::string m_name;
     std::vector<std::string> m_inputs;
-    RenderPassFunc m_func;
     int m_layer;
     int m_width;
     int m_height;
@@ -38,22 +29,16 @@ protected:
     friend class RenderGraph;
 };
 
+// @TODO: refactor
 class RenderPassGL : public RenderPass {
 public:
     void execute() override;
 
 protected:
     void create_internal(RenderPassDesc& pass_desc) override;
-    void create_subpass(const SubPassDesc& subpass_desc);
+    void create_subpass(const SubpassDesc& subpass_desc);
 
-    struct SubpassData {
-        uint32_t handle;
-        int width;
-        int height;
-        RenderPassFunc func;
-    };
-
-    std::vector<SubpassData> m_subpasses;
+    std::vector<std::shared_ptr<Subpass>> m_subpasses;
 };
 
 }  // namespace my::rg

@@ -13,7 +13,6 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
 }
 
 std::shared_ptr<GraphicsManager> GraphicsManager::create() {
-    // return std::make_shared<EmptyGraphicsManager>();
     return std::make_shared<GLGraphicsManager>();
 }
 

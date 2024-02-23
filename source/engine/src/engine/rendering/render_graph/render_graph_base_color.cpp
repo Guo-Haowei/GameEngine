@@ -71,7 +71,7 @@ void create_render_graph_base_color(RenderGraph& graph) {
     {  // base color
         RenderPassDesc desc;
         desc.name = BASE_COLOR_PASS;
-        desc.subpasses.emplace_back(SubPassDesc{
+        desc.subpasses.emplace_back(SubpassDesc{
             .color_attachments = { color_attachment },
             .depth_attachment = depth_attachment,
             .func = base_color_pass,

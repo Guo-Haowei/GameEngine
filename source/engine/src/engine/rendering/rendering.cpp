@@ -3,7 +3,7 @@
 #include "core/framework/graphics_manager.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/rendering_misc.h"
 
 namespace my {
 
@@ -148,12 +148,10 @@ void fill_constant_buffers(const Scene& scene) {
                     CRASH_COND_MSG(num_point_light_cast_shadow >= MAX_LIGHT_CAST_SHADOW_COUNT, "Can have at most " _STR(MAX_LIGHT_CAST_SHADOW_COUNT) " point lights that cast shadow");
 
                     const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, light.max_distance);
-                    light.matrices[0] = projection * glm::lookAt(position, position + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-                    light.matrices[1] = projection * glm::lookAt(position, position + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-                    light.matrices[2] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-                    light.matrices[3] = projection * glm::lookAt(position, position + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-                    light.matrices[4] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-                    light.matrices[5] = projection * glm::lookAt(position, position + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+                    auto view_matrices = cube_map_view_matrices(position);
+                    for (size_t i = 0; i < view_matrices.size(); ++i) {
+                        light.matrices[i] = projection * view_matrices[i];
+                    }
 
                     // @TODO: allocate
                     auto resource = GraphicsManager::singleton().find_resource(RT_RES_POINT_SHADOW_MAP + std::to_string(num_point_light_cast_shadow));
