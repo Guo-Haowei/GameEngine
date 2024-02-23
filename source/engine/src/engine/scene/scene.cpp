@@ -87,7 +87,7 @@ void Scene::create_camera(int width,
     m_camera->m_fovy = fovy;
     m_camera->m_pitch = Degree{ -10.0f };
     m_camera->m_yaw = Degree{ -90.0f };
-    m_camera->m_position = vec3{ 0, 2, 6 };
+    m_camera->m_position = vec3{ 0, 4, 10 };
     m_camera->set_dirty();
 }
 

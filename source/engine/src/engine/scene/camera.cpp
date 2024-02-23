@@ -6,8 +6,6 @@ namespace my {
 
 void Camera::update() {
     if (is_dirty()) {
-        LOG("camera width is: {}, camera hight is {}", m_width, m_height);
-
         m_front.x = m_yaw.cos() * m_pitch.cos();
         m_front.y = m_pitch.sin();
         m_front.z = m_yaw.sin() * m_pitch.cos();

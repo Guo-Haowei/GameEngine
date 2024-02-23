@@ -4,7 +4,7 @@
 namespace my {
 
 MeshComponent make_cube_mesh(const vec3& p_scale = vec3(0.5f));
-MeshComponent make_sphere_mesh(float p_radius = 0.5f, int p_rings = 20, int p_sectors = 20);
+MeshComponent make_sphere_mesh(float p_radius = 0.5f, int p_rings = 60, int p_sectors = 60);
 
 // @TODO: refactor the following
 MeshComponent make_plane_mesh(float size = 0.5f);

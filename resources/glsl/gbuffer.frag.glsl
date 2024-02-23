@@ -5,7 +5,9 @@ layout(location = 2) out vec4 out_albedo;
 in struct PS_INPUT {
     vec3 position;
     vec2 uv;
-    mat3 TBN;
+    vec3 T;
+    vec3 B;
+    vec3 N;
 } ps_in;
 
 #include "cbuffer.glsl.h"
@@ -35,9 +37,10 @@ void main() {
     // TODO: get rid of branching
     vec3 N;
     if (c_has_normal_map != 0) {
-        N = normalize(ps_in.TBN * (2.0 * texture(c_normal_map, ps_in.uv).xyz - 1.0));
+        mat3 TBN = mat3(ps_in.T, ps_in.B, ps_in.N);
+        N = normalize(TBN * (2.0 * texture(c_normal_map, ps_in.uv).xyz - 1.0));
     } else {
-        N = ps_in.TBN[2];
+        N = normalize(ps_in.N);
     }
 
     out_normal_roughness.xyz = N;

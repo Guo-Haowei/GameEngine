@@ -24,6 +24,7 @@ public:
     uint32_t get_revision() const { return m_revision; }
     void bump_revision() { ++m_revision; }
 
+    // @TODO: bad idea to make it globally accessible, fix it
     static Scene& get_scene();
 
 private:
