@@ -284,7 +284,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     // create a dummy box data
     create_mesh_data(make_plane_mesh(0.3f), g_billboard);
     create_mesh_data(make_box_mesh(), g_box);
-    create_mesh_data(make_box_mesh(20.f), g_skybox);
+    create_mesh_data(make_box_mesh(1.f), g_skybox);
 
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
@@ -429,6 +429,27 @@ static GLuint create_resource_impl(const RenderTargetDesc& desc) {
             glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         } break;
+        case RT_COLOR_ATTACHMENT_CUBE_MAP: {
+            type = GL_TEXTURE_CUBE_MAP;
+            glBindTexture(type, texture_id);
+
+            for (int i = 0; i < 6; ++i) {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                             0,
+                             format_to_gl_internal_format(desc.format),
+                             desc.width, desc.height,
+                             0,
+                             format_to_gl_format(desc.format),
+                             format_to_gl_data_type(desc.format),
+                             nullptr);
+            }
+            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+        } break;
         default:
             CRASH_NOW();
             break;
@@ -480,26 +501,27 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
         // create color attachments
         std::vector<GLuint> attachments;
         attachments.reserve(num_color_attachment);
-        for (int i = 0; i < num_color_attachment; ++i) {
-            GLuint attachment = GL_COLOR_ATTACHMENT0 + i;
+        for (int idx = 0; idx < num_color_attachment; ++idx) {
+            GLuint attachment = GL_COLOR_ATTACHMENT0 + idx;
             attachments.push_back(attachment);
 
-            // const auto& color_attachment = p_desc.color_attachments[i];
-            // switch (color_attachment->get_desc().type) {
-            //     case RT_COLOR_ATTACHMENT: {
-            //         // bind to frame buffer
-            //         glFramebufferTexture2D(
-            //             GL_FRAMEBUFFER,                  // target
-            //             attachment,                      // attachment
-            //             GL_TEXTURE_2D,                   // texture target
-            //             color_attachment->get_handle(),  // texture
-            //             0                                // level
-            //         );
-            //     } break;
-            //     default:
-            //         CRASH_NOW();
-            //         break;
-            // }
+            const auto& color_attachment = p_desc.color_attachments[idx];
+            switch (color_attachment->get_desc().type) {
+                case RT_COLOR_ATTACHMENT_2D: {
+                    glFramebufferTexture2D(
+                        GL_FRAMEBUFFER,                  // target
+                        attachment,                      // attachment
+                        GL_TEXTURE_2D,                   // texture target
+                        color_attachment->get_handle(),  // texture
+                        0                                // level
+                    );
+                } break;
+                case RT_COLOR_ATTACHMENT_CUBE_MAP: {
+                } break;
+                default:
+                    CRASH_NOW();
+                    break;
+            }
         }
 
         glDrawBuffers(num_color_attachment, attachments.data());
@@ -507,29 +529,29 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
 
     // @TODO: move it to bind and unbind
     if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
-        // switch (depth_attachment->get_desc().type) {
-        //     case RT_SHADOW_MAP:
-        //     case RT_DEPTH_ATTACHMENT: {
-        //         glFramebufferTexture2D(GL_FRAMEBUFFER,                  // target
-        //                                GL_DEPTH_ATTACHMENT,             // attachment
-        //                                GL_TEXTURE_2D,                   // texture target
-        //                                depth_attachment->get_handle(),  // texture
-        //                                0                                // level
-        //         );
-        //     } break;
-        //     case RT_SHADOW_CUBE_MAP: {
-        //         glFramebufferTexture(GL_FRAMEBUFFER,
-        //                              GL_DEPTH_ATTACHMENT,
-        //                              depth_attachment->get_handle(),
-        //                              0);
-        //     } break;
-        //     default:
-        //         CRASH_NOW();
-        //         break;
-        // }
+        switch (depth_attachment->get_desc().type) {
+            case RT_SHADOW_2D:
+            case RT_DEPTH_ATTACHMENT_2D: {
+                glFramebufferTexture2D(GL_FRAMEBUFFER,                  // target
+                                       GL_DEPTH_ATTACHMENT,             // attachment
+                                       GL_TEXTURE_2D,                   // texture target
+                                       depth_attachment->get_handle(),  // texture
+                                       0                                // level
+                );
+            } break;
+            case RT_SHADOW_CUBE_MAP: {
+                glFramebufferTexture(GL_FRAMEBUFFER,
+                                     GL_DEPTH_ATTACHMENT,
+                                     depth_attachment->get_handle(),
+                                     0);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
     }
 
-    // DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+    DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 

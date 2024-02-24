@@ -2,16 +2,16 @@
 
 #include "core/base/rid_owner.h"
 #include "core/debugger/profiler.h"
-#include "core/math/frustum.h"
-#include "rendering/rendering_dvars.h"
-
-// @TODO: refactor
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
+#include "core/math/frustum.h"
 #include "rendering/pipeline_state.h"
-#include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
+#include "rendering/rendering_dvars.h"
+#include "rendering/rendering_misc.h"
 
+// @TODO: refactor
+#include "rendering/r_cbuffers.h"
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
@@ -189,6 +189,27 @@ void voxelization_pass_func(const Subpass*) {
     g_normalVoxel.genMipMap();
 }
 
+void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
+    OPTICK_EVENT();
+
+    auto [width, height] = p_subpass->depth_attachment->get_size();
+
+    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = cube_map_view_matrices(vec3(0));
+    for (int i = 0; i < 6; ++i) {
+        p_subpass->set_render_target(i);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, width, height);
+
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKY_BOX_TO_CUBE_MAP);
+
+        g_perBatchCache.cache.c_projection_view_model_matrix = projection * view_matrices[i];
+        g_perBatchCache.Update();
+        glBindVertexArray(g_skybox.vao);
+        glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
+    }
+}
+
 void gbuffer_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
@@ -309,17 +330,6 @@ void fxaa_pass_func(const Subpass* p_subpass) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
-    // @TODO: draw gui stuff to the anti-aliased
-    {
-        // @DEBUG SKYBOX
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_SKY_BOX);
-        glBindVertexArray(g_skybox.vao);
-        glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
-        glDisable(GL_CULL_FACE);
-    }
-
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_BILLBOARD);
     // draw billboards
     auto render_data = GraphicsManager::singleton().get_render_data();
@@ -420,6 +430,30 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                       RT_COLOR_ATTACHMENT_2D,
                                                                       w, h });
 
+    {  // environment pass
+        RenderPassDesc desc;
+        desc.name = ENV_PASS;
+        auto pass = graph.create_pass(desc);
+
+        constexpr int environment_map_size = 512;
+        int size = environment_map_size;
+        auto irradiance_map = manager.create_resource(RenderTargetDesc{ RT_ENV_SKY_BOX_CUBE_MAP,
+                                                                        FORMAT_R16G16B16_FLOAT,
+                                                                        RT_COLOR_ATTACHMENT_CUBE_MAP,
+                                                                        size, size });
+        auto irradiance_depth = manager.create_resource(RenderTargetDesc{ RT_ENV_SKY_BOX_DEPTH,
+                                                                          FORMAT_D32_FLOAT,
+                                                                          RT_DEPTH_ATTACHMENT_2D,
+                                                                          size, size });
+
+        auto subpass = manager.create_subpass(SubpassDesc{
+            .color_attachments = { irradiance_map },
+            .depth_attachment = irradiance_depth,
+            .func = diffuse_irradiance_pass_func,
+        });
+        pass->add_sub_pass(subpass);
+    }
+
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
         DEV_ASSERT(math::is_power_of_two(shadow_res));
@@ -434,6 +468,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.name = SHADOW_PASS;
         auto pass = graph.create_pass(desc);
 
+        // @TODO: refactor
         SubPassFunc funcs[] = {
             [](const Subpass* p_subpass) {
                 point_shadow_pass_func(p_subpass, 0);
@@ -505,7 +540,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     {  // lighting pass
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
-        desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
+        desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS, ENV_PASS };
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { lighting_attachment },

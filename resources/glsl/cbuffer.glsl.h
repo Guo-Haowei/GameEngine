@@ -45,6 +45,7 @@ struct Light {
     mat4 matrices[6];
 };
 
+// @TODO: per subpass constant
 CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     mat4 c_view_matrix;
     mat4 c_projection_matrix;

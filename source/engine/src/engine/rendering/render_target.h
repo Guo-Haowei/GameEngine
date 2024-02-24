@@ -5,6 +5,7 @@ namespace my {
 
 enum RenderTargetType {
     RT_COLOR_ATTACHMENT_2D,
+    RT_COLOR_ATTACHMENT_CUBE_MAP,
     RT_DEPTH_ATTACHMENT_2D,
     RT_SHADOW_2D,
     RT_SHADOW_CUBE_MAP,
