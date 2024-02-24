@@ -125,8 +125,7 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     sampler2D c_fxaa_input_image;
 
     samplerCube c_skybox_map;
-    int _c_1;
-    int _c_2;
+    samplerCube c_diffuse_irradiance_map;
 };
 
 CONSTANT_BUFFER(BoneConstantBuffer, 5) {

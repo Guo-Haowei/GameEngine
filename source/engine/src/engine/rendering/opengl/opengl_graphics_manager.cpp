@@ -284,7 +284,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     // create a dummy box data
     create_mesh_data(make_plane_mesh(0.3f), g_billboard);
     create_mesh_data(make_box_mesh(), g_box);
-    create_mesh_data(make_box_mesh(1.f), g_skybox);
+    create_mesh_data(make_sky_box_mesh(), g_skybox);
 
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
@@ -339,6 +339,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     make_resident(RT_RES_GBUFFER_DEPTH, cache.c_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
     make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_skybox_map);
+    make_resident(RT_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
 
     g_constantCache.Update();
 }

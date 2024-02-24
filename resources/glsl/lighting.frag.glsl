@@ -1,6 +1,6 @@
 #include "cbuffer.glsl.h"
 
-#define ENABLE_VXGI 1
+#define ENABLE_VXGI 0
 
 layout(location = 0) out vec4 out_color;
 layout(location = 0) in vec2 pass_uv;
@@ -42,6 +42,7 @@ void main() {
     const float NdotV = max(dot(N, V), 0.0);
     vec3 Lo = vec3(0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
+
     float shadow = 0.0;
     for (int light_idx = 0; light_idx < c_light_count; ++light_idx) {
         Light light = c_lights[light_idx];
@@ -82,10 +83,17 @@ void main() {
         }
         Lo += (1.0 - shadow) * direct_lighting;
     }
-    // dummy ambient
-    Lo += 0.2 * albedo.rgb;
+
+    // ambient
 
     const float ao = c_enable_ssao == 0 ? 1.0 : texture(c_ssao_map, uv).r;
+    vec3 kS = fresnelSchlickRoughness(NdotV, F0, roughness);
+    vec3 kD = 1.0 - kS;
+    vec3 irradiance = texture(c_diffuse_irradiance_map, N).rgb;
+    vec3 diffuse = irradiance * albedo.rgb;
+    vec3 ambient = (kD * diffuse) * ao;
+
+    Lo += ambient * albedo.rgb;
 
 #if ENABLE_VXGI
     if (c_enable_vxgi == 1) {

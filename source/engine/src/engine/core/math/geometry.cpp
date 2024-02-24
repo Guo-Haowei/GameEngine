@@ -260,6 +260,50 @@ MeshComponent make_box_mesh(float size) {
     return mesh;
 }
 
+MeshComponent make_sky_box_mesh() {
+    float size = 1.0f;
+    MeshComponent mesh;
+    mesh.positions = {
+        vec3(-size, +size, +size),  // A
+        vec3(-size, -size, +size),  // B
+        vec3(+size, -size, +size),  // C
+        vec3(+size, +size, +size),  // D
+        vec3(-size, +size, -size),  // E
+        vec3(-size, -size, -size),  // F
+        vec3(+size, -size, -size),  // G
+        vec3(+size, +size, -size),  // H
+    };
+
+    mesh.indices = {
+        A, D, B,  // ABD
+        D, C, B,  // DBC
+        E, F, H,  // EHF
+        H, F, G,  // HGF
+        D, G, C,  // DCG
+        D, H, G,  // DGH
+        A, B, F,  // AFB
+        A, F, E,  // AEF
+        A, H, D,  // ADH
+        A, E, H,  // AHE
+        B, G, F,  // BFG
+        B, C, G,  // BGC
+        // A, B, D,  // ABD
+        // D, B, C,  // DBC
+        // E, H, F,  // EHF
+        // H, G, F,  // HGF
+        // D, C, G,  // DCG
+        // D, G, H,  // DGH
+        // A, F, B,  // AFB
+        // A, E, F,  // AEF
+        // A, D, H,  // ADH
+        // A, H, E,  // AHE
+        // B, F, G,  // BFG
+        // B, G, C,  // BGC
+    };
+
+    return mesh;
+}
+
 // load scene
 MeshComponent make_box_wireframe_mesh(float size) {
     MeshComponent mesh;
