@@ -15,7 +15,7 @@ public:
 
     uint64_t get_final_image() const override { return 0; }
 
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&) override { return nullptr; }
+    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&, const SamplerDesc&) override { return nullptr; }
     std::shared_ptr<RenderTarget> find_resource(const std::string&) const override { return nullptr; }
 
     // @TODO: refactor this

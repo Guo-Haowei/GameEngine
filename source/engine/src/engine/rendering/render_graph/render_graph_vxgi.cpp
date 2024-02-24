@@ -273,7 +273,6 @@ void prefilter_pass_func(const Subpass* p_subpass) {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glViewport(0, 0, width, height);
             draw_cube_map();
-            LOG("face is: {}, mip is: {}, width: {}, height{}", face_id, mip_idx, width, height);
         }
     }
 
@@ -500,53 +499,65 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
+    // @TODO: refactor
     auto gbuffer_attachment0 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
                                                                          FORMAT_R16G16B16A16_FLOAT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto gbuffer_attachment1 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
                                                                          FORMAT_R16G16B16A16_FLOAT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto gbuffer_attachment2 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
                                                                          FORMAT_R8G8B8A8_UINT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto gbuffer_depth = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
                                                                    FORMAT_D32_FLOAT,
                                                                    RT_DEPTH_ATTACHMENT_2D,
-                                                                   w, h });
+                                                                   w, h },
+                                                 nearest_sampler());
+
     auto ssao_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_SSAO,
                                                                      FORMAT_R32_FLOAT,
                                                                      RT_COLOR_ATTACHMENT_2D,
-                                                                     w, h });
+                                                                     w, h },
+                                                   nearest_sampler());
     auto lighting_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_LIGHTING,
                                                                          FORMAT_R8G8B8A8_UINT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto fxaa_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FXAA,
                                                                      FORMAT_R8G8B8A8_UINT,
                                                                      RT_COLOR_ATTACHMENT_2D,
-                                                                     w, h });
+                                                                     w, h },
+                                                   nearest_sampler());
     auto final_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
                                                                       FORMAT_R8G8B8A8_UINT,
                                                                       RT_COLOR_ATTACHMENT_2D,
-                                                                      w, h });
+                                                                      w, h },
+                                                    nearest_sampler());
 
     {  // environment pass
         RenderPassDesc desc;
         desc.name = ENV_PASS;
         auto pass = graph.create_pass(desc);
 
-        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, bool gen_mipmap = false) {
+        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.create_resource(RenderTargetDesc{ cube_map_name,
                                                                       FORMAT_R16G16B16_FLOAT,
                                                                       RT_COLOR_ATTACHMENT_CUBE_MAP,
-                                                                      size, size, gen_mipmap });
+                                                                      size, size, gen_mipmap },
+                                                    p_sampler);
             auto depth_map = manager.create_resource(RenderTargetDesc{ depth_name,
                                                                        FORMAT_D32_FLOAT,
                                                                        RT_DEPTH_ATTACHMENT_2D,
-                                                                       size, size, gen_mipmap });
+                                                                       size, size, gen_mipmap },
+                                                     nearest_sampler());
 
             auto subpass = manager.create_subpass(SubpassDesc{
                 .color_attachments = { cube_map },
@@ -556,9 +567,9 @@ void create_render_graph_vxgi(RenderGraph& graph) {
             return subpass;
         };
 
-        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func));
-        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func));
-        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 128, prefilter_pass_func, true));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, env_cube_map_sampler(), false));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 128, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
     {  // shadow pass
@@ -570,7 +581,8 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         auto shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_SHADOW_MAP,
                                                                     FORMAT_D32_FLOAT,
                                                                     RT_SHADOW_2D,
-                                                                    MAX_CASCADE_COUNT * shadow_res, shadow_res });
+                                                                    MAX_CASCADE_COUNT * shadow_res, shadow_res },
+                                                  shadow_map_sampler());
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
         auto pass = graph.create_pass(desc);
@@ -597,7 +609,8 @@ void create_render_graph_vxgi(RenderGraph& graph) {
             auto point_shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
                                                                               FORMAT_D32_FLOAT,
                                                                               RT_SHADOW_CUBE_MAP,
-                                                                              point_shadow_res, point_shadow_res });
+                                                                              point_shadow_res, point_shadow_res },
+                                                            shadow_cube_map_sampler());
 
             auto subpass = manager.create_subpass(SubpassDesc{
                 .depth_attachment = point_shadow_map,

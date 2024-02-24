@@ -172,12 +172,12 @@ void OpenGLGraphicsManager::create_texture(ImageHandle* handle) {
 
     glTexImage2D(GL_TEXTURE_2D,
                  0,
-                 format_to_gl_internal_format(image->format),
+                 gl::convert_internal_format(image->format),
                  image->width,
                  image->height,
                  0,
-                 format_to_gl_format(image->format),
-                 format_to_gl_data_type(image->format),
+                 gl::convert_format(image->format),
+                 gl::convert_data_type(image->format),
                  image->buffer.data());
 
     switch (image->format) {
@@ -186,16 +186,16 @@ void OpenGLGraphicsManager::create_texture(ImageHandle* handle) {
         case FORMAT_R32G32B32_FLOAT:
         case FORMAT_R32G32B32A32_FLOAT: {
             // @TODO: properly handle filter
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            SamplerDesc sampler_desc{};
+            sampler_desc.min = sampler_desc.mag = FilterMode::LINEAR;
+            sampler_desc.mode_u = sampler_desc.mode_v = AddressMode::CLAMP;
+            gl::set_sampler(GL_TEXTURE_2D, sampler_desc);
         } break;
         default: {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            SamplerDesc sampler_desc{};
+            sampler_desc.min = FilterMode::MIPMAP_LINEAR;
+            sampler_desc.mag = FilterMode::LINEAR;
+            gl::set_sampler(GL_TEXTURE_2D, sampler_desc);
             glGenerateMipmap(GL_TEXTURE_2D);
         } break;
     }
@@ -267,7 +267,7 @@ static void create_ssao_resource() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    g_constantCache.cache.c_kernel_noise_map = gl::MakeTextureResident(noiseTexture);
+    g_constantCache.cache.c_kernel_noise_map = ::gl::MakeTextureResident(noiseTexture);
     g_noiseTexture = noiseTexture;
 }
 
@@ -316,8 +316,8 @@ void OpenGLGraphicsManager::createGpuResources() {
     R_CreateQuad();
 
     auto& cache = g_constantCache.cache;
-    cache.c_voxel_map = gl::MakeTextureResident(g_albedoVoxel.GetHandle());
-    cache.c_voxel_normal_map = gl::MakeTextureResident(g_normalVoxel.GetHandle());
+    cache.c_voxel_map = ::gl::MakeTextureResident(g_albedoVoxel.GetHandle());
+    cache.c_voxel_normal_map = ::gl::MakeTextureResident(g_normalVoxel.GetHandle());
 
     // @TODO: refactor
     auto make_resident = [&](const std::string& name, uint64_t& id) {
@@ -357,59 +357,47 @@ uint64_t OpenGLGraphicsManager::get_final_image() const {
 }
 
 // @TODO: refactor
-static GLuint create_resource_impl(const RenderTargetDesc& desc) {
-    constexpr float shadow_boarder[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+static GLuint create_resource_impl(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
+    unused(p_sampler);
+
     GLuint texture_id = 0;
     GLenum type = GL_TEXTURE_2D;
     glGenTextures(1, &texture_id);
-    switch (desc.type) {
+    switch (p_desc.type) {
         case RT_COLOR_ATTACHMENT_2D: {
             glBindTexture(type, texture_id);
-            glTexImage2D(type,                                       // target
-                         0,                                          // level
-                         format_to_gl_internal_format(desc.format),  // internal format
-                         desc.width, desc.height,                    // dimension
-                         0,                                          // boarder
-                         format_to_gl_format(desc.format),           // format
-                         format_to_gl_data_type(desc.format),        // type
-                         nullptr                                     // pixels
+            glTexImage2D(type,                                        // target
+                         0,                                           // level
+                         gl::convert_internal_format(p_desc.format),  // internal format
+                         p_desc.width, p_desc.height,                 // dimension
+                         0,                                           // boarder
+                         gl::convert_format(p_desc.format),           // format
+                         gl::convert_data_type(p_desc.format),        // type
+                         nullptr                                      // pixels
             );
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glBindTexture(type, 0);
         } break;
         case RT_DEPTH_ATTACHMENT_2D: {
             glBindTexture(type, texture_id);
-            glTexImage2D(type,                                       // target
-                         0,                                          // level
-                         format_to_gl_internal_format(desc.format),  // internal format
-                         desc.width, desc.height,                    // dimension
-                         0,                                          // boarder
-                         format_to_gl_format(desc.format),           // format
-                         format_to_gl_data_type(desc.format),        // type
-                         nullptr                                     // pixels
+            glTexImage2D(type,                                        // target
+                         0,                                           // level
+                         gl::convert_internal_format(p_desc.format),  // internal format
+                         p_desc.width, p_desc.height,                 // dimension
+                         0,                                           // boarder
+                         gl::convert_format(p_desc.format),           // format
+                         gl::convert_data_type(p_desc.format),        // type
+                         nullptr                                      // pixels
             );
-
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glBindTexture(type, 0);
         } break;
         case RT_SHADOW_2D: {
             glBindTexture(type, texture_id);
             glTexImage2D(type,
                          0,
-                         format_to_gl_internal_format(desc.format),
-                         desc.width, desc.height,
+                         gl::convert_internal_format(p_desc.format),
+                         p_desc.width, p_desc.height,
                          0,
-                         format_to_gl_format(desc.format),
-                         format_to_gl_data_type(desc.format),
+                         gl::convert_format(p_desc.format),
+                         gl::convert_data_type(p_desc.format),
                          nullptr);
-
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-            glTexParameterfv(type, GL_TEXTURE_BORDER_COLOR, shadow_boarder);
         } break;
         case RT_SHADOW_CUBE_MAP: {
             type = GL_TEXTURE_CUBE_MAP;
@@ -417,18 +405,13 @@ static GLuint create_resource_impl(const RenderTargetDesc& desc) {
             for (int i = 0; i < 6; ++i) {
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                              0,
-                             format_to_gl_internal_format(desc.format),
-                             desc.width, desc.height,
+                             gl::convert_internal_format(p_desc.format),
+                             p_desc.width, p_desc.height,
                              0,
-                             format_to_gl_format(desc.format),
-                             format_to_gl_data_type(desc.format),
+                             gl::convert_format(p_desc.format),
+                             gl::convert_data_type(p_desc.format),
                              nullptr);
             }
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         } break;
         case RT_COLOR_ATTACHMENT_CUBE_MAP: {
             type = GL_TEXTURE_CUBE_MAP;
@@ -437,40 +420,32 @@ static GLuint create_resource_impl(const RenderTargetDesc& desc) {
             for (int i = 0; i < 6; ++i) {
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                              0,
-                             format_to_gl_internal_format(desc.format),
-                             desc.width, desc.height,
+                             gl::convert_internal_format(p_desc.format),
+                             p_desc.width, p_desc.height,
                              0,
-                             format_to_gl_format(desc.format),
-                             format_to_gl_data_type(desc.format),
+                             gl::convert_format(p_desc.format),
+                             gl::convert_data_type(p_desc.format),
                              nullptr);
             }
-            if (desc.gen_mipmap) {
-                glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            } else {
-                glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            }
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(type, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-
         } break;
         default:
             CRASH_NOW();
             break;
     }
-    if (desc.gen_mipmap) {
+
+    gl::set_sampler(type, p_sampler);
+    if (p_desc.gen_mipmap) {
         glGenerateMipmap(type);
     }
     glBindTexture(type, 0);
     return texture_id;
 }
 
-std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const RenderTargetDesc& desc) {
-    DEV_ASSERT(m_resource_lookup.find(desc.name) == m_resource_lookup.end());
-    std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(desc);
+std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
+    DEV_ASSERT(m_resource_lookup.find(p_desc.name) == m_resource_lookup.end());
+    std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
 
-    resource->m_handle = create_resource_impl(resource->m_desc);
+    resource->m_handle = create_resource_impl(p_desc, p_sampler);
     resource->m_resident_handle = glGetTextureHandleARB(resource->m_handle);
     glMakeTextureHandleResidentARB(resource->m_resident_handle);
 
