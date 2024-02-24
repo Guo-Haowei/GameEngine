@@ -32,6 +32,9 @@ void base_color_pass(const Subpass* p_subpass) {
     auto render_data = GraphicsManager::singleton().get_render_data();
     RenderData::Pass& pass = render_data->main_pass;
 
+    pass.fill_perpass(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
 
@@ -45,7 +48,6 @@ void base_color_pass(const Subpass* p_subpass) {
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_BASE_COLOR_ANIMATED : PROGRAM_BASE_COLOR_STATIC);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 

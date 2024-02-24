@@ -46,6 +46,9 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 
     RenderData::Pass& pass = render_data->point_shadow_passes[p_pass_id];
 
+    pass.fill_perpass(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
 
@@ -59,7 +62,6 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.cache.c_light_index = pass.light_index;
         g_perBatchCache.Update();
@@ -90,6 +92,8 @@ void shadow_pass_func(const Subpass* p_subpass) {
         glViewport(cascade_idx * actual_width, 0, actual_width, height);
 
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
+        pass.fill_perpass(g_per_pass_cache.cache);
+        g_per_pass_cache.Update();
 
         for (const auto& draw : pass.draws) {
             const bool has_bone = draw.armature_id.is_valid();
@@ -104,7 +108,6 @@ void shadow_pass_func(const Subpass* p_subpass) {
 
             GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-            g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
             g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
             g_perBatchCache.Update();
 
@@ -143,6 +146,8 @@ void voxelization_pass_func(const Subpass*) {
 
     auto render_data = GraphicsManager::singleton().get_render_data();
     RenderData::Pass& pass = render_data->voxel_pass;
+    pass.fill_perpass(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
 
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
@@ -157,7 +162,6 @@ void voxelization_pass_func(const Subpass*) {
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 
@@ -203,8 +207,10 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
 
         GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKY_BOX_TO_CUBE_MAP);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = projection * view_matrices[i];
-        g_perBatchCache.Update();
+        g_per_pass_cache.cache.c_projection_matrix = projection;
+        g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
+        g_per_pass_cache.Update();
         glBindVertexArray(g_skybox.vao);
         glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
     }
@@ -226,6 +232,9 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
     auto render_data = GraphicsManager::singleton().get_render_data();
     RenderData::Pass& pass = render_data->main_pass;
 
+    pass.fill_perpass(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
 
@@ -239,7 +248,6 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 
@@ -271,6 +279,14 @@ void ssao_pass_func(const Subpass* p_subpass) {
     R_DrawQuad();
 }
 
+// @TODO: refactor
+static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
+    auto camera = SceneManager::singleton().get_scene().m_camera;
+    buffer.c_projection_view_matrix = camera->get_projection_view_matrix();
+    buffer.c_view_matrix = camera->get_view_matrix();
+    buffer.c_projection_matrix = camera->get_projection_matrix();
+}
+
 void lighting_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
@@ -283,6 +299,12 @@ void lighting_pass_func(const Subpass* p_subpass) {
     // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_LIGHTING_VXGI);
+
+    // @TODO: fix
+    auto camera = SceneManager::singleton().get_scene().m_camera;
+    fill_camera_matrices(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     R_DrawQuad();
 }
 
@@ -300,6 +322,11 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_DEBUG_VOXEL);
+
+    // @TODO: fix
+    auto camera = SceneManager::singleton().get_scene().m_camera;
+    fill_camera_matrices(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
 
     glBindVertexArray(g_box.vao);
 

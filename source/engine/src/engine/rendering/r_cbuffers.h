@@ -4,8 +4,9 @@
 // inline include
 #include "cbuffer.glsl.h"
 
-extern gl::ConstantBuffer<PerFrameConstantBuffer> g_perFrameCache;
 extern gl::ConstantBuffer<PerBatchConstantBuffer> g_perBatchCache;
+extern gl::ConstantBuffer<PerPassConstantBuffer> g_per_pass_cache;
+extern gl::ConstantBuffer<PerFrameConstantBuffer> g_perFrameCache;
 extern gl::ConstantBuffer<MaterialConstantBuffer> g_materialCache;
 extern gl::ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 extern gl::ConstantBuffer<BoneConstantBuffer> g_boneCache;

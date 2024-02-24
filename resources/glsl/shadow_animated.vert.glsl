@@ -10,5 +10,5 @@ void main() {
     bone_matrix += c_bones[in_bone_id.z] * in_bone_weight.z;
     bone_matrix += c_bones[in_bone_id.w] * in_bone_weight.w;
 
-    gl_Position = c_projection_view_model_matrix * bone_matrix * vec4(in_position, 1.0);
+    gl_Position = c_projection_view_matrix * c_model_matrix * bone_matrix * vec4(in_position, 1.0);
 }

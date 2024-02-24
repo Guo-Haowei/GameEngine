@@ -45,12 +45,21 @@ struct Light {
     mat4 matrices[6];
 };
 
-// @TODO: per subpass constant
-CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
+CONSTANT_BUFFER(PerBatchConstantBuffer, 0) {
+    mat4 c_model_matrix;
+
+    vec3 _c_ddddd_padding;
+    int c_light_index;  // HACK: shouldn't be here
+};
+
+CONSTANT_BUFFER(PerPassConstantBuffer, 1) {
     mat4 c_view_matrix;
     mat4 c_projection_matrix;
     mat4 c_projection_view_matrix;
+};
 
+// @TODO: per subpass constant
+CONSTANT_BUFFER(PerFrameConstantBuffer, 2) {
     Light c_lights[MAX_LIGHT_COUNT];
 
     // @TODO: move it to Light
@@ -84,15 +93,7 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     int c_debug_csm;
 };
 
-CONSTANT_BUFFER(PerBatchConstantBuffer, 1) {
-    mat4 c_projection_view_model_matrix;
-    mat4 c_model_matrix;
-
-    vec3 _c_ddddd_padding;
-    int c_light_index;  // HACK: shouldn't be here
-};
-
-CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
+CONSTANT_BUFFER(MaterialConstantBuffer, 3) {
     vec4 c_albedo_color;
     float c_metallic;
     float c_roughness;
@@ -109,7 +110,7 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
     sampler2D _c_dummy_padding;
 };
 
-CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
+CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
     sampler2D c_shadow_map;
@@ -128,12 +129,12 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
     sampler2D c_fxaa_input_image;
 };
 
-CONSTANT_BUFFER(BoneConstantBuffer, 4) {
+CONSTANT_BUFFER(BoneConstantBuffer, 5) {
     mat4 c_bones[MAX_BONE_COUNT];
 };
 
 // @TODO: make it more general, something like 2D draw
-CONSTANT_BUFFER(DebugDrawConstantBuffer, 5) {
+CONSTANT_BUFFER(DebugDrawConstantBuffer, 6) {
     vec2 c_debug_draw_pos;
     vec2 c_debug_draw_size;
 

@@ -174,9 +174,6 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_cascade_plane_distances = cascade_end;
 
     cache.c_camera_position = camera.get_position();
-    cache.c_view_matrix = camera.get_view_matrix();
-    cache.c_projection_matrix = camera.get_projection_matrix();
-    cache.c_projection_view_matrix = camera.get_projection_view_matrix();
 
     cache.c_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
     cache.c_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
