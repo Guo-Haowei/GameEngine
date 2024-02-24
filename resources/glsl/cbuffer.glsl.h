@@ -23,10 +23,6 @@ struct ConstantBufferBase {
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
 using samplerCube = uint64_t;
-// struct samplerCube {
-//     uint64_t data;
-//     uint64_t padding;
-// };
 static_assert(MAX_CASCADE_COUNT == 4);
 #endif
 
@@ -114,7 +110,7 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
     sampler2D c_shadow_map;
-    sampler2D c_skybox_map;
+    sampler2D c_env_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
 
@@ -127,6 +123,10 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     sampler2D c_kernel_noise_map;
     sampler2D c_fxaa_image;
     sampler2D c_fxaa_input_image;
+
+    samplerCube c_skybox_map;
+    int _c_1;
+    int _c_2;
 };
 
 CONSTANT_BUFFER(BoneConstantBuffer, 5) {

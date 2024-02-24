@@ -193,6 +193,11 @@ void voxelization_pass_func(const Subpass*) {
     g_normalVoxel.genMipMap();
 }
 
+static void draw_skybox() {
+    glBindVertexArray(g_skybox.vao);
+    glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
+}
+
 void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
@@ -205,14 +210,13 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKY_BOX_TO_CUBE_MAP);
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
 
         g_per_pass_cache.cache.c_projection_matrix = projection;
         g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
         g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
         g_per_pass_cache.Update();
-        glBindVertexArray(g_skybox.vao);
-        glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
+        draw_skybox();
     }
 }
 
@@ -357,7 +361,14 @@ void fxaa_pass_func(const Subpass* p_subpass) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
+    // draw skybox here
+    {
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX);
+        draw_skybox();
+    }
+
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_BILLBOARD);
+
     // draw billboards
     auto render_data = GraphicsManager::singleton().get_render_data();
 
@@ -464,11 +475,11 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
         constexpr int environment_map_size = 512;
         int size = environment_map_size;
-        auto irradiance_map = manager.create_resource(RenderTargetDesc{ RT_ENV_SKY_BOX_CUBE_MAP,
+        auto irradiance_map = manager.create_resource(RenderTargetDesc{ RT_ENV_SKYBOX_CUBE_MAP,
                                                                         FORMAT_R16G16B16_FLOAT,
                                                                         RT_COLOR_ATTACHMENT_CUBE_MAP,
                                                                         size, size });
-        auto irradiance_depth = manager.create_resource(RenderTargetDesc{ RT_ENV_SKY_BOX_DEPTH,
+        auto irradiance_depth = manager.create_resource(RenderTargetDesc{ RT_ENV_SKYBOX_DEPTH,
                                                                           FORMAT_D32_FLOAT,
                                                                           RT_DEPTH_ATTACHMENT_2D,
                                                                           size, size });

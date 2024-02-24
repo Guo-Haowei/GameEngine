@@ -274,7 +274,7 @@ static void create_ssao_resource() {
 
 void OpenGLGraphicsManager::createGpuResources() {
     auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
-    g_constantCache.cache.c_skybox_map = skybox->get()->texture.resident_handle;
+    g_constantCache.cache.c_env_map = skybox->get()->texture.resident_handle;
     // @TODO: enviroment
 
     create_ssao_resource();
@@ -338,6 +338,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.c_gbuffer_albedo_map);
     make_resident(RT_RES_GBUFFER_DEPTH, cache.c_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
+    make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_skybox_map);
 
     g_constantCache.Update();
 }
