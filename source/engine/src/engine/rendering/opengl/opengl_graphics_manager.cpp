@@ -180,13 +180,12 @@ void OpenGLGraphicsManager::create_texture(ImageHandle* handle) {
                  format_to_gl_data_type(image->format),
                  image->buffer.data());
 
-    // @TODO: filter
-    // @HACK: dummy filter
     switch (image->format) {
         case FORMAT_R32_FLOAT:
         case FORMAT_R32G32_FLOAT:
         case FORMAT_R32G32B32_FLOAT:
         case FORMAT_R32G32B32A32_FLOAT: {
+            // @TODO: properly handle filter
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -274,7 +273,7 @@ static void create_ssao_resource() {
 
 void OpenGLGraphicsManager::createGpuResources() {
     auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
-    g_constantCache.cache.c_env_map = skybox->get()->texture.resident_handle;
+    g_constantCache.cache.c_hdr_env_map = skybox->get()->texture.resident_handle;
     // @TODO: enviroment
 
     create_ssao_resource();
@@ -338,8 +337,8 @@ void OpenGLGraphicsManager::createGpuResources() {
     make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.c_gbuffer_albedo_map);
     make_resident(RT_RES_GBUFFER_DEPTH, cache.c_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
-    make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_skybox_map);
-    make_resident(RT_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
+    make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
+    make_resident(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
 
     g_constantCache.Update();
 }
@@ -445,7 +444,11 @@ static GLuint create_resource_impl(const RenderTargetDesc& desc) {
                              format_to_gl_data_type(desc.format),
                              nullptr);
             }
-            glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            if (desc.gen_mipmap) {
+                glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            } else {
+                glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            }
             glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
             glTexParameteri(type, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             glTexParameteri(type, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -455,6 +458,9 @@ static GLuint create_resource_impl(const RenderTargetDesc& desc) {
         default:
             CRASH_NOW();
             break;
+    }
+    if (desc.gen_mipmap) {
+        glGenerateMipmap(type);
     }
     glBindTexture(type, 0);
     return texture_id;

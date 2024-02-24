@@ -20,7 +20,7 @@ void main() {
             float ydir = sin(theta) * sin(phi);
             float zdir = cos(theta);
             vec3 sampleVec = xdir * right + ydir * up + zdir * N;
-            irradiance += textureLod(c_skybox_map, sampleVec, 0.0).rgb * cos(theta) * sin(theta);
+            irradiance += textureLod(c_env_map, sampleVec, 0.0).rgb * cos(theta) * sin(theta);
             samples += 1.0;
         }
     }

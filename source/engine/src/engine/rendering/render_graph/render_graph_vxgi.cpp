@@ -205,7 +205,9 @@ static void draw_cube_map() {
 void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    auto [width, height] = p_subpass->depth_attachment->get_size();
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
+    auto cube_map = p_subpass->color_attachments[0];
+    auto [width, height] = cube_map->get_size();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = cube_map_view_matrices(vec3(0));
@@ -214,7 +216,32 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
+        g_per_pass_cache.cache.c_projection_matrix = projection;
+        g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
+        g_per_pass_cache.Update();
+        draw_cube_map();
+    }
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->get_handle());
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+// @TODO: refactor
+void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
+    OPTICK_EVENT();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_DIFFUSE_IRRADIANCE);
+    auto [width, height] = p_subpass->depth_attachment->get_size();
+
+    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = cube_map_view_matrices(vec3(0));
+
+    for (int i = 0; i < 6; ++i) {
+        p_subpass->set_render_target(i);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, width, height);
 
         g_per_pass_cache.cache.c_projection_matrix = projection;
         g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
@@ -224,27 +251,33 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
     }
 }
 
-// @TODO: refactor
-void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
+void prefilter_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_PREFILTER);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = cube_map_view_matrices(vec3(0));
-    for (int i = 0; i < 6; ++i) {
-        p_subpass->set_render_target(i);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, width, height);
+    const uint32_t max_mip_levels = 5;
 
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_DIFFUSE_IRRADIANCE);
+    for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
+        for (int face_id = 0; face_id < 6; ++face_id) {
+            g_per_pass_cache.cache.c_projection_matrix = projection;
+            g_per_pass_cache.cache.c_view_matrix = view_matrices[face_id];
+            g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[face_id];
+            g_per_pass_cache.cache.c_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
+            g_per_pass_cache.Update();
 
-        g_per_pass_cache.cache.c_projection_matrix = projection;
-        g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
-        g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
-        g_per_pass_cache.Update();
-        draw_cube_map();
+            p_subpass->set_render_target(face_id, mip_idx);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glViewport(0, 0, width, height);
+            draw_cube_map();
+            LOG("face is: {}, mip is: {}, width: {}, height{}", face_id, mip_idx, width, height);
+        }
     }
+
+    return;
 }
 
 void gbuffer_pass_func(const Subpass* p_subpass) {
@@ -505,15 +538,15 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         desc.name = ENV_PASS;
         auto pass = graph.create_pass(desc);
 
-        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func) {
+        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, bool gen_mipmap = false) {
             auto cube_map = manager.create_resource(RenderTargetDesc{ cube_map_name,
                                                                       FORMAT_R16G16B16_FLOAT,
                                                                       RT_COLOR_ATTACHMENT_CUBE_MAP,
-                                                                      size, size });
+                                                                      size, size, gen_mipmap });
             auto depth_map = manager.create_resource(RenderTargetDesc{ depth_name,
                                                                        FORMAT_D32_FLOAT,
                                                                        RT_DEPTH_ATTACHMENT_2D,
-                                                                       size, size });
+                                                                       size, size, gen_mipmap });
 
             auto subpass = manager.create_subpass(SubpassDesc{
                 .color_attachments = { cube_map },
@@ -524,7 +557,8 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         };
 
         pass->add_sub_pass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func));
-        pass->add_sub_pass(create_cube_map_subpass(RT_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 128, prefilter_pass_func, true));
     }
 
     {  // shadow pass

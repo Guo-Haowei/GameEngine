@@ -52,6 +52,8 @@ CONSTANT_BUFFER(PerPassConstantBuffer, 1) {
     mat4 c_view_matrix;
     mat4 c_projection_matrix;
     mat4 c_projection_view_matrix;
+    vec3 _c_per_pass_padding;
+    float c_per_pass_roughness;
 };
 
 // @TODO: per subpass constant
@@ -110,7 +112,7 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
     sampler2D c_shadow_map;
-    sampler2D c_env_map;
+    sampler2D c_hdr_env_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
 
@@ -124,7 +126,7 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     sampler2D c_fxaa_image;
     sampler2D c_fxaa_input_image;
 
-    samplerCube c_skybox_map;
+    samplerCube c_env_map;
     samplerCube c_diffuse_irradiance_map;
 };
 

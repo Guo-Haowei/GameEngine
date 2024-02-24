@@ -4,9 +4,7 @@
 
 namespace my {
 
-void OpenGLSubpass::set_render_target(int p_index) const {
-    unused(p_index);
-
+void OpenGLSubpass::set_render_target(int p_index, int p_mip_level) const {
     if (!m_handle) {
         return;
     }
@@ -17,7 +15,11 @@ void OpenGLSubpass::set_render_target(int p_index) const {
     if (!color_attachments.empty()) {
         auto resource = color_attachments[0];
         if (resource->get_desc().type == RT_COLOR_ATTACHMENT_CUBE_MAP) {
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index, resource->get_handle(), 0);
+            glFramebufferTexture2D(GL_FRAMEBUFFER,
+                                   GL_COLOR_ATTACHMENT0,
+                                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
+                                   resource->get_handle(),
+                                   p_mip_level);
         }
     }
 

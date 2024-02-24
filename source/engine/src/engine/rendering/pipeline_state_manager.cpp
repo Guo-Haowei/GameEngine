@@ -121,6 +121,12 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
+        info.vs = "@res://glsl/env/cube_map.vert.glsl";
+        info.ps = "@res://glsl/env/prefilter.frag.glsl";
+        m_cache[PROGRAM_PREFILTER] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
         info.vs = "@res://glsl/env/skybox.vert.glsl";
         info.ps = "@res://glsl/env/skybox.frag.glsl";
         m_cache[PROGRAM_ENV_SKYBOX] = create(info);

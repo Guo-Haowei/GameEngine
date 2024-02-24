@@ -28,11 +28,13 @@
 #define FINAL_PASS        "final_pass"
 
 // environment
-#define ENV_PASS                       "env_pass"
-#define RT_ENV_SKYBOX_CUBE_MAP         "env_cube_map"
-#define RT_ENV_SKYBOX_DEPTH            "env_depth"
-#define RT_DIFFUSE_IRRADIANCE_CUBE_MAP "diffuse_irradiance_cube_map"
-#define RT_DIFFUSE_IRRADIANCE_DEPTH    "diffuse_irradiance_depth"
+#define ENV_PASS                           "env_pass"
+#define RT_ENV_SKYBOX_CUBE_MAP             "env_cube_map"
+#define RT_ENV_SKYBOX_DEPTH                "env_depth"
+#define RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP "env_diffuse_irradiance_cube_map"
+#define RT_ENV_DIFFUSE_IRRADIANCE_DEPTH    "env_diffuse_irradiance_depth"
+#define RT_ENV_PREFILTER_CUBE_MAP          "env_prefilter_cube_map"
+#define RT_ENV_PREFILTER_DEPTH             "env_prefilter_depth"
 
 #define RT_RES_LIGHTING "rt_res_light"
 #define RT_RES_FXAA     "rt_res_fxaa"
