@@ -4,7 +4,10 @@ in vec3 pass_position;
 out vec4 out_color;
 
 void main() {
-    vec3 color = texture(c_diffuse_irradiance_map, pass_position).rgb;
+    // vec3 color = texture(c_env_map, pass_position).rgb;
+    // vec3 color = texture(c_diffuse_irradiance_map, pass_position).rgb;
+    vec3 color = textureLod(c_prefiltered_map, pass_position, 0.0).rgb;
+    // vec3 color = texture(c_prefiltered_map, pass_position).rgb;
 
     color = color / (color + vec3(1.0));
     color = pow(color, vec3(1.0 / 2.2));

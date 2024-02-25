@@ -202,7 +202,15 @@ static void draw_cube_map() {
     glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
 }
 
+// @TODO: fix
+
 void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
+    static bool s_need_update = true;
+    if (!s_need_update) {
+        return;
+    }
+    s_need_update = false;
+
     OPTICK_EVENT();
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
@@ -229,7 +237,32 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
 }
 
 // @TODO: refactor
+void generate_brdf_func(const Subpass* p_subpass) {
+    // static bool s_need_update = true;
+    // if (!s_need_update) {
+    //     return;
+    // }
+    // s_need_update = false;
+
+    OPTICK_EVENT();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_BRDF);
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    p_subpass->set_render_target();
+    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    R_DrawQuad();
+    glEnable(GL_DEPTH_TEST);
+}
+
 void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
+    static bool s_need_update = true;
+    if (!s_need_update) {
+        return;
+    }
+    s_need_update = false;
+
     OPTICK_EVENT();
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_DIFFUSE_IRRADIANCE);
@@ -252,6 +285,12 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
 }
 
 void prefilter_pass_func(const Subpass* p_subpass) {
+    static bool s_need_update = true;
+    if (!s_need_update) {
+        return;
+    }
+    s_need_update = false;
+
     OPTICK_EVENT();
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_PREFILTER);
@@ -487,6 +526,10 @@ void final_pass_func(const Subpass* p_subpass) {
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
 #if 0
+    auto handle = GraphicsManager::singleton().find_resource(RT_BRDF)->get_resident_handle();
+    debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
+#endif
+#if 0
     auto shadow_map_handle = GraphicsManager::singleton().find_resource(RT_RES_SHADOW_MAP)->get_resident_handle();
     debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 800, 200);
 #endif
@@ -567,8 +610,16 @@ void create_render_graph_vxgi(RenderGraph& graph) {
             return subpass;
         };
 
+        auto brdf_image = manager.create_resource(RenderTargetDesc{ RT_BRDF, FORMAT_R16G16_FLOAT, RT_COLOR_ATTACHMENT_2D, 512, 512, false },
+                                                  linear_clamp_sampler());
+        auto brdf_subpass = manager.create_subpass(SubpassDesc{
+            .color_attachments = { brdf_image },
+            .func = generate_brdf_func,
+        });
+
+        pass->add_sub_pass(brdf_subpass);
         pass->add_sub_pass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
-        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, env_cube_map_sampler(), false));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
         pass->add_sub_pass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 128, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 

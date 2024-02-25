@@ -66,19 +66,19 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert.glsl";
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
         info.ps = "@res://glsl/ssao.frag";
         m_cache[PROGRAM_SSAO] = create(info);
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert.glsl";
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
         info.ps = "@res://glsl/lighting.frag.glsl";
         m_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert.glsl";
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
         info.ps = "@res://glsl/fxaa.frag";
         m_cache[PROGRAM_FXAA] = create(info);
     }
@@ -130,6 +130,12 @@ bool PipelineStateManager::initialize() {
         info.vs = "@res://glsl/env/skybox.vert.glsl";
         info.ps = "@res://glsl/env/skybox.frag.glsl";
         m_cache[PROGRAM_ENV_SKYBOX] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
+        info.ps = "@res://glsl/brdf.frag.glsl";
+        m_cache[PROGRAM_BRDF] = create(info);
     }
     {
         PipelineCreateInfo info;

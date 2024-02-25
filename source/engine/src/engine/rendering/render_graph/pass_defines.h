@@ -35,6 +35,7 @@
 #define RT_ENV_DIFFUSE_IRRADIANCE_DEPTH    "env_diffuse_irradiance_depth"
 #define RT_ENV_PREFILTER_CUBE_MAP          "env_prefilter_cube_map"
 #define RT_ENV_PREFILTER_DEPTH             "env_prefilter_depth"
+#define RT_BRDF                            "rt_brdf"
 
 #define RT_RES_LIGHTING "rt_res_light"
 #define RT_RES_FXAA     "rt_res_fxaa"

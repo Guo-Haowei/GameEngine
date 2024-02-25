@@ -339,6 +339,8 @@ void OpenGLGraphicsManager::createGpuResources() {
     make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
     make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
     make_resident(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
+    make_resident(RT_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);
+    make_resident(RT_BRDF, cache.c_brdf_map);
 
     g_constantCache.Update();
 }

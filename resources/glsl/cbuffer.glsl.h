@@ -126,8 +126,10 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     sampler2D c_fxaa_image;
     sampler2D c_fxaa_input_image;
 
+    sampler2D c_brdf_map;
     samplerCube c_env_map;
     samplerCube c_diffuse_irradiance_map;
+    samplerCube c_prefiltered_map;
 };
 
 CONSTANT_BUFFER(BoneConstantBuffer, 5) {

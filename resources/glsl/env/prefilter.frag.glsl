@@ -1,54 +1,10 @@
 #include "cbuffer.glsl.h"
-#define SAMPLE_COUNT 1024u
+#include "common/lighting.glsl"
+
 layout(location = 0) out vec4 out_color;
 in vec3 pass_position;
 
-// NDF(n, h, alpha) = alpha^2 / (pi * ((n dot h)^2 * (alpha^2 - 1) + 1)^2)
-float DistributionGGX(in vec3 N, in vec3 H, float roughness) {
-    float a = roughness * roughness;
-    float a2 = a * a;
-    float NdotH = max(dot(N, H), 0.0);
-    float nom = a2;
-    float denom = NdotH * NdotH * (a2 - 1.0) + 1.0;
-    denom = MY_PI * denom * denom;
-    // if roughness = 0, NDF = 0,
-    // if roughness = 1, NDF = 1 / pi
-    return nom / denom;
-}
-
-float RadicalInverse_VdC(uint bits) {
-    bits = (bits << 16u) | (bits >> 16u);
-    bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
-    bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
-    bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
-    bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
-    return float(bits) * 2.3283064365386963e-10;  // / 0x100000000
-}
-
-vec2 Hammersley(uint i, uint N) {
-    return vec2(float(i) / float(N), RadicalInverse_VdC(i));
-}
-
-vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness) {
-    float a = roughness * roughness;
-
-    float phi = 2.0 * MY_PI * Xi.x;
-    float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a * a - 1.0) * Xi.y));
-    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
-
-    // from tangent-space H vector to world-space sample vector
-    vec3 up = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
-    vec3 tangent = normalize(cross(up, N));
-    vec3 bitangent = cross(N, tangent);
-
-    // from spherical coordinates to cartesian coordinates
-    float x = cos(phi) * sinTheta;
-    float y = sin(phi) * sinTheta;
-    float z = cosTheta;
-
-    vec3 sampleVec = tangent * x + bitangent * y + N * z;
-    return normalize(sampleVec);
-}
+#define SAMPLE_COUNT 1024u
 
 void main() {
     vec3 N = normalize(pass_position);
@@ -70,11 +26,12 @@ void main() {
         float NdotL = dot(N, L);
         if (NdotL > 0.0) {
             // sample from the environment's mip level based on roughness/pdf
-            float D = DistributionGGX(N, H, roughness);
             float NdotH = max(dot(N, H), 0.0);
+            float D = distributionGGX(NdotH, roughness);
             float HdotV = max(dot(H, V), 0.0);
             float pdf = D * NdotH / (4.0 * HdotV) + 0.0001;
 
+            // @TODO: fix hard code
             float resolution = 512.0;  // resolution of source cubemap (per face)
             float saTexel = 4.0 * MY_PI / (6.0 * resolution * resolution);
             float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);

@@ -30,7 +30,7 @@ inline SamplerDesc nearest_sampler() {
     return desc;
 }
 
-inline SamplerDesc env_cube_map_sampler() {
+inline SamplerDesc linear_clamp_sampler() {
     SamplerDesc desc{};
     desc.min = desc.mag = FilterMode::LINEAR;
     desc.mode_u = desc.mode_v = desc.mode_w = AddressMode::CLAMP;

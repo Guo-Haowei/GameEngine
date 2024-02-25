@@ -1,5 +1,4 @@
 #pragma once
-#include "core/base/singleton.h"
 #include "rendering/pipeline_state.h"
 
 namespace my {
