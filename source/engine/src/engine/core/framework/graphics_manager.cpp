@@ -3,6 +3,7 @@
 #include "core/debugger/profiler.h"
 #include "rendering/empty/empty_graphics_manager.h"
 #include "rendering/opengl/opengl_graphics_manager.h"
+#include "rendering/rendering_dvars.h"
 
 namespace my {
 
@@ -14,7 +15,15 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
 }
 
 std::shared_ptr<GraphicsManager> GraphicsManager::create() {
-    return std::make_shared<OpenGLGraphicsManager>();
+    const std::string& backend = DVAR_GET_STRING(r_backend);
+
+    if (backend == "opengl") {
+        return std::make_shared<OpenGLGraphicsManager>();
+    } else if (backend == "d3d11") {
+        // @TODO:
+        return std::make_shared<EmptyGraphicsManager>();
+    }
+    return std::make_shared<EmptyGraphicsManager>();
 }
 
 void GraphicsManager::set_pipeline_state(PipelineStateName p_name) {

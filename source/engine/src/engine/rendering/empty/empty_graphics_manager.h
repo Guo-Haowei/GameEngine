@@ -11,12 +11,14 @@ public:
     void render() override {}
 
     // @TODO: filter
+    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&, const SamplerDesc&) override { return nullptr; }
+    std::shared_ptr<RenderTarget> find_resource(const std::string&) const override { return nullptr; }
+
+    std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) override { return nullptr; }
+
     void create_texture(ImageHandle*) override {}
 
     uint64_t get_final_image() const override { return 0; }
-
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&, const SamplerDesc&) override { return nullptr; }
-    std::shared_ptr<RenderTarget> find_resource(const std::string&) const override { return nullptr; }
 
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent*, MaterialConstantBuffer&) override {}

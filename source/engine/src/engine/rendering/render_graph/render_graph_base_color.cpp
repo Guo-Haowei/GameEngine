@@ -10,8 +10,6 @@
 #include "rendering/render_data.h"
 #include "rendering/rendering_dvars.h"
 
-extern my::RIDAllocator<MeshData> g_meshes;
-
 namespace my::rg {
 
 void base_color_pass(const Subpass* p_subpass) {

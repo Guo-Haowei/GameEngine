@@ -36,7 +36,7 @@ ContentBrowser::~ContentBrowser() {
 void ContentBrowser::update_internal(Scene&) {
     if (ImGui::Button("<-")) {
         if (m_current_path == m_root_path) {
-            LOG_WARN("???");
+            LOG_WARN("TODO: don't go outside project dir");
         }
         m_current_path = m_current_path.parent_path();
     }

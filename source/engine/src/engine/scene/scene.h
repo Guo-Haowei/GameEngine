@@ -163,10 +163,10 @@ public:                                                                         
     ecs::Entity create_material_entity(const std::string& name);
 
     ecs::Entity create_pointlight_entity(const std::string& name, const vec3& position, const vec3& color = vec3(1),
-                                         const float energy = 20.0f);
+                                         const float energy = 5.0f);
 
     ecs::Entity create_omnilight_entity(const std::string& name, const vec3& color = vec3(1),
-                                        const float energy = 20.0f);
+                                        const float energy = 5.0f);
 
     ecs::Entity create_cube_entity(const std::string& p_name,
                                    const vec3& p_scale = vec3(0.5f),
