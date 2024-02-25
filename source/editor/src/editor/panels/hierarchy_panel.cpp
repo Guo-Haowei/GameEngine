@@ -6,6 +6,7 @@
 #include "editor/editor_layer.h"
 
 namespace my {
+using ecs::Entity;
 
 #define POPUP_NAME_ID "SCENE_PANEL_POPUP"
 
@@ -14,12 +15,12 @@ class HierarchyCreator {
 public:
     struct HierarchyNode {
         HierarchyNode* parent = nullptr;
-        ecs::Entity entity;
+        Entity entity;
 
         std::vector<HierarchyNode*> children;
     };
 
-    HierarchyCreator(EditorLayer& editor) : m_editor_layer(editor) {}
+    HierarchyCreator(EditorLayer& p_editor) : m_editor_layer(p_editor) {}
 
     void update(const Scene& scene) {
         if (build(scene)) {
@@ -29,46 +30,104 @@ public:
     }
 
 private:
-    bool build(const Scene& scene);
-    void draw_node(const Scene& scene, HierarchyNode* pNode, ImGuiTreeNodeFlags flags = 0);
+    bool build(const Scene& p_scene);
+    void draw_node(const Scene& p_scene, HierarchyNode* p_node, ImGuiTreeNodeFlags p_flags = 0);
 
-    std::map<ecs::Entity, std::shared_ptr<HierarchyNode>> m_nodes;
+    std::map<Entity, std::shared_ptr<HierarchyNode>> m_nodes;
     HierarchyNode* m_root = nullptr;
     EditorLayer& m_editor_layer;
 };
 
-namespace panel_util {
+static bool tree_node_helper(const Scene& p_scene,
+                             Entity p_id,
+                             ImGuiTreeNodeFlags p_flags,
+                             std::function<void()> p_on_left_click,
+                             std::function<void()> p_on_right_click) {
 
+    const NameComponent* name_component = p_scene.get_component<NameComponent>(p_id);
+    std::string name = name_component->get_name();
+    if (name.empty()) {
+        name = "Untitled";
+    }
+    auto node_name = std::format("##{}", p_id.get_id());
+    auto tag = std::format("{}{}", name, node_name);
+
+    p_flags |= ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+    const bool expanded = ImGui::TreeNodeEx(node_name.c_str(), p_flags);
+    ImGui::SameLine();
+    if (!p_on_left_click && !p_on_right_click) {
+        ImGui::Text(tag.c_str());
+    } else {
+        ImGui::Selectable(tag.c_str());
+        if (ImGui::IsItemHovered()) {
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+                if (p_on_left_click) {
+                    p_on_left_click();
+                }
+            } else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+                if (p_on_right_click) {
+                    p_on_right_click();
+                }
+            }
+        }
+    }
+    return expanded;
 }
 
 // @TODO: make it an widget
 void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
     DEV_ASSERT(p_hier);
-    ecs::Entity id = p_hier->entity;
+    Entity id = p_hier->entity;
     const NameComponent* name_component = p_scene.get_component<NameComponent>(id);
     const char* name = name_component ? name_component->get_name().c_str() : "Untitled";
+    const ObjectComponent* object_component = p_scene.get_component<ObjectComponent>(id);
+    const MeshComponent* mesh_component = object_component ? p_scene.get_component<MeshComponent>(object_component->mesh_id) : nullptr;
 
-    auto nodeTag = std::format("##{}", id.get_id());
-    auto tag = std::format("{}{}", name, nodeTag);
+    auto node_name = std::format("##{}", id.get_id());
+    auto tag = std::format("{}{}", name, node_name);
 
-    p_flags |= ImGuiTreeNodeFlags_NoTreePushOnOpen;
-    p_flags |= p_hier->children.empty() ? ImGuiTreeNodeFlags_Leaf : 0;
+    p_flags |= (p_hier->children.empty() && !mesh_component) ? ImGuiTreeNodeFlags_Leaf : 0;
     p_flags |= m_editor_layer.get_selected_entity() == id ? ImGuiTreeNodeFlags_Selected : 0;
-    bool expanded = ImGui::TreeNodeEx(nodeTag.c_str(), p_flags);
-    ImGui::SameLine();
-    ImGui::Selectable(tag.c_str());
-    if (ImGui::IsItemHovered()) {
-        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+
+    const bool expanded = tree_node_helper(
+        p_scene, id, p_flags,
+        [&]() {
             m_editor_layer.select_entity(id);
-        } else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+        },
+        [&]() {
             m_editor_layer.select_entity(id);
             ImGui::OpenPopup(POPUP_NAME_ID);
-        }
-    }
+        });
 
     if (expanded) {
         float indentWidth = 8.f;
         ImGui::Indent(indentWidth);
+
+        if (mesh_component) {
+            for (const auto& subset : mesh_component->subsets) {
+                const MaterialComponent* material = p_scene.get_component<MaterialComponent>(subset.material_id);
+                if (material) {
+                    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
+                    tree_node_helper(
+                        p_scene, subset.material_id, flags,
+                        [&]() {
+                            m_editor_layer.select_entity(subset.material_id);
+                        },
+                        nullptr);
+                }
+            }
+            Entity armature_id = mesh_component->armature_id;
+            if (armature_id.is_valid()) {
+                ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
+                tree_node_helper(
+                    p_scene, armature_id, flags, [&]() {
+                        m_editor_layer.select_entity(armature_id);
+                    },
+                    nullptr);
+            }
+        }
+
         for (auto& child : p_hier->children) {
             draw_node(p_scene, child);
         }
@@ -76,15 +135,15 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
     }
 }
 
-bool HierarchyCreator::build(const Scene& scene) {
+bool HierarchyCreator::build(const Scene& p_scene) {
     // @TODO: on scene change instead of build every frame
-    const size_t hierarchy_count = scene.get_count<HierarchyComponent>();
+    const size_t hierarchy_count = p_scene.get_count<HierarchyComponent>();
     if (hierarchy_count == 0) {
         return false;
     }
 
     for (int i = 0; i < hierarchy_count; ++i) {
-        auto FindOrCreate = [this](ecs::Entity id) {
+        auto find_or_create = [this](ecs::Entity id) {
             auto it = m_nodes.find(id);
             if (it == m_nodes.end()) {
                 m_nodes[id] = std::make_shared<HierarchyNode>();
@@ -93,15 +152,15 @@ bool HierarchyCreator::build(const Scene& scene) {
             return it->second.get();
         };
 
-        const HierarchyComponent& hier = scene.get_component<HierarchyComponent>(i);
-        const ecs::Entity selfId = scene.get_entity<HierarchyComponent>(i);
-        const ecs::Entity parentId = hier.GetParent();
-        HierarchyNode* parentNode = FindOrCreate(parentId);
-        HierarchyNode* selfNode = FindOrCreate(selfId);
-        parentNode->children.push_back(selfNode);
-        parentNode->entity = parentId;
-        selfNode->parent = parentNode;
-        selfNode->entity = selfId;
+        const HierarchyComponent& hier = p_scene.get_component<HierarchyComponent>(i);
+        const ecs::Entity self_id = p_scene.get_entity<HierarchyComponent>(i);
+        const ecs::Entity parent_id = hier.GetParent();
+        HierarchyNode* parent_node = find_or_create(parent_id);
+        HierarchyNode* self_node = find_or_create(self_id);
+        parent_node->children.push_back(self_node);
+        parent_node->entity = parent_id;
+        self_node->parent = parent_node;
+        self_node->entity = self_id;
     }
 
     int nodes_without_parent = 0;
@@ -115,13 +174,13 @@ bool HierarchyCreator::build(const Scene& scene) {
     return true;
 }
 
-void HierarchyPanel::update_internal(Scene& scene) {
+void HierarchyPanel::update_internal(Scene& p_scene) {
     // @TODO: on scene change, rebuild hierarchy
     HierarchyCreator creator(m_editor);
 
-    draw_popup(scene);
+    draw_popup(p_scene);
 
-    creator.update(scene);
+    creator.update(p_scene);
 }
 
 void HierarchyPanel::draw_popup(Scene&) {

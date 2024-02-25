@@ -596,6 +596,7 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
         tag = std::format("{}::animation_{}", m_file_name, ++s_counter);
     }
     auto entity = m_scene->create_name_entity(tag);
+    m_scene->attach_component(entity);
 
     // m_scene->Component_Attach(entity, m_scene->m_root);
     AnimationComponent& animation = m_scene->create<AnimationComponent>(entity);

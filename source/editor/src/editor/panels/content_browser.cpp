@@ -70,42 +70,12 @@ void AssetWindow::update_internal(Scene& p_scene) {
     if (auto mesh = p_scene.get_component<MeshComponent>(id); mesh) {
     }
     if (auto material = p_scene.get_component<MaterialComponent>(id); material) {
-        ImGui::DragFloat("metallic", &material->metallic, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
-        for (int i = 0; i < MaterialComponent::TEXTURE_MAX; ++i) {
-            auto& texture = material->textures[i];
-            ImGui::Text("path: %s", texture.path.c_str());
-            // @TODO: safer
-            auto check_box_id = std::format("Enabled##{}", i);
-            ImGui::Checkbox(check_box_id.c_str(), &texture.enabled);
-            Image* image = texture.image ? texture.image->get() : nullptr;
-            uint64_t handle = image ? image->texture.handle : 0;
-            if (handle) {
-                ImGui::Image((ImTextureID)handle, ImVec2(256, 256));
-            }
-        }
     }
     if (auto animation = p_scene.get_component<AnimationComponent>(id); animation) {
-        ImGui::Text("Animation %s", name->get_name().c_str());
-        if (!animation->is_playing()) {
-            if (ImGui::Button("play")) {
-                animation->flags |= AnimationComponent::PLAYING;
-            }
-        } else {
-            if (ImGui::Button("stop")) {
-                animation->flags &= ~AnimationComponent::PLAYING;
-            }
-        }
-        if (ImGui::SliderFloat("Frame", &animation->timer, animation->start, animation->end)) {
-            animation->flags |= AnimationComponent::PLAYING;
-        }
-        ImGui::Separator();
     }
 }
 
 void FolderWindow::update_internal(Scene& p_scene) {
-    list_asset<MeshComponent>("Mesh", p_scene, m_parent);
-    list_asset<MaterialComponent>("Material", p_scene, m_parent);
     list_asset<AnimationComponent>("Animation", p_scene, m_parent);
 }
 

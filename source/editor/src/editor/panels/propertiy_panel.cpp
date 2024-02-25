@@ -102,11 +102,12 @@ void PropertyPanel::update_internal(Scene& scene) {
     LightComponent* light_component = scene.get_component<LightComponent>(id);
     ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
     MeshComponent* mesh_component = object_component ? scene.get_component<MeshComponent>(object_component->mesh_id) : nullptr;
-    auto material_id = mesh_component ? mesh_component->subsets[0].material_id : ecs::Entity::INVALID;
-    MaterialComponent* material_component = scene.get_component<MaterialComponent>(material_id);
+    // auto material_id = mesh_component ? mesh_component->subsets[0].material_id : ecs::Entity::INVALID;
+    MaterialComponent* material_component = scene.get_component<MaterialComponent>(id);
     RigidBodyComponent* rigid_body_component = scene.get_component<RigidBodyComponent>(id);
     BoxColliderComponent* box_collider = scene.get_component<BoxColliderComponent>(id);
     MeshColliderComponent* mesh_collider = scene.get_component<MeshColliderComponent>(id);
+    AnimationComponent* animation_component = scene.get_component<AnimationComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -188,6 +189,30 @@ void PropertyPanel::update_internal(Scene& scene) {
         }
     });
 
+    DrawComponent("Material", material_component, [](MaterialComponent& p_material) {
+        vec3 color = p_material.base_color;
+        if (draw_color_control("Color", color)) {
+            p_material.base_color = vec4(color, p_material.base_color.a);
+        }
+        draw_drag_float("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);
+        draw_drag_float("roughness", p_material.roughness, 0.01f, 0.0f, 1.0f);
+        for (int i = 0; i < MaterialComponent::TEXTURE_MAX; ++i) {
+            auto& texture = p_material.textures[i];
+            if (texture.path.empty()) {
+                continue;
+            }
+            ImGui::Text("path: %s", texture.path.c_str());
+            // @TODO: safer
+            auto check_box_id = std::format("Enabled##{}", i);
+            ImGui::Checkbox(check_box_id.c_str(), &texture.enabled);
+            Image* image = texture.image ? texture.image->get() : nullptr;
+            uint64_t handle = image ? image->texture.handle : 0;
+            if (handle) {
+                ImGui::Image((ImTextureID)handle, ImVec2(128, 128));
+            }
+        }
+    });
+
     // CameraComponent* cameraComponent = scene.get_component<CameraComponent>(id);
     // DrawComponent("Camera", cameraComponent, [](CameraComponent& camera) {
     //     const float width = 50.0f;
@@ -235,11 +260,20 @@ void PropertyPanel::update_internal(Scene& scene) {
         }
     });
 
-    DrawComponent("Material", material_component, [&](MaterialComponent& material) {
-        vec3 color = material.base_color;
-        if (draw_color_control("Color", color)) {
-            material.base_color = vec4(color, material.base_color.a);
+    DrawComponent("Animation", animation_component, [&](AnimationComponent& p_animation) {
+        if (!p_animation.is_playing()) {
+            if (ImGui::Button("play")) {
+                p_animation.flags |= AnimationComponent::PLAYING;
+            }
+        } else {
+            if (ImGui::Button("stop")) {
+                p_animation.flags &= ~AnimationComponent::PLAYING;
+            }
         }
+        if (ImGui::SliderFloat("Frame", &p_animation.timer, p_animation.start, p_animation.end)) {
+            p_animation.flags |= AnimationComponent::PLAYING;
+        }
+        ImGui::Separator();
     });
 
     // @TODO: animation
