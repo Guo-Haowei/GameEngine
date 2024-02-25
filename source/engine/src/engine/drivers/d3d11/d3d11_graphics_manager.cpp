@@ -64,8 +64,6 @@ void D3d11GraphicsManager::on_window_resize(int p_width, int p_height) {
 
 }  // namespace my
 
-///// @TODO: move
-
 // Helper functions
 bool CreateDeviceD3D(HWND hWnd) {
     // Setup swap chain

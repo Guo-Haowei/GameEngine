@@ -23,7 +23,7 @@ public:
     HWND get_hwnd() const { return m_hwnd; }
 
 private:
-    // void initialize_key_mapping();
+    void initialize_key_mapping();
 
     struct {
         int x, y;
@@ -33,7 +33,7 @@ private:
     HWND m_hwnd{};
     bool m_should_quit{ false };
 
-    inline static std::unordered_map<int, KeyCode> s_key_mapping;
+    std::unordered_map<int, KeyCode> m_key_mapping;
 };
 
 }  // namespace my

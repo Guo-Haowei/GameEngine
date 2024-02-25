@@ -4,6 +4,7 @@
 
 #include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
+#include "core/input/input.h"
 
 namespace my {
 
@@ -23,6 +24,8 @@ static LRESULT wnd_proc_wrapper(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 }
 
 bool Win32DisplayManager::initialize() {
+    initialize_key_mapping();
+
     const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
     const ivec2 min_size = ivec2(600, 400);
     const ivec2 size = glm::max(min_size, resolution);
@@ -30,12 +33,6 @@ bool Win32DisplayManager::initialize() {
 
     RECT rect = { 0, 0, size.x, size.y };
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-
-    //// Create the window
-    // HWND hwnd = CreateWindow(wc.lpszClassName, L"Window Title", WS_OVERLAPPEDWINDOW,
-    //                          CW_USEDEFAULT, CW_USEDEFAULT,
-    //                          windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
-    //                          NULL, NULL, hInstance, NULL);
 
     m_wnd_class = { sizeof(m_wnd_class),
                     CS_CLASSDC,
@@ -116,6 +113,7 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             int width = LOWORD(lParam);
             int height = HIWORD(lParam);
             if (wParam != SIZE_MINIMIZED) {
+                // @TODO: only dispatch when resize stops
                 m_frame_size.x = width;
                 m_frame_size.y = height;
                 auto event = std::make_shared<ResizeEvent>(width, height);
@@ -139,18 +137,76 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             ::PostQuitMessage(0);
             return 0;
         case WM_DPICHANGED:
-            // if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
-            //     // const int dpi = HIWORD(wParam);
-            //     // printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
-            //     const RECT* suggested_rect = (RECT*)lParam;
-            //     ::SetWindowPos(hWnd, NULL, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
-            // }
+            if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
+                // const int dpi = HIWORD(wParam);
+                // printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
+                const RECT* suggested_rect = (RECT*)lParam;
+                ::SetWindowPos(hwnd, NULL, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+            }
             break;
+        case WM_MOUSEWHEEL: {
+            const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+            float direction = (delta > 0) ? 1.0f : -1.0f;
+            input::set_wheel(0.0f, direction);
+        } break;
+        case WM_LBUTTONDOWN: {
+            input::set_button(MOUSE_BUTTON_LEFT, true);
+        } break;
+        case WM_LBUTTONUP: {
+            input::set_button(MOUSE_BUTTON_LEFT, false);
+        } break;
+        case WM_RBUTTONDOWN: {
+            input::set_button(MOUSE_BUTTON_RIGHT, true);
+        } break;
+        case WM_RBUTTONUP: {
+            input::set_button(MOUSE_BUTTON_RIGHT, false);
+        } break;
+        case WM_MBUTTONDOWN: {
+            input::set_button(MOUSE_BUTTON_MIDDLE, true);
+        } break;
+        case WM_MBUTTONUP: {
+            input::set_button(MOUSE_BUTTON_MIDDLE, false);
+        } break;
+        case WM_MOUSEMOVE: {
+            int x = LOWORD(lParam);
+            int y = HIWORD(lParam);
+            input::set_cursor(static_cast<float>(x), static_cast<float>(y));
+        } break;
+        case WM_KEYDOWN: {
+            int key_code = LOWORD(wParam);
+            auto it = m_key_mapping.find(key_code);
+            if (it != m_key_mapping.end()) {
+                input::set_key(it->second, true);
+            } else {
+                LOG_WARN("key {} not mapped", key_code);
+            }
+        } break;
+        case WM_KEYUP: {
+            int key_code = LOWORD(wParam);
+            auto it = m_key_mapping.find(key_code);
+            if (it != m_key_mapping.end()) {
+                input::set_key(it->second, false);
+            }
+        } break;
         default:
             break;
     }
 
     return ::DefWindowProcW(hwnd, msg, wParam, lParam);
+}
+
+void Win32DisplayManager::initialize_key_mapping() {
+    DEV_ASSERT(m_key_mapping.empty());
+
+    m_key_mapping[VK_SPACE] = KEY_SPACE;
+    for (char i = 0; i <= 9; ++i) {
+        m_key_mapping['0' + i] = static_cast<KeyCode>(KEY_0 + i);
+    }
+    for (char i = 0; i < 26; ++i) {
+        m_key_mapping['A' + i] = static_cast<KeyCode>(KEY_A + i);
+    }
+
+    // @TODO: do the rest
 }
 
 }  // namespace my
