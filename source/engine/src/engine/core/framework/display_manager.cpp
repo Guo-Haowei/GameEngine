@@ -1,5 +1,6 @@
 #include "display_manager.h"
 
+#include "drivers/empty/empty_display_manager.h"
 #include "drivers/glfw/glfw_display_manager.h"
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/rendering_dvars.h"
@@ -16,8 +17,7 @@ std::shared_ptr<DisplayManager> DisplayManager::create() {
         return std::make_shared<Win32DisplayManager>();
     }
 
-    CRASH_NOW_MSG("no suitable display manager");
-    return nullptr;
+    return std::make_shared<EmptyDisplayManager>();
 }
 
 }  // namespace my

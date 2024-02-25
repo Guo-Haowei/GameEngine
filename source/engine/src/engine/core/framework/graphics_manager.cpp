@@ -1,8 +1,9 @@
 #include "graphics_manager.h"
 
 #include "core/debugger/profiler.h"
-#include "rendering/empty/empty_graphics_manager.h"
-#include "rendering/opengl/opengl_graphics_manager.h"
+#include "drivers/d3d11/d3d11_graphics_manager.h"
+#include "drivers/empty/empty_graphics_manager.h"
+#include "drivers/opengl/opengl_graphics_manager.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
@@ -12,6 +13,9 @@ void GraphicsManager::event_received(std::shared_ptr<Event> event) {
         const Scene& scene = *e->get_scene();
         on_scene_change(scene);
     }
+    if (ResizeEvent* e = dynamic_cast<ResizeEvent*>(event.get()); e) {
+        on_window_resize(e->get_width(), e->get_height());
+    }
 }
 
 std::shared_ptr<GraphicsManager> GraphicsManager::create() {
@@ -20,8 +24,7 @@ std::shared_ptr<GraphicsManager> GraphicsManager::create() {
     if (backend == "opengl") {
         return std::make_shared<OpenGLGraphicsManager>();
     } else if (backend == "d3d11") {
-        // @TODO:
-        return std::make_shared<EmptyGraphicsManager>();
+        return std::make_shared<D3d11GraphicsManager>();
     }
     return std::make_shared<EmptyGraphicsManager>();
 }

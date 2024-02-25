@@ -1,5 +1,5 @@
 #pragma once
-#include "rendering/opengl/opengl_prerequisites.h"
+#include "drivers/opengl/opengl_prerequisites.h"
 
 class GpuResource {
 public:

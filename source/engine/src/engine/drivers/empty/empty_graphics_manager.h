@@ -2,6 +2,7 @@
 #include "core/framework/graphics_manager.h"
 
 namespace my {
+
 class EmptyGraphicsManager : public GraphicsManager {
 public:
     EmptyGraphicsManager() : GraphicsManager("EmptyGraphicsManager") {}

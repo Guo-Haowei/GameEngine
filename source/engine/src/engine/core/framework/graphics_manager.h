@@ -60,6 +60,7 @@ public:
 
 protected:
     virtual void on_scene_change(const Scene& p_scene) = 0;
+    virtual void on_window_resize(int, int) {}
     virtual void set_pipeline_state_impl(PipelineStateName p_name) = 0;
     virtual void render() = 0;
 

@@ -1,6 +1,6 @@
 #include "opengl_subpass.h"
 
-#include "rendering/opengl/opengl_prerequisites.h"
+#include "drivers/opengl/opengl_prerequisites.h"
 
 namespace my {
 
