@@ -5,16 +5,16 @@ local Vector3 = geomath.Vector3
 local scene = Scene.get()
 
 -- create point light
-local light_pos = {
-    Vector3:new(-5, -5, 5),
-    Vector3:new(5, -5, 5),
-    Vector3:new(5, 5, 5),
-    Vector3:new(-5, 5, 5),
-}
+-- local light_pos = {
+--     Vector3:new(-5, -5, 5),
+--     Vector3:new(5, -5, 5),
+--     Vector3:new(5, 5, 5),
+--     Vector3:new(-5, 5, 5),
+-- }
 
-for idx = 1, 4 do
-    scene_helper.create_point_light(scene, 'PointLight', light_pos[idx])
-end
+-- for idx = 1, 4 do
+--     scene_helper.create_point_light(scene, 'PointLight', light_pos[idx])
+-- end
 
 local num_row = 7
 local num_col = 7

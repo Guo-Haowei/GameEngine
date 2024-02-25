@@ -9,7 +9,7 @@ void main() {
         out_color.rgb = 0.5 * (pass_color.xyz + 1.0);
     } else  // normal
     {
-        float gamma = 2.2;
+        float gamma = 1.0 / 2.2;
         vec3 color = pass_color.rgb;
         color = color / (color + 1.0);
         color = pow(color, vec3(gamma));
