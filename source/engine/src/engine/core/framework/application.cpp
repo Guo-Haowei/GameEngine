@@ -19,9 +19,6 @@
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
-// @TODO: rename
-#include "core/framework/asset_manager.h"
-
 #define DEFINE_DVAR
 #include "core/framework/common_dvars.h"
 
@@ -104,7 +101,7 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_OK("TODO: update voxels only when scene is dirty");
+    LOG_ERROR("TODO: win32 input & refactor");
     LOG_WARN("TODO: path tracer here");
     LOG_ERROR("TODO: cloth physics");
     LOG_WARN("TODO: TAA");
@@ -114,8 +111,6 @@ int Application::run(int argc, const char** argv) {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-
-    bool imgui_built = ImGui::GetIO().Fonts->IsBuilt();
 
     while (!DisplayManager::singleton().should_close()) {
         OPTICK_FRAME("MainThread");
@@ -130,17 +125,15 @@ int Application::run(int argc, const char** argv) {
         timer.start();
 
         // to avoid empty renderer crash
-        if (imgui_built) {
-            ImGui::NewFrame();
-            for (auto& layer : m_layers) {
-                layer->update(dt);
-            }
-
-            for (auto& layer : m_layers) {
-                layer->render();
-            }
-            ImGui::Render();
+        ImGui::NewFrame();
+        for (auto& layer : m_layers) {
+            layer->update(dt);
         }
+
+        for (auto& layer : m_layers) {
+            layer->render();
+        }
+        ImGui::Render();
 
         m_scene_manager->update(dt);
 

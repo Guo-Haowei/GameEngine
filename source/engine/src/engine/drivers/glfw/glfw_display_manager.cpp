@@ -34,7 +34,7 @@ bool GlfwDisplayManager::initialize() {
     const ivec2 max_size = ivec2(vidmode->width, vidmode->height);
     const ivec2 size = glm::clamp(resolution, min_size, max_size);
 
-    m_window = glfwCreateWindow(size.x, size.y, "Editor", nullptr, nullptr);
+    m_window = glfwCreateWindow(size.x, size.y, "Editor (OpenGL)", nullptr, nullptr);
     DEV_ASSERT(m_window);
 
     const ivec2 position = DVAR_GET_IVEC2(window_position);
@@ -42,7 +42,6 @@ bool GlfwDisplayManager::initialize() {
 
     glfwMakeContextCurrent(m_window);
 
-    LOG("GLFWwindow created {} x {}", size.x, size.y);
     glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
 
     ImGui_ImplGlfw_InitForOpenGL(m_window, false);

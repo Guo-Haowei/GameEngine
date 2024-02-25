@@ -6,8 +6,8 @@ namespace my {
 
 // @TODO: refactor
 struct Texture {
-    uint32_t handle;
-    uint64_t resident_handle;
+    uint32_t handle = 0;
+    uint64_t resident_handle = 0;
 };
 
 class Image {

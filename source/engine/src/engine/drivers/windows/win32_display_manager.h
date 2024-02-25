@@ -18,6 +18,8 @@ public:
     void new_frame() final;
     void present() final;
 
+    LRESULT wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 private:
     // void initialize_key_mapping();
 
