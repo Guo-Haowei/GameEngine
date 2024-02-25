@@ -1,82 +1,86 @@
 #include "content_browser.h"
 
+#include "core/framework/asset_manager.h"
 #include "editor/panels/panel_util.h"
 
 namespace my {
 
-class FolderWindow : public EditorWindow {
-public:
-    FolderWindow(EditorLayer& p_editor, ContentBrowser& p_parent) : EditorWindow("Content Browser", p_editor), m_parent(p_parent) {}
+namespace fs = std::filesystem;
 
-protected:
-    void update_internal(Scene& p_scene) override;
+ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Browser", p_editor) {
+    m_root_path = fs::path{ fs::path(ROOT_FOLDER) / "resources" };
+    m_current_path = m_root_path;
 
-    ContentBrowser& m_parent;
-};
+    auto folder_icon = AssetManager::singleton().load_image_sync("@res://images/icons/folder_icon.png")->get();
+    auto image_icon = AssetManager::singleton().load_image_sync("@res://images/icons/image_icon.png")->get();
+    auto scene_icon = AssetManager::singleton().load_image_sync("@res://images/icons/scene_icon.png")->get();
 
-class AssetWindow : public EditorWindow {
-public:
-    AssetWindow(EditorLayer& p_editor, ContentBrowser& p_parent) : EditorWindow("Asset", p_editor), m_parent(p_parent) {}
-
-protected:
-    void update_internal(Scene& p_scene) override;
-
-    ContentBrowser& m_parent;
-};
-
-ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorCompositeWindow(p_editor) {
-    add_window(std::make_shared<FolderWindow>(p_editor, *this));
-    add_window(std::make_shared<AssetWindow>(p_editor, *this));
+    m_icon_map["."] = folder_icon;
+    m_icon_map[".png"] = image_icon;
+    m_icon_map[".hdr"] = image_icon;
+    m_icon_map[".lua"] = scene_icon;
 }
 
-void ContentBrowser::set_selected(ecs::Entity p_entity) {
-    m_selected = p_entity;
-    LOG("asset {} selected!", p_entity.get_id());
-}
+void ContentBrowser::update_internal(Scene&) {
+    if (ImGui::Button("<-")) {
+        if (m_current_path == m_root_path) {
+            LOG_WARN("???");
+        }
+        m_current_path = m_current_path.parent_path();
+    }
 
-template<typename T>
-static void list_asset(const char* type, const Scene& p_scene, ContentBrowser& p_content_browser) {
-    constexpr float indent_width = 8.f;
-    if (ImGui::TreeNodeEx(type, ImGuiTreeNodeFlags_NoTreePushOnOpen)) {
-        ImGui::Indent(indent_width);
-        for (size_t idx = 0; idx < p_scene.get_count<T>(); ++idx) {
-            auto id = p_scene.get_entity<T>(idx);
-            const NameComponent* name = p_scene.get_component<NameComponent>(id);
-            auto string_id = std::format("##{}", id.get_id());
-            auto asset_name = std::format("{} (id: {})", name->get_name(), id.get_id());
-            DEV_ASSERT(name);
-            ImGui::TreeNodeEx(string_id.c_str(), ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf);
-            ImGui::SameLine();
-            ImGui::Selectable(asset_name.c_str());
-            if (ImGui::IsItemHovered()) {
-                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                    p_content_browser.set_selected(id);
-                }
+    // ImGui::Image((ImTextureID)handle, ImVec2(dim.x, dim.y), ImVec2(0, 1), ImVec2(1, 0));
+
+    ImVec2 window_size = ImGui::GetWindowSize();
+    float desired_icon_size = 128.f;
+    int num_col = static_cast<int>(glm::floor(window_size.x / desired_icon_size));
+
+    ImGui::Columns(num_col, nullptr, false);
+
+    for (const auto& entry : fs::directory_iterator(m_current_path)) {
+        const bool is_file = entry.is_regular_file();
+        const bool is_dir = entry.is_directory();
+        if (!is_dir && !is_file) {
+            continue;
+        }
+
+        fs::path full_path = entry.path();
+        fs::path relative_path = fs::relative(full_path, m_root_path);
+        // std::string relative_path_string = relative_path.string();
+
+        std::string name;
+        std::string extention;
+        if (is_dir) {
+            name = full_path.stem().string();
+            extention = ".";
+        } else if (is_file) {
+            name = full_path.filename().string();
+            extention = full_path.extension().string();
+        }
+
+        bool clicked = false;
+        auto it = m_icon_map.find(extention);
+        ImVec2 size{ desired_icon_size, desired_icon_size };
+        if (it != m_icon_map.end()) {
+            uint64_t handle = it->second->texture.handle;
+            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size);
+        } else {
+            clicked = ImGui::Button(name.c_str(), size);
+        }
+
+        ImGui::Text(name.c_str());
+
+        ImGui::NextColumn();
+
+        if (clicked) {
+            if (is_dir) {
+                m_current_path = full_path;
+            } else if (is_file) {
             }
         }
-        ImGui::Unindent(indent_width);
     }
-}
 
-void AssetWindow::update_internal(Scene& p_scene) {
-    ecs::Entity id = m_parent.get_selected();
-    if (!id.is_valid()) {
-        return;
-    }
-    NameComponent* name = p_scene.get_component<NameComponent>(id);
-    ImGui::Text("Asset Name");
-    panel_util::edit_name(name);
-    ImGui::Separator();
-    if (auto mesh = p_scene.get_component<MeshComponent>(id); mesh) {
-    }
-    if (auto material = p_scene.get_component<MaterialComponent>(id); material) {
-    }
-    if (auto animation = p_scene.get_component<AnimationComponent>(id); animation) {
-    }
-}
-
-void FolderWindow::update_internal(Scene& p_scene) {
-    list_asset<AnimationComponent>("Animation", p_scene, m_parent);
+    ImGui::Columns(1);
 }
 
 }  // namespace my

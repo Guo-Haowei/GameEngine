@@ -275,26 +275,6 @@ void PropertyPanel::update_internal(Scene& scene) {
         }
         ImGui::Separator();
     });
-
-    // @TODO: animation
-    // if (mesh->armature_id.is_valid()) {
-    //     TagComponent* animation_name = scene.get_component<TagComponent>(mesh->armature_id);
-    //     AnimationComponent& animation = *scene.get_component<AnimationComponent>(mesh->armature_id);
-    //     ImGui::Text("Animation %s", animation_name->get_tag().c_str());
-    //     if (!animation.is_playing()) {
-    //         if (ImGui::Button("Play")) {
-    //             animation.flags |= AnimationComponent::PLAYING;
-    //         }
-    //     } else {
-    //         if (ImGui::Button("Stop")) {
-    //             animation.flags &= ~AnimationComponent::PLAYING;
-    //         }
-    //     }
-    //     if (ImGui::SliderFloat("Frame", &animation.timer, animation.start, animation.end)) {
-    //         animation.flags |= AnimationComponent::PLAYING;
-    //     }
-    //     ImGui::Separator();
-    // }
 }
 
 }  // namespace my
