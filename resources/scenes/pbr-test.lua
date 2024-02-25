@@ -20,7 +20,7 @@ local scene = Scene.get()
 
 local num_row = 7
 local num_col = 7
-local spacing = 2.5
+local spacing = 1.2
 
 for row = 0, num_row - 1 do
     for col = 0, num_col - 1 do
@@ -28,8 +28,8 @@ for row = 0, num_row - 1 do
         local y = (row - 0.5 * num_row) * spacing
         local translate = Vector3:new(x, y, 0)
         local id = row * num_col + col
-        local desc = scene_helper.build_sphere_desc('Sphere' .. id, translate, 1.0)
-        local material = scene_helper.build_material_desc(Vector3.UNIX_X, row / num_row, col / num_col)
+        local desc = scene_helper.build_sphere_desc('Sphere' .. id, translate, 0.5)
+        local material = scene_helper.build_material_desc(Vector3.ONE, row / num_row, col / num_col)
         desc.material = material
         scene:create_entity(desc)
     end

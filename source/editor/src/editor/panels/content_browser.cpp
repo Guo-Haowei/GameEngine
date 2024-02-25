@@ -22,10 +22,11 @@ ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Br
     auto image_icon = AssetManager::singleton().load_image_sync("@res://images/icons/image_icon.png")->get();
     auto scene_icon = AssetManager::singleton().load_image_sync("@res://images/icons/scene_icon.png")->get();
 
-    m_icon_map["."] = folder_icon;
-    m_icon_map[".png"] = image_icon;
-    m_icon_map[".hdr"] = image_icon;
-    m_icon_map[".lua"] = scene_icon;
+    m_icon_map["."] = { folder_icon, nullptr };
+    m_icon_map[".png"] = { image_icon, nullptr };
+    m_icon_map[".hdr"] = { image_icon, EditorItem::DRAG_DROP_ENV };
+    m_icon_map[".gltf"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_icon_map[".obj"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
 }
 
 ContentBrowser::~ContentBrowser() {
@@ -70,26 +71,29 @@ void ContentBrowser::update_internal(Scene&) {
             extention = full_path.extension().string();
         }
 
-        bool clicked = false;
         auto it = m_icon_map.find(extention);
         ImVec2 size{ desired_icon_size, desired_icon_size };
-        if (it != m_icon_map.end()) {
-            uint64_t handle = it->second->texture.handle;
-            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size);
-            // clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0));
-        } else {
-            clicked = ImGui::Button(name.c_str(), size);
+        if (it == m_icon_map.end()) {
+            continue;
         }
+
+        uint64_t handle = it->second.image->texture.handle;
+        bool clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size);
+        // clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0));
 
         if (is_file) {
             std::string full_path_string = full_path.string();
             char* dragged_data = _strdup(full_path_string.c_str());
 
-            ImGuiDragDropFlags flags = ImGuiDragDropFlags_SourceNoDisableHover;
-            if (ImGui::BeginDragDropSource(flags)) {
-                ImGui::SetDragDropPayload(EditorItem::DRAG_DROP_ENV, &dragged_data, sizeof(const char*));
-                ImGui::Text("%s", name.c_str());
-                ImGui::EndDragDropSource();
+            const char* action = it->second.action;
+
+            if (action) {
+                ImGuiDragDropFlags flags = ImGuiDragDropFlags_SourceNoDisableHover;
+                if (ImGui::BeginDragDropSource(flags)) {
+                    ImGui::SetDragDropPayload(action, &dragged_data, sizeof(const char*));
+                    ImGui::Text("%s", name.c_str());
+                    ImGui::EndDragDropSource();
+                }
             }
         }
 

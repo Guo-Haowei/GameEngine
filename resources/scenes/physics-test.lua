@@ -7,7 +7,7 @@ Renderer.set_env_map('@res://env/sky.hdr')
 local scene = Scene.get()
 
 -- create point light
-scene_helper.create_point_light(scene, 'PointLight', Vector3:new(0, 4, 0))
+-- scene_helper.create_point_light(scene, 'PointLight', Vector3:new(0, 4, 0))
 
 -- create ground
 local transform = scene:create_entity({

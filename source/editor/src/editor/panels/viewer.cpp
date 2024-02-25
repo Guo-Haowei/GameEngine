@@ -187,6 +187,14 @@ void Viewer::update_internal(Scene& scene) {
             // @TODO: no strdup and free
             free(dragged_data);
         }
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(EditorItem::DRAG_DROP_IMPORT)) {
+            IM_ASSERT(payload->DataSize == sizeof(const char*));
+            char* dragged_data = *(char**)payload->Data;
+            SceneManager::singleton().request_scene(dragged_data);
+
+            // @TODO: no strdup and free
+            free(dragged_data);
+        }
         ImGui::EndDragDropTarget();
     }
 

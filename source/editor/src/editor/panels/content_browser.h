@@ -15,7 +15,11 @@ protected:
     std::filesystem::path m_root_path;
     std::filesystem::path m_current_path;
 
-    std::map<std::string, Image*> m_icon_map;
+    struct ExtensionAction {
+        Image* image;
+        const char* action;
+    };
+    std::map<std::string, ExtensionAction> m_icon_map;
 };
 
 }  // namespace my
