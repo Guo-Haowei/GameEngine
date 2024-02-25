@@ -18,11 +18,7 @@ struct Subpass {
     std::vector<std::shared_ptr<RenderTarget>> color_attachments;
     std::shared_ptr<RenderTarget> depth_attachment;
 
-    virtual void set_render_target(int p_index) const = 0;
-
-    void set_render_target() const {
-        set_render_target(0);
-    }
+    virtual void set_render_target(int p_index = 0, int p_miplevel = 0) const = 0;
 };
 
 }  // namespace my

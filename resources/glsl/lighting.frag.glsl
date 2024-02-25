@@ -1,6 +1,6 @@
 #include "cbuffer.glsl.h"
 
-#define ENABLE_VXGI 1
+#define ENABLE_VXGI 0
 
 layout(location = 0) out vec4 out_color;
 layout(location = 0) in vec2 pass_uv;
@@ -11,8 +11,8 @@ layout(location = 0) in vec2 pass_uv;
 #include "vxgi/vxgi.glsl"
 #endif
 
-vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness) {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
+    return F0 + (max(vec3(1.0 - roughness) - F0, vec3(0.0))) * pow(1.0 - cosTheta, 5.0);
 }
 
 void main() {
@@ -40,8 +40,11 @@ void main() {
     const vec3 N = normal_roughness.xyz;
     const vec3 V = normalize(c_camera_position - world_position);
     const float NdotV = max(dot(N, V), 0.0);
+    vec3 R = reflect(-V, N);
+
     vec3 Lo = vec3(0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
+
     float shadow = 0.0;
     for (int light_idx = 0; light_idx < c_light_count; ++light_idx) {
         Light light = c_lights[light_idx];
@@ -82,10 +85,23 @@ void main() {
         }
         Lo += (1.0 - shadow) * direct_lighting;
     }
-    // dummy ambient
-    Lo += 0.2 * albedo.rgb;
+
+    // ambient
+
+    vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
+    vec3 kS = F;
+    vec3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;
+    vec3 irradiance = texture(c_diffuse_irradiance_map, N).rgb;
+    vec3 diffuse = irradiance * albedo.rgb;
+
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(c_prefiltered_map, R, roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 envBRDF = texture(c_brdf_map, vec2(NdotV, roughness)).rg;
+    vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     const float ao = c_enable_ssao == 0 ? 1.0 : texture(c_ssao_map, uv).r;
+    vec3 ambient = (kD * diffuse + specular) * ao;
 
 #if ENABLE_VXGI
     if (c_enable_vxgi == 1) {
@@ -104,9 +120,9 @@ void main() {
     }
 #endif
 
-    vec3 color = Lo;
+    vec3 color = Lo + ambient;
 
-    const float gamma = 2.2;
+    const float gamma = 1.0 / 2.2;
 
     color = color / (color + 1.0);
     color = pow(color, vec3(gamma));
@@ -131,8 +147,6 @@ void main() {
         }
     }
 
-    out_color = vec4(color, 1.0);
-
 #if ENABLE_CSM
     if (c_debug_csm != 0) {
         vec3 mask = vec3(0.1);
@@ -142,7 +156,9 @@ void main() {
                 break;
             }
         }
-        out_color.rgb = mix(out_color.rgb, mask, 0.1);
+        color = mix(color.rgb, mask, 0.1);
     }
 #endif
+
+    out_color = vec4(color, 1.0);
 }

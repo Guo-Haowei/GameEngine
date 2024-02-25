@@ -2,16 +2,16 @@
 
 #include "core/base/rid_owner.h"
 #include "core/debugger/profiler.h"
-#include "core/math/frustum.h"
-#include "rendering/rendering_dvars.h"
-
-// @TODO: refactor
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
+#include "core/math/frustum.h"
 #include "rendering/pipeline_state.h"
-#include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
+#include "rendering/rendering_dvars.h"
+#include "rendering/rendering_misc.h"
 
+// @TODO: refactor
+#include "rendering/r_cbuffers.h"
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern MeshData g_box;
@@ -46,6 +46,9 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 
     RenderData::Pass& pass = render_data->point_shadow_passes[p_pass_id];
 
+    pass.fill_perpass(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
 
@@ -59,7 +62,6 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.cache.c_light_index = pass.light_index;
         g_perBatchCache.Update();
@@ -90,6 +92,8 @@ void shadow_pass_func(const Subpass* p_subpass) {
         glViewport(cascade_idx * actual_width, 0, actual_width, height);
 
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
+        pass.fill_perpass(g_per_pass_cache.cache);
+        g_per_pass_cache.Update();
 
         for (const auto& draw : pass.draws) {
             const bool has_bone = draw.armature_id.is_valid();
@@ -104,7 +108,6 @@ void shadow_pass_func(const Subpass* p_subpass) {
 
             GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-            g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
             g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
             g_perBatchCache.Update();
 
@@ -143,6 +146,8 @@ void voxelization_pass_func(const Subpass*) {
 
     auto render_data = GraphicsManager::singleton().get_render_data();
     RenderData::Pass& pass = render_data->voxel_pass;
+    pass.fill_perpass(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
 
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
@@ -157,7 +162,6 @@ void voxelization_pass_func(const Subpass*) {
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 
@@ -187,6 +191,131 @@ void voxelization_pass_func(const Subpass*) {
     g_albedoVoxel.genMipMap();
     g_normalVoxel.bind();
     g_normalVoxel.genMipMap();
+
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+}
+
+static void draw_cube_map() {
+    glBindVertexArray(g_skybox.vao);
+    glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
+}
+
+// @TODO: fix
+
+void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
+    static bool s_need_update = true;
+    if (!s_need_update) {
+        return;
+    }
+    s_need_update = false;
+
+    OPTICK_EVENT();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
+    auto cube_map = p_subpass->color_attachments[0];
+    auto [width, height] = cube_map->get_size();
+
+    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = cube_map_view_matrices(vec3(0));
+    for (int i = 0; i < 6; ++i) {
+        p_subpass->set_render_target(i);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, width, height);
+
+        g_per_pass_cache.cache.c_projection_matrix = projection;
+        g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
+        g_per_pass_cache.Update();
+        draw_cube_map();
+    }
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->get_handle());
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+}
+
+// @TODO: refactor
+void generate_brdf_func(const Subpass* p_subpass) {
+    // static bool s_need_update = true;
+    // if (!s_need_update) {
+    //     return;
+    // }
+    // s_need_update = false;
+
+    OPTICK_EVENT();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_BRDF);
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    p_subpass->set_render_target();
+    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0, 0, width, height);
+    glDisable(GL_DEPTH_TEST);
+    R_DrawQuad();
+    glEnable(GL_DEPTH_TEST);
+}
+
+void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
+    static bool s_need_update = true;
+    if (!s_need_update) {
+        return;
+    }
+    s_need_update = false;
+
+    OPTICK_EVENT();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_DIFFUSE_IRRADIANCE);
+    auto [width, height] = p_subpass->depth_attachment->get_size();
+
+    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = cube_map_view_matrices(vec3(0));
+
+    for (int i = 0; i < 6; ++i) {
+        p_subpass->set_render_target(i);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, width, height);
+
+        g_per_pass_cache.cache.c_projection_matrix = projection;
+        g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
+        g_per_pass_cache.Update();
+        draw_cube_map();
+    }
+}
+
+void prefilter_pass_func(const Subpass* p_subpass) {
+    static bool s_need_update = true;
+    if (!s_need_update) {
+        return;
+    }
+    s_need_update = false;
+
+    OPTICK_EVENT();
+
+    GraphicsManager::singleton().set_pipeline_state(PROGRAM_PREFILTER);
+    auto [width, height] = p_subpass->depth_attachment->get_size();
+
+    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = cube_map_view_matrices(vec3(0));
+    const uint32_t max_mip_levels = 5;
+
+    for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
+        for (int face_id = 0; face_id < 6; ++face_id) {
+            g_per_pass_cache.cache.c_projection_matrix = projection;
+            g_per_pass_cache.cache.c_view_matrix = view_matrices[face_id];
+            g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[face_id];
+            g_per_pass_cache.cache.c_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
+            g_per_pass_cache.Update();
+
+            p_subpass->set_render_target(face_id, mip_idx);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glViewport(0, 0, width, height);
+            draw_cube_map();
+        }
+    }
+
+    return;
 }
 
 void gbuffer_pass_func(const Subpass* p_subpass) {
@@ -205,6 +334,9 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
     auto render_data = GraphicsManager::singleton().get_render_data();
     RenderData::Pass& pass = render_data->main_pass;
 
+    pass.fill_perpass(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.armature_id.is_valid();
 
@@ -218,7 +350,6 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
-        g_perBatchCache.cache.c_projection_view_model_matrix = pass.projection_view_matrix * draw.world_matrix;
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 
@@ -240,7 +371,6 @@ void ssao_pass_func(const Subpass* p_subpass) {
 
     p_subpass->set_render_target();
     DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
@@ -250,19 +380,48 @@ void ssao_pass_func(const Subpass* p_subpass) {
     R_DrawQuad();
 }
 
+// @TODO: refactor
+static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
+    auto camera = SceneManager::singleton().get_scene().m_camera;
+    buffer.c_projection_view_matrix = camera->get_projection_view_matrix();
+    buffer.c_view_matrix = camera->get_view_matrix();
+    buffer.c_projection_matrix = camera->get_projection_matrix();
+}
+
 void lighting_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     p_subpass->set_render_target();
     DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glEnable(GL_DEPTH_TEST);
+
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_LIGHTING_VXGI);
+
+    // @TODO: fix
+    auto camera = SceneManager::singleton().get_scene().m_camera;
+    fill_camera_matrices(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     R_DrawQuad();
+
+    glDepthFunc(GL_LEQUAL);
+
+    // draw skybox here
+    {
+        auto render_data = GraphicsManager::singleton().get_render_data();
+        RenderData::Pass& pass = render_data->main_pass;
+
+        pass.fill_perpass(g_per_pass_cache.cache);
+        g_per_pass_cache.Update();
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX);
+        draw_cube_map();
+    }
 }
 
 void debug_vxgi_pass_func(const Subpass* p_subpass) {
@@ -280,6 +439,11 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_DEBUG_VOXEL);
 
+    // @TODO: fix
+    auto camera = SceneManager::singleton().get_scene().m_camera;
+    fill_camera_matrices(g_per_pass_cache.cache);
+    g_per_pass_cache.Update();
+
     glBindVertexArray(g_box.vao);
 
     const int size = DVAR_GET_INT(r_voxel_size);
@@ -294,33 +458,8 @@ void fxaa_pass_func(const Subpass* p_subpass) {
     auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
-    // HACK:
-    if (DVAR_GET_BOOL(r_debug_vxgi)) {
-        debug_vxgi_pass_func(p_subpass);
-    } else {
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        // glDisable(GL_DEPTH_TEST);
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_FXAA);
-        R_DrawQuad();
-    }
-
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-
-    // @TODO: draw gui stuff to the anti-aliased
-    {
-        // @DEBUG SKYBOX
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_SKY_BOX);
-        glBindVertexArray(g_skybox.vao);
-        glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
-        glDisable(GL_CULL_FACE);
-    }
-
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_BILLBOARD);
+
     // draw billboards
     auto render_data = GraphicsManager::singleton().get_render_data();
 
@@ -333,6 +472,18 @@ void fxaa_pass_func(const Subpass* p_subpass) {
 
         glBindVertexArray(g_billboard.vao);
         glDrawElementsInstanced(GL_TRIANGLES, g_billboard.count, GL_UNSIGNED_INT, 0, 1);
+    }
+
+    // HACK:
+    if (DVAR_GET_BOOL(r_debug_vxgi)) {
+        debug_vxgi_pass_func(p_subpass);
+    } else {
+        glViewport(0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // glDisable(GL_DEPTH_TEST);
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_FXAA);
+        R_DrawQuad();
     }
 
     // glDepthFunc(GL_LESS);
@@ -374,7 +525,11 @@ void final_pass_func(const Subpass* p_subpass) {
     auto final_image_handle = GraphicsManager::singleton().find_resource(RT_RES_FXAA)->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
-#if 1
+#if 0
+    auto handle = GraphicsManager::singleton().find_resource(RT_BRDF)->get_resident_handle();
+    debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
+#endif
+#if 0
     auto shadow_map_handle = GraphicsManager::singleton().find_resource(RT_RES_SHADOW_MAP)->get_resident_handle();
     debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 800, 200);
 #endif
@@ -387,38 +542,86 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
+    // @TODO: refactor
     auto gbuffer_attachment0 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
                                                                          FORMAT_R16G16B16A16_FLOAT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto gbuffer_attachment1 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
                                                                          FORMAT_R16G16B16A16_FLOAT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto gbuffer_attachment2 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
                                                                          FORMAT_R8G8B8A8_UINT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto gbuffer_depth = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
                                                                    FORMAT_D32_FLOAT,
                                                                    RT_DEPTH_ATTACHMENT_2D,
-                                                                   w, h });
+                                                                   w, h },
+                                                 nearest_sampler());
+
     auto ssao_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_SSAO,
                                                                      FORMAT_R32_FLOAT,
                                                                      RT_COLOR_ATTACHMENT_2D,
-                                                                     w, h });
+                                                                     w, h },
+                                                   nearest_sampler());
     auto lighting_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_LIGHTING,
                                                                          FORMAT_R8G8B8A8_UINT,
                                                                          RT_COLOR_ATTACHMENT_2D,
-                                                                         w, h });
+                                                                         w, h },
+                                                       nearest_sampler());
     auto fxaa_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FXAA,
                                                                      FORMAT_R8G8B8A8_UINT,
                                                                      RT_COLOR_ATTACHMENT_2D,
-                                                                     w, h });
+                                                                     w, h },
+                                                   nearest_sampler());
     auto final_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
                                                                       FORMAT_R8G8B8A8_UINT,
                                                                       RT_COLOR_ATTACHMENT_2D,
-                                                                      w, h });
+                                                                      w, h },
+                                                    nearest_sampler());
+
+    {  // environment pass
+        RenderPassDesc desc;
+        desc.name = ENV_PASS;
+        auto pass = graph.create_pass(desc);
+
+        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
+            auto cube_map = manager.create_resource(RenderTargetDesc{ cube_map_name,
+                                                                      FORMAT_R16G16B16_FLOAT,
+                                                                      RT_COLOR_ATTACHMENT_CUBE_MAP,
+                                                                      size, size, gen_mipmap },
+                                                    p_sampler);
+            auto depth_map = manager.create_resource(RenderTargetDesc{ depth_name,
+                                                                       FORMAT_D32_FLOAT,
+                                                                       RT_DEPTH_ATTACHMENT_2D,
+                                                                       size, size, gen_mipmap },
+                                                     nearest_sampler());
+
+            auto subpass = manager.create_subpass(SubpassDesc{
+                .color_attachments = { cube_map },
+                .depth_attachment = depth_map,
+                .func = p_func,
+            });
+            return subpass;
+        };
+
+        auto brdf_image = manager.create_resource(RenderTargetDesc{ RT_BRDF, FORMAT_R16G16_FLOAT, RT_COLOR_ATTACHMENT_2D, 512, 512, false },
+                                                  linear_clamp_sampler());
+        auto brdf_subpass = manager.create_subpass(SubpassDesc{
+            .color_attachments = { brdf_image },
+            .func = generate_brdf_func,
+        });
+
+        pass->add_sub_pass(brdf_subpass);
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
+        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
+    }
 
     {  // shadow pass
         const int shadow_res = DVAR_GET_INT(r_shadow_res);
@@ -429,11 +632,13 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         auto shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_SHADOW_MAP,
                                                                     FORMAT_D32_FLOAT,
                                                                     RT_SHADOW_2D,
-                                                                    MAX_CASCADE_COUNT * shadow_res, shadow_res });
+                                                                    MAX_CASCADE_COUNT * shadow_res, shadow_res },
+                                                  shadow_map_sampler());
         RenderPassDesc desc;
         desc.name = SHADOW_PASS;
         auto pass = graph.create_pass(desc);
 
+        // @TODO: refactor
         SubPassFunc funcs[] = {
             [](const Subpass* p_subpass) {
                 point_shadow_pass_func(p_subpass, 0);
@@ -455,7 +660,8 @@ void create_render_graph_vxgi(RenderGraph& graph) {
             auto point_shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
                                                                               FORMAT_D32_FLOAT,
                                                                               RT_SHADOW_CUBE_MAP,
-                                                                              point_shadow_res, point_shadow_res });
+                                                                              point_shadow_res, point_shadow_res },
+                                                            shadow_cube_map_sampler());
 
             auto subpass = manager.create_subpass(SubpassDesc{
                 .depth_attachment = point_shadow_map,
@@ -505,10 +711,11 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     {  // lighting pass
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
-        desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS };
+        desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS, ENV_PASS };
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { lighting_attachment },
+            .depth_attachment = gbuffer_depth,
             .func = lighting_pass_func,
         });
         pass->add_sub_pass(subpass);
@@ -520,7 +727,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { fxaa_attachment },
-            .depth_attachment = gbuffer_depth,
             .func = fxaa_pass_func,
         });
         pass->add_sub_pass(subpass);

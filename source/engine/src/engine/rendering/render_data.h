@@ -1,6 +1,7 @@
 #pragma once
 #include "core/base/fixed_stack.h"
 #include "gl_utils.h"
+#include "rendering/r_cbuffers.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -24,7 +25,16 @@ struct RenderData {
     };
 
     struct Pass {
+        mat4 projection_matrix;
+        mat4 view_matrix;
         mat4 projection_view_matrix;
+
+        void fill_perpass(PerPassConstantBuffer& buffer) {
+            buffer.c_projection_matrix = projection_matrix;
+            buffer.c_view_matrix = view_matrix;
+            buffer.c_projection_view_matrix = projection_view_matrix;
+        }
+
         std::vector<Mesh> draws;
         int light_index;
 
@@ -56,7 +66,7 @@ private:
     void clear();
 
     void point_light_draw_data();
-    void fill(const Scene* p_scene, const mat4& projection_view_matrix, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2);
+    void fill(const Scene* p_scene, Pass& p_pass, FilterObjectFunc1 p_func1, FilterObjectFunc2 p_func2);
 };
 
 }  // namespace my

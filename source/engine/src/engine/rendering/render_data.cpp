@@ -47,7 +47,6 @@ void RenderData::point_light_draw_data() {
             Pass pass;
             fill(
                 scene,
-                mat4(1),
                 pass,
                 [](const ObjectComponent& object) {
                     return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
@@ -74,11 +73,12 @@ void RenderData::update(const Scene* p_scene) {
 
     // cascaded shadow map
     for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
+        // @TODO: fix this
         mat4 light_matrix = g_perFrameCache.cache.c_main_light_matrices[i];
         Frustum light_frustum(light_matrix);
+        shadow_passes[i].projection_view_matrix = light_matrix;
         fill(
             p_scene,
-            light_matrix,
             shadow_passes[i],
             [](const ObjectComponent& object) {
                 return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
@@ -91,7 +91,6 @@ void RenderData::update(const Scene* p_scene) {
     // voxel pass
     fill(
         p_scene,
-        g_perFrameCache.cache.c_projection_view_matrix,
         voxel_pass,
         [](const ObjectComponent& object) {
             return !(object.flags & ObjectComponent::RENDERABLE);
@@ -102,11 +101,14 @@ void RenderData::update(const Scene* p_scene) {
             return true;
         });
 
-    Frustum camera_frustum(g_perFrameCache.cache.c_projection_view_matrix);
+    mat4 camera_projection_view = scene->m_camera->get_projection_view_matrix();
+    Frustum camera_frustum(camera_projection_view);
     // main pass
+    main_pass.projection_matrix = scene->m_camera->get_projection_matrix();
+    main_pass.view_matrix = scene->m_camera->get_view_matrix();
+    main_pass.projection_view_matrix = scene->m_camera->get_projection_view_matrix();
     fill(
         p_scene,
-        g_perFrameCache.cache.c_projection_view_matrix,
         main_pass,
         [](const ObjectComponent& object) {
             return !(object.flags & ObjectComponent::RENDERABLE);
@@ -154,9 +156,9 @@ void RenderData::update(const Scene* p_scene) {
     }
 }
 
-void RenderData::fill(const Scene* p_scene, const mat4& projection_view_matrix, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
+void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
     scene = p_scene;
-    pass.projection_view_matrix = projection_view_matrix;
+
     uint32_t num_objects = (uint32_t)scene->get_count<ObjectComponent>();
     for (uint32_t i = 0; i < num_objects; ++i) {
         ecs::Entity entity = scene->get_entity<ObjectComponent>(i);

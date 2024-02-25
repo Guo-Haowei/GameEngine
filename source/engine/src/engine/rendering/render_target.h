@@ -5,6 +5,7 @@ namespace my {
 
 enum RenderTargetType {
     RT_COLOR_ATTACHMENT_2D,
+    RT_COLOR_ATTACHMENT_CUBE_MAP,
     RT_DEPTH_ATTACHMENT_2D,
     RT_SHADOW_2D,
     RT_SHADOW_CUBE_MAP,
@@ -16,9 +17,10 @@ struct RenderTargetDesc {
     RenderTargetType type;
     int width;
     int height;
+    bool gen_mipmap;
 
-    RenderTargetDesc(const std::string& p_name, PixelFormat p_format, RenderTargetType p_type, int p_width, int p_height)
-        : name(p_name), format(p_format), type(p_type), width(p_width), height(p_height) {
+    RenderTargetDesc(const std::string& p_name, PixelFormat p_format, RenderTargetType p_type, int p_width, int p_height, bool p_gen_mipmap = false)
+        : name(p_name), format(p_format), type(p_type), width(p_width), height(p_height), gen_mipmap(p_gen_mipmap) {
     }
 };
 

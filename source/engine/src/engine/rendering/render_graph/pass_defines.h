@@ -1,5 +1,7 @@
 #pragma once
 
+// @TODO: rename the following
+
 // shadow
 #define SHADOW_PASS             "shadow_pass"
 #define RT_RES_SHADOW_MAP       "rt_res_shadow_map"
@@ -26,9 +28,14 @@
 #define FINAL_PASS        "final_pass"
 
 // environment
-#define DIFFUSE_IRRADIANCE         "diffuse_irradiance_pass"
-#define DIFFUSE_IRRADIANCE_CUBEMAP "diffuse_irradiance_cube_map"
-#define DIFFUSE_IRRADIANCE_DEPTH   "diffuse_irradiance_depth"
+#define ENV_PASS                           "env_pass"
+#define RT_ENV_SKYBOX_CUBE_MAP             "env_cube_map"
+#define RT_ENV_SKYBOX_DEPTH                "env_depth"
+#define RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP "env_diffuse_irradiance_cube_map"
+#define RT_ENV_DIFFUSE_IRRADIANCE_DEPTH    "env_diffuse_irradiance_depth"
+#define RT_ENV_PREFILTER_CUBE_MAP          "env_prefilter_cube_map"
+#define RT_ENV_PREFILTER_DEPTH             "env_prefilter_depth"
+#define RT_BRDF                            "rt_brdf"
 
 #define RT_RES_LIGHTING "rt_res_light"
 #define RT_RES_FXAA     "rt_res_fxaa"

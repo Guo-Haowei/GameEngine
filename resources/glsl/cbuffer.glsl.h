@@ -23,10 +23,6 @@ struct ConstantBufferBase {
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
 using samplerCube = uint64_t;
-// struct samplerCube {
-//     uint64_t data;
-//     uint64_t padding;
-// };
 static_assert(MAX_CASCADE_COUNT == 4);
 #endif
 
@@ -45,11 +41,23 @@ struct Light {
     mat4 matrices[6];
 };
 
-CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
+CONSTANT_BUFFER(PerBatchConstantBuffer, 0) {
+    mat4 c_model_matrix;
+
+    vec3 _c_ddddd_padding;
+    int c_light_index;  // HACK: shouldn't be here
+};
+
+CONSTANT_BUFFER(PerPassConstantBuffer, 1) {
     mat4 c_view_matrix;
     mat4 c_projection_matrix;
     mat4 c_projection_view_matrix;
+    vec3 _c_per_pass_padding;
+    float c_per_pass_roughness;
+};
 
+// @TODO: per subpass constant
+CONSTANT_BUFFER(PerFrameConstantBuffer, 2) {
     Light c_lights[MAX_LIGHT_COUNT];
 
     // @TODO: move it to Light
@@ -83,15 +91,7 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 0) {
     int c_debug_csm;
 };
 
-CONSTANT_BUFFER(PerBatchConstantBuffer, 1) {
-    mat4 c_projection_view_model_matrix;
-    mat4 c_model_matrix;
-
-    vec3 _c_ddddd_padding;
-    int c_light_index;  // HACK: shouldn't be here
-};
-
-CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
+CONSTANT_BUFFER(MaterialConstantBuffer, 3) {
     vec4 c_albedo_color;
     float c_metallic;
     float c_roughness;
@@ -108,11 +108,11 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 2) {
     sampler2D _c_dummy_padding;
 };
 
-CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
+CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
     sampler2D c_shadow_map;
-    sampler2D c_skybox_map;
+    sampler2D c_hdr_env_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
 
@@ -125,14 +125,19 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 3) {
     sampler2D c_kernel_noise_map;
     sampler2D c_fxaa_image;
     sampler2D c_fxaa_input_image;
+
+    sampler2D c_brdf_map;
+    samplerCube c_env_map;
+    samplerCube c_diffuse_irradiance_map;
+    samplerCube c_prefiltered_map;
 };
 
-CONSTANT_BUFFER(BoneConstantBuffer, 4) {
+CONSTANT_BUFFER(BoneConstantBuffer, 5) {
     mat4 c_bones[MAX_BONE_COUNT];
 };
 
 // @TODO: make it more general, something like 2D draw
-CONSTANT_BUFFER(DebugDrawConstantBuffer, 5) {
+CONSTANT_BUFFER(DebugDrawConstantBuffer, 6) {
     vec2 c_debug_draw_pos;
     vec2 c_debug_draw_size;
 

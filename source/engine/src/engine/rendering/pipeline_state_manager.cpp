@@ -66,19 +66,19 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert.glsl";
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
         info.ps = "@res://glsl/ssao.frag";
         m_cache[PROGRAM_SSAO] = create(info);
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert.glsl";
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
         info.ps = "@res://glsl/lighting.frag.glsl";
         m_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/fullscreen.vert.glsl";
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
         info.ps = "@res://glsl/fxaa.frag";
         m_cache[PROGRAM_FXAA] = create(info);
     }
@@ -109,9 +109,33 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "@res://glsl/cube_map.vert.glsl";
-        info.ps = "@res://glsl/cube_map.frag.glsl";
-        m_cache[PROGRAM_SKY_BOX] = create(info);
+        info.vs = "@res://glsl/env/cube_map.vert.glsl";
+        info.ps = "@res://glsl/env/to_cube_map.frag.glsl";
+        m_cache[PROGRAM_ENV_SKYBOX_TO_CUBE_MAP] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/env/cube_map.vert.glsl";
+        info.ps = "@res://glsl/env/diffuse_irradiance.frag.glsl";
+        m_cache[PROGRAM_DIFFUSE_IRRADIANCE] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/env/cube_map.vert.glsl";
+        info.ps = "@res://glsl/env/prefilter.frag.glsl";
+        m_cache[PROGRAM_PREFILTER] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/env/skybox.vert.glsl";
+        info.ps = "@res://glsl/env/skybox.frag.glsl";
+        m_cache[PROGRAM_ENV_SKYBOX] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "@res://glsl/screenspace_quad.vert.glsl";
+        info.ps = "@res://glsl/brdf.frag.glsl";
+        m_cache[PROGRAM_BRDF] = create(info);
     }
     {
         PipelineCreateInfo info;

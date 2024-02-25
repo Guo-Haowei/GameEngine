@@ -5,6 +5,7 @@
 #include "core/framework/module.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/render_graph.h"
+#include "rendering/sampler.h"
 #include "scene/material_component.h"
 #include "scene/scene_components.h"
 
@@ -29,7 +30,8 @@ public:
 
     void set_pipeline_state(PipelineStateName p_name);
 
-    virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc) = 0;
+    // @TODO: better name
+    virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) = 0;
     virtual std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const = 0;
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
