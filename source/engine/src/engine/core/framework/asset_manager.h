@@ -34,16 +34,15 @@ public:
 
     bool initialize() override;
     void finalize() override;
-    void update();
 
-    void load_scene_async(const std::string& path, LoadSuccessFunc on_success);
+    void load_scene_async(const std::string& p_path, LoadSuccessFunc p_on_success);
 
-    ImageHandle* load_image_sync(const std::string& path);
-    ImageHandle* load_image_async(const std::string& path);
-    ImageHandle* find_image(const std::string& path);
+    ImageHandle* load_image_sync(const std::string& p_path);
+    ImageHandle* load_image_async(const std::string& p_path, LoadSuccessFunc = nullptr);
+    ImageHandle* find_image(const std::string& p_path);
 
-    std::shared_ptr<File> load_file_sync(const std::string& path);
-    std::shared_ptr<File> find_file(const std::string& path);
+    std::shared_ptr<File> load_file_sync(const std::string& p_path);
+    std::shared_ptr<File> find_file(const std::string& p_path);
 
     static void worker_main();
 

@@ -7,7 +7,7 @@
 #include "core/math/geometry.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/render_data.h"
-#include "rendering/rendering.h"
+#include "rendering/renderer.h"
 /////
 #include "assets/image.h"
 #include "core/base/rid_owner.h"
@@ -272,10 +272,6 @@ static void create_ssao_resource() {
 }
 
 void OpenGLGraphicsManager::createGpuResources() {
-    auto skybox = AssetManager::singleton().load_image_sync("@res://env/sky.hdr");
-    g_constantCache.cache.c_hdr_env_map = skybox->get()->texture.resident_handle;
-    // @TODO: enviroment
-
     create_ssao_resource();
 
     R_Alloc_Cbuffers();
@@ -576,8 +572,9 @@ void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponen
 void OpenGLGraphicsManager::render() {
     OPTICK_EVENT();
 
+    // @TODO: move outside
     Scene& scene = SceneManager::singleton().get_scene();
-    fill_constant_buffers(scene);
+    renderer::fill_constant_buffers(scene);
 
     m_render_data->update(&scene);
 

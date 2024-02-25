@@ -1,5 +1,6 @@
 #include "lua_scene_binding.h"
 
+#include "rendering/renderer.h"
 #include "sol/sol.hpp"
 
 namespace my {
@@ -163,11 +164,22 @@ struct LuaScene {
     Scene* scene;
 };
 
+static void open_renderer_lib(sol::state& p_lua) {
+    sol::table lib = p_lua.create_table();
+
+    p_lua.set("Renderer", lib);
+    lib.set_function("set_env_map", [](const std::string& p_env_path) {
+        renderer::request_env_map(p_env_path);
+    });
+}
+
 bool load_lua_scene(const std::string& p_path, Scene* p_scene) {
     sol::state lua;
     lua.open_libraries();
 
     // install libs
+    open_renderer_lib(lua);
+
     sol::table lib = lua.create_table();
 
     lua.new_usertype<LuaScene>("LuaScene",

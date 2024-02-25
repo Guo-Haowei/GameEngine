@@ -1,11 +1,61 @@
-#include "rendering.h"
+#include "renderer.h"
 
+#include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
-#include "rendering/rendering_misc.h"
 
-namespace my {
+#define DEFINE_DVAR
+#include "rendering_dvars.h"
+
+namespace my::renderer {
+
+static struct {
+    std::string prev_env_map;
+    bool need_update_env = false;
+} s_renderer_glob;
+
+bool need_update_env() {
+    return s_renderer_glob.need_update_env;
+}
+
+void reset_need_update_env() {
+    s_renderer_glob.need_update_env = false;
+}
+
+void request_env_map(const std::string& path) {
+    if (path == s_renderer_glob.prev_env_map) {
+        return;
+    }
+
+    if (!s_renderer_glob.prev_env_map.empty()) {
+        LOG_WARN("TODO: release {}", s_renderer_glob.prev_env_map.empty());
+    }
+
+    s_renderer_glob.prev_env_map = path;
+    auto image = AssetManager::singleton().find_image(path);
+    if (image) {
+        g_constantCache.cache.c_hdr_env_map = image->get()->texture.resident_handle;
+        g_constantCache.Update();
+        s_renderer_glob.need_update_env = true;
+        return;
+    }
+
+    AssetManager::singleton().load_image_async(path, [](void* p_asset, void* p_userdata) {
+        Image* image = reinterpret_cast<Image*>(p_asset);
+        ImageHandle* handle = reinterpret_cast<ImageHandle*>(p_userdata);
+        DEV_ASSERT(image);
+        DEV_ASSERT(handle);
+
+        handle->set(image);
+        GraphicsManager::singleton().request_texture(handle, [](ImageHandle* p_image_handle) {
+            // @TODO: better way
+            g_constantCache.cache.c_hdr_env_map = p_image_handle->get()->texture.resident_handle;
+            g_constantCache.Update();
+            s_renderer_glob.need_update_env = true;
+        });
+    });
+}
 
 mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_matrix) {
     const vec3 center = p_world_bound.center();
@@ -217,4 +267,19 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_voxel_size = voxel_size;
 }
 
-}  // namespace my
+void register_rendering_dvars(){
+#define REGISTER_DVAR
+#include "rendering_dvars.h"
+}
+
+std::array<mat4, 6> cube_map_view_matrices(const vec3& p_eye) {
+    std::array<mat4, 6> matrices;
+    matrices[0] = glm::lookAt(p_eye, p_eye + glm::vec3(+1, +0, +0), glm::vec3(0, -1, +0));
+    matrices[1] = glm::lookAt(p_eye, p_eye + glm::vec3(-1, +0, +0), glm::vec3(0, -1, +0));
+    matrices[2] = glm::lookAt(p_eye, p_eye + glm::vec3(+0, +1, +0), glm::vec3(0, +0, +1));
+    matrices[3] = glm::lookAt(p_eye, p_eye + glm::vec3(+0, -1, +0), glm::vec3(0, +0, -1));
+    matrices[4] = glm::lookAt(p_eye, p_eye + glm::vec3(+0, +0, +1), glm::vec3(0, -1, +0));
+    matrices[5] = glm::lookAt(p_eye, p_eye + glm::vec3(+0, +0, -1), glm::vec3(0, -1, +0));
+    return matrices;
+}
+}  // namespace my::renderer

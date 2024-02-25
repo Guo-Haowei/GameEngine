@@ -2,6 +2,8 @@ local geomath = require('geomath')
 local scene_helper = require('scene-helper')
 local Vector3 = geomath.Vector3
 
+Renderer.set_env_map('@res://env/sky.hdr')
+
 local scene = Scene.get()
 
 -- create point light

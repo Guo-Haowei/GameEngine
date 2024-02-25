@@ -7,6 +7,7 @@ namespace my {
 class ContentBrowser : public EditorWindow {
 public:
     ContentBrowser(EditorLayer& p_editor);
+    ~ContentBrowser();
 
 protected:
     void update_internal(Scene& p_scene) override;

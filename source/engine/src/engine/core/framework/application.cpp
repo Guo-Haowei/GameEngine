@@ -16,8 +16,8 @@
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
 #include "drivers/glfw/glfw_display_manager.h"
+#include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
-#include "rendering/rendering_misc.h"
 
 // @TODO: rename
 #include "core/framework/asset_manager.h"
@@ -78,7 +78,7 @@ int Application::run(int argc, const char** argv) {
 
     // dvars
     register_common_dvars();
-    register_rendering_dvars();
+    renderer::register_rendering_dvars();
     DynamicVariableManager::deserialize();
     DynamicVariableManager::parse(m_command_line);
 
@@ -124,8 +124,6 @@ int Application::run(int argc, const char** argv) {
 
         input::begin_frame();
 
-        m_asset_manager->update();
-
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.get_duration().to_second());
         dt = glm::min(dt, 0.5f);
@@ -148,7 +146,8 @@ int Application::run(int argc, const char** argv) {
 
         m_physics_manager->update(dt);
 
-        m_graphics_manager->render();
+        m_graphics_manager->update(dt);
+        renderer::reset_need_update_env();
 
         m_display_server->present();
 
@@ -164,6 +163,8 @@ int Application::run(int argc, const char** argv) {
     DVAR_SET_IVEC2(window_resolution, w, h);
     auto [x, y] = DisplayManager::singleton().get_window_pos();
     DVAR_SET_IVEC2(window_position, x, y);
+
+    m_layers.clear();
 
     // @TODO: move it to request shutdown
     thread::request_shutdown();

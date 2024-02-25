@@ -9,6 +9,9 @@ build/
 user/
 project/
 
+# resources
+*.hdr
+
 # vscode
 .vscode/
 

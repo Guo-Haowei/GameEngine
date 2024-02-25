@@ -10,7 +10,7 @@ DVAR_IVEC2(window_position, DVAR_FLAG_CACHE, "Request window position", 40, 40);
 DVAR_BOOL(verbose, 0, "Print verbose log", true);
 
 // cache
-DVAR_STRING(recent_files, DVAR_FLAG_CACHE, "A list of recent opened scenes", "");
+DVAR_STRING(content_browser_path, DVAR_FLAG_CACHE, "", "");
 
 // gui
 DVAR_BOOL(show_editor, DVAR_FLAG_CACHE, "Show editor", true);

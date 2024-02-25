@@ -4,20 +4,17 @@
 
 #include "core/framework/common_dvars.h"
 #include "core/framework/display_manager.h"
+#include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
 #include "core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
-#include "rendering/rendering_dvars.h"
-// @TODO: refactor this
-#include "core/framework/graphics_manager.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
+#include "rendering/renderer.h"
+#include "rendering/rendering_dvars.h"
 
 namespace my {
-
-Viewer::Viewer(EditorLayer& editor) : EditorWindow("Viewer", editor) {
-}
 
 void Viewer::update_data() {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
@@ -179,6 +176,19 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
 
 void Viewer::update_internal(Scene& scene) {
     Camera& camera = *scene.m_camera;
+
+    ImGui::Dummy(ImGui::GetContentRegionAvail());
+    if (ImGui::BeginDragDropTarget()) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(EditorItem::DRAG_DROP_ENV)) {
+            IM_ASSERT(payload->DataSize == sizeof(const char*));
+            char* dragged_data = *(char**)payload->Data;
+            renderer::request_env_map(dragged_data);
+
+            // @TODO: no strdup and free
+            free(dragged_data);
+        }
+        ImGui::EndDragDropTarget();
+    }
 
     update_data();
 
