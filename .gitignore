@@ -9,6 +9,10 @@ build/
 user/
 project/
 
+# resources
+*.hdr
+scenes/
+
 # vscode
 .vscode/
 

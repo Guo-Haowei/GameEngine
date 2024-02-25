@@ -9,15 +9,14 @@ public:
 
     bool initialize() final;
     void finalize() final;
-    void render() final;
 
     std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) final;
     std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const final;
 
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) override;
 
-    // @TODO: filter
     void create_texture(ImageHandle* handle) final;
+    // @TODO: filter
 
     uint64_t get_final_image() const final;
 
@@ -27,6 +26,7 @@ public:
 protected:
     void on_scene_change(const Scene& p_scene) final;
     void set_pipeline_state_impl(PipelineStateName p_name) final;
+    void render() final;
 
     void createGpuResources();
     void destroyGpuResources();

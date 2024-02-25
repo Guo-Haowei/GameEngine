@@ -1,5 +1,6 @@
 #pragma once
 #include "assets/image.h"
+#include "core/base/concurrent_queue.h"
 #include "core/base/singleton.h"
 #include "core/framework/event_queue.h"
 #include "core/framework/module.h"
@@ -18,6 +19,8 @@ struct RenderData;
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
+    using OnTextureLoadFunc = void (*)(ImageHandle* p_image_handle);
+
     enum RenderGraph {
         RENDER_GRAPH_NONE,
         RENDER_GRAPH_BASE_COLOR,
@@ -26,7 +29,7 @@ public:
 
     GraphicsManager(std::string_view p_name) : Module(p_name) {}
 
-    virtual void render() = 0;
+    void update(float p_delta);
 
     void set_pipeline_state(PipelineStateName p_name);
 
@@ -38,6 +41,7 @@ public:
 
     // @TODO: sampler
     virtual void create_texture(ImageHandle* p_handle) = 0;
+    void request_texture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
     // virtual std::shared_ptr<rg::Subpass> create_subpass(const rg::SubpassDesc& p_desc) = 0;
 
@@ -57,6 +61,7 @@ public:
 protected:
     virtual void on_scene_change(const Scene& p_scene) = 0;
     virtual void set_pipeline_state_impl(PipelineStateName p_name) = 0;
+    virtual void render() = 0;
 
     RenderGraph m_method = RENDER_GRAPH_NONE;
 
@@ -67,6 +72,12 @@ protected:
     std::map<std::string, std::shared_ptr<RenderTarget>> m_resource_lookup;
 
     PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
+
+    struct ImageTask {
+        ImageHandle* handle;
+        OnTextureLoadFunc func;
+    };
+    ConcurrentQueue<ImageTask> m_loaded_images;
 };
 
 }  // namespace my

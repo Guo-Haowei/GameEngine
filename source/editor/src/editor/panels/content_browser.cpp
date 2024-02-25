@@ -1,112 +1,115 @@
 #include "content_browser.h"
 
+#include "core/framework/asset_manager.h"
+#include "core/framework/common_dvars.h"
 #include "editor/panels/panel_util.h"
 
 namespace my {
 
-class FolderWindow : public EditorWindow {
-public:
-    FolderWindow(EditorLayer& p_editor, ContentBrowser& p_parent) : EditorWindow("Content Browser", p_editor), m_parent(p_parent) {}
+namespace fs = std::filesystem;
 
-protected:
-    void update_internal(Scene& p_scene) override;
+ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Browser", p_editor) {
+    m_root_path = fs::path{ fs::path(ROOT_FOLDER) / "resources" };
 
-    ContentBrowser& m_parent;
-};
+    const std::string& cached_path = DVAR_GET_STRING(content_browser_path);
+    if (cached_path.empty()) {
+        m_current_path = m_root_path;
+    } else {
+        m_current_path = cached_path;
+    }
 
-class AssetWindow : public EditorWindow {
-public:
-    AssetWindow(EditorLayer& p_editor, ContentBrowser& p_parent) : EditorWindow("Asset", p_editor), m_parent(p_parent) {}
+    auto folder_icon = AssetManager::singleton().load_image_sync("@res://images/icons/folder_icon.png")->get();
+    auto image_icon = AssetManager::singleton().load_image_sync("@res://images/icons/image_icon.png")->get();
+    auto scene_icon = AssetManager::singleton().load_image_sync("@res://images/icons/scene_icon.png")->get();
 
-protected:
-    void update_internal(Scene& p_scene) override;
-
-    ContentBrowser& m_parent;
-};
-
-ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorCompositeWindow(p_editor) {
-    add_window(std::make_shared<FolderWindow>(p_editor, *this));
-    add_window(std::make_shared<AssetWindow>(p_editor, *this));
+    m_icon_map["."] = { folder_icon, nullptr };
+    m_icon_map[".png"] = { image_icon, nullptr };
+    m_icon_map[".hdr"] = { image_icon, EditorItem::DRAG_DROP_ENV };
+    m_icon_map[".gltf"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_icon_map[".obj"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
 }
 
-void ContentBrowser::set_selected(ecs::Entity p_entity) {
-    m_selected = p_entity;
-    LOG("asset {} selected!", p_entity.get_id());
+ContentBrowser::~ContentBrowser() {
+    DVAR_SET_STRING(content_browser_path, m_current_path.string());
 }
 
-template<typename T>
-static void list_asset(const char* type, const Scene& p_scene, ContentBrowser& p_content_browser) {
-    constexpr float indent_width = 8.f;
-    if (ImGui::TreeNodeEx(type, ImGuiTreeNodeFlags_NoTreePushOnOpen)) {
-        ImGui::Indent(indent_width);
-        for (size_t idx = 0; idx < p_scene.get_count<T>(); ++idx) {
-            auto id = p_scene.get_entity<T>(idx);
-            const NameComponent* name = p_scene.get_component<NameComponent>(id);
-            auto string_id = std::format("##{}", id.get_id());
-            auto asset_name = std::format("{} (id: {})", name->get_name(), id.get_id());
-            DEV_ASSERT(name);
-            ImGui::TreeNodeEx(string_id.c_str(), ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf);
-            ImGui::SameLine();
-            ImGui::Selectable(asset_name.c_str());
-            if (ImGui::IsItemHovered()) {
-                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                    p_content_browser.set_selected(id);
+void ContentBrowser::update_internal(Scene&) {
+    if (ImGui::Button("<-")) {
+        if (m_current_path == m_root_path) {
+            LOG_WARN("???");
+        }
+        m_current_path = m_current_path.parent_path();
+    }
+
+    // ImGui::Image((ImTextureID)handle, ImVec2(dim.x, dim.y), ImVec2(0, 1), ImVec2(1, 0));
+
+    ImVec2 window_size = ImGui::GetWindowSize();
+    float desired_icon_size = 128.f;
+    int num_col = static_cast<int>(glm::floor(window_size.x / desired_icon_size));
+    num_col = glm::max(1, num_col);
+
+    ImGui::Columns(num_col, nullptr, false);
+
+    for (const auto& entry : fs::directory_iterator(m_current_path)) {
+        const bool is_file = entry.is_regular_file();
+        const bool is_dir = entry.is_directory();
+        if (!is_dir && !is_file) {
+            continue;
+        }
+
+        fs::path full_path = entry.path();
+        fs::path relative_path = fs::relative(full_path, m_root_path);
+        // std::string relative_path_string = relative_path.string();
+
+        std::string name;
+        std::string extention;
+        if (is_dir) {
+            name = full_path.stem().string();
+            extention = ".";
+        } else if (is_file) {
+            name = full_path.filename().string();
+            extention = full_path.extension().string();
+        }
+
+        auto it = m_icon_map.find(extention);
+        ImVec2 size{ desired_icon_size, desired_icon_size };
+        if (it == m_icon_map.end()) {
+            continue;
+        }
+
+        uint64_t handle = it->second.image->texture.handle;
+        bool clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size);
+        // clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0));
+
+        if (is_file) {
+            std::string full_path_string = full_path.string();
+            char* dragged_data = _strdup(full_path_string.c_str());
+
+            const char* action = it->second.action;
+
+            if (action) {
+                ImGuiDragDropFlags flags = ImGuiDragDropFlags_SourceNoDisableHover;
+                if (ImGui::BeginDragDropSource(flags)) {
+                    ImGui::SetDragDropPayload(action, &dragged_data, sizeof(const char*));
+                    ImGui::Text("%s", name.c_str());
+                    ImGui::EndDragDropSource();
                 }
             }
         }
-        ImGui::Unindent(indent_width);
-    }
-}
 
-void AssetWindow::update_internal(Scene& p_scene) {
-    ecs::Entity id = m_parent.get_selected();
-    if (!id.is_valid()) {
-        return;
-    }
-    NameComponent* name = p_scene.get_component<NameComponent>(id);
-    ImGui::Text("Asset Name");
-    panel_util::edit_name(name);
-    ImGui::Separator();
-    if (auto mesh = p_scene.get_component<MeshComponent>(id); mesh) {
-    }
-    if (auto material = p_scene.get_component<MaterialComponent>(id); material) {
-        ImGui::DragFloat("metallic", &material->metallic, 0.01f, 0.0f, 1.0f);
-        ImGui::DragFloat("roughness", &material->roughness, 0.01f, 0.0f, 1.0f);
-        for (int i = 0; i < MaterialComponent::TEXTURE_MAX; ++i) {
-            auto& texture = material->textures[i];
-            ImGui::Text("path: %s", texture.path.c_str());
-            // @TODO: safer
-            auto check_box_id = std::format("Enabled##{}", i);
-            ImGui::Checkbox(check_box_id.c_str(), &texture.enabled);
-            Image* image = texture.image ? texture.image->get() : nullptr;
-            uint64_t handle = image ? image->texture.handle : 0;
-            if (handle) {
-                ImGui::Image((ImTextureID)handle, ImVec2(256, 256));
-            }
-        }
-    }
-    if (auto animation = p_scene.get_component<AnimationComponent>(id); animation) {
-        ImGui::Text("Animation %s", name->get_name().c_str());
-        if (!animation->is_playing()) {
-            if (ImGui::Button("play")) {
-                animation->flags |= AnimationComponent::PLAYING;
-            }
-        } else {
-            if (ImGui::Button("stop")) {
-                animation->flags &= ~AnimationComponent::PLAYING;
-            }
-        }
-        if (ImGui::SliderFloat("Frame", &animation->timer, animation->start, animation->end)) {
-            animation->flags |= AnimationComponent::PLAYING;
-        }
-        ImGui::Separator();
-    }
-}
+        ImGui::Text(name.c_str());
 
-void FolderWindow::update_internal(Scene& p_scene) {
-    list_asset<MeshComponent>("Mesh", p_scene, m_parent);
-    list_asset<MaterialComponent>("Material", p_scene, m_parent);
-    list_asset<AnimationComponent>("Animation", p_scene, m_parent);
+        if (clicked) {
+            if (is_dir) {
+                m_current_path = full_path;
+            } else if (is_file) {
+            }
+        }
+
+        ImGui::NextColumn();
+    }
+
+    ImGui::Columns(1);
 }
 
 }  // namespace my

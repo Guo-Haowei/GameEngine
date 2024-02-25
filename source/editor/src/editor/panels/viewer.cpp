@@ -4,20 +4,17 @@
 
 #include "core/framework/common_dvars.h"
 #include "core/framework/display_manager.h"
+#include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
 #include "core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
-#include "rendering/rendering_dvars.h"
-// @TODO: refactor this
-#include "core/framework/graphics_manager.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
+#include "rendering/renderer.h"
+#include "rendering/rendering_dvars.h"
 
 namespace my {
-
-Viewer::Viewer(EditorLayer& editor) : EditorWindow("Viewer", editor) {
-}
 
 void Viewer::update_data() {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
@@ -62,10 +59,10 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             const vec3 ray_end = ray_start + direction * camera.get_far();
             Ray ray(ray_start, ray_end);
 
-            // const auto intersection_result = scene.intersects(ray);
-            const auto intersection_result = scene.select(ray);
+            const auto result = scene.intersects(ray);
+            // const auto result = scene.select(ray);
 
-            m_editor.select_entity(intersection_result.entity);
+            m_editor.select_entity(result.entity);
         }
     }
 }
@@ -179,6 +176,27 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
 
 void Viewer::update_internal(Scene& scene) {
     Camera& camera = *scene.m_camera;
+
+    ImGui::Dummy(ImGui::GetContentRegionAvail());
+    if (ImGui::BeginDragDropTarget()) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(EditorItem::DRAG_DROP_ENV)) {
+            IM_ASSERT(payload->DataSize == sizeof(const char*));
+            char* dragged_data = *(char**)payload->Data;
+            renderer::request_env_map(dragged_data);
+
+            // @TODO: no strdup and free
+            free(dragged_data);
+        }
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(EditorItem::DRAG_DROP_IMPORT)) {
+            IM_ASSERT(payload->DataSize == sizeof(const char*));
+            char* dragged_data = *(char**)payload->Data;
+            SceneManager::singleton().request_scene(dragged_data);
+
+            // @TODO: no strdup and free
+            free(dragged_data);
+        }
+        ImGui::EndDragDropTarget();
+    }
 
     update_data();
 

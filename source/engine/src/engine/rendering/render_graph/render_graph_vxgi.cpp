@@ -7,8 +7,8 @@
 #include "core/math/frustum.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_data.h"
+#include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
-#include "rendering/rendering_misc.h"
 
 // @TODO: refactor
 #include "rendering/r_cbuffers.h"
@@ -205,20 +205,18 @@ static void draw_cube_map() {
 // @TODO: fix
 
 void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
-    static bool s_need_update = true;
-    if (!s_need_update) {
+    OPTICK_EVENT();
+
+    if (!renderer::need_update_env()) {
         return;
     }
-    s_need_update = false;
-
-    OPTICK_EVENT();
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
     auto cube_map = p_subpass->color_attachments[0];
     auto [width, height] = cube_map->get_size();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = cube_map_view_matrices(vec3(0));
+    auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
     for (int i = 0; i < 6; ++i) {
         p_subpass->set_render_target(i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -238,13 +236,11 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
 
 // @TODO: refactor
 void generate_brdf_func(const Subpass* p_subpass) {
-    // static bool s_need_update = true;
-    // if (!s_need_update) {
-    //     return;
-    // }
-    // s_need_update = false;
-
     OPTICK_EVENT();
+
+    if (!renderer::need_update_env()) {
+        return;
+    }
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_BRDF);
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
@@ -257,19 +253,16 @@ void generate_brdf_func(const Subpass* p_subpass) {
 }
 
 void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
-    static bool s_need_update = true;
-    if (!s_need_update) {
+    OPTICK_EVENT();
+    if (!renderer::need_update_env()) {
         return;
     }
-    s_need_update = false;
-
-    OPTICK_EVENT();
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_DIFFUSE_IRRADIANCE);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = cube_map_view_matrices(vec3(0));
+    auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
 
     for (int i = 0; i < 6; ++i) {
         p_subpass->set_render_target(i);
@@ -285,19 +278,16 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
 }
 
 void prefilter_pass_func(const Subpass* p_subpass) {
-    static bool s_need_update = true;
-    if (!s_need_update) {
+    OPTICK_EVENT();
+    if (!renderer::need_update_env()) {
         return;
     }
-    s_need_update = false;
-
-    OPTICK_EVENT();
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_PREFILTER);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = cube_map_view_matrices(vec3(0));
+    auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
     const uint32_t max_mip_levels = 5;
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {

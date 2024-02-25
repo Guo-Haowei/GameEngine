@@ -1,6 +1,6 @@
 #include "cbuffer.glsl.h"
 
-#define ENABLE_VXGI 0
+#define ENABLE_VXGI 1
 
 layout(location = 0) out vec4 out_color;
 layout(location = 0) in vec2 pass_uv;
@@ -105,7 +105,7 @@ void main() {
 
 #if ENABLE_VXGI
     if (c_enable_vxgi == 1) {
-        const vec3 F = fresnelSchlickRoughness(NdotV, F0, roughness);
+        const vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
         const vec3 kS = F;
         const vec3 kD = (1.0 - kS) * (1.0 - metallic);
 
