@@ -22,7 +22,7 @@ local material = {
 --]]
 
 function scene_helper.create_point_light(p_scene, p_name, p_position)
-    Scene.create_entity(p_scene, {
+    return p_scene:create_entity({
         type = 'POINT_LIGHT',
         name = p_name,
         transform = { translate = p_position },

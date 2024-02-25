@@ -29,6 +29,6 @@ for row = 0, num_row - 1 do
         local desc = scene_helper.build_sphere_desc('Sphere' .. id, translate, 1.0)
         local material = scene_helper.build_material_desc(Vector3.UNIX_X, row / num_row, col / num_col)
         desc.material = material
-        Scene.create_entity(scene, desc)
+        scene:create_entity(desc)
     end
 end

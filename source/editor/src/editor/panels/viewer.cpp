@@ -62,10 +62,10 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             const vec3 ray_end = ray_start + direction * camera.get_far();
             Ray ray(ray_start, ray_end);
 
-            // const auto intersection_result = scene.intersects(ray);
-            const auto intersection_result = scene.select(ray);
+            const auto result = scene.intersects(ray);
+            // const auto result = scene.select(ray);
 
-            m_editor.select_entity(intersection_result.entity);
+            m_editor.select_entity(result.entity);
         }
     }
 }

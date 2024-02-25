@@ -8,8 +8,14 @@ local scene = Scene.get()
 scene_helper.create_point_light(scene, 'PointLight', Vector3:new(0, 4, 0))
 
 -- create ground
+local transform = scene:create_entity({
+    name = 'transform',
+    transform = {},
+})
+
 local ground_size = Vector3:new(6, 0.03, 6)
-Scene.create_entity(scene, scene_helper.build_cube_desc('Ground', Vector3.ZERO, ground_size, 0.0))
+local ground = scene:create_entity_detached(scene_helper.build_cube_desc('Ground', Vector3.ZERO, ground_size, 0.0))
+scene:attach(ground, transform)
 
 -- create objects
 for t = 1, 21 do
@@ -20,9 +26,16 @@ for t = 1, 21 do
     local s = 0.25
     local size = Vector3:new(s, s, s)
 
+    local desc;
+
     if t % 2 == 0 then
-        Scene.create_entity(scene, scene_helper.build_cube_desc('Cube' .. t, translate, size, 1.0))
+        desc = scene_helper.build_cube_desc('Cube' .. t, translate, size, 1.0)
     else
-        Scene.create_entity(scene, scene_helper.build_sphere_desc('Sphere' .. t, translate, s, 1.0))
+        desc = scene_helper.build_sphere_desc('Sphere' .. t, translate, s, 1.0)
     end
+
+    local material = scene_helper.build_material_desc(Vector3.ONE, 0.99, 0.01)
+    desc.material = material
+    local object = scene:create_entity_detached(desc)
+    scene:attach(object, transform)
 end

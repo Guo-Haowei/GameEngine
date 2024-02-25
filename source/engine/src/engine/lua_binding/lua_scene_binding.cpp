@@ -98,6 +98,9 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
 
         TransformComponent* transform = p_scene->get_component<TransformComponent>(id);
         if (!transform) {
+            DEV_ASSERT(!id.is_valid());
+            id = p_scene->create_name_entity(name);
+
             transform = &p_scene->create<TransformComponent>(id);
         }
         transform->set_translation(translate);
@@ -130,9 +133,35 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     }
 
     DEV_ASSERT(id.is_valid());
-    p_scene->attach_component(id, p_scene->m_root);
     return id;
 }
+
+struct LuaScene {
+    LuaScene(Scene* p_scene) : scene(p_scene) {}
+
+    uint32_t get_root() const { return scene->m_root.get_id(); }
+
+    uint32_t create_entity(const sol::table& p_components) {
+        uint32_t id = create_entity_detached(p_components);
+        scene->attach_component(Entity{ id }, scene->m_root);
+        return id;
+    }
+
+    uint32_t create_entity_detached(const sol::table& p_components) {
+        Entity id = lua_scene_create_entity(scene, p_components);
+        return id.get_id();
+    }
+
+    void attach(uint32_t p_child, uint32_t p_parent) {
+        scene->attach_component(Entity{ p_child }, Entity{ p_parent });
+    }
+
+    void attach_root(uint32_t p_child) {
+        scene->attach_component(Entity{ p_child }, Entity{ scene->m_root });
+    }
+
+    Scene* scene;
+};
 
 bool load_lua_scene(const std::string& p_path, Scene* p_scene) {
     sol::state lua;
@@ -140,8 +169,16 @@ bool load_lua_scene(const std::string& p_path, Scene* p_scene) {
 
     // install libs
     sol::table lib = lua.create_table();
+
+    lua.new_usertype<LuaScene>("LuaScene",
+                               "get_root", &LuaScene::get_root,
+                               "create_entity", &LuaScene::create_entity,
+                               "create_entity_detached", &LuaScene::create_entity_detached,
+                               "attach", &LuaScene::attach,
+                               "attach_root", &LuaScene::attach_root);
+
     lua.set("Scene", lib);
-    lib.set_function("get", [&]() { return p_scene; });
+    lib.set_function("get", [&]() { return LuaScene{ p_scene }; });
     lib.set_function("create_entity", lua_scene_create_entity);
 
     // add additional package path
