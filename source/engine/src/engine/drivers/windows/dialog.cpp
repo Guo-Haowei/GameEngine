@@ -1,7 +1,6 @@
 #include "dialog.h"
 
-#include <Windows.h>
-#include <commdlg.h>
+#include "drivers/windows/win32_prerequisites.h"
 
 namespace my {
 

@@ -4,60 +4,12 @@
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
+#include "drivers/windows/dialog.h"
 #include "editor/editor_layer.h"
-#include "platform/windows/dialog.h"
 #include "rendering/render_graph/render_graph_vxgi.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
-
-// @TODO: fix this
-// static std::vector<std::string> quick_dirty_split(std::string str, std::string token) {
-//    std::vector<std::string> result;
-//    while (str.size()) {
-//        size_t index = str.find(token);
-//        if (index != std::string::npos) {
-//            result.push_back(str.substr(0, index));
-//            str = str.substr(index + token.size());
-//            if (str.size() == 0) result.push_back(str);
-//        } else {
-//            result.push_back(str);
-//            str = "";
-//        }
-//    }
-//    return result;
-//}
-
-static void import_scene() {
-    // std::vector<const char*> filters = { ".gltf", ".obj" };
-    // auto path = open_file_dialog(filters);
-
-    // if (path.empty()) {
-    //     return;
-    // }
-
-    // SceneManager::singleton().request_scene(path);
-
-    // std::string files(DVAR_GET_STRING(recent_files));
-    // if (!files.empty()) {
-    //     files.append(";");
-    // }
-    // files.append(path);
-
-    // DVAR_SET_STRING(recent_files, files);
-}
-
-static void import_recent() {
-    // std::string recent_files(DVAR_GET_STRING(recent_files));
-
-    // auto files = quick_dirty_split(recent_files, ";");
-
-    // for (const auto& file : files) {
-    //     if (ImGui::MenuItem(file.c_str())) {
-    //         SceneManager::singleton().request_scene(file);
-    //     }
-    // }
-}
 
 static void save_project(bool open_dialog) {
     const std::string& project = DVAR_GET_STRING(project);
@@ -97,17 +49,6 @@ void MenuBar::update(Scene&) {
             }
             if (ImGui::MenuItem("Save As..")) {
                 save_project(true);
-            }
-            ImGui::EndMenu();
-        }
-        ImGui::Separator();
-        if (ImGui::BeginMenu("Import")) {
-            if (ImGui::MenuItem("Import")) {
-                import_scene();
-            }
-            if (ImGui::BeginMenu("Import Recent")) {
-                import_recent();
-                ImGui::EndMenu();
             }
             ImGui::EndMenu();
         }

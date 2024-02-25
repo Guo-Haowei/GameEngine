@@ -17,6 +17,8 @@ public:
 
     virtual void new_frame() = 0;
     virtual void present() = 0;
+
+    static std::shared_ptr<DisplayManager> create();
 };
 
 }  // namespace my

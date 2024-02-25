@@ -1,14 +1,12 @@
 #include "threads.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 #include <latch>
 #include <thread>
 
 #include "core/framework/asset_manager.h"
 #include "core/io/print.h"
 #include "core/systems/job_system.h"
+#include "drivers/windows/win32_prerequisites.h"
 
 namespace my::thread {
 

@@ -36,7 +36,7 @@ ContentBrowser::~ContentBrowser() {
 void ContentBrowser::update_internal(Scene&) {
     if (ImGui::Button("<-")) {
         if (m_current_path == m_root_path) {
-            LOG_WARN("???");
+            LOG_WARN("TODO: don't go outside project dir");
         }
         m_current_path = m_current_path.parent_path();
     }
@@ -78,8 +78,13 @@ void ContentBrowser::update_internal(Scene&) {
         }
 
         uint64_t handle = it->second.image->texture.handle;
-        bool clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size);
-        // clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0));
+        bool clicked = false;
+        if (handle) {
+            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size);
+            // clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0));
+        } else {
+            clicked = ImGui::Button(name.c_str(), size);
+        }
 
         if (is_file) {
             std::string full_path_string = full_path.string();

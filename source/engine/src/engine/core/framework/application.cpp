@@ -7,6 +7,7 @@
 #include "core/dynamic_variable/dynamic_variable_manager.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
+#include "core/framework/display_manager.h"
 #include "core/framework/graphics_manager.h"
 #include "core/framework/imgui_module.h"
 #include "core/framework/physics_manager.h"
@@ -15,12 +16,8 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
-#include "drivers/glfw/glfw_display_manager.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
-
-// @TODO: rename
-#include "core/framework/asset_manager.h"
 
 #define DEFINE_DVAR
 #include "core/framework/common_dvars.h"
@@ -53,8 +50,7 @@ void Application::setup_modules() {
     m_scene_manager = std::make_shared<SceneManager>();
     m_physics_manager = std::make_shared<PhysicsManager>();
     m_imgui_module = std::make_shared<ImGuiModule>();
-    m_display_server = std::make_shared<GLFWDisplayManager>();
-    // @TODO: select proper graphics manager
+    m_display_server = DisplayManager::create();
     m_graphics_manager = GraphicsManager::create();
 
     register_module(m_asset_manager.get());
@@ -71,7 +67,6 @@ void Application::setup_modules() {
 int Application::run(int argc, const char** argv) {
     save_command_line(argc, argv);
     m_os = std::make_shared<OS>();
-    setup_modules();
 
     // intialize
     OS::singleton().initialize();
@@ -81,6 +76,8 @@ int Application::run(int argc, const char** argv) {
     renderer::register_rendering_dvars();
     DynamicVariableManager::deserialize();
     DynamicVariableManager::parse(m_command_line);
+
+    setup_modules();
 
     thread::initialize();
     jobsystem::initialize();
@@ -104,7 +101,7 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_OK("TODO: update voxels only when scene is dirty");
+    LOG_ERROR("TODO: win32 input & refactor");
     LOG_WARN("TODO: path tracer here");
     LOG_ERROR("TODO: cloth physics");
     LOG_WARN("TODO: TAA");
@@ -114,8 +111,6 @@ int Application::run(int argc, const char** argv) {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-
-    bool imgui_built = ImGui::GetIO().Fonts->IsBuilt();
 
     while (!DisplayManager::singleton().should_close()) {
         OPTICK_FRAME("MainThread");
@@ -130,17 +125,15 @@ int Application::run(int argc, const char** argv) {
         timer.start();
 
         // to avoid empty renderer crash
-        if (imgui_built) {
-            ImGui::NewFrame();
-            for (auto& layer : m_layers) {
-                layer->update(dt);
-            }
-
-            for (auto& layer : m_layers) {
-                layer->render();
-            }
-            ImGui::Render();
+        ImGui::NewFrame();
+        for (auto& layer : m_layers) {
+            layer->update(dt);
         }
+
+        for (auto& layer : m_layers) {
+            layer->render();
+        }
+        ImGui::Render();
 
         m_scene_manager->update(dt);
 

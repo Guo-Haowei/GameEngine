@@ -1,19 +1,18 @@
 #include "glfw_display_manager.h"
 
 #include <GLFW/glfw3.h>
+#include <imgui/backends/imgui_impl_glfw.h>
 
 #include "core/debugger/profiler.h"
 #include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
 #include "core/input/input.h"
-#include "imgui/backends/imgui_impl_glfw.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
 
-bool GLFWDisplayManager::initialize() {
-    GLFWDisplayManager::initialize_key_mapping();
+bool GlfwDisplayManager::initialize() {
+    GlfwDisplayManager::initialize_key_mapping();
 
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
@@ -31,11 +30,11 @@ bool GLFWDisplayManager::initialize() {
     const GLFWvidmode* vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
 
     const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
-    const ivec2 minSize = ivec2(600, 400);
-    const ivec2 maxSize = ivec2(vidmode->width, vidmode->height);
-    const ivec2 size = glm::clamp(resolution, minSize, maxSize);
+    const ivec2 min_size = ivec2(600, 400);
+    const ivec2 max_size = ivec2(vidmode->width, vidmode->height);
+    const ivec2 size = glm::clamp(resolution, min_size, max_size);
 
-    m_window = glfwCreateWindow(size.x, size.y, "Editor", nullptr, nullptr);
+    m_window = glfwCreateWindow(size.x, size.y, "Editor (OpenGL)", nullptr, nullptr);
     DEV_ASSERT(m_window);
 
     const ivec2 position = DVAR_GET_IVEC2(window_position);
@@ -43,23 +42,14 @@ bool GLFWDisplayManager::initialize() {
 
     glfwMakeContextCurrent(m_window);
 
-    LOG("GLFWwindow created {} x {}", size.x, size.y);
     glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
 
     ImGui_ImplGlfw_InitForOpenGL(m_window, false);
 
-    // glfwSetFramebufferSizeCallback(mGlfwWindow, [](GLFWwindow* window, int width, int height) {
-    //     auto data = reinterpret_cast<WindowData*>(glfwGetWindowUserPointer(window));
-    //     data->mWidth = width;
-    //     data->mHeight = height;
-    //     Event e = Event::Resize(width, height);
-    //     data->m_func(e);
-    // });
-
-    glfwSetCursorPosCallback(m_window, cursor_pos_cb);
-    glfwSetMouseButtonCallback(m_window, mouse_button_cb);
-    glfwSetKeyCallback(m_window, key_cb);
-    glfwSetScrollCallback(m_window, scroll_cb);
+    glfwSetCursorPosCallback(m_window, cursor_pos_callback);
+    glfwSetMouseButtonCallback(m_window, mouse_button_callback);
+    glfwSetKeyCallback(m_window, key_callback);
+    glfwSetScrollCallback(m_window, scroll_callback);
 
     glfwSetWindowFocusCallback(m_window, ImGui_ImplGlfw_WindowFocusCallback);
     glfwSetCursorEnterCallback(m_window, ImGui_ImplGlfw_CursorEnterCallback);
@@ -68,17 +58,17 @@ bool GLFWDisplayManager::initialize() {
     return true;
 }
 
-void GLFWDisplayManager::finalize() {
+void GlfwDisplayManager::finalize() {
     ImGui_ImplGlfw_Shutdown();
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
-bool GLFWDisplayManager::should_close() {
+bool GlfwDisplayManager::should_close() {
     return glfwWindowShouldClose(m_window);
 }
 
-void GLFWDisplayManager::new_frame() {
+void GlfwDisplayManager::new_frame() {
     glfwPollEvents();
     glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
     glfwGetWindowPos(m_window, &m_window_pos.x, &m_window_pos.y);
@@ -86,11 +76,11 @@ void GLFWDisplayManager::new_frame() {
     ImGui_ImplGlfw_NewFrame();
 }
 
-std::tuple<int, int> GLFWDisplayManager::get_window_size() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
+std::tuple<int, int> GlfwDisplayManager::get_window_size() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
 
-std::tuple<int, int> GLFWDisplayManager::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
+std::tuple<int, int> GlfwDisplayManager::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
 
-void GLFWDisplayManager::present() {
+void GlfwDisplayManager::present() {
     OPTICK_EVENT();
 
     GLFWwindow* oldContext = glfwGetCurrentContext();
@@ -101,13 +91,13 @@ void GLFWDisplayManager::present() {
     glfwSwapBuffers(m_window);
 }
 
-void GLFWDisplayManager::cursor_pos_cb(GLFWwindow* window, double x, double y) {
+void GlfwDisplayManager::cursor_pos_callback(GLFWwindow* window, double x, double y) {
     ImGui_ImplGlfw_CursorPosCallback(window, x, y);
     // if (!ImGui::GetIO().WantCaptureMouse)
     { input::set_cursor(static_cast<float>(x), static_cast<float>(y)); }
 }
 
-void GLFWDisplayManager::mouse_button_cb(GLFWwindow* window, int button, int action, int mods) {
+void GlfwDisplayManager::mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
     ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
@@ -120,7 +110,7 @@ void GLFWDisplayManager::mouse_button_cb(GLFWwindow* window, int button, int act
     }
 }
 
-void GLFWDisplayManager::key_cb(GLFWwindow* window, int keycode, int scancode, int action, int mods) {
+void GlfwDisplayManager::key_callback(GLFWwindow* window, int keycode, int scancode, int action, int mods) {
     ImGui_ImplGlfw_KeyCallback(window, keycode, scancode, action, mods);
 
     // if (!ImGui::GetIO().WantCaptureKeyboard)
@@ -136,14 +126,14 @@ void GLFWDisplayManager::key_cb(GLFWwindow* window, int keycode, int scancode, i
     }
 }
 
-void GLFWDisplayManager::scroll_cb(GLFWwindow* window, double xoffset, double yoffset) {
+void GlfwDisplayManager::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     { input::set_wheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
 }
 
-void GLFWDisplayManager::initialize_key_mapping() {
+void GlfwDisplayManager::initialize_key_mapping() {
     if (!s_key_mapping.empty()) {
         return;
     }
@@ -273,4 +263,4 @@ void GLFWDisplayManager::initialize_key_mapping() {
 
 }  // namespace my
 
-#include "imgui/backends/imgui_impl_glfw.cpp"
+#include <imgui/backends/imgui_impl_glfw.cpp>

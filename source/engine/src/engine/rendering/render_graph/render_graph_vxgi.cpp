@@ -18,8 +18,6 @@ extern MeshData g_box;
 extern MeshData g_skybox;
 extern MeshData g_billboard;
 
-extern my::RIDAllocator<MeshData> g_meshes;
-
 namespace my::rg {
 
 // @TODO: refactor render passes to have multiple frame buffers
