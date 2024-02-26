@@ -33,12 +33,13 @@ void request_env_map(const std::string& path) {
     }
 
     s_renderer_glob.prev_env_map = path;
-    auto image = AssetManager::singleton().find_image(path);
-    if (image) {
-        g_constantCache.cache.c_hdr_env_map = image->get()->texture.resident_handle;
-        g_constantCache.Update();
-        s_renderer_glob.need_update_env = true;
-        return;
+    if (auto handle = AssetManager::singleton().find_image(path); handle) {
+        if (auto image = handle->get(); image && image->gpu_texture) {
+            g_constantCache.cache.c_hdr_env_map = image->gpu_texture->get_resident_handle();
+            g_constantCache.Update();
+            s_renderer_glob.need_update_env = true;
+            return;
+        }
     }
 
     AssetManager::singleton().load_image_async(path, [](void* p_asset, void* p_userdata) {
@@ -48,9 +49,9 @@ void request_env_map(const std::string& path) {
         DEV_ASSERT(handle);
 
         handle->set(image);
-        GraphicsManager::singleton().request_texture(handle, [](ImageHandle* p_image_handle) {
+        GraphicsManager::singleton().request_texture(handle, [](Image* p_image) {
             // @TODO: better way
-            g_constantCache.cache.c_hdr_env_map = p_image_handle->get()->texture.resident_handle;
+            g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
             g_constantCache.Update();
             s_renderer_glob.need_update_env = true;
         });

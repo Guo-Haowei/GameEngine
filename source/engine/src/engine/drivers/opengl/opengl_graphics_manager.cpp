@@ -2,21 +2,22 @@
 
 // @TODO: remove
 #include <random>
-
-#include "core/debugger/profiler.h"
-#include "core/math/geometry.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
-#include "rendering/render_data.h"
-#include "rendering/renderer.h"
 /////
+
 #include "assets/image.h"
 #include "core/base/rid_owner.h"
+#include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
+#include "core/math/geometry.h"
 #include "drivers/opengl/opengl_pipeline_state_manager.h"
 #include "drivers/opengl/opengl_subpass.h"
+#include "drivers/opengl/opengl_texture.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
+#include "rendering/render_data.h"
+#include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"
 // @TODO: refactor
@@ -204,8 +205,11 @@ void OpenGLGraphicsManager::create_texture(ImageHandle* handle) {
 
     GLuint64 resident_id = glGetTextureHandleARB(texture_id);
     glMakeTextureHandleResidentARB(resident_id);
-    image->texture.handle = texture_id;
-    image->texture.resident_handle = resident_id;
+
+    auto texture = std::make_shared<OpenGLTexture>();
+    texture->handle = texture_id;
+    texture->resident_handle = resident_id;
+    image->gpu_texture = texture;
 }
 
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
@@ -551,16 +555,21 @@ void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponen
         }
 
         ImageHandle* handle = material->textures[idx].image;
-        if (!handle || handle->state != ASSET_STATE_READY) {
+        if (!handle) {
             return false;
         }
 
-        Image* image = handle->data;
-        if (image->texture.handle == 0) {
+        Image* image = handle->get();
+        if (!image) {
             return false;
         }
 
-        out_handle = image->texture.resident_handle;
+        const OpenGLTexture* texture = reinterpret_cast<OpenGLTexture*>(image->gpu_texture.get());
+        if (!texture) {
+            return false;
+        }
+
+        out_handle = texture->resident_handle;
         return true;
     };
 

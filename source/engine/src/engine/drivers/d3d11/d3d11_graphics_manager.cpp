@@ -1,47 +1,44 @@
 #include "d3d11_graphics_manager.h"
 
-#include <d3d11.h>
 #include <dxgi.h>
 #include <imgui/backends/imgui_impl_dx11.h>
 
+#include "drivers/d3d11/d3d11_helpers.h"
 #include "drivers/windows/win32_display_manager.h"
-
-static ID3D11Device* g_pd3dDevice = NULL;
-static ID3D11DeviceContext* g_pd3dDeviceContext = NULL;
-static IDXGISwapChain* g_pSwapChain = NULL;
-static ID3D11RenderTargetView* g_mainRenderTargetView = NULL;
-
-// Forward declarations of helper functions
-bool CreateDeviceD3D(HWND hWnd);
-void CleanupDeviceD3D();
-void CreateRenderTarget();
-void CleanupRenderTarget();
+#include "rendering/rendering_dvars.h"
+#include "rendering/texture.h"
 
 namespace my {
 
+using Microsoft::WRL::ComPtr;
+
+struct D3d11Texture : public Texture {
+    uint32_t get_handle() const { return 0; }
+    uint64_t get_resident_handle() const { return 0; }
+    uint64_t get_imgui_handle() const { return (uint64_t)srv.Get(); }
+
+    ComPtr<ID3D11ShaderResourceView> srv;
+};
+
 bool D3d11GraphicsManager::initialize() {
-    auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::singleton_ptr());
-    DEV_ASSERT(display_manager);
+    bool ok = true;
+    ok = ok && create_device();
+    ok = ok && create_swap_chain();
+    ok = ok && create_render_target();
+    ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_ctx.Get());
 
-    if (!CreateDeviceD3D(display_manager->get_hwnd())) {
-        CleanupDeviceD3D();
-        return false;
-    }
-
-    bool ok = ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
     ImGui_ImplDX11_NewFrame();
     return ok;
 }
 
 void D3d11GraphicsManager::finalize() {
     ImGui_ImplDX11_Shutdown();
-    CleanupDeviceD3D();
 }
 
 void D3d11GraphicsManager::render() {
-    const float clear_color_with_alpha[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
-    g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+    const float clear_color_with_alpha[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    m_ctx->OMSetRenderTargets(1, m_window_rtv.GetAddressOf(), nullptr);
+    m_ctx->ClearRenderTargetView(m_window_rtv.Get(), clear_color_with_alpha);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
     ImGuiIO& io = ImGui::GetIO();
@@ -51,88 +48,130 @@ void D3d11GraphicsManager::render() {
         ImGui::RenderPlatformWindowsDefault();
     }
 
-    g_pSwapChain->Present(1, 0);  // Present with vsync
+    m_swap_chain->Present(1, 0);  // Present with vsync
 }
 
 void D3d11GraphicsManager::on_window_resize(int p_width, int p_height) {
-    if (g_pd3dDevice != NULL) {
-        CleanupRenderTarget();
-        g_pSwapChain->ResizeBuffers(0, p_width, p_height, DXGI_FORMAT_UNKNOWN, 0);
-        CreateRenderTarget();
+    if (m_device) {
+        m_window_rtv.Reset();
+        m_swap_chain->ResizeBuffers(0, p_width, p_height, DXGI_FORMAT_UNKNOWN, 0);
+        create_render_target();
     }
 }
 
-}  // namespace my
-
-// Helper functions
-bool CreateDeviceD3D(HWND hWnd) {
-    // Setup swap chain
-    DXGI_SWAP_CHAIN_DESC sd;
-    ZeroMemory(&sd, sizeof(sd));
-    sd.BufferCount = 2;
-    sd.BufferDesc.Width = 0;
-    sd.BufferDesc.Height = 0;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    sd.BufferDesc.RefreshRate.Numerator = 60;
-    sd.BufferDesc.RefreshRate.Denominator = 1;
-    sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.OutputWindow = hWnd;
-    sd.SampleDesc.Count = 1;
-    sd.SampleDesc.Quality = 0;
-    sd.Windowed = TRUE;
-    sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
-    UINT createDeviceFlags = 0;
-    createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-    D3D_FEATURE_LEVEL featureLevel;
-    const D3D_FEATURE_LEVEL featureLevelArray[2] = {
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_0,
-    };
-    HRESULT res = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
-    if (res == DXGI_ERROR_UNSUPPORTED)  // Try high-performance WARP software driver if hardware is not available.
-        res = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_WARP, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
-    if (res != S_OK)
-        return false;
-
-    // Query debug interface if available
-    ID3D11Debug* debugInterface = nullptr;
-    res = g_pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&debugInterface));
-    if (FAILED(res)) {
-        // Debug layer is not available or not supported
+bool D3d11GraphicsManager::create_device() {
+    D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    UINT create_device_flags = 0;
+    if (DVAR_GET_BOOL(r_gpu_validation)) {
+        create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
     }
 
-    CreateRenderTarget();
+    HRESULT hr = D3D11CreateDevice(
+        nullptr,
+        D3D_DRIVER_TYPE_HARDWARE,
+        0,
+        create_device_flags,
+        &feature_level,
+        1,
+        D3D11_SDK_VERSION,
+        m_device.GetAddressOf(),
+        nullptr,
+        m_ctx.GetAddressOf());
+
+    D3D_FAIL_V_MSG(hr, false, "Failed to create d3d11 device");
+
+    D3D_FAIL_V_MSG(m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)m_dxgi_device.GetAddressOf()),
+                   false,
+                   "Failed to query IDXGIDevice");
+
+    D3D_FAIL_V_MSG(m_dxgi_device->GetParent(__uuidof(IDXGIAdapter), (void**)m_dxgi_adapter.GetAddressOf()),
+                   false,
+                   "Failed to query IDXGIAdapter");
+
+    D3D_FAIL_V_MSG(m_dxgi_adapter->GetParent(__uuidof(IDXGIFactory), (void**)m_dxgi_factory.GetAddressOf()),
+                   false,
+                   "Failed to query IDXGIFactory");
+
     return true;
 }
 
-void CleanupDeviceD3D() {
-    CleanupRenderTarget();
-    if (g_pSwapChain) {
-        g_pSwapChain->Release();
-        g_pSwapChain = NULL;
-    }
-    if (g_pd3dDeviceContext) {
-        g_pd3dDeviceContext->Release();
-        g_pd3dDeviceContext = NULL;
-    }
-    if (g_pd3dDevice) {
-        g_pd3dDevice->Release();
-        g_pd3dDevice = NULL;
-    }
+bool D3d11GraphicsManager::create_swap_chain() {
+    auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::singleton_ptr());
+    DEV_ASSERT(display_manager);
+
+    DXGI_MODE_DESC buffer_desc{};
+    buffer_desc.Width = 0;
+    buffer_desc.Height = 0;
+    buffer_desc.RefreshRate = { 60, 1 };
+    buffer_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    buffer_desc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+
+    DXGI_SWAP_CHAIN_DESC swap_chain_desc{};
+    swap_chain_desc.BufferDesc = buffer_desc;
+    swap_chain_desc.SampleDesc = { 1, 0 };
+    swap_chain_desc.BufferCount = 2;
+    swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+    swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swap_chain_desc.OutputWindow = display_manager->get_hwnd();
+    swap_chain_desc.Windowed = true;
+    swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+
+    D3D_FAIL_V_MSG(m_dxgi_factory->CreateSwapChain(m_device.Get(), &swap_chain_desc, m_swap_chain.GetAddressOf()),
+                   false,
+                   "Failed to create swap chain");
+
+    return true;
 }
 
-void CreateRenderTarget() {
-    ID3D11Texture2D* pBackBuffer;
-    g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-    g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &g_mainRenderTargetView);
-    pBackBuffer->Release();
+bool D3d11GraphicsManager::create_render_target() {
+    ComPtr<ID3D11Texture2D> back_buffer;
+    m_swap_chain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
+    m_device->CreateRenderTargetView(back_buffer.Get(), nullptr, m_window_rtv.GetAddressOf());
+    return true;
 }
 
-void CleanupRenderTarget() {
-    if (g_mainRenderTargetView) {
-        g_mainRenderTargetView->Release();
-        g_mainRenderTargetView = NULL;
-    }
+void D3d11GraphicsManager::create_texture(ImageHandle* p_handle) {
+    ComPtr<ID3D11ShaderResourceView> srv;
+
+    DEV_ASSERT(p_handle);
+    Image* image = p_handle->get();
+
+    D3D11_TEXTURE2D_DESC texture_desc{};
+    texture_desc.Width = image->width;
+    texture_desc.Height = image->height;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = d3d11::convert_format(image->format);
+    texture_desc.SampleDesc = { 1, 0 };
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA texture_data{};
+    texture_data.pSysMem = image->buffer.data();
+    texture_data.SysMemPitch = image->width * image->num_channels * channel_size(image->format);
+    texture_data.SysMemSlicePitch = image->height * texture_data.SysMemPitch;
+
+    ComPtr<ID3D11Texture2D> texture;
+    D3D_FAIL_MSG(m_device->CreateTexture2D(&texture_desc, &texture_data, texture.GetAddressOf()),
+                 "Failed to create texture");
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+    srv_desc.Format = texture_desc.Format;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.Texture2D.MostDetailedMip = 0;
+    srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+
+    D3D_FAIL_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
+                 "Failed to create shader resource view");
+
+    SET_DEBUG_NAME(srv.Get(), image->debug_name);
+
+    auto gpu_texture = std::make_shared<D3d11Texture>();
+    gpu_texture->srv = srv;
+    p_handle->get()->gpu_texture = gpu_texture;
+    return;
 }
+
+}  // namespace my

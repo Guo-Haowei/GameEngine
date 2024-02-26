@@ -206,9 +206,9 @@ void PropertyPanel::update_internal(Scene& scene) {
             auto check_box_id = std::format("Enabled##{}", i);
             ImGui::Checkbox(check_box_id.c_str(), &texture.enabled);
             Image* image = texture.image ? texture.image->get() : nullptr;
-            uint64_t handle = image ? image->texture.handle : 0;
-            if (handle) {
-                ImGui::Image((ImTextureID)handle, ImVec2(128, 128));
+            auto gpu_texture = image ? image->gpu_texture : nullptr;
+            if (gpu_texture) {
+                ImGui::Image((ImTextureID)gpu_texture->get_imgui_handle(), ImVec2(128, 128));
             }
         }
     });

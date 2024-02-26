@@ -122,7 +122,7 @@ ImageHandle* AssetManager::load_image_sync(const std::string& p_path) {
         return nullptr;
     }
 
-    Image* image = new Image;
+    Image* image = new Image(p_path);
     if (!loader->load(image)) {
         delete image;
         return nullptr;
@@ -144,8 +144,7 @@ void AssetManager::load_scene_async(const std::string& p_path, LoadSuccessFunc p
 }
 
 template<typename T>
-static void load_asset(LoadTask& p_task) {
-    T* asset = new T;
+static void load_asset(LoadTask& p_task, T* p_asset) {
     auto loader = Loader<T>::create(p_task.asset_path);
     if (!loader) {
         LOG_ERROR("[AssetManager] not loader found for '{}'", p_task.asset_path);
@@ -153,8 +152,8 @@ static void load_asset(LoadTask& p_task) {
     }
 
     Timer timer;
-    if (loader->load(asset)) {
-        p_task.on_success(asset, p_task.userdata);
+    if (loader->load(p_asset)) {
+        p_task.on_success(p_asset, p_task.userdata);
         LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", p_task.asset_path, timer.get_duration_string());
     } else {
         LOG_ERROR("[AssetManager] failed to load '{}', details: {}", p_task.asset_path, loader->get_error());
@@ -177,11 +176,11 @@ void AssetManager::worker_main() {
         // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
         switch (task.type) {
             case LOAD_TASK_IMAGE: {
-                load_asset<Image>(task);
+                load_asset<Image>(task, new Image(task.asset_path));
             } break;
             case LOAD_TASK_SCENE: {
                 LOG_VERBOSE("[AssetManager] start loading scene {}", task.asset_path);
-                load_asset<Scene>(task);
+                load_asset<Scene>(task, new Scene);
             } break;
             default:
                 CRASH_NOW();

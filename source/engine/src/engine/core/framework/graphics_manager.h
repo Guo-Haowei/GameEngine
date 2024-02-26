@@ -19,7 +19,7 @@ struct RenderData;
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
-    using OnTextureLoadFunc = void (*)(ImageHandle* p_image_handle);
+    using OnTextureLoadFunc = void (*)(Image* p_image);
 
     enum RenderGraph {
         RENDER_GRAPH_NONE,

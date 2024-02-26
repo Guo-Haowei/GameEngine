@@ -50,7 +50,7 @@ void GraphicsManager::update(float) {
         DEV_ASSERT(task.handle->state == ASSET_STATE_READY);
         create_texture(task.handle);
         if (task.func) {
-            task.func(task.handle);
+            task.func(task.handle->get());
         }
     }
 

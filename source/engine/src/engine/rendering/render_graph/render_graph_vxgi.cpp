@@ -451,17 +451,6 @@ void fxaa_pass_func(const Subpass* p_subpass) {
     // draw billboards
     auto render_data = GraphicsManager::singleton().get_render_data();
 
-    for (const auto& light : render_data->light_billboards) {
-        // @TODO: sort same materials
-        g_perBatchCache.cache.c_model_matrix = light.transform;
-        g_perBatchCache.Update();
-        g_materialCache.cache.c_albedo_map = light.image ? light.image->texture.resident_handle : 0;
-        g_materialCache.Update();
-
-        glBindVertexArray(g_billboard.vao);
-        glDrawElementsInstanced(GL_TRIANGLES, g_billboard.count, GL_UNSIGNED_INT, 0, 1);
-    }
-
     // HACK:
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
         debug_vxgi_pass_func(p_subpass);
