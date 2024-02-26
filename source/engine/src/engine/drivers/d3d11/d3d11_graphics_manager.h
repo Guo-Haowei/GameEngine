@@ -8,7 +8,7 @@ namespace my {
 
 class D3d11GraphicsManager : public GraphicsManager {
 public:
-    D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager") {}
+    D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {}
 
     bool initialize() final;
     void finalize() final;

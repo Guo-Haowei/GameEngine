@@ -17,12 +17,10 @@
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
+#include "rendering/render_graph/render_graphs.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"
-// @TODO: refactor
-#include "rendering/render_graph/render_graph_base_color.h"
-#include "rendering/render_graph/render_graph_vxgi.h"
 
 using my::rg::RenderGraph;
 using my::rg::RenderPass;
@@ -79,6 +77,8 @@ bool OpenGLGraphicsManager::initialize() {
             LOG_VERBOSE("[opengl] debug callback enabled");
         }
     }
+
+    set_render_graph();
 
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplOpenGL3_CreateDeviceObjects();
@@ -285,17 +285,6 @@ void OpenGLGraphicsManager::createGpuResources() {
     create_mesh_data(make_box_mesh(), g_box);
     create_mesh_data(make_sky_box_mesh(), g_skybox);
 
-    std::string method(DVAR_GET_STRING(r_render_graph));
-    if (method == "vxgi") {
-        m_method = RENDER_GRAPH_VXGI;
-        create_render_graph_vxgi(m_render_graph);
-    } else if (method == "base_color") {
-        m_method = RENDER_GRAPH_BASE_COLOR;
-        create_render_graph_base_color(m_render_graph);
-    } else {
-        CRASH_NOW();
-    }
-
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
 
     /// create voxel image
@@ -347,11 +336,12 @@ void OpenGLGraphicsManager::createGpuResources() {
 
 uint64_t OpenGLGraphicsManager::get_final_image() const {
     switch (m_method) {
-        case my::OpenGLGraphicsManager::RENDER_GRAPH_VXGI:
-            // return find_resource(RT_RES_FXAA)->get_handle();
+        case OpenGLGraphicsManager::VXGI:
             return find_resource(RT_RES_FINAL)->get_handle();
-        case my::OpenGLGraphicsManager::RENDER_GRAPH_BASE_COLOR:
+        case OpenGLGraphicsManager::BASE_COLOR:
             return find_resource(RT_RES_BASE_COLOR)->get_handle();
+        case OpenGLGraphicsManager::DUMMY:
+            return find_resource(RT_RES_FINAL)->get_handle();
         default:
             CRASH_NOW();
             return 0;

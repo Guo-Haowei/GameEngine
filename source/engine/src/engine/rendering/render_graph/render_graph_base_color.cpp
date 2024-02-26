@@ -1,4 +1,4 @@
-#include "render_graph_base_color.h"
+#include "render_graphs.h"
 
 // @TODO: refactor
 #include "core/base/rid_owner.h"

@@ -3,7 +3,7 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
 #include "rendering/r_cbuffers.h"
-#include "rendering/render_graph/render_graph_vxgi.h"
+#include "rendering/render_graph/render_graphs.h"
 
 #define DEFINE_DVAR
 #include "rendering_dvars.h"

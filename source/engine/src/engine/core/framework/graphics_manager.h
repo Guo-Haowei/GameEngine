@@ -21,13 +21,19 @@ class GraphicsManager : public Singleton<GraphicsManager>, public Module, public
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
 
-    enum RenderGraph {
-        RENDER_GRAPH_NONE,
-        RENDER_GRAPH_BASE_COLOR,
-        RENDER_GRAPH_VXGI,
+    enum class Backend : uint8_t {
+        EMPTY,
+        OPENGL,
+        D3D11,
     };
 
-    GraphicsManager(std::string_view p_name) : Module(p_name) {}
+    enum RenderGraph : uint8_t {
+        DUMMY,
+        BASE_COLOR,
+        VXGI,
+    };
+
+    GraphicsManager(std::string_view p_name, Backend p_backend) : Module(p_name), m_backend(p_backend) {}
 
     void update(float p_delta);
 
@@ -63,8 +69,10 @@ protected:
     virtual void on_window_resize(int, int) {}
     virtual void set_pipeline_state_impl(PipelineStateName p_name) = 0;
     virtual void render() = 0;
+    void set_render_graph();
 
-    RenderGraph m_method = RENDER_GRAPH_NONE;
+    const Backend m_backend;
+    RenderGraph m_method = DUMMY;
 
     std::shared_ptr<RenderData> m_render_data;
 

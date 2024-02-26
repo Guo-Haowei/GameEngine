@@ -5,7 +5,7 @@ namespace my {
 
 class OpenGLGraphicsManager : public GraphicsManager {
 public:
-    OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager") {}
+    OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager", Backend::OPENGL) {}
 
     bool initialize() final;
     void finalize() final;

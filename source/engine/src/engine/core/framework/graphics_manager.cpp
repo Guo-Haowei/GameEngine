@@ -4,6 +4,7 @@
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
+#include "rendering/render_graph/render_graphs.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
@@ -26,7 +27,7 @@ std::shared_ptr<GraphicsManager> GraphicsManager::create() {
     } else if (backend == "d3d11") {
         return std::make_shared<D3d11GraphicsManager>();
     }
-    return std::make_shared<EmptyGraphicsManager>();
+    return std::make_shared<EmptyGraphicsManager>(Backend::EMPTY);
 }
 
 void GraphicsManager::set_pipeline_state(PipelineStateName p_name) {
@@ -55,6 +56,33 @@ void GraphicsManager::update(float) {
     }
 
     render();
+}
+
+void GraphicsManager::set_render_graph() {
+    std::string method(DVAR_GET_STRING(r_render_graph));
+    if (method == "vxgi") {
+        m_method = VXGI;
+    } else if (method == "base_color") {
+        m_method = BASE_COLOR;
+    } else {
+        m_method = DUMMY;
+    }
+
+    if (m_backend == Backend::D3D11) {
+        m_method = DUMMY;
+    }
+
+    switch (m_method) {
+        case GraphicsManager::BASE_COLOR:
+            create_render_graph_base_color(m_render_graph);
+            break;
+        case GraphicsManager::VXGI:
+            create_render_graph_vxgi(m_render_graph);
+            break;
+        default:
+            create_render_graph_dummy(m_render_graph);
+            break;
+    }
 }
 
 }  // namespace my

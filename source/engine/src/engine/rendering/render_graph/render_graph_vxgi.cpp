@@ -1,10 +1,8 @@
-#include "render_graph_vxgi.h"
-
-#include "core/base/rid_owner.h"
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
+#include "render_graphs.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_data.h"
 #include "rendering/renderer.h"

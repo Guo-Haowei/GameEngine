@@ -10,7 +10,6 @@
 #include "core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
-#include "rendering/render_graph/render_graph_vxgi.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 

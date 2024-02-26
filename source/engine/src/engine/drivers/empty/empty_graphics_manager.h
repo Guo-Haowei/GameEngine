@@ -5,7 +5,7 @@ namespace my {
 
 class EmptyGraphicsManager : public GraphicsManager {
 public:
-    EmptyGraphicsManager() : GraphicsManager("EmptyGraphicsManager") {}
+    EmptyGraphicsManager(Backend p_backend) : GraphicsManager("EmptyGraphicsManager", p_backend) {}
 
     bool initialize() override { return true; }
     void finalize() override {}
