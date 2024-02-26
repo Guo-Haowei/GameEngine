@@ -58,31 +58,43 @@ void GraphicsManager::update(float) {
     render();
 }
 
-void GraphicsManager::set_render_graph() {
+void GraphicsManager::select_render_graph() {
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
-        m_method = VXGI;
+        m_method = RenderGraph::VXGI;
     } else if (method == "base_color") {
-        m_method = BASE_COLOR;
+        m_method = RenderGraph::BASE_COLOR;
     } else {
-        m_method = DUMMY;
+        m_method = RenderGraph::DUMMY;
     }
 
     if (m_backend == Backend::D3D11) {
-        m_method = DUMMY;
+        m_method = RenderGraph::DUMMY;
     }
 
     switch (m_method) {
-        case GraphicsManager::BASE_COLOR:
+        case RenderGraph::BASE_COLOR:
             create_render_graph_base_color(m_render_graph);
             break;
-        case GraphicsManager::VXGI:
+        case RenderGraph::VXGI:
             create_render_graph_vxgi(m_render_graph);
             break;
         default:
             create_render_graph_dummy(m_render_graph);
             break;
     }
+}
+
+std::shared_ptr<RenderTarget> GraphicsManager::find_resource(const std::string& name) const {
+    if (m_resource_lookup.empty()) {
+        return nullptr;
+    }
+
+    auto it = m_resource_lookup.find(name);
+    if (it == m_resource_lookup.end()) {
+        return nullptr;
+    }
+    return it->second;
 }
 
 }  // namespace my

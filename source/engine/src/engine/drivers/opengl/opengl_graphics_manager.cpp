@@ -78,7 +78,7 @@ bool OpenGLGraphicsManager::initialize() {
         }
     }
 
-    set_render_graph();
+    select_render_graph();
 
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplOpenGL3_CreateDeviceObjects();
@@ -336,11 +336,11 @@ void OpenGLGraphicsManager::createGpuResources() {
 
 uint64_t OpenGLGraphicsManager::get_final_image() const {
     switch (m_method) {
-        case OpenGLGraphicsManager::VXGI:
+        case RenderGraph::VXGI:
             return find_resource(RT_RES_FINAL)->get_handle();
-        case OpenGLGraphicsManager::BASE_COLOR:
+        case RenderGraph::BASE_COLOR:
             return find_resource(RT_RES_BASE_COLOR)->get_handle();
-        case OpenGLGraphicsManager::DUMMY:
+        case RenderGraph::DUMMY:
             return find_resource(RT_RES_FINAL)->get_handle();
         default:
             CRASH_NOW();
@@ -443,14 +443,6 @@ std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const Rende
 
     m_resource_lookup[resource->m_desc.name] = resource;
     return resource;
-}
-
-std::shared_ptr<RenderTarget> OpenGLGraphicsManager::find_resource(const std::string& name) const {
-    auto it = m_resource_lookup.find(name);
-    if (it == m_resource_lookup.end()) {
-        return nullptr;
-    }
-    return it->second;
 }
 
 std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc& p_desc) {

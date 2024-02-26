@@ -13,7 +13,6 @@ public:
 
     // @TODO: filter
     std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&, const SamplerDesc&) override { return nullptr; }
-    std::shared_ptr<RenderTarget> find_resource(const std::string&) const override { return nullptr; }
 
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) override { return nullptr; }
 

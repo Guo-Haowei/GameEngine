@@ -16,7 +16,6 @@ public:
 
     // @TODO: filter
     std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&, const SamplerDesc&) final { return nullptr; }
-    std::shared_ptr<RenderTarget> find_resource(const std::string&) const final { return nullptr; }
 
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) final { return nullptr; }
 

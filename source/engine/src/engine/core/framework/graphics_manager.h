@@ -17,6 +17,7 @@ namespace my {
 
 struct RenderData;
 
+// @TODO: move generic stuff to renderer
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
@@ -27,7 +28,7 @@ public:
         D3D11,
     };
 
-    enum RenderGraph : uint8_t {
+    enum class RenderGraph : uint8_t {
         DUMMY,
         BASE_COLOR,
         VXGI,
@@ -41,7 +42,7 @@ public:
 
     // @TODO: better name
     virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) = 0;
-    virtual std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const = 0;
+    std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const;
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
 
@@ -69,10 +70,11 @@ protected:
     virtual void on_window_resize(int, int) {}
     virtual void set_pipeline_state_impl(PipelineStateName p_name) = 0;
     virtual void render() = 0;
-    void set_render_graph();
+    // @TODO: move to renderer
+    void select_render_graph();
 
     const Backend m_backend;
-    RenderGraph m_method = DUMMY;
+    RenderGraph m_method;
 
     std::shared_ptr<RenderData> m_render_data;
 

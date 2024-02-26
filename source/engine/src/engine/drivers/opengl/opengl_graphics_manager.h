@@ -11,9 +11,8 @@ public:
     void finalize() final;
 
     std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) final;
-    std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const final;
 
-    std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) override;
+    std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) final;
 
     void create_texture(ImageHandle* handle) final;
     // @TODO: filter

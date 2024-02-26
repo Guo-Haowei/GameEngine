@@ -63,6 +63,8 @@ bool D3d11GraphicsManager::initialize() {
     hr = m_device->CreateShaderResourceView(m_render_target_texture.Get(), &srvDesc, &m_srv);
     CRASH_COND(FAILED(hr));
 
+    select_render_graph();
+
     return ok;
 }
 
