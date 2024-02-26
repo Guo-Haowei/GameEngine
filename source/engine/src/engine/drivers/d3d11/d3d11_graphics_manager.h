@@ -22,7 +22,7 @@ public:
 
     void create_texture(ImageHandle* p_handle) final;
 
-    uint64_t get_final_image() const final { return 0; }
+    uint64_t get_final_image() const final;
 
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent*, MaterialConstantBuffer&) final {}

@@ -12,6 +12,11 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
+// @TODO: render target
+ComPtr<ID3D11Texture2D> m_render_target_texture;
+ComPtr<ID3D11RenderTargetView> m_render_target_view;
+ComPtr<ID3D11ShaderResourceView> m_srv;
+
 struct D3d11Texture : public Texture {
     uint32_t get_handle() const { return 0; }
     uint64_t get_resident_handle() const { return 0; }
@@ -28,6 +33,36 @@ bool D3d11GraphicsManager::initialize() {
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_ctx.Get());
 
     ImGui_ImplDX11_NewFrame();
+
+    D3D11_TEXTURE2D_DESC texture_desc = {};
+    texture_desc.Width = 1024;   // Example width
+    texture_desc.Height = 1024;  // Example height
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;  // RGBA format
+    texture_desc.SampleDesc = { 1, 0 };
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    HRESULT hr = S_OK;
+    hr = m_device->CreateTexture2D(&texture_desc, nullptr, m_render_target_texture.GetAddressOf());
+    CRASH_COND(FAILED(hr));
+
+    // D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {};
+
+    hr = m_device->CreateRenderTargetView(m_render_target_texture.Get(), nullptr, m_render_target_view.GetAddressOf());
+    CRASH_COND(FAILED(hr));
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format = texture_desc.Format;
+    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = 1;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    hr = m_device->CreateShaderResourceView(m_render_target_texture.Get(), &srvDesc, &m_srv);
+    CRASH_COND(FAILED(hr));
+
     return ok;
 }
 
@@ -35,10 +70,20 @@ void D3d11GraphicsManager::finalize() {
     ImGui_ImplDX11_Shutdown();
 }
 
+uint64_t D3d11GraphicsManager::get_final_image() const {
+    return (uint64_t)m_srv.Get();
+}
+
 void D3d11GraphicsManager::render() {
-    const float clear_color_with_alpha[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    const float clear_color[4] = { 0.3f, 0.4f, 0.3f, 1.0f };
+    m_ctx->OMSetRenderTargets(1, m_render_target_view.GetAddressOf(), nullptr);
+    m_ctx->ClearRenderTargetView(m_render_target_view.Get(), clear_color);
+
+    // ID3D11RenderTargetView* rtv = nullptr;
+    // m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
+
     m_ctx->OMSetRenderTargets(1, m_window_rtv.GetAddressOf(), nullptr);
-    m_ctx->ClearRenderTargetView(m_window_rtv.Get(), clear_color_with_alpha);
+    m_ctx->ClearRenderTargetView(m_window_rtv.Get(), clear_color);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
     ImGuiIO& io = ImGui::GetIO();
