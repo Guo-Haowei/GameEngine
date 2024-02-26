@@ -4,6 +4,8 @@
 namespace my {
 
 struct OpenGLTexture : public Texture {
+    using Texture::Texture;
+
     ~OpenGLTexture();
 
     uint32_t get_handle() const final { return handle; }

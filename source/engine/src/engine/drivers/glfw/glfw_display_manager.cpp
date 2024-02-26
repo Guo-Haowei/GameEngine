@@ -36,9 +36,7 @@ bool GlfwDisplayManager::initialize() {
 
     m_window = glfwCreateWindow(size.x, size.y, "Editor (OpenGL)", nullptr, nullptr);
     DEV_ASSERT(m_window);
-
-    const ivec2 position = DVAR_GET_IVEC2(window_position);
-    glfwSetWindowPos(m_window, position.x, position.y);
+    glfwSetWindowPos(m_window, 40, 40);
 
     glfwMakeContextCurrent(m_window);
 

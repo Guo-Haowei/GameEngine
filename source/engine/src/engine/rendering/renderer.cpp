@@ -283,4 +283,40 @@ std::array<mat4, 6> cube_map_view_matrices(const vec3& p_eye) {
     matrices[5] = glm::lookAt(p_eye, p_eye + glm::vec3(+0, +0, -1), glm::vec3(0, -1, +0));
     return matrices;
 }
+
+void fill_texture_and_sampler_desc(const Image* p_image, TextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc) {
+    DEV_ASSERT(p_image);
+    bool is_hdr_file = false;
+
+    switch (p_image->format) {
+        case PixelFormat::R32_FLOAT:
+        case PixelFormat::R32G32_FLOAT:
+        case PixelFormat::R32G32B32_FLOAT:
+        case PixelFormat::R32G32B32A32_FLOAT: {
+            is_hdr_file = true;
+        } break;
+        default: {
+        } break;
+    }
+
+    p_texture_desc.dimension = Dimension::TEXTURE_2D;
+    p_texture_desc.width = p_image->width;
+    p_texture_desc.height = p_image->height;
+    p_texture_desc.array_size = 1;
+    p_texture_desc.format = p_image->format;
+    p_texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+    p_texture_desc.initial_data = p_image->buffer.data();
+    p_texture_desc.mip_levels = 1;
+
+    if (is_hdr_file) {
+        p_sampler_desc.min = p_sampler_desc.mag = FilterMode::LINEAR;
+        p_sampler_desc.mode_u = p_sampler_desc.mode_v = AddressMode::CLAMP;
+    } else {
+        p_texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
+
+        p_sampler_desc.min = FilterMode::MIPMAP_LINEAR;
+        p_sampler_desc.mag = FilterMode::LINEAR;
+    }
+}
+
 }  // namespace my::renderer

@@ -26,33 +26,33 @@ void set_debug_name(ID3D11DeviceChild* p_resource, const std::string& p_name);
 
 inline DXGI_FORMAT convert_format(PixelFormat p_format) {
     switch (p_format) {
-        case FORMAT_UNKNOWN:
+        case PixelFormat::UNKNOWN:
             return DXGI_FORMAT_UNKNOWN;
-        case FORMAT_R8_UINT:
+        case PixelFormat::R8_UINT:
             return DXGI_FORMAT_R8_UNORM;
-        case FORMAT_R8G8_UINT:
+        case PixelFormat::R8G8_UINT:
             return DXGI_FORMAT_R8G8_UNORM;
-        case FORMAT_R8G8B8_UINT:
+        case PixelFormat::R8G8B8_UINT:
             return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case FORMAT_R8G8B8A8_UINT:
+        case PixelFormat::R8G8B8A8_UINT:
             return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case FORMAT_R16_FLOAT:
+        case PixelFormat::R16_FLOAT:
             return DXGI_FORMAT_R16_FLOAT;
-        case FORMAT_R16G16_FLOAT:
+        case PixelFormat::R16G16_FLOAT:
             return DXGI_FORMAT_R16G16_FLOAT;
-        case FORMAT_R16G16B16_FLOAT:
+        case PixelFormat::R16G16B16_FLOAT:
             return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case FORMAT_R16G16B16A16_FLOAT:
+        case PixelFormat::R16G16B16A16_FLOAT:
             return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case FORMAT_R32_FLOAT:
+        case PixelFormat::R32_FLOAT:
             return DXGI_FORMAT_R32_FLOAT;
-        case FORMAT_R32G32_FLOAT:
+        case PixelFormat::R32G32_FLOAT:
             return DXGI_FORMAT_R32G32_FLOAT;
-        case FORMAT_R32G32B32_FLOAT:
+        case PixelFormat::R32G32B32_FLOAT:
             return DXGI_FORMAT_R32G32B32_FLOAT;
-        case FORMAT_R32G32B32A32_FLOAT:
+        case PixelFormat::R32G32B32A32_FLOAT:
             return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        case FORMAT_D32_FLOAT:
+        case PixelFormat::D32_FLOAT:
             return DXGI_FORMAT_D32_FLOAT;
         default:
             CRASH_NOW();

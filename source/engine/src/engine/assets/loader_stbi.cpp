@@ -8,16 +8,16 @@ namespace my {
 static PixelFormat channel_to_format(int channel, bool is_float) {
     switch (channel) {
         case 1:
-            return is_float ? FORMAT_R32_FLOAT : FORMAT_R8_UINT;
+            return is_float ? PixelFormat::R32_FLOAT : PixelFormat::R8_UINT;
         case 2:
-            return is_float ? FORMAT_R32G32_FLOAT : FORMAT_R8G8_UINT;
+            return is_float ? PixelFormat::R32G32_FLOAT : PixelFormat::R8G8_UINT;
         case 3:
-            return is_float ? FORMAT_R32G32B32_FLOAT : FORMAT_R8G8B8_UINT;
+            return is_float ? PixelFormat::R32G32B32_FLOAT : PixelFormat::R8G8B8_UINT;
         case 4:
-            return is_float ? FORMAT_R32G32B32A32_FLOAT : FORMAT_R8G8B8A8_UINT;
+            return is_float ? PixelFormat::R32G32B32A32_FLOAT : PixelFormat::R8G8B8A8_UINT;
         default:
             CRASH_NOW();
-            return FORMAT_UNKNOWN;
+            return PixelFormat::UNKNOWN;
     }
 }
 

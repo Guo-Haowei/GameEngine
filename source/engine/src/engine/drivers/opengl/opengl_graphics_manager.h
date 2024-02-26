@@ -14,8 +14,7 @@ public:
 
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) final;
 
-    void create_texture(ImageHandle* handle) final;
-    // @TODO: filter
+    std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     uint64_t get_final_image() const final;
 

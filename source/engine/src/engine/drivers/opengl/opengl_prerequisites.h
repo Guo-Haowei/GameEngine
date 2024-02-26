@@ -7,30 +7,32 @@
 #endif
 #include <glad/glad.h>
 
-#include "rendering/pixel_format.h"
 #include "rendering/sampler.h"
+#include "rendering/texture.h"
+
+// @TODO: make this included by cpp only
 
 namespace my::gl {
 
 inline GLuint convert_format(PixelFormat format) {
     switch (format) {
-        case FORMAT_R8_UINT:
-        case FORMAT_R16_FLOAT:
-        case FORMAT_R32_FLOAT:
+        case PixelFormat::R8_UINT:
+        case PixelFormat::R16_FLOAT:
+        case PixelFormat::R32_FLOAT:
             return GL_RED;
-        case FORMAT_R8G8_UINT:
-        case FORMAT_R16G16_FLOAT:
-        case FORMAT_R32G32_FLOAT:
+        case PixelFormat::R8G8_UINT:
+        case PixelFormat::R16G16_FLOAT:
+        case PixelFormat::R32G32_FLOAT:
             return GL_RG;
-        case FORMAT_R8G8B8_UINT:
-        case FORMAT_R16G16B16_FLOAT:
-        case FORMAT_R32G32B32_FLOAT:
+        case PixelFormat::R8G8B8_UINT:
+        case PixelFormat::R16G16B16_FLOAT:
+        case PixelFormat::R32G32B32_FLOAT:
             return GL_RGB;
-        case FORMAT_R8G8B8A8_UINT:
-        case FORMAT_R16G16B16A16_FLOAT:
-        case FORMAT_R32G32B32A32_FLOAT:
+        case PixelFormat::R8G8B8A8_UINT:
+        case PixelFormat::R16G16B16A16_FLOAT:
+        case PixelFormat::R32G32B32A32_FLOAT:
             return GL_RGBA;
-        case FORMAT_D32_FLOAT:
+        case PixelFormat::D32_FLOAT:
             return GL_DEPTH_COMPONENT;
         default:
             CRASH_NOW();
@@ -40,31 +42,31 @@ inline GLuint convert_format(PixelFormat format) {
 
 inline GLuint convert_internal_format(PixelFormat format) {
     switch (format) {
-        case FORMAT_R8_UINT:
+        case PixelFormat::R8_UINT:
             return GL_RED;
-        case FORMAT_R8G8_UINT:
+        case PixelFormat::R8G8_UINT:
             return GL_RG;
-        case FORMAT_R8G8B8_UINT:
+        case PixelFormat::R8G8B8_UINT:
             return GL_RGB;
-        case FORMAT_R8G8B8A8_UINT:
+        case PixelFormat::R8G8B8A8_UINT:
             return GL_RGBA;
-        case FORMAT_R16_FLOAT:
+        case PixelFormat::R16_FLOAT:
             return GL_R16F;
-        case FORMAT_R16G16_FLOAT:
+        case PixelFormat::R16G16_FLOAT:
             return GL_RG16F;
-        case FORMAT_R16G16B16_FLOAT:
+        case PixelFormat::R16G16B16_FLOAT:
             return GL_RGB16F;
-        case FORMAT_R16G16B16A16_FLOAT:
+        case PixelFormat::R16G16B16A16_FLOAT:
             return GL_RGBA16F;
-        case FORMAT_R32_FLOAT:
+        case PixelFormat::R32_FLOAT:
             return GL_R32F;
-        case FORMAT_R32G32_FLOAT:
+        case PixelFormat::R32G32_FLOAT:
             return GL_RG32F;
-        case FORMAT_R32G32B32_FLOAT:
+        case PixelFormat::R32G32B32_FLOAT:
             return GL_RGB32F;
-        case FORMAT_R32G32B32A32_FLOAT:
+        case PixelFormat::R32G32B32A32_FLOAT:
             return GL_RGBA32F;
-        case FORMAT_D32_FLOAT:
+        case PixelFormat::D32_FLOAT:
             // return GL_DEPTH_COMPONENT;
             return GL_DEPTH_COMPONENT32F;
         default:
@@ -75,20 +77,20 @@ inline GLuint convert_internal_format(PixelFormat format) {
 
 inline GLuint convert_data_type(PixelFormat format) {
     switch (format) {
-        case FORMAT_R8_UINT:
-        case FORMAT_R8G8_UINT:
-        case FORMAT_R8G8B8_UINT:
-        case FORMAT_R8G8B8A8_UINT:
+        case PixelFormat::R8_UINT:
+        case PixelFormat::R8G8_UINT:
+        case PixelFormat::R8G8B8_UINT:
+        case PixelFormat::R8G8B8A8_UINT:
             return GL_UNSIGNED_BYTE;
-        case FORMAT_R16_FLOAT:
-        case FORMAT_R16G16_FLOAT:
-        case FORMAT_R16G16B16_FLOAT:
-        case FORMAT_R16G16B16A16_FLOAT:
-        case FORMAT_R32_FLOAT:
-        case FORMAT_R32G32_FLOAT:
-        case FORMAT_R32G32B32_FLOAT:
-        case FORMAT_R32G32B32A32_FLOAT:
-        case FORMAT_D32_FLOAT:
+        case PixelFormat::R16_FLOAT:
+        case PixelFormat::R16G16_FLOAT:
+        case PixelFormat::R16G16B16_FLOAT:
+        case PixelFormat::R16G16B16A16_FLOAT:
+        case PixelFormat::R32_FLOAT:
+        case PixelFormat::R32G32_FLOAT:
+        case PixelFormat::R32G32B32_FLOAT:
+        case PixelFormat::R32G32B32A32_FLOAT:
+        case PixelFormat::D32_FLOAT:
             return GL_FLOAT;
         default:
             CRASH_NOW();
@@ -146,6 +148,22 @@ inline void set_sampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
         p_desc.mode_v == AddressMode::BORDER ||
         p_desc.mode_w == AddressMode::BORDER) {
         glTexParameterfv(p_texture_type, GL_TEXTURE_BORDER_COLOR, p_desc.border);
+    }
+}
+
+inline GLenum convert_dimension(Dimension p_dimension) {
+    switch (p_dimension) {
+        case my::TEXTURE_2D:
+            return GL_TEXTURE_2D;
+        case my::TEXTURE_3D:
+            return GL_TEXTURE_3D;
+        case my::TEXTURE_2D_ARRAY:
+            return GL_TEXTURE_2D_ARRAY;
+        case my::TEXTURE_CUBE:
+            return GL_TEXTURE_CUBE_MAP;
+        default:
+            CRASH_NOW();
+            return GL_TEXTURE_2D;
     }
 }
 

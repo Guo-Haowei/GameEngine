@@ -15,11 +15,11 @@ public:
     void render() final;
 
     // @TODO: filter
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&, const SamplerDesc&) final { return nullptr; }
+    std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
+
+    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) final;
 
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) final { return nullptr; }
-
-    void create_texture(ImageHandle* p_handle) final;
 
     uint64_t get_final_image() const final;
 

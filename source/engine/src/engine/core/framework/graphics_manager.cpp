@@ -5,6 +5,7 @@
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "rendering/render_graph/render_graphs.h"
+#include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
@@ -49,7 +50,14 @@ void GraphicsManager::update(float) {
         auto task = loaded_images.front();
         loaded_images.pop();
         DEV_ASSERT(task.handle->state == ASSET_STATE_READY);
-        create_texture(task.handle);
+        Image* image = task.handle->get();
+        DEV_ASSERT(image);
+
+        TextureDesc texture_desc{};
+        SamplerDesc sampler_desc{};
+        renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
+
+        image->gpu_texture = create_texture(texture_desc, sampler_desc);
         if (task.func) {
             task.func(task.handle->get());
         }

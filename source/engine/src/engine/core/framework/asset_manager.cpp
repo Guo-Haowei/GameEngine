@@ -7,6 +7,7 @@
 #include "core/io/file_access.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
+#include "rendering/renderer.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -122,15 +123,20 @@ ImageHandle* AssetManager::load_image_sync(const std::string& p_path) {
         return nullptr;
     }
 
-    Image* image = new Image(p_path);
+    Image* image = new Image;
     if (!loader->load(image)) {
         delete image;
         return nullptr;
     }
+
+    TextureDesc texture_desc{};
+    SamplerDesc sampler_desc{};
+    renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
+
+    image->gpu_texture = GraphicsManager::singleton().create_texture(texture_desc, sampler_desc);
     handle->set(image);
     ImageHandle* ret = handle.get();
     m_image_cache[p_path] = std::move(handle);
-    GraphicsManager::singleton().create_texture(ret);
     return ret;
 }
 
@@ -176,7 +182,7 @@ void AssetManager::worker_main() {
         // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
         switch (task.type) {
             case LOAD_TASK_IMAGE: {
-                load_asset<Image>(task, new Image(task.asset_path));
+                load_asset<Image>(task, new Image);
             } break;
             case LOAD_TASK_SCENE: {
                 LOG_VERBOSE("[AssetManager] start loading scene {}", task.asset_path);

@@ -7,10 +7,7 @@ namespace my {
 
 class Image {
 public:
-    Image(const std::string& p_debug_name) : debug_name(p_debug_name) {}
-    std::string debug_name;
-
-    PixelFormat format = FORMAT_UNKNOWN;
+    PixelFormat format = PixelFormat::UNKNOWN;
     int width = 0;
     int height = 0;
     int num_channels = 0;

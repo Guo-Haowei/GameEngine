@@ -1,5 +1,4 @@
 #pragma once
-#include "assets/image.h"
 #include "core/base/concurrent_queue.h"
 #include "core/base/singleton.h"
 #include "core/framework/event_queue.h"
@@ -7,6 +6,7 @@
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/render_graph.h"
 #include "rendering/sampler.h"
+#include "rendering/texture.h"
 #include "scene/material_component.h"
 #include "scene/scene_components.h"
 
@@ -46,8 +46,8 @@ public:
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
 
-    // @TODO: sampler
-    virtual void create_texture(ImageHandle* p_handle) = 0;
+    virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
+
     void request_texture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
     // virtual std::shared_ptr<rg::Subpass> create_subpass(const rg::SubpassDesc& p_desc) = 0;

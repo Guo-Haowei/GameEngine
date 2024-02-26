@@ -29,7 +29,6 @@ bool Win32DisplayManager::initialize() {
     const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
     const ivec2 min_size = ivec2(600, 400);
     const ivec2 size = glm::max(min_size, resolution);
-    // const ivec2 position = DVAR_GET_IVEC2(window_position);
 
     RECT rect = { 0, 0, size.x, size.y };
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
@@ -50,7 +49,7 @@ bool Win32DisplayManager::initialize() {
     m_hwnd = ::CreateWindowW(m_wnd_class.lpszClassName,
                              L"Editor (D3d11)",
                              WS_OVERLAPPEDWINDOW,
-                             100, 100,
+                             40, 40,
                              rect.right - rect.left, rect.bottom - rect.top,
                              NULL,
                              NULL,

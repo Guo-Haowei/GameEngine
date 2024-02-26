@@ -519,43 +519,43 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
     // @TODO: refactor
     auto gbuffer_attachment0 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
-                                                                         FORMAT_R16G16B16A16_FLOAT,
+                                                                         PixelFormat::R16G16B16A16_FLOAT,
                                                                          RT_COLOR_ATTACHMENT_2D,
                                                                          w, h },
                                                        nearest_sampler());
     auto gbuffer_attachment1 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
-                                                                         FORMAT_R16G16B16A16_FLOAT,
+                                                                         PixelFormat::R16G16B16A16_FLOAT,
                                                                          RT_COLOR_ATTACHMENT_2D,
                                                                          w, h },
                                                        nearest_sampler());
     auto gbuffer_attachment2 = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
-                                                                         FORMAT_R8G8B8A8_UINT,
+                                                                         PixelFormat::R8G8B8A8_UINT,
                                                                          RT_COLOR_ATTACHMENT_2D,
                                                                          w, h },
                                                        nearest_sampler());
     auto gbuffer_depth = manager.create_resource(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
-                                                                   FORMAT_D32_FLOAT,
+                                                                   PixelFormat::D32_FLOAT,
                                                                    RT_DEPTH_ATTACHMENT_2D,
                                                                    w, h },
                                                  nearest_sampler());
 
     auto ssao_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_SSAO,
-                                                                     FORMAT_R32_FLOAT,
+                                                                     PixelFormat::R32_FLOAT,
                                                                      RT_COLOR_ATTACHMENT_2D,
                                                                      w, h },
                                                    nearest_sampler());
     auto lighting_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_LIGHTING,
-                                                                         FORMAT_R8G8B8A8_UINT,
+                                                                         PixelFormat::R8G8B8A8_UINT,
                                                                          RT_COLOR_ATTACHMENT_2D,
                                                                          w, h },
                                                        nearest_sampler());
     auto fxaa_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FXAA,
-                                                                     FORMAT_R8G8B8A8_UINT,
+                                                                     PixelFormat::R8G8B8A8_UINT,
                                                                      RT_COLOR_ATTACHMENT_2D,
                                                                      w, h },
                                                    nearest_sampler());
     auto final_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
-                                                                      FORMAT_R8G8B8A8_UINT,
+                                                                      PixelFormat::R8G8B8A8_UINT,
                                                                       RT_COLOR_ATTACHMENT_2D,
                                                                       w, h },
                                                     nearest_sampler());
@@ -567,12 +567,12 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
         auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.create_resource(RenderTargetDesc{ cube_map_name,
-                                                                      FORMAT_R16G16B16_FLOAT,
+                                                                      PixelFormat::R16G16B16_FLOAT,
                                                                       RT_COLOR_ATTACHMENT_CUBE_MAP,
                                                                       size, size, gen_mipmap },
                                                     p_sampler);
             auto depth_map = manager.create_resource(RenderTargetDesc{ depth_name,
-                                                                       FORMAT_D32_FLOAT,
+                                                                       PixelFormat::D32_FLOAT,
                                                                        RT_DEPTH_ATTACHMENT_2D,
                                                                        size, size, gen_mipmap },
                                                      nearest_sampler());
@@ -585,7 +585,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
             return subpass;
         };
 
-        auto brdf_image = manager.create_resource(RenderTargetDesc{ RT_BRDF, FORMAT_R16G16_FLOAT, RT_COLOR_ATTACHMENT_2D, 512, 512, false },
+        auto brdf_image = manager.create_resource(RenderTargetDesc{ RT_BRDF, PixelFormat::R16G16_FLOAT, RT_COLOR_ATTACHMENT_2D, 512, 512, false },
                                                   linear_clamp_sampler());
         auto brdf_subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { brdf_image },
@@ -605,7 +605,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         DEV_ASSERT(math::is_power_of_two(point_shadow_res));
 
         auto shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_SHADOW_MAP,
-                                                                    FORMAT_D32_FLOAT,
+                                                                    PixelFormat::D32_FLOAT,
                                                                     RT_SHADOW_2D,
                                                                     MAX_CASCADE_COUNT * shadow_res, shadow_res },
                                                   shadow_map_sampler());
@@ -633,7 +633,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
             auto point_shadow_map = manager.create_resource(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
-                                                                              FORMAT_D32_FLOAT,
+                                                                              PixelFormat::D32_FLOAT,
                                                                               RT_SHADOW_CUBE_MAP,
                                                                               point_shadow_res, point_shadow_res },
                                                             shadow_cube_map_sampler());

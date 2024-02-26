@@ -33,7 +33,6 @@ public:
     void bind() const;
     void unbind() const;
     void genMipMap();
-    inline GLenum getFormat() const { return m_format; }
 
     inline GLuint GetHandle() const { return mHandle; }
 

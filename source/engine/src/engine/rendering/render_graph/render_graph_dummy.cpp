@@ -1,13 +1,10 @@
-#include "render_graph_base_color.h"
-
 // @TODO: refactor
-#include "core/base/rid_owner.h"
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
-#include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
+#include "rendering/render_graph/render_graphs.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my::rg {
@@ -33,7 +30,7 @@ void create_render_graph_dummy(RenderGraph& graph) {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     auto color_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
-                                                                      FORMAT_R8G8B8A8_UINT,
+                                                                      PixelFormat::R8G8B8A8_UINT,
                                                                       RT_COLOR_ATTACHMENT_2D,
                                                                       w, h },
                                                     nearest_sampler());

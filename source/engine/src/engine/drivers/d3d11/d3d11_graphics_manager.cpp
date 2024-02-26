@@ -18,6 +18,8 @@ ComPtr<ID3D11RenderTargetView> m_render_target_view;
 ComPtr<ID3D11ShaderResourceView> m_srv;
 
 struct D3d11Texture : public Texture {
+    using Texture::Texture;
+
     uint32_t get_handle() const { return 0; }
     uint64_t get_resident_handle() const { return 0; }
     uint64_t get_imgui_handle() const { return (uint64_t)srv.Get(); }
@@ -177,48 +179,99 @@ bool D3d11GraphicsManager::create_render_target() {
     return true;
 }
 
-void D3d11GraphicsManager::create_texture(ImageHandle* p_handle) {
+inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
+    // only support a few flags for now
+    DEV_ASSERT((p_bind_flags & (~(BIND_SHADER_RESOURCE | BIND_RENDER_TARGET))) == 0);
+
+    uint32_t flags = 0;
+    if (p_bind_flags & BIND_SHADER_RESOURCE) {
+        flags |= D3D11_BIND_SHADER_RESOURCE;
+    }
+    if (p_bind_flags & BIND_RENDER_TARGET) {
+        flags |= D3D11_BIND_RENDER_TARGET;
+    }
+
+    return flags;
+}
+
+inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
+    // only support a few flags for now
+    DEV_ASSERT((p_misc_flags & (~RESOURCE_MISC_GENERATE_MIPS)) == 0);
+
+    uint32_t flags = 0;
+    if (p_misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+        flags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+    }
+
+    return flags;
+}
+
+inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
+    switch (p_dimension) {
+        case my::TEXTURE_2D:
+            return D3D_SRV_DIMENSION_TEXTURE2D;
+        case my::TEXTURE_3D:
+            return D3D_SRV_DIMENSION_TEXTURE3D;
+        case my::TEXTURE_2D_ARRAY:
+            return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
+        case my::TEXTURE_CUBE:
+            return D3D_SRV_DIMENSION_TEXTURECUBE;
+        default:
+            CRASH_NOW();
+            return D3D_SRV_DIMENSION_TEXTURE2D;
+    }
+}
+
+std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+    unused(p_sampler_desc);
+
     ComPtr<ID3D11ShaderResourceView> srv;
 
-    DEV_ASSERT(p_handle);
-    Image* image = p_handle->get();
+    PixelFormat format = p_texture_desc.format;
 
     D3D11_TEXTURE2D_DESC texture_desc{};
-    texture_desc.Width = image->width;
-    texture_desc.Height = image->height;
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = d3d11::convert_format(image->format);
+    texture_desc.Width = p_texture_desc.width;
+    texture_desc.Height = p_texture_desc.height;
+    texture_desc.MipLevels = p_texture_desc.mip_levels;
+    texture_desc.ArraySize = p_texture_desc.array_size;
+    texture_desc.Format = d3d11::convert_format(format);
     texture_desc.SampleDesc = { 1, 0 };
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.BindFlags = convert_bind_flags(p_texture_desc.bind_flags);
     texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
+    texture_desc.MiscFlags = convert_misc_flags(p_texture_desc.misc_flags);
 
     D3D11_SUBRESOURCE_DATA texture_data{};
-    texture_data.pSysMem = image->buffer.data();
-    texture_data.SysMemPitch = image->width * image->num_channels * channel_size(image->format);
-    texture_data.SysMemSlicePitch = image->height * texture_data.SysMemPitch;
-
     ComPtr<ID3D11Texture2D> texture;
-    D3D_FAIL_MSG(m_device->CreateTexture2D(&texture_desc, &texture_data, texture.GetAddressOf()),
-                 "Failed to create texture");
+    texture_data.pSysMem = p_texture_desc.initial_data;
+    texture_data.SysMemPitch = p_texture_desc.width * channel_count(format) * channel_size(format);
+    texture_data.SysMemSlicePitch = p_texture_desc.height * texture_data.SysMemPitch;
+
+    D3D11_SUBRESOURCE_DATA* texture_data_ptr = p_texture_desc.initial_data ? &texture_data : nullptr;
+    D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, texture_data_ptr, texture.GetAddressOf()),
+                   nullptr,
+                   "Failed to create texture");
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
     srv_desc.Format = texture_desc.Format;
-    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.ViewDimension = convert_dimension(p_texture_desc.dimension);
     srv_desc.Texture2D.MostDetailedMip = 0;
     srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
 
-    D3D_FAIL_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
-                 "Failed to create shader resource view");
+    D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
+                   nullptr,
+                   "Failed to create shader resource view");
 
-    SET_DEBUG_NAME(srv.Get(), image->debug_name);
-
-    auto gpu_texture = std::make_shared<D3d11Texture>();
+    auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
     gpu_texture->srv = srv;
-    p_handle->get()->gpu_texture = gpu_texture;
-    return;
+    return gpu_texture;
+}
+
+std::shared_ptr<RenderTarget> D3d11GraphicsManager::create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
+    unused(p_desc);
+    unused(p_sampler);
+
+    return nullptr;
 }
 
 }  // namespace my
