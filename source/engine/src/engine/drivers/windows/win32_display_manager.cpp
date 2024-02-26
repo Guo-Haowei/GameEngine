@@ -2,22 +2,9 @@
 
 #include <imgui/backends/imgui_impl_win32.h>
 
+#include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
-
-// @TODO: move away
-#include <d3d11.h>
-#include <dxgi.h>
-#include <imgui/backends/imgui_impl_dx11.h>
-static ID3D11Device* g_pd3dDevice = NULL;
-static ID3D11DeviceContext* g_pd3dDeviceContext = NULL;
-static IDXGISwapChain* g_pSwapChain = NULL;
-static ID3D11RenderTargetView* g_mainRenderTargetView = NULL;
-
-// Forward declarations of helper functions
-bool CreateDeviceD3D(HWND hWnd);
-void CleanupDeviceD3D();
-void CreateRenderTarget();
-void CleanupRenderTarget();
+#include "core/input/input.h"
 
 namespace my {
 
@@ -37,19 +24,14 @@ static LRESULT wnd_proc_wrapper(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 }
 
 bool Win32DisplayManager::initialize() {
+    initialize_key_mapping();
+
     const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
     const ivec2 min_size = ivec2(600, 400);
     const ivec2 size = glm::max(min_size, resolution);
-    const ivec2 position = DVAR_GET_IVEC2(window_position);
 
     RECT rect = { 0, 0, size.x, size.y };
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-
-    //// Create the window
-    // HWND hwnd = CreateWindow(wc.lpszClassName, L"Window Title", WS_OVERLAPPEDWINDOW,
-    //                          CW_USEDEFAULT, CW_USEDEFAULT,
-    //                          windowRect.right - windowRect.left, windowRect.bottom - windowRect.top,
-    //                          NULL, NULL, hInstance, NULL);
 
     m_wnd_class = { sizeof(m_wnd_class),
                     CS_CLASSDC,
@@ -67,7 +49,7 @@ bool Win32DisplayManager::initialize() {
     m_hwnd = ::CreateWindowW(m_wnd_class.lpszClassName,
                              L"Editor (D3d11)",
                              WS_OVERLAPPEDWINDOW,
-                             position.x, position.y,
+                             40, 40,
                              rect.right - rect.left, rect.bottom - rect.top,
                              NULL,
                              NULL,
@@ -80,28 +62,11 @@ bool Win32DisplayManager::initialize() {
 
     ImGui_ImplWin32_Init(m_hwnd);
 
-    // TEMP///////////////////////
-    // Initialize Direct3D
-    if (!CreateDeviceD3D(m_hwnd)) {
-        CleanupDeviceD3D();
-        return 1;
-    }
-    bool ok = ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
-    DEV_ASSERT(ok);
-    ImGui_ImplDX11_NewFrame();
-    //////////////////////////
-
     return true;
 }
 
 void Win32DisplayManager::finalize() {
-    ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
-
-    // ImGui_ImplWin32_Shutdown();
-    // ImGui::DestroyContext();
-
-    CleanupDeviceD3D();
 
     ::DestroyWindow(m_hwnd);
     ::UnregisterClassW(m_wnd_class.lpszClassName, m_wnd_class.hInstance);
@@ -134,19 +99,6 @@ void Win32DisplayManager::new_frame() {
 }
 
 void Win32DisplayManager::present() {
-    const float clear_color_with_alpha[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
-    g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-    ImGuiIO& io = ImGui::GetIO();
-    // Update and Render additional Platform Windows
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-    }
-
-    g_pSwapChain->Present(1, 0);  // Present with vsync
 }
 
 LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -159,12 +111,12 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         case WM_SIZE: {
             int width = LOWORD(lParam);
             int height = HIWORD(lParam);
-            m_frame_size.x = width;
-            m_frame_size.y = height;
-            if (g_pd3dDevice != NULL && wParam != SIZE_MINIMIZED) {
-                CleanupRenderTarget();
-                g_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
-                CreateRenderTarget();
+            if (wParam != SIZE_MINIMIZED) {
+                // @TODO: only dispatch when resize stops
+                m_frame_size.x = width;
+                m_frame_size.y = height;
+                auto event = std::make_shared<ResizeEvent>(width, height);
+                m_app->get_event_queue().dispatch_event(event);
             }
             return 0;
         }
@@ -184,13 +136,57 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             ::PostQuitMessage(0);
             return 0;
         case WM_DPICHANGED:
-            // if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
-            //     // const int dpi = HIWORD(wParam);
-            //     // printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
-            //     const RECT* suggested_rect = (RECT*)lParam;
-            //     ::SetWindowPos(hWnd, NULL, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
-            // }
+            if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
+                // const int dpi = HIWORD(wParam);
+                // printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
+                const RECT* suggested_rect = (RECT*)lParam;
+                ::SetWindowPos(hwnd, NULL, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+            }
             break;
+        case WM_MOUSEWHEEL: {
+            const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+            float direction = (delta > 0) ? 1.0f : -1.0f;
+            input::set_wheel(0.0f, direction);
+        } break;
+        case WM_LBUTTONDOWN: {
+            input::set_button(MOUSE_BUTTON_LEFT, true);
+        } break;
+        case WM_LBUTTONUP: {
+            input::set_button(MOUSE_BUTTON_LEFT, false);
+        } break;
+        case WM_RBUTTONDOWN: {
+            input::set_button(MOUSE_BUTTON_RIGHT, true);
+        } break;
+        case WM_RBUTTONUP: {
+            input::set_button(MOUSE_BUTTON_RIGHT, false);
+        } break;
+        case WM_MBUTTONDOWN: {
+            input::set_button(MOUSE_BUTTON_MIDDLE, true);
+        } break;
+        case WM_MBUTTONUP: {
+            input::set_button(MOUSE_BUTTON_MIDDLE, false);
+        } break;
+        case WM_MOUSEMOVE: {
+            int x = LOWORD(lParam);
+            int y = HIWORD(lParam);
+            input::set_cursor(static_cast<float>(x), static_cast<float>(y));
+        } break;
+        case WM_KEYDOWN: {
+            int key_code = LOWORD(wParam);
+            auto it = m_key_mapping.find(key_code);
+            if (it != m_key_mapping.end()) {
+                input::set_key(it->second, true);
+            } else {
+                LOG_WARN("key {} not mapped", key_code);
+            }
+        } break;
+        case WM_KEYUP: {
+            int key_code = LOWORD(wParam);
+            auto it = m_key_mapping.find(key_code);
+            if (it != m_key_mapping.end()) {
+                input::set_key(it->second, false);
+            }
+        } break;
         default:
             break;
     }
@@ -198,83 +194,20 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
     return ::DefWindowProcW(hwnd, msg, wParam, lParam);
 }
 
+void Win32DisplayManager::initialize_key_mapping() {
+    DEV_ASSERT(m_key_mapping.empty());
+
+    m_key_mapping[VK_SPACE] = KEY_SPACE;
+    for (char i = 0; i <= 9; ++i) {
+        m_key_mapping['0' + i] = static_cast<KeyCode>(KEY_0 + i);
+    }
+    for (char i = 0; i < 26; ++i) {
+        m_key_mapping['A' + i] = static_cast<KeyCode>(KEY_A + i);
+    }
+
+    // @TODO: do the rest
+}
+
 }  // namespace my
 
 #include <imgui/backends/imgui_impl_win32.cpp>
-
-///// @TODO: move
-
-// Helper functions
-bool CreateDeviceD3D(HWND hWnd) {
-    // Setup swap chain
-    DXGI_SWAP_CHAIN_DESC sd;
-    ZeroMemory(&sd, sizeof(sd));
-    sd.BufferCount = 2;
-    sd.BufferDesc.Width = 0;
-    sd.BufferDesc.Height = 0;
-    sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    sd.BufferDesc.RefreshRate.Numerator = 60;
-    sd.BufferDesc.RefreshRate.Denominator = 1;
-    sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-    sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    sd.OutputWindow = hWnd;
-    sd.SampleDesc.Count = 1;
-    sd.SampleDesc.Quality = 0;
-    sd.Windowed = TRUE;
-    sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
-    UINT createDeviceFlags = 0;
-    createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-    D3D_FEATURE_LEVEL featureLevel;
-    const D3D_FEATURE_LEVEL featureLevelArray[2] = {
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_0,
-    };
-    HRESULT res = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
-    if (res == DXGI_ERROR_UNSUPPORTED)  // Try high-performance WARP software driver if hardware is not available.
-        res = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_WARP, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
-    if (res != S_OK)
-        return false;
-
-    // Query debug interface if available
-    ID3D11Debug* debugInterface = nullptr;
-    res = g_pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&debugInterface));
-    if (FAILED(res)) {
-        // Debug layer is not available or not supported
-    }
-
-    CreateRenderTarget();
-    return true;
-}
-
-void CleanupDeviceD3D() {
-    CleanupRenderTarget();
-    if (g_pSwapChain) {
-        g_pSwapChain->Release();
-        g_pSwapChain = NULL;
-    }
-    if (g_pd3dDeviceContext) {
-        g_pd3dDeviceContext->Release();
-        g_pd3dDeviceContext = NULL;
-    }
-    if (g_pd3dDevice) {
-        g_pd3dDevice->Release();
-        g_pd3dDevice = NULL;
-    }
-}
-
-void CreateRenderTarget() {
-    ID3D11Texture2D* pBackBuffer;
-    g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-    g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &g_mainRenderTargetView);
-    pBackBuffer->Release();
-}
-
-void CleanupRenderTarget() {
-    if (g_mainRenderTargetView) {
-        g_mainRenderTargetView->Release();
-        g_mainRenderTargetView = NULL;
-    }
-}
-
-#include <imgui/backends/imgui_impl_dx11.cpp>

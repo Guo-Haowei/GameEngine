@@ -1,5 +1,6 @@
 #pragma once
 #include "rendering/pixel_format.h"
+#include "rendering/texture.h"
 
 namespace my {
 
@@ -35,6 +36,7 @@ public:
 
 private:
     const RenderTargetDesc m_desc;
+
     // @TODO: refactor this
     uint32_t m_handle = 0;
     uint64_t m_resident_handle = 0;

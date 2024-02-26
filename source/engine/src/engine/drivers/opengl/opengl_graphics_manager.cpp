@@ -2,31 +2,31 @@
 
 // @TODO: remove
 #include <random>
-
-#include "core/debugger/profiler.h"
-#include "core/math/geometry.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
-#include "rendering/render_data.h"
-#include "rendering/renderer.h"
 /////
+
 #include "assets/image.h"
 #include "core/base/rid_owner.h"
+#include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
+#include "core/math/geometry.h"
+#include "drivers/opengl/opengl_pipeline_state_manager.h"
+#include "drivers/opengl/opengl_subpass.h"
+#include "drivers/opengl/opengl_texture.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/gl_utils.h"
-#include "rendering/opengl/opengl_pipeline_state_manager.h"
-#include "rendering/opengl/opengl_subpass.h"
 #include "rendering/r_cbuffers.h"
+#include "rendering/render_data.h"
+#include "rendering/render_graph/render_graphs.h"
+#include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"
-// @TODO: refactor
-#include "rendering/render_graph/render_graph_base_color.h"
-#include "rendering/render_graph/render_graph_vxgi.h"
 
 using my::rg::RenderGraph;
 using my::rg::RenderPass;
 
 /// textures
+// @TODO: time to refactor this!!
 GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
 
@@ -78,6 +78,8 @@ bool OpenGLGraphicsManager::initialize() {
             LOG_VERBOSE("[opengl] debug callback enabled");
         }
     }
+
+    select_render_graph();
 
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplOpenGL3_CreateDeviceObjects();
@@ -161,51 +163,48 @@ static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
     glBindVertexArray(0);
 }
 
-void OpenGLGraphicsManager::create_texture(ImageHandle* handle) {
-    DEV_ASSERT(handle && handle->data);
-    Image* image = handle->data;
-
+std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
-
     glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
 
-    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 gl::convert_internal_format(image->format),
-                 image->width,
-                 image->height,
-                 0,
-                 gl::convert_format(image->format),
-                 gl::convert_data_type(image->format),
-                 image->buffer.data());
+    GLenum texture_type = gl::convert_dimension(p_texture_desc.dimension);
+    GLenum internal_format = gl::convert_internal_format(p_texture_desc.format);
+    GLenum format = gl::convert_format(p_texture_desc.format);
+    GLenum data_type = gl::convert_data_type(p_texture_desc.format);
 
-    switch (image->format) {
-        case FORMAT_R32_FLOAT:
-        case FORMAT_R32G32_FLOAT:
-        case FORMAT_R32G32B32_FLOAT:
-        case FORMAT_R32G32B32A32_FLOAT: {
-            // @TODO: properly handle filter
-            SamplerDesc sampler_desc{};
-            sampler_desc.min = sampler_desc.mag = FilterMode::LINEAR;
-            sampler_desc.mode_u = sampler_desc.mode_v = AddressMode::CLAMP;
-            gl::set_sampler(GL_TEXTURE_2D, sampler_desc);
+    glBindTexture(texture_type, texture_id);
+
+    switch (texture_type) {
+        case GL_TEXTURE_2D: {
+            glTexImage2D(GL_TEXTURE_2D,
+                         0,
+                         internal_format,
+                         p_texture_desc.width,
+                         p_texture_desc.height,
+                         0,
+                         format,
+                         data_type,
+                         p_texture_desc.initial_data);
         } break;
-        default: {
-            SamplerDesc sampler_desc{};
-            sampler_desc.min = FilterMode::MIPMAP_LINEAR;
-            sampler_desc.mag = FilterMode::LINEAR;
-            gl::set_sampler(GL_TEXTURE_2D, sampler_desc);
-            glGenerateMipmap(GL_TEXTURE_2D);
-        } break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+
+    gl::set_sampler(texture_type, p_sampler_desc);
+    if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+        glGenerateMipmap(GL_TEXTURE_2D);
     }
 
     glBindTexture(GL_TEXTURE_2D, 0);
 
     GLuint64 resident_id = glGetTextureHandleARB(texture_id);
     glMakeTextureHandleResidentARB(resident_id);
-    image->texture.handle = texture_id;
-    image->texture.resident_handle = resident_id;
+
+    auto texture = std::make_shared<OpenGLTexture>(p_texture_desc);
+    texture->handle = texture_id;
+    texture->resident_handle = resident_id;
+    return texture;
 }
 
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
@@ -281,17 +280,6 @@ void OpenGLGraphicsManager::createGpuResources() {
     create_mesh_data(make_box_mesh(), g_box);
     create_mesh_data(make_sky_box_mesh(), g_skybox);
 
-    std::string method(DVAR_GET_STRING(r_render_graph));
-    if (method == "vxgi") {
-        m_method = RENDER_GRAPH_VXGI;
-        create_render_graph_vxgi(m_render_graph);
-    } else if (method == "base_color") {
-        m_method = RENDER_GRAPH_BASE_COLOR;
-        create_render_graph_base_color(m_render_graph);
-    } else {
-        CRASH_NOW();
-    }
-
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
 
     /// create voxel image
@@ -343,11 +331,12 @@ void OpenGLGraphicsManager::createGpuResources() {
 
 uint64_t OpenGLGraphicsManager::get_final_image() const {
     switch (m_method) {
-        case my::OpenGLGraphicsManager::RENDER_GRAPH_VXGI:
-            // return find_resource(RT_RES_FXAA)->get_handle();
+        case RenderGraph::VXGI:
             return find_resource(RT_RES_FINAL)->get_handle();
-        case my::OpenGLGraphicsManager::RENDER_GRAPH_BASE_COLOR:
+        case RenderGraph::BASE_COLOR:
             return find_resource(RT_RES_BASE_COLOR)->get_handle();
+        case RenderGraph::DUMMY:
+            return find_resource(RT_RES_FINAL)->get_handle();
         default:
             CRASH_NOW();
             return 0;
@@ -451,14 +440,6 @@ std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const Rende
     return resource;
 }
 
-std::shared_ptr<RenderTarget> OpenGLGraphicsManager::find_resource(const std::string& name) const {
-    auto it = m_resource_lookup.find(name);
-    if (it == m_resource_lookup.end()) {
-        return nullptr;
-    }
-    return it->second;
-}
-
 std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc& p_desc) {
     auto subpass = std::make_shared<OpenGLSubpass>();
     subpass->func = p_desc.func;
@@ -551,16 +532,21 @@ void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponen
         }
 
         ImageHandle* handle = material->textures[idx].image;
-        if (!handle || handle->state != ASSET_STATE_READY) {
+        if (!handle) {
             return false;
         }
 
-        Image* image = handle->data;
-        if (image->texture.handle == 0) {
+        Image* image = handle->get();
+        if (!image) {
             return false;
         }
 
-        out_handle = image->texture.resident_handle;
+        const OpenGLTexture* texture = reinterpret_cast<OpenGLTexture*>(image->gpu_texture.get());
+        if (!texture) {
+            return false;
+        }
+
+        out_handle = texture->resident_handle;
         return true;
     };
 

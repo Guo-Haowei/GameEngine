@@ -7,6 +7,7 @@
 #include "core/io/file_access.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
+#include "rendering/renderer.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -127,10 +128,15 @@ ImageHandle* AssetManager::load_image_sync(const std::string& p_path) {
         delete image;
         return nullptr;
     }
+
+    TextureDesc texture_desc{};
+    SamplerDesc sampler_desc{};
+    renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
+
+    image->gpu_texture = GraphicsManager::singleton().create_texture(texture_desc, sampler_desc);
     handle->set(image);
     ImageHandle* ret = handle.get();
     m_image_cache[p_path] = std::move(handle);
-    GraphicsManager::singleton().create_texture(ret);
     return ret;
 }
 
@@ -144,8 +150,7 @@ void AssetManager::load_scene_async(const std::string& p_path, LoadSuccessFunc p
 }
 
 template<typename T>
-static void load_asset(LoadTask& p_task) {
-    T* asset = new T;
+static void load_asset(LoadTask& p_task, T* p_asset) {
     auto loader = Loader<T>::create(p_task.asset_path);
     if (!loader) {
         LOG_ERROR("[AssetManager] not loader found for '{}'", p_task.asset_path);
@@ -153,8 +158,8 @@ static void load_asset(LoadTask& p_task) {
     }
 
     Timer timer;
-    if (loader->load(asset)) {
-        p_task.on_success(asset, p_task.userdata);
+    if (loader->load(p_asset)) {
+        p_task.on_success(p_asset, p_task.userdata);
         LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", p_task.asset_path, timer.get_duration_string());
     } else {
         LOG_ERROR("[AssetManager] failed to load '{}', details: {}", p_task.asset_path, loader->get_error());
@@ -177,11 +182,11 @@ void AssetManager::worker_main() {
         // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
         switch (task.type) {
             case LOAD_TASK_IMAGE: {
-                load_asset<Image>(task);
+                load_asset<Image>(task, new Image);
             } break;
             case LOAD_TASK_SCENE: {
                 LOG_VERBOSE("[AssetManager] start loading scene {}", task.asset_path);
-                load_asset<Scene>(task);
+                load_asset<Scene>(task, new Scene);
             } break;
             default:
                 CRASH_NOW();

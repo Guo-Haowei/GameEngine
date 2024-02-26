@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "core/framework/asset_manager.h"
-#include "rendering/opengl/opengl_prerequisites.h"
+#include "drivers/opengl/opengl_prerequisites.h"
 
 namespace my {
 

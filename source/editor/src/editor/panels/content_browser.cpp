@@ -77,11 +77,10 @@ void ContentBrowser::update_internal(Scene&) {
             continue;
         }
 
-        uint64_t handle = it->second.image->texture.handle;
+        auto texture = it->second.image->gpu_texture;
         bool clicked = false;
-        if (handle) {
-            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size);
-            // clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)handle, size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0));
+        if (texture) {
+            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)texture->get_imgui_handle(), size);
         } else {
             clicked = ImGui::Button(name.c_str(), size);
         }

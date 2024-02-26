@@ -1,7 +1,7 @@
 #pragma once
+#include "render_graph.h"
 
 // @TODO: rename the following
-
 // shadow
 #define SHADOW_PASS             "shadow_pass"
 #define RT_RES_SHADOW_MAP       "rt_res_shadow_map"
@@ -41,3 +41,14 @@
 #define RT_RES_FXAA     "rt_res_fxaa"
 #define RT_RES_SSAO     "rt_res_ssao"
 #define RT_RES_FINAL    "rt_res_final"
+
+// dummy pass
+#define DUMMY_PASS "dummy_pass"
+
+namespace my::rg {
+
+void create_render_graph_dummy(RenderGraph& graph);
+void create_render_graph_base_color(RenderGraph& graph);
+void create_render_graph_vxgi(RenderGraph& graph);
+
+}  // namespace my::rg

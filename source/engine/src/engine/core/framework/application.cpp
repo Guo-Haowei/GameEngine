@@ -154,8 +154,6 @@ int Application::run(int argc, const char** argv) {
     // @TODO: fix
     auto [w, h] = DisplayManager::singleton().get_window_size();
     DVAR_SET_IVEC2(window_resolution, w, h);
-    auto [x, y] = DisplayManager::singleton().get_window_pos();
-    DVAR_SET_IVEC2(window_position, x, y);
 
     m_layers.clear();
 
