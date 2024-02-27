@@ -186,6 +186,19 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc
                          data_type,
                          p_texture_desc.initial_data);
         } break;
+        case GL_TEXTURE_CUBE_MAP: {
+            for (int i = 0; i < 6; ++i) {
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                             0,
+                             internal_format,
+                             p_texture_desc.width,
+                             p_texture_desc.height,
+                             0,
+                             format,
+                             data_type,
+                             p_texture_desc.initial_data);
+            }
+        } break;
         default:
             CRASH_NOW();
             break;
@@ -193,10 +206,10 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc
 
     gl::set_sampler(texture_type, p_sampler_desc);
     if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glGenerateMipmap(texture_type);
     }
 
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(texture_type, 0);
 
     GLuint64 resident_id = glGetTextureHandleARB(texture_id);
     glMakeTextureHandleResidentARB(resident_id);
@@ -343,98 +356,38 @@ uint64_t OpenGLGraphicsManager::get_final_image() const {
     }
 }
 
-// @TODO: refactor
-static GLuint create_resource_impl(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
-    unused(p_sampler);
-
-    GLuint texture_id = 0;
-    GLenum type = GL_TEXTURE_2D;
-    glGenTextures(1, &texture_id);
-    switch (p_desc.type) {
-        case RT_COLOR_ATTACHMENT_2D: {
-            glBindTexture(type, texture_id);
-            glTexImage2D(type,                                        // target
-                         0,                                           // level
-                         gl::convert_internal_format(p_desc.format),  // internal format
-                         p_desc.width, p_desc.height,                 // dimension
-                         0,                                           // boarder
-                         gl::convert_format(p_desc.format),           // format
-                         gl::convert_data_type(p_desc.format),        // type
-                         nullptr                                      // pixels
-            );
-        } break;
-        case RT_DEPTH_ATTACHMENT_2D: {
-            glBindTexture(type, texture_id);
-            glTexImage2D(type,                                        // target
-                         0,                                           // level
-                         gl::convert_internal_format(p_desc.format),  // internal format
-                         p_desc.width, p_desc.height,                 // dimension
-                         0,                                           // boarder
-                         gl::convert_format(p_desc.format),           // format
-                         gl::convert_data_type(p_desc.format),        // type
-                         nullptr                                      // pixels
-            );
-        } break;
-        case RT_SHADOW_2D: {
-            glBindTexture(type, texture_id);
-            glTexImage2D(type,
-                         0,
-                         gl::convert_internal_format(p_desc.format),
-                         p_desc.width, p_desc.height,
-                         0,
-                         gl::convert_format(p_desc.format),
-                         gl::convert_data_type(p_desc.format),
-                         nullptr);
-        } break;
-        case RT_SHADOW_CUBE_MAP: {
-            type = GL_TEXTURE_CUBE_MAP;
-            glBindTexture(type, texture_id);
-            for (int i = 0; i < 6; ++i) {
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                             0,
-                             gl::convert_internal_format(p_desc.format),
-                             p_desc.width, p_desc.height,
-                             0,
-                             gl::convert_format(p_desc.format),
-                             gl::convert_data_type(p_desc.format),
-                             nullptr);
-            }
-        } break;
-        case RT_COLOR_ATTACHMENT_CUBE_MAP: {
-            type = GL_TEXTURE_CUBE_MAP;
-            glBindTexture(type, texture_id);
-
-            for (int i = 0; i < 6; ++i) {
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                             0,
-                             gl::convert_internal_format(p_desc.format),
-                             p_desc.width, p_desc.height,
-                             0,
-                             gl::convert_format(p_desc.format),
-                             gl::convert_data_type(p_desc.format),
-                             nullptr);
-            }
-        } break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-
-    gl::set_sampler(type, p_sampler);
-    if (p_desc.gen_mipmap) {
-        glGenerateMipmap(type);
-    }
-    glBindTexture(type, 0);
-    return texture_id;
-}
-
 std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
     DEV_ASSERT(m_resource_lookup.find(p_desc.name) == m_resource_lookup.end());
     std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
 
-    resource->m_handle = create_resource_impl(p_desc, p_sampler);
-    resource->m_resident_handle = glGetTextureHandleARB(resource->m_handle);
-    glMakeTextureHandleResidentARB(resource->m_resident_handle);
+    TextureDesc texture_desc{};
+    switch (p_desc.type) {
+        case RT_COLOR_ATTACHMENT_2D:
+        case RT_DEPTH_ATTACHMENT_2D:
+        case RT_SHADOW_2D:
+            texture_desc.dimension = Dimension::TEXTURE_2D;
+            break;
+        case RT_SHADOW_CUBE_MAP:
+        case RT_COLOR_ATTACHMENT_CUBE_MAP:
+            texture_desc.dimension = Dimension::TEXTURE_CUBE;
+            break;
+        default:
+            break;
+    }
+    texture_desc.format = p_desc.format;
+    texture_desc.width = p_desc.width;
+    texture_desc.height = p_desc.height;
+    texture_desc.initial_data = nullptr;
+    texture_desc.misc_flags = 0;
+    texture_desc.bind_flags = 0;
+    texture_desc.mip_levels = 1;
+    texture_desc.array_size = 1;
+    if (p_desc.gen_mipmap) {
+        texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
+        texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+    }
+
+    resource->m_texture = create_texture(texture_desc, p_sampler);
 
     m_resource_lookup[resource->m_desc.name] = resource;
     return resource;

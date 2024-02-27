@@ -74,7 +74,7 @@ protected:
     void select_render_graph();
 
     const Backend m_backend;
-    RenderGraph m_method;
+    RenderGraph m_method = RenderGraph::DUMMY;
 
     std::shared_ptr<RenderData> m_render_data;
 
