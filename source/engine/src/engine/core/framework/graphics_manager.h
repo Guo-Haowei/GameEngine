@@ -18,6 +18,7 @@ struct MaterialConstantBuffer;
 
 namespace my {
 
+// @TODO: refactor
 struct RenderData;
 
 enum class Backend : uint8_t {
@@ -36,6 +37,12 @@ enum ClearFlags : uint32_t {
 struct Viewport {
     int width;
     int height;
+};
+
+struct MeshBuffers {
+    virtual ~MeshBuffers() = default;
+
+    uint32_t index_count = 0;
 };
 
 // @TODO: move generic stuff to renderer
@@ -57,7 +64,10 @@ public:
 
     virtual void set_render_target(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
-    virtual void set_viewport(const Viewport& p_vp) = 0;
+    virtual void set_viewport(const Viewport& p_viewport) = 0;
+
+    virtual void set_mesh(const MeshBuffers* p_mesh) = 0;
+    virtual void draw_elements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     void set_pipeline_state(PipelineStateName p_name);
 

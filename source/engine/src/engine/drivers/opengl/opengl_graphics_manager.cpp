@@ -5,7 +5,6 @@
 /////
 
 #include "assets/image.h"
-#include "core/base/rid_owner.h"
 #include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
@@ -23,22 +22,19 @@
 using my::rg::RenderGraph;
 using my::rg::RenderPass;
 
+using namespace my;
+
 /// textures
 // @TODO: time to refactor this!!
 GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
 
 // @TODO: refactor
-MeshData g_box;
-MeshData g_skybox;
-MeshData g_billboard;
-
-// @TODO: fix this
-my::RIDAllocator<MeshData> g_meshes;
+OpenGLMeshBuffers g_box;
+OpenGLMeshBuffers g_skybox;
+OpenGLMeshBuffers g_billboard;
 
 static GLuint g_noiseTexture;
-
-using namespace my;
 
 // @TODO: refactor
 template<typename T>
@@ -84,7 +80,7 @@ bool OpenGLGraphicsManager::initialize_internal() {
 
     createGpuResources();
 
-    g_meshes.set_description("GPU-Mesh-Allocator");
+    m_meshes.set_description("GPU-Mesh-Allocator");
 
     return true;
 }
@@ -102,7 +98,7 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
+static void create_mesh_data(const MeshComponent& mesh, OpenGLMeshBuffers& out_mesh) {
     const bool has_normals = !mesh.normals.empty();
     const bool has_uvs = !mesh.texcoords_0.empty();
     const bool has_tangents = !mesh.tangents.empty();
@@ -153,7 +149,7 @@ static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
     }
 
     buffer_storage(out_mesh.ebo, mesh.indices);
-    out_mesh.count = static_cast<uint32_t>(mesh.indices.size());
+    out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
 
     glBindVertexArray(0);
 }
@@ -178,8 +174,17 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
     glClear(flags);
 }
 
-void OpenGLGraphicsManager::set_viewport(const Viewport& p_vp) {
-    glViewport(0, 0, p_vp.width, p_vp.height);
+void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
+    glViewport(0, 0, p_viewport.width, p_viewport.height);
+}
+
+void OpenGLGraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
+    auto mesh = reinterpret_cast<const OpenGLMeshBuffers*>(p_mesh);
+    glBindVertexArray(mesh->vao);
+}
+
+void OpenGLGraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
+    glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
 std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -347,15 +352,16 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
     for (size_t idx = 0; idx < p_scene.get_count<MeshComponent>(); ++idx) {
         const MeshComponent& mesh = p_scene.get_component_array<MeshComponent>()[idx];
-        if (mesh.gpu_resource.is_valid()) {
+        if (mesh.gpu_resource != nullptr) {
             ecs::Entity entity = p_scene.get_entity<MeshComponent>(idx);
             const NameComponent& name = *p_scene.get_component<NameComponent>(entity);
             LOG_WARN("[begin_scene] mesh '{}' (idx: {}) already has gpu resource", name.get_name(), idx);
             continue;
         }
-        RID rid = g_meshes.make_rid();
-        mesh.gpu_resource = rid;
-        create_mesh_data(mesh, *g_meshes.get_or_null(rid));
+        RID rid = m_meshes.make_rid();
+        OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+        mesh.gpu_resource = mesh_buffers;
+        create_mesh_data(mesh, *mesh_buffers);
     }
 
     g_constantCache.Update();

@@ -8,8 +8,6 @@
 #include "r_cbuffers.h"
 #include "scene/scene.h"
 
-extern my::RIDAllocator<MeshData> g_meshes;
-
 namespace my {
 
 void RenderData::clear() {
@@ -186,11 +184,8 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
         Mesh draw;
         draw.armature_id = mesh.armature_id;
         draw.world_matrix = world_matrix;
-        const MeshData* mesh_data = g_meshes.get_or_null(mesh.gpu_resource);
-        if (!mesh_data) {
-            continue;
-        }
-        draw.mesh_data = mesh_data;
+        DEV_ASSERT(mesh.gpu_resource);
+        draw.mesh_data = (MeshBuffers*)mesh.gpu_resource;
 
         for (const auto& subset : mesh.subsets) {
             aabb = subset.local_bound;

@@ -15,7 +15,8 @@ namespace my::rg {
 void base_color_pass(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().set_render_target(p_subpass);
+    auto& gm = GraphicsManager::singleton();
+    gm.set_render_target(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
@@ -44,18 +45,18 @@ void base_color_pass(const Subpass* p_subpass) {
             g_boneCache.Update();
         }
 
-        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_BASE_COLOR_ANIMATED : PROGRAM_BASE_COLOR_STATIC);
+        gm.set_pipeline_state(has_bone ? PROGRAM_BASE_COLOR_ANIMATED : PROGRAM_BASE_COLOR_STATIC);
 
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 
-        glBindVertexArray(draw.mesh_data->vao);
+        gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
             GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
             g_materialCache.Update();
 
-            glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));
+            gm.draw_elements(subset.index_count, subset.index_offset);
         }
     }
 }

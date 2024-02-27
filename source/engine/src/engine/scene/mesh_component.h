@@ -58,7 +58,7 @@ struct MeshComponent {
     ecs::Entity armature_id;
 
     // Non-serialized
-    mutable RID gpu_resource;
+    mutable void* gpu_resource = nullptr;
     AABB local_bound;
 
     VertexAttribute attributes[VertexAttribute::COUNT];

@@ -6,6 +6,8 @@
 
 namespace my {
 
+struct MeshBuffers;
+
 struct RenderData {
     using FilterObjectFunc1 = std::function<bool(const ObjectComponent& object)>;
     using FilterObjectFunc2 = std::function<bool(const AABB& object_aabb)>;
@@ -20,7 +22,7 @@ struct RenderData {
     struct Mesh {
         ecs::Entity armature_id;
         mat4 world_matrix;
-        const MeshData* mesh_data;
+        const MeshBuffers* mesh_data;
         std::vector<SubMesh> subsets;
     };
 

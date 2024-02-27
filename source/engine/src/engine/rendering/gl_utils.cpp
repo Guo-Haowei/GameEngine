@@ -4,8 +4,9 @@
 #include <set>
 
 #include "cbuffer.h"
+#include "drivers/opengl/opengl_graphics_manager.h"
 
-static MeshData g_quad;
+static OpenGLMeshBuffers g_quad;
 
 void R_CreateQuad() {
     // clang-format off

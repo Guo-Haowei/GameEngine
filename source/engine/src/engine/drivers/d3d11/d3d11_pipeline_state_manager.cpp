@@ -12,7 +12,7 @@ namespace my {
 namespace fs = std::filesystem;
 using Microsoft::WRL::ComPtr;
 
-static auto compile_shader(std::string_view p_path, const char* p_target) -> std::expected<ComPtr<ID3DBlob>, std::string> {
+static auto compile_shader(std::string_view p_path, const char* p_target, const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, std::string> {
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
     std::string fullpath_str = fullpath.string();
 
@@ -23,7 +23,7 @@ static auto compile_shader(std::string_view p_path, const char* p_target) -> std
     uint32_t flags = D3DCOMPILE_ENABLE_STRICTNESS;
     HRESULT hr = D3DCompileFromFile(
         path.c_str(),
-        nullptr,
+        p_defines,
         D3D_COMPILE_STANDARD_FILE_INCLUDE,
         "main",
         p_target,
@@ -53,9 +53,15 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
 
     HRESULT hr = S_OK;
 
+    std::vector<D3D_SHADER_MACRO> macros;
+    for (const auto& define : p_info.defines) {
+        macros.push_back({ define.name, define.value });
+    }
+    macros.push_back({ nullptr, nullptr });
+
     ComPtr<ID3DBlob> vsblob;
     if (!p_info.vs.empty()) {
-        auto res = compile_shader(p_info.vs, "vs_5_0");
+        auto res = compile_shader(p_info.vs, "vs_5_0", macros.data());
         if (!res) {
             LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
             return nullptr;
@@ -68,7 +74,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
         vsblob = blob;
     }
     if (!p_info.ps.empty()) {
-        auto res = compile_shader(p_info.ps, "ps_5_0");
+        auto res = compile_shader(p_info.ps, "ps_5_0", macros.data());
         if (!res) {
             LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
             return nullptr;

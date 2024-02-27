@@ -20,8 +20,20 @@ cbuffer PerBatchConstants : register(b1) {
     float4x4 _dummy3;
 };
 
+cbuffer BoneConstants : register(b2) {
+    float4x4 Bones[128];
+};
+
 vsoutput_mesh main(vsinput_mesh input) {
+#ifdef HAS_ANIMATION
+    float4x4 boneTransform = Bones[input.boneIndex.x] * input.boneWeight.x;
+    boneTransform += Bones[input.boneIndex.y] * input.boneWeight.y;
+    boneTransform += Bones[input.boneIndex.z] * input.boneWeight.z;
+    boneTransform += Bones[input.boneIndex.w] * input.boneWeight.w;
+    float4x4 worldMatrix = mul(Model, boneTransform);
+#else
     float4x4 worldMatrix = Model;
+#endif
 
     float4 position = float4(input.position, 1.0);
     position = mul(worldMatrix, position);

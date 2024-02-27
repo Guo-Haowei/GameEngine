@@ -2,9 +2,15 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 
+#include "core/base/rid_owner.h"
 #include "core/framework/graphics_manager.h"
 
 namespace my {
+
+struct D3d11MeshBuffers : public MeshBuffers {
+    Microsoft::WRL::ComPtr<ID3D11Buffer> vertex_buffer[6]{};
+    Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer;
+};
 
 class D3d11GraphicsManager : public GraphicsManager {
 public:
@@ -16,7 +22,10 @@ public:
 
     void set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) final;
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
-    void set_viewport(const Viewport& p_vp) final;
+    void set_viewport(const Viewport& p_viewport) final;
+
+    void set_mesh(const MeshBuffers* p_mesh) final;
+    void draw_elements(uint32_t p_count, uint32_t p_offset) final;
 
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) final;
@@ -42,6 +51,8 @@ protected:
     Microsoft::WRL::ComPtr<IDXGIDevice> m_dxgi_device;
     Microsoft::WRL::ComPtr<IDXGIAdapter> m_dxgi_adapter;
     Microsoft::WRL::ComPtr<IDXGIFactory> m_dxgi_factory;
+
+    my::RIDAllocator<D3d11MeshBuffers> m_meshes;
 };
 
 }  // namespace my

@@ -2,13 +2,6 @@
 #include "GpuTexture.h"
 #include "core/math/geomath.h"
 
-struct MeshData {
-    GLuint vao = 0;
-    GLuint ebo = 0;
-    GLuint vbos[6] = { 0 };
-    uint32_t count = 0;
-};
-
 void R_CreateQuad();
 void R_DrawQuad();
 

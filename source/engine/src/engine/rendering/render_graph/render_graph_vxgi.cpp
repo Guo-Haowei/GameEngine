@@ -9,12 +9,13 @@
 #include "rendering/rendering_dvars.h"
 
 // @TODO: refactor
+#include "drivers/opengl/opengl_graphics_manager.h"
 #include "rendering/r_cbuffers.h"
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
-extern MeshData g_box;
-extern MeshData g_skybox;
-extern MeshData g_billboard;
+extern OpenGLMeshBuffers g_box;
+extern OpenGLMeshBuffers g_skybox;
+extern OpenGLMeshBuffers g_billboard;
 
 namespace my::rg {
 
@@ -23,13 +24,14 @@ namespace my::rg {
 void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     OPTICK_EVENT();
 
-    auto render_data = GraphicsManager::singleton().get_render_data();
+    auto& gm = GraphicsManager::singleton();
+    auto render_data = gm.get_render_data();
     if (render_data->point_shadow_passes.size() <= p_pass_id) {
         return;
     }
 
     // prepare render data
-    GraphicsManager::singleton().set_render_target(p_subpass);
+    gm.set_render_target(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
     glViewport(0, 0, width, height);
 
@@ -56,21 +58,22 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
             g_boneCache.Update();
         }
 
-        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
+        gm.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.cache.c_light_index = pass.light_index;
         g_perBatchCache.Update();
 
-        glBindVertexArray(draw.mesh_data->vao);
-        glDrawElements(GL_TRIANGLES, draw.mesh_data->count, GL_UNSIGNED_INT, 0);
+        gm.set_mesh(draw.mesh_data);
+        gm.draw_elements(draw.mesh_data->index_count);
     }
 }
 
 void shadow_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().set_render_target(p_subpass);
+    auto& gm = GraphicsManager::singleton();
+    gm.set_render_target(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
     // @TODO: for each light source, render shadow
@@ -102,13 +105,13 @@ void shadow_pass_func(const Subpass* p_subpass) {
                 g_boneCache.Update();
             }
 
-            GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
+            gm.set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
             g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
             g_perBatchCache.Update();
 
-            glBindVertexArray(draw.mesh_data->vao);
-            glDrawElements(GL_TRIANGLES, draw.mesh_data->count, GL_UNSIGNED_INT, 0);
+            gm.set_mesh(draw.mesh_data);
+            gm.draw_elements(draw.mesh_data->index_count);
         }
 
         glCullFace(GL_BACK);
@@ -118,6 +121,7 @@ void shadow_pass_func(const Subpass* p_subpass) {
 
 void voxelization_pass_func(const Subpass*) {
     OPTICK_EVENT();
+    auto& gm = GraphicsManager::singleton();
 
     if (!DVAR_GET_BOOL(r_enable_vxgi)) {
         return;
@@ -140,7 +144,7 @@ void voxelization_pass_func(const Subpass*) {
     g_albedoVoxel.bindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT);
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
 
-    auto render_data = GraphicsManager::singleton().get_render_data();
+    auto render_data = gm.get_render_data();
     RenderData::Pass& pass = render_data->voxel_pass;
     pass.fill_perpass(g_per_pass_cache.cache);
     g_per_pass_cache.Update();
@@ -156,18 +160,18 @@ void voxelization_pass_func(const Subpass*) {
             g_boneCache.Update();
         }
 
-        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
+        gm.set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 
-        glBindVertexArray(draw.mesh_data->vao);
+        gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
             GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
             g_materialCache.Update();
 
-            glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));
+            gm.draw_elements(subset.index_count, subset.index_offset);
         }
     }
 
@@ -195,7 +199,7 @@ void voxelization_pass_func(const Subpass*) {
 
 static void draw_cube_map() {
     glBindVertexArray(g_skybox.vao);
-    glDrawElementsInstanced(GL_TRIANGLES, g_skybox.count, GL_UNSIGNED_INT, 0, 1);
+    glDrawElementsInstanced(GL_TRIANGLES, g_skybox.index_count, GL_UNSIGNED_INT, 0, 1);
 }
 
 // @TODO: fix
@@ -307,7 +311,8 @@ void prefilter_pass_func(const Subpass* p_subpass) {
 void gbuffer_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().set_render_target(p_subpass);
+    auto& gm = GraphicsManager::singleton();
+    gm.set_render_target(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
     glViewport(0, 0, width, height);
@@ -317,7 +322,7 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    auto render_data = GraphicsManager::singleton().get_render_data();
+    auto render_data = gm.get_render_data();
     RenderData::Pass& pass = render_data->main_pass;
 
     pass.fill_perpass(g_per_pass_cache.cache);
@@ -339,13 +344,13 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
         g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
         g_perBatchCache.Update();
 
-        glBindVertexArray(draw.mesh_data->vao);
+        gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
             GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
             g_materialCache.Update();
 
-            glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));
+            gm.draw_elements(subset.index_count, subset.index_offset);
         }
     }
 
@@ -433,7 +438,7 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     glBindVertexArray(g_box.vao);
 
     const int size = DVAR_GET_INT(r_voxel_size);
-    glDrawElementsInstanced(GL_TRIANGLES, g_box.count, GL_UNSIGNED_INT, 0, size * size * size);
+    glDrawElementsInstanced(GL_TRIANGLES, g_box.index_count, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
 void fxaa_pass_func(const Subpass* p_subpass) {
