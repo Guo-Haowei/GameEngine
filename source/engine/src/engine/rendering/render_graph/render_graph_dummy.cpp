@@ -12,14 +12,16 @@ namespace my::rg {
 static void dummy_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    p_subpass->set_render_target();
+    auto& graphics_manager = GraphicsManager::singleton();
+
+    graphics_manager.set_render_target(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
-    glViewport(0, 0, width, height);
+    // glViewport(0, 0, width, height);
 
-    glClearColor(0.3f, 0.4f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    float clear_color[] = { 0.3f, 0.3f, 0.4f, 1.0f };
+    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT, clear_color);
 }
 
 void create_render_graph_dummy(RenderGraph& graph) {
@@ -31,7 +33,7 @@ void create_render_graph_dummy(RenderGraph& graph) {
 
     auto color_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_FINAL,
                                                                            PixelFormat::R8G8B8A8_UINT,
-                                                                           RT_COLOR_ATTACHMENT_2D,
+                                                                           AttachmentType::COLOR_2D,
                                                                            w, h },
                                                          nearest_sampler());
 

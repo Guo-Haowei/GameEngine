@@ -4,43 +4,33 @@
 
 namespace my {
 
-// @TODO: enum class
-enum RenderTargetType {
-    RT_COLOR_ATTACHMENT_2D,
-    RT_COLOR_ATTACHMENT_CUBE_MAP,
-    RT_DEPTH_ATTACHMENT_2D,
-    RT_SHADOW_2D,
-    RT_SHADOW_CUBE_MAP,
+enum class AttachmentType {
+    COLOR_2D,
+    COLOR_CUBE_MAP,
+    DEPTH_2D,
+    SHADOW_2D,
+    SHADOW_CUBE_MAP,
 };
 
 struct RenderTargetDesc {
     std::string name;
     PixelFormat format;
-    RenderTargetType type;
+    AttachmentType type;
     int width;
     int height;
     bool gen_mipmap;
 
-    RenderTargetDesc(const std::string& p_name, PixelFormat p_format, RenderTargetType p_type, int p_width, int p_height, bool p_gen_mipmap = false)
+    RenderTargetDesc(const std::string& p_name, PixelFormat p_format, AttachmentType p_type, int p_width, int p_height, bool p_gen_mipmap = false)
         : name(p_name), format(p_format), type(p_type), width(p_width), height(p_height), gen_mipmap(p_gen_mipmap) {
     }
 };
 
-class RenderTarget {
-public:
-    RenderTarget(const RenderTargetDesc& p_desc) : m_desc(p_desc) {}
+struct RenderTarget {
+    RenderTarget(const RenderTargetDesc& p_desc) : desc(p_desc) {}
 
-    const RenderTargetDesc& get_desc() const { return m_desc; }
-    std::tuple<int, int> get_size() const { return std::make_tuple(m_desc.width, m_desc.height); }
-    uint32_t get_handle() const { return m_texture->get_handle(); }
-    uint64_t get_resident_handle() const { return m_texture->get_resident_handle(); }
-
-private:
-    const RenderTargetDesc m_desc;
-
-    std::shared_ptr<Texture> m_texture;
-
-    friend class GraphicsManager;
+    std::tuple<int, int> get_size() const { return std::make_tuple(desc.width, desc.height); }
+    const RenderTargetDesc desc;
+    std::shared_ptr<Texture> texture;
 };
 
 }  // namespace my

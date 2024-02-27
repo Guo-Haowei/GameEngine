@@ -5,6 +5,7 @@
 #include "core/framework/module.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/render_graph.h"
+#include "rendering/render_graph/subpass.h"
 #include "rendering/sampler.h"
 #include "rendering/texture.h"
 #include "scene/material_component.h"
@@ -16,6 +17,13 @@ struct MaterialConstantBuffer;
 namespace my {
 
 struct RenderData;
+
+enum ClearFlags : uint32_t {
+    CLEAR_NONE = BIT(0),
+    CLEAR_COLOR_BIT = BIT(1),
+    CLEAR_DEPTH_BIT = BIT(2),
+    CLEAR_STENCIL_BIT = BIT(3),
+};
 
 // @TODO: move generic stuff to renderer
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
@@ -43,13 +51,16 @@ public:
     std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;
 
+    virtual void set_render_target(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
+    virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
+
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
     void request_texture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
-    // @TODO: refactor
-    virtual uint64_t get_final_image() const = 0;
+    // @TODO: move to renderer
+    uint64_t get_final_image() const;
 
     // @TODO: thread safety ?
     void event_received(std::shared_ptr<Event> p_event) final;
@@ -74,13 +85,14 @@ protected:
     const Backend m_backend;
     RenderGraph m_method = RenderGraph::DUMMY;
 
-    std::shared_ptr<RenderData> m_render_data;
+    // @TODO: cache
+    PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
 
+    // @TODO: move following to renderer
+    std::shared_ptr<RenderData> m_render_data;
     rg::RenderGraph m_render_graph;
 
     std::map<std::string, std::shared_ptr<RenderTarget>> m_resource_lookup;
-
-    PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
 
     struct ImageTask {
         ImageHandle* handle;

@@ -15,10 +15,9 @@ public:
     void render() final;
 
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
-
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) final;
-
-    uint64_t get_final_image() const final;
+    void set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) final;
+    void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
 
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent*, MaterialConstantBuffer&) final {}

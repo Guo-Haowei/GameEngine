@@ -99,13 +99,13 @@ std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const Render
 
     TextureDesc texture_desc{};
     switch (p_desc.type) {
-        case RT_COLOR_ATTACHMENT_2D:
-        case RT_DEPTH_ATTACHMENT_2D:
-        case RT_SHADOW_2D:
+        case AttachmentType::COLOR_2D:
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::SHADOW_2D:
             texture_desc.dimension = Dimension::TEXTURE_2D;
             break;
-        case RT_SHADOW_CUBE_MAP:
-        case RT_COLOR_ATTACHMENT_CUBE_MAP:
+        case AttachmentType::SHADOW_CUBE_MAP:
+        case AttachmentType::COLOR_CUBE_MAP:
             texture_desc.dimension = Dimension::TEXTURE_CUBE;
             break;
         default:
@@ -123,9 +123,9 @@ std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const Render
         texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
     }
 
-    resource->m_texture = create_texture(texture_desc, p_sampler);
+    resource->texture = create_texture(texture_desc, p_sampler);
 
-    m_resource_lookup[resource->m_desc.name] = resource;
+    m_resource_lookup[resource->desc.name] = resource;
     return resource;
 }
 
@@ -139,6 +139,29 @@ std::shared_ptr<RenderTarget> GraphicsManager::find_render_target(const std::str
         return nullptr;
     }
     return it->second;
+}
+
+uint64_t GraphicsManager::get_final_image() const {
+    const Texture* texture = nullptr;
+    switch (m_method) {
+        case RenderGraph::VXGI:
+            texture = find_render_target(RT_RES_FINAL)->texture.get();
+            break;
+        case RenderGraph::BASE_COLOR:
+            return find_render_target(RT_RES_BASE_COLOR)->texture->get_handle();
+        case RenderGraph::DUMMY:
+            texture = find_render_target(RT_RES_FINAL)->texture.get();
+            break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+
+    if (texture) {
+        return texture->get_imgui_handle();
+    }
+
+    return 0;
 }
 
 }  // namespace my

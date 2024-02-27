@@ -6,17 +6,13 @@
 #include "drivers/d3d11/d3d11_helpers.h"
 #include "drivers/d3d11/d3d11_resources.h"
 #include "drivers/windows/win32_display_manager.h"
+#include "rendering/render_graph/render_graphs.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/texture.h"
 
 namespace my {
 
 using Microsoft::WRL::ComPtr;
-
-// @TODO: render target
-ComPtr<ID3D11Texture2D> m_render_target_texture;
-ComPtr<ID3D11RenderTargetView> m_render_target_view;
-ComPtr<ID3D11ShaderResourceView> m_srv;
 
 bool D3d11GraphicsManager::initialize() {
     bool ok = true;
@@ -39,23 +35,6 @@ bool D3d11GraphicsManager::initialize() {
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    HRESULT hr = S_OK;
-    hr = m_device->CreateTexture2D(&texture_desc, nullptr, m_render_target_texture.GetAddressOf());
-    CRASH_COND(FAILED(hr));
-
-    // D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {};
-
-    hr = m_device->CreateRenderTargetView(m_render_target_texture.Get(), nullptr, m_render_target_view.GetAddressOf());
-    CRASH_COND(FAILED(hr));
-
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = texture_desc.Format;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    hr = m_device->CreateShaderResourceView(m_render_target_texture.Get(), &srvDesc, &m_srv);
-    CRASH_COND(FAILED(hr));
-
     select_render_graph();
 
     return ok;
@@ -65,18 +44,10 @@ void D3d11GraphicsManager::finalize() {
     ImGui_ImplDX11_Shutdown();
 }
 
-uint64_t D3d11GraphicsManager::get_final_image() const {
-    return (uint64_t)m_srv.Get();
-}
-
 void D3d11GraphicsManager::render() {
-    const float clear_color[4] = { 0.3f, 0.4f, 0.3f, 1.0f };
-    m_ctx->OMSetRenderTargets(1, m_render_target_view.GetAddressOf(), nullptr);
-    m_ctx->ClearRenderTargetView(m_render_target_view.Get(), clear_color);
+    m_render_graph.execute();
 
-    // ID3D11RenderTargetView* rtv = nullptr;
-    // m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
-
+    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_ctx->OMSetRenderTargets(1, m_window_rtv.GetAddressOf(), nullptr);
     m_ctx->ClearRenderTargetView(m_window_rtv.Get(), clear_color);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -239,12 +210,70 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
 
     auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
     gpu_texture->srv = srv;
+    gpu_texture->texture = texture;
     return gpu_texture;
 }
 
 std::shared_ptr<Subpass> D3d11GraphicsManager::create_subpass(const SubpassDesc& p_subpass_desc) {
-    unused(p_subpass_desc);
-    return nullptr;
+    auto subpass = std::make_shared<D3d11Subpass>();
+    subpass->func = p_subpass_desc.func;
+    subpass->color_attachments = p_subpass_desc.color_attachments;
+    subpass->depth_attachment = p_subpass_desc.depth_attachment;
+
+    for (const auto& color_attachment : p_subpass_desc.color_attachments) {
+        auto texture = reinterpret_cast<const D3d11Texture*>(color_attachment->texture.get());
+        switch (color_attachment->desc.type) {
+            case AttachmentType::COLOR_2D: {
+                ComPtr<ID3D11RenderTargetView> rtv;
+                D3D_FAIL_V_MSG(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create render target view");
+                subpass->rtvs.emplace_back(rtv);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
+    return subpass;
+}
+
+void D3d11GraphicsManager::set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) {
+    unused(p_index);
+    unused(p_mip_level);
+
+    auto subpass = reinterpret_cast<const D3d11Subpass*>(p_subpass);
+
+    // @TODO: fixed_vector
+    std::vector<ID3D11RenderTargetView*> rtvs;
+    for (auto& rtv : subpass->rtvs) {
+        rtvs.push_back(rtv.Get());
+    }
+
+    m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), nullptr);
+}
+
+void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
+    auto subpass = reinterpret_cast<const D3d11Subpass*>(p_subpass);
+
+    if (p_flags & CLEAR_COLOR_BIT) {
+        float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        if (p_clear_color) {
+            clear_color[0] = p_clear_color[0];
+            clear_color[1] = p_clear_color[1];
+            clear_color[2] = p_clear_color[2];
+            clear_color[3] = p_clear_color[3];
+        }
+
+        for (auto& rtv : subpass->rtvs) {
+            m_ctx->ClearRenderTargetView(rtv.Get(), clear_color);
+        }
+    }
+
+    if (p_flags & CLEAR_DEPTH_BIT) {
+        LOG_WARN("TODO: clear depth");
+    }
 }
 
 }  // namespace my

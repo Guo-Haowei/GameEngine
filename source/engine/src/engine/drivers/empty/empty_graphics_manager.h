@@ -3,6 +3,9 @@
 
 namespace my {
 
+#pragma warning(push)
+#pragma warning(disable : 4100)
+
 class EmptyGraphicsManager : public GraphicsManager {
 public:
     EmptyGraphicsManager(Backend p_backend) : GraphicsManager("EmptyGraphicsManager", p_backend) {}
@@ -12,10 +15,9 @@ public:
     void render() override {}
 
     std::shared_ptr<Texture> create_texture(const TextureDesc&, const SamplerDesc&) { return nullptr; }
-
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) override { return nullptr; }
-
-    uint64_t get_final_image() const override { return 0; }
+    void set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) override {}
+    void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) override {}
 
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent*, MaterialConstantBuffer&) override {}
@@ -24,5 +26,7 @@ protected:
     void on_scene_change(const Scene&) override {}
     void set_pipeline_state_impl(PipelineStateName) override {}
 };
+
+#pragma warning(pop)
 
 }  // namespace my

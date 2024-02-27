@@ -19,14 +19,10 @@ struct D3d11Texture : public Texture {
     uint64_t get_imgui_handle() const { return (uint64_t)srv.Get(); }
 
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+    Microsoft::WRL::ComPtr<ID3D11Resource> texture;
 };
 
 struct D3d11Subpass : public Subpass {
-    void set_render_target(int p_index, int p_miplevel) const final {
-        unused(p_index);
-        unused(p_miplevel);
-    }
-
     std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
     // @TODO: fix
