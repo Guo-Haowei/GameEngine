@@ -3,31 +3,111 @@
 #include <dxgi.h>
 #include <imgui/backends/imgui_impl_dx11.h>
 
+#include "core/base/rid_owner.h"
+#include "drivers/d3d11/convert.h"
 #include "drivers/d3d11/d3d11_helpers.h"
+#include "drivers/d3d11/d3d11_pipeline_state_manager.h"
+#include "drivers/d3d11/d3d11_resources.h"
 #include "drivers/windows/win32_display_manager.h"
+#include "rendering/render_graph/render_graphs.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/texture.h"
-
-namespace my {
+// @TODO: refactor
+#include "core/framework/scene_manager.h"
+#include "rendering/renderer.h"
+extern ID3D11Device* get_d3d11_device();
 
 using Microsoft::WRL::ComPtr;
 
-// @TODO: render target
-ComPtr<ID3D11Texture2D> m_render_target_texture;
-ComPtr<ID3D11RenderTargetView> m_render_target_view;
-ComPtr<ID3D11ShaderResourceView> m_srv;
+// rasterizer
+ComPtr<ID3D11RasterizerState> m_rasterizer;
+// reverse depth
+ComPtr<ID3D11DepthStencilState> m_depthStencilState;
 
-struct D3d11Texture : public Texture {
-    using Texture::Texture;
-
-    uint32_t get_handle() const { return 0; }
-    uint64_t get_resident_handle() const { return 0; }
-    uint64_t get_imgui_handle() const { return (uint64_t)srv.Get(); }
-
-    ComPtr<ID3D11ShaderResourceView> srv;
+struct PerDrawData {
+    ComPtr<ID3D11Buffer> vertexBuffer[6]{};
+    ComPtr<ID3D11Buffer> indexBuffer;
+    uint32_t indexCount = 0;
 };
 
-bool D3d11GraphicsManager::initialize() {
+my::RIDAllocator<PerDrawData> g_meshe__s;
+
+namespace my {
+
+// @TODO: refactor
+template<class Cache>
+class ConstantBuffer {
+public:
+    inline size_t BufferSize() const { return sizeof(Cache); }
+
+    ConstantBuffer() = default;
+
+    void Create(ComPtr<ID3D11Device>& device) {
+        D3D11_BUFFER_DESC bufferDesc;
+        bufferDesc.ByteWidth = sizeof(Cache);
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = 0;
+
+        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, nullptr, m_buffer.GetAddressOf()),
+                     "Failed to create constant buffer");
+    }
+
+    void Update(ComPtr<ID3D11DeviceContext>& deviceContext) {
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        ZeroMemory(&mapped, sizeof(D3D11_MAPPED_SUBRESOURCE));
+        deviceContext->Map(m_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+        memcpy(mapped.pData, (void*)&m_cache, sizeof(Cache));
+        deviceContext->Unmap(m_buffer.Get(), 0);
+    }
+
+    void VSSet(ComPtr<ID3D11DeviceContext>& deviceContext, uint32_t slot) {
+        deviceContext->VSSetConstantBuffers(slot, 1, m_buffer.GetAddressOf());
+    }
+
+    void PSSet(ComPtr<ID3D11DeviceContext>& deviceContext, uint32_t slot) {
+        deviceContext->PSSetConstantBuffers(slot, 1, m_buffer.GetAddressOf());
+    }
+
+public:
+    Cache m_cache;
+
+private:
+    ComPtr<ID3D11Buffer> m_buffer;
+};
+
+// @TODO: fix
+using float4x4 = mat4;
+struct PerFrameConstants {
+    float4x4 Proj;
+    float4x4 View;
+    float4x4 ProjView;
+    float4x4 _dummy0;
+    // float3 EyePos;
+    // int NumOfLights;
+    // Light Lights[2];
+};
+
+struct PerBatchConstants {
+    float4x4 Model;
+    float4x4 _dummy1;
+    float4x4 _dummy2;
+    float4x4 _dummy3;
+};
+
+typedef ConstantBuffer<PerFrameConstants> PerFrameBuffer;
+typedef ConstantBuffer<PerBatchConstants> PerBatchBuffer;
+PerFrameBuffer m_perFrameBuffer;
+PerBatchBuffer m_perDrawBuffer;
+// typedef ConstantBuffer<LightDataCache> LightBuffer;
+// typedef ConstantBuffer<ViewPositionCache> ViewPositionBuffer;
+// typedef ConstantBuffer<Vec4Cache> FourFloatsBuffer;
+
+////////////////////
+
+bool D3d11GraphicsManager::initialize_internal() {
     bool ok = true;
     ok = ok && create_device();
     ok = ok && create_swap_chain();
@@ -36,36 +116,36 @@ bool D3d11GraphicsManager::initialize() {
 
     ImGui_ImplDX11_NewFrame();
 
-    D3D11_TEXTURE2D_DESC texture_desc = {};
-    texture_desc.Width = 1024;   // Example width
-    texture_desc.Height = 1024;  // Example height
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;  // RGBA format
-    texture_desc.SampleDesc = { 1, 0 };
-    texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
-
-    HRESULT hr = S_OK;
-    hr = m_device->CreateTexture2D(&texture_desc, nullptr, m_render_target_texture.GetAddressOf());
-    CRASH_COND(FAILED(hr));
-
-    // D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {};
-
-    hr = m_device->CreateRenderTargetView(m_render_target_texture.Get(), nullptr, m_render_target_view.GetAddressOf());
-    CRASH_COND(FAILED(hr));
-
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format = texture_desc.Format;
-    srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = 1;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    hr = m_device->CreateShaderResourceView(m_render_target_texture.Get(), &srvDesc, &m_srv);
-    CRASH_COND(FAILED(hr));
-
     select_render_graph();
+
+    m_perFrameBuffer.Create(m_device);
+    m_perDrawBuffer.Create(m_device);
+    {
+        // rasterizer
+        {
+            D3D11_RASTERIZER_DESC desc;
+            ZeroMemory(&desc, sizeof(desc));
+            desc.FillMode = D3D11_FILL_SOLID;
+            desc.CullMode = D3D11_CULL_NONE;
+            m_device->CreateRasterizerState(&desc, m_rasterizer.GetAddressOf());
+            m_ctx->RSSetState(m_rasterizer.Get());
+        }
+
+        // set depth function to less equal
+        {
+            D3D11_DEPTH_STENCIL_DESC dsDesc{};
+            dsDesc.DepthEnable = true;
+            dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+            dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+            dsDesc.StencilEnable = false;
+
+            m_device->CreateDepthStencilState(&dsDesc, m_depthStencilState.GetAddressOf());
+
+            m_ctx->OMSetDepthStencilState(m_depthStencilState.Get(), 1);
+        }
+    }
+
+    g_meshe__s.set_description("GPU-Mesh-Allocator");
 
     return ok;
 }
@@ -74,18 +154,74 @@ void D3d11GraphicsManager::finalize() {
     ImGui_ImplDX11_Shutdown();
 }
 
-uint64_t D3d11GraphicsManager::get_final_image() const {
-    return (uint64_t)m_srv.Get();
-}
-
 void D3d11GraphicsManager::render() {
-    const float clear_color[4] = { 0.3f, 0.4f, 0.3f, 1.0f };
-    m_ctx->OMSetRenderTargets(1, m_render_target_view.GetAddressOf(), nullptr);
-    m_ctx->ClearRenderTargetView(m_render_target_view.Get(), clear_color);
 
-    // ID3D11RenderTargetView* rtv = nullptr;
-    // m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
+    m_render_graph.execute();
+    /////////////////////////////
 
+    set_pipeline_state(PROGRAM_GBUFFER_STATIC);
+
+    Scene& scene = SceneManager::singleton().get_scene();
+
+    const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+
+    m_perFrameBuffer.m_cache.View = scene.m_camera->get_view_matrix();
+    m_perFrameBuffer.m_cache.Proj = fixup * scene.m_camera->get_projection_matrix();
+
+    m_perFrameBuffer.m_cache.ProjView =
+        m_perFrameBuffer.m_cache.Proj *
+        m_perFrameBuffer.m_cache.View;
+
+    m_perFrameBuffer.Update(m_ctx);
+    m_perFrameBuffer.VSSet(m_ctx, 0);
+
+    for (uint32_t idx = 0; idx < scene.get_count<ObjectComponent>(); ++idx) {
+        ecs::Entity entity = scene.get_entity<ObjectComponent>(idx);
+        if (!scene.contains<TransformComponent>(entity)) {
+            continue;
+        }
+
+        const ObjectComponent& obj = scene.get_component_array<ObjectComponent>()[idx];
+
+        const TransformComponent& transform = *scene.get_component<TransformComponent>(entity);
+        DEV_ASSERT(scene.contains<MeshComponent>(obj.mesh_id));
+        const MeshComponent& mesh = *scene.get_component<MeshComponent>(obj.mesh_id);
+
+        const mat4& world_matrix = transform.get_world_matrix();
+        unused(world_matrix);
+
+        // set vertex/index buffer
+        PerDrawData* model = g_meshe__s.get_or_null(mesh.gpu_resource);
+
+        m_perDrawBuffer.m_cache.Model = world_matrix;
+        m_perDrawBuffer.Update(m_ctx);
+        m_perDrawBuffer.VSSet(m_ctx, 1);
+
+        m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        ID3D11Buffer* buffers[] = {
+            model->vertexBuffer[0].Get(),
+            model->vertexBuffer[1].Get(),
+        };
+        UINT stride[] = {
+            sizeof(vec3),
+            sizeof(vec3),
+        };
+        UINT offset[] = { 0, 0 };
+
+        m_ctx->IASetVertexBuffers(0, 2, buffers, stride, offset);
+        m_ctx->IASetIndexBuffer(model->indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+        // draw
+        m_ctx->DrawIndexed(model->indexCount, 0, 0);
+    }
+
+    /////////////////////////////
+
+    // @TODO: for now, draw stuff here
+
+    // @draw here
+
+    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_ctx->OMSetRenderTargets(1, m_window_rtv.GetAddressOf(), nullptr);
     m_ctx->ClearRenderTargetView(m_window_rtv.Get(), clear_color);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -179,67 +315,30 @@ bool D3d11GraphicsManager::create_render_target() {
     return true;
 }
 
-inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
-    // only support a few flags for now
-    DEV_ASSERT((p_bind_flags & (~(BIND_SHADER_RESOURCE | BIND_RENDER_TARGET))) == 0);
-
-    uint32_t flags = 0;
-    if (p_bind_flags & BIND_SHADER_RESOURCE) {
-        flags |= D3D11_BIND_SHADER_RESOURCE;
-    }
-    if (p_bind_flags & BIND_RENDER_TARGET) {
-        flags |= D3D11_BIND_RENDER_TARGET;
-    }
-
-    return flags;
-}
-
-inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
-    // only support a few flags for now
-    DEV_ASSERT((p_misc_flags & (~RESOURCE_MISC_GENERATE_MIPS)) == 0);
-
-    uint32_t flags = 0;
-    if (p_misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
-        flags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
-    }
-
-    return flags;
-}
-
-inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
-    switch (p_dimension) {
-        case my::TEXTURE_2D:
-            return D3D_SRV_DIMENSION_TEXTURE2D;
-        case my::TEXTURE_3D:
-            return D3D_SRV_DIMENSION_TEXTURE3D;
-        case my::TEXTURE_2D_ARRAY:
-            return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
-        case my::TEXTURE_CUBE:
-            return D3D_SRV_DIMENSION_TEXTURECUBE;
-        default:
-            CRASH_NOW();
-            return D3D_SRV_DIMENSION_TEXTURE2D;
-    }
-}
-
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     ComPtr<ID3D11ShaderResourceView> srv;
 
     PixelFormat format = p_texture_desc.format;
+    DXGI_FORMAT texture_format = convert(format);
+    DXGI_FORMAT srv_format = convert(format);
+    if (format == PixelFormat::D32_FLOAT) {
+        texture_format = DXGI_FORMAT_R32_TYPELESS;
+        srv_format = DXGI_FORMAT_R32_FLOAT;
+    }
 
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
     texture_desc.MipLevels = p_texture_desc.mip_levels;
     texture_desc.ArraySize = p_texture_desc.array_size;
-    texture_desc.Format = d3d11::convert_format(format);
+    texture_desc.Format = texture_format;
     texture_desc.SampleDesc = { 1, 0 };
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = convert_bind_flags(p_texture_desc.bind_flags);
+    texture_desc.BindFlags = d3d11::convert_bind_flags(p_texture_desc.bind_flags);
     texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = convert_misc_flags(p_texture_desc.misc_flags);
+    texture_desc.MiscFlags = d3d11::convert_misc_flags(p_texture_desc.misc_flags);
 
     D3D11_SUBRESOURCE_DATA texture_data{};
     ComPtr<ID3D11Texture2D> texture;
@@ -253,8 +352,9 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
                    "Failed to create texture");
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
-    srv_desc.Format = texture_desc.Format;
-    srv_desc.ViewDimension = convert_dimension(p_texture_desc.dimension);
+
+    srv_desc.Format = srv_format;
+    srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
     srv_desc.Texture2D.MostDetailedMip = 0;
     srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
 
@@ -264,14 +364,189 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
 
     auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
     gpu_texture->srv = srv;
+    gpu_texture->texture = texture;
     return gpu_texture;
 }
 
-std::shared_ptr<RenderTarget> D3d11GraphicsManager::create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
-    unused(p_desc);
-    unused(p_sampler);
+std::shared_ptr<Subpass> D3d11GraphicsManager::create_subpass(const SubpassDesc& p_subpass_desc) {
+    auto subpass = std::make_shared<D3d11Subpass>();
+    subpass->func = p_subpass_desc.func;
+    subpass->color_attachments = p_subpass_desc.color_attachments;
+    subpass->depth_attachment = p_subpass_desc.depth_attachment;
 
-    return nullptr;
+    for (const auto& color_attachment : p_subpass_desc.color_attachments) {
+        auto texture = reinterpret_cast<const D3d11Texture*>(color_attachment->texture.get());
+        switch (color_attachment->desc.type) {
+            case AttachmentType::COLOR_2D: {
+                ComPtr<ID3D11RenderTargetView> rtv;
+                D3D_FAIL_V_MSG(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create render target view");
+                subpass->rtvs.emplace_back(rtv);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
+    if (auto& depth_attachment = subpass->depth_attachment; depth_attachment) {
+        auto texture = reinterpret_cast<const D3d11Texture*>(depth_attachment->texture.get());
+        switch (depth_attachment->desc.type) {
+            case AttachmentType::DEPTH_2D: {
+                ComPtr<ID3D11DepthStencilView> dsv;
+                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                desc.Format = DXGI_FORMAT_D32_FLOAT;
+                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                desc.Texture2D.MipSlice = 0;
+
+                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create depth stencil view");
+                subpass->dsv = dsv;
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
+    return subpass;
+}
+
+void D3d11GraphicsManager::set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) {
+    unused(p_index);
+    unused(p_mip_level);
+
+    auto subpass = reinterpret_cast<const D3d11Subpass*>(p_subpass);
+
+    // @TODO: fixed_vector
+    std::vector<ID3D11RenderTargetView*> rtvs;
+    for (auto& rtv : subpass->rtvs) {
+        rtvs.push_back(rtv.Get());
+    }
+
+    ID3D11DepthStencilView* dsv = subpass->dsv.Get();
+    m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
+}
+
+void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
+    auto subpass = reinterpret_cast<const D3d11Subpass*>(p_subpass);
+
+    if (p_flags & CLEAR_COLOR_BIT) {
+        float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        if (p_clear_color) {
+            clear_color[0] = p_clear_color[0];
+            clear_color[1] = p_clear_color[1];
+            clear_color[2] = p_clear_color[2];
+            clear_color[3] = p_clear_color[3];
+        }
+
+        for (auto& rtv : subpass->rtvs) {
+            m_ctx->ClearRenderTargetView(rtv.Get(), clear_color);
+        }
+    }
+
+    uint32_t clear_flags = 0;
+    if (p_flags & CLEAR_DEPTH_BIT) {
+        clear_flags |= D3D11_CLEAR_DEPTH;
+    }
+    if (p_flags & D3D11_CLEAR_STENCIL) {
+        clear_flags |= D3D11_CLEAR_STENCIL;
+    }
+    if (clear_flags) {
+        // @TODO: configure clear depth
+        m_ctx->ClearDepthStencilView(subpass->dsv.Get(), clear_flags, 1.0f, 0);
+    }
+}
+
+void D3d11GraphicsManager::set_viewport(const Viewport& p_vp) {
+    D3D11_VIEWPORT vp{};
+    vp.Width = static_cast<float>(p_vp.width);
+    vp.Height = static_cast<float>(p_vp.height);
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+
+    m_ctx->RSSetViewports(1, &vp);
+}
+
+static void create_mesh_data(const MeshComponent& mesh, PerDrawData& out_mesh) {
+    // const bool has_normals = !mesh.normals.empty();
+    // const bool has_uvs = !mesh.texcoords_0.empty();
+    // const bool has_tangents = !mesh.tangents.empty();
+    // const bool has_joints = !mesh.joints_0.empty();
+    // const bool has_weights = !mesh.weights_0.empty();
+
+    ID3D11Device* device = get_d3d11_device();
+    {
+        // vertex buffer
+        D3D11_BUFFER_DESC bufferDesc{};
+        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+        bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(vec3) * mesh.positions.size());
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        bufferDesc.CPUAccessFlags = 0;
+        bufferDesc.MiscFlags = 0;
+
+        D3D11_SUBRESOURCE_DATA data{};
+        data.pSysMem = mesh.positions.data();
+        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, &data, out_mesh.vertexBuffer[0].GetAddressOf()),
+                     "Failed to create vertex buffer");
+    }
+    {
+        // normal buffer
+        D3D11_BUFFER_DESC bufferDesc{};
+        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+        bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(vec3) * mesh.normals.size());
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        bufferDesc.CPUAccessFlags = 0;
+        bufferDesc.MiscFlags = 0;
+
+        D3D11_SUBRESOURCE_DATA data{};
+        data.pSysMem = mesh.normals.data();
+        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, &data, out_mesh.vertexBuffer[1].GetAddressOf()),
+                     "Failed to create normal buffer");
+    }
+    {
+        // index buffer
+        out_mesh.indexCount = static_cast<uint32_t>(mesh.indices.size());
+        D3D11_BUFFER_DESC bufferDesc{};
+        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+        bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.indexCount);
+        bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        bufferDesc.CPUAccessFlags = 0;
+        bufferDesc.MiscFlags = 0;
+
+        D3D11_SUBRESOURCE_DATA data{};
+        data.pSysMem = mesh.indices.data();
+        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, &data, out_mesh.indexBuffer.GetAddressOf()),
+                     "Failed to create index buffer");
+    }
+}
+
+void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
+    for (size_t idx = 0; idx < p_scene.get_count<MeshComponent>(); ++idx) {
+        const MeshComponent& mesh = p_scene.get_component_array<MeshComponent>()[idx];
+        if (mesh.gpu_resource.is_valid()) {
+            ecs::Entity entity = p_scene.get_entity<MeshComponent>(idx);
+            const NameComponent& name = *p_scene.get_component<NameComponent>(entity);
+            LOG_WARN("[begin_scene] mesh '{}' (idx: {}) already has gpu resource", name.get_name(), idx);
+            continue;
+        }
+        RID rid = g_meshe__s.make_rid();
+        mesh.gpu_resource = rid;
+        create_mesh_data(mesh, *g_meshe__s.get_or_null(rid));
+    }
+}
+
+void D3d11GraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
+    auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipeline_state_manager->find(p_name));
+    if (pipeline->vertex_shader) {
+        m_ctx->VSSetShader(pipeline->vertex_shader.Get(), 0, 0);
+        m_ctx->IASetInputLayout(pipeline->input_layout.Get());
+    }
+    if (pipeline->pixel_shader) {
+        m_ctx->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
+    }
 }
 
 }  // namespace my

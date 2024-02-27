@@ -15,7 +15,7 @@ namespace my::rg {
 void base_color_pass(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    p_subpass->set_render_target();
+    GraphicsManager::singleton().set_render_target(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
@@ -67,16 +67,16 @@ void create_render_graph_base_color(RenderGraph& graph) {
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    auto color_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_BASE_COLOR,
-                                                                      PixelFormat::R8G8B8A8_UINT,
-                                                                      RT_COLOR_ATTACHMENT_2D,
-                                                                      w, h },
-                                                    nearest_sampler());
-    auto depth_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_BASE_COLOR_DEPTH,
-                                                                      PixelFormat::D32_FLOAT,
-                                                                      RT_DEPTH_ATTACHMENT_2D,
-                                                                      w, h },
-                                                    nearest_sampler());
+    auto color_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_BASE_COLOR,
+                                                                           PixelFormat::R8G8B8A8_UINT,
+                                                                           AttachmentType::COLOR_2D,
+                                                                           w, h },
+                                                         nearest_sampler());
+    auto depth_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_BASE_COLOR_DEPTH,
+                                                                           PixelFormat::D32_FLOAT,
+                                                                           AttachmentType::DEPTH_2D,
+                                                                           w, h },
+                                                         nearest_sampler());
 
     {  // base color
         RenderPassDesc desc;

@@ -2,7 +2,7 @@
 #include "gl_utils.h"
 
 // inline include
-#include "cbuffer.glsl.h"
+#include "cbuffer.h"
 
 extern gl::ConstantBuffer<PerBatchConstantBuffer> g_perBatchCache;
 extern gl::ConstantBuffer<PerPassConstantBuffer> g_per_pass_cache;

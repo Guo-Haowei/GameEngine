@@ -21,7 +21,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/sol2/include
     ${PROJECT_SOURCE_DIR}/thirdparty/lua
     ${PROJECT_SOURCE_DIR}/thirdparty/
-    ${PROJECT_SOURCE_DIR}/resources/glsl
+    ${PROJECT_SOURCE_DIR}/source/shader
     ${CMAKE_CURRENT_SOURCE_DIR}/src/engine
 )
 
@@ -37,7 +37,9 @@ target_link_libraries(${TARGET_NAME} PUBLIC
     lua
     bullet
     optick
-    d3d11.lib)
+    d3d11.lib
+    d3dcompiler.lib
+)
 
 target_set_warning_level(${TARGET_NAME})
 

@@ -101,13 +101,9 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_ERROR("TODO: win32 input & refactor");
     LOG_WARN("TODO: path tracer here");
-    LOG_ERROR("TODO: cloth physics");
+    LOG_WARN("TODO: cloth physics");
     LOG_WARN("TODO: TAA");
-    LOG_ERROR("TODO: soft shadow");
-    LOG_WARN("TODO: fix multiple objects play same animation");
-    LOG_ERROR("TODO: link object with animation");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;

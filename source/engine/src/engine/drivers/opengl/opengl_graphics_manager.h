@@ -1,5 +1,4 @@
 #include "core/framework/graphics_manager.h"
-#include "rendering/pipeline_state_manager.h"
 
 namespace my {
 
@@ -7,16 +6,15 @@ class OpenGLGraphicsManager : public GraphicsManager {
 public:
     OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager", Backend::OPENGL) {}
 
-    bool initialize() final;
+    bool initialize_internal() final;
     void finalize() final;
 
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) final;
-
-    std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) final;
+    void set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) final;
+    void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
+    void set_viewport(const Viewport& p_vp) final;
 
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
-
-    uint64_t get_final_image() const final;
+    std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) final;
 
     // @TODO: refactor this
     void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) final;
@@ -28,8 +26,6 @@ protected:
 
     void createGpuResources();
     void destroyGpuResources();
-
-    std::shared_ptr<PipelineStateManager> m_pipeline_state_manager;
 };
 
 }  // namespace my

@@ -1,8 +1,14 @@
 #include "d3d11_helpers.h"
 
-#if USING(DEBUG_BUILD)
-#pragma comment(lib, "dxguid.lib")
-#endif
+#include "drivers/d3d11/d3d11_graphics_manager.h"
+
+ID3D11Device* get_d3d11_device() {
+    auto graphics_manager = dynamic_cast<my::D3d11GraphicsManager*>(my::GraphicsManager::singleton_ptr());
+    if (!graphics_manager) {
+        return nullptr;
+    }
+    return graphics_manager->get_device();
+}
 
 namespace my::d3d11 {
 

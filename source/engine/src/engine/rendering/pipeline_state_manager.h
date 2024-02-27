@@ -3,17 +3,6 @@
 
 namespace my {
 
-struct PipelineCreateInfo {
-    std::string_view vs;
-    std::string_view ps;
-    std::string_view gs;
-    std::string_view cs;
-};
-
-struct PipelineState {
-    virtual ~PipelineState() = default;
-};
-
 class PipelineStateManager {
 public:
     bool initialize();

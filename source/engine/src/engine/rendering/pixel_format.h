@@ -20,6 +20,10 @@ enum class PixelFormat {
     R32G32B32_FLOAT,
     R32G32B32A32_FLOAT,
 
+    R32G32_SINT,
+    R32G32B32_SINT,
+    R32G32B32A32_SINT,
+
     D32_FLOAT,
 };
 
