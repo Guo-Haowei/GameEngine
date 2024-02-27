@@ -4,11 +4,26 @@
 
 namespace my {
 
-static std::string process_shader(const std::string &source, int depth) {
+namespace fs = std::filesystem;
+
+enum class Result {
+    OK,
+    MAX_DEPTH,
+    FILE_ERROR,
+};
+
+static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected<std::string, std::string> {
     constexpr int max_depth = 100;
-    if (depth >= max_depth) {
-        LOG_FATAL("maximum include depth {} exceeded", max_depth);
+    if (p_depth >= max_depth) {
+        return std::unexpected("circular includes!");
     }
+
+    auto source_binary = AssetManager::singleton().load_file_sync(p_path.string());
+    if (source_binary->buffer.empty()) {
+        return std::unexpected(std::format("failed to read file '{}'", p_path.string()));
+    }
+
+    std::string source(source_binary->buffer.begin(), source_binary->buffer.end());
 
     std::string result;
     std::stringstream ss(source);
@@ -21,15 +36,16 @@ static std::string process_shader(const std::string &source, int depth) {
             DEV_ASSERT(quote1 && quote2 && (quote1 != quote2));
             std::string file_to_include(quote1 + 1, quote2);
 
-            file_to_include = "@res://glsl/" + file_to_include;
-            // @TODO: nested include
-            auto buffer = AssetManager::singleton().load_file_sync(file_to_include);
-            DEV_ASSERT(buffer);
-            std::string extra(buffer->buffer.begin(), buffer->buffer.end());
-            if (extra.empty()) {
-                LOG_ERROR("[filesystem] failed to read shader '{}'", file_to_include);
+            fs::path new_path = p_path;
+            new_path.remove_filename();
+            new_path = new_path / file_to_include;
+
+            auto res = process_shader(new_path, p_depth + 1);
+            if (!res) {
+                return res.error();
             }
-            result.append(process_shader(extra, depth + 1));
+
+            result.append(*res);
         } else {
             result.append(line);
         }
@@ -40,16 +56,17 @@ static std::string process_shader(const std::string &source, int depth) {
     return result;
 }
 
-static GLuint create_shader(std::string_view file, GLenum type) {
-    auto source_binary = AssetManager::singleton().load_file_sync(std::string(file));
-    DEV_ASSERT(source_binary);
-
-    std::string source(source_binary->buffer.begin(), source_binary->buffer.end());
-    if (source.empty()) {
-        LOG_ERROR("[filesystem] failed to read shader '{}'", file);
+static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::vector<std::string_view> &p_defines) {
+    std::string file{ p_file };
+    file.append(".glsl");
+    fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
+    auto res = process_shader(path, 0);
+    if (!res) {
+        LOG_ERROR("Failed to create shader '{}', reason: {}", p_file, res.error());
         return 0;
     }
 
+    // @TODO: fix this
     std::string fullsource =
         "#version 460 core\n"
         "#extension GL_NV_gpu_shader5 : require\n"
@@ -58,10 +75,15 @@ static GLuint create_shader(std::string_view file, GLenum type) {
         "#extension GL_ARB_bindless_texture : require\n"
         "";
 
-    fullsource.append(process_shader(source, 0));
+    for (const auto &define : p_defines) {
+        fullsource.append(define);
+        fullsource.push_back('\n');
+    }
+
+    fullsource.append(*res);
     const char *sources[] = { fullsource.c_str() };
 
-    GLuint shader = glCreateShader(type);
+    GLuint shader = glCreateShader(p_type);
     glShaderSource(shader, 1, sources, nullptr);
     glCompileShader(shader);
 
@@ -71,7 +93,7 @@ static GLuint create_shader(std::string_view file, GLenum type) {
     if (length > 0) {
         std::vector<char> buffer(length + 1);
         glGetShaderInfoLog(shader, length, nullptr, buffer.data());
-        LOG_FATAL("[glsl] failed to compile shader '{}'\ndetails:\n{}", file, buffer.data());
+        LOG_FATAL("[glsl] failed to compile shader '{}'\ndetails:\n{}", p_file, buffer.data());
     }
 
     if (status == GL_FALSE) {
@@ -87,7 +109,7 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const Pipeline
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
         if (!path.empty()) {
-            GLuint shader = create_shader(path, type);
+            GLuint shader = create_shader(path, type, info.defines);
             glAttachShader(programID, shader);
             shaders.push_back(shader);
         }

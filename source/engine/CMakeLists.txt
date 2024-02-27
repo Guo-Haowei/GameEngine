@@ -21,7 +21,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/sol2/include
     ${PROJECT_SOURCE_DIR}/thirdparty/lua
     ${PROJECT_SOURCE_DIR}/thirdparty/
-    ${PROJECT_SOURCE_DIR}/resources/glsl
+    ${PROJECT_SOURCE_DIR}/source/shader
     ${CMAKE_CURRENT_SOURCE_DIR}/src/engine
 )
 

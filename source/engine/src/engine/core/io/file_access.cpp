@@ -13,7 +13,6 @@ auto FileAccess::create(AccessType access_type) -> std::shared_ptr<FileAccess> {
 }
 
 auto FileAccess::create_for_path(const std::string& path) -> std::shared_ptr<FileAccess> {
-    // @TODO: sanitize path
     if (path.starts_with("@res://")) {
         return create(ACCESS_RESOURCE);
     }

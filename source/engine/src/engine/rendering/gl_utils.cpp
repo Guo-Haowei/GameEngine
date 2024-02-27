@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <set>
 
-#include "cbuffer.glsl.h"
+#include "cbuffer.h"
 
 static MeshData g_quad;
 

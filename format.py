@@ -11,7 +11,7 @@ skip_patterns = [
 def need_format(file):
     # choose files
     _, file_ext = os.path.splitext(file)
-    if not (file_ext in ['.hpp', '.cpp', '.h', '.c', '.glsl', '.vert', '.frag']):
+    if not (file_ext in ['.hpp', '.cpp', '.h', '.c', '.glsl']):
         return False
 
     # white list
@@ -29,5 +29,5 @@ def format_folder(folder_name):
                 print(f'*** formatting file {file_path}')
                 subprocess.run(['clang-format', '-i', file_path])
 
-for dir in ['source', 'resources/glsl']:
+for dir in ['source']:
     format_folder(os.path.join(project_dir, dir))
