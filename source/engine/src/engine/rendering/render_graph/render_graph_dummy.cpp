@@ -18,10 +18,11 @@ static void dummy_pass_func(const Subpass* p_subpass) {
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
+    // @TODO: view port
     // glViewport(0, 0, width, height);
 
     float clear_color[] = { 0.3f, 0.3f, 0.4f, 1.0f };
-    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT, clear_color);
+    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
 }
 
 void create_render_graph_dummy(RenderGraph& graph) {
@@ -37,11 +38,18 @@ void create_render_graph_dummy(RenderGraph& graph) {
                                                                            w, h },
                                                          nearest_sampler());
 
+    auto depth_attachment = manager.create_render_target(RenderTargetDesc{ "depth-buffer",
+                                                                           PixelFormat::D32_FLOAT,
+                                                                           AttachmentType::DEPTH_2D,
+                                                                           w, h },
+                                                         nearest_sampler());
+
     RenderPassDesc desc;
     desc.name = DUMMY_PASS;
     auto pass = graph.create_pass(desc);
     auto subpass = manager.create_subpass(SubpassDesc{
         .color_attachments = { color_attachment },
+        .depth_attachment = depth_attachment,
         .func = dummy_pass_func,
     });
     pass->add_sub_pass(subpass);

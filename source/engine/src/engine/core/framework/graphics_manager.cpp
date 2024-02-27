@@ -109,14 +109,33 @@ std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const Render
             texture_desc.dimension = Dimension::TEXTURE_CUBE;
             break;
         default:
+            CRASH_NOW();
             break;
     }
+    switch (p_desc.type) {
+        case AttachmentType::COLOR_2D:
+        case AttachmentType::COLOR_CUBE_MAP:
+            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+            break;
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::SHADOW_2D:
+        case AttachmentType::SHADOW_CUBE_MAP:
+            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            break;
+        default:
+            break;
+    }
+
     texture_desc.format = p_desc.format;
+    // @TODO: refactor
+    // if (p_desc.format == PixelFormat::D32_FLOAT) {
+    //    texture_desc.pixel_format = PixelFormat::R32_FLOAT;
+    //}
+
     texture_desc.width = p_desc.width;
     texture_desc.height = p_desc.height;
     texture_desc.initial_data = nullptr;
     texture_desc.misc_flags = 0;
-    texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
     texture_desc.mip_levels = 1;
     texture_desc.array_size = 1;
     if (p_desc.gen_mipmap) {

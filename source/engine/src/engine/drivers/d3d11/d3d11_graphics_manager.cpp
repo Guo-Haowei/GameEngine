@@ -23,20 +23,7 @@ bool D3d11GraphicsManager::initialize() {
 
     ImGui_ImplDX11_NewFrame();
 
-    D3D11_TEXTURE2D_DESC texture_desc = {};
-    texture_desc.Width = 1024;   // Example width
-    texture_desc.Height = 1024;  // Example height
-    texture_desc.MipLevels = 1;
-    texture_desc.ArraySize = 1;
-    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;  // RGBA format
-    texture_desc.SampleDesc = { 1, 0 };
-    texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0;
-
     select_render_graph();
-
     return ok;
 }
 
@@ -46,6 +33,10 @@ void D3d11GraphicsManager::finalize() {
 
 void D3d11GraphicsManager::render() {
     m_render_graph.execute();
+
+    // @TODO: for now, draw stuff here
+
+    // @draw here
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_ctx->OMSetRenderTargets(1, m_window_rtv.GetAddressOf(), nullptr);
@@ -141,51 +132,30 @@ bool D3d11GraphicsManager::create_render_target() {
     return true;
 }
 
-inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
-    // only support a few flags for now
-    DEV_ASSERT((p_bind_flags & (~(BIND_SHADER_RESOURCE | BIND_RENDER_TARGET))) == 0);
-
-    uint32_t flags = 0;
-    if (p_bind_flags & BIND_SHADER_RESOURCE) {
-        flags |= D3D11_BIND_SHADER_RESOURCE;
-    }
-    if (p_bind_flags & BIND_RENDER_TARGET) {
-        flags |= D3D11_BIND_RENDER_TARGET;
-    }
-
-    return flags;
-}
-
-inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
-    // only support a few flags for now
-    DEV_ASSERT((p_misc_flags & (~RESOURCE_MISC_GENERATE_MIPS)) == 0);
-
-    uint32_t flags = 0;
-    if (p_misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
-        flags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
-    }
-
-    return flags;
-}
-
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     ComPtr<ID3D11ShaderResourceView> srv;
 
     PixelFormat format = p_texture_desc.format;
+    DXGI_FORMAT texture_format = d3d11::convert_format(format);
+    DXGI_FORMAT srv_format = d3d11::convert_format(format);
+    if (format == PixelFormat::D32_FLOAT) {
+        texture_format = DXGI_FORMAT_R32_TYPELESS;
+        srv_format = DXGI_FORMAT_R32_FLOAT;
+    }
 
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
     texture_desc.MipLevels = p_texture_desc.mip_levels;
     texture_desc.ArraySize = p_texture_desc.array_size;
-    texture_desc.Format = d3d11::convert_format(format);
+    texture_desc.Format = texture_format;
     texture_desc.SampleDesc = { 1, 0 };
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = convert_bind_flags(p_texture_desc.bind_flags);
+    texture_desc.BindFlags = d3d11::convert_bind_flags(p_texture_desc.bind_flags);
     texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = convert_misc_flags(p_texture_desc.misc_flags);
+    texture_desc.MiscFlags = d3d11::convert_misc_flags(p_texture_desc.misc_flags);
 
     D3D11_SUBRESOURCE_DATA texture_data{};
     ComPtr<ID3D11Texture2D> texture;
@@ -199,7 +169,8 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
                    "Failed to create texture");
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
-    srv_desc.Format = texture_desc.Format;
+
+    srv_desc.Format = srv_format;
     srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
     srv_desc.Texture2D.MostDetailedMip = 0;
     srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
@@ -236,6 +207,27 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::create_subpass(const SubpassDesc&
         }
     }
 
+    if (auto& depth_attachment = subpass->depth_attachment; depth_attachment) {
+        auto texture = reinterpret_cast<const D3d11Texture*>(depth_attachment->texture.get());
+        switch (depth_attachment->desc.type) {
+            case AttachmentType::DEPTH_2D: {
+                ComPtr<ID3D11DepthStencilView> dsv;
+                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                desc.Format = DXGI_FORMAT_D32_FLOAT;
+                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                desc.Texture2D.MipSlice = 0;
+
+                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create depth stencil view");
+                subpass->dsv = dsv;
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
     return subpass;
 }
 
@@ -251,7 +243,8 @@ void D3d11GraphicsManager::set_render_target(const Subpass* p_subpass, int p_ind
         rtvs.push_back(rtv.Get());
     }
 
-    m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), nullptr);
+    ID3D11DepthStencilView* dsv = subpass->dsv.Get();
+    m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 
 void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
@@ -271,8 +264,16 @@ void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, flo
         }
     }
 
+    uint32_t clear_flags = 0;
     if (p_flags & CLEAR_DEPTH_BIT) {
-        LOG_WARN("TODO: clear depth");
+        clear_flags |= D3D11_CLEAR_DEPTH;
+    }
+    if (p_flags & D3D11_CLEAR_STENCIL) {
+        clear_flags |= D3D11_CLEAR_STENCIL;
+    }
+    if (clear_flags) {
+        // @TODO: configure clear depth
+        m_ctx->ClearDepthStencilView(subpass->dsv.Get(), clear_flags, 1.0f, 0);
     }
 }
 

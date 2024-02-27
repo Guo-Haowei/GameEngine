@@ -25,41 +25,7 @@ namespace my::d3d11 {
 
 void set_debug_name(ID3D11DeviceChild* p_resource, const std::string& p_name);
 
-inline DXGI_FORMAT convert_format(PixelFormat p_format) {
-    switch (p_format) {
-        case PixelFormat::UNKNOWN:
-            return DXGI_FORMAT_UNKNOWN;
-        case PixelFormat::R8_UINT:
-            return DXGI_FORMAT_R8_UNORM;
-        case PixelFormat::R8G8_UINT:
-            return DXGI_FORMAT_R8G8_UNORM;
-        case PixelFormat::R8G8B8_UINT:
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case PixelFormat::R8G8B8A8_UINT:
-            return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case PixelFormat::R16_FLOAT:
-            return DXGI_FORMAT_R16_FLOAT;
-        case PixelFormat::R16G16_FLOAT:
-            return DXGI_FORMAT_R16G16_FLOAT;
-        case PixelFormat::R16G16B16_FLOAT:
-            return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case PixelFormat::R16G16B16A16_FLOAT:
-            return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case PixelFormat::R32_FLOAT:
-            return DXGI_FORMAT_R32_FLOAT;
-        case PixelFormat::R32G32_FLOAT:
-            return DXGI_FORMAT_R32G32_FLOAT;
-        case PixelFormat::R32G32B32_FLOAT:
-            return DXGI_FORMAT_R32G32B32_FLOAT;
-        case PixelFormat::R32G32B32A32_FLOAT:
-            return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        case PixelFormat::D32_FLOAT:
-            return DXGI_FORMAT_D32_FLOAT;
-        default:
-            CRASH_NOW();
-            return DXGI_FORMAT_UNKNOWN;
-    }
-}
+DXGI_FORMAT convert_format(PixelFormat p_format);
 
 inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
     switch (p_dimension) {
@@ -75,6 +41,36 @@ inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
             CRASH_NOW();
             return D3D_SRV_DIMENSION_TEXTURE2D;
     }
+}
+
+inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
+    // only support a few flags for now
+    DEV_ASSERT((p_misc_flags & (~RESOURCE_MISC_GENERATE_MIPS)) == 0);
+
+    uint32_t flags = 0;
+    if (p_misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+        flags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+    }
+
+    return flags;
+}
+
+inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
+    [[maybe_unused]] constexpr uint32_t supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL;
+    DEV_ASSERT((p_bind_flags & (~supported_flags)) == 0);
+
+    uint32_t flags = 0;
+    if (p_bind_flags & BIND_SHADER_RESOURCE) {
+        flags |= D3D11_BIND_SHADER_RESOURCE;
+    }
+    if (p_bind_flags & BIND_RENDER_TARGET) {
+        flags |= D3D11_BIND_RENDER_TARGET;
+    }
+    if (p_bind_flags & BIND_DEPTH_STENCIL) {
+        flags |= D3D11_BIND_DEPTH_STENCIL;
+    }
+
+    return flags;
 }
 
 }  // namespace my::d3d11

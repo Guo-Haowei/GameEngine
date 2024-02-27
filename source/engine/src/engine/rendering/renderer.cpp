@@ -299,11 +299,11 @@ void fill_texture_and_sampler_desc(const Image* p_image, TextureDesc& p_texture_
         } break;
     }
 
+    p_texture_desc.format = p_image->format;
     p_texture_desc.dimension = Dimension::TEXTURE_2D;
     p_texture_desc.width = p_image->width;
     p_texture_desc.height = p_image->height;
     p_texture_desc.array_size = 1;
-    p_texture_desc.format = p_image->format;
     p_texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
     p_texture_desc.initial_data = p_image->buffer.data();
     p_texture_desc.mip_levels = 1;

@@ -25,8 +25,6 @@ struct D3d11Texture : public Texture {
 struct D3d11Subpass : public Subpass {
     std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
-    // @TODO: fix
-    Microsoft::WRL::ComPtr<ID3D11DeviceContext> ctx;
 };
 
 }  // namespace my
