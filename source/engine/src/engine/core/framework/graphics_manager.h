@@ -40,18 +40,15 @@ public:
 
     void set_pipeline_state(PipelineStateName p_name);
 
-    // @TODO: better name
-    virtual std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) = 0;
-    std::shared_ptr<RenderTarget> find_resource(const std::string& p_name) const;
+    std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
+    std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
-
     virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
     void request_texture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
-    // virtual std::shared_ptr<rg::Subpass> create_subpass(const rg::SubpassDesc& p_desc) = 0;
-
+    // @TODO: refactor
     virtual uint64_t get_final_image() const = 0;
 
     // @TODO: thread safety ?
@@ -60,6 +57,7 @@ public:
     // @TODO: refactor this
     virtual void fill_material_constant_buffer(const MaterialComponent* p_material, MaterialConstantBuffer& p_cb) = 0;
 
+    // @TODO: move to renderer
     std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
     const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
 

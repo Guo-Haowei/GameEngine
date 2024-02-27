@@ -93,7 +93,43 @@ void GraphicsManager::select_render_graph() {
     }
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::find_resource(const std::string& name) const {
+std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
+    DEV_ASSERT(m_resource_lookup.find(p_desc.name) == m_resource_lookup.end());
+    std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
+
+    TextureDesc texture_desc{};
+    switch (p_desc.type) {
+        case RT_COLOR_ATTACHMENT_2D:
+        case RT_DEPTH_ATTACHMENT_2D:
+        case RT_SHADOW_2D:
+            texture_desc.dimension = Dimension::TEXTURE_2D;
+            break;
+        case RT_SHADOW_CUBE_MAP:
+        case RT_COLOR_ATTACHMENT_CUBE_MAP:
+            texture_desc.dimension = Dimension::TEXTURE_CUBE;
+            break;
+        default:
+            break;
+    }
+    texture_desc.format = p_desc.format;
+    texture_desc.width = p_desc.width;
+    texture_desc.height = p_desc.height;
+    texture_desc.initial_data = nullptr;
+    texture_desc.misc_flags = 0;
+    texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+    texture_desc.mip_levels = 1;
+    texture_desc.array_size = 1;
+    if (p_desc.gen_mipmap) {
+        texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
+    }
+
+    resource->m_texture = create_texture(texture_desc, p_sampler);
+
+    m_resource_lookup[resource->m_desc.name] = resource;
+    return resource;
+}
+
+std::shared_ptr<RenderTarget> GraphicsManager::find_render_target(const std::string& name) const {
     if (m_resource_lookup.empty()) {
         return nullptr;
     }

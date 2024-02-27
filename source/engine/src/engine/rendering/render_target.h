@@ -40,7 +40,7 @@ private:
 
     std::shared_ptr<Texture> m_texture;
 
-    friend class OpenGLGraphicsManager;
+    friend class GraphicsManager;
 };
 
 }  // namespace my

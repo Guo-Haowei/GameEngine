@@ -11,8 +11,7 @@
 #include "core/framework/scene_manager.h"
 #include "core/math/geometry.h"
 #include "drivers/opengl/opengl_pipeline_state_manager.h"
-#include "drivers/opengl/opengl_subpass.h"
-#include "drivers/opengl/opengl_texture.h"
+#include "drivers/opengl/opengl_resources.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
@@ -220,6 +219,88 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc
     return texture;
 }
 
+std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc& p_desc) {
+    auto subpass = std::make_shared<OpenGLSubpass>();
+    subpass->func = p_desc.func;
+    subpass->color_attachments = p_desc.color_attachments;
+    subpass->depth_attachment = p_desc.depth_attachment;
+    GLuint fbo_handle = 0;
+
+    const int num_depth_attachment = p_desc.depth_attachment != nullptr;
+    const int num_color_attachment = (int)p_desc.color_attachments.size();
+    if (!num_depth_attachment && !num_color_attachment) {
+        return subpass;
+    }
+
+    glGenFramebuffers(1, &fbo_handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle);
+
+    if (!num_color_attachment) {
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+    } else {
+        // create color attachments
+        std::vector<GLuint> attachments;
+        attachments.reserve(num_color_attachment);
+        for (int idx = 0; idx < num_color_attachment; ++idx) {
+            GLuint attachment = GL_COLOR_ATTACHMENT0 + idx;
+            attachments.push_back(attachment);
+
+            const auto& color_attachment = p_desc.color_attachments[idx];
+            switch (color_attachment->get_desc().type) {
+                case RT_COLOR_ATTACHMENT_2D: {
+                    glFramebufferTexture2D(
+                        GL_FRAMEBUFFER,                  // target
+                        attachment,                      // attachment
+                        GL_TEXTURE_2D,                   // texture target
+                        color_attachment->get_handle(),  // texture
+                        0                                // level
+                    );
+                } break;
+                case RT_COLOR_ATTACHMENT_CUBE_MAP: {
+                } break;
+                default:
+                    CRASH_NOW();
+                    break;
+            }
+        }
+
+        glDrawBuffers(num_color_attachment, attachments.data());
+    }
+
+    // @TODO: move it to bind and unbind
+    if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
+        switch (depth_attachment->get_desc().type) {
+            case RT_SHADOW_2D:
+            case RT_DEPTH_ATTACHMENT_2D: {
+                glFramebufferTexture2D(GL_FRAMEBUFFER,                  // target
+                                       GL_DEPTH_ATTACHMENT,             // attachment
+                                       GL_TEXTURE_2D,                   // texture target
+                                       depth_attachment->get_handle(),  // texture
+                                       0                                // level
+                );
+            } break;
+            case RT_SHADOW_CUBE_MAP: {
+                glFramebufferTexture(GL_FRAMEBUFFER,
+                                     GL_DEPTH_ATTACHMENT,
+                                     depth_attachment->get_handle(),
+                                     0);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
+    DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    subpass->m_handle = fbo_handle;
+    return subpass;
+}
+
+// @TODO: refactor this, instead off iterate through all the meshes, find a more atomic way
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
     for (size_t idx = 0; idx < p_scene.get_count<MeshComponent>(); ++idx) {
         const MeshComponent& mesh = p_scene.get_component_array<MeshComponent>()[idx];
@@ -318,7 +399,7 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     // @TODO: refactor
     auto make_resident = [&](const std::string& name, uint64_t& id) {
-        std::shared_ptr<RenderTarget> resource = find_resource(name);
+        std::shared_ptr<RenderTarget> resource = find_render_target(name);
         if (resource) {
             id = resource->get_resident_handle();
         } else {
@@ -345,133 +426,15 @@ void OpenGLGraphicsManager::createGpuResources() {
 uint64_t OpenGLGraphicsManager::get_final_image() const {
     switch (m_method) {
         case RenderGraph::VXGI:
-            return find_resource(RT_RES_FINAL)->get_handle();
+            return find_render_target(RT_RES_FINAL)->get_handle();
         case RenderGraph::BASE_COLOR:
-            return find_resource(RT_RES_BASE_COLOR)->get_handle();
+            return find_render_target(RT_RES_BASE_COLOR)->get_handle();
         case RenderGraph::DUMMY:
-            return find_resource(RT_RES_FINAL)->get_handle();
+            return find_render_target(RT_RES_FINAL)->get_handle();
         default:
             CRASH_NOW();
             return 0;
     }
-}
-
-std::shared_ptr<RenderTarget> OpenGLGraphicsManager::create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
-    DEV_ASSERT(m_resource_lookup.find(p_desc.name) == m_resource_lookup.end());
-    std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
-
-    TextureDesc texture_desc{};
-    switch (p_desc.type) {
-        case RT_COLOR_ATTACHMENT_2D:
-        case RT_DEPTH_ATTACHMENT_2D:
-        case RT_SHADOW_2D:
-            texture_desc.dimension = Dimension::TEXTURE_2D;
-            break;
-        case RT_SHADOW_CUBE_MAP:
-        case RT_COLOR_ATTACHMENT_CUBE_MAP:
-            texture_desc.dimension = Dimension::TEXTURE_CUBE;
-            break;
-        default:
-            break;
-    }
-    texture_desc.format = p_desc.format;
-    texture_desc.width = p_desc.width;
-    texture_desc.height = p_desc.height;
-    texture_desc.initial_data = nullptr;
-    texture_desc.misc_flags = 0;
-    texture_desc.bind_flags = 0;
-    texture_desc.mip_levels = 1;
-    texture_desc.array_size = 1;
-    if (p_desc.gen_mipmap) {
-        texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
-        texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
-    }
-
-    resource->m_texture = create_texture(texture_desc, p_sampler);
-
-    m_resource_lookup[resource->m_desc.name] = resource;
-    return resource;
-}
-
-std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc& p_desc) {
-    auto subpass = std::make_shared<OpenGLSubpass>();
-    subpass->func = p_desc.func;
-    subpass->color_attachments = p_desc.color_attachments;
-    subpass->depth_attachment = p_desc.depth_attachment;
-    GLuint fbo_handle = 0;
-
-    const int num_depth_attachment = p_desc.depth_attachment != nullptr;
-    const int num_color_attachment = (int)p_desc.color_attachments.size();
-    if (!num_depth_attachment && !num_color_attachment) {
-        return subpass;
-    }
-
-    glGenFramebuffers(1, &fbo_handle);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle);
-
-    if (!num_color_attachment) {
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-    } else {
-        // create color attachments
-        std::vector<GLuint> attachments;
-        attachments.reserve(num_color_attachment);
-        for (int idx = 0; idx < num_color_attachment; ++idx) {
-            GLuint attachment = GL_COLOR_ATTACHMENT0 + idx;
-            attachments.push_back(attachment);
-
-            const auto& color_attachment = p_desc.color_attachments[idx];
-            switch (color_attachment->get_desc().type) {
-                case RT_COLOR_ATTACHMENT_2D: {
-                    glFramebufferTexture2D(
-                        GL_FRAMEBUFFER,                  // target
-                        attachment,                      // attachment
-                        GL_TEXTURE_2D,                   // texture target
-                        color_attachment->get_handle(),  // texture
-                        0                                // level
-                    );
-                } break;
-                case RT_COLOR_ATTACHMENT_CUBE_MAP: {
-                } break;
-                default:
-                    CRASH_NOW();
-                    break;
-            }
-        }
-
-        glDrawBuffers(num_color_attachment, attachments.data());
-    }
-
-    // @TODO: move it to bind and unbind
-    if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
-        switch (depth_attachment->get_desc().type) {
-            case RT_SHADOW_2D:
-            case RT_DEPTH_ATTACHMENT_2D: {
-                glFramebufferTexture2D(GL_FRAMEBUFFER,                  // target
-                                       GL_DEPTH_ATTACHMENT,             // attachment
-                                       GL_TEXTURE_2D,                   // texture target
-                                       depth_attachment->get_handle(),  // texture
-                                       0                                // level
-                );
-            } break;
-            case RT_SHADOW_CUBE_MAP: {
-                glFramebufferTexture(GL_FRAMEBUFFER,
-                                     GL_DEPTH_ATTACHMENT,
-                                     depth_attachment->get_handle(),
-                                     0);
-            } break;
-            default:
-                CRASH_NOW();
-                break;
-        }
-    }
-
-    DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    subpass->m_handle = fbo_handle;
-    return subpass;
 }
 
 void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {

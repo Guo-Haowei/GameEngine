@@ -7,6 +7,7 @@
 #include <d3d11.h>
 
 #include "rendering/pixel_format.h"
+#include "rendering/texture.h"
 
 #define D3D_FAIL_MSG(HR, MSG)        ERR_FAIL_COND_MSG(FAILED(HR), MSG)
 #define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
@@ -57,6 +58,22 @@ inline DXGI_FORMAT convert_format(PixelFormat p_format) {
         default:
             CRASH_NOW();
             return DXGI_FORMAT_UNKNOWN;
+    }
+}
+
+inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
+    switch (p_dimension) {
+        case my::TEXTURE_2D:
+            return D3D_SRV_DIMENSION_TEXTURE2D;
+        case my::TEXTURE_3D:
+            return D3D_SRV_DIMENSION_TEXTURE3D;
+        case my::TEXTURE_2D_ARRAY:
+            return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
+        case my::TEXTURE_CUBE:
+            return D3D_SRV_DIMENSION_TEXTURECUBE;
+        default:
+            CRASH_NOW();
+            return D3D_SRV_DIMENSION_TEXTURE2D;
     }
 }
 

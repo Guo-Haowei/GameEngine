@@ -29,11 +29,11 @@ void create_render_graph_dummy(RenderGraph& graph) {
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    auto color_attachment = manager.create_resource(RenderTargetDesc{ RT_RES_FINAL,
-                                                                      PixelFormat::R8G8B8A8_UINT,
-                                                                      RT_COLOR_ATTACHMENT_2D,
-                                                                      w, h },
-                                                    nearest_sampler());
+    auto color_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_FINAL,
+                                                                           PixelFormat::R8G8B8A8_UINT,
+                                                                           RT_COLOR_ATTACHMENT_2D,
+                                                                           w, h },
+                                                         nearest_sampler());
 
     RenderPassDesc desc;
     desc.name = DUMMY_PASS;

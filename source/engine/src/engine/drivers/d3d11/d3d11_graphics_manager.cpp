@@ -4,6 +4,7 @@
 #include <imgui/backends/imgui_impl_dx11.h>
 
 #include "drivers/d3d11/d3d11_helpers.h"
+#include "drivers/d3d11/d3d11_resources.h"
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/texture.h"
@@ -16,16 +17,6 @@ using Microsoft::WRL::ComPtr;
 ComPtr<ID3D11Texture2D> m_render_target_texture;
 ComPtr<ID3D11RenderTargetView> m_render_target_view;
 ComPtr<ID3D11ShaderResourceView> m_srv;
-
-struct D3d11Texture : public Texture {
-    using Texture::Texture;
-
-    uint32_t get_handle() const { return 0; }
-    uint64_t get_resident_handle() const { return 0; }
-    uint64_t get_imgui_handle() const { return (uint64_t)srv.Get(); }
-
-    ComPtr<ID3D11ShaderResourceView> srv;
-};
 
 bool D3d11GraphicsManager::initialize() {
     bool ok = true;
@@ -206,22 +197,6 @@ inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
     return flags;
 }
 
-inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
-    switch (p_dimension) {
-        case my::TEXTURE_2D:
-            return D3D_SRV_DIMENSION_TEXTURE2D;
-        case my::TEXTURE_3D:
-            return D3D_SRV_DIMENSION_TEXTURE3D;
-        case my::TEXTURE_2D_ARRAY:
-            return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
-        case my::TEXTURE_CUBE:
-            return D3D_SRV_DIMENSION_TEXTURECUBE;
-        default:
-            CRASH_NOW();
-            return D3D_SRV_DIMENSION_TEXTURE2D;
-    }
-}
-
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
@@ -254,7 +229,7 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
     srv_desc.Format = texture_desc.Format;
-    srv_desc.ViewDimension = convert_dimension(p_texture_desc.dimension);
+    srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
     srv_desc.Texture2D.MostDetailedMip = 0;
     srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
 
@@ -267,10 +242,8 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
     return gpu_texture;
 }
 
-std::shared_ptr<RenderTarget> D3d11GraphicsManager::create_resource(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
-    unused(p_desc);
-    unused(p_sampler);
-
+std::shared_ptr<Subpass> D3d11GraphicsManager::create_subpass(const SubpassDesc& p_subpass_desc) {
+    unused(p_subpass_desc);
     return nullptr;
 }
 

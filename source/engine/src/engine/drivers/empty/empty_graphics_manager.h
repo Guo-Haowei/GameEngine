@@ -13,8 +13,6 @@ public:
 
     std::shared_ptr<Texture> create_texture(const TextureDesc&, const SamplerDesc&) { return nullptr; }
 
-    std::shared_ptr<RenderTarget> create_resource(const RenderTargetDesc&, const SamplerDesc&) override { return nullptr; }
-
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) override { return nullptr; }
 
     uint64_t get_final_image() const override { return 0; }
