@@ -18,11 +18,13 @@ static void dummy_pass_func(const Subpass* p_subpass) {
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
-    // @TODO: view port
-    // glViewport(0, 0, width, height);
-
     float clear_color[] = { 0.3f, 0.3f, 0.4f, 1.0f };
     graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
+
+    Viewport vp;
+    vp.width = width;
+    vp.height = height;
+    graphics_manager.set_viewport(vp);
 }
 
 void create_render_graph_dummy(RenderGraph& graph) {

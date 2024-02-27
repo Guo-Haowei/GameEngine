@@ -1,12 +1,20 @@
 #include "pipeline_state_manager.h"
 
-#include <sstream>
-#include <vector>
-
 #include "core/framework/asset_manager.h"
-#include "drivers/opengl/opengl_prerequisites.h"
+#include "core/framework/graphics_manager.h"
 
 namespace my {
+
+static const InputLayoutDesc s_input_layout_mesh = {
+    .elements = {
+        { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, PixelFormat::R32G32B32_FLOAT, 1, 0, InputClassification::PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, PixelFormat::R32G32_FLOAT, 2, 0, InputClassification::PER_VERTEX_DATA, 0 },
+        { "TANGENT", 0, PixelFormat::R32G32B32_FLOAT, 3, 0, InputClassification::PER_VERTEX_DATA, 0 },
+        { "BONEINDEX", 0, PixelFormat::R32G32B32A32_SINT, 4, 0, InputClassification::PER_VERTEX_DATA, 0 },
+        { "BONEWEIGHT", 0, PixelFormat::R32G32B32A32_FLOAT, 5, 0, InputClassification::PER_VERTEX_DATA, 0 },
+    }
+};
 
 PipelineState* PipelineStateManager::find(PipelineStateName p_name) {
     DEV_ASSERT_INDEX(p_name, m_cache.size());
@@ -14,7 +22,28 @@ PipelineState* PipelineStateManager::find(PipelineStateName p_name) {
 }
 
 bool PipelineStateManager::initialize() {
-    constexpr std::string_view has_animation = "#define HAS_ANIMATION";
+    constexpr ShaderMacro has_animation = { "HAS_ANIMATION", "1" };
+    {
+        PipelineCreateInfo info;
+        info.vs = "mesh.vert";
+        info.ps = "gbuffer.frag";
+        info.input_layout_desc = &s_input_layout_mesh;
+        m_cache[PROGRAM_GBUFFER_STATIC] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "mesh.vert";
+        info.ps = "gbuffer.frag";
+        info.defines = { has_animation };
+        info.input_layout_desc = &s_input_layout_mesh;
+        m_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
+    }
+
+    // @HACK: only support this many shaders
+    if (GraphicsManager::singleton().get_backend() == Backend::D3D11) {
+        return true;
+    }
+
     {
         PipelineCreateInfo info;
         info.vs = "mesh.vert";
@@ -27,19 +56,6 @@ bool PipelineStateManager::initialize() {
         info.ps = "base_color.frag";
         info.defines = { has_animation };
         m_cache[PROGRAM_BASE_COLOR_ANIMATED] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "mesh.vert";
-        info.ps = "gbuffer.frag";
-        m_cache[PROGRAM_GBUFFER_STATIC] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "mesh.vert";
-        info.ps = "gbuffer.frag";
-        info.defines = { has_animation };
-        m_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
     }
     {
         PipelineCreateInfo info;

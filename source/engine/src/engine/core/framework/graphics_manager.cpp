@@ -2,13 +2,45 @@
 
 #include "core/debugger/profiler.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
+#include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
+#include "drivers/opengl/opengl_pipeline_state_manager.h"
 #include "rendering/render_graph/render_graphs.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
+
+bool GraphicsManager::initialize() {
+    if (!initialize_internal()) {
+        return false;
+    }
+
+    // select pipeline state manager
+    switch (m_backend) {
+        case Backend::EMPTY:
+            break;
+        case Backend::OPENGL:
+            m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
+            break;
+        case Backend::D3D11:
+            m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
+            break;
+        default:
+            break;
+    }
+
+    m_render_data = std::make_shared<RenderData>();
+
+    if (m_pipeline_state_manager) {
+        if (!m_pipeline_state_manager->initialize()) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 void GraphicsManager::event_received(std::shared_ptr<Event> event) {
     if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(event.get()); e) {

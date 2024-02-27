@@ -6,12 +6,6 @@ namespace my {
 
 namespace fs = std::filesystem;
 
-enum class Result {
-    OK,
-    MAX_DEPTH,
-    FILE_ERROR,
-};
-
 static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected<std::string, std::string> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
@@ -56,7 +50,7 @@ static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected
     return result;
 }
 
-static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::vector<std::string_view> &p_defines) {
+static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
     std::string file{ p_file };
     file.append(".glsl");
     fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
@@ -76,8 +70,7 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
         "";
 
     for (const auto &define : p_defines) {
-        fullsource.append(define);
-        fullsource.push_back('\n');
+        fullsource.append(std::format("#define {} {}\n", define.name, define.value));
     }
 
     fullsource.append(*res);
@@ -104,12 +97,12 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
     return shader;
 }
 
-std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const PipelineCreateInfo &info) {
+std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const PipelineCreateInfo &p_info) {
     GLuint programID = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
         if (!path.empty()) {
-            GLuint shader = create_shader(path, type, info.defines);
+            GLuint shader = create_shader(path, type, p_info.defines);
             glAttachShader(programID, shader);
             shaders.push_back(shader);
         }
@@ -121,16 +114,16 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const Pipeline
         }
     });
 
-    if (!info.cs.empty()) {
-        DEV_ASSERT(info.vs.empty());
-        DEV_ASSERT(info.ps.empty());
-        DEV_ASSERT(info.gs.empty());
-        create_shader_helper(info.cs, GL_COMPUTE_SHADER);
-    } else if (!info.vs.empty()) {
-        DEV_ASSERT(info.cs.empty());
-        create_shader_helper(info.vs, GL_VERTEX_SHADER);
-        create_shader_helper(info.ps, GL_FRAGMENT_SHADER);
-        create_shader_helper(info.gs, GL_GEOMETRY_SHADER);
+    if (!p_info.cs.empty()) {
+        DEV_ASSERT(p_info.vs.empty());
+        DEV_ASSERT(p_info.ps.empty());
+        DEV_ASSERT(p_info.gs.empty());
+        create_shader_helper(p_info.cs, GL_COMPUTE_SHADER);
+    } else if (!p_info.vs.empty()) {
+        DEV_ASSERT(p_info.cs.empty());
+        create_shader_helper(p_info.vs, GL_VERTEX_SHADER);
+        create_shader_helper(p_info.ps, GL_FRAGMENT_SHADER);
+        create_shader_helper(p_info.gs, GL_GEOMETRY_SHADER);
     }
 
     DEV_ASSERT(!shaders.empty());

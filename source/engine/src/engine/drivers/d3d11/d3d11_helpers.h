@@ -9,6 +9,10 @@
 #include "rendering/pixel_format.h"
 #include "rendering/texture.h"
 
+#if USING(DEBUG_BUILD)
+#pragma comment(lib, "dxguid.lib")
+#endif
+
 #define D3D_FAIL_MSG(HR, MSG)        ERR_FAIL_COND_MSG(FAILED(HR), MSG)
 #define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
 
@@ -24,8 +28,6 @@
 namespace my::d3d11 {
 
 void set_debug_name(ID3D11DeviceChild* p_resource, const std::string& p_name);
-
-DXGI_FORMAT convert_format(PixelFormat p_format);
 
 inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
     switch (p_dimension) {

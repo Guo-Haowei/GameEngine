@@ -4,6 +4,7 @@
 #include "core/framework/event_queue.h"
 #include "core/framework/module.h"
 #include "rendering/pipeline_state.h"
+#include "rendering/pipeline_state_manager.h"
 #include "rendering/render_graph/render_graph.h"
 #include "rendering/render_graph/subpass.h"
 #include "rendering/sampler.h"
@@ -12,11 +13,18 @@
 #include "scene/scene_components.h"
 
 // @TODO: refactor
+#include "rendering/render_data.h"
 struct MaterialConstantBuffer;
 
 namespace my {
 
 struct RenderData;
+
+enum class Backend : uint8_t {
+    EMPTY,
+    OPENGL,
+    D3D11,
+};
 
 enum ClearFlags : uint32_t {
     CLEAR_NONE = BIT(0),
@@ -25,16 +33,15 @@ enum ClearFlags : uint32_t {
     CLEAR_STENCIL_BIT = BIT(3),
 };
 
+struct Viewport {
+    int width;
+    int height;
+};
+
 // @TODO: move generic stuff to renderer
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
-
-    enum class Backend : uint8_t {
-        EMPTY,
-        OPENGL,
-        D3D11,
-    };
 
     enum class RenderGraph : uint8_t {
         DUMMY,
@@ -44,15 +51,18 @@ public:
 
     GraphicsManager(std::string_view p_name, Backend p_backend) : Module(p_name), m_backend(p_backend) {}
 
+    bool initialize() final;
+
     void update(float p_delta);
+
+    virtual void set_render_target(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
+    virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
+    virtual void set_viewport(const Viewport& p_vp) = 0;
 
     void set_pipeline_state(PipelineStateName p_name);
 
     std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;
-
-    virtual void set_render_target(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
-    virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
@@ -74,13 +84,17 @@ public:
 
     static std::shared_ptr<GraphicsManager> create();
 
+    Backend get_backend() const { return m_backend; }
+
+    // @TODO: move to renderer
+    void select_render_graph();
+
 protected:
     virtual void on_scene_change(const Scene& p_scene) = 0;
     virtual void on_window_resize(int, int) {}
     virtual void set_pipeline_state_impl(PipelineStateName p_name) = 0;
     virtual void render() = 0;
-    // @TODO: move to renderer
-    void select_render_graph();
+    virtual bool initialize_internal() = 0;
 
     const Backend m_backend;
     RenderGraph m_method = RenderGraph::DUMMY;
@@ -99,6 +113,8 @@ protected:
         OnTextureLoadFunc func;
     };
     ConcurrentQueue<ImageTask> m_loaded_images;
+
+    std::shared_ptr<PipelineStateManager> m_pipeline_state_manager;
 };
 
 }  // namespace my

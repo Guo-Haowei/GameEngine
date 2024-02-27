@@ -1,6 +1,46 @@
 #pragma once
+#include "rendering/pixel_format.h"
 
 namespace my {
+
+enum class InputClassification {
+    PER_VERTEX_DATA,
+    PER_INSTANCE_DATA,
+};
+
+struct InputLayoutDesc {
+    struct Element {
+        // @TODO: rename
+        std::string semanticName;
+        uint32_t semanticIndex;
+        PixelFormat format;
+        uint32_t inputSlot;
+        uint32_t alignedByteOffset;
+        InputClassification inputSlotClass;
+        uint32_t instanceDataStepRate;
+    };
+
+    std::vector<Element> elements;
+};
+
+struct ShaderMacro {
+    const char* name;
+    const char* value;
+};
+
+struct PipelineCreateInfo {
+    std::string_view vs;
+    std::string_view ps;
+    std::string_view gs;
+    std::string_view cs;
+    std::vector<ShaderMacro> defines;
+
+    const InputLayoutDesc* input_layout_desc = nullptr;
+};
+
+struct PipelineState {
+    virtual ~PipelineState() = default;
+};
 
 enum PipelineStateName {
     // @TODO: split render passes to static and dynamic
@@ -29,4 +69,4 @@ enum PipelineStateName {
     PIPELINE_STATE_MAX,
 };
 
-}
+}  // namespace my

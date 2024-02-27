@@ -37,7 +37,9 @@ target_link_libraries(${TARGET_NAME} PUBLIC
     lua
     bullet
     optick
-    d3d11.lib)
+    d3d11.lib
+    d3dcompiler.lib
+)
 
 target_set_warning_level(${TARGET_NAME})
 

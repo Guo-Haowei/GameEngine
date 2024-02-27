@@ -15,7 +15,6 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
-#include "rendering/render_data.h"
 #include "rendering/render_graph/render_graphs.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
@@ -57,7 +56,7 @@ namespace my {
 
 static void APIENTRY gl_debug_callback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
-bool OpenGLGraphicsManager::initialize() {
+bool OpenGLGraphicsManager::initialize_internal() {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
         return false;
@@ -87,10 +86,7 @@ bool OpenGLGraphicsManager::initialize() {
 
     g_meshes.set_description("GPU-Mesh-Allocator");
 
-    m_render_data = std::make_shared<RenderData>();
-
-    m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
-    return m_pipeline_state_manager->initialize();
+    return true;
 }
 
 void OpenGLGraphicsManager::finalize() {
@@ -180,6 +176,10 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
     }
 
     glClear(flags);
+}
+
+void OpenGLGraphicsManager::set_viewport(const Viewport& p_vp) {
+    glViewport(0, 0, p_vp.width, p_vp.height);
 }
 
 std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
