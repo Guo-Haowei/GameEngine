@@ -10,8 +10,8 @@ void main() {
     bone_matrix += c_bones[in_bone_id.y] * in_bone_weight.y;
     bone_matrix += c_bones[in_bone_id.z] * in_bone_weight.z;
     bone_matrix += c_bones[in_bone_id.w] * in_bone_weight.w;
-    gl_Position = c_model_matrix * bone_matrix * vec4(in_position, 1.0);
+    gl_Position = g_model * bone_matrix * vec4(in_position, 1.0);
 #else
-    gl_Position = c_model_matrix * vec4(in_position, 1.0);
+    gl_Position = g_model * vec4(in_position, 1.0);
 #endif
 }

@@ -1,10 +1,10 @@
 #ifndef CBUFFER_INCLUDED
 #define CBUFFER_INCLUDED
-#include "shader_constants.h"
+#include "shader_defines.h"
 
 // constant buffer
-#ifdef __cplusplus
-#define CONSTANT_BUFFER(name, reg) \
+#if defined(__cplusplus)
+#define CBUFFER(name, reg) \
     struct name : public ConstantBufferBase<name, reg>
 
 template<typename T, int N>
@@ -13,19 +13,41 @@ struct ConstantBufferBase {
         static_assert(sizeof(T) % 16 == 0);
     }
     constexpr int get_slot() { return N; }
+    static constexpr int get_uniform_buffer_slot() { return N; }
 };
-#else
-#define CONSTANT_BUFFER(name, reg) layout(std140, binding = reg) uniform name
-#endif
 
-// sampler
-#ifdef __cplusplus
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
 using samplerCube = uint64_t;
+
+// @TODO: remove this constraint
 static_assert(MAX_CASCADE_COUNT == 4);
+#elif defined(HLSL_LANG)
+#define CBUFFER(name, reg) cbuffer name : register(b##reg)
+
+#elif defined(GLSL_LANG)
+#define CBUFFER(name, reg) layout(std140, binding = reg) uniform name
+
 #endif
 
+CBUFFER(PerBatchConstantBuffer, 0) {
+    mat4 g_model;
+};
+
+CBUFFER(PerPassConstantBuffer, 1) {
+    mat4 g_view;
+    mat4 g_projection;
+    mat4 g_projection_view;
+    vec2 _per_pass_padding_1;
+    int g_light_index;           // for point light shadow mapping
+    float g_per_pass_roughness;  // for environment map
+};
+
+CBUFFER(BoneConstantBuffer, 5) {
+    mat4 c_bones[MAX_BONE_COUNT];
+};
+
+#ifndef HLSL_LANG
 struct Light {
     vec3 color;
     int type;
@@ -41,23 +63,7 @@ struct Light {
     mat4 matrices[6];
 };
 
-CONSTANT_BUFFER(PerBatchConstantBuffer, 0) {
-    mat4 c_model_matrix;
-
-    vec3 _c_ddddd_padding;
-    int c_light_index;  // HACK: shouldn't be here
-};
-
-CONSTANT_BUFFER(PerPassConstantBuffer, 1) {
-    mat4 c_view_matrix;
-    mat4 c_projection_matrix;
-    mat4 c_projection_view_matrix;
-    vec3 _c_per_pass_padding;
-    float c_per_pass_roughness;
-};
-
-// @TODO: per subpass constant
-CONSTANT_BUFFER(PerFrameConstantBuffer, 2) {
+CBUFFER(PerFrameConstantBuffer, 2) {
     Light c_lights[MAX_LIGHT_COUNT];
 
     // @TODO: move it to Light
@@ -91,7 +97,7 @@ CONSTANT_BUFFER(PerFrameConstantBuffer, 2) {
     int c_debug_csm;
 };
 
-CONSTANT_BUFFER(MaterialConstantBuffer, 3) {
+CBUFFER(MaterialConstantBuffer, 3) {
     vec4 c_albedo_color;
     float c_metallic;
     float c_roughness;
@@ -108,7 +114,7 @@ CONSTANT_BUFFER(MaterialConstantBuffer, 3) {
     sampler2D _c_dummy_padding;
 };
 
-CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
+CBUFFER(PerSceneConstantBuffer, 4) {
     vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
     sampler2D c_shadow_map;
@@ -132,12 +138,8 @@ CONSTANT_BUFFER(PerSceneConstantBuffer, 4) {
     samplerCube c_prefiltered_map;
 };
 
-CONSTANT_BUFFER(BoneConstantBuffer, 5) {
-    mat4 c_bones[MAX_BONE_COUNT];
-};
-
 // @TODO: make it more general, something like 2D draw
-CONSTANT_BUFFER(DebugDrawConstantBuffer, 6) {
+CBUFFER(DebugDrawConstantBuffer, 6) {
     vec2 c_debug_draw_pos;
     vec2 c_debug_draw_size;
 
@@ -145,5 +147,6 @@ CONSTANT_BUFFER(DebugDrawConstantBuffer, 6) {
     int c_display_channel;
     int c_another_padding;
 };
+#endif
 
 #endif

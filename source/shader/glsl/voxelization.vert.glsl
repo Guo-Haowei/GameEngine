@@ -11,9 +11,9 @@ void main() {
     bone_matrix += c_bones[in_bone_id.y] * in_bone_weight.y;
     bone_matrix += c_bones[in_bone_id.z] * in_bone_weight.z;
     bone_matrix += c_bones[in_bone_id.w] * in_bone_weight.w;
-    mat4 world_matrix = c_model_matrix * bone_matrix;
+    mat4 world_matrix = g_model * bone_matrix;
 #else
-    mat4 world_matrix = c_model_matrix;
+    mat4 world_matrix = g_model;
 #endif
 
     vec4 world_position = world_matrix * vec4(in_position, 1.0);

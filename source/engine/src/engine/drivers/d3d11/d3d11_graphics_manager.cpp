@@ -27,11 +27,11 @@ namespace my {
 
 // @TODO: refactor
 template<class Cache>
-class ConstantBuffer {
+class D3d11ConstantBuffer {
 public:
     inline size_t BufferSize() const { return sizeof(Cache); }
 
-    ConstantBuffer() = default;
+    D3d11ConstantBuffer() = default;
 
     void Create(ComPtr<ID3D11Device>& device) {
         D3D11_BUFFER_DESC bufferDesc;
@@ -92,14 +92,11 @@ struct BoneConstants {
     float4x4 Bones[128];
 };
 
-typedef ConstantBuffer<PerFrameConstants> PerFrameBuffer;
-typedef ConstantBuffer<PerBatchConstants> PerBatchBuffer;
+typedef D3d11ConstantBuffer<PerFrameConstants> PerFrameBuffer;
+typedef D3d11ConstantBuffer<PerBatchConstants> PerBatchBuffer;
 PerFrameBuffer m_perFrameBuffer;
 PerBatchBuffer m_perDrawBuffer;
-ConstantBuffer<BoneConstants> m_bone_buffer;
-// typedef ConstantBuffer<LightDataCache> LightBuffer;
-// typedef ConstantBuffer<ViewPositionCache> ViewPositionBuffer;
-// typedef ConstantBuffer<Vec4Cache> FourFloatsBuffer;
+D3d11ConstantBuffer<BoneConstants> m_bone_buffer;
 
 ////////////////////
 
@@ -308,6 +305,18 @@ bool D3d11GraphicsManager::create_render_target() {
     m_swap_chain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
     m_device->CreateRenderTargetView(back_buffer.Get(), nullptr, m_window_rtv.GetAddressOf());
     return true;
+}
+
+std::shared_ptr<UniformBufferBase> D3d11GraphicsManager::create_uniform_buffer(int p_slot, size_t p_capacity) {
+    unused(p_slot);
+    unused(p_capacity);
+    return nullptr;
+}
+
+void D3d11GraphicsManager::update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+    unused(p_buffer);
+    unused(p_size);
+    unused(p_data);
 }
 
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {

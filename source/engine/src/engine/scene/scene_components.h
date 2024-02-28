@@ -4,7 +4,7 @@
 #include "core/math/aabb.h"
 #include "core/math/angle.h"
 #include "core/systems/entity.h"
-#include "shader_constants.h"
+#include "shader_defines.h"
 
 namespace my {
 

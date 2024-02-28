@@ -1,5 +1,5 @@
-#ifndef SHADER_CONSTANTS_INCLUDED
-#define SHADER_CONSTANTS_INCLUDED
+#ifndef SHADER_DEFINES_INCLUDED
+#define SHADER_DEFINES_INCLUDED
 
 #ifndef MY_PI
 #define MY_PI 3.141592653589793
@@ -27,5 +27,14 @@
 #define DISPLAY_CHANNEL_RGB 0
 #define DISPLAY_CHANNEL_RRR 1
 #define DISPLAY_CHANNEL_AAA 2
+
+#if defined(HLSL_LANG)
+#define ivec2 int2
+#define ivec3 int3
+#define ivec4 int4
+#define vec3  float3
+#define vec4  float4
+#define mat4  mat4x4
+#endif
 
 #endif

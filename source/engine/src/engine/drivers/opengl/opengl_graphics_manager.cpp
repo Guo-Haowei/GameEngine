@@ -10,8 +10,10 @@
 #include "core/framework/scene_manager.h"
 #include "core/math/geometry.h"
 #include "drivers/opengl/opengl_pipeline_state_manager.h"
+#include "drivers/opengl/opengl_prerequisites.h"
 #include "drivers/opengl/opengl_resources.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
+#include "rendering/GpuTexture.h"
 #include "rendering/gl_utils.h"
 #include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graphs.h"
@@ -187,6 +189,26 @@ void OpenGLGraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
     glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
+std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::create_uniform_buffer(int p_slot, size_t p_capacity) {
+    auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
+    GLuint handle = 0;
+    glGenBuffers(1, &handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, handle);
+    glBufferData(GL_UNIFORM_BUFFER, p_capacity, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, p_slot, handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    buffer->handle = handle;
+    return buffer;
+}
+
+void OpenGLGraphicsManager::update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+    auto buffer_id = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, buffer_id->handle);
+    glBufferData(GL_UNIFORM_BUFFER, p_size, p_data, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
@@ -321,17 +343,17 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    subpass->m_handle = fbo_handle;
+    subpass->handle = fbo_handle;
     return subpass;
 }
 
 void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) {
     auto subpass = reinterpret_cast<const OpenGLSubpass*>(p_subpass);
-    if (subpass->m_handle == 0) {
+    if (subpass->handle == 0) {
         return;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, subpass->m_handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, subpass->handle);
 
     // @TODO: bind cube map/texture 2d array
     if (!subpass->color_attachments.empty()) {
@@ -364,7 +386,7 @@ void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
         create_mesh_data(mesh, *mesh_buffers);
     }
 
-    g_constantCache.Update();
+    g_constantCache.update();
 }
 
 // @TODO: refactor
@@ -469,7 +491,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     make_resident(RT_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);
     make_resident(RT_BRDF, cache.c_brdf_map);
 
-    g_constantCache.Update();
+    g_constantCache.update();
 }
 
 void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
@@ -515,7 +537,7 @@ void OpenGLGraphicsManager::render() {
 
     m_render_data->update(&scene);
 
-    g_perFrameCache.Update();
+    g_perFrameCache.update();
     m_render_graph.execute();
 
     // @TODO: move it somewhere else
@@ -528,8 +550,6 @@ void OpenGLGraphicsManager::render() {
 }
 
 void OpenGLGraphicsManager::destroyGpuResources() {
-    R_Destroy_Cbuffers();
-
     glDeleteTextures(1, &g_noiseTexture);
 }
 

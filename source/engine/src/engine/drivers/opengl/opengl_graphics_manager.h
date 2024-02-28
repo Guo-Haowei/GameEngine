@@ -24,6 +24,9 @@ public:
     void set_mesh(const MeshBuffers* p_mesh) final;
     void draw_elements(uint32_t p_count, uint32_t offset) final;
 
+    std::shared_ptr<UniformBufferBase> create_uniform_buffer(int p_slot, size_t p_capacity) final;
+    void update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
+
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) final;
 

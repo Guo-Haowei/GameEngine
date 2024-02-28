@@ -10,6 +10,7 @@
 
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
+#include "rendering/GpuTexture.h"
 #include "rendering/r_cbuffers.h"
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
@@ -45,24 +46,24 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     RenderData::Pass& pass = render_data->point_shadow_passes[p_pass_id];
 
     pass.fill_perpass(g_per_pass_cache.cache);
-    g_per_pass_cache.Update();
+    g_per_pass_cache.cache.g_light_index = pass.light_index;
+    g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.armature_id.is_valid();
+        const bool has_bone = draw.tmp_armature_id.is_valid();
 
         if (has_bone) {
-            auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
+            auto& armature = *scene.get_component<ArmatureComponent>(draw.tmp_armature_id);
             DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.Update();
+            g_boneCache.update();
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-        g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
-        g_perBatchCache.cache.c_light_index = pass.light_index;
-        g_perBatchCache.Update();
+        g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
+        g_per_batch_uniform.update();
 
         gm.set_mesh(draw.mesh_data);
         gm.draw_elements(draw.mesh_data->index_count);
@@ -92,23 +93,23 @@ void shadow_pass_func(const Subpass* p_subpass) {
 
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
         pass.fill_perpass(g_per_pass_cache.cache);
-        g_per_pass_cache.Update();
+        g_per_pass_cache.update();
 
         for (const auto& draw : pass.draws) {
-            const bool has_bone = draw.armature_id.is_valid();
+            const bool has_bone = draw.tmp_armature_id.is_valid();
 
             if (has_bone) {
-                auto& armature = *scene.get_component<ArmatureComponent>(draw.armature_id);
+                auto& armature = *scene.get_component<ArmatureComponent>(draw.tmp_armature_id);
                 DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
                 memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-                g_boneCache.Update();
+                g_boneCache.update();
             }
 
             gm.set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-            g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
-            g_perBatchCache.Update();
+            g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
+            g_per_batch_uniform.update();
 
             gm.set_mesh(draw.mesh_data);
             gm.draw_elements(draw.mesh_data->index_count);
@@ -147,29 +148,29 @@ void voxelization_pass_func(const Subpass*) {
     auto render_data = gm.get_render_data();
     RenderData::Pass& pass = render_data->voxel_pass;
     pass.fill_perpass(g_per_pass_cache.cache);
-    g_per_pass_cache.Update();
+    g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.armature_id.is_valid();
+        const bool has_bone = draw.tmp_armature_id.is_valid();
 
         if (has_bone) {
-            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
+            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.tmp_armature_id);
             DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.Update();
+            g_boneCache.update();
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
-        g_perBatchCache.Update();
+        g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
+        g_per_batch_uniform.update();
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
             GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
-            g_materialCache.Update();
+            g_materialCache.update();
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }
@@ -222,10 +223,10 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.c_projection_matrix = projection;
-        g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
-        g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
-        g_per_pass_cache.Update();
+        g_per_pass_cache.cache.g_projection = projection;
+        g_per_pass_cache.cache.g_view = view_matrices[i];
+        g_per_pass_cache.cache.g_projection_view = projection * view_matrices[i];
+        g_per_pass_cache.update();
         draw_cube_map();
     }
 
@@ -269,10 +270,10 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.c_projection_matrix = projection;
-        g_per_pass_cache.cache.c_view_matrix = view_matrices[i];
-        g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[i];
-        g_per_pass_cache.Update();
+        g_per_pass_cache.cache.g_projection = projection;
+        g_per_pass_cache.cache.g_view = view_matrices[i];
+        g_per_pass_cache.cache.g_projection_view = projection * view_matrices[i];
+        g_per_pass_cache.update();
         draw_cube_map();
     }
 }
@@ -292,11 +293,11 @@ void prefilter_pass_func(const Subpass* p_subpass) {
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
-            g_per_pass_cache.cache.c_projection_matrix = projection;
-            g_per_pass_cache.cache.c_view_matrix = view_matrices[face_id];
-            g_per_pass_cache.cache.c_projection_view_matrix = projection * view_matrices[face_id];
-            g_per_pass_cache.cache.c_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
-            g_per_pass_cache.Update();
+            g_per_pass_cache.cache.g_projection = projection;
+            g_per_pass_cache.cache.g_view = view_matrices[face_id];
+            g_per_pass_cache.cache.g_projection_view = projection * view_matrices[face_id];
+            g_per_pass_cache.cache.g_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
+            g_per_pass_cache.update();
 
             GraphicsManager::singleton().set_render_target(p_subpass, face_id, mip_idx);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -326,29 +327,29 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
     RenderData::Pass& pass = render_data->main_pass;
 
     pass.fill_perpass(g_per_pass_cache.cache);
-    g_per_pass_cache.Update();
+    g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.armature_id.is_valid();
+        const bool has_bone = draw.tmp_armature_id.is_valid();
 
         if (has_bone) {
-            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
+            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.tmp_armature_id);
             DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.Update();
+            g_boneCache.update();
         }
 
         GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
-        g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
-        g_perBatchCache.Update();
+        g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
+        g_per_batch_uniform.update();
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
             GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
-            g_materialCache.Update();
+            g_materialCache.update();
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }
@@ -374,9 +375,9 @@ void ssao_pass_func(const Subpass* p_subpass) {
 // @TODO: refactor
 static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
     auto camera = SceneManager::singleton().get_scene().m_camera;
-    buffer.c_projection_view_matrix = camera->get_projection_view_matrix();
-    buffer.c_view_matrix = camera->get_view_matrix();
-    buffer.c_projection_matrix = camera->get_projection_matrix();
+    buffer.g_projection_view = camera->get_projection_view_matrix();
+    buffer.g_view = camera->get_view_matrix();
+    buffer.g_projection = camera->get_projection_matrix();
 }
 
 void lighting_pass_func(const Subpass* p_subpass) {
@@ -397,7 +398,7 @@ void lighting_pass_func(const Subpass* p_subpass) {
     // @TODO: fix
     auto camera = SceneManager::singleton().get_scene().m_camera;
     fill_camera_matrices(g_per_pass_cache.cache);
-    g_per_pass_cache.Update();
+    g_per_pass_cache.update();
 
     R_DrawQuad();
 
@@ -409,7 +410,7 @@ void lighting_pass_func(const Subpass* p_subpass) {
         RenderData::Pass& pass = render_data->main_pass;
 
         pass.fill_perpass(g_per_pass_cache.cache);
-        g_per_pass_cache.Update();
+        g_per_pass_cache.update();
         GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX);
         draw_cube_map();
     }
@@ -433,7 +434,7 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     // @TODO: fix
     auto camera = SceneManager::singleton().get_scene().m_camera;
     fill_camera_matrices(g_per_pass_cache.cache);
-    g_per_pass_cache.Update();
+    g_per_pass_cache.update();
 
     glBindVertexArray(g_box.vao);
 
@@ -484,7 +485,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     g_debug_draw_cache.cache.c_debug_draw_pos = pos;
     g_debug_draw_cache.cache.c_display_channel = p_channel;
     g_debug_draw_cache.cache.c_debug_draw_map = p_handle;
-    g_debug_draw_cache.Update();
+    g_debug_draw_cache.update();
     R_DrawQuad();
 }
 

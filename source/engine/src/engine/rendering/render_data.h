@@ -20,21 +20,26 @@ struct RenderData {
     };
 
     struct Mesh {
-        ecs::Entity armature_id;
-        mat4 world_matrix;
+        // @TODO: world_matrix index
+
+        ecs::Entity tmp_armature_id;
         const MeshBuffers* mesh_data;
         std::vector<SubMesh> subsets;
+
+        uint32_t batch_buffer_id;
     };
 
     struct Pass {
+        // @TODO: index instead of actuall data
+
         mat4 projection_matrix;
         mat4 view_matrix;
         mat4 projection_view_matrix;
 
         void fill_perpass(PerPassConstantBuffer& buffer) {
-            buffer.c_projection_matrix = projection_matrix;
-            buffer.c_view_matrix = view_matrix;
-            buffer.c_projection_view_matrix = projection_view_matrix;
+            buffer.g_projection = projection_matrix;
+            buffer.g_view = view_matrix;
+            buffer.g_projection_view = projection_view_matrix;
         }
 
         std::vector<Mesh> draws;
@@ -51,6 +56,8 @@ struct RenderData {
 
     const Scene* scene = nullptr;
 
+    std::vector<PerBatchConstantBuffer> m_batch_buffers;
+
     // @TODO: fix this ugly shit
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
@@ -59,16 +66,18 @@ struct RenderData {
 
     Pass voxel_pass;
     Pass main_pass;
-    // @TODO: array
-    std::vector<LightBillboard> light_billboards;
 
     void update(const Scene* p_scene);
 
 private:
+    uint32_t find_or_add_batch(ecs::Entity p_entity, const PerBatchConstantBuffer& p_buffer);
+
     void clear();
 
     void point_light_draw_data();
     void fill(const Scene* p_scene, Pass& p_pass, FilterObjectFunc1 p_func1, FilterObjectFunc2 p_func2);
+
+    std::unordered_map<ecs::Entity, uint32_t> m_batch_buffer_lookup;
 };
 
 }  // namespace my

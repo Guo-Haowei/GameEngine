@@ -67,6 +67,7 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
         "#extension GL_NV_shader_atomic_float : enable\n"
         "#extension GL_NV_shader_atomic_fp16_vector : enable\n"
         "#extension GL_ARB_bindless_texture : require\n"
+        "#define GLSL_LANG 1\n"
         "";
 
     for (const auto &define : p_defines) {

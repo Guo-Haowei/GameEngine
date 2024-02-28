@@ -64,8 +64,14 @@ void RenderData::point_light_draw_data() {
 }
 
 void RenderData::update(const Scene* p_scene) {
+    // clean up
     clear();
     scene = p_scene;
+
+    m_batch_buffer_lookup.clear();
+    m_batch_buffer_lookup.reserve(p_scene->get_count<TransformComponent>());
+    m_batch_buffers.clear();
+    m_batch_buffers.reserve(p_scene->get_count<TransformComponent>());
 
     point_light_draw_data();
 
@@ -115,43 +121,16 @@ void RenderData::update(const Scene* p_scene) {
             return camera_frustum.intersects(aabb);
         });
 
-    // @TODO: cache pointers
-    ImageHandle* point_light = AssetManager::singleton().find_image("@res://images/pointlight.png");
-    DEV_ASSERT(point_light);
-    Image* point_light_image = point_light->get();
+    //// @TODO: cache pointers
+    // ImageHandle* point_light = AssetManager::singleton().find_image("@res://images/pointlight.png");
+    // DEV_ASSERT(point_light);
+    // Image* point_light_image = point_light->get();
 
-    ImageHandle* omni_light = AssetManager::singleton().find_image("@res://images/omnilight.png");
-    DEV_ASSERT(omni_light);
-    Image* omni_light_image = omni_light->get();
+    // ImageHandle* omni_light = AssetManager::singleton().find_image("@res://images/omnilight.png");
+    // DEV_ASSERT(omni_light);
+    // Image* omni_light_image = omni_light->get();
 
-    // lights
-    light_billboards.clear();
-    // if (DVAR_GET_BOOL(show_editor))
-    {
-        for (uint32_t idx = 0; idx < (uint32_t)scene->get_count<LightComponent>(); ++idx) {
-            auto light_id = scene->get_entity<LightComponent>(idx);
-            const LightComponent& light = scene->get_component_array<LightComponent>()[idx];
-            const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
-            DEV_ASSERT(transform);
-            LightBillboard billboard;
-            vec3 translation = transform->get_translation();
-            switch (light.type) {
-                case LIGHT_TYPE_OMNI:
-                    billboard.image = omni_light_image;
-                    break;
-                case LIGHT_TYPE_POINT:
-                    billboard.image = point_light_image;
-                    break;
-                default:
-                    CRASH_NOW();
-                    break;
-            }
-            billboard.transform = glm::translate(translation);
-            billboard.type = light.type;
-
-            light_billboards.emplace_back(billboard);
-        }
-    }
+    m_batch_buffer_lookup.clear();
 }
 
 void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
@@ -181,9 +160,13 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
             continue;
         }
 
+        PerBatchConstantBuffer batch_buffer;
+        batch_buffer.g_model = world_matrix;
+
         Mesh draw;
-        draw.armature_id = mesh.armature_id;
-        draw.world_matrix = world_matrix;
+
+        draw.batch_buffer_id = find_or_add_batch(entity, batch_buffer);
+        draw.tmp_armature_id = mesh.armature_id;
         DEV_ASSERT(mesh.gpu_resource);
         draw.mesh_data = (MeshBuffers*)mesh.gpu_resource;
 
@@ -203,6 +186,18 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
 
         pass.draws.emplace_back(std::move(draw));
     }
+}
+
+uint32_t RenderData::find_or_add_batch(ecs::Entity p_entity, const PerBatchConstantBuffer& p_buffer) {
+    auto it = m_batch_buffer_lookup.find(p_entity);
+    if (it != m_batch_buffer_lookup.end()) {
+        return it->second;
+    }
+
+    uint32_t index = static_cast<uint32_t>(m_batch_buffers.size());
+    m_batch_buffer_lookup[p_entity] = index;
+    m_batch_buffers.emplace_back(p_buffer);
+    return index;
 }
 
 }  // namespace my

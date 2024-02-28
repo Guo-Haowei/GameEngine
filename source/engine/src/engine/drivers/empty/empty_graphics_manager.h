@@ -21,6 +21,9 @@ public:
     void set_mesh(const MeshBuffers* p_mesh) override{};
     void draw_elements(uint32_t p_count, uint32_t p_offset) override{};
 
+    std::shared_ptr<UniformBufferBase> create_uniform_buffer(int p_slot, size_t p_capacity) override { return nullptr; }
+    void update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) override{};
+
     std::shared_ptr<Texture> create_texture(const TextureDesc&, const SamplerDesc&) { return nullptr; }
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) override { return nullptr; }
 

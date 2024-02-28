@@ -1,10 +1,7 @@
 #include "gl_utils.h"
 
-#include <filesystem>
-#include <set>
-
-#include "cbuffer.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
+#include "drivers/opengl/opengl_prerequisites.h"
 
 static OpenGLMeshBuffers g_quad;
 
@@ -37,26 +34,10 @@ void R_DrawQuad() {
 
 namespace gl {
 
-//------------------------------------------------------------------------------
-// Constant Buffer
-//------------------------------------------------------------------------------
-GLuint CreateAndBindConstantBuffer(int slot, size_t size_in_byte) {
-    GLuint handle = 0;
-    glGenBuffers(1, &handle);
-    glBindBuffer(GL_UNIFORM_BUFFER, handle);
-    glBufferData(GL_UNIFORM_BUFFER, size_in_byte, nullptr, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferBase(GL_UNIFORM_BUFFER, slot, handle);
-    LOG_VERBOSE("[opengl] created buffer of size {} (slot {})", size_in_byte, slot);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    return handle;
-}
-
-void UpdateConstantBuffer(GLuint handle, const void *ptr, size_t size_in_byte) {
-    // glMapBuffer( m_handle, 0 );
-    glBindBuffer(GL_UNIFORM_BUFFER, handle);
-    glBufferData(GL_UNIFORM_BUFFER, size_in_byte, ptr, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+uint64_t MakeTextureResident(uint32_t texture) {
+    uint64_t ret = glGetTextureHandleARB(texture);
+    glMakeTextureHandleResidentARB(ret);
+    return ret;
 }
 
 }  // namespace gl

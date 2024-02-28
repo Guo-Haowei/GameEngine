@@ -11,7 +11,7 @@ void main() {
         gl_Layer = face;
         for (int i = 0; i < 3; ++i) {
             pass_position = gl_in[i].gl_Position;
-            gl_Position = c_lights[c_light_index].matrices[face] * pass_position;
+            gl_Position = c_lights[g_light_index].matrices[face] * pass_position;
             EmitVertex();
         }
         EndPrimitive();

@@ -9,6 +9,7 @@
 #include "rendering/render_graph/subpass.h"
 #include "rendering/sampler.h"
 #include "rendering/texture.h"
+#include "rendering/uniform_buffer.h"
 #include "scene/material_component.h"
 #include "scene/scene_components.h"
 
@@ -73,6 +74,9 @@ public:
 
     std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;
+
+    virtual std::shared_ptr<UniformBufferBase> create_uniform_buffer(int p_slot, size_t p_capacity) = 0;
+    virtual void update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;

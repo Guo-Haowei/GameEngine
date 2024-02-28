@@ -57,6 +57,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
     for (const auto& define : p_info.defines) {
         macros.push_back({ define.name, define.value });
     }
+    macros.push_back({ "HLSL_LANG", "1" });
     macros.push_back({ nullptr, nullptr });
 
     ComPtr<ID3DBlob> vsblob;
