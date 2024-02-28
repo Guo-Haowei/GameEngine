@@ -1,38 +1,50 @@
 #pragma once
 #include "core/base/fixed_stack.h"
-#include "gl_utils.h"
-#include "rendering/r_cbuffers.h"
+#include "rendering/uniform_buffer.h"
 #include "scene/scene.h"
+
+// this should be included after geomath.h
+#include "hlsl/cbuffer.h"
 
 namespace my {
 
+struct MeshBuffers;
+
+extern UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
+extern UniformBuffer<PerFrameConstantBuffer> g_perFrameCache;
+extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
+extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+
 struct RenderData {
+    RenderData();
+
     using FilterObjectFunc1 = std::function<bool(const ObjectComponent& object)>;
     using FilterObjectFunc2 = std::function<bool(const AABB& object_aabb)>;
 
     struct SubMesh {
         uint32_t index_count;
         uint32_t index_offset;
-        const MaterialComponent* material;
-        uint32_t flags;
+        int material_idx;
     };
 
     struct Mesh {
-        ecs::Entity armature_id;
-        mat4 world_matrix;
-        const MeshData* mesh_data;
+        int bone_idx;
+        int batch_idx;
+        const MeshBuffers* mesh_data;
         std::vector<SubMesh> subsets;
     };
 
     struct Pass {
+        // @TODO: index instead of actuall data
+
         mat4 projection_matrix;
         mat4 view_matrix;
         mat4 projection_view_matrix;
 
         void fill_perpass(PerPassConstantBuffer& buffer) {
-            buffer.c_projection_matrix = projection_matrix;
-            buffer.c_view_matrix = view_matrix;
-            buffer.c_projection_view_matrix = projection_view_matrix;
+            buffer.g_projection = projection_matrix;
+            buffer.g_view = view_matrix;
+            buffer.g_projection_view = projection_view_matrix;
         }
 
         std::vector<Mesh> draws;
@@ -41,13 +53,15 @@ struct RenderData {
         void clear() { draws.clear(); }
     };
 
-    struct LightBillboard {
-        mat4 transform;
-        int type;
-        Image* image;
-    };
-
     const Scene* scene = nullptr;
+
+    std::vector<PerBatchConstantBuffer> m_batch_buffers;
+    std::vector<MaterialConstantBuffer> m_material_buffers;
+    std::vector<BoneConstantBuffer> m_bone_buffers;
+
+    std::shared_ptr<UniformBufferBase> m_batch_uniform;
+    std::shared_ptr<UniformBufferBase> m_material_uniform;
+    std::shared_ptr<UniformBufferBase> m_bone_uniform;
 
     // @TODO: fix this ugly shit
 
@@ -57,16 +71,22 @@ struct RenderData {
 
     Pass voxel_pass;
     Pass main_pass;
-    // @TODO: array
-    std::vector<LightBillboard> light_billboards;
 
     void update(const Scene* p_scene);
 
 private:
+    uint32_t find_or_add_batch(ecs::Entity p_entity, const PerBatchConstantBuffer& p_buffer);
+    uint32_t find_or_add_material(ecs::Entity p_entity, const MaterialConstantBuffer& p_buffer);
+    uint32_t find_or_add_bone(ecs::Entity p_entity, const BoneConstantBuffer& p_buffer);
+
     void clear();
 
     void point_light_draw_data();
     void fill(const Scene* p_scene, Pass& p_pass, FilterObjectFunc1 p_func1, FilterObjectFunc2 p_func2);
+
+    std::unordered_map<ecs::Entity, uint32_t> m_batch_buffer_lookup;
+    std::unordered_map<ecs::Entity, uint32_t> m_material_buffer_lookup;
+    std::unordered_map<ecs::Entity, uint32_t> m_bone_buffer_lookup;
 };
 
 }  // namespace my

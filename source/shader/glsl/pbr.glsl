@@ -1,4 +1,4 @@
-#include "../shader_constants.h"
+#include "../hlsl/shader_defines.h"
 // @TODO: refactor the names
 
 // NDF(n, h, alpha) = alpha^2 / (pi * ((n dot h)^2 * (alpha^2 - 1) + 1)^2)

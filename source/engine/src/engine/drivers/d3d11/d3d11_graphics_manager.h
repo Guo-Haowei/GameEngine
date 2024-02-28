@@ -2,9 +2,15 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 
+#include "core/base/rid_owner.h"
 #include "core/framework/graphics_manager.h"
 
 namespace my {
+
+struct D3d11MeshBuffers : public MeshBuffers {
+    Microsoft::WRL::ComPtr<ID3D11Buffer> vertex_buffer[6]{};
+    Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer;
+};
 
 class D3d11GraphicsManager : public GraphicsManager {
 public:
@@ -16,13 +22,17 @@ public:
 
     void set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) final;
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
-    void set_viewport(const Viewport& p_vp) final;
+    void set_viewport(const Viewport& p_viewport) final;
+
+    void set_mesh(const MeshBuffers* p_mesh) final;
+    void draw_elements(uint32_t p_count, uint32_t p_offset) final;
+
+    std::shared_ptr<UniformBufferBase> uniform_create(int p_slot, size_t p_capacity) final;
+    void uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
+    void uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) final;
-
-    // @TODO: refactor this
-    void fill_material_constant_buffer(const MaterialComponent*, MaterialConstantBuffer&) final {}
 
     ID3D11Device* get_device() const { return m_device.Get(); }
 
@@ -42,6 +52,8 @@ protected:
     Microsoft::WRL::ComPtr<IDXGIDevice> m_dxgi_device;
     Microsoft::WRL::ComPtr<IDXGIAdapter> m_dxgi_adapter;
     Microsoft::WRL::ComPtr<IDXGIFactory> m_dxgi_factory;
+
+    my::RIDAllocator<D3d11MeshBuffers> m_meshes;
 };
 
 }  // namespace my

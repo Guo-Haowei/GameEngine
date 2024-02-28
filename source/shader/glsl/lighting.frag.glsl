@@ -1,4 +1,4 @@
-#include "../cbuffer.h"
+#include "../hlsl/cbuffer.h"
 
 #define ENABLE_VXGI 1
 

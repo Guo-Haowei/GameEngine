@@ -1,4 +1,4 @@
-#include "../cbuffer.h"
+#include "../hlsl/cbuffer.h"
 
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float occlusion;
@@ -16,10 +16,10 @@ void main() {
     const vec3 bitangent = cross(N, tangent);
 
     mat3 TBN = mat3(tangent, bitangent, N);
-    TBN = mat3(c_view_matrix) * TBN;
+    TBN = mat3(g_view) * TBN;
 
     vec4 origin = vec4(texture(c_gbuffer_position_metallic_map, uv).xyz, 1.0);
-    origin = c_view_matrix * origin;
+    origin = g_view * origin;
 
     occlusion = 0.0;
     for (int i = 0; i < c_ssao_kernel_size; ++i) {
@@ -29,14 +29,14 @@ void main() {
 
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);
-        offset = c_projection_matrix * offset;  // from view to clip-space
-        offset.xyz /= offset.w;                 // perspective divide
-        offset.xy = offset.xy * 0.5 + 0.5;      // transform to range 0.0 - 1.0
+        offset = g_projection * offset;     // from view to clip-space
+        offset.xyz /= offset.w;             // perspective divide
+        offset.xy = offset.xy * 0.5 + 0.5;  // transform to range 0.0 - 1.0
 
         // get sample depth
-        const vec4 samplec_view_matrixSpace =
-            c_view_matrix * vec4(texture(c_gbuffer_position_metallic_map, offset.xy).xyz, 1.0);  // get depth value of kernel sample
-        const float sampleDepth = samplec_view_matrixSpace.z;
+        const vec4 sampleg_viewSpace =
+            g_view * vec4(texture(c_gbuffer_position_metallic_map, offset.xy).xyz, 1.0);  // get depth value of kernel sample
+        const float sampleDepth = sampleg_viewSpace.z;
 
         // range check & accumulate
         float rangeCheck = smoothstep(0.0, 1.0, c_ssao_kernel_radius / abs(origin.z - sampleDepth));

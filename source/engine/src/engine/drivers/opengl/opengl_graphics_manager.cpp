@@ -5,16 +5,16 @@
 /////
 
 #include "assets/image.h"
-#include "core/base/rid_owner.h"
 #include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/math/geometry.h"
 #include "drivers/opengl/opengl_pipeline_state_manager.h"
+#include "drivers/opengl/opengl_prerequisites.h"
 #include "drivers/opengl/opengl_resources.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
+#include "rendering/GpuTexture.h"
 #include "rendering/gl_utils.h"
-#include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graphs.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
@@ -23,22 +23,19 @@
 using my::rg::RenderGraph;
 using my::rg::RenderPass;
 
+using namespace my;
+
 /// textures
 // @TODO: time to refactor this!!
 GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
 
 // @TODO: refactor
-MeshData g_box;
-MeshData g_skybox;
-MeshData g_billboard;
-
-// @TODO: fix this
-my::RIDAllocator<MeshData> g_meshes;
+OpenGLMeshBuffers g_box;
+OpenGLMeshBuffers g_skybox;
+OpenGLMeshBuffers g_billboard;
 
 static GLuint g_noiseTexture;
-
-using namespace my;
 
 // @TODO: refactor
 template<typename T>
@@ -84,7 +81,7 @@ bool OpenGLGraphicsManager::initialize_internal() {
 
     createGpuResources();
 
-    g_meshes.set_description("GPU-Mesh-Allocator");
+    m_meshes.set_description("GPU-Mesh-Allocator");
 
     return true;
 }
@@ -102,7 +99,7 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
+static void create_mesh_data(const MeshComponent& mesh, OpenGLMeshBuffers& out_mesh) {
     const bool has_normals = !mesh.normals.empty();
     const bool has_uvs = !mesh.texcoords_0.empty();
     const bool has_tangents = !mesh.tangents.empty();
@@ -153,7 +150,7 @@ static void create_mesh_data(const MeshComponent& mesh, MeshData& out_mesh) {
     }
 
     buffer_storage(out_mesh.ebo, mesh.indices);
-    out_mesh.count = static_cast<uint32_t>(mesh.indices.size());
+    out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
 
     glBindVertexArray(0);
 }
@@ -178,8 +175,44 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
     glClear(flags);
 }
 
-void OpenGLGraphicsManager::set_viewport(const Viewport& p_vp) {
-    glViewport(0, 0, p_vp.width, p_vp.height);
+void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
+    glViewport(0, 0, p_viewport.width, p_viewport.height);
+}
+
+void OpenGLGraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
+    auto mesh = reinterpret_cast<const OpenGLMeshBuffers*>(p_mesh);
+    glBindVertexArray(mesh->vao);
+}
+
+void OpenGLGraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
+    glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
+}
+
+std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::uniform_create(int p_slot, size_t p_capacity) {
+    auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
+    GLuint handle = 0;
+    glGenBuffers(1, &handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, handle);
+    glBufferData(GL_UNIFORM_BUFFER, p_capacity, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, p_slot, handle);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    buffer->handle = handle;
+    return buffer;
+}
+
+void OpenGLGraphicsManager::uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+    // ERR_FAIL_INDEX(p_size, p_buffer->get_capacity());
+    auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
+    glBufferData(GL_UNIFORM_BUFFER, p_size, p_data, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void OpenGLGraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+    ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
+    auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
+    glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
 }
 
 std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -316,17 +349,17 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    subpass->m_handle = fbo_handle;
+    subpass->handle = fbo_handle;
     return subpass;
 }
 
 void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) {
     auto subpass = reinterpret_cast<const OpenGLSubpass*>(p_subpass);
-    if (subpass->m_handle == 0) {
+    if (subpass->handle == 0) {
         return;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, subpass->m_handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, subpass->handle);
 
     // @TODO: bind cube map/texture 2d array
     if (!subpass->color_attachments.empty()) {
@@ -347,18 +380,19 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
     for (size_t idx = 0; idx < p_scene.get_count<MeshComponent>(); ++idx) {
         const MeshComponent& mesh = p_scene.get_component_array<MeshComponent>()[idx];
-        if (mesh.gpu_resource.is_valid()) {
+        if (mesh.gpu_resource != nullptr) {
             ecs::Entity entity = p_scene.get_entity<MeshComponent>(idx);
             const NameComponent& name = *p_scene.get_component<NameComponent>(entity);
             LOG_WARN("[begin_scene] mesh '{}' (idx: {}) already has gpu resource", name.get_name(), idx);
             continue;
         }
-        RID rid = g_meshes.make_rid();
-        mesh.gpu_resource = rid;
-        create_mesh_data(mesh, *g_meshes.get_or_null(rid));
+        RID rid = m_meshes.make_rid();
+        OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+        mesh.gpu_resource = mesh_buffers;
+        create_mesh_data(mesh, *mesh_buffers);
     }
 
-    g_constantCache.Update();
+    g_constantCache.update();
 }
 
 // @TODO: refactor
@@ -409,8 +443,6 @@ static void create_ssao_resource() {
 
 void OpenGLGraphicsManager::createGpuResources() {
     create_ssao_resource();
-
-    R_Alloc_Cbuffers();
 
     // create a dummy box data
     create_mesh_data(make_plane_mesh(0.3f), g_billboard);
@@ -463,41 +495,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     make_resident(RT_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);
     make_resident(RT_BRDF, cache.c_brdf_map);
 
-    g_constantCache.Update();
-}
-
-void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.c_albedo_color = material->base_color;
-    cb.c_metallic = material->metallic;
-    cb.c_roughness = material->roughness;
-
-    auto set_texture = [&](int idx, sampler2D& out_handle) {
-        if (!material->textures[idx].enabled) {
-            return false;
-        }
-
-        ImageHandle* handle = material->textures[idx].image;
-        if (!handle) {
-            return false;
-        }
-
-        Image* image = handle->get();
-        if (!image) {
-            return false;
-        }
-
-        const OpenGLTexture* texture = reinterpret_cast<OpenGLTexture*>(image->gpu_texture.get());
-        if (!texture) {
-            return false;
-        }
-
-        out_handle = texture->resident_handle;
-        return true;
-    };
-
-    cb.c_has_albedo_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_albedo_map);
-    cb.c_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normal_map);
-    cb.c_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_pbr_map);
+    g_constantCache.update();
 }
 
 void OpenGLGraphicsManager::render() {
@@ -509,7 +507,8 @@ void OpenGLGraphicsManager::render() {
 
     m_render_data->update(&scene);
 
-    g_perFrameCache.Update();
+    g_perFrameCache.update();
+
     m_render_graph.execute();
 
     // @TODO: move it somewhere else
@@ -522,8 +521,6 @@ void OpenGLGraphicsManager::render() {
 }
 
 void OpenGLGraphicsManager::destroyGpuResources() {
-    R_Destroy_Cbuffers();
-
     glDeleteTextures(1, &g_noiseTexture);
 }
 

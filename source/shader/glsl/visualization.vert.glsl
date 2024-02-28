@@ -3,7 +3,7 @@ layout(location = 1) in vec3 in_normal;
 
 layout(location = 0) out vec4 pass_color;
 
-#include "../cbuffer.h"
+#include "../hlsl/cbuffer.h"
 
 layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;
 layout(rgba16f, binding = 1) uniform image3D u_normal_texture;
@@ -30,7 +30,7 @@ void main() {
         coord_pos = 2.0 * coord_pos - vec3(1.0);                                          // [-1, 1]
         vec3 offset = c_world_size_half * coord_pos + c_world_center + 0.5 * vec3(voxel_size);
         vec3 world_position = voxel_size * in_position + offset;
-        gl_Position = c_projection_view_matrix * vec4(world_position, 1.0);
+        gl_Position = g_projection_view * vec4(world_position, 1.0);
 
         pass_color = color;
     }

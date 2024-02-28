@@ -9,6 +9,7 @@
 #include "rendering/render_graph/subpass.h"
 #include "rendering/sampler.h"
 #include "rendering/texture.h"
+#include "rendering/uniform_buffer.h"
 #include "scene/material_component.h"
 #include "scene/scene_components.h"
 
@@ -18,6 +19,7 @@ struct MaterialConstantBuffer;
 
 namespace my {
 
+// @TODO: refactor
 struct RenderData;
 
 enum class Backend : uint8_t {
@@ -36,6 +38,12 @@ enum ClearFlags : uint32_t {
 struct Viewport {
     int width;
     int height;
+};
+
+struct MeshBuffers {
+    virtual ~MeshBuffers() = default;
+
+    uint32_t index_count = 0;
 };
 
 // @TODO: move generic stuff to renderer
@@ -57,12 +65,27 @@ public:
 
     virtual void set_render_target(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
-    virtual void set_viewport(const Viewport& p_vp) = 0;
+    virtual void set_viewport(const Viewport& p_viewport) = 0;
+
+    virtual void set_mesh(const MeshBuffers* p_mesh) = 0;
+    virtual void draw_elements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     void set_pipeline_state(PipelineStateName p_name);
 
     std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;
+
+    virtual std::shared_ptr<UniformBufferBase> uniform_create(int p_slot, size_t p_capacity) = 0;
+    virtual void uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
+    template<typename T>
+    void uniform_update(const UniformBufferBase* p_buffer, const std::vector<T>& p_vector) {
+        uniform_update(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
+    }
+    virtual void uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
+    template<typename T>
+    void uniform_bind_slot(const UniformBufferBase* p_buffer, int slot) {
+        uniform_bind_range(p_buffer, sizeof(T), slot * sizeof(T));
+    }
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
@@ -74,9 +97,6 @@ public:
 
     // @TODO: thread safety ?
     void event_received(std::shared_ptr<Event> p_event) final;
-
-    // @TODO: refactor this
-    virtual void fill_material_constant_buffer(const MaterialComponent* p_material, MaterialConstantBuffer& p_cb) = 0;
 
     // @TODO: move to renderer
     std::shared_ptr<RenderData> get_render_data() { return m_render_data; }

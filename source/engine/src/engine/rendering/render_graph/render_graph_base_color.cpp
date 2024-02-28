@@ -6,7 +6,7 @@
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
-#include "rendering/r_cbuffers.h"
+#include "rendering/GpuTexture.h"
 #include "rendering/render_data.h"
 #include "rendering/rendering_dvars.h"
 
@@ -15,7 +15,8 @@ namespace my::rg {
 void base_color_pass(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().set_render_target(p_subpass);
+    auto& gm = GraphicsManager::singleton();
+    gm.set_render_target(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
@@ -31,31 +32,24 @@ void base_color_pass(const Subpass* p_subpass) {
     RenderData::Pass& pass = render_data->main_pass;
 
     pass.fill_perpass(g_per_pass_cache.cache);
-    g_per_pass_cache.Update();
+    g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.armature_id.is_valid();
-
+        bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
-
-            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.Update();
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
         }
 
-        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_BASE_COLOR_ANIMATED : PROGRAM_BASE_COLOR_STATIC);
+        gm.set_pipeline_state(has_bone ? PROGRAM_BASE_COLOR_ANIMATED : PROGRAM_BASE_COLOR_STATIC);
 
-        g_perBatchCache.cache.c_model_matrix = draw.world_matrix;
-        g_perBatchCache.Update();
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
-        glBindVertexArray(draw.mesh_data->vao);
+        gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
-            g_materialCache.Update();
+            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
 
-            glDrawElements(GL_TRIANGLES, subset.index_count, GL_UNSIGNED_INT, (void*)(subset.index_offset * sizeof(uint32_t)));
+            gm.draw_elements(subset.index_count, subset.index_offset);
         }
     }
 }
