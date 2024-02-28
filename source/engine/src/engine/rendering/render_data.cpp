@@ -29,8 +29,8 @@ static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
 
 RenderData::RenderData() {
     auto& gm = GraphicsManager::singleton();
-    m_batch_uniform = create_uniform<PerBatchConstantBuffer>(gm, 512);
-    m_material_uniform = create_uniform<MaterialConstantBuffer>(gm, 128);
+    m_batch_uniform = create_uniform<PerBatchConstantBuffer>(gm, 4096 * 16);
+    m_material_uniform = create_uniform<MaterialConstantBuffer>(gm, 2048 * 16);
     m_bone_uniform = create_uniform<BoneConstantBuffer>(gm, 16);
 
     create_uniform_buffer<PerPassConstantBuffer>(g_per_pass_cache);
