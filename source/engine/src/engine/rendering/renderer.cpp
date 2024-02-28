@@ -142,6 +142,7 @@ std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Cam
     return ret;
 }
 
+// @TODO: fix this?
 void fill_constant_buffers(const Scene& scene) {
     Camera& camera = *scene.m_camera.get();
 
@@ -165,6 +166,8 @@ void fill_constant_buffers(const Scene& scene) {
     }
 
     int num_point_light_cast_shadow = 0;
+
+    // @TODO: fina a better way to allocate shadow map
     for (uint32_t idx = 0; idx < light_count; ++idx) {
         const LightComponent& light_component = scene.get_component_array<LightComponent>()[idx];
         auto light_entity = scene.get_entity<LightComponent>(idx);

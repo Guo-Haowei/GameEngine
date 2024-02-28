@@ -552,7 +552,6 @@ void Scene::run_light_update_system(Context& ctx) {
 
 void Scene::run_transformation_update_system(Context& ctx) {
     JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
-    // JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, get_component_array<TransformComponent>()[index].update_transform());
 }
 
 void Scene::run_animation_update_system(Context& ctx) {
@@ -570,14 +569,11 @@ void Scene::run_hierarchy_update_system(Context& ctx) {
 void Scene::run_object_update_system(jobsystem::Context&) {
     m_bound.make_invalid();
 
-    const uint32_t num_object = (uint32_t)get_count<ObjectComponent>();
-    for (uint32_t i = 0; i < num_object; ++i) {
-        ecs::Entity entity = get_entity<ObjectComponent>(i);
+    for (auto [entity, obj] : m_ObjectComponents) {
         if (!contains<TransformComponent>(entity)) {
             continue;
         }
 
-        const ObjectComponent& obj = get_component_array<ObjectComponent>()[i];
         const TransformComponent& transform = *get_component<TransformComponent>(entity);
         DEV_ASSERT(contains<MeshComponent>(obj.mesh_id));
         const MeshComponent& mesh = *get_component<MeshComponent>(obj.mesh_id);

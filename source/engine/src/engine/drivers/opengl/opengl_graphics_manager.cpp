@@ -378,12 +378,8 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
 
 // @TODO: refactor this, instead off iterate through all the meshes, find a more atomic way
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
-    for (size_t idx = 0; idx < p_scene.get_count<MeshComponent>(); ++idx) {
-        const MeshComponent& mesh = p_scene.get_component_array<MeshComponent>()[idx];
+    for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
-            ecs::Entity entity = p_scene.get_entity<MeshComponent>(idx);
-            const NameComponent& name = *p_scene.get_component<NameComponent>(entity);
-            LOG_WARN("[begin_scene] mesh '{}' (idx: {}) already has gpu resource", name.get_name(), idx);
             continue;
         }
         RID rid = m_meshes.make_rid();

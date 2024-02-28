@@ -1,4 +1,3 @@
-#pragma once
 #include "core/math/box.h"
 
 namespace my::math {

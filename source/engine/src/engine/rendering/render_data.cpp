@@ -215,14 +215,11 @@ void RenderData::update(const Scene* p_scene) {
 void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
     scene = p_scene;
 
-    uint32_t num_objects = (uint32_t)scene->get_count<ObjectComponent>();
-    for (uint32_t i = 0; i < num_objects; ++i) {
-        ecs::Entity entity = scene->get_entity<ObjectComponent>(i);
+    for (auto [entity, obj] : scene->m_ObjectComponents) {
         if (!scene->contains<TransformComponent>(entity)) {
             continue;
         }
 
-        const ObjectComponent& obj = scene->get_component_array<ObjectComponent>()[i];
         // ????
         if (func1(obj)) {
             continue;

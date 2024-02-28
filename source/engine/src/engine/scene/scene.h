@@ -24,7 +24,7 @@ public:
 
 #pragma region WORLD_COMPONENTS_REGISTERY
 #define REGISTER_COMPONENT(T, VER)                                                               \
-private:                                                                                         \
+public:                                                                                          \
     ecs::ComponentManager<T>& m_##T##s = m_component_lib.register_manager<T>("World::" #T, VER); \
                                                                                                  \
 public:                                                                                          \

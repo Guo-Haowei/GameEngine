@@ -67,8 +67,9 @@ void PropertyPanel::update_internal(Scene& scene) {
     }
 
     NameComponent* name_component = scene.get_component<NameComponent>(id);
+    // @NOTE: when loading another scene, the selected entity will expire, thus don't have name
     if (!name_component) {
-        LOG_WARN("Entity {} does not have name", id.get_id());
+        // LOG_WARN("Entity {} does not have name", id.get_id());
         return;
     }
 
