@@ -27,6 +27,8 @@ ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Br
     m_icon_map[".hdr"] = { image_icon, EditorItem::DRAG_DROP_ENV };
     m_icon_map[".gltf"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
     m_icon_map[".obj"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_icon_map[".scene"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_icon_map[".lua"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
 }
 
 ContentBrowser::~ContentBrowser() {

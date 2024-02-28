@@ -205,6 +205,7 @@ public:                                                                         
     ecs::Entity m_root;
     float m_delta_time = 0.0f;
     std::shared_ptr<Camera> m_camera;
+    bool m_replace = false;
 
 private:
     void update_light(uint32_t index);

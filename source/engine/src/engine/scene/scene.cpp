@@ -9,7 +9,6 @@ namespace my {
 using ecs::Entity;
 using jobsystem::Context;
 
-// static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // kSceneVersion history
 // version 2: don't serialize scene.m_bound
