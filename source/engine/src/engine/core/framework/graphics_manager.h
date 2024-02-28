@@ -75,8 +75,17 @@ public:
     std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;
 
-    virtual std::shared_ptr<UniformBufferBase> create_uniform_buffer(int p_slot, size_t p_capacity) = 0;
-    virtual void update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
+    virtual std::shared_ptr<UniformBufferBase> uniform_create(int p_slot, size_t p_capacity) = 0;
+    virtual void uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
+    template<typename T>
+    void uniform_update(const UniformBufferBase* p_buffer, const std::vector<T>& p_vector) {
+        uniform_update(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
+    }
+    virtual void uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
+    template<typename T>
+    void uniform_bind_slot(const UniformBufferBase* p_buffer, int slot) {
+        uniform_bind_range(p_buffer, sizeof(T), slot * sizeof(T));
+    }
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
@@ -88,9 +97,6 @@ public:
 
     // @TODO: thread safety ?
     void event_received(std::shared_ptr<Event> p_event) final;
-
-    // @TODO: refactor this
-    virtual void fill_material_constant_buffer(const MaterialComponent* p_material, MaterialConstantBuffer& p_cb) = 0;
 
     // @TODO: move to renderer
     std::shared_ptr<RenderData> get_render_data() { return m_render_data; }

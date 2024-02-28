@@ -1,4 +1,4 @@
-#include "../cbuffer.h"
+#include "../hlsl/cbuffer.h"
 
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float occlusion;

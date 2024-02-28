@@ -1,4 +1,4 @@
-#include "../cbuffer.h"
+#include "../hlsl/cbuffer.h"
 
 layout(location = 0) in vec3 in_position;
 

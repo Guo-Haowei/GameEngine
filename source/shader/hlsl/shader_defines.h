@@ -10,7 +10,7 @@
 #endif
 
 #define MAX_LIGHT_COUNT             16
-#define MAX_BONE_COUNT              128
+#define MAX_BONE_COUNT              64
 #define MAX_SSAO_KERNEL_COUNT       64
 #define MAX_CASCADE_COUNT           4
 #define MAX_LIGHT_CAST_SHADOW_COUNT 4
@@ -34,7 +34,7 @@
 #define ivec4 int4
 #define vec3  float3
 #define vec4  float4
-#define mat4  mat4x4
+#define mat4  float4x4
 #endif
 
 #endif

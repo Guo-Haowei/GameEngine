@@ -4,11 +4,6 @@
 // @TODO: range bind
 namespace my {
 
-class ConstantBuffer {
-public:
-    ConstantBuffer() {}
-};
-
 class UniformBufferBase {
 public:
     UniformBufferBase(int p_slot, size_t p_capacity) : m_slot(p_slot), m_capacity(p_capacity) {}
@@ -21,6 +16,9 @@ public:
         unused(p_size);
         unused(p_offset);
     }
+
+    int get_slot() const { return m_slot; }
+    size_t get_capacity() const { return m_capacity; }
 
 protected:
     const int m_slot;

@@ -3,12 +3,60 @@
 #include "core/base/rid_owner.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
+#include "core/framework/graphics_manager.h"
 #include "core/math/frustum.h"
 #include "gl_utils.h"
 #include "r_cbuffers.h"
 #include "scene/scene.h"
 
 namespace my {
+
+template<typename T>
+static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
+    static_assert(sizeof(T) % 256 == 0);
+    return p_graphics_manager.uniform_create(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
+}
+
+RenderData::RenderData() {
+    auto& gm = GraphicsManager::singleton();
+    m_batch_uniform = create_uniform<PerBatchConstantBuffer>(gm, 512);
+    m_material_uniform = create_uniform<MaterialConstantBuffer>(gm, 128);
+    m_bone_uniform = create_uniform<BoneConstantBuffer>(gm, 16);
+}
+
+static void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
+    cb.c_albedo_color = material->base_color;
+    cb.c_metallic = material->metallic;
+    cb.c_roughness = material->roughness;
+
+    auto set_texture = [&](int idx, sampler2D& out_handle) {
+        if (!material->textures[idx].enabled) {
+            return false;
+        }
+
+        ImageHandle* handle = material->textures[idx].image;
+        if (!handle) {
+            return false;
+        }
+
+        Image* image = handle->get();
+        if (!image) {
+            return false;
+        }
+
+        auto texture = reinterpret_cast<Texture*>(image->gpu_texture.get());
+        if (!texture) {
+            return false;
+        }
+
+        out_handle = texture->get_resident_handle();
+        return true;
+    };
+
+    cb.c_has_albedo_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_albedo_map);
+    cb.c_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normal_map);
+    cb.c_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_pbr_map);
+}
 
 void RenderData::clear() {
     scene = nullptr;
@@ -64,14 +112,24 @@ void RenderData::point_light_draw_data() {
 }
 
 void RenderData::update(const Scene* p_scene) {
-    // clean up
-    clear();
-    scene = p_scene;
-
     m_batch_buffer_lookup.clear();
     m_batch_buffer_lookup.reserve(p_scene->get_count<TransformComponent>());
     m_batch_buffers.clear();
     m_batch_buffers.reserve(p_scene->get_count<TransformComponent>());
+
+    m_material_buffer_lookup.clear();
+    m_material_buffer_lookup.reserve(p_scene->get_count<MaterialComponent>());
+    m_material_buffers.clear();
+    m_material_buffers.reserve(p_scene->get_count<MaterialComponent>());
+
+    m_bone_buffer_lookup.clear();
+    m_bone_buffer_lookup.reserve(p_scene->get_count<ArmatureComponent>());
+    m_bone_buffers.clear();
+    m_bone_buffers.reserve(p_scene->get_count<ArmatureComponent>());
+
+    // clean up
+    clear();
+    scene = p_scene;
 
     point_light_draw_data();
 
@@ -131,6 +189,12 @@ void RenderData::update(const Scene* p_scene) {
     // Image* omni_light_image = omni_light->get();
 
     m_batch_buffer_lookup.clear();
+    m_material_buffer_lookup.clear();
+    // copy buffers
+
+    GraphicsManager::singleton().uniform_update(m_batch_uniform.get(), m_batch_buffers);
+    GraphicsManager::singleton().uniform_update(m_material_uniform.get(), m_material_buffers);
+    GraphicsManager::singleton().uniform_update(m_bone_uniform.get(), m_bone_buffers);
 }
 
 void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
@@ -161,12 +225,23 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
         }
 
         PerBatchConstantBuffer batch_buffer;
-        batch_buffer.g_model = world_matrix;
+        batch_buffer.g_world = world_matrix;
 
         Mesh draw;
 
-        draw.batch_buffer_id = find_or_add_batch(entity, batch_buffer);
-        draw.tmp_armature_id = mesh.armature_id;
+        draw.batch_id = find_or_add_batch(entity, batch_buffer);
+        if (mesh.armature_id.is_valid()) {
+            auto& armature = *scene->get_component<ArmatureComponent>(mesh.armature_id);
+            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
+
+            BoneConstantBuffer bone;
+            memcpy(bone.g_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
+
+            // @TODO: better memory usage
+            draw.armature_id = find_or_add_bone(mesh.armature_id, bone);
+        } else {
+            draw.armature_id = -1;
+        }
         DEV_ASSERT(mesh.gpu_resource);
         draw.mesh_data = (MeshBuffers*)mesh.gpu_resource;
 
@@ -177,10 +252,15 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
                 continue;
             }
 
+            const MaterialComponent* material = scene->get_component<MaterialComponent>(subset.material_id);
+            MaterialConstantBuffer material_buffer;
+            fill_material_constant_buffer(material, material_buffer);
+
             SubMesh sub_mesh;
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
-            sub_mesh.material = scene->get_component<MaterialComponent>(subset.material_id);
+            sub_mesh.material_id = find_or_add_material(subset.material_id, material_buffer);
+
             draw.subsets.emplace_back(std::move(sub_mesh));
         }
 
@@ -188,6 +268,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
     }
 }
 
+// @TODO: refactor
 uint32_t RenderData::find_or_add_batch(ecs::Entity p_entity, const PerBatchConstantBuffer& p_buffer) {
     auto it = m_batch_buffer_lookup.find(p_entity);
     if (it != m_batch_buffer_lookup.end()) {
@@ -197,6 +278,30 @@ uint32_t RenderData::find_or_add_batch(ecs::Entity p_entity, const PerBatchConst
     uint32_t index = static_cast<uint32_t>(m_batch_buffers.size());
     m_batch_buffer_lookup[p_entity] = index;
     m_batch_buffers.emplace_back(p_buffer);
+    return index;
+}
+
+uint32_t RenderData::find_or_add_material(ecs::Entity p_entity, const MaterialConstantBuffer& p_buffer) {
+    auto it = m_material_buffer_lookup.find(p_entity);
+    if (it != m_material_buffer_lookup.end()) {
+        return it->second;
+    }
+
+    uint32_t index = static_cast<uint32_t>(m_material_buffers.size());
+    m_material_buffer_lookup[p_entity] = index;
+    m_material_buffers.emplace_back(p_buffer);
+    return index;
+}
+
+uint32_t RenderData::find_or_add_bone(ecs::Entity p_entity, const BoneConstantBuffer& p_buffer) {
+    auto it = m_bone_buffer_lookup.find(p_entity);
+    if (it != m_bone_buffer_lookup.end()) {
+        return it->second;
+    }
+
+    uint32_t index = static_cast<uint32_t>(m_bone_buffers.size());
+    m_bone_buffer_lookup[p_entity] = index;
+    m_bone_buffers.emplace_back(p_buffer);
     return index;
 }
 

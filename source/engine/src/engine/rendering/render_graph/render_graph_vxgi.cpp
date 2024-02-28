@@ -37,7 +37,6 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     glViewport(0, 0, width, height);
 
     // @TODO: fix this
-    const Scene& scene = SceneManager::get_scene();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
@@ -50,20 +49,14 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.tmp_armature_id.is_valid();
-
+        bool has_bone = draw.armature_id >= 0;
         if (has_bone) {
-            auto& armature = *scene.get_component<ArmatureComponent>(draw.tmp_armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
-
-            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.update();
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-        g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
-        g_per_batch_uniform.update();
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
 
         gm.set_mesh(draw.mesh_data);
         gm.draw_elements(draw.mesh_data->index_count);
@@ -76,9 +69,6 @@ void shadow_pass_func(const Subpass* p_subpass) {
     auto& gm = GraphicsManager::singleton();
     gm.set_render_target(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
-
-    // @TODO: for each light source, render shadow
-    const Scene& scene = SceneManager::get_scene();
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -96,20 +86,14 @@ void shadow_pass_func(const Subpass* p_subpass) {
         g_per_pass_cache.update();
 
         for (const auto& draw : pass.draws) {
-            const bool has_bone = draw.tmp_armature_id.is_valid();
-
+            bool has_bone = draw.armature_id >= 0;
             if (has_bone) {
-                auto& armature = *scene.get_component<ArmatureComponent>(draw.tmp_armature_id);
-                DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
-
-                memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-                g_boneCache.update();
+                gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
             }
 
             gm.set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-            g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
-            g_per_batch_uniform.update();
+            gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
 
             gm.set_mesh(draw.mesh_data);
             gm.draw_elements(draw.mesh_data->index_count);
@@ -151,26 +135,19 @@ void voxelization_pass_func(const Subpass*) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.tmp_armature_id.is_valid();
-
+        bool has_bone = draw.armature_id >= 0;
         if (has_bone) {
-            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.tmp_armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
-
-            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.update();
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
-        g_per_batch_uniform.update();
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
-            g_materialCache.update();
+            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_id);
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }
@@ -330,26 +307,19 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.tmp_armature_id.is_valid();
-
+        bool has_bone = draw.armature_id >= 0;
         if (has_bone) {
-            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.tmp_armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
-
-            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.update();
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
         }
 
-        GraphicsManager::singleton().set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
+        gm.set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
-        g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
-        g_per_batch_uniform.update();
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
-            g_materialCache.update();
+            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_id);
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }

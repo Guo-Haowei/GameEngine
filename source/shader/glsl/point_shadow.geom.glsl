@@ -1,4 +1,4 @@
-#include "../cbuffer.h"
+#include "../hlsl/cbuffer.h"
 
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 18) out;

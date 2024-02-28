@@ -2,6 +2,8 @@
 
 #include <d3dcompiler.h>
 
+#include <fstream>
+
 #include "drivers/d3d11/convert.h"
 #include "drivers/d3d11/d3d11_helpers.h"
 

@@ -9,24 +9,22 @@ namespace my {
 struct MeshBuffers;
 
 struct RenderData {
+    RenderData();
+
     using FilterObjectFunc1 = std::function<bool(const ObjectComponent& object)>;
     using FilterObjectFunc2 = std::function<bool(const AABB& object_aabb)>;
 
     struct SubMesh {
         uint32_t index_count;
         uint32_t index_offset;
-        const MaterialComponent* material;
-        uint32_t flags;
+        int material_id;
     };
 
     struct Mesh {
-        // @TODO: world_matrix index
-
-        ecs::Entity tmp_armature_id;
+        int armature_id;
+        int batch_id;
         const MeshBuffers* mesh_data;
         std::vector<SubMesh> subsets;
-
-        uint32_t batch_buffer_id;
     };
 
     struct Pass {
@@ -48,15 +46,15 @@ struct RenderData {
         void clear() { draws.clear(); }
     };
 
-    struct LightBillboard {
-        mat4 transform;
-        int type;
-        Image* image;
-    };
-
     const Scene* scene = nullptr;
 
     std::vector<PerBatchConstantBuffer> m_batch_buffers;
+    std::vector<MaterialConstantBuffer> m_material_buffers;
+    std::vector<BoneConstantBuffer> m_bone_buffers;
+
+    std::shared_ptr<UniformBufferBase> m_batch_uniform;
+    std::shared_ptr<UniformBufferBase> m_material_uniform;
+    std::shared_ptr<UniformBufferBase> m_bone_uniform;
 
     // @TODO: fix this ugly shit
 
@@ -71,6 +69,8 @@ struct RenderData {
 
 private:
     uint32_t find_or_add_batch(ecs::Entity p_entity, const PerBatchConstantBuffer& p_buffer);
+    uint32_t find_or_add_material(ecs::Entity p_entity, const MaterialConstantBuffer& p_buffer);
+    uint32_t find_or_add_bone(ecs::Entity p_entity, const BoneConstantBuffer& p_buffer);
 
     void clear();
 
@@ -78,6 +78,8 @@ private:
     void fill(const Scene* p_scene, Pass& p_pass, FilterObjectFunc1 p_func1, FilterObjectFunc2 p_func2);
 
     std::unordered_map<ecs::Entity, uint32_t> m_batch_buffer_lookup;
+    std::unordered_map<ecs::Entity, uint32_t> m_material_buffer_lookup;
+    std::unordered_map<ecs::Entity, uint32_t> m_bone_buffer_lookup;
 };
 
 }  // namespace my

@@ -36,26 +36,19 @@ void base_color_pass(const Subpass* p_subpass) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.tmp_armature_id.is_valid();
-
+        bool has_bone = draw.armature_id >= 0;
         if (has_bone) {
-            auto& armature = *render_data->scene->get_component<ArmatureComponent>(draw.tmp_armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
-
-            memcpy(g_boneCache.cache.c_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            g_boneCache.update();
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_BASE_COLOR_ANIMATED : PROGRAM_BASE_COLOR_STATIC);
 
-        g_per_batch_uniform.cache = render_data->m_batch_buffers[draw.batch_buffer_id];
-        g_per_batch_uniform.update();
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            GraphicsManager::singleton().fill_material_constant_buffer(subset.material, g_materialCache.cache);
-            g_materialCache.update();
+            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_id);
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }

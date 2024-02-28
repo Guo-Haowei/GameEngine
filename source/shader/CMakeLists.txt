@@ -3,6 +3,7 @@ set(LIB_NAME shaders)
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.glsl"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.hlsl"
 )
 
 add_library(${LIB_NAME} STATIC ${SRC})

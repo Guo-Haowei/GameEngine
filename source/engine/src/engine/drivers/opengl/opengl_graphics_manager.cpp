@@ -189,7 +189,7 @@ void OpenGLGraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
     glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
-std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::create_uniform_buffer(int p_slot, size_t p_capacity) {
+std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::uniform_create(int p_slot, size_t p_capacity) {
     auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
     GLuint handle = 0;
     glGenBuffers(1, &handle);
@@ -202,11 +202,18 @@ std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::create_uniform_buffer(
     return buffer;
 }
 
-void OpenGLGraphicsManager::update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
-    auto buffer_id = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
-    glBindBuffer(GL_UNIFORM_BUFFER, buffer_id->handle);
+void OpenGLGraphicsManager::uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+    // ERR_FAIL_INDEX(p_size, p_buffer->get_capacity());
+    auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
+    glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
     glBufferData(GL_UNIFORM_BUFFER, p_size, p_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void OpenGLGraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+    ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
+    auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
+    glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
 }
 
 std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -494,40 +501,6 @@ void OpenGLGraphicsManager::createGpuResources() {
     g_constantCache.update();
 }
 
-void OpenGLGraphicsManager::fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.c_albedo_color = material->base_color;
-    cb.c_metallic = material->metallic;
-    cb.c_roughness = material->roughness;
-
-    auto set_texture = [&](int idx, sampler2D& out_handle) {
-        if (!material->textures[idx].enabled) {
-            return false;
-        }
-
-        ImageHandle* handle = material->textures[idx].image;
-        if (!handle) {
-            return false;
-        }
-
-        Image* image = handle->get();
-        if (!image) {
-            return false;
-        }
-
-        const OpenGLTexture* texture = reinterpret_cast<OpenGLTexture*>(image->gpu_texture.get());
-        if (!texture) {
-            return false;
-        }
-
-        out_handle = texture->resident_handle;
-        return true;
-    };
-
-    cb.c_has_albedo_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_albedo_map);
-    cb.c_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normal_map);
-    cb.c_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_pbr_map);
-}
-
 void OpenGLGraphicsManager::render() {
     OPTICK_EVENT();
 
@@ -538,6 +511,7 @@ void OpenGLGraphicsManager::render() {
     m_render_data->update(&scene);
 
     g_perFrameCache.update();
+
     m_render_graph.execute();
 
     // @TODO: move it somewhere else

@@ -114,8 +114,8 @@ bool D3d11GraphicsManager::initialize_internal() {
     m_perFrameBuffer.Create(m_device);
     m_perDrawBuffer.Create(m_device);
     m_bone_buffer.Create(m_device);
-    m_perFrameBuffer.VSSet(m_ctx, 0);
-    m_perDrawBuffer.VSSet(m_ctx, 1);
+    m_perDrawBuffer.VSSet(m_ctx, 0);
+    m_perFrameBuffer.VSSet(m_ctx, 1);
     m_bone_buffer.VSSet(m_ctx, 2);
     {
         // rasterizer
@@ -307,16 +307,22 @@ bool D3d11GraphicsManager::create_render_target() {
     return true;
 }
 
-std::shared_ptr<UniformBufferBase> D3d11GraphicsManager::create_uniform_buffer(int p_slot, size_t p_capacity) {
+std::shared_ptr<UniformBufferBase> D3d11GraphicsManager::uniform_create(int p_slot, size_t p_capacity) {
     unused(p_slot);
     unused(p_capacity);
     return nullptr;
 }
 
-void D3d11GraphicsManager::update_uniform_buffer(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+void D3d11GraphicsManager::uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
     unused(p_buffer);
     unused(p_size);
     unused(p_data);
+}
+
+void D3d11GraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+    unused(p_buffer);
+    unused(p_size);
+    unused(p_offset);
 }
 
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -572,6 +578,7 @@ void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
 
 void D3d11GraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipeline_state_manager->find(p_name));
+    DEV_ASSERT(pipeline);
     if (pipeline->vertex_shader) {
         m_ctx->VSSetShader(pipeline->vertex_shader.Get(), 0, 0);
         m_ctx->IASetInputLayout(pipeline->input_layout.Get());
