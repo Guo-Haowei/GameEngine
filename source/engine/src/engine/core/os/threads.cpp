@@ -25,7 +25,7 @@ static struct
         ThreadObject{ "main" },
         ThreadObject{ "render thread", []() {} },
         ThreadObject{ "asset thread 1", AssetManager::worker_main },
-        ThreadObject{ "asset thread 2", AssetManager::worker_main },
+        // ThreadObject{ "asset thread 2", AssetManager::worker_main },
         ThreadObject{ "js worker 0", jobsystem::worker_main },
         ThreadObject{ "js worker 1", jobsystem::worker_main },
         ThreadObject{ "js worker 2", jobsystem::worker_main },

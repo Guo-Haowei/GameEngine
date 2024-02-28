@@ -2,23 +2,12 @@
 #include "vsinput.hlsl"
 #include "vsoutput.hlsl"
 
-cbuffer PerFrameConstants : register(b1) {
-    float4x4 Proj;
-    float4x4 View;
-    float4x4 g_projection_view;
-    float4x4 _dummy0;
-};
-
-cbuffer BoneConstants : register(b2) {
-    float4x4 Bones[128];
-};
-
 vsoutput_mesh main(vsinput_mesh input) {
 #ifdef HAS_ANIMATION
-    float4x4 boneTransform = Bones[input.boneIndex.x] * input.boneWeight.x;
-    boneTransform += Bones[input.boneIndex.y] * input.boneWeight.y;
-    boneTransform += Bones[input.boneIndex.z] * input.boneWeight.z;
-    boneTransform += Bones[input.boneIndex.w] * input.boneWeight.w;
+    float4x4 boneTransform = g_bones[input.boneIndex.x] * input.boneWeight.x;
+    boneTransform += g_bones[input.boneIndex.y] * input.boneWeight.y;
+    boneTransform += g_bones[input.boneIndex.z] * input.boneWeight.z;
+    boneTransform += g_bones[input.boneIndex.w] * input.boneWeight.w;
     float4x4 world_matrix = mul(g_world, boneTransform);
 #else
     float4x4 world_matrix = g_world;

@@ -27,4 +27,11 @@ struct D3d11Subpass : public Subpass {
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
 };
 
+struct D3d11UniformBuffer : public UniformBufferBase {
+    using UniformBufferBase::UniformBufferBase;
+
+    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+    mutable const char* data;
+};
+
 }  // namespace my

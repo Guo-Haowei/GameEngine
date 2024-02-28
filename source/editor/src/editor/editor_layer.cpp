@@ -1,8 +1,7 @@
 #include "editor_layer.h"
 
-#include "imgui/imgui_internal.h"
-#include "rendering/r_cbuffers.h"
-/////////////////////
+#include <imgui/imgui_internal.h>
+
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"

@@ -6,7 +6,6 @@
 #include "core/framework/graphics_manager.h"
 #include "core/math/frustum.h"
 #include "gl_utils.h"
-#include "r_cbuffers.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -17,11 +16,27 @@ static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_c
     return p_graphics_manager.uniform_create(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
 }
 
+UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
+UniformBuffer<PerFrameConstantBuffer> g_perFrameCache;
+UniformBuffer<PerSceneConstantBuffer> g_constantCache;
+UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+
+template<typename T>
+static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
+    constexpr int slot = T::get_uniform_buffer_slot();
+    p_buffer.buffer = GraphicsManager::singleton().uniform_create(slot, sizeof(T));
+}
+
 RenderData::RenderData() {
     auto& gm = GraphicsManager::singleton();
     m_batch_uniform = create_uniform<PerBatchConstantBuffer>(gm, 512);
     m_material_uniform = create_uniform<MaterialConstantBuffer>(gm, 128);
     m_bone_uniform = create_uniform<BoneConstantBuffer>(gm, 16);
+
+    create_uniform_buffer<PerPassConstantBuffer>(g_per_pass_cache);
+    create_uniform_buffer<PerFrameConstantBuffer>(g_perFrameCache);
+    create_uniform_buffer<PerSceneConstantBuffer>(g_constantCache);
+    create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
 }
 
 static void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
@@ -229,7 +244,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
 
         Mesh draw;
 
-        draw.batch_id = find_or_add_batch(entity, batch_buffer);
+        draw.batch_idx = find_or_add_batch(entity, batch_buffer);
         if (mesh.armature_id.is_valid()) {
             auto& armature = *scene->get_component<ArmatureComponent>(mesh.armature_id);
             DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
@@ -238,9 +253,9 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
             memcpy(bone.g_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
 
             // @TODO: better memory usage
-            draw.armature_id = find_or_add_bone(mesh.armature_id, bone);
+            draw.bone_idx = find_or_add_bone(mesh.armature_id, bone);
         } else {
-            draw.armature_id = -1;
+            draw.bone_idx = -1;
         }
         DEV_ASSERT(mesh.gpu_resource);
         draw.mesh_data = (MeshBuffers*)mesh.gpu_resource;
@@ -259,7 +274,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
             SubMesh sub_mesh;
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
-            sub_mesh.material_id = find_or_add_material(subset.material_id, material_buffer);
+            sub_mesh.material_idx = find_or_add_material(subset.material_id, material_buffer);
 
             draw.subsets.emplace_back(std::move(sub_mesh));
         }

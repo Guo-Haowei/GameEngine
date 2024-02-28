@@ -7,7 +7,6 @@
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
 #include "rendering/GpuTexture.h"
-#include "rendering/r_cbuffers.h"
 #include "rendering/render_data.h"
 #include "rendering/rendering_dvars.h"
 
@@ -36,19 +35,19 @@ void base_color_pass(const Subpass* p_subpass) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.armature_id >= 0;
+        bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_BASE_COLOR_ANIMATED : PROGRAM_BASE_COLOR_STATIC);
 
-        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_id);
+            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }

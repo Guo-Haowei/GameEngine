@@ -1,12 +1,19 @@
 #pragma once
 #include "core/base/fixed_stack.h"
-#include "gl_utils.h"
-#include "rendering/r_cbuffers.h"
+#include "rendering/uniform_buffer.h"
 #include "scene/scene.h"
+
+// this should be included after geomath.h
+#include "hlsl/cbuffer.h"
 
 namespace my {
 
 struct MeshBuffers;
+
+extern UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
+extern UniformBuffer<PerFrameConstantBuffer> g_perFrameCache;
+extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
+extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
 struct RenderData {
     RenderData();
@@ -17,12 +24,12 @@ struct RenderData {
     struct SubMesh {
         uint32_t index_count;
         uint32_t index_offset;
-        int material_id;
+        int material_idx;
     };
 
     struct Mesh {
-        int armature_id;
-        int batch_id;
+        int bone_idx;
+        int batch_idx;
         const MeshBuffers* mesh_data;
         std::vector<SubMesh> subsets;
     };

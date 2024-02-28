@@ -37,7 +37,6 @@ CBUFFER(PerBatchConstantBuffer, 0) {
     mat4 _per_batch_padding_2;
 };
 
-#ifndef HLSL_LANG
 CBUFFER(PerPassConstantBuffer, 1) {
     mat4 g_view;
     mat4 g_projection;
@@ -54,6 +53,8 @@ CBUFFER(PerPassConstantBuffer, 1) {
 CBUFFER(BoneConstantBuffer, 5) {
     mat4 g_bones[MAX_BONE_COUNT];
 };
+
+#ifndef HLSL_LANG
 
 struct Light {
     vec3 color;

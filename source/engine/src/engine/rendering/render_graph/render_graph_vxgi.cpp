@@ -11,7 +11,7 @@
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "rendering/GpuTexture.h"
-#include "rendering/r_cbuffers.h"
+#include "rendering/gl_utils.h"
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern OpenGLMeshBuffers g_box;
@@ -49,14 +49,14 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.armature_id >= 0;
+        bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
         gm.set_mesh(draw.mesh_data);
         gm.draw_elements(draw.mesh_data->index_count);
@@ -86,14 +86,14 @@ void shadow_pass_func(const Subpass* p_subpass) {
         g_per_pass_cache.update();
 
         for (const auto& draw : pass.draws) {
-            bool has_bone = draw.armature_id >= 0;
+            bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
+                gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
             }
 
             gm.set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-            gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
+            gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
             gm.set_mesh(draw.mesh_data);
             gm.draw_elements(draw.mesh_data->index_count);
@@ -135,19 +135,19 @@ void voxelization_pass_func(const Subpass*) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.armature_id >= 0;
+        bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_id);
+            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }
@@ -307,19 +307,19 @@ void gbuffer_pass_func(const Subpass* p_subpass) {
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.armature_id >= 0;
+        bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.armature_id);
+            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
         }
 
         gm.set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
-        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_id);
+        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
         gm.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_id);
+            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
 
             gm.draw_elements(subset.index_count, subset.index_offset);
         }

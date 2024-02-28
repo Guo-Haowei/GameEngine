@@ -15,7 +15,6 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/GpuTexture.h"
 #include "rendering/gl_utils.h"
-#include "rendering/r_cbuffers.h"
 #include "rendering/render_graph/render_graphs.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
@@ -444,8 +443,6 @@ static void create_ssao_resource() {
 
 void OpenGLGraphicsManager::createGpuResources() {
     create_ssao_resource();
-
-    R_Alloc_Cbuffers();
 
     // create a dummy box data
     create_mesh_data(make_plane_mesh(0.3f), g_billboard);

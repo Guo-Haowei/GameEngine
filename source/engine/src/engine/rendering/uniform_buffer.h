@@ -1,7 +1,5 @@
 #pragma once
 
-// @TODO: rename
-// @TODO: range bind
 namespace my {
 
 class UniformBufferBase {
@@ -11,11 +9,6 @@ public:
     virtual ~UniformBufferBase() = default;
 
     void update(const void* p_data, size_t p_size);
-
-    void bind(size_t p_size, size_t p_offset) {
-        unused(p_size);
-        unused(p_offset);
-    }
 
     int get_slot() const { return m_slot; }
     size_t get_capacity() const { return m_capacity; }

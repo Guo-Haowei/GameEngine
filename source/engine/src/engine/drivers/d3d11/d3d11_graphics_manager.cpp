@@ -69,35 +69,6 @@ private:
     ComPtr<ID3D11Buffer> m_buffer;
 };
 
-// @TODO: fix
-using float4x4 = mat4;
-struct PerFrameConstants {
-    float4x4 Proj;
-    float4x4 View;
-    float4x4 ProjView;
-    float4x4 _dummy0;
-    // float3 EyePos;
-    // int NumOfLights;
-    // Light Lights[2];
-};
-
-struct PerBatchConstants {
-    float4x4 Model;
-    float4x4 _dummy1;
-    float4x4 _dummy2;
-    float4x4 _dummy3;
-};
-
-struct BoneConstants {
-    float4x4 Bones[128];
-};
-
-typedef D3d11ConstantBuffer<PerFrameConstants> PerFrameBuffer;
-typedef D3d11ConstantBuffer<PerBatchConstants> PerBatchBuffer;
-PerFrameBuffer m_perFrameBuffer;
-PerBatchBuffer m_perDrawBuffer;
-D3d11ConstantBuffer<BoneConstants> m_bone_buffer;
-
 ////////////////////
 
 bool D3d11GraphicsManager::initialize_internal() {
@@ -110,13 +81,6 @@ bool D3d11GraphicsManager::initialize_internal() {
     ImGui_ImplDX11_NewFrame();
 
     select_render_graph();
-
-    m_perFrameBuffer.Create(m_device);
-    m_perDrawBuffer.Create(m_device);
-    m_bone_buffer.Create(m_device);
-    m_perDrawBuffer.VSSet(m_ctx, 0);
-    m_perFrameBuffer.VSSet(m_ctx, 1);
-    m_bone_buffer.VSSet(m_ctx, 2);
     {
         // rasterizer
         {
@@ -140,6 +104,8 @@ bool D3d11GraphicsManager::initialize_internal() {
 
             m_ctx->OMSetDepthStencilState(m_depthStencilState.Get(), 1);
         }
+
+        m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     }
 
     m_meshes.set_description("GPU-Mesh-Allocator");
@@ -151,23 +117,43 @@ void D3d11GraphicsManager::finalize() {
 }
 
 void D3d11GraphicsManager::render() {
+    Scene& scene = SceneManager::singleton().get_scene();
+    renderer::fill_constant_buffers(scene);
+
+    m_render_data->update(&scene);
 
     m_render_graph.execute();
     /////////////////////////////
 
-    Scene& scene = SceneManager::singleton().get_scene();
-
     const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
 
-    m_perFrameBuffer.m_cache.View = scene.m_camera->get_view_matrix();
-    m_perFrameBuffer.m_cache.Proj = fixup * scene.m_camera->get_projection_matrix();
+    g_per_pass_cache.cache.g_view = scene.m_camera->get_view_matrix();
+    g_per_pass_cache.cache.g_projection = fixup * scene.m_camera->get_projection_matrix();
+    g_per_pass_cache.cache.g_projection_view =
+        g_per_pass_cache.cache.g_projection *
+        g_per_pass_cache.cache.g_view;
+    g_per_pass_cache.update();
 
-    m_perFrameBuffer.m_cache.ProjView =
-        m_perFrameBuffer.m_cache.Proj *
-        m_perFrameBuffer.m_cache.View;
+    RenderData::Pass& pass = m_render_data->main_pass;
+    // TODO: update pass
+    for (const auto& draw : pass.draws) {
+        bool has_bone = draw.bone_idx >= 0;
+        if (has_bone) {
+            uniform_bind_slot<BoneConstantBuffer>(m_render_data->m_bone_uniform.get(), draw.bone_idx);
+        }
 
-    m_perFrameBuffer.Update(m_ctx);
+        set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
+        uniform_bind_slot<PerBatchConstantBuffer>(m_render_data->m_batch_uniform.get(), draw.batch_idx);
+        set_mesh(draw.mesh_data);
 
+        for (const auto& subset : draw.subsets) {
+            // gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
+
+            draw_elements(subset.index_count, subset.index_offset);
+        }
+    }
+
+#if 0
     for (uint32_t idx = 0; idx < scene.get_count<ObjectComponent>(); ++idx) {
         ecs::Entity entity = scene.get_entity<ObjectComponent>(idx);
         if (!scene.contains<TransformComponent>(entity)) {
@@ -201,11 +187,10 @@ void D3d11GraphicsManager::render() {
         m_perDrawBuffer.m_cache.Model = world_matrix;
         m_perDrawBuffer.Update(m_ctx);
 
-        m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
         set_mesh((MeshBuffers*)mesh.gpu_resource);
         draw_elements(mesh_buffers->index_count, 0);
     }
+#endif
 
     /////////////////////////////
 
@@ -308,21 +293,41 @@ bool D3d11GraphicsManager::create_render_target() {
 }
 
 std::shared_ptr<UniformBufferBase> D3d11GraphicsManager::uniform_create(int p_slot, size_t p_capacity) {
-    unused(p_slot);
-    unused(p_capacity);
-    return nullptr;
+    ComPtr<ID3D11Buffer> buffer;
+    D3D11_BUFFER_DESC buffer_desc;
+    buffer_desc.ByteWidth = (UINT)p_capacity;
+    buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    D3D_FAIL_V_MSG(m_device->CreateBuffer(&buffer_desc, nullptr, buffer.GetAddressOf()),
+                   nullptr,
+                   "Failed to create constant buffer");
+
+    auto uniform_buffer = std::make_shared<D3d11UniformBuffer>(p_slot, p_capacity);
+    uniform_buffer->buffer = buffer;
+
+    m_ctx->VSSetConstantBuffers(p_slot, 1, uniform_buffer->buffer.GetAddressOf());
+    m_ctx->PSSetConstantBuffers(p_slot, 1, uniform_buffer->buffer.GetAddressOf());
+    return uniform_buffer;
 }
 
 void D3d11GraphicsManager::uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
-    unused(p_buffer);
-    unused(p_size);
-    unused(p_data);
+    auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
+    DEV_ASSERT(p_size <= buffer->get_capacity());
+    buffer->data = (const char*)p_data;
 }
 
 void D3d11GraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
-    unused(p_buffer);
-    unused(p_size);
-    unused(p_offset);
+    auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
+    DEV_ASSERT(p_size + p_offset <= buffer->get_capacity());
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    ZeroMemory(&mapped, sizeof(D3D11_MAPPED_SUBRESOURCE));
+    m_ctx->Map(buffer->buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+    memcpy(mapped.pData, buffer->data + p_offset, p_size);
+    m_ctx->Unmap(buffer->buffer.Get(), 0);
 }
 
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
