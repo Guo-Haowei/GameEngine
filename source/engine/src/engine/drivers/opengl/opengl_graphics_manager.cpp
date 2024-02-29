@@ -302,12 +302,11 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
             const auto& color_attachment = p_desc.color_attachments[idx];
             switch (color_attachment->desc.type) {
                 case AttachmentType::COLOR_2D: {
-                    glFramebufferTexture2D(
-                        GL_FRAMEBUFFER,                           // target
-                        attachment,                               // attachment
-                        GL_TEXTURE_2D,                            // texture target
-                        color_attachment->texture->get_handle(),  // texture
-                        0                                         // level
+                    glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
+                                           attachment,                               // attachment
+                                           GL_TEXTURE_2D,                            // texture target
+                                           color_attachment->texture->get_handle(),  // texture
+                                           0                                         // level
                     );
                 } break;
                 case AttachmentType::COLOR_CUBE_MAP: {

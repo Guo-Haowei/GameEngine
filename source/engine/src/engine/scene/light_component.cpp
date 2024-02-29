@@ -11,7 +11,7 @@ void LightComponent::update(const TransformComponent& p_transform) {
 
     if (is_dirty() || p_transform.is_dirty()) {
         // update max distance
-        constexpr float atten_factor_inv = 1.0f / 0.01f;
+        constexpr float atten_factor_inv = 1.0f / 0.03f;
         if (m_atten.linear == 0.0f && m_atten.quadratic == 0.0f) {
             m_max_distance = 1000.0f;
         } else {

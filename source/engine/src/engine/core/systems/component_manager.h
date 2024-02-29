@@ -160,10 +160,12 @@ public:
             return;
         }
 
+        CRASH_NOW_MSG("TODO: make block invalid, instead of erase it");
         size_t index = it->second;
         m_lookup.erase(it);
         DEV_ASSERT_INDEX(index, m_entity_array.size());
-        m_entity_array[index] = Entity::INVALID;
+        m_entity_array.erase(m_entity_array.begin() + index);
+        m_component_array.erase(m_component_array.begin() + index);
     }
 
     bool contains(const Entity& entity) const override {
@@ -225,9 +227,6 @@ public:
         m_entity_array.push_back(entity);
         return m_component_array.back();
     }
-
-    const std::vector<T>& get_component_array() const { return m_component_array; }
-    std::vector<T>& get_component_array() { return m_component_array; }
 
     const T& operator[](size_t idx) const { return get_component(idx); }
 

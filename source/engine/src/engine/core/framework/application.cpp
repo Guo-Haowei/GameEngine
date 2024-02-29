@@ -102,13 +102,20 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_WARN("TODO: path tracer here");
+    LOG_OK("TODO: bloom");
+    LOG_OK("TODO: selection highlight");
+    LOG_OK("TODO: TAA");
+    LOG_OK("TODO: path tracer here");
+
+    LOG_WARN("TODO: change point shadow map to texture cube array");
+    LOG_WARN("TODO: properly unload scene");
+    LOG_WARN("TODO: make camera a component");
+    LOG_WARN("TODO: use lua to construct scene");
+    LOG_WARN("TODO: refactor render graph");
     LOG_WARN("TODO: cloth physics");
-    LOG_WARN("TODO: TAA");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-
     while (!DisplayManager::singleton().should_close()) {
         OPTICK_FRAME("MainThread");
 

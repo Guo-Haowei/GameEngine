@@ -3,6 +3,7 @@
 #include "core/io/archive.h"
 #include "core/math/geometry.h"
 #include "core/systems/job_system.h"
+#include "rendering/renderer.h"
 
 namespace my {
 
@@ -228,6 +229,14 @@ void Scene::attach_component(Entity child, Entity parent) {
 }
 
 void Scene::remove_entity(Entity entity) {
+    LightComponent* light = get_component<LightComponent>(entity);
+    if (light) {
+        auto shadow_handle = light->get_shadow_map_index();
+        if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
+            renderer::free_point_light_shadow_map(shadow_handle);
+        }
+        m_LightComponents.remove(entity);
+    }
     m_HierarchyComponents.remove(entity);
     m_TransformComponents.remove(entity);
     m_ObjectComponents.remove(entity);

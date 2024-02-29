@@ -38,22 +38,6 @@ public:                                                                         
         return m_##T##s.get_component(entity);                                                   \
     }                                                                                            \
     template<>                                                                                   \
-    inline const T& get_component<T>(size_t index) const {                                       \
-        return m_##T##s[index];                                                                  \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline T& get_component<T>(size_t index) {                                                   \
-        return m_##T##s[index];                                                                  \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline std::vector<T>& get_component_array() {                                               \
-        return m_##T##s.get_component_array();                                                   \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline const std::vector<T>& get_component_array() const {                                   \
-        return m_##T##s.get_component_array();                                                   \
-    }                                                                                            \
-    template<>                                                                                   \
     inline bool contains<T>(const ecs::Entity& entity) const {                                   \
         return m_##T##s.contains(entity);                                                        \
     }                                                                                            \
@@ -87,22 +71,6 @@ public:                                                                         
     template<typename T>
     T* get_component(const ecs::Entity&) {
         return nullptr;
-    }
-    template<typename T>
-    const T& get_component(size_t) const {
-        return *(reinterpret_cast<T*>(nullptr));
-    }
-    template<typename T>
-    T& get_component(size_t) {
-        return *(reinterpret_cast<T*>(nullptr));
-    }
-    template<typename T>
-    std::vector<T>& get_component_array() {
-        return *(reinterpret_cast<std::vector<T>*>(nullptr));
-    }
-    template<typename T>
-    const std::vector<T>& get_component_array() const {
-        return *(reinterpret_cast<std::vector<T>*>(nullptr));
     }
     template<typename T>
     bool contains(const ecs::Entity&) const {
