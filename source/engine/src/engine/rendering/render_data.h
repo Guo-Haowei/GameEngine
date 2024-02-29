@@ -34,20 +34,18 @@ struct RenderData {
     };
 
     struct Pass {
-        // @TODO: index instead of actuall data
-
         mat4 projection_matrix;
         mat4 view_matrix;
         mat4 projection_view_matrix;
+        LightComponent light_component;
 
-        void fill_perpass(PerPassConstantBuffer& buffer) {
+        void fill_perpass(PerPassConstantBuffer& buffer) const {
             buffer.g_projection = projection_matrix;
             buffer.g_view = view_matrix;
             buffer.g_projection_view = projection_view_matrix;
         }
 
         std::vector<Mesh> draws;
-        int light_index;
 
         void clear() { draws.clear(); }
         bool empty() { return draws.empty(); }
@@ -67,7 +65,8 @@ struct RenderData {
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<Pass, MAX_CASCADE_COUNT> shadow_passes;
-    std::array<Pass, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
+
+    std::array<std::unique_ptr<Pass>, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
 
     Pass voxel_pass;
     Pass main_pass;

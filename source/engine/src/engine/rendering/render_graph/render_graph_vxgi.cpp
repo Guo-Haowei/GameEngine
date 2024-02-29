@@ -20,43 +20,53 @@ extern OpenGLMeshBuffers g_billboard;
 
 namespace my::rg {
 
-// @TODO: refactor render passes to have multiple frame buffers
-// const int shadow_res = DVAR_GET_INT(r_point_shadow_res);
 void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
     auto render_data = gm.get_render_data();
 
+    auto& pass_ptr = render_data->point_shadow_passes[p_pass_id];
+    if (!pass_ptr) {
+        return;
+    }
+
     // prepare render data
-    gm.set_render_target(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
-    glViewport(0, 0, width, height);
 
     // @TODO: fix this
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
-    glClear(GL_DEPTH_BUFFER_BIT);
 
-    RenderData::Pass& pass = render_data->point_shadow_passes[p_pass_id];
+    // @TODO: instead of render the same object 6 times
+    // set up different object list for different pass
+    const RenderData::Pass& pass = *pass_ptr.get();
 
-    pass.fill_perpass(g_per_pass_cache.cache);
-    g_per_pass_cache.cache.g_light_index = pass.light_index;
-    g_per_pass_cache.update();
+    const auto& light_matrices = pass.light_component.get_matrices();
+    for (int i = 0; i < 6; ++i) {
+        g_per_pass_cache.cache.g_projection_view = light_matrices[i];
+        g_per_pass_cache.cache.g_point_light_position = pass.light_component.get_position();
+        g_per_pass_cache.cache.g_point_light_far = pass.light_component.get_max_distance();
+        g_per_pass_cache.update();
 
-    for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+        gm.set_render_target(p_subpass, i);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, width, height);
+
+        for (const auto& draw : pass.draws) {
+            bool has_bone = draw.bone_idx >= 0;
+            if (has_bone) {
+                gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+            }
+
+            gm.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
+
+            gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
+
+            gm.set_mesh(draw.mesh_data);
+            gm.draw_elements(draw.mesh_data->index_count);
         }
-
-        gm.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
-
-        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
-
-        gm.set_mesh(draw.mesh_data);
-        gm.draw_elements(draw.mesh_data->index_count);
     }
 }
 

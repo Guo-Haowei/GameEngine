@@ -233,6 +233,13 @@ void Scene::remove_entity(Entity entity) {
     m_ObjectComponents.remove(entity);
 }
 
+void Scene::update_light(uint32_t p_index) {
+    Entity id = get_entity<LightComponent>(p_index);
+    const TransformComponent* transform = get_component<TransformComponent>(id);
+    DEV_ASSERT(transform);
+    m_LightComponents[p_index].update(*transform);
+}
+
 void Scene::update_animation(uint32_t index) {
     AnimationComponent& animation = m_AnimationComponents[index];
     if (!animation.is_playing()) {
@@ -519,24 +526,24 @@ Scene::RayIntersectionResult Scene::intersects(Ray& ray) {
     return result;
 }
 
-void Scene::run_light_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, m_LightComponents[index].update());
+void Scene::run_light_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, update_light(index));
 }
 
-void Scene::run_transformation_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
+void Scene::run_transformation_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
 }
 
-void Scene::run_animation_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
+void Scene::run_animation_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
 }
 
-void Scene::run_armature_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
+void Scene::run_armature_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
 }
 
-void Scene::run_hierarchy_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
+void Scene::run_hierarchy_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
 }
 
 void Scene::run_object_update_system(jobsystem::Context&) {

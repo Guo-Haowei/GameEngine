@@ -201,12 +201,12 @@ void fill_constant_buffers(const Scene& scene) {
         const TransformComponent* light_transform = scene.get_component<TransformComponent>(light_entity);
         DEV_ASSERT(light_transform);
 
+        // SHOULD BE THIS INDEX
         Light& light = cache.c_lights[idx];
         bool cast_shadow = light_component.cast_shadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.get_type();
         light.color = light_component.m_color * light_component.m_energy;
-        int shadow_map_index = light_component.get_shadow_map_index();
         switch (light_component.get_type()) {
             case LIGHT_TYPE_OMNI: {
                 mat4 light_matrix = light_transform->get_local_matrix();
@@ -217,12 +217,12 @@ void fill_constant_buffers(const Scene& scene) {
                 light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, scene.get_bound());
             } break;
             case LIGHT_TYPE_POINT: {
+                const int shadow_map_index = light_component.get_shadow_map_index();
                 // @TODO: there's a bug in shadow map allocation
                 light.atten_constant = light_component.m_atten.constant;
                 light.atten_linear = light_component.m_atten.linear;
                 light.atten_quadratic = light_component.m_atten.quadratic;
-                const vec3 position = light_transform->get_translation();
-                light.position = position;
+                light.position = light_component.get_position();
                 light.cast_shadow = cast_shadow;
                 light.max_distance = light_component.get_max_distance();
                 if (cast_shadow && shadow_map_index != -1) {

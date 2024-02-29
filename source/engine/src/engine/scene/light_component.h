@@ -5,6 +5,7 @@
 namespace my {
 
 class Archive;
+class TransformComponent;
 
 class LightComponent {
 public:
@@ -26,7 +27,7 @@ public:
     float get_max_distance() const { return m_max_distance; }
     int get_shadow_map_index() const { return m_shadow_map_index; }
 
-    void update();
+    void update(const TransformComponent& p_transform);
 
     void serialize(Archive& archive, uint32_t version);
 
@@ -39,6 +40,7 @@ public:
     } m_atten;
 
     const auto& get_matrices() const { return m_light_space_matrices; }
+    const vec3& get_position() const { return m_position; }
 
 private:
     uint32_t m_flags = DIRTY;
@@ -46,6 +48,7 @@ private:
 
     // Non-serialized
     float m_max_distance;
+    vec3 m_position;
     int m_shadow_map_index = -1;
     std::array<mat4, 6> m_light_space_matrices;
 };

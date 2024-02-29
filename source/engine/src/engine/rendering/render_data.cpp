@@ -5,8 +5,11 @@
 #include "core/framework/common_dvars.h"
 #include "core/framework/graphics_manager.h"
 #include "core/math/frustum.h"
-#include "gl_utils.h"
+#include "rendering/renderer.h"
 #include "scene/scene.h"
+
+//
+#include "gl_utils.h"
 
 namespace my {
 
@@ -81,8 +84,9 @@ void RenderData::clear() {
     }
 
     for (auto& pass : point_shadow_passes) {
-        pass.clear();
+        pass.reset();
     }
+
     main_pass.clear();
     voxel_pass.clear();
 }
@@ -93,41 +97,45 @@ void RenderData::point_light_draw_data() {
             continue;
         }
 
-        if (light.get_type() == LIGHT_TYPE_POINT && light.cast_shadow()) {
-            const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
-            DEV_ASSERT(transform);
-            vec3 position = transform->get_translation();
-
-            const auto& light_space_matrices = light.get_matrices();
-            std::array<Frustum, 6> frustums = {
-                Frustum{ light_space_matrices[0] },
-                Frustum{ light_space_matrices[1] },
-                Frustum{ light_space_matrices[2] },
-                Frustum{ light_space_matrices[3] },
-                Frustum{ light_space_matrices[4] },
-                Frustum{ light_space_matrices[5] },
-            };
-
-            Pass pass;
-            fill(
-                scene,
-                pass,
-                [](const ObjectComponent& object) {
-                    return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
-                },
-                [&](const AABB& aabb) {
-                    for (const auto& frustum : frustums) {
-                        if (frustum.intersects(aabb)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
-            pass.light_index = light.get_shadow_map_index();
-
-            DEV_ASSERT_INDEX(pass.light_index, MAX_LIGHT_CAST_SHADOW_COUNT);
-            point_shadow_passes[pass.light_index] = std::move(pass);
+        const int light_pass_index = light.get_shadow_map_index();
+        if (light_pass_index == INVALID_POINT_SHADOW_HANDLE) {
+            continue;
         }
+
+        const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
+        DEV_ASSERT(transform);
+        vec3 position = transform->get_translation();
+
+        const auto& light_space_matrices = light.get_matrices();
+        std::array<Frustum, 6> frustums = {
+            Frustum{ light_space_matrices[0] },
+            Frustum{ light_space_matrices[1] },
+            Frustum{ light_space_matrices[2] },
+            Frustum{ light_space_matrices[3] },
+            Frustum{ light_space_matrices[4] },
+            Frustum{ light_space_matrices[5] },
+        };
+
+        auto pass = std::make_unique<Pass>();
+        fill(
+            scene,
+            *pass.get(),
+            [](const ObjectComponent& object) {
+                return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
+            },
+            [&](const AABB& aabb) {
+                for (const auto& frustum : frustums) {
+                    if (frustum.intersects(aabb)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+        DEV_ASSERT_INDEX(light_pass_index, MAX_LIGHT_CAST_SHADOW_COUNT);
+        pass->light_component = light;
+
+        point_shadow_passes[light_pass_index] = std::move(pass);
     }
 }
 

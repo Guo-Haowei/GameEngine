@@ -2,13 +2,14 @@
 
 #include "core/io/archive.h"
 #include "rendering/renderer.h"
+#include "scene/transform_component.h"
 
 namespace my {
 
-void LightComponent::update() {
-    TransformComponent p_transform;
+void LightComponent::update(const TransformComponent& p_transform) {
+    m_position = p_transform.get_translation();
 
-    if (is_dirty()) {
+    if (is_dirty() || p_transform.is_dirty()) {
         // update max distance
         constexpr float atten_factor_inv = 1.0f / 0.01f;
         if (m_atten.linear == 0.0f && m_atten.quadratic == 0.0f) {
@@ -48,11 +49,10 @@ void LightComponent::update() {
         if (cast_shadow()) {
             switch (m_type) {
                 case LIGHT_TYPE_POINT: {
-                    const vec3 position = p_transform.get_translation();
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
                     const float far_plane = m_max_distance;
                     const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
-                    auto view_matrices = renderer::cube_map_view_matrices(position);
+                    auto view_matrices = renderer::cube_map_view_matrices(m_position);
                     for (size_t i = 0; i < view_matrices.size(); ++i) {
                         m_light_space_matrices[i] = projection * view_matrices[i];
                     }

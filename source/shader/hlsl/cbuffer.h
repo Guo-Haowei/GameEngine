@@ -42,11 +42,12 @@ CBUFFER(PerPassConstantBuffer, 1) {
     mat4 g_projection;
     mat4 g_projection_view;
 
+    vec3 g_point_light_position;
+    float g_point_light_far;
+
     vec4 _per_pass_padding_0;
     vec4 _per_pass_padding_1;
-    vec4 _per_pass_padding_2;
-    vec2 _per_pass_padding_3;
-    int g_light_index;           // for point light shadow mapping
+    vec3 _per_pass_padding_2;
     float g_per_pass_roughness;  // for environment map
 };
 

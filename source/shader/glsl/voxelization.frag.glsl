@@ -36,11 +36,11 @@ void main() {
     const float NdotV = max(dot(N, V), 0.0);
     vec3 Lo = vec3(0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
-    float shadow = 0.0;
     for (int light_idx = 0; light_idx < c_light_count; ++light_idx) {
         Light light = c_lights[light_idx];
         int light_type = c_lights[light_idx].type;
         vec3 direct_lighting = vec3(0.0);
+        float shadow = 0.0;
         switch (light.type) {
             case LIGHT_TYPE_OMNI: {
                 vec3 L = light.position;

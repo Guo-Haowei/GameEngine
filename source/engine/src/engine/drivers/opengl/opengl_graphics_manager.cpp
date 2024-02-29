@@ -334,10 +334,6 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
                 );
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
-                glFramebufferTexture(GL_FRAMEBUFFER,
-                                     GL_DEPTH_ATTACHMENT,
-                                     depth_attachment->texture->get_handle(),
-                                     0);
             } break;
             default:
                 CRASH_NOW();
@@ -345,7 +341,7 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
         }
     }
 
-    DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+    // DEV_ASSERT(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -363,12 +359,22 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
 
     // @TODO: bind cube map/texture 2d array
     if (!subpass->color_attachments.empty()) {
-        auto resource = subpass->color_attachments[0];
+        const auto resource = subpass->color_attachments[0];
         if (resource->desc.type == AttachmentType::COLOR_CUBE_MAP) {
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
                                    resource->texture->get_handle(),
+                                   p_mip_level);
+        }
+    }
+
+    if (const auto depth_attachment = subpass->depth_attachment; depth_attachment) {
+        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
+            glFramebufferTexture2D(GL_FRAMEBUFFER,
+                                   GL_DEPTH_ATTACHMENT,
+                                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
+                                   depth_attachment->texture->get_handle(),
                                    p_mip_level);
         }
     }
