@@ -42,6 +42,7 @@ public:
 
     void add_component(ComponentType p_type, ecs::Entity p_target);
     void add_entity(EntityType p_type, ecs::Entity p_parent);
+    void remove_entity(ecs::Entity p_target);
 
 private:
     void dock_space(Scene& p_scene);

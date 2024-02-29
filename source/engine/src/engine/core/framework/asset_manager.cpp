@@ -7,7 +7,9 @@
 #include "core/io/file_access.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
+#include "lua_binding/lua_scene_binding.h"
 #include "rendering/renderer.h"
+#include "rendering/rendering_dvars.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -22,30 +24,52 @@ static struct {
     std::map<std::string, std::shared_ptr<File>> text_cache;
 } s_asset_manager_glob;
 
+// @TODO: refactor
+class LoaderDeserialize : public Loader<Scene> {
+public:
+    LoaderDeserialize(const std::string& p_path) : Loader<Scene>{ p_path } {}
+
+    static std::shared_ptr<Loader<Scene>> create(const std::string& p_path) {
+        return std::make_shared<LoaderDeserialize>(p_path);
+    }
+
+    bool load(Scene* p_scene) {
+        Archive archive;
+        if (!archive.open_read(m_file_path)) {
+            return false;
+        }
+        p_scene->m_replace = true;
+        return p_scene->serialize(archive);
+    }
+};
+
+class LoaderLuaScript : public Loader<Scene> {
+public:
+    LoaderLuaScript(const std::string& p_path) : Loader<Scene>{ p_path } {}
+
+    static std::shared_ptr<Loader<Scene>> create(const std::string& p_path) {
+        return std::make_shared<LoaderLuaScript>(p_path);
+    }
+
+    bool load(Scene* p_scene) {
+        ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+        p_scene->create_camera(frame_size.x, frame_size.y);
+        auto root = p_scene->create_transform_entity("world");
+        p_scene->m_replace = true;
+        p_scene->m_root = root;
+        return load_lua_scene(m_file_path, p_scene);
+    }
+};
+
 bool AssetManager::initialize() {
     Loader<Scene>::register_loader(".obj", LoaderAssimp::create);
     Loader<Scene>::register_loader(".gltf", LoaderTinyGLTF::create);
+    Loader<Scene>::register_loader(".scene", LoaderDeserialize::create);
+    Loader<Scene>::register_loader(".lua", LoaderLuaScript::create);
 
     Loader<Image>::register_loader(".png", LoaderSTBI8::create);
     Loader<Image>::register_loader(".jpg", LoaderSTBI8::create);
     Loader<Image>::register_loader(".hdr", LoaderSTBI32::create);
-
-    // @TODO: dir_access
-    // @TODO: async
-    // force load all shaders
-#if 0
-    const std::string preload[] = {
-        "@res://fonts/DroidSans.ttf",
-    };
-
-    Timer timer;
-    for (int i = 0; i < array_length(preload); ++i) {
-        if (load_file_sync(preload[i])) {
-            LOG_VERBOSE("[asset_loader] resource '{}' preloaded", preload[i]);
-        }
-    }
-    LOG_VERBOSE("[asset_loader] preloaded {} assets in {}", array_length(preload), timer.get_duration_string());
-#endif
 
     return true;
 }

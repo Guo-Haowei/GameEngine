@@ -68,9 +68,7 @@ void PhysicsManager::create_world(const Scene& scene) {
 
     m_dynamic_world->setGravity(btVector3(0, -10, 0));
 
-    for (int i = 0; i < scene.get_count<RigidBodyComponent>(); ++i) {
-        ecs::Entity id = scene.get_entity<RigidBodyComponent>(i);
-        const RigidBodyComponent& rigid_body = scene.get_component_array<RigidBodyComponent>()[i];
+    for (auto [id, rigid_body] : scene.m_RigidBodyComponents) {
         const TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
         DEV_ASSERT(transform_component);
         if (!transform_component) {

@@ -1,4 +1,3 @@
-#pragma once
 #include "core/math/ray.h"
 
 namespace my::math {

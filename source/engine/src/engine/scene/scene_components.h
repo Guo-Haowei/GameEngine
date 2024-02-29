@@ -29,37 +29,6 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------------
-// Light Component
-//--------------------------------------------------------------------------------------------------
-struct LightComponent {
-    enum : uint32_t {
-        NONE = BIT(0),
-        DIRTY = BIT(1),
-        CAST_SHADOW = BIT(2),
-    };
-
-    bool cast_shadow() const { return flags & CAST_SHADOW; }
-
-    uint32_t flags = NONE;
-    int type = LIGHT_TYPE_OMNI;
-    vec3 color = vec3(1);
-    float energy = 10.0f;
-
-    // Non-serialized
-    float max_distance;
-
-    // @TODO: serialize
-    // @TODO: edit
-    struct {
-        float constant;
-        float linear;
-        float quadratic;
-    } atten;
-
-    void serialize(Archive& archive, uint32_t version);
-};
-
-//--------------------------------------------------------------------------------------------------
 // Object Compoinent
 //--------------------------------------------------------------------------------------------------
 struct ObjectComponent {

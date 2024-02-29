@@ -11,7 +11,7 @@ bool ImGuiModule::initialize() {
     ImGui::CreateContext();
 
     std::filesystem::path path(ROOT_FOLDER);
-    path = path.parent_path() / "config/imgui.ini";
+    path = path.parent_path() / "user" / "imgui.ini";
     m_ini_path = path.string();
     LOG_VERBOSE("Set imgui ini file to {}", m_ini_path);
 

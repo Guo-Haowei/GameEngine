@@ -142,7 +142,7 @@ bool HierarchyCreator::build(const Scene& p_scene) {
         return false;
     }
 
-    for (int i = 0; i < hierarchy_count; ++i) {
+    for (auto [self_id, hier] : p_scene.m_HierarchyComponents) {
         auto find_or_create = [this](ecs::Entity id) {
             auto it = m_nodes.find(id);
             if (it == m_nodes.end()) {
@@ -152,8 +152,6 @@ bool HierarchyCreator::build(const Scene& p_scene) {
             return it->second.get();
         };
 
-        const HierarchyComponent& hier = p_scene.get_component<HierarchyComponent>(i);
-        const ecs::Entity self_id = p_scene.get_entity<HierarchyComponent>(i);
         const ecs::Entity parent_id = hier.GetParent();
         HierarchyNode* parent_node = find_or_create(parent_id);
         HierarchyNode* self_node = find_or_create(self_id);
@@ -190,7 +188,10 @@ void HierarchyPanel::draw_popup(Scene&) {
     if (ImGui::BeginPopup(POPUP_NAME_ID)) {
         open_add_entity_popup(selected);
         if (ImGui::MenuItem("Delete")) {
-            LOG_WARN("@TODO: not implement");
+            if (selected.is_valid()) {
+                m_editor.select_entity(Entity::INVALID);
+                m_editor.remove_entity(selected);
+            }
         }
         ImGui::EndPopup();
     }

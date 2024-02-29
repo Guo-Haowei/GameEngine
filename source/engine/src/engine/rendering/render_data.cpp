@@ -5,8 +5,11 @@
 #include "core/framework/common_dvars.h"
 #include "core/framework/graphics_manager.h"
 #include "core/math/frustum.h"
-#include "gl_utils.h"
+#include "rendering/renderer.h"
 #include "scene/scene.h"
+
+//
+#include "gl_utils.h"
 
 namespace my {
 
@@ -80,49 +83,59 @@ void RenderData::clear() {
         pass.clear();
     }
 
-    point_shadow_passes.clear();
+    for (auto& pass : point_shadow_passes) {
+        pass.reset();
+    }
+
     main_pass.clear();
     voxel_pass.clear();
 }
 
 void RenderData::point_light_draw_data() {
-    // point shadow map
-    for (int light_idx = 0; light_idx < (int)scene->get_count<LightComponent>(); ++light_idx) {
-        auto light_id = scene->get_entity<LightComponent>(light_idx);
-        const LightComponent& light = scene->get_component_array<LightComponent>()[light_idx];
-        if (light.type == LIGHT_TYPE_POINT && light.cast_shadow()) {
-            const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
-            DEV_ASSERT(transform);
-            vec3 position = transform->get_translation();
-
-            const mat4* light_space_matrices = g_perFrameCache.cache.c_lights[light_idx].matrices;
-            std::array<Frustum, 6> frustums = {
-                Frustum{ light_space_matrices[0] },
-                Frustum{ light_space_matrices[1] },
-                Frustum{ light_space_matrices[2] },
-                Frustum{ light_space_matrices[3] },
-                Frustum{ light_space_matrices[4] },
-                Frustum{ light_space_matrices[5] },
-            };
-
-            Pass pass;
-            fill(
-                scene,
-                pass,
-                [](const ObjectComponent& object) {
-                    return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
-                },
-                [&](const AABB& aabb) {
-                    for (const auto& frustum : frustums) {
-                        if (frustum.intersects(aabb)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
-            pass.light_index = light_idx;
-            point_shadow_passes.push_back(pass);
+    for (auto [light_id, light] : scene->m_LightComponents) {
+        if (light.get_type() != LIGHT_TYPE_POINT || !light.cast_shadow()) {
+            continue;
         }
+
+        const int light_pass_index = light.get_shadow_map_index();
+        if (light_pass_index == INVALID_POINT_SHADOW_HANDLE) {
+            continue;
+        }
+
+        const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
+        DEV_ASSERT(transform);
+        vec3 position = transform->get_translation();
+
+        const auto& light_space_matrices = light.get_matrices();
+        std::array<Frustum, 6> frustums = {
+            Frustum{ light_space_matrices[0] },
+            Frustum{ light_space_matrices[1] },
+            Frustum{ light_space_matrices[2] },
+            Frustum{ light_space_matrices[3] },
+            Frustum{ light_space_matrices[4] },
+            Frustum{ light_space_matrices[5] },
+        };
+
+        auto pass = std::make_unique<Pass>();
+        fill(
+            scene,
+            *pass.get(),
+            [](const ObjectComponent& object) {
+                return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
+            },
+            [&](const AABB& aabb) {
+                for (const auto& frustum : frustums) {
+                    if (frustum.intersects(aabb)) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+        DEV_ASSERT_INDEX(light_pass_index, MAX_LIGHT_CAST_SHADOW_COUNT);
+        pass->light_component = light;
+
+        point_shadow_passes[light_pass_index] = std::move(pass);
     }
 }
 
@@ -215,14 +228,11 @@ void RenderData::update(const Scene* p_scene) {
 void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
     scene = p_scene;
 
-    uint32_t num_objects = (uint32_t)scene->get_count<ObjectComponent>();
-    for (uint32_t i = 0; i < num_objects; ++i) {
-        ecs::Entity entity = scene->get_entity<ObjectComponent>(i);
+    for (auto [entity, obj] : scene->m_ObjectComponents) {
         if (!scene->contains<TransformComponent>(entity)) {
             continue;
         }
 
-        const ObjectComponent& obj = scene->get_component_array<ObjectComponent>()[i];
         // ????
         if (func1(obj)) {
             continue;

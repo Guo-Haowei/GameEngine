@@ -3,13 +3,13 @@
 #include "core/io/archive.h"
 #include "core/math/geometry.h"
 #include "core/systems/job_system.h"
+#include "rendering/renderer.h"
 
 namespace my {
 
 using ecs::Entity;
 using jobsystem::Context;
 
-// static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // kSceneVersion history
 // version 2: don't serialize scene.m_bound
@@ -139,12 +139,12 @@ Entity Scene::create_pointlight_entity(const std::string& name, const vec3& posi
     transform.set_dirty();
 
     LightComponent& light = create<LightComponent>(entity);
-    light.type = LIGHT_TYPE_POINT;
-    light.color = color;
-    light.energy = energy;
-    light.atten.constant = 1.0f;
-    light.atten.linear = 0.09f;
-    light.atten.quadratic = 0.032f;
+    light.set_type(LIGHT_TYPE_POINT);
+    light.m_color = color;
+    light.m_energy = energy;
+    light.m_atten.constant = 1.0f;
+    light.m_atten.linear = 0.09f;
+    light.m_atten.quadratic = 0.032f;
     return entity;
 }
 
@@ -154,12 +154,12 @@ Entity Scene::create_omnilight_entity(const std::string& name, const vec3& color
     create<TransformComponent>(entity);
 
     LightComponent& light = create<LightComponent>(entity);
-    light.type = LIGHT_TYPE_OMNI;
-    light.color = color;
-    light.energy = energy;
-    light.atten.constant = 1.0f;
-    light.atten.linear = 0.0f;
-    light.atten.quadratic = 0.0f;
+    light.set_type(LIGHT_TYPE_OMNI);
+    light.m_color = color;
+    light.m_energy = energy;
+    light.m_atten.constant = 1.0f;
+    light.m_atten.linear = 0.0f;
+    light.m_atten.quadratic = 0.0f;
     return entity;
 }
 
@@ -229,9 +229,24 @@ void Scene::attach_component(Entity child, Entity parent) {
 }
 
 void Scene::remove_entity(Entity entity) {
+    LightComponent* light = get_component<LightComponent>(entity);
+    if (light) {
+        auto shadow_handle = light->get_shadow_map_index();
+        if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
+            renderer::free_point_light_shadow_map(shadow_handle);
+        }
+        m_LightComponents.remove(entity);
+    }
     m_HierarchyComponents.remove(entity);
     m_TransformComponents.remove(entity);
     m_ObjectComponents.remove(entity);
+}
+
+void Scene::update_light(uint32_t p_index) {
+    Entity id = get_entity<LightComponent>(p_index);
+    const TransformComponent* transform = get_component<TransformComponent>(id);
+    DEV_ASSERT(transform);
+    m_LightComponents[p_index].update(*transform);
 }
 
 void Scene::update_animation(uint32_t index) {
@@ -356,33 +371,6 @@ void Scene::update_hierarchy(uint32_t index) {
 
     self_transform->set_world_matrix(world_matrix);
     self_transform->set_dirty(false);
-}
-
-void Scene::update_light(uint32_t index) {
-    Entity self_id = get_entity<LightComponent>(index);
-    LightComponent& light = m_LightComponents[index];
-
-    constexpr float atten_factor_inv = 1.0f / 0.01f;
-    if (light.atten.linear == 0.0f && light.atten.quadratic == 0.0f) {
-        light.max_distance = 1000.0f;
-    } else {
-        // (constant + linear * x + quad * x^2) * atten_factor = 1
-        // quad * x^2 + linear * x + constant - 1.0 / atten_factor = 0
-        const float a = light.atten.quadratic;
-        const float b = light.atten.linear;
-        const float c = light.atten.constant - atten_factor_inv;
-
-        float discriminant = b * b - 4 * a * c;
-        if (discriminant < 0.0f) {
-            __debugbreak();
-        }
-
-        float sqrt_d = glm::sqrt(discriminant);
-        float root1 = (-b + sqrt_d) / (2 * a);
-        float root2 = (-b - sqrt_d) / (2 * a);
-        light.max_distance = root1 > 0.0f ? root1 : root2;
-        light.max_distance = glm::max(LIGHT_SHADOW_MIN_DISTANCE + 1.0f, light.max_distance);
-    }
 }
 
 void Scene::update_armature(uint32_t index) {
@@ -547,38 +535,34 @@ Scene::RayIntersectionResult Scene::intersects(Ray& ray) {
     return result;
 }
 
-void Scene::run_light_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, update_light(index));
+void Scene::run_light_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, update_light(index));
 }
 
-void Scene::run_transformation_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
-    // JS_PARALLEL_FOR(ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, get_component_array<TransformComponent>()[index].update_transform());
+void Scene::run_transformation_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
 }
 
-void Scene::run_animation_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
+void Scene::run_animation_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
 }
 
-void Scene::run_armature_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
+void Scene::run_armature_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
 }
 
-void Scene::run_hierarchy_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
+void Scene::run_hierarchy_update_system(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
 }
 
 void Scene::run_object_update_system(jobsystem::Context&) {
     m_bound.make_invalid();
 
-    const uint32_t num_object = (uint32_t)get_count<ObjectComponent>();
-    for (uint32_t i = 0; i < num_object; ++i) {
-        ecs::Entity entity = get_entity<ObjectComponent>(i);
+    for (auto [entity, obj] : m_ObjectComponents) {
         if (!contains<TransformComponent>(entity)) {
             continue;
         }
 
-        const ObjectComponent& obj = get_component_array<ObjectComponent>()[i];
         const TransformComponent& transform = *get_component<TransformComponent>(entity);
         DEV_ASSERT(contains<MeshComponent>(obj.mesh_id));
         const MeshComponent& mesh = *get_component<MeshComponent>(obj.mesh_id);

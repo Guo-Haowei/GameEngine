@@ -104,25 +104,30 @@ void EditorLayer::update(float) {
 void EditorLayer::render() {
 }
 
-void EditorLayer::add_component(ComponentType type, ecs::Entity target) {
-    auto command = std::make_shared<EditorCommandAddComponent>(type);
-    command->target = target;
+void EditorLayer::add_component(ComponentType p_type, ecs::Entity p_target) {
+    auto command = std::make_shared<EditorCommandAddComponent>(p_type);
+    command->target = p_target;
     buffer_command(command);
 }
 
-void EditorLayer::add_entity(EntityType name, ecs::Entity parent) {
-    auto command = std::make_shared<EditorCommandAddEntity>(name);
-    command->parent = parent;
+void EditorLayer::add_entity(EntityType p_name, ecs::Entity p_parent) {
+    auto command = std::make_shared<EditorCommandAddEntity>(p_name);
+    command->parent = p_parent;
     buffer_command(command);
 }
 
-void EditorLayer::buffer_command(std::shared_ptr<EditorCommand> command) {
-    m_command_buffer.emplace_back(std::move(command));
+void EditorLayer::remove_entity(ecs::Entity p_target) {
+    auto command = std::make_shared<EditorCommandRemoveEntity>(p_target);
+    buffer_command(command);
 }
 
-static std::string gen_name(std::string_view name) {
+void EditorLayer::buffer_command(std::shared_ptr<EditorCommand> p_command) {
+    m_command_buffer.emplace_back(std::move(p_command));
+}
+
+static std::string gen_name(std::string_view p_name) {
     static int s_counter = 0;
-    return std::format("{}_{}", name, ++s_counter);
+    return std::format("{}_{}", p_name, ++s_counter);
 }
 
 void EditorLayer::flush_commands(Scene& scene) {
@@ -174,6 +179,16 @@ void EditorLayer::flush_commands(Scene& scene) {
                         CRASH_NOW();
                         break;
                 }
+                break;
+            }
+            if (auto command = dynamic_cast<EditorCommandRemoveEntity*>(task.get()); command) {
+                auto entity = command->target;
+                DEV_ASSERT(entity.is_valid());
+                scene.remove_entity(entity);
+                // if (scene.contains<TransformComponent>(entity)) {
+
+                //}
+                break;
             }
         } while (0);
         m_command_history.push_back(task);

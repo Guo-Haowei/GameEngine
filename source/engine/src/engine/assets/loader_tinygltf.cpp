@@ -53,18 +53,18 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
         DEV_ASSERT(node.mesh < (int)m_scene->get_count<MeshComponent>());
         if (node.skin >= 0) {  // this node is an armature
             entity = m_scene->get_entity<ArmatureComponent>(node.skin);
-            MeshComponent* mesh = &m_scene->get_component_array<MeshComponent>()[node.mesh];
+            MeshComponent& mesh = m_scene->m_MeshComponents.get_component(node.mesh);
             ecs::Entity mesh_id = m_scene->get_entity<MeshComponent>(node.mesh);
-            DEV_ASSERT(!mesh->joints_0.empty());
-            if (mesh->armature_id.is_valid()) {
+            DEV_ASSERT(!mesh.joints_0.empty());
+            if (mesh.armature_id.is_valid()) {
                 // Reuse mesh with different skin is not possible currently, so we create a new one:
                 LOG_WARN("Re-use mesh for different skin!");
                 mesh_id = entity;
                 MeshComponent& newMesh = m_scene->create<MeshComponent>(mesh_id);
-                newMesh = m_scene->get_component_array<MeshComponent>()[node.mesh];
-                mesh = &newMesh;
+                newMesh = m_scene->m_MeshComponents.get_component(node.mesh);
+                mesh = newMesh;
             }
-            mesh->armature_id = entity;
+            mesh.armature_id = entity;
 
             // the object component will use an identity transform but will be parented to the armature
             ecs::Entity objectID = m_scene->create_object_entity("Animated::" + node.name);
@@ -298,7 +298,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
     int armatureIndex = 0;
     for (const auto& skin : m_model->skins) {
         ecs::Entity armature_id = m_scene->get_entity<ArmatureComponent>(armatureIndex);
-        ArmatureComponent& armature = m_scene->get_component_array<ArmatureComponent>()[armatureIndex++];
+        ArmatureComponent& armature = m_scene->m_ArmatureComponents.get_component(armatureIndex++);
 
         const size_t jointCount = skin.joints.size();
         armature.bone_collection.resize(jointCount);

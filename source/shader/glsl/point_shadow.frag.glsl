@@ -1,12 +1,12 @@
 #include "../hlsl/cbuffer.h"
 
-in vec4 pass_position;
+in vec3 pass_position;
 
 void main() {
-    float light_distance = length(pass_position.xyz - c_lights[g_light_index].position);
+    // @TODO: shit
+    float light_distance = length(pass_position - g_point_light_position);
 
-    light_distance = light_distance / c_lights[g_light_index].max_distance;
+    light_distance = light_distance / g_point_light_far;
 
-    // write this as modified depth
     gl_FragDepth = light_distance;
 }

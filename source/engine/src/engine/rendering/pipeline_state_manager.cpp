@@ -73,14 +73,12 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "point_shadow.vert";
-        info.gs = "point_shadow.geom";
         info.ps = "point_shadow.frag";
         m_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
     }
     {
         PipelineCreateInfo info;
         info.vs = "point_shadow.vert";
-        info.gs = "point_shadow.geom";
         info.ps = "point_shadow.frag";
         info.defines = { has_animation };
         m_cache[PROGRAM_POINT_SHADOW_ANIMATED] = create(info);

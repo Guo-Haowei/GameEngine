@@ -81,7 +81,7 @@ void SceneManager::finalize() {}
 bool SceneManager::try_swap_scene() {
     Scene* new_scene = m_loading_scene.load();
     if (new_scene) {
-        if (m_scene) {
+        if (m_scene && !new_scene->m_replace) {
             m_scene->merge(*new_scene);
             delete new_scene;
         } else {
@@ -100,7 +100,6 @@ void SceneManager::update(float dt) {
     try_swap_scene();
 
     if (m_last_revision < m_revision) {
-        // @TODO: profiler
         Timer timer;
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
         m_app->get_event_queue().dispatch_event(event);
@@ -111,6 +110,7 @@ void SceneManager::update(float dt) {
     SceneManager::get_scene().update(dt);
 }
 
+// @TODO: add import and load scene
 void SceneManager::request_scene(std::string_view path) {
     AssetManager::singleton().load_scene_async(std::string(path), [](void* scene, void*) {
         DEV_ASSERT(scene);

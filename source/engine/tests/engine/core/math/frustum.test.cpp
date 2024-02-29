@@ -1,4 +1,3 @@
-#pragma once
 #include "core/math/frustum.h"
 
 namespace my::math {

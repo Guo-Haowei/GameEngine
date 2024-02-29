@@ -4,6 +4,7 @@
 #include "core/systems/component_manager.h"
 #include "scene/camera.h"
 #include "scene/collider_component.h"
+#include "scene/light_component.h"
 #include "scene/material_component.h"
 #include "scene/mesh_component.h"
 #include "scene/name_component.h"
@@ -24,7 +25,7 @@ public:
 
 #pragma region WORLD_COMPONENTS_REGISTERY
 #define REGISTER_COMPONENT(T, VER)                                                               \
-private:                                                                                         \
+public:                                                                                          \
     ecs::ComponentManager<T>& m_##T##s = m_component_lib.register_manager<T>("World::" #T, VER); \
                                                                                                  \
 public:                                                                                          \
@@ -35,22 +36,6 @@ public:                                                                         
     template<>                                                                                   \
     inline T* get_component<T>(const ecs::Entity& entity) {                                      \
         return m_##T##s.get_component(entity);                                                   \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline const T& get_component<T>(size_t index) const {                                       \
-        return m_##T##s[index];                                                                  \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline T& get_component<T>(size_t index) {                                                   \
-        return m_##T##s[index];                                                                  \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline std::vector<T>& get_component_array() {                                               \
-        return m_##T##s.get_component_array();                                                   \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline const std::vector<T>& get_component_array() const {                                   \
-        return m_##T##s.get_component_array();                                                   \
     }                                                                                            \
     template<>                                                                                   \
     inline bool contains<T>(const ecs::Entity& entity) const {                                   \
@@ -86,22 +71,6 @@ public:                                                                         
     template<typename T>
     T* get_component(const ecs::Entity&) {
         return nullptr;
-    }
-    template<typename T>
-    const T& get_component(size_t) const {
-        return *(reinterpret_cast<T*>(nullptr));
-    }
-    template<typename T>
-    T& get_component(size_t) {
-        return *(reinterpret_cast<T*>(nullptr));
-    }
-    template<typename T>
-    std::vector<T>& get_component_array() {
-        return *(reinterpret_cast<std::vector<T>*>(nullptr));
-    }
-    template<typename T>
-    const std::vector<T>& get_component_array() const {
-        return *(reinterpret_cast<std::vector<T>*>(nullptr));
     }
     template<typename T>
     bool contains(const ecs::Entity&) const {
@@ -205,19 +174,20 @@ public:                                                                         
     ecs::Entity m_root;
     float m_delta_time = 0.0f;
     std::shared_ptr<Camera> m_camera;
+    bool m_replace = false;
 
 private:
-    void update_light(uint32_t index);
-    void update_hierarchy(uint32_t index);
-    void update_animation(uint32_t index);
-    void update_armature(uint32_t index);
+    void update_hierarchy(uint32_t p_index);
+    void update_animation(uint32_t p_index);
+    void update_armature(uint32_t p_index);
+    void update_light(uint32_t p_index);
 
-    void run_light_update_system(jobsystem::Context& ctx);
-    void run_transformation_update_system(jobsystem::Context& ctx);
-    void run_hierarchy_update_system(jobsystem::Context& ctx);
-    void run_animation_update_system(jobsystem::Context& ctx);
-    void run_armature_update_system(jobsystem::Context& ctx);
-    void run_object_update_system(jobsystem::Context& ctx);
+    void run_light_update_system(jobsystem::Context& p_ctx);
+    void run_transformation_update_system(jobsystem::Context& p_ctx);
+    void run_hierarchy_update_system(jobsystem::Context& p_ctx);
+    void run_animation_update_system(jobsystem::Context& p_ctx);
+    void run_armature_update_system(jobsystem::Context& p_ctx);
+    void run_object_update_system(jobsystem::Context& p_ctx);
 
     AABB m_bound;
 };

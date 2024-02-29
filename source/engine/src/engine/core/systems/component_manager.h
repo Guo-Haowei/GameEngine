@@ -8,6 +8,76 @@ class Scene;
 
 namespace my::ecs {
 
+#define COMPONENT_MANAGER_ITERATOR_COMMON                                          \
+public:                                                                            \
+    self_type operator++(int) {                                                    \
+        self_type tmp = *this;                                                     \
+        ++m_index;                                                                 \
+        return tmp;                                                                \
+    }                                                                              \
+    self_type operator--(int) {                                                    \
+        self_type tmp = *this;                                                     \
+        --m_index;                                                                 \
+        return tmp;                                                                \
+    }                                                                              \
+    self_type& operator++() {                                                      \
+        ++m_index;                                                                 \
+        return *this;                                                              \
+    }                                                                              \
+    self_type& operator--() {                                                      \
+        --m_index;                                                                 \
+        return *this;                                                              \
+    }                                                                              \
+    bool operator==(const self_type& rhs) const { return m_index == rhs.m_index; } \
+    bool operator!=(const self_type& rhs) const { return m_index != rhs.m_index; } \
+    using _dummy_force_semi_colon = int
+
+template<typename T>
+class ComponentManagerIterator {
+    using self_type = ComponentManagerIterator<T>;
+
+public:
+    ComponentManagerIterator(std::vector<Entity>& p_entity_array, std::vector<T>& p_component_array, size_t p_index)
+        : m_entity_array(p_entity_array),
+          m_component_array(p_component_array),
+          m_index(p_index) {}
+
+    COMPONENT_MANAGER_ITERATOR_COMMON;
+
+    std::pair<Entity, T&> operator*() const {
+        return std::make_pair(this->m_entity_array[this->m_index], std::ref(this->m_component_array[this->m_index]));
+    }
+
+private:
+    std::vector<Entity>& m_entity_array;
+    std::vector<T>& m_component_array;
+
+    size_t m_index;
+};
+
+template<typename T>
+class ComponentManagerConstIterator {
+    using self_type = ComponentManagerConstIterator<T>;
+
+public:
+    ComponentManagerConstIterator(const std::vector<Entity>& p_entity_array, const std::vector<T>& p_component_array, size_t p_index)
+        : m_entity_array(p_entity_array),
+          m_component_array(p_component_array),
+          m_index(p_index) {}
+
+    COMPONENT_MANAGER_ITERATOR_COMMON;
+
+    std::pair<Entity, const T&> operator*() const {
+        return std::make_pair(this->m_entity_array[this->m_index], std::ref(this->m_component_array[this->m_index]));
+    }
+
+private:
+    const std::vector<Entity>& m_entity_array;
+    const std::vector<T>& m_component_array;
+
+    size_t m_index;
+};
+
 class IComponentManager {
     IComponentManager(const IComponentManager&) = delete;
     IComponentManager& operator=(const IComponentManager&) = delete;
@@ -27,7 +97,15 @@ public:
 
 template<typename T>
 class ComponentManager final : public IComponentManager {
+    using iter = ComponentManagerIterator<T>;
+    using const_iter = ComponentManagerConstIterator<T>;
+
 public:
+    iter begin() { return iter(m_entity_array, m_component_array, 0); }
+    iter end() { return iter(m_entity_array, m_component_array, m_component_array.size()); }
+    const_iter begin() const { return const_iter(m_entity_array, m_component_array, 0); }
+    const_iter end() const { return const_iter(m_entity_array, m_component_array, m_component_array.size()); }
+
     ComponentManager(size_t capacity = 0) { reserve(capacity); }
 
     void reserve(size_t capacity) {
@@ -82,10 +160,12 @@ public:
             return;
         }
 
+        CRASH_NOW_MSG("TODO: make block invalid, instead of erase it");
         size_t index = it->second;
         m_lookup.erase(it);
         DEV_ASSERT_INDEX(index, m_entity_array.size());
-        m_entity_array[index] = Entity::INVALID;
+        m_entity_array.erase(m_entity_array.begin() + index);
+        m_component_array.erase(m_component_array.begin() + index);
     }
 
     bool contains(const Entity& entity) const override {
@@ -147,11 +227,6 @@ public:
         m_entity_array.push_back(entity);
         return m_component_array.back();
     }
-
-    const std::vector<Entity>& GetEntityArray() const { return m_entity_array; }
-    std::vector<Entity>& GetEntityArray() { return m_entity_array; }
-    const std::vector<T>& get_component_array() const { return m_component_array; }
-    std::vector<T>& get_component_array() { return m_component_array; }
 
     const T& operator[](size_t idx) const { return get_component(idx); }
 

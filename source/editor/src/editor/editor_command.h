@@ -5,6 +5,7 @@ namespace my {
 
 enum EditorCommandType : uint8_t {
     EDITOR_ADD_ENTITY,
+    EDITOR_REMOVE_ENTITY,
     EDITOR_ADD_COMPONENT,
 };
 
@@ -47,6 +48,14 @@ public:
         : EditorCommand(EDITOR_ADD_COMPONENT), component_type(p_component_type) {}
 
     ComponentType component_type;
+    ecs::Entity target;
+};
+
+class EditorCommandRemoveEntity : public EditorCommand {
+public:
+    EditorCommandRemoveEntity(ecs::Entity p_target)
+        : EditorCommand(EDITOR_REMOVE_ENTITY), target(p_target) {}
+
     ecs::Entity target;
 };
 

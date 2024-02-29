@@ -67,8 +67,9 @@ void PropertyPanel::update_internal(Scene& scene) {
     }
 
     NameComponent* name_component = scene.get_component<NameComponent>(id);
+    // @NOTE: when loading another scene, the selected entity will expire, thus don't have name
     if (!name_component) {
-        LOG_WARN("Entity {} does not have name", id.get_id());
+        // LOG_WARN("Entity {} does not have name", id.get_id());
         return;
     }
 
@@ -113,7 +114,7 @@ void PropertyPanel::update_internal(Scene& scene) {
     bool disable_rotation = false;
     bool disable_scale = false;
     if (light_component) {
-        switch (light_component->type) {
+        switch (light_component->get_type()) {
             case LIGHT_TYPE_OMNI:
                 disable_translation = true;
                 disable_scale = true;
@@ -153,27 +154,32 @@ void PropertyPanel::update_internal(Scene& scene) {
     });
 
     DrawComponent("Light", light_component, [&](LightComponent& light) {
-        static const char* types[] = {
-            "omni light",
-            "point light"
-        };
-
         bool dirty = false;
 
-        if (ImGui::Combo("MyCombo", (int*)(&light_component->type), types, IM_ARRAYSIZE(types))) {
-            // @TODO: set dirty
+        switch (light.get_type()) {
+            case LIGHT_TYPE_OMNI:
+                ImGui::Text("omni light");
+                break;
+            case LIGHT_TYPE_POINT:
+                ImGui::Text("point light");
+                break;
+            default:
+                break;
         }
 
         bool cast_shadow = light.cast_shadow();
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        light.flags = (cast_shadow ? LightComponent::CAST_SHADOW : 0);
+        if (cast_shadow != light.cast_shadow()) {
+            light.set_cast_shadow(cast_shadow);
+            light.set_dirty();
+        }
 
-        dirty |= draw_color_control("color:", light.color);
-        dirty |= draw_drag_float("energy:", light.energy, 1.0f, 0.1f, 100.0f);
-        dirty |= draw_drag_float("constant", light.atten.constant, 0.1f, 0.0f, 1.0f);
-        dirty |= draw_drag_float("linear", light.atten.linear, 0.1f, 0.0f, 1.0f);
-        dirty |= draw_drag_float("quadratic", light.atten.quadratic, 0.1f, 0.0f, 1.0f);
-        ImGui::Text("max distance: %0.3f", light.max_distance);
+        dirty |= draw_color_control("color:", light.m_color);
+        dirty |= draw_drag_float("energy:", light.m_energy, 1.0f, 0.1f, 100.0f);
+        dirty |= draw_drag_float("constant", light.m_atten.constant, 0.1f, 0.0f, 1.0f);
+        dirty |= draw_drag_float("linear", light.m_atten.linear, 0.1f, 0.0f, 1.0f);
+        dirty |= draw_drag_float("quadratic", light.m_atten.quadratic, 0.1f, 0.0f, 1.0f);
+        ImGui::Text("max distance: %0.3f", light.get_max_distance());
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {

@@ -153,45 +153,6 @@ void D3d11GraphicsManager::render() {
         }
     }
 
-#if 0
-    for (uint32_t idx = 0; idx < scene.get_count<ObjectComponent>(); ++idx) {
-        ecs::Entity entity = scene.get_entity<ObjectComponent>(idx);
-        if (!scene.contains<TransformComponent>(entity)) {
-            continue;
-        }
-
-        const ObjectComponent& obj = scene.get_component_array<ObjectComponent>()[idx];
-
-        const TransformComponent& transform = *scene.get_component<TransformComponent>(entity);
-        DEV_ASSERT(scene.contains<MeshComponent>(obj.mesh_id));
-        const MeshComponent& mesh = *scene.get_component<MeshComponent>(obj.mesh_id);
-
-        const mat4& world_matrix = transform.get_world_matrix();
-        unused(world_matrix);
-
-        // set vertex/index buffer
-        auto mesh_buffers = reinterpret_cast<D3d11MeshBuffers*>(mesh.gpu_resource);
-
-        bool has_bone = false;
-        if (mesh.armature_id.is_valid()) {
-            has_bone = true;
-
-            auto& armature = *scene.get_component<ArmatureComponent>(mesh.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
-
-            memcpy(m_bone_buffer.m_cache.Bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
-            m_bone_buffer.Update(m_ctx);
-        }
-        set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
-
-        m_perDrawBuffer.m_cache.Model = world_matrix;
-        m_perDrawBuffer.Update(m_ctx);
-
-        set_mesh((MeshBuffers*)mesh.gpu_resource);
-        draw_elements(mesh_buffers->index_count, 0);
-    }
-#endif
-
     /////////////////////////////
 
     // @TODO: for now, draw stuff here
@@ -566,12 +527,10 @@ static void create_mesh_data(const MeshComponent& mesh, D3d11MeshBuffers& out_me
 }
 
 void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
-    for (size_t idx = 0; idx < p_scene.get_count<MeshComponent>(); ++idx) {
-        const MeshComponent& mesh = p_scene.get_component_array<MeshComponent>()[idx];
+    for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
-            ecs::Entity entity = p_scene.get_entity<MeshComponent>(idx);
             const NameComponent& name = *p_scene.get_component<NameComponent>(entity);
-            LOG_WARN("[begin_scene] mesh '{}' (idx: {}) already has gpu resource", name.get_name(), idx);
+            LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.get_name());
             continue;
         }
         RID rid = m_meshes.make_rid();
