@@ -1,5 +1,4 @@
 #pragma once
-#include "core/base/fixed_stack.h"
 #include "rendering/uniform_buffer.h"
 #include "scene/scene.h"
 
@@ -51,6 +50,7 @@ struct RenderData {
         int light_index;
 
         void clear() { draws.clear(); }
+        bool empty() { return draws.empty(); }
     };
 
     const Scene* scene = nullptr;
@@ -67,7 +67,7 @@ struct RenderData {
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<Pass, MAX_CASCADE_COUNT> shadow_passes;
-    FixedStack<Pass, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
+    std::array<Pass, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
 
     Pass voxel_pass;
     Pass main_pass;

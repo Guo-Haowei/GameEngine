@@ -80,22 +80,25 @@ void RenderData::clear() {
         pass.clear();
     }
 
-    point_shadow_passes.clear();
+    for (auto& pass : point_shadow_passes) {
+        pass.clear();
+    }
     main_pass.clear();
     voxel_pass.clear();
 }
 
 void RenderData::point_light_draw_data() {
-    // point shadow map
-    for (int light_idx = 0; light_idx < (int)scene->get_count<LightComponent>(); ++light_idx) {
-        auto light_id = scene->get_entity<LightComponent>(light_idx);
-        const LightComponent& light = scene->get_component_array<LightComponent>()[light_idx];
-        if (light.type == LIGHT_TYPE_POINT && light.cast_shadow()) {
+    for (auto [light_id, light] : scene->m_LightComponents) {
+        if (light.get_type() != LIGHT_TYPE_POINT || !light.cast_shadow()) {
+            continue;
+        }
+
+        if (light.get_type() == LIGHT_TYPE_POINT && light.cast_shadow()) {
             const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
             DEV_ASSERT(transform);
             vec3 position = transform->get_translation();
 
-            const mat4* light_space_matrices = g_perFrameCache.cache.c_lights[light_idx].matrices;
+            const auto& light_space_matrices = light.get_matrices();
             std::array<Frustum, 6> frustums = {
                 Frustum{ light_space_matrices[0] },
                 Frustum{ light_space_matrices[1] },
@@ -120,8 +123,10 @@ void RenderData::point_light_draw_data() {
                     }
                     return false;
                 });
-            pass.light_index = light_idx;
-            point_shadow_passes.push_back(pass);
+            pass.light_index = light.get_shadow_map_index();
+
+            DEV_ASSERT_INDEX(pass.light_index, MAX_LIGHT_CAST_SHADOW_COUNT);
+            point_shadow_passes[pass.light_index] = std::move(pass);
         }
     }
 }

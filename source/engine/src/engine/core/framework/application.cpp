@@ -81,6 +81,7 @@ int Application::run(int argc, const char** argv) {
 
     thread::initialize();
     jobsystem::initialize();
+    renderer::initialize();
 
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->get_name());
@@ -164,6 +165,7 @@ int Application::run(int argc, const char** argv) {
         LOG_VERBOSE("module '{}' finalized", module->get_name());
     }
 
+    renderer::finalize();
     jobsystem::finalize();
     thread::finailize();
 

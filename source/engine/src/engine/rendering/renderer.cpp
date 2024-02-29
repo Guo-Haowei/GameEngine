@@ -7,36 +7,50 @@
 #define DEFINE_DVAR
 #include "rendering_dvars.h"
 
+namespace {
+std::string s_prev_env_map;
+bool s_need_update_env = false;
+std::list<int> s_free_point_light_shadow;
+}  // namespace
+
 namespace my::renderer {
 
-static struct {
-    std::string prev_env_map;
-    bool need_update_env = false;
-} s_renderer_glob;
+bool initialize() {
+    DEV_ASSERT(s_free_point_light_shadow.empty());
+
+    for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
+        s_free_point_light_shadow.push_back(i);
+    }
+    return true;
+}
+
+void finalize() {
+    s_free_point_light_shadow.clear();
+}
 
 bool need_update_env() {
-    return s_renderer_glob.need_update_env;
+    return s_need_update_env;
 }
 
 void reset_need_update_env() {
-    s_renderer_glob.need_update_env = false;
+    s_need_update_env = false;
 }
 
 void request_env_map(const std::string& path) {
-    if (path == s_renderer_glob.prev_env_map) {
+    if (path == s_prev_env_map) {
         return;
     }
 
-    if (!s_renderer_glob.prev_env_map.empty()) {
-        LOG_WARN("TODO: release {}", s_renderer_glob.prev_env_map.empty());
+    if (!s_prev_env_map.empty()) {
+        LOG_WARN("TODO: release {}", s_prev_env_map.empty());
     }
 
-    s_renderer_glob.prev_env_map = path;
+    s_prev_env_map = path;
     if (auto handle = AssetManager::singleton().find_image(path); handle) {
         if (auto image = handle->get(); image && image->gpu_texture) {
             g_constantCache.cache.c_hdr_env_map = image->gpu_texture->get_resident_handle();
             g_constantCache.update();
-            s_renderer_glob.need_update_env = true;
+            s_need_update_env = true;
             return;
         }
     }
@@ -52,7 +66,7 @@ void request_env_map(const std::string& path) {
             // @TODO: better way
             g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
             g_constantCache.update();
-            s_renderer_glob.need_update_env = true;
+            s_need_update_env = true;
         });
     });
 }
@@ -142,6 +156,23 @@ std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Cam
     return ret;
 }
 
+PointShadowHandle allocate_point_light_shadow_map() {
+    if (s_free_point_light_shadow.empty()) {
+        LOG_WARN("OUT OUT POINT SHADOW MAP");
+        return INVALID_POINT_SHADOW_HANDLE;
+    }
+
+    int handle = s_free_point_light_shadow.front();
+    s_free_point_light_shadow.pop_front();
+    return handle;
+}
+
+void free_point_light_shadow_map(PointShadowHandle& p_handle) {
+    DEV_ASSERT_INDEX(p_handle, MAX_LIGHT_CAST_SHADOW_COUNT);
+    s_free_point_light_shadow.push_back(p_handle);
+    p_handle = INVALID_POINT_SHADOW_HANDLE;
+}
+
 // @TODO: fix this?
 void fill_constant_buffers(const Scene& scene) {
     Camera& camera = *scene.m_camera.get();
@@ -165,62 +196,56 @@ void fill_constant_buffers(const Scene& scene) {
         DEV_ASSERT(left < cascade_end[idx]);
     }
 
-    int num_point_light_cast_shadow = 0;
-
-    // @TODO: fina a better way to allocate shadow map
-    for (uint32_t idx = 0; idx < light_count; ++idx) {
-        const LightComponent& light_component = scene.get_component_array<LightComponent>()[idx];
-        auto light_entity = scene.get_entity<LightComponent>(idx);
+    int idx = 0;
+    for (auto [light_entity, light_component] : scene.m_LightComponents) {
         const TransformComponent* light_transform = scene.get_component<TransformComponent>(light_entity);
         DEV_ASSERT(light_transform);
 
         Light& light = cache.c_lights[idx];
-        light.cast_shadow = false;
-        light.type = light_component.type;
-        light.color = light_component.color * light_component.energy;
-        switch (light_component.type) {
+        bool cast_shadow = light_component.cast_shadow();
+        light.cast_shadow = cast_shadow;
+        light.type = light_component.get_type();
+        light.color = light_component.m_color * light_component.m_energy;
+        int shadow_map_index = light_component.get_shadow_map_index();
+        switch (light_component.get_type()) {
             case LIGHT_TYPE_OMNI: {
                 mat4 light_matrix = light_transform->get_local_matrix();
                 vec3 light_dir = glm::normalize(light_matrix * vec4(0, 0, 1, 0));
-                light.cast_shadow = light_component.cast_shadow();
+                light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
                 light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, scene.get_bound());
             } break;
             case LIGHT_TYPE_POINT: {
                 // @TODO: there's a bug in shadow map allocation
-                light.atten_constant = light_component.atten.constant;
-                light.atten_linear = light_component.atten.linear;
-                light.atten_quadratic = light_component.atten.quadratic;
+                light.atten_constant = light_component.m_atten.constant;
+                light.atten_linear = light_component.m_atten.linear;
+                light.atten_quadratic = light_component.m_atten.quadratic;
                 const vec3 position = light_transform->get_translation();
                 light.position = position;
-                light.cast_shadow = light_component.cast_shadow();
-                constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
-                light.max_distance = light_component.max_distance;
-                if (light.cast_shadow) {
-                    CRASH_COND_MSG(num_point_light_cast_shadow >= MAX_LIGHT_CAST_SHADOW_COUNT, "Can have at most " _STR(MAX_LIGHT_CAST_SHADOW_COUNT) " point lights that cast shadow");
-
-                    const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, light.max_distance);
-                    auto view_matrices = cube_map_view_matrices(position);
-                    for (size_t i = 0; i < view_matrices.size(); ++i) {
-                        light.matrices[i] = projection * view_matrices[i];
+                light.cast_shadow = cast_shadow;
+                light.max_distance = light_component.get_max_distance();
+                if (cast_shadow && shadow_map_index != -1) {
+                    const auto& point_light_matrices = light_component.get_matrices();
+                    for (size_t i = 0; i < 6; ++i) {
+                        light.matrices[i] = point_light_matrices[i];
                     }
-
-                    // @TODO: allocate
-                    auto resource = GraphicsManager::singleton().find_render_target(RT_RES_POINT_SHADOW_MAP + std::to_string(num_point_light_cast_shadow));
+                    auto resource = GraphicsManager::singleton().find_render_target(RT_RES_POINT_SHADOW_MAP + std::to_string(shadow_map_index));
                     light.shadow_map = resource ? resource->texture->get_resident_handle() : 0;
-
-                    ++num_point_light_cast_shadow;
+                } else {
+                    light.shadow_map = 0;
                 }
             } break;
             default:
                 break;
         }
+        ++idx;
     }
 
+    // @TODO: fix this
     if (!light_matrices.empty()) {
-        for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
-            cache.c_main_light_matrices[idx] = light_matrices[idx];
+        for (int idx2 = 0; idx2 < MAX_CASCADE_COUNT; ++idx2) {
+            cache.c_main_light_matrices[idx2] = light_matrices[idx2];
         }
     }
 

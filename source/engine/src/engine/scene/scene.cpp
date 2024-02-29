@@ -138,12 +138,12 @@ Entity Scene::create_pointlight_entity(const std::string& name, const vec3& posi
     transform.set_dirty();
 
     LightComponent& light = create<LightComponent>(entity);
-    light.type = LIGHT_TYPE_POINT;
-    light.color = color;
-    light.energy = energy;
-    light.atten.constant = 1.0f;
-    light.atten.linear = 0.09f;
-    light.atten.quadratic = 0.032f;
+    light.set_type(LIGHT_TYPE_POINT);
+    light.m_color = color;
+    light.m_energy = energy;
+    light.m_atten.constant = 1.0f;
+    light.m_atten.linear = 0.09f;
+    light.m_atten.quadratic = 0.032f;
     return entity;
 }
 
@@ -153,12 +153,12 @@ Entity Scene::create_omnilight_entity(const std::string& name, const vec3& color
     create<TransformComponent>(entity);
 
     LightComponent& light = create<LightComponent>(entity);
-    light.type = LIGHT_TYPE_OMNI;
-    light.color = color;
-    light.energy = energy;
-    light.atten.constant = 1.0f;
-    light.atten.linear = 0.0f;
-    light.atten.quadratic = 0.0f;
+    light.set_type(LIGHT_TYPE_OMNI);
+    light.m_color = color;
+    light.m_energy = energy;
+    light.m_atten.constant = 1.0f;
+    light.m_atten.linear = 0.0f;
+    light.m_atten.quadratic = 0.0f;
     return entity;
 }
 
@@ -357,33 +357,6 @@ void Scene::update_hierarchy(uint32_t index) {
     self_transform->set_dirty(false);
 }
 
-void Scene::update_light(uint32_t index) {
-    Entity self_id = get_entity<LightComponent>(index);
-    LightComponent& light = m_LightComponents[index];
-
-    constexpr float atten_factor_inv = 1.0f / 0.01f;
-    if (light.atten.linear == 0.0f && light.atten.quadratic == 0.0f) {
-        light.max_distance = 1000.0f;
-    } else {
-        // (constant + linear * x + quad * x^2) * atten_factor = 1
-        // quad * x^2 + linear * x + constant - 1.0 / atten_factor = 0
-        const float a = light.atten.quadratic;
-        const float b = light.atten.linear;
-        const float c = light.atten.constant - atten_factor_inv;
-
-        float discriminant = b * b - 4 * a * c;
-        if (discriminant < 0.0f) {
-            __debugbreak();
-        }
-
-        float sqrt_d = glm::sqrt(discriminant);
-        float root1 = (-b + sqrt_d) / (2 * a);
-        float root2 = (-b - sqrt_d) / (2 * a);
-        light.max_distance = root1 > 0.0f ? root1 : root2;
-        light.max_distance = glm::max(LIGHT_SHADOW_MIN_DISTANCE + 1.0f, light.max_distance);
-    }
-}
-
 void Scene::update_armature(uint32_t index) {
     Entity id = m_ArmatureComponents.get_entity(index);
     ArmatureComponent& armature = m_ArmatureComponents[index];
@@ -547,7 +520,7 @@ Scene::RayIntersectionResult Scene::intersects(Ray& ray) {
 }
 
 void Scene::run_light_update_system(Context& ctx) {
-    JS_PARALLEL_FOR(ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, update_light(index));
+    JS_PARALLEL_FOR(ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, m_LightComponents[index].update());
 }
 
 void Scene::run_transformation_update_system(Context& ctx) {

@@ -8,29 +8,6 @@ void HierarchyComponent::serialize(Archive& archive, uint32_t) {
     m_parent_id.serialize(archive);
 }
 
-void LightComponent::serialize(Archive& archive, uint32_t version) {
-    unused(version);
-    if (archive.is_write_mode()) {
-        archive << flags;
-        archive << type;
-        archive << color;
-        archive << energy;
-        archive << atten.constant;
-        archive << atten.linear;
-        archive << atten.quadratic;
-    } else {
-        if (version >= 4) {
-            archive >> flags;
-        }
-        archive >> type;
-        archive >> color;
-        archive >> energy;
-        archive >> atten.constant;
-        archive >> atten.linear;
-        archive >> atten.quadratic;
-    }
-}
-
 void ObjectComponent::serialize(Archive& archive, uint32_t) {
     mesh_id.serialize(archive);
 }

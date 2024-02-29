@@ -27,9 +27,6 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 
     auto& gm = GraphicsManager::singleton();
     auto render_data = gm.get_render_data();
-    if (render_data->point_shadow_passes.size() <= p_pass_id) {
-        return;
-    }
 
     // prepare render data
     gm.set_render_target(p_subpass);
@@ -480,10 +477,11 @@ void final_pass_func(const Subpass* p_subpass) {
     auto handle = GraphicsManager::singleton().find_resource(RT_BRDF)->get_resident_handle();
     debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
 #endif
-#if 0
-    auto shadow_map_handle = GraphicsManager::singleton().find_resource(RT_RES_SHADOW_MAP)->get_resident_handle();
-    debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 800, 200);
-#endif
+
+    if (DVAR_GET_BOOL(r_debug_csm)) {
+        auto shadow_map_handle = GraphicsManager::singleton().find_render_target(RT_RES_SHADOW_MAP)->texture->get_resident_handle();
+        debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 800, 200);
+    }
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {

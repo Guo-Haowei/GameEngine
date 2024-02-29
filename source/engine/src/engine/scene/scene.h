@@ -4,6 +4,7 @@
 #include "core/systems/component_manager.h"
 #include "scene/camera.h"
 #include "scene/collider_component.h"
+#include "scene/light_component.h"
 #include "scene/material_component.h"
 #include "scene/mesh_component.h"
 #include "scene/name_component.h"
@@ -208,7 +209,6 @@ public:                                                                         
     bool m_replace = false;
 
 private:
-    void update_light(uint32_t index);
     void update_hierarchy(uint32_t index);
     void update_animation(uint32_t index);
     void update_armature(uint32_t index);
