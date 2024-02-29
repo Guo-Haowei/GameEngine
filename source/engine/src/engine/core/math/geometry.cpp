@@ -2,6 +2,66 @@
 
 namespace my {
 
+/**
+ *        E__________________ H
+ *       /|                 /|
+ *      / |                / |
+ *     /  |               /  |
+ *   A/___|______________/D  |
+ *    |   |              |   |
+ *    |   |              |   |
+ *    |   |              |   |
+ *    |  F|______________|___|G
+ *    |  /               |  /
+ *    | /                | /
+ *   B|/_________________|C
+ *
+ */
+
+// clang-format off
+enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };
+// clang-format on
+
+MeshComponent make_plane_mesh(const vec3& p_scale) {
+    MeshComponent mesh;
+    const float x = p_scale.x;
+    const float y = p_scale.y;
+    mesh.positions = {
+        vec3(-x, +y, 0.0f),  // A
+        vec3(-x, -y, 0.0f),  // B
+        vec3(+x, -y, 0.0f),  // C
+        vec3(+x, +y, 0.0f),  // D
+    };
+
+    const vec3 normal{ 0, 0, 1 };
+    mesh.normals = {
+        normal,
+        normal,
+        normal,
+        normal,
+    };
+
+    mesh.texcoords_0 = {
+        vec2(1, 0),  // top-left
+        vec2(0, 0),  // bottom-left
+        vec2(0, 1),  // bottom-right
+        vec2(1, 1),  // top-right
+    };
+
+    mesh.indices = {
+        A, B, D,  // ABD
+        D, B, C,  // DBC
+    };
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(mesh.indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.create_render_data();
+    return mesh;
+}
+
 MeshComponent make_cube_mesh(const vec3& p_scale) {
     MeshComponent mesh;
     // clang-format off
@@ -182,50 +242,6 @@ MeshComponent make_sphere_mesh(float p_radius, int p_rings, int p_sectors) {
     mesh.subsets.emplace_back(subset);
 
     mesh.create_render_data();
-    return mesh;
-}
-
-/**
- *        E__________________ H
- *       /|                 /|
- *      / |                / |
- *     /  |               /  |
- *   A/___|______________/D  |
- *    |   |              |   |
- *    |   |              |   |
- *    |   |              |   |
- *    |  F|______________|___|G
- *    |  /               |  /
- *    | /                | /
- *   B|/_________________|C
- *
- */
-
-// clang-format off
-enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };
-// clang-format on
-
-MeshComponent make_plane_mesh(float size) {
-    MeshComponent mesh;
-    mesh.positions = {
-        vec3(-size, +size, 0.0f),  // A
-        vec3(-size, -size, 0.0f),  // B
-        vec3(+size, -size, 0.0f),  // C
-        vec3(+size, +size, 0.0f),  // D
-    };
-
-    mesh.texcoords_0 = {
-        vec2(1, 0),  // top-left
-        vec2(0, 0),  // bottom-left
-        vec2(0, 1),  // bottom-right
-        vec2(1, 1),  // top-right
-    };
-
-    mesh.indices = {
-        A, B, D,  // ABD
-        D, B, C,  // DBC
-    };
-
     return mesh;
 }
 

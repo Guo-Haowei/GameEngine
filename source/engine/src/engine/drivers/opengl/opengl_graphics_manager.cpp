@@ -446,7 +446,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     create_ssao_resource();
 
     // create a dummy box data
-    create_mesh_data(make_plane_mesh(0.3f), g_billboard);
+    create_mesh_data(make_plane_mesh(vec3(0.3f)), g_billboard);
     create_mesh_data(make_box_mesh(), g_box);
     create_mesh_data(make_sky_box_mesh(), g_skybox);
 

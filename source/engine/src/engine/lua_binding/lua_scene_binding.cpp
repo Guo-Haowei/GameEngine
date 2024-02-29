@@ -48,6 +48,9 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<std::string> type = p_components["type"]; type) {
         if (type == "POINT_LIGHT") {
             id = p_scene->create_pointlight_entity(name, vec3(0));
+            LightComponent* light = p_scene->get_component<LightComponent>(id);
+            light->set_cast_shadow();
+            light->set_dirty();
         } else {
             CRASH_NOW();
         }
@@ -79,6 +82,15 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
 
         id = p_scene->create_cube_entity(name, material_id, size);
     }
+    if (sol::optional<sol::table> table = p_components["plane"]; table) {
+        vec3 size{ 0.5f };
+        try_get_vec3(*table, "size", size);
+        if (!material_id.is_valid()) {
+            material_id = create_material();
+        }
+
+        id = p_scene->create_plane_entity(name, material_id, size);
+    }
     if (sol::optional<sol::table> table = p_components["sphere"]; table) {
         float radius{ 0.5f };
         try_get_float(*table, "radius", radius);
@@ -89,6 +101,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         id = p_scene->create_sphere_entity(name, material_id, radius);
     }
 
+    // @TODO: transformation
     if (sol::optional<sol::table> table = p_components["transform"]; table) {
         vec3 translate{ 0 };
         vec3 rotate{ 0 };

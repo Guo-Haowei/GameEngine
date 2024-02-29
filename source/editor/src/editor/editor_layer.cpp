@@ -145,7 +145,7 @@ void EditorLayer::flush_commands(Scene& scene) {
                         id = scene.create_pointlight_entity(gen_name("Pointlight"), vec3(0, 1, 0));
                         break;
                     case ENTITY_TYPE_PLANE:
-                        id = scene.create_cube_entity(gen_name("Plane"));
+                        id = scene.create_plane_entity(gen_name("Plane"));
                         break;
                     case ENTITY_TYPE_CUBE:
                         id = scene.create_cube_entity(gen_name("Cube"));

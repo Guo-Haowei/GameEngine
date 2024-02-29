@@ -163,6 +163,32 @@ Entity Scene::create_omnilight_entity(const std::string& name, const vec3& color
     return entity;
 }
 
+Entity Scene::create_plane_entity(const std::string& p_name,
+                                  const vec3& p_scale,
+                                  const mat4& p_transform) {
+    Entity material_id = create_material_entity(p_name + ":mat");
+    return create_plane_entity(p_name, material_id, p_scale, p_transform);
+}
+
+Entity Scene::create_plane_entity(const std::string& p_name,
+                                  Entity p_material_id,
+                                  const vec3& p_scale,
+                                  const mat4& p_transform) {
+    ecs::Entity entity = create_object_entity(p_name);
+    TransformComponent& trans = *get_component<TransformComponent>(entity);
+    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    trans.matrix_transform(p_transform);
+
+    ecs::Entity mesh_id = create_mesh_entity(p_name + ":mesh");
+    object.mesh_id = mesh_id;
+
+    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
+    mesh = make_plane_mesh(p_scale);
+    mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
 Entity Scene::create_cube_entity(const std::string& p_name,
                                  const vec3& p_scale,
                                  const mat4& p_transform) {

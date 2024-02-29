@@ -76,4 +76,21 @@ function scene_helper.build_cube_desc(p_name, p_position, p_size, p_mass)
     return desc
 end
 
+function scene_helper.build_plane_desc(p_name, p_position, p_size, p_mass)
+    p_position = p_position or Vector3.ZERO
+    p_size = p_size or Vector3.HALF
+    local desc = {
+        name = p_name,
+        plane = { size = p_size },
+        transform = { translate = p_position },
+    }
+    if p_mass ~= nil then
+        desc.rigid_body = {
+            shape = 'SHAPE_PLANE',
+            size = p_size,
+            mass = p_mass,
+        }
+    end
+    return desc
+end
 return scene_helper

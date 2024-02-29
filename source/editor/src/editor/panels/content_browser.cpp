@@ -12,10 +12,10 @@ ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Br
     m_root_path = fs::path{ fs::path(ROOT_FOLDER) / "resources" };
 
     const std::string& cached_path = DVAR_GET_STRING(content_browser_path);
-    if (cached_path.empty()) {
-        m_current_path = m_root_path;
-    } else {
+    if (!cached_path.empty() && fs::exists(cached_path)) {
         m_current_path = cached_path;
+    } else {
+        m_current_path = m_root_path;
     }
 
     auto folder_icon = AssetManager::singleton().load_image_sync("@res://images/icons/folder_icon.png")->get();
