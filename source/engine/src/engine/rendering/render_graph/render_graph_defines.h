@@ -12,6 +12,7 @@
 #define RT_RES_GBUFFER_POSITION   "rt_res_gbuffer_position"
 #define RT_RES_GBUFFER_NORMAL     "rt_res_gbuffer_normal"
 #define RT_RES_GBUFFER_BASE_COLOR "rt_res_gbuffer_base_color"
+#define RT_RES_GBUFFER_MATERIAL   "rt_res_gbuffer_material"
 #define RT_RES_GBUFFER_DEPTH      "rt_res_gbuffer_depth"
 
 // base_color pass
@@ -24,7 +25,7 @@
 #define VXGI_DEBUG_PASS   "debug_vxgi_pass"
 #define LIGHTING_PASS     "lighting_pass"
 #define SSAO_PASS         "ssao_pass"
-#define FXAA_PASS         "fxaa_pass"
+#define TONE_PASS         "tone_pass"
 #define FINAL_PASS        "final_pass"
 
 // environment
@@ -38,7 +39,7 @@
 #define RT_BRDF                            "rt_brdf"
 
 #define RT_RES_LIGHTING "rt_res_light"
-#define RT_RES_FXAA     "rt_res_fxaa"
+#define RT_RES_TONE     "RT_RES_TONE"
 #define RT_RES_SSAO     "rt_res_ssao"
 #define RT_RES_FINAL    "rt_res_final"
 
@@ -46,6 +47,8 @@
 #define DUMMY_PASS "dummy_pass"
 
 namespace my::rg {
+
+void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height);
 
 void create_render_graph_dummy(RenderGraph& graph);
 void create_render_graph_base_color(RenderGraph& graph);

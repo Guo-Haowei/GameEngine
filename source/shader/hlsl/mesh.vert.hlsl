@@ -4,19 +4,19 @@
 
 vsoutput_mesh main(vsinput_mesh input) {
 #ifdef HAS_ANIMATION
-    float4x4 boneTransform = g_bones[input.boneIndex.x] * input.boneWeight.x;
-    boneTransform += g_bones[input.boneIndex.y] * input.boneWeight.y;
-    boneTransform += g_bones[input.boneIndex.z] * input.boneWeight.z;
-    boneTransform += g_bones[input.boneIndex.w] * input.boneWeight.w;
-    float4x4 world_matrix = mul(g_world, boneTransform);
+    float4x4 boneTransform = u_bones[input.boneIndex.x] * input.boneWeight.x;
+    boneTransform += u_bones[input.boneIndex.y] * input.boneWeight.y;
+    boneTransform += u_bones[input.boneIndex.z] * input.boneWeight.z;
+    boneTransform += u_bones[input.boneIndex.w] * input.boneWeight.w;
+    float4x4 world_matrix = mul(u_world_matrix, boneTransform);
 #else
-    float4x4 world_matrix = g_world;
+    float4x4 world_matrix = u_world_matrix;
 #endif
 
     float4 position = float4(input.position, 1.0);
     position = mul(world_matrix, position);
     float3 world_position = position.xyz;
-    position = mul(g_projection_view, position);
+    position = mul(u_proj_view_matrix, position);
 
     vsoutput_mesh result;
     result.position = position;

@@ -8,16 +8,6 @@
 
 namespace my {
 
-// @TODO: refactor
-enum {
-    DISPLAY_FXAA_IMAGE = 0,
-    DISPLAY_GBUFFER_DEPTH,
-    DISPLAY_GBUFFER_BASE_COLOR,
-    DISPLAY_GBUFFER_NORMAL,
-    DISPLAY_SSAO,
-    DISPLAY_SHADOW_MAP,
-};
-
 class EditorLayer : public Layer {
 public:
     enum State {

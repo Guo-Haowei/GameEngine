@@ -6,14 +6,14 @@ layout(location = 5) in vec4 in_bone_weight;
 
 void main() {
 #ifdef HAS_ANIMATION
-    mat4 bone_matrix = g_bones[in_bone_id.x] * in_bone_weight.x;
-    bone_matrix += g_bones[in_bone_id.y] * in_bone_weight.y;
-    bone_matrix += g_bones[in_bone_id.z] * in_bone_weight.z;
-    bone_matrix += g_bones[in_bone_id.w] * in_bone_weight.w;
-    mat4 world_matrix = g_world * bone_matrix;
+    mat4 bone_matrix = u_bones[in_bone_id.x] * in_bone_weight.x;
+    bone_matrix += u_bones[in_bone_id.y] * in_bone_weight.y;
+    bone_matrix += u_bones[in_bone_id.z] * in_bone_weight.z;
+    bone_matrix += u_bones[in_bone_id.w] * in_bone_weight.w;
+    mat4 world_matrix = u_world_matrix * bone_matrix;
 #else
-    mat4 world_matrix = g_world;
+    mat4 world_matrix = u_world_matrix;
 #endif
 
-    gl_Position = g_projection_view * world_matrix * vec4(in_position, 1.0);
+    gl_Position = u_proj_view_matrix * world_matrix * vec4(in_position, 1.0);
 }

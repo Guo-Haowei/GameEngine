@@ -2,7 +2,7 @@
 
 #include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
-#include "rendering/render_graph/render_graphs.h"
+#include "rendering/render_graph/render_graph_defines.h"
 
 #define DEFINE_DVAR
 #include "rendering_dvars.h"
@@ -236,7 +236,16 @@ void fill_constant_buffers(const Scene& scene) {
                     light.shadow_map = 0;
                 }
             } break;
+            case LIGHT_TYPE_AREA: {
+                mat4 transform = light_transform->get_world_matrix();
+                constexpr float s = 0.5f;
+                light.points[0] = transform * vec4(-s, +s, 0.0f, 1.0f);
+                light.points[1] = transform * vec4(-s, -s, 0.0f, 1.0f);
+                light.points[2] = transform * vec4(+s, -s, 0.0f, 1.0f);
+                light.points[3] = transform * vec4(+s, +s, 0.0f, 1.0f);
+            } break;
             default:
+                CRASH_NOW();
                 break;
         }
         ++idx;
@@ -267,9 +276,6 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
     cache.c_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
     cache.c_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
-
-    // c_fxaa_image
-    cache.c_enable_fxaa = DVAR_GET_BOOL(r_enable_fxaa);
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);

@@ -6,7 +6,7 @@ int find_cascade(const in vec3 p_pos_world) {
         return 0;
     }
 
-    vec4 pos_view = g_view * vec4(p_pos_world, 1.0);
+    vec4 pos_view = u_view_matrix * vec4(p_pos_world, 1.0);
     float depth = abs(pos_view.z);
 
     for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
@@ -34,7 +34,7 @@ float point_shadow_calculation(vec3 p_frag_pos, int p_light_index, vec3 p_eye) {
     vec3 frag_to_light = p_frag_pos - light_position;
     float current_depth = length(frag_to_light);
 
-    float bias = 0.15;
+    float bias = 0.01;
 
     float view_distance = length(p_eye - p_frag_pos);
     float disk_radius = (1.0 + (view_distance / light_far)) / 100.0;

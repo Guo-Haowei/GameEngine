@@ -131,11 +131,27 @@ public:                                                                         
     ecs::Entity create_mesh_entity(const std::string& name);
     ecs::Entity create_material_entity(const std::string& name);
 
-    ecs::Entity create_pointlight_entity(const std::string& name, const vec3& position, const vec3& color = vec3(1),
-                                         const float energy = 5.0f);
+    ecs::Entity create_point_light_entity(const std::string& p_name,
+                                          const vec3& p_position,
+                                          const vec3& p_color = vec3(1),
+                                          const float p_energy = 5.0f);
 
-    ecs::Entity create_omnilight_entity(const std::string& name, const vec3& color = vec3(1),
-                                        const float energy = 5.0f);
+    ecs::Entity create_area_light_entity(const std::string& p_name,
+                                         const vec3& p_color = vec3(1),
+                                         const float p_energy = 5.0f);
+
+    ecs::Entity create_omni_light_entity(const std::string& p_name,
+                                         const vec3& p_color = vec3(1),
+                                         const float p_energy = 5.0f);
+
+    ecs::Entity create_plane_entity(const std::string& p_name,
+                                    const vec3& p_scale = vec3(0.5f),
+                                    const mat4& p_transform = mat4(1.0f));
+
+    ecs::Entity create_plane_entity(const std::string& p_name,
+                                    ecs::Entity p_material_id,
+                                    const vec3& p_scale = vec3(0.5f),
+                                    const mat4& p_transform = mat4(1.0f));
 
     ecs::Entity create_cube_entity(const std::string& p_name,
                                    const vec3& p_scale = vec3(0.5f),

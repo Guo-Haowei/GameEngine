@@ -2,9 +2,9 @@
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
-#include "render_graphs.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_data.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
@@ -45,9 +45,9 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 
     const auto& light_matrices = pass.light_component.get_matrices();
     for (int i = 0; i < 6; ++i) {
-        g_per_pass_cache.cache.g_projection_view = light_matrices[i];
-        g_per_pass_cache.cache.g_point_light_position = pass.light_component.get_position();
-        g_per_pass_cache.cache.g_point_light_far = pass.light_component.get_max_distance();
+        g_per_pass_cache.cache.u_proj_view_matrix = light_matrices[i];
+        g_per_pass_cache.cache.u_point_light_position = pass.light_component.get_position();
+        g_per_pass_cache.cache.u_point_light_far = pass.light_component.get_max_distance();
         g_per_pass_cache.update();
 
         gm.set_render_target(p_subpass, i);
@@ -207,9 +207,9 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.g_projection = projection;
-        g_per_pass_cache.cache.g_view = view_matrices[i];
-        g_per_pass_cache.cache.g_projection_view = projection * view_matrices[i];
+        g_per_pass_cache.cache.u_proj_matrix = projection;
+        g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
         g_per_pass_cache.update();
         draw_cube_map();
     }
@@ -254,9 +254,9 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.g_projection = projection;
-        g_per_pass_cache.cache.g_view = view_matrices[i];
-        g_per_pass_cache.cache.g_projection_view = projection * view_matrices[i];
+        g_per_pass_cache.cache.u_proj_matrix = projection;
+        g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
         g_per_pass_cache.update();
         draw_cube_map();
     }
@@ -277,10 +277,10 @@ void prefilter_pass_func(const Subpass* p_subpass) {
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
-            g_per_pass_cache.cache.g_projection = projection;
-            g_per_pass_cache.cache.g_view = view_matrices[face_id];
-            g_per_pass_cache.cache.g_projection_view = projection * view_matrices[face_id];
-            g_per_pass_cache.cache.g_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
+            g_per_pass_cache.cache.u_proj_matrix = projection;
+            g_per_pass_cache.cache.u_view_matrix = view_matrices[face_id];
+            g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[face_id];
+            g_per_pass_cache.cache.u_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
             g_per_pass_cache.update();
 
             GraphicsManager::singleton().set_render_target(p_subpass, face_id, mip_idx);
@@ -291,48 +291,6 @@ void prefilter_pass_func(const Subpass* p_subpass) {
     }
 
     return;
-}
-
-void gbuffer_pass_func(const Subpass* p_subpass) {
-    OPTICK_EVENT();
-
-    auto& gm = GraphicsManager::singleton();
-    gm.set_render_target(p_subpass);
-    auto [width, height] = p_subpass->depth_attachment->get_size();
-
-    glViewport(0, 0, width, height);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    auto render_data = gm.get_render_data();
-    RenderData::Pass& pass = render_data->main_pass;
-
-    pass.fill_perpass(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
-
-    for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
-        }
-
-        gm.set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
-
-        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
-
-        gm.set_mesh(draw.mesh_data);
-
-        for (const auto& subset : draw.subsets) {
-            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
-
-            gm.draw_elements(subset.index_count, subset.index_offset);
-        }
-    }
-
-    glUseProgram(0);
 }
 
 void ssao_pass_func(const Subpass* p_subpass) {
@@ -352,9 +310,9 @@ void ssao_pass_func(const Subpass* p_subpass) {
 // @TODO: refactor
 static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
     auto camera = SceneManager::singleton().get_scene().m_camera;
-    buffer.g_projection_view = camera->get_projection_view_matrix();
-    buffer.g_view = camera->get_view_matrix();
-    buffer.g_projection = camera->get_projection_matrix();
+    buffer.u_proj_view_matrix = camera->get_projection_view_matrix();
+    buffer.u_view_matrix = camera->get_view_matrix();
+    buffer.u_proj_matrix = camera->get_projection_matrix();
 }
 
 void lighting_pass_func(const Subpass* p_subpass) {
@@ -419,7 +377,7 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     glDrawElementsInstanced(GL_TRIANGLES, g_box.index_count, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
-void fxaa_pass_func(const Subpass* p_subpass) {
+void TONE_PASS_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     GraphicsManager::singleton().set_render_target(p_subpass);
@@ -440,7 +398,7 @@ void fxaa_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // glDisable(GL_DEPTH_TEST);
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_FXAA);
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_TONE);
         R_DrawQuad();
     }
 
@@ -480,7 +438,7 @@ void final_pass_func(const Subpass* p_subpass) {
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_IMAGE_2D);
 
     // @TODO: clean up
-    auto final_image_handle = GraphicsManager::singleton().find_render_target(RT_RES_FXAA)->texture->get_resident_handle();
+    auto final_image_handle = GraphicsManager::singleton().find_render_target(RT_RES_TONE)->texture->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
 #if 0
@@ -495,46 +453,16 @@ void final_pass_func(const Subpass* p_subpass) {
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {
+    // @TODO: early-z
+
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
     int h = frame_size.y;
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    // @TODO: refactor
-    auto gbuffer_attachment0 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
-                                                                              PixelFormat::R16G16B16A16_FLOAT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
-    auto gbuffer_attachment1 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
-                                                                              PixelFormat::R16G16B16A16_FLOAT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
-    auto gbuffer_attachment2 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
-                                                                              PixelFormat::R8G8B8A8_UINT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
-    auto gbuffer_depth = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
-                                                                        PixelFormat::D32_FLOAT,
-                                                                        AttachmentType::DEPTH_2D,
-                                                                        w, h },
-                                                      nearest_sampler());
-
     auto ssao_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_SSAO,
                                                                           PixelFormat::R32_FLOAT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h },
-                                                        nearest_sampler());
-    auto lighting_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_LIGHTING,
-                                                                              PixelFormat::R8G8B8A8_UINT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
-    auto fxaa_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_FXAA,
-                                                                          PixelFormat::R8G8B8A8_UINT,
                                                                           AttachmentType::COLOR_2D,
                                                                           w, h },
                                                         nearest_sampler());
@@ -635,17 +563,11 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         });
         pass->add_sub_pass(subpass);
     }
-    {  // gbuffer pass
-        RenderPassDesc desc;
-        desc.name = GBUFFER_PASS;
-        auto pass = graph.create_pass(desc);
-        auto subpass = manager.create_subpass(SubpassDesc{
-            .color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 },
-            .depth_attachment = gbuffer_depth,
-            .func = gbuffer_pass_func,
-        });
-        pass->add_sub_pass(subpass);
-    }
+
+    create_gbuffer_pass(graph, w, h);
+
+    auto gbuffer_depth = manager.find_render_target(RT_RES_GBUFFER_DEPTH);
+
     {  // voxel pass
         RenderPassDesc desc;
         desc.name = VOXELIZATION_PASS;
@@ -668,6 +590,12 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
     {  // lighting pass
+        auto lighting_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_LIGHTING,
+                                                                                  PixelFormat::R11G11B10_FLOAT,
+                                                                                  AttachmentType::COLOR_2D,
+                                                                                  w, h },
+                                                                nearest_sampler());
+
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
         desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS, ENV_PASS };
@@ -680,13 +608,19 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
     {  // fxaa pass
+        auto fxaa_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_TONE,
+                                                                              PixelFormat::R11G11B10_FLOAT,
+                                                                              AttachmentType::COLOR_2D,
+                                                                              w, h },
+                                                            nearest_sampler());
+
         RenderPassDesc desc;
-        desc.name = FXAA_PASS;
+        desc.name = TONE_PASS;
         desc.dependencies = { LIGHTING_PASS };
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { fxaa_attachment },
-            .func = fxaa_pass_func,
+            .func = TONE_PASS_func,
         });
         pass->add_sub_pass(subpass);
     }
@@ -694,7 +628,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         // final pass
         RenderPassDesc desc;
         desc.name = FINAL_PASS;
-        desc.dependencies = { FXAA_PASS };
+        desc.dependencies = { TONE_PASS };
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { final_attachment },

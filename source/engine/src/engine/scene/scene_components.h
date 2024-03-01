@@ -4,8 +4,8 @@
 #include "core/math/aabb.h"
 #include "core/math/angle.h"
 #include "core/systems/entity.h"
-#include "hlsl/shader_defines.h"
 
+// @TODO: split following
 namespace my {
 
 class Archive;

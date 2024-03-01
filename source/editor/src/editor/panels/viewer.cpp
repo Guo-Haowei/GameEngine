@@ -106,16 +106,11 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
     if (transform_component) {
         AABB aabb;
-        if (const BoxColliderComponent* collider = scene.get_component<BoxColliderComponent>(id); collider) {
-            aabb = collider->box;
-        }
-        if (const MeshColliderComponent* collider = scene.get_component<MeshColliderComponent>(id); collider) {
-            if (const ObjectComponent* object = scene.get_component<ObjectComponent>(collider->object_id); object) {
-                MeshComponent* mesh = scene.get_component<MeshComponent>(object->mesh_id);
-                transform_component = scene.get_component<TransformComponent>(collider->object_id);
-                DEV_ASSERT(transform_component);
-                aabb = mesh->local_bound;
-            }
+        if (const ObjectComponent* object = scene.get_component<ObjectComponent>(id); object) {
+            MeshComponent* mesh = scene.get_component<MeshComponent>(object->mesh_id);
+            transform_component = scene.get_component<TransformComponent>(id);
+            DEV_ASSERT(transform_component);
+            aabb = mesh->local_bound;
         }
 
         if (aabb.is_valid()) {

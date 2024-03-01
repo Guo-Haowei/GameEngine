@@ -7,7 +7,7 @@ out vec2 pass_texcoord_0;
 
 void main() {
     pass_texcoord_0 = in_texcoord_0;
-    mat4 view_model = g_view * g_world;
+    mat4 view_model = u_view_matrix * u_world_matrix;
     view_model[0][0] = 1.0;
     view_model[0][1] = 0.0;
     view_model[0][2] = 0.0;
@@ -18,5 +18,5 @@ void main() {
     view_model[2][1] = 0.0;
     view_model[2][2] = 1.0;
 
-    gl_Position = g_projection * view_model * vec4(in_position, 1.0);
+    gl_Position = u_proj_matrix * view_model * vec4(in_position, 1.0);
 }

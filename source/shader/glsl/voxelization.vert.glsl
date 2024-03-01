@@ -7,13 +7,13 @@ out vec2 pass_uvs;
 
 void main() {
 #ifdef HAS_ANIMATION
-    mat4 bone_matrix = g_bones[in_bone_id.x] * in_bone_weight.x;
-    bone_matrix += g_bones[in_bone_id.y] * in_bone_weight.y;
-    bone_matrix += g_bones[in_bone_id.z] * in_bone_weight.z;
-    bone_matrix += g_bones[in_bone_id.w] * in_bone_weight.w;
-    mat4 world_matrix = g_world * bone_matrix;
+    mat4 bone_matrix = u_bones[in_bone_id.x] * in_bone_weight.x;
+    bone_matrix += u_bones[in_bone_id.y] * in_bone_weight.y;
+    bone_matrix += u_bones[in_bone_id.z] * in_bone_weight.z;
+    bone_matrix += u_bones[in_bone_id.w] * in_bone_weight.w;
+    mat4 world_matrix = u_world_matrix * bone_matrix;
 #else
-    mat4 world_matrix = g_world;
+    mat4 world_matrix = u_world_matrix;
 #endif
 
     vec4 world_position = world_matrix * vec4(in_position, 1.0);

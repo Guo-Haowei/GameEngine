@@ -61,7 +61,6 @@ void DebugPanel::update_internal(Scene&) {
     dvar_checkbox(DVAR_r_enable_csm, []() {
         ImGui::Checkbox("Debug CSM", (bool*)DVAR_GET_POINTER(r_debug_csm));
     });
-    dvar_checkbox(DVAR_r_enable_fxaa);
     dvar_checkbox(DVAR_show_editor);
 
     ImGui::Separator();

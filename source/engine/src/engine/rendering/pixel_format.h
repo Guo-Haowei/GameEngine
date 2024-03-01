@@ -24,6 +24,9 @@ enum class PixelFormat {
     R32G32B32_SINT,
     R32G32B32A32_SINT,
 
+    R11G11B10_FLOAT,
+    R10G10B10A2_UINT,
+
     D32_FLOAT,
 };
 

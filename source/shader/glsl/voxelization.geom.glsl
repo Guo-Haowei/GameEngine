@@ -12,9 +12,9 @@ out vec3 pass_normal;
 out vec2 pass_uv;
 
 void main() {
-    vec3 triangle_normal =
-        abs(pass_normals[0] + pass_normals[1] + pass_normals[2]);
+    vec3 triangle_normal = abs(pass_normals[0] + pass_normals[1] + pass_normals[2]);
 
+    // @TODO: there's a bug stretching voxel along x axis
     uint dominant = triangle_normal.x > triangle_normal.y ? 0 : 1;
     dominant = triangle_normal.z > dominant ? 2 : dominant;
 

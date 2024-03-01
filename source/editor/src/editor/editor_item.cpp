@@ -8,7 +8,7 @@ void EditorItem::open_add_entity_popup(ecs::Entity p_parent) {
     if (ImGui::BeginMenu("Add")) {
         if (ImGui::BeginMenu("Mesh")) {
             if (ImGui::MenuItem("Plane")) {
-                LOG_ERROR("not implemented");
+                m_editor.add_entity(ENTITY_TYPE_PLANE, p_parent);
             }
             if (ImGui::MenuItem("Cube")) {
                 m_editor.add_entity(ENTITY_TYPE_CUBE, p_parent);
@@ -29,7 +29,7 @@ void EditorItem::open_add_entity_popup(ecs::Entity p_parent) {
                 LOG_ERROR("not implemented");
             }
             if (ImGui::MenuItem("Area")) {
-                LOG_ERROR("not implemented");
+                m_editor.add_entity(ENTITY_TYPE_AREA_LIGHT, p_parent);
             }
             ImGui::EndMenu();
         }

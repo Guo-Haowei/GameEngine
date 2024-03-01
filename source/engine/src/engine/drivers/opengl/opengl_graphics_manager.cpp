@@ -1,9 +1,5 @@
 #include "opengl_graphics_manager.h"
 
-// @TODO: remove
-#include <random>
-/////
-
 #include "assets/image.h"
 #include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
@@ -15,15 +11,21 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/GpuTexture.h"
 #include "rendering/gl_utils.h"
-#include "rendering/render_graph/render_graphs.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"
 
+// @TODO: remove
+#include <random>
+
+#include "rendering/ltc_matrix.h"
+/////
+
+// @TODO: refactor
+using namespace my;
 using my::rg::RenderGraph;
 using my::rg::RenderPass;
-
-using namespace my;
 
 /// textures
 // @TODO: time to refactor this!!
@@ -37,7 +39,6 @@ OpenGLMeshBuffers g_billboard;
 
 static GLuint g_noiseTexture;
 
-// @TODO: refactor
 template<typename T>
 static void buffer_storage(GLuint buffer, const std::vector<T>& data) {
     glNamedBufferStorage(buffer, sizeof(T) * data.size(), data.data(), 0);
@@ -48,6 +49,21 @@ static inline void bind_to_slot(GLuint buffer, int slot, int size) {
     glVertexAttribPointer(slot, size, GL_FLOAT, GL_FALSE, size * sizeof(float), 0);
     glEnableVertexAttribArray(slot);
 }
+
+static unsigned int loadMTexture(const float* matrixTable) {
+    unsigned int texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_FLOAT, matrixTable);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texture;
+}
+
+//-----------------------------------------------------------------------------------------------------------------
 
 namespace my {
 
@@ -446,7 +462,7 @@ void OpenGLGraphicsManager::createGpuResources() {
     create_ssao_resource();
 
     // create a dummy box data
-    create_mesh_data(make_plane_mesh(0.3f), g_billboard);
+    create_mesh_data(make_plane_mesh(vec3(0.3f)), g_billboard);
     create_mesh_data(make_box_mesh(), g_box);
     create_mesh_data(make_sky_box_mesh(), g_skybox);
 
@@ -470,6 +486,13 @@ void OpenGLGraphicsManager::createGpuResources() {
     R_CreateQuad();
 
     auto& cache = g_constantCache.cache;
+
+    // @TODO: delete!
+    unsigned int m1 = loadMTexture(LTC1);
+    unsigned int m2 = loadMTexture(LTC2);
+    cache.u_ltc_1 = ::gl::MakeTextureResident(m1);
+    cache.u_ltc_2 = ::gl::MakeTextureResident(m2);
+
     cache.c_voxel_map = ::gl::MakeTextureResident(g_albedoVoxel.GetHandle());
     cache.c_voxel_normal_map = ::gl::MakeTextureResident(g_normalVoxel.GetHandle());
 
@@ -485,12 +508,13 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
-    make_resident(RT_RES_FXAA, cache.c_fxaa_image);
-    make_resident(RT_RES_GBUFFER_POSITION, cache.c_gbuffer_position_metallic_map);
-    make_resident(RT_RES_GBUFFER_NORMAL, cache.c_gbuffer_normal_roughness_map);
-    make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.c_gbuffer_albedo_map);
-    make_resident(RT_RES_GBUFFER_DEPTH, cache.c_gbuffer_depth_map);
-    make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
+    make_resident(RT_RES_TONE, cache.c_tone_image);
+    make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.u_gbuffer_base_color_map);
+    make_resident(RT_RES_GBUFFER_POSITION, cache.u_gbuffer_position_map);
+    make_resident(RT_RES_GBUFFER_NORMAL, cache.u_gbuffer_normal_map);
+    make_resident(RT_RES_GBUFFER_MATERIAL, cache.u_gbuffer_material_map);
+    make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
+    make_resident(RT_RES_LIGHTING, cache.c_tone_input_image);
     make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
     make_resident(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
     make_resident(RT_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);
