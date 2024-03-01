@@ -29,6 +29,7 @@ void main() {
         }
     }
 
+    // @TODO: there's a bug stretching voxel along x axis
     // stretch the triangle to fill more one more texel
     vec2 side0N = normalize(output_positions[1].xy - output_positions[0].xy);
     vec2 side1N = normalize(output_positions[2].xy - output_positions[1].xy);

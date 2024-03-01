@@ -15,7 +15,7 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     const vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
     const vec3 nom = NDF * G * F;
-    const float denom = 4 * NdotV * NdotL;
+    float denom = 4 * NdotV * NdotL;
 
     vec3 specular = nom / max(denom, 0.001);
 

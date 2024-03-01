@@ -45,9 +45,32 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         name = *optional_name;
     }
 
+    mat4 transform{ 1 };
+    vec3 translate{ 0 };
+    if (sol::optional<sol::table> table = p_components["transform"]; table) {
+        mat4 translation_matrix{ 1 };
+        mat4 rotation_matrix{ 1 };
+        mat4 scale_matrix{ 1 };
+        if (try_get_vec3(*table, "translate", translate)) {
+            translation_matrix = glm::translate(translate);
+        }
+        if (vec3 rotate{ 0 }; try_get_vec3(*table, "rotate", rotate)) {
+            mat4 rotation_x = glm::rotate(glm::radians(rotate.x), vec3(1, 0, 0));
+            mat4 rotation_y = glm::rotate(glm::radians(rotate.y), vec3(0, 1, 0));
+            mat4 rotation_z = glm::rotate(glm::radians(rotate.z), vec3(0, 0, 1));
+            rotation_matrix = rotation_z * rotation_y * rotation_x;
+        }
+        if (vec3 scale{ 1 }; try_get_vec3(*table, "scale", scale)) {
+            scale_matrix = glm::scale(scale);
+        }
+
+        transform = rotation_matrix * translation_matrix * scale_matrix;
+        // transform = translation_matrix * rotation_matrix * scale_matrix;
+    }
+
     if (sol::optional<std::string> type = p_components["type"]; type) {
         if (type == "POINT_LIGHT") {
-            id = p_scene->create_pointlight_entity(name, vec3(0));
+            id = p_scene->create_pointlight_entity(name, translate);
             LightComponent* light = p_scene->get_component<LightComponent>(id);
             light->set_cast_shadow();
             light->set_dirty();
@@ -80,7 +103,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             material_id = create_material();
         }
 
-        id = p_scene->create_cube_entity(name, material_id, size);
+        id = p_scene->create_cube_entity(name, material_id, size, transform);
     }
     if (sol::optional<sol::table> table = p_components["plane"]; table) {
         vec3 size{ 0.5f };
@@ -89,7 +112,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             material_id = create_material();
         }
 
-        id = p_scene->create_plane_entity(name, material_id, size);
+        id = p_scene->create_plane_entity(name, material_id, size, transform);
     }
     if (sol::optional<sol::table> table = p_components["sphere"]; table) {
         float radius{ 0.5f };
@@ -98,29 +121,15 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             material_id = create_material();
         }
 
-        id = p_scene->create_sphere_entity(name, material_id, radius);
+        id = p_scene->create_sphere_entity(name, material_id, radius, transform);
     }
 
-    // @TODO: transformation
-    if (sol::optional<sol::table> table = p_components["transform"]; table) {
-        vec3 translate{ 0 };
-        vec3 rotate{ 0 };
-        vec3 scale{ 1 };
-        try_get_vec3(*table, "translate", translate);
-        try_get_vec3(*table, "rotate", rotate);
-        try_get_vec3(*table, "scale", scale);
+    if (TransformComponent* transform_component = p_scene->get_component<TransformComponent>(id); !transform_component) {
+        DEV_ASSERT(!id.is_valid());
+        id = p_scene->create_name_entity(name);
 
-        TransformComponent* transform = p_scene->get_component<TransformComponent>(id);
-        if (!transform) {
-            DEV_ASSERT(!id.is_valid());
-            id = p_scene->create_name_entity(name);
-
-            transform = &p_scene->create<TransformComponent>(id);
-        }
-        transform->set_translation(translate);
-        // transform_component.set_rotation(rotate);
-        transform->set_scale(scale);
-        transform->set_dirty();
+        transform_component = &p_scene->create<TransformComponent>(id);
+        transform_component->set_local_transform(transform);
     }
 
     if (sol::optional<sol::table> table = p_components["rigid_body"]; table) {

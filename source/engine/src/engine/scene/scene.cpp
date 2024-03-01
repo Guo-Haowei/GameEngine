@@ -130,21 +130,36 @@ Entity Scene::create_box_selectable(const std::string& name, const AABB& aabb) {
     return entity;
 }
 
-Entity Scene::create_pointlight_entity(const std::string& name, const vec3& position, const vec3& color,
+Entity Scene::create_pointlight_entity(const std::string& p_name, const vec3& p_position, const vec3& p_color,
                                        const float energy) {
-    Entity entity = create_box_selectable(name, AABB::from_center_size(vec3(0), vec3(0.3f)));
-
-    TransformComponent& transform = create<TransformComponent>(entity);
-    transform.set_translation(position);
+    Entity entity = create_object_entity(p_name);
+    TransformComponent& transform = *get_component<TransformComponent>(entity);
+    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    transform.set_translation(p_position);
     transform.set_dirty();
+
+    Entity mesh_id = create_mesh_entity(p_name + ":mesh");
+    Entity material_id = create_material_entity(p_name + ":mat");
+    object.mesh_id = mesh_id;
+    object.flags = ObjectComponent::RENDERABLE;
+
+    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
+    mesh = make_sphere_mesh(0.2f, 40, 40);
+    mesh.subsets[0].material_id = material_id;
+
+    // @TODO: generalize it?
+    MaterialComponent& material = *get_component<MaterialComponent>(material_id);
+    material.base_color = vec4(p_color, 1.0f);
+    material.emissive = energy;
 
     LightComponent& light = create<LightComponent>(entity);
     light.set_type(LIGHT_TYPE_POINT);
-    light.m_color = color;
+    light.m_color = p_color;
     light.m_energy = energy;
     light.m_atten.constant = 1.0f;
     light.m_atten.linear = 0.09f;
     light.m_atten.quadratic = 0.032f;
+    // @TODO: emissive
     return entity;
 }
 
@@ -235,7 +250,7 @@ Entity Scene::create_sphere_entity(const std::string& p_name,
     object.mesh_id = mesh_id;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_sphere_mesh(p_radius, 20, 20);
+    mesh = make_sphere_mesh(p_radius);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;

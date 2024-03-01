@@ -112,11 +112,12 @@ CBUFFER(MaterialConstantBuffer, 3) {
     float c_metallic;
     float c_roughness;
     float c_reflect_power;
-    int c_has_albedo_map;
+    float c_emissive_power;
 
-    vec2 _c_padding1;
+    int c_has_albedo_map;
     int c_has_pbr_map;
     int c_has_normal_map;
+    int _c_padding1;
 
     sampler2D c_albedo_map;
     sampler2D c_normal_map;

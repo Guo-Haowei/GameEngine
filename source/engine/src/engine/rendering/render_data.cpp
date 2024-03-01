@@ -46,6 +46,7 @@ static void fill_material_constant_buffer(const MaterialComponent* material, Mat
     cb.c_albedo_color = material->base_color;
     cb.c_metallic = material->metallic;
     cb.c_roughness = material->roughness;
+    cb.c_emissive_power = material->emissive;
 
     auto set_texture = [&](int idx, sampler2D& out_handle) {
         if (!material->textures[idx].enabled) {

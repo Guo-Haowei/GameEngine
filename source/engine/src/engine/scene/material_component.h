@@ -23,6 +23,7 @@ struct MaterialComponent {
 
     float metallic = 0.0f;
     float roughness = 1.0f;
+    float emissive = 0.0f;
     vec4 base_color = vec4(1);
     TextureMap textures[TEXTURE_MAX];
     bool use_textures;
