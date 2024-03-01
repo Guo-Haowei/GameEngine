@@ -31,28 +31,29 @@ static_assert(MAX_CASCADE_COUNT == 4);
 #endif
 
 CBUFFER(PerBatchConstantBuffer, 0) {
-    mat4 g_world;
+    mat4 u_world_matrix;
     mat4 _per_batch_padding_0;
     mat4 _per_batch_padding_1;
     mat4 _per_batch_padding_2;
 };
 
 CBUFFER(PerPassConstantBuffer, 1) {
-    mat4 g_view;
-    mat4 g_projection;
-    mat4 g_projection_view;
+    mat4 u_view_matrix;
+    mat4 u_proj_matrix;
+    mat4 u_proj_view_matrix;
 
-    vec3 g_point_light_position;
-    float g_point_light_far;
+    vec3 u_point_light_position;
+    float u_point_light_far;
 
     vec4 _per_pass_padding_0;
     vec4 _per_pass_padding_1;
     vec3 _per_pass_padding_2;
-    float g_per_pass_roughness;  // for environment map
+    float u_per_pass_roughness;  // for environment map
 };
 
+// @TODO: change to unordered access buffer
 CBUFFER(BoneConstantBuffer, 5) {
-    mat4 g_bones[MAX_BONE_COUNT];
+    mat4 u_bones[MAX_BONE_COUNT];
 };
 
 #ifndef HLSL_LANG
@@ -135,18 +136,18 @@ CBUFFER(MaterialConstantBuffer, 3) {
 CBUFFER(PerSceneConstantBuffer, 4) {
     vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
+    sampler2D u_gbuffer_base_color_map;
+    sampler2D u_gbuffer_position_map;
+    sampler2D u_gbuffer_normal_map;
+    sampler2D u_gbuffer_material_map;
+
+    sampler2D u_gbuffer_depth_map;
+    sampler2D _some_other_padding;
+
     sampler2D c_shadow_map;
     sampler2D c_hdr_env_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
-
-    sampler2D g_gbuffer_base_color_map;
-    sampler2D c_gbuffer_position_metallic_map;
-    sampler2D c_gbuffer_normal_roughness_map;
-    sampler2D g_gbuffer_material_map;
-
-    sampler2D g_gbuffer_depth_map;
-    sampler2D _some_other_padding;
 
     sampler2D c_ssao_map;
     sampler2D c_kernel_noise_map;

@@ -6,7 +6,7 @@ int find_cascade(const in vec3 p_pos_world) {
         return 0;
     }
 
-    vec4 pos_view = g_view * vec4(p_pos_world, 1.0);
+    vec4 pos_view = u_view_matrix * vec4(p_pos_world, 1.0);
     float depth = abs(pos_view.z);
 
     for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {

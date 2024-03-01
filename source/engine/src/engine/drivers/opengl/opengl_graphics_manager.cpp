@@ -486,11 +486,11 @@ void OpenGLGraphicsManager::createGpuResources() {
     make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_FXAA, cache.c_fxaa_image);
-    make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.g_gbuffer_base_color_map);
-    make_resident(RT_RES_GBUFFER_POSITION, cache.c_gbuffer_position_metallic_map);
-    make_resident(RT_RES_GBUFFER_NORMAL, cache.c_gbuffer_normal_roughness_map);
-    make_resident(RT_RES_GBUFFER_MATERIAL, cache.g_gbuffer_material_map);
-    make_resident(RT_RES_GBUFFER_DEPTH, cache.g_gbuffer_depth_map);
+    make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.u_gbuffer_base_color_map);
+    make_resident(RT_RES_GBUFFER_POSITION, cache.u_gbuffer_position_map);
+    make_resident(RT_RES_GBUFFER_NORMAL, cache.u_gbuffer_normal_map);
+    make_resident(RT_RES_GBUFFER_MATERIAL, cache.u_gbuffer_material_map);
+    make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_fxaa_input_image);
     make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
     make_resident(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);

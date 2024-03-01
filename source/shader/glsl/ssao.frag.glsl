@@ -10,16 +10,16 @@ void main() {
     noiseScale /= float(c_ssao_noise_size);
 
     const vec2 uv = pass_uv;
-    const vec3 N = normalize(texture(c_gbuffer_normal_roughness_map, uv).xyz);
+    const vec3 N = normalize(texture(u_gbuffer_normal_map, uv).xyz);
     const vec3 rvec = texture(c_kernel_noise_map, noiseScale * uv).xyz;
     const vec3 tangent = normalize(rvec - N * dot(rvec, N));
     const vec3 bitangent = cross(N, tangent);
 
     mat3 TBN = mat3(tangent, bitangent, N);
-    TBN = mat3(g_view) * TBN;
+    TBN = mat3(u_view_matrix) * TBN;
 
-    vec4 origin = vec4(texture(c_gbuffer_position_metallic_map, uv).xyz, 1.0);
-    origin = g_view * origin;
+    vec4 origin = vec4(texture(u_gbuffer_position_map, uv).xyz, 1.0);
+    origin = u_view_matrix * origin;
 
     occlusion = 0.0;
     for (int i = 0; i < c_ssao_kernel_size; ++i) {
@@ -29,13 +29,13 @@ void main() {
 
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);
-        offset = g_projection * offset;     // from view to clip-space
+        offset = u_proj_matrix * offset;    // from view to clip-space
         offset.xyz /= offset.w;             // perspective divide
         offset.xy = offset.xy * 0.5 + 0.5;  // transform to range 0.0 - 1.0
 
         // get sample depth
         const vec4 sampleg_viewSpace =
-            g_view * vec4(texture(c_gbuffer_position_metallic_map, offset.xy).xyz, 1.0);  // get depth value of kernel sample
+            u_view_matrix * vec4(texture(u_gbuffer_position_map, offset.xy).xyz, 1.0);  // get depth value of kernel sample
         const float sampleDepth = sampleg_viewSpace.z;
 
         // range check & accumulate

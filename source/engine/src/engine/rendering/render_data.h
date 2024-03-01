@@ -40,9 +40,9 @@ struct RenderData {
         LightComponent light_component;
 
         void fill_perpass(PerPassConstantBuffer& buffer) const {
-            buffer.g_projection = projection_matrix;
-            buffer.g_view = view_matrix;
-            buffer.g_projection_view = projection_view_matrix;
+            buffer.u_proj_matrix = projection_matrix;
+            buffer.u_view_matrix = view_matrix;
+            buffer.u_proj_view_matrix = projection_view_matrix;
         }
 
         std::vector<Mesh> draws;

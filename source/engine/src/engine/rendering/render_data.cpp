@@ -251,7 +251,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
         }
 
         PerBatchConstantBuffer batch_buffer;
-        batch_buffer.g_world = world_matrix;
+        batch_buffer.u_world_matrix = world_matrix;
 
         Mesh draw;
 
@@ -261,7 +261,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
             DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             BoneConstantBuffer bone;
-            memcpy(bone.g_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
+            memcpy(bone.u_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
 
             // @TODO: better memory usage
             draw.bone_idx = find_or_add_bone(mesh.armature_id, bone);

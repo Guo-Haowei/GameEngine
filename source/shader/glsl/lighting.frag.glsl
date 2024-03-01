@@ -17,25 +17,22 @@ vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
 
 void main() {
     const vec2 uv = pass_uv;
-    float depth = texture(g_gbuffer_depth_map, uv).r;
+    float depth = texture(u_gbuffer_depth_map, uv).r;
 
     if (depth > 0.999) discard;
 
     gl_FragDepth = depth;
 
-    vec3 N = texture(c_gbuffer_normal_roughness_map, uv).rgb;
+    vec3 N = texture(u_gbuffer_normal_map, uv).rgb;
     N = (2.0 * N) - vec3(1.0);
 
-    const vec4 position_metallic = texture(c_gbuffer_position_metallic_map, uv);
-    const vec3 world_position = position_metallic.xyz;
+    const vec3 world_position = texture(u_gbuffer_position_map, uv).rgb;
+    const vec3 emissive_roughness_metallic = texture(u_gbuffer_material_map, uv).rgb;
+    float emissive = emissive_roughness_metallic.r;
+    float roughness = emissive_roughness_metallic.g;
+    float metallic = emissive_roughness_metallic.b;
 
-    const vec3 emissive_roughness_metallic = texture(g_gbuffer_material_map, uv).rgb;
-    const float emissive = emissive_roughness_metallic.r;
-    const float roughness = emissive_roughness_metallic.g;
-    const float metallic = emissive_roughness_metallic.b;
-
-    vec3 base_color = texture(g_gbuffer_base_color_map, uv).rgb;
-
+    vec3 base_color = texture(u_gbuffer_base_color_map, uv).rgb;
     if (c_no_texture != 0) {
         base_color = vec3(0.6);
     }
@@ -126,6 +123,12 @@ void main() {
 
     vec3 color = Lo + ambient;
 
+    // @TODO: move this before those heavy calculation
+    if (emissive > 0.0) {
+        color = emissive * base_color;
+    }
+
+    // @TODO: move gamma correction after bloom
     const float gamma = 1.0 / 2.2;
 
     color = color / (color + 1.0);

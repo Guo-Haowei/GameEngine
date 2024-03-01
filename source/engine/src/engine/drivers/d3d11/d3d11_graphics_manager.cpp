@@ -127,11 +127,11 @@ void D3d11GraphicsManager::render() {
 
     const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
 
-    g_per_pass_cache.cache.g_view = scene.m_camera->get_view_matrix();
-    g_per_pass_cache.cache.g_projection = fixup * scene.m_camera->get_projection_matrix();
-    g_per_pass_cache.cache.g_projection_view =
-        g_per_pass_cache.cache.g_projection *
-        g_per_pass_cache.cache.g_view;
+    g_per_pass_cache.cache.u_view_matrix = scene.m_camera->get_view_matrix();
+    g_per_pass_cache.cache.u_proj_matrix = fixup * scene.m_camera->get_projection_matrix();
+    g_per_pass_cache.cache.u_proj_view_matrix =
+        g_per_pass_cache.cache.u_proj_matrix *
+        g_per_pass_cache.cache.u_view_matrix;
     g_per_pass_cache.update();
 
     RenderData::Pass& pass = m_render_data->main_pass;

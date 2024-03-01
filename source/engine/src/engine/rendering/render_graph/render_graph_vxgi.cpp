@@ -45,9 +45,9 @@ void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 
     const auto& light_matrices = pass.light_component.get_matrices();
     for (int i = 0; i < 6; ++i) {
-        g_per_pass_cache.cache.g_projection_view = light_matrices[i];
-        g_per_pass_cache.cache.g_point_light_position = pass.light_component.get_position();
-        g_per_pass_cache.cache.g_point_light_far = pass.light_component.get_max_distance();
+        g_per_pass_cache.cache.u_proj_view_matrix = light_matrices[i];
+        g_per_pass_cache.cache.u_point_light_position = pass.light_component.get_position();
+        g_per_pass_cache.cache.u_point_light_far = pass.light_component.get_max_distance();
         g_per_pass_cache.update();
 
         gm.set_render_target(p_subpass, i);
@@ -207,9 +207,9 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.g_projection = projection;
-        g_per_pass_cache.cache.g_view = view_matrices[i];
-        g_per_pass_cache.cache.g_projection_view = projection * view_matrices[i];
+        g_per_pass_cache.cache.u_proj_matrix = projection;
+        g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
         g_per_pass_cache.update();
         draw_cube_map();
     }
@@ -254,9 +254,9 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.g_projection = projection;
-        g_per_pass_cache.cache.g_view = view_matrices[i];
-        g_per_pass_cache.cache.g_projection_view = projection * view_matrices[i];
+        g_per_pass_cache.cache.u_proj_matrix = projection;
+        g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
+        g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
         g_per_pass_cache.update();
         draw_cube_map();
     }
@@ -277,10 +277,10 @@ void prefilter_pass_func(const Subpass* p_subpass) {
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
-            g_per_pass_cache.cache.g_projection = projection;
-            g_per_pass_cache.cache.g_view = view_matrices[face_id];
-            g_per_pass_cache.cache.g_projection_view = projection * view_matrices[face_id];
-            g_per_pass_cache.cache.g_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
+            g_per_pass_cache.cache.u_proj_matrix = projection;
+            g_per_pass_cache.cache.u_view_matrix = view_matrices[face_id];
+            g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[face_id];
+            g_per_pass_cache.cache.u_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
             g_per_pass_cache.update();
 
             GraphicsManager::singleton().set_render_target(p_subpass, face_id, mip_idx);
@@ -352,9 +352,9 @@ void ssao_pass_func(const Subpass* p_subpass) {
 // @TODO: refactor
 static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
     auto camera = SceneManager::singleton().get_scene().m_camera;
-    buffer.g_projection_view = camera->get_projection_view_matrix();
-    buffer.g_view = camera->get_view_matrix();
-    buffer.g_projection = camera->get_projection_matrix();
+    buffer.u_proj_view_matrix = camera->get_projection_view_matrix();
+    buffer.u_view_matrix = camera->get_view_matrix();
+    buffer.u_proj_matrix = camera->get_projection_matrix();
 }
 
 void lighting_pass_func(const Subpass* p_subpass) {
@@ -620,6 +620,8 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         });
         pass->add_sub_pass(subpass);
     }
+
+    // @TODO: extract this to a common place
     {  // gbuffer pass
         auto attachment0 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
                                                                           PixelFormat::R11G11B10_FLOAT,
@@ -627,12 +629,13 @@ void create_render_graph_vxgi(RenderGraph& graph) {
                                                                           w, h },
                                                         nearest_sampler());
         auto attachment1 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
-                                                                          PixelFormat::R16G16B16A16_FLOAT,
+                                                                          PixelFormat::R16G16B16_FLOAT,
                                                                           AttachmentType::COLOR_2D,
                                                                           w, h },
                                                         nearest_sampler());
         auto attachment2 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
-                                                                          PixelFormat::R10G10B10A2_UINT,
+                                                                          PixelFormat::R16G16B16_FLOAT,
+                                                                          // PixelFormat::R10G10B10A2_UINT,
                                                                           AttachmentType::COLOR_2D,
                                                                           w, h },
                                                         nearest_sampler());

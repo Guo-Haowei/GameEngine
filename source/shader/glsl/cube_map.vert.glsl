@@ -7,5 +7,5 @@ out vec3 pass_position;
 void main() {
     pass_position = in_position;
     vec4 world_position = vec4(in_position, 1.0);
-    gl_Position = g_projection_view * world_position;
+    gl_Position = u_proj_view_matrix * world_position;
 }
