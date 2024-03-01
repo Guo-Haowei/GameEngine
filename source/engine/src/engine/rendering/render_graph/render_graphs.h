@@ -12,6 +12,7 @@
 #define RT_RES_GBUFFER_POSITION   "rt_res_gbuffer_position"
 #define RT_RES_GBUFFER_NORMAL     "rt_res_gbuffer_normal"
 #define RT_RES_GBUFFER_BASE_COLOR "rt_res_gbuffer_base_color"
+#define RT_RES_GBUFFER_MATERIAL   "rt_res_gbuffer_material"
 #define RT_RES_GBUFFER_DEPTH      "rt_res_gbuffer_depth"
 
 // base_color pass

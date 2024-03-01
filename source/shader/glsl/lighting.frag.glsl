@@ -17,33 +17,37 @@ vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
 
 void main() {
     const vec2 uv = pass_uv;
-    float depth = texture(c_gbuffer_depth_map, uv).r;
+    float depth = texture(g_gbuffer_depth_map, uv).r;
 
     if (depth > 0.999) discard;
 
     gl_FragDepth = depth;
 
-    const vec4 normal_roughness = texture(c_gbuffer_normal_roughness_map, uv);
+    vec3 N = texture(c_gbuffer_normal_roughness_map, uv).rgb;
+    N = (2.0 * N) - vec3(1.0);
+
     const vec4 position_metallic = texture(c_gbuffer_position_metallic_map, uv);
     const vec3 world_position = position_metallic.xyz;
-    float roughness = normal_roughness.w;
-    float metallic = position_metallic.w;
 
-    vec4 albedo = texture(c_gbuffer_albedo_map, uv);
+    const vec3 emissive_roughness_metallic = texture(g_gbuffer_material_map, uv).rgb;
+    const float emissive = emissive_roughness_metallic.r;
+    const float roughness = emissive_roughness_metallic.g;
+    const float metallic = emissive_roughness_metallic.b;
+
+    vec3 base_color = texture(g_gbuffer_base_color_map, uv).rgb;
 
     if (c_no_texture != 0) {
-        albedo.rgb = vec3(0.6);
+        base_color = vec3(0.6);
     }
 
     const int cascade_level = find_cascade(world_position);
 
-    const vec3 N = normal_roughness.xyz;
     const vec3 V = normalize(c_camera_position - world_position);
     const float NdotV = max(dot(N, V), 0.0);
     vec3 R = reflect(-V, N);
 
     vec3 Lo = vec3(0.0);
-    vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
+    vec3 F0 = mix(vec3(0.04), base_color, metallic);
 
     for (int light_idx = 0; light_idx < c_light_count; ++light_idx) {
         Light light = c_lights[light_idx];
@@ -57,7 +61,7 @@ void main() {
 
                 const vec3 H = normalize(V + L);
                 const vec3 radiance = light.color;
-                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
+                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
                     shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
@@ -74,7 +78,7 @@ void main() {
                     vec3 L = normalize(delta);
                     const vec3 H = normalize(V + L);
                     const vec3 radiance = c_lights[light_idx].color;
-                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
+                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                     if (light.cast_shadow == 1) {
                         shadow = point_shadow_calculation(world_position, light_idx, c_camera_position);
                     }
@@ -93,7 +97,7 @@ void main() {
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
     vec3 irradiance = texture(c_diffuse_irradiance_map, N).rgb;
-    vec3 diffuse = irradiance * albedo.rgb;
+    vec3 diffuse = irradiance * base_color.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(c_prefiltered_map, R, roughness * MAX_REFLECTION_LOD).rgb;
@@ -110,7 +114,7 @@ void main() {
         const vec3 kD = (1.0 - kS) * (1.0 - metallic);
 
         // indirect diffuse
-        vec3 diffuse = albedo.rgb * cone_diffuse(world_position, N);
+        vec3 diffuse = base_color.rgb * cone_diffuse(world_position, N);
 
         // specular cone
         vec3 coneDirection = reflect(-V, N);

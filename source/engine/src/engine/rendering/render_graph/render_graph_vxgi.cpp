@@ -501,22 +501,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    // @TODO: refactor
-    auto gbuffer_attachment0 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
-                                                                              PixelFormat::R16G16B16A16_FLOAT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
-    auto gbuffer_attachment1 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
-                                                                              PixelFormat::R16G16B16A16_FLOAT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
-    auto gbuffer_attachment2 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
-                                                                              PixelFormat::R8G8B8A8_UINT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
+    // @TODO: early-z
     auto gbuffer_depth = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
                                                                         PixelFormat::D32_FLOAT,
                                                                         AttachmentType::DEPTH_2D,
@@ -636,11 +621,32 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
     {  // gbuffer pass
+        auto attachment0 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
+                                                                          PixelFormat::R11G11B10_FLOAT,
+                                                                          AttachmentType::COLOR_2D,
+                                                                          w, h },
+                                                        nearest_sampler());
+        auto attachment1 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
+                                                                          PixelFormat::R16G16B16A16_FLOAT,
+                                                                          AttachmentType::COLOR_2D,
+                                                                          w, h },
+                                                        nearest_sampler());
+        auto attachment2 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
+                                                                          PixelFormat::R10G10B10A2_UINT,
+                                                                          AttachmentType::COLOR_2D,
+                                                                          w, h },
+                                                        nearest_sampler());
+        auto attachment3 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_MATERIAL,
+                                                                          PixelFormat::R11G11B10_FLOAT,
+                                                                          AttachmentType::COLOR_2D,
+                                                                          w, h },
+                                                        nearest_sampler());
+
         RenderPassDesc desc;
         desc.name = GBUFFER_PASS;
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
-            .color_attachments = { gbuffer_attachment0, gbuffer_attachment1, gbuffer_attachment2 },
+            .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
             .depth_attachment = gbuffer_depth,
             .func = gbuffer_pass_func,
         });

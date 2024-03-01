@@ -140,10 +140,13 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
 
-    sampler2D c_gbuffer_albedo_map;
+    sampler2D g_gbuffer_base_color_map;
     sampler2D c_gbuffer_position_metallic_map;
     sampler2D c_gbuffer_normal_roughness_map;
-    sampler2D c_gbuffer_depth_map;
+    sampler2D g_gbuffer_material_map;
+
+    sampler2D g_gbuffer_depth_map;
+    sampler2D _some_other_padding;
 
     sampler2D c_ssao_map;
     sampler2D c_kernel_noise_map;

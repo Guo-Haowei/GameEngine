@@ -48,7 +48,7 @@ void main() {
 
                 const vec3 H = normalize(V + L);
                 const vec3 radiance = light.color;
-                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
+                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo.rgb);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
                     shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
@@ -65,7 +65,7 @@ void main() {
                     vec3 L = normalize(delta);
                     const vec3 H = normalize(V + L);
                     const vec3 radiance = c_lights[light_idx].color;
-                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo);
+                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo.rgb);
                     if (light.cast_shadow == 1) {
                         shadow = point_shadow_calculation(world_position, light_idx, c_camera_position);
                     }

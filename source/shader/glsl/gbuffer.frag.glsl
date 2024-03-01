@@ -1,6 +1,7 @@
-layout(location = 0) out vec4 out_position_metallic;
-layout(location = 1) out vec4 out_normal_roughness;
-layout(location = 2) out vec4 out_albedo;
+layout(location = 0) out vec3 out_base_color;
+layout(location = 1) out vec4 out_position_metallic;
+layout(location = 2) out vec3 out_normal;
+layout(location = 3) out vec3 out_emissive_roughness_metallic;
 
 in struct PS_INPUT {
     vec3 position;
@@ -43,8 +44,11 @@ void main() {
         N = normalize(ps_in.N);
     }
 
-    out_normal_roughness.xyz = N;
-    out_normal_roughness.w = roughness;
+    out_normal = 0.5 * (N + vec3(1.0));
 
-    out_albedo.rgb = albedo.rgb;
+    out_base_color.rgb = albedo.rgb;
+
+    out_emissive_roughness_metallic.r = c_emissive_power;
+    out_emissive_roughness_metallic.g = roughness;
+    out_emissive_roughness_metallic.b = metallic;
 }

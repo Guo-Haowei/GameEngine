@@ -2,7 +2,7 @@
 #include "shadow.glsl"
 
 // @TODO: refactor
-vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec4 albedo) {
+vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec3 p_base_color) {
     vec3 Lo = vec3(0.0, 0.0, 0.0);
     const vec3 H = normalize(V + L);
     const float NdotL = max(dot(N, L), 0.0);
@@ -22,7 +22,7 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     const vec3 kS = F;
     const vec3 kD = (1.0 - metallic) * (vec3(1.0) - kS);
 
-    vec3 direct_lighting = (kD * albedo.rgb / MY_PI + specular) * radiance * NdotL;
+    vec3 direct_lighting = (kD * p_base_color / MY_PI + specular) * radiance * NdotL;
 
     return direct_lighting;
 }
