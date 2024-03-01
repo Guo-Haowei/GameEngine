@@ -32,7 +32,7 @@ static void create_empty_scene(Scene* scene) {
     auto root = scene->create_transform_entity("world");
     scene->m_root = root;
     if (0) {
-        auto light = scene->create_omnilight_entity("omni light", vec3(1));
+        auto light = scene->create_omni_light_entity("omni light", vec3(1));
         auto transform = scene->get_component<TransformComponent>(light);
         DEV_ASSERT(transform);
         constexpr float rx = glm::radians(-80.0f);

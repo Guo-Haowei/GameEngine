@@ -15,7 +15,7 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/GpuTexture.h"
 #include "rendering/gl_utils.h"
-#include "rendering/render_graph/render_graphs.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"

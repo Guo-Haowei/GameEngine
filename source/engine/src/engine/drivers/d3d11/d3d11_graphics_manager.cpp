@@ -8,7 +8,7 @@
 #include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/d3d11/d3d11_resources.h"
 #include "drivers/windows/win32_display_manager.h"
-#include "rendering/render_graph/render_graphs.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/texture.h"
 // @TODO: refactor
@@ -87,7 +87,8 @@ bool D3d11GraphicsManager::initialize_internal() {
             D3D11_RASTERIZER_DESC desc;
             ZeroMemory(&desc, sizeof(desc));
             desc.FillMode = D3D11_FILL_SOLID;
-            desc.CullMode = D3D11_CULL_NONE;
+            desc.CullMode = D3D11_CULL_BACK;
+            desc.FrontCounterClockwise = true;
             m_device->CreateRasterizerState(&desc, m_rasterizer.GetAddressOf());
             m_ctx->RSSetState(m_rasterizer.Get());
         }
@@ -147,8 +148,6 @@ void D3d11GraphicsManager::render() {
         set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            // gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
-
             draw_elements(subset.index_count, subset.index_offset);
         }
     }

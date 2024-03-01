@@ -3,7 +3,7 @@
 #include "core/framework/graphics_manager.h"
 #include "core/math/frustum.h"
 #include "rendering/render_data.h"
-#include "rendering/render_graph/render_graphs.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my::rg {

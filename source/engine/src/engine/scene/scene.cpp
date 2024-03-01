@@ -130,8 +130,10 @@ Entity Scene::create_box_selectable(const std::string& name, const AABB& aabb) {
     return entity;
 }
 
-Entity Scene::create_pointlight_entity(const std::string& p_name, const vec3& p_position, const vec3& p_color,
-                                       const float energy) {
+Entity Scene::create_point_light_entity(const std::string& p_name,
+                                        const vec3& p_position,
+                                        const vec3& p_color,
+                                        const float p_energy) {
     Entity entity = create_object_entity(p_name);
     TransformComponent& transform = *get_component<TransformComponent>(entity);
     ObjectComponent& object = *get_component<ObjectComponent>(entity);
@@ -150,12 +152,12 @@ Entity Scene::create_pointlight_entity(const std::string& p_name, const vec3& p_
     // @TODO: generalize it?
     MaterialComponent& material = *get_component<MaterialComponent>(material_id);
     material.base_color = vec4(p_color, 1.0f);
-    material.emissive = energy;
+    material.emissive = p_energy;
 
     LightComponent& light = create<LightComponent>(entity);
     light.set_type(LIGHT_TYPE_POINT);
     light.m_color = p_color;
-    light.m_energy = energy;
+    light.m_energy = p_energy;
     light.m_atten.constant = 1.0f;
     light.m_atten.linear = 0.09f;
     light.m_atten.quadratic = 0.032f;
@@ -163,15 +165,17 @@ Entity Scene::create_pointlight_entity(const std::string& p_name, const vec3& p_
     return entity;
 }
 
-Entity Scene::create_omnilight_entity(const std::string& name, const vec3& color, const float energy) {
-    Entity entity = create_box_selectable(name, AABB::from_center_size(vec3(0), vec3(0.3f)));
+Entity Scene::create_omni_light_entity(const std::string& p_name,
+                                       const vec3& p_color,
+                                       const float p_energy) {
+    Entity entity = create_box_selectable(p_name, AABB::from_center_size(vec3(0), vec3(0.3f)));
 
     create<TransformComponent>(entity);
 
     LightComponent& light = create<LightComponent>(entity);
     light.set_type(LIGHT_TYPE_OMNI);
-    light.m_color = color;
-    light.m_energy = energy;
+    light.m_color = p_color;
+    light.m_energy = p_energy;
     light.m_atten.constant = 1.0f;
     light.m_atten.linear = 0.0f;
     light.m_atten.quadratic = 0.0f;

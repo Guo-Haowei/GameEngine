@@ -48,6 +48,8 @@
 
 namespace my::rg {
 
+void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height);
+
 void create_render_graph_dummy(RenderGraph& graph);
 void create_render_graph_base_color(RenderGraph& graph);
 void create_render_graph_vxgi(RenderGraph& graph);

@@ -70,7 +70,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
 
     if (sol::optional<std::string> type = p_components["type"]; type) {
         if (type == "POINT_LIGHT") {
-            id = p_scene->create_pointlight_entity(name, translate);
+            id = p_scene->create_point_light_entity(name, translate);
             LightComponent* light = p_scene->get_component<LightComponent>(id);
             light->set_cast_shadow();
             light->set_dirty();

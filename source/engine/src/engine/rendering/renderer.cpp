@@ -2,7 +2,7 @@
 
 #include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
-#include "rendering/render_graph/render_graphs.h"
+#include "rendering/render_graph/render_graph_defines.h"
 
 #define DEFINE_DVAR
 #include "rendering_dvars.h"

@@ -139,10 +139,10 @@ void EditorLayer::flush_commands(Scene& scene) {
                 ecs::Entity id;
                 switch (add_command->entity_type) {
                     case ENTITY_TYPE_OMNI_LIGHT:
-                        id = scene.create_omnilight_entity(gen_name("OmniLight"));
+                        id = scene.create_omni_light_entity(gen_name("OmniLight"));
                         break;
                     case ENTITY_TYPE_POINT_LIGHT:
-                        id = scene.create_pointlight_entity(gen_name("Pointlight"), vec3(0, 1, 0));
+                        id = scene.create_point_light_entity(gen_name("Pointlight"), vec3(0, 1, 0));
                         break;
                     case ENTITY_TYPE_PLANE:
                         id = scene.create_plane_entity(gen_name("Plane"));

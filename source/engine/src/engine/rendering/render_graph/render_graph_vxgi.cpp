@@ -2,9 +2,9 @@
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
-#include "render_graphs.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_data.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
@@ -293,48 +293,6 @@ void prefilter_pass_func(const Subpass* p_subpass) {
     return;
 }
 
-void gbuffer_pass_func(const Subpass* p_subpass) {
-    OPTICK_EVENT();
-
-    auto& gm = GraphicsManager::singleton();
-    gm.set_render_target(p_subpass);
-    auto [width, height] = p_subpass->depth_attachment->get_size();
-
-    glViewport(0, 0, width, height);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    auto render_data = gm.get_render_data();
-    RenderData::Pass& pass = render_data->main_pass;
-
-    pass.fill_perpass(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
-
-    for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
-        }
-
-        gm.set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
-
-        gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
-
-        gm.set_mesh(draw.mesh_data);
-
-        for (const auto& subset : draw.subsets) {
-            gm.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
-
-            gm.draw_elements(subset.index_count, subset.index_offset);
-        }
-    }
-
-    glUseProgram(0);
-}
-
 void ssao_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
@@ -495,29 +453,19 @@ void final_pass_func(const Subpass* p_subpass) {
 }
 
 void create_render_graph_vxgi(RenderGraph& graph) {
+    // @TODO: early-z
+
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
     int h = frame_size.y;
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    // @TODO: early-z
-    auto gbuffer_depth = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
-                                                                        PixelFormat::D32_FLOAT,
-                                                                        AttachmentType::DEPTH_2D,
-                                                                        w, h },
-                                                      nearest_sampler());
-
     auto ssao_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_SSAO,
                                                                           PixelFormat::R32_FLOAT,
                                                                           AttachmentType::COLOR_2D,
                                                                           w, h },
                                                         nearest_sampler());
-    auto lighting_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_LIGHTING,
-                                                                              PixelFormat::R8G8B8A8_UINT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
     auto fxaa_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_FXAA,
                                                                           PixelFormat::R8G8B8A8_UINT,
                                                                           AttachmentType::COLOR_2D,
@@ -621,40 +569,10 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
 
-    // @TODO: extract this to a common place
-    {  // gbuffer pass
-        auto attachment0 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
-                                                                          PixelFormat::R11G11B10_FLOAT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h },
-                                                        nearest_sampler());
-        auto attachment1 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
-                                                                          PixelFormat::R16G16B16_FLOAT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h },
-                                                        nearest_sampler());
-        auto attachment2 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
-                                                                          PixelFormat::R16G16B16_FLOAT,
-                                                                          // PixelFormat::R10G10B10A2_UINT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h },
-                                                        nearest_sampler());
-        auto attachment3 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_MATERIAL,
-                                                                          PixelFormat::R11G11B10_FLOAT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h },
-                                                        nearest_sampler());
+    create_gbuffer_pass(graph, w, h);
 
-        RenderPassDesc desc;
-        desc.name = GBUFFER_PASS;
-        auto pass = graph.create_pass(desc);
-        auto subpass = manager.create_subpass(SubpassDesc{
-            .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
-            .depth_attachment = gbuffer_depth,
-            .func = gbuffer_pass_func,
-        });
-        pass->add_sub_pass(subpass);
-    }
+    auto gbuffer_depth = manager.find_render_target(RT_RES_GBUFFER_DEPTH);
+
     {  // voxel pass
         RenderPassDesc desc;
         desc.name = VOXELIZATION_PASS;
@@ -677,6 +595,12 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
     {  // lighting pass
+        auto lighting_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_LIGHTING,
+                                                                                  PixelFormat::R11G11B10_FLOAT,
+                                                                                  AttachmentType::COLOR_2D,
+                                                                                  w, h },
+                                                                nearest_sampler());
+
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
         desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS, ENV_PASS };

@@ -125,18 +125,20 @@ public:                                                                         
                        Degree fovy = Camera::kDefaultFovy);
 
     ecs::Entity create_name_entity(const std::string& name);
-    // @TODO: remove this
     ecs::Entity create_box_selectable(const std::string& name, const AABB& aabb);
     ecs::Entity create_transform_entity(const std::string& name);
     ecs::Entity create_object_entity(const std::string& name);
     ecs::Entity create_mesh_entity(const std::string& name);
     ecs::Entity create_material_entity(const std::string& name);
 
-    ecs::Entity create_pointlight_entity(const std::string& name, const vec3& position, const vec3& color = vec3(1),
-                                         const float energy = 5.0f);
+    ecs::Entity create_point_light_entity(const std::string& p_name,
+                                          const vec3& p_position,
+                                          const vec3& p_color = vec3(1),
+                                          const float p_energy = 5.0f);
 
-    ecs::Entity create_omnilight_entity(const std::string& name, const vec3& color = vec3(1),
-                                        const float energy = 5.0f);
+    ecs::Entity create_omni_light_entity(const std::string& p_name,
+                                         const vec3& p_color = vec3(1),
+                                         const float p_energy = 5.0f);
 
     ecs::Entity create_plane_entity(const std::string& p_name,
                                     const vec3& p_scale = vec3(0.5f),

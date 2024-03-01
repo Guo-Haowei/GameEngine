@@ -6,6 +6,7 @@ namespace my {
 
 class Archive;
 
+// @TODO: remove this
 struct SelectableComponent {
     bool selected = false;
 

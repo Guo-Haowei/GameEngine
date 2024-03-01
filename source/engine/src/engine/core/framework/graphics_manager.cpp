@@ -6,7 +6,7 @@
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "drivers/opengl/opengl_pipeline_state_manager.h"
-#include "rendering/render_graph/render_graphs.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
