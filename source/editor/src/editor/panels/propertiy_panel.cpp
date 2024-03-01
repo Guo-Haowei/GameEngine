@@ -123,6 +123,8 @@ void PropertyPanel::update_internal(Scene& scene) {
                 disable_rotation = true;
                 disable_scale = true;
                 break;
+            case LIGHT_TYPE_AREA:
+                break;
             default:
                 CRASH_NOW();
                 break;

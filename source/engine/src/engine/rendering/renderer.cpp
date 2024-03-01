@@ -236,7 +236,16 @@ void fill_constant_buffers(const Scene& scene) {
                     light.shadow_map = 0;
                 }
             } break;
+            case LIGHT_TYPE_AREA: {
+                mat4 transform = light_transform->get_world_matrix();
+                constexpr float s = 0.5f;
+                light.points[0] = transform * vec4(-s, +s, 0.0f, 1.0f);
+                light.points[1] = transform * vec4(-s, -s, 0.0f, 1.0f);
+                light.points[2] = transform * vec4(+s, -s, 0.0f, 1.0f);
+                light.points[3] = transform * vec4(+s, +s, 0.0f, 1.0f);
+            } break;
             default:
+                CRASH_NOW();
                 break;
         }
         ++idx;

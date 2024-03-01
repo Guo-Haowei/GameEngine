@@ -125,7 +125,7 @@ void EditorLayer::buffer_command(std::shared_ptr<EditorCommand> p_command) {
 
 static std::string gen_name(std::string_view p_name) {
     static int s_counter = 0;
-    return std::format("{}_{}", p_name, ++s_counter);
+    return std::format("{}-{}", p_name, ++s_counter);
 }
 
 void EditorLayer::flush_commands(Scene& scene) {
@@ -137,19 +137,22 @@ void EditorLayer::flush_commands(Scene& scene) {
                 ecs::Entity id;
                 switch (add_command->entity_type) {
                     case ENTITY_TYPE_OMNI_LIGHT:
-                        id = scene.create_omni_light_entity(gen_name("OmniLight"));
+                        id = scene.create_omni_light_entity(gen_name("directional-light"));
                         break;
                     case ENTITY_TYPE_POINT_LIGHT:
-                        id = scene.create_point_light_entity(gen_name("Pointlight"), vec3(0, 1, 0));
+                        id = scene.create_point_light_entity(gen_name("point-light"), vec3(0, 1, 0));
+                        break;
+                    case ENTITY_TYPE_AREA_LIGHT:
+                        id = scene.create_area_light_entity(gen_name("area-light"));
                         break;
                     case ENTITY_TYPE_PLANE:
-                        id = scene.create_plane_entity(gen_name("Plane"));
+                        id = scene.create_plane_entity(gen_name("plane"));
                         break;
                     case ENTITY_TYPE_CUBE:
-                        id = scene.create_cube_entity(gen_name("Cube"));
+                        id = scene.create_cube_entity(gen_name("cube"));
                         break;
                     case ENTITY_TYPE_SPHERE:
-                        id = scene.create_sphere_entity(gen_name("Sphere"));
+                        id = scene.create_sphere_entity(gen_name("sphere"));
                         break;
                     default:
                         CRASH_NOW();

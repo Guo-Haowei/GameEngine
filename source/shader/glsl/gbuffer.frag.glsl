@@ -43,7 +43,7 @@ void main() {
 
     out_base_color.rgb = albedo.rgb;
     out_position = ps_in.position;
-    out_normal = 0.5 * (N + vec3(1.0));
+    out_normal = N;
 
     out_emissive_roughness_metallic.r = c_emissive_power;
     out_emissive_roughness_metallic.g = roughness;

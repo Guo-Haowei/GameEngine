@@ -28,6 +28,10 @@
 #define DISPLAY_CHANNEL_RRR 1
 #define DISPLAY_CHANNEL_AAA 2
 
+const float LUT_SIZE = 64.0;  // ltc_texture size
+const float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;
+const float LUT_BIAS = 0.5 / LUT_SIZE;
+
 #if defined(HLSL_LANG)
 #define ivec2 int2
 #define ivec3 int3

@@ -136,6 +136,10 @@ public:                                                                         
                                           const vec3& p_color = vec3(1),
                                           const float p_energy = 5.0f);
 
+    ecs::Entity create_area_light_entity(const std::string& p_name,
+                                         const vec3& p_color = vec3(1),
+                                         const float p_energy = 5.0f);
+
     ecs::Entity create_omni_light_entity(const std::string& p_name,
                                          const vec3& p_color = vec3(1),
                                          const float p_energy = 5.0f);

@@ -71,6 +71,7 @@ struct Light {
     float atten_quadratic;
     float max_distance;  // max distance the light affects
     mat4 matrices[6];
+    vec4 points[4];
 };
 
 CBUFFER(PerFrameConstantBuffer, 2) {
@@ -157,6 +158,10 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     samplerCube c_env_map;
     samplerCube c_diffuse_irradiance_map;
     samplerCube c_prefiltered_map;
+
+    // @TODO: unordered access
+    sampler2D u_ltc_1;
+    sampler2D u_ltc_2;
 };
 
 // @TODO: make it more general, something like 2D draw
