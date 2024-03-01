@@ -25,7 +25,7 @@
 #define VXGI_DEBUG_PASS   "debug_vxgi_pass"
 #define LIGHTING_PASS     "lighting_pass"
 #define SSAO_PASS         "ssao_pass"
-#define FXAA_PASS         "fxaa_pass"
+#define TONE_PASS         "tone_pass"
 #define FINAL_PASS        "final_pass"
 
 // environment
@@ -39,7 +39,7 @@
 #define RT_BRDF                            "rt_brdf"
 
 #define RT_RES_LIGHTING "rt_res_light"
-#define RT_RES_FXAA     "rt_res_fxaa"
+#define RT_RES_TONE     "RT_RES_TONE"
 #define RT_RES_SSAO     "rt_res_ssao"
 #define RT_RES_FINAL    "rt_res_final"
 

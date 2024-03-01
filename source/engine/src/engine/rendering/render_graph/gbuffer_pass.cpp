@@ -24,6 +24,7 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
 
+    // @TODO:
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
@@ -56,6 +57,7 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height) {
     GraphicsManager& manager = GraphicsManager::singleton();
 
+    // @TODO: decouple sampler and render target
     auto gbuffer_depth = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
                                                                         PixelFormat::D32_FLOAT,
                                                                         AttachmentType::DEPTH_2D,
@@ -67,6 +69,7 @@ void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height) {
                                                                       AttachmentType::COLOR_2D,
                                                                       p_width, p_height },
                                                     nearest_sampler());
+
     auto attachment1 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
                                                                       PixelFormat::R16G16B16_FLOAT,
                                                                       AttachmentType::COLOR_2D,

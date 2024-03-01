@@ -80,10 +80,9 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     mat4 c_main_light_matrices[MAX_CASCADE_COUNT];
     vec4 c_cascade_plane_distances;
 
+    vec2 _c_padding_0;
     int c_light_count;
-    int c_enable_csm;
     int c_display_method;
-    int _c_padding_0;
 
     int c_debug_voxel_id;
     int c_no_texture;
@@ -102,7 +101,7 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     float c_texel_size;
 
     int c_enable_ssao;
-    int c_enable_fxaa;
+    int c_enable_csm;
     int c_enable_vxgi;
     int c_debug_csm;
 };
@@ -151,8 +150,8 @@ CBUFFER(PerSceneConstantBuffer, 4) {
 
     sampler2D c_ssao_map;
     sampler2D c_kernel_noise_map;
-    sampler2D c_fxaa_image;
-    sampler2D c_fxaa_input_image;
+    sampler2D c_tone_image;
+    sampler2D c_tone_input_image;
 
     sampler2D c_brdf_map;
     samplerCube c_env_map;

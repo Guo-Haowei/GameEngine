@@ -2,7 +2,7 @@
 
 #define ENABLE_VXGI 1
 
-layout(location = 0) out vec4 out_color;
+layout(location = 0) out vec3 out_color;
 layout(location = 0) in vec2 pass_uv;
 
 #include "lighting.glsl"
@@ -35,6 +35,12 @@ void main() {
     vec3 base_color = texture(u_gbuffer_base_color_map, uv).rgb;
     if (c_no_texture != 0) {
         base_color = vec3(0.6);
+    }
+
+    // @TODO: move this before those heavy calculation
+    if (emissive > 0.0) {
+        out_color = emissive * base_color;
+        return;
     }
 
     const int cascade_level = find_cascade(world_position);
@@ -123,17 +129,6 @@ void main() {
 
     vec3 color = Lo + ambient;
 
-    // @TODO: move this before those heavy calculation
-    if (emissive > 0.0) {
-        color = emissive * base_color;
-    }
-
-    // @TODO: move gamma correction after bloom
-    const float gamma = 1.0 / 2.2;
-
-    color = color / (color + 1.0);
-    color = pow(color, vec3(gamma));
-
     // debug CSM
     if (c_debug_csm == 1) {
 
@@ -167,5 +162,5 @@ void main() {
     }
 #endif
 
-    out_color = vec4(color, 1.0);
+    out_color = color;
 }

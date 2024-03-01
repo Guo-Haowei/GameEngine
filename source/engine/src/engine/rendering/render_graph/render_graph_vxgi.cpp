@@ -377,7 +377,7 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     glDrawElementsInstanced(GL_TRIANGLES, g_box.index_count, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
-void fxaa_pass_func(const Subpass* p_subpass) {
+void TONE_PASS_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     GraphicsManager::singleton().set_render_target(p_subpass);
@@ -398,7 +398,7 @@ void fxaa_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // glDisable(GL_DEPTH_TEST);
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_FXAA);
+        GraphicsManager::singleton().set_pipeline_state(PROGRAM_TONE);
         R_DrawQuad();
     }
 
@@ -438,7 +438,7 @@ void final_pass_func(const Subpass* p_subpass) {
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_IMAGE_2D);
 
     // @TODO: clean up
-    auto final_image_handle = GraphicsManager::singleton().find_render_target(RT_RES_FXAA)->texture->get_resident_handle();
+    auto final_image_handle = GraphicsManager::singleton().find_render_target(RT_RES_TONE)->texture->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
 #if 0
@@ -463,11 +463,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
     auto ssao_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_SSAO,
                                                                           PixelFormat::R32_FLOAT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h },
-                                                        nearest_sampler());
-    auto fxaa_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_FXAA,
-                                                                          PixelFormat::R8G8B8A8_UINT,
                                                                           AttachmentType::COLOR_2D,
                                                                           w, h },
                                                         nearest_sampler());
@@ -613,13 +608,19 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
     {  // fxaa pass
+        auto fxaa_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_TONE,
+                                                                              PixelFormat::R11G11B10_FLOAT,
+                                                                              AttachmentType::COLOR_2D,
+                                                                              w, h },
+                                                            nearest_sampler());
+
         RenderPassDesc desc;
-        desc.name = FXAA_PASS;
+        desc.name = TONE_PASS;
         desc.dependencies = { LIGHTING_PASS };
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { fxaa_attachment },
-            .func = fxaa_pass_func,
+            .func = TONE_PASS_func,
         });
         pass->add_sub_pass(subpass);
     }
@@ -627,7 +628,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         // final pass
         RenderPassDesc desc;
         desc.name = FINAL_PASS;
-        desc.dependencies = { FXAA_PASS };
+        desc.dependencies = { TONE_PASS };
         auto pass = graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { final_attachment },

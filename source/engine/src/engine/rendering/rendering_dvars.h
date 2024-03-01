@@ -3,7 +3,6 @@
 DVAR_IVEC2(resolution, 0, "Frame resolution", 1280, 720);
 
 // Debug switch
-DVAR_BOOL(r_enable_fxaa, DVAR_FLAG_CACHE, "Enalbe FXAA", true);
 DVAR_BOOL(r_enable_vxgi, DVAR_FLAG_CACHE, "Enable VXGI", true);
 DVAR_BOOL(r_enable_ssao, DVAR_FLAG_CACHE, "Enable SSAO", true);
 DVAR_BOOL(r_enable_csm, DVAR_FLAG_CACHE, "Enable CSM", true);
@@ -32,6 +31,6 @@ DVAR_INT(r_ssaoKernelSize, 0, "", 32);
 DVAR_INT(r_ssaoNoiseSize, 0, "", 4);
 DVAR_FLOAT(r_ssaoKernelRadius, 0, "", 0.5f);
 
-// c_fxaa_image
+// c_tone_image
 
 #include "core/dynamic_variable/dynamic_variable_end.h"

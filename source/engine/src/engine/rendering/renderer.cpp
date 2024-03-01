@@ -268,9 +268,6 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
     cache.c_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
 
-    // c_fxaa_image
-    cache.c_enable_fxaa = DVAR_GET_BOOL(r_enable_fxaa);
-
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
     DEV_ASSERT(math::is_power_of_two(voxel_texture_size));

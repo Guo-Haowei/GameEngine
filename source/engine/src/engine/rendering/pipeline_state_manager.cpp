@@ -98,8 +98,9 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";
-        info.ps = "fxaa.frag";
-        m_cache[PROGRAM_FXAA] = create(info);
+        // @TODO: rename it
+        info.ps = "tone.frag";
+        m_cache[PROGRAM_TONE] = create(info);
     }
     {
         PipelineCreateInfo info;
