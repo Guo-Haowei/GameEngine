@@ -512,24 +512,35 @@ bool Scene::serialize(Archive& archive) {
     }
     m_camera->serialize(archive, version);
 
-    bool ok = true;
-    ok = ok && serialize<NameComponent>(archive, version);
-    ok = ok && serialize<TransformComponent>(archive, version);
-    ok = ok && serialize<HierarchyComponent>(archive, version);
-    ok = ok && serialize<MaterialComponent>(archive, version);
-    ok = ok && serialize<MeshComponent>(archive, version);
-    ok = ok && serialize<ObjectComponent>(archive, version);
-    ok = ok && serialize<LightComponent>(archive, version);
-    ok = ok && serialize<ArmatureComponent>(archive, version);
-    ok = ok && serialize<AnimationComponent>(archive, version);
-    ok = ok && serialize<RigidBodyComponent>(archive, version);
+    constexpr uint64_t has_next_flag = 6368519827137030510;
+    if (archive.is_write_mode()) {
+        for (const auto& it : m_component_lib.m_entries) {
+            archive << has_next_flag;
+            archive << it.first;  // write name
+            it.second.m_manager->serialize(archive, version);
+        }
+        archive << uint64_t(0);
+        return true;
+    } else {
+        for (;;) {
+            uint64_t has_next = 0;
+            archive >> has_next;
+            if (has_next != has_next_flag) {
+                return true;
+            }
 
-    if (archive.is_write_mode() || version >= 6) {
-        ok = ok && serialize<SelectableComponent>(archive, version);
-        ok = ok && serialize<BoxColliderComponent>(archive, version);
-        ok = ok && serialize<MeshColliderComponent>(archive, version);
+            std::string key;
+            archive >> key;
+            auto it = m_component_lib.m_entries.find(key);
+            if (it == m_component_lib.m_entries.end()) {
+                LOG_ERROR("scene corrupted");
+                return false;
+            }
+            if (!it->second.m_manager->serialize(archive, version)) {
+                return false;
+            }
+        }
     }
-    return ok;
 }
 
 Scene::RayIntersectionResult Scene::select(Ray& ray) {

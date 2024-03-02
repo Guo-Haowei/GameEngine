@@ -102,7 +102,9 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_OK("TODO: bloom");
+    LOG_ERROR("TODO: refactor area light");
+    LOG_ERROR("TODO: refactor scene loading and saving");
+
     LOG_OK("TODO: selection highlight");
     LOG_OK("TODO: TAA");
     LOG_OK("TODO: path tracer here");

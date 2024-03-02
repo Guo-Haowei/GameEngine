@@ -31,6 +31,10 @@ public:
 
     void serialize(Archive& archive, uint32_t version);
 
+    const auto& get_matrices() const { return m_light_space_matrices; }
+    const vec3& get_position() const { return m_position; }
+
+    // @TODO: fix this
     vec3 m_color = vec3(1);
     float m_energy = 10.0f;
     struct {
@@ -38,9 +42,6 @@ public:
         float linear;
         float quadratic;
     } m_atten;
-
-    const auto& get_matrices() const { return m_light_space_matrices; }
-    const vec3& get_position() const { return m_position; }
 
 private:
     uint32_t m_flags = DIRTY;

@@ -8,8 +8,10 @@
 #include "scene/material_component.h"
 #include "scene/mesh_component.h"
 #include "scene/name_component.h"
-#include "scene/scene_components.h"
+#include "scene/object_component.h"
 #include "scene/transform_component.h"
+// @TODO: eventually remove this
+#include "scene/scene_components.h"
 
 namespace my {
 
@@ -57,10 +59,6 @@ public:                                                                         
     T& create<T>(const ecs::Entity& entity) {                                                    \
         return m_##T##s.create(entity);                                                          \
     }                                                                                            \
-    template<>                                                                                   \
-    bool serialize<T>(Archive & archive, uint32_t version) {                                     \
-        return m_##T##s.serialize(archive, version);                                             \
-    }                                                                                            \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #pragma endregion WORLD_COMPONENTS_REGISTERY
@@ -92,11 +90,8 @@ public:                                                                         
     T& create(const ecs::Entity&) {
         return *(T*)(nullptr);
     }
-    template<typename T>
-    bool serialize(Archive&, uint32_t) {
-        return false;
-    }
 
+private:
     ecs::ComponentLibrary m_component_lib;
 
     REGISTER_COMPONENT(NameComponent, 0);
@@ -205,6 +200,7 @@ private:
     void run_armature_update_system(jobsystem::Context& p_ctx);
     void run_object_update_system(jobsystem::Context& p_ctx);
 
+    // @TODO: refactor
     AABB m_bound;
 };
 

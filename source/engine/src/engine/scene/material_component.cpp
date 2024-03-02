@@ -14,11 +14,11 @@ void MaterialComponent::request_image(int p_slot, const std::string& p_path) {
 
 void MaterialComponent::serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
-    // @TODO: emissive
 
     if (p_archive.is_write_mode()) {
         p_archive << metallic;
         p_archive << roughness;
+        p_archive << emissive;
         p_archive << base_color;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
             p_archive << textures[i].enabled;
@@ -27,11 +27,10 @@ void MaterialComponent::serialize(Archive& p_archive, uint32_t p_version) {
     } else {
         p_archive >> metallic;
         p_archive >> roughness;
+        p_archive >> emissive;
         p_archive >> base_color;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
-            if (p_version >= 7) {
-                p_archive >> textures[i].enabled;
-            }
+            p_archive >> textures[i].enabled;
             std::string& path = textures[i].path;
             p_archive >> path;
 

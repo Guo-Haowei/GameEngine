@@ -67,27 +67,21 @@ void LightComponent::update(const TransformComponent& p_transform) {
     }
 }
 
-void LightComponent::serialize(Archive& archive, uint32_t version) {
-    unused(version);
+void LightComponent::serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
 
-    if (archive.is_write_mode()) {
-        archive << m_flags;
-        archive << m_type;
-        archive << m_color;
-        archive << m_energy;
-        archive << m_atten.constant;
-        archive << m_atten.linear;
-        archive << m_atten.quadratic;
+    if (p_archive.is_write_mode()) {
+        p_archive << m_flags;
+        p_archive << m_type;
+        p_archive << m_color;
+        p_archive << m_energy;
+        p_archive << m_atten;
     } else {
-        if (version >= 4) {
-            archive >> m_flags;
-        }
-        archive >> m_type;
-        archive >> m_color;
-        archive >> m_energy;
-        archive >> m_atten.constant;
-        archive >> m_atten.linear;
-        archive >> m_atten.quadratic;
+        p_archive >> m_flags;
+        p_archive >> m_type;
+        p_archive >> m_color;
+        p_archive >> m_energy;
+        p_archive >> m_atten;
 
         m_flags |= DIRTY;
     }
