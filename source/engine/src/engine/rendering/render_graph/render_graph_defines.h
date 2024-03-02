@@ -15,11 +15,6 @@
 #define RT_RES_GBUFFER_MATERIAL   "rt_res_gbuffer_material"
 #define RT_RES_GBUFFER_DEPTH      "rt_res_gbuffer_depth"
 
-// base_color pass
-#define BASE_COLOR_PASS         "base_color_pass"
-#define RT_RES_BASE_COLOR       "rt_res_base_color"
-#define RT_RES_BASE_COLOR_DEPTH "rt_res_base_color_depth"
-
 // vxgi pass
 #define VOXELIZATION_PASS "voxelization_pass"
 #define VXGI_DEBUG_PASS   "debug_vxgi_pass"
@@ -38,20 +33,27 @@
 #define RT_ENV_PREFILTER_DEPTH             "env_prefilter_depth"
 #define RT_BRDF                            "rt_brdf"
 
+// bloom
+#define BLOOM_PASS   "bloom_pass"
+#define RT_RES_BLOOM "rt_res_bloom"
+
 #define RT_RES_LIGHTING "rt_res_light"
-#define RT_RES_TONE     "RT_RES_TONE"
+#define RT_RES_TONE     "rt_res_tone"
 #define RT_RES_SSAO     "rt_res_ssao"
 #define RT_RES_FINAL    "rt_res_final"
 
 // dummy pass
 #define DUMMY_PASS "dummy_pass"
 
+constexpr int BLOOM_MIP_CHAIN_MAX = 6;
+
 namespace my::rg {
 
+void create_shadow_pass(RenderGraph& p_graph);
 void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height);
+void create_bloom_pass(RenderGraph& p_graph, int p_width, int p_height);
 
 void create_render_graph_dummy(RenderGraph& graph);
-void create_render_graph_base_color(RenderGraph& graph);
 void create_render_graph_vxgi(RenderGraph& graph);
 
 }  // namespace my::rg

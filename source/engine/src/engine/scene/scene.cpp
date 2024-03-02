@@ -148,7 +148,7 @@ Entity Scene::create_point_light_entity(const std::string& p_name,
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_sphere_mesh(0.2f, 40, 40);
+    mesh = make_sphere_mesh(0.1f, 40, 40);
     mesh.subsets[0].material_id = entity;
     return entity;
 }

@@ -102,8 +102,6 @@ void GraphicsManager::select_render_graph() {
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
         m_method = RenderGraph::VXGI;
-    } else if (method == "base_color") {
-        m_method = RenderGraph::BASE_COLOR;
     } else {
         m_method = RenderGraph::DUMMY;
     }
@@ -113,9 +111,6 @@ void GraphicsManager::select_render_graph() {
     }
 
     switch (m_method) {
-        case RenderGraph::BASE_COLOR:
-            create_render_graph_base_color(m_render_graph);
-            break;
         case RenderGraph::VXGI:
             create_render_graph_vxgi(m_render_graph);
             break;
@@ -198,8 +193,6 @@ uint64_t GraphicsManager::get_final_image() const {
         case RenderGraph::VXGI:
             texture = find_render_target(RT_RES_FINAL)->texture.get();
             break;
-        case RenderGraph::BASE_COLOR:
-            return find_render_target(RT_RES_BASE_COLOR)->texture->get_handle();
         case RenderGraph::DUMMY:
             texture = find_render_target(RT_RES_FINAL)->texture.get();
             break;

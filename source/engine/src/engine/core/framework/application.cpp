@@ -100,11 +100,14 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_ERROR("TODO: refactor scene loading and saving");
-
+    LOG_OK("TODO: bloom");
+    LOG_WARN("TODO: area light shadow");
     LOG_OK("TODO: selection highlight");
+    LOG_WARN("TODO: terrain & grass");
     LOG_OK("TODO: TAA");
+    LOG_WARN("TODO: water");
     LOG_OK("TODO: path tracer here");
+    LOG_WARN("TODO: cloud");
 
     LOG_WARN("TODO: change point shadow map to texture cube array");
     LOG_WARN("TODO: properly unload scene");
