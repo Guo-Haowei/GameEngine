@@ -101,7 +101,7 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     LOG_OK("TODO: change position buffer to view space");
-    LOG_WARN("TODO: area light shadow");
+    LOG_WARN("TODO: area light shadow & fix cascade shadow");
     LOG_OK("TODO: selection highlight");
     LOG_WARN("TODO: terrain & grass");
     LOG_OK("TODO: TAA");

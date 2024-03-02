@@ -279,6 +279,7 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
     cache.c_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
     cache.c_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
+    cache.c_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);

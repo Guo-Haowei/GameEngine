@@ -64,6 +64,7 @@ void DebugPanel::update_internal(Scene&) {
     });
     dvar_checkbox(DVAR_show_editor);
 
+    dvar_checkbox(DVAR_r_enable_bloom);
     ImGui::DragInt("Bloom downsample", (int*)DVAR_GET_POINTER(r_debug_bloom_downsample), 0.1f, 0, BLOOM_MIP_CHAIN_MAX - 1);
 
     ImGui::Separator();

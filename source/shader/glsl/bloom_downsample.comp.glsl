@@ -10,7 +10,7 @@ void main() {
     vec2 uv = vec2(float(output_tex_coord.x) / output_image_size.x,
                    float(output_tex_coord.y) / output_image_size.y);
 
-    vec2 input_tex_size = textureSize(u_tmp_down_sample_input, 0);
+    vec2 input_tex_size = textureSize(u_tmp_bloom_input, 0);
     vec2 input_texel_size = 1.0 / input_tex_size;
     float x = input_texel_size.x;
     float y = input_texel_size.y;
@@ -24,22 +24,22 @@ void main() {
     // - l - m -
     // g - h - i
     // === ('e' is the current texel) ===
-    vec3 a = texture(u_tmp_down_sample_input, vec2(uv.x - 2 * x, uv.y + 2 * y)).rgb;
-    vec3 b = texture(u_tmp_down_sample_input, vec2(uv.x, uv.y + 2 * y)).rgb;
-    vec3 c = texture(u_tmp_down_sample_input, vec2(uv.x + 2 * x, uv.y + 2 * y)).rgb;
+    vec3 a = texture(u_tmp_bloom_input, vec2(uv.x - 2 * x, uv.y + 2 * y)).rgb;
+    vec3 b = texture(u_tmp_bloom_input, vec2(uv.x, uv.y + 2 * y)).rgb;
+    vec3 c = texture(u_tmp_bloom_input, vec2(uv.x + 2 * x, uv.y + 2 * y)).rgb;
 
-    vec3 d = texture(u_tmp_down_sample_input, vec2(uv.x - 2 * x, uv.y)).rgb;
-    vec3 e = texture(u_tmp_down_sample_input, vec2(uv.x, uv.y)).rgb;
-    vec3 f = texture(u_tmp_down_sample_input, vec2(uv.x + 2 * x, uv.y)).rgb;
+    vec3 d = texture(u_tmp_bloom_input, vec2(uv.x - 2 * x, uv.y)).rgb;
+    vec3 e = texture(u_tmp_bloom_input, vec2(uv.x, uv.y)).rgb;
+    vec3 f = texture(u_tmp_bloom_input, vec2(uv.x + 2 * x, uv.y)).rgb;
 
-    vec3 g = texture(u_tmp_down_sample_input, vec2(uv.x - 2 * x, uv.y - 2 * y)).rgb;
-    vec3 h = texture(u_tmp_down_sample_input, vec2(uv.x, uv.y - 2 * y)).rgb;
-    vec3 i = texture(u_tmp_down_sample_input, vec2(uv.x + 2 * x, uv.y - 2 * y)).rgb;
+    vec3 g = texture(u_tmp_bloom_input, vec2(uv.x - 2 * x, uv.y - 2 * y)).rgb;
+    vec3 h = texture(u_tmp_bloom_input, vec2(uv.x, uv.y - 2 * y)).rgb;
+    vec3 i = texture(u_tmp_bloom_input, vec2(uv.x + 2 * x, uv.y - 2 * y)).rgb;
 
-    vec3 j = texture(u_tmp_down_sample_input, vec2(uv.x - x, uv.y + y)).rgb;
-    vec3 k = texture(u_tmp_down_sample_input, vec2(uv.x + x, uv.y + y)).rgb;
-    vec3 l = texture(u_tmp_down_sample_input, vec2(uv.x - x, uv.y - y)).rgb;
-    vec3 m = texture(u_tmp_down_sample_input, vec2(uv.x + x, uv.y - y)).rgb;
+    vec3 j = texture(u_tmp_bloom_input, vec2(uv.x - x, uv.y + y)).rgb;
+    vec3 k = texture(u_tmp_bloom_input, vec2(uv.x + x, uv.y + y)).rgb;
+    vec3 l = texture(u_tmp_bloom_input, vec2(uv.x - x, uv.y - y)).rgb;
+    vec3 m = texture(u_tmp_bloom_input, vec2(uv.x + x, uv.y - y)).rgb;
 
     // This shows 5 square areas that are being sampled. But some of them overlap,
     // so to have an energy preserving downsample we need to make some adjustments.

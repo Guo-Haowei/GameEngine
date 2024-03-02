@@ -26,7 +26,7 @@ static void down_sample_func(const Subpass*) {
         const uint32_t work_group_x = divide_and_roundup(width, 16);
         const uint32_t work_group_y = divide_and_roundup(height, 16);
 
-        g_per_pass_cache.cache.u_tmp_down_sample_input = input->texture->get_resident_handle();
+        g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
         glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
@@ -34,16 +34,35 @@ static void down_sample_func(const Subpass*) {
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }
 
-    // Step 2, Down sample
+    // Step 2, down sampling
     manager.set_pipeline_state(PROGRAM_BLOOM_DOWNSAMPLE);
     for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
         auto input = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i - 1));
         auto output = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i));
         DEV_ASSERT(input && output);
 
-        g_per_pass_cache.cache.u_tmp_down_sample_input = input->texture->get_resident_handle();
+        g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
+        // @TODO: refactor image slot
         glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+
+        auto [width, height] = output->get_size();
+        const uint32_t work_group_x = divide_and_roundup(width, 16);
+        const uint32_t work_group_y = divide_and_roundup(height, 16);
+        glDispatchCompute(work_group_x, work_group_y, 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    }
+
+    // Step 3, up sampling
+    manager.set_pipeline_state(PROGRAM_BLOOM_UPSAMPLE);
+    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
+        auto input = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i));
+        auto output = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i - 1));
+
+        g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
+        g_per_pass_cache.update();
+
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
 
         auto [width, height] = output->get_size();
         const uint32_t work_group_x = divide_and_roundup(width, 16);

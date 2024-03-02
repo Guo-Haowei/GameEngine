@@ -348,7 +348,7 @@ void final_pass_func(const Subpass* p_subpass) {
     auto final_image_handle = GraphicsManager::singleton().find_render_target(RT_RES_TONE)->texture->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
-    {
+    if (0) {
         int level = DVAR_GET_INT(r_debug_bloom_downsample);
         auto handle = GraphicsManager::singleton().find_render_target(std::format("{}_{}", RT_RES_BLOOM, level))->texture->get_resident_handle();
         debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 1980 / 4, 1080 / 4);

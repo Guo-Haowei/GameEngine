@@ -14,7 +14,7 @@ void main() {
     vec2 uv = vec2(output_tex_coord.x / output_image_size.x,
                    output_tex_coord.y / output_image_size.y);
 
-    vec3 color = texture(u_tmp_down_sample_input, vec2(uv.x, uv.y)).rgb;
+    vec3 color = texture(u_tmp_bloom_input, vec2(uv.x, uv.y)).rgb;
     float luma = rgb_to_luma(color);
     if (luma < 1.5) {
         color = vec3(0.0);
