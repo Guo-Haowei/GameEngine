@@ -53,7 +53,6 @@ public:
 
     enum class RenderGraph : uint8_t {
         DUMMY,
-        BASE_COLOR,
         VXGI,
     };
 

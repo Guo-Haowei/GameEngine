@@ -8,28 +8,28 @@ class Scene;
 
 namespace my::ecs {
 
-#define COMPONENT_MANAGER_ITERATOR_COMMON                                          \
-public:                                                                            \
-    self_type operator++(int) {                                                    \
-        self_type tmp = *this;                                                     \
-        ++m_index;                                                                 \
-        return tmp;                                                                \
-    }                                                                              \
-    self_type operator--(int) {                                                    \
-        self_type tmp = *this;                                                     \
-        --m_index;                                                                 \
-        return tmp;                                                                \
-    }                                                                              \
-    self_type& operator++() {                                                      \
-        ++m_index;                                                                 \
-        return *this;                                                              \
-    }                                                                              \
-    self_type& operator--() {                                                      \
-        --m_index;                                                                 \
-        return *this;                                                              \
-    }                                                                              \
-    bool operator==(const self_type& rhs) const { return m_index == rhs.m_index; } \
-    bool operator!=(const self_type& rhs) const { return m_index != rhs.m_index; } \
+#define COMPONENT_MANAGER_ITERATOR_COMMON                                              \
+public:                                                                                \
+    self_type operator++(int) {                                                        \
+        self_type tmp = *this;                                                         \
+        ++m_index;                                                                     \
+        return tmp;                                                                    \
+    }                                                                                  \
+    self_type operator--(int) {                                                        \
+        self_type tmp = *this;                                                         \
+        --m_index;                                                                     \
+        return tmp;                                                                    \
+    }                                                                                  \
+    self_type& operator++() {                                                          \
+        ++m_index;                                                                     \
+        return *this;                                                                  \
+    }                                                                                  \
+    self_type& operator--() {                                                          \
+        --m_index;                                                                     \
+        return *this;                                                                  \
+    }                                                                                  \
+    bool operator==(const self_type& p_rhs) const { return m_index == p_rhs.m_index; } \
+    bool operator!=(const self_type& p_rhs) const { return m_index != p_rhs.m_index; } \
     using _dummy_force_semi_colon = int
 
 template<typename T>
@@ -86,13 +86,15 @@ public:
     IComponentManager() = default;
     virtual ~IComponentManager() = default;
     virtual void clear() = 0;
-    virtual void copy(const IComponentManager& other) = 0;
-    virtual void merge(IComponentManager& other) = 0;
-    virtual void remove(const Entity& entity) = 0;
-    virtual bool contains(const Entity& entity) const = 0;
-    virtual size_t get_index(const Entity& entity) const = 0;
+    virtual void copy(const IComponentManager& p_other) = 0;
+    virtual void merge(IComponentManager& p_other) = 0;
+    virtual void remove(const Entity& p_entity) = 0;
+    virtual bool contains(const Entity& p_entity) const = 0;
+    virtual size_t get_index(const Entity& p_entity) const = 0;
     virtual size_t get_count() const = 0;
-    virtual Entity get_entity(size_t index) const = 0;
+    virtual Entity get_entity(size_t p_index) const = 0;
+
+    virtual bool serialize(Archive& p_archive, uint32_t p_version) = 0;
 };
 
 template<typename T>
@@ -106,13 +108,13 @@ public:
     const_iter begin() const { return const_iter(m_entity_array, m_component_array, 0); }
     const_iter end() const { return const_iter(m_entity_array, m_component_array, m_component_array.size()); }
 
-    ComponentManager(size_t capacity = 0) { reserve(capacity); }
+    ComponentManager(size_t p_capacity = 0) { reserve(p_capacity); }
 
-    void reserve(size_t capacity) {
-        if (capacity) {
-            m_component_array.reserve(capacity);
-            m_entity_array.reserve(capacity);
-            m_lookup.reserve(capacity);
+    void reserve(size_t p_capacity) {
+        if (p_capacity) {
+            m_component_array.reserve(p_capacity);
+            m_entity_array.reserve(p_capacity);
+            m_lookup.reserve(p_capacity);
         }
     }
 
@@ -122,40 +124,40 @@ public:
         m_lookup.clear();
     }
 
-    void copy(const ComponentManager<T>& other) {
+    void copy(const ComponentManager<T>& p_other) {
         clear();
-        m_component_array = other.m_component_array;
-        m_entity_array = other.m_entity_array;
-        m_lookup = other.m_lookup;
+        m_component_array = p_other.m_component_array;
+        m_entity_array = p_other.m_entity_array;
+        m_lookup = p_other.m_lookup;
     }
 
-    void copy(const IComponentManager& other) override {
-        copy((ComponentManager<T>&)other);
+    void copy(const IComponentManager& p_other) override {
+        copy((ComponentManager<T>&)p_other);
     }
 
-    void merge(ComponentManager<T>& other) {
-        const size_t reserved = get_count() + other.get_count();
+    void merge(ComponentManager<T>& p_other) {
+        const size_t reserved = get_count() + p_other.get_count();
         m_component_array.reserve(reserved);
         m_entity_array.reserve(reserved);
         m_lookup.reserve(reserved);
 
-        for (size_t i = 0; i < other.get_count(); ++i) {
-            Entity entity = other.m_entity_array[i];
+        for (size_t i = 0; i < p_other.get_count(); ++i) {
+            Entity entity = p_other.m_entity_array[i];
             DEV_ASSERT(!contains(entity));
             m_entity_array.push_back(entity);
             m_lookup[entity] = m_component_array.size();
-            m_component_array.push_back(std::move(other.m_component_array[i]));
+            m_component_array.push_back(std::move(p_other.m_component_array[i]));
         }
 
-        other.clear();
+        p_other.clear();
     }
 
-    void merge(IComponentManager& other) override {
-        merge((ComponentManager<T>&)other);
+    void merge(IComponentManager& p_other) override {
+        merge((ComponentManager<T>&)p_other);
     }
 
-    void remove(const Entity& entity) override {
-        auto it = m_lookup.find(entity);
+    void remove(const Entity& p_entity) override {
+        auto it = m_lookup.find(p_entity);
         if (it == m_lookup.end()) {
             return;
         }
@@ -168,24 +170,24 @@ public:
         m_component_array.erase(m_component_array.begin() + index);
     }
 
-    bool contains(const Entity& entity) const override {
+    bool contains(const Entity& p_entity) const override {
         if (m_lookup.empty()) {
             return false;
         }
-        return m_lookup.find(entity) != m_lookup.end();
+        return m_lookup.find(p_entity) != m_lookup.end();
     }
 
-    inline T& get_component(size_t idx) {
-        DEV_ASSERT(idx < m_component_array.size());
-        return m_component_array[idx];
+    inline T& get_component(size_t p_idx) {
+        DEV_ASSERT(p_idx < m_component_array.size());
+        return m_component_array[p_idx];
     }
 
-    T* get_component(const Entity& entity) {
-        if (!entity.is_valid() || m_lookup.empty()) {
+    T* get_component(const Entity& p_entity) {
+        if (!p_entity.is_valid() || m_lookup.empty()) {
             return nullptr;
         }
 
-        auto it = m_lookup.find(entity);
+        auto it = m_lookup.find(p_entity);
 
         if (it == m_lookup.end()) {
             return nullptr;
@@ -194,12 +196,12 @@ public:
         return &m_component_array[it->second];
     }
 
-    size_t get_index(const Entity& entity) const override {
+    size_t get_index(const Entity& p_entity) const override {
         if (m_lookup.empty()) {
             return Entity::INVALID_INDEX;
         }
 
-        const auto it = m_lookup.find(entity);
+        const auto it = m_lookup.find(p_entity);
         if (it == m_lookup.end()) {
             return Entity::INVALID_INDEX;
         }
@@ -209,58 +211,58 @@ public:
 
     size_t get_count() const override { return m_component_array.size(); }
 
-    Entity get_entity(size_t index) const override {
-        DEV_ASSERT(index < m_entity_array.size());
-        return m_entity_array[index];
+    Entity get_entity(size_t p_index) const override {
+        DEV_ASSERT(p_index < m_entity_array.size());
+        return m_entity_array[p_index];
     }
 
-    T& create(const Entity& entity) {
-        DEV_ASSERT(entity.is_valid());
+    T& create(const Entity& p_entity) {
+        DEV_ASSERT(p_entity.is_valid());
 
         const size_t componentCount = m_component_array.size();
-        DEV_ASSERT(m_lookup.find(entity) == m_lookup.end());
+        DEV_ASSERT(m_lookup.find(p_entity) == m_lookup.end());
         DEV_ASSERT(m_entity_array.size() == componentCount);
         DEV_ASSERT(m_lookup.size() == componentCount);
 
-        m_lookup[entity] = componentCount;
+        m_lookup[p_entity] = componentCount;
         m_component_array.emplace_back();
-        m_entity_array.push_back(entity);
+        m_entity_array.push_back(p_entity);
         return m_component_array.back();
     }
 
-    const T& operator[](size_t idx) const { return get_component(idx); }
+    const T& operator[](size_t p_idx) const { return get_component(p_idx); }
 
-    T& operator[](size_t idx) { return get_component(idx); }
+    T& operator[](size_t p_idx) { return get_component(p_idx); }
 
-    bool serialize(Archive& archive, uint32_t version) {
+    bool serialize(Archive& p_archive, uint32_t p_version) override {
         constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;
-        if (archive.is_write_mode()) {
-            archive << magic;
+        if (p_archive.is_write_mode()) {
+            p_archive << magic;
             count = static_cast<uint32_t>(m_component_array.size());
-            archive << count;
+            p_archive << count;
             for (auto& component : m_component_array) {
-                component.serialize(archive, version);
+                component.serialize(p_archive, p_version);
             }
             for (auto& entity : m_entity_array) {
-                entity.serialize(archive);
+                entity.serialize(p_archive);
             }
         } else {
             uint64_t read_magic;
-            archive >> read_magic;
+            p_archive >> read_magic;
             if (read_magic != magic) {
                 return false;
             }
 
             clear();
-            archive >> count;
+            p_archive >> count;
             m_component_array.resize(count);
             m_entity_array.resize(count);
             for (size_t i = 0; i < count; ++i) {
-                m_component_array[i].serialize(archive, version);
+                m_component_array[i].serialize(p_archive, p_version);
             }
             for (size_t i = 0; i < count; ++i) {
-                m_entity_array[i].serialize(archive);
+                m_entity_array[i].serialize(p_archive);
                 m_lookup[m_entity_array[i]] = i;
             }
         }
@@ -282,11 +284,11 @@ public:
     };
 
     template<typename T>
-    inline ComponentManager<T>& register_manager(const std::string& name, uint64_t version = 0) {
-        DEV_ASSERT(m_entries.find(name) == m_entries.end());
-        m_entries[name].m_manager = std::make_unique<ComponentManager<T>>();
-        m_entries[name].m_version = version;
-        return static_cast<ComponentManager<T>&>(*(m_entries[name].m_manager));
+    inline ComponentManager<T>& register_manager(const std::string& p_name, uint64_t p_version = 0) {
+        DEV_ASSERT(m_entries.find(p_name) == m_entries.end());
+        m_entries[p_name].m_manager = std::make_unique<ComponentManager<T>>();
+        m_entries[p_name].m_version = p_version;
+        return static_cast<ComponentManager<T>&>(*(m_entries[p_name].m_manager));
     }
 
 private:

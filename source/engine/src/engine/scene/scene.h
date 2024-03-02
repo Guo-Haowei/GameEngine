@@ -8,8 +8,10 @@
 #include "scene/material_component.h"
 #include "scene/mesh_component.h"
 #include "scene/name_component.h"
-#include "scene/scene_components.h"
+#include "scene/object_component.h"
 #include "scene/transform_component.h"
+// @TODO: eventually remove this
+#include "scene/scene_components.h"
 
 namespace my {
 
@@ -57,10 +59,6 @@ public:                                                                         
     T& create<T>(const ecs::Entity& entity) {                                                    \
         return m_##T##s.create(entity);                                                          \
     }                                                                                            \
-    template<>                                                                                   \
-    bool serialize<T>(Archive & archive, uint32_t version) {                                     \
-        return m_##T##s.serialize(archive, version);                                             \
-    }                                                                                            \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #pragma endregion WORLD_COMPONENTS_REGISTERY
@@ -92,11 +90,8 @@ public:                                                                         
     T& create(const ecs::Entity&) {
         return *(T*)(nullptr);
     }
-    template<typename T>
-    bool serialize(Archive&, uint32_t) {
-        return false;
-    }
 
+private:
     ecs::ComponentLibrary m_component_lib;
 
     REGISTER_COMPONENT(NameComponent, 0);
@@ -109,7 +104,6 @@ public:                                                                         
     REGISTER_COMPONENT(ArmatureComponent, 0);
     REGISTER_COMPONENT(AnimationComponent, 0);
     REGISTER_COMPONENT(RigidBodyComponent, 0);
-    REGISTER_COMPONENT(SelectableComponent, 0);
     REGISTER_COMPONENT(BoxColliderComponent, 0);
     REGISTER_COMPONENT(MeshColliderComponent, 0);
 
@@ -125,7 +119,6 @@ public:                                                                         
                        Degree fovy = Camera::kDefaultFovy);
 
     ecs::Entity create_name_entity(const std::string& name);
-    ecs::Entity create_box_selectable(const std::string& name, const AABB& aabb);
     ecs::Entity create_transform_entity(const std::string& name);
     ecs::Entity create_object_entity(const std::string& name);
     ecs::Entity create_mesh_entity(const std::string& name);
@@ -134,15 +127,15 @@ public:                                                                         
     ecs::Entity create_point_light_entity(const std::string& p_name,
                                           const vec3& p_position,
                                           const vec3& p_color = vec3(1),
-                                          const float p_energy = 5.0f);
+                                          const float p_emissive = 5.0f);
 
     ecs::Entity create_area_light_entity(const std::string& p_name,
                                          const vec3& p_color = vec3(1),
-                                         const float p_energy = 5.0f);
+                                         const float p_emissive = 5.0f);
 
     ecs::Entity create_omni_light_entity(const std::string& p_name,
                                          const vec3& p_color = vec3(1),
-                                         const float p_energy = 5.0f);
+                                         const float p_emissive = 5.0f);
 
     ecs::Entity create_plane_entity(const std::string& p_name,
                                     const vec3& p_scale = vec3(0.5f),
@@ -181,7 +174,6 @@ public:                                                                         
         ecs::Entity entity;
     };
 
-    RayIntersectionResult select(Ray& ray);
     RayIntersectionResult intersects(Ray& ray);
     bool ray_object_intersect(ecs::Entity object_id, Ray& ray);
 
@@ -205,6 +197,7 @@ private:
     void run_armature_update_system(jobsystem::Context& p_ctx);
     void run_object_update_system(jobsystem::Context& p_ctx);
 
+    // @TODO: refactor
     AABB m_bound;
 };
 

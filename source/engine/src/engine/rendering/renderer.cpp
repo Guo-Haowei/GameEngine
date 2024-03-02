@@ -199,14 +199,17 @@ void fill_constant_buffers(const Scene& scene) {
     int idx = 0;
     for (auto [light_entity, light_component] : scene.m_LightComponents) {
         const TransformComponent* light_transform = scene.get_component<TransformComponent>(light_entity);
-        DEV_ASSERT(light_transform);
+        const MaterialComponent* material = scene.get_component<MaterialComponent>(light_entity);
+
+        DEV_ASSERT(light_transform && material);
 
         // SHOULD BE THIS INDEX
         Light& light = cache.c_lights[idx];
         bool cast_shadow = light_component.cast_shadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.get_type();
-        light.color = light_component.m_color * light_component.m_energy;
+        light.color = material->base_color;
+        light.color *= material->emissive;
         switch (light_component.get_type()) {
             case LIGHT_TYPE_OMNI: {
                 mat4 light_matrix = light_transform->get_local_matrix();
@@ -276,6 +279,7 @@ void fill_constant_buffers(const Scene& scene) {
     cache.c_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
     cache.c_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
     cache.c_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
+    cache.c_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);

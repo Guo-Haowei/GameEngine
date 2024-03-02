@@ -1,6 +1,7 @@
 #include "os.h"
 
 #include "core/io/file_access_unix.h"
+#include "core/io/std_logger.h"
 
 namespace my {
 

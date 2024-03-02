@@ -8,10 +8,6 @@ void HierarchyComponent::serialize(Archive& archive, uint32_t) {
     m_parent_id.serialize(archive);
 }
 
-void ObjectComponent::serialize(Archive& archive, uint32_t) {
-    mesh_id.serialize(archive);
-}
-
 void AnimationComponent::serialize(Archive& archive, uint32_t) {
     if (archive.is_write_mode()) {
         archive << flags;

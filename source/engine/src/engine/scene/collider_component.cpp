@@ -4,32 +4,23 @@
 
 namespace my {
 
-void SelectableComponent::serialize(Archive& archive, uint32_t version) {
-    unused(version);
+void BoxColliderComponent::serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
 
-    // nothing to do
-    if (archive.is_write_mode()) {
+    if (p_archive.is_write_mode()) {
+        p_archive << box;
     } else {
+        p_archive >> box;
     }
 }
 
-void BoxColliderComponent::serialize(Archive& archive, uint32_t version) {
-    unused(version);
+void MeshColliderComponent::serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
 
-    if (archive.is_write_mode()) {
-        archive << box;
+    if (p_archive.is_write_mode()) {
+        p_archive << object_id;
     } else {
-        archive >> box;
-    }
-}
-
-void MeshColliderComponent::serialize(Archive& archive, uint32_t version) {
-    unused(version);
-
-    if (archive.is_write_mode()) {
-        archive << object_id;
-    } else {
-        archive >> object_id;
+        p_archive >> object_id;
     }
 }
 

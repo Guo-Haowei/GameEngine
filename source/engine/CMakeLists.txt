@@ -4,6 +4,7 @@ file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.lua"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.natvis"
 )
 
 add_library(${TARGET_NAME} STATIC ${SRC})

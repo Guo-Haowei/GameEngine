@@ -97,8 +97,22 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
+        info.cs = "bloom_setup.comp";
+        m_cache[PROGRAM_BLOOM_SETUP] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.cs = "bloom_downsample.comp";
+        m_cache[PROGRAM_BLOOM_DOWNSAMPLE] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.cs = "bloom_upsample.comp";
+        m_cache[PROGRAM_BLOOM_UPSAMPLE] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";
-        // @TODO: rename it
         info.ps = "tone.frag";
         m_cache[PROGRAM_TONE] = create(info);
     }

@@ -1,8 +1,5 @@
 #include "application.h"
 
-#include "imgui/imgui.h"
-// @TODO: refactor
-
 #include "core/debugger/profiler.h"
 #include "core/dynamic_variable/dynamic_variable_manager.h"
 #include "core/framework/asset_manager.h"
@@ -16,6 +13,7 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
+#include "imgui/imgui.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
@@ -102,10 +100,14 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_OK("TODO: bloom");
+    LOG_OK("TODO: change position buffer to view space");
+    LOG_WARN("TODO: area light shadow & fix cascade shadow");
     LOG_OK("TODO: selection highlight");
+    LOG_WARN("TODO: terrain & grass");
     LOG_OK("TODO: TAA");
+    LOG_WARN("TODO: water");
     LOG_OK("TODO: path tracer here");
+    LOG_WARN("TODO: cloud");
 
     LOG_WARN("TODO: change point shadow map to texture cube array");
     LOG_WARN("TODO: properly unload scene");

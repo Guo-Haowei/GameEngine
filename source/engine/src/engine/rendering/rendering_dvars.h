@@ -1,11 +1,12 @@
 #include "core/dynamic_variable/dynamic_variable_begin.h"
 
-DVAR_IVEC2(resolution, 0, "Frame resolution", 1280, 720);
+DVAR_IVEC2(resolution, 0, "Frame resolution", 1920, 1080);
 
 // Debug switch
 DVAR_BOOL(r_enable_vxgi, DVAR_FLAG_CACHE, "Enable VXGI", true);
 DVAR_BOOL(r_enable_ssao, DVAR_FLAG_CACHE, "Enable SSAO", true);
 DVAR_BOOL(r_enable_csm, DVAR_FLAG_CACHE, "Enable CSM", true);
+DVAR_BOOL(r_enable_bloom, DVAR_FLAG_CACHE, "Enable Bloom", true);
 DVAR_BOOL(r_no_texture, DVAR_FLAG_CACHE, "No texture", false);
 DVAR_BOOL(r_debug_csm, DVAR_FLAG_CACHE, "Debug CSM", false);
 DVAR_BOOL(r_debug_vxgi, DVAR_FLAG_CACHE, "Debug VXGI", false);
@@ -31,6 +32,7 @@ DVAR_INT(r_ssaoKernelSize, 0, "", 32);
 DVAR_INT(r_ssaoNoiseSize, 0, "", 4);
 DVAR_FLOAT(r_ssaoKernelRadius, 0, "", 0.5f);
 
-// c_tone_image
+// Bloom
+DVAR_INT(r_debug_bloom_downsample, 0, "", 0);
 
 #include "core/dynamic_variable/dynamic_variable_end.h"

@@ -122,93 +122,82 @@ Entity Scene::create_material_entity(const std::string& name) {
     return entity;
 }
 
-Entity Scene::create_box_selectable(const std::string& name, const AABB& aabb) {
-    Entity entity = create_name_entity(name);
-    BoxColliderComponent& collider = create<BoxColliderComponent>(entity);
-    collider.box = aabb;
-    create<SelectableComponent>(entity);
-    return entity;
-}
-
-// @TODO: combine emissive material and light component
 Entity Scene::create_point_light_entity(const std::string& p_name,
                                         const vec3& p_position,
                                         const vec3& p_color,
-                                        const float p_energy) {
+                                        const float p_emissive) {
     Entity entity = create_object_entity(p_name);
+
+    LightComponent& light = create<LightComponent>(entity);
+    light.set_type(LIGHT_TYPE_POINT);
+    light.m_atten.constant = 1.0f;
+    light.m_atten.linear = 0.2f;
+    light.m_atten.quadratic = 0.05f;
+
+    MaterialComponent& material = create<MaterialComponent>(entity);
+    material.base_color = vec4(p_color, 1.0f);
+    material.emissive = p_emissive;
+
     TransformComponent& transform = *get_component<TransformComponent>(entity);
     ObjectComponent& object = *get_component<ObjectComponent>(entity);
     transform.set_translation(p_position);
     transform.set_dirty();
 
     Entity mesh_id = create_mesh_entity(p_name + ":mesh");
-    Entity material_id = create_material_entity(p_name + ":mat");
     object.mesh_id = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_sphere_mesh(0.2f, 40, 40);
-    mesh.subsets[0].material_id = material_id;
-
-    // @TODO: generalize it?
-    MaterialComponent& material = *get_component<MaterialComponent>(material_id);
-    material.base_color = vec4(p_color, 1.0f);
-    material.emissive = p_energy;
-
-    LightComponent& light = create<LightComponent>(entity);
-    light.set_type(LIGHT_TYPE_POINT);
-    light.m_color = p_color;
-    light.m_energy = p_energy;
-    light.m_atten.constant = 1.0f;
-    light.m_atten.linear = 0.2f;
-    light.m_atten.quadratic = 0.05f;
+    mesh = make_sphere_mesh(0.1f, 40, 40);
+    mesh.subsets[0].material_id = entity;
     return entity;
 }
 
 Entity Scene::create_area_light_entity(const std::string& p_name,
                                        const vec3& p_color,
-                                       const float p_energy) {
+                                       const float p_emissive) {
     Entity entity = create_object_entity(p_name);
+
+    // light
+    LightComponent& light = create<LightComponent>(entity);
+    light.set_type(LIGHT_TYPE_AREA);
+    // light.m_atten.constant = 1.0f;
+    // light.m_atten.linear = 0.09f;
+    // light.m_atten.quadratic = 0.032f;
+
+    // material
+    MaterialComponent& material = create<MaterialComponent>(entity);
+    material.base_color = vec4(p_color, 1.0f);
+    material.emissive = p_emissive;
+
     ObjectComponent& object = *get_component<ObjectComponent>(entity);
 
     Entity mesh_id = create_mesh_entity(p_name + ":mesh");
-    Entity material_id = create_material_entity(p_name + ":mat");
     object.mesh_id = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
     mesh = make_plane_mesh();
-    mesh.subsets[0].material_id = material_id;
-
-    // @TODO: generalize it?
-    MaterialComponent& material = *get_component<MaterialComponent>(material_id);
-    material.base_color = vec4(p_color, 1.0f);
-    material.emissive = p_energy;
-
-    LightComponent& light = create<LightComponent>(entity);
-    light.set_type(LIGHT_TYPE_AREA);
-    light.m_color = p_color;
-    light.m_energy = p_energy;
-    // light.m_atten.constant = 1.0f;
-    // light.m_atten.linear = 0.09f;
-    // light.m_atten.quadratic = 0.032f;
+    mesh.subsets[0].material_id = entity;
     return entity;
 }
 
 Entity Scene::create_omni_light_entity(const std::string& p_name,
                                        const vec3& p_color,
-                                       const float p_energy) {
-    Entity entity = create_box_selectable(p_name, AABB::from_center_size(vec3(0), vec3(0.3f)));
+                                       const float p_emissive) {
+    Entity entity = create_name_entity(p_name);
 
     create<TransformComponent>(entity);
 
     LightComponent& light = create<LightComponent>(entity);
     light.set_type(LIGHT_TYPE_OMNI);
-    light.m_color = p_color;
-    light.m_energy = p_energy;
     light.m_atten.constant = 1.0f;
     light.m_atten.linear = 0.0f;
     light.m_atten.quadratic = 0.0f;
+
+    MaterialComponent& material = create<MaterialComponent>(entity);
+    material.base_color = vec4(p_color, 1.0f);
+    material.emissive = p_emissive;
     return entity;
 }
 
@@ -512,55 +501,35 @@ bool Scene::serialize(Archive& archive) {
     }
     m_camera->serialize(archive, version);
 
-    bool ok = true;
-    ok = ok && serialize<NameComponent>(archive, version);
-    ok = ok && serialize<TransformComponent>(archive, version);
-    ok = ok && serialize<HierarchyComponent>(archive, version);
-    ok = ok && serialize<MaterialComponent>(archive, version);
-    ok = ok && serialize<MeshComponent>(archive, version);
-    ok = ok && serialize<ObjectComponent>(archive, version);
-    ok = ok && serialize<LightComponent>(archive, version);
-    ok = ok && serialize<ArmatureComponent>(archive, version);
-    ok = ok && serialize<AnimationComponent>(archive, version);
-    ok = ok && serialize<RigidBodyComponent>(archive, version);
-
-    if (archive.is_write_mode() || version >= 6) {
-        ok = ok && serialize<SelectableComponent>(archive, version);
-        ok = ok && serialize<BoxColliderComponent>(archive, version);
-        ok = ok && serialize<MeshColliderComponent>(archive, version);
-    }
-    return ok;
-}
-
-Scene::RayIntersectionResult Scene::select(Ray& ray) {
-    RayIntersectionResult result;
-
-    for (size_t idx = 0; idx < get_count<SelectableComponent>(); ++idx) {
-        Entity entity = get_entity<SelectableComponent>(idx);
-        const TransformComponent* transform = get_component<TransformComponent>(entity);
-        if (!transform) {
-            continue;
+    constexpr uint64_t has_next_flag = 6368519827137030510;
+    if (archive.is_write_mode()) {
+        for (const auto& it : m_component_lib.m_entries) {
+            archive << has_next_flag;
+            archive << it.first;  // write name
+            it.second.m_manager->serialize(archive, version);
         }
-
-        if (const auto* collider = get_component<BoxColliderComponent>(entity); collider) {
-            mat4 inversed_model = glm::inverse(transform->get_world_matrix());
-            Ray inversed_ray = ray.inverse(inversed_model);
-            if (inversed_ray.intersects(collider->box)) {
-                result.entity = entity;
-                ray.copy_dist(inversed_ray);
+        archive << uint64_t(0);
+        return true;
+    } else {
+        for (;;) {
+            uint64_t has_next = 0;
+            archive >> has_next;
+            if (has_next != has_next_flag) {
+                return true;
             }
-            continue;
-        }
 
-        if (const auto* collider = get_component<MeshColliderComponent>(entity); collider) {
-            if (ray_object_intersect(collider->object_id, ray)) {
-                result.entity = entity;
+            std::string key;
+            archive >> key;
+            auto it = m_component_lib.m_entries.find(key);
+            if (it == m_component_lib.m_entries.end()) {
+                LOG_ERROR("scene corrupted");
+                return false;
             }
-            continue;
+            if (!it->second.m_manager->serialize(archive, version)) {
+                return false;
+            }
         }
-        CRASH_NOW_MSG("????");
     }
-    return result;
 }
 
 bool Scene::ray_object_intersect(Entity object_id, Ray& ray) {

@@ -1,5 +1,6 @@
 #include "print.h"
 
+#include "core/io/std_logger.h"
 #include "core/os/os.h"
 #include "core/os/threads.h"
 

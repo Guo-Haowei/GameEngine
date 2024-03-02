@@ -29,24 +29,6 @@ private:
 };
 
 //--------------------------------------------------------------------------------------------------
-// Object Compoinent
-//--------------------------------------------------------------------------------------------------
-struct ObjectComponent {
-    enum : uint32_t {
-        NONE = BIT(0),
-        RENDERABLE = BIT(1),
-        CAST_SHADOW = BIT(2),
-    };
-
-    uint32_t flags = RENDERABLE | CAST_SHADOW;
-
-    /// mesh
-    ecs::Entity mesh_id;
-
-    void serialize(Archive& archive, uint32_t version);
-};
-
-//--------------------------------------------------------------------------------------------------
 // Animation Component
 //--------------------------------------------------------------------------------------------------
 struct AnimationComponent {

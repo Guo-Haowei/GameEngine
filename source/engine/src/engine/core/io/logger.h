@@ -1,8 +1,7 @@
 #pragma once
 #include "core/base/ring_buffer.h"
-// #include "core/math/color.h"
 #include "core/base/singleton.h"
-#include "print.h"
+#include "core/io/print.h"
 
 namespace my {
 
@@ -10,12 +9,7 @@ class ILogger {
 public:
     virtual ~ILogger() = default;
 
-    virtual void print(LogLevel level, std::string_view message) = 0;
-};
-
-class StdLogger : public ILogger {
-public:
-    void print(LogLevel level, std::string_view message) override;
+    virtual void print(LogLevel p_level, std::string_view p_message) = 0;
 };
 
 class CompositeLogger : public ILogger, public Singleton<CompositeLogger> {
@@ -30,14 +24,14 @@ public:
         char buffer[PER_LOG_STRUCT_SIZE - sizeof(level)];
     };
 
-    void print(LogLevel level, std::string_view message) override;
+    void print(LogLevel p_level, std::string_view p_message) override;
 
-    void add_logger(std::shared_ptr<ILogger> logger);
-    void add_channel(LogLevel log) { m_channels |= log; }
-    void remove_channel(LogLevel log) { m_channels &= ~log; }
+    void add_logger(std::shared_ptr<ILogger> p_logger);
+    void add_channel(LogLevel p_log) { m_channels |= p_log; }
+    void remove_channel(LogLevel p_log) { m_channels &= ~p_log; }
 
     // @TODO: change to array
-    void retrieve_log(std::vector<Log>& buffer);
+    void retrieve_log(std::vector<Log>& p_buffer);
 
 private:
     std::vector<std::shared_ptr<ILogger>> m_loggers;

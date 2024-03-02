@@ -75,12 +75,13 @@ void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height) {
                                                                       AttachmentType::COLOR_2D,
                                                                       p_width, p_height },
                                                     nearest_sampler());
+
     auto attachment2 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
                                                                       PixelFormat::R16G16B16_FLOAT,
-                                                                      // PixelFormat::R10G10B10A2_UINT,
                                                                       AttachmentType::COLOR_2D,
                                                                       p_width, p_height },
                                                     nearest_sampler());
+
     auto attachment3 = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_MATERIAL,
                                                                       PixelFormat::R11G11B10_FLOAT,
                                                                       AttachmentType::COLOR_2D,

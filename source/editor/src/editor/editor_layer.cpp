@@ -168,12 +168,10 @@ void EditorLayer::flush_commands(Scene& scene) {
                 DEV_ASSERT(command->target.is_valid());
                 switch (command->component_type) {
                     case COMPONENT_TYPE_BOX_COLLIDER: {
-                        scene.create<SelectableComponent>(command->target);
                         auto& collider = scene.create<BoxColliderComponent>(command->target);
                         collider.box = AABB::from_center_size(vec3(0), vec3(1));
                     } break;
                     case COMPONENT_TYPE_MESH_COLLIDER:
-                        scene.create<SelectableComponent>(command->target);
                         scene.create<MeshColliderComponent>(command->target);
                         break;
                     default:

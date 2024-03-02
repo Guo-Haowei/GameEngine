@@ -25,6 +25,8 @@ static_assert(MAX_CASCADE_COUNT == 4);
 #elif defined(HLSL_LANG)
 #define CBUFFER(name, reg) cbuffer name : register(b##reg)
 
+#define sampler2D vec2;
+
 #elif defined(GLSL_LANG)
 #define CBUFFER(name, reg) layout(std140, binding = reg) uniform name
 
@@ -47,8 +49,10 @@ CBUFFER(PerPassConstantBuffer, 1) {
 
     vec4 _per_pass_padding_0;
     vec4 _per_pass_padding_1;
-    vec3 _per_pass_padding_2;
+
+    sampler2D u_tmp_bloom_input;
     float u_per_pass_roughness;  // for environment map
+    float _per_pass_padding_2;
 };
 
 // @TODO: change to unordered access buffer
@@ -81,9 +85,10 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     mat4 c_main_light_matrices[MAX_CASCADE_COUNT];
     vec4 c_cascade_plane_distances;
 
-    vec2 _c_padding_0;
+    int c_enable_bloom;
     int c_light_count;
     int c_display_method;
+    int _c_padding_0;
 
     int c_debug_voxel_id;
     int c_no_texture;
@@ -142,7 +147,7 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     sampler2D u_gbuffer_material_map;
 
     sampler2D u_gbuffer_depth_map;
-    sampler2D _some_other_padding;
+    sampler2D u_final_bloom;
 
     sampler2D c_shadow_map;
     sampler2D c_hdr_env_map;
