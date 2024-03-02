@@ -103,7 +103,6 @@ void PropertyPanel::update_internal(Scene& scene) {
     LightComponent* light_component = scene.get_component<LightComponent>(id);
     ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
     MeshComponent* mesh_component = object_component ? scene.get_component<MeshComponent>(object_component->mesh_id) : nullptr;
-    // auto material_id = mesh_component ? mesh_component->subsets[0].material_id : ecs::Entity::INVALID;
     MaterialComponent* material_component = scene.get_component<MaterialComponent>(id);
     RigidBodyComponent* rigid_body_component = scene.get_component<RigidBodyComponent>(id);
     BoxColliderComponent* box_collider = scene.get_component<BoxColliderComponent>(id);
@@ -155,10 +154,10 @@ void PropertyPanel::update_internal(Scene& scene) {
         }
     });
 
-    DrawComponent("Light", light_component, [&](LightComponent& light) {
+    DrawComponent("Light", light_component, [&](LightComponent& p_light) {
         bool dirty = false;
 
-        switch (light.get_type()) {
+        switch (p_light.get_type()) {
             case LIGHT_TYPE_OMNI:
                 ImGui::Text("omni light");
                 break;
@@ -169,19 +168,17 @@ void PropertyPanel::update_internal(Scene& scene) {
                 break;
         }
 
-        bool cast_shadow = light.cast_shadow();
+        bool cast_shadow = p_light.cast_shadow();
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        if (cast_shadow != light.cast_shadow()) {
-            light.set_cast_shadow(cast_shadow);
-            light.set_dirty();
+        if (cast_shadow != p_light.cast_shadow()) {
+            p_light.set_cast_shadow(cast_shadow);
+            p_light.set_dirty();
         }
 
-        dirty |= draw_color_control("color:", light.m_color);
-        dirty |= draw_drag_float("energy:", light.m_energy, 1.0f, 0.1f, 100.0f);
-        dirty |= draw_drag_float("constant", light.m_atten.constant, 0.1f, 0.0f, 1.0f);
-        dirty |= draw_drag_float("linear", light.m_atten.linear, 0.1f, 0.0f, 1.0f);
-        dirty |= draw_drag_float("quadratic", light.m_atten.quadratic, 0.1f, 0.0f, 1.0f);
-        ImGui::Text("max distance: %0.3f", light.get_max_distance());
+        dirty |= draw_drag_float("constant", p_light.m_atten.constant, 0.1f, 0.0f, 1.0f);
+        dirty |= draw_drag_float("linear", p_light.m_atten.linear, 0.1f, 0.0f, 1.0f);
+        dirty |= draw_drag_float("quadratic", p_light.m_atten.quadratic, 0.1f, 0.0f, 1.0f);
+        ImGui::Text("max distance: %0.3f", p_light.get_max_distance());
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
@@ -204,6 +201,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         }
         draw_drag_float("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);
         draw_drag_float("roughness", p_material.roughness, 0.01f, 0.0f, 1.0f);
+        draw_drag_float("emissive:", p_material.emissive, 0.1f, 0.0f, 100.0f);
         for (int i = 0; i < MaterialComponent::TEXTURE_MAX; ++i) {
             auto& texture = p_material.textures[i];
             if (texture.path.empty()) {
@@ -220,16 +218,6 @@ void PropertyPanel::update_internal(Scene& scene) {
             }
         }
     });
-
-    // CameraComponent* cameraComponent = scene.get_component<CameraComponent>(id);
-    // DrawComponent("Camera", cameraComponent, [](CameraComponent& camera) {
-    //     const float width = 50.0f;
-    //     float fovy = glm::degrees(camera.m_fovy);
-    //     draw_drag_float("m_fovy", &fovy, 1.0f, 20.0f, 90.0f, width);
-    //     draw_drag_float("m_near", &camera.m_near, 0.1f, 0.1f, 10.0f, width);
-    //     draw_drag_float("m_far", &camera.m_far, 10.0f, 10.0f, 5000.0f, width);
-    //     camera.m_fovy = glm::radians(fovy);
-    // });
 
     DrawComponent("Object", object_component, [&](ObjectComponent& object) {
         bool hide = !(object.flags & ObjectComponent::RENDERABLE);

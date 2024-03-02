@@ -73,14 +73,10 @@ void LightComponent::serialize(Archive& p_archive, uint32_t p_version) {
     if (p_archive.is_write_mode()) {
         p_archive << m_flags;
         p_archive << m_type;
-        p_archive << m_color;
-        p_archive << m_energy;
         p_archive << m_atten;
     } else {
         p_archive >> m_flags;
         p_archive >> m_type;
-        p_archive >> m_color;
-        p_archive >> m_energy;
         p_archive >> m_atten;
 
         m_flags |= DIRTY;

@@ -129,15 +129,15 @@ private:
     ecs::Entity create_point_light_entity(const std::string& p_name,
                                           const vec3& p_position,
                                           const vec3& p_color = vec3(1),
-                                          const float p_energy = 5.0f);
+                                          const float p_emissive = 5.0f);
 
     ecs::Entity create_area_light_entity(const std::string& p_name,
                                          const vec3& p_color = vec3(1),
-                                         const float p_energy = 5.0f);
+                                         const float p_emissive = 5.0f);
 
     ecs::Entity create_omni_light_entity(const std::string& p_name,
                                          const vec3& p_color = vec3(1),
-                                         const float p_energy = 5.0f);
+                                         const float p_emissive = 5.0f);
 
     ecs::Entity create_plane_entity(const std::string& p_name,
                                     const vec3& p_scale = vec3(0.5f),

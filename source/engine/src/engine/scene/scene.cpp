@@ -130,85 +130,82 @@ Entity Scene::create_box_selectable(const std::string& name, const AABB& aabb) {
     return entity;
 }
 
-// @TODO: combine emissive material and light component
 Entity Scene::create_point_light_entity(const std::string& p_name,
                                         const vec3& p_position,
                                         const vec3& p_color,
-                                        const float p_energy) {
+                                        const float p_emissive) {
     Entity entity = create_object_entity(p_name);
+
+    LightComponent& light = create<LightComponent>(entity);
+    light.set_type(LIGHT_TYPE_POINT);
+    light.m_atten.constant = 1.0f;
+    light.m_atten.linear = 0.2f;
+    light.m_atten.quadratic = 0.05f;
+
+    MaterialComponent& material = create<MaterialComponent>(entity);
+    material.base_color = vec4(p_color, 1.0f);
+    material.emissive = p_emissive;
+
     TransformComponent& transform = *get_component<TransformComponent>(entity);
     ObjectComponent& object = *get_component<ObjectComponent>(entity);
     transform.set_translation(p_position);
     transform.set_dirty();
 
     Entity mesh_id = create_mesh_entity(p_name + ":mesh");
-    Entity material_id = create_material_entity(p_name + ":mat");
     object.mesh_id = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
     mesh = make_sphere_mesh(0.2f, 40, 40);
-    mesh.subsets[0].material_id = material_id;
-
-    // @TODO: generalize it?
-    MaterialComponent& material = *get_component<MaterialComponent>(material_id);
-    material.base_color = vec4(p_color, 1.0f);
-    material.emissive = p_energy;
-
-    LightComponent& light = create<LightComponent>(entity);
-    light.set_type(LIGHT_TYPE_POINT);
-    light.m_color = p_color;
-    light.m_energy = p_energy;
-    light.m_atten.constant = 1.0f;
-    light.m_atten.linear = 0.2f;
-    light.m_atten.quadratic = 0.05f;
+    mesh.subsets[0].material_id = entity;
     return entity;
 }
 
 Entity Scene::create_area_light_entity(const std::string& p_name,
                                        const vec3& p_color,
-                                       const float p_energy) {
+                                       const float p_emissive) {
     Entity entity = create_object_entity(p_name);
+
+    // light
+    LightComponent& light = create<LightComponent>(entity);
+    light.set_type(LIGHT_TYPE_AREA);
+    // light.m_atten.constant = 1.0f;
+    // light.m_atten.linear = 0.09f;
+    // light.m_atten.quadratic = 0.032f;
+
+    // material
+    MaterialComponent& material = create<MaterialComponent>(entity);
+    material.base_color = vec4(p_color, 1.0f);
+    material.emissive = p_emissive;
+
     ObjectComponent& object = *get_component<ObjectComponent>(entity);
 
     Entity mesh_id = create_mesh_entity(p_name + ":mesh");
-    Entity material_id = create_material_entity(p_name + ":mat");
     object.mesh_id = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
     mesh = make_plane_mesh();
-    mesh.subsets[0].material_id = material_id;
-
-    // @TODO: generalize it?
-    MaterialComponent& material = *get_component<MaterialComponent>(material_id);
-    material.base_color = vec4(p_color, 1.0f);
-    material.emissive = p_energy;
-
-    LightComponent& light = create<LightComponent>(entity);
-    light.set_type(LIGHT_TYPE_AREA);
-    light.m_color = p_color;
-    light.m_energy = p_energy;
-    // light.m_atten.constant = 1.0f;
-    // light.m_atten.linear = 0.09f;
-    // light.m_atten.quadratic = 0.032f;
+    mesh.subsets[0].material_id = entity;
     return entity;
 }
 
 Entity Scene::create_omni_light_entity(const std::string& p_name,
                                        const vec3& p_color,
-                                       const float p_energy) {
+                                       const float p_emissive) {
     Entity entity = create_box_selectable(p_name, AABB::from_center_size(vec3(0), vec3(0.3f)));
 
     create<TransformComponent>(entity);
 
     LightComponent& light = create<LightComponent>(entity);
     light.set_type(LIGHT_TYPE_OMNI);
-    light.m_color = p_color;
-    light.m_energy = p_energy;
     light.m_atten.constant = 1.0f;
     light.m_atten.linear = 0.0f;
     light.m_atten.quadratic = 0.0f;
+
+    MaterialComponent& material = create<MaterialComponent>(entity);
+    material.base_color = vec4(p_color, 1.0f);
+    material.emissive = p_emissive;
     return entity;
 }
 

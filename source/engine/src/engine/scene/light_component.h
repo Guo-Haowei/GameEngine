@@ -34,9 +34,6 @@ public:
     const auto& get_matrices() const { return m_light_space_matrices; }
     const vec3& get_position() const { return m_position; }
 
-    // @TODO: fix this
-    vec3 m_color = vec3(1);
-    float m_energy = 10.0f;
     struct {
         float constant;
         float linear;
