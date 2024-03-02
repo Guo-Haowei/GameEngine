@@ -97,6 +97,11 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
+        info.cs = "bloom_setup.comp";
+        m_cache[PROGRAM_BLOOM_SETUP] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
         info.cs = "bloom_downsample.comp";
         m_cache[PROGRAM_BLOOM_DOWNSAMPLE] = create(info);
     }

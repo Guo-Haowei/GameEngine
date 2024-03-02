@@ -100,7 +100,7 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_OK("TODO: bloom");
+    LOG_OK("TODO: change position buffer to view space");
     LOG_WARN("TODO: area light shadow");
     LOG_OK("TODO: selection highlight");
     LOG_WARN("TODO: terrain & grass");

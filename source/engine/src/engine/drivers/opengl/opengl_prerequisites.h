@@ -138,17 +138,7 @@ inline void set_sampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
     glTexParameteri(p_texture_type, GL_TEXTURE_MAG_FILTER, convert_filter(p_desc.mag));
     glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_S, convert_address_mode(p_desc.mode_u));
     glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_T, convert_address_mode(p_desc.mode_v));
-
-    switch (p_texture_type) {
-        case GL_TEXTURE_2D:
-            break;
-        case GL_TEXTURE_CUBE_MAP:
-            glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_R, convert_address_mode(p_desc.mode_w));
-            break;
-        default:
-            CRASH_NOW();
-            break;
-    }
+    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_R, convert_address_mode(p_desc.mode_w));
 
     // @TODO: border
     if (p_desc.mode_u == AddressMode::BORDER ||

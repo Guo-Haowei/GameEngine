@@ -37,6 +37,17 @@ inline SamplerDesc linear_clamp_sampler() {
     return desc;
 }
 
+inline SamplerDesc bloom_downsample() {
+    SamplerDesc desc{};
+    desc.min = desc.mag = FilterMode::LINEAR;
+    desc.mode_u = desc.mode_v = desc.mode_w = AddressMode::BORDER;
+    desc.border[0] = 0.0;
+    desc.border[1] = 0.0;
+    desc.border[2] = 0.0;
+    desc.border[3] = 1.0f;
+    return desc;
+}
+
 inline SamplerDesc env_cube_map_sampler_mip() {
     SamplerDesc desc{};
     desc.min = FilterMode::MIPMAP_LINEAR;

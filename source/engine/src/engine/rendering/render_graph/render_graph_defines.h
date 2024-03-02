@@ -45,7 +45,7 @@
 // dummy pass
 #define DUMMY_PASS "dummy_pass"
 
-constexpr int BLOOM_MIP_CHAIN_MAX = 6;
+constexpr int BLOOM_MIP_CHAIN_MAX = 7;
 
 // @TODO: move to shader_defines
 constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;

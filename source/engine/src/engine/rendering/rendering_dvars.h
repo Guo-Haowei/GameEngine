@@ -31,6 +31,7 @@ DVAR_INT(r_ssaoKernelSize, 0, "", 32);
 DVAR_INT(r_ssaoNoiseSize, 0, "", 4);
 DVAR_FLOAT(r_ssaoKernelRadius, 0, "", 0.5f);
 
-// c_tone_image
+// Bloom
+DVAR_INT(r_debug_bloom_downsample, 0, "", 0);
 
 #include "core/dynamic_variable/dynamic_variable_end.h"
