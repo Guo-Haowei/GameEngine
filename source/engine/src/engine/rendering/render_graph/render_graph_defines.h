@@ -47,6 +47,12 @@
 
 constexpr int BLOOM_MIP_CHAIN_MAX = 6;
 
+// @TODO: move to shader_defines
+constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
+constexpr int IMAGE_VOXEL_NORMAL_SLOT = 1;
+constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
+constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
+
 namespace my::rg {
 
 void create_shadow_pass(RenderGraph& p_graph);

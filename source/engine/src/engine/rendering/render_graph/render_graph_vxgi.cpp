@@ -40,8 +40,6 @@ void voxelization_pass_func(const Subpass*) {
     glViewport(0, 0, voxel_size, voxel_size);
 
     // @TODO: fix
-    constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
-    constexpr int IMAGE_VOXEL_NORMAL_SLOT = 1;
     g_albedoVoxel.bindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT);
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
 
@@ -350,10 +348,8 @@ void final_pass_func(const Subpass* p_subpass) {
     auto final_image_handle = GraphicsManager::singleton().find_render_target(RT_RES_TONE)->texture->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
-#if 0
-    auto handle = GraphicsManager::singleton().find_resource(RT_BRDF)->get_resident_handle();
-    debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
-#endif
+    auto handle = GraphicsManager::singleton().find_render_target(RT_RES_BLOOM "_2")->texture->get_resident_handle();
+    debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 1980 / 4, 1080 / 4);
 
     if (DVAR_GET_BOOL(r_debug_csm)) {
         auto shadow_map_handle = GraphicsManager::singleton().find_render_target(RT_RES_SHADOW_MAP)->texture->get_resident_handle();

@@ -8,9 +8,34 @@
 
 namespace my::rg {
 
-static void down_sample_func(const Subpass* p_subpass, int p_level) {
-    unused(p_subpass);
-    unused(p_level);
+// @TODO: refactor
+static int divide_and_roundup(int p_dividend, int p_divisor) {
+    return (p_dividend + p_divisor - 1) / p_divisor;
+}
+
+static void down_sample_func(const Subpass*) {
+    GraphicsManager& manager = GraphicsManager::singleton();
+    std::shared_ptr<RenderTarget> input = manager.find_render_target(RT_RES_LIGHTING);
+
+    manager.set_pipeline_state(PROGRAM_BLOOM_DOWNSAMPLE);
+    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX; ++i) {
+        if (i > 0) {
+            input = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i - 1));
+        }
+        auto output = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i));
+        DEV_ASSERT(input && output);
+
+        g_per_pass_cache.cache.u_tmp_down_sample_input = input->texture->get_resident_handle();
+        g_per_pass_cache.update();
+
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+
+        auto [width, height] = output->get_size();
+        const uint32_t work_group_x = divide_and_roundup(width, 16);
+        const uint32_t work_group_y = divide_and_roundup(height, 16);
+        glDispatchCompute(work_group_x, work_group_y, 1);
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    }
 }
 
 void create_bloom_pass(RenderGraph& p_graph, int p_width, int p_height) {
@@ -20,29 +45,6 @@ void create_bloom_pass(RenderGraph& p_graph, int p_width, int p_height) {
     desc.name = BLOOM_PASS;
     desc.dependencies = { LIGHTING_PASS };
     auto pass = p_graph.create_pass(desc);
-
-    // @TODO: refactor
-    SubPassFunc funcs[] = {
-        [](const Subpass* p_subpass) {
-            down_sample_func(p_subpass, 0);
-        },
-        [](const Subpass* p_subpass) {
-            down_sample_func(p_subpass, 1);
-        },
-        [](const Subpass* p_subpass) {
-            down_sample_func(p_subpass, 2);
-        },
-        [](const Subpass* p_subpass) {
-            down_sample_func(p_subpass, 3);
-        },
-        [](const Subpass* p_subpass) {
-            down_sample_func(p_subpass, 4);
-        },
-        [](const Subpass* p_subpass) {
-            down_sample_func(p_subpass, 5);
-        },
-    };
-    static_assert(array_length(funcs) == BLOOM_MIP_CHAIN_MAX);
 
     for (int i = 0, width = p_width / 2, height = p_height / 2; i < BLOOM_MIP_CHAIN_MAX; ++i, width /= 2, height /= 2) {
         DEV_ASSERT(width > 1);
@@ -55,12 +57,13 @@ void create_bloom_pass(RenderGraph& p_graph, int p_width, int p_height) {
                                                                          AttachmentType::COLOR_2D,
                                                                          width, height },
                                                        linear_clamp_sampler());
-        auto subpass = manager.create_subpass(SubpassDesc{
-            .color_attachments = { attachment },
-            .func = funcs[i],
-        });
-        pass->add_sub_pass(subpass);
     }
+
+    auto subpass = manager.create_subpass(SubpassDesc{
+        .color_attachments = {},
+        .func = down_sample_func,
+    });
+    pass->add_sub_pass(subpass);
 }
 
 }  // namespace my::rg

@@ -25,6 +25,8 @@ static_assert(MAX_CASCADE_COUNT == 4);
 #elif defined(HLSL_LANG)
 #define CBUFFER(name, reg) cbuffer name : register(b##reg)
 
+#define sampler2D vec2;
+
 #elif defined(GLSL_LANG)
 #define CBUFFER(name, reg) layout(std140, binding = reg) uniform name
 
@@ -47,8 +49,10 @@ CBUFFER(PerPassConstantBuffer, 1) {
 
     vec4 _per_pass_padding_0;
     vec4 _per_pass_padding_1;
-    vec3 _per_pass_padding_2;
+
+    sampler2D u_tmp_down_sample_input;
     float u_per_pass_roughness;  // for environment map
+    float _per_pass_padding_2;
 };
 
 // @TODO: change to unordered access buffer
