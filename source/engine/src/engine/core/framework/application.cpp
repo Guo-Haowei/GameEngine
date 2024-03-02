@@ -1,8 +1,5 @@
 #include "application.h"
 
-#include "imgui/imgui.h"
-// @TODO: refactor
-
 #include "core/debugger/profiler.h"
 #include "core/dynamic_variable/dynamic_variable_manager.h"
 #include "core/framework/asset_manager.h"
@@ -16,6 +13,7 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
+#include "imgui/imgui.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
@@ -102,7 +100,6 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_ERROR("TODO: refactor area light");
     LOG_ERROR("TODO: refactor scene loading and saving");
 
     LOG_OK("TODO: selection highlight");

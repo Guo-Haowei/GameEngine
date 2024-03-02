@@ -122,14 +122,6 @@ Entity Scene::create_material_entity(const std::string& name) {
     return entity;
 }
 
-Entity Scene::create_box_selectable(const std::string& name, const AABB& aabb) {
-    Entity entity = create_name_entity(name);
-    BoxColliderComponent& collider = create<BoxColliderComponent>(entity);
-    collider.box = aabb;
-    create<SelectableComponent>(entity);
-    return entity;
-}
-
 Entity Scene::create_point_light_entity(const std::string& p_name,
                                         const vec3& p_position,
                                         const vec3& p_color,
@@ -193,7 +185,7 @@ Entity Scene::create_area_light_entity(const std::string& p_name,
 Entity Scene::create_omni_light_entity(const std::string& p_name,
                                        const vec3& p_color,
                                        const float p_emissive) {
-    Entity entity = create_box_selectable(p_name, AABB::from_center_size(vec3(0), vec3(0.3f)));
+    Entity entity = create_name_entity(p_name);
 
     create<TransformComponent>(entity);
 
@@ -538,37 +530,6 @@ bool Scene::serialize(Archive& archive) {
             }
         }
     }
-}
-
-Scene::RayIntersectionResult Scene::select(Ray& ray) {
-    RayIntersectionResult result;
-
-    for (size_t idx = 0; idx < get_count<SelectableComponent>(); ++idx) {
-        Entity entity = get_entity<SelectableComponent>(idx);
-        const TransformComponent* transform = get_component<TransformComponent>(entity);
-        if (!transform) {
-            continue;
-        }
-
-        if (const auto* collider = get_component<BoxColliderComponent>(entity); collider) {
-            mat4 inversed_model = glm::inverse(transform->get_world_matrix());
-            Ray inversed_ray = ray.inverse(inversed_model);
-            if (inversed_ray.intersects(collider->box)) {
-                result.entity = entity;
-                ray.copy_dist(inversed_ray);
-            }
-            continue;
-        }
-
-        if (const auto* collider = get_component<MeshColliderComponent>(entity); collider) {
-            if (ray_object_intersect(collider->object_id, ray)) {
-                result.entity = entity;
-            }
-            continue;
-        }
-        CRASH_NOW_MSG("????");
-    }
-    return result;
 }
 
 bool Scene::ray_object_intersect(Entity object_id, Ray& ray) {
