@@ -75,6 +75,8 @@ static inline DXGI_FORMAT convert(PixelFormat p_format) {
             return DXGI_FORMAT_R32G32B32_SINT;
         case PixelFormat::R32G32B32A32_SINT:
             return DXGI_FORMAT_R32G32B32A32_SINT;
+        case PixelFormat::R11G11B10_FLOAT:
+            return DXGI_FORMAT_R11G11B10_FLOAT;
         case PixelFormat::D32_FLOAT:
             return DXGI_FORMAT_D32_FLOAT;
         default:

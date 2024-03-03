@@ -13,6 +13,20 @@
 
 namespace my {
 
+void RenderData::Pass::fill_perpass(PerPassConstantBuffer& buffer) const {
+    static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+
+    buffer.u_view_matrix = view_matrix;
+
+    if (GraphicsManager::singleton().get_backend() == Backend::D3D11) {
+        buffer.u_proj_matrix = fixup * projection_matrix;
+        buffer.u_proj_view_matrix = fixup * projection_view_matrix;
+    } else {
+        buffer.u_proj_matrix = projection_matrix;
+        buffer.u_proj_view_matrix = projection_view_matrix;
+    }
+}
+
 template<typename T>
 static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);

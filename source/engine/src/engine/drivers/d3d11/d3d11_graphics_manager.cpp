@@ -94,40 +94,8 @@ void D3d11GraphicsManager::render() {
     m_render_data->update(&scene);
 
     m_render_graph.execute();
-    /////////////////////////////
 
-    const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
-
-    g_per_pass_cache.cache.u_view_matrix = scene.m_camera->get_view_matrix();
-    g_per_pass_cache.cache.u_proj_matrix = fixup * scene.m_camera->get_projection_matrix();
-    g_per_pass_cache.cache.u_proj_view_matrix =
-        g_per_pass_cache.cache.u_proj_matrix *
-        g_per_pass_cache.cache.u_view_matrix;
-    g_per_pass_cache.update();
-
-    RenderData::Pass& pass = m_render_data->main_pass;
-    // TODO: update pass
-    for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            uniform_bind_slot<BoneConstantBuffer>(m_render_data->m_bone_uniform.get(), draw.bone_idx);
-        }
-
-        set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
-        uniform_bind_slot<PerBatchConstantBuffer>(m_render_data->m_batch_uniform.get(), draw.batch_idx);
-        set_mesh(draw.mesh_data);
-
-        for (const auto& subset : draw.subsets) {
-            draw_elements(subset.index_count, subset.index_offset);
-        }
-    }
-
-    /////////////////////////////
-
-    // @TODO: for now, draw stuff here
-
-    // @draw here
-
+    // @TODO: fix the following
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_ctx->OMSetRenderTargets(1, m_window_rtv.GetAddressOf(), nullptr);
     m_ctx->ClearRenderTargetView(m_window_rtv.Get(), clear_color);
@@ -285,13 +253,16 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = d3d11::convert_misc_flags(p_texture_desc.misc_flags);
 
+    D3D11_SUBRESOURCE_DATA* texture_data_ptr = nullptr;
     D3D11_SUBRESOURCE_DATA texture_data{};
+    if (p_texture_desc.initial_data) {
+        texture_data.pSysMem = p_texture_desc.initial_data;
+        texture_data.SysMemPitch = p_texture_desc.width * channel_count(format) * channel_size(format);
+        texture_data.SysMemSlicePitch = p_texture_desc.height * texture_data.SysMemPitch;
+        texture_data_ptr = &texture_data;
+    }
     ComPtr<ID3D11Texture2D> texture;
-    texture_data.pSysMem = p_texture_desc.initial_data;
-    texture_data.SysMemPitch = p_texture_desc.width * channel_count(format) * channel_size(format);
-    texture_data.SysMemSlicePitch = p_texture_desc.height * texture_data.SysMemPitch;
 
-    D3D11_SUBRESOURCE_DATA* texture_data_ptr = p_texture_desc.initial_data ? &texture_data : nullptr;
     D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, texture_data_ptr, texture.GetAddressOf()),
                    nullptr,
                    "Failed to create texture");
