@@ -28,7 +28,7 @@ static const RasterizerDesc s_shadow_rasterizer = {
     .front_counter_clockwise = true,
 };
 
-static const RasterizerDesc s_voxelization_rasterizer = {
+static const RasterizerDesc s_cull_none_rasterizer = {
     .fill_mode = FillMode::SOLID,
     .cull_mode = CullMode::NONE,
     .front_counter_clockwise = true,
@@ -159,7 +159,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "voxelization.vert";
         info.gs = "voxelization.geom";
         info.ps = "voxelization.frag";
-        info.rasterizer_desc = &s_voxelization_rasterizer;
+        info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_VOXELIZATION_STATIC] = create(info);
     }
@@ -169,7 +169,7 @@ bool PipelineStateManager::initialize() {
         info.gs = "voxelization.geom";
         info.ps = "voxelization.frag";
         info.defines = { has_animation };
-        info.rasterizer_desc = &s_voxelization_rasterizer;
+        info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_VOXELIZATION_ANIMATED] = create(info);
     }
@@ -230,7 +230,7 @@ bool PipelineStateManager::initialize() {
         PipelineCreateInfo info;
         info.vs = "billboard.vert";
         info.ps = "texture.frag";
-        info.rasterizer_desc = &s_default_rasterizer;
+        info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BILLBOARD] = create(info);
     }

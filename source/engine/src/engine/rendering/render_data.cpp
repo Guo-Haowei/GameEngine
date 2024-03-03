@@ -253,7 +253,6 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
             continue;
         }
 
-        // ????
         if (!func1(obj)) {
             continue;
         }

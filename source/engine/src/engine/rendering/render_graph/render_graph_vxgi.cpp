@@ -16,7 +16,8 @@ extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern OpenGLMeshBuffers g_box;
 extern OpenGLMeshBuffers g_skybox;
-extern OpenGLMeshBuffers g_billboard;
+// @TODO: add as a object
+extern OpenGLMeshBuffers g_grass;
 
 namespace my::rg {
 
@@ -219,7 +220,8 @@ static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
 void lighting_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().set_render_target(p_subpass);
+    auto& manager = GraphicsManager::singleton();
+    manager.set_render_target(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
@@ -227,7 +229,7 @@ void lighting_pass_func(const Subpass* p_subpass) {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GraphicsManager::singleton().set_pipeline_state(PROGRAM_LIGHTING_VXGI);
+    manager.set_pipeline_state(PROGRAM_LIGHTING_VXGI);
 
     // @TODO: fix
     auto camera = SceneManager::singleton().get_scene().m_camera;
@@ -235,6 +237,11 @@ void lighting_pass_func(const Subpass* p_subpass) {
     g_per_pass_cache.update();
 
     R_DrawQuad();
+
+    // draw billboard grass here for now
+    manager.set_pipeline_state(PROGRAM_BILLBOARD);
+    manager.set_mesh(&g_grass);
+    manager.draw_elements(g_grass.index_count);
 
     // draw skybox here
     {

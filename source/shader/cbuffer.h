@@ -168,6 +168,9 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     // @TODO: unordered access
     sampler2D u_ltc_1;
     sampler2D u_ltc_2;
+
+    sampler2D u_grass_base_color;
+    sampler2D _per_scene_padding_0;
 };
 
 // @TODO: make it more general, something like 2D draw

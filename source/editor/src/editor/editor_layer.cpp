@@ -26,16 +26,16 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 
     m_menu_bar = std::make_shared<MenuBar>(*this);
 
-    // load assets
-    const char* light_icons[] = {
-        "@res://images/arealight.png",
-        "@res://images/pointlight.png",
-        "@res://images/omnilight.png",
-    };
+    //// load assets
+    // const char* light_icons[] = {
+    //     "@res://images/arealight.png",
+    //     "@res://images/pointlight.png",
+    //     "@res://images/omnilight.png",
+    // };
 
-    for (int i = 0; i < array_length(light_icons); ++i) {
-        AssetManager::singleton().load_image_sync(light_icons[i]);
-    }
+    // for (int i = 0; i < array_length(light_icons); ++i) {
+    //     AssetManager::singleton().load_image_sync(light_icons[i]);
+    // }
 }
 
 void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {

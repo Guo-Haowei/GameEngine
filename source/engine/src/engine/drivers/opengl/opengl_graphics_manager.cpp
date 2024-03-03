@@ -35,7 +35,7 @@ GpuTexture g_normalVoxel;
 // @TODO: refactor
 OpenGLMeshBuffers g_box;
 OpenGLMeshBuffers g_skybox;
-OpenGLMeshBuffers g_billboard;
+OpenGLMeshBuffers g_grass;
 
 static GLuint g_noiseTexture;
 
@@ -550,10 +550,13 @@ static void create_ssao_resource() {
 }
 
 void OpenGLGraphicsManager::createGpuResources() {
+    // @TODO: appropriate sampler
+    auto grass_image = AssetManager::singleton().load_image_sync("@res://images/grass.png")->get();
+
     create_ssao_resource();
 
     // create a dummy box data
-    create_mesh_data(make_plane_mesh(vec3(0.3f)), g_billboard);
+    create_mesh_data(make_grass_billboard(), g_grass);
     create_mesh_data(make_box_mesh(), g_box);
     create_mesh_data(make_sky_box_mesh(), g_skybox);
 
@@ -586,6 +589,8 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     cache.c_voxel_map = ::gl::MakeTextureResident(g_albedoVoxel.GetHandle());
     cache.c_voxel_normal_map = ::gl::MakeTextureResident(g_normalVoxel.GetHandle());
+
+    cache.u_grass_base_color = grass_image->gpu_texture->get_resident_handle();
 
     // @TODO: refactor
     auto make_resident = [&](const std::string& name, uint64_t& id) {
