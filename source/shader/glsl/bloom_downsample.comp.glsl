@@ -1,6 +1,6 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-#include "../hlsl/cbuffer.h"
+#include "../cbuffer.h"
 
 layout(r11f_g11f_b10f, binding = 3) uniform image2D u_output_image;
 

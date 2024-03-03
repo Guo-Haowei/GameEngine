@@ -23,11 +23,6 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     // prepare render data
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
-    // @TODO: fix this
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-
     // @TODO: instead of render the same object 6 times
     // set up different object list for different pass
     const RenderData::Pass& pass = *pass_ptr.get();
@@ -66,9 +61,6 @@ static void shadow_pass_func(const Subpass* p_subpass) {
     gm.set_render_target(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
     glClear(GL_DEPTH_BUFFER_BIT);
 
     int actual_width = width / MAX_CASCADE_COUNT;
@@ -94,9 +86,6 @@ static void shadow_pass_func(const Subpass* p_subpass) {
             gm.set_mesh(draw.mesh_data);
             gm.draw_elements(draw.mesh_data->index_count);
         }
-
-        glCullFace(GL_BACK);
-        glUseProgram(0);
     }
 }
 

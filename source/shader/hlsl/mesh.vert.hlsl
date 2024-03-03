@@ -1,6 +1,6 @@
-#include "../hlsl/cbuffer.h"
-#include "vsinput.hlsl"
-#include "vsoutput.hlsl"
+#include "cbuffer.h"
+#include "hlsl/vsinput.hlsl"
+#include "hlsl/vsoutput.hlsl"
 
 vsoutput_mesh main(vsinput_mesh input) {
 #ifdef HAS_ANIMATION

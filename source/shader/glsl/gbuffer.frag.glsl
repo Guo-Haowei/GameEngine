@@ -11,7 +11,7 @@ in struct PS_INPUT {
     vec3 N;
 } ps_in;
 
-#include "../hlsl/cbuffer.h"
+#include "../cbuffer.h"
 
 void main() {
     vec4 albedo = c_albedo_color;

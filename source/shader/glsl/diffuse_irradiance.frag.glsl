@@ -1,4 +1,4 @@
-#include "../hlsl/cbuffer.h"
+#include "../cbuffer.h"
 
 layout(location = 0) out vec4 out_color;
 in vec3 pass_position;

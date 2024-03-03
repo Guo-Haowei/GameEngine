@@ -4,6 +4,7 @@
 
 #include <fstream>
 
+#include "core/framework/asset_manager.h"
 #include "drivers/d3d11/convert.h"
 #include "drivers/d3d11/d3d11_helpers.h"
 
@@ -14,6 +15,29 @@ namespace my {
 namespace fs = std::filesystem;
 using Microsoft::WRL::ComPtr;
 
+class D3DIncludeHandler : public ID3DInclude {
+public:
+    STDMETHOD(Open)
+    (D3D_INCLUDE_TYPE, LPCSTR p_file, LPCVOID, LPCVOID* p_out_data, UINT* p_bytes) override {
+        fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / p_file;
+
+        auto source_binary = AssetManager::singleton().load_file_sync(path.string());
+        if (!source_binary || source_binary->buffer.empty()) {
+            LOG_ERROR("failed to read file '{}'", path.string());
+            return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+        }
+
+        *p_out_data = source_binary->buffer.data();
+        *p_bytes = (UINT)source_binary->buffer.size();
+        return S_OK;
+    }
+
+    STDMETHOD(Close)
+    (LPCVOID) override {
+        return S_OK;
+    }
+};
+
 static auto compile_shader(std::string_view p_path, const char* p_target, const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, std::string> {
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
     std::string fullpath_str = fullpath.string();
@@ -22,11 +46,13 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
     ComPtr<ID3DBlob> error;
     ComPtr<ID3DBlob> source;
 
+    D3DIncludeHandler include_handler;
+
     uint32_t flags = D3DCOMPILE_ENABLE_STRICTNESS;
     HRESULT hr = D3DCompileFromFile(
         path.c_str(),
         p_defines,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        &include_handler,
         "main",
         p_target,
         flags,
@@ -51,7 +77,9 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
     if (!device) {
         return nullptr;
     }
-    auto pipeline_state = std::make_shared<D3d11PipelineState>();
+    auto pipeline_state = std::make_shared<D3d11PipelineState>(p_info.input_layout_desc,
+                                                               p_info.rasterizer_desc,
+                                                               p_info.depth_stencil_desc);
 
     HRESULT hr = S_OK;
 
@@ -92,55 +120,60 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
     std::vector<D3D11_INPUT_ELEMENT_DESC> elements;
     elements.reserve(p_info.input_layout_desc->elements.size());
     for (const auto& ele : p_info.input_layout_desc->elements) {
-        D3D11_INPUT_ELEMENT_DESC ildesc;
-        ildesc.SemanticName = ele.semanticName.c_str();
-        ildesc.SemanticIndex = ele.semanticIndex;
-        ildesc.Format = convert(ele.format);
-        ildesc.InputSlot = ele.inputSlot;
-        ildesc.AlignedByteOffset = ele.alignedByteOffset;
-        ildesc.InputSlotClass = convert(ele.inputSlotClass);
-        ildesc.InstanceDataStepRate = ele.instanceDataStepRate;
-        elements.emplace_back(ildesc);
+        D3D11_INPUT_ELEMENT_DESC desc;
+        desc.SemanticName = ele.semantic_name.c_str();
+        desc.SemanticIndex = ele.semantic_index;
+        desc.Format = convert(ele.format);
+        desc.InputSlot = ele.input_slot;
+        desc.AlignedByteOffset = ele.aligned_byte_offset;
+        desc.InputSlotClass = convert(ele.input_slot_class);
+        desc.InstanceDataStepRate = ele.instance_data_step_rate;
+        elements.emplace_back(desc);
     }
     DEV_ASSERT(elements.size());
 
     hr = device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->input_layout.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create input layout");
 
+    if (p_info.rasterizer_desc) {
+        ComPtr<ID3D11RasterizerState> state;
+
+        auto it = m_rasterizer_states.find(p_info.rasterizer_desc);
+        if (it == m_rasterizer_states.end()) {
+            D3D11_RASTERIZER_DESC desc{};
+            desc.FillMode = convert(p_info.rasterizer_desc->fill_mode);
+            desc.CullMode = convert(p_info.rasterizer_desc->cull_mode);
+            desc.FrontCounterClockwise = p_info.rasterizer_desc->front_counter_clockwise;
+            hr = device->CreateRasterizerState(&desc, state.GetAddressOf());
+            D3D_FAIL_V_MSG(hr, nullptr, "failed to create rasterizer state");
+            m_rasterizer_states[p_info.rasterizer_desc] = state;
+        } else {
+            state = it->second;
+        }
+        DEV_ASSERT(state);
+        pipeline_state->rasterizer = state;
+    }
+    if (p_info.depth_stencil_desc) {
+        ComPtr<ID3D11DepthStencilState> state;
+
+        auto it = m_depth_stencil_states.find(p_info.depth_stencil_desc);
+        if (it == m_depth_stencil_states.end()) {
+            D3D11_DEPTH_STENCIL_DESC dsDesc{};
+            dsDesc.DepthEnable = p_info.depth_stencil_desc->depth_enabled;
+            dsDesc.DepthFunc = convert(p_info.depth_stencil_desc->depth_func);
+            dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+            dsDesc.StencilEnable = p_info.depth_stencil_desc->stencil_enabled;
+            device->CreateDepthStencilState(&dsDesc, state.GetAddressOf());
+            D3D_FAIL_V_MSG(hr, nullptr, "failed to create depth stencil state");
+            m_depth_stencil_states[p_info.depth_stencil_desc] = state;
+        } else {
+            state = it->second.Get();
+        }
+        DEV_ASSERT(state);
+        pipeline_state->depth_stencil = state;
+    }
+
     return pipeline_state;
 }
 
 }  // namespace my
-
-#if 0
-void HlslProgram::CompileShader(string const& file, LPCSTR entry, LPCSTR target, ComPtr<ID3DBlob>& sourceBlob) {
-    string fileStr(file);
-    wstring fileWStr(fileStr.begin(), fileStr.end());
-    ComPtr<ID3DBlob> errorBlob;
-}
-
-void HlslProgram::create(ComPtr<ID3D11Device>& device, const char* debugName, char const* vertName, const char* fragName) {
-    string path(HLSL_DIR);
-    string vertFile(vertName);
-    vertFile.append(".vert.hlsl");
-    string pixelFile(fragName == nullptr ? vertName : fragName);
-    pixelFile.append(".pixel.hlsl");
-    SHADER_COMPILING_START_INFO(debugName);
-    HlslProgram::CompileShader(path + vertFile, "vs_main", "vs_5_0", vertShaderBlob);
-    HRESULT hr = device->CreateVertexShader(
-        vertShaderBlob->GetBufferPointer(),
-        vertShaderBlob->GetBufferSize(),
-        NULL,
-        vertShader.GetAddressOf());
-    D3D_THROW_IF_FAILED(hr, "Failed to create vertex shader");
-    ComPtr<ID3DBlob> pixelBlob;
-    HlslProgram::CompileShader(path + pixelFile, "ps_main", "ps_5_0", pixelBlob);
-    hr = device->CreatePixelShader(
-        pixelBlob->GetBufferPointer(),
-        pixelBlob->GetBufferSize(),
-        NULL,
-        pixelShader.GetAddressOf());
-    D3D_THROW_IF_FAILED(hr, "Failed to create pixel shader");
-    SHADER_COMPILING_END_INFO(debugName);
-}
-#endif

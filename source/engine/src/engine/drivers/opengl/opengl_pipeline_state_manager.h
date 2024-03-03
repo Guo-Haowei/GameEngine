@@ -5,6 +5,8 @@
 namespace my {
 
 struct OpenGLPipelineState : public PipelineState {
+    using PipelineState::PipelineState;
+
     GLuint program_id;
 
     ~OpenGLPipelineState() {

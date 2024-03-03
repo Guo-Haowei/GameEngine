@@ -198,6 +198,11 @@ void Win32DisplayManager::initialize_key_mapping() {
     DEV_ASSERT(m_key_mapping.empty());
 
     m_key_mapping[VK_SPACE] = KEY_SPACE;
+    m_key_mapping[VK_LEFT] = KEY_LEFT;
+    m_key_mapping[VK_RIGHT] = KEY_RIGHT;
+    m_key_mapping[VK_UP] = KEY_UP;
+    m_key_mapping[VK_DOWN] = KEY_DOWN;
+
     for (char i = 0; i <= 9; ++i) {
         m_key_mapping['0' + i] = static_cast<KeyCode>(KEY_0 + i);
     }

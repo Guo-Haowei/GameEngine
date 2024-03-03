@@ -1,4 +1,4 @@
-#include "../hlsl/cbuffer.h"
+#include "../cbuffer.h"
 #include "lighting.glsl"
 
 layout(location = 0) out vec4 out_color;

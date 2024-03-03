@@ -1,6 +1,6 @@
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-#include "../hlsl/cbuffer.h"
+#include "../cbuffer.h"
 
 layout(r11f_g11f_b10f, binding = 3) uniform image2D u_output_image;
 
@@ -16,7 +16,7 @@ void main() {
 
     vec3 color = texture(u_tmp_bloom_input, vec2(uv.x, uv.y)).rgb;
     float luma = rgb_to_luma(color);
-    if (luma < 1.5) {
+    if (luma < 1.0) {
         color = vec3(0.0);
     }
 

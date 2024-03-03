@@ -194,7 +194,7 @@ uint64_t GraphicsManager::get_final_image() const {
             texture = find_render_target(RT_RES_FINAL)->texture.get();
             break;
         case RenderGraph::DUMMY:
-            texture = find_render_target(RT_RES_FINAL)->texture.get();
+            texture = find_render_target(RT_RES_GBUFFER_NORMAL)->texture.get();
             break;
         default:
             CRASH_NOW();

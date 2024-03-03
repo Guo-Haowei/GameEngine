@@ -1,6 +1,6 @@
 #pragma once
 #include "core/math/geomath.h"
-#include "hlsl/shader_defines.h"
+#include "shader_defines.h"
 
 namespace my {
 
