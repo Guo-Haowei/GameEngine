@@ -378,6 +378,9 @@ void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, flo
 
 void D3d11GraphicsManager::set_viewport(const Viewport& p_viewport) {
     D3D11_VIEWPORT vp{};
+    // @TODO: gl and d3d use different viewport
+    vp.TopLeftX = static_cast<float>(p_viewport.top_left_x);
+    vp.TopLeftY = static_cast<float>(p_viewport.top_left_y);
     vp.Width = static_cast<float>(p_viewport.width);
     vp.Height = static_cast<float>(p_viewport.height);
     vp.MinDepth = 0.0f;

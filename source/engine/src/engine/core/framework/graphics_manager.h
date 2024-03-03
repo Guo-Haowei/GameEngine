@@ -36,8 +36,12 @@ enum ClearFlags : uint32_t {
 };
 
 struct Viewport {
+    Viewport(int p_width, int p_height) : width(p_width), height(p_height), top_left_x(0), top_left_y(0) {}
+
     int width;
     int height;
+    int top_left_x;
+    int top_left_y;
 };
 
 struct MeshBuffers {

@@ -57,8 +57,7 @@ struct RenderData {
     std::shared_ptr<UniformBufferBase> m_material_uniform;
     std::shared_ptr<UniformBufferBase> m_bone_uniform;
 
-    // @TODO: fix this ugly shit
-
+    bool has_sun_light = false;
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<Pass, MAX_CASCADE_COUNT> shadow_passes;
 

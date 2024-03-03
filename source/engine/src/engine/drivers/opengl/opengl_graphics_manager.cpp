@@ -262,6 +262,7 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
 
     uint32_t flags = 0;
     if (p_flags & CLEAR_COLOR_BIT) {
+        // @TODO: cache clear color
         if (p_clear_color) {
             glClearColor(p_clear_color[0], p_clear_color[1], p_clear_color[2], p_clear_color[3]);
         }
@@ -275,7 +276,14 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
 }
 
 void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
-    glViewport(0, 0, p_viewport.width, p_viewport.height);
+    if (p_viewport.top_left_y) {
+        LOG_FATAL("TODO: adjust to bottom left y");
+    }
+
+    glViewport(p_viewport.top_left_x,
+               p_viewport.top_left_y,
+               p_viewport.width,
+               p_viewport.height);
 }
 
 void OpenGLGraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
@@ -610,11 +618,13 @@ void OpenGLGraphicsManager::createGpuResources() {
 void OpenGLGraphicsManager::render() {
     OPTICK_EVENT();
 
-    // @TODO: move outside
-    Scene& scene = SceneManager::singleton().get_scene();
-    renderer::fill_constant_buffers(scene);
-
-    m_render_data->update(&scene);
+    {
+        OPTICK_EVENT("prepare render data");
+        // @TODO: move outside
+        Scene& scene = SceneManager::singleton().get_scene();
+        renderer::fill_constant_buffers(scene);
+        m_render_data->update(&scene);
+    }
 
     g_perFrameCache.update();
 

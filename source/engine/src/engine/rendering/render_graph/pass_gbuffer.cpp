@@ -13,9 +13,7 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 
     graphics_manager.set_render_target(p_subpass);
 
-    Viewport viewport;
-    viewport.width = width;
-    viewport.height = height;
+    Viewport viewport{ width, height };
     graphics_manager.set_viewport(viewport);
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };

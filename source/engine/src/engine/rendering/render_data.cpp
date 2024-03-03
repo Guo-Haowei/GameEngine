@@ -1,6 +1,7 @@
 #include "render_data.h"
 
 #include "core/base/rid_owner.h"
+#include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
 #include "core/framework/graphics_manager.h"
@@ -155,6 +156,8 @@ void RenderData::point_light_draw_data() {
 }
 
 void RenderData::update(const Scene* p_scene) {
+    OPTICK_EVENT();
+
     m_batch_buffer_lookup.clear();
     m_batch_buffer_lookup.reserve(p_scene->get_count<TransformComponent>());
     m_batch_buffers.clear();
@@ -176,21 +179,31 @@ void RenderData::update(const Scene* p_scene) {
 
     point_light_draw_data();
 
-    // cascaded shadow map
-    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-        // @TODO: fix this
-        mat4 light_matrix = g_perFrameCache.cache.u_main_light_matrices[i];
-        Frustum light_frustum(light_matrix);
-        shadow_passes[i].projection_view_matrix = light_matrix;
-        fill(
-            p_scene,
-            shadow_passes[i],
-            [](const ObjectComponent& object) {
-                return object.flags & ObjectComponent::CAST_SHADOW;
-            },
-            [&](const AABB& aabb) {
-                return light_frustum.intersects(aabb);
-            });
+    // @TODO: generalize this
+    has_sun_light = false;
+    for (auto [entity, light] : p_scene->m_LightComponents) {
+        if (light.get_type() == LIGHT_TYPE_OMNI) {
+            has_sun_light = true;
+            break;
+        }
+    }
+    if (has_sun_light) {
+        // cascaded shadow map
+        for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
+            // @TODO: fix this
+            mat4 light_matrix = g_perFrameCache.cache.u_main_light_matrices[i];
+            Frustum light_frustum(light_matrix);
+            shadow_passes[i].projection_view_matrix = light_matrix;
+            fill(
+                p_scene,
+                shadow_passes[i],
+                [](const ObjectComponent& object) {
+                    return object.flags & ObjectComponent::CAST_SHADOW;
+                },
+                [&](const AABB& aabb) {
+                    return light_frustum.intersects(aabb);
+                });
+        }
     }
 
     // voxel pass
@@ -222,15 +235,6 @@ void RenderData::update(const Scene* p_scene) {
             return camera_frustum.intersects(aabb);
         });
 
-    //// @TODO: cache pointers
-    // ImageHandle* point_light = AssetManager::singleton().find_image("@res://images/pointlight.png");
-    // DEV_ASSERT(point_light);
-    // Image* point_light_image = point_light->get();
-
-    // ImageHandle* omni_light = AssetManager::singleton().find_image("@res://images/omnilight.png");
-    // DEV_ASSERT(omni_light);
-    // Image* omni_light_image = omni_light->get();
-
     m_batch_buffer_lookup.clear();
     m_material_buffer_lookup.clear();
     // copy buffers
@@ -241,6 +245,7 @@ void RenderData::update(const Scene* p_scene) {
 }
 
 void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {
+    OPTICK_EVENT();
     scene = p_scene;
 
     for (auto [entity, obj] : scene->m_ObjectComponents) {

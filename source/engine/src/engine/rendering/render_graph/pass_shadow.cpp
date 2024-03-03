@@ -4,16 +4,13 @@
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
 
-// @TODO: remove API sepcific code
-#include "drivers/opengl/opengl_prerequisites.h"
-
 namespace my::rg {
 
 static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     OPTICK_EVENT();
 
-    auto& gm = GraphicsManager::singleton();
-    auto render_data = gm.get_render_data();
+    auto& manager = GraphicsManager::singleton();
+    auto render_data = manager.get_render_data();
 
     auto& pass_ptr = render_data->point_shadow_passes[p_pass_id];
     if (!pass_ptr) {
@@ -34,22 +31,24 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
         g_per_pass_cache.cache.u_point_light_far = pass.light_component.get_max_distance();
         g_per_pass_cache.update();
 
-        gm.set_render_target(p_subpass, i);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, width, height);
+        manager.set_render_target(p_subpass, i);
+        manager.clear(p_subpass, CLEAR_DEPTH_BIT);
+
+        Viewport viewport{ width, height };
+        manager.set_viewport(viewport);
 
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+                manager.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
             }
 
-            gm.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
+            manager.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-            gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
+            manager.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
-            gm.set_mesh(draw.mesh_data);
-            gm.draw_elements(draw.mesh_data->index_count);
+            manager.set_mesh(draw.mesh_data);
+            manager.draw_elements(draw.mesh_data->index_count);
         }
     }
 }
@@ -57,17 +56,23 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 static void shadow_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    auto& gm = GraphicsManager::singleton();
-    gm.set_render_target(p_subpass);
+    auto render_data = GraphicsManager::singleton().get_render_data();
+    if (!render_data->has_sun_light) {
+        return;
+    }
+
+    auto& manager = GraphicsManager::singleton();
+    manager.set_render_target(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    manager.clear(p_subpass, CLEAR_DEPTH_BIT);
 
     int actual_width = width / MAX_CASCADE_COUNT;
-    auto render_data = GraphicsManager::singleton().get_render_data();
 
     for (int cascade_idx = 0; cascade_idx < MAX_CASCADE_COUNT; ++cascade_idx) {
-        glViewport(cascade_idx * actual_width, 0, actual_width, height);
+        Viewport viewport{ actual_width, height };
+        viewport.top_left_x = cascade_idx * actual_width;
+        manager.set_viewport(viewport);
 
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
         pass.fill_perpass(g_per_pass_cache.cache);
@@ -76,15 +81,15 @@ static void shadow_pass_func(const Subpass* p_subpass) {
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+                manager.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
             }
 
-            gm.set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
+            manager.set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-            gm.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
+            manager.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
-            gm.set_mesh(draw.mesh_data);
-            gm.draw_elements(draw.mesh_data->index_count);
+            manager.set_mesh(draw.mesh_data);
+            manager.draw_elements(draw.mesh_data->index_count);
         }
     }
 }
