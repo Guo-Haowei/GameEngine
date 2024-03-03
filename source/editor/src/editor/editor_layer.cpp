@@ -7,10 +7,10 @@
 #include "core/input/input.h"
 #include "editor/panels/console_panel.h"
 #include "editor/panels/content_browser.h"
-#include "editor/panels/debug_panel.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_editor.h"
+#include "editor/panels/renderer_panel.h"
 #include "editor/panels/viewer.h"
 
 namespace my {
@@ -18,7 +18,7 @@ namespace my {
 EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<RenderGraphEditor>(*this));
     add_panel(std::make_shared<ConsolePanel>(*this));
-    add_panel(std::make_shared<DebugPanel>(*this));
+    add_panel(std::make_shared<RendererPanel>(*this));
     add_panel(std::make_shared<HierarchyPanel>(*this));
     add_panel(std::make_shared<PropertyPanel>(*this));
     add_panel(std::make_shared<Viewer>(*this));

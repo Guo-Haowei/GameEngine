@@ -29,11 +29,11 @@ DVAR_INT(r_shadow_res, 0, "Shadow resolution", 1024 * 2);
 // SSAO
 DVAR_INT(r_ssaoKernelSize, 0, "", 32);
 DVAR_INT(r_ssaoNoiseSize, 0, "", 4);
-DVAR_FLOAT(r_ssaoKernelRadius, 0, "", 0.5f);
+DVAR_FLOAT(r_ssao_kernel_radius, 0, "", 0.5f);
 
 // Bloom
-DVAR_BOOL(r_enable_bloom, DVAR_FLAG_CACHE, "Enable Bloom", true);
-DVAR_INT(r_debug_bloom_downsample, DVAR_FLAG_CACHE, "", 0);
-DVAR_FLOAT(r_bloom_threshold, DVAR_FLAG_CACHE, "", 1.0f);
+DVAR_BOOL(r_enable_bloom, DVAR_FLAG_NONE, "Enable Bloom", true);
+DVAR_INT(r_debug_bloom_downsample, DVAR_FLAG_NONE, "", 0);
+DVAR_FLOAT(r_bloom_threshold, DVAR_FLAG_NONE, "", 1.0f);
 
 #include "core/dynamic_variable/dynamic_variable_end.h"

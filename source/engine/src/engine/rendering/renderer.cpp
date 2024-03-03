@@ -290,7 +290,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     // SSAO
     cache.u_ssao_kernel_size = DVAR_GET_INT(r_ssaoKernelSize);
-    cache.u_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
+    cache.u_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssao_kernel_radius);
     cache.u_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
     cache.u_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
     cache.u_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
