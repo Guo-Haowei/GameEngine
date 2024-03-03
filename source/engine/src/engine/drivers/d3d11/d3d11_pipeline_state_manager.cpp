@@ -4,6 +4,7 @@
 
 #include <fstream>
 
+#include "core/framework/asset_manager.h"
 #include "drivers/d3d11/convert.h"
 #include "drivers/d3d11/d3d11_helpers.h"
 
@@ -14,6 +15,29 @@ namespace my {
 namespace fs = std::filesystem;
 using Microsoft::WRL::ComPtr;
 
+class D3DIncludeHandler : public ID3DInclude {
+public:
+    STDMETHOD(Open)
+    (D3D_INCLUDE_TYPE, LPCSTR p_file, LPCVOID, LPCVOID* p_out_data, UINT* p_bytes) override {
+        fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / p_file;
+
+        auto source_binary = AssetManager::singleton().load_file_sync(path.string());
+        if (!source_binary || source_binary->buffer.empty()) {
+            LOG_ERROR("failed to read file '{}'", path.string());
+            return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+        }
+
+        *p_out_data = source_binary->buffer.data();
+        *p_bytes = (UINT)source_binary->buffer.size();
+        return S_OK;
+    }
+
+    STDMETHOD(Close)
+    (LPCVOID) override {
+        return S_OK;
+    }
+};
+
 static auto compile_shader(std::string_view p_path, const char* p_target, const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, std::string> {
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
     std::string fullpath_str = fullpath.string();
@@ -22,12 +46,13 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
     ComPtr<ID3DBlob> error;
     ComPtr<ID3DBlob> source;
 
-    // @TODO: custom include
+    D3DIncludeHandler include_handler;
+
     uint32_t flags = D3DCOMPILE_ENABLE_STRICTNESS;
     HRESULT hr = D3DCompileFromFile(
         path.c_str(),
         p_defines,
-        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        &include_handler,
         "main",
         p_target,
         flags,

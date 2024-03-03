@@ -1,4 +1,4 @@
-#include "../hlsl/cbuffer.h"
+#include "../cbuffer.h"
 #include "../vsinput.glsl.h"
 
 out struct PS_INPUT {

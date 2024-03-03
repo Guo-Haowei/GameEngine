@@ -3,7 +3,7 @@
 #include "scene/scene.h"
 
 // this should be included after geomath.h
-#include "hlsl/cbuffer.h"
+#include "cbuffer.h"
 
 namespace my {
 

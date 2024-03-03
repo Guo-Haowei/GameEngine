@@ -1,4 +1,4 @@
-#include "../hlsl/cbuffer.h"
+#include "../cbuffer.h"
 
 in vec3 pass_position;
 

@@ -1,4 +1,4 @@
-#include "vsoutput.hlsl"
+#include "hlsl/vsoutput.hlsl"
 
 struct ps_output {
     float4 base_color : SV_TARGET0;
