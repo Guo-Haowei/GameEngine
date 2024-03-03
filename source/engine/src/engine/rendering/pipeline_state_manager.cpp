@@ -40,6 +40,12 @@ static const DepthStencilDesc s_default_depth_stencil = {
     .stencil_enabled = false,
 };
 
+static const DepthStencilDesc s_no_depth_test = {
+    .depth_func = ComparisonFunc::LESS_EQUAL,
+    .depth_enabled = false,
+    .stencil_enabled = false,
+};
+
 PipelineState* PipelineStateManager::find(PipelineStateName p_name) {
     DEV_ASSERT_INDEX(p_name, m_cache.size());
     return m_cache[p_name].get();
@@ -154,7 +160,7 @@ bool PipelineStateManager::initialize() {
         info.gs = "voxelization.geom";
         info.ps = "voxelization.frag";
         info.rasterizer_desc = &s_voxelization_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_VOXELIZATION_STATIC] = create(info);
     }
     {
@@ -164,7 +170,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "voxelization.frag";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_voxelization_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_VOXELIZATION_ANIMATED] = create(info);
     }
     {
@@ -217,7 +223,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "screenspace_quad.vert";
         info.ps = "brdf.frag";
         info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_BRDF] = create(info);
     }
     {
@@ -233,7 +239,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "debug_draw_texture.vert";
         info.ps = "debug_draw_texture.frag";
         info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_IMAGE_2D] = create(info);
     }
 

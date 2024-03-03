@@ -33,7 +33,6 @@ void voxelization_pass_func(const Subpass*) {
 
     const int voxel_size = DVAR_GET_INT(r_voxel_size);
 
-    glDisable(GL_DEPTH_TEST);
     glDisable(GL_BLEND);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glViewport(0, 0, voxel_size, voxel_size);
@@ -83,7 +82,6 @@ void voxelization_pass_func(const Subpass*) {
     g_normalVoxel.bind();
     g_normalVoxel.genMipMap();
 
-    glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
 }
 
@@ -137,9 +135,7 @@ void generate_brdf_func(const Subpass* p_subpass) {
     GraphicsManager::singleton().set_render_target(p_subpass);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
-    glDisable(GL_DEPTH_TEST);
     R_DrawQuad();
-    glEnable(GL_DEPTH_TEST);
 }
 
 void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
@@ -231,8 +227,6 @@ void lighting_pass_func(const Subpass* p_subpass) {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glEnable(GL_DEPTH_TEST);
-
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_LIGHTING_VXGI);
 
     // @TODO: fix
@@ -241,8 +235,6 @@ void lighting_pass_func(const Subpass* p_subpass) {
     g_per_pass_cache.update();
 
     R_DrawQuad();
-
-    glDepthFunc(GL_LEQUAL);
 
     // draw skybox here
     {
@@ -265,8 +257,6 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
-    glEnable(GL_DEPTH_TEST);
-    // glClear(GL_COLOR_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_DEBUG_VOXEL);
@@ -302,13 +292,9 @@ static void tone_pass_func(const Subpass* p_subpass) {
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // glDisable(GL_DEPTH_TEST);
         GraphicsManager::singleton().set_pipeline_state(PROGRAM_TONE);
         R_DrawQuad();
     }
-
-    // glDepthFunc(GL_LESS);
-    glUseProgram(0);
 }
 
 // @TODO: refactor
@@ -337,7 +323,6 @@ void final_pass_func(const Subpass* p_subpass) {
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
     glViewport(0, 0, width, height);
-    glDisable(GL_DEPTH_TEST);
     glClear(GL_COLOR_BUFFER_BIT);
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_IMAGE_2D);
@@ -345,6 +330,11 @@ void final_pass_func(const Subpass* p_subpass) {
     // @TODO: clean up
     auto final_image_handle = GraphicsManager::singleton().find_render_target(RT_RES_TONE)->texture->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
+
+    if (0) {
+        auto handle = GraphicsManager::singleton().find_render_target(RT_BRDF)->texture->get_resident_handle();
+        debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
+    }
 
     if (0) {
         int level = DVAR_GET_INT(r_debug_bloom_downsample);

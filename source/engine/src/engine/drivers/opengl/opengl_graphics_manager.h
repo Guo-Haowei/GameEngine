@@ -46,6 +46,8 @@ private:
     struct {
         CullMode cull_mode;
         bool front_counter_clockwise;
+        ComparisonFunc depth_func;
+        bool enable_depth_test;
     } m_state_cache;
 };
 

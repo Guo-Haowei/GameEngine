@@ -114,7 +114,7 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipeline_state_manager->find(p_name));
 
     if (pipeline->rasterizer_desc) {
-        auto cull_mode = pipeline->rasterizer_desc->cull_mode;
+        const auto cull_mode = pipeline->rasterizer_desc->cull_mode;
         if (cull_mode != m_state_cache.cull_mode) {
             switch (cull_mode) {
                 case my::CullMode::NONE:
@@ -139,10 +139,59 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
             m_state_cache.cull_mode = cull_mode;
         }
 
-        bool front_counter_clockwise = pipeline->rasterizer_desc->front_counter_clockwise;
+        const bool front_counter_clockwise = pipeline->rasterizer_desc->front_counter_clockwise;
         if (front_counter_clockwise != m_state_cache.front_counter_clockwise) {
             glFrontFace(front_counter_clockwise ? GL_CCW : GL_CW);
             m_state_cache.front_counter_clockwise = front_counter_clockwise;
+        }
+    }
+
+    if (pipeline->depth_stencil_desc) {
+        const bool enable_depth_test = pipeline->depth_stencil_desc->depth_enabled;
+        if (enable_depth_test != m_state_cache.enable_depth_test) {
+            if (enable_depth_test) {
+                glEnable(GL_DEPTH_TEST);
+            } else {
+                glDisable(GL_DEPTH_TEST);
+            }
+            m_state_cache.enable_depth_test = enable_depth_test;
+        }
+
+        if (enable_depth_test) {
+            const auto func = pipeline->depth_stencil_desc->depth_func;
+            if (func != m_state_cache.depth_func) {
+                switch (func) {
+                    case ComparisonFunc::NEVER:
+                        glDepthFunc(GL_NEVER);
+                        break;
+                    case ComparisonFunc::LESS:
+                        glDepthFunc(GL_LESS);
+                        break;
+                    case ComparisonFunc::EQUAL:
+                        glDepthFunc(GL_EQUAL);
+                        break;
+                    case ComparisonFunc::LESS_EQUAL:
+                        glDepthFunc(GL_LEQUAL);
+                        break;
+                    case ComparisonFunc::GREATER:
+                        glDepthFunc(GL_GREATER);
+                        break;
+                    case ComparisonFunc::NOT_EQUAL:
+                        glDepthFunc(GL_NOTEQUAL);
+                        break;
+                    case ComparisonFunc::GREATER_EQUAL:
+                        glDepthFunc(GL_GEQUAL);
+                        break;
+                    case ComparisonFunc::ALWAYS:
+                        glDepthFunc(GL_ALWAYS);
+                        break;
+                    default:
+                        CRASH_NOW();
+                        break;
+                }
+
+                m_state_cache.depth_func = func;
+            }
         }
     }
 

@@ -3,9 +3,6 @@
 #include "rendering/render_data.h"
 #include "rendering/render_graph/render_graph_defines.h"
 
-// @TODO: remove API sepcific code
-#include "drivers/opengl/opengl_prerequisites.h"
-
 namespace my::rg {
 
 static void gbuffer_pass_func(const Subpass* p_subpass) {
@@ -23,9 +20,6 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
-
-    // @TODO:
-    glEnable(GL_DEPTH_TEST);
 
     auto render_data = graphics_manager.get_render_data();
     RenderData::Pass& pass = render_data->main_pass;
