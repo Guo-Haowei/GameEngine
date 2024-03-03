@@ -23,7 +23,7 @@ void EditorItem::open_add_entity_popup(ecs::Entity p_parent) {
                 m_editor.add_entity(ENTITY_TYPE_POINT_LIGHT, p_parent);
             }
             if (ImGui::MenuItem("Sun")) {
-                LOG_ERROR("not implemented");
+                m_editor.add_entity(ENTITY_TYPE_OMNI_LIGHT, p_parent);
             }
             if (ImGui::MenuItem("Spot")) {
                 LOG_ERROR("not implemented");

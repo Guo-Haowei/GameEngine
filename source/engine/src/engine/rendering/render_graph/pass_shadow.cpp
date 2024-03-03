@@ -94,10 +94,8 @@ static void shadow_pass_func(const Subpass* p_subpass) {
             gm.set_mesh(draw.mesh_data);
             gm.draw_elements(draw.mesh_data->index_count);
         }
-
-        glCullFace(GL_BACK);
-        glUseProgram(0);
     }
+    glCullFace(GL_BACK);
 }
 
 void create_shadow_pass(RenderGraph& p_graph) {

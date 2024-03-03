@@ -84,6 +84,36 @@ mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_mat
     return P * V;
 }
 
+struct Sphere {
+    vec3 center;
+    float radius;
+};
+
+static Sphere find_bounding_sphere(const vec3* p_points, int p_point_count) {
+    DEV_ASSERT(p_point_count >= 2);
+    vec3 center{ 0 };
+    float max_distance = 0.0f;
+    for (int i = 0; i < p_point_count; ++i) {
+        center += p_points[i];
+    }
+    center *= 1.0f / p_point_count;
+
+    for (int i = 0; i < p_point_count - 1; ++i) {
+        for (int j = i + 1; j < p_point_count; ++j) {
+            float distance = glm::distance(p_points[i], p_points[j]);
+            if (distance > max_distance) {
+                max_distance = distance;
+            }
+        }
+    }
+
+    DEV_ASSERT(max_distance > 0.0f);
+    Sphere sphere;
+    sphere.center = center;
+    sphere.radius = 0.5f * max_distance;
+    return sphere;
+}
+
 static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plane, float p_far_plane, const Camera& p_camera) {
     const auto proj = glm::perspective(
         p_camera.get_fovy().to_rad(),
@@ -91,54 +121,38 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
         p_near_plane,
         p_far_plane);
 
-    std::array<vec4, 8> corners{
-        vec4(-1, -1, -1, 1),
-        vec4(-1, -1, +1, 1),
-        vec4(-1, +1, -1, 1),
-        vec4(-1, +1, +1, 1),
+    std::array<vec3, 8> corners{
+        vec3(-1, -1, -1),
+        vec3(-1, -1, +1),
+        vec3(-1, +1, -1),
+        vec3(-1, +1, +1),
 
-        vec4(+1, -1, -1, 1),
-        vec4(+1, -1, +1, 1),
-        vec4(+1, +1, -1, 1),
-        vec4(+1, +1, +1, 1),
+        vec3(+1, -1, -1),
+        vec3(+1, -1, +1),
+        vec3(+1, +1, -1),
+        vec3(+1, +1, +1),
     };
 
-    glm::vec3 center = glm::vec3(0);
     mat4 inv_pv = glm::inverse(proj * p_camera.get_view_matrix());
-    for (vec4& point : corners) {
-        point = inv_pv * point;
-        point /= point.w;  // world space
-        center += vec3(point);
+    for (vec3& point : corners) {
+        vec4 point4{ point, 1.0f };
+        point4 = inv_pv * point4;
+        point4 /= point4.w;  // world space
+        point = point4;
     }
 
-    center /= corners.size();
+    Sphere sphere = find_bounding_sphere(corners.data(), static_cast<int>(corners.size()));
+    float r = sphere.radius;
 
     vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
-    vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
-    vec3 eye = center + light_dir;
-    mat4 light_view = glm::lookAt(eye, center, light_up);
+    vec3 light_up = glm::normalize(p_light_matrix * vec4(0, 1, 0, 0));
+    vec3 eye = sphere.center + r * light_dir;
+    mat4 light_view = glm::lookAt(eye, sphere.center, light_up);
 
-    AABB aabb;
-    for (const vec4& point : corners) {
-        aabb.expand_point(vec3(light_view * point));
-    }
+    float min_z = -2.0f * r;
+    float max_z = 2.0f * r;
 
-    vec3 aabb_center = aabb.center();
-
-    float min_x = aabb.get_min().x;
-    float max_x = aabb.get_max().x;
-    float min_y = aabb.get_min().y;
-    float max_y = aabb.get_max().y;
-    float min_z = aabb.get_min().z;
-    float max_z = aabb.get_max().z;
-
-    // HACK: extend min and max z
-    // use a more math way to do it
-    float dz = 2.f * (max_z - min_z);
-    min_z -= dz;
-    max_z += dz;
-
-    mat4 light_projection = glm::ortho(min_x, max_x, min_y, max_y, min_z, max_z);
+    mat4 light_projection = glm::ortho(-r, r, -r, r, min_z, max_z);
     return light_projection * light_view;
 }
 

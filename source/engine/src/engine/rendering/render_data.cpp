@@ -122,7 +122,7 @@ void RenderData::point_light_draw_data() {
             scene,
             *pass.get(),
             [](const ObjectComponent& object) {
-                return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
+                return object.flags & ObjectComponent::CAST_SHADOW;
             },
             [&](const AABB& aabb) {
                 for (const auto& frustum : frustums) {
@@ -172,7 +172,7 @@ void RenderData::update(const Scene* p_scene) {
             p_scene,
             shadow_passes[i],
             [](const ObjectComponent& object) {
-                return !(object.flags & ObjectComponent::CAST_SHADOW) || !(object.flags & ObjectComponent::RENDERABLE);
+                return object.flags & ObjectComponent::CAST_SHADOW;
             },
             [&](const AABB& aabb) {
                 return light_frustum.intersects(aabb);
@@ -184,7 +184,7 @@ void RenderData::update(const Scene* p_scene) {
         p_scene,
         voxel_pass,
         [](const ObjectComponent& object) {
-            return !(object.flags & ObjectComponent::RENDERABLE);
+            return object.flags & ObjectComponent::RENDERABLE;
         },
         [&](const AABB& aabb) {
             unused(aabb);
@@ -202,7 +202,7 @@ void RenderData::update(const Scene* p_scene) {
         p_scene,
         main_pass,
         [](const ObjectComponent& object) {
-            return !(object.flags & ObjectComponent::RENDERABLE);
+            return object.flags & ObjectComponent::RENDERABLE;
         },
         [&](const AABB& aabb) {
             return camera_frustum.intersects(aabb);
@@ -235,7 +235,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
         }
 
         // ????
-        if (func1(obj)) {
+        if (!func1(obj)) {
             continue;
         }
 
