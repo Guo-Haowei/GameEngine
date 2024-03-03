@@ -6,8 +6,8 @@ layout(location = 0) out float occlusion;
 void main() {
     const float bias = 0.01;
 
-    vec2 noiseScale = vec2(float(c_screen_width), float(c_screen_height));
-    noiseScale /= float(c_ssao_noise_size);
+    vec2 noiseScale = vec2(float(u_screen_width), float(u_screen_height));
+    noiseScale /= float(u_ssao_noise_size);
 
     const vec2 uv = pass_uv;
     const vec3 N = normalize(texture(u_gbuffer_normal_map, uv).xyz);
@@ -22,10 +22,10 @@ void main() {
     origin = u_view_matrix * origin;
 
     occlusion = 0.0;
-    for (int i = 0; i < c_ssao_kernel_size; ++i) {
+    for (int i = 0; i < u_ssao_kernel_size; ++i) {
         // get sample position
-        vec3 samplePos = TBN * c_ssao_kernels[i].xyz;  // from tangent to view-space
-        samplePos = origin.xyz + samplePos * c_ssao_kernel_radius;
+        vec3 samplePos = TBN * u_ssao_kernels[i].xyz;  // from tangent to view-space
+        samplePos = origin.xyz + samplePos * u_ssao_kernel_radius;
 
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);
@@ -39,9 +39,9 @@ void main() {
         const float sampleDepth = sampleg_viewSpace.z;
 
         // range check & accumulate
-        float rangeCheck = smoothstep(0.0, 1.0, c_ssao_kernel_radius / abs(origin.z - sampleDepth));
+        float rangeCheck = smoothstep(0.0, 1.0, u_ssao_kernel_radius / abs(origin.z - sampleDepth));
         occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;
     }
 
-    occlusion = 1.0 - (occlusion / float(c_ssao_kernel_size));
+    occlusion = 1.0 - (occlusion / float(u_ssao_kernel_size));
 }

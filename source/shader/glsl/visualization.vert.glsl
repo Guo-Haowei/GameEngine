@@ -14,7 +14,7 @@ void main() {
     int y = (gl_InstanceID / voxel_texture_size) % voxel_texture_size;
     int z = gl_InstanceID / (voxel_texture_size * voxel_texture_size);
     vec4 color;
-    if (c_debug_voxel_id == 1) {
+    if (u_debug_voxel_id == 1) {
         color = imageLoad(u_normal_texture, ivec3(x, y, z));
     } else {
         color = imageLoad(u_albedo_texture, ivec3(x, y, z));
@@ -24,11 +24,11 @@ void main() {
         // move the voxel outside the clipping space
         gl_Position = vec4(vec3(-99999), 1.0);
     } else {
-        float world_size = 2.0 * c_world_size_half;
+        float world_size = 2.0 * u_world_size_half;
         float voxel_size = world_size / float(voxel_texture_size);
         vec3 coord_pos = vec3(float(x), float(y), float(z)) / float(voxel_texture_size);  // [0, 1]
         coord_pos = 2.0 * coord_pos - vec3(1.0);                                          // [-1, 1]
-        vec3 offset = c_world_size_half * coord_pos + c_world_center + 0.5 * vec3(voxel_size);
+        vec3 offset = u_world_size_half * coord_pos + u_world_center + 0.5 * vec3(voxel_size);
         vec3 world_position = voxel_size * in_position + offset;
         gl_Position = u_proj_view_matrix * vec4(world_position, 1.0);
 

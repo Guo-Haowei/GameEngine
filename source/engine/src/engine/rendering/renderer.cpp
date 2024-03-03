@@ -196,7 +196,7 @@ void fill_constant_buffers(const Scene& scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), MAX_LIGHT_COUNT);
     // DEV_ASSERT(light_count);
 
-    cache.c_light_count = light_count;
+    cache.u_light_count = light_count;
 
     // auto camera = scene.m_camera;
     vec4 cascade_end = DVAR_GET_VEC4(cascade_end);
@@ -218,7 +218,7 @@ void fill_constant_buffers(const Scene& scene) {
         DEV_ASSERT(light_transform && material);
 
         // SHOULD BE THIS INDEX
-        Light& light = cache.c_lights[idx];
+        Light& light = cache.u_lights[idx];
         bool cast_shadow = light_component.cast_shadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.get_type();
@@ -271,29 +271,32 @@ void fill_constant_buffers(const Scene& scene) {
     // @TODO: fix this
     if (!light_matrices.empty()) {
         for (int idx2 = 0; idx2 < MAX_CASCADE_COUNT; ++idx2) {
-            cache.c_main_light_matrices[idx2] = light_matrices[idx2];
+            cache.u_main_light_matrices[idx2] = light_matrices[idx2];
         }
     }
 
-    cache.c_cascade_plane_distances = cascade_end;
+    cache.u_cascade_plane_distances = cascade_end;
 
-    cache.c_camera_position = camera.get_position();
+    cache.u_camera_position = camera.get_position();
 
-    cache.c_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
-    cache.c_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
-    cache.c_no_texture = DVAR_GET_BOOL(r_no_texture);
-    cache.c_debug_csm = DVAR_GET_BOOL(r_debug_csm);
-    cache.c_enable_csm = DVAR_GET_BOOL(r_enable_csm);
+    cache.u_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
+    cache.u_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
+    cache.u_no_texture = DVAR_GET_BOOL(r_no_texture);
+    cache.u_debug_csm = DVAR_GET_BOOL(r_debug_csm);
+    cache.u_enable_csm = DVAR_GET_BOOL(r_enable_csm);
 
-    cache.c_screen_width = (int)camera.get_width();
-    cache.c_screen_height = (int)camera.get_height();
+    cache.u_screen_width = (int)camera.get_width();
+    cache.u_screen_height = (int)camera.get_height();
 
     // SSAO
-    cache.c_ssao_kernel_size = DVAR_GET_INT(r_ssaoKernelSize);
-    cache.c_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
-    cache.c_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
-    cache.c_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
-    cache.c_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
+    cache.u_ssao_kernel_size = DVAR_GET_INT(r_ssaoKernelSize);
+    cache.u_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssaoKernelRadius);
+    cache.u_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
+    cache.u_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
+    cache.u_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
+
+    // Bloom
+    cache.u_bloom_threshold = DVAR_GET_FLOAT(r_bloom_threshold);
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
@@ -313,10 +316,10 @@ void fill_constant_buffers(const Scene& scene) {
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = world_size * texel_size;
 
-    cache.c_world_center = world_center;
-    cache.c_world_size_half = 0.5f * world_size;
-    cache.c_texel_size = texel_size;
-    cache.c_voxel_size = voxel_size;
+    cache.u_world_center = world_center;
+    cache.u_world_size_half = 0.5f * world_size;
+    cache.u_texel_size = texel_size;
+    cache.u_voxel_size = voxel_size;
 }
 
 void register_rendering_dvars(){

@@ -57,10 +57,10 @@ RenderData::RenderData() {
 }
 
 static void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.c_albedo_color = material->base_color;
-    cb.c_metallic = material->metallic;
-    cb.c_roughness = material->roughness;
-    cb.c_emissive_power = material->emissive;
+    cb.u_albedo_color = material->base_color;
+    cb.u_metallic = material->metallic;
+    cb.u_roughness = material->roughness;
+    cb.u_emissive_power = material->emissive;
 
     auto set_texture = [&](int idx, sampler2D& out_handle) {
         if (!material->textures[idx].enabled) {
@@ -86,9 +86,9 @@ static void fill_material_constant_buffer(const MaterialComponent* material, Mat
         return true;
     };
 
-    cb.c_has_albedo_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_albedo_map);
-    cb.c_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normal_map);
-    cb.c_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_pbr_map);
+    cb.u_has_albedo_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.u_albedo_map);
+    cb.u_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.u_normal_map);
+    cb.u_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.u_pbr_map);
 }
 
 void RenderData::clear() {
@@ -179,7 +179,7 @@ void RenderData::update(const Scene* p_scene) {
     // cascaded shadow map
     for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
         // @TODO: fix this
-        mat4 light_matrix = g_perFrameCache.cache.c_main_light_matrices[i];
+        mat4 light_matrix = g_perFrameCache.cache.u_main_light_matrices[i];
         Frustum light_frustum(light_matrix);
         shadow_passes[i].projection_view_matrix = light_matrix;
         fill(

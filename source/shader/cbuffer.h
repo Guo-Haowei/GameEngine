@@ -79,57 +79,57 @@ struct Light {
 };
 
 CBUFFER(PerFrameConstantBuffer, 2) {
-    Light c_lights[MAX_LIGHT_COUNT];
+    Light u_lights[MAX_LIGHT_COUNT];
 
     // @TODO: move it to Light
-    mat4 c_main_light_matrices[MAX_CASCADE_COUNT];
-    vec4 c_cascade_plane_distances;
+    mat4 u_main_light_matrices[MAX_CASCADE_COUNT];
+    vec4 u_cascade_plane_distances;
 
-    int c_enable_bloom;
-    int c_light_count;
-    int c_display_method;
-    int _c_padding_0;
+    int u_light_count;
+    int u_display_method;
+    int u_enable_bloom;
+    float u_bloom_threshold;
 
-    int c_debug_voxel_id;
-    int c_no_texture;
-    int c_screen_width;
-    int c_screen_height;
+    int u_debug_voxel_id;
+    int u_no_texture;
+    int u_screen_width;
+    int u_screen_height;
 
-    vec3 c_camera_position;
-    float c_voxel_size;
+    vec3 u_camera_position;
+    float u_voxel_size;
 
-    vec3 c_world_center;
-    float c_world_size_half;
+    vec3 u_world_center;
+    float u_world_size_half;
 
-    int c_ssao_kernel_size;
-    float c_ssao_kernel_radius;
-    int c_ssao_noise_size;
-    float c_texel_size;
+    int u_ssao_kernel_size;
+    float u_ssao_kernel_radius;
+    int u_ssao_noise_size;
+    float u_texel_size;
 
-    int c_enable_ssao;
-    int c_enable_csm;
-    int c_enable_vxgi;
-    int c_debug_csm;
+    int u_enable_ssao;
+    int u_enable_csm;
+    int u_enable_vxgi;
+    int u_debug_csm;
 };
 
 CBUFFER(MaterialConstantBuffer, 3) {
-    vec4 c_albedo_color;
+    vec4 u_albedo_color;
 
-    float c_metallic;
-    float c_roughness;
-    float c_reflect_power;
-    float c_emissive_power;
+    float u_metallic;
+    float u_roughness;
+    float u_reflect_power;
+    float u_emissive_power;
 
-    int c_has_albedo_map;
-    int c_has_pbr_map;
-    int c_has_normal_map;
-    int _c_padding1;
+    int u_has_albedo_map;
+    int u_has_pbr_map;
+    int u_has_normal_map;
+    int _u_padding1;
 
-    sampler2D c_albedo_map;
-    sampler2D c_normal_map;
+    sampler2D u_albedo_map;
+    sampler2D u_normal_map;
 
-    sampler2D c_pbr_map;
-    sampler2D _c_dummy_padding;
+    sampler2D u_pbr_map;
+    sampler2D _u_dummy_padding;
 
     vec4 _material_padding_0;
     vec4 _material_padding_1;
@@ -139,8 +139,9 @@ CBUFFER(MaterialConstantBuffer, 3) {
 };
 
 CBUFFER(PerSceneConstantBuffer, 4) {
-    vec4 c_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
+    vec4 u_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
+    // @TODO: remove the following
     sampler2D u_gbuffer_base_color_map;
     sampler2D u_gbuffer_position_map;
     sampler2D u_gbuffer_normal_map;

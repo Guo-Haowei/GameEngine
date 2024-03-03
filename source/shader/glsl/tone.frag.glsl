@@ -15,7 +15,7 @@ void main() {
     // @TODO: add bloom
     vec3 color = texture(c_tone_input_image, uv).rgb;
 
-    if (c_enable_bloom == 1) {
+    if (u_enable_bloom == 1) {
         vec3 bloom = texture(u_final_bloom, uv).rgb;
         color += bloom;
     }

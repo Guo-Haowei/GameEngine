@@ -39,6 +39,46 @@ static void dvar_checkbox(DynamicVariable& dvar, CheckBoxFunc func = nullptr) {
     ImGui::Separator();
 }
 
+#if 0
+template<typename T, typename UIFunction>
+static void DrawComponent(const std::string& name, T* component, UIFunction uiFunction) {
+    const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
+                                             ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap |
+                                             ImGuiTreeNodeFlags_FramePadding;
+    if (component) {
+        ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
+
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
+        float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+        ImGui::Separator();
+        bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
+        ImGui::PopStyleVar();
+        ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
+        if (ImGui::Button("-", ImVec2{ lineHeight, lineHeight })) {
+            ImGui::OpenPopup("ComponentSettings");
+        }
+
+        bool removeComponent = false;
+        if (ImGui::BeginPopup("ComponentSettings")) {
+            if (ImGui::MenuItem("remove component")) {
+                removeComponent = true;
+            }
+
+            ImGui::EndPopup();
+        }
+
+        if (open) {
+            uiFunction(*component);
+            ImGui::TreePop();
+        }
+
+        if (removeComponent) {
+            LOG_ERROR("TODO: implement remove component");
+        }
+    }
+}
+#endif
+
 void DebugPanel::update_internal(Scene&) {
     ImGui::Text("Debug");
     ImGui::Text("Frame rate:%.2f", ImGui::GetIO().Framerate);
@@ -66,6 +106,7 @@ void DebugPanel::update_internal(Scene&) {
 
     dvar_checkbox(DVAR_r_enable_bloom);
     ImGui::DragInt("Bloom downsample", (int*)DVAR_GET_POINTER(r_debug_bloom_downsample), 0.1f, 0, BLOOM_MIP_CHAIN_MAX - 1);
+    ImGui::DragFloat("Bloom threshold", (float*)DVAR_GET_POINTER(r_bloom_threshold), 0.1f, 0.0f, 5.0f);
 
     ImGui::Separator();
 }

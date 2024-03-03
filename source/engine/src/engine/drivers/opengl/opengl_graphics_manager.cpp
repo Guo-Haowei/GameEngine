@@ -516,8 +516,8 @@ static void create_ssao_resource() {
         ssaoKernel.emplace_back(vec4(sample, 0.0f));
     }
 
-    memset(&g_constantCache.cache.c_ssao_kernels, 0, sizeof(g_constantCache.cache.c_ssao_kernels));
-    memcpy(&g_constantCache.cache.c_ssao_kernels, ssaoKernel.data(), sizeof(ssaoKernel.front()) * ssaoKernel.size());
+    memset(&g_constantCache.cache.u_ssao_kernels, 0, sizeof(g_constantCache.cache.u_ssao_kernels));
+    memcpy(&g_constantCache.cache.u_ssao_kernels, ssaoKernel.data(), sizeof(ssaoKernel.front()) * ssaoKernel.size());
 
     // generate noise texture
     const int noiseSize = DVAR_GET_INT(r_ssaoNoiseSize);

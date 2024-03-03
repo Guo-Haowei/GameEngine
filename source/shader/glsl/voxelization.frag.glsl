@@ -10,19 +10,19 @@ in vec2 pass_uv;
 #include "lighting.glsl"
 
 void main() {
-    vec4 albedo = c_albedo_color;
-    if (c_has_albedo_map != 0) {
-        albedo = texture(c_albedo_map, pass_uv);
+    vec4 albedo = u_albedo_color;
+    if (u_has_albedo_map != 0) {
+        albedo = texture(u_albedo_map, pass_uv);
     }
     if (albedo.a < 0.001) {
         discard;
     }
 
-    float metallic = c_metallic;
-    float roughness = c_roughness;
-    if (c_has_pbr_map != 0) {
+    float metallic = u_metallic;
+    float roughness = u_roughness;
+    if (u_has_pbr_map != 0) {
         // g roughness, b metallic
-        vec3 mr = texture(c_pbr_map, pass_uv).rgb;
+        vec3 mr = texture(u_pbr_map, pass_uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }
@@ -32,13 +32,13 @@ void main() {
     const int cascade_level = find_cascade(world_position);
 
     const vec3 N = normalize(pass_normal);
-    const vec3 V = normalize(c_camera_position - world_position);
+    const vec3 V = normalize(u_camera_position - world_position);
     const float NdotV = max(dot(N, V), 0.0);
     vec3 Lo = vec3(0.0);
     vec3 F0 = mix(vec3(0.04), albedo.rgb, metallic);
-    for (int light_idx = 0; light_idx < c_light_count; ++light_idx) {
-        Light light = c_lights[light_idx];
-        int light_type = c_lights[light_idx].type;
+    for (int light_idx = 0; light_idx < u_light_count; ++light_idx) {
+        Light light = u_lights[light_idx];
+        int light_type = u_lights[light_idx].type;
         vec3 direct_lighting = vec3(0.0);
         float shadow = 0.0;
         switch (light.type) {
@@ -64,10 +64,10 @@ void main() {
                 if (atten > 0.01) {
                     vec3 L = normalize(delta);
                     const vec3 H = normalize(V + L);
-                    const vec3 radiance = c_lights[light_idx].color;
+                    const vec3 radiance = u_lights[light_idx].color;
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, albedo.rgb);
                     if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(world_position, light_idx, c_camera_position);
+                        shadow = point_shadow_calculation(world_position, light_idx, u_camera_position);
                     }
                 }
             } break;
@@ -84,7 +84,7 @@ void main() {
     ///////////////////////////////////////////////////////////////////////////
 
     // write lighting information to texel
-    vec3 voxel = (pass_position - c_world_center) / c_world_size_half;  // normalize it to [-1, 1]
+    vec3 voxel = (pass_position - u_world_center) / u_world_size_half;  // normalize it to [-1, 1]
     voxel = 0.5 * voxel + vec3(0.5);                                    // normalize to [0, 1]
     ivec3 dim = imageSize(u_albedo_texture);
     ivec3 coord = ivec3(dim * voxel);
