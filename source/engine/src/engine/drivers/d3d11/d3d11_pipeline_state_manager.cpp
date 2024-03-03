@@ -53,7 +53,8 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
         return nullptr;
     }
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_info.input_layout_desc,
-                                                               p_info.rasterizer_desc);
+                                                               p_info.rasterizer_desc,
+                                                               p_info.depth_stencil_desc);
 
     HRESULT hr = S_OK;
 
@@ -109,23 +110,42 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
     hr = device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->input_layout.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create input layout");
 
-    {
-        auto it = m_rasterizer_states.find((void*)p_info.rasterizer_desc);
+    if (p_info.rasterizer_desc) {
+        ComPtr<ID3D11RasterizerState> state;
 
-        ID3D11RasterizerState* state = nullptr;
+        auto it = m_rasterizer_states.find(p_info.rasterizer_desc);
         if (it == m_rasterizer_states.end()) {
             D3D11_RASTERIZER_DESC desc{};
-            desc.FillMode = convert(p_info.rasterizer_desc->fillMode);
-            desc.CullMode = convert(p_info.rasterizer_desc->cullMode);
-            desc.FrontCounterClockwise = p_info.rasterizer_desc->frontCounterClockwise;
-            hr = device->CreateRasterizerState(&desc, &state);
+            desc.FillMode = convert(p_info.rasterizer_desc->fill_mode);
+            desc.CullMode = convert(p_info.rasterizer_desc->cull_mode);
+            desc.FrontCounterClockwise = p_info.rasterizer_desc->front_counter_clockwise;
+            hr = device->CreateRasterizerState(&desc, state.GetAddressOf());
             D3D_FAIL_V_MSG(hr, nullptr, "failed to create rasterizer state");
-            m_rasterizer_states[(void*)p_info.rasterizer_desc] = state;
+            m_rasterizer_states[p_info.rasterizer_desc] = state;
+        } else {
+            state = it->second;
+        }
+        DEV_ASSERT(state);
+        pipeline_state->rasterizer = state;
+    }
+    if (p_info.depth_stencil_desc) {
+        ComPtr<ID3D11DepthStencilState> state;
+
+        auto it = m_depth_stencil_states.find(p_info.depth_stencil_desc);
+        if (it == m_depth_stencil_states.end()) {
+            D3D11_DEPTH_STENCIL_DESC dsDesc{};
+            dsDesc.DepthEnable = p_info.depth_stencil_desc->depth_enabled;
+            dsDesc.DepthFunc = convert(p_info.depth_stencil_desc->depth_func);
+            dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+            dsDesc.StencilEnable = p_info.depth_stencil_desc->stencil_enabled;
+            device->CreateDepthStencilState(&dsDesc, state.GetAddressOf());
+            D3D_FAIL_V_MSG(hr, nullptr, "failed to create depth stencil state");
+            m_depth_stencil_states[p_info.depth_stencil_desc] = state;
         } else {
             state = it->second.Get();
         }
         DEV_ASSERT(state);
-        pipeline_state->rasterizer = state;
+        pipeline_state->depth_stencil = state;
     }
 
     return pipeline_state;

@@ -16,11 +16,9 @@
 #include "rendering/renderer.h"
 extern ID3D11Device* get_d3d11_device();
 
-using Microsoft::WRL::ComPtr;
-// @TODO: reverse depth
-ComPtr<ID3D11DepthStencilState> m_depthStencilState;
-
 namespace my {
+
+using Microsoft::WRL::ComPtr;
 
 // @TODO: refactor
 template<class Cache>
@@ -78,23 +76,8 @@ bool D3d11GraphicsManager::initialize_internal() {
     ImGui_ImplDX11_NewFrame();
 
     select_render_graph();
-    {
-
-        // set depth function to less equal
-        {
-            D3D11_DEPTH_STENCIL_DESC dsDesc{};
-            dsDesc.DepthEnable = true;
-            dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-            dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-            dsDesc.StencilEnable = false;
-
-            m_device->CreateDepthStencilState(&dsDesc, m_depthStencilState.GetAddressOf());
-
-            m_ctx->OMSetDepthStencilState(m_depthStencilState.Get(), 1);
-        }
-
-        m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    }
+    // @TODO: refactor this
+    m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_meshes.set_description("GPU-Mesh-Allocator");
     return ok;
@@ -540,6 +523,11 @@ void D3d11GraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     if (pipeline->rasterizer.Get() != m_state_cache.rasterizer) {
         m_ctx->RSSetState(pipeline->rasterizer.Get());
         m_state_cache.rasterizer = pipeline->rasterizer.Get();
+    }
+
+    if (pipeline->depth_stencil.Get() != m_state_cache.depth_stencil) {
+        m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 1);
+        m_state_cache.depth_stencil = pipeline->depth_stencil.Get();
     }
 }
 

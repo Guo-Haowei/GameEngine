@@ -440,13 +440,14 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         });
         pass->add_sub_pass(subpass);
     }
+
+    auto gbuffer_depth = manager.find_render_target(RT_RES_GBUFFER_DEPTH);
     {  // lighting pass
         auto lighting_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_LIGHTING,
                                                                                   PixelFormat::R11G11B10_FLOAT,
                                                                                   AttachmentType::COLOR_2D,
                                                                                   w, h },
                                                                 nearest_sampler());
-        auto gbuffer_depth = manager.find_render_target(RT_RES_GBUFFER_DEPTH);
 
         RenderPassDesc desc;
         desc.name = LIGHTING_PASS;
@@ -474,6 +475,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { attachment },
+            .depth_attachment = gbuffer_depth,
             .func = tone_pass_func,
         });
         pass->add_sub_pass(subpass);

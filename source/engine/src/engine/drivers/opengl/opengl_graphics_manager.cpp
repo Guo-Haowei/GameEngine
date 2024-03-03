@@ -114,7 +114,7 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipeline_state_manager->find(p_name));
 
     if (pipeline->rasterizer_desc) {
-        auto cull_mode = pipeline->rasterizer_desc->cullMode;
+        auto cull_mode = pipeline->rasterizer_desc->cull_mode;
         if (cull_mode != m_state_cache.cull_mode) {
             switch (cull_mode) {
                 case my::CullMode::NONE:
@@ -139,7 +139,7 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
             m_state_cache.cull_mode = cull_mode;
         }
 
-        bool front_counter_clockwise = pipeline->rasterizer_desc->frontCounterClockwise;
+        bool front_counter_clockwise = pipeline->rasterizer_desc->front_counter_clockwise;
         if (front_counter_clockwise != m_state_cache.front_counter_clockwise) {
             glFrontFace(front_counter_clockwise ? GL_CCW : GL_CW);
             m_state_cache.front_counter_clockwise = front_counter_clockwise;

@@ -57,6 +57,7 @@ protected:
 
     struct {
         ID3D11RasterizerState* rasterizer = nullptr;
+        ID3D11DepthStencilState* depth_stencil = nullptr;
     } m_state_cache;
 };
 

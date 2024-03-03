@@ -16,13 +16,15 @@ struct D3d11PipelineState : public PipelineState {
     Microsoft::WRL::ComPtr<ID3D11InputLayout> input_layout;
 
     Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizer;
+    Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depth_stencil;
 };
 
 class D3d11PipelineStateManager : public PipelineStateManager {
 protected:
     std::shared_ptr<PipelineState> create(const PipelineCreateInfo& p_info) final;
 
-    std::unordered_map<void*, Microsoft::WRL::ComPtr<ID3D11RasterizerState>> m_rasterizer_states;
+    std::unordered_map<const RasterizerDesc*, Microsoft::WRL::ComPtr<ID3D11RasterizerState>> m_rasterizer_states;
+    std::unordered_map<const DepthStencilDesc*, Microsoft::WRL::ComPtr<ID3D11DepthStencilState>> m_depth_stencil_states;
 };
 
 }  // namespace my

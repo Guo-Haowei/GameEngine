@@ -17,21 +17,27 @@ static const InputLayoutDesc s_input_layout_mesh = {
 };
 
 static const RasterizerDesc s_default_rasterizer = {
-    .fillMode = FillMode::SOLID,
-    .cullMode = CullMode::BACK,
-    .frontCounterClockwise = true,
+    .fill_mode = FillMode::SOLID,
+    .cull_mode = CullMode::BACK,
+    .front_counter_clockwise = true,
 };
 
 static const RasterizerDesc s_shadow_rasterizer = {
-    .fillMode = FillMode::SOLID,
-    .cullMode = CullMode::FRONT,
-    .frontCounterClockwise = true,
+    .fill_mode = FillMode::SOLID,
+    .cull_mode = CullMode::FRONT,
+    .front_counter_clockwise = true,
 };
 
 static const RasterizerDesc s_voxelization_rasterizer = {
-    .fillMode = FillMode::SOLID,
-    .cullMode = CullMode::NONE,
-    .frontCounterClockwise = true,
+    .fill_mode = FillMode::SOLID,
+    .cull_mode = CullMode::NONE,
+    .front_counter_clockwise = true,
+};
+
+static const DepthStencilDesc s_default_depth_stencil = {
+    .depth_func = ComparisonFunc::LESS_EQUAL,
+    .depth_enabled = true,
+    .stencil_enabled = false,
 };
 
 PipelineState* PipelineStateManager::find(PipelineStateName p_name) {
@@ -47,6 +53,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "gbuffer.frag";
         info.input_layout_desc = &s_input_layout_mesh;
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_GBUFFER_STATIC] = create(info);
     }
     {
@@ -56,6 +63,7 @@ bool PipelineStateManager::initialize() {
         info.defines = { has_animation };
         info.input_layout_desc = &s_input_layout_mesh;
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
     }
 
@@ -68,6 +76,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "shadow.vert";
         info.ps = "depth.frag";
         info.rasterizer_desc = &s_shadow_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_DPETH_STATIC] = create(info);
     }
     {
@@ -76,6 +85,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "depth.frag";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_shadow_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_DPETH_ANIMATED] = create(info);
     }
     {
@@ -83,6 +93,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "point_shadow.vert";
         info.ps = "point_shadow.frag";
         info.rasterizer_desc = &s_shadow_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
     }
     {
@@ -91,6 +102,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "point_shadow.frag";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_shadow_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_POINT_SHADOW_ANIMATED] = create(info);
     }
     {
@@ -98,6 +110,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "screenspace_quad.vert";
         info.ps = "ssao.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_SSAO] = create(info);
     }
     {
@@ -105,18 +118,21 @@ bool PipelineStateManager::initialize() {
         info.vs = "screenspace_quad.vert";
         info.ps = "lighting.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
         PipelineCreateInfo info;
         info.cs = "bloom_setup.comp";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BLOOM_SETUP] = create(info);
     }
     {
         PipelineCreateInfo info;
         info.cs = "bloom_downsample.comp";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BLOOM_DOWNSAMPLE] = create(info);
     }
     {
@@ -129,6 +145,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "screenspace_quad.vert";
         info.ps = "tone.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_TONE] = create(info);
     }
     {
@@ -137,6 +154,7 @@ bool PipelineStateManager::initialize() {
         info.gs = "voxelization.geom";
         info.ps = "voxelization.frag";
         info.rasterizer_desc = &s_voxelization_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_VOXELIZATION_STATIC] = create(info);
     }
     {
@@ -146,6 +164,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "voxelization.frag";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_voxelization_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_VOXELIZATION_ANIMATED] = create(info);
     }
     {
@@ -158,6 +177,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "visualization.vert";
         info.ps = "visualization.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_DEBUG_VOXEL] = create(info);
     }
     {
@@ -165,6 +185,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "cube_map.vert";
         info.ps = "to_cube_map.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_ENV_SKYBOX_TO_CUBE_MAP] = create(info);
     }
     {
@@ -172,6 +193,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "cube_map.vert";
         info.ps = "diffuse_irradiance.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_DIFFUSE_IRRADIANCE] = create(info);
     }
     {
@@ -179,6 +201,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "cube_map.vert";
         info.ps = "prefilter.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_PREFILTER] = create(info);
     }
     {
@@ -186,6 +209,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "skybox.vert";
         info.ps = "skybox.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_ENV_SKYBOX] = create(info);
     }
     {
@@ -193,6 +217,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "screenspace_quad.vert";
         info.ps = "brdf.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BRDF] = create(info);
     }
     {
@@ -200,6 +225,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "billboard.vert";
         info.ps = "texture.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BILLBOARD] = create(info);
     }
     {
@@ -207,6 +233,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "debug_draw_texture.vert";
         info.ps = "debug_draw_texture.frag";
         info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_IMAGE_2D] = create(info);
     }
 

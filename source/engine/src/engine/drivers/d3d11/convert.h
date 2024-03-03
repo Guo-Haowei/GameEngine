@@ -115,19 +115,8 @@ static inline CULL_MODE convert(CullMode p_cull_mode) {
     return D3D_CULL_MODE(NONE);
 }
 
-#if 0
-static inline DEPTH_WRITE_MASK Convert(DepthWriteMask depth_write_mask) {
-    switch (depth_write_mask) {
-        case DepthWriteMask::ZERO:
-            return D3D(DEPTH_WRITE_MASK_ZERO);
-        case DepthWriteMask::ALL:
-            return D3D(DEPTH_WRITE_MASK_ALL);
-    }
-    return D3D(DEPTH_WRITE_MASK_ZERO);
-}
-
-static inline COMPARISON_FUNC Convert(ComparisonFunc comparison_func) {
-    switch (comparison_func) {
+static inline COMPARISON_FUNC convert(ComparisonFunc p_func) {
+    switch (p_func) {
         case ComparisonFunc::NEVER:
             return D3D_COMPARISON(NEVER);
         case ComparisonFunc::LESS:
@@ -144,6 +133,17 @@ static inline COMPARISON_FUNC Convert(ComparisonFunc comparison_func) {
             return D3D_COMPARISON(ALWAYS);
     }
     return D3D_COMPARISON(NEVER);
+}
+
+#if 0
+static inline DEPTH_WRITE_MASK Convert(DepthWriteMask depth_write_mask) {
+    switch (depth_write_mask) {
+        case DepthWriteMask::ZERO:
+            return D3D(DEPTH_WRITE_MASK_ZERO);
+        case DepthWriteMask::ALL:
+            return D3D(DEPTH_WRITE_MASK_ALL);
+    }
+    return D3D(DEPTH_WRITE_MASK_ZERO);
 }
 
 static inline FILTER Convert(Filter filter) {
