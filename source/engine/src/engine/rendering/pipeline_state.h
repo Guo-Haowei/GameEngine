@@ -11,17 +11,55 @@ enum class InputClassification {
 struct InputLayoutDesc {
     struct Element {
         // @TODO: rename
-        std::string semanticName;
-        uint32_t semanticIndex;
+        std::string semantic_name;
+        uint32_t semantic_index;
         PixelFormat format;
-        uint32_t inputSlot;
-        uint32_t alignedByteOffset;
-        InputClassification inputSlotClass;
-        uint32_t instanceDataStepRate;
+        uint32_t input_slot;
+        uint32_t aligned_byte_offset;
+        InputClassification input_slot_class;
+        uint32_t instance_data_step_rate;
     };
 
     std::vector<Element> elements;
 };
+
+enum class FillMode : uint8_t {
+    WIREFRAME,
+    SOLID,
+};
+
+enum class CullMode : uint8_t {
+    NONE,
+    FRONT,
+    BACK,
+    FRONT_AND_BACK,
+};
+
+struct RasterizerDesc {
+    FillMode fillMode = FillMode::SOLID;
+    CullMode cullMode = CullMode::BACK;
+    bool frontCounterClockwise = false;
+    int depthBias = 0;
+    float depthBiasClamp = 0.0f;
+    float slopeScaledDepthBias = 0.0f;
+    bool depthClipEnable = false;
+    bool scissorEnable = false;
+    bool multisampleEnable = false;
+    bool antialiasedLineEnable = false;
+};
+
+// typedef struct D3D11_RASTERIZER_DESC {
+//     D3D11_FILL_MODE FillMode;
+//     D3D11_CULL_MODE CullMode;
+//     BOOL FrontCounterClockwise;
+//     INT DepthBias;
+//     FLOAT DepthBiasClamp;
+//     FLOAT SlopeScaledDepthBias;
+//     BOOL DepthClipEnable;
+//     BOOL ScissorEnable;
+//     BOOL MultisampleEnable;
+//     BOOL AntialiasedLineEnable;
+// } D3D11_RASTERIZER_DESC;
 
 struct ShaderMacro {
     const char* name;
@@ -36,16 +74,23 @@ struct PipelineCreateInfo {
     std::vector<ShaderMacro> defines;
 
     const InputLayoutDesc* input_layout_desc = nullptr;
+    const RasterizerDesc* rasterizer_desc = nullptr;
 };
 
 struct PipelineState {
+    PipelineState(const InputLayoutDesc* p_input_layout_desc,
+                  const RasterizerDesc* p_rasterizer_desc)
+        : input_layout_desc(p_input_layout_desc),
+          rasterizer_desc(p_rasterizer_desc) {}
+
     virtual ~PipelineState() = default;
+
+    const InputLayoutDesc* input_layout_desc;
+    const RasterizerDesc* rasterizer_desc;
 };
 
 enum PipelineStateName {
     // @TODO: split render passes to static and dynamic
-    PROGRAM_BASE_COLOR_STATIC,
-    PROGRAM_BASE_COLOR_ANIMATED,
     PROGRAM_DPETH_STATIC,
     PROGRAM_DPETH_ANIMATED,
     PROGRAM_POINT_SHADOW_STATIC,

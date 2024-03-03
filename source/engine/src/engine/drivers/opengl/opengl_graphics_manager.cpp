@@ -112,6 +112,40 @@ void OpenGLGraphicsManager::finalize() {
 
 void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipeline_state_manager->find(p_name));
+
+    if (pipeline->rasterizer_desc) {
+        auto cull_mode = pipeline->rasterizer_desc->cullMode;
+        if (cull_mode != m_state_cache.cull_mode) {
+            switch (cull_mode) {
+                case my::CullMode::NONE:
+                    glDisable(GL_CULL_FACE);
+                    break;
+                case my::CullMode::FRONT:
+                    glEnable(GL_CULL_FACE);
+                    glCullFace(GL_FRONT);
+                    break;
+                case my::CullMode::BACK:
+                    glEnable(GL_CULL_FACE);
+                    glCullFace(GL_BACK);
+                    break;
+                case my::CullMode::FRONT_AND_BACK:
+                    glEnable(GL_CULL_FACE);
+                    glCullFace(GL_FRONT_AND_BACK);
+                    break;
+                default:
+                    CRASH_NOW();
+                    break;
+            }
+            m_state_cache.cull_mode = cull_mode;
+        }
+
+        bool front_counter_clockwise = pipeline->rasterizer_desc->frontCounterClockwise;
+        if (front_counter_clockwise != m_state_cache.front_counter_clockwise) {
+            glFrontFace(front_counter_clockwise ? GL_CCW : GL_CW);
+            m_state_cache.front_counter_clockwise = front_counter_clockwise;
+        }
+    }
+
     glUseProgram(pipeline->program_id);
 }
 

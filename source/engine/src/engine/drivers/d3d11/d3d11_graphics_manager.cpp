@@ -17,10 +17,7 @@
 extern ID3D11Device* get_d3d11_device();
 
 using Microsoft::WRL::ComPtr;
-
-// rasterizer
-ComPtr<ID3D11RasterizerState> m_rasterizer;
-// reverse depth
+// @TODO: reverse depth
 ComPtr<ID3D11DepthStencilState> m_depthStencilState;
 
 namespace my {
@@ -82,16 +79,6 @@ bool D3d11GraphicsManager::initialize_internal() {
 
     select_render_graph();
     {
-        // rasterizer
-        {
-            D3D11_RASTERIZER_DESC desc;
-            ZeroMemory(&desc, sizeof(desc));
-            desc.FillMode = D3D11_FILL_SOLID;
-            desc.CullMode = D3D11_CULL_BACK;
-            desc.FrontCounterClockwise = true;
-            m_device->CreateRasterizerState(&desc, m_rasterizer.GetAddressOf());
-            m_ctx->RSSetState(m_rasterizer.Get());
-        }
 
         // set depth function to less equal
         {
@@ -548,6 +535,11 @@ void D3d11GraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     }
     if (pipeline->pixel_shader) {
         m_ctx->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
+    }
+
+    if (pipeline->rasterizer.Get() != m_state_cache.rasterizer) {
+        m_ctx->RSSetState(pipeline->rasterizer.Get());
+        m_state_cache.rasterizer = pipeline->rasterizer.Get();
     }
 }
 

@@ -26,7 +26,6 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 
     // @TODO:
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
 
     auto render_data = graphics_manager.get_render_data();
     RenderData::Pass& pass = render_data->main_pass;

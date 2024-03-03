@@ -5,6 +5,8 @@ namespace my {
 
 class PipelineStateManager {
 public:
+    virtual ~PipelineStateManager() = default;
+
     bool initialize();
     void finalize();
 

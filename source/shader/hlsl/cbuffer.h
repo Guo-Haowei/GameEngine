@@ -25,7 +25,7 @@ static_assert(MAX_CASCADE_COUNT == 4);
 #elif defined(HLSL_LANG)
 #define CBUFFER(name, reg) cbuffer name : register(b##reg)
 
-#define sampler2D vec2;
+#define sampler2D float2
 
 #elif defined(GLSL_LANG)
 #define CBUFFER(name, reg) layout(std140, binding = reg) uniform name

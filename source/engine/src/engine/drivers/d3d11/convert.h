@@ -83,8 +83,8 @@ static inline DXGI_FORMAT convert(PixelFormat p_format) {
     }
 }
 
-static inline INPUT_CLASSIFICATION convert(InputClassification input_classification) {
-    switch (input_classification) {
+static inline INPUT_CLASSIFICATION convert(InputClassification p_input_classification) {
+    switch (p_input_classification) {
         case InputClassification::PER_VERTEX_DATA:
             return D3D_INPUT_CLASSIFICATION(PER_VERTEX_DATA);
         case InputClassification::PER_INSTANCE_DATA:
@@ -93,9 +93,8 @@ static inline INPUT_CLASSIFICATION convert(InputClassification input_classificat
     return D3D_INPUT_CLASSIFICATION(PER_VERTEX_DATA);
 }
 
-#if 0
-static inline FILL_MODE Convert(FillMode fill_mode) {
-    switch (fill_mode) {
+static inline FILL_MODE convert(FillMode p_fill_mode) {
+    switch (p_fill_mode) {
         case FillMode::SOLID:
             return D3D_FILL_MODE(SOLID);
         case FillMode::WIREFRAME:
@@ -104,8 +103,8 @@ static inline FILL_MODE Convert(FillMode fill_mode) {
     return D3D_FILL_MODE(SOLID);
 }
 
-static inline CULL_MODE Convert(CullMode cull_mode) {
-    switch (cull_mode) {
+static inline CULL_MODE convert(CullMode p_cull_mode) {
+    switch (p_cull_mode) {
         case CullMode::NONE:
             return D3D_CULL_MODE(NONE);
         case CullMode::FRONT:
@@ -116,6 +115,7 @@ static inline CULL_MODE Convert(CullMode cull_mode) {
     return D3D_CULL_MODE(NONE);
 }
 
+#if 0
 static inline DEPTH_WRITE_MASK Convert(DepthWriteMask depth_write_mask) {
     switch (depth_write_mask) {
         case DepthWriteMask::ZERO:

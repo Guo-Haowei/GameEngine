@@ -39,8 +39,14 @@ protected:
     void createGpuResources();
     void destroyGpuResources();
 
+private:
     // @TODO: rename
     RIDAllocator<OpenGLMeshBuffers> m_meshes;
+
+    struct {
+        CullMode cull_mode;
+        bool front_counter_clockwise;
+    } m_state_cache;
 };
 
 }  // namespace my

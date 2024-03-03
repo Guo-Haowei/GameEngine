@@ -22,6 +22,7 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
     ComPtr<ID3DBlob> error;
     ComPtr<ID3DBlob> source;
 
+    // @TODO: custom include
     uint32_t flags = D3DCOMPILE_ENABLE_STRICTNESS;
     HRESULT hr = D3DCompileFromFile(
         path.c_str(),
@@ -51,7 +52,8 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
     if (!device) {
         return nullptr;
     }
-    auto pipeline_state = std::make_shared<D3d11PipelineState>();
+    auto pipeline_state = std::make_shared<D3d11PipelineState>(p_info.input_layout_desc,
+                                                               p_info.rasterizer_desc);
 
     HRESULT hr = S_OK;
 
@@ -92,55 +94,41 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
     std::vector<D3D11_INPUT_ELEMENT_DESC> elements;
     elements.reserve(p_info.input_layout_desc->elements.size());
     for (const auto& ele : p_info.input_layout_desc->elements) {
-        D3D11_INPUT_ELEMENT_DESC ildesc;
-        ildesc.SemanticName = ele.semanticName.c_str();
-        ildesc.SemanticIndex = ele.semanticIndex;
-        ildesc.Format = convert(ele.format);
-        ildesc.InputSlot = ele.inputSlot;
-        ildesc.AlignedByteOffset = ele.alignedByteOffset;
-        ildesc.InputSlotClass = convert(ele.inputSlotClass);
-        ildesc.InstanceDataStepRate = ele.instanceDataStepRate;
-        elements.emplace_back(ildesc);
+        D3D11_INPUT_ELEMENT_DESC desc;
+        desc.SemanticName = ele.semantic_name.c_str();
+        desc.SemanticIndex = ele.semantic_index;
+        desc.Format = convert(ele.format);
+        desc.InputSlot = ele.input_slot;
+        desc.AlignedByteOffset = ele.aligned_byte_offset;
+        desc.InputSlotClass = convert(ele.input_slot_class);
+        desc.InstanceDataStepRate = ele.instance_data_step_rate;
+        elements.emplace_back(desc);
     }
     DEV_ASSERT(elements.size());
 
     hr = device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->input_layout.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create input layout");
 
+    {
+        auto it = m_rasterizer_states.find((void*)p_info.rasterizer_desc);
+
+        ID3D11RasterizerState* state = nullptr;
+        if (it == m_rasterizer_states.end()) {
+            D3D11_RASTERIZER_DESC desc{};
+            desc.FillMode = convert(p_info.rasterizer_desc->fillMode);
+            desc.CullMode = convert(p_info.rasterizer_desc->cullMode);
+            desc.FrontCounterClockwise = p_info.rasterizer_desc->frontCounterClockwise;
+            hr = device->CreateRasterizerState(&desc, &state);
+            D3D_FAIL_V_MSG(hr, nullptr, "failed to create rasterizer state");
+            m_rasterizer_states[(void*)p_info.rasterizer_desc] = state;
+        } else {
+            state = it->second.Get();
+        }
+        DEV_ASSERT(state);
+        pipeline_state->rasterizer = state;
+    }
+
     return pipeline_state;
 }
 
 }  // namespace my
-
-#if 0
-void HlslProgram::CompileShader(string const& file, LPCSTR entry, LPCSTR target, ComPtr<ID3DBlob>& sourceBlob) {
-    string fileStr(file);
-    wstring fileWStr(fileStr.begin(), fileStr.end());
-    ComPtr<ID3DBlob> errorBlob;
-}
-
-void HlslProgram::create(ComPtr<ID3D11Device>& device, const char* debugName, char const* vertName, const char* fragName) {
-    string path(HLSL_DIR);
-    string vertFile(vertName);
-    vertFile.append(".vert.hlsl");
-    string pixelFile(fragName == nullptr ? vertName : fragName);
-    pixelFile.append(".pixel.hlsl");
-    SHADER_COMPILING_START_INFO(debugName);
-    HlslProgram::CompileShader(path + vertFile, "vs_main", "vs_5_0", vertShaderBlob);
-    HRESULT hr = device->CreateVertexShader(
-        vertShaderBlob->GetBufferPointer(),
-        vertShaderBlob->GetBufferSize(),
-        NULL,
-        vertShader.GetAddressOf());
-    D3D_THROW_IF_FAILED(hr, "Failed to create vertex shader");
-    ComPtr<ID3DBlob> pixelBlob;
-    HlslProgram::CompileShader(path + pixelFile, "ps_main", "ps_5_0", pixelBlob);
-    hr = device->CreatePixelShader(
-        pixelBlob->GetBufferPointer(),
-        pixelBlob->GetBufferSize(),
-        NULL,
-        pixelShader.GetAddressOf());
-    D3D_THROW_IF_FAILED(hr, "Failed to create pixel shader");
-    SHADER_COMPILING_END_INFO(debugName);
-}
-#endif

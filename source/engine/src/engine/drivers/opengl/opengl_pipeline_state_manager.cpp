@@ -144,7 +144,8 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const Pipeline
         programID = 0;
     }
 
-    auto program = std::make_shared<OpenGLPipelineState>();
+    auto program = std::make_shared<OpenGLPipelineState>(p_info.input_layout_desc,
+                                                         p_info.rasterizer_desc);
     program->program_id = programID;
     return program;
 }

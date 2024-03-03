@@ -53,7 +53,11 @@ protected:
     Microsoft::WRL::ComPtr<IDXGIAdapter> m_dxgi_adapter;
     Microsoft::WRL::ComPtr<IDXGIFactory> m_dxgi_factory;
 
-    my::RIDAllocator<D3d11MeshBuffers> m_meshes;
+    RIDAllocator<D3d11MeshBuffers> m_meshes;
+
+    struct {
+        ID3D11RasterizerState* rasterizer = nullptr;
+    } m_state_cache;
 };
 
 }  // namespace my
