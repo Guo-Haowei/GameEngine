@@ -42,9 +42,9 @@ MeshComponent make_plane_mesh(const vec3& p_scale) {
     };
 
     mesh.texcoords_0 = {
-        vec2(1, 0),  // top-left
+        vec2(0, 1),  // top-left
         vec2(0, 0),  // bottom-left
-        vec2(0, 1),  // bottom-right
+        vec2(1, 0),  // bottom-right
         vec2(1, 1),  // top-right
     };
 
@@ -273,6 +273,63 @@ MeshComponent make_box_mesh(float size) {
         B, G, C,  // BGC
     };
 
+    return mesh;
+}
+
+MeshComponent make_grass_billboard(const vec3& p_scale) {
+    MeshComponent mesh;
+
+    const float x = p_scale.x;
+    const float y = p_scale.y;
+
+    std::array<vec4, 4> points = {
+        vec4(-x, 2 * y, 0.0f, 1.0f),  // A
+        vec4(-x, 0.0f, 0.0f, 1.0f),   // B
+        vec4(+x, 0.0f, 0.0f, 1.0f),   // C
+        vec4(+x, 2 * y, 0.0f, 1.0f),  // D
+    };
+
+    // @TODO: correct sampler
+    std::array<vec2, 4> uvs = {
+        vec2(0, 1),  // top-left
+        vec2(0, 0),  // bottom-left
+        vec2(1, 0),  // bottom-right
+        vec2(1, 1),  // top-right
+    };
+
+    uint32_t indices[] = {
+        A, B, D,  // ABD
+        D, B, C,  // DBC
+    };
+
+    float angle = 0.0f;
+    for (int i = 0; i < 3; ++i, angle += glm::radians(120.0f)) {
+        mat4 rotation = glm::rotate(angle, vec3(0, 1, 0));
+        vec4 normal = rotation * vec4{ 0, 0, 1, 0 };
+
+        uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
+        for (int j = 0; j < points.size(); ++j) {
+            mesh.positions.push_back(rotation * points[j]);
+            mesh.normals.push_back(normal);
+            mesh.texcoords_0.push_back(uvs[j]);
+        }
+
+        for (int j = 0; j < array_length(indices); ++j) {
+            mesh.indices.push_back(indices[j] + offset);
+        }
+    }
+
+    // flip uv
+    for (auto& uv : mesh.texcoords_0) {
+        uv.y = 1.0f - uv.y;
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(mesh.indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.create_render_data();
     return mesh;
 }
 

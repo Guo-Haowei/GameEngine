@@ -2,7 +2,7 @@
 #define SHADOW_GLSL_INCLUDED
 
 int find_cascade(const in vec3 p_pos_world) {
-    if (c_enable_csm == 0) {
+    if (u_enable_csm == 0) {
         return 0;
     }
 
@@ -10,7 +10,7 @@ int find_cascade(const in vec3 p_pos_world) {
     float depth = abs(pos_view.z);
 
     for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-        if (depth < c_cascade_plane_distances[i]) {
+        if (depth < u_cascade_plane_distances[i]) {
             return i;
         }
     }
@@ -28,8 +28,8 @@ vec3 g_point_light_shadow_sample_offset[NUM_POINT_SHADOW_SAMPLES] = vec3[](
     vec3(0, 1, 1), vec3(0, -1, 1), vec3(0, -1, -1), vec3(0, 1, -1));
 
 float point_shadow_calculation(vec3 p_frag_pos, int p_light_index, vec3 p_eye) {
-    vec3 light_position = c_lights[p_light_index].position;
-    float light_far = c_lights[p_light_index].max_distance;
+    vec3 light_position = u_lights[p_light_index].position;
+    float light_far = u_lights[p_light_index].max_distance;
 
     vec3 frag_to_light = p_frag_pos - light_position;
     float current_depth = length(frag_to_light);
@@ -41,7 +41,7 @@ float point_shadow_calculation(vec3 p_frag_pos, int p_light_index, vec3 p_eye) {
     // float disk_radius = (1.0 + (view_distance / light_far)) / 25.0;
     float shadow = 0.0;
     for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
-        float closest_depth = texture(c_lights[p_light_index].shadow_map, frag_to_light + g_point_light_shadow_sample_offset[i] * disk_radius).r;
+        float closest_depth = texture(u_lights[p_light_index].shadow_map, frag_to_light + g_point_light_shadow_sample_offset[i] * disk_radius).r;
         closest_depth *= light_far;
         if (current_depth - bias > closest_depth) {
             shadow += 1.0;
@@ -56,7 +56,7 @@ float cascade_shadow_voxel(sampler2D p_shadow_map,
                            const in vec3 p_pos_world,
                            float p_NdotL,
                            int p_level) {
-    vec4 pos_light = c_main_light_matrices[p_level] * vec4(p_pos_world, 1.0);
+    vec4 pos_light = u_main_light_matrices[p_level] * vec4(p_pos_world, 1.0);
     vec3 coords = pos_light.xyz / pos_light.w;
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
@@ -81,7 +81,7 @@ float cascade_shadow(sampler2D p_shadow_map,
                      const in vec3 p_pos_world,
                      float p_NdotL,
                      int p_level) {
-    vec4 pos_light = c_main_light_matrices[p_level] * vec4(p_pos_world, 1.0);
+    vec4 pos_light = u_main_light_matrices[p_level] * vec4(p_pos_world, 1.0);
     vec3 coords = pos_light.xyz / pos_light.w;
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;

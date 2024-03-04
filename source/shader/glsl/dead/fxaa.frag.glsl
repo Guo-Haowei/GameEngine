@@ -27,7 +27,7 @@ void main() {
     }
 
     vec3 color_center = texture(c_tone_input_image, uv).rgb;
-    vec2 texel_size = 1.0 / vec2(c_screen_width, c_screen_height);
+    vec2 texel_size = 1.0 / vec2(u_screen_width, u_screen_height);
 
     // Luma at the current fragment
     float luma_center = rgb_to_luma(color_center);

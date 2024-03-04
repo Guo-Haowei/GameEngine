@@ -17,6 +17,8 @@ public:
     bool initialize_internal() final;
     void finalize() final;
 
+    void set_stencil_ref(uint32_t p_ref) final;
+
     void set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) final;
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
     void set_viewport(const Viewport& p_viewport) final;
@@ -48,6 +50,8 @@ private:
         bool front_counter_clockwise;
         ComparisonFunc depth_func;
         bool enable_depth_test;
+        bool enable_stencil_test;
+        uint32_t stencil_func;
     } m_state_cache;
 };
 

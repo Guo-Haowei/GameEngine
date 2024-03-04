@@ -16,7 +16,8 @@ extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 extern OpenGLMeshBuffers g_box;
 extern OpenGLMeshBuffers g_skybox;
-extern OpenGLMeshBuffers g_billboard;
+// @TODO: add as a object
+extern OpenGLMeshBuffers g_grass;
 
 namespace my::rg {
 
@@ -194,6 +195,23 @@ void prefilter_pass_func(const Subpass* p_subpass) {
     return;
 }
 
+static void highlight_select_pass_func(const Subpass* p_subpass) {
+    OPTICK_EVENT();
+
+    auto& manager = GraphicsManager::singleton();
+    manager.set_render_target(p_subpass);
+    DEV_ASSERT(!p_subpass->color_attachments.empty());
+    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+
+    glViewport(0, 0, width, height);
+
+    manager.set_pipeline_state(PROGRAM_HIGHLIGHT);
+    manager.set_stencil_ref(STENCIL_FLAG_SELECTED);
+    glClear(GL_COLOR_BUFFER_BIT);
+    R_DrawQuad();
+    manager.set_stencil_ref(0);
+}
+
 void ssao_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
@@ -219,7 +237,8 @@ static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
 void lighting_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().set_render_target(p_subpass);
+    auto& manager = GraphicsManager::singleton();
+    manager.set_render_target(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto [width, height] = p_subpass->color_attachments[0]->get_size();
 
@@ -227,7 +246,7 @@ void lighting_pass_func(const Subpass* p_subpass) {
 
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GraphicsManager::singleton().set_pipeline_state(PROGRAM_LIGHTING_VXGI);
+    manager.set_pipeline_state(PROGRAM_LIGHTING_VXGI);
 
     // @TODO: fix
     auto camera = SceneManager::singleton().get_scene().m_camera;
@@ -235,6 +254,13 @@ void lighting_pass_func(const Subpass* p_subpass) {
     g_per_pass_cache.update();
 
     R_DrawQuad();
+
+    if (0) {
+        // draw billboard grass here for now
+        manager.set_pipeline_state(PROGRAM_BILLBOARD);
+        manager.set_mesh(&g_grass);
+        glDrawElementsInstanced(GL_TRIANGLES, g_grass.index_count, GL_UNSIGNED_INT, 0, 64);
+    }
 
     // draw skybox here
     {
@@ -357,11 +383,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    auto ssao_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_SSAO,
-                                                                          PixelFormat::R32_FLOAT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h },
-                                                        nearest_sampler());
     auto final_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_FINAL,
                                                                            PixelFormat::R8G8B8A8_UINT,
                                                                            AttachmentType::COLOR_2D,
@@ -409,6 +430,26 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     create_shadow_pass(graph);
     create_gbuffer_pass(graph, w, h);
 
+    auto gbuffer_depth = manager.find_render_target(RT_RES_GBUFFER_DEPTH);
+    {  // highlight selected pass
+        auto attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_HIGHLIGHT_SELECT,
+                                                                         PixelFormat::R8_UINT,
+                                                                         AttachmentType::COLOR_2D,
+                                                                         w, h },
+                                                       nearest_sampler());
+
+        RenderPassDesc desc;
+        desc.name = HIGHLIGHT_SELECT_PASS;
+        desc.dependencies = { GBUFFER_PASS };
+        auto pass = graph.create_pass(desc);
+        auto subpass = manager.create_subpass(SubpassDesc{
+            .color_attachments = { attachment },
+            .depth_attachment = gbuffer_depth,
+            .func = highlight_select_pass_func,
+        });
+        pass->add_sub_pass(subpass);
+    }
+
     {  // voxel pass
         RenderPassDesc desc;
         desc.name = VOXELIZATION_PASS;
@@ -420,6 +461,12 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
     {  // ssao pass
+        // doen't need to 32 bit float!
+        auto ssao_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_SSAO,
+                                                                              PixelFormat::R32_FLOAT,
+                                                                              AttachmentType::COLOR_2D,
+                                                                              w, h },
+                                                            nearest_sampler());
         RenderPassDesc desc;
         desc.name = SSAO_PASS;
         desc.dependencies = { GBUFFER_PASS };
@@ -431,7 +478,6 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
 
-    auto gbuffer_depth = manager.find_render_target(RT_RES_GBUFFER_DEPTH);
     {  // lighting pass
         auto lighting_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_LIGHTING,
                                                                                   PixelFormat::R11G11B10_FLOAT,

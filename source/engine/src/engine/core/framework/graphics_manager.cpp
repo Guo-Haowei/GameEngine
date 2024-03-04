@@ -124,10 +124,12 @@ std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const Render
     DEV_ASSERT(m_resource_lookup.find(p_desc.name) == m_resource_lookup.end());
     std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
 
+    // @TODO: this part need rework
     TextureDesc texture_desc{};
     switch (p_desc.type) {
         case AttachmentType::COLOR_2D:
         case AttachmentType::DEPTH_2D:
+        case AttachmentType::DEPTH_STENCIL_2D:
         case AttachmentType::SHADOW_2D:
             texture_desc.dimension = Dimension::TEXTURE_2D;
             break;
@@ -144,21 +146,19 @@ std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const Render
         case AttachmentType::COLOR_CUBE_MAP:
             texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
             break;
-        case AttachmentType::DEPTH_2D:
         case AttachmentType::SHADOW_2D:
         case AttachmentType::SHADOW_CUBE_MAP:
             texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            break;
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::DEPTH_STENCIL_2D:
+            texture_desc.bind_flags |= BIND_DEPTH_STENCIL;
             break;
         default:
             break;
     }
 
     texture_desc.format = p_desc.format;
-    // @TODO: refactor
-    // if (p_desc.format == PixelFormat::D32_FLOAT) {
-    //    texture_desc.pixel_format = PixelFormat::R32_FLOAT;
-    //}
-
     texture_desc.width = p_desc.width;
     texture_desc.height = p_desc.height;
     texture_desc.initial_data = nullptr;

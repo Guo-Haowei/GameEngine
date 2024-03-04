@@ -35,7 +35,7 @@ GpuTexture g_normalVoxel;
 // @TODO: refactor
 OpenGLMeshBuffers g_box;
 OpenGLMeshBuffers g_skybox;
-OpenGLMeshBuffers g_billboard;
+OpenGLMeshBuffers g_grass;
 
 static GLuint g_noiseTexture;
 
@@ -147,50 +147,57 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     }
 
     if (pipeline->depth_stencil_desc) {
-        const bool enable_depth_test = pipeline->depth_stencil_desc->depth_enabled;
-        if (enable_depth_test != m_state_cache.enable_depth_test) {
-            if (enable_depth_test) {
-                glEnable(GL_DEPTH_TEST);
-            } else {
-                glDisable(GL_DEPTH_TEST);
+        {
+            const bool enable_depth_test = pipeline->depth_stencil_desc->depth_enabled;
+            if (enable_depth_test != m_state_cache.enable_depth_test) {
+                if (enable_depth_test) {
+                    glEnable(GL_DEPTH_TEST);
+                } else {
+                    glDisable(GL_DEPTH_TEST);
+                }
+                m_state_cache.enable_depth_test = enable_depth_test;
             }
-            m_state_cache.enable_depth_test = enable_depth_test;
-        }
 
-        if (enable_depth_test) {
-            const auto func = pipeline->depth_stencil_desc->depth_func;
-            if (func != m_state_cache.depth_func) {
-                switch (func) {
-                    case ComparisonFunc::NEVER:
-                        glDepthFunc(GL_NEVER);
+            if (enable_depth_test) {
+                const auto func = pipeline->depth_stencil_desc->depth_func;
+                if (func != m_state_cache.depth_func) {
+                    glDepthFunc(gl::convert(func));
+                    m_state_cache.depth_func = func;
+                }
+            }
+        }
+        {
+            const bool enable_stencil_test = pipeline->depth_stencil_desc->stencil_enabled;
+            if (enable_stencil_test != m_state_cache.enable_stencil_test) {
+                if (enable_stencil_test) {
+                    glEnable(GL_STENCIL_TEST);
+                } else {
+                    glDisable(GL_STENCIL_TEST);
+                }
+                m_state_cache.enable_stencil_test = enable_stencil_test;
+            }
+
+            if (enable_stencil_test) {
+                switch (pipeline->depth_stencil_desc->op) {
+                    case DepthStencilOpDesc::ALWAYS:
+                        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+                        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                        m_state_cache.stencil_func = GL_ALWAYS;
                         break;
-                    case ComparisonFunc::LESS:
-                        glDepthFunc(GL_LESS);
+                    case DepthStencilOpDesc::Z_PASS:
+                        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+                        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+                        m_state_cache.stencil_func = GL_ALWAYS;
                         break;
-                    case ComparisonFunc::EQUAL:
-                        glDepthFunc(GL_EQUAL);
-                        break;
-                    case ComparisonFunc::LESS_EQUAL:
-                        glDepthFunc(GL_LEQUAL);
-                        break;
-                    case ComparisonFunc::GREATER:
-                        glDepthFunc(GL_GREATER);
-                        break;
-                    case ComparisonFunc::NOT_EQUAL:
-                        glDepthFunc(GL_NOTEQUAL);
-                        break;
-                    case ComparisonFunc::GREATER_EQUAL:
-                        glDepthFunc(GL_GEQUAL);
-                        break;
-                    case ComparisonFunc::ALWAYS:
-                        glDepthFunc(GL_ALWAYS);
+                    case DepthStencilOpDesc::EQUAL:
+                        glStencilFunc(GL_EQUAL, 0, 0xFF);
+                        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                        m_state_cache.stencil_func = GL_EQUAL;
                         break;
                     default:
                         CRASH_NOW();
                         break;
                 }
-
-                m_state_cache.depth_func = func;
             }
         }
     }
@@ -262,6 +269,7 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
 
     uint32_t flags = 0;
     if (p_flags & CLEAR_COLOR_BIT) {
+        // @TODO: cache clear color
         if (p_clear_color) {
             glClearColor(p_clear_color[0], p_clear_color[1], p_clear_color[2], p_clear_color[3]);
         }
@@ -270,12 +278,22 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
     if (p_flags & CLEAR_DEPTH_BIT) {
         flags |= GL_DEPTH_BUFFER_BIT;
     }
+    if (p_flags & CLEAR_STENCIL_BIT) {
+        flags |= GL_STENCIL_BUFFER_BIT;
+    }
 
     glClear(flags);
 }
 
 void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
-    glViewport(0, 0, p_viewport.width, p_viewport.height);
+    if (p_viewport.top_left_y) {
+        LOG_FATAL("TODO: adjust to bottom left y");
+    }
+
+    glViewport(p_viewport.top_left_x,
+               p_viewport.top_left_y,
+               p_viewport.width,
+               p_viewport.height);
 }
 
 void OpenGLGraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
@@ -419,7 +437,6 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
         glDrawBuffers(num_color_attachment, attachments.data());
     }
 
-    // @TODO: move it to bind and unbind
     if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
         switch (depth_attachment->desc.type) {
             case AttachmentType::SHADOW_2D:
@@ -428,8 +445,14 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
                                        GL_DEPTH_ATTACHMENT,                      // attachment
                                        GL_TEXTURE_2D,                            // texture target
                                        depth_attachment->texture->get_handle(),  // texture
-                                       0                                         // level
-                );
+                                       0);                                       // level
+            } break;
+            case AttachmentType::DEPTH_STENCIL_2D: {
+                glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
+                                       GL_DEPTH_STENCIL_ATTACHMENT,              // attachment
+                                       GL_TEXTURE_2D,                            // texture target
+                                       depth_attachment->texture->get_handle(),  // texture
+                                       0);                                       // level
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
             } break;
@@ -445,6 +468,10 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
 
     subpass->handle = fbo_handle;
     return subpass;
+}
+
+void OpenGLGraphicsManager::set_stencil_ref(uint32_t p_ref) {
+    glStencilFunc(m_state_cache.stencil_func, p_ref, 0xFF);
 }
 
 void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) {
@@ -516,8 +543,8 @@ static void create_ssao_resource() {
         ssaoKernel.emplace_back(vec4(sample, 0.0f));
     }
 
-    memset(&g_constantCache.cache.c_ssao_kernels, 0, sizeof(g_constantCache.cache.c_ssao_kernels));
-    memcpy(&g_constantCache.cache.c_ssao_kernels, ssaoKernel.data(), sizeof(ssaoKernel.front()) * ssaoKernel.size());
+    memset(&g_constantCache.cache.u_ssao_kernels, 0, sizeof(g_constantCache.cache.u_ssao_kernels));
+    memcpy(&g_constantCache.cache.u_ssao_kernels, ssaoKernel.data(), sizeof(ssaoKernel.front()) * ssaoKernel.size());
 
     // generate noise texture
     const int noiseSize = DVAR_GET_INT(r_ssaoNoiseSize);
@@ -542,10 +569,13 @@ static void create_ssao_resource() {
 }
 
 void OpenGLGraphicsManager::createGpuResources() {
+    // @TODO: appropriate sampler
+    auto grass_image = AssetManager::singleton().load_image_sync("@res://images/grass.png")->get();
+
     create_ssao_resource();
 
     // create a dummy box data
-    create_mesh_data(make_plane_mesh(vec3(0.3f)), g_billboard);
+    create_mesh_data(make_grass_billboard(), g_grass);
     create_mesh_data(make_box_mesh(), g_box);
     create_mesh_data(make_sky_box_mesh(), g_skybox);
 
@@ -579,6 +609,8 @@ void OpenGLGraphicsManager::createGpuResources() {
     cache.c_voxel_map = ::gl::MakeTextureResident(g_albedoVoxel.GetHandle());
     cache.c_voxel_normal_map = ::gl::MakeTextureResident(g_normalVoxel.GetHandle());
 
+    cache.u_grass_base_color = grass_image->gpu_texture->get_resident_handle();
+
     // @TODO: refactor
     auto make_resident = [&](const std::string& name, uint64_t& id) {
         std::shared_ptr<RenderTarget> resource = find_render_target(name);
@@ -589,13 +621,28 @@ void OpenGLGraphicsManager::createGpuResources() {
         }
     };
 
+    auto bind_slot = [&](const std::string& name, int slot) {
+        std::shared_ptr<RenderTarget> resource = find_render_target(name);
+        if (!resource) {
+            DEV_ASSERT(0);
+            return;
+        }
+        uint32_t handle = resource->texture->get_handle();
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, handle);
+    };
+
+    bind_slot(RT_RES_HIGHLIGHT_SELECT, u_selection_highlight_slot);
+    bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
+    bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
+    bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
+    bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+
+    glActiveTexture(GL_TEXTURE0);
+
     make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_TONE, cache.c_tone_image);
-    make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.u_gbuffer_base_color_map);
-    make_resident(RT_RES_GBUFFER_POSITION, cache.u_gbuffer_position_map);
-    make_resident(RT_RES_GBUFFER_NORMAL, cache.u_gbuffer_normal_map);
-    make_resident(RT_RES_GBUFFER_MATERIAL, cache.u_gbuffer_material_map);
     make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_tone_input_image);
     make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
@@ -610,11 +657,13 @@ void OpenGLGraphicsManager::createGpuResources() {
 void OpenGLGraphicsManager::render() {
     OPTICK_EVENT();
 
-    // @TODO: move outside
-    Scene& scene = SceneManager::singleton().get_scene();
-    renderer::fill_constant_buffers(scene);
-
-    m_render_data->update(&scene);
+    {
+        OPTICK_EVENT("prepare render data");
+        // @TODO: move outside
+        Scene& scene = SceneManager::singleton().get_scene();
+        renderer::fill_constant_buffers(scene);
+        m_render_data->update(&scene);
+    }
 
     g_perFrameCache.update();
 

@@ -13,13 +13,11 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 
     graphics_manager.set_render_target(p_subpass);
 
-    Viewport viewport;
-    viewport.width = width;
-    viewport.height = height;
+    Viewport viewport{ width, height };
     graphics_manager.set_viewport(viewport);
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
+    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     auto render_data = graphics_manager.get_render_data();
     RenderData::Pass& pass = render_data->main_pass;
@@ -35,6 +33,10 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 
         graphics_manager.set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
+        if (draw.flags) {
+            graphics_manager.set_stencil_ref(draw.flags);
+        }
+
         graphics_manager.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
         graphics_manager.set_mesh(draw.mesh_data);
@@ -44,6 +46,10 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 
             graphics_manager.draw_elements(subset.index_count, subset.index_offset);
         }
+
+        if (draw.flags) {
+            graphics_manager.set_stencil_ref(0);
+        }
     }
 }
 
@@ -52,8 +58,8 @@ void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height) {
 
     // @TODO: decouple sampler and render target
     auto gbuffer_depth = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
-                                                                        PixelFormat::D32_FLOAT,
-                                                                        AttachmentType::DEPTH_2D,
+                                                                        PixelFormat::D24_UNORM_S8_UINT,
+                                                                        AttachmentType::DEPTH_STENCIL_2D,
                                                                         p_width, p_height },
                                                       nearest_sampler());
 

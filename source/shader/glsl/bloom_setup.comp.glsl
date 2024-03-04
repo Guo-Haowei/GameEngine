@@ -16,7 +16,8 @@ void main() {
 
     vec3 color = texture(u_tmp_bloom_input, vec2(uv.x, uv.y)).rgb;
     float luma = rgb_to_luma(color);
-    if (luma < 1.0) {
+    // @TODO: dynamic lua
+    if (luma < u_bloom_threshold) {
         color = vec3(0.0);
     }
 

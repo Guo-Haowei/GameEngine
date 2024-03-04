@@ -23,6 +23,10 @@
 #define TONE_PASS         "tone_pass"
 #define FINAL_PASS        "final_pass"
 
+// select pass
+#define HIGHLIGHT_SELECT_PASS   "highlight_select_pass"
+#define RT_RES_HIGHLIGHT_SELECT "rt_res_highlight_selected"
+
 // environment
 #define ENV_PASS                           "env_pass"
 #define RT_ENV_SKYBOX_CUBE_MAP             "env_cube_map"

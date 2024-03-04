@@ -36,8 +36,12 @@ enum ClearFlags : uint32_t {
 };
 
 struct Viewport {
+    Viewport(int p_width, int p_height) : width(p_width), height(p_height), top_left_x(0), top_left_y(0) {}
+
     int width;
     int height;
+    int top_left_x;
+    int top_left_y;
 };
 
 struct MeshBuffers {
@@ -45,6 +49,11 @@ struct MeshBuffers {
 
     uint32_t index_count = 0;
 };
+
+#define SHADER_TEXTURE(TYPE, NAME, SLOT) \
+    constexpr int NAME##_slot = SLOT;
+#include "texture_binding.h"
+#undef SHADER_TEXTURE
 
 // @TODO: move generic stuff to renderer
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
@@ -70,6 +79,7 @@ public:
     virtual void draw_elements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     void set_pipeline_state(PipelineStateName p_name);
+    virtual void set_stencil_ref(uint32_t p_ref) = 0;
 
     std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;

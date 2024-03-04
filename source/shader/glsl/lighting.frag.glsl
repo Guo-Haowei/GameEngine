@@ -1,4 +1,5 @@
 #include "../cbuffer.h"
+#include "../texture_binding.h"
 
 #define ENABLE_VXGI 1
 
@@ -33,7 +34,7 @@ void main() {
     float metallic = emissive_roughness_metallic.b;
 
     vec3 base_color = texture(u_gbuffer_base_color_map, texcoord).rgb;
-    if (c_no_texture != 0) {
+    if (u_no_texture != 0) {
         base_color = vec3(0.6);
     }
 
@@ -45,7 +46,7 @@ void main() {
 
     const int cascade_level = find_cascade(world_position);
 
-    const vec3 V = normalize(c_camera_position - world_position);
+    const vec3 V = normalize(u_camera_position - world_position);
     const float NdotV = clamp(dot(N, V), 0.0, 1.0);
     vec3 R = reflect(-V, N);
 
@@ -69,9 +70,9 @@ void main() {
         vec3(t1.z, 0, t1.w));
     // ------------------- for area light
 
-    for (int light_idx = 0; light_idx < c_light_count; ++light_idx) {
-        Light light = c_lights[light_idx];
-        int light_type = c_lights[light_idx].type;
+    for (int light_idx = 0; light_idx < u_light_count; ++light_idx) {
+        Light light = u_lights[light_idx];
+        int light_type = u_lights[light_idx].type;
         vec3 direct_lighting = vec3(0.0);
         float shadow = 0.0;
         const vec3 radiance = light.color;
@@ -98,7 +99,7 @@ void main() {
                     const vec3 H = normalize(V + L);
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                     if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(world_position, light_idx, c_camera_position);
+                        shadow = point_shadow_calculation(world_position, light_idx, u_camera_position);
                     }
                 }
             } break;
@@ -125,11 +126,11 @@ void main() {
     vec2 envBRDF = texture(c_brdf_map, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
-    const float ao = c_enable_ssao == 0 ? 1.0 : texture(c_ssao_map, texcoord).r;
+    const float ao = u_enable_ssao == 0 ? 1.0 : texture(c_ssao_map, texcoord).r;
     vec3 ambient = (kD * diffuse + specular) * ao;
 
 #if ENABLE_VXGI
-    if (c_enable_vxgi == 1) {
+    if (u_enable_vxgi == 1) {
         const vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
         const vec3 kS = F;
         const vec3 kD = (1.0 - kS) * (1.0 - metallic);
@@ -148,7 +149,7 @@ void main() {
     vec3 color = Lo + ambient;
 
     // debug CSM
-    if (c_debug_csm == 1) {
+    if (u_debug_csm == 1) {
 
         float alpha = 0.2;
         switch (cascade_level) {
@@ -168,7 +169,7 @@ void main() {
     }
 
 #if ENABLE_CSM
-    if (c_debug_csm != 0) {
+    if (u_debug_csm != 0) {
         vec3 mask = vec3(0.1);
         for (int light_idx = 0; light_idx < MAX_CASCADE_COUNT; ++light_idx) {
             if (clipSpaceZ <= c_cascade_clip_z[light_idx + 1]) {

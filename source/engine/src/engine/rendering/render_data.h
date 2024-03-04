@@ -14,6 +14,10 @@ extern UniformBuffer<PerFrameConstantBuffer> g_perFrameCache;
 extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
+enum StencilFlags {
+    STENCIL_FLAG_SELECTED = BIT(1),
+};
+
 struct RenderData {
     RenderData();
 
@@ -31,6 +35,7 @@ struct RenderData {
         int batch_idx;
         const MeshBuffers* mesh_data;
         std::vector<SubMesh> subsets;
+        uint32_t flags;
     };
 
     struct Pass {
@@ -57,8 +62,7 @@ struct RenderData {
     std::shared_ptr<UniformBufferBase> m_material_uniform;
     std::shared_ptr<UniformBufferBase> m_bone_uniform;
 
-    // @TODO: fix this ugly shit
-
+    bool has_sun_light = false;
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<Pass, MAX_CASCADE_COUNT> shadow_passes;
 

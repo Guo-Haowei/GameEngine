@@ -14,29 +14,29 @@ in struct PS_INPUT {
 #include "../cbuffer.h"
 
 void main() {
-    vec4 albedo = c_albedo_color;
+    vec4 albedo = u_albedo_color;
 
-    if (c_has_albedo_map != 0) {
-        albedo = texture(c_albedo_map, ps_in.uv, 0);
+    if (u_has_albedo_map != 0) {
+        albedo = texture(u_albedo_map, ps_in.uv, 0);
     }
     if (albedo.a < 0.001) {
         discard;
     }
 
-    float metallic = c_metallic;
-    float roughness = c_roughness;
-    if (c_has_pbr_map != 0) {
+    float metallic = u_metallic;
+    float roughness = u_roughness;
+    if (u_has_pbr_map != 0) {
         // g roughness, b metallic
-        vec3 mr = texture(c_pbr_map, ps_in.uv).rgb;
+        vec3 mr = texture(u_pbr_map, ps_in.uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }
 
     // TODO: get rid of branching
     vec3 N;
-    if (c_has_normal_map != 0) {
+    if (u_has_normal_map != 0) {
         mat3 TBN = mat3(ps_in.T, ps_in.B, ps_in.N);
-        N = normalize(TBN * (2.0 * texture(c_normal_map, ps_in.uv).xyz - 1.0));
+        N = normalize(TBN * (2.0 * texture(u_normal_map, ps_in.uv).xyz - 1.0));
     } else {
         N = normalize(ps_in.N);
     }
@@ -45,7 +45,7 @@ void main() {
     out_position = ps_in.position;
     out_normal = N;
 
-    out_emissive_roughness_metallic.r = c_emissive_power;
+    out_emissive_roughness_metallic.r = u_emissive_power;
     out_emissive_roughness_metallic.g = roughness;
     out_emissive_roughness_metallic.b = metallic;
 }

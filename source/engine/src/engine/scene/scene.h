@@ -180,6 +180,7 @@ private:
     const AABB& get_bound() const { return m_bound; }
     // @TODO: refactor
     ecs::Entity m_root;
+    ecs::Entity m_selected;
     float m_delta_time = 0.0f;
     std::shared_ptr<Camera> m_camera;
     bool m_replace = false;

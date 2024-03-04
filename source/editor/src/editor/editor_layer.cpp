@@ -7,10 +7,10 @@
 #include "core/input/input.h"
 #include "editor/panels/console_panel.h"
 #include "editor/panels/content_browser.h"
-#include "editor/panels/debug_panel.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_editor.h"
+#include "editor/panels/renderer_panel.h"
 #include "editor/panels/viewer.h"
 
 namespace my {
@@ -18,7 +18,7 @@ namespace my {
 EditorLayer::EditorLayer() : Layer("EditorLayer") {
     add_panel(std::make_shared<RenderGraphEditor>(*this));
     add_panel(std::make_shared<ConsolePanel>(*this));
-    add_panel(std::make_shared<DebugPanel>(*this));
+    add_panel(std::make_shared<RendererPanel>(*this));
     add_panel(std::make_shared<HierarchyPanel>(*this));
     add_panel(std::make_shared<PropertyPanel>(*this));
     add_panel(std::make_shared<Viewer>(*this));
@@ -26,16 +26,16 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 
     m_menu_bar = std::make_shared<MenuBar>(*this);
 
-    // load assets
-    const char* light_icons[] = {
-        "@res://images/arealight.png",
-        "@res://images/pointlight.png",
-        "@res://images/omnilight.png",
-    };
+    //// load assets
+    // const char* light_icons[] = {
+    //     "@res://images/arealight.png",
+    //     "@res://images/pointlight.png",
+    //     "@res://images/omnilight.png",
+    // };
 
-    for (int i = 0; i < array_length(light_icons); ++i) {
-        AssetManager::singleton().load_image_sync(light_icons[i]);
-    }
+    // for (int i = 0; i < array_length(light_icons); ++i) {
+    //     AssetManager::singleton().load_image_sync(light_icons[i]);
+    // }
 }
 
 void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {
@@ -44,6 +44,8 @@ void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {
 
 void EditorLayer::select_entity(ecs::Entity p_selected) {
     m_selected = p_selected;
+    // TODO: fix this, shouldn't fetch globally
+    SceneManager::get_scene().m_selected = m_selected;
 }
 
 // @TODO: make this an item

@@ -26,6 +26,7 @@ struct SamplerDesc {
 
 inline SamplerDesc nearest_sampler() {
     SamplerDesc desc{};
+    desc.mode_u = desc.mode_v = desc.mode_w = AddressMode::CLAMP;
     desc.min = desc.mag = FilterMode::NEAREST;
     return desc;
 }

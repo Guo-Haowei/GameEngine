@@ -86,6 +86,7 @@ bool SceneManager::try_swap_scene() {
             delete new_scene;
         } else {
             m_scene = new_scene;
+            // @TODO: old scene
         }
         m_loading_scene.store(nullptr);
         ++m_revision;
@@ -102,6 +103,7 @@ void SceneManager::update(float dt) {
     if (m_last_revision < m_revision) {
         Timer timer;
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
+        LOG_WARN("offload scene properly");
         m_app->get_event_queue().dispatch_event(event);
         LOG("[SceneManager] Detected scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.get_duration_string());
         m_last_revision = m_revision;

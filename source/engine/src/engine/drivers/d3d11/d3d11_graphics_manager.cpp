@@ -111,6 +111,10 @@ void D3d11GraphicsManager::render() {
     m_swap_chain->Present(1, 0);  // Present with vsync
 }
 
+void D3d11GraphicsManager::set_stencil_ref(uint32_t p_ref) {
+    unused(p_ref);
+}
+
 void D3d11GraphicsManager::on_window_resize(int p_width, int p_height) {
     if (m_device) {
         m_window_rtv.Reset();
@@ -240,6 +244,9 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
         texture_format = DXGI_FORMAT_R32_TYPELESS;
         srv_format = DXGI_FORMAT_R32_FLOAT;
     }
+    if (format == PixelFormat::D24_UNORM_S8_UINT) {
+        texture_format = DXGI_FORMAT_R24G8_TYPELESS;
+    }
 
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
@@ -269,17 +276,20 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
 
-    srv_desc.Format = srv_format;
-    srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
-    srv_desc.Texture2D.MostDetailedMip = 0;
-    srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
-
-    D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
-                   nullptr,
-                   "Failed to create shader resource view");
-
     auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
-    gpu_texture->srv = srv;
+    if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
+        srv_desc.Format = srv_format;
+        srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
+        srv_desc.Texture2D.MostDetailedMip = 0;
+        srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+
+        D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
+                       nullptr,
+                       "Failed to create shader resource view");
+
+        gpu_texture->srv = srv;
+    }
+
     gpu_texture->texture = texture;
     return gpu_texture;
 }
@@ -313,6 +323,18 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::create_subpass(const SubpassDesc&
                 ComPtr<ID3D11DepthStencilView> dsv;
                 D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
                 desc.Format = DXGI_FORMAT_D32_FLOAT;
+                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                desc.Texture2D.MipSlice = 0;
+
+                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create depth stencil view");
+                subpass->dsv = dsv;
+            } break;
+            case AttachmentType::DEPTH_STENCIL_2D: {
+                ComPtr<ID3D11DepthStencilView> dsv;
+                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
                 desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
                 desc.Texture2D.MipSlice = 0;
 
@@ -378,6 +400,9 @@ void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, flo
 
 void D3d11GraphicsManager::set_viewport(const Viewport& p_viewport) {
     D3D11_VIEWPORT vp{};
+    // @TODO: gl and d3d use different viewport
+    vp.TopLeftX = static_cast<float>(p_viewport.top_left_x);
+    vp.TopLeftY = static_cast<float>(p_viewport.top_left_y);
     vp.Width = static_cast<float>(p_viewport.width);
     vp.Height = static_cast<float>(p_viewport.height);
     vp.MinDepth = 0.0f;
@@ -497,7 +522,7 @@ void D3d11GraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     }
 
     if (pipeline->depth_stencil.Get() != m_state_cache.depth_stencil) {
-        m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 1);
+        m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
         m_state_cache.depth_stencil = pipeline->depth_stencil.Get();
     }
 }

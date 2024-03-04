@@ -8,6 +8,7 @@ enum class AttachmentType {
     COLOR_2D,
     COLOR_CUBE_MAP,
     DEPTH_2D,
+    DEPTH_STENCIL_2D,
     SHADOW_2D,
     SHADOW_CUBE_MAP,
 };
