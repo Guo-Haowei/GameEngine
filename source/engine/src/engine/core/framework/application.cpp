@@ -101,7 +101,6 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     LOG_WARN("TODO: terrain & grass");
-    LOG_OK("TODO: path tracer here");
     LOG_WARN("TODO: water");
     LOG_OK("TODO: change position buffer to view space");
     LOG_WARN("TODO: area light shadow & fix cascade shadow");
@@ -113,14 +112,9 @@ int Application::run(int argc, const char** argv) {
     LOG_WARN("TODO: make camera a component");
     LOG_WARN("TODO: use lua to construct scene");
     LOG_WARN("TODO: refactor render graph");
-    LOG_WARN("TODO: cloth physics");
 
-    LOG_WARN(
-        "\nTODO:"
-        "\n  1. z-prepass"
-        "\n  2. depth-stencil"
-        "\n  3. 8-bit color for selected item"
-        "\n  4. sobel edge detection");
+    LOG_ERROR("TODO: path tracer here");
+    LOG_ERROR("TODO: cloth physics");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;

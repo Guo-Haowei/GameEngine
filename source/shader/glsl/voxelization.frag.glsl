@@ -77,7 +77,7 @@ void main() {
         Lo += (1.0 - shadow) * direct_lighting;
     }
     // dummy ambient
-    Lo += 0.2 * albedo.rgb;
+    // Lo += 0.0 * albedo.rgb;
 
     vec3 color = Lo;
 

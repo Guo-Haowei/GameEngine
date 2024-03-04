@@ -38,7 +38,7 @@ void main() {
     float gy = dot(sy[0], I[0]) + dot(sy[1], I[1]) + dot(sy[2], I[2]);
 
     float g = sqrt(pow(gx, 2.0) + pow(gy, 2.0));
-    if (g > 0.1) {
+    if (g > 0.0) {
         out_color = vec3(0.98, 0.64, 0);
         return;
     }
