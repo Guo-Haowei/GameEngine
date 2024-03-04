@@ -8,8 +8,15 @@ out vec2 pass_uv;
 void main() {
     pass_uv = in_uv;
 
+    float x_offset = float(gl_InstanceID / 8);
+    float z_offset = float(gl_InstanceID % 8);
+
+    vec4 position = vec4(in_position, 1.0);
+    position.x += 0.3 * x_offset;
+    position.z += 0.3 * z_offset;
+
     mat4 view_model = u_view_matrix;
-#if 1
+#if 0
     view_model[0][0] = 1.0;
     view_model[0][1] = 0.0;
     view_model[0][2] = 0.0;
@@ -21,5 +28,5 @@ void main() {
     view_model[2][2] = 1.0;
 #endif
 
-    gl_Position = u_proj_matrix * view_model * vec4(in_position, 1.0);
+    gl_Position = u_proj_matrix * view_model * position;
 }

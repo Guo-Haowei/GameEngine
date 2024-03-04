@@ -238,10 +238,12 @@ void lighting_pass_func(const Subpass* p_subpass) {
 
     R_DrawQuad();
 
-    // draw billboard grass here for now
-    manager.set_pipeline_state(PROGRAM_BILLBOARD);
-    manager.set_mesh(&g_grass);
-    manager.draw_elements(g_grass.index_count);
+    if (0) {
+        // draw billboard grass here for now
+        manager.set_pipeline_state(PROGRAM_BILLBOARD);
+        manager.set_mesh(&g_grass);
+        glDrawElementsInstanced(GL_TRIANGLES, g_grass.index_count, GL_UNSIGNED_INT, 0, 64);
+    }
 
     // draw skybox here
     {
