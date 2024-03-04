@@ -36,6 +36,8 @@ inline GLuint convert_format(PixelFormat format) {
             return GL_RGBA;
         case PixelFormat::D32_FLOAT:
             return GL_DEPTH_COMPONENT;
+        case PixelFormat::D24_UNORM_S8_UINT:
+            return GL_DEPTH_STENCIL;
         default:
             CRASH_NOW();
             return 0;
@@ -74,6 +76,8 @@ inline GLuint convert_internal_format(PixelFormat format) {
             return GL_RGB10_A2;
         case PixelFormat::D32_FLOAT:
             return GL_DEPTH_COMPONENT32F;
+        case PixelFormat::D24_UNORM_S8_UINT:
+            return GL_DEPTH24_STENCIL8;
         default:
             CRASH_NOW();
             return 0;
@@ -99,6 +103,8 @@ inline GLuint convert_data_type(PixelFormat format) {
         case PixelFormat::R11G11B10_FLOAT:
         case PixelFormat::D32_FLOAT:
             return GL_FLOAT;
+        case PixelFormat::D24_UNORM_S8_UINT:
+            return GL_UNSIGNED_INT_24_8;
         default:
             CRASH_NOW();
             return 0;

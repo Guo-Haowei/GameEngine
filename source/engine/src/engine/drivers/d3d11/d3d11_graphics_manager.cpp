@@ -240,6 +240,9 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
         texture_format = DXGI_FORMAT_R32_TYPELESS;
         srv_format = DXGI_FORMAT_R32_FLOAT;
     }
+    if (format == PixelFormat::D24_UNORM_S8_UINT) {
+        texture_format = DXGI_FORMAT_R24G8_TYPELESS;
+    }
 
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
@@ -269,17 +272,20 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
 
-    srv_desc.Format = srv_format;
-    srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
-    srv_desc.Texture2D.MostDetailedMip = 0;
-    srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
-
-    D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
-                   nullptr,
-                   "Failed to create shader resource view");
-
     auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
-    gpu_texture->srv = srv;
+    if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
+        srv_desc.Format = srv_format;
+        srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
+        srv_desc.Texture2D.MostDetailedMip = 0;
+        srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+
+        D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
+                       nullptr,
+                       "Failed to create shader resource view");
+
+        gpu_texture->srv = srv;
+    }
+
     gpu_texture->texture = texture;
     return gpu_texture;
 }
@@ -313,6 +319,18 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::create_subpass(const SubpassDesc&
                 ComPtr<ID3D11DepthStencilView> dsv;
                 D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
                 desc.Format = DXGI_FORMAT_D32_FLOAT;
+                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                desc.Texture2D.MipSlice = 0;
+
+                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create depth stencil view");
+                subpass->dsv = dsv;
+            } break;
+            case AttachmentType::DEPTH_STENCIL_2D: {
+                ComPtr<ID3D11DepthStencilView> dsv;
+                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
                 desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
                 desc.Texture2D.MipSlice = 0;
 

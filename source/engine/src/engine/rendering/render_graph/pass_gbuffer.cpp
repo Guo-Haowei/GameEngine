@@ -50,8 +50,8 @@ void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height) {
 
     // @TODO: decouple sampler and render target
     auto gbuffer_depth = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
-                                                                        PixelFormat::D32_FLOAT,
-                                                                        AttachmentType::DEPTH_2D,
+                                                                        PixelFormat::D24_UNORM_S8_UINT,
+                                                                        AttachmentType::DEPTH_STENCIL_2D,
                                                                         p_width, p_height },
                                                       nearest_sampler());
 

@@ -427,7 +427,6 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
         glDrawBuffers(num_color_attachment, attachments.data());
     }
 
-    // @TODO: move it to bind and unbind
     if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
         switch (depth_attachment->desc.type) {
             case AttachmentType::SHADOW_2D:
@@ -436,8 +435,14 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
                                        GL_DEPTH_ATTACHMENT,                      // attachment
                                        GL_TEXTURE_2D,                            // texture target
                                        depth_attachment->texture->get_handle(),  // texture
-                                       0                                         // level
-                );
+                                       0);                                       // level
+            } break;
+            case AttachmentType::DEPTH_STENCIL_2D: {
+                glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
+                                       GL_DEPTH_STENCIL_ATTACHMENT,              // attachment
+                                       GL_TEXTURE_2D,                            // texture target
+                                       depth_attachment->texture->get_handle(),  // texture
+                                       0);                                       // level
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
             } break;
