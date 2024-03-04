@@ -50,6 +50,11 @@ struct MeshBuffers {
     uint32_t index_count = 0;
 };
 
+#define SHADER_TEXTURE(TYPE, NAME, SLOT) \
+    constexpr int NAME##_slot = SLOT;
+#include "texture_binding.h"
+#undef SHADER_TEXTURE
+
 // @TODO: move generic stuff to renderer
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:

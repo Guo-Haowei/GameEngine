@@ -6,6 +6,18 @@ namespace my {
 
 namespace fs = std::filesystem;
 
+struct TextureSlot {
+    const char *name;
+    int slot;
+};
+
+static constexpr TextureSlot s_texture_slots[] = {
+#define SHADER_TEXTURE(TYPE, NAME, SLOT) \
+    TextureSlot{ #NAME, SLOT },
+#include "texture_binding.h"
+#undef SHADER_TEXTURE
+};
+
 static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected<std::string, std::string> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
@@ -99,12 +111,12 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
 }
 
 std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const PipelineCreateInfo &p_info) {
-    GLuint programID = glCreateProgram();
+    GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
         if (!path.empty()) {
             GLuint shader = create_shader(path, type, p_info.defines);
-            glAttachShader(programID, shader);
+            glAttachShader(program_id, shader);
             shaders.push_back(shader);
         }
     };
@@ -129,25 +141,35 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const Pipeline
 
     DEV_ASSERT(!shaders.empty());
 
-    glLinkProgram(programID);
+    glLinkProgram(program_id);
     GLint status = GL_FALSE, length = 0;
-    glGetProgramiv(programID, GL_LINK_STATUS, &status);
-    glGetProgramiv(programID, GL_INFO_LOG_LENGTH, &length);
+    glGetProgramiv(program_id, GL_LINK_STATUS, &status);
+    glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &length);
     if (length > 0) {
         std::vector<char> buffer(length + 1);
-        glGetProgramInfoLog(programID, length, nullptr, buffer.data());
+        glGetProgramInfoLog(program_id, length, nullptr, buffer.data());
         LOG_FATAL("[glsl] failed to link program\ndetails:\n{}", buffer.data());
     }
 
     if (status == GL_FALSE) {
-        glDeleteProgram(programID);
-        programID = 0;
+        glDeleteProgram(program_id);
+        program_id = 0;
     }
 
     auto program = std::make_shared<OpenGLPipelineState>(p_info.input_layout_desc,
                                                          p_info.rasterizer_desc,
                                                          p_info.depth_stencil_desc);
-    program->program_id = programID;
+    program->program_id = program_id;
+
+    // set constants
+    glUseProgram(program_id);
+    for (int i = 0; i < array_length(s_texture_slots); ++i) {
+        GLint location = glGetUniformLocation(program_id, s_texture_slots[i].name);
+        if (location != -1) {
+            glUniform1i(location, s_texture_slots[i].slot);
+        }
+    }
+    glUseProgram(0);
     return program;
 }
 

@@ -602,13 +602,27 @@ void OpenGLGraphicsManager::createGpuResources() {
         }
     };
 
+    auto bind_slot = [&](const std::string& name, int slot) {
+        std::shared_ptr<RenderTarget> resource = find_render_target(name);
+        if (!resource) {
+            DEV_ASSERT(0);
+            return;
+        }
+        uint32_t handle = resource->texture->get_handle();
+        glActiveTexture(GL_TEXTURE0 + slot);
+        glBindTexture(GL_TEXTURE_2D, handle);
+    };
+
+    bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
+    bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
+    bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
+    bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+
+    glActiveTexture(GL_TEXTURE0);
+
     make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_TONE, cache.c_tone_image);
-    make_resident(RT_RES_GBUFFER_BASE_COLOR, cache.u_gbuffer_base_color_map);
-    make_resident(RT_RES_GBUFFER_POSITION, cache.u_gbuffer_position_map);
-    make_resident(RT_RES_GBUFFER_NORMAL, cache.u_gbuffer_normal_map);
-    make_resident(RT_RES_GBUFFER_MATERIAL, cache.u_gbuffer_material_map);
     make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_tone_input_image);
     make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);

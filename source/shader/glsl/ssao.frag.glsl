@@ -1,4 +1,5 @@
 #include "../cbuffer.h"
+#include "../texture_binding.h"
 
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float occlusion;

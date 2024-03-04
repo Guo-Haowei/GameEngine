@@ -142,11 +142,6 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     vec4 u_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
 
     // @TODO: remove the following
-    sampler2D u_gbuffer_base_color_map;
-    sampler2D u_gbuffer_position_map;
-    sampler2D u_gbuffer_normal_map;
-    sampler2D u_gbuffer_material_map;
-
     sampler2D u_gbuffer_depth_map;
     sampler2D u_final_bloom;
 

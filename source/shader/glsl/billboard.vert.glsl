@@ -7,10 +7,9 @@ out vec2 pass_uv;
 
 void main() {
     pass_uv = in_uv;
-    mat4 view_model = u_view_matrix;
 
-#if 0
-    mat4 view_model = u_view_matrix * u_world_matrix;
+    mat4 view_model = u_view_matrix;
+#if 1
     view_model[0][0] = 1.0;
     view_model[0][1] = 0.0;
     view_model[0][2] = 0.0;
