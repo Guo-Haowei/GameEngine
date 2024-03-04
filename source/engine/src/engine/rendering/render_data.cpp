@@ -272,6 +272,10 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
         batch_buffer.u_world_matrix = world_matrix;
 
         Mesh draw;
+        draw.flags = 0;
+        if (entity == scene->m_selected) {
+            draw.flags |= STENCIL_FLAG_SELECTED;
+        }
 
         draw.batch_idx = find_or_add_batch(entity, batch_buffer);
         if (mesh.armature_id.is_valid()) {

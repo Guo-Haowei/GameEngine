@@ -111,6 +111,10 @@ void D3d11GraphicsManager::render() {
     m_swap_chain->Present(1, 0);  // Present with vsync
 }
 
+void D3d11GraphicsManager::set_stencil_ref(uint32_t p_ref) {
+    unused(p_ref);
+}
+
 void D3d11GraphicsManager::on_window_resize(int p_width, int p_height) {
     if (m_device) {
         m_window_rtv.Reset();
@@ -518,7 +522,7 @@ void D3d11GraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     }
 
     if (pipeline->depth_stencil.Get() != m_state_cache.depth_stencil) {
-        m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 1);
+        m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
         m_state_cache.depth_stencil = pipeline->depth_stencil.Get();
     }
 }

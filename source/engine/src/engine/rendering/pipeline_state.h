@@ -59,10 +59,18 @@ enum class ComparisonFunc : uint8_t {
     ALWAYS,
 };
 
+enum class DepthStencilOpDesc : uint8_t {
+    ALWAYS,
+    Z_PASS,
+    EQUAL,
+};
+
 struct DepthStencilDesc {
     ComparisonFunc depth_func;
     bool depth_enabled;
     bool stencil_enabled;
+
+    DepthStencilOpDesc op = DepthStencilOpDesc::ALWAYS;
 };
 
 struct ShaderMacro {
@@ -108,6 +116,7 @@ enum PipelineStateName {
     PROGRAM_VOXELIZATION_STATIC,
     PROGRAM_VOXELIZATION_ANIMATED,
     PROGRAM_VOXELIZATION_POST,
+    PROGRAM_HIGHLIGHT,
     PROGRAM_SSAO,
     PROGRAM_LIGHTING_VXGI,
     PROGRAM_BLOOM_SETUP,

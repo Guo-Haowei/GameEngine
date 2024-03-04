@@ -79,6 +79,7 @@ public:
     virtual void draw_elements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     void set_pipeline_state(PipelineStateName p_name);
+    virtual void set_stencil_ref(uint32_t p_ref) = 0;
 
     std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;

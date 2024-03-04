@@ -104,6 +104,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
 
     ecs::Entity id = m_editor.get_selected_entity();
     TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
+#if 0
     if (transform_component) {
         AABB aabb;
         if (const ObjectComponent* object = scene.get_component<ObjectComponent>(id); object) {
@@ -120,7 +121,6 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
             ImGuizmo::draw_box_wireframe(projection_view_matrix, model_matrix);
         }
     }
-#if 0
     ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
     if (object_component && transform_component) {
         auto mesh_component = scene.get_component<MeshComponent>(object_component->mesh_id);

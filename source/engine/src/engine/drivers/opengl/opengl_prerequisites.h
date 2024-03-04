@@ -7,6 +7,7 @@
 #endif
 #include <glad/glad.h>
 
+#include "rendering/pipeline_state.h"
 #include "rendering/sampler.h"
 #include "rendering/texture.h"
 
@@ -138,6 +139,30 @@ inline GLenum convert_address_mode(AddressMode p_mode) {
             return 0;
     }
 }
+
+static inline GLenum convert(ComparisonFunc p_func) {
+    switch (p_func) {
+        case ComparisonFunc::NEVER:
+            return GL_NEVER;
+        case ComparisonFunc::LESS:
+            return GL_LESS;
+        case ComparisonFunc::EQUAL:
+            return GL_EQUAL;
+        case ComparisonFunc::LESS_EQUAL:
+            return GL_LEQUAL;
+        case ComparisonFunc::GREATER:
+            return GL_GREATER;
+        case ComparisonFunc::NOT_EQUAL:
+            return GL_NOTEQUAL;
+        case ComparisonFunc::GREATER_EQUAL:
+            return GL_GEQUAL;
+        case ComparisonFunc::ALWAYS:
+            return GL_ALWAYS;
+        default:
+            CRASH_NOW();
+            return GL_NEVER;
+    }
+};
 
 inline void set_sampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
     glTexParameteri(p_texture_type, GL_TEXTURE_MIN_FILTER, convert_filter(p_desc.min));

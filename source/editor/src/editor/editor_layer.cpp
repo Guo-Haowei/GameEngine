@@ -44,6 +44,8 @@ void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {
 
 void EditorLayer::select_entity(ecs::Entity p_selected) {
     m_selected = p_selected;
+    // TODO: fix this, shouldn't fetch globally
+    SceneManager::get_scene().m_selected = m_selected;
 }
 
 // @TODO: make this an item

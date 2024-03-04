@@ -147,50 +147,57 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     }
 
     if (pipeline->depth_stencil_desc) {
-        const bool enable_depth_test = pipeline->depth_stencil_desc->depth_enabled;
-        if (enable_depth_test != m_state_cache.enable_depth_test) {
-            if (enable_depth_test) {
-                glEnable(GL_DEPTH_TEST);
-            } else {
-                glDisable(GL_DEPTH_TEST);
+        {
+            const bool enable_depth_test = pipeline->depth_stencil_desc->depth_enabled;
+            if (enable_depth_test != m_state_cache.enable_depth_test) {
+                if (enable_depth_test) {
+                    glEnable(GL_DEPTH_TEST);
+                } else {
+                    glDisable(GL_DEPTH_TEST);
+                }
+                m_state_cache.enable_depth_test = enable_depth_test;
             }
-            m_state_cache.enable_depth_test = enable_depth_test;
-        }
 
-        if (enable_depth_test) {
-            const auto func = pipeline->depth_stencil_desc->depth_func;
-            if (func != m_state_cache.depth_func) {
-                switch (func) {
-                    case ComparisonFunc::NEVER:
-                        glDepthFunc(GL_NEVER);
+            if (enable_depth_test) {
+                const auto func = pipeline->depth_stencil_desc->depth_func;
+                if (func != m_state_cache.depth_func) {
+                    glDepthFunc(gl::convert(func));
+                    m_state_cache.depth_func = func;
+                }
+            }
+        }
+        {
+            const bool enable_stencil_test = pipeline->depth_stencil_desc->stencil_enabled;
+            if (enable_stencil_test != m_state_cache.enable_stencil_test) {
+                if (enable_stencil_test) {
+                    glEnable(GL_STENCIL_TEST);
+                } else {
+                    glDisable(GL_STENCIL_TEST);
+                }
+                m_state_cache.enable_stencil_test = enable_stencil_test;
+            }
+
+            if (enable_stencil_test) {
+                switch (pipeline->depth_stencil_desc->op) {
+                    case DepthStencilOpDesc::ALWAYS:
+                        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+                        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                        m_state_cache.stencil_func = GL_ALWAYS;
                         break;
-                    case ComparisonFunc::LESS:
-                        glDepthFunc(GL_LESS);
+                    case DepthStencilOpDesc::Z_PASS:
+                        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+                        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+                        m_state_cache.stencil_func = GL_ALWAYS;
                         break;
-                    case ComparisonFunc::EQUAL:
-                        glDepthFunc(GL_EQUAL);
-                        break;
-                    case ComparisonFunc::LESS_EQUAL:
-                        glDepthFunc(GL_LEQUAL);
-                        break;
-                    case ComparisonFunc::GREATER:
-                        glDepthFunc(GL_GREATER);
-                        break;
-                    case ComparisonFunc::NOT_EQUAL:
-                        glDepthFunc(GL_NOTEQUAL);
-                        break;
-                    case ComparisonFunc::GREATER_EQUAL:
-                        glDepthFunc(GL_GEQUAL);
-                        break;
-                    case ComparisonFunc::ALWAYS:
-                        glDepthFunc(GL_ALWAYS);
+                    case DepthStencilOpDesc::EQUAL:
+                        glStencilFunc(GL_EQUAL, 0, 0xFF);
+                        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                        m_state_cache.stencil_func = GL_EQUAL;
                         break;
                     default:
                         CRASH_NOW();
                         break;
                 }
-
-                m_state_cache.depth_func = func;
             }
         }
     }
@@ -270,6 +277,9 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
     }
     if (p_flags & CLEAR_DEPTH_BIT) {
         flags |= GL_DEPTH_BUFFER_BIT;
+    }
+    if (p_flags & CLEAR_STENCIL_BIT) {
+        flags |= GL_STENCIL_BUFFER_BIT;
     }
 
     glClear(flags);
@@ -460,6 +470,10 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
     return subpass;
 }
 
+void OpenGLGraphicsManager::set_stencil_ref(uint32_t p_ref) {
+    glStencilFunc(m_state_cache.stencil_func, p_ref, 0xFF);
+}
+
 void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) {
     auto subpass = reinterpret_cast<const OpenGLSubpass*>(p_subpass);
     if (subpass->handle == 0) {
@@ -618,6 +632,7 @@ void OpenGLGraphicsManager::createGpuResources() {
         glBindTexture(GL_TEXTURE_2D, handle);
     };
 
+    bind_slot(RT_RES_HIGHLIGHT_SELECT, u_selection_highlight_slot);
     bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
     bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
     bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);

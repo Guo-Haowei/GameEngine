@@ -7,6 +7,7 @@
 #define SHADER_TEXTURE(TYPE, NAME, SLOT) uniform TYPE NAME;
 #endif
 
+SHADER_TEXTURE(sampler2D, u_selection_highlight, 9)
 SHADER_TEXTURE(sampler2D, u_gbuffer_base_color_map, 10)
 SHADER_TEXTURE(sampler2D, u_gbuffer_position_map, 11)
 SHADER_TEXTURE(sampler2D, u_gbuffer_normal_map, 12)

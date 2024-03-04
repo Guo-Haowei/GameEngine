@@ -17,7 +17,7 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
     graphics_manager.set_viewport(viewport);
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
+    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     auto render_data = graphics_manager.get_render_data();
     RenderData::Pass& pass = render_data->main_pass;
@@ -33,6 +33,10 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
 
         graphics_manager.set_pipeline_state(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
+        if (draw.flags) {
+            graphics_manager.set_stencil_ref(draw.flags);
+        }
+
         graphics_manager.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
         graphics_manager.set_mesh(draw.mesh_data);
@@ -41,6 +45,10 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
             graphics_manager.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
 
             graphics_manager.draw_elements(subset.index_count, subset.index_offset);
+        }
+
+        if (draw.flags) {
+            graphics_manager.set_stencil_ref(0);
         }
     }
 }
