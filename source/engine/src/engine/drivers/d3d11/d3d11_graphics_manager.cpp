@@ -14,57 +14,14 @@
 // @TODO: refactor
 #include "core/framework/scene_manager.h"
 #include "rendering/renderer.h"
-extern ID3D11Device* get_d3d11_device();
 
 namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-// @TODO: refactor
-template<class Cache>
-class D3d11ConstantBuffer {
-public:
-    inline size_t BufferSize() const { return sizeof(Cache); }
-
-    D3d11ConstantBuffer() = default;
-
-    void Create(ComPtr<ID3D11Device>& device) {
-        D3D11_BUFFER_DESC bufferDesc;
-        bufferDesc.ByteWidth = sizeof(Cache);
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = 0;
-
-        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, nullptr, m_buffer.GetAddressOf()),
-                     "Failed to create constant buffer");
-    }
-
-    void Update(ComPtr<ID3D11DeviceContext>& deviceContext) {
-        D3D11_MAPPED_SUBRESOURCE mapped;
-        ZeroMemory(&mapped, sizeof(D3D11_MAPPED_SUBRESOURCE));
-        deviceContext->Map(m_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-        memcpy(mapped.pData, (void*)&m_cache, sizeof(Cache));
-        deviceContext->Unmap(m_buffer.Get(), 0);
-    }
-
-    void VSSet(ComPtr<ID3D11DeviceContext>& deviceContext, uint32_t slot) {
-        deviceContext->VSSetConstantBuffers(slot, 1, m_buffer.GetAddressOf());
-    }
-
-    void PSSet(ComPtr<ID3D11DeviceContext>& deviceContext, uint32_t slot) {
-        deviceContext->PSSetConstantBuffers(slot, 1, m_buffer.GetAddressOf());
-    }
-
-public:
-    Cache m_cache;
-
-private:
-    ComPtr<ID3D11Buffer> m_buffer;
-};
-
-////////////////////
+D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
+    m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
+}
 
 bool D3d11GraphicsManager::initialize_internal() {
     bool ok = true;
@@ -443,10 +400,7 @@ void D3d11GraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
     m_ctx->DrawIndexed(p_count, p_offset, 0);
 }
 
-// @TODO: refator
-static void create_mesh_data(const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
-    ID3D11Device* device = get_d3d11_device();
-
+static void create_mesh_data(ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
     auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
         ID3D11Buffer* buffer = nullptr;
         // vertex buffer
@@ -459,7 +413,7 @@ static void create_mesh_data(const MeshComponent& mesh, D3d11MeshBuffers& out_me
 
         D3D11_SUBRESOURCE_DATA data{};
         data.pSysMem = p_data;
-        D3D_FAIL_V_MSG(device->CreateBuffer(&bufferDesc, &data, &buffer),
+        D3D_FAIL_V_MSG(p_device->CreateBuffer(&bufferDesc, &data, &buffer),
                        nullptr,
                        "Failed to create vertex buffer");
         return buffer;
@@ -486,7 +440,7 @@ static void create_mesh_data(const MeshComponent& mesh, D3d11MeshBuffers& out_me
 
         D3D11_SUBRESOURCE_DATA data{};
         data.pSysMem = mesh.indices.data();
-        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
+        D3D_FAIL_MSG(p_device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
                      "Failed to create index buffer");
     }
 }
@@ -501,7 +455,7 @@ void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
         RID rid = m_meshes.make_rid();
         D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
         mesh.gpu_resource = mesh_buffers;
-        create_mesh_data(mesh, *mesh_buffers);
+        create_mesh_data(m_device.Get(), mesh, *mesh_buffers);
     }
 }
 

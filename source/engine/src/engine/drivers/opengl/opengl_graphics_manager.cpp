@@ -69,6 +69,10 @@ namespace my {
 
 static void APIENTRY gl_debug_callback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
+OpenGLGraphicsManager::OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager", Backend::OPENGL) {
+    m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
+}
+
 bool OpenGLGraphicsManager::initialize_internal() {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");

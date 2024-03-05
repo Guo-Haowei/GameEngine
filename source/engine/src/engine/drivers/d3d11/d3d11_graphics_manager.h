@@ -14,7 +14,7 @@ struct D3d11MeshBuffers : public MeshBuffers {
 
 class D3d11GraphicsManager : public GraphicsManager {
 public:
-    D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {}
+    D3d11GraphicsManager();
 
     bool initialize_internal() final;
     void finalize() final;
@@ -36,7 +36,7 @@ public:
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) final;
 
-    ID3D11Device* get_device() const { return m_device.Get(); }
+    Microsoft::WRL::ComPtr<ID3D11Device>& get_d3d_device() { return m_device; }
 
 protected:
     void on_scene_change(const Scene& p_scene) final;

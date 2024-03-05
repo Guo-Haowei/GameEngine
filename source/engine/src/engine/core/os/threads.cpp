@@ -51,7 +51,6 @@ bool initialize() {
                 g_thread_id = object->id;
 
                 latch.count_down();
-                // @TODO: wait for everything to be initialized before running
                 LOG_VERBOSE("[threads] thread '{}'(id: {}) starts.", object->name, object->id);
                 object->thread_func();
                 LOG_VERBOSE("[threads] thread '{}'(id: {}) ends.", object->name, object->id);

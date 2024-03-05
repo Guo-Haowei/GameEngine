@@ -2,10 +2,8 @@
 
 #include "core/debugger/profiler.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
-#include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
-#include "drivers/opengl/opengl_pipeline_state_manager.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
@@ -17,26 +15,12 @@ bool GraphicsManager::initialize() {
         return false;
     }
 
-    // select pipeline state manager
-    switch (m_backend) {
-        case Backend::EMPTY:
-            break;
-        case Backend::OPENGL:
-            m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
-            break;
-        case Backend::D3D11:
-            m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
-            break;
-        default:
-            break;
-    }
-
     m_render_data = std::make_shared<RenderData>();
 
-    if (m_pipeline_state_manager) {
-        if (!m_pipeline_state_manager->initialize()) {
-            return false;
-        }
+    DEV_ASSERT(m_pipeline_state_manager);
+
+    if (!m_pipeline_state_manager->initialize()) {
+        return false;
     }
 
     return true;

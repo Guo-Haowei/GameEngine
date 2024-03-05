@@ -110,9 +110,9 @@ int Application::run(int argc, const char** argv) {
 
     LOG_WARN("TODO: properly unload scene");
     LOG_WARN("TODO: make camera a component");
-    LOG_WARN("TODO: use lua to construct scene");
     LOG_WARN("TODO: refactor render graph");
 
+    LOG_WARN("TODO: use lua to construct scene");
     LOG_ERROR("TODO: path tracer here");
     LOG_ERROR("TODO: cloth physics");
 
