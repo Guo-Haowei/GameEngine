@@ -145,11 +145,10 @@ int Application::run(int argc, const char** argv) {
         m_scene_manager->update(dt);
         auto& scene = m_scene_manager->get_scene();
 
-        m_physics_manager->update(dt);
-
+        m_physics_manager->update(scene);
         m_render_manager->update(scene);
+        m_graphics_manager->update(scene);
 
-        m_graphics_manager->update(dt);
         renderer::reset_need_update_env();
 
         m_display_server->present();

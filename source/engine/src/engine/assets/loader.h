@@ -23,26 +23,30 @@ class Loader : public LoaderBase {
     using CreateLoaderFunc = std::shared_ptr<Loader<T>> (*)(const std::string& path);
 
 public:
-    Loader(const std::string& path) : LoaderBase(path) {}
+    Loader(const std::string& p_path) : LoaderBase(p_path) {}
 
-    virtual bool load(T* data) = 0;
+    virtual bool load(T* p_data) = 0;
 
-    static std::shared_ptr<Loader<T>> create(const std::string& path) {
-        std::filesystem::path ext{ path };
+    static std::shared_ptr<Loader<T>> create(const std::string& p_path) {
+        std::filesystem::path ext{ p_path };
         ext = ext.extension();
         auto it = s_loader_creator.find(ext.string());
         if (it == s_loader_creator.end()) {
             return nullptr;
         }
-        return it->second(path);
+        return it->second(p_path);
     }
 
-    static bool register_loader(const std::string& extension, CreateLoaderFunc func) {
-        DEV_ASSERT(!extension.empty());
-        DEV_ASSERT(func);
-
-        // @TODO: check override
-        s_loader_creator[extension] = func;
+    static bool register_loader(const std::string& p_extension, CreateLoaderFunc p_func) {
+        DEV_ASSERT(!p_extension.empty());
+        DEV_ASSERT(p_func);
+        auto it = s_loader_creator.find(p_extension);
+        if (it != s_loader_creator.end()) {
+            LOG_WARN("Already exists a loader for p_extension '{}'", p_extension);
+            it->second = p_func;
+        } else {
+            s_loader_creator[p_extension] = p_func;
+        }
         return true;
     }
 

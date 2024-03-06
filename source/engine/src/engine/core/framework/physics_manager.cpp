@@ -18,8 +18,8 @@ void PhysicsManager::finalize() {
     clean_world();
 }
 
-void PhysicsManager::event_received(std::shared_ptr<Event> event) {
-    SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(event.get());
+void PhysicsManager::event_received(std::shared_ptr<Event> p_event) {
+    SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get());
     if (!e) {
         return;
     }
@@ -29,11 +29,11 @@ void PhysicsManager::event_received(std::shared_ptr<Event> event) {
     create_world(scene);
 }
 
-void PhysicsManager::update(float dt) {
-    Scene& scene = SceneManager::singleton().get_scene();
+void PhysicsManager::update(Scene& p_scene) {
+    float delta_time = p_scene.m_delta_time;
 
     if (has_world()) {
-        m_dynamic_world->stepSimulation(dt, 10);
+        m_dynamic_world->stepSimulation(delta_time, 10);
 
         for (int j = m_dynamic_world->getNumCollisionObjects() - 1; j >= 0; j--) {
             btCollisionObject* collision_object = m_dynamic_world->getCollisionObjectArray()[j];
@@ -49,7 +49,7 @@ void PhysicsManager::update(float dt) {
             uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
             ecs::Entity id{ handle };
             if (id.is_valid()) {
-                TransformComponent& transform_component = *scene.get_component<TransformComponent>(id);
+                TransformComponent& transform_component = *p_scene.get_component<TransformComponent>(id);
                 const btVector3& origin = transform.getOrigin();
                 const btQuaternion rotation = transform.getRotation();
                 transform_component.set_translation(vec3(origin.getX(), origin.getY(), origin.getZ()));
@@ -59,7 +59,7 @@ void PhysicsManager::update(float dt) {
     }
 }
 
-void PhysicsManager::create_world(const Scene& scene) {
+void PhysicsManager::create_world(const Scene& p_scene) {
     m_collision_config = new btDefaultCollisionConfiguration();
     m_dispatcher = new btCollisionDispatcher(m_collision_config);
     m_overlapping_pair_cache = new btDbvtBroadphase();
@@ -68,8 +68,8 @@ void PhysicsManager::create_world(const Scene& scene) {
 
     m_dynamic_world->setGravity(btVector3(0, -10, 0));
 
-    for (auto [id, rigid_body] : scene.m_RigidBodyComponents) {
-        const TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
+    for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
+        const TransformComponent* transform_component = p_scene.get_component<TransformComponent>(id);
         DEV_ASSERT(transform_component);
         if (!transform_component) {
             continue;
@@ -159,4 +159,5 @@ void PhysicsManager::clean_world() {
         m_collision_shapes.clear();
     }
 }
+
 }  // namespace my

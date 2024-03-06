@@ -74,7 +74,7 @@ void GraphicsManager::request_texture(ImageHandle* p_handle, OnTextureLoadFunc p
     m_loaded_images.push(ImageTask{ p_handle, p_func });
 }
 
-void GraphicsManager::update(float) {
+void GraphicsManager::update(Scene&) {
     OPTICK_EVENT();
 
     auto loaded_images = m_loaded_images.pop_all();

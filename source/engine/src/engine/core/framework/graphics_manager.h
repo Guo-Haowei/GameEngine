@@ -69,7 +69,7 @@ public:
 
     bool initialize() final;
 
-    void update(float p_delta);
+    void update(Scene& p_scene);
 
     virtual void set_render_target(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
