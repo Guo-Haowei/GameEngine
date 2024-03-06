@@ -152,14 +152,6 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "screenspace_quad.vert";
-        info.ps = "ssao.pixel";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_no_depth_test;
-        m_cache[PROGRAM_SSAO] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
         info.cs = "bloom_setup.comp";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;

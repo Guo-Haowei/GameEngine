@@ -116,6 +116,7 @@ int Application::run(int argc, const char** argv) {
     LOG_WARN("TODO: use lua to construct scene");
     LOG_ERROR("TODO: path tracer here");
     LOG_ERROR("TODO: cloth physics");
+    LOG_ERROR("TODO: reverse z");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;

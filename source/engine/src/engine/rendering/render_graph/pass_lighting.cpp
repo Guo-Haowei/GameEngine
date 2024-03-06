@@ -90,9 +90,6 @@ void RenderPassCreator::add_lighting_pass() {
     if (m_config.enable_voxel_gi) {
         desc.dependencies.push_back(VOXELIZATION_PASS);
     }
-    if (m_config.enable_ssao) {
-        desc.dependencies.push_back(SSAO_PASS);
-    }
     if (m_config.enable_ibl) {
         desc.dependencies.push_back(ENV_PASS);
     }

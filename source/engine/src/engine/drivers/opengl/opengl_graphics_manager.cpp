@@ -33,8 +33,6 @@ GpuTexture g_normalVoxel;
 OpenGLMeshBuffers* g_box;
 OpenGLMeshBuffers* g_grass;
 
-static GLuint g_noiseTexture;
-
 template<typename T>
 static void buffer_storage(GLuint buffer, const std::vector<T>& data) {
     glNamedBufferStorage(buffer, sizeof(T) * data.size(), data.data(), 0);
@@ -110,8 +108,6 @@ bool OpenGLGraphicsManager::initialize_internal() {
 
 void OpenGLGraphicsManager::finalize() {
     m_pipeline_state_manager->finalize();
-
-    destroyGpuResources();
 
     ImGui_ImplOpenGL3_Shutdown();
 }
@@ -547,57 +543,9 @@ void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
     g_constantCache.update();
 }
 
-// @TODO: refactor
-static void create_ssao_resource() {
-    // @TODO: save
-    // generate sample kernel
-    std::uniform_real_distribution<float> randomFloats(0.0f, 1.0f);  // generates random floats between 0.0 and 1.0
-    std::default_random_engine generator;
-    std::vector<glm::vec4> ssaoKernel;
-    const int kernelSize = DVAR_GET_INT(r_ssaoKernelSize);
-    for (int i = 0; i < kernelSize; ++i) {
-        // [-1, 1], [-1, 1], [0, 1]
-        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0,
-                         randomFloats(generator));
-        sample = glm::normalize(sample);
-        sample *= randomFloats(generator);
-        float scale = float(i) / kernelSize;
-
-        scale = lerp(0.1f, 1.0f, scale * scale);
-        sample *= scale;
-        ssaoKernel.emplace_back(vec4(sample, 0.0f));
-    }
-
-    memset(&g_constantCache.cache.u_ssao_kernels, 0, sizeof(g_constantCache.cache.u_ssao_kernels));
-    memcpy(&g_constantCache.cache.u_ssao_kernels, ssaoKernel.data(), sizeof(ssaoKernel.front()) * ssaoKernel.size());
-
-    // generate noise texture
-    const int noiseSize = DVAR_GET_INT(r_ssaoNoiseSize);
-
-    std::vector<glm::vec3> ssaoNoise;
-    for (int i = 0; i < noiseSize * noiseSize; ++i) {
-        glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f);
-        noise = glm::normalize(noise);
-        ssaoNoise.emplace_back(noise);
-    }
-    unsigned int noiseTexture;
-    glGenTextures(1, &noiseTexture);
-    glBindTexture(GL_TEXTURE_2D, noiseTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, noiseSize, noiseSize, 0, GL_RGB, GL_FLOAT, ssaoNoise.data());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    g_constantCache.cache.c_kernel_noise_map = MakeTextureResident(noiseTexture);
-    g_noiseTexture = noiseTexture;
-}
-
 void OpenGLGraphicsManager::createGpuResources() {
     // @TODO: appropriate sampler
     auto grass_image = AssetManager::singleton().load_image_sync("@res://images/grass.png")->get();
-
-    create_ssao_resource();
 
     // @TODO: move to renderer
     g_grass = (OpenGLMeshBuffers*)create_mesh(make_grass_billboard());
@@ -643,7 +591,6 @@ void OpenGLGraphicsManager::createGpuResources() {
     };
 
     make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
-    make_resident(RT_RES_SSAO, cache.c_ssao_map);
     make_resident(RT_RES_TONE, cache.c_tone_image);
     make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_tone_input_image);
@@ -668,10 +615,6 @@ void OpenGLGraphicsManager::render() {
         OPTICK_EVENT("ImGui_ImplOpenGL3_RenderDrawData");
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
-}
-
-void OpenGLGraphicsManager::destroyGpuResources() {
-    glDeleteTextures(1, &g_noiseTexture);
 }
 
 static void APIENTRY gl_debug_callback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,

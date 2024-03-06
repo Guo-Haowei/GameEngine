@@ -15,7 +15,6 @@ extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 // @TODO: add as a object
 extern OpenGLMeshBuffers* g_box;
-extern OpenGLMeshBuffers* g_grass;
 
 // @TODO: refactor
 void fill_camera_matrices(PerPassConstantBuffer& buffer) {
@@ -212,20 +211,6 @@ static void highlight_select_pass_func(const Subpass* p_subpass) {
     manager.set_stencil_ref(0);
 }
 
-void ssao_pass_func(const Subpass* p_subpass) {
-    OPTICK_EVENT();
-
-    GraphicsManager::singleton().set_render_target(p_subpass);
-    DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
-
-    glViewport(0, 0, width, height);
-
-    GraphicsManager::singleton().set_pipeline_state(PROGRAM_SSAO);
-    glClear(GL_COLOR_BUFFER_BIT);
-    RenderManager::singleton().draw_quad();
-}
-
 void debug_vxgi_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
@@ -414,23 +399,6 @@ void create_render_graph_vxgi(RenderGraph& p_graph) {
         auto pass = p_graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .func = voxelization_pass_func,
-        });
-        pass->add_sub_pass(subpass);
-    }
-    {  // ssao pass
-        // @TODO: change to 16 bit float and fix!
-        auto ssao_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_SSAO,
-                                                                              PixelFormat::R32_FLOAT,
-                                                                              AttachmentType::COLOR_2D,
-                                                                              w, h },
-                                                            nearest_sampler());
-        RenderPassDesc desc;
-        desc.name = SSAO_PASS;
-        desc.dependencies = { GBUFFER_PASS };
-        auto pass = p_graph.create_pass(desc);
-        auto subpass = manager.create_subpass(SubpassDesc{
-            .color_attachments = { ssao_attachment },
-            .func = ssao_pass_func,
         });
         pass->add_sub_pass(subpass);
     }

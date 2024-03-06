@@ -100,12 +100,7 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     vec3 u_world_center;
     float u_world_size_half;
 
-    int u_ssao_kernel_size;
-    float u_ssao_kernel_radius;
-    int u_ssao_noise_size;
     float u_texel_size;
-
-    int u_enable_ssao;
     int u_enable_csm;
     int u_enable_vxgi;
     int u_debug_csm;
@@ -145,8 +140,6 @@ CBUFFER(BoneConstantBuffer, 5) {
 #ifndef HLSL_LANG
 
 CBUFFER(PerSceneConstantBuffer, 4) {
-    vec4 u_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
-
     // @TODO: remove the following
     sampler2D u_gbuffer_depth_map;
     sampler2D u_final_bloom;
@@ -156,7 +149,7 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
 
-    sampler2D c_ssao_map;
+    sampler2D u_grass_base_color;
     sampler2D c_kernel_noise_map;
     sampler2D c_tone_image;
     sampler2D c_tone_input_image;
@@ -169,9 +162,6 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     // @TODO: unordered access
     sampler2D u_ltc_1;
     sampler2D u_ltc_2;
-
-    sampler2D u_grass_base_color;
-    sampler2D _per_scene_padding_0;
 };
 
 // @TODO: make it more general, something like 2D draw

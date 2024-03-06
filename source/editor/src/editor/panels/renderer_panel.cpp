@@ -54,11 +54,6 @@ void RendererPanel::update_internal(Scene&) {
         DVAR_SET_INT(r_debug_vxgi_voxel, value);
     });
 
-    collapse_window("SSAO", []() {
-        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(r_enable_ssao));
-        ImGui::SliderFloat("radius", (float*)(DVAR_GET_POINTER(r_ssao_kernel_radius)), 0.1f, 5.0f);
-    });
-
     collapse_window("CSM", []() {
         ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(r_enable_csm));
         ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(r_debug_csm));

@@ -16,7 +16,6 @@ void create_render_graph_dummy(RenderGraph& p_graph) {
     config.enable_bloom = false;
     config.enable_ibl = false;
     config.enable_voxel_gi = false;
-    config.enable_ssao = false;
     config.enable_shadow = backend == Backend::OPENGL;
     RenderPassCreator creator(config, p_graph);
 
