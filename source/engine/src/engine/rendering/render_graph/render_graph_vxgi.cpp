@@ -4,7 +4,7 @@
 #include "core/math/frustum.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_data.h"
-#include "rendering/render_graph/render_graph_defines.h"
+#include "rendering/render_graph/pass_creator.h"
 #include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 
@@ -18,6 +18,20 @@ extern OpenGLMeshBuffers g_box;
 extern OpenGLMeshBuffers g_skybox;
 // @TODO: add as a object
 extern OpenGLMeshBuffers g_grass;
+
+// @TODO: refactor
+void fill_camera_matrices(PerPassConstantBuffer& buffer) {
+    auto camera = my::SceneManager::singleton().get_scene().m_camera;
+    buffer.u_proj_view_matrix = camera->get_projection_view_matrix();
+    buffer.u_view_matrix = camera->get_view_matrix();
+    buffer.u_proj_matrix = camera->get_projection_matrix();
+}
+
+void draw_cube_map() {
+    glBindVertexArray(g_skybox.vao);
+    glDrawElementsInstanced(GL_TRIANGLES, g_skybox.index_count, GL_UNSIGNED_INT, 0, 1);
+}
+// @TODO: fix
 
 namespace my::rg {
 
@@ -85,13 +99,6 @@ void voxelization_pass_func(const Subpass*) {
 
     glEnable(GL_BLEND);
 }
-
-static void draw_cube_map() {
-    glBindVertexArray(g_skybox.vao);
-    glDrawElementsInstanced(GL_TRIANGLES, g_skybox.index_count, GL_UNSIGNED_INT, 0, 1);
-}
-
-// @TODO: fix
 
 void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
@@ -226,54 +233,6 @@ void ssao_pass_func(const Subpass* p_subpass) {
     R_DrawQuad();
 }
 
-// @TODO: refactor
-static void fill_camera_matrices(PerPassConstantBuffer& buffer) {
-    auto camera = SceneManager::singleton().get_scene().m_camera;
-    buffer.u_proj_view_matrix = camera->get_projection_view_matrix();
-    buffer.u_view_matrix = camera->get_view_matrix();
-    buffer.u_proj_matrix = camera->get_projection_matrix();
-}
-
-void lighting_pass_func(const Subpass* p_subpass) {
-    OPTICK_EVENT();
-
-    auto& manager = GraphicsManager::singleton();
-    manager.set_render_target(p_subpass);
-    DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
-
-    glViewport(0, 0, width, height);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    manager.set_pipeline_state(PROGRAM_LIGHTING_VXGI);
-
-    // @TODO: fix
-    auto camera = SceneManager::singleton().get_scene().m_camera;
-    fill_camera_matrices(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
-
-    R_DrawQuad();
-
-    if (0) {
-        // draw billboard grass here for now
-        manager.set_pipeline_state(PROGRAM_BILLBOARD);
-        manager.set_mesh(&g_grass);
-        glDrawElementsInstanced(GL_TRIANGLES, g_grass.index_count, GL_UNSIGNED_INT, 0, 64);
-    }
-
-    // draw skybox here
-    {
-        auto render_data = GraphicsManager::singleton().get_render_data();
-        RenderData::Pass& pass = render_data->main_pass;
-
-        pass.fill_perpass(g_per_pass_cache.cache);
-        g_per_pass_cache.update();
-        GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX);
-        draw_cube_map();
-    }
-}
-
 void debug_vxgi_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
@@ -374,12 +333,17 @@ void final_pass_func(const Subpass* p_subpass) {
     }
 }
 
-void create_render_graph_vxgi(RenderGraph& graph) {
+void create_render_graph_vxgi(RenderGraph& p_graph) {
     // @TODO: early-z
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
     int h = frame_size.y;
+
+    RenderPassCreator::Config config;
+    config.frame_width = w;
+    config.frame_height = h;
+    RenderPassCreator creator(config, p_graph);
 
     GraphicsManager& manager = GraphicsManager::singleton();
 
@@ -392,7 +356,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     {  // environment pass
         RenderPassDesc desc;
         desc.name = ENV_PASS;
-        auto pass = graph.create_pass(desc);
+        auto pass = p_graph.create_pass(desc);
 
         auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.create_render_target(RenderTargetDesc{ cube_map_name,
@@ -427,8 +391,8 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
-    create_shadow_pass(graph);
-    create_gbuffer_pass(graph, w, h);
+    creator.add_shadow_pass();
+    creator.add_gbuffer_pass();
 
     auto gbuffer_depth = manager.find_render_target(RT_RES_GBUFFER_DEPTH);
     {  // highlight selected pass
@@ -441,7 +405,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.name = HIGHLIGHT_SELECT_PASS;
         desc.dependencies = { GBUFFER_PASS };
-        auto pass = graph.create_pass(desc);
+        auto pass = p_graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
@@ -454,14 +418,14 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
-        auto pass = graph.create_pass(desc);
+        auto pass = p_graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .func = voxelization_pass_func,
         });
         pass->add_sub_pass(subpass);
     }
     {  // ssao pass
-        // doen't need to 32 bit float!
+        // @TODO: change to 16 bit float and fix!
         auto ssao_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_SSAO,
                                                                               PixelFormat::R32_FLOAT,
                                                                               AttachmentType::COLOR_2D,
@@ -470,7 +434,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.name = SSAO_PASS;
         desc.dependencies = { GBUFFER_PASS };
-        auto pass = graph.create_pass(desc);
+        auto pass = p_graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { ssao_attachment },
             .func = ssao_pass_func,
@@ -478,30 +442,14 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         pass->add_sub_pass(subpass);
     }
 
-    {  // lighting pass
-        auto lighting_attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_LIGHTING,
-                                                                                  PixelFormat::R11G11B10_FLOAT,
-                                                                                  AttachmentType::COLOR_2D,
-                                                                                  w, h },
-                                                                nearest_sampler());
+    creator.add_lighting_pass();
+    creator.add_bloom_pass();
 
-        RenderPassDesc desc;
-        desc.name = LIGHTING_PASS;
-        desc.dependencies = { SHADOW_PASS, GBUFFER_PASS, SSAO_PASS, VOXELIZATION_PASS, ENV_PASS };
-        auto pass = graph.create_pass(desc);
-        auto subpass = manager.create_subpass(SubpassDesc{
-            .color_attachments = { lighting_attachment },
-            .depth_attachment = gbuffer_depth,
-            .func = lighting_pass_func,
-        });
-        pass->add_sub_pass(subpass);
-    }
-    create_bloom_pass(graph, w, h);
     {  // tone pass
         RenderPassDesc desc;
         desc.name = TONE_PASS;
         desc.dependencies = { BLOOM_PASS };
-        auto pass = graph.create_pass(desc);
+        auto pass = p_graph.create_pass(desc);
 
         auto attachment = manager.create_render_target(RenderTargetDesc{ RT_RES_TONE,
                                                                          PixelFormat::R11G11B10_FLOAT,
@@ -521,7 +469,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
         RenderPassDesc desc;
         desc.name = FINAL_PASS;
         desc.dependencies = { TONE_PASS };
-        auto pass = graph.create_pass(desc);
+        auto pass = p_graph.create_pass(desc);
         auto subpass = manager.create_subpass(SubpassDesc{
             .color_attachments = { final_attachment },
             .func = final_pass_func,
@@ -530,7 +478,7 @@ void create_render_graph_vxgi(RenderGraph& graph) {
     }
 
     // @TODO: allow recompile
-    graph.compile();
+    p_graph.compile();
 }
 
 }  // namespace my::rg

@@ -59,11 +59,9 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
 
 namespace my::rg {
 
-void create_shadow_pass(RenderGraph& p_graph);
-void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height);
-void create_bloom_pass(RenderGraph& p_graph, int p_width, int p_height);
-
-void create_render_graph_dummy(RenderGraph& graph);
-void create_render_graph_vxgi(RenderGraph& graph);
+void create_render_graph_dummy(RenderGraph& p_graph);
+void create_render_graph_vxgi(RenderGraph& p_graph);
+// @TODO: add this
+void create_render_graph_path_tracer(RenderGraph& p_graph);
 
 }  // namespace my::rg

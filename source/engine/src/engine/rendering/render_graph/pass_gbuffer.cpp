@@ -1,7 +1,7 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "rendering/render_data.h"
-#include "rendering/render_graph/render_graph_defines.h"
+#include "rendering/render_graph/pass_creator.h"
 
 namespace my::rg {
 
@@ -53,8 +53,11 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
     }
 }
 
-void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height) {
+void RenderPassCreator::add_gbuffer_pass() {
     GraphicsManager& manager = GraphicsManager::singleton();
+
+    int p_width = m_config.frame_width;
+    int p_height = m_config.frame_height;
 
     // @TODO: decouple sampler and render target
     auto gbuffer_depth = manager.create_render_target(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
@@ -89,7 +92,7 @@ void create_gbuffer_pass(RenderGraph& p_graph, int p_width, int p_height) {
 
     RenderPassDesc desc;
     desc.name = GBUFFER_PASS;
-    auto pass = p_graph.create_pass(desc);
+    auto pass = m_graph.create_pass(desc);
     auto subpass = manager.create_subpass(SubpassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
         .depth_attachment = gbuffer_depth,

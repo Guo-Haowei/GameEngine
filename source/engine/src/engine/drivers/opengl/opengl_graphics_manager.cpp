@@ -628,7 +628,6 @@ void OpenGLGraphicsManager::createGpuResources() {
     auto bind_slot = [&](const std::string& name, int slot) {
         std::shared_ptr<RenderTarget> resource = find_render_target(name);
         if (!resource) {
-            DEV_ASSERT(0);
             return;
         }
         uint32_t handle = resource->texture->get_handle();
