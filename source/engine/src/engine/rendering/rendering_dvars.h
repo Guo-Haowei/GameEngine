@@ -34,6 +34,6 @@ DVAR_FLOAT(r_ssao_kernel_radius, 0, "", 0.5f);
 // Bloom
 DVAR_BOOL(r_enable_bloom, DVAR_FLAG_NONE, "Enable Bloom", true);
 DVAR_INT(r_debug_bloom_downsample, DVAR_FLAG_NONE, "", 0);
-DVAR_FLOAT(r_bloom_threshold, DVAR_FLAG_NONE, "", 1.0f);
+DVAR_FLOAT(r_bloom_threshold, DVAR_FLAG_NONE, "", 1.3f);
 
 #include "core/dynamic_variable/dynamic_variable_end.h"

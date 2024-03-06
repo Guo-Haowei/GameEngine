@@ -11,60 +11,16 @@
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/texture.h"
-// @TODO: refactor
-#include "core/framework/scene_manager.h"
-#include "rendering/renderer.h"
-extern ID3D11Device* get_d3d11_device();
 
 namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-// @TODO: refactor
-template<class Cache>
-class D3d11ConstantBuffer {
-public:
-    inline size_t BufferSize() const { return sizeof(Cache); }
+ComPtr<ID3D11SamplerState> m_sampler_state;
 
-    D3d11ConstantBuffer() = default;
-
-    void Create(ComPtr<ID3D11Device>& device) {
-        D3D11_BUFFER_DESC bufferDesc;
-        bufferDesc.ByteWidth = sizeof(Cache);
-        bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-        bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-        bufferDesc.MiscFlags = 0;
-        bufferDesc.StructureByteStride = 0;
-
-        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, nullptr, m_buffer.GetAddressOf()),
-                     "Failed to create constant buffer");
-    }
-
-    void Update(ComPtr<ID3D11DeviceContext>& deviceContext) {
-        D3D11_MAPPED_SUBRESOURCE mapped;
-        ZeroMemory(&mapped, sizeof(D3D11_MAPPED_SUBRESOURCE));
-        deviceContext->Map(m_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-        memcpy(mapped.pData, (void*)&m_cache, sizeof(Cache));
-        deviceContext->Unmap(m_buffer.Get(), 0);
-    }
-
-    void VSSet(ComPtr<ID3D11DeviceContext>& deviceContext, uint32_t slot) {
-        deviceContext->VSSetConstantBuffers(slot, 1, m_buffer.GetAddressOf());
-    }
-
-    void PSSet(ComPtr<ID3D11DeviceContext>& deviceContext, uint32_t slot) {
-        deviceContext->PSSetConstantBuffers(slot, 1, m_buffer.GetAddressOf());
-    }
-
-public:
-    Cache m_cache;
-
-private:
-    ComPtr<ID3D11Buffer> m_buffer;
-};
-
-////////////////////
+D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
+    m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
+}
 
 bool D3d11GraphicsManager::initialize_internal() {
     bool ok = true;
@@ -79,6 +35,24 @@ bool D3d11GraphicsManager::initialize_internal() {
     // @TODO: refactor this
     m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+    {
+        // @TODO: refactor this
+        // Create the sample state
+        D3D11_SAMPLER_DESC sampDesc;
+        ZeroMemory(&sampDesc, sizeof(sampDesc));
+        sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+        sampDesc.MinLOD = 0;
+        sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        auto hr = m_device->CreateSamplerState(&sampDesc, m_sampler_state.GetAddressOf());
+        DEV_ASSERT(SUCCEEDED(hr));
+
+        m_ctx->PSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
+    }
+
     m_meshes.set_description("GPU-Mesh-Allocator");
     return ok;
 }
@@ -88,11 +62,6 @@ void D3d11GraphicsManager::finalize() {
 }
 
 void D3d11GraphicsManager::render() {
-    Scene& scene = SceneManager::singleton().get_scene();
-    renderer::fill_constant_buffers(scene);
-
-    m_render_data->update(&scene);
-
     m_render_graph.execute();
 
     // @TODO: fix the following
@@ -232,6 +201,15 @@ void D3d11GraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer,
     m_ctx->Unmap(buffer->buffer.Get(), 0);
 }
 
+void D3d11GraphicsManager::bind_texture(Dimension, uint64_t p_handle, int p_slot) {
+    if (p_handle == 0) {
+        return;
+    }
+
+    ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
+    m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+}
+
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
@@ -248,10 +226,13 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
         texture_format = DXGI_FORMAT_R24G8_TYPELESS;
     }
 
+    const bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
+
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
-    texture_desc.MipLevels = p_texture_desc.mip_levels;
+    // texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mip_levels;
+    texture_desc.MipLevels = 0;
     texture_desc.ArraySize = p_texture_desc.array_size;
     texture_desc.Format = texture_format;
     texture_desc.SampleDesc = { 1, 0 };
@@ -259,38 +240,41 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
     texture_desc.BindFlags = d3d11::convert_bind_flags(p_texture_desc.bind_flags);
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = d3d11::convert_misc_flags(p_texture_desc.misc_flags);
-
-    D3D11_SUBRESOURCE_DATA* texture_data_ptr = nullptr;
-    D3D11_SUBRESOURCE_DATA texture_data{};
-    if (p_texture_desc.initial_data) {
-        texture_data.pSysMem = p_texture_desc.initial_data;
-        texture_data.SysMemPitch = p_texture_desc.width * channel_count(format) * channel_size(format);
-        texture_data.SysMemSlicePitch = p_texture_desc.height * texture_data.SysMemPitch;
-        texture_data_ptr = &texture_data;
-    }
     ComPtr<ID3D11Texture2D> texture;
-
-    D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, texture_data_ptr, texture.GetAddressOf()),
+    D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()),
                    nullptr,
                    "Failed to create texture");
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+    if (p_texture_desc.initial_data) {
+        uint32_t row_pitch = p_texture_desc.width * channel_count(format) * channel_size(format);
+        m_ctx->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initial_data, row_pitch, 0);
+    }
 
     auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
     if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
+        D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.Format = srv_format;
         srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
+        srv_desc.Texture2D.MipLevels = p_texture_desc.mip_levels;
         srv_desc.Texture2D.MostDetailedMip = 0;
-        srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+
+        if (gen_mip_map) {
+            srv_desc.Texture2D.MipLevels = (UINT)-1;
+        }
 
         D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
                        nullptr,
                        "Failed to create shader resource view");
 
+        if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+            m_ctx->GenerateMips(srv.Get());
+        }
+
         gpu_texture->srv = srv;
     }
 
     gpu_texture->texture = texture;
+
     return gpu_texture;
 }
 
@@ -411,6 +395,66 @@ void D3d11GraphicsManager::set_viewport(const Viewport& p_viewport) {
     m_ctx->RSSetViewports(1, &vp);
 }
 
+const MeshBuffers* D3d11GraphicsManager::create_mesh(const MeshComponent& p_mesh) {
+    auto create_mesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
+        auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
+            ID3D11Buffer* buffer = nullptr;
+            // vertex buffer
+            D3D11_BUFFER_DESC bufferDesc{};
+            bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+            bufferDesc.ByteWidth = (UINT)p_size_in_byte;
+            bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+            bufferDesc.CPUAccessFlags = 0;
+            bufferDesc.MiscFlags = 0;
+
+            D3D11_SUBRESOURCE_DATA data{};
+            data.pSysMem = p_data;
+            D3D_FAIL_V_MSG(p_device->CreateBuffer(&bufferDesc, &data, &buffer),
+                           nullptr,
+                           "Failed to create vertex buffer");
+            return buffer;
+        };
+
+        out_mesh.vertex_buffer[0] = create_vertex_buffer(sizeof(vec3) * mesh.positions.size(), mesh.positions.data());
+
+        if (!mesh.normals.empty()) {
+            out_mesh.vertex_buffer[1] = create_vertex_buffer(sizeof(vec3) * mesh.normals.size(), mesh.normals.data());
+        }
+
+        if (!mesh.texcoords_0.empty()) {
+            out_mesh.vertex_buffer[2] = create_vertex_buffer(sizeof(vec2) * mesh.texcoords_0.size(), mesh.texcoords_0.data());
+        }
+
+        if (!mesh.joints_0.empty()) {
+            out_mesh.vertex_buffer[4] = create_vertex_buffer(sizeof(ivec4) * mesh.joints_0.size(), mesh.joints_0.data());
+        }
+        if (!mesh.weights_0.empty()) {
+            out_mesh.vertex_buffer[5] = create_vertex_buffer(sizeof(vec4) * mesh.weights_0.size(), mesh.weights_0.data());
+        }
+        {
+            // index buffer
+            out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
+            D3D11_BUFFER_DESC bufferDesc{};
+            bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+            bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.index_count);
+            bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+            bufferDesc.CPUAccessFlags = 0;
+            bufferDesc.MiscFlags = 0;
+
+            D3D11_SUBRESOURCE_DATA data{};
+            data.pSysMem = mesh.indices.data();
+            D3D_FAIL_MSG(p_device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
+                         "Failed to create index buffer");
+        }
+    };
+
+    RID rid = m_meshes.make_rid();
+    D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+    p_mesh.gpu_resource = mesh_buffers;
+    create_mesh_data(m_device.Get(), p_mesh, *mesh_buffers);
+    return mesh_buffers;
+}
+
 void D3d11GraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
@@ -443,54 +487,6 @@ void D3d11GraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
     m_ctx->DrawIndexed(p_count, p_offset, 0);
 }
 
-// @TODO: refator
-static void create_mesh_data(const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
-    ID3D11Device* device = get_d3d11_device();
-
-    auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
-        ID3D11Buffer* buffer = nullptr;
-        // vertex buffer
-        D3D11_BUFFER_DESC bufferDesc{};
-        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-        bufferDesc.ByteWidth = (UINT)p_size_in_byte;
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-        bufferDesc.CPUAccessFlags = 0;
-        bufferDesc.MiscFlags = 0;
-
-        D3D11_SUBRESOURCE_DATA data{};
-        data.pSysMem = p_data;
-        D3D_FAIL_V_MSG(device->CreateBuffer(&bufferDesc, &data, &buffer),
-                       nullptr,
-                       "Failed to create vertex buffer");
-        return buffer;
-    };
-
-    out_mesh.vertex_buffer[0] = create_vertex_buffer(sizeof(vec3) * mesh.positions.size(), mesh.positions.data());
-    out_mesh.vertex_buffer[1] = create_vertex_buffer(sizeof(vec3) * mesh.normals.size(), mesh.normals.data());
-
-    if (!mesh.joints_0.empty()) {
-        out_mesh.vertex_buffer[4] = create_vertex_buffer(sizeof(ivec4) * mesh.joints_0.size(), mesh.joints_0.data());
-    }
-    if (!mesh.weights_0.empty()) {
-        out_mesh.vertex_buffer[5] = create_vertex_buffer(sizeof(vec4) * mesh.weights_0.size(), mesh.weights_0.data());
-    }
-    {
-        // index buffer
-        out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
-        D3D11_BUFFER_DESC bufferDesc{};
-        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-        bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.index_count);
-        bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-        bufferDesc.CPUAccessFlags = 0;
-        bufferDesc.MiscFlags = 0;
-
-        D3D11_SUBRESOURCE_DATA data{};
-        data.pSysMem = mesh.indices.data();
-        D3D_FAIL_MSG(device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
-                     "Failed to create index buffer");
-    }
-}
-
 void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
@@ -498,10 +494,8 @@ void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
             LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.get_name());
             continue;
         }
-        RID rid = m_meshes.make_rid();
-        D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-        mesh.gpu_resource = mesh_buffers;
-        create_mesh_data(mesh, *mesh_buffers);
+
+        create_mesh(mesh);
     }
 }
 

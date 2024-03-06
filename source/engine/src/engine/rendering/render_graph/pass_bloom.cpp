@@ -1,14 +1,14 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "rendering/render_data.h"
-#include "rendering/render_graph/render_graph_defines.h"
+#include "rendering/render_graph/pass_creator.h"
 
 // @TODO: remove API sepcific code
 #include "drivers/opengl/opengl_prerequisites.h"
 
 namespace my::rg {
 
-// @TODO: refactor
+// @TODO: refactor to math
 static int divide_and_roundup(int p_dividend, int p_divisor) {
     return (p_dividend + p_divisor - 1) / p_divisor;
 }
@@ -17,7 +17,7 @@ static void down_sample_func(const Subpass*) {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     // Step 1, select pixels contribute to bloom
-    if (1) {
+    {
         manager.set_pipeline_state(PROGRAM_BLOOM_SETUP);
         auto input = manager.find_render_target(RT_RES_LIGHTING);
         auto output = manager.find_render_target(RT_RES_BLOOM "_0");
@@ -28,7 +28,7 @@ static void down_sample_func(const Subpass*) {
 
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
         glDispatchCompute(work_group_x, work_group_y, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -44,7 +44,7 @@ static void down_sample_func(const Subpass*) {
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
         // @TODO: refactor image slot
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
         auto [width, height] = output->get_size();
         const uint32_t work_group_x = divide_and_roundup(width, 16);
@@ -62,7 +62,7 @@ static void down_sample_func(const Subpass*) {
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
 
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
 
         auto [width, height] = output->get_size();
         const uint32_t work_group_x = divide_and_roundup(width, 16);
@@ -72,16 +72,16 @@ static void down_sample_func(const Subpass*) {
     }
 }
 
-void create_bloom_pass(RenderGraph& p_graph, int p_width, int p_height) {
+void RenderPassCreator::add_bloom_pass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     RenderPassDesc desc;
     desc.name = BLOOM_PASS;
     desc.dependencies = { LIGHTING_PASS };
-    auto pass = p_graph.create_pass(desc);
+    auto pass = m_graph.create_pass(desc);
 
-    int width = p_width;
-    int height = p_height;
+    int width = m_config.frame_width;
+    int height = m_config.frame_height;
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX; ++i, width /= 2, height /= 2) {
         DEV_ASSERT(width > 1);
         DEV_ASSERT(height > 1);

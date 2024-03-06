@@ -14,7 +14,7 @@
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
 #include "imgui/imgui.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
 #define DEFINE_DVAR
@@ -50,6 +50,7 @@ void Application::setup_modules() {
     m_imgui_module = std::make_shared<ImGuiModule>();
     m_display_server = DisplayManager::create();
     m_graphics_manager = GraphicsManager::create();
+    m_render_manager = std::make_shared<RenderManager>();
 
     register_module(m_asset_manager.get());
     register_module(m_scene_manager.get());
@@ -57,6 +58,7 @@ void Application::setup_modules() {
     register_module(m_imgui_module.get());
     register_module(m_display_server.get());
     register_module(m_graphics_manager.get());
+    register_module(m_render_manager.get());
 
     m_event_queue.register_listener(m_graphics_manager.get());
     m_event_queue.register_listener(m_physics_manager.get());
@@ -79,7 +81,6 @@ int Application::run(int argc, const char** argv) {
 
     thread::initialize();
     jobsystem::initialize();
-    renderer::initialize();
 
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->get_name());
@@ -101,7 +102,6 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     LOG_WARN("TODO: terrain & grass");
-    LOG_OK("TODO: path tracer here");
     LOG_WARN("TODO: water");
     LOG_OK("TODO: change position buffer to view space");
     LOG_WARN("TODO: area light shadow & fix cascade shadow");
@@ -111,16 +111,11 @@ int Application::run(int argc, const char** argv) {
 
     LOG_WARN("TODO: properly unload scene");
     LOG_WARN("TODO: make camera a component");
-    LOG_WARN("TODO: use lua to construct scene");
     LOG_WARN("TODO: refactor render graph");
-    LOG_WARN("TODO: cloth physics");
 
-    LOG_WARN(
-        "\nTODO:"
-        "\n  1. z-prepass"
-        "\n  2. depth-stencil"
-        "\n  3. 8-bit color for selected item"
-        "\n  4. sobel edge detection");
+    LOG_WARN("TODO: use lua to construct scene");
+    LOG_ERROR("TODO: path tracer here");
+    LOG_ERROR("TODO: cloth physics");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
@@ -148,8 +143,11 @@ int Application::run(int argc, const char** argv) {
         ImGui::Render();
 
         m_scene_manager->update(dt);
+        auto& scene = m_scene_manager->get_scene();
 
         m_physics_manager->update(dt);
+
+        m_render_manager->update(scene);
 
         m_graphics_manager->update(dt);
         renderer::reset_need_update_env();
@@ -180,7 +178,6 @@ int Application::run(int argc, const char** argv) {
         LOG_VERBOSE("module '{}' finalized", module->get_name());
     }
 
-    renderer::finalize();
     jobsystem::finalize();
     thread::finailize();
 

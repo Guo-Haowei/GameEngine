@@ -10,6 +10,8 @@ namespace my {
 #error "compiler not supported"
 #endif
 
+void break_if_debug();
+
 using ErrorHandlerFunc = void (*)(void* user_data, std::string_view function, std::string_view file, int line,
                                   std::string_view error);
 
@@ -34,25 +36,28 @@ void report_error_index_impl(std::string_view function, std::string_view file, i
                              int64_t index, int64_t bound, std::string_view index_string, std::string_view bound_string,
                              std::string_view detail);
 
-#define ERR_FAIL_V_MSG_INTERNAL(RET, MSG, EXTRA)                                                       \
-    do {                                                                                               \
-        my::report_error_impl(__FUNCTION__, __FILE__, __LINE__, "Method/function failed." EXTRA, MSG); \
-        return RET;                                                                                    \
+#define ERR_FAIL_V_MSG_INTERNAL(RET, MSG, EXTRA)                                                         \
+    do {                                                                                                 \
+        ::my::report_error_impl(__FUNCTION__, __FILE__, __LINE__, "Method/function failed." EXTRA, MSG); \
+        ::my::break_if_debug();                                                                          \
+        return RET;                                                                                      \
     } while (0)
 
-#define ERR_FAIL_COND_V_MSG_INTERNAL(EXPR, RET, MSG, EXTRA)                                                          \
-    if (!!(EXPR)) [[unlikely]] {                                                                                     \
-        my::report_error_impl(__FUNCTION__, __FILE__, __LINE__, "Condition \"" _STR(EXPR) "\" is true." EXTRA, MSG); \
-        return RET;                                                                                                  \
-    } else                                                                                                           \
+#define ERR_FAIL_COND_V_MSG_INTERNAL(EXPR, RET, MSG, EXTRA)                                                            \
+    if (!!(EXPR)) [[unlikely]] {                                                                                       \
+        ::my::report_error_impl(__FUNCTION__, __FILE__, __LINE__, "Condition \"" _STR(EXPR) "\" is true." EXTRA, MSG); \
+        ::my::break_if_debug();                                                                                        \
+        return RET;                                                                                                    \
+    } else                                                                                                             \
         ((void)0)
 
-#define ERR_FAIL_INDEX_V_MSG_INTERNAL(INDEX, BOUND, RET, MSG)                                                        \
-    if (int64_t index_ = (int64_t)(INDEX), bound_ = (int64_t)(BOUND); index_ < 0 || index_ >= bound_) [[unlikely]] { \
-        my::report_error_index_impl(__FUNCTION__, __FILE__, __LINE__, "", index_, bound_, _STR(INDEX), _STR(BOUND),  \
-                                    MSG);                                                                            \
-        return RET;                                                                                                  \
-    } else                                                                                                           \
+#define ERR_FAIL_INDEX_V_MSG_INTERNAL(INDEX, BOUND, RET, MSG)                                                         \
+    if (int64_t index_ = (int64_t)(INDEX), bound_ = (int64_t)(BOUND); index_ < 0 || index_ >= bound_) [[unlikely]] {  \
+        ::my::report_error_index_impl(__FUNCTION__, __FILE__, __LINE__, "", index_, bound_, _STR(INDEX), _STR(BOUND), \
+                                      MSG);                                                                           \
+        ::my::break_if_debug();                                                                                       \
+        return RET;                                                                                                   \
+    } else                                                                                                            \
         ((void)0)
 
 #define ERR_FAIL()                                   ERR_FAIL_V_MSG_INTERNAL(void(), "", "")

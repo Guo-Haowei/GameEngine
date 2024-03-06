@@ -1,7 +1,9 @@
-#include "renderer.h"
+#include "render_manager.h"
 
+#include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
+#include "core/math/geometry.h"
 #include "rendering/render_graph/render_graph_defines.h"
 
 #define DEFINE_DVAR
@@ -10,23 +12,9 @@
 namespace {
 std::string s_prev_env_map;
 bool s_need_update_env = false;
-std::list<int> s_free_point_light_shadow;
 }  // namespace
 
 namespace my::renderer {
-
-bool initialize() {
-    DEV_ASSERT(s_free_point_light_shadow.empty());
-
-    for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-        s_free_point_light_shadow.push_back(i);
-    }
-    return true;
-}
-
-void finalize() {
-    s_free_point_light_shadow.clear();
-}
 
 bool need_update_env() {
     return s_need_update_env;
@@ -64,9 +52,11 @@ void request_env_map(const std::string& path) {
         handle->set(image);
         GraphicsManager::singleton().request_texture(handle, [](Image* p_image) {
             // @TODO: better way
-            g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
-            g_constantCache.update();
-            s_need_update_env = true;
+            if (p_image->gpu_texture) {
+                g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
+                g_constantCache.update();
+                s_need_update_env = true;
+            }
         });
     });
 }
@@ -168,23 +158,6 @@ std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Cam
         }
     }
     return ret;
-}
-
-PointShadowHandle allocate_point_light_shadow_map() {
-    if (s_free_point_light_shadow.empty()) {
-        LOG_WARN("OUT OUT POINT SHADOW MAP");
-        return INVALID_POINT_SHADOW_HANDLE;
-    }
-
-    int handle = s_free_point_light_shadow.front();
-    s_free_point_light_shadow.pop_front();
-    return handle;
-}
-
-void free_point_light_shadow_map(PointShadowHandle& p_handle) {
-    DEV_ASSERT_INDEX(p_handle, MAX_LIGHT_CAST_SHADOW_COUNT);
-    s_free_point_light_shadow.push_back(p_handle);
-    p_handle = INVALID_POINT_SHADOW_HANDLE;
 }
 
 // @TODO: fix this?
@@ -374,3 +347,62 @@ void fill_texture_and_sampler_desc(const Image* p_image, TextureDesc& p_texture_
 }
 
 }  // namespace my::renderer
+
+namespace my {
+
+RenderManager::RenderManager() : Module("RenderManager") {
+    for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
+        m_free_point_light_shadow.push_back(i);
+    }
+}
+
+bool RenderManager::initialize() {
+    m_screen_quad_buffers = GraphicsManager::singleton().create_mesh(make_plane_mesh(vec3(1)));
+    m_skybox_buffers = GraphicsManager::singleton().create_mesh(make_sky_box_mesh());
+
+    return true;
+}
+
+void RenderManager::finalize() {
+    m_screen_quad_buffers = nullptr;
+    m_skybox_buffers = nullptr;
+
+    m_free_point_light_shadow.clear();
+    return;
+}
+
+void RenderManager::update(Scene& p_scene) {
+    OPTICK_EVENT();
+
+    renderer::fill_constant_buffers(p_scene);
+    GraphicsManager::singleton().get_render_data()->update(&p_scene);
+}
+
+PointShadowHandle RenderManager::allocate_point_light_shadow_map() {
+    if (m_free_point_light_shadow.empty()) {
+        LOG_WARN("OUT OUT POINT SHADOW MAP");
+        return INVALID_POINT_SHADOW_HANDLE;
+    }
+
+    int handle = m_free_point_light_shadow.front();
+    m_free_point_light_shadow.pop_front();
+    return handle;
+}
+
+void RenderManager::free_point_light_shadow_map(PointShadowHandle& p_handle) {
+    DEV_ASSERT_INDEX(p_handle, MAX_LIGHT_CAST_SHADOW_COUNT);
+    m_free_point_light_shadow.push_back(p_handle);
+    p_handle = INVALID_POINT_SHADOW_HANDLE;
+}
+
+void RenderManager::draw_quad() {
+    GraphicsManager::singleton().set_mesh(m_screen_quad_buffers);
+    GraphicsManager::singleton().draw_elements(m_screen_quad_buffers->index_count);
+}
+
+void RenderManager::draw_skybox() {
+    GraphicsManager::singleton().set_mesh(m_skybox_buffers);
+    GraphicsManager::singleton().draw_elements(m_skybox_buffers->index_count);
+}
+
+}  // namespace my

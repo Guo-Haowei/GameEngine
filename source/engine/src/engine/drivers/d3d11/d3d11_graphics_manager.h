@@ -14,7 +14,7 @@ struct D3d11MeshBuffers : public MeshBuffers {
 
 class D3d11GraphicsManager : public GraphicsManager {
 public:
-    D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {}
+    D3d11GraphicsManager();
 
     bool initialize_internal() final;
     void finalize() final;
@@ -26,6 +26,7 @@ public:
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
     void set_viewport(const Viewport& p_viewport) final;
 
+    const MeshBuffers* create_mesh(const MeshComponent& p_mesh) final;
     void set_mesh(const MeshBuffers* p_mesh) final;
     void draw_elements(uint32_t p_count, uint32_t p_offset) final;
 
@@ -33,10 +34,11 @@ public:
     void uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
     void uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
+    void bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc&) final;
 
-    ID3D11Device* get_device() const { return m_device.Get(); }
+    Microsoft::WRL::ComPtr<ID3D11Device>& get_d3d_device() { return m_device; }
 
 protected:
     void on_scene_change(const Scene& p_scene) final;

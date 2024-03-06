@@ -2,12 +2,10 @@
 
 #include "core/debugger/profiler.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
-#include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
-#include "drivers/opengl/opengl_pipeline_state_manager.h"
 #include "rendering/render_graph/render_graph_defines.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
@@ -17,26 +15,12 @@ bool GraphicsManager::initialize() {
         return false;
     }
 
-    // select pipeline state manager
-    switch (m_backend) {
-        case Backend::EMPTY:
-            break;
-        case Backend::OPENGL:
-            m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
-            break;
-        case Backend::D3D11:
-            m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
-            break;
-        default:
-            break;
-    }
-
     m_render_data = std::make_shared<RenderData>();
 
-    if (m_pipeline_state_manager) {
-        if (!m_pipeline_state_manager->initialize()) {
-            return false;
-        }
+    DEV_ASSERT(m_pipeline_state_manager);
+
+    if (!m_pipeline_state_manager->initialize()) {
+        return false;
     }
 
     return true;
@@ -194,7 +178,8 @@ uint64_t GraphicsManager::get_final_image() const {
             texture = find_render_target(RT_RES_FINAL)->texture.get();
             break;
         case RenderGraph::DUMMY:
-            texture = find_render_target(RT_RES_GBUFFER_NORMAL)->texture.get();
+            texture = find_render_target(RT_RES_GBUFFER_BASE_COLOR)->texture.get();
+            // texture = find_render_target(RT_RES_LIGHTING)->texture.get();
             break;
         default:
             CRASH_NOW();
@@ -202,7 +187,7 @@ uint64_t GraphicsManager::get_final_image() const {
     }
 
     if (texture) {
-        return texture->get_imgui_handle();
+        return texture->get_handle();
     }
 
     return 0;

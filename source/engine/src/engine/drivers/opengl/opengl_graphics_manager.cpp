@@ -3,16 +3,13 @@
 #include "assets/image.h"
 #include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
-#include "core/framework/scene_manager.h"
 #include "core/math/geometry.h"
 #include "drivers/opengl/opengl_pipeline_state_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 #include "drivers/opengl/opengl_resources.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/GpuTexture.h"
-#include "rendering/gl_utils.h"
 #include "rendering/render_graph/render_graph_defines.h"
-#include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"
 
@@ -33,9 +30,8 @@ GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
 
 // @TODO: refactor
-OpenGLMeshBuffers g_box;
-OpenGLMeshBuffers g_skybox;
-OpenGLMeshBuffers g_grass;
+OpenGLMeshBuffers* g_box;
+OpenGLMeshBuffers* g_grass;
 
 static GLuint g_noiseTexture;
 
@@ -63,11 +59,21 @@ static unsigned int loadMTexture(const float* matrixTable) {
     return texture;
 }
 
+static uint64_t MakeTextureResident(uint32_t texture) {
+    uint64_t ret = glGetTextureHandleARB(texture);
+    glMakeTextureHandleResidentARB(ret);
+    return ret;
+}
+
 //-----------------------------------------------------------------------------------------------------------------
 
 namespace my {
 
 static void APIENTRY gl_debug_callback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
+
+OpenGLGraphicsManager::OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager", Backend::OPENGL) {
+    m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
+}
 
 bool OpenGLGraphicsManager::initialize_internal() {
     if (gladLoadGL() == 0) {
@@ -205,62 +211,6 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-static void create_mesh_data(const MeshComponent& mesh, OpenGLMeshBuffers& out_mesh) {
-    const bool has_normals = !mesh.normals.empty();
-    const bool has_uvs = !mesh.texcoords_0.empty();
-    const bool has_tangents = !mesh.tangents.empty();
-    const bool has_joints = !mesh.joints_0.empty();
-    const bool has_weights = !mesh.weights_0.empty();
-
-    int vbo_count = 1 + has_normals + has_uvs + has_tangents + has_joints + has_weights;
-    DEV_ASSERT(vbo_count <= array_length(out_mesh.vbos));
-
-    glGenVertexArrays(1, &out_mesh.vao);
-
-    // @TODO: fix this hack
-    glGenBuffers(1, &out_mesh.ebo);
-    glGenBuffers(6, out_mesh.vbos);
-
-    int slot = -1;
-    glBindVertexArray(out_mesh.vao);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, out_mesh.ebo);
-
-    slot = get_position_slot();
-    // @TODO: refactor these
-    bind_to_slot(out_mesh.vbos[slot], slot, 3);
-    buffer_storage(out_mesh.vbos[slot], mesh.positions);
-
-    if (has_normals) {
-        slot = get_normal_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 3);
-        buffer_storage(out_mesh.vbos[slot], mesh.normals);
-    }
-    if (has_uvs) {
-        slot = get_uv_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 2);
-        buffer_storage(out_mesh.vbos[slot], mesh.texcoords_0);
-    }
-    if (has_tangents) {
-        slot = get_tangent_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 3);
-        buffer_storage(out_mesh.vbos[slot], mesh.tangents);
-    }
-    if (has_joints) {
-        slot = get_bone_id_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 4);
-        buffer_storage(out_mesh.vbos[slot], mesh.joints_0);
-        DEV_ASSERT(!mesh.weights_0.empty());
-        slot = get_bone_weight_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 4);
-        buffer_storage(out_mesh.vbos[slot], mesh.weights_0);
-    }
-
-    buffer_storage(out_mesh.ebo, mesh.indices);
-    out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
-
-    glBindVertexArray(0);
-}
-
 void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
     unused(p_subpass);
     if (p_flags == CLEAR_NONE) {
@@ -294,6 +244,71 @@ void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
                p_viewport.top_left_y,
                p_viewport.width,
                p_viewport.height);
+}
+
+const MeshBuffers* OpenGLGraphicsManager::create_mesh(const MeshComponent& p_mesh) {
+    RID rid = m_meshes.make_rid();
+    OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+    p_mesh.gpu_resource = mesh_buffers;
+
+    auto create_mesh_data = [](const MeshComponent& p_mesh, OpenGLMeshBuffers& p_out_mesh) {
+        const bool has_normals = !p_mesh.normals.empty();
+        const bool has_uvs = !p_mesh.texcoords_0.empty();
+        const bool has_tangents = !p_mesh.tangents.empty();
+        const bool has_joints = !p_mesh.joints_0.empty();
+        const bool has_weights = !p_mesh.weights_0.empty();
+
+        int vbo_count = 1 + has_normals + has_uvs + has_tangents + has_joints + has_weights;
+        DEV_ASSERT(vbo_count <= array_length(p_out_mesh.vbos));
+
+        glGenVertexArrays(1, &p_out_mesh.vao);
+
+        // @TODO: fix this hack
+        glGenBuffers(1, &p_out_mesh.ebo);
+        glGenBuffers(6, p_out_mesh.vbos);
+
+        int slot = -1;
+        glBindVertexArray(p_out_mesh.vao);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_out_mesh.ebo);
+
+        slot = get_position_slot();
+        // @TODO: refactor these
+        bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
+        buffer_storage(p_out_mesh.vbos[slot], p_mesh.positions);
+
+        if (has_normals) {
+            slot = get_normal_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.normals);
+        }
+        if (has_uvs) {
+            slot = get_uv_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 2);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.texcoords_0);
+        }
+        if (has_tangents) {
+            slot = get_tangent_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.tangents);
+        }
+        if (has_joints) {
+            slot = get_bone_id_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 4);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.joints_0);
+            DEV_ASSERT(!p_mesh.weights_0.empty());
+            slot = get_bone_weight_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 4);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.weights_0);
+        }
+
+        buffer_storage(p_out_mesh.ebo, p_mesh.indices);
+        p_out_mesh.index_count = static_cast<uint32_t>(p_mesh.indices.size());
+
+        glBindVertexArray(0);
+    };
+
+    create_mesh_data(p_mesh, *mesh_buffers);
+    return mesh_buffers;
 }
 
 void OpenGLGraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
@@ -330,6 +345,16 @@ void OpenGLGraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer
     ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
+}
+
+void OpenGLGraphicsManager::bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+    if (p_dimension != Dimension::TEXTURE_2D) {
+        CRASH_NOW();
+    }
+    if (p_handle != 0) {
+        glActiveTexture(GL_TEXTURE0 + p_slot);
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(p_handle));
+    }
 }
 
 std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -417,13 +442,14 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
             attachments.push_back(attachment);
 
             const auto& color_attachment = p_desc.color_attachments[idx];
+            uint32_t texture_handle = static_cast<uint32_t>(color_attachment->texture->get_handle());
             switch (color_attachment->desc.type) {
                 case AttachmentType::COLOR_2D: {
-                    glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
-                                           attachment,                               // attachment
-                                           GL_TEXTURE_2D,                            // texture target
-                                           color_attachment->texture->get_handle(),  // texture
-                                           0                                         // level
+                    glFramebufferTexture2D(GL_FRAMEBUFFER,  // target
+                                           attachment,      // attachment
+                                           GL_TEXTURE_2D,   // texture target
+                                           texture_handle,  // texture
+                                           0                // level
                     );
                 } break;
                 case AttachmentType::COLOR_CUBE_MAP: {
@@ -438,21 +464,22 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
     }
 
     if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
+        uint32_t texture_handle = static_cast<uint32_t>(depth_attachment->texture->get_handle());
         switch (depth_attachment->desc.type) {
             case AttachmentType::SHADOW_2D:
             case AttachmentType::DEPTH_2D: {
-                glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
-                                       GL_DEPTH_ATTACHMENT,                      // attachment
-                                       GL_TEXTURE_2D,                            // texture target
-                                       depth_attachment->texture->get_handle(),  // texture
-                                       0);                                       // level
+                glFramebufferTexture2D(GL_FRAMEBUFFER,       // target
+                                       GL_DEPTH_ATTACHMENT,  // attachment
+                                       GL_TEXTURE_2D,        // texture target
+                                       texture_handle,       // texture
+                                       0);                   // level
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
-                glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
-                                       GL_DEPTH_STENCIL_ATTACHMENT,              // attachment
-                                       GL_TEXTURE_2D,                            // texture target
-                                       depth_attachment->texture->get_handle(),  // texture
-                                       0);                                       // level
+                glFramebufferTexture2D(GL_FRAMEBUFFER,               // target
+                                       GL_DEPTH_STENCIL_ATTACHMENT,  // attachment
+                                       GL_TEXTURE_2D,                // texture target
+                                       texture_handle,               // texture
+                                       0);                           // level
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
             } break;
@@ -489,7 +516,7 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   resource->texture->get_handle(),
+                                   static_cast<uint32_t>(resource->texture->get_handle()),
                                    p_mip_level);
         }
     }
@@ -499,7 +526,7 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_DEPTH_ATTACHMENT,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   depth_attachment->texture->get_handle(),
+                                   static_cast<uint32_t>(depth_attachment->texture->get_handle()),
                                    p_mip_level);
         }
     }
@@ -507,16 +534,14 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
     return;
 }
 
-// @TODO: refactor this, instead off iterate through all the meshes, find a more atomic way
+// @TODO: refactor this, instead off iterate through all the meshes, find a better way
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
             continue;
         }
-        RID rid = m_meshes.make_rid();
-        OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-        mesh.gpu_resource = mesh_buffers;
-        create_mesh_data(mesh, *mesh_buffers);
+
+        create_mesh(mesh);
     }
 
     g_constantCache.update();
@@ -564,7 +589,7 @@ static void create_ssao_resource() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    g_constantCache.cache.c_kernel_noise_map = ::gl::MakeTextureResident(noiseTexture);
+    g_constantCache.cache.c_kernel_noise_map = MakeTextureResident(noiseTexture);
     g_noiseTexture = noiseTexture;
 }
 
@@ -574,10 +599,9 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     create_ssao_resource();
 
-    // create a dummy box data
-    create_mesh_data(make_grass_billboard(), g_grass);
-    create_mesh_data(make_box_mesh(), g_box);
-    create_mesh_data(make_sky_box_mesh(), g_skybox);
+    // @TODO: move to renderer
+    g_grass = (OpenGLMeshBuffers*)create_mesh(make_grass_billboard());
+    g_box = (OpenGLMeshBuffers*)create_mesh(make_box_mesh());
 
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
 
@@ -595,19 +619,16 @@ void OpenGLGraphicsManager::createGpuResources() {
         g_normalVoxel.create3DEmpty(info);
     }
 
-    // create box quad
-    R_CreateQuad();
-
     auto& cache = g_constantCache.cache;
 
     // @TODO: delete!
     unsigned int m1 = loadMTexture(LTC1);
     unsigned int m2 = loadMTexture(LTC2);
-    cache.u_ltc_1 = ::gl::MakeTextureResident(m1);
-    cache.u_ltc_2 = ::gl::MakeTextureResident(m2);
+    cache.u_ltc_1 = MakeTextureResident(m1);
+    cache.u_ltc_2 = MakeTextureResident(m2);
 
-    cache.c_voxel_map = ::gl::MakeTextureResident(g_albedoVoxel.GetHandle());
-    cache.c_voxel_normal_map = ::gl::MakeTextureResident(g_normalVoxel.GetHandle());
+    cache.c_voxel_map = MakeTextureResident(g_albedoVoxel.GetHandle());
+    cache.c_voxel_normal_map = MakeTextureResident(g_normalVoxel.GetHandle());
 
     cache.u_grass_base_color = grass_image->gpu_texture->get_resident_handle();
 
@@ -624,10 +645,9 @@ void OpenGLGraphicsManager::createGpuResources() {
     auto bind_slot = [&](const std::string& name, int slot) {
         std::shared_ptr<RenderTarget> resource = find_render_target(name);
         if (!resource) {
-            DEV_ASSERT(0);
             return;
         }
-        uint32_t handle = resource->texture->get_handle();
+        uint32_t handle = resource->texture->get_handle32();
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, handle);
     };
@@ -656,14 +676,6 @@ void OpenGLGraphicsManager::createGpuResources() {
 
 void OpenGLGraphicsManager::render() {
     OPTICK_EVENT();
-
-    {
-        OPTICK_EVENT("prepare render data");
-        // @TODO: move outside
-        Scene& scene = SceneManager::singleton().get_scene();
-        renderer::fill_constant_buffers(scene);
-        m_render_data->update(&scene);
-    }
 
     g_perFrameCache.update();
 

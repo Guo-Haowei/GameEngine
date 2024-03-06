@@ -138,7 +138,7 @@ bool PipelineStateManager::initialize() {
         info.vs = "screenspace_quad.vert";
         info.ps = "ssao.frag";
         info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_SSAO] = create(info);
     }
     {

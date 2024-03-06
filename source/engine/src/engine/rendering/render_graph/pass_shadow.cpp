@@ -1,7 +1,7 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "rendering/render_data.h"
-#include "rendering/render_graph/render_graph_defines.h"
+#include "rendering/render_graph/pass_creator.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my::rg {
@@ -94,7 +94,7 @@ static void shadow_pass_func(const Subpass* p_subpass) {
     }
 }
 
-void create_shadow_pass(RenderGraph& p_graph) {
+void RenderPassCreator::add_shadow_pass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     const int shadow_res = DVAR_GET_INT(r_shadow_res);
@@ -109,7 +109,7 @@ void create_shadow_pass(RenderGraph& p_graph) {
                                                    shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = SHADOW_PASS;
-    auto pass = p_graph.create_pass(desc);
+    auto pass = m_graph.create_pass(desc);
 
     // @TODO: refactor
     SubPassFunc funcs[] = {

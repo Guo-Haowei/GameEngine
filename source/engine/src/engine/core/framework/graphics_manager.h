@@ -75,6 +75,7 @@ public:
     virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
     virtual void set_viewport(const Viewport& p_viewport) = 0;
 
+    virtual const MeshBuffers* create_mesh(const MeshComponent& p_mesh) = 0;
     virtual void set_mesh(const MeshBuffers* p_mesh) = 0;
     virtual void draw_elements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 
@@ -98,6 +99,7 @@ public:
 
     virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
+    virtual void bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
 
     void request_texture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
@@ -131,7 +133,7 @@ protected:
     // @TODO: cache
     PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
 
-    // @TODO: move following to renderer
+    // @TODO: move the following to renderer
     std::shared_ptr<RenderData> m_render_data;
     rg::RenderGraph m_render_graph;
 

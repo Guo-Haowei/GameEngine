@@ -10,7 +10,7 @@
 #include "core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {

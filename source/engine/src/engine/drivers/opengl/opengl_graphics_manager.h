@@ -12,7 +12,7 @@ namespace my {
 
 class OpenGLGraphicsManager : public GraphicsManager {
 public:
-    OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager", Backend::OPENGL) {}
+    OpenGLGraphicsManager();
 
     bool initialize_internal() final;
     void finalize() final;
@@ -23,12 +23,15 @@ public:
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
     void set_viewport(const Viewport& p_viewport) final;
 
+    const MeshBuffers* create_mesh(const MeshComponent& p_mesh) final;
     void set_mesh(const MeshBuffers* p_mesh) final;
     void draw_elements(uint32_t p_count, uint32_t offset) final;
 
     std::shared_ptr<UniformBufferBase> uniform_create(int p_slot, size_t p_capacity) final;
     void uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
     void uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
+
+    void bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
 
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) final;

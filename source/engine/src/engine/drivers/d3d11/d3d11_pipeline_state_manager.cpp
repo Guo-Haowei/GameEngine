@@ -6,9 +6,8 @@
 
 #include "core/framework/asset_manager.h"
 #include "drivers/d3d11/convert.h"
+#include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d11/d3d11_helpers.h"
-
-extern ID3D11Device* get_d3d11_device();
 
 namespace my {
 
@@ -72,7 +71,8 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
 }
 
 std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineCreateInfo& p_info) {
-    ID3D11Device* device = get_d3d11_device();
+    auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::singleton_ptr());
+    auto& device = graphics_manager->get_d3d_device();
     DEV_ASSERT(device);
     if (!device) {
         return nullptr;
@@ -158,12 +158,13 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
 
         auto it = m_depth_stencil_states.find(p_info.depth_stencil_desc);
         if (it == m_depth_stencil_states.end()) {
-            D3D11_DEPTH_STENCIL_DESC dsDesc{};
-            dsDesc.DepthEnable = p_info.depth_stencil_desc->depth_enabled;
-            dsDesc.DepthFunc = convert(p_info.depth_stencil_desc->depth_func);
-            dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-            dsDesc.StencilEnable = p_info.depth_stencil_desc->stencil_enabled;
-            device->CreateDepthStencilState(&dsDesc, state.GetAddressOf());
+            D3D11_DEPTH_STENCIL_DESC desc{};
+            desc.DepthEnable = p_info.depth_stencil_desc->depth_enabled;
+            desc.DepthFunc = convert(p_info.depth_stencil_desc->depth_func);
+            desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+            desc.StencilEnable = false;
+            // desc.StencilEnable = p_info.depth_stencil_desc->stencil_enabled;
+            device->CreateDepthStencilState(&desc, state.GetAddressOf());
             D3D_FAIL_V_MSG(hr, nullptr, "failed to create depth stencil state");
             m_depth_stencil_states[p_info.depth_stencil_desc] = state;
         } else {
