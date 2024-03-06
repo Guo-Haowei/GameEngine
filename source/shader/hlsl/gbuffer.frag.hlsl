@@ -16,8 +16,7 @@ ps_output main(vsoutput_mesh input) {
     float4 color = u_base_color;
 
     if (u_has_base_color_map) {
-        // color = u_base_color_map.Sample(u_sampler, input.uv);
-        color = u_base_color_map.SampleLevel(u_sampler, input.uv, 6);
+        color = u_base_color_map.Sample(u_sampler, input.uv);
     }
 
     if (color.a <= 0.0) {

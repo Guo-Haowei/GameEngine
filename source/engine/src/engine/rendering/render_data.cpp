@@ -9,9 +9,6 @@
 #include "rendering/render_manager.h"
 #include "scene/scene.h"
 
-//
-#include "gl_utils.h"
-
 namespace my {
 
 void RenderData::Pass::fill_perpass(PerPassConstantBuffer& buffer) const {

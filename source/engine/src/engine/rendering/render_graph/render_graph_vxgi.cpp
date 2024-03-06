@@ -11,7 +11,6 @@
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "rendering/GpuTexture.h"
-#include "rendering/gl_utils.h"
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
 // @TODO: add as a object

@@ -226,10 +226,13 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
         texture_format = DXGI_FORMAT_R24G8_TYPELESS;
     }
 
+    const bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
+
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
-    texture_desc.MipLevels = p_texture_desc.mip_levels;
+    // texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mip_levels;
+    texture_desc.MipLevels = 0;
     texture_desc.ArraySize = p_texture_desc.array_size;
     texture_desc.Format = texture_format;
     texture_desc.SampleDesc = { 1, 0 };
@@ -237,31 +240,25 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
     texture_desc.BindFlags = d3d11::convert_bind_flags(p_texture_desc.bind_flags);
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = d3d11::convert_misc_flags(p_texture_desc.misc_flags);
-
-    D3D11_SUBRESOURCE_DATA* texture_data_ptr = nullptr;
-    D3D11_SUBRESOURCE_DATA texture_data{};
-    if (p_texture_desc.initial_data) {
-        texture_data.pSysMem = p_texture_desc.initial_data;
-        texture_data.SysMemPitch = p_texture_desc.width * channel_count(format) * channel_size(format);
-        texture_data.SysMemSlicePitch = p_texture_desc.height * texture_data.SysMemPitch;
-        texture_data_ptr = &texture_data;
-    }
     ComPtr<ID3D11Texture2D> texture;
-
-    D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, texture_data_ptr, texture.GetAddressOf()),
+    D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()),
                    nullptr,
                    "Failed to create texture");
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+    if (p_texture_desc.initial_data) {
+        uint32_t row_pitch = p_texture_desc.width * channel_count(format) * channel_size(format);
+        m_ctx->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initial_data, row_pitch, 0);
+    }
 
     auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
     if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
+        D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.Format = srv_format;
         srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
         srv_desc.Texture2D.MipLevels = p_texture_desc.mip_levels;
         srv_desc.Texture2D.MostDetailedMip = 0;
 
-        if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+        if (gen_mip_map) {
             srv_desc.Texture2D.MipLevels = (UINT)-1;
         }
 

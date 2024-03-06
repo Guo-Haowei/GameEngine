@@ -9,6 +9,12 @@ IntrusiveList<ErrorHandlerListNode> s_error_handlers;
 void global_lock() {}
 void global_unlock() {}
 
+void break_if_debug() {
+#if USING(DEBUG_BUILD)
+    __debugbreak();
+#endif
+}
+
 bool add_error_handler(ErrorHandler* handler) {
     // if the handler already exists, remove it
     remove_error_handler(handler);

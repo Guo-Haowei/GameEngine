@@ -9,7 +9,6 @@
 #include "drivers/opengl/opengl_resources.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/GpuTexture.h"
-#include "rendering/gl_utils.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"
@@ -58,6 +57,12 @@ static unsigned int loadMTexture(const float* matrixTable) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
     return texture;
+}
+
+static uint64_t MakeTextureResident(uint32_t texture) {
+    uint64_t ret = glGetTextureHandleARB(texture);
+    glMakeTextureHandleResidentARB(ret);
+    return ret;
 }
 
 //-----------------------------------------------------------------------------------------------------------------
@@ -584,7 +589,7 @@ static void create_ssao_resource() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    g_constantCache.cache.c_kernel_noise_map = ::gl::MakeTextureResident(noiseTexture);
+    g_constantCache.cache.c_kernel_noise_map = MakeTextureResident(noiseTexture);
     g_noiseTexture = noiseTexture;
 }
 
@@ -619,11 +624,11 @@ void OpenGLGraphicsManager::createGpuResources() {
     // @TODO: delete!
     unsigned int m1 = loadMTexture(LTC1);
     unsigned int m2 = loadMTexture(LTC2);
-    cache.u_ltc_1 = ::gl::MakeTextureResident(m1);
-    cache.u_ltc_2 = ::gl::MakeTextureResident(m2);
+    cache.u_ltc_1 = MakeTextureResident(m1);
+    cache.u_ltc_2 = MakeTextureResident(m2);
 
-    cache.c_voxel_map = ::gl::MakeTextureResident(g_albedoVoxel.GetHandle());
-    cache.c_voxel_normal_map = ::gl::MakeTextureResident(g_normalVoxel.GetHandle());
+    cache.c_voxel_map = MakeTextureResident(g_albedoVoxel.GetHandle());
+    cache.c_voxel_normal_map = MakeTextureResident(g_normalVoxel.GetHandle());
 
     cache.u_grass_base_color = grass_image->gpu_texture->get_resident_handle();
 
