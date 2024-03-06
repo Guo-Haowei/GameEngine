@@ -48,10 +48,17 @@ MeshComponent make_plane_mesh(const vec3& p_scale) {
         vec2(1, 1),  // top-right
     };
 
+    // clang-format off
     mesh.indices = {
+#if 1
         A, B, D,  // ABD
         D, B, C,  // DBC
+#else
+        A, D, B, // ADB
+        D, C, B, // DBC
+#endif
     };
+    // clang-format on
 
     MeshComponent::MeshSubset subset;
     subset.index_count = static_cast<uint32_t>(mesh.indices.size());
@@ -374,6 +381,12 @@ MeshComponent make_sky_box_mesh() {
         // B, G, C,  // BGC
     };
 
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(mesh.indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.create_render_data();
     return mesh;
 }
 

@@ -23,6 +23,7 @@ public:
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
     void set_viewport(const Viewport& p_viewport) final;
 
+    const MeshBuffers* create_mesh(const MeshComponent& p_mesh) final;
     void set_mesh(const MeshBuffers* p_mesh) final;
     void draw_elements(uint32_t p_count, uint32_t offset) final;
 

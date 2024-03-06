@@ -3,6 +3,7 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
+#include "core/math/geometry.h"
 #include "rendering/render_graph/render_graph_defines.h"
 
 #define DEFINE_DVAR
@@ -51,9 +52,11 @@ void request_env_map(const std::string& path) {
         handle->set(image);
         GraphicsManager::singleton().request_texture(handle, [](Image* p_image) {
             // @TODO: better way
-            g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
-            g_constantCache.update();
-            s_need_update_env = true;
+            if (p_image->gpu_texture) {
+                g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
+                g_constantCache.update();
+                s_need_update_env = true;
+            }
         });
     });
 }
@@ -354,10 +357,16 @@ RenderManager::RenderManager() : Module("RenderManager") {
 }
 
 bool RenderManager::initialize() {
+    m_screen_quad_buffers = GraphicsManager::singleton().create_mesh(make_plane_mesh(vec3(1)));
+    m_skybox_buffers = GraphicsManager::singleton().create_mesh(make_sky_box_mesh());
+
     return true;
 }
 
 void RenderManager::finalize() {
+    m_screen_quad_buffers = nullptr;
+    m_skybox_buffers = nullptr;
+
     m_free_point_light_shadow.clear();
     return;
 }
@@ -384,6 +393,16 @@ void RenderManager::free_point_light_shadow_map(PointShadowHandle& p_handle) {
     DEV_ASSERT_INDEX(p_handle, MAX_LIGHT_CAST_SHADOW_COUNT);
     m_free_point_light_shadow.push_back(p_handle);
     p_handle = INVALID_POINT_SHADOW_HANDLE;
+}
+
+void RenderManager::draw_quad() {
+    GraphicsManager::singleton().set_mesh(m_screen_quad_buffers);
+    GraphicsManager::singleton().draw_elements(m_screen_quad_buffers->index_count);
+}
+
+void RenderManager::draw_skybox() {
+    GraphicsManager::singleton().set_mesh(m_skybox_buffers);
+    GraphicsManager::singleton().draw_elements(m_skybox_buffers->index_count);
 }
 
 }  // namespace my

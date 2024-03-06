@@ -2,16 +2,13 @@
 #include "core/framework/graphics_manager.h"
 #include "rendering/render_data.h"
 #include "rendering/render_graph/pass_creator.h"
+#include "rendering/render_manager.h"
 
 // @TODO: refactor
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 
 extern void fill_camera_matrices(PerPassConstantBuffer& buffer);
-
-// @TODO: move the following to renderer
-extern void R_DrawQuad();
-extern void draw_cube_map();
 
 namespace my::rg {
 
@@ -29,7 +26,7 @@ static void lighting_pass_func(const Subpass* p_subpass) {
     manager.set_pipeline_state(PROGRAM_LIGHTING_VXGI);
 
     // @TODO: fix it
-    R_DrawQuad();
+    RenderManager::singleton().draw_quad();
 
     // @TODO: fix it
     auto camera = SceneManager::singleton().get_scene().m_camera;
@@ -44,15 +41,14 @@ static void lighting_pass_func(const Subpass* p_subpass) {
     // }
 
     // @TODO: fix skybox
-    // draw skybox here
-    {
+    if (GraphicsManager::singleton().get_backend() == Backend::OPENGL) {
         auto render_data = GraphicsManager::singleton().get_render_data();
         RenderData::Pass& pass = render_data->main_pass;
 
         pass.fill_perpass(g_per_pass_cache.cache);
         g_per_pass_cache.update();
         GraphicsManager::singleton().set_pipeline_state(PROGRAM_ENV_SKYBOX);
-        draw_cube_map();
+        RenderManager::singleton().draw_skybox();
     }
 }
 

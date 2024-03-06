@@ -75,6 +75,7 @@ public:
     virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
     virtual void set_viewport(const Viewport& p_viewport) = 0;
 
+    virtual const MeshBuffers* create_mesh(const MeshComponent& p_mesh) = 0;
     virtual void set_mesh(const MeshBuffers* p_mesh) = 0;
     virtual void draw_elements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 

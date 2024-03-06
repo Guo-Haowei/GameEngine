@@ -31,9 +31,8 @@ GpuTexture g_albedoVoxel;
 GpuTexture g_normalVoxel;
 
 // @TODO: refactor
-OpenGLMeshBuffers g_box;
-OpenGLMeshBuffers g_skybox;
-OpenGLMeshBuffers g_grass;
+OpenGLMeshBuffers* g_box;
+OpenGLMeshBuffers* g_grass;
 
 static GLuint g_noiseTexture;
 
@@ -207,62 +206,6 @@ void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-static void create_mesh_data(const MeshComponent& mesh, OpenGLMeshBuffers& out_mesh) {
-    const bool has_normals = !mesh.normals.empty();
-    const bool has_uvs = !mesh.texcoords_0.empty();
-    const bool has_tangents = !mesh.tangents.empty();
-    const bool has_joints = !mesh.joints_0.empty();
-    const bool has_weights = !mesh.weights_0.empty();
-
-    int vbo_count = 1 + has_normals + has_uvs + has_tangents + has_joints + has_weights;
-    DEV_ASSERT(vbo_count <= array_length(out_mesh.vbos));
-
-    glGenVertexArrays(1, &out_mesh.vao);
-
-    // @TODO: fix this hack
-    glGenBuffers(1, &out_mesh.ebo);
-    glGenBuffers(6, out_mesh.vbos);
-
-    int slot = -1;
-    glBindVertexArray(out_mesh.vao);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, out_mesh.ebo);
-
-    slot = get_position_slot();
-    // @TODO: refactor these
-    bind_to_slot(out_mesh.vbos[slot], slot, 3);
-    buffer_storage(out_mesh.vbos[slot], mesh.positions);
-
-    if (has_normals) {
-        slot = get_normal_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 3);
-        buffer_storage(out_mesh.vbos[slot], mesh.normals);
-    }
-    if (has_uvs) {
-        slot = get_uv_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 2);
-        buffer_storage(out_mesh.vbos[slot], mesh.texcoords_0);
-    }
-    if (has_tangents) {
-        slot = get_tangent_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 3);
-        buffer_storage(out_mesh.vbos[slot], mesh.tangents);
-    }
-    if (has_joints) {
-        slot = get_bone_id_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 4);
-        buffer_storage(out_mesh.vbos[slot], mesh.joints_0);
-        DEV_ASSERT(!mesh.weights_0.empty());
-        slot = get_bone_weight_slot();
-        bind_to_slot(out_mesh.vbos[slot], slot, 4);
-        buffer_storage(out_mesh.vbos[slot], mesh.weights_0);
-    }
-
-    buffer_storage(out_mesh.ebo, mesh.indices);
-    out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
-
-    glBindVertexArray(0);
-}
-
 void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
     unused(p_subpass);
     if (p_flags == CLEAR_NONE) {
@@ -296,6 +239,71 @@ void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
                p_viewport.top_left_y,
                p_viewport.width,
                p_viewport.height);
+}
+
+const MeshBuffers* OpenGLGraphicsManager::create_mesh(const MeshComponent& p_mesh) {
+    RID rid = m_meshes.make_rid();
+    OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+    p_mesh.gpu_resource = mesh_buffers;
+
+    auto create_mesh_data = [](const MeshComponent& p_mesh, OpenGLMeshBuffers& p_out_mesh) {
+        const bool has_normals = !p_mesh.normals.empty();
+        const bool has_uvs = !p_mesh.texcoords_0.empty();
+        const bool has_tangents = !p_mesh.tangents.empty();
+        const bool has_joints = !p_mesh.joints_0.empty();
+        const bool has_weights = !p_mesh.weights_0.empty();
+
+        int vbo_count = 1 + has_normals + has_uvs + has_tangents + has_joints + has_weights;
+        DEV_ASSERT(vbo_count <= array_length(p_out_mesh.vbos));
+
+        glGenVertexArrays(1, &p_out_mesh.vao);
+
+        // @TODO: fix this hack
+        glGenBuffers(1, &p_out_mesh.ebo);
+        glGenBuffers(6, p_out_mesh.vbos);
+
+        int slot = -1;
+        glBindVertexArray(p_out_mesh.vao);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_out_mesh.ebo);
+
+        slot = get_position_slot();
+        // @TODO: refactor these
+        bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
+        buffer_storage(p_out_mesh.vbos[slot], p_mesh.positions);
+
+        if (has_normals) {
+            slot = get_normal_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.normals);
+        }
+        if (has_uvs) {
+            slot = get_uv_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 2);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.texcoords_0);
+        }
+        if (has_tangents) {
+            slot = get_tangent_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.tangents);
+        }
+        if (has_joints) {
+            slot = get_bone_id_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 4);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.joints_0);
+            DEV_ASSERT(!p_mesh.weights_0.empty());
+            slot = get_bone_weight_slot();
+            bind_to_slot(p_out_mesh.vbos[slot], slot, 4);
+            buffer_storage(p_out_mesh.vbos[slot], p_mesh.weights_0);
+        }
+
+        buffer_storage(p_out_mesh.ebo, p_mesh.indices);
+        p_out_mesh.index_count = static_cast<uint32_t>(p_mesh.indices.size());
+
+        glBindVertexArray(0);
+    };
+
+    create_mesh_data(p_mesh, *mesh_buffers);
+    return mesh_buffers;
 }
 
 void OpenGLGraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
@@ -509,16 +517,14 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
     return;
 }
 
-// @TODO: refactor this, instead off iterate through all the meshes, find a more atomic way
+// @TODO: refactor this, instead off iterate through all the meshes, find a better way
 void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
             continue;
         }
-        RID rid = m_meshes.make_rid();
-        OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-        mesh.gpu_resource = mesh_buffers;
-        create_mesh_data(mesh, *mesh_buffers);
+
+        create_mesh(mesh);
     }
 
     g_constantCache.update();
@@ -576,10 +582,9 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     create_ssao_resource();
 
-    // create a dummy box data
-    create_mesh_data(make_grass_billboard(), g_grass);
-    create_mesh_data(make_box_mesh(), g_box);
-    create_mesh_data(make_sky_box_mesh(), g_skybox);
+    // @TODO: move to renderer
+    g_grass = (OpenGLMeshBuffers*)create_mesh(make_grass_billboard());
+    g_box = (OpenGLMeshBuffers*)create_mesh(make_box_mesh());
 
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
 
@@ -596,9 +601,6 @@ void OpenGLGraphicsManager::createGpuResources() {
         g_albedoVoxel.create3DEmpty(info);
         g_normalVoxel.create3DEmpty(info);
     }
-
-    // create box quad
-    R_CreateQuad();
 
     auto& cache = g_constantCache.cache;
 

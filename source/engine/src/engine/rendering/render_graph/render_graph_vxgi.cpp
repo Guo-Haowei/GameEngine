@@ -14,10 +14,9 @@
 #include "rendering/gl_utils.h"
 extern GpuTexture g_albedoVoxel;
 extern GpuTexture g_normalVoxel;
-extern OpenGLMeshBuffers g_box;
-extern OpenGLMeshBuffers g_skybox;
 // @TODO: add as a object
-extern OpenGLMeshBuffers g_grass;
+extern OpenGLMeshBuffers* g_box;
+extern OpenGLMeshBuffers* g_grass;
 
 // @TODO: refactor
 void fill_camera_matrices(PerPassConstantBuffer& buffer) {
@@ -25,11 +24,6 @@ void fill_camera_matrices(PerPassConstantBuffer& buffer) {
     buffer.u_proj_view_matrix = camera->get_projection_view_matrix();
     buffer.u_view_matrix = camera->get_view_matrix();
     buffer.u_proj_matrix = camera->get_projection_matrix();
-}
-
-void draw_cube_map() {
-    glBindVertexArray(g_skybox.vao);
-    glDrawElementsInstanced(GL_TRIANGLES, g_skybox.index_count, GL_UNSIGNED_INT, 0, 1);
 }
 // @TODO: fix
 
@@ -122,7 +116,7 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
         g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
         g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
         g_per_pass_cache.update();
-        draw_cube_map();
+        RenderManager::singleton().draw_skybox();
     }
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->texture->get_handle());
@@ -143,7 +137,7 @@ void generate_brdf_func(const Subpass* p_subpass) {
     GraphicsManager::singleton().set_render_target(p_subpass);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
-    R_DrawQuad();
+    RenderManager::singleton().draw_quad();
 }
 
 void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
@@ -167,7 +161,7 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
         g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
         g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
         g_per_pass_cache.update();
-        draw_cube_map();
+        RenderManager::singleton().draw_skybox();
     }
 }
 
@@ -195,7 +189,7 @@ void prefilter_pass_func(const Subpass* p_subpass) {
             GraphicsManager::singleton().set_render_target(p_subpass, face_id, mip_idx);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glViewport(0, 0, width, height);
-            draw_cube_map();
+            RenderManager::singleton().draw_skybox();
         }
     }
 
@@ -215,7 +209,7 @@ static void highlight_select_pass_func(const Subpass* p_subpass) {
     manager.set_pipeline_state(PROGRAM_HIGHLIGHT);
     manager.set_stencil_ref(STENCIL_FLAG_SELECTED);
     glClear(GL_COLOR_BUFFER_BIT);
-    R_DrawQuad();
+    RenderManager::singleton().draw_quad();
     manager.set_stencil_ref(0);
 }
 
@@ -230,7 +224,7 @@ void ssao_pass_func(const Subpass* p_subpass) {
 
     GraphicsManager::singleton().set_pipeline_state(PROGRAM_SSAO);
     glClear(GL_COLOR_BUFFER_BIT);
-    R_DrawQuad();
+    RenderManager::singleton().draw_quad();
 }
 
 void debug_vxgi_pass_func(const Subpass* p_subpass) {
@@ -251,10 +245,10 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     fill_camera_matrices(g_per_pass_cache.cache);
     g_per_pass_cache.update();
 
-    glBindVertexArray(g_box.vao);
+    glBindVertexArray(g_box->vao);
 
     const int size = DVAR_GET_INT(r_voxel_size);
-    glDrawElementsInstanced(GL_TRIANGLES, g_box.index_count, GL_UNSIGNED_INT, 0, size * size * size);
+    glDrawElementsInstanced(GL_TRIANGLES, g_box->index_count, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
 static void tone_pass_func(const Subpass* p_subpass) {
@@ -278,7 +272,7 @@ static void tone_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         GraphicsManager::singleton().set_pipeline_state(PROGRAM_TONE);
-        R_DrawQuad();
+        RenderManager::singleton().draw_quad();
     }
 }
 
@@ -297,7 +291,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     g_debug_draw_cache.cache.c_display_channel = p_channel;
     g_debug_draw_cache.cache.c_debug_draw_map = p_handle;
     g_debug_draw_cache.update();
-    R_DrawQuad();
+    RenderManager::singleton().draw_quad();
 }
 
 void final_pass_func(const Subpass* p_subpass) {

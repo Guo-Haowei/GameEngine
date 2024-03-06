@@ -33,14 +33,16 @@ void vertex_attrib(MeshComponent::VertexAttribute& attrib, const std::vector<T>&
 
 void MeshComponent::create_render_data() {
     // @HACK: fill dummy textures
+#if 0
     if (texcoords_0.empty()) {
-        for (size_t i = 0; i < normals.size(); ++i) {
+        for (size_t i = 0; i < positions.size(); ++i) {
             texcoords_0.emplace_back(vec2(0, 0));
         }
     }
 
     DEV_ASSERT(texcoords_0.size());
     DEV_ASSERT(normals.size());
+#endif
     // AABB
     local_bound.make_invalid();
     for (MeshSubset& subset : subsets) {

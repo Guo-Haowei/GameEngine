@@ -62,6 +62,33 @@ CBUFFER(BoneConstantBuffer, 5) {
 
 #ifndef HLSL_LANG
 
+// @TODO: enable for HLSL
+CBUFFER(MaterialConstantBuffer, 3) {
+    vec4 u_albedo_color;
+
+    float u_metallic;
+    float u_roughness;
+    float u_reflect_power;
+    float u_emissive_power;
+
+    int u_has_albedo_map;
+    int u_has_pbr_map;
+    int u_has_normal_map;
+    int _u_padding1;
+
+    sampler2D u_albedo_map;
+    sampler2D u_normal_map;
+
+    sampler2D u_pbr_map;
+    sampler2D _u_dummy_padding;
+
+    vec4 _material_padding_0;
+    vec4 _material_padding_1;
+    vec4 _material_padding_2;
+    mat4 _material_padding_3;
+    mat4 _material_padding_4;
+};
+
 struct Light {
     vec3 color;
     int type;
@@ -110,32 +137,6 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     int u_enable_csm;
     int u_enable_vxgi;
     int u_debug_csm;
-};
-
-CBUFFER(MaterialConstantBuffer, 3) {
-    vec4 u_albedo_color;
-
-    float u_metallic;
-    float u_roughness;
-    float u_reflect_power;
-    float u_emissive_power;
-
-    int u_has_albedo_map;
-    int u_has_pbr_map;
-    int u_has_normal_map;
-    int _u_padding1;
-
-    sampler2D u_albedo_map;
-    sampler2D u_normal_map;
-
-    sampler2D u_pbr_map;
-    sampler2D _u_dummy_padding;
-
-    vec4 _material_padding_0;
-    vec4 _material_padding_1;
-    vec4 _material_padding_2;
-    mat4 _material_padding_3;
-    mat4 _material_padding_4;
 };
 
 CBUFFER(PerSceneConstantBuffer, 4) {

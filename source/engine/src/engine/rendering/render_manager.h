@@ -6,6 +6,9 @@
 #include "rendering/texture.h"
 #include "scene/scene.h"
 
+// @TODO: refactor
+#include "core/framework/graphics_manager.h"
+
 namespace my {
 
 using PointShadowHandle = int;
@@ -23,8 +26,13 @@ public:
     PointShadowHandle allocate_point_light_shadow_map();
     void free_point_light_shadow_map(PointShadowHandle& p_handle);
 
+    void draw_quad();
+    void draw_skybox();
+
 private:
     std::list<PointShadowHandle> m_free_point_light_shadow;
+    const MeshBuffers* m_screen_quad_buffers;
+    const MeshBuffers* m_skybox_buffers;
 };
 
 }  // namespace my

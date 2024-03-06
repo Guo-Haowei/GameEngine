@@ -38,7 +38,6 @@ void main() {
         base_color = vec3(0.6);
     }
 
-    // @TODO: move this before those heavy calculation
     if (emissive > 0.0) {
         out_color = emissive * base_color;
         return;

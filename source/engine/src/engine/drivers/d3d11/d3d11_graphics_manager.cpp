@@ -360,6 +360,62 @@ void D3d11GraphicsManager::set_viewport(const Viewport& p_viewport) {
     m_ctx->RSSetViewports(1, &vp);
 }
 
+const MeshBuffers* D3d11GraphicsManager::create_mesh(const MeshComponent& p_mesh) {
+    auto create_mesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
+        auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
+            ID3D11Buffer* buffer = nullptr;
+            // vertex buffer
+            D3D11_BUFFER_DESC bufferDesc{};
+            bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+            bufferDesc.ByteWidth = (UINT)p_size_in_byte;
+            bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+            bufferDesc.CPUAccessFlags = 0;
+            bufferDesc.MiscFlags = 0;
+
+            D3D11_SUBRESOURCE_DATA data{};
+            data.pSysMem = p_data;
+            D3D_FAIL_V_MSG(p_device->CreateBuffer(&bufferDesc, &data, &buffer),
+                           nullptr,
+                           "Failed to create vertex buffer");
+            return buffer;
+        };
+
+        out_mesh.vertex_buffer[0] = create_vertex_buffer(sizeof(vec3) * mesh.positions.size(), mesh.positions.data());
+
+        if (!mesh.normals.empty()) {
+            out_mesh.vertex_buffer[1] = create_vertex_buffer(sizeof(vec3) * mesh.normals.size(), mesh.normals.data());
+        }
+
+        if (!mesh.joints_0.empty()) {
+            out_mesh.vertex_buffer[4] = create_vertex_buffer(sizeof(ivec4) * mesh.joints_0.size(), mesh.joints_0.data());
+        }
+        if (!mesh.weights_0.empty()) {
+            out_mesh.vertex_buffer[5] = create_vertex_buffer(sizeof(vec4) * mesh.weights_0.size(), mesh.weights_0.data());
+        }
+        {
+            // index buffer
+            out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
+            D3D11_BUFFER_DESC bufferDesc{};
+            bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+            bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.index_count);
+            bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+            bufferDesc.CPUAccessFlags = 0;
+            bufferDesc.MiscFlags = 0;
+
+            D3D11_SUBRESOURCE_DATA data{};
+            data.pSysMem = mesh.indices.data();
+            D3D_FAIL_MSG(p_device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
+                         "Failed to create index buffer");
+        }
+    };
+
+    RID rid = m_meshes.make_rid();
+    D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+    p_mesh.gpu_resource = mesh_buffers;
+    create_mesh_data(m_device.Get(), p_mesh, *mesh_buffers);
+    return mesh_buffers;
+}
+
 void D3d11GraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
@@ -392,51 +448,6 @@ void D3d11GraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
     m_ctx->DrawIndexed(p_count, p_offset, 0);
 }
 
-static void create_mesh_data(ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
-    auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
-        ID3D11Buffer* buffer = nullptr;
-        // vertex buffer
-        D3D11_BUFFER_DESC bufferDesc{};
-        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-        bufferDesc.ByteWidth = (UINT)p_size_in_byte;
-        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-        bufferDesc.CPUAccessFlags = 0;
-        bufferDesc.MiscFlags = 0;
-
-        D3D11_SUBRESOURCE_DATA data{};
-        data.pSysMem = p_data;
-        D3D_FAIL_V_MSG(p_device->CreateBuffer(&bufferDesc, &data, &buffer),
-                       nullptr,
-                       "Failed to create vertex buffer");
-        return buffer;
-    };
-
-    out_mesh.vertex_buffer[0] = create_vertex_buffer(sizeof(vec3) * mesh.positions.size(), mesh.positions.data());
-    out_mesh.vertex_buffer[1] = create_vertex_buffer(sizeof(vec3) * mesh.normals.size(), mesh.normals.data());
-
-    if (!mesh.joints_0.empty()) {
-        out_mesh.vertex_buffer[4] = create_vertex_buffer(sizeof(ivec4) * mesh.joints_0.size(), mesh.joints_0.data());
-    }
-    if (!mesh.weights_0.empty()) {
-        out_mesh.vertex_buffer[5] = create_vertex_buffer(sizeof(vec4) * mesh.weights_0.size(), mesh.weights_0.data());
-    }
-    {
-        // index buffer
-        out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
-        D3D11_BUFFER_DESC bufferDesc{};
-        bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-        bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.index_count);
-        bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-        bufferDesc.CPUAccessFlags = 0;
-        bufferDesc.MiscFlags = 0;
-
-        D3D11_SUBRESOURCE_DATA data{};
-        data.pSysMem = mesh.indices.data();
-        D3D_FAIL_MSG(p_device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
-                     "Failed to create index buffer");
-    }
-}
-
 void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
@@ -444,10 +455,8 @@ void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
             LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.get_name());
             continue;
         }
-        RID rid = m_meshes.make_rid();
-        D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-        mesh.gpu_resource = mesh_buffers;
-        create_mesh_data(m_device.Get(), mesh, *mesh_buffers);
+
+        create_mesh(mesh);
     }
 }
 
