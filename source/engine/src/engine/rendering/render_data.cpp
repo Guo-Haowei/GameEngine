@@ -32,7 +32,7 @@ static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_c
 }
 
 UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
-UniformBuffer<PerFrameConstantBuffer> g_perFrameCache;
+UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
@@ -49,7 +49,7 @@ RenderData::RenderData() {
     m_bone_uniform = create_uniform<BoneConstantBuffer>(gm, 16);
 
     create_uniform_buffer<PerPassConstantBuffer>(g_per_pass_cache);
-    create_uniform_buffer<PerFrameConstantBuffer>(g_perFrameCache);
+    create_uniform_buffer<PerFrameConstantBuffer>(g_per_frame_cache);
     create_uniform_buffer<PerSceneConstantBuffer>(g_constantCache);
     create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
 }
@@ -190,7 +190,7 @@ void RenderData::update(const Scene* p_scene) {
         // cascaded shadow map
         for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
             // @TODO: fix this
-            mat4 light_matrix = g_perFrameCache.cache.u_main_light_matrices[i];
+            mat4 light_matrix = g_per_frame_cache.cache.u_main_light_matrices[i];
             Frustum light_frustum(light_matrix);
             shadow_passes[i].projection_view_matrix = light_matrix;
             fill(

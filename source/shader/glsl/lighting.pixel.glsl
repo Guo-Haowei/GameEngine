@@ -18,6 +18,8 @@ vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
 
 void main() {
     const vec2 texcoord = pass_uv;
+
+    // @TODO: check if this is necessary
     float depth = texture(u_gbuffer_depth_map, texcoord).r;
 
     if (depth > 0.999) discard;

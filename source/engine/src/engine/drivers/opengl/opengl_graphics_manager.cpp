@@ -659,8 +659,6 @@ void OpenGLGraphicsManager::createGpuResources() {
 void OpenGLGraphicsManager::render() {
     OPTICK_EVENT();
 
-    g_perFrameCache.update();
-
     m_render_graph.execute();
 
     // @TODO: move it somewhere else

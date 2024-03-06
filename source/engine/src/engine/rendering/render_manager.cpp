@@ -165,7 +165,7 @@ void fill_constant_buffers(const Scene& scene) {
     Camera& camera = *scene.m_camera.get();
 
     // THESE SHOULDN'T BE HERE
-    auto& cache = g_perFrameCache.cache;
+    auto& cache = g_per_frame_cache.cache;
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), MAX_LIGHT_COUNT);
     // DEV_ASSERT(light_count);
 
@@ -376,6 +376,8 @@ void RenderManager::update(Scene& p_scene) {
 
     renderer::fill_constant_buffers(p_scene);
     GraphicsManager::singleton().get_render_data()->update(&p_scene);
+
+    g_per_frame_cache.update();
 }
 
 PointShadowHandle RenderManager::allocate_point_light_shadow_map() {

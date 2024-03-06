@@ -1,5 +1,6 @@
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out vec2 out_color;
+
 #include "pbr.glsl"
 
 vec2 IntegrateBRDF(float NdotV, float roughness) {

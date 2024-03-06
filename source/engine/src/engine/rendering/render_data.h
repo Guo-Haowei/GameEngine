@@ -10,7 +10,7 @@ namespace my {
 struct MeshBuffers;
 
 extern UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
-extern UniformBuffer<PerFrameConstantBuffer> g_perFrameCache;
+extern UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
