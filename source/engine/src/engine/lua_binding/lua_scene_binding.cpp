@@ -1,6 +1,6 @@
 #include "lua_scene_binding.h"
 
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "sol/sol.hpp"
 
 namespace my {

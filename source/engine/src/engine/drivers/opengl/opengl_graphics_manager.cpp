@@ -3,7 +3,6 @@
 #include "assets/image.h"
 #include "core/debugger/profiler.h"
 #include "core/framework/asset_manager.h"
-#include "core/framework/scene_manager.h"
 #include "core/math/geometry.h"
 #include "drivers/opengl/opengl_pipeline_state_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
@@ -12,7 +11,6 @@
 #include "rendering/GpuTexture.h"
 #include "rendering/gl_utils.h"
 #include "rendering/render_graph/render_graph_defines.h"
-#include "rendering/renderer.h"
 #include "rendering/rendering_dvars.h"
 #include "vsinput.glsl.h"
 
@@ -659,14 +657,6 @@ void OpenGLGraphicsManager::createGpuResources() {
 
 void OpenGLGraphicsManager::render() {
     OPTICK_EVENT();
-
-    {
-        OPTICK_EVENT("prepare render data");
-        // @TODO: move outside
-        Scene& scene = SceneManager::singleton().get_scene();
-        renderer::fill_constant_buffers(scene);
-        m_render_data->update(&scene);
-    }
 
     g_perFrameCache.update();
 

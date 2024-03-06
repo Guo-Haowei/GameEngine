@@ -8,7 +8,7 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "lua_binding/lua_scene_binding.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 #include "scene/scene.h"
 

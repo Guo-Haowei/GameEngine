@@ -11,6 +11,7 @@ class DisplayManager;
 class GraphicsManager;
 class ImGuiModule;
 class PhysicsManager;
+class RenderManager;
 class SceneManager;
 
 class Application {
@@ -43,6 +44,7 @@ private:
     std::shared_ptr<PhysicsManager> m_physics_manager;
     std::shared_ptr<DisplayManager> m_display_server;
     std::shared_ptr<GraphicsManager> m_graphics_manager;
+    std::shared_ptr<RenderManager> m_render_manager;
     std::shared_ptr<ImGuiModule> m_imgui_module;
 
     std::vector<Module*> m_modules;

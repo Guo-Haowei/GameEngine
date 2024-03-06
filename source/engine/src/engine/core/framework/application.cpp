@@ -14,7 +14,7 @@
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
 #include "imgui/imgui.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
 #define DEFINE_DVAR
@@ -50,6 +50,7 @@ void Application::setup_modules() {
     m_imgui_module = std::make_shared<ImGuiModule>();
     m_display_server = DisplayManager::create();
     m_graphics_manager = GraphicsManager::create();
+    m_render_manager = std::make_shared<RenderManager>();
 
     register_module(m_asset_manager.get());
     register_module(m_scene_manager.get());
@@ -57,6 +58,7 @@ void Application::setup_modules() {
     register_module(m_imgui_module.get());
     register_module(m_display_server.get());
     register_module(m_graphics_manager.get());
+    register_module(m_render_manager.get());
 
     m_event_queue.register_listener(m_graphics_manager.get());
     m_event_queue.register_listener(m_physics_manager.get());
@@ -79,7 +81,6 @@ int Application::run(int argc, const char** argv) {
 
     thread::initialize();
     jobsystem::initialize();
-    renderer::initialize();
 
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->get_name());
@@ -142,8 +143,11 @@ int Application::run(int argc, const char** argv) {
         ImGui::Render();
 
         m_scene_manager->update(dt);
+        auto& scene = m_scene_manager->get_scene();
 
         m_physics_manager->update(dt);
+
+        m_render_manager->update(scene);
 
         m_graphics_manager->update(dt);
         renderer::reset_need_update_env();
@@ -174,7 +178,6 @@ int Application::run(int argc, const char** argv) {
         LOG_VERBOSE("module '{}' finalized", module->get_name());
     }
 
-    renderer::finalize();
     jobsystem::finalize();
     thread::finailize();
 

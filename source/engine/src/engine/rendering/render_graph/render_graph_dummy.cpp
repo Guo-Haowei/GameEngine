@@ -24,7 +24,9 @@ void create_render_graph_dummy(RenderGraph& p_graph) {
         creator.add_shadow_pass();
     }
     creator.add_gbuffer_pass();
-    creator.add_lighting_pass();
+    if (0) {
+        creator.add_lighting_pass();
+    }
 
     p_graph.compile();
 }

@@ -11,9 +11,6 @@
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
 #include "rendering/texture.h"
-// @TODO: refactor
-#include "core/framework/scene_manager.h"
-#include "rendering/renderer.h"
 
 namespace my {
 
@@ -45,11 +42,6 @@ void D3d11GraphicsManager::finalize() {
 }
 
 void D3d11GraphicsManager::render() {
-    Scene& scene = SceneManager::singleton().get_scene();
-    renderer::fill_constant_buffers(scene);
-
-    m_render_data->update(&scene);
-
     m_render_graph.execute();
 
     // @TODO: fix the following

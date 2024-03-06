@@ -6,7 +6,7 @@
 #include "core/framework/common_dvars.h"
 #include "core/framework/graphics_manager.h"
 #include "core/math/frustum.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "scene/scene.h"
 
 //

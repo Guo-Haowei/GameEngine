@@ -1,7 +1,7 @@
 #include "light_component.h"
 
 #include "core/io/archive.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "scene/transform_component.h"
 
 namespace my {
@@ -37,11 +37,11 @@ void LightComponent::update(const TransformComponent& p_transform) {
         if (cast_shadow()) {
             // @TODO: get rid of the
             if (m_shadow_map_index == INVALID_POINT_SHADOW_HANDLE) {
-                m_shadow_map_index = renderer::allocate_point_light_shadow_map();
+                m_shadow_map_index = RenderManager::singleton().allocate_point_light_shadow_map();
             }
         } else {
             if (m_shadow_map_index != INVALID_POINT_SHADOW_HANDLE) {
-                renderer::free_point_light_shadow_map(m_shadow_map_index);
+                RenderManager::singleton().free_point_light_shadow_map(m_shadow_map_index);
             }
         }
 

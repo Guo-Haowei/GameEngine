@@ -7,8 +7,10 @@
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 
-extern void R_DrawQuad();
 extern void fill_camera_matrices(PerPassConstantBuffer& buffer);
+
+// @TODO: move the following to renderer
+extern void R_DrawQuad();
 extern void draw_cube_map();
 
 namespace my::rg {

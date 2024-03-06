@@ -5,7 +5,7 @@
 #include "rendering/pipeline_state.h"
 #include "rendering/render_data.h"
 #include "rendering/render_graph/pass_creator.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
 // @TODO: refactor

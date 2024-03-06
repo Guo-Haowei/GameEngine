@@ -131,7 +131,7 @@ protected:
     // @TODO: cache
     PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
 
-    // @TODO: move following to renderer
+    // @TODO: move the following to renderer
     std::shared_ptr<RenderData> m_render_data;
     rg::RenderGraph m_render_graph;
 

@@ -3,7 +3,7 @@
 #include "core/io/archive.h"
 #include "core/math/geometry.h"
 #include "core/systems/job_system.h"
-#include "rendering/renderer.h"
+#include "rendering/render_manager.h"
 
 namespace my {
 
@@ -297,7 +297,7 @@ void Scene::remove_entity(Entity entity) {
     if (light) {
         auto shadow_handle = light->get_shadow_map_index();
         if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
-            renderer::free_point_light_shadow_map(shadow_handle);
+            RenderManager::singleton().free_point_light_shadow_map(shadow_handle);
         }
         m_LightComponents.remove(entity);
     }
