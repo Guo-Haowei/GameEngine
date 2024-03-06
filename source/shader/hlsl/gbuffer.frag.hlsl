@@ -1,5 +1,5 @@
 #include "cbuffer.h"
-#include "hlsl/vsoutput.hlsl"
+#include "hlsl/input_output.hlsl"
 #include "texture_binding.h"
 
 SamplerState u_sampler : register(s0);

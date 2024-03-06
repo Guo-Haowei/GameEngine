@@ -5,6 +5,7 @@
 
 namespace my {
 
+// input layouts
 static const InputLayoutDesc s_input_layout_mesh = {
     .elements = {
         { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
@@ -16,6 +17,13 @@ static const InputLayoutDesc s_input_layout_mesh = {
     }
 };
 
+static const InputLayoutDesc s_input_layout_position = {
+    .elements = {
+        { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
+    }
+};
+
+// rasterizer states
 static const RasterizerDesc s_default_rasterizer = {
     .fill_mode = FillMode::SOLID,
     .cull_mode = CullMode::BACK,
@@ -86,6 +94,15 @@ bool PipelineStateManager::initialize() {
         info.depth_stencil_desc = &s_gbuffer_depth_stencil;
         m_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
     }
+    {
+        PipelineCreateInfo info;
+        info.vs = "screenspace_quad.vert";
+        info.ps = "lighting.frag";
+        info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.input_layout_desc = &s_input_layout_position;
+        m_cache[PROGRAM_LIGHTING] = create(info);
+    }
 
     // @HACK: only support this many shaders
     if (GraphicsManager::singleton().get_backend() == Backend::D3D11) {
@@ -140,14 +157,6 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_SSAO] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "screenspace_quad.vert";
-        info.ps = "lighting.frag";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
         PipelineCreateInfo info;

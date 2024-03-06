@@ -71,6 +71,7 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
 }
 
 std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineCreateInfo& p_info) {
+    // @TODO: properly cache everything
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::singleton_ptr());
     auto& device = graphics_manager->get_d3d_device();
     DEV_ASSERT(device);
