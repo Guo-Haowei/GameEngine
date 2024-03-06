@@ -187,7 +187,7 @@ uint64_t GraphicsManager::get_final_image() const {
     }
 
     if (texture) {
-        return texture->get_imgui_handle();
+        return texture->get_handle();
     }
 
     return 0;

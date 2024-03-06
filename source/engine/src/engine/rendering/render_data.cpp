@@ -58,17 +58,19 @@ RenderData::RenderData() {
 }
 
 static void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.u_albedo_color = material->base_color;
+    cb.u_base_color = material->base_color;
     cb.u_metallic = material->metallic;
     cb.u_roughness = material->roughness;
     cb.u_emissive_power = material->emissive;
 
-    auto set_texture = [&](int idx, sampler2D& out_handle) {
-        if (!material->textures[idx].enabled) {
+    auto set_texture = [&](int p_idx, sampler2D& p_out_handle) {
+        p_out_handle = 0;
+
+        if (!material->textures[p_idx].enabled) {
             return false;
         }
 
-        ImageHandle* handle = material->textures[idx].image;
+        ImageHandle* handle = material->textures[p_idx].image;
         if (!handle) {
             return false;
         }
@@ -83,13 +85,13 @@ static void fill_material_constant_buffer(const MaterialComponent* material, Mat
             return false;
         }
 
-        out_handle = texture->get_resident_handle();
+        p_out_handle = texture->get_handle();
         return true;
     };
 
-    cb.u_has_albedo_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.u_albedo_map);
-    cb.u_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.u_normal_map);
-    cb.u_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.u_pbr_map);
+    cb.u_has_base_color_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.u_base_color_map_handle);
+    cb.u_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.u_normal_map_handle);
+    cb.u_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.u_material_map_handle);
 }
 
 void RenderData::clear() {

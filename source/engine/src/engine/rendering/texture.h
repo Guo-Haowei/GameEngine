@@ -66,9 +66,10 @@ struct Texture {
 
     virtual ~Texture() = default;
 
-    virtual uint32_t get_handle() const = 0;
     virtual uint64_t get_resident_handle() const = 0;
-    virtual uint64_t get_imgui_handle() const = 0;
+    virtual uint64_t get_handle() const = 0;
+
+    uint32_t get_handle32() const { return static_cast<uint32_t>(get_handle()); }
 
     const TextureDesc desc;
 };

@@ -119,7 +119,7 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
         RenderManager::singleton().draw_skybox();
     }
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->texture->get_handle());
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->texture->get_handle32());
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }

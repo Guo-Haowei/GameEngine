@@ -342,6 +342,16 @@ void OpenGLGraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
 }
 
+void OpenGLGraphicsManager::bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+    if (p_dimension != Dimension::TEXTURE_2D) {
+        CRASH_NOW();
+    }
+    if (p_handle != 0) {
+        glActiveTexture(GL_TEXTURE0 + p_slot);
+        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(p_handle));
+    }
+}
+
 std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
@@ -427,13 +437,14 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
             attachments.push_back(attachment);
 
             const auto& color_attachment = p_desc.color_attachments[idx];
+            uint32_t texture_handle = static_cast<uint32_t>(color_attachment->texture->get_handle());
             switch (color_attachment->desc.type) {
                 case AttachmentType::COLOR_2D: {
-                    glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
-                                           attachment,                               // attachment
-                                           GL_TEXTURE_2D,                            // texture target
-                                           color_attachment->texture->get_handle(),  // texture
-                                           0                                         // level
+                    glFramebufferTexture2D(GL_FRAMEBUFFER,  // target
+                                           attachment,      // attachment
+                                           GL_TEXTURE_2D,   // texture target
+                                           texture_handle,  // texture
+                                           0                // level
                     );
                 } break;
                 case AttachmentType::COLOR_CUBE_MAP: {
@@ -448,21 +459,22 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
     }
 
     if (auto depth_attachment = p_desc.depth_attachment; depth_attachment) {
+        uint32_t texture_handle = static_cast<uint32_t>(depth_attachment->texture->get_handle());
         switch (depth_attachment->desc.type) {
             case AttachmentType::SHADOW_2D:
             case AttachmentType::DEPTH_2D: {
-                glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
-                                       GL_DEPTH_ATTACHMENT,                      // attachment
-                                       GL_TEXTURE_2D,                            // texture target
-                                       depth_attachment->texture->get_handle(),  // texture
-                                       0);                                       // level
+                glFramebufferTexture2D(GL_FRAMEBUFFER,       // target
+                                       GL_DEPTH_ATTACHMENT,  // attachment
+                                       GL_TEXTURE_2D,        // texture target
+                                       texture_handle,       // texture
+                                       0);                   // level
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
-                glFramebufferTexture2D(GL_FRAMEBUFFER,                           // target
-                                       GL_DEPTH_STENCIL_ATTACHMENT,              // attachment
-                                       GL_TEXTURE_2D,                            // texture target
-                                       depth_attachment->texture->get_handle(),  // texture
-                                       0);                                       // level
+                glFramebufferTexture2D(GL_FRAMEBUFFER,               // target
+                                       GL_DEPTH_STENCIL_ATTACHMENT,  // attachment
+                                       GL_TEXTURE_2D,                // texture target
+                                       texture_handle,               // texture
+                                       0);                           // level
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
             } break;
@@ -499,7 +511,7 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   resource->texture->get_handle(),
+                                   static_cast<uint32_t>(resource->texture->get_handle()),
                                    p_mip_level);
         }
     }
@@ -509,7 +521,7 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_DEPTH_ATTACHMENT,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   depth_attachment->texture->get_handle(),
+                                   static_cast<uint32_t>(depth_attachment->texture->get_handle()),
                                    p_mip_level);
         }
     }
@@ -630,7 +642,7 @@ void OpenGLGraphicsManager::createGpuResources() {
         if (!resource) {
             return;
         }
-        uint32_t handle = resource->texture->get_handle();
+        uint32_t handle = resource->texture->get_handle32();
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(GL_TEXTURE_2D, handle);
     };

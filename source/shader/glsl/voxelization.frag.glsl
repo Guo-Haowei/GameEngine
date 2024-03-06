@@ -2,6 +2,7 @@ layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;
 layout(rgba16f, binding = 1) uniform image3D u_normal_texture;
 
 #include "../cbuffer.h"
+#include "../texture_binding.h"
 
 in vec3 pass_position;
 in vec3 pass_normal;
@@ -10,9 +11,9 @@ in vec2 pass_uv;
 #include "lighting.glsl"
 
 void main() {
-    vec4 albedo = u_albedo_color;
-    if (u_has_albedo_map != 0) {
-        albedo = texture(u_albedo_map, pass_uv);
+    vec4 albedo = u_base_color;
+    if (u_has_base_color_map != 0) {
+        albedo = texture(u_base_color_map, pass_uv);
     }
     if (albedo.a < 0.001) {
         discard;
@@ -22,7 +23,7 @@ void main() {
     float roughness = u_roughness;
     if (u_has_pbr_map != 0) {
         // g roughness, b metallic
-        vec3 mr = texture(u_pbr_map, pass_uv).rgb;
+        vec3 mr = texture(u_material_map, pass_uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }

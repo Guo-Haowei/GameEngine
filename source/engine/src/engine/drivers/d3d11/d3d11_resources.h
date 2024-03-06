@@ -14,9 +14,8 @@ namespace my {
 struct D3d11Texture : public Texture {
     using Texture::Texture;
 
-    uint32_t get_handle() const { return 0; }
     uint64_t get_resident_handle() const { return 0; }
-    uint64_t get_imgui_handle() const { return (uint64_t)srv.Get(); }
+    uint64_t get_handle() const { return (uint64_t)srv.Get(); }
 
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
     Microsoft::WRL::ComPtr<ID3D11Resource> texture;

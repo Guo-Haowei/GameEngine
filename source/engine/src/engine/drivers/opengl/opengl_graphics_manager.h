@@ -31,6 +31,8 @@ public:
     void uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
     void uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
+    void bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
+
     std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) final;
 

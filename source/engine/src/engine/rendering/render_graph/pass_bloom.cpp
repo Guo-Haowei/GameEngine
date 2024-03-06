@@ -28,7 +28,7 @@ static void down_sample_func(const Subpass*) {
 
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
         glDispatchCompute(work_group_x, work_group_y, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -44,7 +44,7 @@ static void down_sample_func(const Subpass*) {
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
         // @TODO: refactor image slot
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
         auto [width, height] = output->get_size();
         const uint32_t work_group_x = divide_and_roundup(width, 16);
@@ -62,7 +62,7 @@ static void down_sample_func(const Subpass*) {
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
 
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
+        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
 
         auto [width, height] = output->get_size();
         const uint32_t work_group_x = divide_and_roundup(width, 16);

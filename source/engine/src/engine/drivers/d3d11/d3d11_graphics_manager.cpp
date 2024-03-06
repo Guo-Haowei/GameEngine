@@ -16,6 +16,8 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
+ComPtr<ID3D11SamplerState> m_sampler_state;
+
 D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
     m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
 }
@@ -32,6 +34,24 @@ bool D3d11GraphicsManager::initialize_internal() {
     select_render_graph();
     // @TODO: refactor this
     m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    {
+        // @TODO: refactor this
+        // Create the sample state
+        D3D11_SAMPLER_DESC sampDesc;
+        ZeroMemory(&sampDesc, sizeof(sampDesc));
+        sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+        sampDesc.MinLOD = 0;
+        sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        auto hr = m_device->CreateSamplerState(&sampDesc, m_sampler_state.GetAddressOf());
+        DEV_ASSERT(SUCCEEDED(hr));
+
+        m_ctx->PSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
+    }
 
     m_meshes.set_description("GPU-Mesh-Allocator");
     return ok;
@@ -181,6 +201,15 @@ void D3d11GraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer,
     m_ctx->Unmap(buffer->buffer.Get(), 0);
 }
 
+void D3d11GraphicsManager::bind_texture(Dimension, uint64_t p_handle, int p_slot) {
+    if (p_handle == 0) {
+        return;
+    }
+
+    ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
+    m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+}
+
 std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
@@ -229,17 +258,26 @@ std::shared_ptr<Texture> D3d11GraphicsManager::create_texture(const TextureDesc&
     if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
         srv_desc.Format = srv_format;
         srv_desc.ViewDimension = d3d11::convert_dimension(p_texture_desc.dimension);
+        srv_desc.Texture2D.MipLevels = p_texture_desc.mip_levels;
         srv_desc.Texture2D.MostDetailedMip = 0;
-        srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+
+        if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+            srv_desc.Texture2D.MipLevels = (UINT)-1;
+        }
 
         D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
                        nullptr,
                        "Failed to create shader resource view");
 
+        if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+            m_ctx->GenerateMips(srv.Get());
+        }
+
         gpu_texture->srv = srv;
     }
 
     gpu_texture->texture = texture;
+
     return gpu_texture;
 }
 
@@ -384,6 +422,10 @@ const MeshBuffers* D3d11GraphicsManager::create_mesh(const MeshComponent& p_mesh
 
         if (!mesh.normals.empty()) {
             out_mesh.vertex_buffer[1] = create_vertex_buffer(sizeof(vec3) * mesh.normals.size(), mesh.normals.data());
+        }
+
+        if (!mesh.texcoords_0.empty()) {
+            out_mesh.vertex_buffer[2] = create_vertex_buffer(sizeof(vec2) * mesh.texcoords_0.size(), mesh.texcoords_0.data());
         }
 
         if (!mesh.joints_0.empty()) {

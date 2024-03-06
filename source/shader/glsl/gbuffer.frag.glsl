@@ -12,12 +12,13 @@ in struct PS_INPUT {
 } ps_in;
 
 #include "../cbuffer.h"
+#include "../texture_binding.h"
 
 void main() {
-    vec4 albedo = u_albedo_color;
+    vec4 albedo = u_base_color;
 
-    if (u_has_albedo_map != 0) {
-        albedo = texture(u_albedo_map, ps_in.uv, 0);
+    if (u_has_base_color_map != 0) {
+        albedo = texture(u_base_color_map, ps_in.uv, 0);
     }
     if (albedo.a < 0.001) {
         discard;
@@ -26,8 +27,7 @@ void main() {
     float metallic = u_metallic;
     float roughness = u_roughness;
     if (u_has_pbr_map != 0) {
-        // g roughness, b metallic
-        vec3 mr = texture(u_pbr_map, ps_in.uv).rgb;
+        vec3 mr = texture(u_material_map, ps_in.uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }

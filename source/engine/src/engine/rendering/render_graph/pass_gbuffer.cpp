@@ -42,7 +42,14 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
         graphics_manager.set_mesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
+            const MaterialConstantBuffer& material = render_data->m_material_buffers[subset.material_idx];
+            graphics_manager.bind_texture(Dimension::TEXTURE_2D, material.u_base_color_map_handle, u_base_color_map_slot);
+            graphics_manager.bind_texture(Dimension::TEXTURE_2D, material.u_normal_map_handle, u_normal_map_slot);
+            graphics_manager.bind_texture(Dimension::TEXTURE_2D, material.u_material_map_handle, u_material_map_slot);
+
             graphics_manager.uniform_bind_slot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
+
+            // @TODO: set material
 
             graphics_manager.draw_elements(subset.index_count, subset.index_offset);
         }

@@ -20,15 +20,20 @@ using sampler2D = uint64_t;
 using sampler3D = uint64_t;
 using samplerCube = uint64_t;
 
+using TextureHandle = uint64_t;
+
 // @TODO: remove this constraint
 static_assert(MAX_CASCADE_COUNT == 4);
 #elif defined(HLSL_LANG)
 #define CBUFFER(name, reg) cbuffer name : register(b##reg)
 
-#define sampler2D float2
+#define TextureHandle float2
+#define sampler2D     float2
 
 #elif defined(GLSL_LANG)
 #define CBUFFER(name, reg) layout(std140, binding = reg) uniform name
+
+#define TextureHandle vec2
 
 #endif
 
@@ -55,32 +60,25 @@ CBUFFER(PerPassConstantBuffer, 1) {
     float _per_pass_padding_2;
 };
 
-// @TODO: change to unordered access buffer
-CBUFFER(BoneConstantBuffer, 5) {
-    mat4 u_bones[MAX_BONE_COUNT];
-};
-
-#ifndef HLSL_LANG
-
 // @TODO: enable for HLSL
 CBUFFER(MaterialConstantBuffer, 3) {
-    vec4 u_albedo_color;
+    vec4 u_base_color;
 
     float u_metallic;
     float u_roughness;
     float u_reflect_power;
     float u_emissive_power;
 
-    int u_has_albedo_map;
+    int u_has_base_color_map;
     int u_has_pbr_map;
     int u_has_normal_map;
-    int _u_padding1;
+    int u_has_height_map;
 
-    sampler2D u_albedo_map;
-    sampler2D u_normal_map;
+    TextureHandle u_base_color_map_handle;
+    TextureHandle u_normal_map_handle;
 
-    sampler2D u_pbr_map;
-    sampler2D _u_dummy_padding;
+    TextureHandle u_material_map_handle;
+    TextureHandle u_height_map_handle;
 
     vec4 _material_padding_0;
     vec4 _material_padding_1;
@@ -88,6 +86,13 @@ CBUFFER(MaterialConstantBuffer, 3) {
     mat4 _material_padding_3;
     mat4 _material_padding_4;
 };
+
+// @TODO: change to unordered access buffer
+CBUFFER(BoneConstantBuffer, 5) {
+    mat4 u_bones[MAX_BONE_COUNT];
+};
+
+#ifndef HLSL_LANG
 
 struct Light {
     vec3 color;
