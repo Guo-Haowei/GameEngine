@@ -68,7 +68,7 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
     fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
     auto res = process_shader(path, 0);
     if (!res) {
-        LOG_ERROR("Failed to create shader '{}', reason: {}", p_file, res.error());
+        LOG_FATAL("Failed to create shader '{}', reason: {}", p_file, res.error());
         return 0;
     }
 

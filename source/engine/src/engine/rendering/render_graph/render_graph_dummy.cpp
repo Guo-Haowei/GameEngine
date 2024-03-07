@@ -15,18 +15,15 @@ void create_render_graph_dummy(RenderGraph& p_graph) {
     config.frame_height = h;
     config.enable_bloom = false;
     config.enable_ibl = false;
-    config.enable_shadow = backend == Backend::OPENGL;
     config.enable_voxel_gi = false;
-    config.enable_ssao = false;
+    config.enable_shadow = backend == Backend::OPENGL;
     RenderPassCreator creator(config, p_graph);
 
     if (config.enable_shadow) {
         creator.add_shadow_pass();
     }
     creator.add_gbuffer_pass();
-    if (0) {
-        creator.add_lighting_pass();
-    }
+    creator.add_lighting_pass();
 
     p_graph.compile();
 }

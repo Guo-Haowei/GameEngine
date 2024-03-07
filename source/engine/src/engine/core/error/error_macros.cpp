@@ -1,5 +1,7 @@
 #include "error_macros.h"
 
+#include <windows.h>
+
 #include "core/os/os.h"
 
 namespace my {
@@ -11,7 +13,9 @@ void global_unlock() {}
 
 void break_if_debug() {
 #if USING(DEBUG_BUILD)
-    __debugbreak();
+    if (IsDebuggerPresent()) {
+        __debugbreak();
+    }
 #endif
 }
 

@@ -23,7 +23,24 @@ static void lighting_pass_func(const Subpass* p_subpass) {
     Viewport viewport(width, height);
     manager.set_viewport(viewport);
     manager.clear(p_subpass, CLEAR_COLOR_BIT);
-    manager.set_pipeline_state(PROGRAM_LIGHTING_VXGI);
+    manager.set_pipeline_state(PROGRAM_LIGHTING);
+
+    // @TODO: refactor pass to auto bind resources,
+    // and make it a class so don't do a map search every frame
+    auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
+        std::shared_ptr<RenderTarget> resource = manager.find_render_target(name);
+        if (!resource) {
+            return;
+        }
+
+        manager.bind_texture(p_dimension, resource->texture->get_handle(), slot);
+    };
+
+    // bind common textures
+    bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
+    bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
+    bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
+    bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
 
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
@@ -72,9 +89,6 @@ void RenderPassCreator::add_lighting_pass() {
     }
     if (m_config.enable_voxel_gi) {
         desc.dependencies.push_back(VOXELIZATION_PASS);
-    }
-    if (m_config.enable_ssao) {
-        desc.dependencies.push_back(SSAO_PASS);
     }
     if (m_config.enable_ibl) {
         desc.dependencies.push_back(ENV_PASS);

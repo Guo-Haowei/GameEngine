@@ -18,6 +18,8 @@ vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
 
 void main() {
     const vec2 texcoord = pass_uv;
+
+    // @TODO: check if this is necessary
     float depth = texture(u_gbuffer_depth_map, texcoord).r;
 
     if (depth > 0.999) discard;
@@ -125,7 +127,7 @@ void main() {
     vec2 envBRDF = texture(c_brdf_map, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
-    const float ao = u_enable_ssao == 0 ? 1.0 : texture(c_ssao_map, texcoord).r;
+    const float ao = 1.0;
     vec3 ambient = (kD * diffuse + specular) * ao;
 
 #if ENABLE_VXGI

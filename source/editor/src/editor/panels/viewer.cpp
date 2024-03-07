@@ -86,10 +86,8 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
 
     switch (GraphicsManager::singleton().get_backend()) {
         case Backend::OPENGL:
-            ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
-            break;
         case Backend::D3D11:
-            ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right);
+            ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
             break;
         default:
             break;

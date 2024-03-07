@@ -6,6 +6,12 @@ file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.hlsl"
 )
 
+foreach(FILENAME ${SRC})
+    if(${FILENAME} MATCHES "\\.hlsl$")
+        set_source_files_properties(${FILENAME} PROPERTIES VS_TOOL_OVERRIDE "None")
+    endif()
+endforeach()
+
 add_library(${LIB_NAME} STATIC ${SRC})
 
 set_target_properties(${LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)

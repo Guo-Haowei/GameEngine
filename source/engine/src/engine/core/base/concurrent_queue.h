@@ -2,6 +2,9 @@
 
 namespace my {
 
+// @TODO: check out implmentation here
+// https://github.com/supermartian/lockfree-queue/tree/master
+// https://people.cs.pitt.edu/~jacklange/teaching/cs2510-f12/papers/implementing_lock_free.pdf
 template<typename T>
 class ConcurrentQueue {
 public:

@@ -5,6 +5,7 @@
 
 namespace my {
 
+// input layouts
 static const InputLayoutDesc s_input_layout_mesh = {
     .elements = {
         { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
@@ -16,6 +17,13 @@ static const InputLayoutDesc s_input_layout_mesh = {
     }
 };
 
+static const InputLayoutDesc s_input_layout_position = {
+    .elements = {
+        { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
+    }
+};
+
+// rasterizer states
 static const RasterizerDesc s_default_rasterizer = {
     .fill_mode = FillMode::SOLID,
     .cull_mode = CullMode::BACK,
@@ -70,7 +78,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "mesh.vert";
-        info.ps = "gbuffer.frag";
+        info.ps = "gbuffer.pixel";
         info.input_layout_desc = &s_input_layout_mesh;
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_gbuffer_depth_stencil;
@@ -79,12 +87,21 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "mesh.vert";
-        info.ps = "gbuffer.frag";
+        info.ps = "gbuffer.pixel";
         info.defines = { has_animation };
         info.input_layout_desc = &s_input_layout_mesh;
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_gbuffer_depth_stencil;
         m_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "screenspace_quad.vert";
+        info.ps = "lighting.pixel";
+        info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.input_layout_desc = &s_input_layout_position;
+        m_cache[PROGRAM_LIGHTING] = create(info);
     }
 
     // @HACK: only support this many shaders
@@ -94,7 +111,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "shadow.vert";
-        info.ps = "depth.frag";
+        info.ps = "depth.pixel";
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_DPETH_STATIC] = create(info);
@@ -102,7 +119,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "shadow.vert";
-        info.ps = "depth.frag";
+        info.ps = "depth.pixel";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
@@ -111,7 +128,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "point_shadow.vert";
-        info.ps = "point_shadow.frag";
+        info.ps = "point_shadow.pixel";
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
@@ -119,7 +136,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "point_shadow.vert";
-        info.ps = "point_shadow.frag";
+        info.ps = "point_shadow.pixel";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
@@ -128,26 +145,10 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";
-        info.ps = "highlight.frag";
+        info.ps = "highlight.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_highlight_depth_stencil;
         m_cache[PROGRAM_HIGHLIGHT] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "screenspace_quad.vert";
-        info.ps = "ssao.frag";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_no_depth_test;
-        m_cache[PROGRAM_SSAO] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "screenspace_quad.vert";
-        info.ps = "lighting.frag";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_LIGHTING_VXGI] = create(info);
     }
     {
         PipelineCreateInfo info;
@@ -171,7 +172,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";
-        info.ps = "tone.frag";
+        info.ps = "tone.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_TONE] = create(info);
@@ -180,7 +181,7 @@ bool PipelineStateManager::initialize() {
         PipelineCreateInfo info;
         info.vs = "voxelization.vert";
         info.gs = "voxelization.geom";
-        info.ps = "voxelization.frag";
+        info.ps = "voxelization.pixel";
         info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_VOXELIZATION_STATIC] = create(info);
@@ -189,7 +190,7 @@ bool PipelineStateManager::initialize() {
         PipelineCreateInfo info;
         info.vs = "voxelization.vert";
         info.gs = "voxelization.geom";
-        info.ps = "voxelization.frag";
+        info.ps = "voxelization.pixel";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
@@ -203,7 +204,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "visualization.vert";
-        info.ps = "visualization.frag";
+        info.ps = "visualization.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_DEBUG_VOXEL] = create(info);
@@ -211,7 +212,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "cube_map.vert";
-        info.ps = "to_cube_map.frag";
+        info.ps = "to_cube_map.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_ENV_SKYBOX_TO_CUBE_MAP] = create(info);
@@ -219,7 +220,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "cube_map.vert";
-        info.ps = "diffuse_irradiance.frag";
+        info.ps = "diffuse_irradiance.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_DIFFUSE_IRRADIANCE] = create(info);
@@ -227,7 +228,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "cube_map.vert";
-        info.ps = "prefilter.frag";
+        info.ps = "prefilter.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_PREFILTER] = create(info);
@@ -235,7 +236,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "skybox.vert";
-        info.ps = "skybox.frag";
+        info.ps = "skybox.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_ENV_SKYBOX] = create(info);
@@ -243,7 +244,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";
-        info.ps = "brdf.frag";
+        info.ps = "brdf.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_BRDF] = create(info);
@@ -251,7 +252,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "billboard.vert";
-        info.ps = "texture.frag";
+        info.ps = "texture.pixel";
         info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BILLBOARD] = create(info);
@@ -259,7 +260,7 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.vs = "debug_draw_texture.vert";
-        info.ps = "debug_draw_texture.frag";
+        info.ps = "debug_draw_texture.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
         m_cache[PROGRAM_IMAGE_2D] = create(info);

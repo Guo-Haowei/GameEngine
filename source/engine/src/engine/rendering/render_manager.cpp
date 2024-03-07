@@ -165,7 +165,7 @@ void fill_constant_buffers(const Scene& scene) {
     Camera& camera = *scene.m_camera.get();
 
     // THESE SHOULDN'T BE HERE
-    auto& cache = g_perFrameCache.cache;
+    auto& cache = g_per_frame_cache.cache;
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), MAX_LIGHT_COUNT);
     // DEV_ASSERT(light_count);
 
@@ -261,15 +261,9 @@ void fill_constant_buffers(const Scene& scene) {
     cache.u_screen_width = (int)camera.get_width();
     cache.u_screen_height = (int)camera.get_height();
 
-    // SSAO
-    cache.u_ssao_kernel_size = DVAR_GET_INT(r_ssaoKernelSize);
-    cache.u_ssao_kernel_radius = DVAR_GET_FLOAT(r_ssao_kernel_radius);
-    cache.u_ssao_noise_size = DVAR_GET_INT(r_ssaoNoiseSize);
-    cache.u_enable_ssao = DVAR_GET_BOOL(r_enable_ssao);
-    cache.u_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
-
     // Bloom
     cache.u_bloom_threshold = DVAR_GET_FLOAT(r_bloom_threshold);
+    cache.u_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
@@ -376,6 +370,8 @@ void RenderManager::update(Scene& p_scene) {
 
     renderer::fill_constant_buffers(p_scene);
     GraphicsManager::singleton().get_render_data()->update(&p_scene);
+
+    g_per_frame_cache.update();
 }
 
 PointShadowHandle RenderManager::allocate_point_light_shadow_map() {

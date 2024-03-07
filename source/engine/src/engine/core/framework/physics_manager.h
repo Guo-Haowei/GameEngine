@@ -21,12 +21,12 @@ public:
     bool initialize() override;
     void finalize() override;
 
-    void update(float dt);
+    void update(Scene& p_scene);
 
-    void event_received(std::shared_ptr<Event> event) override;
+    void event_received(std::shared_ptr<Event> p_event) override;
 
 protected:
-    void create_world(const Scene& scene);
+    void create_world(const Scene& p_scene);
     void clean_world();
     bool has_world() const { return m_collision_config != nullptr; }
 

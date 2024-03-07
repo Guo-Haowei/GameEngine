@@ -116,6 +116,7 @@ int Application::run(int argc, const char** argv) {
     LOG_WARN("TODO: use lua to construct scene");
     LOG_ERROR("TODO: path tracer here");
     LOG_ERROR("TODO: cloth physics");
+    LOG_ERROR("TODO: reverse z");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
@@ -145,11 +146,10 @@ int Application::run(int argc, const char** argv) {
         m_scene_manager->update(dt);
         auto& scene = m_scene_manager->get_scene();
 
-        m_physics_manager->update(dt);
-
+        m_physics_manager->update(scene);
         m_render_manager->update(scene);
+        m_graphics_manager->update(scene);
 
-        m_graphics_manager->update(dt);
         renderer::reset_need_update_env();
 
         m_display_server->present();

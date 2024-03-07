@@ -23,6 +23,22 @@ bool GraphicsManager::initialize() {
         return false;
     }
 
+    auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
+        std::shared_ptr<RenderTarget> resource = find_render_target(name);
+        if (!resource) {
+            return;
+        }
+
+        bind_texture(p_dimension, resource->texture->get_handle(), slot);
+    };
+
+    // bind common textures
+    bind_slot(RT_RES_HIGHLIGHT_SELECT, u_selection_highlight_slot);
+    bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
+    bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
+    bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
+    bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+
     return true;
 }
 
@@ -58,7 +74,7 @@ void GraphicsManager::request_texture(ImageHandle* p_handle, OnTextureLoadFunc p
     m_loaded_images.push(ImageTask{ p_handle, p_func });
 }
 
-void GraphicsManager::update(float) {
+void GraphicsManager::update(Scene&) {
     OPTICK_EVENT();
 
     auto loaded_images = m_loaded_images.pop_all();
@@ -178,8 +194,7 @@ uint64_t GraphicsManager::get_final_image() const {
             texture = find_render_target(RT_RES_FINAL)->texture.get();
             break;
         case RenderGraph::DUMMY:
-            texture = find_render_target(RT_RES_GBUFFER_BASE_COLOR)->texture.get();
-            // texture = find_render_target(RT_RES_LIGHTING)->texture.get();
+            texture = find_render_target(RT_RES_LIGHTING)->texture.get();
             break;
         default:
             CRASH_NOW();

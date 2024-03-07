@@ -7,21 +7,12 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
 #include "core/os/timer.h"
-#include "lua_binding/lua_scene_binding.h"
 #include "rendering/rendering_dvars.h"
 
 namespace my {
 
 using ecs::Entity;
-
-static bool deserialize_scene(Scene* scene, const std::string& path) {
-    Archive archive;
-    if (!archive.open_read(path)) {
-        return false;
-    }
-
-    return scene->serialize(archive);
-}
+namespace fs = std::filesystem;
 
 static void create_empty_scene(Scene* scene) {
     Entity::set_seed();
@@ -47,30 +38,12 @@ static void create_empty_scene(Scene* scene) {
 bool SceneManager::initialize() {
     // create an empty scene
     Scene* scene = new Scene;
+    create_empty_scene(scene);
+    m_scene = scene;
 
-    // @TODO: fix
     const std::string& path = DVAR_GET_STRING(project);
-    if (path.empty()) {
-        create_empty_scene(scene);
-    } else {
-        // @TODO: clean this up
-
-        bool ok = true;
-        std::filesystem::path sys_path{ path };
-        if (sys_path.extension() == ".lua") {
-            create_empty_scene(scene);
-            ok = load_lua_scene(path, scene);
-        } else {
-            ok = deserialize_scene(scene, path);
-        }
-        if (!ok) {
-            LOG_FATAL("failed to deserialize scene '{}'", path);
-        }
-    }
-
-    m_loading_scene.store(scene);
-    if (try_swap_scene()) {
-        m_scene->update(0.0f);
+    if (!path.empty()) {
+        request_scene(path);
     }
 
     return true;
@@ -79,20 +52,29 @@ bool SceneManager::initialize() {
 void SceneManager::finalize() {}
 
 bool SceneManager::try_swap_scene() {
-    Scene* new_scene = m_loading_scene.load();
-    if (new_scene) {
-        if (m_scene && !new_scene->m_replace) {
-            m_scene->merge(*new_scene);
-            delete new_scene;
-        } else {
-            m_scene = new_scene;
-            // @TODO: old scene
-        }
-        m_loading_scene.store(nullptr);
-        ++m_revision;
-        return true;
+    auto queued_scene = m_loading_queue.pop_all();
+
+    if (queued_scene.empty()) {
+        return false;
     }
-    return false;
+
+    while (!queued_scene.empty()) {
+        auto task = queued_scene.front();
+        queued_scene.pop();
+        DEV_ASSERT(task.scene);
+        if (m_scene && !task.replace) {
+            m_scene->merge(*task.scene);
+            m_scene->update(0.0f);
+            delete task.scene;
+        } else {
+            Scene* old_scene = m_scene;
+            m_scene = task.scene;
+            delete old_scene;
+        }
+        ++m_revision;
+    }
+
+    return true;
 }
 
 void SceneManager::update(float dt) {
@@ -103,23 +85,37 @@ void SceneManager::update(float dt) {
     if (m_last_revision < m_revision) {
         Timer timer;
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
-        LOG_WARN("offload scene properly");
+        LOG_WARN("offload p_scene properly");
         m_app->get_event_queue().dispatch_event(event);
-        LOG("[SceneManager] Detected scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.get_duration_string());
+        LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.get_duration_string());
         m_last_revision = m_revision;
     }
 
     SceneManager::get_scene().update(dt);
 }
 
-// @TODO: add import and load scene
-void SceneManager::request_scene(std::string_view path) {
-    AssetManager::singleton().load_scene_async(std::string(path), [](void* scene, void*) {
-        DEV_ASSERT(scene);
-        Scene* new_scene = static_cast<Scene*>(scene);
-        new_scene->update(0.0f);
-        SceneManager::singleton().set_loading_scene(new_scene);
-    });
+void SceneManager::queue_loaded_scene(Scene* p_scene, bool p_replace) {
+    m_loading_queue.push({ p_replace, p_scene });
+}
+
+void SceneManager::request_scene(std::string_view p_path) {
+    fs::path path{ p_path };
+    auto ext = path.extension().string();
+    if (ext == ".lua" || ext == ".scene") {
+        AssetManager::singleton().load_scene_async(std::string(p_path), [](void* p_scene, void*) {
+            DEV_ASSERT(p_scene);
+            Scene* new_scene = static_cast<Scene*>(p_scene);
+            new_scene->update(0.0f);
+            SceneManager::singleton().queue_loaded_scene(new_scene, true);
+        });
+    } else {
+        AssetManager::singleton().load_scene_async(std::string(p_path), [](void* p_scene, void*) {
+            DEV_ASSERT(p_scene);
+            Scene* new_scene = static_cast<Scene*>(p_scene);
+            new_scene->update(0.0f);
+            SceneManager::singleton().queue_loaded_scene(new_scene, false);
+        });
+    }
 }
 
 Scene& SceneManager::get_scene() {

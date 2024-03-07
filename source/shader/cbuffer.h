@@ -29,6 +29,7 @@ static_assert(MAX_CASCADE_COUNT == 4);
 
 #define TextureHandle float2
 #define sampler2D     float2
+#define samplerCube   float2
 
 #elif defined(GLSL_LANG)
 #define CBUFFER(name, reg) layout(std140, binding = reg) uniform name
@@ -36,6 +37,22 @@ static_assert(MAX_CASCADE_COUNT == 4);
 #define TextureHandle vec2
 
 #endif
+
+struct Light {
+    vec3 color;
+    int type;
+    vec3 position;  // direction
+    int cast_shadow;
+    samplerCube shadow_map;
+    float atten_constant;
+    float atten_linear;
+
+    vec2 padding;
+    float atten_quadratic;
+    float max_distance;  // max distance the light affects
+    mat4 matrices[6];
+    vec4 points[4];
+};
 
 CBUFFER(PerBatchConstantBuffer, 0) {
     mat4 u_world_matrix;
@@ -60,7 +77,35 @@ CBUFFER(PerPassConstantBuffer, 1) {
     float _per_pass_padding_2;
 };
 
-// @TODO: enable for HLSL
+CBUFFER(PerFrameConstantBuffer, 2) {
+    Light u_lights[MAX_LIGHT_COUNT];
+
+    // @TODO: move it to Light
+    mat4 u_main_light_matrices[MAX_CASCADE_COUNT];
+    vec4 u_cascade_plane_distances;
+
+    int u_light_count;
+    int u_display_method;
+    int u_enable_bloom;
+    float u_bloom_threshold;
+
+    int u_debug_voxel_id;
+    int u_no_texture;
+    int u_screen_width;
+    int u_screen_height;
+
+    vec3 u_camera_position;
+    float u_voxel_size;
+
+    vec3 u_world_center;
+    float u_world_size_half;
+
+    float u_texel_size;
+    int u_enable_csm;
+    int u_enable_vxgi;
+    int u_debug_csm;
+};
+
 CBUFFER(MaterialConstantBuffer, 3) {
     vec4 u_base_color;
 
@@ -94,59 +139,7 @@ CBUFFER(BoneConstantBuffer, 5) {
 
 #ifndef HLSL_LANG
 
-struct Light {
-    vec3 color;
-    int type;
-    vec3 position;  // direction
-    int cast_shadow;
-    samplerCube shadow_map;
-    float atten_constant;
-    float atten_linear;
-
-    vec2 padding;
-    float atten_quadratic;
-    float max_distance;  // max distance the light affects
-    mat4 matrices[6];
-    vec4 points[4];
-};
-
-CBUFFER(PerFrameConstantBuffer, 2) {
-    Light u_lights[MAX_LIGHT_COUNT];
-
-    // @TODO: move it to Light
-    mat4 u_main_light_matrices[MAX_CASCADE_COUNT];
-    vec4 u_cascade_plane_distances;
-
-    int u_light_count;
-    int u_display_method;
-    int u_enable_bloom;
-    float u_bloom_threshold;
-
-    int u_debug_voxel_id;
-    int u_no_texture;
-    int u_screen_width;
-    int u_screen_height;
-
-    vec3 u_camera_position;
-    float u_voxel_size;
-
-    vec3 u_world_center;
-    float u_world_size_half;
-
-    int u_ssao_kernel_size;
-    float u_ssao_kernel_radius;
-    int u_ssao_noise_size;
-    float u_texel_size;
-
-    int u_enable_ssao;
-    int u_enable_csm;
-    int u_enable_vxgi;
-    int u_debug_csm;
-};
-
 CBUFFER(PerSceneConstantBuffer, 4) {
-    vec4 u_ssao_kernels[MAX_SSAO_KERNEL_COUNT];
-
     // @TODO: remove the following
     sampler2D u_gbuffer_depth_map;
     sampler2D u_final_bloom;
@@ -156,7 +149,7 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
 
-    sampler2D c_ssao_map;
+    sampler2D u_grass_base_color;
     sampler2D c_kernel_noise_map;
     sampler2D c_tone_image;
     sampler2D c_tone_input_image;
@@ -169,9 +162,6 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     // @TODO: unordered access
     sampler2D u_ltc_1;
     sampler2D u_ltc_2;
-
-    sampler2D u_grass_base_color;
-    sampler2D _per_scene_padding_0;
 };
 
 // @TODO: make it more general, something like 2D draw

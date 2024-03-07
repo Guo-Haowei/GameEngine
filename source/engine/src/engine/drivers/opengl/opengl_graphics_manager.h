@@ -42,7 +42,6 @@ protected:
     void render() final;
 
     void createGpuResources();
-    void destroyGpuResources();
 
 private:
     // @TODO: rename
