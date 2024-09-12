@@ -18,7 +18,7 @@ void OS::finalize() {
 }
 
 void OS::add_logger(std::shared_ptr<ILogger> logger) {
-    m_logger.add_logger(logger);
+    m_logger.addLogger(logger);
 }
 
 void OS::print(LogLevel level, std::string_view message) {
