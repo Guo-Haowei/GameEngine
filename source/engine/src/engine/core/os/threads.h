@@ -24,12 +24,12 @@ bool initialize();
 
 void finailize();
 
-bool is_shutdown_requested();
+bool shutdownRequested();
 
-void request_shutdown();
+void requestShutdown();
 
-bool is_main_thread();
+bool isMainThread();
 
-uint32_t get_thread_id();
+uint32_t getThreadId();
 
 }  // namespace my::thread

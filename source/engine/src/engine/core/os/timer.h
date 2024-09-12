@@ -2,19 +2,19 @@
 
 namespace my {
 
-inline constexpr uint64_t kMillisecond = 1000000;
-inline constexpr uint64_t kSecond = kMillisecond * 1000;
+inline constexpr uint64_t MILLISECOND = 1000000;
+inline constexpr uint64_t SECOND = MILLISECOND * 1000;
 
 struct NanoSecond {
-    NanoSecond(const uint64_t value) : m_value(value) {}
+    NanoSecond(const uint64_t p_value) : m_value(p_value) {}
 
-    double to_millisecond() const {
-        constexpr double factor = 1.0 / kMillisecond;
+    double toMillisecond() const {
+        constexpr double factor = 1.0 / MILLISECOND;
         return factor * m_value;
     }
 
-    double to_second() const {
-        constexpr double factor = 1.0 / kSecond;
+    double toSecond() const {
+        constexpr double factor = 1.0 / SECOND;
         return factor * m_value;
     }
 
@@ -30,8 +30,8 @@ public:
 
     void start();
 
-    NanoSecond get_duration() const;
-    std::string get_duration_string() const;
+    NanoSecond getDuration() const;
+    std::string getDurationString() const;
 
 protected:
     TimePoint m_start_point{};

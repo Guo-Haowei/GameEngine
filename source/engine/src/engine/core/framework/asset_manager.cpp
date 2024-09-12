@@ -184,7 +184,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
     Timer timer;
     if (loader->load(p_asset)) {
         p_task.on_success(p_asset, p_task.userdata);
-        LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", p_task.asset_path, timer.get_duration_string());
+        LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", p_task.asset_path, timer.getDurationString());
     } else {
         LOG_ERROR("[AssetManager] failed to load '{}', details: {}", p_task.asset_path, loader->get_error());
     }
@@ -192,7 +192,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
 
 void AssetManager::worker_main() {
     for (;;) {
-        if (thread::is_shutdown_requested()) {
+        if (thread::shutdownRequested()) {
             break;
         }
 

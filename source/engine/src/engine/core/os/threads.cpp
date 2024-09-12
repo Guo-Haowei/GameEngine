@@ -80,19 +80,19 @@ void finailize() {
     }
 }
 
-bool is_shutdown_requested() {
+bool shutdownRequested() {
     return s_thread_glob.shutdown_requested;
 }
 
-void request_shutdown() {
+void requestShutdown() {
     s_thread_glob.shutdown_requested = true;
 }
 
-bool is_main_thread() {
+bool isMainThread() {
     return g_thread_id == THREAD_MAIN;
 }
 
-uint32_t get_thread_id() {
+uint32_t getThreadId() {
     return g_thread_id;
 }
 

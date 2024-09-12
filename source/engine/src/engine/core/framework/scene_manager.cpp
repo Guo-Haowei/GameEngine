@@ -87,7 +87,7 @@ void SceneManager::update(float dt) {
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
         LOG_WARN("offload p_scene properly");
         m_app->get_event_queue().dispatch_event(event);
-        LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.get_duration_string());
+        LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.getDurationString());
         m_last_revision = m_revision;
     }
 

@@ -18,7 +18,7 @@ void printImpl(LogLevel p_level, const std::string& p_message) {
 
 void logImpl(LogLevel p_level, const std::string& p_message) {
     OS* os = OS::singleton_ptr();
-    const uint32_t thread_id = thread::get_thread_id();
+    const uint32_t thread_id = thread::getThreadId();
     std::string thread_info;
     if (thread_id) {
         thread_info = std::format(" (thread id: {})", thread_id);

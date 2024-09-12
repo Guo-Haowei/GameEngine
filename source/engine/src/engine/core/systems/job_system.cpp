@@ -33,7 +33,7 @@ static bool work() {
 
 void worker_main() {
     for (;;) {
-        if (thread::is_shutdown_requested()) {
+        if (thread::shutdownRequested()) {
             break;
         }
 

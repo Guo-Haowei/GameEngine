@@ -128,7 +128,7 @@ int Application::run(int argc, const char** argv) {
         input::begin_frame();
 
         // @TODO: better elapsed time
-        float dt = static_cast<float>(timer.get_duration().to_second());
+        float dt = static_cast<float>(timer.getDuration().toSecond());
         dt = glm::min(dt, 0.5f);
         timer.start();
 
@@ -168,7 +168,7 @@ int Application::run(int argc, const char** argv) {
     m_layers.clear();
 
     // @TODO: move it to request shutdown
-    thread::request_shutdown();
+    thread::requestShutdown();
 
     // finalize
 
