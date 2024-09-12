@@ -71,7 +71,7 @@ void Scene::merge(Scene& other) {
         attach_component(other.m_root, m_root);
     }
 
-    m_bound.union_box(other.m_bound);
+    m_bound.unionBox(other.m_bound);
 }
 
 void Scene::create_camera(int width,
@@ -148,7 +148,7 @@ Entity Scene::create_point_light_entity(const std::string& p_name,
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_sphere_mesh(0.1f, 40, 40);
+    mesh = makeSphereMesh(0.1f, 40, 40);
     mesh.subsets[0].material_id = entity;
     return entity;
 }
@@ -177,7 +177,7 @@ Entity Scene::create_area_light_entity(const std::string& p_name,
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_plane_mesh();
+    mesh = makePlaneMesh();
     mesh.subsets[0].material_id = entity;
     return entity;
 }
@@ -221,7 +221,7 @@ Entity Scene::create_plane_entity(const std::string& p_name,
     object.mesh_id = mesh_id;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_plane_mesh(p_scale);
+    mesh = makePlaneMesh(p_scale);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -247,7 +247,7 @@ Entity Scene::create_cube_entity(const std::string& p_name,
     object.mesh_id = mesh_id;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_cube_mesh(p_scale);
+    mesh = makeCubeMesh(p_scale);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -273,7 +273,7 @@ Entity Scene::create_sphere_entity(const std::string& p_name,
     object.mesh_id = mesh_id;
 
     MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_sphere_mesh(p_radius);
+    mesh = makeSphereMesh(p_radius);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -558,7 +558,7 @@ bool Scene::ray_object_intersect(Entity object_id, Ray& ray) {
         const vec3& B = mesh->positions[mesh->indices[i + 1]];
         const vec3& C = mesh->positions[mesh->indices[i + 2]];
         if (inversedRay.intersects(A, B, C)) {
-            ray.copy_dist(inversedRay);
+            ray.copyDist(inversedRay);
             return true;
         }
     }
@@ -600,7 +600,7 @@ void Scene::run_hierarchy_update_system(Context& p_ctx) {
 }
 
 void Scene::run_object_update_system(jobsystem::Context&) {
-    m_bound.make_invalid();
+    m_bound.makeInvalid();
 
     for (auto [entity, obj] : m_ObjectComponents) {
         if (!contains<TransformComponent>(entity)) {
@@ -613,8 +613,8 @@ void Scene::run_object_update_system(jobsystem::Context&) {
 
         mat4 M = transform.get_world_matrix();
         AABB aabb = mesh.local_bound;
-        aabb.apply_matrix(M);
-        m_bound.union_box(aabb);
+        aabb.applyMatrix(M);
+        m_bound.unionBox(aabb);
     }
 }
 

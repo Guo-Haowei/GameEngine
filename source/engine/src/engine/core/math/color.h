@@ -24,14 +24,14 @@ struct Color {
 #pragma warning(pop)
 
     constexpr Color() = default;
-    constexpr Color(float r, float g, float b, float a) : r(r), g(g), b(b), a(a) {}
-    constexpr Color(float r, float g, float b) : Color(r, g, b, 1.0f) {}
+    constexpr Color(float p_red, float p_green, float p_blue, float p_alpha) : r(p_red), g(p_green), b(p_blue), a(p_alpha) {}
+    constexpr Color(float p_red, float p_green, float p_blue) : Color(p_red, p_green, p_blue, 1.0f) {}
 
-    uint32_t to_rgb() const;
-    uint32_t to_rgba() const;
+    uint32_t toRgb() const;
+    uint32_t toRgba() const;
 
     static Color hex(uint32_t hex);
-    static Color hex_rgba(uint32_t hex);
+    static Color hexRgba(uint32_t hex);
 };
 
 }  // namespace my
