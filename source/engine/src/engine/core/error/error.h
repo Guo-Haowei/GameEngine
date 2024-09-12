@@ -10,8 +10,8 @@ enum ErrorCode : uint16_t {
 };
 
 struct ErrorBase {
-    ErrorBase(std::string_view filepath, std::string_view function, int line)
-        : filepath(filepath), function(function), line(line) {}
+    ErrorBase(std::string_view p_filepath, std::string_view p_function, int p_line)
+        : filepath(p_filepath), function(p_function), line(p_line) {}
 
     std::string_view filepath;
     std::string_view function;
@@ -21,19 +21,26 @@ struct ErrorBase {
 template<typename T>
 class Error : public ErrorBase {
 public:
-    Error(std::string_view filepath, std::string_view function, int line, const T& value)
-        : ErrorBase(filepath, function, line), m_value(value) {}
+    Error(std::string_view p_filepath,
+          std::string_view p_function,
+          int p_line,
+          const T& p_value)
+        : ErrorBase(p_filepath, p_function, p_line), m_value(p_value) {}
 
     template<typename... Args>
-    Error(std::string_view filepath, std::string_view function, int line, const T& value,
-          std::format_string<Args...> format, Args&&... args)
-        : Error(filepath, function, line, value) {
-        m_message = std::format(format, std::forward<Args>(args)...);
+    Error(std::string_view p_filepath,
+          std::string_view p_function,
+          int p_line,
+          const T& p_value,
+          std::format_string<Args...> p_format,
+          Args&&... p_args)
+        : Error(p_filepath, p_function, p_line, p_value) {
+        m_message = std::format(p_format, std::forward<Args>(p_args)...);
     }
 
-    const T& get_value() const { return m_value; }
+    const T& getValue() const { return m_value; }
 
-    const std::string& get_message() const { return m_message; }
+    const std::string& getMessage() const { return m_message; }
 
 private:
     T m_value;
@@ -42,6 +49,6 @@ private:
 
 #define VCT_ERROR(VALUE, ...) std::unexpected(::my::Error(__FILE__, __FUNCTION__, __LINE__, VALUE, ##__VA_ARGS__))
 ;
-const char* error_to_string(ErrorCode err);
+const char* errorToString(ErrorCode p_error);
 
 }  // namespace my

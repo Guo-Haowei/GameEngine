@@ -236,7 +236,7 @@ std::shared_ptr<File> AssetManager::load_file_sync(const std::string& p_path) {
 
     auto res = FileAccess::open(p_path, FileAccess::READ);
     if (!res) {
-        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", p_path, res.error().get_message());
+        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", p_path, res.error().getMessage());
         return nullptr;
     }
 

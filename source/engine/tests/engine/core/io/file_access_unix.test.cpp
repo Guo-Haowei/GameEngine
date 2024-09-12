@@ -6,8 +6,8 @@ TEST(file_access_unix, open_read_fail) {
     FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
     auto err = FileAccess::open("file_access_unix_open_read_fail", FileAccess::READ).error();
-    EXPECT_EQ(err.get_value(), ERR_FILE_NOT_FOUND);
-    EXPECT_EQ(err.get_message(), "error code: 7");
+    EXPECT_EQ(err.getValue(), ERR_FILE_NOT_FOUND);
+    EXPECT_EQ(err.getMessage(), "error code: 7");
 }
 
 TEST(file_access_unix, open_read_success) {
@@ -35,7 +35,7 @@ TEST(file_access_unix, open_write_fail) {
 
     std::filesystem::create_directory(FILE_NAME);
     auto err = FileAccess::open(FILE_NAME, FileAccess::WRITE).error();
-    EXPECT_EQ(err.get_value(), ERR_FILE_CANT_OPEN);
+    EXPECT_EQ(err.getValue(), ERR_FILE_CANT_OPEN);
 
     ASSERT_TRUE(std::filesystem::remove_all(FILE_NAME));
 }

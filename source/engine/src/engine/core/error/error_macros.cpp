@@ -11,7 +11,7 @@ IntrusiveList<ErrorHandlerListNode> s_error_handlers;
 void global_lock() {}
 void global_unlock() {}
 
-void break_if_debug() {
+void breakIfDebug() {
 #if USING(DEBUG_BUILD)
     if (IsDebuggerPresent()) {
         __debugbreak();
@@ -19,31 +19,34 @@ void break_if_debug() {
 #endif
 }
 
-bool add_error_handler(ErrorHandler* handler) {
+bool addErrorHandler(ErrorHandler* p_handler) {
     // if the handler already exists, remove it
-    remove_error_handler(handler);
+    removeErrorHandler(p_handler);
 
     global_lock();
-    s_error_handlers.node_push_front(handler);
+    s_error_handlers.node_push_front(p_handler);
     global_unlock();
     return true;
 }
 
-bool remove_error_handler(const ErrorHandler* handler) {
+bool removeErrorHandler(const ErrorHandler* p_handler) {
     global_lock();
-    s_error_handlers.node_remove(handler);
+    s_error_handlers.node_remove(p_handler);
     global_unlock();
     return true;
 }
 
-void report_error_impl(std::string_view function, std::string_view file, int line, std::string_view error,
-                       std::string_view detail) {
+void reportErrorImpl(std::string_view p_function,
+                     std::string_view p_file,
+                     int p_line,
+                     std::string_view p_error,
+                     std::string_view p_detail) {
     std::string extra;
-    if (!detail.empty()) {
-        extra = std::format("\nDetail: {}", detail);
+    if (!p_detail.empty()) {
+        extra = std::format("\nDetail: {}", p_detail);
     }
 
-    auto message = std::format("ERROR: {}{}\n    at {} ({}:{})\n", error, extra, function, file, line);
+    auto message = std::format("ERROR: {}{}\n    at {} ({}:{})\n", p_error, extra, p_function, p_file, p_line);
     if (auto os = OS::singleton_ptr(); os) {
         os->print(LOG_LEVEL_ERROR, message);
     } else {
@@ -53,19 +56,24 @@ void report_error_impl(std::string_view function, std::string_view file, int lin
     global_lock();
 
     for (auto& handler : s_error_handlers) {
-        handler.error_func(handler.user_data, function, file, line, error);
+        handler.error_func(handler.user_data, p_function, p_file, p_line, p_error);
     }
 
     global_unlock();
 }
 
-void report_error_index_impl(std::string_view function, std::string_view file, int line, std::string_view prefix,
-                             int64_t index, int64_t bound, std::string_view index_string, std::string_view bound_string,
-                             std::string_view detail) {
-    auto error2 =
-        std::format("{}Index {} = {} is out of bounds ({} = {}).", prefix, index_string, index, bound_string, bound);
+void reportErrorIndexImpl(std::string_view p_function,
+                          std::string_view p_file,
+                          int p_line,
+                          std::string_view p_prefix,
+                          int64_t p_index,
+                          int64_t p_bound,
+                          std::string_view p_index_string,
+                          std::string_view p_bound_string,
+                          std::string_view p_detail) {
+    auto error2 = std::format("{}Index {} = {} is out of bounds ({} = {}).", p_prefix, p_index_string, p_index, p_bound_string, p_bound);
 
-    report_error_impl(function, file, line, error2, detail);
+    reportErrorImpl(p_function, p_file, p_line, error2, p_detail);
 }
 
 }  // namespace my

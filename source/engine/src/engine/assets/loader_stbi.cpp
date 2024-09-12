@@ -28,7 +28,7 @@ bool LoaderSTBIBase::load_impl(Image* image, bool is_float, STBILoadFunc func) {
 
     auto res = FileAccess::open(m_file_path, FileAccess::READ);
     if (!res) {
-        m_error = res.error().get_message();
+        m_error = res.error().getMessage();
         return false;
     }
 

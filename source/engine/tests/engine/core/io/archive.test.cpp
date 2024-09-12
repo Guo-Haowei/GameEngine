@@ -10,7 +10,7 @@ TEST(Archive, open_read) {
 
     Archive archive;
     auto err = archive.openRead("path_that_does_not_exist").error();
-    EXPECT_EQ(err.get_value(), ERR_FILE_NOT_FOUND);
+    EXPECT_EQ(err.getValue(), ERR_FILE_NOT_FOUND);
 }
 
 TEST(Archive, open_write) {
