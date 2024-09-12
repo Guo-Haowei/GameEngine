@@ -10,11 +10,11 @@ struct JobArgs {
 
 class Context {
 public:
-    void add_task_count(int num) { m_task_count.fetch_add(num); }
+    void addTaskCount(int p_num) { m_task_count.fetch_add(p_num); }
 
-    bool is_busy() const { return m_task_count.load() > 0; }
+    bool isBusy() const { return m_task_count.load() > 0; }
 
-    void dispatch(uint32_t job_count, uint32_t group_size, const std::function<void(JobArgs)>& task);
+    void dispatch(uint32_t p_job_count, uint32_t p_group_size, const std::function<void(JobArgs)>& p_task);
 
     void wait();
 
@@ -34,6 +34,6 @@ bool initialize();
 
 void finalize();
 
-void worker_main();
+void workerMain();
 
 }  // namespace my::jobsystem

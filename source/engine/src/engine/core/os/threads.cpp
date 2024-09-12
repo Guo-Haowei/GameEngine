@@ -26,14 +26,14 @@ static struct
         ThreadObject{ "render thread", []() {} },
         ThreadObject{ "asset thread 1", AssetManager::worker_main },
         // ThreadObject{ "asset thread 2", AssetManager::worker_main },
-        ThreadObject{ "js worker 0", jobsystem::worker_main },
-        ThreadObject{ "js worker 1", jobsystem::worker_main },
-        ThreadObject{ "js worker 2", jobsystem::worker_main },
-        ThreadObject{ "js worker 3", jobsystem::worker_main },
-        ThreadObject{ "js worker 4", jobsystem::worker_main },
-        ThreadObject{ "js worker 5", jobsystem::worker_main },
-        ThreadObject{ "js worker 6", jobsystem::worker_main },
-        ThreadObject{ "js worker 7", jobsystem::worker_main },
+        ThreadObject{ "js worker 0", jobsystem::workerMain },
+        ThreadObject{ "js worker 1", jobsystem::workerMain },
+        ThreadObject{ "js worker 2", jobsystem::workerMain },
+        ThreadObject{ "js worker 3", jobsystem::workerMain },
+        ThreadObject{ "js worker 4", jobsystem::workerMain },
+        ThreadObject{ "js worker 5", jobsystem::workerMain },
+        ThreadObject{ "js worker 6", jobsystem::workerMain },
+        ThreadObject{ "js worker 7", jobsystem::workerMain },
     };
 } s_thread_glob;
 

@@ -101,7 +101,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     }
 
     ecs::Entity id = m_editor.get_selected_entity();
-    TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
+    TransformComponent* transform_component = scene.getComponent<TransformComponent>(id);
 #if 0
     if (transform_component) {
         AABB aabb;
@@ -199,7 +199,7 @@ void Viewer::update_internal(Scene& scene) {
     select_entity(scene, camera);
 
     // Update state
-    if (m_editor.get_selected_entity().is_valid()) {
+    if (m_editor.get_selected_entity().isValid()) {
         if (input::is_key_pressed(KEY_Z)) {
             m_editor.set_state(EditorLayer::STATE_TRANSLATE);
         } else if (input::is_key_pressed(KEY_X)) {

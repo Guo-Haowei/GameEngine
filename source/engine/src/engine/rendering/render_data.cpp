@@ -117,7 +117,7 @@ void RenderData::point_light_draw_data() {
             continue;
         }
 
-        const TransformComponent* transform = scene->get_component<TransformComponent>(light_id);
+        const TransformComponent* transform = scene->getComponent<TransformComponent>(light_id);
         DEV_ASSERT(transform);
         vec3 position = transform->get_translation();
 
@@ -158,19 +158,19 @@ void RenderData::update(const Scene* p_scene) {
     OPTICK_EVENT();
 
     m_batch_buffer_lookup.clear();
-    m_batch_buffer_lookup.reserve(p_scene->get_count<TransformComponent>());
+    m_batch_buffer_lookup.reserve(p_scene->getCount<TransformComponent>());
     m_batch_buffers.clear();
-    m_batch_buffers.reserve(p_scene->get_count<TransformComponent>());
+    m_batch_buffers.reserve(p_scene->getCount<TransformComponent>());
 
     m_material_buffer_lookup.clear();
-    m_material_buffer_lookup.reserve(p_scene->get_count<MaterialComponent>());
+    m_material_buffer_lookup.reserve(p_scene->getCount<MaterialComponent>());
     m_material_buffers.clear();
-    m_material_buffers.reserve(p_scene->get_count<MaterialComponent>());
+    m_material_buffers.reserve(p_scene->getCount<MaterialComponent>());
 
     m_bone_buffer_lookup.clear();
-    m_bone_buffer_lookup.reserve(p_scene->get_count<ArmatureComponent>());
+    m_bone_buffer_lookup.reserve(p_scene->getCount<ArmatureComponent>());
     m_bone_buffers.clear();
-    m_bone_buffers.reserve(p_scene->get_count<ArmatureComponent>());
+    m_bone_buffers.reserve(p_scene->getCount<ArmatureComponent>());
 
     // clean up
     clear();
@@ -256,9 +256,9 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
             continue;
         }
 
-        const TransformComponent& transform = *scene->get_component<TransformComponent>(entity);
+        const TransformComponent& transform = *scene->getComponent<TransformComponent>(entity);
         DEV_ASSERT(scene->contains<MeshComponent>(obj.mesh_id));
-        const MeshComponent& mesh = *scene->get_component<MeshComponent>(obj.mesh_id);
+        const MeshComponent& mesh = *scene->getComponent<MeshComponent>(obj.mesh_id);
 
         const mat4& world_matrix = transform.get_world_matrix();
         AABB aabb = mesh.local_bound;
@@ -277,8 +277,8 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
         }
 
         draw.batch_idx = find_or_add_batch(entity, batch_buffer);
-        if (mesh.armature_id.is_valid()) {
-            auto& armature = *scene->get_component<ArmatureComponent>(mesh.armature_id);
+        if (mesh.armature_id.isValid()) {
+            auto& armature = *scene->getComponent<ArmatureComponent>(mesh.armature_id);
             DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 
             BoneConstantBuffer bone;
@@ -299,7 +299,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
                 continue;
             }
 
-            const MaterialComponent* material = scene->get_component<MaterialComponent>(subset.material_id);
+            const MaterialComponent* material = scene->getComponent<MaterialComponent>(subset.material_id);
             MaterialConstantBuffer material_buffer;
             fill_material_constant_buffer(material, material_buffer);
 

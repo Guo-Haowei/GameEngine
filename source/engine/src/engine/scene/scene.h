@@ -26,48 +26,48 @@ public:
     Scene() = default;
 
 #pragma region WORLD_COMPONENTS_REGISTERY
-#define REGISTER_COMPONENT(T, VER)                                                               \
-public:                                                                                          \
-    ecs::ComponentManager<T>& m_##T##s = m_component_lib.register_manager<T>("World::" #T, VER); \
-                                                                                                 \
-public:                                                                                          \
-    template<>                                                                                   \
-    inline const T* get_component<T>(const ecs::Entity& entity) const {                          \
-        return m_##T##s.get_component(entity);                                                   \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline T* get_component<T>(const ecs::Entity& entity) {                                      \
-        return m_##T##s.get_component(entity);                                                   \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline bool contains<T>(const ecs::Entity& entity) const {                                   \
-        return m_##T##s.contains(entity);                                                        \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline size_t get_index<T>(const ecs::Entity& entity) const {                                \
-        return m_##T##s.get_index(entity);                                                       \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline size_t get_count<T>() const {                                                         \
-        return m_##T##s.get_count();                                                             \
-    }                                                                                            \
-    template<>                                                                                   \
-    inline ecs::Entity get_entity<T>(size_t index) const {                                       \
-        return m_##T##s.get_entity(index);                                                       \
-    }                                                                                            \
-    template<>                                                                                   \
-    T& create<T>(const ecs::Entity& entity) {                                                    \
-        return m_##T##s.create(entity);                                                          \
-    }                                                                                            \
+#define REGISTER_COMPONENT(T, VER)                                                              \
+public:                                                                                         \
+    ecs::ComponentManager<T>& m_##T##s = m_component_lib.registerManager<T>("World::" #T, VER); \
+                                                                                                \
+public:                                                                                         \
+    template<>                                                                                  \
+    inline const T* getComponent<T>(const ecs::Entity& p_entity) const {                        \
+        return m_##T##s.getComponent(p_entity);                                                 \
+    }                                                                                           \
+    template<>                                                                                  \
+    inline T* getComponent<T>(const ecs::Entity& p_entity) {                                    \
+        return m_##T##s.getComponent(p_entity);                                                 \
+    }                                                                                           \
+    template<>                                                                                  \
+    inline bool contains<T>(const ecs::Entity& p_entity) const {                                \
+        return m_##T##s.contains(p_entity);                                                     \
+    }                                                                                           \
+    template<>                                                                                  \
+    inline size_t getIndex<T>(const ecs::Entity& p_entity) const {                              \
+        return m_##T##s.getIndex(p_entity);                                                     \
+    }                                                                                           \
+    template<>                                                                                  \
+    inline size_t getCount<T>() const {                                                         \
+        return m_##T##s.getCount();                                                             \
+    }                                                                                           \
+    template<>                                                                                  \
+    inline ecs::Entity getEntity<T>(size_t p_index) const {                                     \
+        return m_##T##s.getEntity(p_index);                                                     \
+    }                                                                                           \
+    template<>                                                                                  \
+    T& create<T>(const ecs::Entity& p_entity) {                                                 \
+        return m_##T##s.create(p_entity);                                                       \
+    }                                                                                           \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #pragma endregion WORLD_COMPONENTS_REGISTERY
     template<typename T>
-    const T* get_component(const ecs::Entity&) const {
+    const T* getComponent(const ecs::Entity&) const {
         return nullptr;
     }
     template<typename T>
-    T* get_component(const ecs::Entity&) {
+    T* getComponent(const ecs::Entity&) {
         return nullptr;
     }
     template<typename T>
@@ -75,15 +75,15 @@ public:                                                                         
         return false;
     }
     template<typename T>
-    size_t get_index(const ecs::Entity&) const {
+    size_t getIndex(const ecs::Entity&) const {
         return ecs::Entity::INVALID_INDEX;
     }
     template<typename T>
-    size_t get_count() const {
+    size_t getCount() const {
         return 0;
     }
     template<typename T>
-    ecs::Entity get_entity(size_t) const {
+    ecs::Entity getEntity(size_t) const {
         return ecs::Entity::INVALID;
     }
     template<typename T>

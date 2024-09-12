@@ -44,12 +44,12 @@ static bool tree_node_helper(const Scene& p_scene,
                              std::function<void()> p_on_left_click,
                              std::function<void()> p_on_right_click) {
 
-    const NameComponent* name_component = p_scene.get_component<NameComponent>(p_id);
+    const NameComponent* name_component = p_scene.getComponent<NameComponent>(p_id);
     std::string name = name_component->get_name();
     if (name.empty()) {
         name = "Untitled";
     }
-    auto node_name = std::format("##{}", p_id.get_id());
+    auto node_name = std::format("##{}", p_id.getId());
     auto tag = std::format("{}{}", name, node_name);
 
     p_flags |= ImGuiTreeNodeFlags_NoTreePushOnOpen;
@@ -79,12 +79,12 @@ static bool tree_node_helper(const Scene& p_scene,
 void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
     DEV_ASSERT(p_hier);
     Entity id = p_hier->entity;
-    const NameComponent* name_component = p_scene.get_component<NameComponent>(id);
+    const NameComponent* name_component = p_scene.getComponent<NameComponent>(id);
     const char* name = name_component ? name_component->get_name().c_str() : "Untitled";
-    const ObjectComponent* object_component = p_scene.get_component<ObjectComponent>(id);
-    const MeshComponent* mesh_component = object_component ? p_scene.get_component<MeshComponent>(object_component->mesh_id) : nullptr;
+    const ObjectComponent* object_component = p_scene.getComponent<ObjectComponent>(id);
+    const MeshComponent* mesh_component = object_component ? p_scene.getComponent<MeshComponent>(object_component->mesh_id) : nullptr;
 
-    auto node_name = std::format("##{}", id.get_id());
+    auto node_name = std::format("##{}", id.getId());
     auto tag = std::format("{}{}", name, node_name);
 
     p_flags |= (p_hier->children.empty() && !mesh_component) ? ImGuiTreeNodeFlags_Leaf : 0;
@@ -106,7 +106,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
 
         if (mesh_component) {
             for (const auto& subset : mesh_component->subsets) {
-                const MaterialComponent* material = p_scene.get_component<MaterialComponent>(subset.material_id);
+                const MaterialComponent* material = p_scene.getComponent<MaterialComponent>(subset.material_id);
                 if (material) {
                     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
                     tree_node_helper(
@@ -118,7 +118,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
                 }
             }
             Entity armature_id = mesh_component->armature_id;
-            if (armature_id.is_valid()) {
+            if (armature_id.isValid()) {
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
                 tree_node_helper(
                     p_scene, armature_id, flags, [&]() {
@@ -137,7 +137,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
 
 bool HierarchyCreator::build(const Scene& p_scene) {
     // @TODO: on scene change instead of build every frame
-    const size_t hierarchy_count = p_scene.get_count<HierarchyComponent>();
+    const size_t hierarchy_count = p_scene.getCount<HierarchyComponent>();
     if (hierarchy_count == 0) {
         return false;
     }
@@ -188,7 +188,7 @@ void HierarchyPanel::draw_popup(Scene&) {
     if (ImGui::BeginPopup(POPUP_NAME_ID)) {
         open_add_entity_popup(selected);
         if (ImGui::MenuItem("Delete")) {
-            if (selected.is_valid()) {
+            if (selected.isValid()) {
                 m_editor.select_entity(Entity::INVALID);
                 m_editor.remove_entity(selected);
             }

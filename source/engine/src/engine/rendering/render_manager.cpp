@@ -166,7 +166,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     // THESE SHOULDN'T BE HERE
     auto& cache = g_per_frame_cache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), MAX_LIGHT_COUNT);
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.getCount<LightComponent>(), MAX_LIGHT_COUNT);
     // DEV_ASSERT(light_count);
 
     cache.u_light_count = light_count;
@@ -185,8 +185,8 @@ void fill_constant_buffers(const Scene& scene) {
 
     int idx = 0;
     for (auto [light_entity, light_component] : scene.m_LightComponents) {
-        const TransformComponent* light_transform = scene.get_component<TransformComponent>(light_entity);
-        const MaterialComponent* material = scene.get_component<MaterialComponent>(light_entity);
+        const TransformComponent* light_transform = scene.getComponent<TransformComponent>(light_entity);
+        const MaterialComponent* material = scene.getComponent<MaterialComponent>(light_entity);
 
         DEV_ASSERT(light_transform && material);
 
