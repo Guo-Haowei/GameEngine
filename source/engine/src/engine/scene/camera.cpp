@@ -32,7 +32,7 @@ void Camera::set_dimension(int width, int height) {
 }
 
 void Camera::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         archive << m_flags;
         archive << m_near;
         archive << m_far;

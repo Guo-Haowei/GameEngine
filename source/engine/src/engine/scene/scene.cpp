@@ -477,7 +477,7 @@ void Scene::update_armature(uint32_t index) {
 
 bool Scene::serialize(Archive& archive) {
     uint32_t version = UINT_MAX;
-    bool is_read_mode = !archive.is_write_mode();
+    bool is_read_mode = !archive.isWriteMode();
     if (is_read_mode) {
         uint32_t magic;
         uint32_t seed = Entity::MAX_ID;
@@ -502,7 +502,7 @@ bool Scene::serialize(Archive& archive) {
     m_camera->serialize(archive, version);
 
     constexpr uint64_t has_next_flag = 6368519827137030510;
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         for (const auto& it : m_component_lib.m_entries) {
             archive << has_next_flag;
             archive << it.first;  // write name

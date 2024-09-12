@@ -8,13 +8,13 @@ public:
     ~FileAccessUnix();
 
     void close() override;
-    bool is_open() const override;
-    size_t get_length() const override;
-    bool read_buffer(void* data, size_t size) const override;
-    bool write_buffer(const void* data, size_t size) override;
+    bool isOpen() const override;
+    size_t getLength() const override;
+    bool readBuffer(void* p_data, size_t p_size) const override;
+    bool writeBuffer(const void* p_data, size_t p_size) override;
 
 protected:
-    ErrorCode open_internal(std::string_view path, int mode_flags) override;
+    ErrorCode openInternal(std::string_view p_path, int p_mode_flags) override;
 
     FILE* m_file_handle{ nullptr };
 };

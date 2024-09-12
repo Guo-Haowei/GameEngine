@@ -24,7 +24,7 @@ static void save_project(bool open_dialog) {
     Scene& scene = SceneManager::singleton().get_scene();
 
     Archive archive;
-    if (!archive.open_write(path.string())) {
+    if (!archive.openWrite(path.string())) {
         return;
     }
 
