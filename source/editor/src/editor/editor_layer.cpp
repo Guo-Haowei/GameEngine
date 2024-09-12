@@ -171,7 +171,7 @@ void EditorLayer::flush_commands(Scene& scene) {
                 switch (command->component_type) {
                     case COMPONENT_TYPE_BOX_COLLIDER: {
                         auto& collider = scene.create<BoxColliderComponent>(command->target);
-                        collider.box = AABB::from_center_size(vec3(0), vec3(1));
+                        collider.box = AABB::fromCenterSize(vec3(0), vec3(1));
                     } break;
                     case COMPONENT_TYPE_MESH_COLLIDER:
                         scene.create<MeshColliderComponent>(command->target);

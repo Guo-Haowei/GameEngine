@@ -4,7 +4,7 @@
 
 namespace my {
 
-void CompositeLogger::add_logger(std::shared_ptr<ILogger> p_logger) {
+void CompositeLogger::addLogger(std::shared_ptr<ILogger> p_logger) {
     m_loggers.emplace_back(p_logger);
 }
 
@@ -26,7 +26,7 @@ void CompositeLogger::print(LogLevel p_level, std::string_view p_message) {
     m_log_history_mutex.unlock();
 }
 
-void CompositeLogger::retrieve_log(std::vector<Log>& p_buffer) {
+void CompositeLogger::retrieveLog(std::vector<Log>& p_buffer) {
     m_log_history_mutex.lock();
 
     for (auto& log : m_log_history) {

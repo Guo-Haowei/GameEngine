@@ -21,7 +21,7 @@ void DynamicVariableManager::serialize() {
     for (auto const& [key, dvar] : DynamicVariable::s_map) {
         if (dvar->m_flags & DVAR_FLAG_CACHE) {
             auto line = std::format("+set {} {}\n", dvar->m_name, dvar->value_to_string());
-            writer->write_buffer(line.data(), line.length());
+            writer->writeBuffer(line.data(), line.length());
         }
     }
 
@@ -36,10 +36,10 @@ void DynamicVariableManager::deserialize() {
     }
 
     auto reader = std::move(*res);
-    const size_t size = reader->get_length();
+    const size_t size = reader->getLength();
     std::string buffer;
     buffer.resize(size);
-    reader->read_buffer(buffer.data(), size);
+    reader->readBuffer(buffer.data(), size);
     reader->close();
 
     std::stringstream ss{ buffer };

@@ -237,7 +237,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         vec3 center = collider.box.center();
         vec3 size = collider.box.size();
         if (draw_vec3_control("size", size)) {
-            collider.box = AABB::from_center_size(center, size);
+            collider.box = AABB::fromCenterSize(center, size);
         }
     });
 

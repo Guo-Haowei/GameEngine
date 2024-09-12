@@ -9,16 +9,16 @@ class Box {
     using self_type = Box<N>;
 
 public:
-    Box() { make_invalid(); }
+    Box() { makeInvalid(); }
 
-    Box(const vec_type& min, const vec_type& max) : m_min(min), m_max(max) {}
+    Box(const vec_type& p_min, const vec_type& p_max) : m_min(p_min), m_max(p_max) {}
 
-    void make_invalid() {
+    void makeInvalid() {
         m_min = vec_type(std::numeric_limits<float>::infinity());
         m_max = vec_type(-std::numeric_limits<float>::infinity());
     }
 
-    bool is_valid() {
+    bool isValid() {
         for (int i = 0; i < N; ++i) {
             if (m_min[i] >= m_max[i]) {
                 return false;
@@ -27,7 +27,7 @@ public:
         return true;
     }
 
-    void make_valid() {
+    void makeValid() {
         const vec_type size = glm::abs(m_max - m_min);
         constexpr float delta = 0.0001f;
         if (size.x == 0.0f) {
@@ -46,26 +46,26 @@ public:
         }
     }
 
-    void expand_point(const vec_type& point) {
-        m_min = glm::min(m_min, point);
-        m_max = glm::max(m_max, point);
+    void expandPoint(const vec_type& p_point) {
+        m_min = glm::min(m_min, p_point);
+        m_max = glm::max(m_max, p_point);
     }
 
-    void union_box(const self_type& o) {
-        m_min = glm::min(m_min, o.m_min);
-        m_max = glm::max(m_max, o.m_max);
+    void unionBox(const self_type& p_other) {
+        m_min = glm::min(m_min, p_other.m_min);
+        m_max = glm::max(m_max, p_other.m_max);
     }
 
-    void intersect_box(const self_type& o) {
-        m_min = glm::max(m_min, o.m_min);
-        m_max = glm::min(m_max, o.m_max);
+    void intersectBox(const self_type& p_other) {
+        m_min = glm::max(m_min, p_other.m_min);
+        m_max = glm::min(m_max, p_other.m_max);
     }
 
     vec_type center() const { return 0.5f * (m_min + m_max); }
     vec_type size() const { return m_max - m_min; }
 
-    const vec_type& get_min() const { return m_min; }
-    const vec_type& get_max() const { return m_max; }
+    const vec_type& getMin() const { return m_min; }
+    const vec_type& getMax() const { return m_max; }
 
 protected:
     vec_type m_min;

@@ -16,7 +16,7 @@ void Camera::update() {
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
 
         // m_projection_matrix = glm::perspectiveRH_ZO(m_fovy.to_rad(), get_aspect(), m_near, m_far);
-        m_projection_matrix = glm::perspective(m_fovy.to_rad(), get_aspect(), m_near, m_far);
+        m_projection_matrix = glm::perspective(m_fovy.toRad(), get_aspect(), m_near, m_far);
 
         m_projection_view_matrix = m_projection_matrix * m_view_matrix;
         set_dirty(false);
@@ -32,7 +32,7 @@ void Camera::set_dimension(int width, int height) {
 }
 
 void Camera::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         archive << m_flags;
         archive << m_near;
         archive << m_far;

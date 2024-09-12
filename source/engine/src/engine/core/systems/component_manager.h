@@ -237,7 +237,7 @@ public:
     bool serialize(Archive& p_archive, uint32_t p_version) override {
         constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;
-        if (p_archive.is_write_mode()) {
+        if (p_archive.isWriteMode()) {
             p_archive << magic;
             count = static_cast<uint32_t>(m_component_array.size());
             p_archive << count;

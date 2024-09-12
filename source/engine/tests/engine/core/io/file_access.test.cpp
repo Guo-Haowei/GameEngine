@@ -5,21 +5,21 @@ namespace my {
 static std::string s_buffer;
 class FileAccessFoo : public FileAccessUnix {
 public:
-    virtual std::string fix_path(std::string_view path) override {
+    virtual std::string fixPath(std::string_view path) override {
         return std::string(path);
     }
 
-    virtual ErrorCode open_internal(std::string_view path, int mode_flags) override {
-        auto info = std::format("[open]f:{},m:{},a:{};", path, mode_flags, (int)get_access_type());
+    virtual ErrorCode openInternal(std::string_view path, int mode_flags) override {
+        auto info = std::format("[open]f:{},m:{},a:{};", path, mode_flags, (int)getAccessType());
         s_buffer = info;
         return OK;
     }
 };
 
 TEST(file_access, make_default) {
-    FileAccess::make_default<FileAccessFoo>(FileAccess::ACCESS_RESOURCE);
-    FileAccess::make_default<FileAccessFoo>(FileAccess::ACCESS_USERDATA);
-    FileAccess::make_default<FileAccessFoo>(FileAccess::ACCESS_FILESYSTEM);
+    FileAccess::makeDefault<FileAccessFoo>(FileAccess::ACCESS_RESOURCE);
+    FileAccess::makeDefault<FileAccessFoo>(FileAccess::ACCESS_USERDATA);
+    FileAccess::makeDefault<FileAccessFoo>(FileAccess::ACCESS_FILESYSTEM);
 
     { auto file = FileAccess::open("a.txt", 10); }
     EXPECT_EQ(s_buffer, "[open]f:a.txt,m:10,a:0;");

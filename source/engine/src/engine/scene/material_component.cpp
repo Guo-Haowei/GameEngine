@@ -15,7 +15,7 @@ void MaterialComponent::request_image(int p_slot, const std::string& p_path) {
 void MaterialComponent::serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
-    if (p_archive.is_write_mode()) {
+    if (p_archive.isWriteMode()) {
         p_archive << metallic;
         p_archive << roughness;
         p_archive << emissive;

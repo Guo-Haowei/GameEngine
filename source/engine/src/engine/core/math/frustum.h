@@ -9,13 +9,13 @@ class AABB;
 class Frustum {
 public:
     Frustum() = default;
-    Frustum(const mat4& projection_view_matrix);
+    Frustum(const mat4& p_projection_view_matrix);
 
-    Plane& operator[](int i) { return reinterpret_cast<Plane*>(this)[i]; }
+    Plane& operator[](int p_index) { return reinterpret_cast<Plane*>(this)[p_index]; }
 
-    const Plane& operator[](int i) const { return reinterpret_cast<const Plane*>(this)[i]; }
+    const Plane& operator[](int p_index) const { return reinterpret_cast<const Plane*>(this)[p_index]; }
 
-    bool intersects(const AABB& box) const;
+    bool intersects(const AABB& p_box) const;
 
 private:
     Plane m_left;

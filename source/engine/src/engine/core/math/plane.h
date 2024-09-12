@@ -4,13 +4,15 @@
 namespace my {
 
 struct Plane {
-    vec3 m_normal;
-    float m_dist;
+    vec3 normal;
+    float dist;
 
     Plane() = default;
-    Plane(const vec3& normal, float dist) : m_normal(normal), m_dist(dist) {}
+    Plane(const vec3& p_normal, float p_dist) : normal(p_normal), dist(p_dist) {}
 
-    float distance(const vec3& p) const { return glm::dot(p, m_normal) + m_dist; }
+    float distance(const vec3& p_point) const {
+        return glm::dot(p_point, normal) + dist;
+    }
 };
 
 }  // namespace my

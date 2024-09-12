@@ -262,7 +262,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
 
         const mat4& world_matrix = transform.get_world_matrix();
         AABB aabb = mesh.local_bound;
-        aabb.apply_matrix(world_matrix);
+        aabb.applyMatrix(world_matrix);
         if (!func2(aabb)) {
             continue;
         }
@@ -294,7 +294,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
 
         for (const auto& subset : mesh.subsets) {
             aabb = subset.local_bound;
-            aabb.apply_matrix(world_matrix);
+            aabb.applyMatrix(world_matrix);
             if (!func2(aabb)) {
                 continue;
             }

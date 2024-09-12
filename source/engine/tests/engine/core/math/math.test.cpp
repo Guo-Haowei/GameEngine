@@ -64,48 +64,48 @@ TEST(align, compile_time) {
     static_assert(align(31, 16) == 32);
 }
 
-TEST(log_two, power_of_two) {
-    EXPECT_EQ(log_two(16), 4);
-    EXPECT_EQ(log_two(128), 7);
+TEST(logTwo, power_of_two) {
+    EXPECT_EQ(logTwo(16), 4);
+    EXPECT_EQ(logTwo(128), 7);
 }
 
-TEST(is_power_of_two, success) {
-    EXPECT_TRUE(is_power_of_two(16));
-    EXPECT_TRUE(is_power_of_two(128));
+TEST(isPowerOfTwo, success) {
+    EXPECT_TRUE(isPowerOfTwo(16));
+    EXPECT_TRUE(isPowerOfTwo(128));
 }
 
-TEST(is_power_of_two, fail) {
-    EXPECT_FALSE(is_power_of_two(7));
-    EXPECT_FALSE(is_power_of_two(124));
+TEST(isPowerOfTwo, fail) {
+    EXPECT_FALSE(isPowerOfTwo(7));
+    EXPECT_FALSE(isPowerOfTwo(124));
 }
 
-TEST(is_power_of_two, compile_time) {
-    static_assert(is_power_of_two(16) == true);
-    static_assert(is_power_of_two(128) == true);
-    static_assert(is_power_of_two(127) == false);
+TEST(isPowerOfTwo, compile_time) {
+    static_assert(isPowerOfTwo(16) == true);
+    static_assert(isPowerOfTwo(128) == true);
+    static_assert(isPowerOfTwo(127) == false);
 }
 
-TEST(next_power_of_two, roundup) {
-    EXPECT_EQ(next_power_of_two(3), 4);
-    EXPECT_EQ(next_power_of_two(9), 16);
-    EXPECT_EQ(next_power_of_two(10), 16);
-    EXPECT_EQ(next_power_of_two(10), 16);
-    EXPECT_EQ(next_power_of_two(17), 32);
-    EXPECT_EQ(next_power_of_two(39), 64);
+TEST(nextPowerOfTwo, roundup) {
+    EXPECT_EQ(nextPowerOfTwo(3), 4);
+    EXPECT_EQ(nextPowerOfTwo(9), 16);
+    EXPECT_EQ(nextPowerOfTwo(10), 16);
+    EXPECT_EQ(nextPowerOfTwo(10), 16);
+    EXPECT_EQ(nextPowerOfTwo(17), 32);
+    EXPECT_EQ(nextPowerOfTwo(39), 64);
 }
 
-TEST(next_power_of_two, no_roundup) {
-    EXPECT_EQ(next_power_of_two(4), 4);
-    EXPECT_EQ(next_power_of_two(8), 8);
-    EXPECT_EQ(next_power_of_two(16), 16);
-    EXPECT_EQ(next_power_of_two(32), 32);
-    EXPECT_EQ(next_power_of_two(64), 64);
+TEST(nextPowerOfTwo, no_roundup) {
+    EXPECT_EQ(nextPowerOfTwo(4), 4);
+    EXPECT_EQ(nextPowerOfTwo(8), 8);
+    EXPECT_EQ(nextPowerOfTwo(16), 16);
+    EXPECT_EQ(nextPowerOfTwo(32), 32);
+    EXPECT_EQ(nextPowerOfTwo(64), 64);
 }
 
-TEST(next_power_of_two, compile_time) {
-    static_assert(next_power_of_two(9) == 16);
-    static_assert(next_power_of_two(16) == 16);
-    static_assert(next_power_of_two(17) == 32);
+TEST(nextPowerOfTwo, compile_time) {
+    static_assert(nextPowerOfTwo(9) == 16);
+    static_assert(nextPowerOfTwo(16) == 16);
+    static_assert(nextPowerOfTwo(17) == 32);
 }
 
 }  // namespace my::math
