@@ -125,7 +125,7 @@ int Application::run(int argc, const char** argv) {
 
         m_display_server->new_frame();
 
-        input::begin_frame();
+        input::beginFrame();
 
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.getDuration().toSecond());
@@ -154,7 +154,7 @@ int Application::run(int argc, const char** argv) {
 
         m_display_server->present();
 
-        input::end_frame();
+        input::endFrame();
     }
 
     LOG("\n********************************************************************************"

@@ -35,8 +35,8 @@ static void save_project(bool open_dialog) {
 
 void MenuBar::update(Scene&) {
     // @TODO: input system, key s handled here, don't handle it in viewer
-    if (input::is_key_down(KEY_LEFT_CONTROL)) {
-        if (input::is_key_pressed(KEY_S)) {
+    if (input::isKeyDown(KEY_LEFT_CONTROL)) {
+        if (input::isKeyPressed(KEY_S)) {
             save_project(false);
         }
     }
