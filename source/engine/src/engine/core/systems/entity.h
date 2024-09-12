@@ -11,25 +11,25 @@ public:
 
     explicit constexpr Entity() : m_id(INVALID_ID) {}
 
-    explicit constexpr Entity(uint32_t handle) : m_id(handle) {}
+    explicit constexpr Entity(uint32_t p_handle) : m_id(p_handle) {}
 
     ~Entity() = default;
 
-    bool operator==(const Entity& rhs) const { return m_id == rhs.m_id; }
+    bool operator==(const Entity& p_rhs) const { return m_id == p_rhs.m_id; }
 
-    bool operator!=(const Entity& rhs) const { return m_id != rhs.m_id; }
+    bool operator!=(const Entity& p_rhs) const { return m_id != p_rhs.m_id; }
 
-    bool is_valid() const { return m_id != INVALID_ID; }
+    bool isValid() const { return m_id != INVALID_ID; }
 
-    void make_invalid() { m_id = INVALID_ID; }
+    void makeInvalid() { m_id = INVALID_ID; }
 
-    constexpr uint32_t get_id() const { return m_id; }
+    constexpr uint32_t getId() const { return m_id; }
 
-    void serialize(Archive& archive);
+    void serialize(Archive& p_archive);
 
     static Entity create();
-    static uint32_t get_seed();
-    static void set_seed(uint32_t seed = INVALID_ID + 1);
+    static uint32_t getSeed();
+    static void setSeed(uint32_t p_seed = INVALID_ID + 1);
 
     static const Entity INVALID;
 
@@ -45,20 +45,20 @@ namespace std {
 
 template<>
 struct hash<my::ecs::Entity> {
-    std::size_t operator()(const my::ecs::Entity& entity) const { return std::hash<uint32_t>{}(entity.get_id()); }
+    std::size_t operator()(const my::ecs::Entity& p_entity) const { return std::hash<uint32_t>{}(p_entity.getId()); }
 };
 
 template<>
 struct less<my::ecs::Entity> {
-    constexpr bool operator()(const my::ecs::Entity& lhs, const my::ecs::Entity& rhs) const {
-        return lhs.get_id() < rhs.get_id();
+    constexpr bool operator()(const my::ecs::Entity& p_lhs, const my::ecs::Entity& p_rhs) const {
+        return p_lhs.getId() < p_rhs.getId();
     }
 };
 
 template<>
 struct equal_to<my::ecs::Entity> {
-    constexpr bool operator()(const my::ecs::Entity& lhs, const my::ecs::Entity& rhs) const {
-        return lhs.get_id() == rhs.get_id();
+    constexpr bool operator()(const my::ecs::Entity& p_lhs, const my::ecs::Entity& p_rhs) const {
+        return p_lhs.getId() == p_rhs.getId();
     }
 };
 

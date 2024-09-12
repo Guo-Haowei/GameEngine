@@ -37,7 +37,7 @@ bool LoaderAssimp::load(Scene* data) {
     }
 
     ecs::Entity root = process_node(aiscene->mRootNode, ecs::Entity::INVALID);
-    m_scene->get_component<NameComponent>(root)->set_name(m_file_name);
+    m_scene->getComponent<NameComponent>(root)->set_name(m_file_name);
 
     m_scene->m_root = root;
     return true;
@@ -45,7 +45,7 @@ bool LoaderAssimp::load(Scene* data) {
 
 void LoaderAssimp::process_material(aiMaterial& material) {
     auto material_id = m_scene->create_material_entity(std::string("Material::") + material.GetName().C_Str());
-    MaterialComponent* materialComponent = m_scene->get_component<MaterialComponent>(material_id);
+    MaterialComponent* materialComponent = m_scene->getComponent<MaterialComponent>(material_id);
     DEV_ASSERT(materialComponent);
 
     auto getMaterialPath = [&](aiTextureType type, unsigned int index) -> std::string {
@@ -84,7 +84,7 @@ void LoaderAssimp::process_mesh(const aiMesh& mesh) {
     }
 
     ecs::Entity mesh_id = m_scene->create_mesh_entity("Mesh::" + mesh_name);
-    MeshComponent& mesh_component = *m_scene->get_component<MeshComponent>(mesh_id);
+    MeshComponent& mesh_component = *m_scene->getComponent<MeshComponent>(mesh_id);
 
     for (uint32_t i = 0; i < mesh.mNumVertices; ++i) {
         auto& position = mesh.mVertices[i];
@@ -131,16 +131,16 @@ ecs::Entity LoaderAssimp::process_node(const aiNode* node, ecs::Entity parent) {
     if (node->mNumMeshes == 1) {  // geometry node
         entity = m_scene->create_object_entity("Geometry::" + key);
 
-        ObjectComponent& objComponent = *m_scene->get_component<ObjectComponent>(entity);
+        ObjectComponent& objComponent = *m_scene->getComponent<ObjectComponent>(entity);
         objComponent.mesh_id = m_meshes[node->mMeshes[0]];
     } else {  // else make it a transform/bone node
         entity = m_scene->create_transform_entity("Node::" + key);
 
         for (uint32_t i = 0; i < node->mNumMeshes; ++i) {
             ecs::Entity child = m_scene->create_object_entity("");
-            auto tagComponent = m_scene->get_component<NameComponent>(child);
-            tagComponent->set_name("SubGeometry_" + std::to_string(child.get_id()));
-            ObjectComponent& objComponent = *m_scene->get_component<ObjectComponent>(child);
+            auto tagComponent = m_scene->getComponent<NameComponent>(child);
+            tagComponent->set_name("SubGeometry_" + std::to_string(child.getId()));
+            ObjectComponent& objComponent = *m_scene->getComponent<ObjectComponent>(child);
             objComponent.mesh_id = m_meshes[node->mMeshes[i]];
             m_scene->attach_component(child, entity);
         }
@@ -154,10 +154,10 @@ ecs::Entity LoaderAssimp::process_node(const aiNode* node, ecs::Entity parent) {
                                    local.a3, local.b3, local.c3, local.d3,  // x2 y2 z2 w2
                                    local.a4, local.b4, local.c4, local.d4   // x3 y3 z3 w3
     );
-    TransformComponent& transform = *m_scene->get_component<TransformComponent>(entity);
+    TransformComponent& transform = *m_scene->getComponent<TransformComponent>(entity);
     transform.matrix_transform(localTransformColumnMajor);
 
-    if (parent.is_valid()) {
+    if (parent.isValid()) {
         m_scene->attach_component(entity, parent);
     }
 

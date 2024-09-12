@@ -8,14 +8,14 @@ class AABB : public Box3 {
 public:
     using Box3::Box;
 
-    vec3 corner(int index) const;
+    vec3 corner(int p_index) const;
 
-    void apply_matrix(const mat4& mat);
+    void applyMatrix(const mat4& p_mat);
 
-    bool intersects(const AABB& aabb) const { return TestIntersection::aabb_aabb(*this, aabb); }
-    bool intersects(Ray& ray) const { return TestIntersection::ray_aabb(*this, ray); }
+    bool intersects(const AABB& p_aabb) const { return TestIntersection::aabbAabb(*this, p_aabb); }
+    bool intersects(Ray& p_ray) const { return TestIntersection::rayAabb(*this, p_ray); }
 
-    static AABB from_center_size(const vec3& p_center, const vec3& p_size);
+    static AABB fromCenterSize(const vec3& p_center, const vec3& p_size);
 
     friend class TestIntersection;
 };

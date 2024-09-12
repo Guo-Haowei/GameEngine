@@ -4,25 +4,25 @@
 
 namespace my::input {
 
-void begin_frame();
-void end_frame();
+void beginFrame();
+void endFrame();
 
-bool is_button_down(MouseButton key);
-bool is_button_pressed(MouseButton key);
-bool is_button_released(MouseButton key);
+bool isButtonDown(MouseButton p_key);
+bool isButtonPressed(MouseButton p_key);
+bool isButtonReleased(MouseButton p_key);
 
-bool is_key_down(KeyCode key);
-bool is_key_pressed(KeyCode key);
-bool is_key_released(KeyCode key);
+bool isKeyDown(KeyCode p_key);
+bool isKeyPressed(KeyCode p_key);
+bool isKeyReleased(KeyCode p_key);
 
-const vec2& get_cursor();
-const vec2& get_wheel();
-vec2 mouse_move();
+const vec2& getCursor();
+const vec2& getWheel();
+vec2 mouseMove();
 
-void set_button(int button, bool pressed);
-void set_key(int key, bool pressed);
+void setButton(int p_button, bool p_pressed);
+void setKey(int p_key, bool p_pressed);
 
-void set_cursor(float x, float y);
-void set_wheel(float x, float y);
+void setCursor(float p_x, float p_y);
+void setWheel(float p_x, float p_y);
 
 };  // namespace my::input

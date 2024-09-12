@@ -6,20 +6,20 @@
 namespace my {
 
 TEST(Archive, open_read) {
-    FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
+    FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
     Archive archive;
-    auto err = archive.open_read("path_that_does_not_exist").error();
-    EXPECT_EQ(err.get_value(), ERR_FILE_NOT_FOUND);
+    auto err = archive.openRead("path_that_does_not_exist").error();
+    EXPECT_EQ(err.getValue(), ERR_FILE_NOT_FOUND);
 }
 
 TEST(Archive, open_write) {
     const std::string test_file = "archive_test_open_write";
 
     Archive archive;
-    auto result = archive.open_write(test_file);
+    auto result = archive.openWrite(test_file);
     EXPECT_TRUE(result);
-    EXPECT_TRUE(archive.is_write_mode());
+    EXPECT_TRUE(archive.isWriteMode());
 
     archive.close();
     EXPECT_TRUE(std::filesystem::remove(test_file));
@@ -35,8 +35,8 @@ TEST(Archive, write_and_read) {
 
     Archive writer;
 
-    EXPECT_TRUE(writer.open_write(test_file));
-    EXPECT_TRUE(writer.is_write_mode());
+    EXPECT_TRUE(writer.openWrite(test_file));
+    EXPECT_TRUE(writer.isWriteMode());
 
     writer << test_int;
     writer << test_byte;
@@ -47,8 +47,8 @@ TEST(Archive, write_and_read) {
     writer.close();
 
     Archive reader;
-    EXPECT_TRUE(reader.open_read(test_file));
-    EXPECT_FALSE(reader.is_write_mode());
+    EXPECT_TRUE(reader.openRead(test_file));
+    EXPECT_FALSE(reader.isWriteMode());
 
     int actual_int;
     reader >> actual_int;

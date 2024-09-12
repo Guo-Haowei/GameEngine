@@ -146,36 +146,36 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         case WM_MOUSEWHEEL: {
             const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
             float direction = (delta > 0) ? 1.0f : -1.0f;
-            input::set_wheel(0.0f, direction);
+            input::setWheel(0.0f, direction);
         } break;
         case WM_LBUTTONDOWN: {
-            input::set_button(MOUSE_BUTTON_LEFT, true);
+            input::setButton(MOUSE_BUTTON_LEFT, true);
         } break;
         case WM_LBUTTONUP: {
-            input::set_button(MOUSE_BUTTON_LEFT, false);
+            input::setButton(MOUSE_BUTTON_LEFT, false);
         } break;
         case WM_RBUTTONDOWN: {
-            input::set_button(MOUSE_BUTTON_RIGHT, true);
+            input::setButton(MOUSE_BUTTON_RIGHT, true);
         } break;
         case WM_RBUTTONUP: {
-            input::set_button(MOUSE_BUTTON_RIGHT, false);
+            input::setButton(MOUSE_BUTTON_RIGHT, false);
         } break;
         case WM_MBUTTONDOWN: {
-            input::set_button(MOUSE_BUTTON_MIDDLE, true);
+            input::setButton(MOUSE_BUTTON_MIDDLE, true);
         } break;
         case WM_MBUTTONUP: {
-            input::set_button(MOUSE_BUTTON_MIDDLE, false);
+            input::setButton(MOUSE_BUTTON_MIDDLE, false);
         } break;
         case WM_MOUSEMOVE: {
             int x = LOWORD(lParam);
             int y = HIWORD(lParam);
-            input::set_cursor(static_cast<float>(x), static_cast<float>(y));
+            input::setCursor(static_cast<float>(x), static_cast<float>(y));
         } break;
         case WM_KEYDOWN: {
             int key_code = LOWORD(wParam);
             auto it = m_key_mapping.find(key_code);
             if (it != m_key_mapping.end()) {
-                input::set_key(it->second, true);
+                input::setKey(it->second, true);
             } else {
                 LOG_WARN("key {} not mapped", key_code);
             }
@@ -184,7 +184,7 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             int key_code = LOWORD(wParam);
             auto it = m_key_mapping.find(key_code);
             if (it != m_key_mapping.end()) {
-                input::set_key(it->second, false);
+                input::setKey(it->second, false);
             }
         } break;
         default:

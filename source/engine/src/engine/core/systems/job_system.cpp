@@ -27,13 +27,13 @@ static bool work() {
         job.task(args);
     }
 
-    job.ctx->add_task_count(-1);
+    job.ctx->addTaskCount(-1);
     return true;
 }
 
-void worker_main() {
+void workerMain() {
     for (;;) {
-        if (thread::is_shutdown_requested()) {
+        if (thread::shutdownRequested()) {
             break;
         }
 
@@ -52,23 +52,23 @@ void finalize() {
     s_glob.wake_condition.notify_all();
 }
 
-void Context::dispatch(uint32_t job_count, uint32_t group_size, const std::function<void(JobArgs)>& task) {
-    // DEV_ASSERT(thread::is_main_thread());
+void Context::dispatch(uint32_t p_job_count, uint32_t p_group_size, const std::function<void(JobArgs)>& p_task) {
+    // DEV_ASSERT(thread::isMainThread());
 
-    if (job_count == 0 || group_size == 0) {
+    if (p_job_count == 0 || p_group_size == 0) {
         return;
     }
 
-    const uint32_t group_count = (job_count + group_size - 1) / group_size;  // make sure round up
+    const uint32_t group_count = (p_job_count + p_group_size - 1) / p_group_size;  // make sure round up
     m_task_count.fetch_add(group_count);
 
     for (uint32_t group_id = 0; group_id < group_count; ++group_id) {
         Job job;
         job.ctx = this;
-        job.task = task;
+        job.task = p_task;
         job.group_id = group_id;
-        job.group_job_offset = group_id * group_size;
-        job.group_job_end = glm::min(job.group_job_offset + group_size, job_count);
+        job.group_job_offset = group_id * p_group_size;
+        job.group_job_end = glm::min(job.group_job_offset + p_group_size, p_job_count);
 
         while (!s_glob.job_queue.push_back(job)) {
             // if job queue is full, notify all and let main thread do the work as well
@@ -85,7 +85,7 @@ void Context::wait() {
     s_glob.wake_condition.notify_all();
 
     // Waiting will also put the current thread to good use by working on an other job if it can:
-    while (is_busy()) {
+    while (isBusy()) {
         work();
     }
 }

@@ -71,7 +71,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<std::string> type = p_components["type"]; type) {
         if (type == "POINT_LIGHT") {
             id = p_scene->create_point_light_entity(name, translate);
-            LightComponent* light = p_scene->get_component<LightComponent>(id);
+            LightComponent* light = p_scene->getComponent<LightComponent>(id);
             light->set_cast_shadow();
             light->set_dirty();
         } else {
@@ -85,7 +85,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
 
     if (sol::optional<sol::table> table = p_components["material"]; table) {
         material_id = create_material();
-        MaterialComponent* material = p_scene->get_component<MaterialComponent>(material_id);
+        MaterialComponent* material = p_scene->getComponent<MaterialComponent>(material_id);
         vec3 color{ 1 };
         bool ok = true;
         ok = ok && try_get_float(*table, "roughness", material->roughness);
@@ -99,7 +99,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<sol::table> table = p_components["cube"]; table) {
         vec3 size{ 0.5f };
         try_get_vec3(*table, "size", size);
-        if (!material_id.is_valid()) {
+        if (!material_id.isValid()) {
             material_id = create_material();
         }
 
@@ -108,7 +108,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<sol::table> table = p_components["plane"]; table) {
         vec3 size{ 0.5f };
         try_get_vec3(*table, "size", size);
-        if (!material_id.is_valid()) {
+        if (!material_id.isValid()) {
             material_id = create_material();
         }
 
@@ -117,15 +117,15 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<sol::table> table = p_components["sphere"]; table) {
         float radius{ 0.5f };
         try_get_float(*table, "radius", radius);
-        if (!material_id.is_valid()) {
+        if (!material_id.isValid()) {
             material_id = create_material();
         }
 
         id = p_scene->create_sphere_entity(name, material_id, radius, transform);
     }
 
-    if (TransformComponent* transform_component = p_scene->get_component<TransformComponent>(id); !transform_component) {
-        DEV_ASSERT(!id.is_valid());
+    if (TransformComponent* transform_component = p_scene->getComponent<TransformComponent>(id); !transform_component) {
+        DEV_ASSERT(!id.isValid());
         id = p_scene->create_name_entity(name);
 
         transform_component = &p_scene->create<TransformComponent>(id);
@@ -155,14 +155,14 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         }
     }
 
-    DEV_ASSERT(id.is_valid());
+    DEV_ASSERT(id.isValid());
     return id;
 }
 
 struct LuaScene {
     LuaScene(Scene* p_scene) : scene(p_scene) {}
 
-    uint32_t get_root() const { return scene->m_root.get_id(); }
+    uint32_t get_root() const { return scene->m_root.getId(); }
 
     uint32_t create_entity(const sol::table& p_components) {
         uint32_t id = create_entity_detached(p_components);
@@ -172,7 +172,7 @@ struct LuaScene {
 
     uint32_t create_entity_detached(const sol::table& p_components) {
         Entity id = lua_scene_create_entity(scene, p_components);
-        return id.get_id();
+        return id.getId();
     }
 
     void attach(uint32_t p_child, uint32_t p_parent) {

@@ -98,9 +98,9 @@ void RenderPassCreator::add_shadow_pass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     const int shadow_res = DVAR_GET_INT(r_shadow_res);
-    DEV_ASSERT(math::is_power_of_two(shadow_res));
+    DEV_ASSERT(math::isPowerOfTwo(shadow_res));
     const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
-    DEV_ASSERT(math::is_power_of_two(point_shadow_res));
+    DEV_ASSERT(math::isPowerOfTwo(point_shadow_res));
 
     auto shadow_map = manager.create_render_target(RenderTargetDesc{ RT_RES_SHADOW_MAP,
                                                                      PixelFormat::D32_FLOAT,

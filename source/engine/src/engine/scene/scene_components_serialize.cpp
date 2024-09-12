@@ -9,7 +9,7 @@ void HierarchyComponent::serialize(Archive& archive, uint32_t) {
 }
 
 void AnimationComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         archive << flags;
         archive << start;
         archive << end;
@@ -44,7 +44,7 @@ void AnimationComponent::serialize(Archive& archive, uint32_t) {
 }
 
 void ArmatureComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         archive << flags;
         archive << bone_collection;
         archive << inverse_bind_matrices;
@@ -56,7 +56,7 @@ void ArmatureComponent::serialize(Archive& archive, uint32_t) {
 }
 
 void RigidBodyComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         archive << shape;
         archive << param;
         archive << mass;

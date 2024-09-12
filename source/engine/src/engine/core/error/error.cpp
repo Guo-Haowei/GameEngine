@@ -2,7 +2,7 @@
 
 namespace my {
 
-const char* error_to_string(ErrorCode err) {
+const char* errorToString(ErrorCode p_error) {
     static const char* s_error_names[] = {
 #define ERROR_CODE_NAME
 #include "error_list.inl.h"
@@ -11,7 +11,7 @@ const char* error_to_string(ErrorCode err) {
 
     static_assert(array_length(s_error_names) == ERR_COUNT);
 
-    return s_error_names[static_cast<int>(err)];
+    return s_error_names[static_cast<int>(p_error)];
 }
 
 }  // namespace my

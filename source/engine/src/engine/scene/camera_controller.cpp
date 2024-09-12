@@ -9,11 +9,11 @@ void CameraController::move(float dt, Camera& camera) {
     // @TODO: get rid off the magic numbers
     auto translate_camera = [&]() {
         float move_speed = 10 * dt;
-        float dx = (float)(input::is_key_down(KEY_D) - input::is_key_down(KEY_A));
-        float dy = (float)(input::is_key_down(KEY_E) - input::is_key_down(KEY_Q));
-        float dz = (float)(input::is_key_down(KEY_W) - input::is_key_down(KEY_S));
+        float dx = (float)(input::isKeyDown(KEY_D) - input::isKeyDown(KEY_A));
+        float dy = (float)(input::isKeyDown(KEY_E) - input::isKeyDown(KEY_Q));
+        float dz = (float)(input::isKeyDown(KEY_W) - input::isKeyDown(KEY_S));
 
-        float scroll = input::get_wheel().y * 3.0f;
+        float scroll = input::getWheel().y * 3.0f;
         if (glm::abs(scroll) > glm::abs(dz)) {
             dz = scroll;
         }
@@ -31,8 +31,8 @@ void CameraController::move(float dt, Camera& camera) {
         float rotate_x = 0.0f;
         float rotate_y = 0.0f;
 
-        if (input::is_button_down(MOUSE_BUTTON_MIDDLE)) {
-            vec2 movement = input::mouse_move();
+        if (input::isButtonDown(MOUSE_BUTTON_MIDDLE)) {
+            vec2 movement = input::mouseMove();
             movement = 20 * dt * movement;
             if (glm::abs(movement.x) > glm::abs(movement.y)) {
                 rotate_y = movement.x;
@@ -42,8 +42,8 @@ void CameraController::move(float dt, Camera& camera) {
         } else {
             // keyboard
             float speed = 200 * dt;
-            rotate_y = speed * (input::is_key_down(KEY_RIGHT) - input::is_key_down(KEY_LEFT));
-            rotate_x = speed * (input::is_key_down(KEY_UP) - input::is_key_down(KEY_DOWN));
+            rotate_y = speed * (input::isKeyDown(KEY_RIGHT) - input::isKeyDown(KEY_LEFT));
+            rotate_x = speed * (input::isKeyDown(KEY_UP) - input::isKeyDown(KEY_DOWN));
         }
 
         // @TODO: DPI

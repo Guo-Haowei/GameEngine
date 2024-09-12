@@ -92,7 +92,7 @@ void GlfwDisplayManager::present() {
 void GlfwDisplayManager::cursor_pos_callback(GLFWwindow* window, double x, double y) {
     ImGui_ImplGlfw_CursorPosCallback(window, x, y);
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::set_cursor(static_cast<float>(x), static_cast<float>(y)); }
+    { input::setCursor(static_cast<float>(x), static_cast<float>(y)); }
 }
 
 void GlfwDisplayManager::mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -101,9 +101,9 @@ void GlfwDisplayManager::mouse_button_callback(GLFWwindow* window, int button, i
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
         if (action == GLFW_PRESS) {
-            input::set_button(button, true);
+            input::setButton(button, true);
         } else if (action == GLFW_RELEASE) {
-            input::set_button(button, false);
+            input::setButton(button, false);
         }
     }
 }
@@ -117,9 +117,9 @@ void GlfwDisplayManager::key_callback(GLFWwindow* window, int keycode, int scanc
         KeyCode key = s_key_mapping[keycode];
 
         if (action == GLFW_PRESS) {
-            input::set_key(key, true);
+            input::setKey(key, true);
         } else if (action == GLFW_RELEASE) {
-            input::set_key(key, false);
+            input::setKey(key, false);
         }
     }
 }
@@ -128,7 +128,7 @@ void GlfwDisplayManager::scroll_callback(GLFWwindow* window, double xoffset, dou
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::set_wheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
+    { input::setWheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
 }
 
 void GlfwDisplayManager::initialize_key_mapping() {

@@ -20,7 +20,7 @@ private:
 template<typename T>
 class LockGuard {
 public:
-    LockGuard(T& lock) : m_lock(lock) {
+    LockGuard(T& p_lock) : m_lock(p_lock) {
         m_lock.lock();
     }
     ~LockGuard() {

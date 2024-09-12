@@ -44,15 +44,15 @@ void MeshComponent::create_render_data() {
     DEV_ASSERT(normals.size());
 #endif
     // AABB
-    local_bound.make_invalid();
+    local_bound.makeInvalid();
     for (MeshSubset& subset : subsets) {
-        subset.local_bound.make_invalid();
+        subset.local_bound.makeInvalid();
         for (uint32_t i = 0; i < subset.index_count; ++i) {
             const vec3& point = positions[indices[i + subset.index_offset]];
-            subset.local_bound.expand_point(point);
+            subset.local_bound.expandPoint(point);
         }
-        subset.local_bound.make_valid();
-        local_bound.union_box(subset.local_bound);
+        subset.local_bound.makeValid();
+        local_bound.unionBox(subset.local_bound);
     }
     // Attributes
     for (int i = 0; i < VertexAttribute::COUNT; ++i) {
@@ -95,7 +95,7 @@ std::vector<char> MeshComponent::generate_combined_buffer() const {
 }
 
 void MeshComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         archive << flags;
         archive << indices;
         archive << positions;

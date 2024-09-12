@@ -4,14 +4,14 @@
 
 namespace my {
 
-auto Archive::open_mode(const std::string& path, bool write_mode) -> std::expected<void, Error<ErrorCode>> {
-    m_path = path;
-    m_write_mode = write_mode;
+auto Archive::openMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, Error<ErrorCode>> {
+    m_path = p_path;
+    m_write_mode = p_write_mode;
     if (m_write_mode) {
         m_path += ".tmp";
     }
 
-    auto res = FileAccess::open(m_path, write_mode ? FileAccess::WRITE : FileAccess::READ);
+    auto res = FileAccess::open(m_path, p_write_mode ? FileAccess::WRITE : FileAccess::READ);
     if (!res) {
         return std::unexpected(res.error());
     }
@@ -34,24 +34,24 @@ void Archive::close() {
     }
 }
 
-bool Archive::is_write_mode() const {
+bool Archive::isWriteMode() const {
     DEV_ASSERT(m_file);
     return m_write_mode;
 }
 
-bool Archive::write(const void* data, size_t size) {
+bool Archive::write(const void* p_data, size_t p_size) {
     DEV_ASSERT(m_file && m_write_mode);
-    return m_file->write_buffer(data, size);
+    return m_file->writeBuffer(p_data, p_size);
 }
 
-bool Archive::read(void* data, size_t size) {
+bool Archive::read(void* p_data, size_t p_size) {
     DEV_ASSERT(m_file && !m_write_mode);
-    return m_file->read_buffer(data, size);
+    return m_file->readBuffer(p_data, p_size);
 }
 
-Archive& Archive::write_string(const char* data, size_t length) {
-    write(length);
-    write(data, length);
+Archive& Archive::writeString(const char* p_data, size_t p_length) {
+    write(p_length);
+    write(p_data, p_length);
     return *this;
 }
 

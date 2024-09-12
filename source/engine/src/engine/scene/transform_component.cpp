@@ -61,7 +61,7 @@ void TransformComponent::update_transform_parented(const TransformComponent& par
 }
 
 void TransformComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         archive << m_flags;
         archive << m_scale;
         archive << m_translation;

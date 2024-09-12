@@ -4,27 +4,27 @@ namespace my::ecs {
 
 const Entity Entity::INVALID{};
 
-void Entity::serialize(Archive& archive) {
-    if (archive.is_write_mode()) {
-        archive << m_id;
+void Entity::serialize(Archive& p_archive) {
+    if (p_archive.isWriteMode()) {
+        p_archive << m_id;
     } else {
-        archive >> m_id;
+        p_archive >> m_id;
     }
 }
 
 Entity Entity::create() {
-    CRASH_COND_MSG(s_id.load() == MAX_ID, "max number of entity allocated, did you forget to call set_seed()?");
-    CRASH_COND_MSG(s_id.load() == 0, "seed id is 0, did you forget to call set_seed()?");
+    CRASH_COND_MSG(s_id.load() == MAX_ID, "max number of entity allocated, did you forget to call setSeed()?");
+    CRASH_COND_MSG(s_id.load() == 0, "seed id is 0, did you forget to call setSeed()?");
     Entity entity(s_id.fetch_add(1));
     return entity;
 }
 
-uint32_t Entity::get_seed() {
+uint32_t Entity::getSeed() {
     return s_id;
 }
 
-void Entity::set_seed(uint32_t seed) {
-    s_id = seed;
+void Entity::setSeed(uint32_t p_seed) {
+    s_id = p_seed;
 }
 
 }  // namespace my::ecs

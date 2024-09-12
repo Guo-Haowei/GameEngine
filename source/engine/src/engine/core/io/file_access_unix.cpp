@@ -5,11 +5,11 @@ namespace my {
 
 FileAccessUnix::~FileAccessUnix() { close(); }
 
-ErrorCode FileAccessUnix::open_internal(std::string_view path, int mode_flags) {
+ErrorCode FileAccessUnix::openInternal(std::string_view p_path, int p_mode_flags) {
     ERR_FAIL_COND_V(m_file_handle, ERR_FILE_ALREADY_IN_USE);
 
     const char* mode = "";
-    switch (mode_flags) {
+    switch (p_mode_flags) {
         case READ:
             mode = "rb";
             break;
@@ -20,7 +20,7 @@ ErrorCode FileAccessUnix::open_internal(std::string_view path, int mode_flags) {
             return ERR_INVALID_PARAMETER;
     }
 
-    std::string path_string{ path };
+    std::string path_string{ p_path };
     m_file_handle = fopen(path_string.c_str(), mode);
 
     if (!m_file_handle) {
@@ -42,29 +42,31 @@ void FileAccessUnix::close() {
     }
 }
 
-bool FileAccessUnix::is_open() const { return m_file_handle != nullptr; }
+bool FileAccessUnix::isOpen() const {
+    return m_file_handle != nullptr;
+}
 
-size_t FileAccessUnix::get_length() const {
+size_t FileAccessUnix::getLength() const {
     fseek(m_file_handle, 0, SEEK_END);
-    size_t length = ftell(m_file_handle);
+    const size_t length = ftell(m_file_handle);
     fseek(m_file_handle, 0, SEEK_SET);
     return length;
 }
 
-bool FileAccessUnix::read_buffer(void* data, size_t size) const {
-    DEV_ASSERT(is_open());
+bool FileAccessUnix::readBuffer(void* p_data, size_t p_size) const {
+    DEV_ASSERT(isOpen());
 
-    if (fread(data, 1, size, m_file_handle) != size) {
+    if (fread(p_data, 1, p_size, m_file_handle) != p_size) {
         return false;
     }
 
     return true;
 }
 
-bool FileAccessUnix::write_buffer(const void* data, size_t size) {
-    DEV_ASSERT(is_open());
+bool FileAccessUnix::writeBuffer(const void* p_data, size_t p_size) {
+    DEV_ASSERT(isOpen());
 
-    if (fwrite(data, 1, size, m_file_handle) != size) {
+    if (fwrite(p_data, 1, p_size, m_file_handle) != p_size) {
         return false;
     }
 

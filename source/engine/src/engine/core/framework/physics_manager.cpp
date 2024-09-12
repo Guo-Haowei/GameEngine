@@ -48,8 +48,8 @@ void PhysicsManager::update(Scene& p_scene) {
 
             uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
             ecs::Entity id{ handle };
-            if (id.is_valid()) {
-                TransformComponent& transform_component = *p_scene.get_component<TransformComponent>(id);
+            if (id.isValid()) {
+                TransformComponent& transform_component = *p_scene.getComponent<TransformComponent>(id);
                 const btVector3& origin = transform.getOrigin();
                 const btQuaternion rotation = transform.getRotation();
                 transform_component.set_translation(vec3(origin.getX(), origin.getY(), origin.getZ()));
@@ -69,7 +69,7 @@ void PhysicsManager::create_world(const Scene& p_scene) {
     m_dynamic_world->setGravity(btVector3(0, -10, 0));
 
     for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
-        const TransformComponent* transform_component = p_scene.get_component<TransformComponent>(id);
+        const TransformComponent* transform_component = p_scene.getComponent<TransformComponent>(id);
         DEV_ASSERT(transform_component);
         if (!transform_component) {
             continue;
@@ -112,7 +112,7 @@ void PhysicsManager::create_world(const Scene& p_scene) {
         btDefaultMotionState* myMotionState = new btDefaultMotionState(transform);
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
         btRigidBody* body = new btRigidBody(rbInfo);
-        body->setUserPointer((void*)((size_t)id.get_id()));
+        body->setUserPointer((void*)((size_t)id.getId()));
         m_dynamic_world->addRigidBody(body);
     }
 }

@@ -4,31 +4,31 @@ namespace my {
 
 FileAccess::CreateFunc FileAccess::s_create_func[ACCESS_MAX];
 
-auto FileAccess::create(AccessType access_type) -> std::shared_ptr<FileAccess> {
-    DEV_ASSERT_INDEX(access_type, ACCESS_MAX);
+auto FileAccess::create(AccessType p_access_type) -> std::shared_ptr<FileAccess> {
+    DEV_ASSERT_INDEX(p_access_type, ACCESS_MAX);
 
-    auto ret = s_create_func[access_type]();
-    ret->set_access_type(access_type);
+    auto ret = s_create_func[p_access_type]();
+    ret->setAccessType(p_access_type);
     return std::shared_ptr<FileAccess>(ret);
 }
 
-auto FileAccess::create_for_path(const std::string& path) -> std::shared_ptr<FileAccess> {
-    if (path.starts_with("@res://")) {
+auto FileAccess::createForPath(const std::string& p_path) -> std::shared_ptr<FileAccess> {
+    if (p_path.starts_with("@res://")) {
         return create(ACCESS_RESOURCE);
     }
 
-    if (path.starts_with("@user://")) {
+    if (p_path.starts_with("@user://")) {
         return create(ACCESS_USERDATA);
     }
 
     return create(ACCESS_FILESYSTEM);
 }
 
-auto FileAccess::open(const std::string& path, int mode_flags)
+auto FileAccess::open(const std::string& p_path, int p_mode_flags)
     -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
-    auto file_access = create_for_path(path);
+    auto file_access = createForPath(p_path);
 
-    ErrorCode err = file_access->open_internal(file_access->fix_path(path), mode_flags);
+    ErrorCode err = file_access->openInternal(file_access->fixPath(p_path), p_mode_flags);
     if (err != OK) {
         return VCT_ERROR(err, "error code: {}", std::to_underlying(err));
     }
@@ -36,21 +36,22 @@ auto FileAccess::open(const std::string& path, int mode_flags)
     return file_access;
 }
 
-static void replace_first(std::string& string, std::string_view pattern, std::string_view replacement) {
-    string.replace(0, pattern.size(), replacement);
+// @TODO: string utils
+static void replace_first(std::string& p_string, std::string_view p_pattern, std::string_view p_replacement) {
+    p_string.replace(0, p_pattern.size(), p_replacement);
 }
 
-std::string FileAccess::fix_path(std::string_view path) {
-    std::string fixed_path{ path };
+std::string FileAccess::fixPath(std::string_view p_path) {
+    std::string fixed_path{ p_path };
     switch (m_access_type) {
         case ACCESS_RESOURCE: {
-            if (path.starts_with("@res://")) {
+            if (p_path.starts_with("@res://")) {
                 replace_first(fixed_path, "@res:/", ROOT_FOLDER "resources");
                 return fixed_path;
             }
         } break;
         case ACCESS_USERDATA: {
-            if (path.starts_with("@user://")) {
+            if (p_path.starts_with("@user://")) {
                 replace_first(fixed_path, "@user:/", ROOT_FOLDER "user");
                 return fixed_path;
             }

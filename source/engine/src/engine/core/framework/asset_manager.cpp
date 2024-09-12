@@ -35,7 +35,7 @@ public:
 
     bool load(Scene* p_scene) {
         Archive archive;
-        if (!archive.open_read(m_file_path)) {
+        if (!archive.openRead(m_file_path)) {
             return false;
         }
         p_scene->m_replace = true;
@@ -184,7 +184,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
     Timer timer;
     if (loader->load(p_asset)) {
         p_task.on_success(p_asset, p_task.userdata);
-        LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", p_task.asset_path, timer.get_duration_string());
+        LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", p_task.asset_path, timer.getDurationString());
     } else {
         LOG_ERROR("[AssetManager] failed to load '{}', details: {}", p_task.asset_path, loader->get_error());
     }
@@ -192,7 +192,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
 
 void AssetManager::worker_main() {
     for (;;) {
-        if (thread::is_shutdown_requested()) {
+        if (thread::shutdownRequested()) {
             break;
         }
 
@@ -236,17 +236,17 @@ std::shared_ptr<File> AssetManager::load_file_sync(const std::string& p_path) {
 
     auto res = FileAccess::open(p_path, FileAccess::READ);
     if (!res) {
-        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", p_path, res.error().get_message());
+        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", p_path, res.error().getMessage());
         return nullptr;
     }
 
     std::shared_ptr<FileAccess> file_access = *res;
 
-    const size_t size = file_access->get_length();
+    const size_t size = file_access->getLength();
 
     std::vector<char> buffer;
     buffer.resize(size);
-    file_access->read_buffer(buffer.data(), size);
+    file_access->readBuffer(buffer.data(), size);
     auto text = std::make_shared<File>();
     text->buffer = std::move(buffer);
     s_asset_manager_glob.text_cache[p_path] = text;

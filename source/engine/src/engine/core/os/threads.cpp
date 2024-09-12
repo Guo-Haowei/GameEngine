@@ -26,14 +26,14 @@ static struct
         ThreadObject{ "render thread", []() {} },
         ThreadObject{ "asset thread 1", AssetManager::worker_main },
         // ThreadObject{ "asset thread 2", AssetManager::worker_main },
-        ThreadObject{ "js worker 0", jobsystem::worker_main },
-        ThreadObject{ "js worker 1", jobsystem::worker_main },
-        ThreadObject{ "js worker 2", jobsystem::worker_main },
-        ThreadObject{ "js worker 3", jobsystem::worker_main },
-        ThreadObject{ "js worker 4", jobsystem::worker_main },
-        ThreadObject{ "js worker 5", jobsystem::worker_main },
-        ThreadObject{ "js worker 6", jobsystem::worker_main },
-        ThreadObject{ "js worker 7", jobsystem::worker_main },
+        ThreadObject{ "js worker 0", jobsystem::workerMain },
+        ThreadObject{ "js worker 1", jobsystem::workerMain },
+        ThreadObject{ "js worker 2", jobsystem::workerMain },
+        ThreadObject{ "js worker 3", jobsystem::workerMain },
+        ThreadObject{ "js worker 4", jobsystem::workerMain },
+        ThreadObject{ "js worker 5", jobsystem::workerMain },
+        ThreadObject{ "js worker 6", jobsystem::workerMain },
+        ThreadObject{ "js worker 7", jobsystem::workerMain },
     };
 } s_thread_glob;
 
@@ -80,19 +80,19 @@ void finailize() {
     }
 }
 
-bool is_shutdown_requested() {
+bool shutdownRequested() {
     return s_thread_glob.shutdown_requested;
 }
 
-void request_shutdown() {
+void requestShutdown() {
     s_thread_glob.shutdown_requested = true;
 }
 
-bool is_main_thread() {
+bool isMainThread() {
     return g_thread_id == THREAD_MAIN;
 }
 
-uint32_t get_thread_id() {
+uint32_t getThreadId() {
     return g_thread_id;
 }
 

@@ -70,7 +70,7 @@ void LightComponent::update(const TransformComponent& p_transform) {
 void LightComponent::serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
-    if (p_archive.is_write_mode()) {
+    if (p_archive.isWriteMode()) {
         p_archive << m_flags;
         p_archive << m_type;
         p_archive << m_atten;

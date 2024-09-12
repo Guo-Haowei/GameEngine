@@ -62,11 +62,11 @@ static bool draw_vec3_control_disabled(bool disabled, Args&&... args) {
 void PropertyPanel::update_internal(Scene& scene) {
     ecs::Entity id = m_editor.get_selected_entity();
 
-    if (!id.is_valid()) {
+    if (!id.isValid()) {
         return;
     }
 
-    NameComponent* name_component = scene.get_component<NameComponent>(id);
+    NameComponent* name_component = scene.getComponent<NameComponent>(id);
     // @NOTE: when loading another scene, the selected entity will expire, thus don't have name
     if (!name_component) {
         // LOG_WARN("Entity {} does not have name", id.get_id());
@@ -99,15 +99,15 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::EndPopup();
     }
 
-    TransformComponent* transform_component = scene.get_component<TransformComponent>(id);
-    LightComponent* light_component = scene.get_component<LightComponent>(id);
-    ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
-    MeshComponent* mesh_component = object_component ? scene.get_component<MeshComponent>(object_component->mesh_id) : nullptr;
-    MaterialComponent* material_component = scene.get_component<MaterialComponent>(id);
-    RigidBodyComponent* rigid_body_component = scene.get_component<RigidBodyComponent>(id);
-    BoxColliderComponent* box_collider = scene.get_component<BoxColliderComponent>(id);
-    MeshColliderComponent* mesh_collider = scene.get_component<MeshColliderComponent>(id);
-    AnimationComponent* animation_component = scene.get_component<AnimationComponent>(id);
+    TransformComponent* transform_component = scene.getComponent<TransformComponent>(id);
+    LightComponent* light_component = scene.getComponent<LightComponent>(id);
+    ObjectComponent* object_component = scene.getComponent<ObjectComponent>(id);
+    MeshComponent* mesh_component = object_component ? scene.getComponent<MeshComponent>(object_component->mesh_id) : nullptr;
+    MaterialComponent* material_component = scene.getComponent<MaterialComponent>(id);
+    RigidBodyComponent* rigid_body_component = scene.getComponent<RigidBodyComponent>(id);
+    BoxColliderComponent* box_collider = scene.getComponent<BoxColliderComponent>(id);
+    MeshColliderComponent* mesh_collider = scene.getComponent<MeshColliderComponent>(id);
+    AnimationComponent* animation_component = scene.getComponent<AnimationComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -237,13 +237,13 @@ void PropertyPanel::update_internal(Scene& scene) {
         vec3 center = collider.box.center();
         vec3 size = collider.box.size();
         if (draw_vec3_control("size", size)) {
-            collider.box = AABB::from_center_size(center, size);
+            collider.box = AABB::fromCenterSize(center, size);
         }
     });
 
     DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
         char buffer[256];
-        snprintf(buffer, sizeof(buffer), "%d", collider.object_id.get_id());
+        snprintf(buffer, sizeof(buffer), "%d", collider.object_id.getId());
         ImGui::Columns(2);
         ImGui::SetColumnWidth(0, kDefaultColumnWidth);
         ImGui::Text("Mesh ID");
@@ -251,7 +251,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::InputText("##ID", buffer, sizeof(buffer));
         ImGui::Columns(1);
         ecs::Entity entity{ (uint32_t)std::stoi(buffer) };
-        if (scene.get_component<ObjectComponent>(entity) != nullptr) {
+        if (scene.getComponent<ObjectComponent>(entity) != nullptr) {
             collider.object_id = entity;
         }
     });

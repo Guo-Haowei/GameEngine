@@ -26,12 +26,12 @@ public:
 
     void print(LogLevel p_level, std::string_view p_message) override;
 
-    void add_logger(std::shared_ptr<ILogger> p_logger);
-    void add_channel(LogLevel p_log) { m_channels |= p_log; }
-    void remove_channel(LogLevel p_log) { m_channels &= ~p_log; }
+    void addLogger(std::shared_ptr<ILogger> p_logger);
+    void addChannel(LogLevel p_log) { m_channels |= p_log; }
+    void removeChannel(LogLevel p_log) { m_channels &= ~p_log; }
 
     // @TODO: change to array
-    void retrieve_log(std::vector<Log>& p_buffer);
+    void retrieveLog(std::vector<Log>& p_buffer);
 
 private:
     std::vector<std::shared_ptr<ILogger>> m_loggers;

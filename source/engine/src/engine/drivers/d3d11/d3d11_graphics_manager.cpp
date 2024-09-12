@@ -490,7 +490,7 @@ void D3d11GraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
 void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
-            const NameComponent& name = *p_scene.get_component<NameComponent>(entity);
+            const NameComponent& name = *p_scene.getComponent<NameComponent>(entity);
             LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.get_name());
             continue;
         }

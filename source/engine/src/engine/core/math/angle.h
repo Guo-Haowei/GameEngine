@@ -9,56 +9,56 @@ class Degree;
 class Degree {
 public:
     explicit constexpr Degree() : m_value(0) {}
-    explicit constexpr Degree(float degree) : m_value(degree) {}
+    explicit constexpr Degree(float p_degree) : m_value(p_degree) {}
 
-    Degree& operator=(const Radians& rad);
+    Degree& operator=(const Radians& p_rad);
 
-    Degree operator*(float v) const {
-        return Degree{ m_value * v };
+    Degree operator*(float p_val) const {
+        return Degree{ m_value * p_val };
     }
-    Degree operator/(float v) const {
-        return Degree{ m_value / v };
+    Degree operator/(float p_val) const {
+        return Degree{ m_value / p_val };
     }
-    Degree& operator*=(float v) {
-        m_value *= v;
+    Degree& operator*=(float p_val) {
+        m_value *= p_val;
         return *this;
     }
-    Degree& operator/=(float v) {
-        m_value /= v;
+    Degree& operator/=(float p_val) {
+        m_value /= p_val;
         return *this;
     }
-    Degree& operator+=(Degree v) {
-        m_value += v.m_value;
+    Degree& operator+=(Degree p_val) {
+        m_value += p_val.m_value;
         return *this;
     }
-    Degree& operator-=(Degree v) {
-        m_value -= v.m_value;
+    Degree& operator-=(Degree p_val) {
+        m_value -= p_val.m_value;
         return *this;
     }
-    bool operator==(Degree v) const {
-        return m_value == v.m_value;
+    bool operator==(Degree p_val) const {
+        return m_value == p_val.m_value;
     }
-    bool operator!=(Degree v) const {
-        return m_value != v.m_value;
+    bool operator!=(Degree p_val) const {
+        return m_value != p_val.m_value;
     }
-    bool operator<(Degree v) const {
-        return m_value < v.m_value;
+    bool operator<(Degree p_val) const {
+        return m_value < p_val.m_value;
     }
-    bool operator>(Degree v) const {
-        return m_value > v.m_value;
+    bool operator>(Degree p_val) const {
+        return m_value > p_val.m_value;
     }
-    bool operator<=(Degree v) const {
-        return m_value <= v.m_value;
+    bool operator<=(Degree p_val) const {
+        return m_value <= p_val.m_value;
     }
-    bool operator>=(Degree v) const {
-        return m_value >= v.m_value;
+    bool operator>=(Degree p_val) const {
+        return m_value >= p_val.m_value;
     }
-    void clamp(float a, float b) { m_value = glm::clamp(m_value, a, b); }
-    float to_rad() const { return glm::radians(m_value); }
-    float get_degree() const { return m_value; }
-    float sin() const { return glm::sin(to_rad()); }
-    float cos() const { return glm::cos(to_rad()); }
-    float tan() const { return glm::tan(to_rad()); }
+    void clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
+    float toRad() const { return glm::radians(m_value); }
+    float getDegree() const { return m_value; }
+    float sin() const { return glm::sin(toRad()); }
+    float cos() const { return glm::cos(toRad()); }
+    float tan() const { return glm::tan(toRad()); }
 
 private:
     float m_value;
@@ -67,43 +67,43 @@ private:
 class Radians {
 public:
     explicit constexpr Radians() : m_value(0) {}
-    explicit constexpr Radians(float angle) : m_value(angle) {}
+    explicit constexpr Radians(float p_angle) : m_value(p_angle) {}
 
-    Radians& operator=(const Degree& degree);
+    Radians& operator=(const Degree& p_degree);
 
-    Radians operator*(float v) const {
-        return Radians{ m_value * v };
+    Radians operator*(float p_val) const {
+        return Radians{ m_value * p_val };
     }
-    Radians operator/(float v) const {
-        return Radians{ m_value / v };
+    Radians operator/(float p_val) const {
+        return Radians{ m_value / p_val };
     }
-    Radians& operator*=(float v) {
-        m_value *= v;
+    Radians& operator*=(float p_val) {
+        m_value *= p_val;
         return *this;
     }
-    Radians& operator/=(float v) {
-        m_value /= v;
+    Radians& operator/=(float p_val) {
+        m_value /= p_val;
         return *this;
     }
-    Radians& operator+=(Radians v) {
-        m_value += v.m_value;
+    Radians& operator+=(Radians p_val) {
+        m_value += p_val.m_value;
         return *this;
     }
-    Radians& operator-=(Radians v) {
-        m_value -= v.m_value;
+    Radians& operator-=(Radians p_val) {
+        m_value -= p_val.m_value;
         return *this;
     }
-    Radians& operator+=(Degree v) {
-        m_value += v.to_rad();
+    Radians& operator+=(Degree p_val) {
+        m_value += p_val.toRad();
         return *this;
     }
-    Radians& operator-=(Degree v) {
-        m_value -= v.to_rad();
+    Radians& operator-=(Degree p_val) {
+        m_value -= p_val.toRad();
         return *this;
     }
-    void clamp(float a, float b) { m_value = glm::clamp(m_value, a, b); }
-    float to_degree() const { return glm::degrees(m_value); }
-    float get_rad() const { return m_value; }
+    void clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
+    float toDegree() const { return glm::degrees(m_value); }
+    float getRad() const { return m_value; }
     float sin() const { return glm::sin(m_value); }
     float cos() const { return glm::cos(m_value); }
     float tan() const { return glm::tan(m_value); }

@@ -161,17 +161,17 @@ void EditorLayer::flush_commands(Scene& scene) {
                         break;
                 }
 
-                scene.attach_component(id, add_command->parent.is_valid() ? add_command->parent : scene.m_root);
+                scene.attach_component(id, add_command->parent.isValid() ? add_command->parent : scene.m_root);
                 select_entity(id);
                 SceneManager::singleton().bump_revision();
                 break;
             }
             if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {
-                DEV_ASSERT(command->target.is_valid());
+                DEV_ASSERT(command->target.isValid());
                 switch (command->component_type) {
                     case COMPONENT_TYPE_BOX_COLLIDER: {
                         auto& collider = scene.create<BoxColliderComponent>(command->target);
-                        collider.box = AABB::from_center_size(vec3(0), vec3(1));
+                        collider.box = AABB::fromCenterSize(vec3(0), vec3(1));
                     } break;
                     case COMPONENT_TYPE_MESH_COLLIDER:
                         scene.create<MeshColliderComponent>(command->target);
@@ -184,7 +184,7 @@ void EditorLayer::flush_commands(Scene& scene) {
             }
             if (auto command = dynamic_cast<EditorCommandRemoveEntity*>(task.get()); command) {
                 auto entity = command->target;
-                DEV_ASSERT(entity.is_valid());
+                DEV_ASSERT(entity.isValid());
                 scene.remove_entity(entity);
                 // if (scene.contains<TransformComponent>(entity)) {
 

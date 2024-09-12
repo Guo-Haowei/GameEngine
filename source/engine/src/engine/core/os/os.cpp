@@ -6,24 +6,24 @@
 namespace my {
 
 void OS::initialize() {
-    FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_RESOURCE);
-    FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
-    FileAccess::make_default<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
+    FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_RESOURCE);
+    FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
+    FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
-    add_logger(std::make_shared<my::StdLogger>());
+    addLogger(std::make_shared<my::StdLogger>());
     // @TODO: add output debug string
 }
 
 void OS::finalize() {
 }
 
-void OS::add_logger(std::shared_ptr<ILogger> logger) {
-    m_logger.add_logger(logger);
+void OS::addLogger(std::shared_ptr<ILogger> p_logger) {
+    m_logger.addLogger(p_logger);
 }
 
-void OS::print(LogLevel level, std::string_view message) {
-    m_logger.print(level, message);
-    if (level == LOG_LEVEL_FATAL) {
+void OS::print(LogLevel level, std::string_view p_message) {
+    m_logger.print(level, p_message);
+    if (level & LOG_LEVEL_FATAL) {
         GENERATE_TRAP();
     }
 }

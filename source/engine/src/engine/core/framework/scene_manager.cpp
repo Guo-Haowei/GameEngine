@@ -15,7 +15,7 @@ using ecs::Entity;
 namespace fs = std::filesystem;
 
 static void create_empty_scene(Scene* scene) {
-    Entity::set_seed();
+    Entity::setSeed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     scene->create_camera(frame_size.x, frame_size.y);
@@ -24,7 +24,7 @@ static void create_empty_scene(Scene* scene) {
     scene->m_root = root;
     if (0) {
         auto light = scene->create_omni_light_entity("omni light", vec3(1));
-        auto transform = scene->get_component<TransformComponent>(light);
+        auto transform = scene->getComponent<TransformComponent>(light);
         DEV_ASSERT(transform);
         constexpr float rx = glm::radians(-80.0f);
         constexpr float ry = glm::radians(0.0f);
@@ -87,7 +87,7 @@ void SceneManager::update(float dt) {
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
         LOG_WARN("offload p_scene properly");
         m_app->get_event_queue().dispatch_event(event);
-        LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.get_duration_string());
+        LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.getDurationString());
         m_last_revision = m_revision;
     }
 

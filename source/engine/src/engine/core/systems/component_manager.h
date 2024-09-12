@@ -90,9 +90,9 @@ public:
     virtual void merge(IComponentManager& p_other) = 0;
     virtual void remove(const Entity& p_entity) = 0;
     virtual bool contains(const Entity& p_entity) const = 0;
-    virtual size_t get_index(const Entity& p_entity) const = 0;
-    virtual size_t get_count() const = 0;
-    virtual Entity get_entity(size_t p_index) const = 0;
+    virtual size_t getIndex(const Entity& p_entity) const = 0;
+    virtual size_t getCount() const = 0;
+    virtual Entity getEntity(size_t p_index) const = 0;
 
     virtual bool serialize(Archive& p_archive, uint32_t p_version) = 0;
 };
@@ -136,12 +136,12 @@ public:
     }
 
     void merge(ComponentManager<T>& p_other) {
-        const size_t reserved = get_count() + p_other.get_count();
+        const size_t reserved = getCount() + p_other.getCount();
         m_component_array.reserve(reserved);
         m_entity_array.reserve(reserved);
         m_lookup.reserve(reserved);
 
-        for (size_t i = 0; i < p_other.get_count(); ++i) {
+        for (size_t i = 0; i < p_other.getCount(); ++i) {
             Entity entity = p_other.m_entity_array[i];
             DEV_ASSERT(!contains(entity));
             m_entity_array.push_back(entity);
@@ -177,13 +177,13 @@ public:
         return m_lookup.find(p_entity) != m_lookup.end();
     }
 
-    inline T& get_component(size_t p_idx) {
-        DEV_ASSERT(p_idx < m_component_array.size());
-        return m_component_array[p_idx];
+    inline T& getComponent(size_t p_index) {
+        DEV_ASSERT(p_index < m_component_array.size());
+        return m_component_array[p_index];
     }
 
-    T* get_component(const Entity& p_entity) {
-        if (!p_entity.is_valid() || m_lookup.empty()) {
+    T* getComponent(const Entity& p_entity) {
+        if (!p_entity.isValid() || m_lookup.empty()) {
             return nullptr;
         }
 
@@ -196,7 +196,7 @@ public:
         return &m_component_array[it->second];
     }
 
-    size_t get_index(const Entity& p_entity) const override {
+    size_t getIndex(const Entity& p_entity) const override {
         if (m_lookup.empty()) {
             return Entity::INVALID_INDEX;
         }
@@ -209,15 +209,15 @@ public:
         return it->second;
     }
 
-    size_t get_count() const override { return m_component_array.size(); }
+    size_t getCount() const override { return m_component_array.size(); }
 
-    Entity get_entity(size_t p_index) const override {
+    Entity getEntity(size_t p_index) const override {
         DEV_ASSERT(p_index < m_entity_array.size());
         return m_entity_array[p_index];
     }
 
     T& create(const Entity& p_entity) {
-        DEV_ASSERT(p_entity.is_valid());
+        DEV_ASSERT(p_entity.isValid());
 
         const size_t componentCount = m_component_array.size();
         DEV_ASSERT(m_lookup.find(p_entity) == m_lookup.end());
@@ -230,14 +230,14 @@ public:
         return m_component_array.back();
     }
 
-    const T& operator[](size_t p_idx) const { return get_component(p_idx); }
+    const T& operator[](size_t p_index) const { return getComponent(p_index); }
 
-    T& operator[](size_t p_idx) { return get_component(p_idx); }
+    T& operator[](size_t p_index) { return getComponent(p_index); }
 
     bool serialize(Archive& p_archive, uint32_t p_version) override {
         constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;
-        if (p_archive.is_write_mode()) {
+        if (p_archive.isWriteMode()) {
             p_archive << magic;
             count = static_cast<uint32_t>(m_component_array.size());
             p_archive << count;
@@ -284,7 +284,7 @@ public:
     };
 
     template<typename T>
-    inline ComponentManager<T>& register_manager(const std::string& p_name, uint64_t p_version = 0) {
+    inline ComponentManager<T>& registerManager(const std::string& p_name, uint64_t p_version = 0) {
         DEV_ASSERT(m_entries.find(p_name) == m_entries.end());
         m_entries[p_name].m_manager = std::make_unique<ComponentManager<T>>();
         m_entries[p_name].m_version = p_version;

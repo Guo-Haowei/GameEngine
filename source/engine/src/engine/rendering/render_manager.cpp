@@ -106,7 +106,7 @@ static Sphere find_bounding_sphere(const vec3* p_points, int p_point_count) {
 
 static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plane, float p_far_plane, const Camera& p_camera) {
     const auto proj = glm::perspective(
-        p_camera.get_fovy().to_rad(),
+        p_camera.get_fovy().toRad(),
         p_camera.get_aspect(),
         p_near_plane,
         p_far_plane);
@@ -166,7 +166,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     // THESE SHOULDN'T BE HERE
     auto& cache = g_per_frame_cache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.get_count<LightComponent>(), MAX_LIGHT_COUNT);
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)scene.getCount<LightComponent>(), MAX_LIGHT_COUNT);
     // DEV_ASSERT(light_count);
 
     cache.u_light_count = light_count;
@@ -185,8 +185,8 @@ void fill_constant_buffers(const Scene& scene) {
 
     int idx = 0;
     for (auto [light_entity, light_component] : scene.m_LightComponents) {
-        const TransformComponent* light_transform = scene.get_component<TransformComponent>(light_entity);
-        const MaterialComponent* material = scene.get_component<MaterialComponent>(light_entity);
+        const TransformComponent* light_transform = scene.getComponent<TransformComponent>(light_entity);
+        const MaterialComponent* material = scene.getComponent<MaterialComponent>(light_entity);
 
         DEV_ASSERT(light_transform && material);
 
@@ -267,7 +267,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
-    DEV_ASSERT(math::is_power_of_two(voxel_texture_size));
+    DEV_ASSERT(math::isPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
     vec3 world_center = scene.get_bound().center();
@@ -351,8 +351,8 @@ RenderManager::RenderManager() : Module("RenderManager") {
 }
 
 bool RenderManager::initialize() {
-    m_screen_quad_buffers = GraphicsManager::singleton().create_mesh(make_plane_mesh(vec3(1)));
-    m_skybox_buffers = GraphicsManager::singleton().create_mesh(make_sky_box_mesh());
+    m_screen_quad_buffers = GraphicsManager::singleton().create_mesh(makePlaneMesh(vec3(1)));
+    m_skybox_buffers = GraphicsManager::singleton().create_mesh(makeSkyBoxMesh());
 
     return true;
 }

@@ -9,9 +9,9 @@ public:
     void initialize();
     void finalize();
 
-    virtual void print(LogLevel level, std::string_view message);
+    virtual void print(LogLevel p_level, std::string_view p_message);
 
-    void add_logger(std::shared_ptr<ILogger> logger);
+    void addLogger(std::shared_ptr<ILogger> p_logger);
 
 protected:
     CompositeLogger m_logger;

@@ -50,31 +50,31 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     auto& node = m_model->nodes[node_index];
 
     if (node.mesh >= 0) {
-        DEV_ASSERT(node.mesh < (int)m_scene->get_count<MeshComponent>());
+        DEV_ASSERT(node.mesh < (int)m_scene->getCount<MeshComponent>());
         if (node.skin >= 0) {  // this node is an armature
-            entity = m_scene->get_entity<ArmatureComponent>(node.skin);
-            MeshComponent& mesh = m_scene->m_MeshComponents.get_component(node.mesh);
-            ecs::Entity mesh_id = m_scene->get_entity<MeshComponent>(node.mesh);
+            entity = m_scene->getEntity<ArmatureComponent>(node.skin);
+            MeshComponent& mesh = m_scene->m_MeshComponents.getComponent(node.mesh);
+            ecs::Entity mesh_id = m_scene->getEntity<MeshComponent>(node.mesh);
             DEV_ASSERT(!mesh.joints_0.empty());
-            if (mesh.armature_id.is_valid()) {
+            if (mesh.armature_id.isValid()) {
                 // Reuse mesh with different skin is not possible currently, so we create a new one:
                 LOG_WARN("Re-use mesh for different skin!");
                 mesh_id = entity;
                 MeshComponent& newMesh = m_scene->create<MeshComponent>(mesh_id);
-                newMesh = m_scene->m_MeshComponents.get_component(node.mesh);
+                newMesh = m_scene->m_MeshComponents.getComponent(node.mesh);
                 mesh = newMesh;
             }
             mesh.armature_id = entity;
 
             // the object component will use an identity transform but will be parented to the armature
             ecs::Entity objectID = m_scene->create_object_entity("Animated::" + node.name);
-            ObjectComponent& object = *m_scene->get_component<ObjectComponent>(objectID);
+            ObjectComponent& object = *m_scene->getComponent<ObjectComponent>(objectID);
             object.mesh_id = mesh_id;
             m_scene->attach_component(objectID, entity);
         } else {  // this node is a mesh instance
             entity = m_scene->create_object_entity("Object::" + node.name);
-            ObjectComponent& object = *m_scene->get_component<ObjectComponent>(entity);
-            object.mesh_id = m_scene->get_entity<MeshComponent>(node.mesh);
+            ObjectComponent& object = *m_scene->getComponent<ObjectComponent>(entity);
+            object.mesh_id = m_scene->getEntity<MeshComponent>(node.mesh);
         }
     } else if (node.camera >= 0) {
         LOG_WARN("@TODO: camera");
@@ -83,7 +83,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     // light
 
     // transform
-    if (!entity.is_valid()) {
+    if (!entity.isValid()) {
         entity = ecs::Entity::create();
         m_scene->create<TransformComponent>(entity);
         m_scene->create<NameComponent>(entity).set_name("Transform::" + node.name);
@@ -91,7 +91,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
 
     m_entity_map[node_index] = entity;
 
-    TransformComponent& transform = *m_scene->get_component<TransformComponent>(entity);
+    TransformComponent& transform = *m_scene->getComponent<TransformComponent>(entity);
     if (!node.matrix.empty()) {
         mat4 matrix;
         matrix[0].x = float(node.matrix.at(0));
@@ -131,7 +131,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     }
     transform.update_transform();
 
-    if (parent.is_valid()) {
+    if (parent.isValid()) {
         m_scene->attach_component(entity, parent);
     }
 
@@ -176,7 +176,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
     // Create materials
     for (const auto& x : m_model->materials) {
         ecs::Entity materialEntity = m_scene->create_material_entity(x.name);
-        MaterialComponent& material = *m_scene->get_component<MaterialComponent>(materialEntity);
+        MaterialComponent& material = *m_scene->getComponent<MaterialComponent>(materialEntity);
 
         // metallic-roughness workflow:
         auto baseColorTexture = x.values.find("baseColorTexture");
@@ -297,8 +297,8 @@ bool LoaderTinyGLTF::load(Scene* data) {
     // Create armature-bone mappings:
     int armatureIndex = 0;
     for (const auto& skin : m_model->skins) {
-        ecs::Entity armature_id = m_scene->get_entity<ArmatureComponent>(armatureIndex);
-        ArmatureComponent& armature = m_scene->m_ArmatureComponents.get_component(armatureIndex++);
+        ecs::Entity armature_id = m_scene->getEntity<ArmatureComponent>(armatureIndex);
+        ArmatureComponent& armature = m_scene->m_ArmatureComponents.getComponent(armatureIndex++);
 
         const size_t jointCount = skin.joints.size();
         armature.bone_collection.resize(jointCount);
@@ -326,14 +326,14 @@ bool LoaderTinyGLTF::load(Scene* data) {
 void LoaderTinyGLTF::process_mesh(const tinygltf::Mesh& gltf_mesh, int) {
     ecs::Entity mesh_id = m_scene->create_mesh_entity("Mesh::" + gltf_mesh.name);
     // m_scene->Component_Attach(mesh_id, state.rootEntity);
-    MeshComponent& mesh = *m_scene->get_component<MeshComponent>(mesh_id);
+    MeshComponent& mesh = *m_scene->getComponent<MeshComponent>(mesh_id);
 
     for (const auto& prim : gltf_mesh.primitives) {
         MeshComponent::MeshSubset subset;
-        if (m_scene->get_count<MaterialComponent>() == 0) {
+        if (m_scene->getCount<MaterialComponent>() == 0) {
             LOG_FATAL("No material! Consider use default");
         }
-        subset.material_id = m_scene->get_entity<MaterialComponent>(glm::max(0, prim.material));
+        subset.material_id = m_scene->getEntity<MaterialComponent>(glm::max(0, prim.material));
 
         const size_t index_remap[] = { 0, 1, 2 };
         uint32_t vertexOffset = (uint32_t)mesh.normals.size();

@@ -67,11 +67,11 @@ void Scene::merge(Scene& other) {
     for (auto& entry : m_component_lib.m_entries) {
         entry.second.m_manager->merge(*other.m_component_lib.m_entries[entry.first].m_manager);
     }
-    if (other.m_root.is_valid()) {
+    if (other.m_root.isValid()) {
         attach_component(other.m_root, m_root);
     }
 
-    m_bound.union_box(other.m_bound);
+    m_bound.unionBox(other.m_bound);
 }
 
 void Scene::create_camera(int width,
@@ -138,8 +138,8 @@ Entity Scene::create_point_light_entity(const std::string& p_name,
     material.base_color = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
 
-    TransformComponent& transform = *get_component<TransformComponent>(entity);
-    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    TransformComponent& transform = *getComponent<TransformComponent>(entity);
+    ObjectComponent& object = *getComponent<ObjectComponent>(entity);
     transform.set_translation(p_position);
     transform.set_dirty();
 
@@ -147,8 +147,8 @@ Entity Scene::create_point_light_entity(const std::string& p_name,
     object.mesh_id = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
-    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_sphere_mesh(0.1f, 40, 40);
+    MeshComponent& mesh = *getComponent<MeshComponent>(mesh_id);
+    mesh = makeSphereMesh(0.1f, 40, 40);
     mesh.subsets[0].material_id = entity;
     return entity;
 }
@@ -170,14 +170,14 @@ Entity Scene::create_area_light_entity(const std::string& p_name,
     material.base_color = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
 
-    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    ObjectComponent& object = *getComponent<ObjectComponent>(entity);
 
     Entity mesh_id = create_mesh_entity(p_name + ":mesh");
     object.mesh_id = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
-    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_plane_mesh();
+    MeshComponent& mesh = *getComponent<MeshComponent>(mesh_id);
+    mesh = makePlaneMesh();
     mesh.subsets[0].material_id = entity;
     return entity;
 }
@@ -213,15 +213,15 @@ Entity Scene::create_plane_entity(const std::string& p_name,
                                   const vec3& p_scale,
                                   const mat4& p_transform) {
     ecs::Entity entity = create_object_entity(p_name);
-    TransformComponent& trans = *get_component<TransformComponent>(entity);
-    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    TransformComponent& trans = *getComponent<TransformComponent>(entity);
+    ObjectComponent& object = *getComponent<ObjectComponent>(entity);
     trans.matrix_transform(p_transform);
 
     ecs::Entity mesh_id = create_mesh_entity(p_name + ":mesh");
     object.mesh_id = mesh_id;
 
-    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_plane_mesh(p_scale);
+    MeshComponent& mesh = *getComponent<MeshComponent>(mesh_id);
+    mesh = makePlaneMesh(p_scale);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -239,15 +239,15 @@ Entity Scene::create_cube_entity(const std::string& p_name,
                                  const vec3& p_scale,
                                  const mat4& p_transform) {
     ecs::Entity entity = create_object_entity(p_name);
-    TransformComponent& trans = *get_component<TransformComponent>(entity);
-    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    TransformComponent& trans = *getComponent<TransformComponent>(entity);
+    ObjectComponent& object = *getComponent<ObjectComponent>(entity);
     trans.matrix_transform(p_transform);
 
     ecs::Entity mesh_id = create_mesh_entity(p_name + ":mesh");
     object.mesh_id = mesh_id;
 
-    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_cube_mesh(p_scale);
+    MeshComponent& mesh = *getComponent<MeshComponent>(mesh_id);
+    mesh = makeCubeMesh(p_scale);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -265,15 +265,15 @@ Entity Scene::create_sphere_entity(const std::string& p_name,
                                    float p_radius,
                                    const mat4& p_transform) {
     ecs::Entity entity = create_object_entity(p_name);
-    TransformComponent& trans = *get_component<TransformComponent>(entity);
-    ObjectComponent& object = *get_component<ObjectComponent>(entity);
+    TransformComponent& trans = *getComponent<TransformComponent>(entity);
+    ObjectComponent& object = *getComponent<ObjectComponent>(entity);
     trans.matrix_transform(p_transform);
 
     ecs::Entity mesh_id = create_mesh_entity(p_name + ":mesh");
     object.mesh_id = mesh_id;
 
-    MeshComponent& mesh = *get_component<MeshComponent>(mesh_id);
-    mesh = make_sphere_mesh(p_radius);
+    MeshComponent& mesh = *getComponent<MeshComponent>(mesh_id);
+    mesh = makeSphereMesh(p_radius);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -281,7 +281,7 @@ Entity Scene::create_sphere_entity(const std::string& p_name,
 
 void Scene::attach_component(Entity child, Entity parent) {
     DEV_ASSERT(child != parent);
-    DEV_ASSERT(parent.is_valid());
+    DEV_ASSERT(parent.isValid());
 
     // if child already has a parent, detach it
     if (contains<HierarchyComponent>(child)) {
@@ -293,7 +293,7 @@ void Scene::attach_component(Entity child, Entity parent) {
 }
 
 void Scene::remove_entity(Entity entity) {
-    LightComponent* light = get_component<LightComponent>(entity);
+    LightComponent* light = getComponent<LightComponent>(entity);
     if (light) {
         auto shadow_handle = light->get_shadow_map_index();
         if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
@@ -307,8 +307,8 @@ void Scene::remove_entity(Entity entity) {
 }
 
 void Scene::update_light(uint32_t p_index) {
-    Entity id = get_entity<LightComponent>(p_index);
-    const TransformComponent* transform = get_component<TransformComponent>(id);
+    Entity id = getEntity<LightComponent>(p_index);
+    const TransformComponent* transform = getComponent<TransformComponent>(id);
     DEV_ASSERT(transform);
     m_LightComponents[p_index].update(*transform);
 }
@@ -364,7 +364,7 @@ void Scene::update_animation(uint32_t index) {
         }
         t = saturate(t);
 
-        TransformComponent* targetTransform = get_component<TransformComponent>(channel.target_id);
+        TransformComponent* targetTransform = getComponent<TransformComponent>(channel.target_id);
         DEV_ASSERT(targetTransform);
         switch (channel.path) {
             case AnimationComponent::Channel::PATH_SCALE: {
@@ -409,8 +409,8 @@ void Scene::update_animation(uint32_t index) {
 }
 
 void Scene::update_hierarchy(uint32_t index) {
-    Entity self_id = get_entity<HierarchyComponent>(index);
-    TransformComponent* self_transform = get_component<TransformComponent>(self_id);
+    Entity self_id = getEntity<HierarchyComponent>(index);
+    TransformComponent* self_transform = getComponent<TransformComponent>(self_id);
 
     if (!self_transform) {
         return;
@@ -420,16 +420,16 @@ void Scene::update_hierarchy(uint32_t index) {
     const HierarchyComponent* hierarchy = &m_HierarchyComponents[index];
     Entity parent = hierarchy->m_parent_id;
 
-    while (parent.is_valid()) {
-        TransformComponent* parent_transform = get_component<TransformComponent>(parent);
+    while (parent.isValid()) {
+        TransformComponent* parent_transform = getComponent<TransformComponent>(parent);
         DEV_ASSERT(parent_transform);
         world_matrix = parent_transform->get_local_matrix() * world_matrix;
 
-        if ((hierarchy = get_component<HierarchyComponent>(parent)) != nullptr) {
+        if ((hierarchy = getComponent<HierarchyComponent>(parent)) != nullptr) {
             parent = hierarchy->m_parent_id;
-            DEV_ASSERT(parent.is_valid());
+            DEV_ASSERT(parent.isValid());
         } else {
-            parent.make_invalid();
+            parent.makeInvalid();
         }
     }
 
@@ -438,9 +438,9 @@ void Scene::update_hierarchy(uint32_t index) {
 }
 
 void Scene::update_armature(uint32_t index) {
-    Entity id = m_ArmatureComponents.get_entity(index);
+    Entity id = m_ArmatureComponents.getEntity(index);
     ArmatureComponent& armature = m_ArmatureComponents[index];
-    TransformComponent* transform = get_component<TransformComponent>(id);
+    TransformComponent* transform = getComponent<TransformComponent>(id);
     DEV_ASSERT(transform);
 
     // The transform world matrices are in world space, but skinning needs them in armature-local space,
@@ -462,7 +462,7 @@ void Scene::update_armature(uint32_t index) {
 
     int idx = 0;
     for (Entity boneID : armature.bone_collection) {
-        const TransformComponent* boneTransform = get_component<TransformComponent>(boneID);
+        const TransformComponent* boneTransform = getComponent<TransformComponent>(boneID);
         DEV_ASSERT(boneTransform);
 
         const mat4& B = armature.inverse_bind_matrices[idx];
@@ -477,7 +477,7 @@ void Scene::update_armature(uint32_t index) {
 
 bool Scene::serialize(Archive& archive) {
     uint32_t version = UINT_MAX;
-    bool is_read_mode = !archive.is_write_mode();
+    bool is_read_mode = !archive.isWriteMode();
     if (is_read_mode) {
         uint32_t magic;
         uint32_t seed = Entity::MAX_ID;
@@ -487,12 +487,12 @@ bool Scene::serialize(Archive& archive) {
         archive >> version;
         ERR_FAIL_COND_V_MSG(version > kSceneMagicNumber, false, std::format("file version {} is greater than max version {}", version, kSceneVersion));
         archive >> seed;
-        Entity::set_seed(seed);
+        Entity::setSeed(seed);
 
     } else {
         archive << kSceneMagicNumber;
         archive << kSceneVersion;
-        archive << Entity::get_seed();
+        archive << Entity::getSeed();
     }
 
     m_root.serialize(archive);
@@ -502,7 +502,7 @@ bool Scene::serialize(Archive& archive) {
     m_camera->serialize(archive, version);
 
     constexpr uint64_t has_next_flag = 6368519827137030510;
-    if (archive.is_write_mode()) {
+    if (archive.isWriteMode()) {
         for (const auto& it : m_component_lib.m_entries) {
             archive << has_next_flag;
             archive << it.first;  // write name
@@ -533,9 +533,9 @@ bool Scene::serialize(Archive& archive) {
 }
 
 bool Scene::ray_object_intersect(Entity object_id, Ray& ray) {
-    ObjectComponent* object = get_component<ObjectComponent>(object_id);
-    MeshComponent* mesh = get_component<MeshComponent>(object->mesh_id);
-    TransformComponent* transform = get_component<TransformComponent>(object_id);
+    ObjectComponent* object = getComponent<ObjectComponent>(object_id);
+    MeshComponent* mesh = getComponent<MeshComponent>(object->mesh_id);
+    TransformComponent* transform = getComponent<TransformComponent>(object_id);
     DEV_ASSERT(mesh && transform);
 
     if (!transform || !mesh) {
@@ -558,7 +558,7 @@ bool Scene::ray_object_intersect(Entity object_id, Ray& ray) {
         const vec3& B = mesh->positions[mesh->indices[i + 1]];
         const vec3& C = mesh->positions[mesh->indices[i + 2]];
         if (inversedRay.intersects(A, B, C)) {
-            ray.copy_dist(inversedRay);
+            ray.copyDist(inversedRay);
             return true;
         }
     }
@@ -569,8 +569,8 @@ Scene::RayIntersectionResult Scene::intersects(Ray& ray) {
     RayIntersectionResult result;
 
     // @TODO: box collider
-    for (int object_idx = 0; object_idx < get_count<ObjectComponent>(); ++object_idx) {
-        Entity entity = get_entity<ObjectComponent>(object_idx);
+    for (int object_idx = 0; object_idx < getCount<ObjectComponent>(); ++object_idx) {
+        Entity entity = getEntity<ObjectComponent>(object_idx);
         if (ray_object_intersect(entity, ray)) {
             result.entity = entity;
         }
@@ -580,41 +580,41 @@ Scene::RayIntersectionResult Scene::intersects(Ray& ray) {
 }
 
 void Scene::run_light_update_system(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, get_count<LightComponent>(), kSmallSubtaskGroupSize, update_light(index));
+    JS_PARALLEL_FOR(p_ctx, index, getCount<LightComponent>(), kSmallSubtaskGroupSize, update_light(index));
 }
 
 void Scene::run_transformation_update_system(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, get_count<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
+    JS_PARALLEL_FOR(p_ctx, index, getCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].update_transform());
 }
 
 void Scene::run_animation_update_system(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, get_count<AnimationComponent>(), 1, update_animation(index));
+    JS_PARALLEL_FOR(p_ctx, index, getCount<AnimationComponent>(), 1, update_animation(index));
 }
 
 void Scene::run_armature_update_system(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, get_count<ArmatureComponent>(), 1, update_armature(index));
+    JS_PARALLEL_FOR(p_ctx, index, getCount<ArmatureComponent>(), 1, update_armature(index));
 }
 
 void Scene::run_hierarchy_update_system(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, get_count<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
+    JS_PARALLEL_FOR(p_ctx, index, getCount<HierarchyComponent>(), kSmallSubtaskGroupSize, update_hierarchy(index));
 }
 
 void Scene::run_object_update_system(jobsystem::Context&) {
-    m_bound.make_invalid();
+    m_bound.makeInvalid();
 
     for (auto [entity, obj] : m_ObjectComponents) {
         if (!contains<TransformComponent>(entity)) {
             continue;
         }
 
-        const TransformComponent& transform = *get_component<TransformComponent>(entity);
+        const TransformComponent& transform = *getComponent<TransformComponent>(entity);
         DEV_ASSERT(contains<MeshComponent>(obj.mesh_id));
-        const MeshComponent& mesh = *get_component<MeshComponent>(obj.mesh_id);
+        const MeshComponent& mesh = *getComponent<MeshComponent>(obj.mesh_id);
 
         mat4 M = transform.get_world_matrix();
         AABB aabb = mesh.local_bound;
-        aabb.apply_matrix(M);
-        m_bound.union_box(aabb);
+        aabb.applyMatrix(M);
+        m_bound.unionBox(aabb);
     }
 }
 
