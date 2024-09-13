@@ -26,7 +26,7 @@ auto FileAccess::createForPath(const std::string& p_path) -> std::shared_ptr<Fil
     return create(ACCESS_FILESYSTEM);
 }
 
-auto FileAccess::open(const std::string& p_path, int p_mode_flags)
+auto FileAccess::open(const std::string& p_path, ModeFlags p_mode_flags)
     -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
     auto file_access = createForPath(p_path);
 

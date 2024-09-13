@@ -27,6 +27,7 @@ public:
 
     virtual bool load(T* p_data) = 0;
 
+    // @TODO: use FilePath instead
     static std::shared_ptr<Loader<T>> create(const std::string& p_path) {
         std::filesystem::path ext{ p_path };
         ext = ext.extension();

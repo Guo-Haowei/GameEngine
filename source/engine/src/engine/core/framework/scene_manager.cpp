@@ -102,14 +102,14 @@ void SceneManager::request_scene(std::string_view p_path) {
     fs::path path{ p_path };
     auto ext = path.extension().string();
     if (ext == ".lua" || ext == ".scene") {
-        AssetManager::singleton().load_scene_async(std::string(p_path), [](void* p_scene, void*) {
+        AssetManager::singleton().load_scene_async(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->update(0.0f);
             SceneManager::singleton().queue_loaded_scene(new_scene, true);
         });
     } else {
-        AssetManager::singleton().load_scene_async(std::string(p_path), [](void* p_scene, void*) {
+        AssetManager::singleton().load_scene_async(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->update(0.0f);

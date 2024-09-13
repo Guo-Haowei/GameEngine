@@ -34,7 +34,7 @@ void request_env_map(const std::string& path) {
     }
 
     s_prev_env_map = path;
-    if (auto handle = AssetManager::singleton().find_image(path); handle) {
+    if (auto handle = AssetManager::singleton().find_image(FilePath{ path }); handle) {
         if (auto image = handle->get(); image && image->gpu_texture) {
             g_constantCache.cache.c_hdr_env_map = image->gpu_texture->get_resident_handle();
             g_constantCache.update();
@@ -43,7 +43,7 @@ void request_env_map(const std::string& path) {
         }
     }
 
-    AssetManager::singleton().load_image_async(path, [](void* p_asset, void* p_userdata) {
+    AssetManager::singleton().load_image_async(FilePath{ path }, [](void* p_asset, void* p_userdata) {
         Image* image = reinterpret_cast<Image*>(p_asset);
         ImageHandle* handle = reinterpret_cast<ImageHandle*>(p_userdata);
         DEV_ASSERT(image);

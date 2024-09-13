@@ -545,7 +545,7 @@ void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
 
 void OpenGLGraphicsManager::createGpuResources() {
     // @TODO: appropriate sampler
-    auto grass_image = AssetManager::singleton().load_image_sync("@res://images/grass.png")->get();
+    auto grass_image = AssetManager::singleton().load_image_sync(FilePath{ "@res://images/grass.png" })->get();
 
     // @TODO: move to renderer
     g_grass = (OpenGLMeshBuffers*)create_mesh(makeGrassBillboard());

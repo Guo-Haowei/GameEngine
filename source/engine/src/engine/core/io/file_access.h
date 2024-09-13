@@ -1,4 +1,5 @@
 #pragma once
+#include "file_path.h"
 
 namespace my {
 
@@ -32,8 +33,11 @@ public:
 
     static auto create(AccessType p_access_type) -> std::shared_ptr<FileAccess>;
     static auto createForPath(const std::string& p_path) -> std::shared_ptr<FileAccess>;
-    // @TODO: use string_view
-    static auto open(const std::string& p_path, int p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>>;
+
+    static auto open(const std::string& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>>;
+    static auto open(const FilePath& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
+        return open(p_path.getString(), p_mode_flags);
+    }
 
     template<typename T>
     static void makeDefault(AccessType p_access_type) {
@@ -43,7 +47,7 @@ public:
 protected:
     FileAccess() = default;
 
-    virtual ErrorCode openInternal(std::string_view p_path, int p_mode_flags) = 0;
+    virtual ErrorCode openInternal(std::string_view p_path, ModeFlags p_mode_flags) = 0;
     virtual void setAccessType(AccessType p_access_type) { m_access_type = p_access_type; }
     virtual std::string fixPath(std::string_view p_path);
 

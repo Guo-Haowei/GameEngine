@@ -5,7 +5,7 @@ namespace my {
 
 FileAccessUnix::~FileAccessUnix() { close(); }
 
-ErrorCode FileAccessUnix::openInternal(std::string_view p_path, int p_mode_flags) {
+ErrorCode FileAccessUnix::openInternal(std::string_view p_path, ModeFlags p_mode_flags) {
     ERR_FAIL_COND_V(m_file_handle, ERR_FILE_ALREADY_IN_USE);
 
     const char* mode = "";
