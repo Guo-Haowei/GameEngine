@@ -10,7 +10,7 @@ extern void register_test_dvars();
 
 using Commands = std::vector<std::string>;
 
-TEST(DynamicVariableParser, invalid_command) {
+TEST(dynamic_variable_parser, invalid_command) {
     register_test_dvars();
 
     Commands commands = { "+abc" };
@@ -21,7 +21,7 @@ TEST(DynamicVariableParser, invalid_command) {
     EXPECT_EQ(parser.get_error(), "unknown command '+abc'");
 }
 
-TEST(DynamicVariableParser, invalid_dvar_name) {
+TEST(dynamic_variable_parser, invalid_dvar_name) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_int1" };
@@ -32,7 +32,7 @@ TEST(DynamicVariableParser, invalid_dvar_name) {
     EXPECT_EQ(parser.get_error(), "dvar 'test_int1' not found");
 }
 
-TEST(DynamicVariableParser, unexpected_eof) {
+TEST(dynamic_variable_parser, unexpected_eof) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_int" };
@@ -43,7 +43,7 @@ TEST(DynamicVariableParser, unexpected_eof) {
     EXPECT_EQ(parser.get_error(), "invalid arguments: +set test_int");
 }
 
-TEST(DynamicVariableParser, set_int) {
+TEST(dynamic_variable_parser, set_int) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_int", "1001" };
@@ -54,7 +54,7 @@ TEST(DynamicVariableParser, set_int) {
     EXPECT_EQ(DVAR_GET_INT(test_int), 1001);
 }
 
-TEST(DynamicVariableParser, set_float) {
+TEST(dynamic_variable_parser, set_float) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_float", "1001.1" };
@@ -65,7 +65,7 @@ TEST(DynamicVariableParser, set_float) {
     EXPECT_EQ(DVAR_GET_FLOAT(test_float), 1001.1f);
 }
 
-TEST(DynamicVariableParser, set_string) {
+TEST(dynamic_variable_parser, set_string) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_string", "1001.1" };
@@ -76,7 +76,7 @@ TEST(DynamicVariableParser, set_string) {
     EXPECT_EQ(DVAR_GET_STRING(test_string), "1001.1");
 }
 
-TEST(DynamicVariableParser, set_vec2) {
+TEST(dynamic_variable_parser, set_vec2) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_vec2", "6", "7" };
@@ -87,7 +87,7 @@ TEST(DynamicVariableParser, set_vec2) {
     EXPECT_EQ(DVAR_GET_VEC2(test_vec2), vec2(6, 7));
 }
 
-TEST(DynamicVariableParser, set_vec3) {
+TEST(dynamic_variable_parser, set_vec3) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_vec3", "6", "7", "8" };
@@ -98,7 +98,7 @@ TEST(DynamicVariableParser, set_vec3) {
     EXPECT_EQ(DVAR_GET_VEC3(test_vec3), vec3(6, 7, 8));
 }
 
-TEST(DynamicVariableParser, set_vec4) {
+TEST(dynamic_variable_parser, set_vec4) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_vec4", "6", "7", "8", "9" };
@@ -109,7 +109,7 @@ TEST(DynamicVariableParser, set_vec4) {
     EXPECT_EQ(DVAR_GET_VEC4(test_vec4), vec4(6, 7, 8, 9));
 }
 
-TEST(DynamicVariableParser, set_ivec2) {
+TEST(dynamic_variable_parser, set_ivec2) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_ivec2", "6", "7" };
@@ -120,7 +120,7 @@ TEST(DynamicVariableParser, set_ivec2) {
     EXPECT_EQ(DVAR_GET_IVEC2(test_ivec2), ivec2(6, 7));
 }
 
-TEST(DynamicVariableParser, set_ivec3) {
+TEST(dynamic_variable_parser, set_ivec3) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_ivec3", "6", "7", "8" };
@@ -131,7 +131,7 @@ TEST(DynamicVariableParser, set_ivec3) {
     EXPECT_EQ(DVAR_GET_IVEC3(test_ivec3), ivec3(6, 7, 8));
 }
 
-TEST(DynamicVariableParser, set_ivec4) {
+TEST(dynamic_variable_parser, set_ivec4) {
     register_test_dvars();
 
     Commands commands = { "+set", "test_ivec4", "6", "7", "8", "9" };
@@ -142,7 +142,7 @@ TEST(DynamicVariableParser, set_ivec4) {
     EXPECT_EQ(DVAR_GET_IVEC4(test_ivec4), ivec4(6, 7, 8, 9));
 }
 
-TEST(DynamicVariableParser, multiple_set_success) {
+TEST(dynamic_variable_parser, multiple_set_success) {
     register_test_dvars();
 
     Commands commands = {
@@ -159,7 +159,7 @@ TEST(DynamicVariableParser, multiple_set_success) {
     EXPECT_EQ(DVAR_GET_INT(test_int), 1002);
 }
 
-TEST(DynamicVariableParser, multiple_set_fail) {
+TEST(dynamic_variable_parser, multiple_set_fail) {
     register_test_dvars();
 
     Commands commands = {

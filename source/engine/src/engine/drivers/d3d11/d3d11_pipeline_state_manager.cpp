@@ -18,9 +18,9 @@ class D3DIncludeHandler : public ID3DInclude {
 public:
     STDMETHOD(Open)
     (D3D_INCLUDE_TYPE, LPCSTR p_file, LPCVOID, LPCVOID* p_out_data, UINT* p_bytes) override {
-        fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / p_file;
+        FilePath path = FilePath{ ROOT_FOLDER } / "source" / "shader" / p_file;
 
-        auto source_binary = AssetManager::singleton().load_file_sync(path.string());
+        auto source_binary = AssetManager::singleton().load_file_sync(path);
         if (!source_binary || source_binary->buffer.empty()) {
             LOG_ERROR("failed to read file '{}'", path.string());
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);

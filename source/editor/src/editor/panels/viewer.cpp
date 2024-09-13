@@ -51,11 +51,11 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             clicked *= 2.0f;
             clicked -= 1.0f;
 
-            const mat4 inversed_projection_view = glm::inverse(camera.get_projection_view_matrix());
+            const mat4 inversed_projection_view = glm::inverse(camera.getProjectionViewMatrix());
 
-            const vec3 ray_start = camera.get_position();
+            const vec3 ray_start = camera.getPosition();
             const vec3 direction = glm::normalize(vec3(inversed_projection_view * vec4(clicked.x, -clicked.y, 1.0f, 1.0f)));
-            const vec3 ray_end = ray_start + direction * camera.get_far();
+            const vec3 ray_end = ray_start + direction * camera.getFar();
             Ray ray(ray_start, ray_end);
 
             const auto result = scene.intersects(ray);
@@ -67,9 +67,9 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
 }
 
 void Viewer::draw_gui(Scene& scene, Camera& camera) {
-    const mat4 view_matrix = camera.get_view_matrix();
-    const mat4 projection_matrix = camera.get_projection_matrix();
-    const mat4 projection_view_matrix = camera.get_projection_view_matrix();
+    const mat4 view_matrix = camera.getViewMatrix();
+    const mat4 projection_matrix = camera.getProjectionMatrix();
+    const mat4 projection_view_matrix = camera.getProjectionViewMatrix();
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
@@ -133,7 +133,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION operation) {
         if (transform_component) {
-            mat4 local = transform_component->get_local_matrix();
+            mat4 local = transform_component->getLocalMatrix();
             if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
                                      glm::value_ptr(projection_matrix),
                                      operation,
@@ -141,7 +141,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
                                      ImGuizmo::WORLD,
                                      glm::value_ptr(local),
                                      nullptr, nullptr, nullptr, nullptr)) {
-                transform_component->set_local_transform(local);
+                transform_component->setLocalTransform(local);
             }
         }
     };

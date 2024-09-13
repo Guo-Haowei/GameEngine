@@ -67,12 +67,12 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
             mesh.armature_id = entity;
 
             // the object component will use an identity transform but will be parented to the armature
-            ecs::Entity objectID = m_scene->create_object_entity("Animated::" + node.name);
+            ecs::Entity objectID = m_scene->createObjectEntity("Animated::" + node.name);
             ObjectComponent& object = *m_scene->getComponent<ObjectComponent>(objectID);
             object.mesh_id = mesh_id;
-            m_scene->attach_component(objectID, entity);
+            m_scene->attachComponent(objectID, entity);
         } else {  // this node is a mesh instance
-            entity = m_scene->create_object_entity("Object::" + node.name);
+            entity = m_scene->createObjectEntity("Object::" + node.name);
             ObjectComponent& object = *m_scene->getComponent<ObjectComponent>(entity);
             object.mesh_id = m_scene->getEntity<MeshComponent>(node.mesh);
         }
@@ -86,7 +86,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     if (!entity.isValid()) {
         entity = ecs::Entity::create();
         m_scene->create<TransformComponent>(entity);
-        m_scene->create<NameComponent>(entity).set_name("Transform::" + node.name);
+        m_scene->create<NameComponent>(entity).setName("Transform::" + node.name);
     }
 
     m_entity_map[node_index] = entity;
@@ -110,7 +110,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
         matrix[3].y = float(node.matrix.at(13));
         matrix[3].z = float(node.matrix.at(14));
         matrix[3].w = float(node.matrix.at(15));
-        transform.matrix_transform(matrix);
+        transform.matrixTransform(matrix);
     } else {
         if (!node.scale.empty()) {
             // Note: limiting min scale because scale <= 0.0001 will break matrix decompose and mess up the model (float precision issue?)
@@ -120,19 +120,19 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
                     node.scale[idx] = 0.0001001 * sign;
                 }
             }
-            transform.set_scale(vec3(float(node.scale[0]), float(node.scale[1]), float(node.scale[2])));
+            transform.setScale(vec3(float(node.scale[0]), float(node.scale[1]), float(node.scale[2])));
         }
         if (!node.rotation.empty()) {
-            transform.set_rotation(vec4(float(node.rotation[0]), float(node.rotation[1]), float(node.rotation[2]), float(node.rotation[3])));
+            transform.setRotation(vec4(float(node.rotation[0]), float(node.rotation[1]), float(node.rotation[2]), float(node.rotation[3])));
         }
         if (!node.translation.empty()) {
-            transform.set_translation(vec3(float(node.translation[0]), float(node.translation[1]), float(node.translation[2])));
+            transform.setTranslation(vec3(float(node.translation[0]), float(node.translation[1]), float(node.translation[2])));
         }
     }
-    transform.update_transform();
+    transform.updateTransform();
 
     if (parent.isValid()) {
-        m_scene->attach_component(entity, parent);
+        m_scene->attachComponent(entity, parent);
     }
 
     for (int child : node.children) {
@@ -170,12 +170,12 @@ bool LoaderTinyGLTF::load(Scene* data) {
 
     ecs::Entity root = ecs::Entity::create();
     m_scene->create<TransformComponent>(root);
-    m_scene->create<NameComponent>(root).set_name(m_file_name);
+    m_scene->create<NameComponent>(root).setName(m_file_name);
     m_scene->m_root = root;
 
     // Create materials
     for (const auto& x : m_model->materials) {
-        ecs::Entity materialEntity = m_scene->create_material_entity(x.name);
+        ecs::Entity materialEntity = m_scene->createMaterialEntity(x.name);
         MaterialComponent& material = *m_scene->getComponent<MaterialComponent>(materialEntity);
 
         // metallic-roughness workflow:
@@ -207,7 +207,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.request_image(MaterialComponent::TEXTURE_BASE, m_base_path + img.uri);
+            material.requestImage(MaterialComponent::TEXTURE_BASE, m_base_path + img.uri);
 
             // @TODO:
             // material.mTextures[MaterialComponent::Base].image = g_assetManager->LoadImageSync(searchName);
@@ -220,7 +220,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.request_image(MaterialComponent::TEXTURE_NORMAL, m_base_path + img.uri);
+            material.requestImage(MaterialComponent::TEXTURE_NORMAL, m_base_path + img.uri);
             // material.mTextures[MaterialComponent::Normal].image = g_assetManager->LoadImageSync(searchName);
             //  material.textures[MaterialComponent::NORMAL_MAP].uvset = normalTexture->second.TextureTexCoord();
         }
@@ -231,7 +231,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.request_image(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_base_path + img.uri);
+            material.requestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_base_path + img.uri);
             // material.mTextures[MaterialComponent::MetallicRoughness].resource = ;
         }
 #if 0
@@ -273,7 +273,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
     // Create armatures
     for (const auto& skin : m_model->skins) {
         ecs::Entity armature_id = ecs::Entity::create();
-        m_scene->create<NameComponent>(armature_id).set_name(skin.name);
+        m_scene->create<NameComponent>(armature_id).setName(skin.name);
         m_scene->create<TransformComponent>(armature_id);
         ArmatureComponent& armature = m_scene->create<ArmatureComponent>(armature_id);
         if (skin.inverseBindMatrices >= 0) {
@@ -324,7 +324,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
 }
 
 void LoaderTinyGLTF::process_mesh(const tinygltf::Mesh& gltf_mesh, int) {
-    ecs::Entity mesh_id = m_scene->create_mesh_entity("Mesh::" + gltf_mesh.name);
+    ecs::Entity mesh_id = m_scene->createMeshEntity("Mesh::" + gltf_mesh.name);
     // m_scene->Component_Attach(mesh_id, state.rootEntity);
     MeshComponent& mesh = *m_scene->getComponent<MeshComponent>(mesh_id);
 
@@ -585,7 +585,7 @@ void LoaderTinyGLTF::process_mesh(const tinygltf::Mesh& gltf_mesh, int) {
         CRASH_NOW_MSG("No normal detected");
     }
 
-    mesh.create_render_data();
+    mesh.createRenderData();
 }
 
 void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int) {
@@ -595,8 +595,8 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
     if (tag.empty()) {
         tag = std::format("{}::animation_{}", m_file_name, ++s_counter);
     }
-    auto entity = m_scene->create_name_entity(tag);
-    m_scene->attach_component(entity);
+    auto entity = m_scene->createNameEntity(tag);
+    m_scene->attachComponent(entity);
 
     // m_scene->Component_Attach(entity, m_scene->m_root);
     AnimationComponent& animation = m_scene->create<AnimationComponent>(entity);

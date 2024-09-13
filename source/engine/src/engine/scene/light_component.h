@@ -15,24 +15,24 @@ public:
         CAST_SHADOW = BIT(2),
     };
 
-    bool is_dirty() const { return m_flags & DIRTY; }
-    void set_dirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
+    bool isDirty() const { return m_flags & DIRTY; }
+    void setDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
 
-    bool cast_shadow() const { return m_flags & CAST_SHADOW; }
-    void set_cast_shadow(bool p_cast = true) { p_cast ? m_flags |= CAST_SHADOW : m_flags &= ~CAST_SHADOW; }
+    bool castShadow() const { return m_flags & CAST_SHADOW; }
+    void setCastShadow(bool p_cast = true) { p_cast ? m_flags |= CAST_SHADOW : m_flags &= ~CAST_SHADOW; }
 
-    int get_type() const { return m_type; }
-    void set_type(int p_type) { m_type = p_type; }
+    int getType() const { return m_type; }
+    void setType(int p_type) { m_type = p_type; }
 
-    float get_max_distance() const { return m_max_distance; }
-    int get_shadow_map_index() const { return m_shadow_map_index; }
+    float getMaxDistance() const { return m_max_distance; }
+    int getShadowMapIndex() const { return m_shadow_map_index; }
 
     void update(const TransformComponent& p_transform);
 
-    void serialize(Archive& archive, uint32_t version);
+    void serialize(Archive& p_archive, uint32_t p_version);
 
-    const auto& get_matrices() const { return m_light_space_matrices; }
-    const vec3& get_position() const { return m_position; }
+    const auto& getMatrices() const { return m_light_space_matrices; }
+    const vec3& getPosition() const { return m_position; }
 
     struct {
         float constant;

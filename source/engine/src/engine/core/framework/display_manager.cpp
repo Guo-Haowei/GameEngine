@@ -13,7 +13,6 @@ std::shared_ptr<DisplayManager> DisplayManager::create() {
     if (backend == "opengl") {
         return std::make_shared<GlfwDisplayManager>();
     } else if (backend == "d3d11") {
-        // @TODO:
         return std::make_shared<Win32DisplayManager>();
     }
 

@@ -29,7 +29,7 @@ struct MaterialComponent {
     bool use_textures;
 
     // @TODO: remove this, this is poorly designed
-    void request_image(int p_slot, const std::string& p_path);
+    void requestImage(int p_slot, const std::string& p_path);
 
     void serialize(Archive& p_archive, uint32_t p_version);
 };

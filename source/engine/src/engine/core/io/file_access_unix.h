@@ -14,7 +14,7 @@ public:
     bool writeBuffer(const void* p_data, size_t p_size) override;
 
 protected:
-    ErrorCode openInternal(std::string_view p_path, int p_mode_flags) override;
+    ErrorCode openInternal(std::string_view p_path, ModeFlags p_mode_flags) override;
 
     FILE* m_file_handle{ nullptr };
 };

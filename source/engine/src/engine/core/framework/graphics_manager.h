@@ -11,7 +11,6 @@
 #include "rendering/texture.h"
 #include "rendering/uniform_buffer.h"
 #include "scene/material_component.h"
-#include "scene/scene_components.h"
 
 // @TODO: refactor
 #include "rendering/render_data.h"

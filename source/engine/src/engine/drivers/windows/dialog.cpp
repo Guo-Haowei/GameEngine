@@ -52,7 +52,6 @@ bool open_save_dialog(std::filesystem::path& inout_path) {
     OPENFILENAMEA ofn;
     ZeroMemory(&ofn, sizeof(ofn));
 
-    // @TODO: string_view
     char file_name[MAX_PATH]{ 0 };
     char extension[MAX_PATH]{ 0 };
     char dir[MAX_PATH]{ 0 };

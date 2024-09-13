@@ -2,7 +2,7 @@
 
 namespace my {
 
-TEST(Graph, has_cycle) {
+TEST(graph, has_cycle) {
     Graph graph(5);
 
     graph.add_edge(0, 1);
@@ -15,7 +15,7 @@ TEST(Graph, has_cycle) {
     EXPECT_TRUE(graph.has_cycle());
 }
 
-TEST(Graph, sort) {
+TEST(graph, sort) {
     Graph graph(5);
 
     enum {
@@ -41,7 +41,7 @@ TEST(Graph, sort) {
     EXPECT_EQ(sorted[4], E);
 }
 
-TEST(Graph, remove_redundant) {
+TEST(graph, remove_redundant) {
     Graph graph(5);
 
     graph.add_edge(0, 1);
@@ -70,7 +70,7 @@ TEST(Graph, remove_redundant) {
     EXPECT_FALSE(graph.has_edge(0, 4));
 }
 
-TEST(Graph, sort_level) {
+TEST(graph, sort_level) {
     enum {
         A = 0,
         B = 1,

@@ -3,6 +3,7 @@
 #include "core/base/concurrent_queue.h"
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
+#include "core/io/file_path.h"
 
 namespace my {
 
@@ -22,8 +23,7 @@ enum LoadTaskType {
 
 struct LoadTask {
     LoadTaskType type;
-    // @TODO: better string
-    std::string asset_path;
+    FilePath asset_path;
     LoadSuccessFunc on_success;
     void* userdata;
 };
@@ -35,21 +35,22 @@ public:
     bool initialize() override;
     void finalize() override;
 
-    void load_scene_async(const std::string& p_path, LoadSuccessFunc p_on_success);
+    void load_scene_async(const FilePath& p_path, LoadSuccessFunc p_on_success);
 
-    ImageHandle* load_image_sync(const std::string& p_path);
-    ImageHandle* load_image_async(const std::string& p_path, LoadSuccessFunc = nullptr);
-    ImageHandle* find_image(const std::string& p_path);
+    ImageHandle* load_image_sync(const FilePath& p_path);
+    ImageHandle* load_image_async(const FilePath& p_path, LoadSuccessFunc = nullptr);
+    ImageHandle* find_image(const FilePath& p_path);
 
-    std::shared_ptr<File> load_file_sync(const std::string& p_path);
-    std::shared_ptr<File> find_file(const std::string& p_path);
+    std::shared_ptr<File> load_file_sync(const FilePath& p_path);
+    std::shared_ptr<File> find_file(const FilePath& p_path);
 
     static void worker_main();
 
 private:
     void enqueue_async_load_task(LoadTask& task);
 
-    std::map<std::string, std::unique_ptr<ImageHandle>> m_image_cache;
+    std::map<FilePath, std::unique_ptr<ImageHandle>> m_image_cache;
+    std::map<FilePath, std::shared_ptr<File>> m_text_cache;
     std::mutex m_image_cache_lock;
 };
 

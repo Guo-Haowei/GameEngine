@@ -1,5 +1,7 @@
 #include "file_access.h"
 
+#include "core/string/string_utils.h"
+
 namespace my {
 
 FileAccess::CreateFunc FileAccess::s_create_func[ACCESS_MAX];
@@ -24,7 +26,7 @@ auto FileAccess::createForPath(const std::string& p_path) -> std::shared_ptr<Fil
     return create(ACCESS_FILESYSTEM);
 }
 
-auto FileAccess::open(const std::string& p_path, int p_mode_flags)
+auto FileAccess::open(const std::string& p_path, ModeFlags p_mode_flags)
     -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
     auto file_access = createForPath(p_path);
 
@@ -36,23 +38,18 @@ auto FileAccess::open(const std::string& p_path, int p_mode_flags)
     return file_access;
 }
 
-// @TODO: string utils
-static void replace_first(std::string& p_string, std::string_view p_pattern, std::string_view p_replacement) {
-    p_string.replace(0, p_pattern.size(), p_replacement);
-}
-
 std::string FileAccess::fixPath(std::string_view p_path) {
     std::string fixed_path{ p_path };
     switch (m_access_type) {
         case ACCESS_RESOURCE: {
             if (p_path.starts_with("@res://")) {
-                replace_first(fixed_path, "@res:/", ROOT_FOLDER "resources");
+                StringUtils::replaceFirst(fixed_path, "@res:/", ROOT_FOLDER "resources");
                 return fixed_path;
             }
         } break;
         case ACCESS_USERDATA: {
             if (p_path.starts_with("@user://")) {
-                replace_first(fixed_path, "@user:/", ROOT_FOLDER "user");
+                StringUtils::replaceFirst(fixed_path, "@user:/", ROOT_FOLDER "user");
                 return fixed_path;
             }
         } break;

@@ -113,7 +113,7 @@ void PropertyPanel::update_internal(Scene& scene) {
     bool disable_rotation = false;
     bool disable_scale = false;
     if (light_component) {
-        switch (light_component->get_type()) {
+        switch (light_component->getType()) {
             case LIGHT_TYPE_OMNI:
                 disable_translation = true;
                 disable_scale = true;
@@ -131,7 +131,7 @@ void PropertyPanel::update_internal(Scene& scene) {
     }
 
     DrawComponent("Transform", transform_component, [&](TransformComponent& transform) {
-        mat4 transformMatrix = transform.get_local_matrix();
+        mat4 transformMatrix = transform.getLocalMatrix();
         vec3 translation;
         vec3 rotation;
         vec3 scale;
@@ -150,14 +150,14 @@ void PropertyPanel::update_internal(Scene& scene) {
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(transformMatrix));
             // @TODO: change position, scale and rotation instead
-            transform.set_local_transform(transformMatrix);
+            transform.setLocalTransform(transformMatrix);
         }
     });
 
     DrawComponent("Light", light_component, [&](LightComponent& p_light) {
         bool dirty = false;
 
-        switch (p_light.get_type()) {
+        switch (p_light.getType()) {
             case LIGHT_TYPE_OMNI:
                 ImGui::Text("omni light");
                 break;
@@ -168,17 +168,17 @@ void PropertyPanel::update_internal(Scene& scene) {
                 break;
         }
 
-        bool cast_shadow = p_light.cast_shadow();
+        bool cast_shadow = p_light.castShadow();
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        if (cast_shadow != p_light.cast_shadow()) {
-            p_light.set_cast_shadow(cast_shadow);
-            p_light.set_dirty();
+        if (cast_shadow != p_light.castShadow()) {
+            p_light.setCastShadow(cast_shadow);
+            p_light.setDirty();
         }
 
         dirty |= draw_drag_float("constant", p_light.m_atten.constant, 0.1f, 0.0f, 1.0f);
         dirty |= draw_drag_float("linear", p_light.m_atten.linear, 0.1f, 0.0f, 1.0f);
         dirty |= draw_drag_float("quadratic", p_light.m_atten.quadratic, 0.1f, 0.0f, 1.0f);
-        ImGui::Text("max distance: %0.3f", p_light.get_max_distance());
+        ImGui::Text("max distance: %0.3f", p_light.getMaxDistance());
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
@@ -257,7 +257,7 @@ void PropertyPanel::update_internal(Scene& scene) {
     });
 
     DrawComponent("Animation", animation_component, [&](AnimationComponent& p_animation) {
-        if (!p_animation.is_playing()) {
+        if (!p_animation.isPlaying()) {
             if (ImGui::Button("play")) {
                 p_animation.flags |= AnimationComponent::PLAYING;
             }

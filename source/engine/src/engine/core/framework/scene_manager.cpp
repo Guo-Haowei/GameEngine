@@ -18,12 +18,12 @@ static void create_empty_scene(Scene* scene) {
     Entity::setSeed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-    scene->create_camera(frame_size.x, frame_size.y);
+    scene->createCamera(frame_size.x, frame_size.y);
 
-    auto root = scene->create_transform_entity("world");
+    auto root = scene->createTransformEntity("world");
     scene->m_root = root;
     if (0) {
-        auto light = scene->create_omni_light_entity("omni light", vec3(1));
+        auto light = scene->createOmniLightEntity("omni light", vec3(1));
         auto transform = scene->getComponent<TransformComponent>(light);
         DEV_ASSERT(transform);
         constexpr float rx = glm::radians(-80.0f);
@@ -31,7 +31,7 @@ static void create_empty_scene(Scene* scene) {
         constexpr float rz = glm::radians(0.0f);
         transform->rotate(vec3(rx, ry, rz));
 
-        scene->attach_component(light, root);
+        scene->attachComponent(light, root);
     }
 }
 
@@ -99,17 +99,18 @@ void SceneManager::queue_loaded_scene(Scene* p_scene, bool p_replace) {
 }
 
 void SceneManager::request_scene(std::string_view p_path) {
-    fs::path path{ p_path };
-    auto ext = path.extension().string();
+    FilePath path{ p_path };
+
+    std::string ext = path.extension();
     if (ext == ".lua" || ext == ".scene") {
-        AssetManager::singleton().load_scene_async(std::string(p_path), [](void* p_scene, void*) {
+        AssetManager::singleton().load_scene_async(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->update(0.0f);
             SceneManager::singleton().queue_loaded_scene(new_scene, true);
         });
     } else {
-        AssetManager::singleton().load_scene_async(std::string(p_path), [](void* p_scene, void*) {
+        AssetManager::singleton().load_scene_async(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->update(0.0f);

@@ -1,4 +1,5 @@
 #pragma once
+#include "core/io/file_path.h"
 
 namespace my {
 
@@ -27,14 +28,13 @@ public:
 
     virtual bool load(T* p_data) = 0;
 
-    static std::shared_ptr<Loader<T>> create(const std::string& p_path) {
-        std::filesystem::path ext{ p_path };
-        ext = ext.extension();
-        auto it = s_loader_creator.find(ext.string());
+    static std::shared_ptr<Loader<T>> create(const FilePath& p_path) {
+        std::string ext = p_path.extensionCStr();
+        auto it = s_loader_creator.find(ext);
         if (it == s_loader_creator.end()) {
             return nullptr;
         }
-        return it->second(p_path);
+        return it->second(p_path.string());
     }
 
     static bool register_loader(const std::string& p_extension, CreateLoaderFunc p_func) {

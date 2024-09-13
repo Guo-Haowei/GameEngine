@@ -1,11 +1,10 @@
 #include "core/io/archive.h"
 
 #include "core/io/file_access_unix.h"
-#include "scene/scene_components.h"
 
 namespace my {
 
-TEST(Archive, open_read) {
+TEST(archive, open_read) {
     FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
     Archive archive;
@@ -13,7 +12,7 @@ TEST(Archive, open_read) {
     EXPECT_EQ(err.getValue(), ERR_FILE_NOT_FOUND);
 }
 
-TEST(Archive, open_write) {
+TEST(archive, open_write) {
     const std::string test_file = "archive_test_open_write";
 
     Archive archive;
@@ -25,7 +24,7 @@ TEST(Archive, open_write) {
     EXPECT_TRUE(std::filesystem::remove(test_file));
 }
 
-TEST(Archive, write_and_read) {
+TEST(archive, write_and_read) {
     const char* test_file = "archive_test_write_and_read";
     const char* test_cstring = "add3to2";
     const std::string test_string = "add3to2";
@@ -74,34 +73,5 @@ TEST(Archive, write_and_read) {
 
     EXPECT_TRUE(std::filesystem::remove(test_file));
 }
-
-// @TODO:
-// TEST(Archive, serialze_tag_component) {
-//     const std::string name = "MyAwesomeObject##001";
-//     const std::string TAG_COMPONENT_SERIALIZE_TEST_FILE = "archive_test_serialize_tag_component";
-//
-//     TagComponent tag_component(name);
-//     Archive writer;
-//     auto res = writer.open_write(TAG_COMPONENT_SERIALIZE_TEST_FILE);
-//     ASSERT_TRUE(res);
-//     tag_component.serialize(writer);
-//     writer.close();
-//
-//     EXPECT_EQ(tag_component.get_tag(), name);
-//
-//     tag_component.set_tag("");
-//     EXPECT_NE(tag_component.get_tag(), name);
-//
-//     Archive reader;
-//     res = reader.open_read(TAG_COMPONENT_SERIALIZE_TEST_FILE);
-//     ASSERT_TRUE(res);
-//
-//     tag_component.serialize(reader);
-//     reader.close();
-//
-//     EXPECT_EQ(tag_component.get_tag(), name);
-//
-//     ASSERT_TRUE(fs::remove(TAG_COMPONENT_SERIALIZE_TEST_FILE));
-// }
 
 }  // namespace my

@@ -65,7 +65,7 @@ MeshComponent makePlaneMesh(const vec3& p_scale) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.create_render_data();
+    mesh.createRenderData();
     return mesh;
 }
 
@@ -196,7 +196,7 @@ MeshComponent makeCubeMesh(const vec3& p_scale) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.create_render_data();
+    mesh.createRenderData();
     return mesh;
 }
 
@@ -248,7 +248,7 @@ MeshComponent makeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.create_render_data();
+    mesh.createRenderData();
     return mesh;
 }
 
@@ -336,7 +336,7 @@ MeshComponent makeGrassBillboard(const vec3& p_scale) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.create_render_data();
+    mesh.createRenderData();
     return mesh;
 }
 
@@ -386,7 +386,7 @@ MeshComponent makeSkyBoxMesh() {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.create_render_data();
+    mesh.createRenderData();
     return mesh;
 }
 

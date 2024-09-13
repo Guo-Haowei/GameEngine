@@ -2,16 +2,18 @@
 #include "core/base/noncopyable.h"
 #include "core/math/ray.h"
 #include "core/systems/component_manager.h"
+#include "scene/animation_component.h"
+#include "scene/armature_component.h"
 #include "scene/camera.h"
 #include "scene/collider_component.h"
+#include "scene/hierarchy_component.h"
 #include "scene/light_component.h"
 #include "scene/material_component.h"
 #include "scene/mesh_component.h"
 #include "scene/name_component.h"
 #include "scene/object_component.h"
+#include "scene/rigid_body_component.h"
 #include "scene/transform_component.h"
-// @TODO: eventually remove this
-#include "scene/scene_components.h"
 
 namespace my {
 
@@ -107,77 +109,78 @@ private:
     REGISTER_COMPONENT(BoxColliderComponent, 0);
     REGISTER_COMPONENT(MeshColliderComponent, 0);
 
-    bool serialize(Archive& archive);
+    bool serialize(Archive& p_archive);
 
-    void update(float deltaTime);
+    void update(float p_delta_time);
 
-    void merge(Scene& other);
+    void merge(Scene& p_other);
 
-    void create_camera(int width, int height,
-                       float near_plane = Camera::kDefaultNear,
-                       float far_plane = Camera::kDefaultFar,
-                       Degree fovy = Camera::kDefaultFovy);
+    void createCamera(int p_width,
+                      int p_height,
+                      float p_near_plane = Camera::DEFAULT_NEAR,
+                      float p_far_plane = Camera::DEFAULT_FAR,
+                      Degree p_fovy = Camera::DEFAULT_FOVY);
 
-    ecs::Entity create_name_entity(const std::string& name);
-    ecs::Entity create_transform_entity(const std::string& name);
-    ecs::Entity create_object_entity(const std::string& name);
-    ecs::Entity create_mesh_entity(const std::string& name);
-    ecs::Entity create_material_entity(const std::string& name);
+    ecs::Entity createNameEntity(const std::string& p_name);
+    ecs::Entity createTransformEntity(const std::string& p_name);
+    ecs::Entity createObjectEntity(const std::string& p_name);
+    ecs::Entity createMeshEntity(const std::string& p_name);
+    ecs::Entity createMaterialEntity(const std::string& p_name);
 
-    ecs::Entity create_point_light_entity(const std::string& p_name,
-                                          const vec3& p_position,
-                                          const vec3& p_color = vec3(1),
-                                          const float p_emissive = 5.0f);
+    ecs::Entity createPointLightEntity(const std::string& p_name,
+                                       const vec3& p_position,
+                                       const vec3& p_color = vec3(1),
+                                       const float p_emissive = 5.0f);
 
-    ecs::Entity create_area_light_entity(const std::string& p_name,
-                                         const vec3& p_color = vec3(1),
-                                         const float p_emissive = 5.0f);
+    ecs::Entity createAreaLightEntity(const std::string& p_name,
+                                      const vec3& p_color = vec3(1),
+                                      const float p_emissive = 5.0f);
 
-    ecs::Entity create_omni_light_entity(const std::string& p_name,
-                                         const vec3& p_color = vec3(1),
-                                         const float p_emissive = 5.0f);
+    ecs::Entity createOmniLightEntity(const std::string& p_name,
+                                      const vec3& p_color = vec3(1),
+                                      const float p_emissive = 5.0f);
 
-    ecs::Entity create_plane_entity(const std::string& p_name,
-                                    const vec3& p_scale = vec3(0.5f),
-                                    const mat4& p_transform = mat4(1.0f));
+    ecs::Entity createPlaneEntity(const std::string& p_name,
+                                  const vec3& p_scale = vec3(0.5f),
+                                  const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity create_plane_entity(const std::string& p_name,
-                                    ecs::Entity p_material_id,
-                                    const vec3& p_scale = vec3(0.5f),
-                                    const mat4& p_transform = mat4(1.0f));
+    ecs::Entity createPlaneEntity(const std::string& p_name,
+                                  ecs::Entity p_material_id,
+                                  const vec3& p_scale = vec3(0.5f),
+                                  const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity create_cube_entity(const std::string& p_name,
-                                   const vec3& p_scale = vec3(0.5f),
+    ecs::Entity createCubeEntity(const std::string& p_name,
+                                 const vec3& p_scale = vec3(0.5f),
+                                 const mat4& p_transform = mat4(1.0f));
+
+    ecs::Entity createCubeEntity(const std::string& p_name,
+                                 ecs::Entity p_material_id,
+                                 const vec3& p_scale = vec3(0.5f),
+                                 const mat4& p_transform = mat4(1.0f));
+
+    ecs::Entity createSphereEntity(const std::string& p_name,
+                                   float p_radius = 0.5f,
                                    const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity create_cube_entity(const std::string& p_name,
+    ecs::Entity createSphereEntity(const std::string& p_name,
                                    ecs::Entity p_material_id,
-                                   const vec3& p_scale = vec3(0.5f),
+                                   float p_radius = 0.5f,
                                    const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity create_sphere_entity(const std::string& p_name,
-                                     float p_radius = 0.5f,
-                                     const mat4& p_transform = mat4(1.0f));
+    void attachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
 
-    ecs::Entity create_sphere_entity(const std::string& p_name,
-                                     ecs::Entity p_material_id,
-                                     float p_radius = 0.5f,
-                                     const mat4& p_transform = mat4(1.0f));
+    void attachComponent(ecs::Entity p_entity) { attachComponent(p_entity, m_root); }
 
-    void attach_component(ecs::Entity entity, ecs::Entity parent);
-
-    void attach_component(ecs::Entity entity) { attach_component(entity, m_root); }
-
-    void remove_entity(ecs::Entity entity);
+    void removeEntity(ecs::Entity p_entity);
 
     struct RayIntersectionResult {
         ecs::Entity entity;
     };
 
-    RayIntersectionResult intersects(Ray& ray);
-    bool ray_object_intersect(ecs::Entity object_id, Ray& ray);
+    RayIntersectionResult intersects(Ray& p_ray);
+    bool rayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray);
 
-    const AABB& get_bound() const { return m_bound; }
+    const AABB& getBound() const { return m_bound; }
     // @TODO: refactor
     ecs::Entity m_root;
     ecs::Entity m_selected;
@@ -186,17 +189,17 @@ private:
     bool m_replace = false;
 
 private:
-    void update_hierarchy(uint32_t p_index);
-    void update_animation(uint32_t p_index);
-    void update_armature(uint32_t p_index);
-    void update_light(uint32_t p_index);
+    void updateHierarchy(uint32_t p_index);
+    void updateAnimation(uint32_t p_index);
+    void updateArmature(uint32_t p_index);
+    void updateLight(uint32_t p_index);
 
-    void run_light_update_system(jobsystem::Context& p_ctx);
-    void run_transformation_update_system(jobsystem::Context& p_ctx);
-    void run_hierarchy_update_system(jobsystem::Context& p_ctx);
-    void run_animation_update_system(jobsystem::Context& p_ctx);
-    void run_armature_update_system(jobsystem::Context& p_ctx);
-    void run_object_update_system(jobsystem::Context& p_ctx);
+    void runLightUpdateSystem(jobsystem::Context& p_ctx);
+    void runTransformationUpdateSystem(jobsystem::Context& p_ctx);
+    void runHierarchyUpdateSystem(jobsystem::Context& p_ctx);
+    void runAnimationUpdateSystem(jobsystem::Context& p_ctx);
+    void runArmatureUpdateSystem(jobsystem::Context& p_ctx);
+    void runObjectUpdateSystem(jobsystem::Context& p_ctx);
 
     // @TODO: refactor
     AABB m_bound;

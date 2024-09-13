@@ -14,40 +14,40 @@ public:
         DIRTY = 1,
     };
 
-    static constexpr float kDefaultNear = 0.1f;
-    static constexpr float kDefaultFar = 100.0f;
-    static constexpr Degree kDefaultFovy{ 50.0f };
+    static constexpr float DEFAULT_NEAR = 0.1f;
+    static constexpr float DEFAULT_FAR = 100.0f;
+    static constexpr Degree DEFAULT_FOVY{ 50.0f };
 
     void update();
 
-    void set_dimension(int width, int height);
+    void setDimension(int p_width, int p_height);
 
-    bool is_dirty() const { return m_flags & DIRTY; }
-    void set_dirty(bool dirty = true) { dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
+    bool isDirty() const { return m_flags & DIRTY; }
+    void setDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
 
-    Degree get_fovy() const { return m_fovy; }
-    float get_near() const { return m_near; }
-    void set_near(float z_near) { m_near = z_near; }
-    float get_far() const { return m_far; }
-    void set_far(float z_far) { m_far = z_far; }
-    int get_width() const { return m_width; }
-    int get_height() const { return m_height; }
-    float get_aspect() const { return (float)m_width / m_height; }
-    const mat4& get_view_matrix() const { return m_view_matrix; }
-    const mat4& get_projection_matrix() const { return m_projection_matrix; }
-    const mat4& get_projection_view_matrix() const { return m_projection_view_matrix; }
-    const vec3& get_position() const { return m_position; }
-    const vec3& get_right() const { return m_right; }
-    const vec3 get_front() const { return m_front; }
+    Degree getFovy() const { return m_fovy; }
+    float getNear() const { return m_near; }
+    void setNear(float p_near) { m_near = p_near; }
+    float getFar() const { return m_far; }
+    void setFar(float p_far) { m_far = p_far; }
+    int getWidth() const { return m_width; }
+    int getHeight() const { return m_height; }
+    float getAspect() const { return (float)m_width / m_height; }
+    const mat4& getViewMatrix() const { return m_view_matrix; }
+    const mat4& getProjectionMatrix() const { return m_projection_matrix; }
+    const mat4& getProjectionViewMatrix() const { return m_projection_view_matrix; }
+    const vec3& getPosition() const { return m_position; }
+    const vec3& getRight() const { return m_right; }
+    const vec3 getFront() const { return m_front; }
 
-    void serialize(Archive& archive, uint32_t version);
+    void serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     uint32_t m_flags = DIRTY;
 
-    Degree m_fovy{ kDefaultFovy };
-    float m_near = kDefaultNear;
-    float m_far = kDefaultFar;
+    Degree m_fovy{ DEFAULT_FOVY };
+    float m_near = DEFAULT_NEAR;
+    float m_far = DEFAULT_FAR;
     int m_width = 0;
     int m_height = 0;
     Degree m_pitch;  // x-axis

@@ -491,7 +491,7 @@ void D3d11GraphicsManager::on_scene_change(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
             const NameComponent& name = *p_scene.getComponent<NameComponent>(entity);
-            LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.get_name());
+            LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.getName());
             continue;
         }
 

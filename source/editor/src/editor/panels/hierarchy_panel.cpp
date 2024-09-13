@@ -45,7 +45,7 @@ static bool tree_node_helper(const Scene& p_scene,
                              std::function<void()> p_on_right_click) {
 
     const NameComponent* name_component = p_scene.getComponent<NameComponent>(p_id);
-    std::string name = name_component->get_name();
+    std::string name = name_component->getName();
     if (name.empty()) {
         name = "Untitled";
     }
@@ -80,7 +80,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
     DEV_ASSERT(p_hier);
     Entity id = p_hier->entity;
     const NameComponent* name_component = p_scene.getComponent<NameComponent>(id);
-    const char* name = name_component ? name_component->get_name().c_str() : "Untitled";
+    const char* name = name_component ? name_component->getName().c_str() : "Untitled";
     const ObjectComponent* object_component = p_scene.getComponent<ObjectComponent>(id);
     const MeshComponent* mesh_component = object_component ? p_scene.getComponent<MeshComponent>(object_component->mesh_id) : nullptr;
 

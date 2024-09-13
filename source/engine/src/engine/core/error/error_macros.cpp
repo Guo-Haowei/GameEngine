@@ -8,8 +8,8 @@ namespace my {
 
 IntrusiveList<ErrorHandlerListNode> s_error_handlers;
 
-void global_lock() {}
-void global_unlock() {}
+void globalLock() {}
+void globalUnlock() {}
 
 void breakIfDebug() {
 #if USING(DEBUG_BUILD)
@@ -23,16 +23,16 @@ bool addErrorHandler(ErrorHandler* p_handler) {
     // if the handler already exists, remove it
     removeErrorHandler(p_handler);
 
-    global_lock();
+    globalLock();
     s_error_handlers.node_push_front(p_handler);
-    global_unlock();
+    globalUnlock();
     return true;
 }
 
 bool removeErrorHandler(const ErrorHandler* p_handler) {
-    global_lock();
+    globalLock();
     s_error_handlers.node_remove(p_handler);
-    global_unlock();
+    globalUnlock();
     return true;
 }
 
@@ -53,13 +53,13 @@ void reportErrorImpl(std::string_view p_function,
         fprintf(stderr, "%s", message.c_str());
     }
 
-    global_lock();
+    globalLock();
 
     for (auto& handler : s_error_handlers) {
         handler.error_func(handler.user_data, p_function, p_file, p_line, p_error);
     }
 
-    global_unlock();
+    globalUnlock();
 }
 
 void reportErrorIndexImpl(std::string_view p_function,
