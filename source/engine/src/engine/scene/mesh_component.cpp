@@ -3,8 +3,8 @@
 
 namespace my {
 
-static size_t get_stride(MeshComponent::VertexAttribute::NAME name) {
-    switch (name) {
+static size_t get_stride(MeshComponent::VertexAttribute::NAME p_name) {
+    switch (p_name) {
         case MeshComponent::VertexAttribute::POSITION:
         case MeshComponent::VertexAttribute::NORMAL:
         case MeshComponent::VertexAttribute::TANGENT:
@@ -24,14 +24,14 @@ static size_t get_stride(MeshComponent::VertexAttribute::NAME name) {
 }
 
 template<typename T>
-void vertex_attrib(MeshComponent::VertexAttribute& attrib, const std::vector<T>& buffer, size_t& in_out_offset) {
-    attrib.offset_in_byte = (uint32_t)in_out_offset;
-    attrib.size_in_byte = (uint32_t)(math::align(sizeof(T) * buffer.size(), 16llu));
-    attrib.stride = (uint32_t)get_stride(attrib.name);
-    in_out_offset += attrib.size_in_byte;
+void vertex_attrib(MeshComponent::VertexAttribute& p_attrib, const std::vector<T>& p_buffer, size_t& p_in_out_offset) {
+    p_attrib.offset_in_byte = (uint32_t)p_in_out_offset;
+    p_attrib.size_in_byte = (uint32_t)(math::align(sizeof(T) * p_buffer.size(), 16llu));
+    p_attrib.stride = (uint32_t)get_stride(p_attrib.name);
+    p_in_out_offset += p_attrib.size_in_byte;
 }
 
-void MeshComponent::create_render_data() {
+void MeshComponent::createRenderData() {
     // @HACK: fill dummy textures
 #if 0
     if (texcoords_0.empty()) {
@@ -71,7 +71,7 @@ void MeshComponent::create_render_data() {
     return;
 }
 
-std::vector<char> MeshComponent::generate_combined_buffer() const {
+std::vector<char> MeshComponent::generateCombinedBuffer() const {
     std::vector<char> result;
     result.resize(vertex_buffer_size);
 
@@ -94,35 +94,35 @@ std::vector<char> MeshComponent::generate_combined_buffer() const {
     return result;
 }
 
-void MeshComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.isWriteMode()) {
-        archive << flags;
-        archive << indices;
-        archive << positions;
-        archive << normals;
-        archive << tangents;
-        archive << texcoords_0;
-        archive << texcoords_1;
-        archive << joints_0;
-        archive << weights_0;
-        archive << color_0;
-        archive << subsets;
-        archive << armature_id;
+void MeshComponent::serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.isWriteMode()) {
+        p_archive << flags;
+        p_archive << indices;
+        p_archive << positions;
+        p_archive << normals;
+        p_archive << tangents;
+        p_archive << texcoords_0;
+        p_archive << texcoords_1;
+        p_archive << joints_0;
+        p_archive << weights_0;
+        p_archive << color_0;
+        p_archive << subsets;
+        p_archive << armature_id;
     } else {
-        archive >> flags;
-        archive >> indices;
-        archive >> positions;
-        archive >> normals;
-        archive >> tangents;
-        archive >> texcoords_0;
-        archive >> texcoords_1;
-        archive >> joints_0;
-        archive >> weights_0;
-        archive >> color_0;
-        archive >> subsets;
-        archive >> armature_id;
+        p_archive >> flags;
+        p_archive >> indices;
+        p_archive >> positions;
+        p_archive >> normals;
+        p_archive >> tangents;
+        p_archive >> texcoords_0;
+        p_archive >> texcoords_1;
+        p_archive >> joints_0;
+        p_archive >> weights_0;
+        p_archive >> color_0;
+        p_archive >> subsets;
+        p_archive >> armature_id;
 
-        create_render_data();
+        createRenderData();
     }
 }
 

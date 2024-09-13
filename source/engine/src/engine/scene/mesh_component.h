@@ -33,7 +33,7 @@ struct MeshComponent {
         uint32_t size_in_byte = 0;
         uint32_t stride = 0;
 
-        bool is_valid() const { return size_in_byte != 0; }
+        bool isValid() const { return size_in_byte != 0; }
     };
 
     uint32_t flags = RENDERABLE;
@@ -64,10 +64,10 @@ struct MeshComponent {
     VertexAttribute attributes[VertexAttribute::COUNT];
     size_t vertex_buffer_size = 0;  // combine vertex buffer
 
-    void create_render_data();
-    std::vector<char> generate_combined_buffer() const;
+    void createRenderData();
+    std::vector<char> generateCombinedBuffer() const;
 
-    void serialize(Archive& archive, uint32_t version);
+    void serialize(Archive& p_archive, uint32_t p_version);
 };
 
 }  // namespace my

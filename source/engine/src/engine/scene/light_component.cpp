@@ -7,9 +7,9 @@
 namespace my {
 
 void LightComponent::update(const TransformComponent& p_transform) {
-    m_position = p_transform.get_translation();
+    m_position = p_transform.getTranslation();
 
-    if (is_dirty() || p_transform.is_dirty()) {
+    if (isDirty() || p_transform.isDirty()) {
         // update max distance
         constexpr float atten_factor_inv = 1.0f / 0.03f;
         if (m_atten.linear == 0.0f && m_atten.quadratic == 0.0f) {
@@ -34,7 +34,7 @@ void LightComponent::update(const TransformComponent& p_transform) {
         }
 
         // update shadow map
-        if (cast_shadow()) {
+        if (castShadow()) {
             // @TODO: get rid of the
             if (m_shadow_map_index == INVALID_POINT_SHADOW_HANDLE) {
                 m_shadow_map_index = RenderManager::singleton().allocate_point_light_shadow_map();
@@ -46,7 +46,7 @@ void LightComponent::update(const TransformComponent& p_transform) {
         }
 
         // update light space matrices
-        if (cast_shadow()) {
+        if (castShadow()) {
             switch (m_type) {
                 case LIGHT_TYPE_POINT: {
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
@@ -63,7 +63,7 @@ void LightComponent::update(const TransformComponent& p_transform) {
         }
 
         // @TODO: query if transformation is dirty, so don't update shadow map unless necessary
-        set_dirty(false);
+        setDirty(false);
     }
 }
 

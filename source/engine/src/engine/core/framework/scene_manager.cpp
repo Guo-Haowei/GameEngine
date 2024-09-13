@@ -18,12 +18,12 @@ static void create_empty_scene(Scene* scene) {
     Entity::setSeed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-    scene->create_camera(frame_size.x, frame_size.y);
+    scene->createCamera(frame_size.x, frame_size.y);
 
-    auto root = scene->create_transform_entity("world");
+    auto root = scene->createTransformEntity("world");
     scene->m_root = root;
     if (0) {
-        auto light = scene->create_omni_light_entity("omni light", vec3(1));
+        auto light = scene->createOmniLightEntity("omni light", vec3(1));
         auto transform = scene->getComponent<TransformComponent>(light);
         DEV_ASSERT(transform);
         constexpr float rx = glm::radians(-80.0f);
@@ -31,7 +31,7 @@ static void create_empty_scene(Scene* scene) {
         constexpr float rz = glm::radians(0.0f);
         transform->rotate(vec3(rx, ry, rz));
 
-        scene->attach_component(light, root);
+        scene->attachComponent(light, root);
     }
 }
 

@@ -106,8 +106,8 @@ static Sphere find_bounding_sphere(const vec3* p_points, int p_point_count) {
 
 static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plane, float p_far_plane, const Camera& p_camera) {
     const auto proj = glm::perspective(
-        p_camera.get_fovy().toRad(),
-        p_camera.get_aspect(),
+        p_camera.getFovy().toRad(),
+        p_camera.getAspect(),
         p_near_plane,
         p_far_plane);
 
@@ -123,7 +123,7 @@ static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plan
         vec3(+1, +1, +1),
     };
 
-    mat4 inv_pv = glm::inverse(proj * p_camera.get_view_matrix());
+    mat4 inv_pv = glm::inverse(proj * p_camera.getViewMatrix());
     for (vec3& point : corners) {
         vec4 point4{ point, 1.0f };
         point4 = inv_pv * point4;
@@ -152,7 +152,7 @@ std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Cam
         if (!DVAR_GET_BOOL(r_enable_csm)) {
             ret.push_back(light_space_matrix_world(world_bound, p_light_matrix));
         } else {
-            float z_near = p_camera.get_near();
+            float z_near = p_camera.getNear();
             z_near = i == 0 ? z_near : p_cascade_end[i - 1];
             ret.push_back(get_light_space_matrix(p_light_matrix, z_near, p_cascade_end[i], p_camera));
         }
@@ -174,12 +174,12 @@ void fill_constant_buffers(const Scene& scene) {
     // auto camera = scene.m_camera;
     vec4 cascade_end = DVAR_GET_VEC4(cascade_end);
     std::vector<mat4> light_matrices;
-    if (camera.get_far() != cascade_end.w) {
-        camera.set_far(cascade_end.w);
-        camera.set_dirty();
+    if (camera.getFar() != cascade_end.w) {
+        camera.setFar(cascade_end.w);
+        camera.setDirty();
     }
     for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
-        float left = idx == 0 ? camera.get_near() : cascade_end[idx - 1];
+        float left = idx == 0 ? camera.getNear() : cascade_end[idx - 1];
         DEV_ASSERT(left < cascade_end[idx]);
     }
 
@@ -192,31 +192,31 @@ void fill_constant_buffers(const Scene& scene) {
 
         // SHOULD BE THIS INDEX
         Light& light = cache.u_lights[idx];
-        bool cast_shadow = light_component.cast_shadow();
+        bool cast_shadow = light_component.castShadow();
         light.cast_shadow = cast_shadow;
-        light.type = light_component.get_type();
+        light.type = light_component.getType();
         light.color = material->base_color;
         light.color *= material->emissive;
-        switch (light_component.get_type()) {
+        switch (light_component.getType()) {
             case LIGHT_TYPE_OMNI: {
-                mat4 light_matrix = light_transform->get_local_matrix();
+                mat4 light_matrix = light_transform->getLocalMatrix();
                 vec3 light_dir = glm::normalize(light_matrix * vec4(0, 0, 1, 0));
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
-                light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, scene.get_bound());
+                light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, scene.getBound());
             } break;
             case LIGHT_TYPE_POINT: {
-                const int shadow_map_index = light_component.get_shadow_map_index();
+                const int shadow_map_index = light_component.getShadowMapIndex();
                 // @TODO: there's a bug in shadow map allocation
                 light.atten_constant = light_component.m_atten.constant;
                 light.atten_linear = light_component.m_atten.linear;
                 light.atten_quadratic = light_component.m_atten.quadratic;
-                light.position = light_component.get_position();
+                light.position = light_component.getPosition();
                 light.cast_shadow = cast_shadow;
-                light.max_distance = light_component.get_max_distance();
+                light.max_distance = light_component.getMaxDistance();
                 if (cast_shadow && shadow_map_index != -1) {
-                    const auto& point_light_matrices = light_component.get_matrices();
+                    const auto& point_light_matrices = light_component.getMatrices();
                     for (size_t i = 0; i < 6; ++i) {
                         light.matrices[i] = point_light_matrices[i];
                     }
@@ -227,7 +227,7 @@ void fill_constant_buffers(const Scene& scene) {
                 }
             } break;
             case LIGHT_TYPE_AREA: {
-                mat4 transform = light_transform->get_world_matrix();
+                mat4 transform = light_transform->getWorldMatrix();
                 constexpr float s = 0.5f;
                 light.points[0] = transform * vec4(-s, +s, 0.0f, 1.0f);
                 light.points[1] = transform * vec4(-s, -s, 0.0f, 1.0f);
@@ -250,7 +250,7 @@ void fill_constant_buffers(const Scene& scene) {
 
     cache.u_cascade_plane_distances = cascade_end;
 
-    cache.u_camera_position = camera.get_position();
+    cache.u_camera_position = camera.getPosition();
 
     cache.u_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
     cache.u_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
@@ -258,8 +258,8 @@ void fill_constant_buffers(const Scene& scene) {
     cache.u_debug_csm = DVAR_GET_BOOL(r_debug_csm);
     cache.u_enable_csm = DVAR_GET_BOOL(r_enable_csm);
 
-    cache.u_screen_width = (int)camera.get_width();
-    cache.u_screen_height = (int)camera.get_height();
+    cache.u_screen_width = (int)camera.getWidth();
+    cache.u_screen_height = (int)camera.getHeight();
 
     // Bloom
     cache.u_bloom_threshold = DVAR_GET_FLOAT(r_bloom_threshold);
@@ -270,13 +270,13 @@ void fill_constant_buffers(const Scene& scene) {
     DEV_ASSERT(math::isPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    vec3 world_center = scene.get_bound().center();
-    vec3 aabb_size = scene.get_bound().size();
+    vec3 world_center = scene.getBound().center();
+    vec3 aabb_size = scene.getBound().size();
     float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
 
     const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
     if (world_size > max_world_size) {
-        world_center = camera.get_position();
+        world_center = camera.getPosition();
         world_size = max_world_size;
     }
 

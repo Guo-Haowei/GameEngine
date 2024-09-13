@@ -53,8 +53,8 @@ public:
 
     bool load(Scene* p_scene) {
         ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-        p_scene->create_camera(frame_size.x, frame_size.y);
-        auto root = p_scene->create_transform_entity("world");
+        p_scene->createCamera(frame_size.x, frame_size.y);
+        auto root = p_scene->createTransformEntity("world");
         p_scene->m_replace = true;
         p_scene->m_root = root;
         return load_lua_scene(m_file_path, p_scene);

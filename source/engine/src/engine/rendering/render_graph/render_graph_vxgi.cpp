@@ -19,9 +19,9 @@ extern OpenGLMeshBuffers* g_box;
 // @TODO: refactor
 void fill_camera_matrices(PerPassConstantBuffer& buffer) {
     auto camera = my::SceneManager::singleton().get_scene().m_camera;
-    buffer.u_proj_view_matrix = camera->get_projection_view_matrix();
-    buffer.u_view_matrix = camera->get_view_matrix();
-    buffer.u_proj_matrix = camera->get_projection_matrix();
+    buffer.u_proj_view_matrix = camera->getProjectionViewMatrix();
+    buffer.u_view_matrix = camera->getViewMatrix();
+    buffer.u_proj_matrix = camera->getProjectionMatrix();
 }
 // @TODO: fix
 

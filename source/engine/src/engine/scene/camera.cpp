@@ -5,7 +5,7 @@
 namespace my {
 
 void Camera::update() {
-    if (is_dirty()) {
+    if (isDirty()) {
         m_front.x = m_yaw.cos() * m_pitch.cos();
         m_front.y = m_pitch.sin();
         m_front.z = m_yaw.sin() * m_pitch.cos();
@@ -16,44 +16,44 @@ void Camera::update() {
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
 
         // m_projection_matrix = glm::perspectiveRH_ZO(m_fovy.to_rad(), get_aspect(), m_near, m_far);
-        m_projection_matrix = glm::perspective(m_fovy.toRad(), get_aspect(), m_near, m_far);
+        m_projection_matrix = glm::perspective(m_fovy.toRad(), getAspect(), m_near, m_far);
 
         m_projection_view_matrix = m_projection_matrix * m_view_matrix;
-        set_dirty(false);
+        setDirty(false);
     }
 }
 
-void Camera::set_dimension(int width, int height) {
-    if (m_width != width || m_height != height) {
-        m_width = width;
-        m_height = height;
-        set_dirty();
+void Camera::setDimension(int p_width, int p_height) {
+    if (m_width != p_width || m_height != p_height) {
+        m_width = p_width;
+        m_height = p_height;
+        setDirty();
     }
 }
 
-void Camera::serialize(Archive& archive, uint32_t) {
-    if (archive.isWriteMode()) {
-        archive << m_flags;
-        archive << m_near;
-        archive << m_far;
-        archive << m_fovy;
-        archive << m_width;
-        archive << m_height;
-        archive << m_pitch;
-        archive << m_yaw;
-        archive << m_position;
+void Camera::serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.isWriteMode()) {
+        p_archive << m_flags;
+        p_archive << m_near;
+        p_archive << m_far;
+        p_archive << m_fovy;
+        p_archive << m_width;
+        p_archive << m_height;
+        p_archive << m_pitch;
+        p_archive << m_yaw;
+        p_archive << m_position;
     } else {
-        archive >> m_flags;
-        archive >> m_near;
-        archive >> m_far;
-        archive >> m_fovy;
-        archive >> m_width;
-        archive >> m_height;
-        archive >> m_pitch;
-        archive >> m_yaw;
-        archive >> m_position;
+        p_archive >> m_flags;
+        p_archive >> m_near;
+        p_archive >> m_far;
+        p_archive >> m_fovy;
+        p_archive >> m_width;
+        p_archive >> m_height;
+        p_archive >> m_pitch;
+        p_archive >> m_yaw;
+        p_archive >> m_position;
 
-        set_dirty();
+        setDirty();
     }
 }
 

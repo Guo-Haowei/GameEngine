@@ -12,36 +12,36 @@ public:
         DIRTY = 1 << 0,
     };
 
-    bool is_dirty() const { return m_flags & DIRTY; }
-    void set_dirty(bool dirty = true) { dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
+    bool isDirty() const { return m_flags & DIRTY; }
+    void setDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
 
-    const vec3& get_translation() const { return m_translation; }
-    void set_translation(const vec3& t) { m_translation = t; }
-    void increase_translation(const vec3& t) { m_translation += t; }
+    const vec3& getTranslation() const { return m_translation; }
+    void setTranslation(const vec3& p_translation) { m_translation = p_translation; }
+    void increaseTranslation(const vec3& p_delta) { m_translation += p_delta; }
 
-    const vec4& get_rotation() const { return m_rotation; }
-    void set_rotation(const vec4& r) { m_rotation = r; }
+    const vec4& getRotation() const { return m_rotation; }
+    void setRotation(const vec4& p_rotation) { m_rotation = p_rotation; }
 
-    const vec3& get_scale() const { return m_scale; }
-    void set_scale(const vec3& s) { m_scale = s; }
+    const vec3& getScale() const { return m_scale; }
+    void setScale(const vec3& p_scale) { m_scale = p_scale; }
 
-    const mat4& get_world_matrix() const { return m_world_matrix; }
+    const mat4& getWorldMatrix() const { return m_world_matrix; }
 
-    void set_world_matrix(const mat4& matrix) { m_world_matrix = matrix; }
+    void setWorldMatrix(const mat4& p_matrix) { m_world_matrix = p_matrix; }
 
-    mat4 get_local_matrix() const;
+    mat4 getLocalMatrix() const;
 
-    void update_transform();
-    void scale(const vec3& scale);
-    void translate(const vec3& translation);
-    void rotate(const vec3& euler);
+    void updateTransform();
+    void scale(const vec3& p_scale);
+    void translate(const vec3& p_translation);
+    void rotate(const vec3& p_euler);
 
-    void set_local_transform(const mat4& matrix);
-    void matrix_transform(const mat4& matrix);
+    void setLocalTransform(const mat4& p_matrix);
+    void matrixTransform(const mat4& p_matrix);
 
-    void update_transform_parented(const TransformComponent& parent);
+    void updateTransformParented(const TransformComponent& p_parent);
 
-    void serialize(Archive& archive, uint32_t version);
+    void serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     uint32_t m_flags = DIRTY;
@@ -51,7 +51,7 @@ private:
     vec4 m_rotation{ 0, 0, 0, 1 };  // local rotation
 
     // Non-serialized attributes
-    mat4 m_world_matrix = mat4(1);
+    mat4 m_world_matrix{ 1 };
 };
 
 }  // namespace my

@@ -8,15 +8,15 @@ class NameComponent {
 public:
     NameComponent() = default;
 
-    NameComponent(const char* tag) { m_name = tag; }
+    NameComponent(const char* p_name) { m_name = p_name; }
 
-    void set_name(const char* tag) { m_name = tag; }
-    void set_name(const std::string& tag) { m_name = tag; }
+    void setName(const char* p_name) { m_name = p_name; }
+    void setName(const std::string& p_name) { m_name = p_name; }
 
-    const std::string& get_name() const { return m_name; }
-    std::string& get_name_ref() { return m_name; }
+    const std::string& getName() const { return m_name; }
+    std::string& getNameRef() { return m_name; }
 
-    void serialize(Archive& archive, uint32_t version);
+    void serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     std::string m_name;

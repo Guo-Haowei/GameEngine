@@ -16,8 +16,6 @@ constexpr inline T align(T p_size, T p_alignment) {
     return (p_size + p_alignment - 1) & ~(p_alignment - 1);
 }
 
-// TODO: smaller size
-
 constexpr unsigned int logTwo(unsigned int p_x) {
     return p_x == 1 ? 0 : 1 + logTwo(p_x >> 1);
 }

@@ -1,7 +1,6 @@
 #include "core/io/archive.h"
 
 #include "core/io/file_access_unix.h"
-#include "scene/scene_components.h"
 
 namespace my {
 

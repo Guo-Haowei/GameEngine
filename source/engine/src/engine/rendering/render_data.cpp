@@ -108,20 +108,20 @@ void RenderData::clear() {
 
 void RenderData::point_light_draw_data() {
     for (auto [light_id, light] : scene->m_LightComponents) {
-        if (light.get_type() != LIGHT_TYPE_POINT || !light.cast_shadow()) {
+        if (light.getType() != LIGHT_TYPE_POINT || !light.castShadow()) {
             continue;
         }
 
-        const int light_pass_index = light.get_shadow_map_index();
+        const int light_pass_index = light.getShadowMapIndex();
         if (light_pass_index == INVALID_POINT_SHADOW_HANDLE) {
             continue;
         }
 
         const TransformComponent* transform = scene->getComponent<TransformComponent>(light_id);
         DEV_ASSERT(transform);
-        vec3 position = transform->get_translation();
+        vec3 position = transform->getTranslation();
 
-        const auto& light_space_matrices = light.get_matrices();
+        const auto& light_space_matrices = light.getMatrices();
         std::array<Frustum, 6> frustums = {
             Frustum{ light_space_matrices[0] },
             Frustum{ light_space_matrices[1] },
@@ -181,7 +181,7 @@ void RenderData::update(const Scene* p_scene) {
     // @TODO: generalize this
     has_sun_light = false;
     for (auto [entity, light] : p_scene->m_LightComponents) {
-        if (light.get_type() == LIGHT_TYPE_OMNI) {
+        if (light.getType() == LIGHT_TYPE_OMNI) {
             has_sun_light = true;
             break;
         }
@@ -218,12 +218,12 @@ void RenderData::update(const Scene* p_scene) {
             return true;
         });
 
-    mat4 camera_projection_view = scene->m_camera->get_projection_view_matrix();
+    mat4 camera_projection_view = scene->m_camera->getProjectionViewMatrix();
     Frustum camera_frustum(camera_projection_view);
     // main pass
-    main_pass.projection_matrix = scene->m_camera->get_projection_matrix();
-    main_pass.view_matrix = scene->m_camera->get_view_matrix();
-    main_pass.projection_view_matrix = scene->m_camera->get_projection_view_matrix();
+    main_pass.projection_matrix = scene->m_camera->getProjectionMatrix();
+    main_pass.view_matrix = scene->m_camera->getViewMatrix();
+    main_pass.projection_view_matrix = scene->m_camera->getProjectionViewMatrix();
     fill(
         p_scene,
         main_pass,
@@ -260,7 +260,7 @@ void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1,
         DEV_ASSERT(scene->contains<MeshComponent>(obj.mesh_id));
         const MeshComponent& mesh = *scene->getComponent<MeshComponent>(obj.mesh_id);
 
-        const mat4& world_matrix = transform.get_world_matrix();
+        const mat4& world_matrix = transform.getWorldMatrix();
         AABB aabb = mesh.local_bound;
         aabb.applyMatrix(world_matrix);
         if (!func2(aabb)) {

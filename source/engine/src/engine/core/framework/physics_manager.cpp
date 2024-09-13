@@ -52,8 +52,8 @@ void PhysicsManager::update(Scene& p_scene) {
                 TransformComponent& transform_component = *p_scene.getComponent<TransformComponent>(id);
                 const btVector3& origin = transform.getOrigin();
                 const btQuaternion rotation = transform.getRotation();
-                transform_component.set_translation(vec3(origin.getX(), origin.getY(), origin.getZ()));
-                transform_component.set_rotation(vec4(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()));
+                transform_component.setTranslation(vec3(origin.getX(), origin.getY(), origin.getZ()));
+                transform_component.setRotation(vec4(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()));
             }
         }
     }
@@ -93,8 +93,8 @@ void PhysicsManager::create_world(const Scene& p_scene) {
 
         m_collision_shapes.push_back(shape);
 
-        const vec3& origin = transform_component->get_translation();
-        const vec4& rotation = transform_component->get_rotation();
+        const vec3& origin = transform_component->getTranslation();
+        const vec4& rotation = transform_component->getRotation();
         btTransform transform;
         transform.setIdentity();
         transform.setOrigin(btVector3(origin.x, origin.y, origin.z));

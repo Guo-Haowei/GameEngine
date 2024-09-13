@@ -4,11 +4,11 @@
 
 namespace my {
 
-void NameComponent::serialize(Archive& archive, uint32_t) {
-    if (archive.isWriteMode()) {
-        archive << m_name;
+void NameComponent::serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.isWriteMode()) {
+        p_archive << m_name;
     } else {
-        archive >> m_name;
+        p_archive >> m_name;
     }
 }
 

@@ -5,7 +5,7 @@
 
 namespace my {
 
-void MaterialComponent::request_image(int p_slot, const std::string& p_path) {
+void MaterialComponent::requestImage(int p_slot, const std::string& p_path) {
     if (!p_path.empty()) {
         textures[p_slot].path = p_path;
         textures[p_slot].image = AssetManager::singleton().load_image_async(p_path);

@@ -24,11 +24,11 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     // set up different object list for different pass
     const RenderData::Pass& pass = *pass_ptr.get();
 
-    const auto& light_matrices = pass.light_component.get_matrices();
+    const auto& light_matrices = pass.light_component.getMatrices();
     for (int i = 0; i < 6; ++i) {
         g_per_pass_cache.cache.u_proj_view_matrix = light_matrices[i];
-        g_per_pass_cache.cache.u_point_light_position = pass.light_component.get_position();
-        g_per_pass_cache.cache.u_point_light_far = pass.light_component.get_max_distance();
+        g_per_pass_cache.cache.u_point_light_position = pass.light_component.getPosition();
+        g_per_pass_cache.cache.u_point_light_far = pass.light_component.getMaxDistance();
         g_per_pass_cache.update();
 
         manager.set_render_target(p_subpass, i);
