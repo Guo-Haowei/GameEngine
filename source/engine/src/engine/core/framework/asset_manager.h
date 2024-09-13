@@ -23,8 +23,7 @@ enum LoadTaskType {
 
 struct LoadTask {
     LoadTaskType type;
-    // @TODO: better string
-    std::string asset_path;
+    FilePath asset_path;
     LoadSuccessFunc on_success;
     void* userdata;
 };
@@ -50,7 +49,8 @@ public:
 private:
     void enqueue_async_load_task(LoadTask& task);
 
-    std::map<std::string, std::unique_ptr<ImageHandle>> m_image_cache;
+    std::map<FilePath, std::unique_ptr<ImageHandle>> m_image_cache;
+    std::map<FilePath, std::shared_ptr<File>> m_text_cache;
     std::mutex m_image_cache_lock;
 };
 

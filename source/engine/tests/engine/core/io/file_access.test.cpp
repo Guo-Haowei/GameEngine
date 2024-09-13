@@ -10,7 +10,7 @@ public:
     }
 
     virtual ErrorCode openInternal(std::string_view path, ModeFlags mode_flags) override {
-        auto info = std::format("[open]f:{},m:{},a:{};", path, mode_flags, (int)getAccessType());
+        auto info = std::format("[open]f:{},m:{},a:{};", path, (int)mode_flags, (int)getAccessType());
         s_buffer = info;
         return OK;
     }

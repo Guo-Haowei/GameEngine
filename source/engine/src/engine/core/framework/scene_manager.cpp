@@ -99,8 +99,9 @@ void SceneManager::queue_loaded_scene(Scene* p_scene, bool p_replace) {
 }
 
 void SceneManager::request_scene(std::string_view p_path) {
-    fs::path path{ p_path };
-    auto ext = path.extension().string();
+    FilePath path{ p_path };
+
+    std::string ext = path.extension();
     if (ext == ".lua" || ext == ".scene") {
         AssetManager::singleton().load_scene_async(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);

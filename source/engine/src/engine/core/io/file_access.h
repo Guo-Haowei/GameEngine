@@ -36,7 +36,7 @@ public:
 
     static auto open(const std::string& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>>;
     static auto open(const FilePath& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
-        return open(p_path.getString(), p_mode_flags);
+        return open(p_path.string(), p_mode_flags);
     }
 
     template<typename T>
