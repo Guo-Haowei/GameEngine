@@ -2,13 +2,13 @@
 
 namespace my::math {
 
-TEST(Box, constructor) {
+TEST(box, constructor) {
     Box3 box{ vec3(1), vec3(10) };
     EXPECT_EQ(box.getMin(), vec3(1));
     EXPECT_EQ(box.getMax(), vec3(10));
 }
 
-TEST(Box, expand_point) {
+TEST(box, expand_point) {
     Box3 box;
     box.expandPoint(vec3(1));
 
@@ -24,7 +24,7 @@ TEST(Box, expand_point) {
     EXPECT_EQ(box.getMax(), vec3(3));
 }
 
-TEST(Box, union_box) {
+TEST(box, union_box) {
     Box3 box1{ vec3(-10), vec3(5) };
     Box3 box2{ vec3(-5), vec3(10) };
 
@@ -33,7 +33,7 @@ TEST(Box, union_box) {
     EXPECT_EQ(box1.getMax(), vec3(10));
 }
 
-TEST(Box, intersect_box) {
+TEST(box, intersect_box) {
     Box3 box1{ vec3(-10), vec3(5) };
     Box3 box2{ vec3(-5), vec3(10) };
 
@@ -42,7 +42,7 @@ TEST(Box, intersect_box) {
     EXPECT_EQ(box1.getMax(), vec3(5));
 }
 
-TEST(Box, center_and_size) {
+TEST(box, center_and_size) {
     Box3 box{ vec3(-10), vec3(5) };
 
     EXPECT_EQ(box.center(), vec3(-2.5));

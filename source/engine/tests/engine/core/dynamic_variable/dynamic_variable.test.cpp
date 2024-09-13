@@ -18,7 +18,7 @@ void register_test_dvars() {
 
 extern void assert_handler(void*, std::string_view, std::string_view, int, std::string_view);
 
-TEST(DynamicVariable, wrong_type) {
+TEST(dynamic_variable, wrong_type) {
     register_test_dvars();
 
     ErrorHandler handler;
@@ -76,7 +76,7 @@ TEST(DynamicVariable, wrong_type) {
     removeErrorHandler(&handler);
 }
 
-TEST(DynamicVariable, int) {
+TEST(dynamic_variable, int) {
     auto value = DVAR_GET_INT(test_int);
     EXPECT_EQ(value, 100);
     DVAR_SET_INT(test_int, 200);
@@ -84,7 +84,7 @@ TEST(DynamicVariable, int) {
     EXPECT_EQ(value, 200);
 }
 
-TEST(DynamicVariable, float) {
+TEST(dynamic_variable, float) {
     auto value = DVAR_GET_FLOAT(test_float);
     EXPECT_EQ(value, 2.3f);
     DVAR_SET_FLOAT(test_float, 1.2f);
@@ -92,7 +92,7 @@ TEST(DynamicVariable, float) {
     EXPECT_EQ(value, 1.2f);
 }
 
-TEST(DynamicVariable, string) {
+TEST(dynamic_variable, string) {
     auto value = DVAR_GET_STRING(test_string);
     EXPECT_EQ(value, "abc");
     DVAR_SET_STRING(test_string, std::string_view("bcd"));
@@ -100,7 +100,7 @@ TEST(DynamicVariable, string) {
     EXPECT_EQ(value, "bcd");
 }
 
-TEST(DynamicVariable, vec2) {
+TEST(dynamic_variable, vec2) {
     auto value = DVAR_GET_VEC2(test_vec2);
     EXPECT_EQ(value, vec2(1, 2));
     DVAR_SET_VEC2(test_vec2, 7.0f, 8.0f);
@@ -108,7 +108,7 @@ TEST(DynamicVariable, vec2) {
     EXPECT_EQ(value, vec2(7, 8));
 }
 
-TEST(DynamicVariable, vec3) {
+TEST(dynamic_variable, vec3) {
     auto value = DVAR_GET_VEC3(test_vec3);
     EXPECT_EQ(value, vec3(1, 2, 3));
     DVAR_SET_VEC3(test_vec3, 7.0f, 8.0f, 9.0f);
@@ -116,7 +116,7 @@ TEST(DynamicVariable, vec3) {
     EXPECT_EQ(value, vec3(7, 8, 9));
 }
 
-TEST(DynamicVariable, vec4) {
+TEST(dynamic_variable, vec4) {
     auto value = DVAR_GET_VEC4(test_vec4);
     EXPECT_EQ(value, vec4(1, 2, 3, 4));
     DVAR_SET_VEC4(test_vec4, 7.0f, 8.0f, 9.0f, 10.0f);
@@ -124,7 +124,7 @@ TEST(DynamicVariable, vec4) {
     EXPECT_EQ(value, vec4(7, 8, 9, 10));
 }
 
-TEST(DynamicVariable, ivec2) {
+TEST(dynamic_variable, ivec2) {
     auto value = DVAR_GET_IVEC2(test_ivec2);
     EXPECT_EQ(value, ivec2(1, 2));
     DVAR_SET_IVEC2(test_ivec2, 7, 8);
@@ -132,7 +132,7 @@ TEST(DynamicVariable, ivec2) {
     EXPECT_EQ(value, ivec2(7, 8));
 }
 
-TEST(DynamicVariable, ivec3) {
+TEST(dynamic_variable, ivec3) {
     auto value = DVAR_GET_IVEC3(test_ivec3);
     EXPECT_EQ(value, ivec3(1, 2, 3));
     DVAR_SET_IVEC3(test_ivec3, 7, 8, 9);
@@ -140,7 +140,7 @@ TEST(DynamicVariable, ivec3) {
     EXPECT_EQ(value, ivec3(7, 8, 9));
 }
 
-TEST(DynamicVariable, ivec4) {
+TEST(dynamic_variable, ivec4) {
     auto value = DVAR_GET_IVEC4(test_ivec4);
     EXPECT_EQ(value, ivec4(1, 2, 3, 4));
     DVAR_SET_IVEC4(test_ivec4, 7, 8, 9, 10);

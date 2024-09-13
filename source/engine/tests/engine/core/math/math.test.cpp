@@ -64,28 +64,28 @@ TEST(align, compile_time) {
     static_assert(align(31, 16) == 32);
 }
 
-TEST(logTwo, power_of_two) {
+TEST(log_two, power_of_two) {
     EXPECT_EQ(logTwo(16), 4);
     EXPECT_EQ(logTwo(128), 7);
 }
 
-TEST(isPowerOfTwo, success) {
+TEST(is_power_of_two, success) {
     EXPECT_TRUE(isPowerOfTwo(16));
     EXPECT_TRUE(isPowerOfTwo(128));
 }
 
-TEST(isPowerOfTwo, fail) {
+TEST(is_power_of_two, fail) {
     EXPECT_FALSE(isPowerOfTwo(7));
     EXPECT_FALSE(isPowerOfTwo(124));
 }
 
-TEST(isPowerOfTwo, compile_time) {
+TEST(is_power_of_two, compile_time) {
     static_assert(isPowerOfTwo(16) == true);
     static_assert(isPowerOfTwo(128) == true);
     static_assert(isPowerOfTwo(127) == false);
 }
 
-TEST(nextPowerOfTwo, roundup) {
+TEST(next_power_of_two, roundup) {
     EXPECT_EQ(nextPowerOfTwo(3), 4);
     EXPECT_EQ(nextPowerOfTwo(9), 16);
     EXPECT_EQ(nextPowerOfTwo(10), 16);
@@ -94,7 +94,7 @@ TEST(nextPowerOfTwo, roundup) {
     EXPECT_EQ(nextPowerOfTwo(39), 64);
 }
 
-TEST(nextPowerOfTwo, no_roundup) {
+TEST(next_power_of_two, no_roundup) {
     EXPECT_EQ(nextPowerOfTwo(4), 4);
     EXPECT_EQ(nextPowerOfTwo(8), 8);
     EXPECT_EQ(nextPowerOfTwo(16), 16);
@@ -102,7 +102,7 @@ TEST(nextPowerOfTwo, no_roundup) {
     EXPECT_EQ(nextPowerOfTwo(64), 64);
 }
 
-TEST(nextPowerOfTwo, compile_time) {
+TEST(next_power_of_two, compile_time) {
     static_assert(nextPowerOfTwo(9) == 16);
     static_assert(nextPowerOfTwo(16) == 16);
     static_assert(nextPowerOfTwo(17) == 32);

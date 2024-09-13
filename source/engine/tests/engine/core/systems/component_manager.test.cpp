@@ -17,7 +17,7 @@ public:
     std::vector<T> m_component_array;
 };
 
-TEST(ComponentManager, iterator) {
+TEST(component_manager, iterator) {
     struct A {
         int a;
     };

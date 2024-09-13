@@ -2,7 +2,7 @@
 
 namespace my {
 
-TEST(ConcurrentQueue, test) {
+TEST(concurrent_queue, test) {
     ConcurrentQueue<int> concurrent_queue;
     std::latch latch{ 1 };
     constexpr int TASK_COUNT = 104;

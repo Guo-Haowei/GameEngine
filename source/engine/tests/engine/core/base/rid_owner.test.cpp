@@ -12,7 +12,7 @@ struct Object {
     int value;
 };
 
-TEST(RIDAllocator, allocate_rid) {
+TEST(rid_allocator, allocate_rid) {
 
     RIDAllocator<Object> allocator{ 512 };
 
@@ -63,7 +63,7 @@ TEST(RIDAllocator, allocate_rid) {
     }
 }
 
-TEST(RIDAllocator, concurrency) {
+TEST(rid_allocator, concurrency) {
     RIDAllocator<Object, true> allocator{ 128 };
     allocator.set_description("concurrency test");
     const size_t num_workers = 16;
