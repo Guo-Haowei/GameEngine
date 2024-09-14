@@ -3,9 +3,6 @@
 
 namespace my {
 
-//--------------------------------------------------------------------------------------------------
-// Dynamic Varialbe Parser
-//--------------------------------------------------------------------------------------------------
 class DynamicVariableParser {
 public:
     enum Source {
@@ -14,24 +11,24 @@ public:
         SOURCE_CACHE,
     };
 
-    DynamicVariableParser(const std::vector<std::string>& commands, Source source)
-        : m_source(source),
-          m_commands(commands) {}
+    DynamicVariableParser(const std::vector<std::string>& p_commands, Source p_source)
+        : m_source(p_source), m_commands(p_commands) {}
 
     bool parse();
 
-    const std::string& get_error() const { return m_error; }
+    const std::string& getError() const { return m_error; }
 
 private:
-    bool process_set();
+    bool processSetCmd();
+    bool processListCmd();
 
-    bool out_of_bound();
+    bool outOfBound();
     const std::string& peek();
     const std::string& consume();
 
-    bool try_get_int(int& out);
-    bool try_get_float(float& out);
-    bool try_get_string(std::string_view& out);
+    bool tryGetInt(int& p_out);
+    bool tryGetFloat(float& p_out);
+    bool tryGetString(std::string_view& p_out);
 
     const Source m_source;
     const std::vector<std::string>& m_commands;
@@ -44,8 +41,8 @@ class DynamicVariableManager {
 public:
     static void serialize();
     static void deserialize();
-    static bool parse(const std::vector<std::string>& commands);
-    static void dump_dvars();
+    static bool parse(const std::vector<std::string>& p_commands);
+    static void dumpDvars();
 };
 
 }  // namespace my

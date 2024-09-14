@@ -2,109 +2,109 @@
 
 namespace my {
 
-void DynamicVariable::register_int(std::string_view key, int value) {
-    m_int = value;
-    register_dvar(key, this);
+void DynamicVariable::registerInt(std::string_view p_key, int p_value) {
+    m_int = p_value;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_float(std::string_view key, float value) {
-    m_float = value;
-    register_dvar(key, this);
+void DynamicVariable::registerFloat(std::string_view p_key, float p_value) {
+    m_float = p_value;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_string(std::string_view key, std::string_view value) {
-    m_string = value;
-    register_dvar(key, this);
+void DynamicVariable::registerString(std::string_view p_key, std::string_view p_value) {
+    m_string = p_value;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_vec2(std::string_view key, float x, float y) {
-    m_vec.x = x;
-    m_vec.y = y;
-    register_dvar(key, this);
+void DynamicVariable::registerVec2(std::string_view p_key, float p_x, float p_y) {
+    m_vec.x = p_x;
+    m_vec.y = p_y;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_vec3(std::string_view key, float x, float y, float z) {
-    m_vec.x = x;
-    m_vec.y = y;
-    m_vec.z = z;
-    register_dvar(key, this);
+void DynamicVariable::registerVec3(std::string_view p_key, float p_x, float p_y, float p_z) {
+    m_vec.x = p_x;
+    m_vec.y = p_y;
+    m_vec.z = p_z;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_vec4(std::string_view key, float x, float y, float z, float w) {
-    m_vec.x = x;
-    m_vec.y = y;
-    m_vec.z = z;
-    m_vec.w = w;
-    register_dvar(key, this);
+void DynamicVariable::registerVec4(std::string_view p_key, float p_x, float p_y, float p_z, float p_w) {
+    m_vec.x = p_x;
+    m_vec.y = p_y;
+    m_vec.z = p_z;
+    m_vec.w = p_w;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_ivec2(std::string_view key, int x, int y) {
-    m_ivec.x = x;
-    m_ivec.y = y;
-    register_dvar(key, this);
+void DynamicVariable::registerIvec2(std::string_view p_key, int p_x, int p_y) {
+    m_ivec.x = p_x;
+    m_ivec.y = p_y;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_ivec3(std::string_view key, int x, int y, int z) {
-    m_ivec.x = x;
-    m_ivec.y = y;
-    m_ivec.z = z;
-    register_dvar(key, this);
+void DynamicVariable::registerIvec3(std::string_view p_key, int p_x, int p_y, int p_z) {
+    m_ivec.x = p_x;
+    m_ivec.y = p_y;
+    m_ivec.z = p_z;
+    registerDvar(p_key, this);
 }
 
-void DynamicVariable::register_ivec4(std::string_view key, int x, int y, int z, int w) {
-    m_ivec.x = x;
-    m_ivec.y = y;
-    m_ivec.z = z;
-    m_ivec.w = w;
-    register_dvar(key, this);
+void DynamicVariable::registerIvec4(std::string_view p_key, int p_x, int p_y, int p_z, int p_w) {
+    m_ivec.x = p_x;
+    m_ivec.y = p_y;
+    m_ivec.z = p_z;
+    m_ivec.w = p_w;
+    registerDvar(p_key, this);
 }
 
-int DynamicVariable::as_int() const {
+int DynamicVariable::asInt() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_INT);
     return m_int;
 }
 
-float DynamicVariable::as_float() const {
+float DynamicVariable::asFloat() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_FLOAT);
     return m_float;
 }
 
-const std::string& DynamicVariable::as_string() const {
+const std::string& DynamicVariable::asString() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_STRING);
     return m_string;
 }
 
-vec2 DynamicVariable::as_vec2() const {
+vec2 DynamicVariable::asVec2() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC2);
     return vec2(m_vec.x, m_vec.y);
 }
 
-vec3 DynamicVariable::as_vec3() const {
+vec3 DynamicVariable::asVec3() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC3);
     return vec3(m_vec.x, m_vec.y, m_vec.z);
 }
 
-vec4 DynamicVariable::as_vec4() const {
+vec4 DynamicVariable::asVec4() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC4);
     return vec4(m_vec.x, m_vec.y, m_vec.z, m_vec.w);
 }
 
-ivec2 DynamicVariable::as_ivec2() const {
+ivec2 DynamicVariable::asIvec2() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC2);
     return ivec2(m_ivec.x, m_ivec.y);
 }
 
-ivec3 DynamicVariable::as_ivec3() const {
+ivec3 DynamicVariable::asIvec3() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC3);
     return ivec3(m_ivec.x, m_ivec.y, m_ivec.z);
 }
 
-ivec4 DynamicVariable::as_ivec4() const {
+ivec4 DynamicVariable::asIvec4() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC4);
     return ivec4(m_ivec.x, m_ivec.y, m_ivec.z, m_ivec.w);
 }
 
-void* DynamicVariable::as_pointer() {
+void* DynamicVariable::asPointer() {
     switch (m_type) {
         case VARIANT_TYPE_INT:
         case VARIANT_TYPE_FLOAT:
@@ -121,79 +121,79 @@ void* DynamicVariable::as_pointer() {
     }
 }
 
-bool DynamicVariable::set_int(int value) {
+bool DynamicVariable::setInt(int p_value) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_INT, false);
-    m_int = value;
+    m_int = p_value;
     return true;
 }
 
-bool DynamicVariable::set_float(float value) {
+bool DynamicVariable::setFloat(float p_value) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_FLOAT, false);
-    m_float = value;
+    m_float = p_value;
     return true;
 }
 
-bool DynamicVariable::set_string(const std::string& value) {
+bool DynamicVariable::setString(const std::string& p_value) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_STRING, false);
-    m_string = value;
+    m_string = p_value;
     return true;
 }
 
-bool DynamicVariable::set_string(std::string_view value) {
+bool DynamicVariable::setString(std::string_view p_value) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_STRING, false);
-    m_string = value;
+    m_string = p_value;
     return true;
 }
 
-bool DynamicVariable::set_vec2(float x, float y) {
+bool DynamicVariable::setVec2(float p_x, float p_y) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_VEC2, false);
-    m_vec.x = x;
-    m_vec.y = y;
+    m_vec.x = p_x;
+    m_vec.y = p_y;
     return true;
 }
 
-bool DynamicVariable::set_vec3(float x, float y, float z) {
+bool DynamicVariable::setVec3(float p_x, float p_y, float p_z) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_VEC3, false);
-    m_vec.x = x;
-    m_vec.y = y;
-    m_vec.z = z;
+    m_vec.x = p_x;
+    m_vec.y = p_y;
+    m_vec.z = p_z;
     return true;
 }
 
-bool DynamicVariable::set_vec4(float x, float y, float z, float w) {
+bool DynamicVariable::setVec4(float p_x, float p_y, float p_z, float p_w) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_VEC4, false);
-    m_vec.x = x;
-    m_vec.y = y;
-    m_vec.z = z;
-    m_vec.w = w;
+    m_vec.x = p_x;
+    m_vec.y = p_y;
+    m_vec.z = p_z;
+    m_vec.w = p_w;
     return true;
 }
 
-bool DynamicVariable::set_ivec2(int x, int y) {
+bool DynamicVariable::setIvec2(int p_x, int p_y) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_IVEC2, false);
-    m_ivec.x = x;
-    m_ivec.y = y;
+    m_ivec.x = p_x;
+    m_ivec.y = p_y;
     return true;
 }
 
-bool DynamicVariable::set_ivec3(int x, int y, int z) {
+bool DynamicVariable::setIvec3(int p_x, int p_y, int p_z) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_IVEC3, false);
-    m_ivec.x = x;
-    m_ivec.y = y;
-    m_ivec.z = z;
+    m_ivec.x = p_x;
+    m_ivec.y = p_y;
+    m_ivec.z = p_z;
     return true;
 }
 
-bool DynamicVariable::set_ivec4(int x, int y, int z, int w) {
+bool DynamicVariable::setIvec4(int p_x, int p_y, int p_z, int p_w) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_IVEC4, false);
-    m_ivec.x = x;
-    m_ivec.y = y;
-    m_ivec.z = z;
-    m_ivec.w = w;
+    m_ivec.x = p_x;
+    m_ivec.y = p_y;
+    m_ivec.z = p_z;
+    m_ivec.w = p_w;
     return true;
 }
 
-std::string DynamicVariable::value_to_string() const {
+std::string DynamicVariable::valueToString() const {
     switch (m_type) {
         case VARIANT_TYPE_INT:
             return std::format("{}", m_int);
@@ -219,7 +219,7 @@ std::string DynamicVariable::value_to_string() const {
     }
 }
 
-void DynamicVariable::print_value_change(std::string_view source) const {
+void DynamicVariable::printValueChange(std::string_view p_source) const {
     static const char* s_names[] = {
         "",
         "int",
@@ -235,28 +235,28 @@ void DynamicVariable::print_value_change(std::string_view source) const {
 
     static_assert(array_length(s_names) == VARIANT_TYPE_MAX);
 
-    std::string value_string = value_to_string();
-    LOG_VERBOSE("[dvar] change dvar '{}'({}) to {} (source: {})", m_name, s_names[m_type], value_string, source);
+    std::string value_string = valueToString();
+    LOG_VERBOSE("[dvar] change dvar '{}'({}) to {} (source: {})", m_name, s_names[m_type], value_string, p_source);
 }
 
-DynamicVariable* DynamicVariable::find_dvar(const std::string& name) {
-    auto it = s_map.find(name);
+DynamicVariable* DynamicVariable::findDvar(const std::string& p_name) {
+    auto it = s_map.find(p_name);
     if (it == s_map.end()) {
         return nullptr;
     }
     return it->second;
 }
 
-void DynamicVariable::register_dvar(std::string_view key, DynamicVariable* dvar) {
-    const std::string keyStr(key);
+void DynamicVariable::registerDvar(std::string_view p_key, DynamicVariable* p_dvar) {
+    const std::string keyStr(p_key);
     auto it = s_map.find(keyStr);
     if (it != s_map.end()) {
-        LOG_ERROR("duplicated dvar {} detected", key);
+        LOG_ERROR("duplicated dvar {} detected", p_key);
     }
 
-    dvar->m_name = key;
+    p_dvar->m_name = p_key;
 
-    s_map.insert(std::make_pair(keyStr, dvar));
+    s_map.insert(std::make_pair(keyStr, p_dvar));
 }
 
 }  // namespace my
