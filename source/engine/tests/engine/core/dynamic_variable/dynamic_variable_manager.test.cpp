@@ -18,7 +18,7 @@ TEST(dynamic_variable_parser, invalid_command) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.parse();
     EXPECT_FALSE(ok);
-    EXPECT_EQ(parser.get_error(), "unknown command '+abc'");
+    EXPECT_EQ(parser.getError(), "unknown command '+abc'");
 }
 
 TEST(dynamic_variable_parser, invalid_dvar_name) {
@@ -29,7 +29,7 @@ TEST(dynamic_variable_parser, invalid_dvar_name) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.parse();
     EXPECT_FALSE(ok);
-    EXPECT_EQ(parser.get_error(), "dvar 'test_int1' not found");
+    EXPECT_EQ(parser.getError(), "dvar 'test_int1' not found");
 }
 
 TEST(dynamic_variable_parser, unexpected_eof) {
@@ -40,7 +40,7 @@ TEST(dynamic_variable_parser, unexpected_eof) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.parse();
     EXPECT_FALSE(ok);
-    EXPECT_EQ(parser.get_error(), "invalid arguments: +set test_int");
+    EXPECT_EQ(parser.getError(), "invalid arguments: +set test_int");
 }
 
 TEST(dynamic_variable_parser, set_int) {
@@ -173,7 +173,7 @@ TEST(dynamic_variable_parser, multiple_set_fail) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.parse();
     EXPECT_FALSE(ok);
-    EXPECT_EQ(parser.get_error(), "invalid arguments: +set test_vec4 1");
+    EXPECT_EQ(parser.getError(), "invalid arguments: +set test_vec4 1");
 }
 
 }  // namespace my
