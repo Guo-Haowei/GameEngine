@@ -4,9 +4,9 @@ namespace my {
 
 const char* errorToString(ErrorCode p_error) {
     static const char* s_error_names[] = {
-#define ERROR_CODE_NAME
-#include "error_list.inl.h"
-#undef ERROR_CODE_NAME
+#define ERROR_CODE(NAME) #NAME,
+        ERROR_LIST
+#undef ERROR_CODE
     };
 
     static_assert(array_length(s_error_names) == ERR_COUNT);
