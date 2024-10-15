@@ -18,18 +18,18 @@ class Application {
 public:
     int run(int argc, const char** argv);
 
-    virtual void init_layers(){};
+    virtual void initLayers(){};
 
-    EventQueue& get_event_queue() { return m_event_queue; }
+    EventQueue& getEventQueue() { return m_event_queue; }
 
 protected:
-    void add_layer(std::shared_ptr<Layer> layer);
+    void addLayer(std::shared_ptr<Layer> layer);
 
 private:
-    void save_command_line(int argc, const char** argv);
+    void saveCommandLine(int argc, const char** argv);
 
-    void register_module(Module* module);
-    void setup_modules();
+    void registerModule(Module* module);
+    void setupModules();
 
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_command_line;

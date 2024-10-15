@@ -10,7 +10,7 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& manager = GraphicsManager::singleton();
-    auto render_data = manager.get_render_data();
+    auto render_data = manager.getRenderData();
 
     auto& pass_ptr = render_data->point_shadow_passes[p_pass_id];
     if (!pass_ptr) {
@@ -31,24 +31,24 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
         g_per_pass_cache.cache.u_point_light_far = pass.light_component.getMaxDistance();
         g_per_pass_cache.update();
 
-        manager.set_render_target(p_subpass, i);
+        manager.setRenderTarget(p_subpass, i);
         manager.clear(p_subpass, CLEAR_DEPTH_BIT);
 
         Viewport viewport{ width, height };
-        manager.set_viewport(viewport);
+        manager.setViewport(viewport);
 
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                manager.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+                manager.bindUniformSlot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
             }
 
-            manager.set_pipeline_state(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
+            manager.setPipelineState(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-            manager.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
+            manager.bindUniformSlot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
-            manager.set_mesh(draw.mesh_data);
-            manager.draw_elements(draw.mesh_data->index_count);
+            manager.setMesh(draw.mesh_data);
+            manager.drawElements(draw.mesh_data->index_count);
         }
     }
 }
@@ -56,13 +56,13 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
 static void shadow_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    auto render_data = GraphicsManager::singleton().get_render_data();
+    auto render_data = GraphicsManager::singleton().getRenderData();
     if (!render_data->has_sun_light) {
         return;
     }
 
     auto& manager = GraphicsManager::singleton();
-    manager.set_render_target(p_subpass);
+    manager.setRenderTarget(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->get_size();
 
     manager.clear(p_subpass, CLEAR_DEPTH_BIT);
@@ -72,7 +72,7 @@ static void shadow_pass_func(const Subpass* p_subpass) {
     for (int cascade_idx = 0; cascade_idx < MAX_CASCADE_COUNT; ++cascade_idx) {
         Viewport viewport{ actual_width, height };
         viewport.top_left_x = cascade_idx * actual_width;
-        manager.set_viewport(viewport);
+        manager.setViewport(viewport);
 
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
         pass.fill_perpass(g_per_pass_cache.cache);
@@ -81,15 +81,15 @@ static void shadow_pass_func(const Subpass* p_subpass) {
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                manager.uniform_bind_slot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+                manager.bindUniformSlot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
             }
 
-            manager.set_pipeline_state(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
+            manager.setPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-            manager.uniform_bind_slot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
+            manager.bindUniformSlot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
 
-            manager.set_mesh(draw.mesh_data);
-            manager.draw_elements(draw.mesh_data->index_count);
+            manager.setMesh(draw.mesh_data);
+            manager.drawElements(draw.mesh_data->index_count);
         }
     }
 }
@@ -102,11 +102,11 @@ void RenderPassCreator::add_shadow_pass() {
     const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
     DEV_ASSERT(math::isPowerOfTwo(point_shadow_res));
 
-    auto shadow_map = manager.create_render_target(RenderTargetDesc{ RT_RES_SHADOW_MAP,
-                                                                     PixelFormat::D32_FLOAT,
-                                                                     AttachmentType::SHADOW_2D,
-                                                                     MAX_CASCADE_COUNT * shadow_res, shadow_res },
-                                                   shadow_map_sampler());
+    auto shadow_map = manager.createRenderTarget(RenderTargetDesc{ RT_RES_SHADOW_MAP,
+                                                                   PixelFormat::D32_FLOAT,
+                                                                   AttachmentType::SHADOW_2D,
+                                                                   MAX_CASCADE_COUNT * shadow_res, shadow_res },
+                                                 shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = SHADOW_PASS;
     auto pass = m_graph.create_pass(desc);
@@ -130,20 +130,20 @@ void RenderPassCreator::add_shadow_pass() {
     static_assert(array_length(funcs) == MAX_LIGHT_CAST_SHADOW_COUNT);
 
     for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-        auto point_shadow_map = manager.create_render_target(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
-                                                                               PixelFormat::D32_FLOAT,
-                                                                               AttachmentType::SHADOW_CUBE_MAP,
-                                                                               point_shadow_res, point_shadow_res },
-                                                             shadow_cube_map_sampler());
+        auto point_shadow_map = manager.createRenderTarget(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
+                                                                             PixelFormat::D32_FLOAT,
+                                                                             AttachmentType::SHADOW_CUBE_MAP,
+                                                                             point_shadow_res, point_shadow_res },
+                                                           shadow_cube_map_sampler());
 
-        auto subpass = manager.create_subpass(SubpassDesc{
+        auto subpass = manager.createSubpass(SubpassDesc{
             .depth_attachment = point_shadow_map,
             .func = funcs[i],
         });
         pass->add_sub_pass(subpass);
     }
 
-    auto subpass = manager.create_subpass(SubpassDesc{
+    auto subpass = manager.createSubpass(SubpassDesc{
         .depth_attachment = shadow_map,
         .func = shadow_pass_func,
     });

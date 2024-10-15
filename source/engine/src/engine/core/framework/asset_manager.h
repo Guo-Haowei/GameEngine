@@ -35,19 +35,19 @@ public:
     bool initialize() override;
     void finalize() override;
 
-    void load_scene_async(const FilePath& p_path, LoadSuccessFunc p_on_success);
+    void loadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success);
 
-    ImageHandle* load_image_sync(const FilePath& p_path);
-    ImageHandle* load_image_async(const FilePath& p_path, LoadSuccessFunc = nullptr);
-    ImageHandle* find_image(const FilePath& p_path);
+    ImageHandle* loadImageSync(const FilePath& p_path);
+    ImageHandle* loadImageAsync(const FilePath& p_path, LoadSuccessFunc = nullptr);
+    ImageHandle* findImage(const FilePath& p_path);
 
-    std::shared_ptr<File> load_file_sync(const FilePath& p_path);
-    std::shared_ptr<File> find_file(const FilePath& p_path);
+    std::shared_ptr<File> loadFileSync(const FilePath& p_path);
+    std::shared_ptr<File> findFile(const FilePath& p_path);
 
-    static void worker_main();
+    static void workerMain();
 
 private:
-    void enqueue_async_load_task(LoadTask& task);
+    void enqueueLoadTask(LoadTask& task);
 
     std::map<FilePath, std::unique_ptr<ImageHandle>> m_image_cache;
     std::map<FilePath, std::shared_ptr<File>> m_text_cache;

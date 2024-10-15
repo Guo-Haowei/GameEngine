@@ -16,18 +16,18 @@ public:
     void finalize() override;
     void update(float dt);
 
-    void request_scene(std::string_view p_path);
+    void requestScene(std::string_view p_path);
 
-    uint32_t get_revision() const { return m_revision; }
-    void bump_revision() { ++m_revision; }
+    uint32_t getRevision() const { return m_revision; }
+    void bumpRevision() { ++m_revision; }
 
-    void queue_loaded_scene(Scene* p_scene, bool p_replace);
+    void enqueueSceneLoadingTask(Scene* p_scene, bool p_replace);
 
     // @TODO: bad idea to make it globally accessible, fix it
-    static Scene& get_scene();
+    static Scene& getScene();
 
 private:
-    bool try_swap_scene();
+    bool trySwapScene();
 
     Scene* m_scene = nullptr;
 

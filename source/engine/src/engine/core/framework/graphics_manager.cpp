@@ -11,7 +11,7 @@
 namespace my {
 
 bool GraphicsManager::initialize() {
-    if (!initialize_internal()) {
+    if (!initializeImpl()) {
         return false;
     }
 
@@ -24,12 +24,12 @@ bool GraphicsManager::initialize() {
     }
 
     auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = find_render_target(name);
+        std::shared_ptr<RenderTarget> resource = findRenderTarget(name);
         if (!resource) {
             return;
         }
 
-        bind_texture(p_dimension, resource->texture->get_handle(), slot);
+        bindTexture(p_dimension, resource->texture->get_handle(), slot);
     };
 
     // bind common textures
@@ -42,13 +42,13 @@ bool GraphicsManager::initialize() {
     return true;
 }
 
-void GraphicsManager::event_received(std::shared_ptr<Event> event) {
+void GraphicsManager::eventReceived(std::shared_ptr<Event> event) {
     if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(event.get()); e) {
-        const Scene& scene = *e->get_scene();
-        on_scene_change(scene);
+        const Scene& scene = *e->getScene();
+        onSceneChange(scene);
     }
     if (ResizeEvent* e = dynamic_cast<ResizeEvent*>(event.get()); e) {
-        on_window_resize(e->get_width(), e->get_height());
+        onWindowResize(e->getWidth(), e->getHeight());
     }
 }
 
@@ -63,14 +63,14 @@ std::shared_ptr<GraphicsManager> GraphicsManager::create() {
     return std::make_shared<EmptyGraphicsManager>(Backend::EMPTY);
 }
 
-void GraphicsManager::set_pipeline_state(PipelineStateName p_name) {
+void GraphicsManager::setPipelineState(PipelineStateName p_name) {
     if (m_last_pipeline_name != p_name) {
-        set_pipeline_state_impl(p_name);
+        setPipelineStateImpl(p_name);
         m_last_pipeline_name = p_name;
     }
 }
 
-void GraphicsManager::request_texture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
+void GraphicsManager::requestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
     m_loaded_images.push(ImageTask{ p_handle, p_func });
 }
 
@@ -89,7 +89,7 @@ void GraphicsManager::update(Scene&) {
         SamplerDesc sampler_desc{};
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-        image->gpu_texture = create_texture(texture_desc, sampler_desc);
+        image->gpu_texture = createTexture(texture_desc, sampler_desc);
         if (task.func) {
             task.func(task.handle->get());
         }
@@ -98,7 +98,7 @@ void GraphicsManager::update(Scene&) {
     render();
 }
 
-void GraphicsManager::select_render_graph() {
+void GraphicsManager::selectRenderGraph() {
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
         m_method = RenderGraph::VXGI;
@@ -120,7 +120,7 @@ void GraphicsManager::select_render_graph() {
     }
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
+std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
     DEV_ASSERT(m_resource_lookup.find(p_desc.name) == m_resource_lookup.end());
     std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
 
@@ -169,13 +169,13 @@ std::shared_ptr<RenderTarget> GraphicsManager::create_render_target(const Render
         texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
     }
 
-    resource->texture = create_texture(texture_desc, p_sampler);
+    resource->texture = createTexture(texture_desc, p_sampler);
 
     m_resource_lookup[resource->desc.name] = resource;
     return resource;
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::find_render_target(const std::string& name) const {
+std::shared_ptr<RenderTarget> GraphicsManager::findRenderTarget(const std::string& name) const {
     if (m_resource_lookup.empty()) {
         return nullptr;
     }
@@ -187,14 +187,14 @@ std::shared_ptr<RenderTarget> GraphicsManager::find_render_target(const std::str
     return it->second;
 }
 
-uint64_t GraphicsManager::get_final_image() const {
+uint64_t GraphicsManager::getFinalImage() const {
     const Texture* texture = nullptr;
     switch (m_method) {
         case RenderGraph::VXGI:
-            texture = find_render_target(RT_RES_FINAL)->texture.get();
+            texture = findRenderTarget(RT_RES_FINAL)->texture.get();
             break;
         case RenderGraph::DUMMY:
-            texture = find_render_target(RT_RES_LIGHTING)->texture.get();
+            texture = findRenderTarget(RT_RES_LIGHTING)->texture.get();
             break;
         default:
             CRASH_NOW();

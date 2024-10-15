@@ -8,16 +8,16 @@ public:
     bool initialize() override { return true; }
     void finalize() override {}
 
-    bool should_close() override { return true; }
+    bool shouldClose() override { return true; }
 
-    std::tuple<int, int> get_window_size() override {
+    std::tuple<int, int> getWindowSize() override {
         return std::make_tuple(0, 0);
     }
-    std::tuple<int, int> get_window_pos() override {
+    std::tuple<int, int> getWindowPos() override {
         return std::make_tuple(0, 0);
     }
 
-    void new_frame() override {}
+    void newFrame() override {}
     void present() override {}
 };
 

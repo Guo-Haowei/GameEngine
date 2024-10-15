@@ -15,24 +15,24 @@ bool PhysicsManager::initialize() {
 }
 
 void PhysicsManager::finalize() {
-    clean_world();
+    cleanWorld();
 }
 
-void PhysicsManager::event_received(std::shared_ptr<Event> p_event) {
+void PhysicsManager::eventReceived(std::shared_ptr<Event> p_event) {
     SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get());
     if (!e) {
         return;
     }
 
-    const Scene& scene = *e->get_scene();
+    const Scene& scene = *e->getScene();
     // @TODO: fix
-    create_world(scene);
+    createWorld(scene);
 }
 
 void PhysicsManager::update(Scene& p_scene) {
     float delta_time = p_scene.m_delta_time;
 
-    if (has_world()) {
+    if (hasWorld()) {
         m_dynamic_world->stepSimulation(delta_time, 10);
 
         for (int j = m_dynamic_world->getNumCollisionObjects() - 1; j >= 0; j--) {
@@ -59,7 +59,7 @@ void PhysicsManager::update(Scene& p_scene) {
     }
 }
 
-void PhysicsManager::create_world(const Scene& p_scene) {
+void PhysicsManager::createWorld(const Scene& p_scene) {
     m_collision_config = new btDefaultCollisionConfiguration();
     m_dispatcher = new btCollisionDispatcher(m_collision_config);
     m_overlapping_pair_cache = new btDbvtBroadphase();
@@ -117,8 +117,8 @@ void PhysicsManager::create_world(const Scene& p_scene) {
     }
 }
 
-void PhysicsManager::clean_world() {
-    if (has_world()) {
+void PhysicsManager::cleanWorld() {
+    if (hasWorld()) {
         // remove the rigidbodies from the dynamics world and delete them
         for (int i = m_dynamic_world->getNumCollisionObjects() - 1; i >= 0; i--) {
             btCollisionObject* obj = m_dynamic_world->getCollisionObjectArray()[i];

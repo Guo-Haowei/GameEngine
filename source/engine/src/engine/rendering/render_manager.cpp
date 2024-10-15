@@ -34,7 +34,7 @@ void request_env_map(const std::string& path) {
     }
 
     s_prev_env_map = path;
-    if (auto handle = AssetManager::singleton().find_image(FilePath{ path }); handle) {
+    if (auto handle = AssetManager::singleton().findImage(FilePath{ path }); handle) {
         if (auto image = handle->get(); image && image->gpu_texture) {
             g_constantCache.cache.c_hdr_env_map = image->gpu_texture->get_resident_handle();
             g_constantCache.update();
@@ -43,14 +43,14 @@ void request_env_map(const std::string& path) {
         }
     }
 
-    AssetManager::singleton().load_image_async(FilePath{ path }, [](void* p_asset, void* p_userdata) {
+    AssetManager::singleton().loadImageAsync(FilePath{ path }, [](void* p_asset, void* p_userdata) {
         Image* image = reinterpret_cast<Image*>(p_asset);
         ImageHandle* handle = reinterpret_cast<ImageHandle*>(p_userdata);
         DEV_ASSERT(image);
         DEV_ASSERT(handle);
 
         handle->set(image);
-        GraphicsManager::singleton().request_texture(handle, [](Image* p_image) {
+        GraphicsManager::singleton().requestTexture(handle, [](Image* p_image) {
             // @TODO: better way
             if (p_image->gpu_texture) {
                 g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
@@ -220,7 +220,7 @@ void fill_constant_buffers(const Scene& scene) {
                     for (size_t i = 0; i < 6; ++i) {
                         light.matrices[i] = point_light_matrices[i];
                     }
-                    auto resource = GraphicsManager::singleton().find_render_target(RT_RES_POINT_SHADOW_MAP + std::to_string(shadow_map_index));
+                    auto resource = GraphicsManager::singleton().findRenderTarget(RT_RES_POINT_SHADOW_MAP + std::to_string(shadow_map_index));
                     light.shadow_map = resource ? resource->texture->get_resident_handle() : 0;
                 } else {
                     light.shadow_map = 0;
@@ -351,8 +351,8 @@ RenderManager::RenderManager() : Module("RenderManager") {
 }
 
 bool RenderManager::initialize() {
-    m_screen_quad_buffers = GraphicsManager::singleton().create_mesh(makePlaneMesh(vec3(1)));
-    m_skybox_buffers = GraphicsManager::singleton().create_mesh(makeSkyBoxMesh());
+    m_screen_quad_buffers = GraphicsManager::singleton().createMesh(makePlaneMesh(vec3(1)));
+    m_skybox_buffers = GraphicsManager::singleton().createMesh(makeSkyBoxMesh());
 
     return true;
 }
@@ -369,7 +369,7 @@ void RenderManager::update(Scene& p_scene) {
     OPTICK_EVENT();
 
     renderer::fill_constant_buffers(p_scene);
-    GraphicsManager::singleton().get_render_data()->update(&p_scene);
+    GraphicsManager::singleton().getRenderData()->update(&p_scene);
 
     g_per_frame_cache.update();
 }
@@ -392,13 +392,13 @@ void RenderManager::free_point_light_shadow_map(PointShadowHandle& p_handle) {
 }
 
 void RenderManager::draw_quad() {
-    GraphicsManager::singleton().set_mesh(m_screen_quad_buffers);
-    GraphicsManager::singleton().draw_elements(m_screen_quad_buffers->index_count);
+    GraphicsManager::singleton().setMesh(m_screen_quad_buffers);
+    GraphicsManager::singleton().drawElements(m_screen_quad_buffers->index_count);
 }
 
 void RenderManager::draw_skybox() {
-    GraphicsManager::singleton().set_mesh(m_skybox_buffers);
-    GraphicsManager::singleton().draw_elements(m_skybox_buffers->index_count);
+    GraphicsManager::singleton().setMesh(m_skybox_buffers);
+    GraphicsManager::singleton().drawElements(m_skybox_buffers->index_count);
 }
 
 }  // namespace my

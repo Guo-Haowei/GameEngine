@@ -76,12 +76,12 @@ void AssetManager::finalize() {
     s_asset_manager_glob.wake_condition.notify_all();
 }
 
-void AssetManager::enqueue_async_load_task(LoadTask& task) {
+void AssetManager::enqueueLoadTask(LoadTask& task) {
     s_asset_manager_glob.job_queue.push(std::move(task));
     s_asset_manager_glob.wake_condition.notify_one();
 }
 
-ImageHandle* AssetManager::find_image(const FilePath& p_path) {
+ImageHandle* AssetManager::findImage(const FilePath& p_path) {
     std::lock_guard guard(m_image_cache_lock);
 
     auto found = m_image_cache.find(p_path);
@@ -92,7 +92,7 @@ ImageHandle* AssetManager::find_image(const FilePath& p_path) {
     return nullptr;
 }
 
-ImageHandle* AssetManager::load_image_async(const FilePath& p_path, LoadSuccessFunc p_on_success) {
+ImageHandle* AssetManager::loadImageAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
     m_image_cache_lock.lock();
 
     auto found = m_image_cache.find(p_path);
@@ -120,16 +120,16 @@ ImageHandle* AssetManager::load_image_async(const FilePath& p_path, LoadSuccessF
             DEV_ASSERT(handle);
 
             handle->set(image);
-            GraphicsManager::singleton().request_texture(handle);
+            GraphicsManager::singleton().requestTexture(handle);
         };
     }
     task.userdata = ret;
     task.asset_path = p_path;
-    enqueue_async_load_task(task);
+    enqueueLoadTask(task);
     return ret;
 }
 
-ImageHandle* AssetManager::load_image_sync(const FilePath& p_path) {
+ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
     std::lock_guard guard(m_image_cache_lock);
 
     auto found = m_image_cache.find(p_path);
@@ -155,20 +155,20 @@ ImageHandle* AssetManager::load_image_sync(const FilePath& p_path) {
     SamplerDesc sampler_desc{};
     renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-    image->gpu_texture = GraphicsManager::singleton().create_texture(texture_desc, sampler_desc);
+    image->gpu_texture = GraphicsManager::singleton().createTexture(texture_desc, sampler_desc);
     handle->set(image);
     ImageHandle* ret = handle.get();
     m_image_cache[p_path] = std::move(handle);
     return ret;
 }
 
-void AssetManager::load_scene_async(const FilePath& p_path, LoadSuccessFunc p_on_success) {
+void AssetManager::loadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
     LoadTask task;
     task.type = LOAD_TASK_SCENE;
     task.asset_path = p_path;
     task.on_success = p_on_success;
     task.userdata = nullptr;
-    enqueue_async_load_task(task);
+    enqueueLoadTask(task);
 }
 
 template<typename T>
@@ -189,7 +189,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
     }
 }
 
-void AssetManager::worker_main() {
+void AssetManager::workerMain() {
     for (;;) {
         if (thread::shutdownRequested()) {
             break;
@@ -218,7 +218,7 @@ void AssetManager::worker_main() {
     }
 }
 
-std::shared_ptr<File> AssetManager::find_file(const FilePath& p_path) {
+std::shared_ptr<File> AssetManager::findFile(const FilePath& p_path) {
     auto found = m_text_cache.find(p_path);
     if (found != m_text_cache.end()) {
         return found->second;
@@ -227,7 +227,7 @@ std::shared_ptr<File> AssetManager::find_file(const FilePath& p_path) {
     return nullptr;
 }
 
-std::shared_ptr<File> AssetManager::load_file_sync(const FilePath& p_path) {
+std::shared_ptr<File> AssetManager::loadFileSync(const FilePath& p_path) {
     auto found = m_text_cache.find(p_path);
     if (found != m_text_cache.end()) {
         return found->second;

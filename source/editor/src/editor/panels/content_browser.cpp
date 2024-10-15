@@ -18,9 +18,9 @@ ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Br
         m_current_path = m_root_path;
     }
 
-    auto folder_icon = AssetManager::singleton().load_image_sync(FilePath{ "@res://images/icons/folder_icon.png" })->get();
-    auto image_icon = AssetManager::singleton().load_image_sync(FilePath{ "@res://images/icons/image_icon.png" })->get();
-    auto scene_icon = AssetManager::singleton().load_image_sync(FilePath{ "@res://images/icons/scene_icon.png" })->get();
+    auto folder_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/folder_icon.png" })->get();
+    auto image_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/image_icon.png" })->get();
+    auto scene_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/scene_icon.png" })->get();
 
     m_icon_map["."] = { folder_icon, nullptr };
     m_icon_map[".png"] = { image_icon, nullptr };

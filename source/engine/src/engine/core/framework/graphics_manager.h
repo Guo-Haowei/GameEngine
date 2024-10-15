@@ -70,61 +70,61 @@ public:
 
     void update(Scene& p_scene);
 
-    virtual void set_render_target(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
+    virtual void setRenderTarget(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
-    virtual void set_viewport(const Viewport& p_viewport) = 0;
+    virtual void setViewport(const Viewport& p_viewport) = 0;
 
-    virtual const MeshBuffers* create_mesh(const MeshComponent& p_mesh) = 0;
-    virtual void set_mesh(const MeshBuffers* p_mesh) = 0;
-    virtual void draw_elements(uint32_t p_count, uint32_t p_offset = 0) = 0;
+    virtual const MeshBuffers* createMesh(const MeshComponent& p_mesh) = 0;
+    virtual void setMesh(const MeshBuffers* p_mesh) = 0;
+    virtual void drawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 
-    void set_pipeline_state(PipelineStateName p_name);
-    virtual void set_stencil_ref(uint32_t p_ref) = 0;
+    void setPipelineState(PipelineStateName p_name);
+    virtual void setStencilRef(uint32_t p_ref) = 0;
 
-    std::shared_ptr<RenderTarget> create_render_target(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
-    std::shared_ptr<RenderTarget> find_render_target(const std::string& p_name) const;
+    std::shared_ptr<RenderTarget> createRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
+    std::shared_ptr<RenderTarget> findRenderTarget(const std::string& p_name) const;
 
-    virtual std::shared_ptr<UniformBufferBase> uniform_create(int p_slot, size_t p_capacity) = 0;
-    virtual void uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
+    virtual std::shared_ptr<UniformBufferBase> createUniform(int p_slot, size_t p_capacity) = 0;
+    virtual void updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
     template<typename T>
-    void uniform_update(const UniformBufferBase* p_buffer, const std::vector<T>& p_vector) {
-        uniform_update(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
+    void updateUniform(const UniformBufferBase* p_buffer, const std::vector<T>& p_vector) {
+        updateUniform(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
     }
-    virtual void uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
+    virtual void bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
     template<typename T>
-    void uniform_bind_slot(const UniformBufferBase* p_buffer, int slot) {
-        uniform_bind_range(p_buffer, sizeof(T), slot * sizeof(T));
+    void bindUniformSlot(const UniformBufferBase* p_buffer, int slot) {
+        bindUniformRange(p_buffer, sizeof(T), slot * sizeof(T));
     }
 
-    virtual std::shared_ptr<Subpass> create_subpass(const SubpassDesc& p_desc) = 0;
-    virtual std::shared_ptr<Texture> create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
-    virtual void bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
+    virtual std::shared_ptr<Subpass> createSubpass(const SubpassDesc& p_desc) = 0;
+    virtual std::shared_ptr<Texture> createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
+    virtual void bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
 
-    void request_texture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
+    void requestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
     // @TODO: move to renderer
-    uint64_t get_final_image() const;
+    uint64_t getFinalImage() const;
 
     // @TODO: thread safety ?
-    void event_received(std::shared_ptr<Event> p_event) final;
+    void eventReceived(std::shared_ptr<Event> p_event) final;
 
     // @TODO: move to renderer
-    std::shared_ptr<RenderData> get_render_data() { return m_render_data; }
-    const rg::RenderGraph& get_active_render_graph() { return m_render_graph; }
+    std::shared_ptr<RenderData> getRenderData() { return m_render_data; }
+    const rg::RenderGraph& getActiveRenderGraph() { return m_render_graph; }
 
     static std::shared_ptr<GraphicsManager> create();
 
-    Backend get_backend() const { return m_backend; }
+    Backend getBackend() const { return m_backend; }
 
     // @TODO: move to renderer
-    void select_render_graph();
+    void selectRenderGraph();
 
 protected:
-    virtual void on_scene_change(const Scene& p_scene) = 0;
-    virtual void on_window_resize(int, int) {}
-    virtual void set_pipeline_state_impl(PipelineStateName p_name) = 0;
+    virtual void onSceneChange(const Scene& p_scene) = 0;
+    virtual void onWindowResize(int, int) {}
+    virtual void setPipelineStateImpl(PipelineStateName p_name) = 0;
     virtual void render() = 0;
-    virtual bool initialize_internal() = 0;
+    virtual bool initializeImpl() = 0;
 
     const Backend m_backend;
     RenderGraph m_method = RenderGraph::DUMMY;

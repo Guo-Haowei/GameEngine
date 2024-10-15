@@ -72,19 +72,19 @@ void Win32DisplayManager::finalize() {
     ::UnregisterClassW(m_wnd_class.lpszClassName, m_wnd_class.hInstance);
 }
 
-bool Win32DisplayManager::should_close() {
+bool Win32DisplayManager::shouldClose() {
     return m_should_quit;
 }
 
-std::tuple<int, int> Win32DisplayManager::get_window_size() {
+std::tuple<int, int> Win32DisplayManager::getWindowSize() {
     return std::make_tuple(m_frame_size.x, m_frame_size.y);
 }
 
-std::tuple<int, int> Win32DisplayManager::get_window_pos() {
+std::tuple<int, int> Win32DisplayManager::getWindowPos() {
     return std::make_tuple(m_window_pos.x, m_window_pos.y);
 }
 
-void Win32DisplayManager::new_frame() {
+void Win32DisplayManager::newFrame() {
     MSG msg{};
     while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
         ::TranslateMessage(&msg);
@@ -116,7 +116,7 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
                 m_frame_size.x = width;
                 m_frame_size.y = height;
                 auto event = std::make_shared<ResizeEvent>(width, height);
-                m_app->get_event_queue().dispatch_event(event);
+                m_app->getEventQueue().dispatchEvent(event);
             }
             return 0;
         }
