@@ -24,8 +24,8 @@ D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsMan
 
 bool D3d11GraphicsManager::initializeImpl() {
     bool ok = true;
-    ok = ok && create_device();
-    ok = ok && create_swap_chain();
+    ok = ok && createDevice();
+    ok = ok && createSwapChain();
     ok = ok && createRenderTarget();
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_ctx.Get());
 
@@ -92,7 +92,7 @@ void D3d11GraphicsManager::onWindowResize(int p_width, int p_height) {
     }
 }
 
-bool D3d11GraphicsManager::create_device() {
+bool D3d11GraphicsManager::createDevice() {
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
     UINT create_device_flags = 0;
     if (DVAR_GET_BOOL(r_gpu_validation)) {
@@ -128,7 +128,7 @@ bool D3d11GraphicsManager::create_device() {
     return true;
 }
 
-bool D3d11GraphicsManager::create_swap_chain() {
+bool D3d11GraphicsManager::createSwapChain() {
     auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::singleton_ptr());
     DEV_ASSERT(display_manager);
 
@@ -319,6 +319,18 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
                 ComPtr<ID3D11DepthStencilView> dsv;
                 D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
                 desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                desc.Texture2D.MipSlice = 0;
+
+                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create depth stencil view");
+                subpass->dsv = dsv;
+            } break;
+            case AttachmentType::SHADOW_2D: {
+                ComPtr<ID3D11DepthStencilView> dsv;
+                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                desc.Format = DXGI_FORMAT_D32_FLOAT;
                 desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
                 desc.Texture2D.MipSlice = 0;
 

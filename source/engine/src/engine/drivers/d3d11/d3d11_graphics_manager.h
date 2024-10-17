@@ -38,15 +38,15 @@ public:
     std::shared_ptr<Texture> createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<Subpass> createSubpass(const SubpassDesc&) final;
 
-    Microsoft::WRL::ComPtr<ID3D11Device>& get_d3d_device() { return m_device; }
+    Microsoft::WRL::ComPtr<ID3D11Device>& getD3dDevice() { return m_device; }
 
 protected:
     void onSceneChange(const Scene& p_scene) final;
     void onWindowResize(int p_width, int p_height) final;
     void setPipelineStateImpl(PipelineStateName p_name) final;
 
-    bool create_device();
-    bool create_swap_chain();
+    bool createDevice();
+    bool createSwapChain();
     bool createRenderTarget();
 
     Microsoft::WRL::ComPtr<ID3D11Device> m_device;

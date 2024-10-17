@@ -8,7 +8,6 @@ void createRenderGraphDefault(RenderGraph& p_graph) {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
     int h = frame_size.y;
-    auto backend = GraphicsManager::singleton().getBackend();
 
     RenderPassCreator::Config config;
     config.frame_width = w;
@@ -16,12 +15,9 @@ void createRenderGraphDefault(RenderGraph& p_graph) {
     config.enable_bloom = false;
     config.enable_ibl = false;
     config.enable_voxel_gi = false;
-    config.enable_shadow = backend == Backend::OPENGL;
     RenderPassCreator creator(config, p_graph);
 
-    if (config.enable_shadow) {
-        creator.addShadowPass();
-    }
+    creator.addShadowPass();
     creator.addGBufferPass();
     creator.addLightingPass();
 

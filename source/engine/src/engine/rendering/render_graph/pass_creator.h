@@ -7,6 +7,7 @@ class RenderPassCreator {
 public:
     struct Config {
         bool enable_shadow = true;
+        bool enable_point_shadow = true;
         bool enable_voxel_gi = true;
         bool enable_ibl = true;
         bool enable_bloom = true;

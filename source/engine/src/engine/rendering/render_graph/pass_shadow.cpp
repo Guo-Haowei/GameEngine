@@ -130,18 +130,20 @@ void RenderPassCreator::addShadowPass() {
 
     static_assert(array_length(funcs) == MAX_LIGHT_CAST_SHADOW_COUNT);
 
-    for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-        auto point_shadow_map = manager.createRenderTarget(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
-                                                                             PixelFormat::D32_FLOAT,
-                                                                             AttachmentType::SHADOW_CUBE_MAP,
-                                                                             point_shadow_res, point_shadow_res },
-                                                           shadow_cube_map_sampler());
+    if (manager.getBackend() == Backend::OPENGL) {
+        for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
+            auto point_shadow_map = manager.createRenderTarget(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
+                                                                                 PixelFormat::D32_FLOAT,
+                                                                                 AttachmentType::SHADOW_CUBE_MAP,
+                                                                                 point_shadow_res, point_shadow_res },
+                                                               shadow_cube_map_sampler());
 
-        auto subpass = manager.createSubpass(SubpassDesc{
-            .depth_attachment = point_shadow_map,
-            .func = funcs[i],
-        });
-        pass->addSubpass(subpass);
+            auto subpass = manager.createSubpass(SubpassDesc{
+                .depth_attachment = point_shadow_map,
+                .func = funcs[i],
+            });
+            pass->addSubpass(subpass);
+        }
     }
 
     auto subpass = manager.createSubpass(SubpassDesc{

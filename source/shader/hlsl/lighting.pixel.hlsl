@@ -67,6 +67,17 @@ float4 main(vsoutput_uv input) : SV_TARGET {
         float shadow = 0.0;
         const vec3 radiance = light.color;
         switch (light.type) {
+            case LIGHT_TYPE_OMNI: {
+                vec3 L = light.position;
+                float atten = 1.0;
+                const vec3 H = normalize(V + L);
+                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
+                // if (light.cast_shadow == 1) {
+                //     const float NdotL = max(dot(N, L), 0.0);
+                //     shadow = cascade_shadow(c_shadow_map, world_position, NdotL, cascade_level);
+                //     direct_lighting *= (1.0 - shadow);
+                // }
+            } break;
             case LIGHT_TYPE_POINT: {
                 vec3 delta = -world_position + light.position;
                 float dist = length(delta);
