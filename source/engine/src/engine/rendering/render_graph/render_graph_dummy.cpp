@@ -8,7 +8,7 @@ void create_render_graph_dummy(RenderGraph& p_graph) {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
     int h = frame_size.y;
-    auto backend = GraphicsManager::singleton().get_backend();
+    auto backend = GraphicsManager::singleton().getBackend();
 
     RenderPassCreator::Config config;
     config.frame_width = w;

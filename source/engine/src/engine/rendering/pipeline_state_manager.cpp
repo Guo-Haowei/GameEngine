@@ -105,7 +105,7 @@ bool PipelineStateManager::initialize() {
     }
 
     // @HACK: only support this many shaders
-    if (GraphicsManager::singleton().get_backend() == Backend::D3D11) {
+    if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
         return true;
     }
     {

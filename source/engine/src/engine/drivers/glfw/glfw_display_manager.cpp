@@ -62,11 +62,11 @@ void GlfwDisplayManager::finalize() {
     glfwTerminate();
 }
 
-bool GlfwDisplayManager::should_close() {
+bool GlfwDisplayManager::shouldClose() {
     return glfwWindowShouldClose(m_window);
 }
 
-void GlfwDisplayManager::new_frame() {
+void GlfwDisplayManager::newFrame() {
     glfwPollEvents();
     glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
     glfwGetWindowPos(m_window, &m_window_pos.x, &m_window_pos.y);
@@ -74,9 +74,9 @@ void GlfwDisplayManager::new_frame() {
     ImGui_ImplGlfw_NewFrame();
 }
 
-std::tuple<int, int> GlfwDisplayManager::get_window_size() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
+std::tuple<int, int> GlfwDisplayManager::getWindowSize() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
 
-std::tuple<int, int> GlfwDisplayManager::get_window_pos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
+std::tuple<int, int> GlfwDisplayManager::getWindowPos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
 
 void GlfwDisplayManager::present() {
     OPTICK_EVENT();

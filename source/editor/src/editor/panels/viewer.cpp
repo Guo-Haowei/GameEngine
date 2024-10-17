@@ -42,7 +42,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
     }
 
     if (input::isButtonPressed(MOUSE_BUTTON_RIGHT)) {
-        auto [window_x, window_y] = DisplayManager::singleton().get_window_pos();
+        auto [window_x, window_y] = DisplayManager::singleton().getWindowPos();
         vec2 clicked = input::getCursor();
         clicked.x = (clicked.x + window_x - m_canvas_min.x) / m_canvas_size.x;
         clicked.y = (clicked.y + window_y - m_canvas_min.y) / m_canvas_size.y;
@@ -82,9 +82,9 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     ImVec2 bottom_right(top_left.x + m_canvas_size.x, top_left.y + m_canvas_size.y);
 
     // @TODO: fix this
-    uint64_t handle = GraphicsManager::singleton().get_final_image();
+    uint64_t handle = GraphicsManager::singleton().getFinalImage();
 
-    switch (GraphicsManager::singleton().get_backend()) {
+    switch (GraphicsManager::singleton().getBackend()) {
         case Backend::OPENGL:
         case Backend::D3D11:
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
@@ -182,7 +182,7 @@ void Viewer::update_internal(Scene& scene) {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(EditorItem::DRAG_DROP_IMPORT)) {
             IM_ASSERT(payload->DataSize == sizeof(const char*));
             char* dragged_data = *(char**)payload->Data;
-            SceneManager::singleton().request_scene(dragged_data);
+            SceneManager::singleton().requestScene(dragged_data);
 
             // @TODO: no strdup and free
             free(dragged_data);

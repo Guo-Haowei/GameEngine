@@ -12,7 +12,7 @@ public:
     virtual bool initialize() = 0;
     virtual void finalize() = 0;
 
-    std::string_view get_name() const { return m_name; }
+    std::string_view getName() const { return m_name; }
 
 protected:
     std::string_view m_name;

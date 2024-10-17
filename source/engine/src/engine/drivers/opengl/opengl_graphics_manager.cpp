@@ -73,7 +73,7 @@ OpenGLGraphicsManager::OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphics
     m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
 }
 
-bool OpenGLGraphicsManager::initialize_internal() {
+bool OpenGLGraphicsManager::initializeImpl() {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
         return false;
@@ -94,7 +94,7 @@ bool OpenGLGraphicsManager::initialize_internal() {
         }
     }
 
-    select_render_graph();
+    selectRenderGraph();
 
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplOpenGL3_CreateDeviceObjects();
@@ -112,7 +112,7 @@ void OpenGLGraphicsManager::finalize() {
     ImGui_ImplOpenGL3_Shutdown();
 }
 
-void OpenGLGraphicsManager::set_pipeline_state_impl(PipelineStateName p_name) {
+void OpenGLGraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipeline_state_manager->find(p_name));
 
     if (pipeline->rasterizer_desc) {
@@ -231,7 +231,7 @@ void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, fl
     glClear(flags);
 }
 
-void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
+void OpenGLGraphicsManager::setViewport(const Viewport& p_viewport) {
     if (p_viewport.top_left_y) {
         LOG_FATAL("TODO: adjust to bottom left y");
     }
@@ -242,12 +242,12 @@ void OpenGLGraphicsManager::set_viewport(const Viewport& p_viewport) {
                p_viewport.height);
 }
 
-const MeshBuffers* OpenGLGraphicsManager::create_mesh(const MeshComponent& p_mesh) {
+const MeshBuffers* OpenGLGraphicsManager::createMesh(const MeshComponent& p_mesh) {
     RID rid = m_meshes.make_rid();
     OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
     p_mesh.gpu_resource = mesh_buffers;
 
-    auto create_mesh_data = [](const MeshComponent& p_mesh, OpenGLMeshBuffers& p_out_mesh) {
+    auto createMesh_data = [](const MeshComponent& p_mesh, OpenGLMeshBuffers& p_out_mesh) {
         const bool has_normals = !p_mesh.normals.empty();
         const bool has_uvs = !p_mesh.texcoords_0.empty();
         const bool has_tangents = !p_mesh.tangents.empty();
@@ -303,20 +303,20 @@ const MeshBuffers* OpenGLGraphicsManager::create_mesh(const MeshComponent& p_mes
         glBindVertexArray(0);
     };
 
-    create_mesh_data(p_mesh, *mesh_buffers);
+    createMesh_data(p_mesh, *mesh_buffers);
     return mesh_buffers;
 }
 
-void OpenGLGraphicsManager::set_mesh(const MeshBuffers* p_mesh) {
+void OpenGLGraphicsManager::setMesh(const MeshBuffers* p_mesh) {
     auto mesh = reinterpret_cast<const OpenGLMeshBuffers*>(p_mesh);
     glBindVertexArray(mesh->vao);
 }
 
-void OpenGLGraphicsManager::draw_elements(uint32_t p_count, uint32_t p_offset) {
+void OpenGLGraphicsManager::drawElements(uint32_t p_count, uint32_t p_offset) {
     glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
-std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::uniform_create(int p_slot, size_t p_capacity) {
+std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::createUniform(int p_slot, size_t p_capacity) {
     auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
     GLuint handle = 0;
     glGenBuffers(1, &handle);
@@ -329,7 +329,7 @@ std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::uniform_create(int p_s
     return buffer;
 }
 
-void OpenGLGraphicsManager::uniform_update(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+void OpenGLGraphicsManager::updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
     // ERR_FAIL_INDEX(p_size, p_buffer->get_capacity());
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
@@ -337,13 +337,13 @@ void OpenGLGraphicsManager::uniform_update(const UniformBufferBase* p_buffer, co
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void OpenGLGraphicsManager::uniform_bind_range(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+void OpenGLGraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
 }
 
-void OpenGLGraphicsManager::bind_texture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+void OpenGLGraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     if (p_dimension != Dimension::TEXTURE_2D) {
         CRASH_NOW();
     }
@@ -353,7 +353,7 @@ void OpenGLGraphicsManager::bind_texture(Dimension p_dimension, uint64_t p_handl
     }
 }
 
-std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
@@ -410,7 +410,7 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::create_texture(const TextureDesc
     return texture;
 }
 
-std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc& p_desc) {
+std::shared_ptr<Subpass> OpenGLGraphicsManager::createSubpass(const SubpassDesc& p_desc) {
     auto subpass = std::make_shared<OpenGLSubpass>();
     subpass->func = p_desc.func;
     subpass->color_attachments = p_desc.color_attachments;
@@ -493,11 +493,11 @@ std::shared_ptr<Subpass> OpenGLGraphicsManager::create_subpass(const SubpassDesc
     return subpass;
 }
 
-void OpenGLGraphicsManager::set_stencil_ref(uint32_t p_ref) {
+void OpenGLGraphicsManager::setStencilRef(uint32_t p_ref) {
     glStencilFunc(m_state_cache.stencil_func, p_ref, 0xFF);
 }
 
-void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_index, int p_mip_level) {
+void OpenGLGraphicsManager::setRenderTarget(const Subpass* p_subpass, int p_index, int p_mip_level) {
     auto subpass = reinterpret_cast<const OpenGLSubpass*>(p_subpass);
     if (subpass->handle == 0) {
         return;
@@ -531,13 +531,13 @@ void OpenGLGraphicsManager::set_render_target(const Subpass* p_subpass, int p_in
 }
 
 // @TODO: refactor this, instead off iterate through all the meshes, find a better way
-void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
+void OpenGLGraphicsManager::onSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
             continue;
         }
 
-        create_mesh(mesh);
+        createMesh(mesh);
     }
 
     g_constantCache.update();
@@ -545,11 +545,11 @@ void OpenGLGraphicsManager::on_scene_change(const Scene& p_scene) {
 
 void OpenGLGraphicsManager::createGpuResources() {
     // @TODO: appropriate sampler
-    auto grass_image = AssetManager::singleton().load_image_sync(FilePath{ "@res://images/grass.png" })->get();
+    auto grass_image = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/grass.png" })->get();
 
     // @TODO: move to renderer
-    g_grass = (OpenGLMeshBuffers*)create_mesh(makeGrassBillboard());
-    g_box = (OpenGLMeshBuffers*)create_mesh(makeBoxMesh());
+    g_grass = (OpenGLMeshBuffers*)createMesh(makeGrassBillboard());
+    g_box = (OpenGLMeshBuffers*)createMesh(makeBoxMesh());
 
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
 
@@ -582,7 +582,7 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     // @TODO: refactor
     auto make_resident = [&](const std::string& name, uint64_t& id) {
-        std::shared_ptr<RenderTarget> resource = find_render_target(name);
+        std::shared_ptr<RenderTarget> resource = findRenderTarget(name);
         if (resource) {
             id = resource->texture->get_resident_handle();
         } else {

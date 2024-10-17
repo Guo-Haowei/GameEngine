@@ -18,9 +18,9 @@ static void down_sample_func(const Subpass*) {
 
     // Step 1, select pixels contribute to bloom
     {
-        manager.set_pipeline_state(PROGRAM_BLOOM_SETUP);
-        auto input = manager.find_render_target(RT_RES_LIGHTING);
-        auto output = manager.find_render_target(RT_RES_BLOOM "_0");
+        manager.setPipelineState(PROGRAM_BLOOM_SETUP);
+        auto input = manager.findRenderTarget(RT_RES_LIGHTING);
+        auto output = manager.findRenderTarget(RT_RES_BLOOM "_0");
 
         auto [width, height] = input->get_size();
         const uint32_t work_group_x = divide_and_roundup(width, 16);
@@ -35,10 +35,10 @@ static void down_sample_func(const Subpass*) {
     }
 
     // Step 2, down sampling
-    manager.set_pipeline_state(PROGRAM_BLOOM_DOWNSAMPLE);
+    manager.setPipelineState(PROGRAM_BLOOM_DOWNSAMPLE);
     for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
-        auto input = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i - 1));
-        auto output = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i));
+        auto input = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i - 1));
+        auto output = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i));
         DEV_ASSERT(input && output);
 
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
@@ -54,10 +54,10 @@ static void down_sample_func(const Subpass*) {
     }
 
     // Step 3, up sampling
-    manager.set_pipeline_state(PROGRAM_BLOOM_UPSAMPLE);
+    manager.setPipelineState(PROGRAM_BLOOM_UPSAMPLE);
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i));
-        auto output = manager.find_render_target(std::format("{}_{}", RT_RES_BLOOM, i - 1));
+        auto input = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i));
+        auto output = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i - 1));
 
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
@@ -88,14 +88,14 @@ void RenderPassCreator::add_bloom_pass() {
 
         LOG_WARN("bloom size {}x{}", width, height);
 
-        auto attachment = manager.create_render_target(RenderTargetDesc{ std::format("{}_{}", RT_RES_BLOOM, i),
-                                                                         PixelFormat::R11G11B10_FLOAT,
-                                                                         AttachmentType::COLOR_2D,
-                                                                         width, height },
-                                                       linear_clamp_sampler());
+        auto attachment = manager.createRenderTarget(RenderTargetDesc{ std::format("{}_{}", RT_RES_BLOOM, i),
+                                                                       PixelFormat::R11G11B10_FLOAT,
+                                                                       AttachmentType::COLOR_2D,
+                                                                       width, height },
+                                                     linear_clamp_sampler());
     }
 
-    auto subpass = manager.create_subpass(SubpassDesc{
+    auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = {},
         .func = down_sample_func,
     });

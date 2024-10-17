@@ -11,7 +11,7 @@ public:
     virtual void render() = 0;
     virtual void update(float dt) = 0;
 
-    const std::string& get_name() const { return m_name; }
+    const std::string& getName() const { return m_name; }
 
 protected:
     std::string m_name;

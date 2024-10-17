@@ -45,7 +45,7 @@ void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {
 void EditorLayer::select_entity(ecs::Entity p_selected) {
     m_selected = p_selected;
     // TODO: fix this, shouldn't fetch globally
-    SceneManager::get_scene().m_selected = m_selected;
+    SceneManager::getScene().m_selected = m_selected;
 }
 
 // @TODO: make this an item
@@ -93,7 +93,7 @@ void EditorLayer::dock_space(Scene& p_scene) {
 }
 
 void EditorLayer::update(float) {
-    Scene& scene = SceneManager::get_scene();
+    Scene& scene = SceneManager::getScene();
     dock_space(scene);
     for (auto& it : m_panels) {
         it->update(scene);
@@ -163,7 +163,7 @@ void EditorLayer::flush_commands(Scene& scene) {
 
                 scene.attachComponent(id, add_command->parent.isValid() ? add_command->parent : scene.m_root);
                 select_entity(id);
-                SceneManager::singleton().bump_revision();
+                SceneManager::singleton().bumpRevision();
                 break;
             }
             if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {

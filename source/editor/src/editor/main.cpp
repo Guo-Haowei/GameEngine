@@ -2,8 +2,8 @@
 
 class Editor : public my::Application {
 public:
-    void init_layers() override {
-        add_layer(std::make_shared<my::EditorLayer>());
+    void initLayers() override {
+        addLayer(std::make_shared<my::EditorLayer>());
     }
 };
 

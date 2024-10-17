@@ -16,7 +16,7 @@ void RenderData::Pass::fill_perpass(PerPassConstantBuffer& buffer) const {
 
     buffer.u_view_matrix = view_matrix;
 
-    if (GraphicsManager::singleton().get_backend() == Backend::D3D11) {
+    if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
         buffer.u_proj_matrix = fixup * projection_matrix;
         buffer.u_proj_view_matrix = fixup * projection_view_matrix;
     } else {
@@ -28,7 +28,7 @@ void RenderData::Pass::fill_perpass(PerPassConstantBuffer& buffer) const {
 template<typename T>
 static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
-    return p_graphics_manager.uniform_create(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
+    return p_graphics_manager.createUniform(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
 }
 
 UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
@@ -39,7 +39,7 @@ UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 template<typename T>
 static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
     constexpr int slot = T::get_uniform_buffer_slot();
-    p_buffer.buffer = GraphicsManager::singleton().uniform_create(slot, sizeof(T));
+    p_buffer.buffer = GraphicsManager::singleton().createUniform(slot, sizeof(T));
 }
 
 RenderData::RenderData() {
@@ -238,9 +238,9 @@ void RenderData::update(const Scene* p_scene) {
     m_material_buffer_lookup.clear();
     // copy buffers
 
-    GraphicsManager::singleton().uniform_update(m_batch_uniform.get(), m_batch_buffers);
-    GraphicsManager::singleton().uniform_update(m_material_uniform.get(), m_material_buffers);
-    GraphicsManager::singleton().uniform_update(m_bone_uniform.get(), m_bone_buffers);
+    GraphicsManager::singleton().updateUniform(m_batch_uniform.get(), m_batch_buffers);
+    GraphicsManager::singleton().updateUniform(m_material_uniform.get(), m_material_buffers);
+    GraphicsManager::singleton().updateUniform(m_bone_uniform.get(), m_bone_buffers);
 }
 
 void RenderData::fill(const Scene* p_scene, Pass& pass, FilterObjectFunc1 func1, FilterObjectFunc2 func2) {

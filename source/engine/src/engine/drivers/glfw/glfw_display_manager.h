@@ -11,12 +11,12 @@ public:
     bool initialize() final;
     void finalize() final;
 
-    bool should_close() final;
+    bool shouldClose() final;
 
-    std::tuple<int, int> get_window_size() final;
-    std::tuple<int, int> get_window_pos() final;
+    std::tuple<int, int> getWindowSize() final;
+    std::tuple<int, int> getWindowPos() final;
 
-    void new_frame() final;
+    void newFrame() final;
     void present() final;
 
 private:
