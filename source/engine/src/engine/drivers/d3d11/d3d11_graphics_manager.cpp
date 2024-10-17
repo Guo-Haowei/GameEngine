@@ -16,7 +16,9 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
+// @TODO: fix this
 ComPtr<ID3D11SamplerState> m_sampler_state;
+ComPtr<ID3D11SamplerState> m_shadow_sampler_state;
 
 D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
     m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
@@ -51,6 +53,27 @@ bool D3d11GraphicsManager::initializeImpl() {
         DEV_ASSERT(SUCCEEDED(hr));
 
         m_ctx->PSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
+    }
+    {
+        // @TODO: refactor this
+        // Create the sample state
+        D3D11_SAMPLER_DESC sampDesc;
+        ZeroMemory(&sampDesc, sizeof(sampDesc));
+        sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+        sampDesc.BorderColor[0] = 1.0f;
+        sampDesc.BorderColor[1] = 1.0f;
+        sampDesc.BorderColor[2] = 1.0f;
+        sampDesc.BorderColor[3] = 1.0f;
+        sampDesc.MinLOD = 0;
+        sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        auto hr = m_device->CreateSamplerState(&sampDesc, m_shadow_sampler_state.GetAddressOf());
+        DEV_ASSERT(SUCCEEDED(hr));
+
+        m_ctx->PSSetSamplers(1, 1, m_sampler_state.GetAddressOf());
     }
 
     m_meshes.set_description("GPU-Mesh-Allocator");

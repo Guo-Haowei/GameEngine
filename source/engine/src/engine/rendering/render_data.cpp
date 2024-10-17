@@ -192,6 +192,12 @@ void RenderData::update(const Scene* p_scene) {
             // @TODO: fix this
             mat4 light_matrix = g_per_frame_cache.cache.u_main_light_matrices[i];
             Frustum light_frustum(light_matrix);
+            static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+
+            if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
+                light_matrix = fixup * light_matrix;
+            }
+
             shadow_passes[i].projection_view_matrix = light_matrix;
             fill(
                 p_scene,

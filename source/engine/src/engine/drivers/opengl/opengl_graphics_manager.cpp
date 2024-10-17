@@ -590,7 +590,6 @@ void OpenGLGraphicsManager::createGpuResources() {
         }
     };
 
-    make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_TONE, cache.c_tone_image);
     make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_tone_input_image);

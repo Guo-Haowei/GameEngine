@@ -10,8 +10,8 @@ void OS::initialize() {
     FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
     FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
-    addLogger(std::make_shared<my::StdLogger>());
-    // @TODO: add output debug string
+    addLogger(std::make_shared<StdLogger>());
+    addLogger(std::make_shared<DebugConsoleLogger>());
 }
 
 void OS::finalize() {

@@ -144,7 +144,7 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     sampler2D u_gbuffer_depth_map;
     sampler2D u_final_bloom;
 
-    sampler2D c_shadow_map;
+    sampler2D _dummy_padding_per_scene;
     sampler2D c_hdr_env_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
