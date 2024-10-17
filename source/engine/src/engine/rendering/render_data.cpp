@@ -11,7 +11,7 @@
 
 namespace my {
 
-void RenderData::Pass::fill_perpass(PerPassConstantBuffer& buffer) const {
+void RenderData::Pass::fillPerpass(PerPassConstantBuffer& buffer) const {
     static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
 
     buffer.u_view_matrix = view_matrix;

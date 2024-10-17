@@ -4,7 +4,7 @@
 
 namespace my::rg {
 
-void create_render_graph_dummy(RenderGraph& p_graph) {
+void createRenderGraphDefault(RenderGraph& p_graph) {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int w = frame_size.x;
     int h = frame_size.y;
@@ -20,10 +20,10 @@ void create_render_graph_dummy(RenderGraph& p_graph) {
     RenderPassCreator creator(config, p_graph);
 
     if (config.enable_shadow) {
-        creator.add_shadow_pass();
+        creator.addShadowPass();
     }
-    creator.add_gbuffer_pass();
-    creator.add_lighting_pass();
+    creator.addGBufferPass();
+    creator.addLightingPass();
 
     p_graph.compile();
 }

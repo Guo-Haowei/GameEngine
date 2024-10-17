@@ -13,7 +13,7 @@ public:
     PipelineState* find(PipelineStateName p_name);
 
 protected:
-    virtual std::shared_ptr<PipelineState> create(const PipelineCreateInfo& info) = 0;
+    virtual std::shared_ptr<PipelineState> create(const PipelineCreateInfo& p_info) = 0;
 
     std::array<std::shared_ptr<PipelineState>, PIPELINE_STATE_MAX> m_cache;
 };

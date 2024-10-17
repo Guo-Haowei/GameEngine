@@ -19,10 +19,10 @@ public:
         : m_config(p_config),
           m_graph(p_graph) {}
 
-    void add_gbuffer_pass();
-    void add_shadow_pass();
-    void add_lighting_pass();
-    void add_bloom_pass();
+    void addGBufferPass();
+    void addShadowPass();
+    void addLightingPass();
+    void addBloomPass();
 
 private:
     Config m_config;

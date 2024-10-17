@@ -103,19 +103,19 @@ void GraphicsManager::selectRenderGraph() {
     if (method == "vxgi") {
         m_method = RenderGraph::VXGI;
     } else {
-        m_method = RenderGraph::DUMMY;
+        m_method = RenderGraph::DEFAULT;
     }
 
     if (m_backend == Backend::D3D11) {
-        m_method = RenderGraph::DUMMY;
+        m_method = RenderGraph::DEFAULT;
     }
 
     switch (m_method) {
         case RenderGraph::VXGI:
-            create_render_graph_vxgi(m_render_graph);
+            createRenderGraphVxgi(m_render_graph);
             break;
         default:
-            create_render_graph_dummy(m_render_graph);
+            createRenderGraphDefault(m_render_graph);
             break;
     }
 }
@@ -193,7 +193,7 @@ uint64_t GraphicsManager::getFinalImage() const {
         case RenderGraph::VXGI:
             texture = findRenderTarget(RT_RES_FINAL)->texture.get();
             break;
-        case RenderGraph::DUMMY:
+        case RenderGraph::DEFAULT:
             texture = findRenderTarget(RT_RES_LIGHTING)->texture.get();
             break;
         default:

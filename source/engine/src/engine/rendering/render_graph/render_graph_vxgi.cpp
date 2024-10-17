@@ -50,7 +50,7 @@ void voxelization_pass_func(const Subpass*) {
 
     auto render_data = gm.getRenderData();
     RenderData::Pass& pass = render_data->voxel_pass;
-    pass.fill_perpass(g_per_pass_cache.cache);
+    pass.fillPerpass(g_per_pass_cache.cache);
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
@@ -101,7 +101,7 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
 
     GraphicsManager::singleton().setPipelineState(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
     auto cube_map = p_subpass->color_attachments[0];
-    auto [width, height] = cube_map->get_size();
+    auto [width, height] = cube_map->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
@@ -131,7 +131,7 @@ void generate_brdf_func(const Subpass* p_subpass) {
     }
 
     GraphicsManager::singleton().setPipelineState(PROGRAM_BRDF);
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    auto [width, height] = p_subpass->color_attachments[0]->getSize();
     GraphicsManager::singleton().setRenderTarget(p_subpass);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
@@ -145,7 +145,7 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
     }
 
     GraphicsManager::singleton().setPipelineState(PROGRAM_DIFFUSE_IRRADIANCE);
-    auto [width, height] = p_subpass->depth_attachment->get_size();
+    auto [width, height] = p_subpass->depth_attachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
@@ -170,7 +170,7 @@ void prefilter_pass_func(const Subpass* p_subpass) {
     }
 
     GraphicsManager::singleton().setPipelineState(PROGRAM_PREFILTER);
-    auto [width, height] = p_subpass->depth_attachment->get_size();
+    auto [width, height] = p_subpass->depth_attachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
@@ -200,7 +200,7 @@ static void highlight_select_pass_func(const Subpass* p_subpass) {
     auto& manager = GraphicsManager::singleton();
     manager.setRenderTarget(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    auto [width, height] = p_subpass->color_attachments[0]->getSize();
 
     glViewport(0, 0, width, height);
 
@@ -217,7 +217,7 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     GraphicsManager::singleton().setRenderTarget(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto depth_buffer = p_subpass->depth_attachment;
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    auto [width, height] = p_subpass->color_attachments[0]->getSize();
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -241,7 +241,7 @@ static void tone_pass_func(const Subpass* p_subpass) {
     GraphicsManager::singleton().setRenderTarget(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto depth_buffer = p_subpass->depth_attachment;
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    auto [width, height] = p_subpass->color_attachments[0]->getSize();
 
     GraphicsManager::singleton().setPipelineState(PROGRAM_BILLBOARD);
 
@@ -283,7 +283,7 @@ void final_pass_func(const Subpass* p_subpass) {
 
     GraphicsManager::singleton().setRenderTarget(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    auto [width, height] = p_subpass->color_attachments[0]->getSize();
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -311,7 +311,7 @@ void final_pass_func(const Subpass* p_subpass) {
     }
 }
 
-void create_render_graph_vxgi(RenderGraph& p_graph) {
+void createRenderGraphVxgi(RenderGraph& p_graph) {
     // @TODO: early-z
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
@@ -334,7 +334,7 @@ void create_render_graph_vxgi(RenderGraph& p_graph) {
     {  // environment pass
         RenderPassDesc desc;
         desc.name = ENV_PASS;
-        auto pass = p_graph.create_pass(desc);
+        auto pass = p_graph.createPass(desc);
 
         auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.createRenderTarget(RenderTargetDesc{ cube_map_name,
@@ -363,14 +363,14 @@ void create_render_graph_vxgi(RenderGraph& p_graph) {
             .func = generate_brdf_func,
         });
 
-        pass->add_sub_pass(brdf_subpass);
-        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
-        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
-        pass->add_sub_pass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
+        pass->addSubpass(brdf_subpass);
+        pass->addSubpass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
+        pass->addSubpass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
+        pass->addSubpass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
-    creator.add_shadow_pass();
-    creator.add_gbuffer_pass();
+    creator.addShadowPass();
+    creator.addGBufferPass();
 
     auto gbuffer_depth = manager.findRenderTarget(RT_RES_GBUFFER_DEPTH);
     {  // highlight selected pass
@@ -383,34 +383,34 @@ void create_render_graph_vxgi(RenderGraph& p_graph) {
         RenderPassDesc desc;
         desc.name = HIGHLIGHT_SELECT_PASS;
         desc.dependencies = { GBUFFER_PASS };
-        auto pass = p_graph.create_pass(desc);
+        auto pass = p_graph.createPass(desc);
         auto subpass = manager.createSubpass(SubpassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
             .func = highlight_select_pass_func,
         });
-        pass->add_sub_pass(subpass);
+        pass->addSubpass(subpass);
     }
 
     {  // voxel pass
         RenderPassDesc desc;
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
-        auto pass = p_graph.create_pass(desc);
+        auto pass = p_graph.createPass(desc);
         auto subpass = manager.createSubpass(SubpassDesc{
             .func = voxelization_pass_func,
         });
-        pass->add_sub_pass(subpass);
+        pass->addSubpass(subpass);
     }
 
-    creator.add_lighting_pass();
-    creator.add_bloom_pass();
+    creator.addLightingPass();
+    creator.addBloomPass();
 
     {  // tone pass
         RenderPassDesc desc;
         desc.name = TONE_PASS;
         desc.dependencies = { BLOOM_PASS };
-        auto pass = p_graph.create_pass(desc);
+        auto pass = p_graph.createPass(desc);
 
         auto attachment = manager.createRenderTarget(RenderTargetDesc{ RT_RES_TONE,
                                                                        PixelFormat::R11G11B10_FLOAT,
@@ -423,19 +423,19 @@ void create_render_graph_vxgi(RenderGraph& p_graph) {
             .depth_attachment = gbuffer_depth,
             .func = tone_pass_func,
         });
-        pass->add_sub_pass(subpass);
+        pass->addSubpass(subpass);
     }
     {
         // final pass
         RenderPassDesc desc;
         desc.name = FINAL_PASS;
         desc.dependencies = { TONE_PASS };
-        auto pass = p_graph.create_pass(desc);
+        auto pass = p_graph.createPass(desc);
         auto subpass = manager.createSubpass(SubpassDesc{
             .color_attachments = { final_attachment },
             .func = final_pass_func,
         });
-        pass->add_sub_pass(subpass);
+        pass->addSubpass(subpass);
     }
 
     // @TODO: allow recompile

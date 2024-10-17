@@ -57,9 +57,9 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
 
 namespace my::rg {
 
-void create_render_graph_dummy(RenderGraph& p_graph);
-void create_render_graph_vxgi(RenderGraph& p_graph);
+void createRenderGraphDefault(RenderGraph& p_graph);
+void createRenderGraphVxgi(RenderGraph& p_graph);
 // @TODO: add this
-void create_render_graph_path_tracer(RenderGraph& p_graph);
+void createRenderGraphPathTracer(RenderGraph& p_graph);
 
 }  // namespace my::rg

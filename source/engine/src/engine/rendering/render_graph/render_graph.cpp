@@ -2,9 +2,9 @@
 
 namespace my::rg {
 
-std::shared_ptr<RenderPass> RenderGraph::create_pass(RenderPassDesc& desc) {
+std::shared_ptr<RenderPass> RenderGraph::createPass(RenderPassDesc& p_desc) {
     std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPass>();
-    render_pass->create_internal(desc);
+    render_pass->createInternal(p_desc);
     m_render_passes.emplace_back(render_pass);
 
     const std::string& name = render_pass->m_name;
@@ -13,8 +13,8 @@ std::shared_ptr<RenderPass> RenderGraph::create_pass(RenderPassDesc& desc) {
     return render_pass;
 }
 
-std::shared_ptr<RenderPass> RenderGraph::find_pass(const std::string& name) const {
-    auto it = m_render_pass_lookup.find(name);
+std::shared_ptr<RenderPass> RenderGraph::findPass(const std::string& p_name) const {
+    auto it = m_render_pass_lookup.find(p_name);
     if (it == m_render_pass_lookup.end()) {
         return nullptr;
     }
@@ -59,7 +59,7 @@ void RenderGraph::compile() {
                 if (graph.has_edge(from, to)) {
                     const RenderPass* a = m_render_passes[from].get();
                     const RenderPass* b = m_render_passes[to].get();
-                    LOG_VERBOSE("[render graph] dependency from '{}' to '{}'", a->get_name(), b->get_name());
+                    LOG_VERBOSE("[render graph] dependency from '{}' to '{}'", a->getName(), b->getName());
                     m_links.push_back({ from, to });
                 }
             }

@@ -9,11 +9,11 @@
 namespace my::rg {
 
 // @TODO: refactor to math
-static int divide_and_roundup(int p_dividend, int p_divisor) {
+static int divideAndRoundup(int p_dividend, int p_divisor) {
     return (p_dividend + p_divisor - 1) / p_divisor;
 }
 
-static void down_sample_func(const Subpass*) {
+static void downSampleFunc(const Subpass*) {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     // Step 1, select pixels contribute to bloom
@@ -22,9 +22,9 @@ static void down_sample_func(const Subpass*) {
         auto input = manager.findRenderTarget(RT_RES_LIGHTING);
         auto output = manager.findRenderTarget(RT_RES_BLOOM "_0");
 
-        auto [width, height] = input->get_size();
-        const uint32_t work_group_x = divide_and_roundup(width, 16);
-        const uint32_t work_group_y = divide_and_roundup(height, 16);
+        auto [width, height] = input->getSize();
+        const uint32_t work_group_x = divideAndRoundup(width, 16);
+        const uint32_t work_group_y = divideAndRoundup(height, 16);
 
         g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
         g_per_pass_cache.update();
@@ -46,9 +46,9 @@ static void down_sample_func(const Subpass*) {
         // @TODO: refactor image slot
         glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
-        auto [width, height] = output->get_size();
-        const uint32_t work_group_x = divide_and_roundup(width, 16);
-        const uint32_t work_group_y = divide_and_roundup(height, 16);
+        auto [width, height] = output->getSize();
+        const uint32_t work_group_x = divideAndRoundup(width, 16);
+        const uint32_t work_group_y = divideAndRoundup(height, 16);
         glDispatchCompute(work_group_x, work_group_y, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }
@@ -64,21 +64,21 @@ static void down_sample_func(const Subpass*) {
 
         glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
 
-        auto [width, height] = output->get_size();
-        const uint32_t work_group_x = divide_and_roundup(width, 16);
-        const uint32_t work_group_y = divide_and_roundup(height, 16);
+        auto [width, height] = output->getSize();
+        const uint32_t work_group_x = divideAndRoundup(width, 16);
+        const uint32_t work_group_y = divideAndRoundup(height, 16);
         glDispatchCompute(work_group_x, work_group_y, 1);
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }
 }
 
-void RenderPassCreator::add_bloom_pass() {
+void RenderPassCreator::addBloomPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     RenderPassDesc desc;
     desc.name = BLOOM_PASS;
     desc.dependencies = { LIGHTING_PASS };
-    auto pass = m_graph.create_pass(desc);
+    auto pass = m_graph.createPass(desc);
 
     int width = m_config.frame_width;
     int height = m_config.frame_height;
@@ -97,9 +97,9 @@ void RenderPassCreator::add_bloom_pass() {
 
     auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = {},
-        .func = down_sample_func,
+        .func = downSampleFunc,
     });
-    pass->add_sub_pass(subpass);
+    pass->addSubpass(subpass);
 }
 
 }  // namespace my::rg

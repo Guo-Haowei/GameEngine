@@ -60,7 +60,7 @@ public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
 
     enum class RenderGraph : uint8_t {
-        DUMMY,
+        DEFAULT,
         VXGI,
     };
 
@@ -127,7 +127,7 @@ protected:
     virtual bool initializeImpl() = 0;
 
     const Backend m_backend;
-    RenderGraph m_method = RenderGraph::DUMMY;
+    RenderGraph m_method = RenderGraph::DEFAULT;
 
     // @TODO: cache
     PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;

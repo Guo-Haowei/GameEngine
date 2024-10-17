@@ -10,14 +10,14 @@ struct RenderPassDesc {
 
 class RenderPass {
 public:
-    void add_sub_pass(std::shared_ptr<Subpass> p_subpass);
+    void addSubpass(std::shared_ptr<Subpass> p_subpass);
 
     void execute();
 
-    const std::string& get_name() const { return m_name; }
+    const std::string& getName() const { return m_name; }
 
 protected:
-    virtual void create_internal(RenderPassDesc& pass_desc);
+    virtual void createInternal(RenderPassDesc& pass_desc);
 
     std::string m_name;
     std::vector<std::string> m_inputs;

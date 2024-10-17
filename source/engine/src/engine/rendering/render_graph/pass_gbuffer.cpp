@@ -5,11 +5,11 @@
 
 namespace my::rg {
 
-static void gbuffer_pass_func(const Subpass* p_subpass) {
+static void gbufferPassFunc(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     auto& graphics_manager = GraphicsManager::singleton();
-    auto [width, height] = p_subpass->depth_attachment->get_size();
+    auto [width, height] = p_subpass->depth_attachment->getSize();
 
     graphics_manager.setRenderTarget(p_subpass);
 
@@ -22,7 +22,7 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
     auto render_data = graphics_manager.getRenderData();
     RenderData::Pass& pass = render_data->main_pass;
 
-    pass.fill_perpass(g_per_pass_cache.cache);
+    pass.fillPerpass(g_per_pass_cache.cache);
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
@@ -60,7 +60,7 @@ static void gbuffer_pass_func(const Subpass* p_subpass) {
     }
 }
 
-void RenderPassCreator::add_gbuffer_pass() {
+void RenderPassCreator::addGBufferPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     int p_width = m_config.frame_width;
@@ -99,13 +99,13 @@ void RenderPassCreator::add_gbuffer_pass() {
 
     RenderPassDesc desc;
     desc.name = GBUFFER_PASS;
-    auto pass = m_graph.create_pass(desc);
+    auto pass = m_graph.createPass(desc);
     auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
         .depth_attachment = gbuffer_depth,
-        .func = gbuffer_pass_func,
+        .func = gbufferPassFunc,
     });
-    pass->add_sub_pass(subpass);
+    pass->addSubpass(subpass);
 }
 
 }  // namespace my::rg

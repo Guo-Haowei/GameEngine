@@ -8,17 +8,17 @@
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 
-extern void fill_camera_matrices(PerPassConstantBuffer& buffer);
+extern void fill_camera_matrices(PerPassConstantBuffer& p_buffer);
 
 namespace my::rg {
 
-static void lighting_pass_func(const Subpass* p_subpass) {
+static void lightingPassFunc(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     auto& manager = GraphicsManager::singleton();
     manager.setRenderTarget(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    auto [width, height] = p_subpass->color_attachments[0]->getSize();
 
     Viewport viewport(width, height);
     manager.setViewport(viewport);
@@ -62,14 +62,14 @@ static void lighting_pass_func(const Subpass* p_subpass) {
         auto render_data = GraphicsManager::singleton().getRenderData();
         RenderData::Pass& pass = render_data->main_pass;
 
-        pass.fill_perpass(g_per_pass_cache.cache);
+        pass.fillPerpass(g_per_pass_cache.cache);
         g_per_pass_cache.update();
         GraphicsManager::singleton().setPipelineState(PROGRAM_ENV_SKYBOX);
         RenderManager::singleton().draw_skybox();
     }
 }
 
-void RenderPassCreator::add_lighting_pass() {
+void RenderPassCreator::addLightingPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     auto gbuffer_depth = manager.findRenderTarget(RT_RES_GBUFFER_DEPTH);
@@ -94,13 +94,13 @@ void RenderPassCreator::add_lighting_pass() {
         desc.dependencies.push_back(ENV_PASS);
     }
 
-    auto pass = m_graph.create_pass(desc);
+    auto pass = m_graph.createPass(desc);
     auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = { lighting_attachment },
         .depth_attachment = gbuffer_depth,
-        .func = lighting_pass_func,
+        .func = lightingPassFunc,
     });
-    pass->add_sub_pass(subpass);
+    pass->addSubpass(subpass);
 }
 
 }  // namespace my::rg

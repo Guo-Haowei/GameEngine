@@ -6,7 +6,7 @@
 
 namespace my::rg {
 
-static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
+static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& manager = GraphicsManager::singleton();
@@ -18,7 +18,7 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     }
 
     // prepare render data
-    auto [width, height] = p_subpass->depth_attachment->get_size();
+    auto [width, height] = p_subpass->depth_attachment->getSize();
 
     // @TODO: instead of render the same object 6 times
     // set up different object list for different pass
@@ -53,7 +53,7 @@ static void point_shadow_pass_func(const Subpass* p_subpass, int p_pass_id) {
     }
 }
 
-static void shadow_pass_func(const Subpass* p_subpass) {
+static void shadowPassFunc(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     auto render_data = GraphicsManager::singleton().getRenderData();
@@ -63,7 +63,7 @@ static void shadow_pass_func(const Subpass* p_subpass) {
 
     auto& manager = GraphicsManager::singleton();
     manager.setRenderTarget(p_subpass);
-    auto [width, height] = p_subpass->depth_attachment->get_size();
+    auto [width, height] = p_subpass->depth_attachment->getSize();
 
     manager.clear(p_subpass, CLEAR_DEPTH_BIT);
 
@@ -75,7 +75,7 @@ static void shadow_pass_func(const Subpass* p_subpass) {
         manager.setViewport(viewport);
 
         RenderData::Pass& pass = render_data->shadow_passes[cascade_idx];
-        pass.fill_perpass(g_per_pass_cache.cache);
+        pass.fillPerpass(g_per_pass_cache.cache);
         g_per_pass_cache.update();
 
         for (const auto& draw : pass.draws) {
@@ -84,6 +84,7 @@ static void shadow_pass_func(const Subpass* p_subpass) {
                 manager.bindUniformSlot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
             }
 
+            // @TODO: sort the objects so there's no need to switch pipeline
             manager.setPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
             manager.bindUniformSlot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
@@ -94,7 +95,7 @@ static void shadow_pass_func(const Subpass* p_subpass) {
     }
 }
 
-void RenderPassCreator::add_shadow_pass() {
+void RenderPassCreator::addShadowPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     const int shadow_res = DVAR_GET_INT(r_shadow_res);
@@ -109,21 +110,21 @@ void RenderPassCreator::add_shadow_pass() {
                                                  shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = SHADOW_PASS;
-    auto pass = m_graph.create_pass(desc);
+    auto pass = m_graph.createPass(desc);
 
     // @TODO: refactor
     SubPassFunc funcs[] = {
         [](const Subpass* p_subpass) {
-            point_shadow_pass_func(p_subpass, 0);
+            pointShadowPassFunc(p_subpass, 0);
         },
         [](const Subpass* p_subpass) {
-            point_shadow_pass_func(p_subpass, 1);
+            pointShadowPassFunc(p_subpass, 1);
         },
         [](const Subpass* p_subpass) {
-            point_shadow_pass_func(p_subpass, 2);
+            pointShadowPassFunc(p_subpass, 2);
         },
         [](const Subpass* p_subpass) {
-            point_shadow_pass_func(p_subpass, 3);
+            pointShadowPassFunc(p_subpass, 3);
         },
     };
 
@@ -140,14 +141,14 @@ void RenderPassCreator::add_shadow_pass() {
             .depth_attachment = point_shadow_map,
             .func = funcs[i],
         });
-        pass->add_sub_pass(subpass);
+        pass->addSubpass(subpass);
     }
 
     auto subpass = manager.createSubpass(SubpassDesc{
         .depth_attachment = shadow_map,
-        .func = shadow_pass_func,
+        .func = shadowPassFunc,
     });
-    pass->add_sub_pass(subpass);
+    pass->addSubpass(subpass);
 }
 
 }  // namespace my::rg

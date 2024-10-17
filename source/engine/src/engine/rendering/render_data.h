@@ -44,7 +44,7 @@ struct RenderData {
         mat4 projection_view_matrix;
         LightComponent light_component;
 
-        void fill_perpass(PerPassConstantBuffer& buffer) const;
+        void fillPerpass(PerPassConstantBuffer& buffer) const;
 
         std::vector<Mesh> draws;
 
