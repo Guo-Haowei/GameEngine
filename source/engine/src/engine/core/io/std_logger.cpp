@@ -43,4 +43,11 @@ void StdLogger::print(LogLevel p_level, std::string_view p_message) {
     m_console_mutex.unlock();
 }
 
+void DebugConsoleLogger::print(LogLevel p_level, std::string_view p_message) {
+    unused(p_level);
+
+    std::string message{ p_message };
+    OutputDebugStringA(message.c_str());
+}
+
 }  // namespace my

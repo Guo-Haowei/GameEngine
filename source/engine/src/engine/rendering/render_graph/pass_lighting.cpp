@@ -1,6 +1,5 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
-#include "rendering/render_data.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
 
@@ -8,32 +7,33 @@
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 
-extern void fill_camera_matrices(PerPassConstantBuffer& buffer);
+extern void fill_camera_matrices(PerPassConstantBuffer& p_buffer);
 
 namespace my::rg {
 
-static void lighting_pass_func(const Subpass* p_subpass) {
+static void lightingPassFunc(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    auto& manager = GraphicsManager::singleton();
-    manager.setRenderTarget(p_subpass);
+    auto& gm = GraphicsManager::singleton();
     DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto [width, height] = p_subpass->color_attachments[0]->get_size();
+    auto [width, height] = p_subpass->color_attachments[0]->getSize();
+
+    gm.setRenderTarget(p_subpass);
 
     Viewport viewport(width, height);
-    manager.setViewport(viewport);
-    manager.clear(p_subpass, CLEAR_COLOR_BIT);
-    manager.setPipelineState(PROGRAM_LIGHTING);
+    gm.setViewport(viewport);
+    gm.clear(p_subpass, CLEAR_COLOR_BIT);
+    gm.setPipelineState(PROGRAM_LIGHTING);
 
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = manager.findRenderTarget(name);
+        std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(name);
         if (!resource) {
             return;
         }
 
-        manager.bindTexture(p_dimension, resource->texture->get_handle(), slot);
+        gm.bindTexture(p_dimension, resource->texture->get_handle(), slot);
     };
 
     // bind common textures
@@ -41,6 +41,7 @@ static void lighting_pass_func(const Subpass* p_subpass) {
     bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
     bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
     bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
 
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
@@ -58,18 +59,22 @@ static void lighting_pass_func(const Subpass* p_subpass) {
     // }
 
     // @TODO: fix skybox
-    if (GraphicsManager::singleton().getBackend() == Backend::OPENGL) {
-        auto render_data = GraphicsManager::singleton().getRenderData();
-        RenderData::Pass& pass = render_data->main_pass;
-
-        pass.fill_perpass(g_per_pass_cache.cache);
+    if (gm.getBackend() == Backend::OPENGL) {
+        PassContext& pass = gm.main_pass;
+        pass.fillPerpass(g_per_pass_cache.cache);
         g_per_pass_cache.update();
         GraphicsManager::singleton().setPipelineState(PROGRAM_ENV_SKYBOX);
         RenderManager::singleton().draw_skybox();
     }
+
+    // unbind stuff
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
 }
 
-void RenderPassCreator::add_lighting_pass() {
+void RenderPassCreator::addLightingPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     auto gbuffer_depth = manager.findRenderTarget(RT_RES_GBUFFER_DEPTH);
@@ -94,13 +99,13 @@ void RenderPassCreator::add_lighting_pass() {
         desc.dependencies.push_back(ENV_PASS);
     }
 
-    auto pass = m_graph.create_pass(desc);
+    auto pass = m_graph.createPass(desc);
     auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = { lighting_attachment },
         .depth_attachment = gbuffer_depth,
-        .func = lighting_pass_func,
+        .func = lightingPassFunc,
     });
-    pass->add_sub_pass(subpass);
+    pass->addSubpass(subpass);
 }
 
 }  // namespace my::rg

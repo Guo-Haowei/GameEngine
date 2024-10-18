@@ -5,6 +5,64 @@
 
 // @TODO: fix sampler
 SamplerState u_sampler : register(s0);
+SamplerState g_shadow_sampler : register(s1);
+
+int find_cascade(const in vec3 p_pos_world) {
+    if (u_enable_csm == 0) {
+        return 0;
+    }
+
+    vec4 pos_view = mul(u_view_matrix, vec4(p_pos_world, 1.0));
+    float depth = abs(pos_view.z);
+
+    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
+        if (depth < u_cascade_plane_distances[i]) {
+            return i;
+        }
+    }
+
+    return MAX_CASCADE_COUNT - 1;
+}
+
+// @TODO: move this to shadow file
+float cascade_shadow(Texture2D p_shadow_map,
+                     const in vec3 p_pos_world,
+                     float p_NdotL,
+                     int p_level) {
+    vec4 pos_light = mul(u_main_light_matrices[p_level], vec4(p_pos_world, 1.0));
+    vec3 coords = pos_light.xyz / pos_light.w;
+    coords = 0.5 * coords + 0.5;  // [0, 1]
+    float current_depth = coords.z;
+    coords.x += p_level;
+    coords.x /= MAX_CASCADE_COUNT;
+
+    if (current_depth > 1.0) {
+        return 0.0;
+    }
+
+    float shadow = 0.0;
+    int shadow_width, shadow_height;
+    p_shadow_map.GetDimensions(shadow_width, shadow_height);
+
+    vec2 texel_size = 1.0 / vec2(shadow_width, shadow_height);
+
+    // @TODO: better bias
+    float bias = max(0.005 * (1.0 - p_NdotL), 0.0005);
+
+    const int SAMPLE_STEP = 1;
+    for (int x = -SAMPLE_STEP; x <= SAMPLE_STEP; ++x) {
+        for (int y = -SAMPLE_STEP; y <= SAMPLE_STEP; ++y) {
+            vec2 offset = vec2(x, y) * texel_size;
+            float closest_depth = p_shadow_map.Sample(g_shadow_sampler, coords.xy + offset).r;
+            shadow += current_depth - bias > closest_depth ? 1.0 : 0.0;
+        }
+    }
+
+    const float samples = float(2 * SAMPLE_STEP + 1);
+    shadow /= samples * samples;
+    return shadow;
+}
+///////////////
 
 // @TODO: refactor
 vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec3 p_base_color) {
@@ -50,6 +108,9 @@ float4 main(vsoutput_uv input) : SV_TARGET {
         return float4(emissive * base_color, 1.0);
     }
 
+    // @TODO: fix this
+    const int cascade_level = find_cascade(world_position);
+
     float3 N = u_gbuffer_normal_map.Sample(u_sampler, texcoord).rgb;
     float3 color = 0.5 * (N + float3(1.0, 1.0, 1.0));
 
@@ -67,6 +128,17 @@ float4 main(vsoutput_uv input) : SV_TARGET {
         float shadow = 0.0;
         const vec3 radiance = light.color;
         switch (light.type) {
+            case LIGHT_TYPE_OMNI: {
+                vec3 L = light.position;
+                float atten = 1.0;
+                const vec3 H = normalize(V + L);
+                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
+                if (light.cast_shadow == 1) {
+                    const float NdotL = max(dot(N, L), 0.0);
+                    shadow = cascade_shadow(u_shadow_map, world_position, NdotL, cascade_level);
+                    direct_lighting *= (1.0 - shadow);
+                }
+            } break;
             case LIGHT_TYPE_POINT: {
                 vec3 delta = -world_position + light.position;
                 float dist = length(delta);
@@ -86,5 +158,24 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     }
 
     color = Lo;
+
+    if (u_debug_csm == 1) {
+        float alpha = 0.2;
+        switch (cascade_level) {
+            case 0:
+                color = lerp(color, vec3(1, 0, 0), alpha);
+                break;
+            case 1:
+                color = lerp(color, vec3(0, 1, 0), alpha);
+                break;
+            case 2:
+                color = lerp(color, vec3(0, 0, 1), alpha);
+                break;
+            default:
+                color = lerp(color, vec3(1, 1, 0), alpha);
+                break;
+        }
+    }
+
     return float4(color, 1.0);
 }

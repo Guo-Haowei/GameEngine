@@ -7,6 +7,7 @@ class RenderPassCreator {
 public:
     struct Config {
         bool enable_shadow = true;
+        bool enable_point_shadow = true;
         bool enable_voxel_gi = true;
         bool enable_ibl = true;
         bool enable_bloom = true;
@@ -19,10 +20,10 @@ public:
         : m_config(p_config),
           m_graph(p_graph) {}
 
-    void add_gbuffer_pass();
-    void add_shadow_pass();
-    void add_lighting_pass();
-    void add_bloom_pass();
+    void addGBufferPass();
+    void addShadowPass();
+    void addLightingPass();
+    void addBloomPass();
 
 private:
     Config m_config;

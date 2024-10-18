@@ -925,7 +925,7 @@ bool EditOptions(Options& options) {
         updated |= ImGui::ColorEdit4("Node Border", (float*)&nodeBorderColor);
         updated |= ImGui::ColorEdit4("Quad Selection", (float*)&quadSelection);
         updated |= ImGui::ColorEdit4("Quad Selection Border", (float*)&quadSelectionBorder);
-        updated |= ImGui::ColorEdit4("Default Slot", (float*)&defaultSlotColor);
+        updated |= ImGui::ColorEdit4("DEFAULT Slot", (float*)&defaultSlotColor);
         updated |= ImGui::ColorEdit4("Frame when has focus", (float*)&frameFocus);
 
         options.mBackgroundColor = backgroundColor;

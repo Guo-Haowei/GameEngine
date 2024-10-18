@@ -103,17 +103,13 @@ bool PipelineStateManager::initialize() {
         info.input_layout_desc = &s_input_layout_position;
         m_cache[PROGRAM_LIGHTING] = create(info);
     }
-
-    // @HACK: only support this many shaders
-    if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
-        return true;
-    }
     {
         PipelineCreateInfo info;
         info.vs = "shadow.vert";
         info.ps = "depth.pixel";
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
+        info.input_layout_desc = &s_input_layout_mesh;
         m_cache[PROGRAM_DPETH_STATIC] = create(info);
     }
     {
@@ -123,7 +119,12 @@ bool PipelineStateManager::initialize() {
         info.defines = { has_animation };
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
+        info.input_layout_desc = &s_input_layout_mesh;
         m_cache[PROGRAM_DPETH_ANIMATED] = create(info);
+    }
+    // @HACK: only support this many shaders
+    if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
+        return true;
     }
     {
         PipelineCreateInfo info;

@@ -16,7 +16,9 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
+// @TODO: fix this
 ComPtr<ID3D11SamplerState> m_sampler_state;
+ComPtr<ID3D11SamplerState> m_shadow_sampler_state;
 
 D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
     m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
@@ -24,8 +26,8 @@ D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsMan
 
 bool D3d11GraphicsManager::initializeImpl() {
     bool ok = true;
-    ok = ok && create_device();
-    ok = ok && create_swap_chain();
+    ok = ok && createDevice();
+    ok = ok && createSwapChain();
     ok = ok && createRenderTarget();
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_ctx.Get());
 
@@ -51,6 +53,27 @@ bool D3d11GraphicsManager::initializeImpl() {
         DEV_ASSERT(SUCCEEDED(hr));
 
         m_ctx->PSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
+    }
+    {
+        // @TODO: refactor this
+        // Create the sample state
+        D3D11_SAMPLER_DESC sampDesc;
+        ZeroMemory(&sampDesc, sizeof(sampDesc));
+        sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+        sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+        sampDesc.BorderColor[0] = 1.0f;
+        sampDesc.BorderColor[1] = 1.0f;
+        sampDesc.BorderColor[2] = 1.0f;
+        sampDesc.BorderColor[3] = 1.0f;
+        sampDesc.MinLOD = 0;
+        sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        auto hr = m_device->CreateSamplerState(&sampDesc, m_shadow_sampler_state.GetAddressOf());
+        DEV_ASSERT(SUCCEEDED(hr));
+
+        m_ctx->PSSetSamplers(1, 1, m_sampler_state.GetAddressOf());
     }
 
     m_meshes.set_description("GPU-Mesh-Allocator");
@@ -92,7 +115,7 @@ void D3d11GraphicsManager::onWindowResize(int p_width, int p_height) {
     }
 }
 
-bool D3d11GraphicsManager::create_device() {
+bool D3d11GraphicsManager::createDevice() {
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
     UINT create_device_flags = 0;
     if (DVAR_GET_BOOL(r_gpu_validation)) {
@@ -128,7 +151,7 @@ bool D3d11GraphicsManager::create_device() {
     return true;
 }
 
-bool D3d11GraphicsManager::create_swap_chain() {
+bool D3d11GraphicsManager::createSwapChain() {
     auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::singleton_ptr());
     DEV_ASSERT(display_manager);
 
@@ -201,12 +224,19 @@ void D3d11GraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, u
     m_ctx->Unmap(buffer->buffer.Get(), 0);
 }
 
-void D3d11GraphicsManager::bindTexture(Dimension, uint64_t p_handle, int p_slot) {
-    if (p_handle == 0) {
-        return;
-    }
+void D3d11GraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+    unused(p_dimension);
 
-    ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
+    if (p_handle) {
+        ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
+        m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+    }
+}
+
+void D3d11GraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
+    unused(p_dimension);
+
+    ID3D11ShaderResourceView* srv = nullptr;
     m_ctx->PSSetShaderResources(p_slot, 1, &srv);
 }
 
@@ -319,6 +349,18 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
                 ComPtr<ID3D11DepthStencilView> dsv;
                 D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
                 desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                desc.Texture2D.MipSlice = 0;
+
+                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create depth stencil view");
+                subpass->dsv = dsv;
+            } break;
+            case AttachmentType::SHADOW_2D: {
+                ComPtr<ID3D11DepthStencilView> dsv;
+                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                desc.Format = DXGI_FORMAT_D32_FLOAT;
                 desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
                 desc.Texture2D.MipSlice = 0;
 

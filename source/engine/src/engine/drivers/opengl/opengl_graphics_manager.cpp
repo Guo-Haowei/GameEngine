@@ -344,13 +344,20 @@ void OpenGLGraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, 
 }
 
 void OpenGLGraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
-    if (p_dimension != Dimension::TEXTURE_2D) {
-        CRASH_NOW();
-    }
+    DEV_ASSERT(p_dimension == Dimension::TEXTURE_2D);
+    // DEV_ASSERT(p_handle != 0);
+
     if (p_handle != 0) {
         glActiveTexture(GL_TEXTURE0 + p_slot);
         glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(p_handle));
     }
+}
+
+void OpenGLGraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
+    DEV_ASSERT(p_dimension == Dimension::TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE0 + p_slot);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -590,7 +597,6 @@ void OpenGLGraphicsManager::createGpuResources() {
         }
     };
 
-    make_resident(RT_RES_SHADOW_MAP, cache.c_shadow_map);
     make_resident(RT_RES_TONE, cache.c_tone_image);
     make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
     make_resident(RT_RES_LIGHTING, cache.c_tone_input_image);

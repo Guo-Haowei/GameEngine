@@ -88,17 +88,6 @@ float cascade_shadow(sampler2D p_shadow_map,
     coords.x += p_level;
     coords.x /= MAX_CASCADE_COUNT;
 
-#if 0
-    float lower = 0.001;
-    float upper = 0.999;
-    if (coords.x < lower || coords.x > upper) {
-        return 0.0;
-    }
-    if (coords.y < lower || coords.y > upper) {
-        return 0.0;
-    }
-#endif
-
     if (current_depth > 1.0) {
         return 0.0;
     }

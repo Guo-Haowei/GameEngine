@@ -13,13 +13,12 @@
 #include "scene/material_component.h"
 
 // @TODO: refactor
-#include "rendering/render_data.h"
+#include "cbuffer.h"
+#include "rendering/uniform_buffer.h"
+#include "scene/scene.h"
 struct MaterialConstantBuffer;
 
 namespace my {
-
-// @TODO: refactor
-struct RenderData;
 
 enum class Backend : uint8_t {
     EMPTY,
@@ -49,6 +48,45 @@ struct MeshBuffers {
     uint32_t index_count = 0;
 };
 
+struct MeshBuffers;
+
+extern UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
+extern UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
+extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
+extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+
+enum StencilFlags {
+    STENCIL_FLAG_SELECTED = BIT(1),
+};
+
+struct DrawContext {
+    uint32_t index_count;
+    uint32_t index_offset;
+    int material_idx;
+};
+
+struct BatchContext {
+    int bone_idx;
+    int batch_idx;
+    const MeshBuffers* mesh_data;
+    std::vector<DrawContext> subsets;
+    uint32_t flags;
+};
+
+struct PassContext {
+    mat4 projection_matrix;
+    mat4 view_matrix;
+    mat4 projection_view_matrix;
+    LightComponent light_component;
+
+    void fillPerpass(PerPassConstantBuffer& buffer) const;
+
+    std::vector<BatchContext> draws;
+
+    void clear() { draws.clear(); }
+    bool empty() { return draws.empty(); }
+};
+
 #define SHADER_TEXTURE(TYPE, NAME, SLOT) \
     constexpr int NAME##_slot = SLOT;
 #include "texture_binding.h"
@@ -60,7 +98,7 @@ public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
 
     enum class RenderGraph : uint8_t {
-        DUMMY,
+        DEFAULT,
         VXGI,
     };
 
@@ -99,6 +137,7 @@ public:
     virtual std::shared_ptr<Subpass> createSubpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
     virtual void bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
+    virtual void unbindTexture(Dimension p_dimension, int p_slot) = 0;
 
     void requestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
@@ -109,7 +148,6 @@ public:
     void eventReceived(std::shared_ptr<Event> p_event) final;
 
     // @TODO: move to renderer
-    std::shared_ptr<RenderData> getRenderData() { return m_render_data; }
     const rg::RenderGraph& getActiveRenderGraph() { return m_render_graph; }
 
     static std::shared_ptr<GraphicsManager> create();
@@ -127,13 +165,11 @@ protected:
     virtual bool initializeImpl() = 0;
 
     const Backend m_backend;
-    RenderGraph m_method = RenderGraph::DUMMY;
+    RenderGraph m_method = RenderGraph::DEFAULT;
 
     // @TODO: cache
     PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
 
-    // @TODO: move the following to renderer
-    std::shared_ptr<RenderData> m_render_data;
     rg::RenderGraph m_render_graph;
 
     std::map<std::string, std::shared_ptr<RenderTarget>> m_resource_lookup;
@@ -145,6 +181,65 @@ protected:
     ConcurrentQueue<ImageTask> m_loaded_images;
 
     std::shared_ptr<PipelineStateManager> m_pipeline_state_manager;
+
+    // @TODO: refactor
+public:
+    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& object)>;
+    using FilterObjectFunc2 = std::function<bool(const AABB& object_aabb)>;
+
+    template<typename BUFFER>
+    struct BufferCache {
+        std::vector<BUFFER> buffer;
+        std::unordered_map<ecs::Entity, uint32_t> lookup;
+
+        uint32_t findOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
+            auto it = lookup.find(p_entity);
+            if (it != lookup.end()) {
+                return it->second;
+            }
+
+            uint32_t index = static_cast<uint32_t>(buffer.size());
+            lookup[p_entity] = index;
+            buffer.emplace_back(p_buffer);
+            return index;
+        }
+
+        void newFrame() {
+            buffer.clear();
+            lookup.clear();
+        }
+    };
+
+    // @TODO: refactor names
+    struct Context {
+        BufferCache<PerBatchConstantBuffer> batch_cache;
+        BufferCache<MaterialConstantBuffer> material_cache;
+        BufferCache<BoneConstantBuffer> bone_cache;
+
+        std::shared_ptr<UniformBufferBase> batch_uniform;
+        std::shared_ptr<UniformBufferBase> material_uniform;
+        std::shared_ptr<UniformBufferBase> bone_uniform;
+    } m_context;
+
+    Context& getContext() { return m_context; }
+
+    bool has_sun_light = false;
+    // @TODO: save pass item somewhere and use index instead of keeping many copies
+    std::array<PassContext, MAX_CASCADE_COUNT> shadow_passes;
+
+    std::array<std::unique_ptr<PassContext>, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
+
+    PassContext voxel_pass;
+    PassContext main_pass;
+
+private:
+    void cleanup();
+    void updatePointLights(const Scene& p_scene);
+    void updateOmniLights(const Scene& p_scene);
+    void updateVoxelPass(const Scene& p_scene);
+    void updateMainPass(const Scene& p_scene);
+
+    void fillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2);
 };
 
 }  // namespace my

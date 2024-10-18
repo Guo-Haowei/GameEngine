@@ -29,7 +29,7 @@ struct RenderTargetDesc {
 struct RenderTarget {
     RenderTarget(const RenderTargetDesc& p_desc) : desc(p_desc) {}
 
-    std::tuple<int, int> get_size() const { return std::make_tuple(desc.width, desc.height); }
+    std::tuple<int, int> getSize() const { return std::make_tuple(desc.width, desc.height); }
     const RenderTargetDesc desc;
     std::shared_ptr<Texture> texture;
 };
