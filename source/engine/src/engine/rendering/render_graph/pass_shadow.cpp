@@ -67,7 +67,20 @@ static void shadowPassFunc(const Subpass* p_subpass) {
 
     manager.clear(p_subpass, CLEAR_DEPTH_BIT);
 
-    int actual_width = width / MAX_CASCADE_COUNT;
+    // @TODO: refactor pass to auto bind resources,
+    // and make it a class so don't do a map search every frame
+    auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
+        std::shared_ptr<RenderTarget> resource = manager.findRenderTarget(name);
+        if (!resource) {
+            return;
+        }
+
+        manager.bindTexture(p_dimension, resource->texture->get_handle(), slot);
+    };
+
+    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
+
+    const int actual_width = width / MAX_CASCADE_COUNT;
 
     for (int cascade_idx = 0; cascade_idx < MAX_CASCADE_COUNT; ++cascade_idx) {
         Viewport viewport{ actual_width, height };
@@ -93,6 +106,8 @@ static void shadowPassFunc(const Subpass* p_subpass) {
             manager.drawElements(draw.mesh_data->index_count);
         }
     }
+
+    // manager.unbindTexture(Dimension::TEXTURE_2D, u_shadow_map_slot);
 }
 
 void RenderPassCreator::addShadowPass() {

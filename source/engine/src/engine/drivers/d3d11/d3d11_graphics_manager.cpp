@@ -224,12 +224,19 @@ void D3d11GraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, u
     m_ctx->Unmap(buffer->buffer.Get(), 0);
 }
 
-void D3d11GraphicsManager::bindTexture(Dimension, uint64_t p_handle, int p_slot) {
-    if (p_handle == 0) {
-        return;
-    }
+void D3d11GraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+    unused(p_dimension);
 
-    ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
+    if (p_handle) {
+        ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
+        m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+    }
+}
+
+void D3d11GraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
+    unused(p_dimension);
+
+    ID3D11ShaderResourceView* srv = nullptr;
     m_ctx->PSSetShaderResources(p_slot, 1, &srv);
 }
 

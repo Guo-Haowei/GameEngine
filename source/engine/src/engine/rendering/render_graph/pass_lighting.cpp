@@ -16,9 +16,10 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
     auto& manager = GraphicsManager::singleton();
-    manager.setRenderTarget(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto [width, height] = p_subpass->color_attachments[0]->getSize();
+
+    manager.setRenderTarget(p_subpass);
 
     Viewport viewport(width, height);
     manager.setViewport(viewport);
@@ -37,11 +38,11 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     };
 
     // bind common textures
-    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
     bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
     bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
     bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
     bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
 
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
@@ -68,6 +69,12 @@ static void lightingPassFunc(const Subpass* p_subpass) {
         GraphicsManager::singleton().setPipelineState(PROGRAM_ENV_SKYBOX);
         RenderManager::singleton().draw_skybox();
     }
+
+    // unbind stuff
+    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
+    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
+    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
+    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
 }
 
 void RenderPassCreator::addLightingPass() {

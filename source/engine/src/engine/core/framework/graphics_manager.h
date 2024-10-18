@@ -99,6 +99,7 @@ public:
     virtual std::shared_ptr<Subpass> createSubpass(const SubpassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
     virtual void bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
+    virtual void unbindTexture(Dimension p_dimension, int p_slot) = 0;
 
     void requestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 

@@ -52,6 +52,8 @@ static void gbufferPassFunc(const Subpass* p_subpass) {
             // @TODO: set material
 
             graphics_manager.drawElements(subset.index_count, subset.index_offset);
+
+            // @TODO: unbind
         }
 
         if (draw.flags) {

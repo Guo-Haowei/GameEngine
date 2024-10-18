@@ -29,6 +29,8 @@ public:
     void bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) override {}
 
     void bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
+    void unbindTexture(Dimension p_dimension, int p_slot) override {}
+
     std::shared_ptr<Texture> createTexture(const TextureDesc&, const SamplerDesc&) { return nullptr; }
     std::shared_ptr<Subpass> createSubpass(const SubpassDesc&) override { return nullptr; }
 
