@@ -17,8 +17,6 @@ void Camera::update() {
 
         // m_projection_matrix = glm::perspectiveRH_ZO(m_fovy.to_rad(), get_aspect(), m_near, m_far);
         m_projection_matrix = glm::perspective(m_fovy.toRad(), getAspect(), m_near, m_far);
-
-        m_projection_view_matrix = m_projection_matrix * m_view_matrix;
         setDirty(false);
     }
 }

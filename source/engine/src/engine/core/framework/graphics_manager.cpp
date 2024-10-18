@@ -657,12 +657,13 @@ void GraphicsManager::updateVoxelPass(const Scene& p_scene) {
 }
 
 void GraphicsManager::updateMainPass(const Scene& p_scene) {
-    mat4 camera_projection_view = p_scene.m_camera->getProjectionViewMatrix();
+    const Camera& camera = *p_scene.m_camera;
+    mat4 camera_projection_view = camera.getProjMatrix() * camera.getViewMatrix();
     Frustum camera_frustum(camera_projection_view);
     // main pass
-    main_pass.projection_matrix = p_scene.m_camera->getProjectionMatrix();
+    main_pass.projection_matrix = p_scene.m_camera->getProjMatrix();
     main_pass.view_matrix = p_scene.m_camera->getViewMatrix();
-    main_pass.projection_view_matrix = p_scene.m_camera->getProjectionViewMatrix();
+    main_pass.projection_view_matrix = camera_projection_view;
     fillPass(
         p_scene,
         main_pass,

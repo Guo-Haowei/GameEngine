@@ -51,7 +51,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             clicked *= 2.0f;
             clicked -= 1.0f;
 
-            const mat4 inversed_projection_view = glm::inverse(camera.getProjectionViewMatrix());
+            const mat4 inversed_projection_view = glm::inverse(camera.getProjMatrix() * camera.getViewMatrix());
 
             const vec3 ray_start = camera.getPosition();
             const vec3 direction = glm::normalize(vec3(inversed_projection_view * vec4(clicked.x, -clicked.y, 1.0f, 1.0f)));
@@ -68,8 +68,8 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
 
 void Viewer::draw_gui(Scene& scene, Camera& camera) {
     const mat4 view_matrix = camera.getViewMatrix();
-    const mat4 projection_matrix = camera.getProjectionMatrix();
-    const mat4 projection_view_matrix = camera.getProjectionViewMatrix();
+    const mat4 proj_matrix = camera.getProjMatrix();
+    const mat4 proj_view_matrix = proj_matrix * view_matrix;
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
@@ -97,7 +97,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     if (draw_grid) {
         mat4 identity(1);
         // draw grid
-        ImGuizmo::draw_grid(projection_view_matrix, identity, 10.0f);
+        ImGuizmo::draw_grid(proj_view_matrix, identity, 10.0f);
     }
 
     ecs::Entity id = m_editor.get_selected_entity();
@@ -135,7 +135,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         if (transform_component) {
             mat4 local = transform_component->getLocalMatrix();
             if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
-                                     glm::value_ptr(projection_matrix),
+                                     glm::value_ptr(proj_matrix),
                                      operation,
                                      // ImGuizmo::LOCAL,
                                      ImGuizmo::WORLD,
