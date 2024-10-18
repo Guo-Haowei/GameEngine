@@ -369,9 +369,6 @@ void RenderManager::update(Scene& p_scene) {
     OPTICK_EVENT();
 
     renderer::fill_constant_buffers(p_scene);
-    GraphicsManager::singleton().getRenderData()->update(&p_scene);
-
-    g_per_frame_cache.update();
 }
 
 PointShadowHandle RenderManager::allocate_point_light_shadow_map() {

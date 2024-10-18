@@ -1,6 +1,5 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
-#include "rendering/render_data.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
 
@@ -15,26 +14,26 @@ namespace my::rg {
 static void lightingPassFunc(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    auto& manager = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::singleton();
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto [width, height] = p_subpass->color_attachments[0]->getSize();
 
-    manager.setRenderTarget(p_subpass);
+    gm.setRenderTarget(p_subpass);
 
     Viewport viewport(width, height);
-    manager.setViewport(viewport);
-    manager.clear(p_subpass, CLEAR_COLOR_BIT);
-    manager.setPipelineState(PROGRAM_LIGHTING);
+    gm.setViewport(viewport);
+    gm.clear(p_subpass, CLEAR_COLOR_BIT);
+    gm.setPipelineState(PROGRAM_LIGHTING);
 
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = manager.findRenderTarget(name);
+        std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(name);
         if (!resource) {
             return;
         }
 
-        manager.bindTexture(p_dimension, resource->texture->get_handle(), slot);
+        gm.bindTexture(p_dimension, resource->texture->get_handle(), slot);
     };
 
     // bind common textures
@@ -60,10 +59,8 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     // }
 
     // @TODO: fix skybox
-    if (GraphicsManager::singleton().getBackend() == Backend::OPENGL) {
-        auto render_data = GraphicsManager::singleton().getRenderData();
-        RenderData::Pass& pass = render_data->main_pass;
-
+    if (gm.getBackend() == Backend::OPENGL) {
+        PassContext& pass = gm.main_pass;
         pass.fillPerpass(g_per_pass_cache.cache);
         g_per_pass_cache.update();
         GraphicsManager::singleton().setPipelineState(PROGRAM_ENV_SKYBOX);
@@ -71,10 +68,10 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     }
 
     // unbind stuff
-    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
-    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
-    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
-    manager.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
 }
 
 void RenderPassCreator::addLightingPass() {

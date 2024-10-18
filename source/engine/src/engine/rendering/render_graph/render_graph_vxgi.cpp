@@ -3,7 +3,6 @@
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
 #include "rendering/pipeline_state.h"
-#include "rendering/render_data.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
@@ -30,6 +29,7 @@ namespace my::rg {
 void voxelization_pass_func(const Subpass*) {
     OPTICK_EVENT();
     auto& gm = GraphicsManager::singleton();
+    auto& ctx = gm.getContext();
 
     if (!DVAR_GET_BOOL(r_enable_vxgi)) {
         return;
@@ -48,25 +48,24 @@ void voxelization_pass_func(const Subpass*) {
     g_albedoVoxel.bindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT);
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
 
-    auto render_data = gm.getRenderData();
-    RenderData::Pass& pass = render_data->voxel_pass;
+    PassContext& pass = gm.voxel_pass;
     pass.fillPerpass(g_per_pass_cache.cache);
     g_per_pass_cache.update();
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.bindUniformSlot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+            gm.bindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
 
         gm.setPipelineState(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        gm.bindUniformSlot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
+        gm.bindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
         gm.setMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            gm.bindUniformSlot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
+            gm.bindUniformSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
 
             gm.drawElements(subset.index_count, subset.index_offset);
         }
@@ -246,7 +245,7 @@ static void tone_pass_func(const Subpass* p_subpass) {
     GraphicsManager::singleton().setPipelineState(PROGRAM_BILLBOARD);
 
     // draw billboards
-    auto render_data = GraphicsManager::singleton().getRenderData();
+    GraphicsManager& gm = GraphicsManager::singleton();
 
     // HACK:
     if (DVAR_GET_BOOL(r_debug_vxgi)) {
@@ -255,7 +254,7 @@ static void tone_pass_func(const Subpass* p_subpass) {
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        GraphicsManager::singleton().setPipelineState(PROGRAM_TONE);
+        gm.setPipelineState(PROGRAM_TONE);
         RenderManager::singleton().draw_quad();
     }
 }

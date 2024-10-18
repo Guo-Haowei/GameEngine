@@ -1,6 +1,5 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
-#include "rendering/render_data.h"
 #include "rendering/render_graph/pass_creator.h"
 
 // @TODO: remove API sepcific code

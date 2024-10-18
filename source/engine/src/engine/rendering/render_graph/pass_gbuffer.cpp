@@ -1,6 +1,5 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
-#include "rendering/render_data.h"
 #include "rendering/render_graph/pass_creator.h"
 
 namespace my::rg {
@@ -8,19 +7,19 @@ namespace my::rg {
 static void gbufferPassFunc(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    auto& graphics_manager = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::singleton();
+    auto& ctx = gm.getContext();
     auto [width, height] = p_subpass->depth_attachment->getSize();
 
-    graphics_manager.setRenderTarget(p_subpass);
+    gm.setRenderTarget(p_subpass);
 
     Viewport viewport{ width, height };
-    graphics_manager.setViewport(viewport);
+    gm.setViewport(viewport);
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    graphics_manager.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
+    gm.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
-    auto render_data = graphics_manager.getRenderData();
-    RenderData::Pass& pass = render_data->main_pass;
+    PassContext& pass = gm.main_pass;
 
     pass.fillPerpass(g_per_pass_cache.cache);
     g_per_pass_cache.update();
@@ -28,36 +27,36 @@ static void gbufferPassFunc(const Subpass* p_subpass) {
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            graphics_manager.bindUniformSlot<BoneConstantBuffer>(render_data->m_bone_uniform.get(), draw.bone_idx);
+            gm.bindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
 
-        graphics_manager.setPipelineState(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
+        gm.setPipelineState(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
         if (draw.flags) {
-            graphics_manager.setStencilRef(draw.flags);
+            gm.setStencilRef(draw.flags);
         }
 
-        graphics_manager.bindUniformSlot<PerBatchConstantBuffer>(render_data->m_batch_uniform.get(), draw.batch_idx);
+        gm.bindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
-        graphics_manager.setMesh(draw.mesh_data);
+        gm.setMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            const MaterialConstantBuffer& material = render_data->m_material_buffers[subset.material_idx];
-            graphics_manager.bindTexture(Dimension::TEXTURE_2D, material.u_base_color_map_handle, u_base_color_map_slot);
-            graphics_manager.bindTexture(Dimension::TEXTURE_2D, material.u_normal_map_handle, u_normal_map_slot);
-            graphics_manager.bindTexture(Dimension::TEXTURE_2D, material.u_material_map_handle, u_material_map_slot);
+            const MaterialConstantBuffer& material = gm.m_context.material_cache.buffer[subset.material_idx];
+            gm.bindTexture(Dimension::TEXTURE_2D, material.u_base_color_map_handle, u_base_color_map_slot);
+            gm.bindTexture(Dimension::TEXTURE_2D, material.u_normal_map_handle, u_normal_map_slot);
+            gm.bindTexture(Dimension::TEXTURE_2D, material.u_material_map_handle, u_material_map_slot);
 
-            graphics_manager.bindUniformSlot<MaterialConstantBuffer>(render_data->m_material_uniform.get(), subset.material_idx);
+            gm.bindUniformSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
 
             // @TODO: set material
 
-            graphics_manager.drawElements(subset.index_count, subset.index_offset);
+            gm.drawElements(subset.index_count, subset.index_offset);
 
             // @TODO: unbind
         }
 
         if (draw.flags) {
-            graphics_manager.setStencilRef(0);
+            gm.setStencilRef(0);
         }
     }
 }
