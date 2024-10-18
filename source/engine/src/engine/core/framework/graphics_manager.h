@@ -234,6 +234,7 @@ public:
 
 private:
     void cleanup();
+    void updateConstants(const Scene& p_scene);
     void updatePointLights(const Scene& p_scene);
     void updateOmniLights(const Scene& p_scene);
     void updateVoxelPass(const Scene& p_scene);

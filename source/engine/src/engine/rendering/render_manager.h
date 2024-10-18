@@ -6,7 +6,7 @@
 #include "rendering/texture.h"
 #include "scene/scene.h"
 
-// @TODO: refactor
+// @TODO: remove this class
 #include "core/framework/graphics_manager.h"
 
 namespace my {
@@ -21,7 +21,7 @@ public:
     bool initialize() override;
     void finalize() override;
 
-    void update(Scene& p_scene);
+    void update(Scene&) {}
 
     PointShadowHandle allocate_point_light_shadow_map();
     void free_point_light_shadow_map(PointShadowHandle& p_handle);
@@ -42,8 +42,6 @@ namespace my::renderer {
 bool need_update_env();
 void reset_need_update_env();
 void request_env_map(const std::string& path);
-
-void fill_constant_buffers(const Scene& scene);
 
 void register_rendering_dvars();
 

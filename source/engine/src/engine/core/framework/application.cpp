@@ -147,7 +147,6 @@ int Application::run(int argc, const char** argv) {
         auto& scene = m_scene_manager->getScene();
 
         m_physics_manager->update(scene);
-        m_render_manager->update(scene);
         m_graphics_manager->update(scene);
 
         renderer::reset_need_update_env();
