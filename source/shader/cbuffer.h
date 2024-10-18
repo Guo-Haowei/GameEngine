@@ -23,7 +23,6 @@ using samplerCube = uint64_t;
 using TextureHandle = uint64_t;
 
 // @TODO: remove this constraint
-static_assert(MAX_CASCADE_COUNT == 4);
 #elif defined(HLSL_LANG)
 #define CBUFFER(name, reg) cbuffer name : register(b##reg)
 
@@ -50,7 +49,6 @@ struct Light {
     vec2 padding;
     float atten_quadratic;
     float max_distance;  // max distance the light affects
-    mat4 matrices[6];
     vec4 points[4];
 };
 
@@ -101,9 +99,9 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     float u_world_size_half;
 
     float u_texel_size;
-    int u_enable_csm;
     int u_enable_vxgi;
     int u_debug_csm;
+    int _frame_constant_padding0;
 };
 
 CBUFFER(MaterialConstantBuffer, 3) {

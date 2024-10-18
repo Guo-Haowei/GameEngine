@@ -4,7 +4,6 @@ DVAR_IVEC2(resolution, 0, "Frame resolution", 1920, 1080);
 
 // Debug switch
 DVAR_BOOL(r_enable_vxgi, DVAR_FLAG_CACHE, "Enable VXGI", true);
-DVAR_BOOL(r_enable_csm, DVAR_FLAG_CACHE, "Enable CSM", true);
 DVAR_BOOL(r_no_texture, DVAR_FLAG_CACHE, "No texture", false);
 DVAR_BOOL(r_debug_csm, DVAR_FLAG_CACHE, "Debug CSM", false);
 DVAR_BOOL(r_debug_vxgi, DVAR_FLAG_CACHE, "Debug VXGI", false);

@@ -54,8 +54,7 @@ void RendererPanel::update_internal(Scene&) {
         DVAR_SET_INT(r_debug_vxgi_voxel, value);
     });
 
-    collapse_window("CSM", []() {
-        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(r_enable_csm));
+    collapse_window("Shadow", []() {
         ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(r_debug_csm));
     });
 

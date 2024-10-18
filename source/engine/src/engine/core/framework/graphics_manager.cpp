@@ -113,8 +113,7 @@ void GraphicsManager::update(Scene& p_scene) {
     cleanup();
 
     updateConstants(p_scene);
-    updatePointLights(p_scene);
-    updateOmniLights(p_scene);
+    updateLights(p_scene);
     updateVoxelPass(p_scene);
     updateMainPass(p_scene);
 
@@ -341,88 +340,10 @@ static mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_li
     return P * V;
 }
 
-struct Sphere {
-    vec3 center;
-    float radius;
-};
-
-static Sphere find_bounding_sphere(const vec3* p_points, int p_point_count) {
-    DEV_ASSERT(p_point_count >= 2);
-    vec3 center{ 0 };
-    float max_distance = 0.0f;
-    for (int i = 0; i < p_point_count; ++i) {
-        center += p_points[i];
-    }
-    center *= 1.0f / p_point_count;
-
-    for (int i = 0; i < p_point_count - 1; ++i) {
-        for (int j = i + 1; j < p_point_count; ++j) {
-            float distance = glm::distance(p_points[i], p_points[j]);
-            if (distance > max_distance) {
-                max_distance = distance;
-            }
-        }
-    }
-
-    DEV_ASSERT(max_distance > 0.0f);
-    Sphere sphere;
-    sphere.center = center;
-    sphere.radius = 0.5f * max_distance;
-    return sphere;
-}
-
-static mat4 get_light_space_matrix(const mat4& p_light_matrix, float p_near_plane, float p_far_plane, const Camera& p_camera) {
-    const auto proj = glm::perspective(
-        p_camera.getFovy().toRad(),
-        p_camera.getAspect(),
-        p_near_plane,
-        p_far_plane);
-
-    std::array<vec3, 8> corners{
-        vec3(-1, -1, -1),
-        vec3(-1, -1, +1),
-        vec3(-1, +1, -1),
-        vec3(-1, +1, +1),
-
-        vec3(+1, -1, -1),
-        vec3(+1, -1, +1),
-        vec3(+1, +1, -1),
-        vec3(+1, +1, +1),
-    };
-
-    mat4 inv_pv = glm::inverse(proj * p_camera.getViewMatrix());
-    for (vec3& point : corners) {
-        vec4 point4{ point, 1.0f };
-        point4 = inv_pv * point4;
-        point4 /= point4.w;  // world space
-        point = point4;
-    }
-
-    Sphere sphere = find_bounding_sphere(corners.data(), static_cast<int>(corners.size()));
-    float r = sphere.radius;
-
-    vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
-    vec3 light_up = glm::normalize(p_light_matrix * vec4(0, 1, 0, 0));
-    vec3 eye = sphere.center + r * light_dir;
-    mat4 light_view = glm::lookAt(eye, sphere.center, light_up);
-
-    float min_z = -3.0f * r;
-    float max_z = 3.0f * r;
-
-    mat4 light_projection = glm::ortho(-r, r, -r, r, min_z, max_z);
-    return light_projection * light_view;
-}
-
-static std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Camera& p_camera, const vec4& p_cascade_end, const AABB& world_bound) {
+static std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Camera&, const vec4&, const AABB& world_bound) {
     std::vector<glm::mat4> ret;
     for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-        if (!DVAR_GET_BOOL(r_enable_csm)) {
-            ret.push_back(light_space_matrix_world(world_bound, p_light_matrix));
-        } else {
-            float z_near = p_camera.getNear();
-            z_near = i == 0 ? z_near : p_cascade_end[i - 1];
-            ret.push_back(get_light_space_matrix(p_light_matrix, z_near, p_cascade_end[i], p_camera));
-        }
+        ret.push_back(light_space_matrix_world(world_bound, p_light_matrix));
     }
     return ret;
 }
@@ -431,99 +352,12 @@ static std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, co
 void GraphicsManager::updateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
 
-    // THESE SHOULDN'T BE HERE
     auto& cache = g_per_frame_cache.cache;
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.getCount<LightComponent>(), MAX_LIGHT_COUNT);
-    // DEV_ASSERT(light_count);
-
-    cache.u_light_count = light_count;
-
-    // auto camera = scene.m_camera;
-    vec4 cascade_end = DVAR_GET_VEC4(cascade_end);
-    std::vector<mat4> light_matrices;
-    if (camera.getFar() != cascade_end.w) {
-        camera.setFar(cascade_end.w);
-        camera.setDirty();
-    }
-    for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
-        float left = idx == 0 ? camera.getNear() : cascade_end[idx - 1];
-        DEV_ASSERT(left < cascade_end[idx]);
-    }
-
-    int idx = 0;
-    for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
-        const TransformComponent* light_transform = p_scene.getComponent<TransformComponent>(light_entity);
-        const MaterialComponent* material = p_scene.getComponent<MaterialComponent>(light_entity);
-
-        DEV_ASSERT(light_transform && material);
-
-        // SHOULD BE THIS INDEX
-        Light& light = cache.u_lights[idx];
-        bool cast_shadow = light_component.castShadow();
-        light.cast_shadow = cast_shadow;
-        light.type = light_component.getType();
-        light.color = material->base_color;
-        light.color *= material->emissive;
-        switch (light_component.getType()) {
-            case LIGHT_TYPE_OMNI: {
-                mat4 light_matrix = light_transform->getLocalMatrix();
-                vec3 light_dir = glm::normalize(light_matrix * vec4(0, 0, 1, 0));
-                light.cast_shadow = cast_shadow;
-                light.position = light_dir;
-
-                light_matrices = get_light_space_matrices(light_matrix, camera, cascade_end, p_scene.getBound());
-            } break;
-            case LIGHT_TYPE_POINT: {
-                const int shadow_map_index = light_component.getShadowMapIndex();
-                // @TODO: there's a bug in shadow map allocation
-                light.atten_constant = light_component.m_atten.constant;
-                light.atten_linear = light_component.m_atten.linear;
-                light.atten_quadratic = light_component.m_atten.quadratic;
-                light.position = light_component.getPosition();
-                light.cast_shadow = cast_shadow;
-                light.max_distance = light_component.getMaxDistance();
-                if (cast_shadow && shadow_map_index != -1) {
-                    const auto& point_light_matrices = light_component.getMatrices();
-                    for (size_t i = 0; i < 6; ++i) {
-                        light.matrices[i] = point_light_matrices[i];
-                    }
-                    auto resource = GraphicsManager::singleton().findRenderTarget(RT_RES_POINT_SHADOW_MAP + std::to_string(shadow_map_index));
-                    light.shadow_map = resource ? resource->texture->get_resident_handle() : 0;
-                } else {
-                    light.shadow_map = 0;
-                }
-            } break;
-            case LIGHT_TYPE_AREA: {
-                mat4 transform = light_transform->getWorldMatrix();
-                constexpr float s = 0.5f;
-                light.points[0] = transform * vec4(-s, +s, 0.0f, 1.0f);
-                light.points[1] = transform * vec4(-s, -s, 0.0f, 1.0f);
-                light.points[2] = transform * vec4(+s, -s, 0.0f, 1.0f);
-                light.points[3] = transform * vec4(+s, +s, 0.0f, 1.0f);
-            } break;
-            default:
-                CRASH_NOW();
-                break;
-        }
-        ++idx;
-    }
-
-    // @TODO: fix this
-    if (!light_matrices.empty()) {
-        for (int idx2 = 0; idx2 < MAX_CASCADE_COUNT; ++idx2) {
-            cache.u_main_light_matrices[idx2] = light_matrices[idx2];
-        }
-    }
-
-    cache.u_cascade_plane_distances = cascade_end;
-
     cache.u_camera_position = camera.getPosition();
 
     cache.u_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
     cache.u_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
     cache.u_no_texture = DVAR_GET_BOOL(r_no_texture);
-    cache.u_debug_csm = DVAR_GET_BOOL(r_debug_csm);
-    cache.u_enable_csm = DVAR_GET_BOOL(r_enable_csm);
 
     cache.u_screen_width = (int)camera.getWidth();
     cache.u_screen_height = (int)camera.getHeight();
@@ -556,89 +390,119 @@ void GraphicsManager::updateConstants(const Scene& p_scene) {
     cache.u_voxel_size = voxel_size;
 }
 
-void GraphicsManager::updatePointLights(const Scene& p_scene) {
-    for (auto [light_id, light] : p_scene.m_LightComponents) {
-        if (light.getType() != LIGHT_TYPE_POINT || !light.castShadow()) {
-            continue;
-        }
+/// @TODO: refactor lights
+void GraphicsManager::updateLights(const Scene& p_scene) {
+    Camera& camera = *p_scene.m_camera.get();
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.getCount<LightComponent>(), MAX_LIGHT_COUNT);
 
-        const int light_pass_index = light.getShadowMapIndex();
-        if (light_pass_index == INVALID_POINT_SHADOW_HANDLE) {
-            continue;
-        }
+    auto& cache = g_per_frame_cache.cache;
 
-        const TransformComponent* transform = p_scene.getComponent<TransformComponent>(light_id);
-        DEV_ASSERT(transform);
-        vec3 position = transform->getTranslation();
+    cache.u_light_count = light_count;
 
-        const auto& light_space_matrices = light.getMatrices();
-        std::array<Frustum, 6> frustums = {
-            Frustum{ light_space_matrices[0] },
-            Frustum{ light_space_matrices[1] },
-            Frustum{ light_space_matrices[2] },
-            Frustum{ light_space_matrices[3] },
-            Frustum{ light_space_matrices[4] },
-            Frustum{ light_space_matrices[5] },
-        };
+    // auto camera = scene.m_camera;
+    vec4 cascade_end = DVAR_GET_VEC4(cascade_end);
 
-        auto pass = std::make_unique<PassContext>();
-        fillPass(
-            p_scene,
-            *pass.get(),
-            [](const ObjectComponent& object) {
-                return object.flags & ObjectComponent::CAST_SHADOW;
-            },
-            [&](const AABB& aabb) {
-                for (const auto& frustum : frustums) {
-                    if (frustum.intersects(aabb)) {
-                        return true;
+    std::vector<mat4> light_matrices;
+    if (camera.getFar() != cascade_end.w) {
+        camera.setFar(cascade_end.w);
+        camera.setDirty();
+    }
+    for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
+        float left = idx == 0 ? camera.getNear() : cascade_end[idx - 1];
+        DEV_ASSERT(left < cascade_end[idx]);
+    }
+
+    cache.u_cascade_plane_distances = cascade_end;
+
+    int idx = 0;
+    for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
+        const TransformComponent* light_transform = p_scene.getComponent<TransformComponent>(light_entity);
+        const MaterialComponent* material = p_scene.getComponent<MaterialComponent>(light_entity);
+
+        DEV_ASSERT(light_transform && material);
+
+        // SHOULD BE THIS INDEX
+        Light& light = cache.u_lights[idx];
+        bool cast_shadow = light_component.castShadow();
+        light.cast_shadow = cast_shadow;
+        light.type = light_component.getType();
+        light.color = material->base_color;
+        light.color *= material->emissive;
+        switch (light_component.getType()) {
+            case LIGHT_TYPE_OMNI: {
+                mat4 light_local_matrix = light_transform->getLocalMatrix();
+                vec3 light_dir = glm::normalize(light_local_matrix * vec4(0, 0, 1, 0));
+                light.cast_shadow = cast_shadow;
+                light.position = light_dir;
+
+                light_matrices = get_light_space_matrices(light_local_matrix, camera, cascade_end, p_scene.getBound());
+                for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
+                    mat4 light_matrix = cache.u_main_light_matrices[i] = light_matrices[i];
+                    Frustum light_frustum(light_matrices[i]);
+                    static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+
+                    if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
+                        light_matrix = fixup * light_matrix;
                     }
+
+                    shadow_passes[i].projection_view_matrix = light_matrix;
+                    fillPass(
+                        p_scene,
+                        shadow_passes[i],
+                        [](const ObjectComponent& object) {
+                            return object.flags & ObjectComponent::CAST_SHADOW;
+                        },
+                        [&](const AABB& aabb) {
+                            return light_frustum.intersects(aabb);
+                        });
                 }
-                return false;
-            });
+            } break;
+            case LIGHT_TYPE_POINT: {
+                const int shadow_map_index = light_component.getShadowMapIndex();
+                // @TODO: there's a bug in shadow map allocation
+                light.atten_constant = light_component.m_atten.constant;
+                light.atten_linear = light_component.m_atten.linear;
+                light.atten_quadratic = light_component.m_atten.quadratic;
+                light.position = light_component.getPosition();
+                light.cast_shadow = cast_shadow;
+                light.max_distance = light_component.getMaxDistance();
+                if (cast_shadow && shadow_map_index != INVALID_POINT_SHADOW_HANDLE) {
+                    auto resource = GraphicsManager::singleton().findRenderTarget(RT_RES_POINT_SHADOW_MAP + std::to_string(shadow_map_index));
+                    light.shadow_map = resource ? resource->texture->get_resident_handle() : 0;
 
-        DEV_ASSERT_INDEX(light_pass_index, MAX_LIGHT_CAST_SHADOW_COUNT);
-        pass->light_component = light;
+                    auto pass = std::make_unique<PassContext>();
+                    fillPass(
+                        p_scene,
+                        *pass.get(),
+                        [](const ObjectComponent& object) {
+                            return object.flags & ObjectComponent::CAST_SHADOW;
+                        },
+                        [&](const AABB& aabb) {
+                            unused(aabb);
+                            return true;
+                        });
 
-        point_shadow_passes[light_pass_index] = std::move(pass);
-    }
-}
+                    DEV_ASSERT_INDEX(shadow_map_index, MAX_LIGHT_CAST_SHADOW_COUNT);
+                    pass->light_component = light_component;
 
-void GraphicsManager::updateOmniLights(const Scene& p_scene) {
-    // @TODO: remove this
-    has_sun_light = false;
-    for (auto [entity, light] : p_scene.m_LightComponents) {
-        if (light.getType() == LIGHT_TYPE_OMNI) {
-            has_sun_light = true;
-            break;
+                    point_shadow_passes[shadow_map_index] = std::move(pass);
+                } else {
+                    light.shadow_map = 0;
+                }
+            } break;
+            case LIGHT_TYPE_AREA: {
+                mat4 transform = light_transform->getWorldMatrix();
+                constexpr float s = 0.5f;
+                light.points[0] = transform * vec4(-s, +s, 0.0f, 1.0f);
+                light.points[1] = transform * vec4(-s, -s, 0.0f, 1.0f);
+                light.points[2] = transform * vec4(+s, -s, 0.0f, 1.0f);
+                light.points[3] = transform * vec4(+s, +s, 0.0f, 1.0f);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
         }
-    }
-
-    if (!has_sun_light) {
-        return;
-    }
-
-    // cascaded shadow map
-    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-        // @TODO: fix this
-        mat4 light_matrix = g_per_frame_cache.cache.u_main_light_matrices[i];
-        Frustum light_frustum(light_matrix);
-        static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
-
-        if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
-            light_matrix = fixup * light_matrix;
-        }
-
-        shadow_passes[i].projection_view_matrix = light_matrix;
-        fillPass(
-            p_scene,
-            shadow_passes[i],
-            [](const ObjectComponent& object) {
-                return object.flags & ObjectComponent::CAST_SHADOW;
-            },
-            [&](const AABB& aabb) {
-                return light_frustum.intersects(aabb);
-            });
+        ++idx;
     }
 }
 

@@ -223,7 +223,6 @@ public:
 
     Context& getContext() { return m_context; }
 
-    bool has_sun_light = false;
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<PassContext, MAX_CASCADE_COUNT> shadow_passes;
 
@@ -235,8 +234,7 @@ public:
 private:
     void cleanup();
     void updateConstants(const Scene& p_scene);
-    void updatePointLights(const Scene& p_scene);
-    void updateOmniLights(const Scene& p_scene);
+    void updateLights(const Scene& p_scene);
     void updateVoxelPass(const Scene& p_scene);
     void updateMainPass(const Scene& p_scene);
 

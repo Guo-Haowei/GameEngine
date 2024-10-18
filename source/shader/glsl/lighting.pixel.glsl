@@ -148,39 +148,5 @@ void main() {
 #endif
 
     vec3 color = Lo + ambient;
-
-    // debug CSM
-    if (u_debug_csm == 1) {
-
-        float alpha = 0.2;
-        switch (cascade_level) {
-            case 0:
-                color = mix(color, vec3(1, 0, 0), alpha);
-                break;
-            case 1:
-                color = mix(color, vec3(0, 1, 0), alpha);
-                break;
-            case 2:
-                color = mix(color, vec3(0, 0, 1), alpha);
-                break;
-            default:
-                color = mix(color, vec3(1, 1, 0), alpha);
-                break;
-        }
-    }
-
-#if ENABLE_CSM
-    if (u_debug_csm != 0) {
-        vec3 mask = vec3(0.1);
-        for (int light_idx = 0; light_idx < MAX_CASCADE_COUNT; ++light_idx) {
-            if (clipSpaceZ <= c_cascade_clip_z[light_idx + 1]) {
-                mask[light_idx] = 0.7;
-                break;
-            }
-        }
-        color = mix(color.rgb, mask, 0.1);
-    }
-#endif
-
     out_color = color;
 }

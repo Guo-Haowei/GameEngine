@@ -8,20 +8,7 @@ SamplerState u_sampler : register(s0);
 SamplerState g_shadow_sampler : register(s1);
 
 int find_cascade(const in vec3 p_pos_world) {
-    if (u_enable_csm == 0) {
-        return 0;
-    }
-
-    vec4 pos_view = mul(u_view_matrix, vec4(p_pos_world, 1.0));
-    float depth = abs(pos_view.z);
-
-    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-        if (depth < u_cascade_plane_distances[i]) {
-            return i;
-        }
-    }
-
-    return MAX_CASCADE_COUNT - 1;
+    return 0;
 }
 
 // @TODO: move this to shadow file
@@ -158,24 +145,5 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     }
 
     color = Lo;
-
-    if (u_debug_csm == 1) {
-        float alpha = 0.2;
-        switch (cascade_level) {
-            case 0:
-                color = lerp(color, vec3(1, 0, 0), alpha);
-                break;
-            case 1:
-                color = lerp(color, vec3(0, 1, 0), alpha);
-                break;
-            case 2:
-                color = lerp(color, vec3(0, 0, 1), alpha);
-                break;
-            default:
-                color = lerp(color, vec3(1, 1, 0), alpha);
-                break;
-        }
-    }
-
     return float4(color, 1.0);
 }

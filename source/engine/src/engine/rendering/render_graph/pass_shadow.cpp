@@ -58,9 +58,9 @@ static void shadowPassFunc(const Subpass* p_subpass) {
     auto& gm = GraphicsManager::singleton();
     auto& ctx = gm.getContext();
 
-    if (!gm.has_sun_light) {
-        return;
-    }
+    // if (!gm.has_sun_light) {
+    //     return;
+    // }
 
     gm.setRenderTarget(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->getSize();
