@@ -72,9 +72,10 @@ CBUFFER(PerPassConstantBuffer, 1) {
     vec4 _per_pass_padding_0;
     vec4 _per_pass_padding_1;
 
-    sampler2D u_tmp_bloom_input;
     float u_per_pass_roughness;  // for environment map
     float _per_pass_padding_2;
+    float _per_pass_padding_3;
+    float _per_pass_padding_4;
 };
 
 CBUFFER(PerFrameConstantBuffer, 2) {
@@ -170,5 +171,19 @@ CBUFFER(DebugDrawConstantBuffer, 6) {
     int c_another_padding;
 };
 #endif
+
+CBUFFER(BloomConstantBuffer, 7) {
+    sampler2D g_bloom_input;                 // 8
+    float _bloom_constant_buffer_padding_0;  // 4
+    float _bloom_constant_buffer_padding_1;  // 4
+
+    vec4 _bloom_constant_buffer_padding_2;  // 16
+    vec4 _bloom_constant_buffer_padding_3;  // 16
+    vec4 _bloom_constant_buffer_padding_4;  // 16
+
+    mat4 _bloom_constant_buffer_padding_5;  // 64
+    mat4 _bloom_constant_buffer_padding_6;  // 64
+    mat4 _bloom_constant_buffer_padding_7;  // 64
+};
 
 #endif

@@ -54,6 +54,7 @@ extern UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
 extern UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+extern UniformBuffer<BloomConstantBuffer> g_bloom_cache;
 
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),

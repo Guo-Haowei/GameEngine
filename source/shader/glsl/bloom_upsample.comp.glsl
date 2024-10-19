@@ -10,7 +10,7 @@ void main() {
     vec2 uv = vec2(float(output_tex_coord.x) / output_image_size.x,
                    float(output_tex_coord.y) / output_image_size.y);
 
-    vec2 input_tex_size = textureSize(u_tmp_bloom_input, 0);
+    vec2 input_tex_size = textureSize(g_bloom_input, 0);
     vec2 input_texel_size = 1.0 / input_tex_size;
     float x = input_texel_size.x;
     float y = input_texel_size.y;
@@ -26,17 +26,17 @@ void main() {
     // d - e - f
     // g - h - i
     // === ('e' is the current texel) ===
-    vec3 a = texture(u_tmp_bloom_input, vec2(uv.x - x, uv.y + y)).rgb;
-    vec3 b = texture(u_tmp_bloom_input, vec2(uv.x, uv.y + y)).rgb;
-    vec3 c = texture(u_tmp_bloom_input, vec2(uv.x + x, uv.y + y)).rgb;
+    vec3 a = texture(g_bloom_input, vec2(uv.x - x, uv.y + y)).rgb;
+    vec3 b = texture(g_bloom_input, vec2(uv.x, uv.y + y)).rgb;
+    vec3 c = texture(g_bloom_input, vec2(uv.x + x, uv.y + y)).rgb;
 
-    vec3 d = texture(u_tmp_bloom_input, vec2(uv.x - x, uv.y)).rgb;
-    vec3 e = texture(u_tmp_bloom_input, vec2(uv.x, uv.y)).rgb;
-    vec3 f = texture(u_tmp_bloom_input, vec2(uv.x + x, uv.y)).rgb;
+    vec3 d = texture(g_bloom_input, vec2(uv.x - x, uv.y)).rgb;
+    vec3 e = texture(g_bloom_input, vec2(uv.x, uv.y)).rgb;
+    vec3 f = texture(g_bloom_input, vec2(uv.x + x, uv.y)).rgb;
 
-    vec3 g = texture(u_tmp_bloom_input, vec2(uv.x - x, uv.y - y)).rgb;
-    vec3 h = texture(u_tmp_bloom_input, vec2(uv.x, uv.y - y)).rgb;
-    vec3 i = texture(u_tmp_bloom_input, vec2(uv.x + x, uv.y - y)).rgb;
+    vec3 g = texture(g_bloom_input, vec2(uv.x - x, uv.y - y)).rgb;
+    vec3 h = texture(g_bloom_input, vec2(uv.x, uv.y - y)).rgb;
+    vec3 i = texture(g_bloom_input, vec2(uv.x + x, uv.y - y)).rgb;
 
     // Apply weighted distribution, by using a 3x3 tent filter:
     //  1   | 1 2 1 |
