@@ -1,4 +1,5 @@
 #include "texture_binding.h"
+#include "cbuffer.h"
 
 // @TODO: refactor this part
 #if defined(HLSL_LANG)
@@ -36,8 +37,10 @@ vec4 sampleShadow(Texture2D textureObject, vec2 offset) {
 #error "Unknown shading language"
 #endif
 
-float shadowTest(Texture2D shadowMap, Vector3f worldPos, float NdotL, int quality) {
-    Vector4f lightSpacePos = Multiply(u_main_light_matrices, Vector4f(worldPos, 1.0));
+float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float NdotL, int quality) {
+    Vector4f lightSpacePos = Multiply(light.view_matrix, Vector4f(worldPos, 1.0));
+    lightSpacePos = Multiply(light.projection_matrix, lightSpacePos);
+
     Vector3f coords = lightSpacePos.xyz / lightSpacePos.w;
     coords = 0.5 * coords + 0.5;
     float currentDepth = coords.z;

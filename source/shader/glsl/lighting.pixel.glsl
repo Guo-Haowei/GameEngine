@@ -83,7 +83,7 @@ void main() {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(u_shadow_map, world_position, NdotL, 1);
+                    shadow = shadowTest(light, u_shadow_map, world_position, NdotL, 1);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;

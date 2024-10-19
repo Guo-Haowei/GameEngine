@@ -327,7 +327,7 @@ void GraphicsManager::cleanup() {
 }
 
 // @TODO: refactor
-static mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_matrix) {
+static void light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_matrix, mat4& p_out_view_matrix, mat4& p_out_projection_matrix) {
     const vec3 center = p_world_bound.center();
     const vec3 extents = p_world_bound.size();
     const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
@@ -335,9 +335,8 @@ static mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_li
     vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
     vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
 
-    const mat4 V = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
-    const mat4 P = glm::ortho(-size, size, -size, size, -size, 3.0f * size);
-    return P * V;
+    p_out_view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
+    p_out_projection_matrix = glm::ortho(-size, size, -size, size, -size, 3.0f * size);
 }
 
 void GraphicsManager::updateConstants(const Scene& p_scene) {
@@ -410,15 +409,17 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
-                mat4 light_matrix = cache.u_main_light_matrices = light_space_matrix_world(p_scene.getBound(), light_local_matrix);
-                Frustum light_frustum(light_matrix);
-                static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+                light_space_matrix_world(p_scene.getBound(), light_local_matrix, light.view_matrix, light.projection_matrix);
+                mat4 light_space_matrix = light.projection_matrix * light.view_matrix;
+                Frustum light_frustum(light_space_matrix);
 
+                // @TODO: fix this
                 if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
-                    light_matrix = fixup * light_matrix;
+                    static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+                    light_space_matrix = fixup * light_space_matrix;
                 }
 
-                shadow_passes[0].projection_view_matrix = light_matrix;
+                shadow_passes[0].projection_view_matrix = light_space_matrix;
                 fillPass(
                     p_scene,
                     shadow_passes[0],
