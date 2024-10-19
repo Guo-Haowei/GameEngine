@@ -18,5 +18,5 @@ void main() {
 #endif
 
     pass_position = position.xyz;
-    gl_Position = u_proj_view_matrix * position;
+    gl_Position = g_point_light_matrix * position;
 }

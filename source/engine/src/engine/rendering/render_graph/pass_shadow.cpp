@@ -25,10 +25,10 @@ static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
 
     const auto& light_matrices = pass.light_component.getMatrices();
     for (int i = 0; i < 6; ++i) {
-        g_per_pass_cache.cache.u_proj_view_matrix = light_matrices[i];
-        g_per_pass_cache.cache.u_point_light_position = pass.light_component.getPosition();
-        g_per_pass_cache.cache.u_point_light_far = pass.light_component.getMaxDistance();
-        g_per_pass_cache.update();
+        g_point_shadow_cache.cache.g_point_light_matrix = light_matrices[i];
+        g_point_shadow_cache.cache.g_point_light_position = pass.light_component.getPosition();
+        g_point_shadow_cache.cache.g_point_light_far = pass.light_component.getMaxDistance();
+        g_point_shadow_cache.update();
 
         gm.setRenderTarget(p_subpass, i);
         gm.clear(p_subpass, CLEAR_DEPTH_BIT);
