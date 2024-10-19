@@ -1,5 +1,5 @@
-#include "texture_binding.h"
 #include "cbuffer.h"
+#include "texture_binding.h"
 
 // @TODO: refactor this part
 #if defined(HLSL_LANG)

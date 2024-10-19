@@ -51,7 +51,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             clicked *= 2.0f;
             clicked -= 1.0f;
 
-            const mat4 inversed_projection_view = glm::inverse(camera.getProjMatrix() * camera.getViewMatrix());
+            const mat4 inversed_projection_view = glm::inverse(camera.getProjectionViewMatrix());
 
             const vec3 ray_start = camera.getPosition();
             const vec3 direction = glm::normalize(vec3(inversed_projection_view * vec4(clicked.x, -clicked.y, 1.0f, 1.0f)));
@@ -66,10 +66,9 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
     }
 }
 
-void Viewer::draw_gui(Scene& scene, Camera& camera) {
-    const mat4 view_matrix = camera.getViewMatrix();
-    const mat4 proj_matrix = camera.getProjMatrix();
-    const mat4 proj_view_matrix = proj_matrix * view_matrix;
+void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
+    const mat4 view_matrix = p_camera.getViewMatrix();
+    const mat4 proj_matrix = p_camera.getProjectionMatrix();
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
@@ -97,11 +96,11 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     if (draw_grid) {
         mat4 identity(1);
         // draw grid
-        ImGuizmo::draw_grid(proj_view_matrix, identity, 10.0f);
+        ImGuizmo::draw_grid(p_camera.getProjectionViewMatrix(), identity, 10.0f);
     }
 
     ecs::Entity id = m_editor.get_selected_entity();
-    TransformComponent* transform_component = scene.getComponent<TransformComponent>(id);
+    TransformComponent* transform_component = p_scene.getComponent<TransformComponent>(id);
 #if 0
     if (transform_component) {
         AABB aabb;

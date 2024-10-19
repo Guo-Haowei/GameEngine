@@ -34,7 +34,8 @@ public:
     int getHeight() const { return m_height; }
     float getAspect() const { return (float)m_width / m_height; }
     const mat4& getViewMatrix() const { return m_view_matrix; }
-    const mat4& getProjMatrix() const { return m_projection_matrix; }
+    const mat4& getProjectionMatrix() const { return m_projection_matrix; }
+    const mat4& getProjectionViewMatrix() const { return m_projection_view_matrix; }
     const vec3& getPosition() const { return m_position; }
     const vec3& getRight() const { return m_right; }
     const vec3 getFront() const { return m_front; }
@@ -59,6 +60,7 @@ private:
 
     mat4 m_view_matrix;
     mat4 m_projection_matrix;
+    mat4 m_projection_view_matrix;
 
     friend class Scene;
     friend class CameraController;
