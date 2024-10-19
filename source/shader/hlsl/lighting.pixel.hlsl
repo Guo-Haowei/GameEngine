@@ -1,48 +1,11 @@
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
 #include "pbr.hlsl"
+#include "shadow.hlsl"
 #include "texture_binding.h"
 
 // @TODO: fix sampler
 SamplerState u_sampler : register(s0);
-SamplerState g_shadow_sampler : register(s1);
-
-// @TODO: move this to shadow file
-float shadow_test(Texture2D p_shadow_map,
-                  const in vec3 p_pos_world,
-                  float p_NdotL) {
-    vec4 pos_light = mul(u_main_light_matrices, vec4(p_pos_world, 1.0));
-    vec3 coords = pos_light.xyz / pos_light.w;
-    coords = 0.5 * coords + 0.5;  // [0, 1]
-    float current_depth = coords.z;
-
-    if (current_depth > 1.0) {
-        return 0.0;
-    }
-
-    float shadow = 0.0;
-    int shadow_width, shadow_height;
-    p_shadow_map.GetDimensions(shadow_width, shadow_height);
-
-    vec2 texel_size = 1.0 / vec2(shadow_width, shadow_height);
-
-    // @TODO: better bias
-    float bias = max(0.005 * (1.0 - p_NdotL), 0.0005);
-
-    const int SAMPLE_STEP = 1;
-    for (int x = -SAMPLE_STEP; x <= SAMPLE_STEP; ++x) {
-        for (int y = -SAMPLE_STEP; y <= SAMPLE_STEP; ++y) {
-            vec2 offset = vec2(x, y) * texel_size;
-            float closest_depth = p_shadow_map.Sample(g_shadow_sampler, coords.xy + offset).r;
-            shadow += current_depth - bias > closest_depth ? 1.0 : 0.0;
-        }
-    }
-
-    const float samples = float(2 * SAMPLE_STEP + 1);
-    shadow /= samples * samples;
-    return shadow;
-}
-///////////////
 
 // @TODO: refactor
 vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec3 p_base_color) {
@@ -112,7 +75,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadow_test(u_shadow_map, world_position, NdotL);
+                    shadow = shadowTest(u_shadow_map, world_position, NdotL, 1);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;

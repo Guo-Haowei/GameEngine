@@ -339,7 +339,6 @@ static mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_li
     const mat4 P = glm::ortho(-size, size, -size, size, -size, 3.0f * size);
     return P * V;
 }
-// @TODO: refactor
 
 void GraphicsManager::updateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
