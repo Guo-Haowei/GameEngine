@@ -15,5 +15,5 @@ void main() {
     mat4 world_matrix = u_world_matrix;
 #endif
 
-    gl_Position = u_proj_view_matrix * world_matrix * vec4(in_position, 1.0);
+    gl_Position = g_projection_matrix * g_view_matrix * world_matrix * vec4(in_position, 1.0);
 }

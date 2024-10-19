@@ -7,6 +7,7 @@
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 
+// @TODO: refactor
 extern void fill_camera_matrices(PerPassConstantBuffer& p_buffer);
 
 namespace my::rg {
@@ -46,10 +47,8 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
 
-    // @TODO: fix it
-    auto camera = SceneManager::singleton().getScene().m_camera;
-    fill_camera_matrices(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
+    PassContext& pass = gm.main_pass;
+    gm.bindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
 
     // if (0) {
     //     // draw billboard grass here for now
@@ -60,9 +59,6 @@ static void lightingPassFunc(const Subpass* p_subpass) {
 
     // @TODO: fix skybox
     if (gm.getBackend() == Backend::OPENGL) {
-        PassContext& pass = gm.main_pass;
-        pass.fillPerpass(g_per_pass_cache.cache);
-        g_per_pass_cache.update();
         GraphicsManager::singleton().setPipelineState(PROGRAM_ENV_SKYBOX);
         RenderManager::singleton().draw_skybox();
     }

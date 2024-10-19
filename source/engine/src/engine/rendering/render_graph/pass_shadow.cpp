@@ -84,8 +84,7 @@ static void shadowPassFunc(const Subpass* p_subpass) {
     gm.setViewport(viewport);
 
     PassContext& pass = gm.shadow_passes[0];
-    pass.fillPerpass(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
+    gm.bindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;

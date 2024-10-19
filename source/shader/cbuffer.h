@@ -62,18 +62,11 @@ CBUFFER(PerBatchConstantBuffer, 0) {
 };
 
 CBUFFER(PerPassConstantBuffer, 1) {
-    mat4 u_view_matrix;
-    mat4 u_proj_matrix;
-    mat4 u_proj_view_matrix;
+    mat4 g_view_matrix;
+    mat4 g_projection_matrix;
 
-    vec4 _per_pass_padding_0;
-    vec4 _per_pass_padding_1;
-    vec4 _per_pass_padding_2;
-
-    float u_per_pass_roughness;  // for environment map
-    float _per_pass_padding_3;
-    float _per_pass_padding_4;
-    float _per_pass_padding_5;
+    mat4 _per_pass_padding_0;
+    mat4 _per_pass_padding_1;
 };
 
 CBUFFER(PerFrameConstantBuffer, 2) {
@@ -195,6 +188,23 @@ CBUFFER(PointShadowConstantBuffer, 8) {
 
     mat4 _point_shadow_padding_3;  // 64
     mat4 _point_shadow_padding_4;  // 64
+};
+
+// @TODO: refactor this
+CBUFFER(EnvConstantBuffer, 9) {
+    mat4 g_cube_projection_view_matrix;
+
+    float g_env_pass_roughness;  // for environment map
+    float _per_env_padding_0;
+    float _per_env_padding_1;
+    float _per_env_padding_2;
+
+    vec4 _per_env_padding_3;
+    vec4 _per_env_padding_4;
+    vec4 _per_env_padding_5;
+
+    mat4 _per_env_padding_6;
+    mat4 _per_env_padding_7;
 };
 
 #endif

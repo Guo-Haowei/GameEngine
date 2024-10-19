@@ -27,7 +27,7 @@ void main() {
     vec3 N = normalize(rotation * in_normal);
     vec3 B = cross(N, T);
 
-    gl_Position = u_proj_view_matrix * world_position;
+    gl_Position = g_projection_matrix * (g_view_matrix * world_position);
 
     ps_in.position = world_position.xyz;
     ps_in.uv = in_uv;
