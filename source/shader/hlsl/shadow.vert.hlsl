@@ -14,7 +14,8 @@ float4 main(vsinput_mesh input) : SV_POSITION {
 
     float4 position = float4(input.position, 1.0);
     position = mul(world_matrix, position);
-    position = mul(u_proj_view_matrix, position);
+    position = mul(g_view_matrix, position);
+    position = mul(g_projection_matrix, position);
 
     return position;
 }

@@ -20,9 +20,7 @@ static void gbufferPassFunc(const Subpass* p_subpass) {
     gm.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     PassContext& pass = gm.main_pass;
-
-    pass.fillPerpass(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
+    gm.bindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;

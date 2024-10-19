@@ -15,7 +15,8 @@ vsoutput_mesh main(vsinput_mesh input) {
     float4 position = float4(input.position, 1.0);
     position = mul(world_matrix, position);
     float3 world_position = position.xyz;
-    position = mul(u_proj_view_matrix, position);
+    position = mul(g_view_matrix, position);
+    position = mul(g_projection_matrix, position);
 
     vsoutput_mesh result;
     result.position = position;

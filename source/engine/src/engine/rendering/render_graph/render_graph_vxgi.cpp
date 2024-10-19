@@ -18,9 +18,8 @@ extern OpenGLMeshBuffers* g_box;
 // @TODO: refactor
 void fill_camera_matrices(PerPassConstantBuffer& buffer) {
     auto camera = my::SceneManager::singleton().getScene().m_camera;
-    buffer.u_proj_view_matrix = camera->getProjectionViewMatrix();
-    buffer.u_view_matrix = camera->getViewMatrix();
-    buffer.u_proj_matrix = camera->getProjectionMatrix();
+    buffer.g_view_matrix = camera->getViewMatrix();
+    buffer.g_projection_matrix = camera->getProjectionMatrix();
 }
 // @TODO: fix
 
@@ -49,8 +48,7 @@ void voxelization_pass_func(const Subpass*) {
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
 
     PassContext& pass = gm.voxel_pass;
-    pass.fillPerpass(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
+    gm.bindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
@@ -109,10 +107,8 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.u_proj_matrix = projection;
-        g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
-        g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
-        g_per_pass_cache.update();
+        g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[i];
+        g_env_cache.update();
         RenderManager::singleton().draw_skybox();
     }
 
@@ -154,10 +150,8 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_per_pass_cache.cache.u_proj_matrix = projection;
-        g_per_pass_cache.cache.u_view_matrix = view_matrices[i];
-        g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[i];
-        g_per_pass_cache.update();
+        g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[i];
+        g_env_cache.update();
         RenderManager::singleton().draw_skybox();
     }
 }
@@ -177,11 +171,9 @@ void prefilter_pass_func(const Subpass* p_subpass) {
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
-            g_per_pass_cache.cache.u_proj_matrix = projection;
-            g_per_pass_cache.cache.u_view_matrix = view_matrices[face_id];
-            g_per_pass_cache.cache.u_proj_view_matrix = projection * view_matrices[face_id];
-            g_per_pass_cache.cache.u_per_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
-            g_per_pass_cache.update();
+            g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[face_id];
+            g_env_cache.cache.g_env_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
+            g_env_cache.update();
 
             GraphicsManager::singleton().setRenderTarget(p_subpass, face_id, mip_idx);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -213,7 +205,8 @@ static void highlight_select_pass_func(const Subpass* p_subpass) {
 void debug_vxgi_pass_func(const Subpass* p_subpass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().setRenderTarget(p_subpass);
+    GraphicsManager& gm = GraphicsManager::singleton();
+    gm.setRenderTarget(p_subpass);
     DEV_ASSERT(!p_subpass->color_attachments.empty());
     auto depth_buffer = p_subpass->depth_attachment;
     auto [width, height] = p_subpass->color_attachments[0]->getSize();
@@ -223,10 +216,8 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
 
     GraphicsManager::singleton().setPipelineState(PROGRAM_DEBUG_VOXEL);
 
-    // @TODO: fix
-    auto camera = SceneManager::singleton().getScene().m_camera;
-    fill_camera_matrices(g_per_pass_cache.cache);
-    g_per_pass_cache.update();
+    PassContext& pass = gm.main_pass;
+    gm.bindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
 
     glBindVertexArray(g_box->vao);
 
@@ -304,9 +295,9 @@ void final_pass_func(const Subpass* p_subpass) {
         debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 1980 / 4, 1080 / 4);
     }
 
-    if (DVAR_GET_BOOL(r_debug_csm)) {
+    if (DVAR_GET_BOOL(gfx_debug_shadow)) {
         auto shadow_map_handle = GraphicsManager::singleton().findRenderTarget(RT_RES_SHADOW_MAP)->texture->get_resident_handle();
-        debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 800, 200);
+        debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);
     }
 }
 

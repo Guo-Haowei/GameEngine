@@ -3,13 +3,12 @@
 DVAR_IVEC2(resolution, 0, "Frame resolution", 1920, 1080);
 
 // Debug switch
-DVAR_BOOL(r_enable_vxgi, DVAR_FLAG_CACHE, "Enable VXGI", true);
-DVAR_BOOL(r_enable_csm, DVAR_FLAG_CACHE, "Enable CSM", true);
-DVAR_BOOL(r_no_texture, DVAR_FLAG_CACHE, "No texture", false);
-DVAR_BOOL(r_debug_csm, DVAR_FLAG_CACHE, "Debug CSM", false);
-DVAR_BOOL(r_debug_vxgi, DVAR_FLAG_CACHE, "Debug VXGI", false);
+DVAR_BOOL(gfx_debug_shadow, DVAR_FLAG_CACHE, "Debug shadow", false);
 
-DVAR_VEC4(cascade_end, 0, "CSM distance", 5.0f, 10.0f, 30.0f, 100.0f);
+//@TODO: rename to gfx_
+DVAR_BOOL(r_enable_vxgi, DVAR_FLAG_CACHE, "Enable VXGI", true);
+DVAR_BOOL(r_no_texture, DVAR_FLAG_CACHE, "No texture", false);
+DVAR_BOOL(r_debug_vxgi, DVAR_FLAG_CACHE, "Debug VXGI", false);
 
 // GFX
 DVAR_STRING(r_backend, 0, "Renderer backend", "opengl");
@@ -23,7 +22,7 @@ DVAR_INT(r_debug_vxgi_voxel, DVAR_FLAG_CACHE, "", 0);
 
 // shadow
 DVAR_INT(r_point_shadow_res, 0, "Point shadow resolution", 1024);
-DVAR_INT(r_shadow_res, 0, "Shadow resolution", 1024 * 2);
+DVAR_INT(r_shadow_res, 0, "Shadow resolution", 1024 * 4);
 
 // Bloom
 DVAR_BOOL(r_enable_bloom, DVAR_FLAG_NONE, "Enable Bloom", true);

@@ -23,7 +23,6 @@ using samplerCube = uint64_t;
 using TextureHandle = uint64_t;
 
 // @TODO: remove this constraint
-static_assert(MAX_CASCADE_COUNT == 4);
 #elif defined(HLSL_LANG)
 #define CBUFFER(name, reg) cbuffer name : register(b##reg)
 
@@ -39,6 +38,8 @@ static_assert(MAX_CASCADE_COUNT == 4);
 #endif
 
 struct Light {
+    mat4 projection_matrix;
+    mat4 view_matrix;
     vec3 color;
     int type;
     vec3 position;  // direction
@@ -50,7 +51,6 @@ struct Light {
     vec2 padding;
     float atten_quadratic;
     float max_distance;  // max distance the light affects
-    mat4 matrices[6];
     vec4 points[4];
 };
 
@@ -62,27 +62,15 @@ CBUFFER(PerBatchConstantBuffer, 0) {
 };
 
 CBUFFER(PerPassConstantBuffer, 1) {
-    mat4 u_view_matrix;
-    mat4 u_proj_matrix;
-    mat4 u_proj_view_matrix;
+    mat4 g_view_matrix;
+    mat4 g_projection_matrix;
 
-    vec3 u_point_light_position;
-    float u_point_light_far;
-
-    vec4 _per_pass_padding_0;
-    vec4 _per_pass_padding_1;
-
-    sampler2D u_tmp_bloom_input;
-    float u_per_pass_roughness;  // for environment map
-    float _per_pass_padding_2;
+    mat4 _per_pass_padding_0;
+    mat4 _per_pass_padding_1;
 };
 
 CBUFFER(PerFrameConstantBuffer, 2) {
     Light u_lights[MAX_LIGHT_COUNT];
-
-    // @TODO: move it to Light
-    mat4 u_main_light_matrices[MAX_CASCADE_COUNT];
-    vec4 u_cascade_plane_distances;
 
     int u_light_count;
     int u_display_method;
@@ -101,9 +89,9 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     float u_world_size_half;
 
     float u_texel_size;
-    int u_enable_csm;
     int u_enable_vxgi;
     int u_debug_csm;
+    int _frame_constant_padding0;
 };
 
 CBUFFER(MaterialConstantBuffer, 3) {
@@ -174,5 +162,49 @@ CBUFFER(DebugDrawConstantBuffer, 6) {
     int c_another_padding;
 };
 #endif
+
+CBUFFER(BloomConstantBuffer, 7) {
+    sampler2D g_bloom_input;                 // 8
+    float _bloom_constant_buffer_padding_0;  // 4
+    float _bloom_constant_buffer_padding_1;  // 4
+
+    vec4 _bloom_constant_buffer_padding_2;  // 16
+    vec4 _bloom_constant_buffer_padding_3;  // 16
+    vec4 _bloom_constant_buffer_padding_4;  // 16
+
+    mat4 _bloom_constant_buffer_padding_5;  // 64
+    mat4 _bloom_constant_buffer_padding_6;  // 64
+    mat4 _bloom_constant_buffer_padding_7;  // 64
+};
+
+CBUFFER(PointShadowConstantBuffer, 8) {
+    mat4 g_point_light_matrix;    // 64
+    vec3 g_point_light_position;  // 12
+    float g_point_light_far;      // 4
+
+    vec4 _point_shadow_padding_0;  // 16
+    vec4 _point_shadow_padding_1;  // 16
+    vec4 _point_shadow_padding_2;  // 16
+
+    mat4 _point_shadow_padding_3;  // 64
+    mat4 _point_shadow_padding_4;  // 64
+};
+
+// @TODO: refactor this
+CBUFFER(EnvConstantBuffer, 9) {
+    mat4 g_cube_projection_view_matrix;
+
+    float g_env_pass_roughness;  // for environment map
+    float _per_env_padding_0;
+    float _per_env_padding_1;
+    float _per_env_padding_2;
+
+    vec4 _per_env_padding_3;
+    vec4 _per_env_padding_4;
+    vec4 _per_env_padding_5;
+
+    mat4 _per_env_padding_6;
+    mat4 _per_env_padding_7;
+};
 
 #endif

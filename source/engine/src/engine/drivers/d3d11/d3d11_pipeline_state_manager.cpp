@@ -18,7 +18,8 @@ class D3DIncludeHandler : public ID3DInclude {
 public:
     STDMETHOD(Open)
     (D3D_INCLUDE_TYPE, LPCSTR p_file, LPCVOID, LPCVOID* p_out_data, UINT* p_bytes) override {
-        FilePath path = FilePath{ ROOT_FOLDER } / "source" / "shader" / p_file;
+        // @TODO: fix search
+        FilePath path = FilePath{ ROOT_FOLDER } / "source/shader/" / p_file;
 
         auto source_binary = AssetManager::singleton().loadFileSync(path);
         if (!source_binary || source_binary->buffer.empty()) {

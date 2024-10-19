@@ -9,7 +9,53 @@
 #include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 namespace my {
+
+/*
+@TODO: finish this
+inline void BuildPerspectiveFovRHMatrix(Matrix4X4f& matrix,
+                                                    const float fieldOfView,
+                                                    const float screenAspect,
+                                                    const float screenNear,
+                                                    const float screenDepth) {
+    Matrix4X4f perspective = {
+        { { 1.0f / (screenAspect * std::tan(fieldOfView * 0.5f)), 0.0f, 0.0f,
+            0.0f },
+          { 0.0f, 1.0f / std::tan(fieldOfView * 0.5f), 0.0f, 0.0f },
+          { 0.0f, 0.0f, screenDepth / (screenNear - screenDepth), -1.0f },
+          { 0.0f, 0.0f, (-screenNear * screenDepth) / (screenDepth - screenNear),
+            0.0f } }
+    };
+
+    matrix = perspective;
+}
+
+inline void BuildOpenglPerspectiveFovRHMatrix(Matrix4X4f& matrix,
+                                              const float fieldOfView,
+                                              const float screenAspect,
+                                              const float screenNear,
+                                              const float screenDepth) {
+    Matrix4X4f perspective = {
+        { { 1.0f / (screenAspect * std::tan(fieldOfView * 0.5f)), 0.0f, 0.0f,
+            0.0f },
+          { 0.0f, 1.0f / std::tan(fieldOfView * 0.5f), 0.0f, 0.0f },
+          { 0.0f, 0.0f, (screenNear + screenDepth) / (screenNear - screenDepth),
+            -1.0f },
+          { 0.0f, 0.0f,
+            (-2.0f * screenNear * screenDepth) / (screenDepth - screenNear),
+            0.0f } }
+    };
+
+    matrix = perspective;
+}
+*/
 
 template<typename T>
 static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
@@ -17,10 +63,12 @@ static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_c
     return p_graphics_manager.createUniform(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
 }
 
-UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
 UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+UniformBuffer<BloomConstantBuffer> g_bloom_cache;
+UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
+UniformBuffer<EnvConstantBuffer> g_env_cache;
 
 template<typename T>
 static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
@@ -35,13 +83,16 @@ bool GraphicsManager::initialize() {
 
     // @TODO: refactor
     m_context.batch_uniform = create_uniform<PerBatchConstantBuffer>(*this, 4096 * 16);
+    m_context.pass_uniform = create_uniform<PerPassConstantBuffer>(*this, 32);
     m_context.material_uniform = create_uniform<MaterialConstantBuffer>(*this, 2048 * 16);
     m_context.bone_uniform = create_uniform<BoneConstantBuffer>(*this, 16);
 
-    create_uniform_buffer<PerPassConstantBuffer>(g_per_pass_cache);
     create_uniform_buffer<PerFrameConstantBuffer>(g_per_frame_cache);
     create_uniform_buffer<PerSceneConstantBuffer>(g_constantCache);
     create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
+    create_uniform_buffer<BloomConstantBuffer>(g_bloom_cache);
+    create_uniform_buffer<PointShadowConstantBuffer>(g_point_shadow_cache);
+    create_uniform_buffer<EnvConstantBuffer>(g_env_cache);
 
     DEV_ASSERT(m_pipeline_state_manager);
 
@@ -105,13 +156,14 @@ void GraphicsManager::update(Scene& p_scene) {
 
     cleanup();
 
-    updatePointLights(p_scene);
-    updateOmniLights(p_scene);
+    updateConstants(p_scene);
+    updateLights(p_scene);
     updateVoxelPass(p_scene);
     updateMainPass(p_scene);
 
     // update uniform
     updateUniform(m_context.batch_uniform.get(), m_context.batch_cache.buffer);
+    updateUniform(m_context.pass_uniform.get(), m_context.pass_cache);
     updateUniform(m_context.material_uniform.get(), m_context.material_cache.buffer);
     updateUniform(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
 
@@ -250,21 +302,6 @@ uint64_t GraphicsManager::getFinalImage() const {
     return 0;
 }
 
-// @TODO: refactor
-void PassContext::fillPerpass(PerPassConstantBuffer& buffer) const {
-    static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
-
-    buffer.u_view_matrix = view_matrix;
-
-    if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
-        buffer.u_proj_matrix = fixup * projection_matrix;
-        buffer.u_proj_view_matrix = fixup * projection_view_matrix;
-    } else {
-        buffer.u_proj_matrix = projection_matrix;
-        buffer.u_proj_view_matrix = projection_view_matrix;
-    }
-}
-
 static void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
     cb.u_base_color = material->base_color;
     cb.u_metallic = material->metallic;
@@ -303,105 +340,179 @@ static void fill_material_constant_buffer(const MaterialComponent* material, Mat
 }
 
 void GraphicsManager::cleanup() {
-    m_context.batch_cache.newFrame();
-    m_context.material_cache.newFrame();
-    m_context.bone_cache.newFrame();
+    m_context.batch_cache.clear();
+    m_context.material_cache.clear();
+    m_context.bone_cache.clear();
+    m_context.pass_cache.clear();
 
     for (auto& pass : shadow_passes) {
-        pass.clear();
+        pass.draws.clear();
     }
 
     for (auto& pass : point_shadow_passes) {
         pass.reset();
     }
 
-    main_pass.clear();
-    voxel_pass.clear();
+    main_pass.draws.clear();
+    voxel_pass.draws.clear();
 }
 
-void GraphicsManager::updatePointLights(const Scene& p_scene) {
-    for (auto [light_id, light] : p_scene.m_LightComponents) {
-        if (light.getType() != LIGHT_TYPE_POINT || !light.castShadow()) {
-            continue;
-        }
+// @TODO: refactor
+static void light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_matrix, mat4& p_out_view_matrix, mat4& p_out_projection_matrix) {
+    const vec3 center = p_world_bound.center();
+    const vec3 extents = p_world_bound.size();
+    const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
 
-        const int light_pass_index = light.getShadowMapIndex();
-        if (light_pass_index == INVALID_POINT_SHADOW_HANDLE) {
-            continue;
-        }
+    vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
+    vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
 
-        const TransformComponent* transform = p_scene.getComponent<TransformComponent>(light_id);
-        DEV_ASSERT(transform);
-        vec3 position = transform->getTranslation();
+    p_out_view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
+    p_out_projection_matrix = glm::ortho(-size, size, -size, size, -size, 3.0f * size);
+}
 
-        const auto& light_space_matrices = light.getMatrices();
-        std::array<Frustum, 6> frustums = {
-            Frustum{ light_space_matrices[0] },
-            Frustum{ light_space_matrices[1] },
-            Frustum{ light_space_matrices[2] },
-            Frustum{ light_space_matrices[3] },
-            Frustum{ light_space_matrices[4] },
-            Frustum{ light_space_matrices[5] },
-        };
+void GraphicsManager::updateConstants(const Scene& p_scene) {
+    Camera& camera = *p_scene.m_camera.get();
 
-        auto pass = std::make_unique<PassContext>();
-        fillPass(
-            p_scene,
-            *pass.get(),
-            [](const ObjectComponent& object) {
-                return object.flags & ObjectComponent::CAST_SHADOW;
-            },
-            [&](const AABB& aabb) {
-                for (const auto& frustum : frustums) {
-                    if (frustum.intersects(aabb)) {
-                        return true;
-                    }
+    auto& cache = g_per_frame_cache.cache;
+    cache.u_camera_position = camera.getPosition();
+
+    cache.u_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
+    cache.u_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
+    cache.u_no_texture = DVAR_GET_BOOL(r_no_texture);
+
+    cache.u_screen_width = (int)camera.getWidth();
+    cache.u_screen_height = (int)camera.getHeight();
+
+    // Bloom
+    cache.u_bloom_threshold = DVAR_GET_FLOAT(r_bloom_threshold);
+    cache.u_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
+
+    // @TODO: refactor the following
+    const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
+    DEV_ASSERT(math::isPowerOfTwo(voxel_texture_size));
+    DEV_ASSERT(voxel_texture_size <= 256);
+
+    vec3 world_center = p_scene.getBound().center();
+    vec3 aabb_size = p_scene.getBound().size();
+    float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
+
+    const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
+    if (world_size > max_world_size) {
+        world_center = camera.getPosition();
+        world_size = max_world_size;
+    }
+
+    const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
+    const float voxel_size = world_size * texel_size;
+
+    cache.u_world_center = world_center;
+    cache.u_world_size_half = 0.5f * world_size;
+    cache.u_texel_size = texel_size;
+    cache.u_voxel_size = voxel_size;
+}
+
+/// @TODO: refactor lights
+void GraphicsManager::updateLights(const Scene& p_scene) {
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.getCount<LightComponent>(), MAX_LIGHT_COUNT);
+
+    auto& cache = g_per_frame_cache.cache;
+
+    cache.u_light_count = light_count;
+
+    int idx = 0;
+    for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
+        const TransformComponent* light_transform = p_scene.getComponent<TransformComponent>(light_entity);
+        const MaterialComponent* material = p_scene.getComponent<MaterialComponent>(light_entity);
+
+        DEV_ASSERT(light_transform && material);
+
+        // SHOULD BE THIS INDEX
+        Light& light = cache.u_lights[idx];
+        bool cast_shadow = light_component.castShadow();
+        light.cast_shadow = cast_shadow;
+        light.type = light_component.getType();
+        light.color = material->base_color;
+        light.color *= material->emissive;
+        switch (light_component.getType()) {
+            case LIGHT_TYPE_OMNI: {
+                mat4 light_local_matrix = light_transform->getLocalMatrix();
+                vec3 light_dir = glm::normalize(light_local_matrix * vec4(0, 0, 1, 0));
+                light.cast_shadow = cast_shadow;
+                light.position = light_dir;
+
+                light_space_matrix_world(p_scene.getBound(), light_local_matrix, light.view_matrix, light.projection_matrix);
+                mat4 light_space_matrix = light.projection_matrix * light.view_matrix;
+                Frustum light_frustum(light_space_matrix);
+
+                // @TODO: fix this
+                mat4 fixup = mat4(1.0f);
+                if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
+                    fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
                 }
-                return false;
-            });
 
-        DEV_ASSERT_INDEX(light_pass_index, MAX_LIGHT_CAST_SHADOW_COUNT);
-        pass->light_component = light;
+                PerPassConstantBuffer pass_constant;
+                // @TODO: Build correct matrices
+                pass_constant.g_projection_matrix = light.projection_matrix;
+                pass_constant.g_view_matrix = light.view_matrix;
+                shadow_passes[0].pass_idx = static_cast<int>(m_context.pass_cache.size());
+                m_context.pass_cache.emplace_back(pass_constant);
 
-        point_shadow_passes[light_pass_index] = std::move(pass);
-    }
-}
+                fillPass(
+                    p_scene,
+                    shadow_passes[0],
+                    [](const ObjectComponent& object) {
+                        return object.flags & ObjectComponent::CAST_SHADOW;
+                    },
+                    [&](const AABB& aabb) {
+                        return light_frustum.intersects(aabb);
+                    });
+            } break;
+            case LIGHT_TYPE_POINT: {
+                const int shadow_map_index = light_component.getShadowMapIndex();
+                // @TODO: there's a bug in shadow map allocation
+                light.atten_constant = light_component.m_atten.constant;
+                light.atten_linear = light_component.m_atten.linear;
+                light.atten_quadratic = light_component.m_atten.quadratic;
+                light.position = light_component.getPosition();
+                light.cast_shadow = cast_shadow;
+                light.max_distance = light_component.getMaxDistance();
+                if (cast_shadow && shadow_map_index != INVALID_POINT_SHADOW_HANDLE) {
+                    auto resource = GraphicsManager::singleton().findRenderTarget(RT_RES_POINT_SHADOW_MAP + std::to_string(shadow_map_index));
+                    light.shadow_map = resource ? resource->texture->get_resident_handle() : 0;
 
-void GraphicsManager::updateOmniLights(const Scene& p_scene) {
-    // @TODO: remove this
-    has_sun_light = false;
-    for (auto [entity, light] : p_scene.m_LightComponents) {
-        if (light.getType() == LIGHT_TYPE_OMNI) {
-            has_sun_light = true;
-            break;
+                    auto pass = std::make_unique<PassContext>();
+                    fillPass(
+                        p_scene,
+                        *pass.get(),
+                        [](const ObjectComponent& object) {
+                            return object.flags & ObjectComponent::CAST_SHADOW;
+                        },
+                        [&](const AABB& aabb) {
+                            unused(aabb);
+                            return true;
+                        });
+
+                    DEV_ASSERT_INDEX(shadow_map_index, MAX_LIGHT_CAST_SHADOW_COUNT);
+                    pass->light_component = light_component;
+
+                    point_shadow_passes[shadow_map_index] = std::move(pass);
+                } else {
+                    light.shadow_map = 0;
+                }
+            } break;
+            case LIGHT_TYPE_AREA: {
+                mat4 transform = light_transform->getWorldMatrix();
+                constexpr float s = 0.5f;
+                light.points[0] = transform * vec4(-s, +s, 0.0f, 1.0f);
+                light.points[1] = transform * vec4(-s, -s, 0.0f, 1.0f);
+                light.points[2] = transform * vec4(+s, -s, 0.0f, 1.0f);
+                light.points[3] = transform * vec4(+s, +s, 0.0f, 1.0f);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
         }
-    }
-
-    if (!has_sun_light) {
-        return;
-    }
-
-    // cascaded shadow map
-    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-        // @TODO: fix this
-        mat4 light_matrix = g_per_frame_cache.cache.u_main_light_matrices[i];
-        Frustum light_frustum(light_matrix);
-        static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
-
-        if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
-            light_matrix = fixup * light_matrix;
-        }
-
-        shadow_passes[i].projection_view_matrix = light_matrix;
-        fillPass(
-            p_scene,
-            shadow_passes[i],
-            [](const ObjectComponent& object) {
-                return object.flags & ObjectComponent::CAST_SHADOW;
-            },
-            [&](const AABB& aabb) {
-                return light_frustum.intersects(aabb);
-            });
+        ++idx;
     }
 }
 
@@ -420,12 +531,16 @@ void GraphicsManager::updateVoxelPass(const Scene& p_scene) {
 }
 
 void GraphicsManager::updateMainPass(const Scene& p_scene) {
-    mat4 camera_projection_view = p_scene.m_camera->getProjectionViewMatrix();
-    Frustum camera_frustum(camera_projection_view);
+    const Camera& camera = *p_scene.m_camera;
+    Frustum camera_frustum(camera.getProjectionViewMatrix());
+
     // main pass
-    main_pass.projection_matrix = p_scene.m_camera->getProjectionMatrix();
-    main_pass.view_matrix = p_scene.m_camera->getViewMatrix();
-    main_pass.projection_view_matrix = p_scene.m_camera->getProjectionViewMatrix();
+    PerPassConstantBuffer pass_constant;
+    pass_constant.g_projection_matrix = camera.getProjectionMatrix();
+    pass_constant.g_view_matrix = camera.getViewMatrix();
+    main_pass.pass_idx = static_cast<int>(m_context.pass_cache.size());
+    m_context.pass_cache.emplace_back(pass_constant);
+
     fillPass(
         p_scene,
         main_pass,

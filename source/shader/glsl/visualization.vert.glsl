@@ -30,7 +30,7 @@ void main() {
         coord_pos = 2.0 * coord_pos - vec3(1.0);                                          // [-1, 1]
         vec3 offset = u_world_size_half * coord_pos + u_world_center + 0.5 * vec3(voxel_size);
         vec3 world_position = voxel_size * in_position + offset;
-        gl_Position = u_proj_view_matrix * vec4(world_position, 1.0);
+        gl_Position = g_projection_matrix * g_view_matrix * vec4(world_position, 1.0);
 
         pass_color = color;
     }

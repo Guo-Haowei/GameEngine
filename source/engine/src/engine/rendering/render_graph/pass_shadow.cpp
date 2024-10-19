@@ -25,10 +25,10 @@ static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
 
     const auto& light_matrices = pass.light_component.getMatrices();
     for (int i = 0; i < 6; ++i) {
-        g_per_pass_cache.cache.u_proj_view_matrix = light_matrices[i];
-        g_per_pass_cache.cache.u_point_light_position = pass.light_component.getPosition();
-        g_per_pass_cache.cache.u_point_light_far = pass.light_component.getMaxDistance();
-        g_per_pass_cache.update();
+        g_point_shadow_cache.cache.g_point_light_matrix = light_matrices[i];
+        g_point_shadow_cache.cache.g_point_light_position = pass.light_component.getPosition();
+        g_point_shadow_cache.cache.g_point_light_far = pass.light_component.getMaxDistance();
+        g_point_shadow_cache.update();
 
         gm.setRenderTarget(p_subpass, i);
         gm.clear(p_subpass, CLEAR_DEPTH_BIT);
@@ -58,9 +58,9 @@ static void shadowPassFunc(const Subpass* p_subpass) {
     auto& gm = GraphicsManager::singleton();
     auto& ctx = gm.getContext();
 
-    if (!gm.has_sun_light) {
-        return;
-    }
+    // if (!gm.has_sun_light) {
+    //     return;
+    // }
 
     gm.setRenderTarget(p_subpass);
     auto [width, height] = p_subpass->depth_attachment->getSize();
@@ -80,34 +80,26 @@ static void shadowPassFunc(const Subpass* p_subpass) {
 
     bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
 
-    const int actual_width = width / MAX_CASCADE_COUNT;
+    Viewport viewport{ width, height };
+    gm.setViewport(viewport);
 
-    for (int cascade_idx = 0; cascade_idx < MAX_CASCADE_COUNT; ++cascade_idx) {
-        Viewport viewport{ actual_width, height };
-        viewport.top_left_x = cascade_idx * actual_width;
-        gm.setViewport(viewport);
+    PassContext& pass = gm.shadow_passes[0];
+    gm.bindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
-        PassContext& pass = gm.shadow_passes[cascade_idx];
-        pass.fillPerpass(g_per_pass_cache.cache);
-        g_per_pass_cache.update();
-
-        for (const auto& draw : pass.draws) {
-            bool has_bone = draw.bone_idx >= 0;
-            if (has_bone) {
-                gm.bindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
-            }
-
-            // @TODO: sort the objects so there's no need to switch pipeline
-            gm.setPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
-
-            gm.bindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
-
-            gm.setMesh(draw.mesh_data);
-            gm.drawElements(draw.mesh_data->index_count);
+    for (const auto& draw : pass.draws) {
+        bool has_bone = draw.bone_idx >= 0;
+        if (has_bone) {
+            gm.bindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
-    }
 
-    // manager.unbindTexture(Dimension::TEXTURE_2D, u_shadow_map_slot);
+        // @TODO: sort the objects so there's no need to switch pipeline
+        gm.setPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
+
+        gm.bindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+
+        gm.setMesh(draw.mesh_data);
+        gm.drawElements(draw.mesh_data->index_count);
+    }
 }
 
 void RenderPassCreator::addShadowPass() {
@@ -121,7 +113,7 @@ void RenderPassCreator::addShadowPass() {
     auto shadow_map = manager.createRenderTarget(RenderTargetDesc{ RT_RES_SHADOW_MAP,
                                                                    PixelFormat::D32_FLOAT,
                                                                    AttachmentType::SHADOW_2D,
-                                                                   MAX_CASCADE_COUNT * shadow_res, shadow_res },
+                                                                   1 * shadow_res, shadow_res },
                                                  shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = SHADOW_PASS;

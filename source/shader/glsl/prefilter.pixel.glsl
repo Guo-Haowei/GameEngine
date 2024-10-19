@@ -13,7 +13,7 @@ void main() {
     vec3 R = N;
     vec3 V = R;
 
-    float roughness = u_per_pass_roughness;
+    float roughness = g_env_pass_roughness;
 
     vec3 prefilteredColor = vec3(0.0);
     float totalWeight = 0.0;

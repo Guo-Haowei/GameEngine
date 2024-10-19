@@ -66,10 +66,9 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
     }
 }
 
-void Viewer::draw_gui(Scene& scene, Camera& camera) {
-    const mat4 view_matrix = camera.getViewMatrix();
-    const mat4 projection_matrix = camera.getProjectionMatrix();
-    const mat4 projection_view_matrix = camera.getProjectionViewMatrix();
+void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
+    const mat4 view_matrix = p_camera.getViewMatrix();
+    const mat4 proj_matrix = p_camera.getProjectionMatrix();
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
@@ -97,11 +96,11 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
     if (draw_grid) {
         mat4 identity(1);
         // draw grid
-        ImGuizmo::draw_grid(projection_view_matrix, identity, 10.0f);
+        ImGuizmo::draw_grid(p_camera.getProjectionViewMatrix(), identity, 10.0f);
     }
 
     ecs::Entity id = m_editor.get_selected_entity();
-    TransformComponent* transform_component = scene.getComponent<TransformComponent>(id);
+    TransformComponent* transform_component = p_scene.getComponent<TransformComponent>(id);
 #if 0
     if (transform_component) {
         AABB aabb;
@@ -135,7 +134,7 @@ void Viewer::draw_gui(Scene& scene, Camera& camera) {
         if (transform_component) {
             mat4 local = transform_component->getLocalMatrix();
             if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
-                                     glm::value_ptr(projection_matrix),
+                                     glm::value_ptr(proj_matrix),
                                      operation,
                                      // ImGuizmo::LOCAL,
                                      ImGuizmo::WORLD,

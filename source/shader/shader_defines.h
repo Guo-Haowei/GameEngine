@@ -11,7 +11,6 @@
 
 #define MAX_LIGHT_COUNT             16
 #define MAX_BONE_COUNT              64
-#define MAX_CASCADE_COUNT           4
 #define MAX_LIGHT_CAST_SHADOW_COUNT 4
 #define LIGHT_SHADOW_MIN_DISTANCE   0.1f
 

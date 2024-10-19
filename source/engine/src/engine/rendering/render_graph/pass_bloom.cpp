@@ -25,8 +25,8 @@ static void downSampleFunc(const Subpass*) {
         const uint32_t work_group_x = divideAndRoundup(width, 16);
         const uint32_t work_group_y = divideAndRoundup(height, 16);
 
-        g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
-        g_per_pass_cache.update();
+        g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
+        g_bloom_cache.update();
         glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
         glDispatchCompute(work_group_x, work_group_y, 1);
@@ -40,8 +40,8 @@ static void downSampleFunc(const Subpass*) {
         auto output = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i));
         DEV_ASSERT(input && output);
 
-        g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
-        g_per_pass_cache.update();
+        g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
+        g_bloom_cache.update();
         // @TODO: refactor image slot
         glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
@@ -58,8 +58,8 @@ static void downSampleFunc(const Subpass*) {
         auto input = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i));
         auto output = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i - 1));
 
-        g_per_pass_cache.cache.u_tmp_bloom_input = input->texture->get_resident_handle();
-        g_per_pass_cache.update();
+        g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
+        g_bloom_cache.update();
 
         glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
 

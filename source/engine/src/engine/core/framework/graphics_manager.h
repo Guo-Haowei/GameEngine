@@ -50,10 +50,12 @@ struct MeshBuffers {
 
 struct MeshBuffers;
 
-extern UniformBuffer<PerPassConstantBuffer> g_per_pass_cache;
 extern UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+extern UniformBuffer<BloomConstantBuffer> g_bloom_cache;
+extern UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
+extern UniformBuffer<EnvConstantBuffer> g_env_cache;
 
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),
@@ -74,17 +76,10 @@ struct BatchContext {
 };
 
 struct PassContext {
-    mat4 projection_matrix;
-    mat4 view_matrix;
-    mat4 projection_view_matrix;
+    int pass_idx{ 0 };
     LightComponent light_component;
 
-    void fillPerpass(PerPassConstantBuffer& buffer) const;
-
     std::vector<BatchContext> draws;
-
-    void clear() { draws.clear(); }
-    bool empty() { return draws.empty(); }
 };
 
 #define SHADER_TEXTURE(TYPE, NAME, SLOT) \
@@ -204,7 +199,7 @@ public:
             return index;
         }
 
-        void newFrame() {
+        void clear() {
             buffer.clear();
             lookup.clear();
         }
@@ -212,30 +207,32 @@ public:
 
     // @TODO: refactor names
     struct Context {
+        std::shared_ptr<UniformBufferBase> batch_uniform;
         BufferCache<PerBatchConstantBuffer> batch_cache;
+
+        std::shared_ptr<UniformBufferBase> material_uniform;
         BufferCache<MaterialConstantBuffer> material_cache;
+
+        std::shared_ptr<UniformBufferBase> bone_uniform;
         BufferCache<BoneConstantBuffer> bone_cache;
 
-        std::shared_ptr<UniformBufferBase> batch_uniform;
-        std::shared_ptr<UniformBufferBase> material_uniform;
-        std::shared_ptr<UniformBufferBase> bone_uniform;
+        std::shared_ptr<UniformBufferBase> pass_uniform;
+        std::vector<PerPassConstantBuffer> pass_cache;
     } m_context;
 
     Context& getContext() { return m_context; }
 
-    bool has_sun_light = false;
     // @TODO: save pass item somewhere and use index instead of keeping many copies
-    std::array<PassContext, MAX_CASCADE_COUNT> shadow_passes;
-
     std::array<std::unique_ptr<PassContext>, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
+    std::array<PassContext, 1> shadow_passes;  // @TODO: support multi omni lights
 
     PassContext voxel_pass;
     PassContext main_pass;
 
 private:
     void cleanup();
-    void updatePointLights(const Scene& p_scene);
-    void updateOmniLights(const Scene& p_scene);
+    void updateConstants(const Scene& p_scene);
+    void updateLights(const Scene& p_scene);
     void updateVoxelPass(const Scene& p_scene);
     void updateMainPass(const Scene& p_scene);
 
