@@ -55,7 +55,7 @@ void RendererPanel::update_internal(Scene&) {
     });
 
     collapse_window("Shadow", []() {
-        ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(r_debug_csm));
+        ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_shadow));
     });
 
     collapse_window("Bloom", []() {

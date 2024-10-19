@@ -1,10 +1,6 @@
 #ifndef SHADOW_GLSL_INCLUDED
 #define SHADOW_GLSL_INCLUDED
 
-int find_cascade(const in vec3 p_pos_world) {
-    return 0;
-}
-
 #define NUM_POINT_SHADOW_SAMPLES 20
 
 vec3 POINT_LIGHT_SHADOW_SAMPLE_OFFSET[NUM_POINT_SHADOW_SAMPLES] = vec3[](
@@ -39,16 +35,13 @@ float point_shadow_calculation(vec3 p_frag_pos, int p_light_index, vec3 p_eye) {
     return shadow;
 }
 
-float cascade_shadow_voxel(sampler2D p_shadow_map,
-                           const in vec3 p_pos_world,
-                           float p_NdotL,
-                           int p_level) {
-    vec4 pos_light = u_main_light_matrices[p_level] * vec4(p_pos_world, 1.0);
+float shadow_test_voxel(sampler2D p_shadow_map,
+                        const in vec3 p_pos_world,
+                        float p_NdotL) {
+    vec4 pos_light = u_main_light_matrices * vec4(p_pos_world, 1.0);
     vec3 coords = pos_light.xyz / pos_light.w;
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
-    coords.x += p_level;
-    coords.x /= MAX_CASCADE_COUNT;
 
     if (current_depth > 1.0) {
         return 0.0;
@@ -64,16 +57,13 @@ float cascade_shadow_voxel(sampler2D p_shadow_map,
     return shadow;
 }
 
-float cascade_shadow(sampler2D p_shadow_map,
-                     const in vec3 p_pos_world,
-                     float p_NdotL,
-                     int p_level) {
-    vec4 pos_light = u_main_light_matrices[p_level] * vec4(p_pos_world, 1.0);
+float shadow_test(sampler2D p_shadow_map,
+                  const in vec3 p_pos_world,
+                  float p_NdotL) {
+    vec4 pos_light = u_main_light_matrices * vec4(p_pos_world, 1.0);
     vec3 coords = pos_light.xyz / pos_light.w;
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
-    coords.x += p_level;
-    coords.x /= MAX_CASCADE_COUNT;
 
     if (current_depth > 1.0) {
         return 0.0;

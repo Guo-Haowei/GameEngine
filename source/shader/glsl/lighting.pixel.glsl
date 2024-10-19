@@ -45,8 +45,6 @@ void main() {
         return;
     }
 
-    const int cascade_level = find_cascade(world_position);
-
     const vec3 V = normalize(u_camera_position - world_position);
     const float NdotV = clamp(dot(N, V), 0.0, 1.0);
     vec3 R = reflect(-V, N);
@@ -85,7 +83,7 @@ void main() {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = cascade_shadow(u_shadow_map, world_position, NdotL, cascade_level);
+                    shadow = shadow_test(u_shadow_map, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;

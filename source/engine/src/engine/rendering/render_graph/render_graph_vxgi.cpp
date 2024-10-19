@@ -304,7 +304,7 @@ void final_pass_func(const Subpass* p_subpass) {
         debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 1980 / 4, 1080 / 4);
     }
 
-    if (DVAR_GET_BOOL(r_debug_csm)) {
+    if (DVAR_GET_BOOL(gfx_debug_shadow)) {
         auto shadow_map_handle = GraphicsManager::singleton().findRenderTarget(RT_RES_SHADOW_MAP)->texture->get_resident_handle();
         debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);
     }

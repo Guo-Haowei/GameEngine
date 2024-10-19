@@ -79,8 +79,7 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     Light u_lights[MAX_LIGHT_COUNT];
 
     // @TODO: move it to Light
-    mat4 u_main_light_matrices[MAX_CASCADE_COUNT];
-    vec4 u_cascade_plane_distances;
+    mat4 u_main_light_matrices;
 
     int u_light_count;
     int u_display_method;

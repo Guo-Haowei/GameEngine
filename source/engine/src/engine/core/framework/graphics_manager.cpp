@@ -339,14 +339,6 @@ static mat4 light_space_matrix_world(const AABB& p_world_bound, const mat4& p_li
     const mat4 P = glm::ortho(-size, size, -size, size, -size, 3.0f * size);
     return P * V;
 }
-
-static std::vector<mat4> get_light_space_matrices(const mat4& p_light_matrix, const Camera&, const vec4&, const AABB& world_bound) {
-    std::vector<glm::mat4> ret;
-    for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-        ret.push_back(light_space_matrix_world(world_bound, p_light_matrix));
-    }
-    return ret;
-}
 // @TODO: refactor
 
 void GraphicsManager::updateConstants(const Scene& p_scene) {
@@ -392,27 +384,11 @@ void GraphicsManager::updateConstants(const Scene& p_scene) {
 
 /// @TODO: refactor lights
 void GraphicsManager::updateLights(const Scene& p_scene) {
-    Camera& camera = *p_scene.m_camera.get();
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.getCount<LightComponent>(), MAX_LIGHT_COUNT);
 
     auto& cache = g_per_frame_cache.cache;
 
     cache.u_light_count = light_count;
-
-    // auto camera = scene.m_camera;
-    vec4 cascade_end = DVAR_GET_VEC4(cascade_end);
-
-    std::vector<mat4> light_matrices;
-    if (camera.getFar() != cascade_end.w) {
-        camera.setFar(cascade_end.w);
-        camera.setDirty();
-    }
-    for (int idx = 0; idx < MAX_CASCADE_COUNT; ++idx) {
-        float left = idx == 0 ? camera.getNear() : cascade_end[idx - 1];
-        DEV_ASSERT(left < cascade_end[idx]);
-    }
-
-    cache.u_cascade_plane_distances = cascade_end;
 
     int idx = 0;
     for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
@@ -435,27 +411,24 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
-                light_matrices = get_light_space_matrices(light_local_matrix, camera, cascade_end, p_scene.getBound());
-                for (int i = 0; i < MAX_CASCADE_COUNT; ++i) {
-                    mat4 light_matrix = cache.u_main_light_matrices[i] = light_matrices[i];
-                    Frustum light_frustum(light_matrices[i]);
-                    static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+                mat4 light_matrix = cache.u_main_light_matrices = light_space_matrix_world(p_scene.getBound(), light_local_matrix);
+                Frustum light_frustum(light_matrix);
+                static const mat4 fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
 
-                    if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
-                        light_matrix = fixup * light_matrix;
-                    }
-
-                    shadow_passes[i].projection_view_matrix = light_matrix;
-                    fillPass(
-                        p_scene,
-                        shadow_passes[i],
-                        [](const ObjectComponent& object) {
-                            return object.flags & ObjectComponent::CAST_SHADOW;
-                        },
-                        [&](const AABB& aabb) {
-                            return light_frustum.intersects(aabb);
-                        });
+                if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
+                    light_matrix = fixup * light_matrix;
                 }
+
+                shadow_passes[0].projection_view_matrix = light_matrix;
+                fillPass(
+                    p_scene,
+                    shadow_passes[0],
+                    [](const ObjectComponent& object) {
+                        return object.flags & ObjectComponent::CAST_SHADOW;
+                    },
+                    [&](const AABB& aabb) {
+                        return light_frustum.intersects(aabb);
+                    });
             } break;
             case LIGHT_TYPE_POINT: {
                 const int shadow_map_index = light_component.getShadowMapIndex();

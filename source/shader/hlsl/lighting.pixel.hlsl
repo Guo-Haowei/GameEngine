@@ -7,21 +7,14 @@
 SamplerState u_sampler : register(s0);
 SamplerState g_shadow_sampler : register(s1);
 
-int find_cascade(const in vec3 p_pos_world) {
-    return 0;
-}
-
 // @TODO: move this to shadow file
-float cascade_shadow(Texture2D p_shadow_map,
-                     const in vec3 p_pos_world,
-                     float p_NdotL,
-                     int p_level) {
-    vec4 pos_light = mul(u_main_light_matrices[p_level], vec4(p_pos_world, 1.0));
+float shadow_test(Texture2D p_shadow_map,
+                  const in vec3 p_pos_world,
+                  float p_NdotL) {
+    vec4 pos_light = mul(u_main_light_matrices, vec4(p_pos_world, 1.0));
     vec3 coords = pos_light.xyz / pos_light.w;
     coords = 0.5 * coords + 0.5;  // [0, 1]
     float current_depth = coords.z;
-    coords.x += p_level;
-    coords.x /= MAX_CASCADE_COUNT;
 
     if (current_depth > 1.0) {
         return 0.0;
@@ -95,9 +88,6 @@ float4 main(vsoutput_uv input) : SV_TARGET {
         return float4(emissive * base_color, 1.0);
     }
 
-    // @TODO: fix this
-    const int cascade_level = find_cascade(world_position);
-
     float3 N = u_gbuffer_normal_map.Sample(u_sampler, texcoord).rgb;
     float3 color = 0.5 * (N + float3(1.0, 1.0, 1.0));
 
@@ -122,7 +112,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = cascade_shadow(u_shadow_map, world_position, NdotL, cascade_level);
+                    shadow = shadow_test(u_shadow_map, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;
