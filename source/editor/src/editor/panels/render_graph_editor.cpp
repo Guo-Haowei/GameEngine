@@ -17,7 +17,7 @@ public:
 
                 mNodes.push_back(
                     {
-                        pass->getName().c_str(),
+                        pass->getNameString(),
                         0,
                         x_offset,
                         y_offset,

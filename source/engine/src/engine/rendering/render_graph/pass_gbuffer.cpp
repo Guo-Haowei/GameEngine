@@ -97,7 +97,7 @@ void RenderPassCreator::addGBufferPass() {
                                                   nearest_sampler());
 
     RenderPassDesc desc;
-    desc.name = GBUFFER_PASS;
+    desc.name = RenderPassName::GBUFFER;
     auto pass = m_graph.createPass(desc);
     auto subpass = manager.createDrawPass(DrawPassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },

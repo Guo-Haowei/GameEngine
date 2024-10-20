@@ -101,7 +101,7 @@ void RenderPassCreator::addShadowPass() {
                                                                    1 * shadow_res, shadow_res },
                                                  shadow_map_sampler());
     RenderPassDesc desc;
-    desc.name = SHADOW_PASS;
+    desc.name = RenderPassName::SHADOW;
     auto pass = m_graph.createPass(desc);
     {
         auto draw_pass = manager.createDrawPass(DrawPassDesc{

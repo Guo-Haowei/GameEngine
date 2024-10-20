@@ -323,7 +323,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
 
     {  // environment pass
         RenderPassDesc desc;
-        desc.name = ENV_PASS;
+        desc.name = RenderPassName::ENV;
         auto pass = p_graph.createPass(desc);
 
         auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
@@ -371,8 +371,8 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
                                                      nearest_sampler());
 
         RenderPassDesc desc;
-        desc.name = HIGHLIGHT_SELECT_PASS;
-        desc.dependencies = { GBUFFER_PASS };
+        desc.name = RenderPassName::HIGHLIGHT_SELECT;
+        desc.dependencies = { RenderPassName::GBUFFER };
         auto pass = p_graph.createPass(desc);
         auto subpass = manager.createDrawPass(DrawPassDesc{
             .color_attachments = { attachment },
@@ -384,8 +384,8 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
 
     {  // voxel pass
         RenderPassDesc desc;
-        desc.name = VOXELIZATION_PASS;
-        desc.dependencies = { SHADOW_PASS };
+        desc.name = RenderPassName::VOXELIZATION;
+        desc.dependencies = { RenderPassName::SHADOW };
         auto pass = p_graph.createPass(desc);
         auto subpass = manager.createDrawPass(DrawPassDesc{
             .exec_func = voxelization_pass_func,
@@ -398,8 +398,8 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
 
     {  // tone pass
         RenderPassDesc desc;
-        desc.name = TONE_PASS;
-        desc.dependencies = { BLOOM_PASS };
+        desc.name = RenderPassName::TONE;
+        desc.dependencies = { RenderPassName::BLOOM };
         auto pass = p_graph.createPass(desc);
 
         auto attachment = manager.createRenderTarget(RenderTargetDesc{ RT_RES_TONE,
@@ -418,8 +418,8 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
     {
         // final pass
         RenderPassDesc desc;
-        desc.name = FINAL_PASS;
-        desc.dependencies = { TONE_PASS };
+        desc.name = RenderPassName::FINAL;
+        desc.dependencies = { RenderPassName::TONE };
         auto pass = p_graph.createPass(desc);
         auto subpass = manager.createDrawPass(DrawPassDesc{
             .color_attachments = { final_attachment },

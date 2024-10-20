@@ -7,13 +7,12 @@ std::shared_ptr<RenderPass> RenderGraph::createPass(RenderPassDesc& p_desc) {
     render_pass->createInternal(p_desc);
     m_render_passes.emplace_back(render_pass);
 
-    const std::string& name = render_pass->m_name;
-    DEV_ASSERT(m_render_pass_lookup.find(name) == m_render_pass_lookup.end());
-    m_render_pass_lookup[name] = (int)m_render_passes.size() - 1;
+    DEV_ASSERT(m_render_pass_lookup.find(render_pass->m_name) == m_render_pass_lookup.end());
+    m_render_pass_lookup[render_pass->m_name] = (int)m_render_passes.size() - 1;
     return render_pass;
 }
 
-std::shared_ptr<RenderPass> RenderGraph::findPass(const std::string& p_name) const {
+std::shared_ptr<RenderPass> RenderGraph::findPass(RenderPassName p_name) const {
     auto it = m_render_pass_lookup.find(p_name);
     if (it == m_render_pass_lookup.end()) {
         return nullptr;
@@ -29,10 +28,10 @@ void RenderGraph::compile() {
 
     for (int pass_index = 0; pass_index < num_passes; ++pass_index) {
         const std::shared_ptr<RenderPass>& pass = m_render_passes[pass_index];
-        for (const std::string& input : pass->m_inputs) {
+        for (RenderPassName input : pass->m_inputs) {
             auto it = m_render_pass_lookup.find(input);
             if (it == m_render_pass_lookup.end()) {
-                CRASH_NOW_MSG(std::format("dependency '{}' not found", input));
+                CRASH_NOW_MSG(std::format("dependency '{}' not found", renderPassNameToString(input)));
             } else {
                 graph.add_edge(it->second, pass_index);
             }
@@ -59,7 +58,7 @@ void RenderGraph::compile() {
                 if (graph.has_edge(from, to)) {
                     const RenderPass* a = m_render_passes[from].get();
                     const RenderPass* b = m_render_passes[to].get();
-                    LOG_VERBOSE("[render graph] dependency from '{}' to '{}'", a->getName(), b->getName());
+                    LOG_VERBOSE("[render graph] dependency from '{}' to '{}'", a->getNameString(), b->getNameString());
                     m_links.push_back({ from, to });
                 }
             }

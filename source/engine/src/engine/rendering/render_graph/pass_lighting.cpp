@@ -84,17 +84,17 @@ void RenderPassCreator::addLightingPass() {
                                                           nearest_sampler());
 
     RenderPassDesc desc;
-    desc.name = LIGHTING_PASS;
+    desc.name = RenderPassName::LIGHTING;
 
-    desc.dependencies = { GBUFFER_PASS };
+    desc.dependencies = { RenderPassName::GBUFFER };
     if (m_config.enable_shadow) {
-        desc.dependencies.push_back(SHADOW_PASS);
+        desc.dependencies.push_back(RenderPassName::SHADOW);
     }
     if (m_config.enable_voxel_gi) {
-        desc.dependencies.push_back(VOXELIZATION_PASS);
+        desc.dependencies.push_back(RenderPassName::VOXELIZATION);
     }
     if (m_config.enable_ibl) {
-        desc.dependencies.push_back(ENV_PASS);
+        desc.dependencies.push_back(RenderPassName::ENV);
     }
 
     auto pass = m_graph.createPass(desc);

@@ -1,11 +1,12 @@
 #pragma once
 #include "rendering/render_graph/draw_pass.h"
+#include "rendering/render_graph/render_graph_defines.h"
 
 namespace my::rg {
 
 struct RenderPassDesc {
-    std::string name;
-    std::vector<std::string> dependencies;
+    RenderPassName name;
+    std::vector<RenderPassName> dependencies;
 };
 
 class RenderPass {
@@ -14,13 +15,14 @@ public:
 
     void execute();
 
-    const std::string& getName() const { return m_name; }
+    RenderPassName getName() const { return m_name; }
+    const char* getNameString() const { return renderPassNameToString(m_name); }
 
 protected:
     virtual void createInternal(RenderPassDesc& pass_desc);
 
-    std::string m_name;
-    std::vector<std::string> m_inputs;
+    RenderPassName m_name;
+    std::vector<RenderPassName> m_inputs;
     std::vector<std::shared_ptr<DrawPass>> m_subpasses;
 
     friend class RenderGraph;

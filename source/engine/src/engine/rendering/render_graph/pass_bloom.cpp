@@ -75,8 +75,8 @@ void RenderPassCreator::addBloomPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     RenderPassDesc desc;
-    desc.name = BLOOM_PASS;
-    desc.dependencies = { LIGHTING_PASS };
+    desc.name = RenderPassName::BLOOM;
+    desc.dependencies = { RenderPassName::LIGHTING };
     auto pass = m_graph.createPass(desc);
 
     int width = m_config.frame_width;
