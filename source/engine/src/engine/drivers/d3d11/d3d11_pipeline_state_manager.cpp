@@ -49,6 +49,10 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
     D3DIncludeHandler include_handler;
 
     uint32_t flags = D3DCOMPILE_ENABLE_STRICTNESS;
+#if _DEBUG
+    flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
     HRESULT hr = D3DCompileFromFile(
         path.c_str(),
         p_defines,

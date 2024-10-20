@@ -40,21 +40,29 @@ vec4 sampleShadow(Texture2D textureObject, vec2 offset) {
 float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float NdotL, int quality) {
     Vector4f lightSpacePos = Multiply(light.view_matrix, Vector4f(worldPos, 1.0));
     lightSpacePos = Multiply(light.projection_matrix, lightSpacePos);
+    lightSpacePos /= lightSpacePos.w;
 
-    Vector3f coords = lightSpacePos.xyz / lightSpacePos.w;
-    coords = 0.5 * coords + 0.5;
-    float currentDepth = coords.z;
+#if defined(HLSL_LANG)
+    lightSpacePos.y = -lightSpacePos.y;
+    lightSpacePos.xy = 0.5 * lightSpacePos.xy + 0.5;
+#else
+    lightSpacePos.xyz = 0.5 * lightSpacePos.xyz + 0.5;
+#endif
+
+    float currentDepth = lightSpacePos.z;
 
     float shadow = 0.0;
     Vector2f texelSize = 1.0 / Vector2f(textureSizeTexture2D(shadowMap));
 
     // @TODO: better bias
     float bias = max(0.005 * (1.0 - NdotL), 0.0005);
+    bias = 0.0;
+    quality = 0;
 
     for (int x = -quality; x <= quality; ++x) {
         for (int y = -quality; y <= quality; ++y) {
             Vector2f offset = Vector2f(x, y) * texelSize;
-            float closestDepth = sampleShadow(shadowMap, coords.xy + offset).r;
+            float closestDepth = sampleShadow(shadowMap, lightSpacePos.xy + offset).r;
             shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
         }
     }

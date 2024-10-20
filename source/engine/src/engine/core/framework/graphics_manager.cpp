@@ -18,44 +18,70 @@
 
 namespace my {
 
-/*
-@TODO: finish this
-inline void BuildPerspectiveFovRHMatrix(Matrix4X4f& matrix,
-                                                    const float fieldOfView,
-                                                    const float screenAspect,
-                                                    const float screenNear,
-                                                    const float screenDepth) {
-    Matrix4X4f perspective = {
-        { { 1.0f / (screenAspect * std::tan(fieldOfView * 0.5f)), 0.0f, 0.0f,
-            0.0f },
-          { 0.0f, 1.0f / std::tan(fieldOfView * 0.5f), 0.0f, 0.0f },
-          { 0.0f, 0.0f, screenDepth / (screenNear - screenDepth), -1.0f },
-          { 0.0f, 0.0f, (-screenNear * screenDepth) / (screenDepth - screenNear),
-            0.0f } }
-    };
-
-    matrix = perspective;
+// @TODO: refactor
+static mat4 buildPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
+    const float tan_half_fovy = glm::tan(0.5f * p_fovy);
+    mat4 Result(0.0f);
+    Result[0][0] = 1.0f / (p_aspect * tan_half_fovy);
+    Result[1][1] = 1.0f / tan_half_fovy;
+    Result[2][2] = -p_far / (p_far - p_near);
+    Result[2][3] = -1.0f;
+    Result[3][2] = -(p_far * p_near) / (p_far - p_near);
+    return Result;
 }
 
-inline void BuildOpenglPerspectiveFovRHMatrix(Matrix4X4f& matrix,
-                                              const float fieldOfView,
-                                              const float screenAspect,
-                                              const float screenNear,
-                                              const float screenDepth) {
-    Matrix4X4f perspective = {
-        { { 1.0f / (screenAspect * std::tan(fieldOfView * 0.5f)), 0.0f, 0.0f,
-            0.0f },
-          { 0.0f, 1.0f / std::tan(fieldOfView * 0.5f), 0.0f, 0.0f },
-          { 0.0f, 0.0f, (screenNear + screenDepth) / (screenNear - screenDepth),
-            -1.0f },
-          { 0.0f, 0.0f,
-            (-2.0f * screenNear * screenDepth) / (screenDepth - screenNear),
-            0.0f } }
-    };
-
-    matrix = perspective;
+static mat4 buildOpenGLPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
+    const float tan_half_fovy = glm::tan(0.5f * p_fovy);
+    mat4 Result(0.0f);
+    Result[0][0] = 1.0f / (p_aspect * tan_half_fovy);
+    Result[1][1] = 1.0f / tan_half_fovy;
+    Result[2][2] = -(p_far + p_near) / (p_far - p_near);
+    Result[2][3] = -1.0f;
+    Result[3][2] = -(2.0f * p_far * p_near) / (p_far - p_near);
+    return Result;
 }
-*/
+
+static mat4 buildOrthoRHMatrix(const float p_left,
+                               const float p_right,
+                               const float p_bottom,
+                               const float p_top,
+                               const float p_near,
+                               const float p_far) {
+
+    const float reciprocal_width = 1.0f / (p_right - p_left);
+    const float reciprocal_height = 1.0f / (p_top - p_bottom);
+    const float reciprocal_depth = 1.0f / (p_far - p_near);
+
+    mat4 result(1.0f);
+    result[0][0] = 2.0f * reciprocal_width;
+    result[1][1] = 2.0f * reciprocal_height;
+    result[2][2] = -1.0f * reciprocal_depth;
+    result[3][0] = -(p_right + p_left) * reciprocal_width;
+    result[3][1] = -(p_top + p_bottom) * reciprocal_height;
+    result[3][2] = -p_near * reciprocal_depth;
+    return result;
+}
+
+static mat4 buildOpenGLOrthoRHMatrix(const float p_left,
+                                     const float p_right,
+                                     const float p_bottom,
+                                     const float p_top,
+                                     const float p_near,
+                                     const float p_far) {
+
+    const float reciprocal_width = 1.0f / (p_right - p_left);
+    const float reciprocal_height = 1.0f / (p_top - p_bottom);
+    const float reciprocal_depth = 1.0f / (p_far - p_near);
+
+    mat4 result(1.0f);
+    result[0][0] = 2.0f * reciprocal_width;
+    result[1][1] = 2.0f * reciprocal_height;
+    result[2][2] = -2.0f * reciprocal_depth;
+    result[3][0] = -(p_right + p_left) * reciprocal_width;
+    result[3][1] = -(p_top + p_bottom) * reciprocal_height;
+    result[3][2] = -(p_far + p_near) * reciprocal_depth;
+    return result;
+}
 
 template<typename T>
 static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
@@ -357,19 +383,6 @@ void GraphicsManager::cleanup() {
     voxel_pass.draws.clear();
 }
 
-// @TODO: refactor
-static void light_space_matrix_world(const AABB& p_world_bound, const mat4& p_light_matrix, mat4& p_out_view_matrix, mat4& p_out_projection_matrix) {
-    const vec3 center = p_world_bound.center();
-    const vec3 extents = p_world_bound.size();
-    const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
-
-    vec3 light_dir = glm::normalize(p_light_matrix * vec4(0, 0, 1, 0));
-    vec3 light_up = glm::normalize(p_light_matrix * vec4(0, -1, 0, 0));
-
-    p_out_view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
-    p_out_projection_matrix = glm::ortho(-size, size, -size, size, -size, 3.0f * size);
-}
-
 void GraphicsManager::updateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
 
@@ -440,15 +453,22 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
-                light_space_matrix_world(p_scene.getBound(), light_local_matrix, light.view_matrix, light.projection_matrix);
-                mat4 light_space_matrix = light.projection_matrix * light.view_matrix;
-                Frustum light_frustum(light_space_matrix);
+                const AABB& world_bound = p_scene.getBound();
+                const vec3 center = world_bound.center();
+                const vec3 extents = world_bound.size();
+                const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
 
-                // @TODO: fix this
-                mat4 fixup = mat4(1.0f);
-                if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
-                    fixup = mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 0.5, 0 }, { 0, 0, 0, 1 }) * mat4({ 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 });
+                vec3 light_up = glm::normalize(light_local_matrix * vec4(0, -1, 0, 0));
+
+                light.view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
+
+                if (getBackend() == Backend::OPENGL) {
+                    light.projection_matrix = buildOpenGLOrthoRHMatrix(-size, size, -size, size, -size, 3.0f * size);
+                } else {
+                    light.projection_matrix = buildOrthoRHMatrix(-size, size, -size, size, -size, 3.0f * size);
                 }
+
+                mat4 light_space_matrix = light.projection_matrix * light.view_matrix;
 
                 PerPassConstantBuffer pass_constant;
                 // @TODO: Build correct matrices
@@ -457,14 +477,17 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 shadow_passes[0].pass_idx = static_cast<int>(m_context.pass_cache.size());
                 m_context.pass_cache.emplace_back(pass_constant);
 
+                // Frustum light_frustum(light_space_matrix);
                 fillPass(
                     p_scene,
                     shadow_passes[0],
-                    [](const ObjectComponent& object) {
-                        return object.flags & ObjectComponent::CAST_SHADOW;
+                    [](const ObjectComponent& p_object) {
+                        return p_object.flags & ObjectComponent::CAST_SHADOW;
                     },
-                    [&](const AABB& aabb) {
-                        return light_frustum.intersects(aabb);
+                    [&](const AABB& p_aabb) {
+                        unused(p_aabb);
+                        // return light_frustum.intersects(aabb);
+                        return true;
                     });
             } break;
             case LIGHT_TYPE_POINT: {
@@ -536,8 +559,16 @@ void GraphicsManager::updateMainPass(const Scene& p_scene) {
 
     // main pass
     PerPassConstantBuffer pass_constant;
-    pass_constant.g_projection_matrix = camera.getProjectionMatrix();
     pass_constant.g_view_matrix = camera.getViewMatrix();
+
+    const float fovy = camera.getFovy().toRad();
+    const float aspect = camera.getAspect();
+    if (getBackend() == Backend::OPENGL) {
+        pass_constant.g_projection_matrix = buildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+    } else {
+        pass_constant.g_projection_matrix = buildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+    }
+
     main_pass.pass_idx = static_cast<int>(m_context.pass_cache.size());
     m_context.pass_cache.emplace_back(pass_constant);
 
