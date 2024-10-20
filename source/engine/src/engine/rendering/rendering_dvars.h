@@ -22,7 +22,7 @@ DVAR_INT(r_debug_vxgi_voxel, DVAR_FLAG_CACHE, "", 0);
 
 // shadow
 DVAR_INT(r_point_shadow_res, 0, "Point shadow resolution", 1024);
-DVAR_INT(r_shadow_res, 0, "Shadow resolution", 1024 * 4);
+DVAR_INT(r_shadow_res, 0, "Shadow resolution", 1024 * 2);
 
 // Bloom
 DVAR_BOOL(r_enable_bloom, DVAR_FLAG_NONE, "Enable Bloom", true);

@@ -112,10 +112,13 @@ int Application::run(int argc, const char** argv) {
     LOG_WARN("TODO: make camera a component");
     LOG_WARN("TODO: refactor render graph");
 
-    LOG_WARN("TODO: use lua to construct scene");
     LOG_ERROR("TODO: path tracer here");
     LOG_ERROR("TODO: cloth physics");
     LOG_ERROR("TODO: reverse z");
+
+    LOG_OK("TODO: D3D11 shadow");
+    LOG_OK("TODO: D3D11 bloom");
+    LOG_OK("TODO: particles");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
