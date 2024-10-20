@@ -5,17 +5,16 @@ namespace my {
 
 struct Subpass;
 
-using SubPassFunc = void (*)(const Subpass*);
+using SubpassExecuteFunc = void (*)(const Subpass*);
 
 struct SubpassDesc {
     std::vector<std::shared_ptr<RenderTarget>> color_attachments;
     std::shared_ptr<RenderTarget> depth_attachment;
-    SubPassFunc func = nullptr;
+    SubpassExecuteFunc exec_func = nullptr;
 };
 
-// @TODO: subpass is more like render target, rename the concept later
 struct Subpass {
-    SubPassFunc func;
+    SubpassExecuteFunc exec_func;
     std::vector<std::shared_ptr<RenderTarget>> color_attachments;
     std::shared_ptr<RenderTarget> depth_attachment;
 };

@@ -102,7 +102,7 @@ void RenderPassCreator::addGBufferPass() {
     auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
         .depth_attachment = gbuffer_depth,
-        .func = gbufferPassFunc,
+        .exec_func = gbufferPassFunc,
     });
     pass->addSubpass(subpass);
 }

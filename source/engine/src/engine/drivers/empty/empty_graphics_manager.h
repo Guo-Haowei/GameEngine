@@ -17,6 +17,8 @@ public:
     void setStencilRef(uint32_t p_ref) override {}
 
     void setRenderTarget(const Subpass* p_subpass, int p_index, int p_mip_level) override {}
+    void unsetRenderTarget() override {}
+
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) override {}
     void setViewport(const Viewport& p_viewport) override {}
 

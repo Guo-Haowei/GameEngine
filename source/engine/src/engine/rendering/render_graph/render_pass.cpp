@@ -15,7 +15,7 @@ void RenderPass::createInternal(RenderPassDesc& p_desc) {
 
 void RenderPass::execute() {
     for (auto& subpass : m_subpasses) {
-        subpass->func(subpass.get());
+        subpass->exec_func(subpass.get());
     }
 }
 

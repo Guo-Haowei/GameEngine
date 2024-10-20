@@ -3,7 +3,7 @@
 
 namespace my {
 
-enum Dimension : uint32_t {
+enum class Dimension : uint32_t {
     TEXTURE_2D,
     TEXTURE_3D,
     TEXTURE_2D_ARRAY,

@@ -419,7 +419,7 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc&
 
 std::shared_ptr<Subpass> OpenGLGraphicsManager::createSubpass(const SubpassDesc& p_desc) {
     auto subpass = std::make_shared<OpenGLSubpass>();
-    subpass->func = p_desc.func;
+    subpass->exec_func = p_desc.exec_func;
     subpass->color_attachments = p_desc.color_attachments;
     subpass->depth_attachment = p_desc.depth_attachment;
     GLuint fbo_handle = 0;
@@ -535,6 +535,10 @@ void OpenGLGraphicsManager::setRenderTarget(const Subpass* p_subpass, int p_inde
     }
 
     return;
+}
+
+void OpenGLGraphicsManager::unsetRenderTarget() {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // @TODO: refactor this, instead off iterate through all the meshes, find a better way

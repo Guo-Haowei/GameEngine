@@ -96,7 +96,7 @@ void RenderPassCreator::addBloomPass() {
 
     auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = {},
-        .func = downSampleFunc,
+        .exec_func = downSampleFunc,
     });
     pass->addSubpass(subpass);
 }

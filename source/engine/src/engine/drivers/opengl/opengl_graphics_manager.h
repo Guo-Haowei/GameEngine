@@ -20,6 +20,8 @@ public:
     void setStencilRef(uint32_t p_ref) final;
 
     void setRenderTarget(const Subpass* p_subpass, int p_index, int p_mip_level) final;
+    void unsetRenderTarget() final;
+
     void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
     void setViewport(const Viewport& p_viewport) final;
 

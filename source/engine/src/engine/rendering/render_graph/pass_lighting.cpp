@@ -43,6 +43,7 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
     bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
     bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
+    //bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
 
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
@@ -68,6 +69,7 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, u_shadow_map_slot);
 }
 
 void RenderPassCreator::addLightingPass() {
@@ -99,7 +101,7 @@ void RenderPassCreator::addLightingPass() {
     auto subpass = manager.createSubpass(SubpassDesc{
         .color_attachments = { lighting_attachment },
         .depth_attachment = gbuffer_depth,
-        .func = lightingPassFunc,
+        .exec_func = lightingPassFunc,
     });
     pass->addSubpass(subpass);
 }

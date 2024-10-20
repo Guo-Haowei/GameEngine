@@ -308,7 +308,7 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
 
 std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& p_subpass_desc) {
     auto subpass = std::make_shared<D3d11Subpass>();
-    subpass->func = p_subpass_desc.func;
+    subpass->exec_func = p_subpass_desc.exec_func;
     subpass->color_attachments = p_subpass_desc.color_attachments;
     subpass->depth_attachment = p_subpass_desc.depth_attachment;
 
@@ -390,6 +390,11 @@ void D3d11GraphicsManager::setRenderTarget(const Subpass* p_subpass, int p_index
 
     ID3D11DepthStencilView* dsv = subpass->dsv.Get();
     m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
+}
+
+void D3d11GraphicsManager::unsetRenderTarget() {
+    ID3D11RenderTargetView* rtv = nullptr;
+    m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
 }
 
 void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {

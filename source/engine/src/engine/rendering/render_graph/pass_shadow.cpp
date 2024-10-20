@@ -63,19 +63,6 @@ static void shadowPassFunc(const Subpass* p_subpass) {
 
     gm.clear(p_subpass, CLEAR_DEPTH_BIT);
 
-    // @TODO: refactor pass to auto bind resources,
-    // and make it a class so don't do a map search every frame
-    auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(name);
-        if (!resource) {
-            return;
-        }
-
-        gm.bindTexture(p_dimension, resource->texture->get_handle(), slot);
-    };
-
-    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
-
     Viewport viewport{ width, height };
     gm.setViewport(viewport);
 
@@ -96,6 +83,8 @@ static void shadowPassFunc(const Subpass* p_subpass) {
         gm.setMesh(draw.mesh_data);
         gm.drawElements(draw.mesh_data->index_count);
     }
+
+    gm.unsetRenderTarget();
 }
 
 void RenderPassCreator::addShadowPass() {
@@ -114,9 +103,16 @@ void RenderPassCreator::addShadowPass() {
     RenderPassDesc desc;
     desc.name = SHADOW_PASS;
     auto pass = m_graph.createPass(desc);
+    {
+        auto subpass = manager.createSubpass(SubpassDesc{
+            .depth_attachment = shadow_map,
+            .exec_func = shadowPassFunc,
+        });
+        pass->addSubpass(subpass);
+    }
 
     // @TODO: refactor
-    SubPassFunc funcs[] = {
+    SubpassExecuteFunc funcs[] = {
         [](const Subpass* p_subpass) {
             pointShadowPassFunc(p_subpass, 0);
         },
@@ -143,17 +139,11 @@ void RenderPassCreator::addShadowPass() {
 
             auto subpass = manager.createSubpass(SubpassDesc{
                 .depth_attachment = point_shadow_map,
-                .func = funcs[i],
+                .exec_func = funcs[i],
             });
             pass->addSubpass(subpass);
         }
     }
-
-    auto subpass = manager.createSubpass(SubpassDesc{
-        .depth_attachment = shadow_map,
-        .func = shadowPassFunc,
-    });
-    pass->addSubpass(subpass);
 }
 
 }  // namespace my::rg

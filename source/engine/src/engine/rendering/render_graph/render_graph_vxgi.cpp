@@ -326,7 +326,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         desc.name = ENV_PASS;
         auto pass = p_graph.createPass(desc);
 
-        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubPassFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
+        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubpassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.createRenderTarget(RenderTargetDesc{ cube_map_name,
                                                                          PixelFormat::R16G16B16_FLOAT,
                                                                          AttachmentType::COLOR_CUBE_MAP,
@@ -341,7 +341,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
             auto subpass = manager.createSubpass(SubpassDesc{
                 .color_attachments = { cube_map },
                 .depth_attachment = depth_map,
-                .func = p_func,
+                .exec_func = p_func,
             });
             return subpass;
         };
@@ -350,7 +350,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
                                                      linear_clamp_sampler());
         auto brdf_subpass = manager.createSubpass(SubpassDesc{
             .color_attachments = { brdf_image },
-            .func = generate_brdf_func,
+            .exec_func = generate_brdf_func,
         });
 
         pass->addSubpass(brdf_subpass);
@@ -377,7 +377,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         auto subpass = manager.createSubpass(SubpassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
-            .func = highlight_select_pass_func,
+            .exec_func = highlight_select_pass_func,
         });
         pass->addSubpass(subpass);
     }
@@ -388,7 +388,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         desc.dependencies = { SHADOW_PASS };
         auto pass = p_graph.createPass(desc);
         auto subpass = manager.createSubpass(SubpassDesc{
-            .func = voxelization_pass_func,
+            .exec_func = voxelization_pass_func,
         });
         pass->addSubpass(subpass);
     }
@@ -411,7 +411,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         auto subpass = manager.createSubpass(SubpassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
-            .func = tone_pass_func,
+            .exec_func = tone_pass_func,
         });
         pass->addSubpass(subpass);
     }
@@ -423,7 +423,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         auto pass = p_graph.createPass(desc);
         auto subpass = manager.createSubpass(SubpassDesc{
             .color_attachments = { final_attachment },
-            .func = final_pass_func,
+            .exec_func = final_pass_func,
         });
         pass->addSubpass(subpass);
     }

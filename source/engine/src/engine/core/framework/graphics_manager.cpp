@@ -136,7 +136,6 @@ bool GraphicsManager::initialize() {
     };
 
     // bind common textures
-    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
     bind_slot(RT_RES_HIGHLIGHT_SELECT, u_selection_highlight_slot);
     bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
     bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);

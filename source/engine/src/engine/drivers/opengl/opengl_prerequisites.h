@@ -181,13 +181,13 @@ inline void set_sampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
 
 inline GLenum convert_dimension(Dimension p_dimension) {
     switch (p_dimension) {
-        case my::TEXTURE_2D:
+        case Dimension::TEXTURE_2D:
             return GL_TEXTURE_2D;
-        case my::TEXTURE_3D:
+        case Dimension::TEXTURE_3D:
             return GL_TEXTURE_3D;
-        case my::TEXTURE_2D_ARRAY:
+        case Dimension::TEXTURE_2D_ARRAY:
             return GL_TEXTURE_2D_ARRAY;
-        case my::TEXTURE_CUBE:
+        case Dimension::TEXTURE_CUBE:
             return GL_TEXTURE_CUBE_MAP;
         default:
             CRASH_NOW();
