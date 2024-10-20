@@ -4,7 +4,7 @@
 #define OPENGL_RESOURCES_INCLUDED
 
 #include "drivers/opengl/opengl_prerequisites.h"
-#include "rendering/render_graph/subpass.h"
+#include "rendering/render_graph/draw_pass.h"
 #include "rendering/texture.h"
 #include "rendering/uniform_buffer.h"
 
@@ -34,7 +34,7 @@ struct OpenGLTexture : public Texture {
     uint64_t resident_handle = 0;
 };
 
-struct OpenGLSubpass : public Subpass {
+struct OpenGLSubpass : public DrawPass {
     ~OpenGLSubpass() {
         clear();
     }

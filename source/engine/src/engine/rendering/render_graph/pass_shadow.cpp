@@ -5,7 +5,7 @@
 
 namespace my::rg {
 
-static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
+static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
@@ -17,7 +17,7 @@ static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
     }
 
     // prepare render data
-    auto [width, height] = p_subpass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
     // @TODO: instead of render the same object 6 times
     // set up different object list for different pass
@@ -30,8 +30,8 @@ static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
         g_point_shadow_cache.cache.g_point_light_far = pass.light_component.getMaxDistance();
         g_point_shadow_cache.update();
 
-        gm.setRenderTarget(p_subpass, i);
-        gm.clear(p_subpass, CLEAR_DEPTH_BIT);
+        gm.setRenderTarget(p_draw_pass, i);
+        gm.clear(p_draw_pass, CLEAR_DEPTH_BIT);
 
         Viewport viewport{ width, height };
         gm.setViewport(viewport);
@@ -52,29 +52,16 @@ static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
     }
 }
 
-static void shadowPassFunc(const Subpass* p_subpass) {
+static void shadowPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
     auto& ctx = gm.getContext();
 
-    gm.setRenderTarget(p_subpass);
-    auto [width, height] = p_subpass->depth_attachment->getSize();
+    gm.setRenderTarget(p_draw_pass);
+    auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
-    gm.clear(p_subpass, CLEAR_DEPTH_BIT);
-
-    // @TODO: refactor pass to auto bind resources,
-    // and make it a class so don't do a map search every frame
-    auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(name);
-        if (!resource) {
-            return;
-        }
-
-        gm.bindTexture(p_dimension, resource->texture->get_handle(), slot);
-    };
-
-    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
+    gm.clear(p_draw_pass, CLEAR_DEPTH_BIT);
 
     Viewport viewport{ width, height };
     gm.setViewport(viewport);
@@ -96,6 +83,8 @@ static void shadowPassFunc(const Subpass* p_subpass) {
         gm.setMesh(draw.mesh_data);
         gm.drawElements(draw.mesh_data->index_count);
     }
+
+    gm.unsetRenderTarget();
 }
 
 void RenderPassCreator::addShadowPass() {
@@ -106,28 +95,35 @@ void RenderPassCreator::addShadowPass() {
     const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
     DEV_ASSERT(math::isPowerOfTwo(point_shadow_res));
 
-    auto shadow_map = manager.createRenderTarget(RenderTargetDesc{ RT_RES_SHADOW_MAP,
+    auto shadow_map = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_SHADOW_MAP,
                                                                    PixelFormat::D32_FLOAT,
                                                                    AttachmentType::SHADOW_2D,
                                                                    1 * shadow_res, shadow_res },
                                                  shadow_map_sampler());
     RenderPassDesc desc;
-    desc.name = SHADOW_PASS;
+    desc.name = RenderPassName::SHADOW;
     auto pass = m_graph.createPass(desc);
+    {
+        auto draw_pass = manager.createDrawPass(DrawPassDesc{
+            .depth_attachment = shadow_map,
+            .exec_func = shadowPassFunc,
+        });
+        pass->addDrawPass(draw_pass);
+    }
 
     // @TODO: refactor
-    SubPassFunc funcs[] = {
-        [](const Subpass* p_subpass) {
-            pointShadowPassFunc(p_subpass, 0);
+    DrawPassExecuteFunc funcs[] = {
+        [](const DrawPass* p_draw_pass) {
+            pointShadowPassFunc(p_draw_pass, 0);
         },
-        [](const Subpass* p_subpass) {
-            pointShadowPassFunc(p_subpass, 1);
+        [](const DrawPass* p_draw_pass) {
+            pointShadowPassFunc(p_draw_pass, 1);
         },
-        [](const Subpass* p_subpass) {
-            pointShadowPassFunc(p_subpass, 2);
+        [](const DrawPass* p_draw_pass) {
+            pointShadowPassFunc(p_draw_pass, 2);
         },
-        [](const Subpass* p_subpass) {
-            pointShadowPassFunc(p_subpass, 3);
+        [](const DrawPass* p_draw_pass) {
+            pointShadowPassFunc(p_draw_pass, 3);
         },
     };
 
@@ -135,25 +131,19 @@ void RenderPassCreator::addShadowPass() {
 
     if (manager.getBackend() == Backend::OPENGL) {
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-            auto point_shadow_map = manager.createRenderTarget(RenderTargetDesc{ RT_RES_POINT_SHADOW_MAP + std::to_string(i),
+            auto point_shadow_map = manager.createRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
                                                                                  PixelFormat::D32_FLOAT,
                                                                                  AttachmentType::SHADOW_CUBE_MAP,
                                                                                  point_shadow_res, point_shadow_res },
                                                                shadow_cube_map_sampler());
 
-            auto subpass = manager.createSubpass(SubpassDesc{
+            auto draw_pass = manager.createDrawPass(DrawPassDesc{
                 .depth_attachment = point_shadow_map,
-                .func = funcs[i],
+                .exec_func = funcs[i],
             });
-            pass->addSubpass(subpass);
+            pass->addDrawPass(draw_pass);
         }
     }
-
-    auto subpass = manager.createSubpass(SubpassDesc{
-        .depth_attachment = shadow_map,
-        .func = shadowPassFunc,
-    });
-    pass->addSubpass(subpass);
 }
 
 }  // namespace my::rg

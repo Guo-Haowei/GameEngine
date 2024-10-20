@@ -6,7 +6,7 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 
-#include "rendering/render_graph/subpass.h"
+#include "rendering/render_graph/draw_pass.h"
 #include "rendering/texture.h"
 
 namespace my {
@@ -21,7 +21,7 @@ struct D3d11Texture : public Texture {
     Microsoft::WRL::ComPtr<ID3D11Resource> texture;
 };
 
-struct D3d11Subpass : public Subpass {
+struct D3d11DrawPass : public DrawPass {
     std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
 };

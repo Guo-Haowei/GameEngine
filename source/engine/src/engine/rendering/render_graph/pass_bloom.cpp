@@ -12,14 +12,14 @@ static int divideAndRoundup(int p_dividend, int p_divisor) {
     return (p_dividend + p_divisor - 1) / p_divisor;
 }
 
-static void downSampleFunc(const Subpass*) {
+static void downSampleFunc(const DrawPass*) {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     // Step 1, select pixels contribute to bloom
     {
         manager.setPipelineState(PROGRAM_BLOOM_SETUP);
-        auto input = manager.findRenderTarget(RT_RES_LIGHTING);
-        auto output = manager.findRenderTarget(RT_RES_BLOOM "_0");
+        auto input = manager.findRenderTarget(RESOURCE_LIGHTING);
+        auto output = manager.findRenderTarget(RESOURCE_BLOOM_0);
 
         auto [width, height] = input->getSize();
         const uint32_t work_group_x = divideAndRoundup(width, 16);
@@ -36,8 +36,9 @@ static void downSampleFunc(const Subpass*) {
     // Step 2, down sampling
     manager.setPipelineState(PROGRAM_BLOOM_DOWNSAMPLE);
     for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
-        auto input = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i - 1));
-        auto output = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i));
+        auto input = manager.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        auto output = manager.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+
         DEV_ASSERT(input && output);
 
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
@@ -55,8 +56,8 @@ static void downSampleFunc(const Subpass*) {
     // Step 3, up sampling
     manager.setPipelineState(PROGRAM_BLOOM_UPSAMPLE);
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i));
-        auto output = manager.findRenderTarget(std::format("{}_{}", RT_RES_BLOOM, i - 1));
+        auto input = manager.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = manager.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
@@ -75,8 +76,8 @@ void RenderPassCreator::addBloomPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     RenderPassDesc desc;
-    desc.name = BLOOM_PASS;
-    desc.dependencies = { LIGHTING_PASS };
+    desc.name = RenderPassName::BLOOM;
+    desc.dependencies = { RenderPassName::LIGHTING };
     auto pass = m_graph.createPass(desc);
 
     int width = m_config.frame_width;
@@ -87,18 +88,18 @@ void RenderPassCreator::addBloomPass() {
 
         LOG_WARN("bloom size {}x{}", width, height);
 
-        auto attachment = manager.createRenderTarget(RenderTargetDesc{ std::format("{}_{}", RT_RES_BLOOM, i),
+        auto attachment = manager.createRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
                                                                        PixelFormat::R11G11B10_FLOAT,
                                                                        AttachmentType::COLOR_2D,
                                                                        width, height },
                                                      linear_clamp_sampler());
     }
 
-    auto subpass = manager.createSubpass(SubpassDesc{
+    auto draw_pass = manager.createDrawPass(DrawPassDesc{
         .color_attachments = {},
-        .func = downSampleFunc,
+        .exec_func = downSampleFunc,
     });
-    pass->addSubpass(subpass);
+    pass->addDrawPass(draw_pass);
 }
 
 }  // namespace my::rg

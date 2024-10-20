@@ -126,22 +126,21 @@ bool GraphicsManager::initialize() {
         return false;
     }
 
-    auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = findRenderTarget(name);
+    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
+        std::shared_ptr<RenderTarget> resource = findRenderTarget(p_name);
         if (!resource) {
             return;
         }
 
-        bindTexture(p_dimension, resource->texture->get_handle(), slot);
+        bindTexture(p_dimension, resource->texture->get_handle(), p_slot);
     };
 
     // bind common textures
-    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
-    bind_slot(RT_RES_HIGHLIGHT_SELECT, u_selection_highlight_slot);
-    bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
-    bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
-    bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
-    bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RESOURCE_HIGHLIGHT_SELECT, u_selection_highlight_slot);
+    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
+    bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
+    bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
+    bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
 
     return true;
 }
@@ -295,12 +294,12 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
     return resource;
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::findRenderTarget(const std::string& name) const {
+std::shared_ptr<RenderTarget> GraphicsManager::findRenderTarget(RenderTargetResourceName p_name) const {
     if (m_resource_lookup.empty()) {
         return nullptr;
     }
 
-    auto it = m_resource_lookup.find(name);
+    auto it = m_resource_lookup.find(p_name);
     if (it == m_resource_lookup.end()) {
         return nullptr;
     }
@@ -311,10 +310,10 @@ uint64_t GraphicsManager::getFinalImage() const {
     const Texture* texture = nullptr;
     switch (m_method) {
         case RenderGraph::VXGI:
-            texture = findRenderTarget(RT_RES_FINAL)->texture.get();
+            texture = findRenderTarget(RESOURCE_FINAL)->texture.get();
             break;
         case RenderGraph::DEFAULT:
-            texture = findRenderTarget(RT_RES_LIGHTING)->texture.get();
+            texture = findRenderTarget(RESOURCE_LIGHTING)->texture.get();
             break;
         default:
             CRASH_NOW();
@@ -500,7 +499,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 light.cast_shadow = cast_shadow;
                 light.max_distance = light_component.getMaxDistance();
                 if (cast_shadow && shadow_map_index != INVALID_POINT_SHADOW_HANDLE) {
-                    auto resource = GraphicsManager::singleton().findRenderTarget(RT_RES_POINT_SHADOW_MAP + std::to_string(shadow_map_index));
+                    auto resource = GraphicsManager::singleton().findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + shadow_map_index));
                     light.shadow_map = resource ? resource->texture->get_resident_handle() : 0;
 
                     auto pass = std::make_unique<PassContext>();

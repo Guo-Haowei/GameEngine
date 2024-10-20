@@ -246,21 +246,23 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
     PixelFormat format = p_texture_desc.format;
     DXGI_FORMAT texture_format = convert(format);
     DXGI_FORMAT srv_format = convert(format);
+    bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
+
+    // @TODO: refactor this part
     if (format == PixelFormat::D32_FLOAT) {
         texture_format = DXGI_FORMAT_R32_TYPELESS;
         srv_format = DXGI_FORMAT_R32_FLOAT;
+        gen_mip_map = false;
     }
     if (format == PixelFormat::D24_UNORM_S8_UINT) {
         texture_format = DXGI_FORMAT_R24G8_TYPELESS;
     }
 
-    const bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
-
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
-    // texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mip_levels;
-    texture_desc.MipLevels = 0;
+    texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mip_levels;
+    // texture_desc.MipLevels = 0;
     texture_desc.ArraySize = p_texture_desc.array_size;
     texture_desc.Format = texture_format;
     texture_desc.SampleDesc = { 1, 0 };
@@ -306,11 +308,11 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
     return gpu_texture;
 }
 
-std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& p_subpass_desc) {
-    auto subpass = std::make_shared<D3d11Subpass>();
-    subpass->func = p_subpass_desc.func;
-    subpass->color_attachments = p_subpass_desc.color_attachments;
-    subpass->depth_attachment = p_subpass_desc.depth_attachment;
+std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDesc& p_subpass_desc) {
+    auto draw_pass = std::make_shared<D3d11DrawPass>();
+    draw_pass->exec_func = p_subpass_desc.exec_func;
+    draw_pass->color_attachments = p_subpass_desc.color_attachments;
+    draw_pass->depth_attachment = p_subpass_desc.depth_attachment;
 
     for (const auto& color_attachment : p_subpass_desc.color_attachments) {
         auto texture = reinterpret_cast<const D3d11Texture*>(color_attachment->texture.get());
@@ -320,7 +322,7 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
                 D3D_FAIL_V_MSG(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()),
                                nullptr,
                                "Failed to create render target view");
-                subpass->rtvs.emplace_back(rtv);
+                draw_pass->rtvs.emplace_back(rtv);
             } break;
             default:
                 CRASH_NOW();
@@ -328,7 +330,7 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
         }
     }
 
-    if (auto& depth_attachment = subpass->depth_attachment; depth_attachment) {
+    if (auto& depth_attachment = draw_pass->depth_attachment; depth_attachment) {
         auto texture = reinterpret_cast<const D3d11Texture*>(depth_attachment->texture.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
@@ -341,7 +343,7 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
                 D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
                                nullptr,
                                "Failed to create depth stencil view");
-                subpass->dsv = dsv;
+                draw_pass->dsv = dsv;
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -353,7 +355,7 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
                 D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
                                nullptr,
                                "Failed to create depth stencil view");
-                subpass->dsv = dsv;
+                draw_pass->dsv = dsv;
             } break;
             case AttachmentType::SHADOW_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -365,7 +367,7 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
                 D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
                                nullptr,
                                "Failed to create depth stencil view");
-                subpass->dsv = dsv;
+                draw_pass->dsv = dsv;
             } break;
             default:
                 CRASH_NOW();
@@ -373,27 +375,32 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
         }
     }
 
-    return subpass;
+    return draw_pass;
 }
 
-void D3d11GraphicsManager::setRenderTarget(const Subpass* p_subpass, int p_index, int p_mip_level) {
+void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_index);
     unused(p_mip_level);
 
-    auto subpass = reinterpret_cast<const D3d11Subpass*>(p_subpass);
+    auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 
     // @TODO: fixed_vector
     std::vector<ID3D11RenderTargetView*> rtvs;
-    for (auto& rtv : subpass->rtvs) {
+    for (auto& rtv : draw_pass->rtvs) {
         rtvs.push_back(rtv.Get());
     }
 
-    ID3D11DepthStencilView* dsv = subpass->dsv.Get();
+    ID3D11DepthStencilView* dsv = draw_pass->dsv.Get();
     m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 
-void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
-    auto subpass = reinterpret_cast<const D3d11Subpass*>(p_subpass);
+void D3d11GraphicsManager::unsetRenderTarget() {
+    ID3D11RenderTargetView* rtv = nullptr;
+    m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
+}
+
+void D3d11GraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color) {
+    auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 
     if (p_flags & CLEAR_COLOR_BIT) {
         float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -404,7 +411,7 @@ void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, flo
             clear_color[3] = p_clear_color[3];
         }
 
-        for (auto& rtv : subpass->rtvs) {
+        for (auto& rtv : draw_pass->rtvs) {
             m_ctx->ClearRenderTargetView(rtv.Get(), clear_color);
         }
     }
@@ -418,7 +425,7 @@ void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, flo
     }
     if (clear_flags) {
         // @TODO: configure clear depth
-        m_ctx->ClearDepthStencilView(subpass->dsv.Get(), clear_flags, 1.0f, 0);
+        m_ctx->ClearDepthStencilView(draw_pass->dsv.Get(), clear_flags, 1.0f, 0);
     }
 }
 

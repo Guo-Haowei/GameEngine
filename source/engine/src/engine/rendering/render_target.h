@@ -1,5 +1,6 @@
 #pragma once
 #include "rendering/pixel_format.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/texture.h"
 
 namespace my {
@@ -14,14 +15,14 @@ enum class AttachmentType {
 };
 
 struct RenderTargetDesc {
-    std::string name;
+    RenderTargetResourceName name;
     PixelFormat format;
     AttachmentType type;
     int width;
     int height;
     bool gen_mipmap;
 
-    RenderTargetDesc(const std::string& p_name, PixelFormat p_format, AttachmentType p_type, int p_width, int p_height, bool p_gen_mipmap = false)
+    RenderTargetDesc(RenderTargetResourceName p_name, PixelFormat p_format, AttachmentType p_type, int p_width, int p_height, bool p_gen_mipmap = false)
         : name(p_name), format(p_format), type(p_type), width(p_width), height(p_height), gen_mipmap(p_gen_mipmap) {
     }
 };

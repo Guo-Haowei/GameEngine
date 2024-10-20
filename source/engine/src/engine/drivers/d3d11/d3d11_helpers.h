@@ -31,13 +31,13 @@ void set_debug_name(ID3D11DeviceChild* p_resource, const std::string& p_name);
 
 inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
     switch (p_dimension) {
-        case my::TEXTURE_2D:
+        case Dimension::TEXTURE_2D:
             return D3D_SRV_DIMENSION_TEXTURE2D;
-        case my::TEXTURE_3D:
+        case Dimension::TEXTURE_3D:
             return D3D_SRV_DIMENSION_TEXTURE3D;
-        case my::TEXTURE_2D_ARRAY:
+        case Dimension::TEXTURE_2D_ARRAY:
             return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
-        case my::TEXTURE_CUBE:
+        case Dimension::TEXTURE_CUBE:
             return D3D_SRV_DIMENSION_TEXTURECUBE;
         default:
             CRASH_NOW();
