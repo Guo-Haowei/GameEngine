@@ -10,18 +10,11 @@
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "rendering/GpuTexture.h"
-extern GpuTexture g_albedoVoxel;
-extern GpuTexture g_normalVoxel;
-// @TODO: add as a object
-extern OpenGLMeshBuffers* g_box;
 
 // @TODO: refactor
-void fill_camera_matrices(PerPassConstantBuffer& buffer) {
-    auto camera = my::SceneManager::singleton().getScene().m_camera;
-    buffer.g_view_matrix = camera->getViewMatrix();
-    buffer.g_projection_matrix = camera->getProjectionMatrix();
-}
-// @TODO: fix
+extern GpuTexture g_albedoVoxel;
+extern GpuTexture g_normalVoxel;
+extern OpenGLMeshBuffers* g_box;
 
 namespace my::rg {
 

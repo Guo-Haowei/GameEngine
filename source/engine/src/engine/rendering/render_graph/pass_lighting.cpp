@@ -7,9 +7,6 @@
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 
-// @TODO: refactor
-extern void fill_camera_matrices(PerPassConstantBuffer& p_buffer);
-
 namespace my::rg {
 
 static void lightingPassFunc(const DrawPass* p_draw_pass) {

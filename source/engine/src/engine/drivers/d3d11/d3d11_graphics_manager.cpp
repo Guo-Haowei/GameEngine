@@ -246,21 +246,23 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
     PixelFormat format = p_texture_desc.format;
     DXGI_FORMAT texture_format = convert(format);
     DXGI_FORMAT srv_format = convert(format);
+    bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
+
+    // @TODO: refactor this part
     if (format == PixelFormat::D32_FLOAT) {
         texture_format = DXGI_FORMAT_R32_TYPELESS;
         srv_format = DXGI_FORMAT_R32_FLOAT;
+        gen_mip_map = false;
     }
     if (format == PixelFormat::D24_UNORM_S8_UINT) {
         texture_format = DXGI_FORMAT_R24G8_TYPELESS;
     }
 
-    const bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
-
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
-    // texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mip_levels;
-    texture_desc.MipLevels = 0;
+    texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mip_levels;
+    // texture_desc.MipLevels = 0;
     texture_desc.ArraySize = p_texture_desc.array_size;
     texture_desc.Format = texture_format;
     texture_desc.SampleDesc = { 1, 0 };
