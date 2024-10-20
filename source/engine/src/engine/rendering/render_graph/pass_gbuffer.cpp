@@ -4,20 +4,20 @@
 
 namespace my::rg {
 
-static void gbufferPassFunc(const DrawPass* p_subpass) {
+static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
     auto& ctx = gm.getContext();
-    auto [width, height] = p_subpass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
-    gm.setRenderTarget(p_subpass);
+    gm.setRenderTarget(p_draw_pass);
 
     Viewport viewport{ width, height };
     gm.setViewport(viewport);
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    gm.clear(p_subpass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
+    gm.clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     PassContext& pass = gm.main_pass;
     gm.bindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
@@ -66,31 +66,31 @@ void RenderPassCreator::addGBufferPass() {
     int p_height = m_config.frame_height;
 
     // @TODO: decouple sampler and render target
-    auto gbuffer_depth = manager.createRenderTarget(RenderTargetDesc{ RT_RES_GBUFFER_DEPTH,
-                                                                      PixelFormat::D24_UNORM_S8_UINT,
-                                                                      AttachmentType::DEPTH_STENCIL_2D,
-                                                                      p_width, p_height },
+    auto gbuffer_depth = manager.createRenderTarget(RenderTargetDesc(RESOURCE_GBUFFER_DEPTH,
+                                                                     PixelFormat::D24_UNORM_S8_UINT,
+                                                                     AttachmentType::DEPTH_STENCIL_2D,
+                                                                     p_width, p_height),
                                                     nearest_sampler());
 
-    auto attachment0 = manager.createRenderTarget(RenderTargetDesc{ RT_RES_GBUFFER_BASE_COLOR,
+    auto attachment0 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_BASE_COLOR,
                                                                     PixelFormat::R11G11B10_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
                                                   nearest_sampler());
 
-    auto attachment1 = manager.createRenderTarget(RenderTargetDesc{ RT_RES_GBUFFER_POSITION,
+    auto attachment1 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_POSITION,
                                                                     PixelFormat::R16G16B16_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
                                                   nearest_sampler());
 
-    auto attachment2 = manager.createRenderTarget(RenderTargetDesc{ RT_RES_GBUFFER_NORMAL,
+    auto attachment2 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_NORMAL,
                                                                     PixelFormat::R16G16B16_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
                                                   nearest_sampler());
 
-    auto attachment3 = manager.createRenderTarget(RenderTargetDesc{ RT_RES_GBUFFER_MATERIAL,
+    auto attachment3 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_MATERIAL,
                                                                     PixelFormat::R11G11B10_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
@@ -99,12 +99,12 @@ void RenderPassCreator::addGBufferPass() {
     RenderPassDesc desc;
     desc.name = RenderPassName::GBUFFER;
     auto pass = m_graph.createPass(desc);
-    auto subpass = manager.createDrawPass(DrawPassDesc{
+    auto draw_pass = manager.createDrawPass(DrawPassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
         .depth_attachment = gbuffer_depth,
         .exec_func = gbufferPassFunc,
     });
-    pass->addDrawPass(subpass);
+    pass->addDrawPass(draw_pass);
 }
 
 }  // namespace my::rg

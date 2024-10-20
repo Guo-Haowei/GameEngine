@@ -12,37 +12,37 @@ extern void fill_camera_matrices(PerPassConstantBuffer& p_buffer);
 
 namespace my::rg {
 
-static void lightingPassFunc(const DrawPass* p_subpass) {
+static void lightingPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
-    DEV_ASSERT(!p_subpass->color_attachments.empty());
-    auto [width, height] = p_subpass->color_attachments[0]->getSize();
+    DEV_ASSERT(!p_draw_pass->color_attachments.empty());
+    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
 
-    gm.setRenderTarget(p_subpass);
+    gm.setRenderTarget(p_draw_pass);
 
     Viewport viewport(width, height);
     gm.setViewport(viewport);
-    gm.clear(p_subpass, CLEAR_COLOR_BIT);
+    gm.clear(p_draw_pass, CLEAR_COLOR_BIT);
     gm.setPipelineState(PROGRAM_LIGHTING);
 
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
-    auto bind_slot = [&](const std::string& name, int slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(name);
+    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
+        std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(p_name);
         if (!resource) {
             return;
         }
 
-        gm.bindTexture(p_dimension, resource->texture->get_handle(), slot);
+        gm.bindTexture(p_dimension, resource->texture->get_handle(), p_slot);
     };
 
     // bind common textures
-    bind_slot(RT_RES_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
-    bind_slot(RT_RES_GBUFFER_POSITION, u_gbuffer_position_map_slot);
-    bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
-    bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
-    bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
+    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
+    bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
+    bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
+    bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RESOURCE_SHADOW_MAP, u_shadow_map_slot);
     // bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
 
     // @TODO: fix it
@@ -75,9 +75,9 @@ static void lightingPassFunc(const DrawPass* p_subpass) {
 void RenderPassCreator::addLightingPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    auto gbuffer_depth = manager.findRenderTarget(RT_RES_GBUFFER_DEPTH);
+    auto gbuffer_depth = manager.findRenderTarget(RESOURCE_GBUFFER_DEPTH);
 
-    auto lighting_attachment = manager.createRenderTarget(RenderTargetDesc{ RT_RES_LIGHTING,
+    auto lighting_attachment = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_LIGHTING,
                                                                             PixelFormat::R11G11B10_FLOAT,
                                                                             AttachmentType::COLOR_2D,
                                                                             m_config.frame_width, m_config.frame_height },
@@ -98,12 +98,12 @@ void RenderPassCreator::addLightingPass() {
     }
 
     auto pass = m_graph.createPass(desc);
-    auto subpass = manager.createDrawPass(DrawPassDesc{
+    auto drawpass = manager.createDrawPass(DrawPassDesc{
         .color_attachments = { lighting_attachment },
         .depth_attachment = gbuffer_depth,
         .exec_func = lightingPassFunc,
     });
-    pass->addDrawPass(subpass);
+    pass->addDrawPass(drawpass);
 }
 
 }  // namespace my::rg

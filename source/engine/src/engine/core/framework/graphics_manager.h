@@ -103,10 +103,10 @@ public:
 
     void update(Scene& p_scene);
 
-    virtual void setRenderTarget(const DrawPass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
+    virtual void setRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void unsetRenderTarget() = 0;
 
-    virtual void clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
+    virtual void clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
     virtual void setViewport(const Viewport& p_viewport) = 0;
 
     virtual const MeshBuffers* createMesh(const MeshComponent& p_mesh) = 0;
@@ -117,7 +117,7 @@ public:
     virtual void setStencilRef(uint32_t p_ref) = 0;
 
     std::shared_ptr<RenderTarget> createRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
-    std::shared_ptr<RenderTarget> findRenderTarget(const std::string& p_name) const;
+    std::shared_ptr<RenderTarget> findRenderTarget(RenderTargetResourceName p_name) const;
 
     virtual std::shared_ptr<UniformBufferBase> createUniform(int p_slot, size_t p_capacity) = 0;
     virtual void updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
@@ -169,7 +169,7 @@ protected:
 
     rg::RenderGraph m_render_graph;
 
-    std::map<std::string, std::shared_ptr<RenderTarget>> m_resource_lookup;
+    std::map<RenderTargetResourceName, std::shared_ptr<RenderTarget>> m_resource_lookup;
 
     struct ImageTask {
         ImageHandle* handle;

@@ -4,8 +4,8 @@
 
 namespace my::rg {
 
-void RenderPass::addDrawPass(std::shared_ptr<DrawPass> p_subpass) {
-    m_subpasses.push_back(p_subpass);
+void RenderPass::addDrawPass(std::shared_ptr<DrawPass> p_draw_pass) {
+    m_draw_passes.push_back(p_draw_pass);
 }
 
 void RenderPass::createInternal(RenderPassDesc& p_desc) {
@@ -14,8 +14,8 @@ void RenderPass::createInternal(RenderPassDesc& p_desc) {
 }
 
 void RenderPass::execute() {
-    for (auto& subpass : m_subpasses) {
-        subpass->exec_func(subpass.get());
+    for (auto& draw_pass : m_draw_passes) {
+        draw_pass->exec_func(draw_pass.get());
     }
 }
 

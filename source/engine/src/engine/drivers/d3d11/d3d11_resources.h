@@ -21,7 +21,7 @@ struct D3d11Texture : public Texture {
     Microsoft::WRL::ComPtr<ID3D11Resource> texture;
 };
 
-struct D3d11Subpass : public DrawPass {
+struct D3d11DrawPass : public DrawPass {
     std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
 };

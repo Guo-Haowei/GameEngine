@@ -11,7 +11,7 @@ struct RenderPassDesc {
 
 class RenderPass {
 public:
-    void addDrawPass(std::shared_ptr<DrawPass> p_subpass);
+    void addDrawPass(std::shared_ptr<DrawPass> p_draw_pass);
 
     void execute();
 
@@ -23,7 +23,7 @@ protected:
 
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;
-    std::vector<std::shared_ptr<DrawPass>> m_subpasses;
+    std::vector<std::shared_ptr<DrawPass>> m_draw_passes;
 
     friend class RenderGraph;
 };

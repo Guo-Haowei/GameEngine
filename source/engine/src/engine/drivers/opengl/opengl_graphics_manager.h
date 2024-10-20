@@ -19,10 +19,10 @@ public:
 
     void setStencilRef(uint32_t p_ref) final;
 
-    void setRenderTarget(const DrawPass* p_subpass, int p_index, int p_mip_level) final;
+    void setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
     void unsetRenderTarget() final;
 
-    void clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color) final;
+    void clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color) final;
     void setViewport(const Viewport& p_viewport) final;
 
     const MeshBuffers* createMesh(const MeshComponent& p_mesh) final;

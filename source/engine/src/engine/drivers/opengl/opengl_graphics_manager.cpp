@@ -207,8 +207,8 @@ void OpenGLGraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-void OpenGLGraphicsManager::clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color) {
-    unused(p_subpass);
+void OpenGLGraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color) {
+    unused(p_draw_pass);
     if (p_flags == CLEAR_NONE) {
         return;
     }
@@ -418,16 +418,16 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc&
 }
 
 std::shared_ptr<DrawPass> OpenGLGraphicsManager::createDrawPass(const DrawPassDesc& p_desc) {
-    auto subpass = std::make_shared<OpenGLSubpass>();
-    subpass->exec_func = p_desc.exec_func;
-    subpass->color_attachments = p_desc.color_attachments;
-    subpass->depth_attachment = p_desc.depth_attachment;
+    auto draw_pass = std::make_shared<OpenGLSubpass>();
+    draw_pass->exec_func = p_desc.exec_func;
+    draw_pass->color_attachments = p_desc.color_attachments;
+    draw_pass->depth_attachment = p_desc.depth_attachment;
     GLuint fbo_handle = 0;
 
     const int num_depth_attachment = p_desc.depth_attachment != nullptr;
     const int num_color_attachment = (int)p_desc.color_attachments.size();
     if (!num_depth_attachment && !num_color_attachment) {
-        return subpass;
+        return draw_pass;
     }
 
     glGenFramebuffers(1, &fbo_handle);
@@ -496,25 +496,25 @@ std::shared_ptr<DrawPass> OpenGLGraphicsManager::createDrawPass(const DrawPassDe
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    subpass->handle = fbo_handle;
-    return subpass;
+    draw_pass->handle = fbo_handle;
+    return draw_pass;
 }
 
 void OpenGLGraphicsManager::setStencilRef(uint32_t p_ref) {
     glStencilFunc(m_state_cache.stencil_func, p_ref, 0xFF);
 }
 
-void OpenGLGraphicsManager::setRenderTarget(const DrawPass* p_subpass, int p_index, int p_mip_level) {
-    auto subpass = reinterpret_cast<const OpenGLSubpass*>(p_subpass);
-    if (subpass->handle == 0) {
+void OpenGLGraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+    auto draw_pass = reinterpret_cast<const OpenGLSubpass*>(p_draw_pass);
+    if (draw_pass->handle == 0) {
         return;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, subpass->handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, draw_pass->handle);
 
     // @TODO: bind cube map/texture 2d array
-    if (!subpass->color_attachments.empty()) {
-        const auto resource = subpass->color_attachments[0];
+    if (!draw_pass->color_attachments.empty()) {
+        const auto resource = draw_pass->color_attachments[0];
         if (resource->desc.type == AttachmentType::COLOR_CUBE_MAP) {
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
@@ -524,7 +524,7 @@ void OpenGLGraphicsManager::setRenderTarget(const DrawPass* p_subpass, int p_ind
         }
     }
 
-    if (const auto depth_attachment = subpass->depth_attachment; depth_attachment) {
+    if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_DEPTH_ATTACHMENT,
@@ -592,23 +592,23 @@ void OpenGLGraphicsManager::createGpuResources() {
     cache.u_grass_base_color = grass_image->gpu_texture->get_resident_handle();
 
     // @TODO: refactor
-    auto make_resident = [&](const std::string& name, uint64_t& id) {
-        std::shared_ptr<RenderTarget> resource = findRenderTarget(name);
+    auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {
+        std::shared_ptr<RenderTarget> resource = findRenderTarget(p_name);
         if (resource) {
-            id = resource->texture->get_resident_handle();
+            p_out_id = resource->texture->get_resident_handle();
         } else {
-            id = 0;
+            p_out_id = 0;
         }
     };
 
-    make_resident(RT_RES_TONE, cache.c_tone_image);
-    make_resident(RT_RES_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
-    make_resident(RT_RES_LIGHTING, cache.c_tone_input_image);
-    make_resident(RT_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
-    make_resident(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
-    make_resident(RT_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);
-    make_resident(RT_BRDF, cache.c_brdf_map);
-    make_resident(RT_RES_BLOOM "_0", cache.u_final_bloom);
+    make_resident(RESOURCE_TONE, cache.c_tone_image);
+    make_resident(RESOURCE_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
+    make_resident(RESOURCE_LIGHTING, cache.c_tone_input_image);
+    make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
+    make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
+    make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);
+    make_resident(RESOURCE_BRDF, cache.c_brdf_map);
+    make_resident(RESOURCE_BLOOM_0, cache.u_final_bloom);
 
     g_constantCache.update();
 }

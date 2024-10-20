@@ -16,10 +16,10 @@ public:
 
     void setStencilRef(uint32_t p_ref) override {}
 
-    void setRenderTarget(const DrawPass* p_subpass, int p_index, int p_mip_level) override {}
+    void setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) override {}
     void unsetRenderTarget() override {}
 
-    void clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color) override {}
+    void clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color) override {}
     void setViewport(const Viewport& p_viewport) override {}
 
     const MeshBuffers* createMesh(const MeshComponent& p_mesh) override { return nullptr; }
