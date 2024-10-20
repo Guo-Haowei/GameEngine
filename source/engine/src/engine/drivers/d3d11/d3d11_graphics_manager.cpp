@@ -306,7 +306,7 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
     return gpu_texture;
 }
 
-std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& p_subpass_desc) {
+std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDesc& p_subpass_desc) {
     auto subpass = std::make_shared<D3d11Subpass>();
     subpass->exec_func = p_subpass_desc.exec_func;
     subpass->color_attachments = p_subpass_desc.color_attachments;
@@ -376,7 +376,7 @@ std::shared_ptr<Subpass> D3d11GraphicsManager::createSubpass(const SubpassDesc& 
     return subpass;
 }
 
-void D3d11GraphicsManager::setRenderTarget(const Subpass* p_subpass, int p_index, int p_mip_level) {
+void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_subpass, int p_index, int p_mip_level) {
     unused(p_index);
     unused(p_mip_level);
 
@@ -397,7 +397,7 @@ void D3d11GraphicsManager::unsetRenderTarget() {
     m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
 }
 
-void D3d11GraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
+void D3d11GraphicsManager::clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color) {
     auto subpass = reinterpret_cast<const D3d11Subpass*>(p_subpass);
 
     if (p_flags & CLEAR_COLOR_BIT) {

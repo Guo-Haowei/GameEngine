@@ -5,7 +5,7 @@
 
 namespace my::rg {
 
-static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
+static void pointShadowPassFunc(const DrawPass* p_subpass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
@@ -52,7 +52,7 @@ static void pointShadowPassFunc(const Subpass* p_subpass, int p_pass_id) {
     }
 }
 
-static void shadowPassFunc(const Subpass* p_subpass) {
+static void shadowPassFunc(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
@@ -104,25 +104,25 @@ void RenderPassCreator::addShadowPass() {
     desc.name = SHADOW_PASS;
     auto pass = m_graph.createPass(desc);
     {
-        auto subpass = manager.createSubpass(SubpassDesc{
+        auto draw_pass = manager.createDrawPass(DrawPassDesc{
             .depth_attachment = shadow_map,
             .exec_func = shadowPassFunc,
         });
-        pass->addSubpass(subpass);
+        pass->addDrawPass(draw_pass);
     }
 
     // @TODO: refactor
-    SubpassExecuteFunc funcs[] = {
-        [](const Subpass* p_subpass) {
+    DrawPassExecuteFunc funcs[] = {
+        [](const DrawPass* p_subpass) {
             pointShadowPassFunc(p_subpass, 0);
         },
-        [](const Subpass* p_subpass) {
+        [](const DrawPass* p_subpass) {
             pointShadowPassFunc(p_subpass, 1);
         },
-        [](const Subpass* p_subpass) {
+        [](const DrawPass* p_subpass) {
             pointShadowPassFunc(p_subpass, 2);
         },
-        [](const Subpass* p_subpass) {
+        [](const DrawPass* p_subpass) {
             pointShadowPassFunc(p_subpass, 3);
         },
     };
@@ -137,11 +137,11 @@ void RenderPassCreator::addShadowPass() {
                                                                                  point_shadow_res, point_shadow_res },
                                                                shadow_cube_map_sampler());
 
-            auto subpass = manager.createSubpass(SubpassDesc{
+            auto subpass = manager.createDrawPass(DrawPassDesc{
                 .depth_attachment = point_shadow_map,
                 .exec_func = funcs[i],
             });
-            pass->addSubpass(subpass);
+            pass->addDrawPass(subpass);
         }
     }
 }

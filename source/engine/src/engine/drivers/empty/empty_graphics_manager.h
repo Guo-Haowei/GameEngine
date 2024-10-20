@@ -16,10 +16,10 @@ public:
 
     void setStencilRef(uint32_t p_ref) override {}
 
-    void setRenderTarget(const Subpass* p_subpass, int p_index, int p_mip_level) override {}
+    void setRenderTarget(const DrawPass* p_subpass, int p_index, int p_mip_level) override {}
     void unsetRenderTarget() override {}
 
-    void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) override {}
+    void clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color) override {}
     void setViewport(const Viewport& p_viewport) override {}
 
     const MeshBuffers* createMesh(const MeshComponent& p_mesh) override { return nullptr; }
@@ -34,7 +34,7 @@ public:
     void unbindTexture(Dimension p_dimension, int p_slot) override {}
 
     std::shared_ptr<Texture> createTexture(const TextureDesc&, const SamplerDesc&) { return nullptr; }
-    std::shared_ptr<Subpass> createSubpass(const SubpassDesc&) override { return nullptr; }
+    std::shared_ptr<DrawPass> createDrawPass(const DrawPassDesc&) override { return nullptr; }
 
 protected:
     void onSceneChange(const Scene&) override {}

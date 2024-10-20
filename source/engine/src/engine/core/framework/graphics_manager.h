@@ -5,8 +5,8 @@
 #include "core/framework/module.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/pipeline_state_manager.h"
+#include "rendering/render_graph/draw_pass.h"
 #include "rendering/render_graph/render_graph.h"
-#include "rendering/render_graph/subpass.h"
 #include "rendering/sampler.h"
 #include "rendering/texture.h"
 #include "rendering/uniform_buffer.h"
@@ -103,10 +103,10 @@ public:
 
     void update(Scene& p_scene);
 
-    virtual void setRenderTarget(const Subpass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
+    virtual void setRenderTarget(const DrawPass* p_subpass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void unsetRenderTarget() = 0;
 
-    virtual void clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
+    virtual void clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
     virtual void setViewport(const Viewport& p_viewport) = 0;
 
     virtual const MeshBuffers* createMesh(const MeshComponent& p_mesh) = 0;
@@ -131,7 +131,7 @@ public:
         bindUniformRange(p_buffer, sizeof(T), slot * sizeof(T));
     }
 
-    virtual std::shared_ptr<Subpass> createSubpass(const SubpassDesc& p_desc) = 0;
+    virtual std::shared_ptr<DrawPass> createDrawPass(const DrawPassDesc& p_desc) = 0;
     virtual std::shared_ptr<Texture> createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
     virtual void bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
     virtual void unbindTexture(Dimension p_dimension, int p_slot) = 0;

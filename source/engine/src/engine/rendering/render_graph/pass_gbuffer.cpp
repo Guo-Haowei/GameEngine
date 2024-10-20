@@ -4,7 +4,7 @@
 
 namespace my::rg {
 
-static void gbufferPassFunc(const Subpass* p_subpass) {
+static void gbufferPassFunc(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
@@ -99,12 +99,12 @@ void RenderPassCreator::addGBufferPass() {
     RenderPassDesc desc;
     desc.name = GBUFFER_PASS;
     auto pass = m_graph.createPass(desc);
-    auto subpass = manager.createSubpass(SubpassDesc{
+    auto subpass = manager.createDrawPass(DrawPassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
         .depth_attachment = gbuffer_depth,
         .exec_func = gbufferPassFunc,
     });
-    pass->addSubpass(subpass);
+    pass->addDrawPass(subpass);
 }
 
 }  // namespace my::rg

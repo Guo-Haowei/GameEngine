@@ -25,7 +25,7 @@ void fill_camera_matrices(PerPassConstantBuffer& buffer) {
 
 namespace my::rg {
 
-void voxelization_pass_func(const Subpass*) {
+void voxelization_pass_func(const DrawPass*) {
     OPTICK_EVENT();
     auto& gm = GraphicsManager::singleton();
     auto& ctx = gm.getContext();
@@ -89,7 +89,7 @@ void voxelization_pass_func(const Subpass*) {
     glEnable(GL_BLEND);
 }
 
-void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
+void hdr_to_cube_map_pass_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     if (!renderer::need_update_env()) {
@@ -118,7 +118,7 @@ void hdr_to_cube_map_pass_func(const Subpass* p_subpass) {
 }
 
 // @TODO: refactor
-void generate_brdf_func(const Subpass* p_subpass) {
+void generate_brdf_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     if (!renderer::need_update_env()) {
@@ -133,7 +133,7 @@ void generate_brdf_func(const Subpass* p_subpass) {
     RenderManager::singleton().draw_quad();
 }
 
-void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
+void diffuse_irradiance_pass_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
     if (!renderer::need_update_env()) {
         return;
@@ -156,7 +156,7 @@ void diffuse_irradiance_pass_func(const Subpass* p_subpass) {
     }
 }
 
-void prefilter_pass_func(const Subpass* p_subpass) {
+void prefilter_pass_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
     if (!renderer::need_update_env()) {
         return;
@@ -185,7 +185,7 @@ void prefilter_pass_func(const Subpass* p_subpass) {
     return;
 }
 
-static void highlight_select_pass_func(const Subpass* p_subpass) {
+static void highlight_select_pass_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     auto& manager = GraphicsManager::singleton();
@@ -202,7 +202,7 @@ static void highlight_select_pass_func(const Subpass* p_subpass) {
     manager.setStencilRef(0);
 }
 
-void debug_vxgi_pass_func(const Subpass* p_subpass) {
+void debug_vxgi_pass_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::singleton();
@@ -225,7 +225,7 @@ void debug_vxgi_pass_func(const Subpass* p_subpass) {
     glDrawElementsInstanced(GL_TRIANGLES, g_box->index_count, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
-static void tone_pass_func(const Subpass* p_subpass) {
+static void tone_pass_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     GraphicsManager::singleton().setRenderTarget(p_subpass);
@@ -268,7 +268,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     RenderManager::singleton().draw_quad();
 }
 
-void final_pass_func(const Subpass* p_subpass) {
+void final_pass_func(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     GraphicsManager::singleton().setRenderTarget(p_subpass);
@@ -326,7 +326,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         desc.name = ENV_PASS;
         auto pass = p_graph.createPass(desc);
 
-        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, SubpassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
+        auto create_cube_map_subpass = [&](const char* cube_map_name, const char* depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.createRenderTarget(RenderTargetDesc{ cube_map_name,
                                                                          PixelFormat::R16G16B16_FLOAT,
                                                                          AttachmentType::COLOR_CUBE_MAP,
@@ -338,7 +338,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
                                                                           size, size, gen_mipmap },
                                                         nearest_sampler());
 
-            auto subpass = manager.createSubpass(SubpassDesc{
+            auto subpass = manager.createDrawPass(DrawPassDesc{
                 .color_attachments = { cube_map },
                 .depth_attachment = depth_map,
                 .exec_func = p_func,
@@ -348,15 +348,15 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
 
         auto brdf_image = manager.createRenderTarget(RenderTargetDesc{ RT_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, 512, 512, false },
                                                      linear_clamp_sampler());
-        auto brdf_subpass = manager.createSubpass(SubpassDesc{
+        auto brdf_subpass = manager.createDrawPass(DrawPassDesc{
             .color_attachments = { brdf_image },
             .exec_func = generate_brdf_func,
         });
 
-        pass->addSubpass(brdf_subpass);
-        pass->addSubpass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
-        pass->addSubpass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
-        pass->addSubpass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
+        pass->addDrawPass(brdf_subpass);
+        pass->addDrawPass(create_cube_map_subpass(RT_ENV_SKYBOX_CUBE_MAP, RT_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
+        pass->addDrawPass(create_cube_map_subpass(RT_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RT_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
+        pass->addDrawPass(create_cube_map_subpass(RT_ENV_PREFILTER_CUBE_MAP, RT_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
     creator.addShadowPass();
@@ -374,12 +374,12 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         desc.name = HIGHLIGHT_SELECT_PASS;
         desc.dependencies = { GBUFFER_PASS };
         auto pass = p_graph.createPass(desc);
-        auto subpass = manager.createSubpass(SubpassDesc{
+        auto subpass = manager.createDrawPass(DrawPassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
             .exec_func = highlight_select_pass_func,
         });
-        pass->addSubpass(subpass);
+        pass->addDrawPass(subpass);
     }
 
     {  // voxel pass
@@ -387,10 +387,10 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         desc.name = VOXELIZATION_PASS;
         desc.dependencies = { SHADOW_PASS };
         auto pass = p_graph.createPass(desc);
-        auto subpass = manager.createSubpass(SubpassDesc{
+        auto subpass = manager.createDrawPass(DrawPassDesc{
             .exec_func = voxelization_pass_func,
         });
-        pass->addSubpass(subpass);
+        pass->addDrawPass(subpass);
     }
 
     creator.addLightingPass();
@@ -408,12 +408,12 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
                                                                        w, h },
                                                      nearest_sampler());
 
-        auto subpass = manager.createSubpass(SubpassDesc{
+        auto subpass = manager.createDrawPass(DrawPassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
             .exec_func = tone_pass_func,
         });
-        pass->addSubpass(subpass);
+        pass->addDrawPass(subpass);
     }
     {
         // final pass
@@ -421,11 +421,11 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         desc.name = FINAL_PASS;
         desc.dependencies = { TONE_PASS };
         auto pass = p_graph.createPass(desc);
-        auto subpass = manager.createSubpass(SubpassDesc{
+        auto subpass = manager.createDrawPass(DrawPassDesc{
             .color_attachments = { final_attachment },
             .exec_func = final_pass_func,
         });
-        pass->addSubpass(subpass);
+        pass->addDrawPass(subpass);
     }
 
     // @TODO: allow recompile

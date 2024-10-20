@@ -4,7 +4,7 @@
 
 namespace my::rg {
 
-void RenderPass::addSubpass(std::shared_ptr<Subpass> p_subpass) {
+void RenderPass::addDrawPass(std::shared_ptr<DrawPass> p_subpass) {
     m_subpasses.push_back(p_subpass);
 }
 

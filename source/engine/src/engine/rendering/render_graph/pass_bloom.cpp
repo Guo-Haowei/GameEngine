@@ -12,7 +12,7 @@ static int divideAndRoundup(int p_dividend, int p_divisor) {
     return (p_dividend + p_divisor - 1) / p_divisor;
 }
 
-static void downSampleFunc(const Subpass*) {
+static void downSampleFunc(const DrawPass*) {
     GraphicsManager& manager = GraphicsManager::singleton();
 
     // Step 1, select pixels contribute to bloom
@@ -94,11 +94,11 @@ void RenderPassCreator::addBloomPass() {
                                                      linear_clamp_sampler());
     }
 
-    auto subpass = manager.createSubpass(SubpassDesc{
+    auto subpass = manager.createDrawPass(DrawPassDesc{
         .color_attachments = {},
         .exec_func = downSampleFunc,
     });
-    pass->addSubpass(subpass);
+    pass->addDrawPass(subpass);
 }
 
 }  // namespace my::rg

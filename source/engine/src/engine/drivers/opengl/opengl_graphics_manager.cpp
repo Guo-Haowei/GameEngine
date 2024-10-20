@@ -207,7 +207,7 @@ void OpenGLGraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-void OpenGLGraphicsManager::clear(const Subpass* p_subpass, uint32_t p_flags, float* p_clear_color) {
+void OpenGLGraphicsManager::clear(const DrawPass* p_subpass, uint32_t p_flags, float* p_clear_color) {
     unused(p_subpass);
     if (p_flags == CLEAR_NONE) {
         return;
@@ -417,7 +417,7 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc&
     return texture;
 }
 
-std::shared_ptr<Subpass> OpenGLGraphicsManager::createSubpass(const SubpassDesc& p_desc) {
+std::shared_ptr<DrawPass> OpenGLGraphicsManager::createDrawPass(const DrawPassDesc& p_desc) {
     auto subpass = std::make_shared<OpenGLSubpass>();
     subpass->exec_func = p_desc.exec_func;
     subpass->color_attachments = p_desc.color_attachments;
@@ -504,7 +504,7 @@ void OpenGLGraphicsManager::setStencilRef(uint32_t p_ref) {
     glStencilFunc(m_state_cache.stencil_func, p_ref, 0xFF);
 }
 
-void OpenGLGraphicsManager::setRenderTarget(const Subpass* p_subpass, int p_index, int p_mip_level) {
+void OpenGLGraphicsManager::setRenderTarget(const DrawPass* p_subpass, int p_index, int p_mip_level) {
     auto subpass = reinterpret_cast<const OpenGLSubpass*>(p_subpass);
     if (subpass->handle == 0) {
         return;

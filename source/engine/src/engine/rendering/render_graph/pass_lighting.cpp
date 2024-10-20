@@ -12,7 +12,7 @@ extern void fill_camera_matrices(PerPassConstantBuffer& p_buffer);
 
 namespace my::rg {
 
-static void lightingPassFunc(const Subpass* p_subpass) {
+static void lightingPassFunc(const DrawPass* p_subpass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
@@ -43,7 +43,7 @@ static void lightingPassFunc(const Subpass* p_subpass) {
     bind_slot(RT_RES_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
     bind_slot(RT_RES_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
     bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
-    //bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
+    // bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
 
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
@@ -98,12 +98,12 @@ void RenderPassCreator::addLightingPass() {
     }
 
     auto pass = m_graph.createPass(desc);
-    auto subpass = manager.createSubpass(SubpassDesc{
+    auto subpass = manager.createDrawPass(DrawPassDesc{
         .color_attachments = { lighting_attachment },
         .depth_attachment = gbuffer_depth,
         .exec_func = lightingPassFunc,
     });
-    pass->addSubpass(subpass);
+    pass->addDrawPass(subpass);
 }
 
 }  // namespace my::rg
