@@ -132,24 +132,21 @@ CBUFFER(PerSceneConstantBuffer, 4) {
     sampler2D u_gbuffer_depth_map;
     sampler2D u_final_bloom;
 
-    sampler2D _dummy_padding_per_scene;
+    sampler2D u_grass_base_color;
     sampler2D c_hdr_env_map;
     sampler3D c_voxel_map;
     sampler3D c_voxel_normal_map;
 
-    sampler2D u_grass_base_color;
     sampler2D c_kernel_noise_map;
     sampler2D c_tone_image;
-    sampler2D c_tone_input_image;
+    // @TODO: unordered access
+    sampler2D u_ltc_1;
+    sampler2D u_ltc_2;
 
     sampler2D c_brdf_map;
     samplerCube c_env_map;
     samplerCube c_diffuse_irradiance_map;
     samplerCube c_prefiltered_map;
-
-    // @TODO: unordered access
-    sampler2D u_ltc_1;
-    sampler2D u_ltc_2;
 };
 
 // @TODO: make it more general, something like 2D draw

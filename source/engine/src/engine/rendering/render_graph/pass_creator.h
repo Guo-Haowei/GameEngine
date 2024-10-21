@@ -24,6 +24,8 @@ public:
     void addShadowPass();
     void addLightingPass();
     void addBloomPass();
+    // @TODO: remove this param
+    void addTonePass(bool p_skip_bloom = false);
 
 private:
     Config m_config;

@@ -218,31 +218,6 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     glDrawElementsInstanced(GL_TRIANGLES, g_box->index_count, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
-static void tone_pass_func(const DrawPass* p_draw_pass) {
-    OPTICK_EVENT();
-
-    GraphicsManager::singleton().setRenderTarget(p_draw_pass);
-    DEV_ASSERT(!p_draw_pass->color_attachments.empty());
-    auto depth_buffer = p_draw_pass->depth_attachment;
-    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
-
-    GraphicsManager::singleton().setPipelineState(PROGRAM_BILLBOARD);
-
-    // draw billboards
-    GraphicsManager& gm = GraphicsManager::singleton();
-
-    // HACK:
-    if (DVAR_GET_BOOL(r_debug_vxgi)) {
-        debug_vxgi_pass_func(p_draw_pass);
-    } else {
-        glViewport(0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        gm.setPipelineState(PROGRAM_TONE);
-        RenderManager::singleton().draw_quad();
-    }
-}
-
 // @TODO: refactor
 static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width, int p_screen_height, int p_width, int p_height) {
     float half_width_ndc = (float)p_width / p_screen_width;
@@ -388,26 +363,8 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
 
     creator.addLightingPass();
     creator.addBloomPass();
+    creator.addTonePass();
 
-    {  // tone pass
-        RenderPassDesc desc;
-        desc.name = RenderPassName::TONE;
-        desc.dependencies = { RenderPassName::BLOOM };
-        auto pass = p_graph.createPass(desc);
-
-        auto attachment = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_TONE,
-                                                                       PixelFormat::R11G11B10_FLOAT,
-                                                                       AttachmentType::COLOR_2D,
-                                                                       w, h },
-                                                     nearest_sampler());
-
-        auto draw_pass = manager.createDrawPass(DrawPassDesc{
-            .color_attachments = { attachment },
-            .depth_attachment = gbuffer_depth,
-            .exec_func = tone_pass_func,
-        });
-        pass->addDrawPass(draw_pass);
-    }
     {
         // final pass
         RenderPassDesc desc;

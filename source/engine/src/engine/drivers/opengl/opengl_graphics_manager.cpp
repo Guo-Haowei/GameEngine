@@ -603,7 +603,6 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     make_resident(RESOURCE_TONE, cache.c_tone_image);
     make_resident(RESOURCE_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
-    make_resident(RESOURCE_LIGHTING, cache.c_tone_input_image);
     make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
     make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
     make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);

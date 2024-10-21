@@ -14,4 +14,5 @@ BUFFER_SLOT(vec2, uv, 2)
 BUFFER_SLOT(vec3, tangent, 3)
 BUFFER_SLOT(ivec4, bone_id, 4)
 BUFFER_SLOT(vec4, bone_weight, 5)
+
 #endif

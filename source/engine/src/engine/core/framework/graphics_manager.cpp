@@ -225,6 +225,7 @@ void GraphicsManager::selectRenderGraph() {
         m_method = RenderGraph::DEFAULT;
     }
 
+    // force to default
     if (m_backend == Backend::D3D11) {
         m_method = RenderGraph::DEFAULT;
     }
@@ -313,7 +314,7 @@ uint64_t GraphicsManager::getFinalImage() const {
             texture = findRenderTarget(RESOURCE_FINAL)->texture.get();
             break;
         case RenderGraph::DEFAULT:
-            texture = findRenderTarget(RESOURCE_LIGHTING)->texture.get();
+            texture = findRenderTarget(RESOURCE_TONE)->texture.get();
             break;
         default:
             CRASH_NOW();
