@@ -56,8 +56,6 @@ float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float Ndot
 
     // @TODO: better bias
     float bias = max(0.005 * (1.0 - NdotL), 0.0005);
-    bias = 0.0;
-    quality = 0;
 
     for (int x = -quality; x <= quality; ++x) {
         for (int y = -quality; y <= quality; ++y) {

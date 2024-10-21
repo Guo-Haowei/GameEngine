@@ -455,7 +455,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 const AABB& world_bound = p_scene.getBound();
                 const vec3 center = world_bound.center();
                 const vec3 extents = world_bound.size();
-                const float size = 0.5f * glm::max(extents.x, glm::max(extents.y, extents.z));
+                const float size = 0.7f * glm::max(extents.x, glm::max(extents.y, extents.z));
 
                 vec3 light_up = glm::normalize(light_local_matrix * vec4(0, -1, 0, 0));
 
