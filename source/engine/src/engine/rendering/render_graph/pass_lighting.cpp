@@ -40,7 +40,6 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
     bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
     bind_slot(RESOURCE_SHADOW_MAP, u_shadow_map_slot);
-    // bind_slot(RT_RES_SHADOW_MAP, u_shadow_map_slot);
 
     // @TODO: fix it
     RenderManager::singleton().draw_quad();

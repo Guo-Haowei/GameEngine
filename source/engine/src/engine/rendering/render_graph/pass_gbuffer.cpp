@@ -13,8 +13,7 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
 
     gm.setRenderTarget(p_draw_pass);
 
-    Viewport viewport{ width, height };
-    gm.setViewport(viewport);
+    gm.setViewport(Viewport(width, height));
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     gm.clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
