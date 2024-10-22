@@ -26,6 +26,9 @@ public:
     void setMesh(const MeshBuffers* p_mesh) override {}
     void drawElements(uint32_t p_count, uint32_t p_offset) override {}
 
+    void dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) override {}
+    void setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) override {}
+
     std::shared_ptr<UniformBufferBase> createUniform(int p_slot, size_t p_capacity) override { return nullptr; }
     void updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) override {}
     void bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) override {}

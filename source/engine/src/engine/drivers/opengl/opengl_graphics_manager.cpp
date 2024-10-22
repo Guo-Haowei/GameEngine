@@ -316,6 +316,15 @@ void OpenGLGraphicsManager::drawElements(uint32_t p_count, uint32_t p_offset) {
     glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
+void OpenGLGraphicsManager::dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+    glDispatchCompute(p_num_groups_x, p_num_groups_y, p_num_groups_z);
+}
+
+void OpenGLGraphicsManager::setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
+    // @TODO: add more to this
+    glBindImageTexture(p_slot, p_texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+}
+
 std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::createUniform(int p_slot, size_t p_capacity) {
     auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
     GLuint handle = 0;

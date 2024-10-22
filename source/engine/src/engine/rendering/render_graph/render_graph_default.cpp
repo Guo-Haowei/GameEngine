@@ -20,7 +20,8 @@ void createRenderGraphDefault(RenderGraph& p_graph) {
     creator.addShadowPass();
     creator.addGBufferPass();
     creator.addLightingPass();
-    creator.addTonePass(true);
+    creator.addBloomPass();
+    creator.addTonePass();
 
     p_graph.compile();
 }

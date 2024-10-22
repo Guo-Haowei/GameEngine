@@ -113,6 +113,9 @@ public:
     virtual void setMesh(const MeshBuffers* p_mesh) = 0;
     virtual void drawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
 
+    virtual void dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
+    virtual void setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) = 0;
+
     void setPipelineState(PipelineStateName p_name);
     virtual void setStencilRef(uint32_t p_ref) = 0;
 

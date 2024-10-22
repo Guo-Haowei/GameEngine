@@ -58,7 +58,7 @@ inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
 }
 
 inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
-    [[maybe_unused]] constexpr uint32_t supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL;
+    [[maybe_unused]] constexpr uint32_t supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL | BIND_UNORDERED_ACCESS;
     DEV_ASSERT((p_bind_flags & (~supported_flags)) == 0);
 
     uint32_t flags = 0;
@@ -70,6 +70,9 @@ inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
     }
     if (p_bind_flags & BIND_DEPTH_STENCIL) {
         flags |= D3D11_BIND_DEPTH_STENCIL;
+    }
+    if (p_bind_flags & BIND_UNORDERED_ACCESS) {
+        flags |= D3D11_BIND_UNORDERED_ACCESS;
     }
 
     return flags;

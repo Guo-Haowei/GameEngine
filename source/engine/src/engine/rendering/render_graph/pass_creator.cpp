@@ -385,17 +385,12 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
     }
 }
 
-void RenderPassCreator::addTonePass(bool p_skip_bloom) {
+void RenderPassCreator::addTonePass() {
     GraphicsManager& gm = GraphicsManager::singleton();
 
     RenderPassDesc desc;
     desc.name = RenderPassName::TONE;
     desc.dependencies = { RenderPassName::BLOOM };
-
-    // HACK:
-    if (p_skip_bloom) {
-        desc.dependencies = { RenderPassName::LIGHTING };
-    }
 
     auto pass = m_graph.createPass(desc);
 

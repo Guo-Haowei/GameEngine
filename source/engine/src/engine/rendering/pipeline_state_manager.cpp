@@ -131,6 +131,25 @@ bool PipelineStateManager::initialize() {
         info.input_layout_desc = &s_input_layout_position;
         m_cache[PROGRAM_TONE] = create(info);
     }
+    {
+        PipelineCreateInfo info;
+        info.cs = "bloom_setup.comp";
+        info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
+        m_cache[PROGRAM_BLOOM_SETUP] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.cs = "bloom_downsample.comp";
+        info.rasterizer_desc = &s_default_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
+        m_cache[PROGRAM_BLOOM_DOWNSAMPLE] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.cs = "bloom_upsample.comp";
+        m_cache[PROGRAM_BLOOM_UPSAMPLE] = create(info);
+    }
 
     // @HACK: only support this many shaders
     if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
@@ -160,25 +179,6 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_highlight_depth_stencil;
         m_cache[PROGRAM_HIGHLIGHT] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.cs = "bloom_setup.comp";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_BLOOM_SETUP] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.cs = "bloom_downsample.comp";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_BLOOM_DOWNSAMPLE] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.cs = "bloom_upsample.comp";
-        m_cache[PROGRAM_BLOOM_UPSAMPLE] = create(info);
     }
     {
         PipelineCreateInfo info;

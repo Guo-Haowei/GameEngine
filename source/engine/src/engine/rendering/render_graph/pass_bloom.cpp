@@ -9,12 +9,10 @@
 
 namespace my::rg {
 
-// @TODO: refactor to math
-static int divideAndRoundup(int p_dividend, int p_divisor) {
-    return (p_dividend + p_divisor - 1) / p_divisor;
-}
 static void downSampleFunc(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::singleton();
+
+    const bool is_opengl = gm.getBackend() == Backend::OPENGL;
 
     // Step 1, select pixels contribute to bloom
     {
@@ -23,15 +21,17 @@ static void downSampleFunc(const DrawPass*) {
         auto output = gm.findRenderTarget(RESOURCE_BLOOM_0);
 
         auto [width, height] = input->getSize();
-        const uint32_t work_group_x = divideAndRoundup(width, 16);
-        const uint32_t work_group_y = divideAndRoundup(height, 16);
+        const uint32_t work_group_x = math::ceilingDivision(width, 16);
+        const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
-        glDispatchCompute(work_group_x, work_group_y, 1);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.dispatch(work_group_x, work_group_y, 1);
+        if (is_opengl) {
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        }
     }
 
     // Step 2, down sampling
@@ -44,14 +44,17 @@ static void downSampleFunc(const DrawPass*) {
 
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
-        // @TODO: refactor image slot
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 
         auto [width, height] = output->getSize();
-        const uint32_t work_group_x = divideAndRoundup(width, 16);
-        const uint32_t work_group_y = divideAndRoundup(height, 16);
-        glDispatchCompute(work_group_x, work_group_y, 1);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        const uint32_t work_group_x = math::ceilingDivision(width, 16);
+        const uint32_t work_group_y = math::ceilingDivision(height, 16);
+
+        // @TODO: refactor image slot
+        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.dispatch(work_group_x, work_group_y, 1);
+        if (is_opengl) {
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        }
     }
 
     // Step 3, up sampling
@@ -63,13 +66,15 @@ static void downSampleFunc(const DrawPass*) {
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
 
-        glBindImageTexture(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture->get_handle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
-
         auto [width, height] = output->getSize();
-        const uint32_t work_group_x = divideAndRoundup(width, 16);
-        const uint32_t work_group_y = divideAndRoundup(height, 16);
-        glDispatchCompute(work_group_x, work_group_y, 1);
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        const uint32_t work_group_x = math::ceilingDivision(width, 16);
+        const uint32_t work_group_y = math::ceilingDivision(height, 16);
+
+        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.dispatch(work_group_x, work_group_y, 1);
+        if (is_opengl) {
+            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        }
     }
 }
 
@@ -89,10 +94,10 @@ void RenderPassCreator::addBloomPass() {
 
         LOG_WARN("bloom size {}x{}", width, height);
 
-        auto attachment = gm.createRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
-                                                                  PixelFormat::R11G11B10_FLOAT,
-                                                                  AttachmentType::COLOR_2D,
-                                                                  width, height },
+        auto attachment = gm.createRenderTarget(RenderTargetDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
+                                                                 PixelFormat::R11G11B10_FLOAT,
+                                                                 AttachmentType::COLOR_2D,
+                                                                 width, height, false, true),
                                                 linear_clamp_sampler());
     }
 
