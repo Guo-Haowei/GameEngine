@@ -12,9 +12,13 @@ build_job:
     - echo "Building the project..."
     - .\build-assimp.bat
     - .\ci-scripts\build_job.bat
+  artifacts:
+    paths:
+    - build/
+    expire_in: 1 day
 
 test_job:
   stage: test
   script:
     - echo "Running tests..."
-    - echo "All tests passed."
+    - .\ci-scripts\test_job.bat
