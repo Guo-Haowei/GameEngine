@@ -74,6 +74,11 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             LightComponent* light = p_scene->getComponent<LightComponent>(id);
             light->setCastShadow();
             light->setDirty();
+        } else if (type == "OMNI_LIGHT") {
+            id = p_scene->createOmniLightEntity(name);
+            LightComponent* light = p_scene->getComponent<LightComponent>(id);
+            light->setCastShadow();
+            light->setDirty();
         } else {
             CRASH_NOW();
         }

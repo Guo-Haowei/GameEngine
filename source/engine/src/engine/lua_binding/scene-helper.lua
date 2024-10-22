@@ -21,6 +21,14 @@ local material = {
 }
 --]]
 
+function scene_helper.create_omni_light(p_scene, p_name, p_rotation)
+    return p_scene:create_entity({
+        type = 'OMNI_LIGHT',
+        name = p_name,
+        transform = { rotate = p_rotation },
+    })
+end
+
 function scene_helper.create_point_light(p_scene, p_name, p_position)
     return p_scene:create_entity({
         type = 'POINT_LIGHT',
@@ -93,4 +101,47 @@ function scene_helper.build_plane_desc(p_name, p_position, p_size, p_mass)
     end
     return desc
 end
+
+function scene_helper.build_cornell(p_scale, p_config)
+    local scale = Vector3:new(p_scale, p_scale, p_scale)
+    function create_wall(p_name, p_translate, p_rotation, p_color)
+        local desc = scene_helper.build_plane_desc(p_name, Vector3.ZERO, scale)
+        p_color = p_color or Vector3.ONE
+        desc.transform = {
+            translate = p_translate,
+            rotate = p_rotation,
+        }
+
+        local metallic = 0.01
+        local roughness = 0.99
+        local material = scene_helper.build_material_desc(p_color, metallic, roughness)
+        desc.material = material
+        local scene = Scene.get()
+        return scene:create_entity(desc)
+    end
+
+    local config = p_config and p_config or {}
+
+    if not config.no_back then
+        create_wall('back-wall', Vector3:new(0, 0, -p_scale), Vector3.ZERO, Vector3.UNIT_Z)
+    end
+    if not config.no_front then
+        create_wall('front-wall', Vector3:new(0, 0, -p_scale), Vector3:new(0, 180, 0))
+    end
+    if not config.no_left then
+        create_wall('left-wall', Vector3:new(0, 0, -p_scale), Vector3:new(0, 90, 0), Vector3.UNIT_X)
+    end
+    if not config.no_right then
+        create_wall('right-wall', Vector3:new(0, 0, -p_scale), Vector3:new(0, -90, 0), Vector3.UNIT_Y)
+    end
+    if not config.no_top then
+        create_wall('top-wall', Vector3:new(0, 0, -p_scale), Vector3:new(90, 0, 0))
+    end
+    if not config.no_bottom then
+        create_wall('bottom-wall', Vector3:new(0, 0, -p_scale), Vector3:new(-90, 0, 0))
+    end
+
+    return
+end
+
 return scene_helper
