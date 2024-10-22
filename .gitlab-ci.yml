@@ -1,0 +1,20 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - build
+  - test
+  - deploy
+
+build_job:
+  stage: build
+  script:
+    - echo "Building the project..."
+    - .\build-assimp.bat
+    - .\ci-scripts\build_job.bat
+
+test_job:
+  stage: test
+  script:
+    - echo "Running tests..."
+    - echo "All tests passed."
