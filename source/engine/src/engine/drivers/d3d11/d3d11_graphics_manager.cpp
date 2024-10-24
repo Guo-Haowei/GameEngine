@@ -51,6 +51,7 @@ bool D3d11GraphicsManager::initializeImpl() {
         auto hr = m_device->CreateSamplerState(&sampler_desc, m_sampler_state.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 
+        m_ctx->CSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
         m_ctx->PSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
     }
     {
@@ -71,6 +72,7 @@ bool D3d11GraphicsManager::initializeImpl() {
         auto hr = m_device->CreateSamplerState(&sampler_desc, m_shadow_sampler_state.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 
+        m_ctx->CSSetSamplers(1, 1, m_sampler_state.GetAddressOf());
         m_ctx->PSSetSamplers(1, 1, m_sampler_state.GetAddressOf());
     }
 
@@ -110,6 +112,12 @@ void D3d11GraphicsManager::dispatch(uint32_t p_num_groups_x, uint32_t p_num_grou
 }
 
 void D3d11GraphicsManager::setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
+    if (!p_texture) {
+        ID3D11UnorderedAccessView* uav = nullptr;
+        m_ctx->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
+        return;
+    }
+
     auto texture = dynamic_cast<D3d11Texture*>(p_texture);
 
     m_ctx->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
@@ -238,6 +246,7 @@ void D3d11GraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle,
     if (p_handle) {
         ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
         m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+        m_ctx->CSSetShaderResources(p_slot, 1, &srv);
     }
 }
 
@@ -246,6 +255,7 @@ void D3d11GraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
 
     ID3D11ShaderResourceView* srv = nullptr;
     m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+    m_ctx->CSSetShaderResources(p_slot, 1, &srv);
 }
 
 std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -285,6 +295,10 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
     D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()),
                    nullptr,
                    "Failed to create texture");
+
+    const char* debug_name = renderTargetResourceNameToString(p_texture_desc.name);
+
+    texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
 
     if (p_texture_desc.initial_data) {
         uint32_t row_pitch = p_texture_desc.width * channel_count(format) * channel_size(format);
@@ -407,6 +421,13 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
 void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_index);
     unused(p_mip_level);
+
+    if (p_draw_pass == nullptr) {
+        // [SCRUM-28] @TODO: Should unbind render target after each render pass
+        ID3D11RenderTargetView* rtvs[3] = { nullptr, nullptr, nullptr };
+        m_ctx->OMSetRenderTargets(3, rtvs, nullptr);
+        return;
+    }
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 

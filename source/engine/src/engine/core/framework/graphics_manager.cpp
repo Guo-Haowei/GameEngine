@@ -278,6 +278,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
             break;
     }
 
+    texture_desc.name = p_desc.name;
     texture_desc.format = p_desc.format;
     texture_desc.width = p_desc.width;
     texture_desc.height = p_desc.height;

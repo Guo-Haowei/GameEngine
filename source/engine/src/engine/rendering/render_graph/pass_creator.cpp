@@ -310,6 +310,9 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_shadow_map_slot);
+
+    // @TODO: [SCRUM-28] refactor 
+    gm.setRenderTarget(nullptr);
 }
 
 void RenderPassCreator::addLightingPass() {

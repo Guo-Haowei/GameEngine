@@ -3,6 +3,8 @@
 
 namespace my {
 
+enum RenderTargetResourceName : uint8_t;
+
 enum class Dimension : uint32_t {
     TEXTURE_2D,
     TEXTURE_3D,
@@ -59,6 +61,8 @@ struct TextureDesc {
     uint32_t bind_flags;
     uint32_t misc_flags;
     const void* initial_data;
+    // @TODO: refactor
+    RenderTargetResourceName name;
 };
 
 struct Texture {

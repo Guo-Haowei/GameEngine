@@ -9,7 +9,7 @@
 
 namespace my::rg {
 
-static void downSampleFunc(const DrawPass*) {
+static void bloomFunction(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::singleton();
 
     const bool is_opengl = gm.getBackend() == Backend::OPENGL;
@@ -27,11 +27,19 @@ static void downSampleFunc(const DrawPass*) {
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
 
+        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
         gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.dispatch(work_group_x, work_group_y, 1);
         if (is_opengl) {
             glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
+        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
+        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+    }
+
+    // @HACK: prevent execution
+    if (!is_opengl) {
+        return;
     }
 
     // Step 2, down sampling
@@ -103,7 +111,7 @@ void RenderPassCreator::addBloomPass() {
 
     auto draw_pass = gm.createDrawPass(DrawPassDesc{
         .color_attachments = {},
-        .exec_func = downSampleFunc,
+        .exec_func = bloomFunction,
     });
     pass->addDrawPass(draw_pass);
 }
