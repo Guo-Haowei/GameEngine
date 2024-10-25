@@ -1,5 +1,4 @@
 #include "../cbuffer.h"
-#include "../texture_binding.h"
 
 #define ENABLE_VXGI 1
 

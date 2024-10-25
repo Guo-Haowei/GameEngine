@@ -2,7 +2,6 @@
 #include "hlsl/input_output.hlsl"
 #include "pbr.hlsl"
 #include "shadow.hlsl"
-#include "texture_binding.h"
 
 // @TODO: fix sampler
 SamplerState u_sampler : register(s0);

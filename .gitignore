@@ -22,3 +22,6 @@ CMakeFiles/
 
 # shader
 *.spv
+bloom_setup.comp.glsl
+bloom_downsample.comp.glsl
+bloom_upsample.comp.glsl

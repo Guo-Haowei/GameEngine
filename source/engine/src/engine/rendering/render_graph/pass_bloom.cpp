@@ -25,8 +25,8 @@ static void bloomFunction(const DrawPass*) {
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
 
-        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
+        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.dispatch(work_group_x, work_group_y, 1);
         gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
         gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);

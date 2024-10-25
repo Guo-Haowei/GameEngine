@@ -1,6 +1,7 @@
 #include "opengl_pipeline_state_manager.h"
 
 #include "core/framework/asset_manager.h"
+#include "core/framework/graphics_manager.h"
 
 namespace my {
 
@@ -64,51 +65,70 @@ static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected
 }
 
 static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
+    // @HACK: check if file is generated
+    bool is_generated = false;
+
+    static const char *s_generated_files[] = {
+        "bloom_setup.comp",
+        "bloom_downsample.comp",
+        "bloom_upsample.comp",
+    };
+
+    for (int i = 0; i < array_length(s_generated_files); ++i) {
+        if (p_file.find(s_generated_files[i]) != std::string_view::npos) {
+            is_generated = true;
+            break;
+        }
+    }
+
     std::string file{ p_file };
     file.append(".glsl");
     fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
     auto res = process_shader(path, 0);
     if (!res) {
-        LOG_FATAL("Failed to create shader '{}', reason: {}", p_file, res.error());
+        LOG_FATAL("Failed to create shader program '{}', reason: {}", p_file, res.error());
         return 0;
     }
 
     // @TODO: fix this
-    std::string fullsource =
-        "#version 460 core\n"
-        "#extension GL_NV_gpu_shader5 : require\n"
-        "#extension GL_NV_shader_atomic_float : enable\n"
-        "#extension GL_NV_shader_atomic_fp16_vector : enable\n"
-        "#extension GL_ARB_bindless_texture : require\n"
-        "#define GLSL_LANG 1\n"
-        "";
+    std::string fullsource;
+    if (!is_generated) {
+        fullsource =
+            "#version 460 core\n"
+            "#extension GL_NV_gpu_shader5 : require\n"
+            "#extension GL_NV_shader_atomic_float : enable\n"
+            "#extension GL_NV_shader_atomic_fp16_vector : enable\n"
+            "#extension GL_ARB_bindless_texture : require\n"
+            "#define GLSL_LANG 1\n"
+            "";
 
-    for (const auto &define : p_defines) {
-        fullsource.append(std::format("#define {} {}\n", define.name, define.value));
+        for (const auto &define : p_defines) {
+            fullsource.append(std::format("#define {} {}\n", define.name, define.value));
+        }
     }
 
     fullsource.append(*res);
     const char *sources[] = { fullsource.c_str() };
 
-    GLuint shader = glCreateShader(p_type);
-    glShaderSource(shader, 1, sources, nullptr);
-    glCompileShader(shader);
+    GLuint shader_id = glCreateShader(p_type);
+    glShaderSource(shader_id, 1, sources, nullptr);
+    glCompileShader(shader_id);
 
     GLint status = GL_FALSE, length = 0;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+    glGetShaderiv(shader_id, GL_COMPILE_STATUS, &status);
+    glGetShaderiv(shader_id, GL_INFO_LOG_LENGTH, &length);
     if (length > 0) {
         std::vector<char> buffer(length + 1);
-        glGetShaderInfoLog(shader, length, nullptr, buffer.data());
-        LOG_FATAL("[glsl] failed to compile shader '{}'\ndetails:\n{}", p_file, buffer.data());
+        glGetShaderInfoLog(shader_id, length, nullptr, buffer.data());
+        LOG_FATAL("[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
     }
 
     if (status == GL_FALSE) {
-        glDeleteShader(shader);
+        glDeleteShader(shader_id);
         return 0;
     }
 
-    return shader;
+    return shader_id;
 }
 
 std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const PipelineCreateInfo &p_info) {
@@ -169,6 +189,13 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const Pipeline
         if (location != -1) {
             glUniform1i(location, s_texture_slots[i].slot);
         }
+    }
+
+    // Setup texture locations
+    {
+        // @TODO: refactor
+        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedg_bloom_input_imagelinear_clamp_sampler"), g_bloom_input_image_slot);
+        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedg_bloom_input_imageSPIRV_Cross_DummySampler"), g_bloom_input_image_slot);
     }
     glUseProgram(0);
     return program;
