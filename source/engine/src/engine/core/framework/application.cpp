@@ -116,7 +116,6 @@ int Application::run(int argc, const char** argv) {
     LOG_ERROR("TODO: cloth physics");
     LOG_ERROR("TODO: reverse z");
 
-    LOG_OK("TODO: D3D11 bloom");
     LOG_OK("TODO: particles");
 
     // @TODO: add frame count, elapsed time, etc
