@@ -321,8 +321,9 @@ void OpenGLGraphicsManager::dispatch(uint32_t p_num_groups_x, uint32_t p_num_gro
 }
 
 void OpenGLGraphicsManager::setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
-    // @TODO: add more to this
-    glBindImageTexture(p_slot, p_texture->get_handle32(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+    GLuint handle = p_texture ? p_texture->get_handle32() : 0;
+
+    glBindImageTexture(p_slot, handle, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 }
 
 std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::createUniform(int p_slot, size_t p_capacity) {
@@ -515,7 +516,8 @@ void OpenGLGraphicsManager::setStencilRef(uint32_t p_ref) {
 
 void OpenGLGraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     auto draw_pass = reinterpret_cast<const OpenGLSubpass*>(p_draw_pass);
-    if (draw_pass->handle == 0) {
+    if (!draw_pass || draw_pass->handle == 0) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         return;
     }
 

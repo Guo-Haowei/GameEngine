@@ -28,6 +28,5 @@ float rgb_to_luma(float3 rgb) {
     }
 
     // @TODO: fix bloom
-    g_output_image[output_coord] = float3(luma, luma, luma);
-    // g_output_image[output_coord] = color;
+    g_output_image[output_coord] = color;
 }
