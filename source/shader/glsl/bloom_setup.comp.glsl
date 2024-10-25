@@ -1,26 +1,13 @@
+#version 450
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-#include "../cbuffer.h"
+layout(binding = 3) uniform writeonly image2D g_output_image;
+uniform sampler2D SPIRV_Cross_Combinedg_bloom_input_imageu_sampler;
 
-layout(r11f_g11f_b10f, binding = 3) uniform image2D u_output_image;
-
-float rgb_to_luma(vec3 rgb) {
-    return sqrt(dot(rgb, vec3(0.299, 0.587, 0.114)));
+void main()
+{
+    uvec2 _37 = uvec2(imageSize(g_output_image));
+    vec3 _53 = textureLod(SPIRV_Cross_Combinedg_bloom_input_imageu_sampler, vec2(float(gl_GlobalInvocationID.x) / float(_37.x), float(gl_GlobalInvocationID.y) / float(_37.y)), 0.0).xyz;
+    imageStore(g_output_image, ivec2(gl_GlobalInvocationID.xy), mix(_53, vec3(0.0), bvec3(sqrt(dot(_53, vec3(0.2989999949932098388671875, 0.58700001239776611328125, 0.114000000059604644775390625))) < 1.2999999523162841796875)).xyzz);
 }
 
-void main() {
-    ivec2 output_tex_coord = ivec2(gl_GlobalInvocationID.xy);
-    vec2 output_image_size = vec2(imageSize(u_output_image));
-    vec2 uv = vec2(output_tex_coord.x / output_image_size.x,
-                   output_tex_coord.y / output_image_size.y);
-
-    vec3 color = texture(g_bloom_input, vec2(uv.x, uv.y)).rgb;
-    float luma = rgb_to_luma(color);
-
-    const float THRESHOLD = 1.3;
-    if (luma < THRESHOLD) {
-        color = vec3(0.0);
-    }
-
-    imageStore(u_output_image, output_tex_coord, vec4(color, 1.0));
-}
