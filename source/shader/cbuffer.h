@@ -160,20 +160,6 @@ CBUFFER(DebugDrawConstantBuffer, 6) {
 };
 #endif
 
-CBUFFER(BloomConstantBuffer, 7) {
-    sampler2D g_bloom_input;                 // 8
-    float _bloom_constant_buffer_padding_0;  // 4
-    float _bloom_constant_buffer_padding_1;  // 4
-
-    vec4 _bloom_constant_buffer_padding_2;  // 16
-    vec4 _bloom_constant_buffer_padding_3;  // 16
-    vec4 _bloom_constant_buffer_padding_4;  // 16
-
-    mat4 _bloom_constant_buffer_padding_5;  // 64
-    mat4 _bloom_constant_buffer_padding_6;  // 64
-    mat4 _bloom_constant_buffer_padding_7;  // 64
-};
-
 CBUFFER(PointShadowConstantBuffer, 8) {
     mat4 g_point_light_matrix;    // 64
     vec3 g_point_light_position;  // 12

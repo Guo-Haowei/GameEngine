@@ -21,10 +21,6 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        // @TODO: refactor image slot
-        g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
-        g_bloom_cache.update();
-
         gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
         gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.dispatch(work_group_x, work_group_y, 1);
@@ -39,10 +35,6 @@ static void bloomFunction(const DrawPass*) {
         auto output = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
 
         DEV_ASSERT(input && output);
-
-        // @TODO: refactor image slot
-        g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
-        g_bloom_cache.update();
 
         auto [width, height] = output->getSize();
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
@@ -60,10 +52,6 @@ static void bloomFunction(const DrawPass*) {
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
         auto input = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
         auto output = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-
-        // @TODO: refactor image slot
-        g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
-        g_bloom_cache.update();
 
         auto [width, height] = output->getSize();
         const uint32_t work_group_x = math::ceilingDivision(width, 16);

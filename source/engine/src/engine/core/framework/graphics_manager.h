@@ -53,7 +53,6 @@ struct MeshBuffers;
 extern UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
-extern UniformBuffer<BloomConstantBuffer> g_bloom_cache;
 extern UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern UniformBuffer<EnvConstantBuffer> g_env_cache;
 
