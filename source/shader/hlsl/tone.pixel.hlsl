@@ -3,7 +3,7 @@
 #include "texture_binding.h"
 
 // @TODO: fix sampler
-SamplerState u_sampler : register(s0);
+SamplerState linear_clamp_sampler : register(s2);
 
 float4 main(vsoutput_uv input) : SV_TARGET {
     const float v = 1.0 / 2.0;
@@ -13,10 +13,10 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     // flip uv
     uv.y = 1 - uv.y;
 
-    float3 color = g_texture_lighting.Sample(u_sampler, uv).rgb;
+    float3 color = g_texture_lighting.Sample(linear_clamp_sampler, uv).rgb;
 
     if (u_enable_bloom == 1) {
-        float3 bloom = g_bloom_input_image.Sample(u_sampler, uv).rgb;
+        float3 bloom = g_bloom_input_image.Sample(linear_clamp_sampler, uv).rgb;
         color += bloom;
     }
 

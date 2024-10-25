@@ -2,6 +2,7 @@
 
 tmp.*
 *.out
+
 # user
 *.scene
 *.ini
@@ -18,3 +19,9 @@ scenes/
 
 # cmake
 CMakeFiles/
+
+# shader
+*.spv
+bloom_setup.comp.glsl
+bloom_downsample.comp.glsl
+bloom_upsample.comp.glsl

@@ -92,7 +92,6 @@ static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_c
 UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
-UniformBuffer<BloomConstantBuffer> g_bloom_cache;
 UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 UniformBuffer<EnvConstantBuffer> g_env_cache;
 
@@ -116,7 +115,6 @@ bool GraphicsManager::initialize() {
     create_uniform_buffer<PerFrameConstantBuffer>(g_per_frame_cache);
     create_uniform_buffer<PerSceneConstantBuffer>(g_constantCache);
     create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
-    create_uniform_buffer<BloomConstantBuffer>(g_bloom_cache);
     create_uniform_buffer<PointShadowConstantBuffer>(g_point_shadow_cache);
     create_uniform_buffer<EnvConstantBuffer>(g_env_cache);
 
