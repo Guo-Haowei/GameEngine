@@ -4,15 +4,12 @@
 #include "rendering/rendering_dvars.h"
 
 // @TODO: remove API sepcific code
-#include "drivers/opengl/opengl_prerequisites.h"
 #include "rendering/render_manager.h"
 
 namespace my::rg {
 
 static void bloomFunction(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::singleton();
-
-    const bool is_opengl = gm.getBackend() == Backend::OPENGL;
 
     // Step 1, select pixels contribute to bloom
     {
@@ -24,22 +21,15 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
+        // @TODO: refactor image slot
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
 
-        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
         gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
         gm.dispatch(work_group_x, work_group_y, 1);
-        if (is_opengl) {
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        }
         gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
         gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
-    }
-
-    // @HACK: prevent execution
-    if (!is_opengl) {
-        return;
     }
 
     // Step 2, down sampling
@@ -50,6 +40,7 @@ static void bloomFunction(const DrawPass*) {
 
         DEV_ASSERT(input && output);
 
+        // @TODO: refactor image slot
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
 
@@ -57,12 +48,11 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        // @TODO: refactor image slot
+        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
         gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.dispatch(work_group_x, work_group_y, 1);
-        if (is_opengl) {
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        }
+        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
+        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
     }
 
     // Step 3, up sampling
@@ -71,6 +61,7 @@ static void bloomFunction(const DrawPass*) {
         auto input = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
         auto output = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
+        // @TODO: refactor image slot
         g_bloom_cache.cache.g_bloom_input = input->texture->get_resident_handle();
         g_bloom_cache.update();
 
@@ -78,11 +69,11 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
+        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
         gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.dispatch(work_group_x, work_group_y, 1);
-        if (is_opengl) {
-            glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        }
+        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
+        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
     }
 }
 

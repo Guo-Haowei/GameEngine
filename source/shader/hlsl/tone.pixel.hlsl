@@ -15,6 +15,11 @@ float4 main(vsoutput_uv input) : SV_TARGET {
 
     float3 color = g_texture_lighting.Sample(u_sampler, uv).rgb;
 
+    if (u_enable_bloom == 1) {
+        float3 bloom = g_bloom_input_image.Sample(u_sampler, uv).rgb;
+        color += bloom;
+    }
+
     color = color / (color + float3(1.0, 1.0, 1.0));
     color = pow(color, gamma);
 
