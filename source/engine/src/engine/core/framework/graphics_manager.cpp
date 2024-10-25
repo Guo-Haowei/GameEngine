@@ -278,6 +278,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
             break;
     }
 
+    texture_desc.name = p_desc.name;
     texture_desc.format = p_desc.format;
     texture_desc.width = p_desc.width;
     texture_desc.height = p_desc.height;
@@ -285,6 +286,11 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
     texture_desc.misc_flags = 0;
     texture_desc.mip_levels = 1;
     texture_desc.array_size = 1;
+
+    if (p_desc.need_uav) {
+        texture_desc.bind_flags |= BIND_UNORDERED_ACCESS;
+    }
+
     if (p_desc.gen_mipmap) {
         texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
     }

@@ -21,9 +21,10 @@ struct RenderTargetDesc {
     int width;
     int height;
     bool gen_mipmap;
+    bool need_uav;
 
-    RenderTargetDesc(RenderTargetResourceName p_name, PixelFormat p_format, AttachmentType p_type, int p_width, int p_height, bool p_gen_mipmap = false)
-        : name(p_name), format(p_format), type(p_type), width(p_width), height(p_height), gen_mipmap(p_gen_mipmap) {
+    RenderTargetDesc(RenderTargetResourceName p_name, PixelFormat p_format, AttachmentType p_type, int p_width, int p_height, bool p_gen_mipmap = false, bool p_need_uav = false)
+        : name(p_name), format(p_format), type(p_type), width(p_width), height(p_height), gen_mipmap(p_gen_mipmap), need_uav(p_need_uav) {
     }
 };
 

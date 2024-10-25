@@ -32,6 +32,9 @@ public:
     void setMesh(const MeshBuffers* p_mesh) final;
     void drawElements(uint32_t p_count, uint32_t p_offset) final;
 
+    void dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
+    void setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) final;
+
     std::shared_ptr<UniformBufferBase> createUniform(int p_slot, size_t p_capacity) final;
     void updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
     void bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;

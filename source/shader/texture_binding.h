@@ -24,5 +24,6 @@ SHADER_TEXTURE(Texture2D, u_gbuffer_position_map, 11)
 SHADER_TEXTURE(Texture2D, u_gbuffer_normal_map, 12)
 SHADER_TEXTURE(Texture2D, u_gbuffer_material_map, 13)
 SHADER_TEXTURE(Texture2D, g_texture_lighting, 14)
+SHADER_TEXTURE(Texture2D, g_bloom_input_image, 15)
 
 #endif

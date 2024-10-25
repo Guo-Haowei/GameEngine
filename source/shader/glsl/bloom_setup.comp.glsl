@@ -2,7 +2,6 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 #include "../cbuffer.h"
 
-layout(r11f_g11f_b10f, binding = 2) uniform image2D u_input_image;
 layout(r11f_g11f_b10f, binding = 3) uniform image2D u_output_image;
 
 float rgb_to_luma(vec3 rgb) {
@@ -17,8 +16,9 @@ void main() {
 
     vec3 color = texture(g_bloom_input, vec2(uv.x, uv.y)).rgb;
     float luma = rgb_to_luma(color);
-    // @TODO: dynamic lua
-    if (luma < u_bloom_threshold) {
+
+    const float THRESHOLD = 1.3;
+    if (luma < THRESHOLD) {
         color = vec3(0.0);
     }
 

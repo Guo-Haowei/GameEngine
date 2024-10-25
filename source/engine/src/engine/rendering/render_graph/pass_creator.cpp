@@ -310,6 +310,9 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_shadow_map_slot);
+
+    // @TODO: [SCRUM-28] refactor
+    gm.setRenderTarget(nullptr);
 }
 
 void RenderPassCreator::addLightingPass() {
@@ -374,6 +377,7 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
             gm.bindTexture(p_dimension, resource->texture->get_handle(), p_slot);
         };
         bind_slot(RESOURCE_LIGHTING, g_texture_lighting_slot);
+        bind_slot(RESOURCE_BLOOM_0, g_bloom_input_image_slot);
 
         gm.setViewport(Viewport(width, height));
         gm.clear(p_draw_pass, CLEAR_COLOR_BIT);
@@ -382,20 +386,16 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
         RenderManager::singleton().draw_quad();
 
         gm.unbindTexture(Dimension::TEXTURE_2D, g_texture_lighting_slot);
+        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
     }
 }
 
-void RenderPassCreator::addTonePass(bool p_skip_bloom) {
+void RenderPassCreator::addTonePass() {
     GraphicsManager& gm = GraphicsManager::singleton();
 
     RenderPassDesc desc;
     desc.name = RenderPassName::TONE;
     desc.dependencies = { RenderPassName::BLOOM };
-
-    // HACK:
-    if (p_skip_bloom) {
-        desc.dependencies = { RenderPassName::LIGHTING };
-    }
 
     auto pass = m_graph.createPass(desc);
 

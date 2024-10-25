@@ -34,4 +34,8 @@ constexpr inline uint32_t nextPowerOfTwo(uint32_t p_x) {
     return ++p_x;
 }
 
+constexpr inline int ceilingDivision(int p_dividend, int p_divisor) {
+    return (p_dividend + p_divisor - 1) / p_divisor;
+}
+
 }  // namespace my::math

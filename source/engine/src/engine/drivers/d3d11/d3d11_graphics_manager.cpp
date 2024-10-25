@@ -51,6 +51,7 @@ bool D3d11GraphicsManager::initializeImpl() {
         auto hr = m_device->CreateSamplerState(&sampler_desc, m_sampler_state.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 
+        m_ctx->CSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
         m_ctx->PSSetSamplers(0, 1, m_sampler_state.GetAddressOf());
     }
     {
@@ -71,6 +72,7 @@ bool D3d11GraphicsManager::initializeImpl() {
         auto hr = m_device->CreateSamplerState(&sampler_desc, m_shadow_sampler_state.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 
+        m_ctx->CSSetSamplers(1, 1, m_sampler_state.GetAddressOf());
         m_ctx->PSSetSamplers(1, 1, m_sampler_state.GetAddressOf());
     }
 
@@ -103,6 +105,22 @@ void D3d11GraphicsManager::render() {
 
 void D3d11GraphicsManager::setStencilRef(uint32_t p_ref) {
     unused(p_ref);
+}
+
+void D3d11GraphicsManager::dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+    m_ctx->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
+}
+
+void D3d11GraphicsManager::setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
+    if (!p_texture) {
+        ID3D11UnorderedAccessView* uav = nullptr;
+        m_ctx->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
+        return;
+    }
+
+    auto texture = dynamic_cast<D3d11Texture*>(p_texture);
+
+    m_ctx->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
 }
 
 void D3d11GraphicsManager::onWindowResize(int p_width, int p_height) {
@@ -228,6 +246,7 @@ void D3d11GraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle,
     if (p_handle) {
         ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
         m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+        m_ctx->CSSetShaderResources(p_slot, 1, &srv);
     }
 }
 
@@ -236,12 +255,14 @@ void D3d11GraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
 
     ID3D11ShaderResourceView* srv = nullptr;
     m_ctx->PSSetShaderResources(p_slot, 1, &srv);
+    m_ctx->CSSetShaderResources(p_slot, 1, &srv);
 }
 
 std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     ComPtr<ID3D11ShaderResourceView> srv;
+    ComPtr<ID3D11UnorderedAccessView> uav;
 
     PixelFormat format = p_texture_desc.format;
     DXGI_FORMAT texture_format = convert(format);
@@ -275,6 +296,10 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
                    nullptr,
                    "Failed to create texture");
 
+    const char* debug_name = renderTargetResourceNameToString(p_texture_desc.name);
+
+    texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
+
     if (p_texture_desc.initial_data) {
         uint32_t row_pitch = p_texture_desc.width * channel_count(format) * channel_size(format);
         m_ctx->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initial_data, row_pitch, 0);
@@ -301,6 +326,21 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
         }
 
         gpu_texture->srv = srv;
+    }
+
+    // @TODO: only generate uav when necessary
+    if (texture_desc.BindFlags & D3D11_BIND_UNORDERED_ACCESS) {
+        // Create UAV
+        D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+        uavDesc.Format = texture_format;
+        uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+        uavDesc.Texture2D.MipSlice = 0;
+
+        D3D_FAIL_V_MSG(m_device->CreateUnorderedAccessView(texture.Get(), &uavDesc, uav.GetAddressOf()),
+                       nullptr,
+                       "Failed to create unordered access view");
+
+        gpu_texture->uav = uav;
     }
 
     gpu_texture->texture = texture;
@@ -381,6 +421,13 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
 void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_index);
     unused(p_mip_level);
+
+    if (p_draw_pass == nullptr) {
+        // [SCRUM-28] @TODO: Should unbind render target after each render pass
+        ID3D11RenderTargetView* rtvs[3] = { nullptr, nullptr, nullptr };
+        m_ctx->OMSetRenderTargets(3, rtvs, nullptr);
+        return;
+    }
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 
@@ -549,22 +596,26 @@ void D3d11GraphicsManager::onSceneChange(const Scene& p_scene) {
 void D3d11GraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipeline_state_manager->find(p_name));
     DEV_ASSERT(pipeline);
-    if (pipeline->vertex_shader) {
-        m_ctx->VSSetShader(pipeline->vertex_shader.Get(), 0, 0);
-        m_ctx->IASetInputLayout(pipeline->input_layout.Get());
-    }
-    if (pipeline->pixel_shader) {
-        m_ctx->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
-    }
+    if (pipeline->compute_shader) {
+        m_ctx->CSSetShader(pipeline->compute_shader.Get(), nullptr, 0);
+    } else {
+        if (pipeline->vertex_shader) {
+            m_ctx->VSSetShader(pipeline->vertex_shader.Get(), 0, 0);
+            m_ctx->IASetInputLayout(pipeline->input_layout.Get());
+        }
+        if (pipeline->pixel_shader) {
+            m_ctx->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
+        }
 
-    if (pipeline->rasterizer.Get() != m_state_cache.rasterizer) {
-        m_ctx->RSSetState(pipeline->rasterizer.Get());
-        m_state_cache.rasterizer = pipeline->rasterizer.Get();
-    }
+        if (pipeline->rasterizer.Get() != m_state_cache.rasterizer) {
+            m_ctx->RSSetState(pipeline->rasterizer.Get());
+            m_state_cache.rasterizer = pipeline->rasterizer.Get();
+        }
 
-    if (pipeline->depth_stencil.Get() != m_state_cache.depth_stencil) {
-        m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
-        m_state_cache.depth_stencil = pipeline->depth_stencil.Get();
+        if (pipeline->depth_stencil.Get() != m_state_cache.depth_stencil) {
+            m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
+            m_state_cache.depth_stencil = pipeline->depth_stencil.Get();
+        }
     }
 }
 
