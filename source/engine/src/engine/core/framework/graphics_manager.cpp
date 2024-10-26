@@ -244,6 +244,8 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
 
     // @TODO: this part need rework
     TextureDesc texture_desc{};
+    texture_desc.array_size = 1;
+
     switch (p_desc.type) {
         case AttachmentType::COLOR_2D:
         case AttachmentType::DEPTH_2D:
@@ -254,6 +256,8 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
         case AttachmentType::SHADOW_CUBE_MAP:
         case AttachmentType::COLOR_CUBE_MAP:
             texture_desc.dimension = Dimension::TEXTURE_CUBE;
+            texture_desc.misc_flags |= RESOURCE_MISC_TEXTURECUBE;
+            texture_desc.array_size = 6;
             break;
         default:
             CRASH_NOW();
@@ -281,9 +285,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
     texture_desc.width = p_desc.width;
     texture_desc.height = p_desc.height;
     texture_desc.initial_data = nullptr;
-    texture_desc.misc_flags = 0;
     texture_desc.mip_levels = 1;
-    texture_desc.array_size = 1;
 
     if (p_desc.need_uav) {
         texture_desc.bind_flags |= BIND_UNORDERED_ACCESS;

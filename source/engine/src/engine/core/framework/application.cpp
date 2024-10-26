@@ -101,13 +101,6 @@ int Application::run(int argc, const char** argv) {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    LOG_WARN("TODO: terrain & grass");
-    LOG_WARN("TODO: water");
-    LOG_OK("TODO: change position buffer to view space");
-    LOG_OK("TODO: selection highlight");
-    LOG_OK("TODO: TAA");
-    LOG_WARN("TODO: cloud");
-
     LOG_WARN("TODO: properly unload scene");
     LOG_WARN("TODO: make camera a component");
     LOG_WARN("TODO: refactor render graph");

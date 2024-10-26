@@ -235,7 +235,7 @@ void RenderPassCreator::addShadowPass() {
 
     static_assert(array_length(funcs) == MAX_LIGHT_CAST_SHADOW_COUNT);
 
-    if (manager.getBackend() == Backend::OPENGL) {
+    {
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
             auto point_shadow_map = manager.createRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
                                                                                  PixelFormat::D32_FLOAT,

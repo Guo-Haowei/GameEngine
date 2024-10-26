@@ -1,5 +1,6 @@
 #include "light_component.h"
 
+#include "core/framework/graphics_manager.h"
 #include "core/io/archive.h"
 #include "rendering/render_manager.h"
 #include "scene/transform_component.h"
@@ -51,7 +52,18 @@ void LightComponent::update(const TransformComponent& p_transform) {
                 case LIGHT_TYPE_POINT: {
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
                     const float far_plane = m_max_distance;
-                    const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                    // @TODO: refactor
+                    glm::mat4 projection;
+                    switch (GraphicsManager::singleton().getBackend()) {
+                        case Backend::D3D11:
+                            projection = glm::perspectiveRH_ZO(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                            break;
+                        case Backend::OPENGL:
+                            projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                            break;
+                        default:
+                            break;
+                    }
                     auto view_matrices = renderer::cube_map_view_matrices(m_position);
                     for (size_t i = 0; i < view_matrices.size(); ++i) {
                         m_light_space_matrices[i] = projection * view_matrices[i];

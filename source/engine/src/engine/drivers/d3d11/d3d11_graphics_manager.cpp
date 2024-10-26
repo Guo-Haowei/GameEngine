@@ -427,6 +427,19 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
                                "Failed to create depth stencil view");
                 draw_pass->dsv = dsv;
             } break;
+            case AttachmentType::SHADOW_CUBE_MAP: {
+                ComPtr<ID3D11DepthStencilView> dsv;
+                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                desc.Format = DXGI_FORMAT_D32_FLOAT;
+                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+                desc.Texture2DArray.ArraySize = 6;
+                desc.Texture2DArray.MipSlice = 0;
+
+                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                               nullptr,
+                               "Failed to create depth stencil view");
+                draw_pass->dsv = dsv;
+            } break;
             default:
                 CRASH_NOW();
                 break;
@@ -448,6 +461,13 @@ void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_in
     }
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
+    if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
+        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
+            ID3D11RenderTargetView* rtv = nullptr;
+            m_ctx->OMSetRenderTargets(1, &rtv, draw_pass->dsv.Get());
+            return;
+        }
+    }
 
     // @TODO: fixed_vector
     std::vector<ID3D11RenderTargetView*> rtvs;
