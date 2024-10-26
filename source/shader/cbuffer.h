@@ -38,9 +38,9 @@ using TextureHandle = uint64_t;
 #endif
 
 struct Light {
-    mat4 projection_matrix; // 64
-    mat4 view_matrix; // 64
-    vec4 points[4]; // 64
+    mat4 projection_matrix;  // 64
+    mat4 view_matrix;        // 64
+    vec4 points[4];          // 64
 
     vec3 color;
     int type;

@@ -56,10 +56,10 @@ void LightComponent::update(const TransformComponent& p_transform) {
                     glm::mat4 projection;
                     switch (GraphicsManager::singleton().getBackend()) {
                         case Backend::D3D11:
-                            projection = glm::perspectiveRH_ZO(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                            projection = glm::perspectiveLH_ZO(glm::radians(90.0f), 1.0f, near_plane, far_plane);
                             break;
                         case Backend::OPENGL:
-                            projection = glm::perspective(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                            projection = glm::perspectiveRH_NO(glm::radians(90.0f), 1.0f, near_plane, far_plane);
                             break;
                         default:
                             break;

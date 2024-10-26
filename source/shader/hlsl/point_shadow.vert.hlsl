@@ -12,8 +12,9 @@ vsoutput_position main(vsinput_mesh input) {
     float4x4 world_matrix = u_world_matrix;
 #endif
 
+    float4 position = mul(world_matrix, float4(input.position, 1.0));
     vsoutput_position output;
-    output.world_position = mul(world_matrix, float4(input.position, 1.0));
-    output.position = mul(g_point_light_matrix, output.world_position);
+    output.world_position = position.xyz;
+    output.position = mul(g_point_light_matrix, position);
     return output;
 }

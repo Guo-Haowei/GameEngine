@@ -36,25 +36,6 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     float3 light_position = p_light.position;
     float light_far = p_light.max_distance;
 
-    TextureCube point_shadow_map;
-    switch (p_light.shadow_map_index) {
-        case 0:
-            point_shadow_map = t_point_shadow_0;
-            break;
-        case 1:
-            point_shadow_map = t_point_shadow_1;
-            break;
-        case 2:
-            point_shadow_map = t_point_shadow_2;
-            break;
-        case 3:
-            point_shadow_map = t_point_shadow_3;
-            break;
-        default:
-            point_shadow_map = t_point_shadow_0;
-            break;
-    }
-
     float3 frag_to_light = p_frag_pos - light_position;
     float current_depth = length(frag_to_light);
 
@@ -64,10 +45,26 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     float disk_radius = (1.0 + (view_distance / light_far)) / 100.0;
     float shadow = 0.0;
 
-    float closest_depth = t_point_shadow_0.Sample(g_shadow_sampler, frag_to_light).r;
+    float closest_depth = 0.0f;
+    switch (p_light.shadow_map_index) {
+        case 0:
+            closest_depth = t_point_shadow_0.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        case 1:
+            closest_depth = t_point_shadow_1.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        case 2:
+            closest_depth = t_point_shadow_2.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        case 3:
+            closest_depth = t_point_shadow_3.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        default:
+            break;
+    }
+
     closest_depth *= light_far;
-    if (current_depth - bias > closest_depth)
-    {
+    if (current_depth - bias > closest_depth) {
         shadow += 1.0;
     }
 
