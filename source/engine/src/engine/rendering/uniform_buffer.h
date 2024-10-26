@@ -18,7 +18,7 @@ protected:
     const size_t m_capacity;
 };
 
-// @TODO: enable if
+// @TODO: remove this
 template<typename T>
 struct UniformBuffer {
     std::shared_ptr<UniformBufferBase> buffer;

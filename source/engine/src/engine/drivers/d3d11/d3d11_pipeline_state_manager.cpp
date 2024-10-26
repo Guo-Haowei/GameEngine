@@ -68,7 +68,7 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
         if (error != nullptr) {
             return std::unexpected(std::string((const char*)error->GetBufferPointer()));
         } else {
-            return std::unexpected("");
+            return std::unexpected("Unkown error");
         }
     }
 

@@ -105,7 +105,7 @@ public:
     virtual void setRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void unsetRenderTarget() = 0;
 
-    virtual void clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color = nullptr) = 0;
+    virtual void clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color = nullptr, int p_index = 0) = 0;
     virtual void setViewport(const Viewport& p_viewport) = 0;
 
     virtual const MeshBuffers* createMesh(const MeshComponent& p_mesh) = 0;

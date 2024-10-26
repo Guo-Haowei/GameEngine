@@ -285,7 +285,11 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
     PixelFormat format = p_texture_desc.format;
     DXGI_FORMAT texture_format = convert(format);
     DXGI_FORMAT srv_format = convert(format);
+    // @TODO: fix this
     bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
+    if (p_texture_desc.dimension == Dimension::TEXTURE_CUBE) {
+        gen_mip_map = false;
+    }
 
     // @TODO: refactor this part
     if (format == PixelFormat::D32_FLOAT) {
@@ -401,7 +405,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
                 D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
                                nullptr,
                                "Failed to create depth stencil view");
-                draw_pass->dsv = dsv;
+                draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -413,7 +417,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
                 D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
                                nullptr,
                                "Failed to create depth stencil view");
-                draw_pass->dsv = dsv;
+                draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -425,20 +429,23 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
                 D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
                                nullptr,
                                "Failed to create depth stencil view");
-                draw_pass->dsv = dsv;
+                draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
-                ComPtr<ID3D11DepthStencilView> dsv;
-                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                desc.Format = DXGI_FORMAT_D32_FLOAT;
-                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-                desc.Texture2DArray.ArraySize = 6;
-                desc.Texture2DArray.MipSlice = 0;
+                for (int face = 0; face < 6; ++face) {
+                    ComPtr<ID3D11DepthStencilView> dsv;
+                    D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                    desc.Format = DXGI_FORMAT_D32_FLOAT;
+                    desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+                    desc.Texture2DArray.MipSlice = 0;
+                    desc.Texture2DArray.ArraySize = 1;
+                    desc.Texture2DArray.FirstArraySlice = face;
 
-                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create depth stencil view");
-                draw_pass->dsv = dsv;
+                    D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                                   nullptr,
+                                   "Failed to create depth stencil view");
+                    draw_pass->dsvs.push_back(dsv);
+                }
             } break;
             default:
                 CRASH_NOW();
@@ -450,7 +457,6 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
 }
 
 void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
-    unused(p_index);
     unused(p_mip_level);
 
     if (p_draw_pass == nullptr) {
@@ -464,7 +470,7 @@ void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_in
     if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
             ID3D11RenderTargetView* rtv = nullptr;
-            m_ctx->OMSetRenderTargets(1, &rtv, draw_pass->dsv.Get());
+            m_ctx->OMSetRenderTargets(1, &rtv, draw_pass->dsvs[p_index].Get());
             return;
         }
     }
@@ -475,7 +481,7 @@ void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_in
         rtvs.push_back(rtv.Get());
     }
 
-    ID3D11DepthStencilView* dsv = draw_pass->dsv.Get();
+    ID3D11DepthStencilView* dsv = draw_pass->dsvs[0].Get();
     m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 
@@ -484,7 +490,7 @@ void D3d11GraphicsManager::unsetRenderTarget() {
     m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
 }
 
-void D3d11GraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color) {
+void D3d11GraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 
     if (p_flags & CLEAR_COLOR_BIT) {
@@ -509,8 +515,9 @@ void D3d11GraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, 
         clear_flags |= D3D11_CLEAR_STENCIL;
     }
     if (clear_flags) {
-        // @TODO: configure clear depth
-        m_ctx->ClearDepthStencilView(draw_pass->dsv.Get(), clear_flags, 1.0f, 0);
+        // @TODO: better way?
+        DEV_ASSERT_INDEX(p_index, draw_pass->dsvs.size());
+        m_ctx->ClearDepthStencilView(draw_pass->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
     }
 }
 

@@ -18,6 +18,11 @@ struct vsoutput_uv {
     float2 uv : TEXCOORD;
 };
 
+struct vsoutput_position {
+    float4 position : SV_POSITION;
+    float3 world_position : POSITION;
+};
+
 struct vsoutput_mesh {
     float4 position : SV_POSITION;
     float3 world_position : POSITION;

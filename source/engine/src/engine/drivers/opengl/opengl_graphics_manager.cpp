@@ -207,8 +207,10 @@ void OpenGLGraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-void OpenGLGraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color) {
+void OpenGLGraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
     unused(p_draw_pass);
+    unused(p_index);
+
     if (p_flags == CLEAR_NONE) {
         return;
     }

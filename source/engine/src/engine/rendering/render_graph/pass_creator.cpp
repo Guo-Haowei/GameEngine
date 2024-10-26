@@ -137,7 +137,7 @@ static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
         g_point_shadow_cache.update();
 
         gm.setRenderTarget(p_draw_pass, i);
-        gm.clear(p_draw_pass, CLEAR_DEPTH_BIT);
+        gm.clear(p_draw_pass, CLEAR_DEPTH_BIT, nullptr, i);
 
         Viewport viewport{ width, height };
         gm.setViewport(viewport);
