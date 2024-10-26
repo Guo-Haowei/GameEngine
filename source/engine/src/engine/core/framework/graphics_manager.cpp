@@ -506,8 +506,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 light.cast_shadow = cast_shadow;
                 light.max_distance = light_component.getMaxDistance();
                 if (cast_shadow && shadow_map_index != INVALID_POINT_SHADOW_HANDLE) {
-                    auto resource = GraphicsManager::singleton().findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + shadow_map_index));
-                    light.shadow_map = resource ? resource->texture->get_resident_handle() : 0;
+                    light.shadow_map_index = shadow_map_index;
 
                     auto pass = std::make_unique<PassContext>();
                     fillPass(
@@ -526,7 +525,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
 
                     point_shadow_passes[shadow_map_index] = std::move(pass);
                 } else {
-                    light.shadow_map = 0;
+                    light.shadow_map_index = -1;
                 }
             } break;
             case LIGHT_TYPE_AREA: {

@@ -82,7 +82,7 @@ void main() {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, u_shadow_map, world_position, NdotL, 1);
+                    shadow = shadowTest(light, t_shadow_map, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;
@@ -97,7 +97,7 @@ void main() {
                     const vec3 H = normalize(V + L);
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                     if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(world_position, light_idx, u_camera_position);
+                        shadow = point_shadow_calculation(light, world_position, u_camera_position);
                     }
                 }
             } break;

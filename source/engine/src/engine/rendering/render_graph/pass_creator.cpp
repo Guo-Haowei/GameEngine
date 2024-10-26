@@ -283,7 +283,12 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
     bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
     bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
-    bind_slot(RESOURCE_SHADOW_MAP, u_shadow_map_slot);
+
+    bind_slot(RESOURCE_SHADOW_MAP, t_shadow_map_slot);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_point_shadow_0_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_point_shadow_1_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_point_shadow_2_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_point_shadow_3_slot, Dimension::TEXTURE_CUBE);
 
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
@@ -309,7 +314,11 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
     gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
-    gm.unbindTexture(Dimension::TEXTURE_2D, u_shadow_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
+    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
+    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
+    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_2_slot);
+    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
 
     // @TODO: [SCRUM-28] refactor
     gm.setRenderTarget(nullptr);
