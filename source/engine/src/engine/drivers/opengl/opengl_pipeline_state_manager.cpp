@@ -2,6 +2,7 @@
 
 #include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
+#include "core/string/string_utils.h"
 
 namespace my {
 
@@ -65,26 +66,30 @@ static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected
 }
 
 static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
-    // @HACK: check if file is generated
-    bool is_generated = false;
-
-    static const char *s_generated_files[] = {
-        "bloom_setup.comp",
-        "bloom_downsample.comp",
-        "bloom_upsample.comp",
-    };
-
-    for (int i = 0; i < array_length(s_generated_files); ++i) {
-        if (p_file.find(s_generated_files[i]) != std::string_view::npos) {
-            is_generated = true;
-            break;
-        }
-    }
-
     std::string file{ p_file };
     file.append(".glsl");
-    fs::path path = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
-    auto res = process_shader(path, 0);
+    fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
+
+    bool is_generated = false;
+    if (!fs::exists(fullpath)) {
+        auto check_if_animated = [](const std::vector<ShaderMacro> &p_defines) {
+            for (const ShaderMacro &macro : p_defines) {
+                if (StringUtils::stringEqual(macro.name, "HAS_ANIMATION")) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        if (p_type == GL_VERTEX_SHADER && check_if_animated(p_defines)) {
+            file = "animated_" + file;
+        }
+        fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
+
+        is_generated = true;
+    }
+
+    auto res = process_shader(fullpath, 0);
     if (!res) {
         LOG_FATAL("Failed to create shader program '{}', reason: {}", p_file, res.error());
         return 0;

@@ -14,10 +14,7 @@ build/
 
 # shader
 *.spv
-# TODO: fix this
-bloom_setup.comp.glsl
-bloom_downsample.comp.glsl
-bloom_upsample.comp.glsl
+glsl_generated/
 
 # others
 *.exe

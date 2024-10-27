@@ -124,8 +124,8 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "point_shadow.vert";
-        info.ps = "point_shadow.pixel";
+        info.vs = "shadowmap_point.vert";
+        info.ps = "shadowmap_point.pixel";
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_mesh;
@@ -133,8 +133,8 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
-        info.vs = "point_shadow.vert";
-        info.ps = "point_shadow.pixel";
+        info.vs = "shadowmap_point.vert";
+        info.ps = "shadowmap_point.pixel";
         info.defines = { has_animation };
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
