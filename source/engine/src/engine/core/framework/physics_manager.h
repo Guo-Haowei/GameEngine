@@ -18,12 +18,12 @@ class PhysicsManager : public Singleton<PhysicsManager>, public Module, public E
 public:
     PhysicsManager() : Module("PhysicsManager") {}
 
-    bool initialize() override;
-    void finalize() override;
+    bool Initialize() override;
+    void Finalize() override;
 
     void update(Scene& p_scene);
 
-    void eventReceived(std::shared_ptr<Event> p_event) override;
+    void EventReceived(std::shared_ptr<Event> p_event) override;
 
 protected:
     void createWorld(const Scene& p_scene);

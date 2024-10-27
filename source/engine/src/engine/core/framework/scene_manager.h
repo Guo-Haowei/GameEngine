@@ -12,8 +12,8 @@ class SceneManager : public Singleton<SceneManager>, public Module {
 public:
     SceneManager() : Module("SceneManager") {}
 
-    bool initialize() override;
-    void finalize() override;
+    bool Initialize() override;
+    void Finalize() override;
     void update(float dt);
 
     void requestScene(std::string_view p_path);

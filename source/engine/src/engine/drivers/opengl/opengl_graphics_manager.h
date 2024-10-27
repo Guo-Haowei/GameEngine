@@ -14,40 +14,40 @@ class OpenGLGraphicsManager : public GraphicsManager {
 public:
     OpenGLGraphicsManager();
 
-    bool initializeImpl() final;
-    void finalize() final;
+    bool InitializeImpl() final;
+    void Finalize() final;
 
-    void setStencilRef(uint32_t p_ref) final;
+    void SetStencilRef(uint32_t p_ref) final;
 
-    void setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
-    void unsetRenderTarget() final;
+    void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
+    void UnsetRenderTarget() final;
 
-    void clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) final;
-    void setViewport(const Viewport& p_viewport) final;
+    void Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) final;
+    void SetViewport(const Viewport& p_viewport) final;
 
-    const MeshBuffers* createMesh(const MeshComponent& p_mesh) final;
-    void setMesh(const MeshBuffers* p_mesh) final;
-    void drawElements(uint32_t p_count, uint32_t offset) final;
+    const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
+    void SetMesh(const MeshBuffers* p_mesh) final;
+    void DrawElements(uint32_t p_count, uint32_t offset) final;
 
-    void dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
-    void setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) final;
+    void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
+    void SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) final;
 
-    std::shared_ptr<UniformBufferBase> createUniform(int p_slot, size_t p_capacity) final;
-    void updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
-    void bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
+    std::shared_ptr<UniformBufferBase> CreateUniform(int p_slot, size_t p_capacity) final;
+    void UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
+    void BindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
-    void bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
-    void unbindTexture(Dimension p_dimension, int p_slot) final;
+    void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
+    void UnbindTexture(Dimension p_dimension, int p_slot) final;
 
-    std::shared_ptr<Texture> createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
-    std::shared_ptr<DrawPass> createDrawPass(const DrawPassDesc& p_desc) final;
+    std::shared_ptr<Texture> CreateTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
+    std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) final;
 
 protected:
-    void onSceneChange(const Scene& p_scene) final;
-    void setPipelineStateImpl(PipelineStateName p_name) final;
-    void render() final;
+    void OnSceneChange(const Scene& p_scene) final;
+    void SetPipelineStateImpl(PipelineStateName p_name) final;
+    void Render() final;
 
-    void createGpuResources();
+    void CreateGpuResources();
 
 private:
     // @TODO: rename

@@ -10,6 +10,7 @@
 #include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
+// @TODO: refactor
 #ifdef min
 #undef min
 #endif
@@ -20,9 +21,9 @@
 namespace my {
 
 template<typename T>
-static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
+static auto CreateUniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
-    return p_graphics_manager.createUniform(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
+    return p_graphics_manager.CreateUniform(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
 }
 
 UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
@@ -34,19 +35,19 @@ UniformBuffer<EnvConstantBuffer> g_env_cache;
 template<typename T>
 static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
     constexpr int slot = T::get_uniform_buffer_slot();
-    p_buffer.buffer = GraphicsManager::singleton().createUniform(slot, sizeof(T));
+    p_buffer.buffer = GraphicsManager::singleton().CreateUniform(slot, sizeof(T));
 }
 
-bool GraphicsManager::initialize() {
-    if (!initializeImpl()) {
+bool GraphicsManager::Initialize() {
+    if (!InitializeImpl()) {
         return false;
     }
 
     // @TODO: refactor
-    m_context.batch_uniform = create_uniform<PerBatchConstantBuffer>(*this, 4096 * 16);
-    m_context.pass_uniform = create_uniform<PerPassConstantBuffer>(*this, 32);
-    m_context.material_uniform = create_uniform<MaterialConstantBuffer>(*this, 2048 * 16);
-    m_context.bone_uniform = create_uniform<BoneConstantBuffer>(*this, 16);
+    m_context.batch_uniform = ::my::CreateUniform<PerBatchConstantBuffer>(*this, 4096 * 16);
+    m_context.pass_uniform = ::my::CreateUniform<PerPassConstantBuffer>(*this, 32);
+    m_context.material_uniform = ::my::CreateUniform<MaterialConstantBuffer>(*this, 2048 * 16);
+    m_context.bone_uniform = ::my::CreateUniform<BoneConstantBuffer>(*this, 16);
 
     create_uniform_buffer<PerFrameConstantBuffer>(g_per_frame_cache);
     create_uniform_buffer<PerSceneConstantBuffer>(g_constantCache);
@@ -54,19 +55,19 @@ bool GraphicsManager::initialize() {
     create_uniform_buffer<PointShadowConstantBuffer>(g_point_shadow_cache);
     create_uniform_buffer<EnvConstantBuffer>(g_env_cache);
 
-    DEV_ASSERT(m_pipeline_state_manager);
+    DEV_ASSERT(m_pipelineStateManager);
 
-    if (!m_pipeline_state_manager->initialize()) {
+    if (!m_pipelineStateManager->initialize()) {
         return false;
     }
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = findRenderTarget(p_name);
+        std::shared_ptr<RenderTarget> resource = FindRenderTarget(p_name);
         if (!resource) {
             return;
         }
 
-        bindTexture(p_dimension, resource->texture->get_handle(), p_slot);
+        BindTexture(p_dimension, resource->texture->get_handle(), p_slot);
     };
 
     // bind common textures
@@ -79,16 +80,16 @@ bool GraphicsManager::initialize() {
     return true;
 }
 
-void GraphicsManager::eventReceived(std::shared_ptr<Event> event) {
+void GraphicsManager::EventReceived(std::shared_ptr<Event> event) {
     if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(event.get()); e) {
-        onSceneChange(*e->getScene());
+        OnSceneChange(*e->GetScene());
     }
     if (ResizeEvent* e = dynamic_cast<ResizeEvent*>(event.get()); e) {
-        onWindowResize(e->getWidth(), e->getHeight());
+        OnWindowResize(e->GetWidth(), e->GetHeight());
     }
 }
 
-std::shared_ptr<GraphicsManager> GraphicsManager::create() {
+std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
     const std::string& backend = DVAR_GET_STRING(r_backend);
 
     if (backend == "opengl") {
@@ -99,38 +100,38 @@ std::shared_ptr<GraphicsManager> GraphicsManager::create() {
     return std::make_shared<EmptyGraphicsManager>(Backend::EMPTY);
 }
 
-void GraphicsManager::setPipelineState(PipelineStateName p_name) {
-    if (m_last_pipeline_name != p_name) {
-        setPipelineStateImpl(p_name);
-        m_last_pipeline_name = p_name;
+void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
+    if (m_lastPipelineName != p_name) {
+        SetPipelineStateImpl(p_name);
+        m_lastPipelineName = p_name;
     }
 }
 
-void GraphicsManager::requestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
-    m_loaded_images.push(ImageTask{ p_handle, p_func });
+void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
+    m_loadedImages.push(ImageTask{ p_handle, p_func });
 }
 
-void GraphicsManager::update(Scene& p_scene) {
+void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
-    cleanup();
+    Cleanup();
 
-    updateConstants(p_scene);
-    updateLights(p_scene);
-    updateVoxelPass(p_scene);
-    updateMainPass(p_scene);
+    UpdateConstants(p_scene);
+    UpdateLights(p_scene);
+    UpdateVoxelPass(p_scene);
+    UpdateMainPass(p_scene);
 
     // update uniform
-    updateUniform(m_context.batch_uniform.get(), m_context.batch_cache.buffer);
-    updateUniform(m_context.pass_uniform.get(), m_context.pass_cache);
-    updateUniform(m_context.material_uniform.get(), m_context.material_cache.buffer);
-    updateUniform(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
+    UpdateUniform(m_context.batch_uniform.get(), m_context.batch_cache.buffer);
+    UpdateUniform(m_context.pass_uniform.get(), m_context.pass_cache);
+    UpdateUniform(m_context.material_uniform.get(), m_context.material_cache.buffer);
+    UpdateUniform(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
 
     g_per_frame_cache.update();
     // update uniform
 
     // @TODO: make it a function
-    auto loaded_images = m_loaded_images.pop_all();
+    auto loaded_images = m_loadedImages.pop_all();
     while (!loaded_images.empty()) {
         auto task = loaded_images.front();
         loaded_images.pop();
@@ -142,16 +143,16 @@ void GraphicsManager::update(Scene& p_scene) {
         SamplerDesc sampler_desc{};
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-        image->gpu_texture = createTexture(texture_desc, sampler_desc);
+        image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
         if (task.func) {
             task.func(task.handle->get());
         }
     }
 
-    render();
+    Render();
 }
 
-void GraphicsManager::selectRenderGraph() {
+void GraphicsManager::SelectRenderGraph() {
     std::string method(DVAR_GET_STRING(r_render_graph));
     if (method == "vxgi") {
         m_method = RenderGraph::VXGI;
@@ -166,16 +167,16 @@ void GraphicsManager::selectRenderGraph() {
 
     switch (m_method) {
         case RenderGraph::VXGI:
-            createRenderGraphVxgi(m_render_graph);
+            createRenderGraphVxgi(m_renderGraph);
             break;
         default:
-            createRenderGraphDefault(m_render_graph);
+            createRenderGraphDefault(m_renderGraph);
             break;
     }
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
-    DEV_ASSERT(m_resource_lookup.find(p_desc.name) == m_resource_lookup.end());
+std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
+    DEV_ASSERT(m_resourceLookup.find(p_desc.name) == m_resourceLookup.end());
     std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
 
     // @TODO: this part need rework
@@ -231,32 +232,32 @@ std::shared_ptr<RenderTarget> GraphicsManager::createRenderTarget(const RenderTa
         texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
     }
 
-    resource->texture = createTexture(texture_desc, p_sampler);
+    resource->texture = CreateTexture(texture_desc, p_sampler);
 
-    m_resource_lookup[resource->desc.name] = resource;
+    m_resourceLookup[resource->desc.name] = resource;
     return resource;
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::findRenderTarget(RenderTargetResourceName p_name) const {
-    if (m_resource_lookup.empty()) {
+std::shared_ptr<RenderTarget> GraphicsManager::FindRenderTarget(RenderTargetResourceName p_name) const {
+    if (m_resourceLookup.empty()) {
         return nullptr;
     }
 
-    auto it = m_resource_lookup.find(p_name);
-    if (it == m_resource_lookup.end()) {
+    auto it = m_resourceLookup.find(p_name);
+    if (it == m_resourceLookup.end()) {
         return nullptr;
     }
     return it->second;
 }
 
-uint64_t GraphicsManager::getFinalImage() const {
+uint64_t GraphicsManager::GetFinalImage() const {
     const Texture* texture = nullptr;
     switch (m_method) {
         case RenderGraph::VXGI:
-            texture = findRenderTarget(RESOURCE_FINAL)->texture.get();
+            texture = FindRenderTarget(RESOURCE_FINAL)->texture.get();
             break;
         case RenderGraph::DEFAULT:
-            texture = findRenderTarget(RESOURCE_TONE)->texture.get();
+            texture = FindRenderTarget(RESOURCE_TONE)->texture.get();
             break;
         default:
             CRASH_NOW();
@@ -270,7 +271,7 @@ uint64_t GraphicsManager::getFinalImage() const {
     return 0;
 }
 
-static void fill_material_constant_buffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
+static void FillMaterialConstantBuffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
     cb.u_base_color = material->base_color;
     cb.u_metallic = material->metallic;
     cb.u_roughness = material->roughness;
@@ -307,25 +308,25 @@ static void fill_material_constant_buffer(const MaterialComponent* material, Mat
     cb.u_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.u_material_map_handle);
 }
 
-void GraphicsManager::cleanup() {
-    m_context.batch_cache.clear();
-    m_context.material_cache.clear();
-    m_context.bone_cache.clear();
+void GraphicsManager::Cleanup() {
+    m_context.batch_cache.Clear();
+    m_context.material_cache.Clear();
+    m_context.bone_cache.Clear();
     m_context.pass_cache.clear();
 
-    for (auto& pass : shadow_passes) {
+    for (auto& pass : m_shadowPasses) {
         pass.draws.clear();
     }
 
-    for (auto& pass : point_shadow_passes) {
+    for (auto& pass : m_pointShadowPasses) {
         pass.reset();
     }
 
-    main_pass.draws.clear();
-    voxel_pass.draws.clear();
+    m_mainPass.draws.clear();
+    m_voxelPass.draws.clear();
 }
 
-void GraphicsManager::updateConstants(const Scene& p_scene) {
+void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
 
     auto& cache = g_per_frame_cache.cache;
@@ -367,7 +368,7 @@ void GraphicsManager::updateConstants(const Scene& p_scene) {
 }
 
 /// @TODO: refactor lights
-void GraphicsManager::updateLights(const Scene& p_scene) {
+void GraphicsManager::UpdateLights(const Scene& p_scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
     auto& cache = g_per_frame_cache.cache;
@@ -404,7 +405,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
 
                 light.view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
 
-                if (getBackend() == Backend::OPENGL) {
+                if (GetBackend() == Backend::OPENGL) {
                     light.projection_matrix = buildOpenGLOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
                     light.projection_matrix = buildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
@@ -416,13 +417,13 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 // @TODO: Build correct matrices
                 pass_constant.g_projection_matrix = light.projection_matrix;
                 pass_constant.g_view_matrix = light.view_matrix;
-                shadow_passes[0].pass_idx = static_cast<int>(m_context.pass_cache.size());
+                m_shadowPasses[0].pass_idx = static_cast<int>(m_context.pass_cache.size());
                 m_context.pass_cache.emplace_back(pass_constant);
 
                 // Frustum light_frustum(light_space_matrix);
-                fillPass(
+                FillPass(
                     p_scene,
-                    shadow_passes[0],
+                    m_shadowPasses[0],
                     [](const ObjectComponent& p_object) {
                         return p_object.flags & ObjectComponent::CAST_SHADOW;
                     },
@@ -445,7 +446,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                     light.shadow_map_index = shadow_map_index;
 
                     auto pass = std::make_unique<PassContext>();
-                    fillPass(
+                    FillPass(
                         p_scene,
                         *pass.get(),
                         [](const ObjectComponent& object) {
@@ -459,7 +460,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                     DEV_ASSERT_INDEX(shadow_map_index, MAX_LIGHT_CAST_SHADOW_COUNT);
                     pass->light_component = light_component;
 
-                    point_shadow_passes[shadow_map_index] = std::move(pass);
+                    m_pointShadowPasses[shadow_map_index] = std::move(pass);
                 } else {
                     light.shadow_map_index = -1;
                 }
@@ -480,10 +481,10 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
     }
 }
 
-void GraphicsManager::updateVoxelPass(const Scene& p_scene) {
-    fillPass(
+void GraphicsManager::UpdateVoxelPass(const Scene& p_scene) {
+    FillPass(
         p_scene,
-        voxel_pass,
+        m_voxelPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::RENDERABLE;
         },
@@ -494,7 +495,7 @@ void GraphicsManager::updateVoxelPass(const Scene& p_scene) {
         });
 }
 
-void GraphicsManager::updateMainPass(const Scene& p_scene) {
+void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
     const Camera& camera = *p_scene.m_camera;
     Frustum camera_frustum(camera.getProjectionViewMatrix());
 
@@ -504,18 +505,18 @@ void GraphicsManager::updateMainPass(const Scene& p_scene) {
 
     const float fovy = camera.getFovy().toRad();
     const float aspect = camera.getAspect();
-    if (getBackend() == Backend::OPENGL) {
+    if (GetBackend() == Backend::OPENGL) {
         pass_constant.g_projection_matrix = buildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     } else {
         pass_constant.g_projection_matrix = buildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     }
 
-    main_pass.pass_idx = static_cast<int>(m_context.pass_cache.size());
+    m_mainPass.pass_idx = static_cast<int>(m_context.pass_cache.size());
     m_context.pass_cache.emplace_back(pass_constant);
 
-    fillPass(
+    FillPass(
         p_scene,
-        main_pass,
+        m_mainPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::RENDERABLE;
         },
@@ -524,7 +525,7 @@ void GraphicsManager::updateMainPass(const Scene& p_scene) {
         });
 }
 
-void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2) {
+void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2) {
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
@@ -554,7 +555,7 @@ void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, Filter
             draw.flags |= STENCIL_FLAG_SELECTED;
         }
 
-        draw.batch_idx = m_context.batch_cache.findOrAdd(entity, batch_buffer);
+        draw.batch_idx = m_context.batch_cache.FindOrAdd(entity, batch_buffer);
         if (mesh.armature_id.IsValid()) {
             auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armature_id);
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
@@ -563,7 +564,7 @@ void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, Filter
             memcpy(bone.u_bones, armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
-            draw.bone_idx = m_context.bone_cache.findOrAdd(mesh.armature_id, bone);
+            draw.bone_idx = m_context.bone_cache.FindOrAdd(mesh.armature_id, bone);
         } else {
             draw.bone_idx = -1;
         }
@@ -579,12 +580,12 @@ void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
             const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
             MaterialConstantBuffer material_buffer;
-            fill_material_constant_buffer(material, material_buffer);
+            FillMaterialConstantBuffer(material, material_buffer);
 
             DrawContext sub_mesh;
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
-            sub_mesh.material_idx = m_context.material_cache.findOrAdd(subset.material_id, material_buffer);
+            sub_mesh.material_idx = m_context.material_cache.FindOrAdd(subset.material_id, material_buffer);
 
             draw.subsets.emplace_back(std::move(sub_mesh));
         }

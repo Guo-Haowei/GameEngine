@@ -81,9 +81,9 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
     ImVec2 bottom_right(top_left.x + m_canvas_size.x, top_left.y + m_canvas_size.y);
 
     // @TODO: fix this
-    uint64_t handle = GraphicsManager::singleton().getFinalImage();
+    uint64_t handle = GraphicsManager::singleton().GetFinalImage();
 
-    switch (GraphicsManager::singleton().getBackend()) {
+    switch (GraphicsManager::singleton().GetBackend()) {
         case Backend::OPENGL:
         case Backend::D3D11:
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));

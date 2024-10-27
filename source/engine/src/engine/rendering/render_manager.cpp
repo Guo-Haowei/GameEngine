@@ -50,7 +50,7 @@ void request_env_map(const std::string& path) {
         DEV_ASSERT(handle);
 
         handle->set(image);
-        GraphicsManager::singleton().requestTexture(handle, [](Image* p_image) {
+        GraphicsManager::singleton().RequestTexture(handle, [](Image* p_image) {
             // @TODO: better way
             if (p_image->gpu_texture) {
                 g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
@@ -113,14 +113,14 @@ RenderManager::RenderManager() : Module("RenderManager") {
     }
 }
 
-bool RenderManager::initialize() {
-    m_screen_quad_buffers = GraphicsManager::singleton().createMesh(makePlaneMesh(vec3(1)));
-    m_skybox_buffers = GraphicsManager::singleton().createMesh(makeSkyBoxMesh());
+bool RenderManager::Initialize() {
+    m_screen_quad_buffers = GraphicsManager::singleton().CreateMesh(makePlaneMesh(vec3(1)));
+    m_skybox_buffers = GraphicsManager::singleton().CreateMesh(makeSkyBoxMesh());
 
     return true;
 }
 
-void RenderManager::finalize() {
+void RenderManager::Finalize() {
     m_screen_quad_buffers = nullptr;
     m_skybox_buffers = nullptr;
 
@@ -146,13 +146,13 @@ void RenderManager::free_point_light_shadow_map(PointShadowHandle& p_handle) {
 }
 
 void RenderManager::draw_quad() {
-    GraphicsManager::singleton().setMesh(m_screen_quad_buffers);
-    GraphicsManager::singleton().drawElements(m_screen_quad_buffers->index_count);
+    GraphicsManager::singleton().SetMesh(m_screen_quad_buffers);
+    GraphicsManager::singleton().DrawElements(m_screen_quad_buffers->indexCount);
 }
 
 void RenderManager::draw_skybox() {
-    GraphicsManager::singleton().setMesh(m_skybox_buffers);
-    GraphicsManager::singleton().drawElements(m_skybox_buffers->index_count);
+    GraphicsManager::singleton().SetMesh(m_skybox_buffers);
+    GraphicsManager::singleton().DrawElements(m_skybox_buffers->indexCount);
 }
 
 }  // namespace my

@@ -22,19 +22,19 @@ ComPtr<ID3D11SamplerState> g_shadow_sampler_state;
 ComPtr<ID3D11SamplerState> g_linear_clamp_sampler;
 
 D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
-    m_pipeline_state_manager = std::make_shared<D3d11PipelineStateManager>();
+    m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
 
-bool D3d11GraphicsManager::initializeImpl() {
+bool D3d11GraphicsManager::InitializeImpl() {
     bool ok = true;
-    ok = ok && createDevice();
-    ok = ok && createSwapChain();
-    ok = ok && createRenderTarget();
+    ok = ok && CreateDevice();
+    ok = ok && CreateSwapChain();
+    ok = ok && CreateRenderTarget();
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_ctx.Get());
 
     ImGui_ImplDX11_NewFrame();
 
-    selectRenderGraph();
+    SelectRenderGraph();
     // @TODO: refactor this
     m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -98,17 +98,17 @@ bool D3d11GraphicsManager::initializeImpl() {
     return ok;
 }
 
-void D3d11GraphicsManager::finalize() {
+void D3d11GraphicsManager::Finalize() {
     ImGui_ImplDX11_Shutdown();
 }
 
-void D3d11GraphicsManager::render() {
-    m_render_graph.execute();
+void D3d11GraphicsManager::Render() {
+    m_renderGraph.execute();
 
     // @TODO: fix the following
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    m_ctx->OMSetRenderTargets(1, m_window_rtv.GetAddressOf(), nullptr);
-    m_ctx->ClearRenderTargetView(m_window_rtv.Get(), clear_color);
+    m_ctx->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
+    m_ctx->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
     ImGuiIO& io = ImGui::GetIO();
@@ -118,18 +118,18 @@ void D3d11GraphicsManager::render() {
         ImGui::RenderPlatformWindowsDefault();
     }
 
-    m_swap_chain->Present(1, 0);  // Present with vsync
+    m_swapChain->Present(1, 0);  // Present with vsync
 }
 
-void D3d11GraphicsManager::setStencilRef(uint32_t p_ref) {
+void D3d11GraphicsManager::SetStencilRef(uint32_t p_ref) {
     unused(p_ref);
 }
 
-void D3d11GraphicsManager::dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     m_ctx->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }
 
-void D3d11GraphicsManager::setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
+void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
     if (!p_texture) {
         ID3D11UnorderedAccessView* uav = nullptr;
         m_ctx->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
@@ -141,15 +141,15 @@ void D3d11GraphicsManager::setUnorderedAccessView(uint32_t p_slot, Texture* p_te
     m_ctx->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
 }
 
-void D3d11GraphicsManager::onWindowResize(int p_width, int p_height) {
+void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
     if (m_device) {
-        m_window_rtv.Reset();
-        m_swap_chain->ResizeBuffers(0, p_width, p_height, DXGI_FORMAT_UNKNOWN, 0);
-        createRenderTarget();
+        m_windowRtv.Reset();
+        m_swapChain->ResizeBuffers(0, p_width, p_height, DXGI_FORMAT_UNKNOWN, 0);
+        CreateRenderTarget();
     }
 }
 
-bool D3d11GraphicsManager::createDevice() {
+bool D3d11GraphicsManager::CreateDevice() {
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
     UINT create_device_flags = 0;
     if (DVAR_GET_BOOL(r_gpu_validation)) {
@@ -170,22 +170,22 @@ bool D3d11GraphicsManager::createDevice() {
 
     D3D_FAIL_V_MSG(hr, false, "Failed to create d3d11 device");
 
-    D3D_FAIL_V_MSG(m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)m_dxgi_device.GetAddressOf()),
+    D3D_FAIL_V_MSG(m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)m_dxgiDevice.GetAddressOf()),
                    false,
                    "Failed to query IDXGIDevice");
 
-    D3D_FAIL_V_MSG(m_dxgi_device->GetParent(__uuidof(IDXGIAdapter), (void**)m_dxgi_adapter.GetAddressOf()),
+    D3D_FAIL_V_MSG(m_dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)m_dxgiAdapter.GetAddressOf()),
                    false,
                    "Failed to query IDXGIAdapter");
 
-    D3D_FAIL_V_MSG(m_dxgi_adapter->GetParent(__uuidof(IDXGIFactory), (void**)m_dxgi_factory.GetAddressOf()),
+    D3D_FAIL_V_MSG(m_dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)m_dxgiFactory.GetAddressOf()),
                    false,
                    "Failed to query IDXGIFactory");
 
     return true;
 }
 
-bool D3d11GraphicsManager::createSwapChain() {
+bool D3d11GraphicsManager::CreateSwapChain() {
     auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::singleton_ptr());
     DEV_ASSERT(display_manager);
 
@@ -206,21 +206,21 @@ bool D3d11GraphicsManager::createSwapChain() {
     swap_chain_desc.Windowed = true;
     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
-    D3D_FAIL_V_MSG(m_dxgi_factory->CreateSwapChain(m_device.Get(), &swap_chain_desc, m_swap_chain.GetAddressOf()),
+    D3D_FAIL_V_MSG(m_dxgiFactory->CreateSwapChain(m_device.Get(), &swap_chain_desc, m_swapChain.GetAddressOf()),
                    false,
                    "Failed to create swap chain");
 
     return true;
 }
 
-bool D3d11GraphicsManager::createRenderTarget() {
+bool D3d11GraphicsManager::CreateRenderTarget() {
     ComPtr<ID3D11Texture2D> back_buffer;
-    m_swap_chain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
-    m_device->CreateRenderTargetView(back_buffer.Get(), nullptr, m_window_rtv.GetAddressOf());
+    m_swapChain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
+    m_device->CreateRenderTargetView(back_buffer.Get(), nullptr, m_windowRtv.GetAddressOf());
     return true;
 }
 
-std::shared_ptr<UniformBufferBase> D3d11GraphicsManager::createUniform(int p_slot, size_t p_capacity) {
+std::shared_ptr<UniformBufferBase> D3d11GraphicsManager::CreateUniform(int p_slot, size_t p_capacity) {
     ComPtr<ID3D11Buffer> buffer;
     D3D11_BUFFER_DESC buffer_desc;
     buffer_desc.ByteWidth = (UINT)p_capacity;
@@ -242,13 +242,13 @@ std::shared_ptr<UniformBufferBase> D3d11GraphicsManager::createUniform(int p_slo
     return uniform_buffer;
 }
 
-void D3d11GraphicsManager::updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+void D3d11GraphicsManager::UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
     auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
     DEV_ASSERT(p_size <= buffer->get_capacity());
     buffer->data = (const char*)p_data;
 }
 
-void D3d11GraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+void D3d11GraphicsManager::BindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
     DEV_ASSERT(p_size + p_offset <= buffer->get_capacity());
     D3D11_MAPPED_SUBRESOURCE mapped;
@@ -258,7 +258,7 @@ void D3d11GraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, u
     m_ctx->Unmap(buffer->buffer.Get(), 0);
 }
 
-void D3d11GraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+void D3d11GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     unused(p_dimension);
 
     if (p_handle) {
@@ -268,7 +268,7 @@ void D3d11GraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle,
     }
 }
 
-void D3d11GraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
+void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
 
     ID3D11ShaderResourceView* srv = nullptr;
@@ -276,7 +276,7 @@ void D3d11GraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
     m_ctx->CSSetShaderResources(p_slot, 1, &srv);
 }
 
-std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<Texture> D3d11GraphicsManager::CreateTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     ComPtr<ID3D11ShaderResourceView> srv;
@@ -370,7 +370,7 @@ std::shared_ptr<Texture> D3d11GraphicsManager::createTexture(const TextureDesc& 
     return gpu_texture;
 }
 
-std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDesc& p_subpass_desc) {
+std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
     auto draw_pass = std::make_shared<D3d11DrawPass>();
     draw_pass->exec_func = p_subpass_desc.exec_func;
     draw_pass->color_attachments = p_subpass_desc.color_attachments;
@@ -456,7 +456,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::createDrawPass(const DrawPassDes
     return draw_pass;
 }
 
-void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
 
     if (p_draw_pass == nullptr) {
@@ -485,12 +485,12 @@ void D3d11GraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_in
     m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 
-void D3d11GraphicsManager::unsetRenderTarget() {
+void D3d11GraphicsManager::UnsetRenderTarget() {
     ID3D11RenderTargetView* rtv = nullptr;
     m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
 }
 
-void D3d11GraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
+void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 
     if (p_flags & CLEAR_COLOR_BIT) {
@@ -521,11 +521,11 @@ void D3d11GraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, 
     }
 }
 
-void D3d11GraphicsManager::setViewport(const Viewport& p_viewport) {
+void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
     D3D11_VIEWPORT vp{};
     // @TODO: gl and d3d use different viewport
-    vp.TopLeftX = static_cast<float>(p_viewport.top_left_x);
-    vp.TopLeftY = static_cast<float>(p_viewport.top_left_y);
+    vp.TopLeftX = static_cast<float>(p_viewport.topLeftX);
+    vp.TopLeftY = static_cast<float>(p_viewport.topLeftY);
     vp.Width = static_cast<float>(p_viewport.width);
     vp.Height = static_cast<float>(p_viewport.height);
     vp.MinDepth = 0.0f;
@@ -534,7 +534,7 @@ void D3d11GraphicsManager::setViewport(const Viewport& p_viewport) {
     m_ctx->RSSetViewports(1, &vp);
 }
 
-const MeshBuffers* D3d11GraphicsManager::createMesh(const MeshComponent& p_mesh) {
+const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     auto createMesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
         auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
             ID3D11Buffer* buffer = nullptr;
@@ -572,10 +572,10 @@ const MeshBuffers* D3d11GraphicsManager::createMesh(const MeshComponent& p_mesh)
         }
         {
             // index buffer
-            out_mesh.index_count = static_cast<uint32_t>(mesh.indices.size());
+            out_mesh.indexCount = static_cast<uint32_t>(mesh.indices.size());
             D3D11_BUFFER_DESC bufferDesc{};
             bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-            bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.index_count);
+            bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.indexCount);
             bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
             bufferDesc.CPUAccessFlags = 0;
             bufferDesc.MiscFlags = 0;
@@ -594,7 +594,7 @@ const MeshBuffers* D3d11GraphicsManager::createMesh(const MeshComponent& p_mesh)
     return mesh_buffers;
 }
 
-void D3d11GraphicsManager::setMesh(const MeshBuffers* p_mesh) {
+void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
     ID3D11Buffer* buffers[6] = {
@@ -622,11 +622,11 @@ void D3d11GraphicsManager::setMesh(const MeshBuffers* p_mesh) {
     m_ctx->IASetIndexBuffer(mesh->index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 }
 
-void D3d11GraphicsManager::drawElements(uint32_t p_count, uint32_t p_offset) {
+void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
     m_ctx->DrawIndexed(p_count, p_offset, 0);
 }
 
-void D3d11GraphicsManager::onSceneChange(const Scene& p_scene) {
+void D3d11GraphicsManager::OnSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
             const NameComponent& name = *p_scene.GetComponent<NameComponent>(entity);
@@ -634,12 +634,12 @@ void D3d11GraphicsManager::onSceneChange(const Scene& p_scene) {
             continue;
         }
 
-        createMesh(mesh);
+        CreateMesh(mesh);
     }
 }
 
-void D3d11GraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
-    auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipeline_state_manager->find(p_name));
+void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
+    auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipelineStateManager->find(p_name));
     DEV_ASSERT(pipeline);
     if (pipeline->compute_shader) {
         m_ctx->CSSetShader(pipeline->compute_shader.Get(), nullptr, 0);
@@ -652,14 +652,14 @@ void D3d11GraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
             m_ctx->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
         }
 
-        if (pipeline->rasterizer.Get() != m_state_cache.rasterizer) {
+        if (pipeline->rasterizer.Get() != m_stateCache.rasterizer) {
             m_ctx->RSSetState(pipeline->rasterizer.Get());
-            m_state_cache.rasterizer = pipeline->rasterizer.Get();
+            m_stateCache.rasterizer = pipeline->rasterizer.Get();
         }
 
-        if (pipeline->depth_stencil.Get() != m_state_cache.depth_stencil) {
+        if (pipeline->depth_stencil.Get() != m_stateCache.depth_stencil) {
             m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
-            m_state_cache.depth_stencil = pipeline->depth_stencil.Get();
+            m_stateCache.depth_stencil = pipeline->depth_stencil.Get();
         }
     }
 }

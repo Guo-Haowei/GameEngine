@@ -35,7 +35,7 @@ static void create_empty_scene(Scene* scene) {
     }
 }
 
-bool SceneManager::initialize() {
+bool SceneManager::Initialize() {
     // create an empty scene
     Scene* scene = new Scene;
     create_empty_scene(scene);
@@ -49,7 +49,7 @@ bool SceneManager::initialize() {
     return true;
 }
 
-void SceneManager::finalize() {}
+void SceneManager::Finalize() {}
 
 bool SceneManager::trySwapScene() {
     auto queued_scene = m_loading_queue.pop_all();
@@ -86,7 +86,7 @@ void SceneManager::update(float dt) {
         Timer timer;
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
         LOG_WARN("offload p_scene properly");
-        m_app->getEventQueue().dispatchEvent(event);
+        m_app->getEventQueue().DispatchEvent(event);
         LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.getDurationString());
         m_last_revision = m_revision;
     }

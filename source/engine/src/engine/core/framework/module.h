@@ -9,10 +9,10 @@ public:
     Module(std::string_view name) : m_name(name) {}
     virtual ~Module() = default;
 
-    virtual bool initialize() = 0;
-    virtual void finalize() = 0;
+    virtual bool Initialize() = 0;
+    virtual void Finalize() = 0;
 
-    std::string_view getName() const { return m_name; }
+    std::string_view GetName() const { return m_name; }
 
 protected:
     std::string_view m_name;

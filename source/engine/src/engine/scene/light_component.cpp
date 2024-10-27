@@ -53,7 +53,7 @@ void LightComponent::Update(const TransformComponent& p_transform) {
                 case LIGHT_TYPE_POINT: {
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
                     const float far_plane = m_maxDistance;
-                    const bool is_opengl = GraphicsManager::singleton().getBackend() == Backend::OPENGL;
+                    const bool is_opengl = GraphicsManager::singleton().GetBackend() == Backend::OPENGL;
                     glm::mat4 projection;
                     if (is_opengl) {
                         projection = buildOpenGLPerspectiveRH(glm::radians(90.0f), 1.0f, near_plane, far_plane);

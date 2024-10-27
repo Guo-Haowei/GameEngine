@@ -10,21 +10,21 @@
 
 namespace my {
 
-bool PhysicsManager::initialize() {
+bool PhysicsManager::Initialize() {
     return true;
 }
 
-void PhysicsManager::finalize() {
+void PhysicsManager::Finalize() {
     cleanWorld();
 }
 
-void PhysicsManager::eventReceived(std::shared_ptr<Event> p_event) {
+void PhysicsManager::EventReceived(std::shared_ptr<Event> p_event) {
     SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get());
     if (!e) {
         return;
     }
 
-    const Scene& scene = *e->getScene();
+    const Scene& scene = *e->GetScene();
     // @TODO: fix
     createWorld(scene);
 }

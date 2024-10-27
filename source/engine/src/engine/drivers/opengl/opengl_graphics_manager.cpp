@@ -32,17 +32,17 @@ OpenGLMeshBuffers* g_box;
 OpenGLMeshBuffers* g_grass;
 
 template<typename T>
-static void buffer_storage(GLuint buffer, const std::vector<T>& data) {
+static void BufferStorage(GLuint buffer, const std::vector<T>& data) {
     glNamedBufferStorage(buffer, sizeof(T) * data.size(), data.data(), 0);
 }
 
-static inline void bind_to_slot(GLuint buffer, int slot, int size) {
+static inline void BindToSlot(GLuint buffer, int slot, int size) {
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
     glVertexAttribPointer(slot, size, GL_FLOAT, GL_FALSE, size * sizeof(float), 0);
     glEnableVertexAttribArray(slot);
 }
 
-static unsigned int loadMTexture(const float* matrixTable) {
+static unsigned int LoadMTexture(const float* matrixTable) {
     unsigned int texture = 0;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
@@ -65,13 +65,13 @@ static uint64_t MakeTextureResident(uint32_t texture) {
 
 namespace my {
 
-static void APIENTRY gl_debug_callback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
+static void APIENTRY DebugCallback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
 OpenGLGraphicsManager::OpenGLGraphicsManager() : GraphicsManager("OpenGLGraphicsManager", Backend::OPENGL) {
-    m_pipeline_state_manager = std::make_shared<OpenGLPipelineStateManager>();
+    m_pipelineStateManager = std::make_shared<OpenGLPipelineStateManager>();
 }
 
-bool OpenGLGraphicsManager::initializeImpl() {
+bool OpenGLGraphicsManager::InitializeImpl() {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
         return false;
@@ -86,32 +86,32 @@ bool OpenGLGraphicsManager::initializeImpl() {
         if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
             glEnable(GL_DEBUG_OUTPUT);
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-            glDebugMessageCallback(gl_debug_callback, nullptr);
+            glDebugMessageCallback(DebugCallback, nullptr);
             glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
             LOG_VERBOSE("[opengl] debug callback enabled");
         }
     }
 
-    selectRenderGraph();
+    SelectRenderGraph();
 
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 
-    createGpuResources();
+    CreateGpuResources();
 
     m_meshes.set_description("GPU-Mesh-Allocator");
 
     return true;
 }
 
-void OpenGLGraphicsManager::finalize() {
-    m_pipeline_state_manager->finalize();
+void OpenGLGraphicsManager::Finalize() {
+    m_pipelineStateManager->finalize();
 
     ImGui_ImplOpenGL3_Shutdown();
 }
 
-void OpenGLGraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
-    auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipeline_state_manager->find(p_name));
+void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
+    auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipelineStateManager->find(p_name));
 
     if (pipeline->rasterizer_desc) {
         const auto cull_mode = pipeline->rasterizer_desc->cull_mode;
@@ -205,7 +205,7 @@ void OpenGLGraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-void OpenGLGraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
+void OpenGLGraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
     unused(p_draw_pass);
     unused(p_index);
 
@@ -231,18 +231,18 @@ void OpenGLGraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags,
     glClear(flags);
 }
 
-void OpenGLGraphicsManager::setViewport(const Viewport& p_viewport) {
-    if (p_viewport.top_left_y) {
+void OpenGLGraphicsManager::SetViewport(const Viewport& p_viewport) {
+    if (p_viewport.topLeftY) {
         LOG_FATAL("TODO: adjust to bottom left y");
     }
 
-    glViewport(p_viewport.top_left_x,
-               p_viewport.top_left_y,
+    glViewport(p_viewport.topLeftX,
+               p_viewport.topLeftY,
                p_viewport.width,
                p_viewport.height);
 }
 
-const MeshBuffers* OpenGLGraphicsManager::createMesh(const MeshComponent& p_mesh) {
+const MeshBuffers* OpenGLGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     RID rid = m_meshes.make_rid();
     OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
     p_mesh.gpu_resource = mesh_buffers;
@@ -269,36 +269,36 @@ const MeshBuffers* OpenGLGraphicsManager::createMesh(const MeshComponent& p_mesh
 
         slot = get_position_slot();
         // @TODO: refactor these
-        bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
-        buffer_storage(p_out_mesh.vbos[slot], p_mesh.positions);
+        BindToSlot(p_out_mesh.vbos[slot], slot, 3);
+        BufferStorage(p_out_mesh.vbos[slot], p_mesh.positions);
 
         if (has_normals) {
             slot = get_normal_slot();
-            bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
-            buffer_storage(p_out_mesh.vbos[slot], p_mesh.normals);
+            BindToSlot(p_out_mesh.vbos[slot], slot, 3);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.normals);
         }
         if (has_uvs) {
             slot = get_uv_slot();
-            bind_to_slot(p_out_mesh.vbos[slot], slot, 2);
-            buffer_storage(p_out_mesh.vbos[slot], p_mesh.texcoords_0);
+            BindToSlot(p_out_mesh.vbos[slot], slot, 2);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.texcoords_0);
         }
         if (has_tangents) {
             slot = get_tangent_slot();
-            bind_to_slot(p_out_mesh.vbos[slot], slot, 3);
-            buffer_storage(p_out_mesh.vbos[slot], p_mesh.tangents);
+            BindToSlot(p_out_mesh.vbos[slot], slot, 3);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.tangents);
         }
         if (has_joints) {
             slot = get_bone_id_slot();
-            bind_to_slot(p_out_mesh.vbos[slot], slot, 4);
-            buffer_storage(p_out_mesh.vbos[slot], p_mesh.joints_0);
+            BindToSlot(p_out_mesh.vbos[slot], slot, 4);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.joints_0);
             DEV_ASSERT(!p_mesh.weights_0.empty());
             slot = get_bone_weight_slot();
-            bind_to_slot(p_out_mesh.vbos[slot], slot, 4);
-            buffer_storage(p_out_mesh.vbos[slot], p_mesh.weights_0);
+            BindToSlot(p_out_mesh.vbos[slot], slot, 4);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.weights_0);
         }
 
-        buffer_storage(p_out_mesh.ebo, p_mesh.indices);
-        p_out_mesh.index_count = static_cast<uint32_t>(p_mesh.indices.size());
+        BufferStorage(p_out_mesh.ebo, p_mesh.indices);
+        p_out_mesh.indexCount = static_cast<uint32_t>(p_mesh.indices.size());
 
         glBindVertexArray(0);
     };
@@ -307,28 +307,28 @@ const MeshBuffers* OpenGLGraphicsManager::createMesh(const MeshComponent& p_mesh
     return mesh_buffers;
 }
 
-void OpenGLGraphicsManager::setMesh(const MeshBuffers* p_mesh) {
+void OpenGLGraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     auto mesh = reinterpret_cast<const OpenGLMeshBuffers*>(p_mesh);
     glBindVertexArray(mesh->vao);
 }
 
-void OpenGLGraphicsManager::drawElements(uint32_t p_count, uint32_t p_offset) {
+void OpenGLGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
     glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
-void OpenGLGraphicsManager::dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+void OpenGLGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     glDispatchCompute(p_num_groups_x, p_num_groups_y, p_num_groups_z);
     // @TODO: this probably shouldn't be here
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
-void OpenGLGraphicsManager::setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
+void OpenGLGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
     GLuint handle = p_texture ? p_texture->get_handle32() : 0;
 
     glBindImageTexture(p_slot, handle, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 }
 
-std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::createUniform(int p_slot, size_t p_capacity) {
+std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::CreateUniform(int p_slot, size_t p_capacity) {
     auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
     GLuint handle = 0;
     glGenBuffers(1, &handle);
@@ -341,7 +341,7 @@ std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::createUniform(int p_sl
     return buffer;
 }
 
-void OpenGLGraphicsManager::updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+void OpenGLGraphicsManager::UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
     // ERR_FAIL_INDEX(p_size, p_buffer->get_capacity());
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
@@ -349,13 +349,13 @@ void OpenGLGraphicsManager::updateUniform(const UniformBufferBase* p_buffer, con
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void OpenGLGraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+void OpenGLGraphicsManager::BindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
 }
 
-void OpenGLGraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+void OpenGLGraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     if (p_handle == 0) {
         return;
     }
@@ -365,14 +365,14 @@ void OpenGLGraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle
     glBindTexture(texture_type, static_cast<GLuint>(p_handle));
 }
 
-void OpenGLGraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
+void OpenGLGraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     const GLuint texture_type = gl::convert_dimension(p_dimension);
 
     glActiveTexture(GL_TEXTURE0 + p_slot);
     glBindTexture(texture_type, 0);
 }
 
-std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<Texture> OpenGLGraphicsManager::CreateTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
@@ -429,7 +429,7 @@ std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc&
     return texture;
 }
 
-std::shared_ptr<DrawPass> OpenGLGraphicsManager::createDrawPass(const DrawPassDesc& p_desc) {
+std::shared_ptr<DrawPass> OpenGLGraphicsManager::CreateDrawPass(const DrawPassDesc& p_desc) {
     auto draw_pass = std::make_shared<OpenGLSubpass>();
     draw_pass->exec_func = p_desc.exec_func;
     draw_pass->color_attachments = p_desc.color_attachments;
@@ -512,11 +512,11 @@ std::shared_ptr<DrawPass> OpenGLGraphicsManager::createDrawPass(const DrawPassDe
     return draw_pass;
 }
 
-void OpenGLGraphicsManager::setStencilRef(uint32_t p_ref) {
+void OpenGLGraphicsManager::SetStencilRef(uint32_t p_ref) {
     glStencilFunc(m_state_cache.stencil_func, p_ref, 0xFF);
 }
 
-void OpenGLGraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+void OpenGLGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     auto draw_pass = reinterpret_cast<const OpenGLSubpass*>(p_draw_pass);
     if (!draw_pass || draw_pass->handle == 0) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -550,30 +550,30 @@ void OpenGLGraphicsManager::setRenderTarget(const DrawPass* p_draw_pass, int p_i
     return;
 }
 
-void OpenGLGraphicsManager::unsetRenderTarget() {
+void OpenGLGraphicsManager::UnsetRenderTarget() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // @TODO: refactor this, instead off iterate through all the meshes, find a better way
-void OpenGLGraphicsManager::onSceneChange(const Scene& p_scene) {
+void OpenGLGraphicsManager::OnSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {
             continue;
         }
 
-        createMesh(mesh);
+        CreateMesh(mesh);
     }
 
     g_constantCache.update();
 }
 
-void OpenGLGraphicsManager::createGpuResources() {
+void OpenGLGraphicsManager::CreateGpuResources() {
     // @TODO: appropriate sampler
     auto grass_image = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/grass.png" })->get();
 
     // @TODO: move to renderer
-    g_grass = (OpenGLMeshBuffers*)createMesh(makeGrassBillboard());
-    g_box = (OpenGLMeshBuffers*)createMesh(makeBoxMesh());
+    g_grass = (OpenGLMeshBuffers*)CreateMesh(makeGrassBillboard());
+    g_box = (OpenGLMeshBuffers*)CreateMesh(makeBoxMesh());
 
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
 
@@ -594,8 +594,8 @@ void OpenGLGraphicsManager::createGpuResources() {
     auto& cache = g_constantCache.cache;
 
     // @TODO: delete!
-    unsigned int m1 = loadMTexture(LTC1);
-    unsigned int m2 = loadMTexture(LTC2);
+    unsigned int m1 = LoadMTexture(LTC1);
+    unsigned int m2 = LoadMTexture(LTC2);
     cache.u_ltc_1 = MakeTextureResident(m1);
     cache.u_ltc_2 = MakeTextureResident(m2);
 
@@ -606,7 +606,7 @@ void OpenGLGraphicsManager::createGpuResources() {
 
     // @TODO: refactor
     auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {
-        std::shared_ptr<RenderTarget> resource = findRenderTarget(p_name);
+        std::shared_ptr<RenderTarget> resource = FindRenderTarget(p_name);
         if (resource) {
             p_out_id = resource->texture->get_resident_handle();
         } else {
@@ -625,10 +625,10 @@ void OpenGLGraphicsManager::createGpuResources() {
     g_constantCache.update();
 }
 
-void OpenGLGraphicsManager::render() {
+void OpenGLGraphicsManager::Render() {
     OPTICK_EVENT();
 
-    m_render_graph.execute();
+    m_renderGraph.execute();
 
     // @TODO: move it somewhere else
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -639,8 +639,8 @@ void OpenGLGraphicsManager::render() {
     }
 }
 
-static void APIENTRY gl_debug_callback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,
-                                       const char* message, const void*) {
+static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,
+                                   const char* message, const void*) {
     switch (id) {
         case 131185:
         case 131204:
