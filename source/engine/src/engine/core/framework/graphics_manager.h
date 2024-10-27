@@ -56,6 +56,7 @@ extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 extern UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern UniformBuffer<EnvConstantBuffer> g_env_cache;
+extern UniformBuffer<ParticleConstantBuffer> g_particle_cache;
 
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),
@@ -112,6 +113,7 @@ public:
     virtual const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) = 0;
     virtual void SetMesh(const MeshBuffers* p_mesh) = 0;
     virtual void DrawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
+    virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
     virtual void SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) = 0;
@@ -181,8 +183,11 @@ protected:
 
     std::shared_ptr<PipelineStateManager> m_pipelineStateManager;
 
-    // @TODO: refactor
 public:
+    // @TODO: refactor
+    // tmp particle stuff
+    int m_particle_count = 0;
+
     using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
     using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 

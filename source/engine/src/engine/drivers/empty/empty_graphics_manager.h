@@ -25,6 +25,7 @@ public:
     const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) override { return nullptr; }
     void SetMesh(const MeshBuffers* p_mesh) override {}
     void DrawElements(uint32_t p_count, uint32_t p_offset) override {}
+    void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) override {}
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) override {}
     void SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) override {}

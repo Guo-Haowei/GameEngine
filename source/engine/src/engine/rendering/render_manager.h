@@ -27,6 +27,7 @@ public:
     void free_point_light_shadow_map(PointShadowHandle& p_handle);
 
     void draw_quad();
+    void draw_quad_instanced(uint32_t p_instance_count);
     void draw_skybox();
 
 private:

@@ -14,6 +14,9 @@
 #define MAX_LIGHT_CAST_SHADOW_COUNT 4
 #define LIGHT_SHADOW_MIN_DISTANCE   0.1f
 
+// @TODO: remove this limit
+#define MAX_PARTICLE_COUNT 1024
+
 // light type
 #define LIGHT_TYPE_INFINITE 0
 #define LIGHT_TYPE_POINT    1

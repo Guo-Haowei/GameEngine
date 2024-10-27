@@ -60,6 +60,11 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
             gm.SetStencilRef(0);
         }
     }
+
+    if (gm.GetBackend() == Backend::OPENGL) {
+        gm.SetPipelineState(PROGRAM_PARTICLE);
+        RenderManager::singleton().draw_quad_instanced(gm.m_particle_count);
+    }
 }
 
 void RenderPassCreator::addGBufferPass() {

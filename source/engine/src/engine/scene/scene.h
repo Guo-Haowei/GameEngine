@@ -97,9 +97,6 @@ public:                                                                         
 private:
     ecs::ComponentLibrary m_componentLib;
 
-    // @TODO: make a proper component
-    ParticleEmitterComponent m_particleEmitter;
-
     REGISTER_COMPONENT(NameComponent, 0);
     REGISTER_COMPONENT(TransformComponent, 0);
     REGISTER_COMPONENT(HierarchyComponent, 0);
@@ -112,6 +109,10 @@ private:
     REGISTER_COMPONENT(RigidBodyComponent, 0);
     REGISTER_COMPONENT(BoxColliderComponent, 0);
     REGISTER_COMPONENT(MeshColliderComponent, 0);
+
+public:
+    // @TODO: make a proper component
+    ParticleEmitterComponent m_particleEmitter;
 
     bool Serialize(Archive& p_archive);
 

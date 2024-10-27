@@ -28,6 +28,7 @@ public:
     const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
     void SetMesh(const MeshBuffers* p_mesh) final;
     void DrawElements(uint32_t p_count, uint32_t offset) final;
+    void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) final;

@@ -12,13 +12,24 @@ public:
     }
 
     static float Float() {
-        return static_cast<float>(s_distribution(s_randomEngine)) / static_cast<float>(std::numeric_limits<uint32_t>::max());
+        return s_distribution(s_randomEngine);
     }
 
 private:
     static std::mt19937 s_randomEngine;
-    static std::uniform_int_distribution<std::mt19937::result_type> s_distribution;
+    static std::uniform_real_distribution<float> s_distribution;
 };
+
+std::mt19937 Random::s_randomEngine;
+std::uniform_real_distribution<float> Random::s_distribution(0.0f, 1.0f);
+
+ParticleEmitterComponent::ParticleEmitterComponent() {
+    m_emittedParticleCount = 0;
+    m_maxParticleCount = 1000;
+    m_emittedParticlesPerFrame = 100;
+    m_particleScale = 0.05f;
+    m_particleLifeSpan = 5.0f;
+}
 
 void ParticleEmitterComponent::Update(float p_elapsedTime) {
     // resize pool if necessary

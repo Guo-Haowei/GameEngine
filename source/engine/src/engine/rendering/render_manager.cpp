@@ -150,6 +150,11 @@ void RenderManager::draw_quad() {
     GraphicsManager::singleton().DrawElements(m_screen_quad_buffers->indexCount);
 }
 
+void RenderManager::draw_quad_instanced(uint32_t p_instance_count) {
+    GraphicsManager::singleton().SetMesh(m_screen_quad_buffers);
+    GraphicsManager::singleton().DrawElementsInstanced(p_instance_count, m_screen_quad_buffers->indexCount, 0);
+}
+
 void RenderManager::draw_skybox() {
     GraphicsManager::singleton().SetMesh(m_skybox_buffers);
     GraphicsManager::singleton().DrawElements(m_skybox_buffers->indexCount);

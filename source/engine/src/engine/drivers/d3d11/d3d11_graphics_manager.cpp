@@ -626,6 +626,11 @@ void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
     m_ctx->DrawIndexed(p_count, p_offset, 0);
 }
 
+void D3d11GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    LOG_ERROR("NOT TESTED");
+    m_ctx->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
+}
+
 void D3d11GraphicsManager::OnSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpu_resource != nullptr) {

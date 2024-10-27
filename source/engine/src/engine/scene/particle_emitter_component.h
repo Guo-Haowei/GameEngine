@@ -7,6 +7,8 @@ class Archive;
 
 class ParticleEmitterComponent {
 public:
+    ParticleEmitterComponent();
+
     void Update(float p_elapsedTime);
 
 private:
@@ -23,13 +25,15 @@ private:
         bool isActive = false;
     };
 
-    int m_emittedParticleCount{ 0 };
-    int m_maxParticleCount{ 100 };
-    int m_emittedParticlesPerFrame{ 10 };
-    float m_particleScale{ 1.0f };
-    float m_particleLifeSpan{ 3.0f };
+    int m_emittedParticleCount;
+    int m_maxParticleCount;
+    int m_emittedParticlesPerFrame;
+    float m_particleScale;
+    float m_particleLifeSpan;
 
     std::vector<Particle> m_particlePool;
+
+    friend class GraphicsManager;
 };
 
 }  // namespace my

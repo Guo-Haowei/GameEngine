@@ -316,6 +316,10 @@ void OpenGLGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
     glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
+void OpenGLGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    glDrawElementsInstanced(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)), p_instance_count);
+}
+
 void OpenGLGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     glDispatchCompute(p_num_groups_x, p_num_groups_y, p_num_groups_z);
     // @TODO: this probably shouldn't be here

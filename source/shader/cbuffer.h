@@ -125,13 +125,17 @@ CBUFFER(MaterialConstantBuffer, 3) {
 };
 
 // @TODO: change to unordered access buffer
-CBUFFER(BoneConstantBuffer, 5) {
+CBUFFER(BoneConstantBuffer, 4) {
     mat4 u_bones[MAX_BONE_COUNT];
+};
+
+CBUFFER(ParticleConstantBuffer, 4) {
+    vec4 globalPatricleTransforms[MAX_PARTICLE_COUNT];
 };
 
 #ifndef HLSL_LANG
 
-CBUFFER(PerSceneConstantBuffer, 4) {
+CBUFFER(PerSceneConstantBuffer, 6) {
     // @TODO: remove the following
     sampler2D u_gbuffer_depth_map;
     sampler2D u_final_bloom;
@@ -154,7 +158,7 @@ CBUFFER(PerSceneConstantBuffer, 4) {
 };
 
 // @TODO: make it more general, something like 2D draw
-CBUFFER(DebugDrawConstantBuffer, 6) {
+CBUFFER(DebugDrawConstantBuffer, 7) {
     vec2 c_debug_draw_pos;
     vec2 c_debug_draw_size;
 

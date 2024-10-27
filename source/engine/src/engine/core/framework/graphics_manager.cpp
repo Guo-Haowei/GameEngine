@@ -31,6 +31,7 @@ UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 UniformBuffer<EnvConstantBuffer> g_env_cache;
+UniformBuffer<ParticleConstantBuffer> g_particle_cache;
 
 template<typename T>
 static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
@@ -54,6 +55,7 @@ bool GraphicsManager::Initialize() {
     create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
     create_uniform_buffer<PointShadowConstantBuffer>(g_point_shadow_cache);
     create_uniform_buffer<EnvConstantBuffer>(g_env_cache);
+    create_uniform_buffer<ParticleConstantBuffer>(g_particle_cache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
@@ -116,6 +118,19 @@ void GraphicsManager::Update(Scene& p_scene) {
 
     Cleanup();
 
+    // @TODO: refactor particles
+    {
+        m_particle_count = 0;
+        for (const auto& particle : p_scene.m_particleEmitter.m_particlePool) {
+            if (particle.isActive) {
+                if (m_particle_count >= array_length(g_particle_cache.cache.globalPatricleTransforms)) {
+                    break;
+                }
+                g_particle_cache.cache.globalPatricleTransforms[m_particle_count++] = vec4(particle.position, p_scene.m_particleEmitter.m_particleScale);
+            }
+        }
+    }
+
     UpdateConstants(p_scene);
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
@@ -128,6 +143,7 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateUniform(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
 
     g_per_frame_cache.update();
+    g_particle_cache.update();
     // update uniform
 
     // @TODO: make it a function
