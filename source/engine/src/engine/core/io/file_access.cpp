@@ -4,33 +4,33 @@
 
 namespace my {
 
-FileAccess::CreateFunc FileAccess::s_create_func[ACCESS_MAX];
+FileAccess::CreateFunc FileAccess::s_createFuncs[ACCESS_MAX];
 
-auto FileAccess::create(AccessType p_access_type) -> std::shared_ptr<FileAccess> {
+auto FileAccess::Create(AccessType p_access_type) -> std::shared_ptr<FileAccess> {
     DEV_ASSERT_INDEX(p_access_type, ACCESS_MAX);
 
-    auto ret = s_create_func[p_access_type]();
-    ret->setAccessType(p_access_type);
+    auto ret = s_createFuncs[p_access_type]();
+    ret->SetAccessType(p_access_type);
     return std::shared_ptr<FileAccess>(ret);
 }
 
-auto FileAccess::createForPath(const std::string& p_path) -> std::shared_ptr<FileAccess> {
+auto FileAccess::CreateForPath(const std::string& p_path) -> std::shared_ptr<FileAccess> {
     if (p_path.starts_with("@res://")) {
-        return create(ACCESS_RESOURCE);
+        return Create(ACCESS_RESOURCE);
     }
 
     if (p_path.starts_with("@user://")) {
-        return create(ACCESS_USERDATA);
+        return Create(ACCESS_USERDATA);
     }
 
-    return create(ACCESS_FILESYSTEM);
+    return Create(ACCESS_FILESYSTEM);
 }
 
-auto FileAccess::open(const std::string& p_path, ModeFlags p_mode_flags)
+auto FileAccess::Open(const std::string& p_path, ModeFlags p_mode_flags)
     -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
-    auto file_access = createForPath(p_path);
+    auto file_access = CreateForPath(p_path);
 
-    ErrorCode err = file_access->openInternal(file_access->fixPath(p_path), p_mode_flags);
+    ErrorCode err = file_access->OpenInternal(file_access->FixPath(p_path), p_mode_flags);
     if (err != OK) {
         return VCT_ERROR(err, "error code: {}", std::to_underlying(err));
     }
@@ -38,18 +38,18 @@ auto FileAccess::open(const std::string& p_path, ModeFlags p_mode_flags)
     return file_access;
 }
 
-std::string FileAccess::fixPath(std::string_view p_path) {
+std::string FileAccess::FixPath(std::string_view p_path) {
     std::string fixed_path{ p_path };
-    switch (m_access_type) {
+    switch (m_accessType) {
         case ACCESS_RESOURCE: {
             if (p_path.starts_with("@res://")) {
-                StringUtils::replaceFirst(fixed_path, "@res:/", ROOT_FOLDER "resources");
+                StringUtils::ReplaceFirst(fixed_path, "@res:/", ROOT_FOLDER "resources");
                 return fixed_path;
             }
         } break;
         case ACCESS_USERDATA: {
             if (p_path.starts_with("@user://")) {
-                StringUtils::replaceFirst(fixed_path, "@user:/", ROOT_FOLDER "user");
+                StringUtils::ReplaceFirst(fixed_path, "@user:/", ROOT_FOLDER "user");
                 return fixed_path;
             }
         } break;

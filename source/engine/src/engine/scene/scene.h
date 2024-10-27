@@ -109,7 +109,7 @@ private:
     REGISTER_COMPONENT(BoxColliderComponent, 0);
     REGISTER_COMPONENT(MeshColliderComponent, 0);
 
-    bool serialize(Archive& p_archive);
+    bool Serialize(Archive& p_archive);
 
     void update(float p_delta_time);
 

@@ -4,8 +4,8 @@
 
 namespace my {
 
-void NameComponent::serialize(Archive& p_archive, uint32_t) {
-    if (p_archive.isWriteMode()) {
+void NameComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
         p_archive << m_name;
     } else {
         p_archive >> m_name;

@@ -60,8 +60,8 @@ void TransformComponent::updateTransformParented(const TransformComponent& p_par
     m_world_matrix = worldMatrixParent * worldMatrix;
 }
 
-void TransformComponent::serialize(Archive& p_archive, uint32_t) {
-    if (p_archive.isWriteMode()) {
+void TransformComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
         p_archive << m_flags;
         p_archive << m_scale;
         p_archive << m_translation;

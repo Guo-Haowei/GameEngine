@@ -45,7 +45,7 @@ struct AnimationComponent {
     std::vector<Channel> channels;
     std::vector<Sampler> samplers;
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 };
 
 }  // namespace my

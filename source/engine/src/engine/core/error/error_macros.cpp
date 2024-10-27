@@ -48,7 +48,7 @@ void reportErrorImpl(std::string_view p_function,
 
     auto message = std::format("ERROR: {}{}\n    at {} ({}:{})\n", p_error, extra, p_function, p_file, p_line);
     if (auto os = OS::singleton_ptr(); os) {
-        os->print(LOG_LEVEL_ERROR, message);
+        os->Print(LOG_LEVEL_ERROR, message);
     } else {
         fprintf(stderr, "%s", message.c_str());
     }

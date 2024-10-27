@@ -9,13 +9,13 @@ class Archive;
 struct BoxColliderComponent {
     AABB box;
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 };
 
 struct MeshColliderComponent {
     ecs::Entity object_id;
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 };
 
 }  // namespace my

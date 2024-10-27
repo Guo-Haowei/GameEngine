@@ -41,7 +41,7 @@ public:
 
     void updateTransformParented(const TransformComponent& p_parent);
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     uint32_t m_flags = DIRTY;

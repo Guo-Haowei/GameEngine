@@ -24,10 +24,10 @@ static constexpr uint32_t kSceneMagicNumber = 'xScn';
 // @TODO: refactor
 #if 1
 #define JS_PARALLEL_FOR(CTX, INDEX, COUNT, SUBCOUNT, BODY) \
-    CTX.dispatch(                                          \
+    CTX.Dispatch(                                          \
         static_cast<uint32_t>(COUNT),                      \
         SUBCOUNT,                                          \
-        [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.job_index; do { BODY; } while(0); })
+        [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.jobIndex; do { BODY; } while(0); })
 #else
 #define JS_PARALLEL_FOR(CTX, INDEX, COUNT, SUBCOUNT, BODY)                    \
     (void)(CTX);                                                              \
@@ -44,16 +44,16 @@ void Scene::update(float p_delta_time) {
     // animation
     runLightUpdateSystem(ctx);
     runAnimationUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
     // transform, update local matrix from position, rotation and scale
     runTransformationUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
     runHierarchyUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
     // armature
     runArmatureUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
 
     // update bounding box
     runObjectUpdateSystem(ctx);
@@ -67,7 +67,7 @@ void Scene::merge(Scene& p_other) {
     for (auto& entry : m_component_lib.m_entries) {
         entry.second.m_manager->merge(*p_other.m_component_lib.m_entries[entry.first].m_manager);
     }
-    if (p_other.m_root.isValid()) {
+    if (p_other.m_root.IsValid()) {
         attachComponent(p_other.m_root, m_root);
     }
 
@@ -92,7 +92,7 @@ void Scene::createCamera(int p_width,
 }
 
 Entity Scene::createNameEntity(const std::string& p_name) {
-    Entity entity = Entity::create();
+    Entity entity = Entity::Create();
     create<NameComponent>(entity).setName(p_name);
     return entity;
 }
@@ -281,7 +281,7 @@ Entity Scene::createSphereEntity(const std::string& p_name,
 
 void Scene::attachComponent(Entity p_child, Entity p_parent) {
     DEV_ASSERT(p_child != p_parent);
-    DEV_ASSERT(p_parent.isValid());
+    DEV_ASSERT(p_parent.IsValid());
 
     // if child already has a parent, detach it
     if (contains<HierarchyComponent>(p_child)) {
@@ -420,16 +420,16 @@ void Scene::updateHierarchy(uint32_t p_index) {
     const HierarchyComponent* hierarchy = &m_HierarchyComponents[p_index];
     Entity parent = hierarchy->m_parent_id;
 
-    while (parent.isValid()) {
+    while (parent.IsValid()) {
         TransformComponent* parent_transform = getComponent<TransformComponent>(parent);
         DEV_ASSERT(parent_transform);
         world_matrix = parent_transform->getLocalMatrix() * world_matrix;
 
         if ((hierarchy = getComponent<HierarchyComponent>(parent)) != nullptr) {
             parent = hierarchy->m_parent_id;
-            DEV_ASSERT(parent.isValid());
+            DEV_ASSERT(parent.IsValid());
         } else {
-            parent.makeInvalid();
+            parent.MakeInvalid();
         }
     }
 
@@ -475,9 +475,9 @@ void Scene::updateArmature(uint32_t p_index) {
     }
 };
 
-bool Scene::serialize(Archive& p_archive) {
+bool Scene::Serialize(Archive& p_archive) {
     uint32_t version = UINT_MAX;
-    bool is_read_mode = !p_archive.isWriteMode();
+    bool is_read_mode = !p_archive.IsWriteMode();
     if (is_read_mode) {
         uint32_t magic;
         uint32_t seed = Entity::MAX_ID;
@@ -487,22 +487,22 @@ bool Scene::serialize(Archive& p_archive) {
         p_archive >> version;
         ERR_FAIL_COND_V_MSG(version > kSceneMagicNumber, false, std::format("file version {} is greater than max version {}", version, kSceneVersion));
         p_archive >> seed;
-        Entity::setSeed(seed);
+        Entity::SetSeed(seed);
 
     } else {
         p_archive << kSceneMagicNumber;
         p_archive << kSceneVersion;
-        p_archive << Entity::getSeed();
+        p_archive << Entity::GetSeed();
     }
 
-    m_root.serialize(p_archive);
+    m_root.Serialize(p_archive);
     if (is_read_mode) {
         m_camera = std::make_shared<Camera>();
     }
-    m_camera->serialize(p_archive, version);
+    m_camera->Serialize(p_archive, version);
 
     constexpr uint64_t has_next_flag = 6368519827137030510;
-    if (p_archive.isWriteMode()) {
+    if (p_archive.IsWriteMode()) {
         for (const auto& it : m_component_lib.m_entries) {
             p_archive << has_next_flag;
             p_archive << it.first;  // write name

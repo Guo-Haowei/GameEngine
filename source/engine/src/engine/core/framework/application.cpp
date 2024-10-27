@@ -69,7 +69,7 @@ int Application::run(int argc, const char** argv) {
     m_os = std::make_shared<OS>();
 
     // intialize
-    OS::singleton().initialize();
+    OS::singleton().Initialize();
 
     // dvars
     registerCommonDvars();
@@ -79,8 +79,8 @@ int Application::run(int argc, const char** argv) {
 
     setupModules();
 
-    thread::initialize();
-    jobsystem::initialize();
+    thread::Initialize();
+    jobsystem::Initialize();
 
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->getName());
@@ -160,7 +160,7 @@ int Application::run(int argc, const char** argv) {
     m_layers.clear();
 
     // @TODO: move it to request shutdown
-    thread::requestShutdown();
+    thread::RequestShutdown();
 
     // finalize
 
@@ -170,12 +170,12 @@ int Application::run(int argc, const char** argv) {
         LOG_VERBOSE("module '{}' finalized", module->getName());
     }
 
-    jobsystem::finalize();
-    thread::finailize();
+    jobsystem::Finalize();
+    thread::Finailize();
 
-    DynamicVariableManager::serialize();
+    DynamicVariableManager::Serialize();
 
-    OS::singleton().finalize();
+    OS::singleton().Finalize();
 
     return 0;
 }

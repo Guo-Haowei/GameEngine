@@ -33,11 +33,11 @@ public:
 
     bool load(Scene* p_scene) {
         Archive archive;
-        if (!archive.openRead(m_file_path)) {
+        if (!archive.OpenRead(m_file_path)) {
             return false;
         }
         p_scene->m_replace = true;
-        return p_scene->serialize(archive);
+        return p_scene->Serialize(archive);
     }
 };
 
@@ -174,7 +174,7 @@ void AssetManager::loadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_s
 template<typename T>
 static void load_asset(LoadTask& p_task, T* p_asset) {
     auto loader = Loader<T>::create(p_task.asset_path);
-    const std::string& asset_path = p_task.asset_path.string();
+    const std::string& asset_path = p_task.asset_path.String();
     if (!loader) {
         LOG_ERROR("[AssetManager] not loader found for '{}'", asset_path);
         return;
@@ -191,7 +191,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
 
 void AssetManager::workerMain() {
     for (;;) {
-        if (thread::shutdownRequested()) {
+        if (thread::ShutdownRequested()) {
             break;
         }
 
@@ -208,7 +208,7 @@ void AssetManager::workerMain() {
                 load_asset<Image>(task, new Image);
             } break;
             case LOAD_TASK_SCENE: {
-                LOG_VERBOSE("[AssetManager] start loading scene {}", task.asset_path.string());
+                LOG_VERBOSE("[AssetManager] start loading scene {}", task.asset_path.String());
                 load_asset<Scene>(task, new Scene);
             } break;
             default:
@@ -233,19 +233,19 @@ std::shared_ptr<File> AssetManager::loadFileSync(const FilePath& p_path) {
         return found->second;
     }
 
-    auto res = FileAccess::open(p_path, FileAccess::READ);
+    auto res = FileAccess::Open(p_path, FileAccess::READ);
     if (!res) {
-        LOG_ERROR("[FileAccess] Error: failed to open file '{}', reason: {}", p_path.string(), res.error().getMessage());
+        LOG_ERROR("[FileAccess] Error: failed to Open file '{}', reason: {}", p_path.String(), res.error().getMessage());
         return nullptr;
     }
 
     std::shared_ptr<FileAccess> file_access = *res;
 
-    const size_t size = file_access->getLength();
+    const size_t size = file_access->GetLength();
 
     std::vector<char> buffer;
     buffer.resize(size);
-    file_access->readBuffer(buffer.data(), size);
+    file_access->ReadBuffer(buffer.data(), size);
     auto text = std::make_shared<File>();
     text->buffer = std::move(buffer);
     m_text_cache[p_path] = text;

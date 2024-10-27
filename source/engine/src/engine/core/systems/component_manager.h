@@ -183,7 +183,7 @@ public:
     }
 
     T* getComponent(const Entity& p_entity) {
-        if (!p_entity.isValid() || m_lookup.empty()) {
+        if (!p_entity.IsValid() || m_lookup.empty()) {
             return nullptr;
         }
 
@@ -217,7 +217,7 @@ public:
     }
 
     T& create(const Entity& p_entity) {
-        DEV_ASSERT(p_entity.isValid());
+        DEV_ASSERT(p_entity.IsValid());
 
         const size_t componentCount = m_component_array.size();
         DEV_ASSERT(m_lookup.find(p_entity) == m_lookup.end());
@@ -237,15 +237,15 @@ public:
     bool serialize(Archive& p_archive, uint32_t p_version) override {
         constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;
-        if (p_archive.isWriteMode()) {
+        if (p_archive.IsWriteMode()) {
             p_archive << magic;
             count = static_cast<uint32_t>(m_component_array.size());
             p_archive << count;
             for (auto& component : m_component_array) {
-                component.serialize(p_archive, p_version);
+                component.Serialize(p_archive, p_version);
             }
             for (auto& entity : m_entity_array) {
-                entity.serialize(p_archive);
+                entity.Serialize(p_archive);
             }
         } else {
             uint64_t read_magic;
@@ -259,10 +259,10 @@ public:
             m_component_array.resize(count);
             m_entity_array.resize(count);
             for (size_t i = 0; i < count; ++i) {
-                m_component_array[i].serialize(p_archive, p_version);
+                m_component_array[i].Serialize(p_archive, p_version);
             }
             for (size_t i = 0; i < count; ++i) {
-                m_entity_array[i].serialize(p_archive);
+                m_entity_array[i].Serialize(p_archive);
                 m_lookup[m_entity_array[i]] = i;
             }
         }

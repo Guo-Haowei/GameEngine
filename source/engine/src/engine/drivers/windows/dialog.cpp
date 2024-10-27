@@ -1,24 +1,25 @@
 #include "dialog.h"
 
+#include "core/string/string_utils.h"
 #include "drivers/windows/win32_prerequisites.h"
 
 namespace my {
 
-std::string open_file_dialog(const std::vector<const char*>& filters) {
+std::string OpenFileDialog(const std::vector<const char*>& p_filters) {
     std::string filterStr;
-    if (filters.empty()) {
+    if (p_filters.empty()) {
         filterStr = "*.*";
     } else {
-        for (const auto& filter : filters) {
+        for (const auto& filter : p_filters) {
             filterStr.append(";*");
             filterStr.append(filter);
         }
         filterStr = filterStr.substr(1);
     }
 
-    char buf[1024] = { 0 };
-    snprintf(buf, sizeof(buf), "Supported Files(%s)\n%s", filterStr.c_str(), filterStr.c_str());
-    for (char* p = buf; *p; ++p) {
+    char buffer[1024] = { 0 };
+    StringUtils::Sprintf(buffer, "Supported Files(%s)\n%s", filterStr.c_str(), filterStr.c_str());
+    for (char* p = buffer; *p; ++p) {
         if (*p == '\n') {
             *p = '\0';
             break;
@@ -33,7 +34,7 @@ std::string open_file_dialog(const std::vector<const char*>& filters) {
     ofn.hwndOwner = NULL;
     ofn.lpstrFile = szFile;
     ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = buf;
+    ofn.lpstrFilter = buffer;
     ofn.nFilterIndex = 1;
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
     if (GetOpenFileNameA(&ofn)) {
@@ -43,21 +44,16 @@ std::string open_file_dialog(const std::vector<const char*>& filters) {
     return "";
 }
 
-template<size_t N>
-static void copy_string(char (&buffer)[N], const std::string& string) {
-    strncpy(buffer, string.c_str(), N);
-}
-
-bool open_save_dialog(std::filesystem::path& inout_path) {
+bool OpenSaveDialog(std::filesystem::path& p_inout_path) {
     OPENFILENAMEA ofn;
     ZeroMemory(&ofn, sizeof(ofn));
 
     char file_name[MAX_PATH]{ 0 };
     char extension[MAX_PATH]{ 0 };
     char dir[MAX_PATH]{ 0 };
-    copy_string(file_name, inout_path.filename().replace_extension().string());
-    copy_string(dir, inout_path.parent_path().string());
-    copy_string(extension, inout_path.extension().string());
+    StringUtils::Strcpy(file_name, p_inout_path.filename().replace_extension().string());
+    StringUtils::Strcpy(dir, p_inout_path.parent_path().string());
+    StringUtils::Strcpy(extension, p_inout_path.extension().string());
 
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = NULL;
@@ -69,7 +65,7 @@ bool open_save_dialog(std::filesystem::path& inout_path) {
     ofn.lpstrInitialDir = dir;
 
     if (GetSaveFileNameA(&ofn)) {
-        inout_path = std::filesystem::path(ofn.lpstrFile);
+        p_inout_path = std::filesystem::path(ofn.lpstrFile);
         return true;
     }
 

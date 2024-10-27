@@ -5,24 +5,24 @@
 
 namespace my {
 
-void OS::initialize() {
-    FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_RESOURCE);
-    FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
-    FileAccess::makeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
+void OS::Initialize() {
+    FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_RESOURCE);
+    FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
+    FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
-    addLogger(std::make_shared<StdLogger>());
-    addLogger(std::make_shared<DebugConsoleLogger>());
+    AddLogger(std::make_shared<StdLogger>());
+    AddLogger(std::make_shared<DebugConsoleLogger>());
 }
 
-void OS::finalize() {
+void OS::Finalize() {
 }
 
-void OS::addLogger(std::shared_ptr<ILogger> p_logger) {
-    m_logger.addLogger(p_logger);
+void OS::AddLogger(std::shared_ptr<ILogger> p_logger) {
+    m_logger.AddLogger(p_logger);
 }
 
-void OS::print(LogLevel level, std::string_view p_message) {
-    m_logger.print(level, p_message);
+void OS::Print(LogLevel level, std::string_view p_message) {
+    m_logger.Print(level, p_message);
     if (level & LOG_LEVEL_FATAL) {
         GENERATE_TRAP();
     }

@@ -3,10 +3,10 @@
 
 namespace my {
 
-FileAccessUnix::~FileAccessUnix() { close(); }
+FileAccessUnix::~FileAccessUnix() { Close(); }
 
-ErrorCode FileAccessUnix::openInternal(std::string_view p_path, ModeFlags p_mode_flags) {
-    ERR_FAIL_COND_V(m_file_handle, ERR_FILE_ALREADY_IN_USE);
+ErrorCode FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) {
+    ERR_FAIL_COND_V(m_fileHandle, ERR_FILE_ALREADY_IN_USE);
 
     const char* mode = "";
     switch (p_mode_flags) {
@@ -21,9 +21,9 @@ ErrorCode FileAccessUnix::openInternal(std::string_view p_path, ModeFlags p_mode
     }
 
     std::string path_string{ p_path };
-    m_file_handle = fopen(path_string.c_str(), mode);
+    m_fileHandle = fopen(path_string.c_str(), mode);
 
-    if (!m_file_handle) {
+    if (!m_fileHandle) {
         switch (errno) {
             case ENOENT:
                 return ERR_FILE_NOT_FOUND;
@@ -35,38 +35,38 @@ ErrorCode FileAccessUnix::openInternal(std::string_view p_path, ModeFlags p_mode
     return OK;
 }
 
-void FileAccessUnix::close() {
-    if (m_file_handle) {
-        fclose(m_file_handle);
-        m_file_handle = nullptr;
+void FileAccessUnix::Close() {
+    if (m_fileHandle) {
+        fclose(m_fileHandle);
+        m_fileHandle = nullptr;
     }
 }
 
-bool FileAccessUnix::isOpen() const {
-    return m_file_handle != nullptr;
+bool FileAccessUnix::IsOpen() const {
+    return m_fileHandle != nullptr;
 }
 
-size_t FileAccessUnix::getLength() const {
-    fseek(m_file_handle, 0, SEEK_END);
-    const size_t length = ftell(m_file_handle);
-    fseek(m_file_handle, 0, SEEK_SET);
+size_t FileAccessUnix::GetLength() const {
+    fseek(m_fileHandle, 0, SEEK_END);
+    const size_t length = ftell(m_fileHandle);
+    fseek(m_fileHandle, 0, SEEK_SET);
     return length;
 }
 
-bool FileAccessUnix::readBuffer(void* p_data, size_t p_size) const {
-    DEV_ASSERT(isOpen());
+bool FileAccessUnix::ReadBuffer(void* p_data, size_t p_size) const {
+    DEV_ASSERT(IsOpen());
 
-    if (fread(p_data, 1, p_size, m_file_handle) != p_size) {
+    if (fread(p_data, 1, p_size, m_fileHandle) != p_size) {
         return false;
     }
 
     return true;
 }
 
-bool FileAccessUnix::writeBuffer(const void* p_data, size_t p_size) {
-    DEV_ASSERT(isOpen());
+bool FileAccessUnix::WriteBuffer(const void* p_data, size_t p_size) {
+    DEV_ASSERT(IsOpen());
 
-    if (fwrite(p_data, 1, p_size, m_file_handle) != p_size) {
+    if (fwrite(p_data, 1, p_size, m_fileHandle) != p_size) {
         return false;
     }
 

@@ -20,16 +20,16 @@ enum ThreadID : uint32_t {
     THREAD_MAX,
 };
 
-bool initialize();
+bool Initialize();
 
-void finailize();
+void Finailize();
 
-bool shutdownRequested();
+bool ShutdownRequested();
 
-void requestShutdown();
+void RequestShutdown();
 
-bool isMainThread();
+bool IsMainThread();
 
-uint32_t getThreadId();
+uint32_t GetThreadId();
 
 }  // namespace my::thread

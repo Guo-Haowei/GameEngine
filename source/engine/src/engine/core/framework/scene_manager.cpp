@@ -15,7 +15,7 @@ using ecs::Entity;
 namespace fs = std::filesystem;
 
 static void create_empty_scene(Scene* scene) {
-    Entity::setSeed();
+    Entity::SetSeed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     scene->createCamera(frame_size.x, frame_size.y);
@@ -101,7 +101,7 @@ void SceneManager::enqueueSceneLoadingTask(Scene* p_scene, bool p_replace) {
 void SceneManager::requestScene(std::string_view p_path) {
     FilePath path{ p_path };
 
-    std::string ext = path.extension();
+    std::string ext = path.Extension();
     if (ext == ".lua" || ext == ".scene") {
         AssetManager::singleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);

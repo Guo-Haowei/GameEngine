@@ -22,42 +22,42 @@ public:
 
     virtual ~FileAccess() = default;
 
-    virtual void close() = 0;
-    virtual bool isOpen() const = 0;
-    virtual size_t getLength() const = 0;
+    virtual void Close() = 0;
+    virtual bool IsOpen() const = 0;
+    virtual size_t GetLength() const = 0;
 
-    virtual bool readBuffer(void* p_data, size_t p_size) const = 0;
-    virtual bool writeBuffer(const void* p_data, size_t p_size) = 0;
+    virtual bool ReadBuffer(void* p_data, size_t p_size) const = 0;
+    virtual bool WriteBuffer(const void* p_data, size_t p_size) = 0;
 
-    AccessType getAccessType() const { return m_access_type; }
+    AccessType GetAccessType() const { return m_accessType; }
 
-    static auto create(AccessType p_access_type) -> std::shared_ptr<FileAccess>;
-    static auto createForPath(const std::string& p_path) -> std::shared_ptr<FileAccess>;
+    static auto Create(AccessType p_access_type) -> std::shared_ptr<FileAccess>;
+    static auto CreateForPath(const std::string& p_path) -> std::shared_ptr<FileAccess>;
 
-    static auto open(const std::string& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>>;
-    static auto open(const FilePath& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
-        return open(p_path.string(), p_mode_flags);
+    static auto Open(const std::string& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>>;
+    static auto Open(const FilePath& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
+        return Open(p_path.String(), p_mode_flags);
     }
 
     template<typename T>
-    static void makeDefault(AccessType p_access_type) {
-        s_create_func[p_access_type] = createBuiltin<T>;
+    static void MakeDefault(AccessType p_access_type) {
+        s_createFuncs[p_access_type] = CreateBuiltin<T>;
     }
 
 protected:
     FileAccess() = default;
 
-    virtual ErrorCode openInternal(std::string_view p_path, ModeFlags p_mode_flags) = 0;
-    virtual void setAccessType(AccessType p_access_type) { m_access_type = p_access_type; }
-    virtual std::string fixPath(std::string_view p_path);
+    virtual ErrorCode OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) = 0;
+    virtual void SetAccessType(AccessType p_access_type) { m_accessType = p_access_type; }
+    virtual std::string FixPath(std::string_view p_path);
 
-    AccessType m_access_type = ACCESS_MAX;
+    AccessType m_accessType = ACCESS_MAX;
 
-    static CreateFunc s_create_func[ACCESS_MAX];
+    static CreateFunc s_createFuncs[ACCESS_MAX];
 
 private:
     template<typename T>
-    static FileAccess* createBuiltin() {
+    static FileAccess* CreateBuiltin() {
         return new T;
     }
 };

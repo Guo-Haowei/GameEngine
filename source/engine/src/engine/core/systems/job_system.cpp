@@ -8,51 +8,51 @@ namespace my::jobsystem {
 
 static struct
 {
-    std::condition_variable wake_condition;
-    std::mutex wake_mutex;
-    ThreadSafeRingBuffer<Job, 128> job_queue;
+    std::condition_variable wakeCondition;
+    std::mutex wakeMutex;
+    ThreadSafeRingBuffer<Job, 128> jobQueue;
 } s_glob;
 
-static bool work() {
+static bool DoWork() {
     Job job;
-    if (!s_glob.job_queue.pop_front(job)) {
+    if (!s_glob.jobQueue.pop_front(job)) {
         return false;
     }
 
-    for (uint32_t i = job.group_job_offset; i < job.group_job_end; ++i) {
+    for (uint32_t i = job.groupJobOffset; i < job.groupJobEnd; ++i) {
         JobArgs args;
-        args.group_id = job.group_id;
-        args.job_index = i;
-        args.group_index = i - job.group_job_offset;
+        args.groupId = job.groupId;
+        args.jobIndex = i;
+        args.groupIndex = i - job.groupJobOffset;
         job.task(args);
     }
 
-    job.ctx->addTaskCount(-1);
+    job.ctx->DecreaseTaskCount();
     return true;
 }
 
-void workerMain() {
+void WorkerMain() {
     for (;;) {
-        if (thread::shutdownRequested()) {
+        if (thread::ShutdownRequested()) {
             break;
         }
 
-        if (!work()) {
-            std::unique_lock<std::mutex> lock(s_glob.wake_mutex);
-            s_glob.wake_condition.wait(lock);
+        if (!DoWork()) {
+            std::unique_lock<std::mutex> lock(s_glob.wakeMutex);
+            s_glob.wakeCondition.wait(lock);
         }
     }
 }
 
-bool initialize() {
+bool Initialize() {
     return true;
 }
 
-void finalize() {
-    s_glob.wake_condition.notify_all();
+void Finalize() {
+    s_glob.wakeCondition.notify_all();
 }
 
-void Context::dispatch(uint32_t p_job_count, uint32_t p_group_size, const std::function<void(JobArgs)>& p_task) {
+void Context::Dispatch(uint32_t p_job_count, uint32_t p_group_size, const std::function<void(JobArgs)>& p_task) {
     // DEV_ASSERT(thread::isMainThread());
 
     if (p_job_count == 0 || p_group_size == 0) {
@@ -60,33 +60,33 @@ void Context::dispatch(uint32_t p_job_count, uint32_t p_group_size, const std::f
     }
 
     const uint32_t group_count = (p_job_count + p_group_size - 1) / p_group_size;  // make sure round up
-    m_task_count.fetch_add(group_count);
+    m_taskCount.fetch_add(group_count);
 
     for (uint32_t group_id = 0; group_id < group_count; ++group_id) {
         Job job;
         job.ctx = this;
         job.task = p_task;
-        job.group_id = group_id;
-        job.group_job_offset = group_id * p_group_size;
-        job.group_job_end = glm::min(job.group_job_offset + p_group_size, p_job_count);
+        job.groupId = group_id;
+        job.groupJobOffset = group_id * p_group_size;
+        job.groupJobEnd = glm::min(job.groupJobOffset + p_group_size, p_job_count);
 
-        while (!s_glob.job_queue.push_back(job)) {
+        while (!s_glob.jobQueue.push_back(job)) {
             // if job queue is full, notify all and let main thread do the work as well
-            s_glob.wake_condition.notify_all();
-            work();
+            s_glob.wakeCondition.notify_all();
+            DoWork();
         }
     }
 
-    s_glob.wake_condition.notify_all();
+    s_glob.wakeCondition.notify_all();
 }
 
-void Context::wait() {
+void Context::Wait() {
     // Wake any threads that might be sleeping:
-    s_glob.wake_condition.notify_all();
+    s_glob.wakeCondition.notify_all();
 
     // Waiting will also put the current thread to good use by working on an other job if it can:
-    while (isBusy()) {
-        work();
+    while (IsBusy()) {
+        DoWork();
     }
 }
 

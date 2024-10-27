@@ -29,12 +29,12 @@ public:
     virtual bool load(T* p_data) = 0;
 
     static std::shared_ptr<Loader<T>> create(const FilePath& p_path) {
-        std::string ext = p_path.extensionCStr();
+        std::string ext = p_path.ExtensionCStr();
         auto it = s_loader_creator.find(ext);
         if (it == s_loader_creator.end()) {
             return nullptr;
         }
-        return it->second(p_path.string());
+        return it->second(p_path.String());
     }
 
     static bool register_loader(const std::string& p_extension, CreateLoaderFunc p_func) {

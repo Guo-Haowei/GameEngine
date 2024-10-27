@@ -5,15 +5,15 @@ namespace my {
 
 class StdLogger : public ILogger {
 public:
-    void print(LogLevel p_level, std::string_view p_message) override;
+    void Print(LogLevel p_level, std::string_view p_message) override;
 
 private:
-    std::mutex m_console_mutex;
+    std::mutex m_consoleMutex;
 };
 
 class DebugConsoleLogger : public ILogger {
 public:
-    void print(LogLevel p_level, std::string_view p_message) override;
+    void Print(LogLevel p_level, std::string_view p_message) override;
 };
 
 }  // namespace my

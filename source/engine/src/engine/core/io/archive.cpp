@@ -4,14 +4,14 @@
 
 namespace my {
 
-auto Archive::openMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, Error<ErrorCode>> {
+auto Archive::OpenMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, Error<ErrorCode>> {
     m_path = p_path;
-    m_write_mode = p_write_mode;
-    if (m_write_mode) {
+    m_isWriteMode = p_write_mode;
+    if (m_isWriteMode) {
         m_path += ".tmp";
     }
 
-    auto res = FileAccess::open(m_path, p_write_mode ? FileAccess::WRITE : FileAccess::READ);
+    auto res = FileAccess::Open(m_path, p_write_mode ? FileAccess::WRITE : FileAccess::READ);
     if (!res) {
         return std::unexpected(res.error());
     }
@@ -20,38 +20,38 @@ auto Archive::openMode(const std::string& p_path, bool p_write_mode) -> std::exp
     return std::expected<void, Error<ErrorCode>>();
 }
 
-void Archive::close() {
+void Archive::Close() {
     if (!m_file) {
         return;
     }
 
     m_file.reset();
 
-    if (m_write_mode) {
+    if (m_isWriteMode) {
         std::filesystem::path final_path{ m_path };
         final_path.replace_extension();
         std::filesystem::rename(m_path, final_path);
     }
 }
 
-bool Archive::isWriteMode() const {
+bool Archive::IsWriteMode() const {
     DEV_ASSERT(m_file);
-    return m_write_mode;
+    return m_isWriteMode;
 }
 
-bool Archive::write(const void* p_data, size_t p_size) {
-    DEV_ASSERT(m_file && m_write_mode);
-    return m_file->writeBuffer(p_data, p_size);
+bool Archive::Write(const void* p_data, size_t p_size) {
+    DEV_ASSERT(m_file && m_isWriteMode);
+    return m_file->WriteBuffer(p_data, p_size);
 }
 
-bool Archive::read(void* p_data, size_t p_size) {
-    DEV_ASSERT(m_file && !m_write_mode);
-    return m_file->readBuffer(p_data, p_size);
+bool Archive::Read(void* p_data, size_t p_size) {
+    DEV_ASSERT(m_file && !m_isWriteMode);
+    return m_file->ReadBuffer(p_data, p_size);
 }
 
-Archive& Archive::writeString(const char* p_data, size_t p_length) {
-    write(p_length);
-    write(p_data, p_length);
+Archive& Archive::WriteString(const char* p_data, size_t p_length) {
+    Write(p_length);
+    Write(p_data, p_length);
     return *this;
 }
 

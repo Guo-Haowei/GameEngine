@@ -4,36 +4,36 @@
 
 namespace my {
 
-void CompositeLogger::addLogger(std::shared_ptr<ILogger> p_logger) {
+void CompositeLogger::AddLogger(std::shared_ptr<ILogger> p_logger) {
     m_loggers.emplace_back(p_logger);
 }
 
-void CompositeLogger::print(LogLevel p_level, std::string_view p_message) {
+void CompositeLogger::Print(LogLevel p_level, std::string_view p_message) {
     // @TODO: set verbose
     if (!(m_channels & p_level)) {
         return;
     }
 
     for (auto& logger : m_loggers) {
-        logger->print(p_level, p_message);
+        logger->Print(p_level, p_message);
     }
 
-    m_log_history_mutex.lock();
-    m_log_history.push_back({});
-    auto& log_history = m_log_history.back();
+    m_logHistoryMutex.lock();
+    m_logHistory.push_back({});
+    auto& log_history = m_logHistory.back();
     log_history.level = p_level;
     strncpy(log_history.buffer, p_message.data(), sizeof(log_history.buffer) - 1);
-    m_log_history_mutex.unlock();
+    m_logHistoryMutex.unlock();
 }
 
-void CompositeLogger::retrieveLog(std::vector<Log>& p_buffer) {
-    m_log_history_mutex.lock();
+void CompositeLogger::RetrieveLog(std::vector<Log>& p_buffer) {
+    m_logHistoryMutex.lock();
 
-    for (auto& log : m_log_history) {
+    for (auto& log : m_logHistory) {
         p_buffer.push_back(log);
     }
 
-    m_log_history_mutex.unlock();
+    m_logHistoryMutex.unlock();
 }
 
 }  // namespace my

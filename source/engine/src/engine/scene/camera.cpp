@@ -29,8 +29,8 @@ void Camera::setDimension(int p_width, int p_height) {
     }
 }
 
-void Camera::serialize(Archive& p_archive, uint32_t) {
-    if (p_archive.isWriteMode()) {
+void Camera::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
         p_archive << m_flags;
         p_archive << m_near;
         p_archive << m_far;

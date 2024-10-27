@@ -15,7 +15,7 @@ static void save_project(bool open_dialog) {
 
     std::filesystem::path path{ project.empty() ? "untitled.scene" : project.c_str() };
     if (open_dialog || project.empty()) {
-        if (!open_save_dialog(path)) {
+        if (!OpenSaveDialog(path)) {
             return;
         }
     }
@@ -24,11 +24,11 @@ static void save_project(bool open_dialog) {
     Scene& scene = SceneManager::singleton().getScene();
 
     Archive archive;
-    if (!archive.openWrite(path.string())) {
+    if (!archive.OpenWrite(path.string())) {
         return;
     }
 
-    if (scene.serialize(archive)) {
+    if (scene.Serialize(archive)) {
         LOG_OK("scene saved to '{}'", path.string());
     }
 }

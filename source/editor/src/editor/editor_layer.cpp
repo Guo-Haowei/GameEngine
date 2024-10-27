@@ -161,13 +161,13 @@ void EditorLayer::flush_commands(Scene& scene) {
                         break;
                 }
 
-                scene.attachComponent(id, add_command->parent.isValid() ? add_command->parent : scene.m_root);
+                scene.attachComponent(id, add_command->parent.IsValid() ? add_command->parent : scene.m_root);
                 select_entity(id);
                 SceneManager::singleton().bumpRevision();
                 break;
             }
             if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {
-                DEV_ASSERT(command->target.isValid());
+                DEV_ASSERT(command->target.IsValid());
                 switch (command->component_type) {
                     case COMPONENT_TYPE_BOX_COLLIDER: {
                         auto& collider = scene.create<BoxColliderComponent>(command->target);
@@ -184,7 +184,7 @@ void EditorLayer::flush_commands(Scene& scene) {
             }
             if (auto command = dynamic_cast<EditorCommandRemoveEntity*>(task.get()); command) {
                 auto entity = command->target;
-                DEV_ASSERT(entity.isValid());
+                DEV_ASSERT(entity.IsValid());
                 scene.removeEntity(entity);
                 // if (scene.contains<TransformComponent>(entity)) {
 
