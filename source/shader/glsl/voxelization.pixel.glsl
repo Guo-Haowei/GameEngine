@@ -40,7 +40,7 @@ void main() {
         vec3 direct_lighting = vec3(0.0);
         float shadow = 0.0;
         switch (light.type) {
-            case LIGHT_TYPE_OMNI: {
+            case LIGHT_TYPE_INFINITE: {
                 vec3 L = light.position;
                 float atten = 1.0;
 

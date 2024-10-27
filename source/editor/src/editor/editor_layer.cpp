@@ -30,7 +30,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     // const char* light_icons[] = {
     //     "@res://images/arealight.png",
     //     "@res://images/pointlight.png",
-    //     "@res://images/omnilight.png",
+    //     "@res://images/infinitelight.png",
     // };
 
     // for (int i = 0; i < array_length(light_icons); ++i) {
@@ -138,8 +138,8 @@ void EditorLayer::flush_commands(Scene& scene) {
             if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
                 ecs::Entity id;
                 switch (add_command->entity_type) {
-                    case ENTITY_TYPE_OMNI_LIGHT:
-                        id = scene.createOmniLightEntity(gen_name("directional-light"));
+                    case ENTITY_TYPE_INFINITE_LIGHT:
+                        id = scene.createInfiniteLightEntity(gen_name("directional-light"));
                         break;
                     case ENTITY_TYPE_POINT_LIGHT:
                         id = scene.createPointLightEntity(gen_name("point-light"), vec3(0, 1, 0));

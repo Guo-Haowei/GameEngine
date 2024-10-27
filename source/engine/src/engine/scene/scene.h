@@ -136,9 +136,9 @@ private:
                                       const vec3& p_color = vec3(1),
                                       const float p_emissive = 5.0f);
 
-    ecs::Entity createOmniLightEntity(const std::string& p_name,
-                                      const vec3& p_color = vec3(1),
-                                      const float p_emissive = 5.0f);
+    ecs::Entity createInfiniteLightEntity(const std::string& p_name,
+                                          const vec3& p_color = vec3(1),
+                                          const float p_emissive = 5.0f);
 
     ecs::Entity createPlaneEntity(const std::string& p_name,
                                   const vec3& p_scale = vec3(0.5f),

@@ -10,7 +10,7 @@ enum EditorCommandType : uint8_t {
 };
 
 enum EntityType : uint8_t {
-    ENTITY_TYPE_OMNI_LIGHT,
+    ENTITY_TYPE_INFINITE_LIGHT,
     ENTITY_TYPE_POINT_LIGHT,
     ENTITY_TYPE_AREA_LIGHT,
     ENTITY_TYPE_PLANE,
