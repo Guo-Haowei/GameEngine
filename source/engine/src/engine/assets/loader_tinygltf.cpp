@@ -56,7 +56,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
             MeshComponent& mesh = m_scene->m_MeshComponents.getComponent(node.mesh);
             ecs::Entity mesh_id = m_scene->getEntity<MeshComponent>(node.mesh);
             DEV_ASSERT(!mesh.joints_0.empty());
-            if (mesh.armature_id.isValid()) {
+            if (mesh.armature_id.IsValid()) {
                 // Reuse mesh with different skin is not possible currently, so we create a new one:
                 LOG_WARN("Re-use mesh for different skin!");
                 mesh_id = entity;
@@ -83,8 +83,8 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     // light
 
     // transform
-    if (!entity.isValid()) {
-        entity = ecs::Entity::create();
+    if (!entity.IsValid()) {
+        entity = ecs::Entity::Create();
         m_scene->create<TransformComponent>(entity);
         m_scene->create<NameComponent>(entity).setName("Transform::" + node.name);
     }
@@ -131,7 +131,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     }
     transform.updateTransform();
 
-    if (parent.isValid()) {
+    if (parent.IsValid()) {
         m_scene->attachComponent(entity, parent);
     }
 
@@ -168,7 +168,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
         return false;
     }
 
-    ecs::Entity root = ecs::Entity::create();
+    ecs::Entity root = ecs::Entity::Create();
     m_scene->create<TransformComponent>(root);
     m_scene->create<NameComponent>(root).setName(m_file_name);
     m_scene->m_root = root;
@@ -272,7 +272,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
     }
     // Create armatures
     for (const auto& skin : m_model->skins) {
-        ecs::Entity armature_id = ecs::Entity::create();
+        ecs::Entity armature_id = ecs::Entity::Create();
         m_scene->create<NameComponent>(armature_id).setName(skin.name);
         m_scene->create<TransformComponent>(armature_id);
         ArmatureComponent& armature = m_scene->create<ArmatureComponent>(armature_id);

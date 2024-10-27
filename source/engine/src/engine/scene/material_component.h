@@ -31,7 +31,7 @@ struct MaterialComponent {
     // @TODO: remove this, this is poorly designed
     void requestImage(int p_slot, const std::string& p_path);
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 };
 
 }  // namespace my

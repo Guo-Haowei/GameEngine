@@ -15,7 +15,7 @@ using ecs::Entity;
 namespace fs = std::filesystem;
 
 static void create_empty_scene(Scene* scene) {
-    Entity::setSeed();
+    Entity::SetSeed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     scene->createCamera(frame_size.x, frame_size.y);

@@ -62,7 +62,7 @@ static bool draw_vec3_control_disabled(bool disabled, Args&&... args) {
 void PropertyPanel::update_internal(Scene& scene) {
     ecs::Entity id = m_editor.get_selected_entity();
 
-    if (!id.isValid()) {
+    if (!id.IsValid()) {
         return;
     }
 
@@ -243,7 +243,7 @@ void PropertyPanel::update_internal(Scene& scene) {
 
     DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
         char buffer[256];
-        snprintf(buffer, sizeof(buffer), "%d", collider.object_id.getId());
+        snprintf(buffer, sizeof(buffer), "%d", collider.object_id.GetId());
         ImGui::Columns(2);
         ImGui::SetColumnWidth(0, kDefaultColumnWidth);
         ImGui::Text("Mesh ID");

@@ -16,7 +16,7 @@ public:
     const std::string& getName() const { return m_name; }
     std::string& getNameRef() { return m_name; }
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     std::string m_name;

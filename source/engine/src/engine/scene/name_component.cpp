@@ -4,7 +4,7 @@
 
 namespace my {
 
-void NameComponent::serialize(Archive& p_archive, uint32_t) {
+void NameComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.isWriteMode()) {
         p_archive << m_name;
     } else {

@@ -33,7 +33,7 @@ struct MeshComponent {
         uint32_t size_in_byte = 0;
         uint32_t stride = 0;
 
-        bool isValid() const { return size_in_byte != 0; }
+        bool IsValid() const { return size_in_byte != 0; }
     };
 
     uint32_t flags = RENDERABLE;
@@ -67,7 +67,7 @@ struct MeshComponent {
     void createRenderData();
     std::vector<char> generateCombinedBuffer() const;
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 };
 
 }  // namespace my

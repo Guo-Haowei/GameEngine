@@ -8,7 +8,7 @@ namespace my {
 
 static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
 
-void DynamicVariableManager::serialize() {
+void DynamicVariableManager::Serialize() {
     auto res = FileAccess::open(DVAR_CACHE_FILE, FileAccess::WRITE);
     if (!res) {
         LOG_ERROR("{}", res.error().getMessage());

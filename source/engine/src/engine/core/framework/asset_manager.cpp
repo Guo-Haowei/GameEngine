@@ -37,7 +37,7 @@ public:
             return false;
         }
         p_scene->m_replace = true;
-        return p_scene->serialize(archive);
+        return p_scene->Serialize(archive);
     }
 };
 
@@ -191,7 +191,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
 
 void AssetManager::workerMain() {
     for (;;) {
-        if (thread::shutdownRequested()) {
+        if (thread::ShutdownRequested()) {
             break;
         }
 

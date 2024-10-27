@@ -104,7 +104,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<sol::table> table = p_components["cube"]; table) {
         vec3 size{ 0.5f };
         try_get_vec3(*table, "size", size);
-        if (!material_id.isValid()) {
+        if (!material_id.IsValid()) {
             material_id = create_material();
         }
 
@@ -113,7 +113,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<sol::table> table = p_components["plane"]; table) {
         vec3 size{ 0.5f };
         try_get_vec3(*table, "size", size);
-        if (!material_id.isValid()) {
+        if (!material_id.IsValid()) {
             material_id = create_material();
         }
 
@@ -122,7 +122,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<sol::table> table = p_components["sphere"]; table) {
         float radius{ 0.5f };
         try_get_float(*table, "radius", radius);
-        if (!material_id.isValid()) {
+        if (!material_id.IsValid()) {
             material_id = create_material();
         }
 
@@ -130,7 +130,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     }
 
     if (TransformComponent* transform_component = p_scene->getComponent<TransformComponent>(id); !transform_component) {
-        DEV_ASSERT(!id.isValid());
+        DEV_ASSERT(!id.IsValid());
         id = p_scene->createNameEntity(name);
 
         transform_component = &p_scene->create<TransformComponent>(id);
@@ -160,14 +160,14 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         }
     }
 
-    DEV_ASSERT(id.isValid());
+    DEV_ASSERT(id.IsValid());
     return id;
 }
 
 struct LuaScene {
     LuaScene(Scene* p_scene) : scene(p_scene) {}
 
-    uint32_t get_root() const { return scene->m_root.getId(); }
+    uint32_t get_root() const { return scene->m_root.GetId(); }
 
     uint32_t create_entity(const sol::table& p_components) {
         uint32_t id = create_entity_detached(p_components);
@@ -177,7 +177,7 @@ struct LuaScene {
 
     uint32_t create_entity_detached(const sol::table& p_components) {
         Entity id = lua_scene_create_entity(scene, p_components);
-        return id.getId();
+        return id.GetId();
     }
 
     void attach(uint32_t p_child, uint32_t p_parent) {

@@ -28,7 +28,7 @@ static void save_project(bool open_dialog) {
         return;
     }
 
-    if (scene.serialize(archive)) {
+    if (scene.Serialize(archive)) {
         LOG_OK("scene saved to '{}'", path.string());
     }
 }

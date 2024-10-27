@@ -4,7 +4,7 @@
 
 namespace my {
 
-void ArmatureComponent::serialize(Archive& p_archive, uint32_t) {
+void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.isWriteMode()) {
         p_archive << flags;
         p_archive << bone_collection;

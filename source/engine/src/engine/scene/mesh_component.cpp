@@ -94,7 +94,7 @@ std::vector<char> MeshComponent::generateCombinedBuffer() const {
     return result;
 }
 
-void MeshComponent::serialize(Archive& p_archive, uint32_t) {
+void MeshComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.isWriteMode()) {
         p_archive << flags;
         p_archive << indices;

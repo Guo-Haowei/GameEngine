@@ -18,7 +18,7 @@ struct ArmatureComponent {
     // Non-Serialized
     std::vector<mat4> bone_transforms;
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 };
 
 }  // namespace my

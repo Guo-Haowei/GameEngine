@@ -139,7 +139,7 @@ ecs::Entity LoaderAssimp::process_node(const aiNode* node, ecs::Entity parent) {
         for (uint32_t i = 0; i < node->mNumMeshes; ++i) {
             ecs::Entity child = m_scene->createObjectEntity("");
             auto tagComponent = m_scene->getComponent<NameComponent>(child);
-            tagComponent->setName("SubGeometry_" + std::to_string(child.getId()));
+            tagComponent->setName("SubGeometry_" + std::to_string(child.GetId()));
             ObjectComponent& objComponent = *m_scene->getComponent<ObjectComponent>(child);
             objComponent.mesh_id = m_meshes[node->mMeshes[i]];
             m_scene->attachComponent(child, entity);
@@ -157,7 +157,7 @@ ecs::Entity LoaderAssimp::process_node(const aiNode* node, ecs::Entity parent) {
     TransformComponent& transform = *m_scene->getComponent<TransformComponent>(entity);
     transform.matrixTransform(localTransformColumnMajor);
 
-    if (parent.isValid()) {
+    if (parent.IsValid()) {
         m_scene->attachComponent(entity, parent);
     }
 

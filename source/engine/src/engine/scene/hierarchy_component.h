@@ -9,7 +9,7 @@ class HierarchyComponent {
 public:
     ecs::Entity GetParent() const { return m_parent_id; }
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     ecs::Entity m_parent_id;

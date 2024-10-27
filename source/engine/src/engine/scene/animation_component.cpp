@@ -4,7 +4,7 @@
 
 namespace my {
 
-void AnimationComponent::serialize(Archive& p_archive, uint32_t) {
+void AnimationComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.isWriteMode()) {
         p_archive << flags;
         p_archive << start;

@@ -40,7 +40,7 @@ public:
     const vec3& getRight() const { return m_right; }
     const vec3 getFront() const { return m_front; }
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     uint32_t m_flags = DIRTY;

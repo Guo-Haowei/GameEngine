@@ -555,7 +555,7 @@ void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, Filter
         }
 
         draw.batch_idx = m_context.batch_cache.findOrAdd(entity, batch_buffer);
-        if (mesh.armature_id.isValid()) {
+        if (mesh.armature_id.IsValid()) {
             auto& armature = *p_scene.getComponent<ArmatureComponent>(mesh.armature_id);
             DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
 

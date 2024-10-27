@@ -18,7 +18,7 @@ public:
         m_max = vec_type(-std::numeric_limits<float>::infinity());
     }
 
-    bool isValid() {
+    bool IsValid() {
         for (int i = 0; i < N; ++i) {
             if (m_min[i] >= m_max[i]) {
                 return false;

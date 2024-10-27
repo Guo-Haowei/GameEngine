@@ -12,7 +12,7 @@ void MaterialComponent::requestImage(int p_slot, const std::string& p_path) {
     }
 }
 
-void MaterialComponent::serialize(Archive& p_archive, uint32_t p_version) {
+void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     if (p_archive.isWriteMode()) {

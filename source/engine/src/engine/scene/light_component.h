@@ -29,7 +29,7 @@ public:
 
     void update(const TransformComponent& p_transform);
 
-    void serialize(Archive& p_archive, uint32_t p_version);
+    void Serialize(Archive& p_archive, uint32_t p_version);
 
     const auto& getMatrices() const { return m_light_space_matrices; }
     const vec3& getPosition() const { return m_position; }

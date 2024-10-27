@@ -4,8 +4,8 @@
 
 namespace my {
 
-void HierarchyComponent::serialize(Archive& p_archive, uint32_t) {
-    m_parent_id.serialize(p_archive);
+void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
+    m_parent_id.Serialize(p_archive);
 }
 
 }  // namespace my

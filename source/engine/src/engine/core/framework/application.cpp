@@ -79,7 +79,7 @@ int Application::run(int argc, const char** argv) {
 
     setupModules();
 
-    thread::initialize();
+    thread::Initialize();
     jobsystem::Initialize();
 
     for (Module* module : m_modules) {
@@ -160,7 +160,7 @@ int Application::run(int argc, const char** argv) {
     m_layers.clear();
 
     // @TODO: move it to request shutdown
-    thread::requestShutdown();
+    thread::RequestShutdown();
 
     // finalize
 
@@ -171,9 +171,9 @@ int Application::run(int argc, const char** argv) {
     }
 
     jobsystem::Finalize();
-    thread::finailize();
+    thread::Finailize();
 
-    DynamicVariableManager::serialize();
+    DynamicVariableManager::Serialize();
 
     OS::singleton().finalize();
 

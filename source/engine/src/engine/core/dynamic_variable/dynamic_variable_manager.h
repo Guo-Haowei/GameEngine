@@ -39,7 +39,7 @@ private:
 
 class DynamicVariableManager {
 public:
-    static void serialize();
+    static void Serialize();
     static void deserialize();
     static bool parse(const std::vector<std::string>& p_commands);
     static void dumpDvars();

@@ -19,17 +19,17 @@ public:
 
     bool operator!=(const Entity& p_rhs) const { return m_id != p_rhs.m_id; }
 
-    bool isValid() const { return m_id != INVALID_ID; }
+    bool IsValid() const { return m_id != INVALID_ID; }
 
-    void makeInvalid() { m_id = INVALID_ID; }
+    void MakeInvalid() { m_id = INVALID_ID; }
 
-    constexpr uint32_t getId() const { return m_id; }
+    constexpr uint32_t GetId() const { return m_id; }
 
-    void serialize(Archive& p_archive);
+    void Serialize(Archive& p_archive);
 
-    static Entity create();
-    static uint32_t getSeed();
-    static void setSeed(uint32_t p_seed = INVALID_ID + 1);
+    static Entity Create();
+    static uint32_t GetSeed();
+    static void SetSeed(uint32_t p_seed = INVALID_ID + 1);
 
     static const Entity INVALID;
 
@@ -45,20 +45,20 @@ namespace std {
 
 template<>
 struct hash<my::ecs::Entity> {
-    std::size_t operator()(const my::ecs::Entity& p_entity) const { return std::hash<uint32_t>{}(p_entity.getId()); }
+    std::size_t operator()(const my::ecs::Entity& p_entity) const { return std::hash<uint32_t>{}(p_entity.GetId()); }
 };
 
 template<>
 struct less<my::ecs::Entity> {
     constexpr bool operator()(const my::ecs::Entity& p_lhs, const my::ecs::Entity& p_rhs) const {
-        return p_lhs.getId() < p_rhs.getId();
+        return p_lhs.GetId() < p_rhs.GetId();
     }
 };
 
 template<>
 struct equal_to<my::ecs::Entity> {
     constexpr bool operator()(const my::ecs::Entity& p_lhs, const my::ecs::Entity& p_rhs) const {
-        return p_lhs.getId() == p_rhs.getId();
+        return p_lhs.GetId() == p_rhs.GetId();
     }
 };
 

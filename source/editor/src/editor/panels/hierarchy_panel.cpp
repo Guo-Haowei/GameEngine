@@ -49,7 +49,7 @@ static bool tree_node_helper(const Scene& p_scene,
     if (name.empty()) {
         name = "Untitled";
     }
-    auto node_name = std::format("##{}", p_id.getId());
+    auto node_name = std::format("##{}", p_id.GetId());
     auto tag = std::format("{}{}", name, node_name);
 
     p_flags |= ImGuiTreeNodeFlags_NoTreePushOnOpen;
@@ -84,7 +84,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
     const ObjectComponent* object_component = p_scene.getComponent<ObjectComponent>(id);
     const MeshComponent* mesh_component = object_component ? p_scene.getComponent<MeshComponent>(object_component->mesh_id) : nullptr;
 
-    auto node_name = std::format("##{}", id.getId());
+    auto node_name = std::format("##{}", id.GetId());
     auto tag = std::format("{}{}", name, node_name);
 
     p_flags |= (p_hier->children.empty() && !mesh_component) ? ImGuiTreeNodeFlags_Leaf : 0;
@@ -118,7 +118,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
                 }
             }
             Entity armature_id = mesh_component->armature_id;
-            if (armature_id.isValid()) {
+            if (armature_id.IsValid()) {
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
                 tree_node_helper(
                     p_scene, armature_id, flags, [&]() {
@@ -188,7 +188,7 @@ void HierarchyPanel::draw_popup(Scene&) {
     if (ImGui::BeginPopup(POPUP_NAME_ID)) {
         open_add_entity_popup(selected);
         if (ImGui::MenuItem("Delete")) {
-            if (selected.isValid()) {
+            if (selected.IsValid()) {
                 m_editor.select_entity(Entity::INVALID);
                 m_editor.remove_entity(selected);
             }

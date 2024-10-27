@@ -33,7 +33,7 @@ static bool DoWork() {
 
 void WorkerMain() {
     for (;;) {
-        if (thread::shutdownRequested()) {
+        if (thread::ShutdownRequested()) {
             break;
         }
 

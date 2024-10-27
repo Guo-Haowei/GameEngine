@@ -198,7 +198,7 @@ void Viewer::update_internal(Scene& scene) {
     select_entity(scene, camera);
 
     // Update state
-    if (m_editor.get_selected_entity().isValid()) {
+    if (m_editor.get_selected_entity().IsValid()) {
         if (input::isKeyPressed(KEY_Z)) {
             m_editor.set_state(EditorLayer::STATE_TRANSLATE);
         } else if (input::isKeyPressed(KEY_X)) {

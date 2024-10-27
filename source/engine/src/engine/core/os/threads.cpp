@@ -36,7 +36,7 @@ static struct {
     };
 } s_thread_glob;
 
-bool initialize() {
+bool Initialize() {
     g_thread_id = THREAD_MAIN;
 
     std::latch latch{ THREAD_MAX - 1 };
@@ -72,26 +72,26 @@ bool initialize() {
     return true;
 }
 
-void finailize() {
+void Finailize() {
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
         auto& thread = s_thread_glob.threads[id];
         thread.thread.join();
     }
 }
 
-bool shutdownRequested() {
+bool ShutdownRequested() {
     return s_thread_glob.shutdown_requested;
 }
 
-void requestShutdown() {
+void RequestShutdown() {
     s_thread_glob.shutdown_requested = true;
 }
 
-bool isMainThread() {
+bool IsMainThread() {
     return g_thread_id == THREAD_MAIN;
 }
 
-uint32_t getThreadId() {
+uint32_t GetThreadId() {
     return g_thread_id;
 }
 
