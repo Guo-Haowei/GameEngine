@@ -23,7 +23,7 @@ static LRESULT wnd_proc_wrapper(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
     return window->wnd_proc(hwnd, msg, wParam, lParam);
 }
 
-bool Win32DisplayManager::initialize() {
+bool Win32DisplayManager::Initialize() {
     initialize_key_mapping();
 
     const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
@@ -65,7 +65,7 @@ bool Win32DisplayManager::initialize() {
     return true;
 }
 
-void Win32DisplayManager::finalize() {
+void Win32DisplayManager::Finalize() {
     ImGui_ImplWin32_Shutdown();
 
     ::DestroyWindow(m_hwnd);
@@ -116,7 +116,7 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
                 m_frame_size.x = width;
                 m_frame_size.y = height;
                 auto event = std::make_shared<ResizeEvent>(width, height);
-                m_app->getEventQueue().dispatchEvent(event);
+                m_app->getEventQueue().DispatchEvent(event);
             }
             return 0;
         }

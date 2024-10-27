@@ -34,27 +34,29 @@ enum ClearFlags : uint32_t {
 };
 
 struct Viewport {
-    Viewport(int p_width, int p_height) : width(p_width), height(p_height), top_left_x(0), top_left_y(0) {}
+    Viewport(int p_width, int p_height) : width(p_width), height(p_height), topLeftX(0), topLeftY(0) {}
 
     int width;
     int height;
-    int top_left_x;
-    int top_left_y;
+    int topLeftX;
+    int topLeftY;
 };
 
 struct MeshBuffers {
     virtual ~MeshBuffers() = default;
 
-    uint32_t index_count = 0;
+    uint32_t indexCount = 0;
 };
 
 struct MeshBuffers;
 
+// @TODO: refactor
 extern UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
 extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 extern UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern UniformBuffer<EnvConstantBuffer> g_env_cache;
+extern UniformBuffer<ParticleConstantBuffer> g_particle_cache;
 
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),
@@ -98,100 +100,103 @@ public:
 
     GraphicsManager(std::string_view p_name, Backend p_backend) : Module(p_name), m_backend(p_backend) {}
 
-    bool initialize() final;
+    bool Initialize() final;
 
-    void update(Scene& p_scene);
+    void Update(Scene& p_scene);
 
-    virtual void setRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
-    virtual void unsetRenderTarget() = 0;
+    virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
+    virtual void UnsetRenderTarget() = 0;
 
-    virtual void clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color = nullptr, int p_index = 0) = 0;
-    virtual void setViewport(const Viewport& p_viewport) = 0;
+    virtual void Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color = nullptr, int p_index = 0) = 0;
+    virtual void SetViewport(const Viewport& p_viewport) = 0;
 
-    virtual const MeshBuffers* createMesh(const MeshComponent& p_mesh) = 0;
-    virtual void setMesh(const MeshBuffers* p_mesh) = 0;
-    virtual void drawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
+    virtual const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) = 0;
+    virtual void SetMesh(const MeshBuffers* p_mesh) = 0;
+    virtual void DrawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
+    virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
-    virtual void dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
-    virtual void setUnorderedAccessView(uint32_t p_slot, Texture* p_texture) = 0;
+    virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
+    virtual void SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) = 0;
+    void SetPipelineState(PipelineStateName p_name);
+    virtual void SetStencilRef(uint32_t p_ref) = 0;
 
-    void setPipelineState(PipelineStateName p_name);
-    virtual void setStencilRef(uint32_t p_ref) = 0;
+    std::shared_ptr<RenderTarget> CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
+    std::shared_ptr<RenderTarget> FindRenderTarget(RenderTargetResourceName p_name) const;
 
-    std::shared_ptr<RenderTarget> createRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
-    std::shared_ptr<RenderTarget> findRenderTarget(RenderTargetResourceName p_name) const;
-
-    virtual std::shared_ptr<UniformBufferBase> createUniform(int p_slot, size_t p_capacity) = 0;
-    virtual void updateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
+    virtual std::shared_ptr<UniformBufferBase> CreateUniform(int p_slot, size_t p_capacity) = 0;
+    virtual void UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
     template<typename T>
-    void updateUniform(const UniformBufferBase* p_buffer, const std::vector<T>& p_vector) {
-        updateUniform(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
+    void UpdateUniform(const UniformBufferBase* p_buffer, const std::vector<T>& p_vector) {
+        UpdateUniform(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
     }
-    virtual void bindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
+    virtual void BindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
     template<typename T>
-    void bindUniformSlot(const UniformBufferBase* p_buffer, int slot) {
-        bindUniformRange(p_buffer, sizeof(T), slot * sizeof(T));
+    void BindUniformSlot(const UniformBufferBase* p_buffer, int slot) {
+        BindUniformRange(p_buffer, sizeof(T), slot * sizeof(T));
     }
 
-    virtual std::shared_ptr<DrawPass> createDrawPass(const DrawPassDesc& p_desc) = 0;
-    virtual std::shared_ptr<Texture> createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
-    virtual void bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
-    virtual void unbindTexture(Dimension p_dimension, int p_slot) = 0;
+    virtual std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) = 0;
+    virtual std::shared_ptr<Texture> CreateTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
+    virtual void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
+    virtual void UnbindTexture(Dimension p_dimension, int p_slot) = 0;
 
-    void requestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
+    void RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
     // @TODO: move to renderer
-    uint64_t getFinalImage() const;
+    uint64_t GetFinalImage() const;
 
     // @TODO: thread safety ?
-    void eventReceived(std::shared_ptr<Event> p_event) final;
+    void EventReceived(std::shared_ptr<Event> p_event) final;
 
     // @TODO: move to renderer
-    const rg::RenderGraph& getActiveRenderGraph() { return m_render_graph; }
+    const rg::RenderGraph& GetActiveRenderGraph() { return m_renderGraph; }
 
-    static std::shared_ptr<GraphicsManager> create();
+    static std::shared_ptr<GraphicsManager> Create();
 
-    Backend getBackend() const { return m_backend; }
+    Backend GetBackend() const { return m_backend; }
 
     // @TODO: move to renderer
-    void selectRenderGraph();
+    void SelectRenderGraph();
 
 protected:
-    virtual void onSceneChange(const Scene& p_scene) = 0;
-    virtual void onWindowResize(int, int) {}
-    virtual void setPipelineStateImpl(PipelineStateName p_name) = 0;
-    virtual void render() = 0;
-    virtual bool initializeImpl() = 0;
+    virtual void OnSceneChange(const Scene& p_scene) = 0;
+    virtual void OnWindowResize(int, int) {}
+    virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
+    virtual void Render() = 0;
+    virtual bool InitializeImpl() = 0;
 
     const Backend m_backend;
     RenderGraph m_method = RenderGraph::DEFAULT;
 
     // @TODO: cache
-    PipelineStateName m_last_pipeline_name = PIPELINE_STATE_MAX;
+    PipelineStateName m_lastPipelineName = PIPELINE_STATE_MAX;
 
-    rg::RenderGraph m_render_graph;
+    rg::RenderGraph m_renderGraph;
 
-    std::map<RenderTargetResourceName, std::shared_ptr<RenderTarget>> m_resource_lookup;
+    std::map<RenderTargetResourceName, std::shared_ptr<RenderTarget>> m_resourceLookup;
 
     struct ImageTask {
         ImageHandle* handle;
         OnTextureLoadFunc func;
     };
-    ConcurrentQueue<ImageTask> m_loaded_images;
+    ConcurrentQueue<ImageTask> m_loadedImages;
 
-    std::shared_ptr<PipelineStateManager> m_pipeline_state_manager;
+    std::shared_ptr<PipelineStateManager> m_pipelineStateManager;
 
-    // @TODO: refactor
 public:
-    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& object)>;
-    using FilterObjectFunc2 = std::function<bool(const AABB& object_aabb)>;
+    // @TODO: refactor
+    // tmp particle stuff
+    int m_particle_count = 0;
+
+    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
+    using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
     template<typename BUFFER>
     struct BufferCache {
         std::vector<BUFFER> buffer;
         std::unordered_map<ecs::Entity, uint32_t> lookup;
 
-        uint32_t findOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
+        uint32_t FindOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
             auto it = lookup.find(p_entity);
             if (it != lookup.end()) {
                 return it->second;
@@ -203,7 +208,7 @@ public:
             return index;
         }
 
-        void clear() {
+        void Clear() {
             buffer.clear();
             lookup.clear();
         }
@@ -224,23 +229,23 @@ public:
         std::vector<PerPassConstantBuffer> pass_cache;
     } m_context;
 
-    Context& getContext() { return m_context; }
+    Context& GetContext() { return m_context; }
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
-    std::array<std::unique_ptr<PassContext>, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
-    std::array<PassContext, 1> shadow_passes;  // @TODO: support multi ortho light
+    std::array<std::unique_ptr<PassContext>, MAX_LIGHT_CAST_SHADOW_COUNT> m_pointShadowPasses;
+    std::array<PassContext, 1> m_shadowPasses;  // @TODO: support multi ortho light
 
-    PassContext voxel_pass;
-    PassContext main_pass;
+    PassContext m_voxelPass;
+    PassContext m_mainPass;
 
 private:
-    void cleanup();
-    void updateConstants(const Scene& p_scene);
-    void updateLights(const Scene& p_scene);
-    void updateVoxelPass(const Scene& p_scene);
-    void updateMainPass(const Scene& p_scene);
+    void Cleanup();
+    void UpdateConstants(const Scene& p_scene);
+    void UpdateLights(const Scene& p_scene);
+    void UpdateVoxelPass(const Scene& p_scene);
+    void UpdateMainPass(const Scene& p_scene);
 
-    void fillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2);
+    void FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2);
 };
 
 }  // namespace my

@@ -12,53 +12,58 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
-    auto& ctx = gm.getContext();
+    auto& ctx = gm.GetContext();
     auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
-    gm.setRenderTarget(p_draw_pass);
+    gm.SetRenderTarget(p_draw_pass);
 
-    gm.setViewport(Viewport(width, height));
+    gm.SetViewport(Viewport(width, height));
 
     float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    gm.clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
+    gm.Clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
-    PassContext& pass = gm.main_pass;
-    gm.bindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    PassContext& pass = gm.m_mainPass;
+    gm.BindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.bindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
 
-        gm.setPipelineState(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
+        gm.SetPipelineState(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
         if (draw.flags) {
-            gm.setStencilRef(draw.flags);
+            gm.SetStencilRef(draw.flags);
         }
 
-        gm.bindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
-        gm.setMesh(draw.mesh_data);
+        gm.SetMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
             const MaterialConstantBuffer& material = gm.m_context.material_cache.buffer[subset.material_idx];
-            gm.bindTexture(Dimension::TEXTURE_2D, material.u_base_color_map_handle, u_base_color_map_slot);
-            gm.bindTexture(Dimension::TEXTURE_2D, material.u_normal_map_handle, u_normal_map_slot);
-            gm.bindTexture(Dimension::TEXTURE_2D, material.u_material_map_handle, u_material_map_slot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.u_base_color_map_handle, u_base_color_map_slot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.u_normal_map_handle, u_normal_map_slot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.u_material_map_handle, u_material_map_slot);
 
-            gm.bindUniformSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
+            gm.BindUniformSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
 
             // @TODO: set material
 
-            gm.drawElements(subset.index_count, subset.index_offset);
+            gm.DrawElements(subset.index_count, subset.index_offset);
 
             // @TODO: unbind
         }
 
         if (draw.flags) {
-            gm.setStencilRef(0);
+            gm.SetStencilRef(0);
         }
+    }
+
+    if (gm.GetBackend() == Backend::OPENGL) {
+        gm.SetPipelineState(PROGRAM_PARTICLE);
+        RenderManager::singleton().draw_quad_instanced(gm.m_particle_count);
     }
 }
 
@@ -69,31 +74,31 @@ void RenderPassCreator::addGBufferPass() {
     int p_height = m_config.frame_height;
 
     // @TODO: decouple sampler and render target
-    auto gbuffer_depth = manager.createRenderTarget(RenderTargetDesc(RESOURCE_GBUFFER_DEPTH,
+    auto gbuffer_depth = manager.CreateRenderTarget(RenderTargetDesc(RESOURCE_GBUFFER_DEPTH,
                                                                      PixelFormat::D24_UNORM_S8_UINT,
                                                                      AttachmentType::DEPTH_STENCIL_2D,
                                                                      p_width, p_height),
                                                     nearest_sampler());
 
-    auto attachment0 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_BASE_COLOR,
+    auto attachment0 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_BASE_COLOR,
                                                                     PixelFormat::R11G11B10_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
                                                   nearest_sampler());
 
-    auto attachment1 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_POSITION,
+    auto attachment1 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_POSITION,
                                                                     PixelFormat::R16G16B16_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
                                                   nearest_sampler());
 
-    auto attachment2 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_NORMAL,
+    auto attachment2 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_NORMAL,
                                                                     PixelFormat::R16G16B16_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
                                                   nearest_sampler());
 
-    auto attachment3 = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_MATERIAL,
+    auto attachment3 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_MATERIAL,
                                                                     PixelFormat::R11G11B10_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
@@ -102,7 +107,7 @@ void RenderPassCreator::addGBufferPass() {
     RenderPassDesc desc;
     desc.name = RenderPassName::GBUFFER;
     auto pass = m_graph.createPass(desc);
-    auto draw_pass = manager.createDrawPass(DrawPassDesc{
+    auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
         .depth_attachment = gbuffer_depth,
         .exec_func = gbufferPassFunc,
@@ -115,9 +120,9 @@ static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
-    auto& ctx = gm.getContext();
+    auto& ctx = gm.GetContext();
 
-    auto& pass_ptr = gm.point_shadow_passes[p_pass_id];
+    auto& pass_ptr = gm.m_pointShadowPasses[p_pass_id];
     if (!pass_ptr) {
         return;
     }
@@ -129,31 +134,31 @@ static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     // set up different object list for different pass
     const PassContext& pass = *pass_ptr.get();
 
-    const auto& light_matrices = pass.light_component.getMatrices();
+    const auto& light_matrices = pass.light_component.GetMatrices();
     for (int i = 0; i < 6; ++i) {
         g_point_shadow_cache.cache.g_point_light_matrix = light_matrices[i];
-        g_point_shadow_cache.cache.g_point_light_position = pass.light_component.getPosition();
-        g_point_shadow_cache.cache.g_point_light_far = pass.light_component.getMaxDistance();
+        g_point_shadow_cache.cache.g_point_light_position = pass.light_component.GetPosition();
+        g_point_shadow_cache.cache.g_point_light_far = pass.light_component.GetMaxDistance();
         g_point_shadow_cache.update();
 
-        gm.setRenderTarget(p_draw_pass, i);
-        gm.clear(p_draw_pass, CLEAR_DEPTH_BIT, nullptr, i);
+        gm.SetRenderTarget(p_draw_pass, i);
+        gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT, nullptr, i);
 
         Viewport viewport{ width, height };
-        gm.setViewport(viewport);
+        gm.SetViewport(viewport);
 
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.bindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+                gm.BindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
             }
 
-            gm.setPipelineState(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
+            gm.SetPipelineState(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-            gm.bindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+            gm.BindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
-            gm.setMesh(draw.mesh_data);
-            gm.drawElements(draw.mesh_data->index_count);
+            gm.SetMesh(draw.mesh_data);
+            gm.DrawElements(draw.mesh_data->indexCount);
         }
     }
 }
@@ -162,35 +167,35 @@ static void shadowPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::singleton();
-    auto& ctx = gm.getContext();
+    auto& ctx = gm.GetContext();
 
-    gm.setRenderTarget(p_draw_pass);
+    gm.SetRenderTarget(p_draw_pass);
     auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
-    gm.clear(p_draw_pass, CLEAR_DEPTH_BIT);
+    gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT);
 
     Viewport viewport{ width, height };
-    gm.setViewport(viewport);
+    gm.SetViewport(viewport);
 
-    PassContext& pass = gm.shadow_passes[0];
-    gm.bindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    PassContext& pass = gm.m_shadowPasses[0];
+    gm.BindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.bindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
 
         // @TODO: sort the objects so there's no need to switch pipeline
-        gm.setPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
+        gm.SetPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-        gm.bindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
-        gm.setMesh(draw.mesh_data);
-        gm.drawElements(draw.mesh_data->index_count);
+        gm.SetMesh(draw.mesh_data);
+        gm.DrawElements(draw.mesh_data->indexCount);
     }
 
-    gm.unsetRenderTarget();
+    gm.UnsetRenderTarget();
 }
 
 void RenderPassCreator::addShadowPass() {
@@ -201,7 +206,7 @@ void RenderPassCreator::addShadowPass() {
     const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
     DEV_ASSERT(math::isPowerOfTwo(point_shadow_res));
 
-    auto shadow_map = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_SHADOW_MAP,
+    auto shadow_map = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_SHADOW_MAP,
                                                                    PixelFormat::D32_FLOAT,
                                                                    AttachmentType::SHADOW_2D,
                                                                    1 * shadow_res, shadow_res },
@@ -210,7 +215,7 @@ void RenderPassCreator::addShadowPass() {
     desc.name = RenderPassName::SHADOW;
     auto pass = m_graph.createPass(desc);
     {
-        auto draw_pass = manager.createDrawPass(DrawPassDesc{
+        auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .depth_attachment = shadow_map,
             .exec_func = shadowPassFunc,
         });
@@ -237,13 +242,13 @@ void RenderPassCreator::addShadowPass() {
 
     {
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-            auto point_shadow_map = manager.createRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
+            auto point_shadow_map = manager.CreateRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
                                                                                  PixelFormat::D32_FLOAT,
                                                                                  AttachmentType::SHADOW_CUBE_MAP,
                                                                                  point_shadow_res, point_shadow_res },
                                                                shadow_cube_map_sampler());
 
-            auto draw_pass = manager.createDrawPass(DrawPassDesc{
+            auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
                 .depth_attachment = point_shadow_map,
                 .exec_func = funcs[i],
             });
@@ -260,22 +265,22 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     DEV_ASSERT(!p_draw_pass->color_attachments.empty());
     auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
 
-    gm.setRenderTarget(p_draw_pass);
+    gm.SetRenderTarget(p_draw_pass);
 
     Viewport viewport(width, height);
-    gm.setViewport(viewport);
-    gm.clear(p_draw_pass, CLEAR_COLOR_BIT);
-    gm.setPipelineState(PROGRAM_LIGHTING);
+    gm.SetViewport(viewport);
+    gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
+    gm.SetPipelineState(PROGRAM_LIGHTING);
 
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(p_name);
+        std::shared_ptr<RenderTarget> resource = gm.FindRenderTarget(p_name);
         if (!resource) {
             return;
         }
 
-        gm.bindTexture(p_dimension, resource->texture->get_handle(), p_slot);
+        gm.BindTexture(p_dimension, resource->texture->get_handle(), p_slot);
     };
 
     // bind common textures
@@ -293,43 +298,43 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     // @TODO: fix it
     RenderManager::singleton().draw_quad();
 
-    PassContext& pass = gm.main_pass;
-    gm.bindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
+    PassContext& pass = gm.m_mainPass;
+    gm.BindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
 
     // if (0) {
     //     // draw billboard grass here for now
-    //     manager.setPipelineState(PROGRAM_BILLBOARD);
+    //     manager.SetPipelineState(PROGRAM_BILLBOARD);
     //     manager.setMesh(&g_grass);
     //     glDrawElementsInstanced(GL_TRIANGLES, g_grass.index_count, GL_UNSIGNED_INT, 0, 64);
     // }
 
     // @TODO: fix skybox
-    if (gm.getBackend() == Backend::OPENGL) {
-        GraphicsManager::singleton().setPipelineState(PROGRAM_ENV_SKYBOX);
+    if (gm.GetBackend() == Backend::OPENGL) {
+        GraphicsManager::singleton().SetPipelineState(PROGRAM_ENV_SKYBOX);
         RenderManager::singleton().draw_skybox();
     }
 
     // unbind stuff
-    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
-    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
-    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
-    gm.unbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
-    gm.unbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
-    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
-    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
-    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_2_slot);
-    gm.unbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_2_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
 
     // @TODO: [SCRUM-28] refactor
-    gm.setRenderTarget(nullptr);
+    gm.SetRenderTarget(nullptr);
 }
 
 void RenderPassCreator::addLightingPass() {
     GraphicsManager& manager = GraphicsManager::singleton();
 
-    auto gbuffer_depth = manager.findRenderTarget(RESOURCE_GBUFFER_DEPTH);
+    auto gbuffer_depth = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
 
-    auto lighting_attachment = manager.createRenderTarget(RenderTargetDesc{ RESOURCE_LIGHTING,
+    auto lighting_attachment = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_LIGHTING,
                                                                             PixelFormat::R11G11B10_FLOAT,
                                                                             AttachmentType::COLOR_2D,
                                                                             m_config.frame_width, m_config.frame_height },
@@ -350,7 +355,7 @@ void RenderPassCreator::addLightingPass() {
     }
 
     auto pass = m_graph.createPass(desc);
-    auto drawpass = manager.createDrawPass(DrawPassDesc{
+    auto drawpass = manager.CreateDrawPass(DrawPassDesc{
         .color_attachments = { lighting_attachment },
         .depth_attachment = gbuffer_depth,
         .exec_func = lightingPassFunc,
@@ -364,26 +369,26 @@ static void bloomFunction(const DrawPass*) {
 
     // Step 1, select pixels contribute to bloom
     {
-        gm.setPipelineState(PROGRAM_BLOOM_SETUP);
-        auto input = gm.findRenderTarget(RESOURCE_LIGHTING);
-        auto output = gm.findRenderTarget(RESOURCE_BLOOM_0);
+        gm.SetPipelineState(PROGRAM_BLOOM_SETUP);
+        auto input = gm.FindRenderTarget(RESOURCE_LIGHTING);
+        auto output = gm.FindRenderTarget(RESOURCE_BLOOM_0);
 
         auto [width, height] = input->getSize();
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
-        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
-        gm.dispatch(work_group_x, work_group_y, 1);
-        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.Dispatch(work_group_x, work_group_y, 1);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
     }
 
     // Step 2, down sampling
-    gm.setPipelineState(PROGRAM_BLOOM_DOWNSAMPLE);
+    gm.SetPipelineState(PROGRAM_BLOOM_DOWNSAMPLE);
     for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
-        auto input = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-        auto output = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto input = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        auto output = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
 
         DEV_ASSERT(input && output);
 
@@ -391,28 +396,28 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
-        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
-        gm.dispatch(work_group_x, work_group_y, 1);
-        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.Dispatch(work_group_x, work_group_y, 1);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
     }
 
     // Step 3, up sampling
-    gm.setPipelineState(PROGRAM_BLOOM_UPSAMPLE);
+    gm.SetPipelineState(PROGRAM_BLOOM_UPSAMPLE);
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.findRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        auto input = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
         auto [width, height] = output->getSize();
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        gm.bindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
-        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
-        gm.dispatch(work_group_x, work_group_y, 1);
-        gm.setUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.Dispatch(work_group_x, work_group_y, 1);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
     }
 }
 
@@ -432,14 +437,14 @@ void RenderPassCreator::addBloomPass() {
 
         LOG_WARN("bloom size {}x{}", width, height);
 
-        auto attachment = gm.createRenderTarget(RenderTargetDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
+        auto attachment = gm.CreateRenderTarget(RenderTargetDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
                                                                  PixelFormat::R11G11B10_FLOAT,
                                                                  AttachmentType::COLOR_2D,
                                                                  width, height, false, true),
                                                 linear_clamp_sampler());
     }
 
-    auto draw_pass = gm.createDrawPass(DrawPassDesc{
+    auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .color_attachments = {},
         .exec_func = bloomFunction,
     });
@@ -451,7 +456,7 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::singleton();
-    gm.setRenderTarget(p_draw_pass);
+    gm.SetRenderTarget(p_draw_pass);
 
     DEV_ASSERT(!p_draw_pass->color_attachments.empty());
     auto depth_buffer = p_draw_pass->depth_attachment;
@@ -460,30 +465,30 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
     // draw billboards
 
     // HACK:
-    if (DVAR_GET_BOOL(r_debug_vxgi) && gm.getBackend() == Backend::OPENGL) {
+    if (DVAR_GET_BOOL(r_debug_vxgi) && gm.GetBackend() == Backend::OPENGL) {
         // @TODO: remove
         extern void debug_vxgi_pass_func(const DrawPass* p_draw_pass);
         debug_vxgi_pass_func(p_draw_pass);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-            std::shared_ptr<RenderTarget> resource = gm.findRenderTarget(p_name);
+            std::shared_ptr<RenderTarget> resource = gm.FindRenderTarget(p_name);
             if (!resource) {
                 return;
             }
 
-            gm.bindTexture(p_dimension, resource->texture->get_handle(), p_slot);
+            gm.BindTexture(p_dimension, resource->texture->get_handle(), p_slot);
         };
         bind_slot(RESOURCE_LIGHTING, g_texture_lighting_slot);
         bind_slot(RESOURCE_BLOOM_0, g_bloom_input_image_slot);
 
-        gm.setViewport(Viewport(width, height));
-        gm.clear(p_draw_pass, CLEAR_COLOR_BIT);
+        gm.SetViewport(Viewport(width, height));
+        gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
 
-        gm.setPipelineState(PROGRAM_TONE);
+        gm.SetPipelineState(PROGRAM_TONE);
         RenderManager::singleton().draw_quad();
 
-        gm.unbindTexture(Dimension::TEXTURE_2D, g_texture_lighting_slot);
-        gm.unbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, g_texture_lighting_slot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
     }
 }
 
@@ -499,15 +504,15 @@ void RenderPassCreator::addTonePass() {
     int width = m_config.frame_width;
     int height = m_config.frame_height;
 
-    auto attachment = gm.createRenderTarget(RenderTargetDesc{ RESOURCE_TONE,
+    auto attachment = gm.CreateRenderTarget(RenderTargetDesc{ RESOURCE_TONE,
                                                               PixelFormat::R11G11B10_FLOAT,
                                                               AttachmentType::COLOR_2D,
                                                               width, height },
                                             nearest_sampler());
 
-    auto gbuffer_depth = gm.findRenderTarget(RESOURCE_GBUFFER_DEPTH);
+    auto gbuffer_depth = gm.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
 
-    auto draw_pass = gm.createDrawPass(DrawPassDesc{
+    auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .color_attachments = { attachment },
         .depth_attachment = gbuffer_depth,
         .exec_func = tonePassFunc,

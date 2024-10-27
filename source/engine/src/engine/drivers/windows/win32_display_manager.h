@@ -7,8 +7,8 @@ namespace my {
 
 class Win32DisplayManager : public DisplayManager {
 public:
-    bool initialize() final;
-    void finalize() final;
+    bool Initialize() final;
+    void Finalize() final;
 
     bool shouldClose() final;
 

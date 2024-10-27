@@ -49,7 +49,7 @@ void Application::setupModules() {
     m_physics_manager = std::make_shared<PhysicsManager>();
     m_imgui_module = std::make_shared<ImGuiModule>();
     m_display_server = DisplayManager::create();
-    m_graphics_manager = GraphicsManager::create();
+    m_graphics_manager = GraphicsManager::Create();
     m_render_manager = std::make_shared<RenderManager>();
 
     registerModule(m_asset_manager.get());
@@ -60,8 +60,8 @@ void Application::setupModules() {
     registerModule(m_graphics_manager.get());
     registerModule(m_render_manager.get());
 
-    m_event_queue.registerListener(m_graphics_manager.get());
-    m_event_queue.registerListener(m_physics_manager.get());
+    m_event_queue.RegisterListener(m_graphics_manager.get());
+    m_event_queue.RegisterListener(m_physics_manager.get());
 }
 
 int Application::run(int argc, const char** argv) {
@@ -83,12 +83,12 @@ int Application::run(int argc, const char** argv) {
     jobsystem::Initialize();
 
     for (Module* module : m_modules) {
-        LOG("module '{}' being initialized...", module->getName());
-        if (!module->initialize()) {
-            LOG_ERROR("Error: failed to initialize module '{}'", module->getName());
+        LOG("module '{}' being initialized...", module->GetName());
+        if (!module->Initialize()) {
+            LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
             return 1;
         }
-        LOG("module '{}' initialized\n", module->getName());
+        LOG("module '{}' initialized\n", module->GetName());
     }
 
     initLayers();
@@ -140,7 +140,7 @@ int Application::run(int argc, const char** argv) {
         auto& scene = m_scene_manager->getScene();
 
         m_physics_manager->update(scene);
-        m_graphics_manager->update(scene);
+        m_graphics_manager->Update(scene);
 
         renderer::reset_need_update_env();
 
@@ -166,8 +166,8 @@ int Application::run(int argc, const char** argv) {
 
     for (int index = (int)m_modules.size() - 1; index >= 0; --index) {
         Module* module = m_modules[index];
-        module->finalize();
-        LOG_VERBOSE("module '{}' finalized", module->getName());
+        module->Finalize();
+        LOG_VERBOSE("module '{}' finalized", module->GetName());
     }
 
     jobsystem::Finalize();

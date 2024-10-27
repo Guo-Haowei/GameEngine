@@ -13,7 +13,7 @@ struct ObjectComponent {
     };
 
     uint32_t flags = RENDERABLE | CAST_SHADOW;
-    ecs::Entity mesh_id;
+    ecs::Entity meshId;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

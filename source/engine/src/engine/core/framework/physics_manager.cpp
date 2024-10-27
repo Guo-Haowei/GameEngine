@@ -10,21 +10,21 @@
 
 namespace my {
 
-bool PhysicsManager::initialize() {
+bool PhysicsManager::Initialize() {
     return true;
 }
 
-void PhysicsManager::finalize() {
+void PhysicsManager::Finalize() {
     cleanWorld();
 }
 
-void PhysicsManager::eventReceived(std::shared_ptr<Event> p_event) {
+void PhysicsManager::EventReceived(std::shared_ptr<Event> p_event) {
     SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get());
     if (!e) {
         return;
     }
 
-    const Scene& scene = *e->getScene();
+    const Scene& scene = *e->GetScene();
     // @TODO: fix
     createWorld(scene);
 }
@@ -49,11 +49,11 @@ void PhysicsManager::update(Scene& p_scene) {
             uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
             ecs::Entity id{ handle };
             if (id.IsValid()) {
-                TransformComponent& transform_component = *p_scene.getComponent<TransformComponent>(id);
+                TransformComponent& transform_component = *p_scene.GetComponent<TransformComponent>(id);
                 const btVector3& origin = transform.getOrigin();
                 const btQuaternion rotation = transform.getRotation();
-                transform_component.setTranslation(vec3(origin.getX(), origin.getY(), origin.getZ()));
-                transform_component.setRotation(vec4(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()));
+                transform_component.SetTranslation(vec3(origin.getX(), origin.getY(), origin.getZ()));
+                transform_component.SetRotation(vec4(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()));
             }
         }
     }
@@ -69,7 +69,7 @@ void PhysicsManager::createWorld(const Scene& p_scene) {
     m_dynamic_world->setGravity(btVector3(0, -10, 0));
 
     for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
-        const TransformComponent* transform_component = p_scene.getComponent<TransformComponent>(id);
+        const TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
         DEV_ASSERT(transform_component);
         if (!transform_component) {
             continue;
@@ -93,8 +93,8 @@ void PhysicsManager::createWorld(const Scene& p_scene) {
 
         m_collision_shapes.push_back(shape);
 
-        const vec3& origin = transform_component->getTranslation();
-        const vec4& rotation = transform_component->getRotation();
+        const vec3& origin = transform_component->GetTranslation();
+        const vec4& rotation = transform_component->GetRotation();
         btTransform transform;
         transform.setIdentity();
         transform.setOrigin(btVector3(origin.x, origin.y, origin.z));

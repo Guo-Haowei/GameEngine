@@ -6,7 +6,7 @@
 
 namespace my {
 
-bool ImGuiModule::initialize() {
+bool ImGuiModule::Initialize() {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
@@ -69,7 +69,7 @@ bool ImGuiModule::initialize() {
     return true;
 }
 
-void ImGuiModule::finalize() {
+void ImGuiModule::Finalize() {
     ImGui::DestroyContext();
 }
 

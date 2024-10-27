@@ -59,7 +59,7 @@ public:
     }
 };
 
-bool AssetManager::initialize() {
+bool AssetManager::Initialize() {
     Loader<Scene>::register_loader(".obj", LoaderAssimp::create);
     Loader<Scene>::register_loader(".gltf", LoaderTinyGLTF::create);
     Loader<Scene>::register_loader(".scene", LoaderDeserialize::create);
@@ -72,7 +72,7 @@ bool AssetManager::initialize() {
     return true;
 }
 
-void AssetManager::finalize() {
+void AssetManager::Finalize() {
     s_asset_manager_glob.wake_condition.notify_all();
 }
 
@@ -120,7 +120,7 @@ ImageHandle* AssetManager::loadImageAsync(const FilePath& p_path, LoadSuccessFun
             DEV_ASSERT(handle);
 
             handle->set(image);
-            GraphicsManager::singleton().requestTexture(handle);
+            GraphicsManager::singleton().RequestTexture(handle);
         };
     }
     task.userdata = ret;
@@ -155,7 +155,7 @@ ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
     SamplerDesc sampler_desc{};
     renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-    image->gpu_texture = GraphicsManager::singleton().createTexture(texture_desc, sampler_desc);
+    image->gpu_texture = GraphicsManager::singleton().CreateTexture(texture_desc, sampler_desc);
     handle->set(image);
     ImageHandle* ret = handle.get();
     m_image_cache[p_path] = std::move(handle);

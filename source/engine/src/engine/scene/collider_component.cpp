@@ -18,9 +18,9 @@ void MeshColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     if (p_archive.IsWriteMode()) {
-        p_archive << object_id;
+        p_archive << objectId;
     } else {
-        p_archive >> object_id;
+        p_archive >> objectId;
     }
 }
 

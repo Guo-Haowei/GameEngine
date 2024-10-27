@@ -67,7 +67,7 @@ void PropertyPanel::update_internal(Scene& scene) {
         return;
     }
 
-    NameComponent* name_component = scene.getComponent<NameComponent>(id);
+    NameComponent* name_component = scene.GetComponent<NameComponent>(id);
     // @NOTE: when loading another scene, the selected entity will expire, thus don't have name
     if (!name_component) {
         // LOG_WARN("Entity {} does not have name", id.get_id());
@@ -100,21 +100,21 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::EndPopup();
     }
 
-    TransformComponent* transform_component = scene.getComponent<TransformComponent>(id);
-    LightComponent* light_component = scene.getComponent<LightComponent>(id);
-    ObjectComponent* object_component = scene.getComponent<ObjectComponent>(id);
-    MeshComponent* mesh_component = object_component ? scene.getComponent<MeshComponent>(object_component->mesh_id) : nullptr;
-    MaterialComponent* material_component = scene.getComponent<MaterialComponent>(id);
-    RigidBodyComponent* rigid_body_component = scene.getComponent<RigidBodyComponent>(id);
-    BoxColliderComponent* box_collider = scene.getComponent<BoxColliderComponent>(id);
-    MeshColliderComponent* mesh_collider = scene.getComponent<MeshColliderComponent>(id);
-    AnimationComponent* animation_component = scene.getComponent<AnimationComponent>(id);
+    TransformComponent* transform_component = scene.GetComponent<TransformComponent>(id);
+    LightComponent* light_component = scene.GetComponent<LightComponent>(id);
+    ObjectComponent* object_component = scene.GetComponent<ObjectComponent>(id);
+    MeshComponent* mesh_component = object_component ? scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
+    MaterialComponent* material_component = scene.GetComponent<MaterialComponent>(id);
+    RigidBodyComponent* rigid_body_component = scene.GetComponent<RigidBodyComponent>(id);
+    BoxColliderComponent* box_collider = scene.GetComponent<BoxColliderComponent>(id);
+    MeshColliderComponent* mesh_collider = scene.GetComponent<MeshColliderComponent>(id);
+    AnimationComponent* animation_component = scene.GetComponent<AnimationComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
     bool disable_scale = false;
     if (light_component) {
-        switch (light_component->getType()) {
+        switch (light_component->GetType()) {
             case LIGHT_TYPE_INFINITE:
                 disable_translation = true;
                 disable_scale = true;
@@ -132,7 +132,7 @@ void PropertyPanel::update_internal(Scene& scene) {
     }
 
     DrawComponent("Transform", transform_component, [&](TransformComponent& transform) {
-        mat4 transformMatrix = transform.getLocalMatrix();
+        mat4 transformMatrix = transform.GetLocalMatrix();
         vec3 translation;
         vec3 rotation;
         vec3 scale;
@@ -151,14 +151,14 @@ void PropertyPanel::update_internal(Scene& scene) {
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(transformMatrix));
             // @TODO: change position, scale and rotation instead
-            transform.setLocalTransform(transformMatrix);
+            transform.SetLocalTransform(transformMatrix);
         }
     });
 
     DrawComponent("Light", light_component, [&](LightComponent& p_light) {
         bool dirty = false;
 
-        switch (p_light.getType()) {
+        switch (p_light.GetType()) {
             case LIGHT_TYPE_INFINITE:
                 ImGui::Text("infinite light");
                 break;
@@ -169,17 +169,17 @@ void PropertyPanel::update_internal(Scene& scene) {
                 break;
         }
 
-        bool cast_shadow = p_light.castShadow();
+        bool cast_shadow = p_light.CastShadow();
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        if (cast_shadow != p_light.castShadow()) {
-            p_light.setCastShadow(cast_shadow);
-            p_light.setDirty();
+        if (cast_shadow != p_light.CastShadow()) {
+            p_light.SetCastShadow(cast_shadow);
+            p_light.SetDirty();
         }
 
         dirty |= draw_drag_float("constant", p_light.m_atten.constant, 0.1f, 0.0f, 1.0f);
         dirty |= draw_drag_float("linear", p_light.m_atten.linear, 0.1f, 0.0f, 1.0f);
         dirty |= draw_drag_float("quadratic", p_light.m_atten.quadratic, 0.1f, 0.0f, 1.0f);
-        ImGui::Text("max distance: %0.3f", p_light.getMaxDistance());
+        ImGui::Text("max distance: %0.3f", p_light.GetMaxDistance());
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
@@ -244,7 +244,7 @@ void PropertyPanel::update_internal(Scene& scene) {
 
     DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
         char buffer[256];
-        StringUtils::Sprintf(buffer, "%d", collider.object_id.GetId());
+        StringUtils::Sprintf(buffer, "%d", collider.objectId.GetId());
         ImGui::Columns(2);
         ImGui::SetColumnWidth(0, kDefaultColumnWidth);
         ImGui::Text("Mesh ID");
@@ -252,8 +252,8 @@ void PropertyPanel::update_internal(Scene& scene) {
         ImGui::InputText("##ID", buffer, sizeof(buffer));
         ImGui::Columns(1);
         ecs::Entity entity{ (uint32_t)std::stoi(buffer) };
-        if (scene.getComponent<ObjectComponent>(entity) != nullptr) {
-            collider.object_id = entity;
+        if (scene.GetComponent<ObjectComponent>(entity) != nullptr) {
+            collider.objectId = entity;
         }
     });
 

@@ -12,11 +12,11 @@ struct ArmatureComponent {
     };
     uint32_t flags = NONE;
 
-    std::vector<ecs::Entity> bone_collection;
-    std::vector<mat4> inverse_bind_matrices;
+    std::vector<ecs::Entity> boneCollection;
+    std::vector<mat4> inverseBindMatrices;
 
     // Non-Serialized
-    std::vector<mat4> bone_transforms;
+    std::vector<mat4> boneTransforms;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

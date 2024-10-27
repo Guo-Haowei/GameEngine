@@ -130,6 +130,8 @@ enum PipelineStateName {
     PROGRAM_BRDF,
     PROGRAM_BILLBOARD,
     PROGRAM_IMAGE_2D,
+    PROGRAM_PARTICLE,
+
     PIPELINE_STATE_MAX,
 };
 

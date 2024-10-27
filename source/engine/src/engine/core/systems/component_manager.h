@@ -38,19 +38,19 @@ class ComponentManagerIterator {
 
 public:
     ComponentManagerIterator(std::vector<Entity>& p_entity_array, std::vector<T>& p_component_array, size_t p_index)
-        : m_entity_array(p_entity_array),
-          m_component_array(p_component_array),
+        : m_entityArray(p_entity_array),
+          m_componentArray(p_component_array),
           m_index(p_index) {}
 
     COMPONENT_MANAGER_ITERATOR_COMMON;
 
     std::pair<Entity, T&> operator*() const {
-        return std::make_pair(this->m_entity_array[this->m_index], std::ref(this->m_component_array[this->m_index]));
+        return std::make_pair(this->m_entityArray[this->m_index], std::ref(this->m_componentArray[this->m_index]));
     }
 
 private:
-    std::vector<Entity>& m_entity_array;
-    std::vector<T>& m_component_array;
+    std::vector<Entity>& m_entityArray;
+    std::vector<T>& m_componentArray;
 
     size_t m_index;
 };
@@ -61,19 +61,19 @@ class ComponentManagerConstIterator {
 
 public:
     ComponentManagerConstIterator(const std::vector<Entity>& p_entity_array, const std::vector<T>& p_component_array, size_t p_index)
-        : m_entity_array(p_entity_array),
-          m_component_array(p_component_array),
+        : m_entityArray(p_entity_array),
+          m_componentArray(p_component_array),
           m_index(p_index) {}
 
     COMPONENT_MANAGER_ITERATOR_COMMON;
 
     std::pair<Entity, const T&> operator*() const {
-        return std::make_pair(this->m_entity_array[this->m_index], std::ref(this->m_component_array[this->m_index]));
+        return std::make_pair(this->m_entityArray[this->m_index], std::ref(this->m_componentArray[this->m_index]));
     }
 
 private:
-    const std::vector<Entity>& m_entity_array;
-    const std::vector<T>& m_component_array;
+    const std::vector<Entity>& m_entityArray;
+    const std::vector<T>& m_componentArray;
 
     size_t m_index;
 };
@@ -85,16 +85,16 @@ class IComponentManager {
 public:
     IComponentManager() = default;
     virtual ~IComponentManager() = default;
-    virtual void clear() = 0;
-    virtual void copy(const IComponentManager& p_other) = 0;
-    virtual void merge(IComponentManager& p_other) = 0;
-    virtual void remove(const Entity& p_entity) = 0;
-    virtual bool contains(const Entity& p_entity) const = 0;
-    virtual size_t getIndex(const Entity& p_entity) const = 0;
-    virtual size_t getCount() const = 0;
-    virtual Entity getEntity(size_t p_index) const = 0;
+    virtual void Clear() = 0;
+    virtual void Copy(const IComponentManager& p_other) = 0;
+    virtual void Merge(IComponentManager& p_other) = 0;
+    virtual void Remove(const Entity& p_entity) = 0;
+    virtual bool Contains(const Entity& p_entity) const = 0;
+    virtual size_t GetIndex(const Entity& p_entity) const = 0;
+    virtual size_t GetCount() const = 0;
+    virtual Entity GetEntity(size_t p_index) const = 0;
 
-    virtual bool serialize(Archive& p_archive, uint32_t p_version) = 0;
+    virtual bool Serialize(Archive& p_archive, uint32_t p_version) = 0;
 };
 
 template<typename T>
@@ -103,60 +103,60 @@ class ComponentManager final : public IComponentManager {
     using const_iter = ComponentManagerConstIterator<T>;
 
 public:
-    iter begin() { return iter(m_entity_array, m_component_array, 0); }
-    iter end() { return iter(m_entity_array, m_component_array, m_component_array.size()); }
-    const_iter begin() const { return const_iter(m_entity_array, m_component_array, 0); }
-    const_iter end() const { return const_iter(m_entity_array, m_component_array, m_component_array.size()); }
+    iter begin() { return iter(m_entityArray, m_componentArray, 0); }
+    iter end() { return iter(m_entityArray, m_componentArray, m_componentArray.size()); }
+    const_iter begin() const { return const_iter(m_entityArray, m_componentArray, 0); }
+    const_iter end() const { return const_iter(m_entityArray, m_componentArray, m_componentArray.size()); }
 
-    ComponentManager(size_t p_capacity = 0) { reserve(p_capacity); }
+    ComponentManager(size_t p_capacity = 0) { Reserve(p_capacity); }
 
-    void reserve(size_t p_capacity) {
+    void Reserve(size_t p_capacity) {
         if (p_capacity) {
-            m_component_array.reserve(p_capacity);
-            m_entity_array.reserve(p_capacity);
+            m_componentArray.reserve(p_capacity);
+            m_entityArray.reserve(p_capacity);
             m_lookup.reserve(p_capacity);
         }
     }
 
-    void clear() override {
-        m_component_array.clear();
-        m_entity_array.clear();
+    void Clear() override {
+        m_componentArray.clear();
+        m_entityArray.clear();
         m_lookup.clear();
     }
 
-    void copy(const ComponentManager<T>& p_other) {
-        clear();
-        m_component_array = p_other.m_component_array;
-        m_entity_array = p_other.m_entity_array;
+    void Copy(const ComponentManager<T>& p_other) {
+        Clear();
+        m_componentArray = p_other.m_componentArray;
+        m_entityArray = p_other.m_entityArray;
         m_lookup = p_other.m_lookup;
     }
 
-    void copy(const IComponentManager& p_other) override {
-        copy((ComponentManager<T>&)p_other);
+    void Copy(const IComponentManager& p_other) override {
+        Copy((ComponentManager<T>&)p_other);
     }
 
-    void merge(ComponentManager<T>& p_other) {
-        const size_t reserved = getCount() + p_other.getCount();
-        m_component_array.reserve(reserved);
-        m_entity_array.reserve(reserved);
+    void Merge(ComponentManager<T>& p_other) {
+        const size_t reserved = GetCount() + p_other.GetCount();
+        m_componentArray.reserve(reserved);
+        m_entityArray.reserve(reserved);
         m_lookup.reserve(reserved);
 
-        for (size_t i = 0; i < p_other.getCount(); ++i) {
-            Entity entity = p_other.m_entity_array[i];
-            DEV_ASSERT(!contains(entity));
-            m_entity_array.push_back(entity);
-            m_lookup[entity] = m_component_array.size();
-            m_component_array.push_back(std::move(p_other.m_component_array[i]));
+        for (size_t i = 0; i < p_other.GetCount(); ++i) {
+            Entity entity = p_other.m_entityArray[i];
+            DEV_ASSERT(!Contains(entity));
+            m_entityArray.push_back(entity);
+            m_lookup[entity] = m_componentArray.size();
+            m_componentArray.push_back(std::move(p_other.m_componentArray[i]));
         }
 
-        p_other.clear();
+        p_other.Clear();
     }
 
-    void merge(IComponentManager& p_other) override {
-        merge((ComponentManager<T>&)p_other);
+    void Merge(IComponentManager& p_other) override {
+        Merge((ComponentManager<T>&)p_other);
     }
 
-    void remove(const Entity& p_entity) override {
+    void Remove(const Entity& p_entity) override {
         auto it = m_lookup.find(p_entity);
         if (it == m_lookup.end()) {
             return;
@@ -165,24 +165,24 @@ public:
         CRASH_NOW_MSG("TODO: make block invalid, instead of erase it");
         size_t index = it->second;
         m_lookup.erase(it);
-        DEV_ASSERT_INDEX(index, m_entity_array.size());
-        m_entity_array.erase(m_entity_array.begin() + index);
-        m_component_array.erase(m_component_array.begin() + index);
+        DEV_ASSERT_INDEX(index, m_entityArray.size());
+        m_entityArray.erase(m_entityArray.begin() + index);
+        m_componentArray.erase(m_componentArray.begin() + index);
     }
 
-    bool contains(const Entity& p_entity) const override {
+    bool Contains(const Entity& p_entity) const override {
         if (m_lookup.empty()) {
             return false;
         }
         return m_lookup.find(p_entity) != m_lookup.end();
     }
 
-    inline T& getComponent(size_t p_index) {
-        DEV_ASSERT(p_index < m_component_array.size());
-        return m_component_array[p_index];
+    inline T& GetComponent(size_t p_index) {
+        DEV_ASSERT(p_index < m_componentArray.size());
+        return m_componentArray[p_index];
     }
 
-    T* getComponent(const Entity& p_entity) {
+    T* GetComponent(const Entity& p_entity) {
         if (!p_entity.IsValid() || m_lookup.empty()) {
             return nullptr;
         }
@@ -193,10 +193,10 @@ public:
             return nullptr;
         }
 
-        return &m_component_array[it->second];
+        return &m_componentArray[it->second];
     }
 
-    size_t getIndex(const Entity& p_entity) const override {
+    size_t GetIndex(const Entity& p_entity) const override {
         if (m_lookup.empty()) {
             return Entity::INVALID_INDEX;
         }
@@ -209,42 +209,42 @@ public:
         return it->second;
     }
 
-    size_t getCount() const override { return m_component_array.size(); }
+    size_t GetCount() const override { return m_componentArray.size(); }
 
-    Entity getEntity(size_t p_index) const override {
-        DEV_ASSERT(p_index < m_entity_array.size());
-        return m_entity_array[p_index];
+    Entity GetEntity(size_t p_index) const override {
+        DEV_ASSERT(p_index < m_entityArray.size());
+        return m_entityArray[p_index];
     }
 
-    T& create(const Entity& p_entity) {
+    T& Create(const Entity& p_entity) {
         DEV_ASSERT(p_entity.IsValid());
 
-        const size_t componentCount = m_component_array.size();
+        const size_t componentCount = m_componentArray.size();
         DEV_ASSERT(m_lookup.find(p_entity) == m_lookup.end());
-        DEV_ASSERT(m_entity_array.size() == componentCount);
+        DEV_ASSERT(m_entityArray.size() == componentCount);
         DEV_ASSERT(m_lookup.size() == componentCount);
 
         m_lookup[p_entity] = componentCount;
-        m_component_array.emplace_back();
-        m_entity_array.push_back(p_entity);
-        return m_component_array.back();
+        m_componentArray.emplace_back();
+        m_entityArray.push_back(p_entity);
+        return m_componentArray.back();
     }
 
-    const T& operator[](size_t p_index) const { return getComponent(p_index); }
+    const T& operator[](size_t p_index) const { return GetComponent(p_index); }
 
-    T& operator[](size_t p_index) { return getComponent(p_index); }
+    T& operator[](size_t p_index) { return GetComponent(p_index); }
 
-    bool serialize(Archive& p_archive, uint32_t p_version) override {
+    bool Serialize(Archive& p_archive, uint32_t p_version) override {
         constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;
         if (p_archive.IsWriteMode()) {
             p_archive << magic;
-            count = static_cast<uint32_t>(m_component_array.size());
+            count = static_cast<uint32_t>(m_componentArray.size());
             p_archive << count;
-            for (auto& component : m_component_array) {
+            for (auto& component : m_componentArray) {
                 component.Serialize(p_archive, p_version);
             }
-            for (auto& entity : m_entity_array) {
+            for (auto& entity : m_entityArray) {
                 entity.Serialize(p_archive);
             }
         } else {
@@ -254,16 +254,16 @@ public:
                 return false;
             }
 
-            clear();
+            Clear();
             p_archive >> count;
-            m_component_array.resize(count);
-            m_entity_array.resize(count);
+            m_componentArray.resize(count);
+            m_entityArray.resize(count);
             for (size_t i = 0; i < count; ++i) {
-                m_component_array[i].Serialize(p_archive, p_version);
+                m_componentArray[i].Serialize(p_archive, p_version);
             }
             for (size_t i = 0; i < count; ++i) {
-                m_entity_array[i].Serialize(p_archive);
-                m_lookup[m_entity_array[i]] = i;
+                m_entityArray[i].Serialize(p_archive);
+                m_lookup[m_entityArray[i]] = i;
             }
         }
 
@@ -271,8 +271,8 @@ public:
     }
 
 private:
-    std::vector<T> m_component_array;
-    std::vector<Entity> m_entity_array;
+    std::vector<T> m_componentArray;
+    std::vector<Entity> m_entityArray;
     std::unordered_map<Entity, size_t> m_lookup;
 };
 
@@ -284,7 +284,7 @@ public:
     };
 
     template<typename T>
-    inline ComponentManager<T>& registerManager(const std::string& p_name, uint64_t p_version = 0) {
+    inline ComponentManager<T>& RegisterManager(const std::string& p_name, uint64_t p_version = 0) {
         DEV_ASSERT(m_entries.find(p_name) == m_entries.end());
         m_entries[p_name].m_manager = std::make_unique<ComponentManager<T>>();
         m_entries[p_name].m_version = p_version;

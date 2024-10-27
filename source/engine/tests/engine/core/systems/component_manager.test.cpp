@@ -8,13 +8,13 @@ struct dummy2 {
     using const_iter = ComponentManagerConstIterator<T>;
 
 public:
-    iter begin() { return iter(m_entity_array, m_component_array, 0); }
-    iter end() { return iter(m_entity_array, m_component_array, m_component_array.size()); }
-    const_iter begin() const { return const_iter(m_entity_array, m_component_array, 0); }
-    const_iter end() const { return const_iter(m_entity_array, m_component_array, m_component_array.size()); }
+    iter begin() { return iter(m_entityArray, m_componentArray, 0); }
+    iter end() { return iter(m_entityArray, m_componentArray, m_componentArray.size()); }
+    const_iter begin() const { return const_iter(m_entityArray, m_componentArray, 0); }
+    const_iter end() const { return const_iter(m_entityArray, m_componentArray, m_componentArray.size()); }
 
-    std::vector<Entity> m_entity_array;
-    std::vector<T> m_component_array;
+    std::vector<Entity> m_entityArray;
+    std::vector<T> m_componentArray;
 };
 
 TEST(component_manager, iterator) {
@@ -28,13 +28,13 @@ TEST(component_manager, iterator) {
     };
 
     dummy2<A> aa;
-    aa.m_component_array = { {}, {}, {}, {} };
-    aa.m_entity_array = entities;
+    aa.m_componentArray = { {}, {}, {}, {} };
+    aa.m_entityArray = entities;
 
     {
         int i = 0;
         for (const auto [entity, component] : aa) {
-            EXPECT_EQ(&component, &aa.m_component_array[i]);
+            EXPECT_EQ(&component, &aa.m_componentArray[i]);
             component.a = 10;
             EXPECT_EQ(entity, entities[i]);
             ++i;
@@ -45,7 +45,7 @@ TEST(component_manager, iterator) {
         const auto& p = aa;
         int i = 0;
         for (auto [entity, component] : p) {
-            EXPECT_EQ(&component, &aa.m_component_array[i++]);
+            EXPECT_EQ(&component, &aa.m_componentArray[i++]);
         }
     }
 }

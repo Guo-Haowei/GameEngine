@@ -5,8 +5,8 @@ namespace my {
 
 class EmptyDisplayManager : public DisplayManager {
 public:
-    bool initialize() override { return true; }
-    void finalize() override {}
+    bool Initialize() override { return true; }
+    void Finalize() override {}
 
     bool shouldClose() override { return true; }
 

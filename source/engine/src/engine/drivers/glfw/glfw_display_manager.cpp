@@ -11,7 +11,7 @@
 
 namespace my {
 
-bool GlfwDisplayManager::initialize() {
+bool GlfwDisplayManager::Initialize() {
     GlfwDisplayManager::initialize_key_mapping();
 
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
@@ -56,7 +56,7 @@ bool GlfwDisplayManager::initialize() {
     return true;
 }
 
-void GlfwDisplayManager::finalize() {
+void GlfwDisplayManager::Finalize() {
     ImGui_ImplGlfw_Shutdown();
     glfwDestroyWindow(m_window);
     glfwTerminate();

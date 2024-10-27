@@ -6,13 +6,13 @@ namespace my {
 
 void UniformBufferBase::update(const void* p_data, size_t p_size) {
     auto& gm = GraphicsManager::singleton();
-    switch (gm.getBackend()) {
+    switch (gm.GetBackend()) {
         case Backend::OPENGL:
-            gm.updateUniform(this, p_data, p_size);
+            gm.UpdateUniform(this, p_data, p_size);
             break;
         case Backend::D3D11:
-            gm.updateUniform(this, p_data, p_size);
-            gm.bindUniformRange(this, (uint32_t)p_size, 0);
+            gm.UpdateUniform(this, p_data, p_size);
+            gm.BindUniformRange(this, (uint32_t)p_size, 0);
             break;
         default:
             break;
