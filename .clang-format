@@ -33,11 +33,11 @@ AlignConsecutiveDeclarations: false
 # brace
 BraceWrapping:
   AfterClass            : false
+  AfterStruct           : false
   AfterControlStatement : false
   AfterEnum             : false
   AfterFunction         : false
   AfterNamespace        : false
-  AfterStruct           : false
   AfterUnion            : false
   BeforeElse            : false
 BreakBeforeBraces: Custom

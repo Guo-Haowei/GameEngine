@@ -80,7 +80,7 @@ int Application::run(int argc, const char** argv) {
     setupModules();
 
     thread::initialize();
-    jobsystem::initialize();
+    jobsystem::Initialize();
 
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->getName());
@@ -170,7 +170,7 @@ int Application::run(int argc, const char** argv) {
         LOG_VERBOSE("module '{}' finalized", module->getName());
     }
 
-    jobsystem::finalize();
+    jobsystem::Finalize();
     thread::finailize();
 
     DynamicVariableManager::serialize();

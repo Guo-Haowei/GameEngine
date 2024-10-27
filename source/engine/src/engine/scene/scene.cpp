@@ -24,10 +24,10 @@ static constexpr uint32_t kSceneMagicNumber = 'xScn';
 // @TODO: refactor
 #if 1
 #define JS_PARALLEL_FOR(CTX, INDEX, COUNT, SUBCOUNT, BODY) \
-    CTX.dispatch(                                          \
+    CTX.Dispatch(                                          \
         static_cast<uint32_t>(COUNT),                      \
         SUBCOUNT,                                          \
-        [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.job_index; do { BODY; } while(0); })
+        [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.jobIndex; do { BODY; } while(0); })
 #else
 #define JS_PARALLEL_FOR(CTX, INDEX, COUNT, SUBCOUNT, BODY)                    \
     (void)(CTX);                                                              \
@@ -44,16 +44,16 @@ void Scene::update(float p_delta_time) {
     // animation
     runLightUpdateSystem(ctx);
     runAnimationUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
     // transform, update local matrix from position, rotation and scale
     runTransformationUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
     runHierarchyUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
     // armature
     runArmatureUpdateSystem(ctx);
-    ctx.wait();
+    ctx.Wait();
 
     // update bounding box
     runObjectUpdateSystem(ctx);
