@@ -68,7 +68,7 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
         if (error != nullptr) {
             return std::unexpected(std::string((const char*)error->GetBufferPointer()));
         } else {
-            return std::unexpected("");
+            return std::unexpected("Unkown error");
         }
     }
 
@@ -109,7 +109,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::createGraphicsPipeline
     if (!p_info.vs.empty()) {
         auto res = compile_shader(p_info.vs, "vs_5_0", p_defines.data());
         if (!res) {
-            LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
+            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
             return nullptr;
         }
 
@@ -122,7 +122,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::createGraphicsPipeline
     if (!p_info.ps.empty()) {
         auto res = compile_shader(p_info.ps, "ps_5_0", p_defines.data());
         if (!res) {
-            LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
+            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
             return nullptr;
         }
 

@@ -207,8 +207,10 @@ void OpenGLGraphicsManager::setPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->program_id);
 }
 
-void OpenGLGraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color) {
+void OpenGLGraphicsManager::clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
     unused(p_draw_pass);
+    unused(p_index);
+
     if (p_flags == CLEAR_NONE) {
         return;
     }
@@ -356,20 +358,20 @@ void OpenGLGraphicsManager::bindUniformRange(const UniformBufferBase* p_buffer, 
 }
 
 void OpenGLGraphicsManager::bindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
-    DEV_ASSERT(p_dimension == Dimension::TEXTURE_2D);
-    // DEV_ASSERT(p_handle != 0);
-
-    if (p_handle != 0) {
-        glActiveTexture(GL_TEXTURE0 + p_slot);
-        glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(p_handle));
+    if (p_handle == 0) {
+        return;
     }
+
+    const GLuint texture_type = gl::convert_dimension(p_dimension);
+    glActiveTexture(GL_TEXTURE0 + p_slot);
+    glBindTexture(texture_type, static_cast<GLuint>(p_handle));
 }
 
 void OpenGLGraphicsManager::unbindTexture(Dimension p_dimension, int p_slot) {
-    DEV_ASSERT(p_dimension == Dimension::TEXTURE_2D);
+    const GLuint texture_type = gl::convert_dimension(p_dimension);
 
     glActiveTexture(GL_TEXTURE0 + p_slot);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(texture_type, 0);
 }
 
 std::shared_ptr<Texture> OpenGLGraphicsManager::createTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {

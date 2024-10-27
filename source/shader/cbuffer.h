@@ -38,20 +38,24 @@ using TextureHandle = uint64_t;
 #endif
 
 struct Light {
-    mat4 projection_matrix;
-    mat4 view_matrix;
+    mat4 projection_matrix;  // 64
+    mat4 view_matrix;        // 64
+    vec4 points[4];          // 64
+
     vec3 color;
     int type;
+
     vec3 position;  // direction
     int cast_shadow;
-    samplerCube shadow_map;
+
     float atten_constant;
     float atten_linear;
 
-    vec2 padding;
     float atten_quadratic;
     float max_distance;  // max distance the light affects
-    vec4 points[4];
+
+    vec3 padding;
+    int shadow_map_index;
 };
 
 CBUFFER(PerBatchConstantBuffer, 0) {

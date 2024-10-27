@@ -45,8 +45,6 @@ void request_env_map(const std::string& path);
 
 void register_rendering_dvars();
 
-std::array<mat4, 6> cube_map_view_matrices(const vec3& p_eye);
-
 void fill_texture_and_sampler_desc(const Image* p_image, TextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc);
 
 }  // namespace my::renderer

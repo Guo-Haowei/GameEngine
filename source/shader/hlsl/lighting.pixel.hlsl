@@ -6,6 +6,82 @@
 // @TODO: fix sampler
 SamplerState u_sampler : register(s0);
 
+// @TODO: refactor shadow
+#define NUM_POINT_SHADOW_SAMPLES 20
+
+float3 POINT_LIGHT_SHADOW_SAMPLE_OFFSET[NUM_POINT_SHADOW_SAMPLES] = {
+    float3(1, 1, 1),
+    float3(1, -1, 1),
+    float3(-1, -1, 1),
+    float3(-1, 1, 1),
+    float3(1, 1, -1),
+    float3(1, -1, -1),
+    float3(-1, -1, -1),
+    float3(-1, 1, -1),
+    float3(1, 1, 0),
+    float3(1, -1, 0),
+    float3(-1, -1, 0),
+    float3(-1, 1, 0),
+    float3(1, 0, 1),
+    float3(-1, 0, 1),
+    float3(1, 0, -1),
+    float3(-1, 0, -1),
+    float3(0, 1, 1),
+    float3(0, -1, 1),
+    float3(0, -1, -1),
+    float3(0, 1, -1),
+};
+
+float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
+    float3 light_position = p_light.position;
+    float light_far = p_light.max_distance;
+
+    float3 frag_to_light = p_frag_pos - light_position;
+    float current_depth = length(frag_to_light);
+
+    float bias = 0.01;
+
+    float view_distance = length(p_eye - p_frag_pos);
+    float disk_radius = (1.0 + (view_distance / light_far)) / 100.0;
+    float shadow = 0.0;
+
+    float closest_depth = 0.0f;
+    switch (p_light.shadow_map_index) {
+        case 0:
+            closest_depth = t_point_shadow_0.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        case 1:
+            closest_depth = t_point_shadow_1.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        case 2:
+            closest_depth = t_point_shadow_2.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        case 3:
+            closest_depth = t_point_shadow_3.Sample(g_shadow_sampler, frag_to_light).r;
+            break;
+        default:
+            break;
+    }
+
+    closest_depth *= light_far;
+    if (current_depth - bias > closest_depth) {
+        shadow += 1.0;
+    }
+
+#if 0
+    for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
+        float closest_depth = t_point_shadow_0.Sample(g_shadow_sampler, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
+        closest_depth *= light_far;
+        if (current_depth - bias > closest_depth) {
+            shadow += 1.0;
+        }
+    }
+    shadow /= float(NUM_POINT_SHADOW_SAMPLES);
+#endif
+
+    return shadow;
+}
+
 // @TODO: refactor
 vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec3 p_base_color) {
     vec3 Lo = vec3(0.0, 0.0, 0.0);
@@ -60,7 +136,11 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     vec3 Lo = float3(0.0, 0.0, 0.0);
     vec3 F0 = lerp(float3(0.04, 0.04, 0.04), base_color, metallic);
 
-    for (int light_idx = 0; light_idx < u_light_count; ++light_idx) {
+    for (int light_idx = 0; light_idx < MAX_LIGHT_COUNT; ++light_idx) {
+        if (light_idx >= u_light_count) {
+            break;
+        }
+
         Light light = u_lights[light_idx];
         int light_type = u_lights[light_idx].type;
         vec3 direct_lighting = vec3(0.0, 0.0, 0.0);
@@ -74,7 +154,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, u_shadow_map, world_position, NdotL, 1);
+                    shadow = shadowTest(light, t_shadow_map, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;
@@ -88,6 +168,9 @@ float4 main(vsoutput_uv input) : SV_TARGET {
                     vec3 L = normalize(delta);
                     const vec3 H = normalize(V + L);
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
+                    if (light.cast_shadow == 1) {
+                        shadow = point_shadow_calculation(light, world_position, u_camera_position);
+                    }
                 }
             } break;
             default:

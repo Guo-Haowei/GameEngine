@@ -124,6 +124,25 @@ bool PipelineStateManager::initialize() {
     }
     {
         PipelineCreateInfo info;
+        info.vs = "point_shadow.vert";
+        info.ps = "point_shadow.pixel";
+        info.rasterizer_desc = &s_shadow_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.input_layout_desc = &s_input_layout_mesh;
+        m_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
+        info.vs = "point_shadow.vert";
+        info.ps = "point_shadow.pixel";
+        info.defines = { has_animation };
+        info.rasterizer_desc = &s_shadow_rasterizer;
+        info.depth_stencil_desc = &s_default_depth_stencil;
+        info.input_layout_desc = &s_input_layout_mesh;
+        m_cache[PROGRAM_POINT_SHADOW_ANIMATED] = create(info);
+    }
+    {
+        PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";
         info.ps = "tone.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
@@ -134,15 +153,11 @@ bool PipelineStateManager::initialize() {
     {
         PipelineCreateInfo info;
         info.cs = "bloom_setup.comp";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BLOOM_SETUP] = create(info);
     }
     {
         PipelineCreateInfo info;
         info.cs = "bloom_downsample.comp";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
         m_cache[PROGRAM_BLOOM_DOWNSAMPLE] = create(info);
     }
     {
@@ -154,23 +169,6 @@ bool PipelineStateManager::initialize() {
     // @HACK: only support this many shaders
     if (GraphicsManager::singleton().getBackend() == Backend::D3D11) {
         return true;
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "point_shadow.vert";
-        info.ps = "point_shadow.pixel";
-        info.rasterizer_desc = &s_shadow_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "point_shadow.vert";
-        info.ps = "point_shadow.pixel";
-        info.defines = { has_animation };
-        info.rasterizer_desc = &s_shadow_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_POINT_SHADOW_ANIMATED] = create(info);
     }
     {
         PipelineCreateInfo info;

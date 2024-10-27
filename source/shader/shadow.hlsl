@@ -37,7 +37,7 @@ vec4 sampleShadow(Texture2D textureObject, vec2 offset) {
 #error "Unknown shading language"
 #endif
 
-float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float NdotL, int quality) {
+float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float NdotL) {
     Vector4f lightSpacePos = Multiply(light.view_matrix, Vector4f(worldPos, 1.0));
     lightSpacePos = Multiply(light.projection_matrix, lightSpacePos);
     lightSpacePos /= lightSpacePos.w;
@@ -57,6 +57,7 @@ float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float Ndot
     // @TODO: better bias
     float bias = max(0.005 * (1.0 - NdotL), 0.0005);
 
+    const int quality = 1;
     for (int x = -quality; x <= quality; ++x) {
         for (int y = -quality; y <= quality; ++y) {
             Vector2f offset = Vector2f(x, y) * texelSize;

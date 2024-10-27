@@ -27,7 +27,7 @@ struct D3d11Texture : public Texture {
 
 struct D3d11DrawPass : public DrawPass {
     std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
-    Microsoft::WRL::ComPtr<ID3D11DepthStencilView> dsv;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> dsvs;
 };
 
 struct D3d11UniformBuffer : public UniformBufferBase {

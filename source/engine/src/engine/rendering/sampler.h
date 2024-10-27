@@ -68,9 +68,9 @@ inline SamplerDesc shadow_map_sampler() {
     SamplerDesc desc{};
     desc.min = desc.mag = FilterMode::NEAREST;
     desc.mode_u = desc.mode_v = desc.mode_w = AddressMode::BORDER;
-    desc.border[0] = 1.0;
-    desc.border[1] = 1.0;
-    desc.border[2] = 1.0;
+    desc.border[0] = 1.0f;
+    desc.border[1] = 1.0f;
+    desc.border[2] = 1.0f;
     desc.border[3] = 1.0f;
     return desc;
 }

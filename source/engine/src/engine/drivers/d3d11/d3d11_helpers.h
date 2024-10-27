@@ -47,11 +47,15 @@ inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
 
 inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
     // only support a few flags for now
-    DEV_ASSERT((p_misc_flags & (~RESOURCE_MISC_GENERATE_MIPS)) == 0);
+    [[maybe_unused]] constexpr uint32_t supported_flags = RESOURCE_MISC_GENERATE_MIPS | RESOURCE_MISC_TEXTURECUBE;
+    DEV_ASSERT((p_misc_flags & (~supported_flags)) == 0);
 
     uint32_t flags = 0;
     if (p_misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
         flags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+    }
+    if (p_misc_flags & RESOURCE_MISC_TEXTURECUBE) {
+        flags |= D3D11_RESOURCE_MISC_TEXTURECUBE;
     }
 
     return flags;
