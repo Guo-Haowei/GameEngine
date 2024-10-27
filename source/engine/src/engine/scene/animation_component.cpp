@@ -17,8 +17,8 @@ void AnimationComponent::Serialize(Archive& p_archive, uint32_t) {
         uint64_t num_samplers = samplers.size();
         p_archive << num_samplers;
         for (uint64_t i = 0; i < num_samplers; ++i) {
-            p_archive << samplers[i].keyframe_times;
-            p_archive << samplers[i].keyframe_data;
+            p_archive << samplers[i].keyframeTmes;
+            p_archive << samplers[i].keyframeData;
         }
     } else {
         p_archive >> flags;
@@ -33,8 +33,8 @@ void AnimationComponent::Serialize(Archive& p_archive, uint32_t) {
         p_archive >> num_samplers;
         samplers.resize(num_samplers);
         for (uint64_t i = 0; i < num_samplers; ++i) {
-            p_archive >> samplers[i].keyframe_times;
-            p_archive >> samplers[i].keyframe_data;
+            p_archive >> samplers[i].keyframeTmes;
+            p_archive >> samplers[i].keyframeData;
         }
     }
 }

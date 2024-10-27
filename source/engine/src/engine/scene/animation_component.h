@@ -22,12 +22,12 @@ struct AnimationComponent {
         };
 
         Path path = PATH_UNKNOWN;
-        ecs::Entity target_id;
-        int sampler_index = -1;
+        ecs::Entity targetId;
+        int samplerIndex = -1;
     };
     struct Sampler {
-        std::vector<float> keyframe_times;
-        std::vector<float> keyframe_data;
+        std::vector<float> keyframeTmes;
+        std::vector<float> keyframeData;
     };
 
     bool isPlaying() const { return flags & PLAYING; }

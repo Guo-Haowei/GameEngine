@@ -100,7 +100,7 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
     }
 
     ecs::Entity id = m_editor.get_selected_entity();
-    TransformComponent* transform_component = p_scene.getComponent<TransformComponent>(id);
+    TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
 #if 0
     if (transform_component) {
         AABB aabb;
@@ -132,7 +132,7 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION operation) {
         if (transform_component) {
-            mat4 local = transform_component->getLocalMatrix();
+            mat4 local = transform_component->GetLocalMatrix();
             if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
                                      glm::value_ptr(proj_matrix),
                                      operation,
@@ -140,7 +140,7 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
                                      ImGuizmo::WORLD,
                                      glm::value_ptr(local),
                                      nullptr, nullptr, nullptr, nullptr)) {
-                transform_component->setLocalTransform(local);
+                transform_component->SetLocalTransform(local);
             }
         }
     };

@@ -7,12 +7,12 @@ class Archive;
 
 class HierarchyComponent {
 public:
-    ecs::Entity GetParent() const { return m_parent_id; }
+    ecs::Entity GetParent() const { return m_parentId; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 
 private:
-    ecs::Entity m_parent_id;
+    ecs::Entity m_parentId;
 
     friend class Scene;
 };

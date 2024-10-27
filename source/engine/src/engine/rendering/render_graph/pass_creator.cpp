@@ -129,11 +129,11 @@ static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     // set up different object list for different pass
     const PassContext& pass = *pass_ptr.get();
 
-    const auto& light_matrices = pass.light_component.getMatrices();
+    const auto& light_matrices = pass.light_component.GetMatrices();
     for (int i = 0; i < 6; ++i) {
         g_point_shadow_cache.cache.g_point_light_matrix = light_matrices[i];
-        g_point_shadow_cache.cache.g_point_light_position = pass.light_component.getPosition();
-        g_point_shadow_cache.cache.g_point_light_far = pass.light_component.getMaxDistance();
+        g_point_shadow_cache.cache.g_point_light_position = pass.light_component.GetPosition();
+        g_point_shadow_cache.cache.g_point_light_far = pass.light_component.GetMaxDistance();
         g_point_shadow_cache.update();
 
         gm.setRenderTarget(p_draw_pass, i);

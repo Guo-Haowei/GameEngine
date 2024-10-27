@@ -368,7 +368,7 @@ void GraphicsManager::updateConstants(const Scene& p_scene) {
 
 /// @TODO: refactor lights
 void GraphicsManager::updateLights(const Scene& p_scene) {
-    const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.getCount<LightComponent>(), MAX_LIGHT_COUNT);
+    const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
     auto& cache = g_per_frame_cache.cache;
 
@@ -376,21 +376,21 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
 
     int idx = 0;
     for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
-        const TransformComponent* light_transform = p_scene.getComponent<TransformComponent>(light_entity);
-        const MaterialComponent* material = p_scene.getComponent<MaterialComponent>(light_entity);
+        const TransformComponent* light_transform = p_scene.GetComponent<TransformComponent>(light_entity);
+        const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(light_entity);
 
         DEV_ASSERT(light_transform && material);
 
         // SHOULD BE THIS INDEX
         Light& light = cache.u_lights[idx];
-        bool cast_shadow = light_component.castShadow();
+        bool cast_shadow = light_component.CastShadow();
         light.cast_shadow = cast_shadow;
-        light.type = light_component.getType();
+        light.type = light_component.GetType();
         light.color = material->base_color;
         light.color *= material->emissive;
-        switch (light_component.getType()) {
+        switch (light_component.GetType()) {
             case LIGHT_TYPE_INFINITE: {
-                mat4 light_local_matrix = light_transform->getLocalMatrix();
+                mat4 light_local_matrix = light_transform->GetLocalMatrix();
                 vec3 light_dir = glm::normalize(light_local_matrix * vec4(0, 0, 1, 0));
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
@@ -433,14 +433,14 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                     });
             } break;
             case LIGHT_TYPE_POINT: {
-                const int shadow_map_index = light_component.getShadowMapIndex();
+                const int shadow_map_index = light_component.GetShadowMapIndex();
                 // @TODO: there's a bug in shadow map allocation
                 light.atten_constant = light_component.m_atten.constant;
                 light.atten_linear = light_component.m_atten.linear;
                 light.atten_quadratic = light_component.m_atten.quadratic;
-                light.position = light_component.getPosition();
+                light.position = light_component.GetPosition();
                 light.cast_shadow = cast_shadow;
-                light.max_distance = light_component.getMaxDistance();
+                light.max_distance = light_component.GetMaxDistance();
                 if (cast_shadow && shadow_map_index != INVALID_POINT_SHADOW_HANDLE) {
                     light.shadow_map_index = shadow_map_index;
 
@@ -465,7 +465,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 }
             } break;
             case LIGHT_TYPE_AREA: {
-                mat4 transform = light_transform->getWorldMatrix();
+                mat4 transform = light_transform->GetWorldMatrix();
                 constexpr float s = 0.5f;
                 light.points[0] = transform * vec4(-s, +s, 0.0f, 1.0f);
                 light.points[1] = transform * vec4(-s, -s, 0.0f, 1.0f);
@@ -526,7 +526,7 @@ void GraphicsManager::updateMainPass(const Scene& p_scene) {
 
 void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2) {
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
-        if (!p_scene.contains<TransformComponent>(entity)) {
+        if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
         }
 
@@ -534,11 +534,11 @@ void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, Filter
             continue;
         }
 
-        const TransformComponent& transform = *p_scene.getComponent<TransformComponent>(entity);
-        DEV_ASSERT(p_scene.contains<MeshComponent>(obj.mesh_id));
-        const MeshComponent& mesh = *p_scene.getComponent<MeshComponent>(obj.mesh_id);
+        const TransformComponent& transform = *p_scene.GetComponent<TransformComponent>(entity);
+        DEV_ASSERT(p_scene.Contains<MeshComponent>(obj.meshId));
+        const MeshComponent& mesh = *p_scene.GetComponent<MeshComponent>(obj.meshId);
 
-        const mat4& world_matrix = transform.getWorldMatrix();
+        const mat4& world_matrix = transform.GetWorldMatrix();
         AABB aabb = mesh.local_bound;
         aabb.applyMatrix(world_matrix);
         if (!p_filter2(aabb)) {
@@ -556,11 +556,11 @@ void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
         draw.batch_idx = m_context.batch_cache.findOrAdd(entity, batch_buffer);
         if (mesh.armature_id.IsValid()) {
-            auto& armature = *p_scene.getComponent<ArmatureComponent>(mesh.armature_id);
-            DEV_ASSERT(armature.bone_transforms.size() <= MAX_BONE_COUNT);
+            auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armature_id);
+            DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
 
             BoneConstantBuffer bone;
-            memcpy(bone.u_bones, armature.bone_transforms.data(), sizeof(mat4) * armature.bone_transforms.size());
+            memcpy(bone.u_bones, armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
             draw.bone_idx = m_context.bone_cache.findOrAdd(mesh.armature_id, bone);
@@ -577,7 +577,7 @@ void GraphicsManager::fillPass(const Scene& p_scene, PassContext& p_pass, Filter
                 continue;
             }
 
-            const MaterialComponent* material = p_scene.getComponent<MaterialComponent>(subset.material_id);
+            const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
             MaterialConstantBuffer material_buffer;
             fill_material_constant_buffer(material, material_buffer);
 

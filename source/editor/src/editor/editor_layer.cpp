@@ -170,11 +170,11 @@ void EditorLayer::flush_commands(Scene& scene) {
                 DEV_ASSERT(command->target.IsValid());
                 switch (command->component_type) {
                     case COMPONENT_TYPE_BOX_COLLIDER: {
-                        auto& collider = scene.create<BoxColliderComponent>(command->target);
+                        auto& collider = scene.Create<BoxColliderComponent>(command->target);
                         collider.box = AABB::fromCenterSize(vec3(0), vec3(1));
                     } break;
                     case COMPONENT_TYPE_MESH_COLLIDER:
-                        scene.create<MeshColliderComponent>(command->target);
+                        scene.Create<MeshColliderComponent>(command->target);
                         break;
                     default:
                         CRASH_NOW();

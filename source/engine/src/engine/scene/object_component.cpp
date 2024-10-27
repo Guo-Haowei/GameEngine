@@ -7,10 +7,10 @@ namespace my {
 void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.IsWriteMode()) {
         p_archive << flags;
-        p_archive << mesh_id;
+        p_archive << meshId;
     } else {
         p_archive >> flags;
-        p_archive >> mesh_id;
+        p_archive >> meshId;
     }
 }
 

@@ -71,14 +71,14 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     if (sol::optional<std::string> type = p_components["type"]; type) {
         if (type == "POINT_LIGHT") {
             id = p_scene->createPointLightEntity(name, translate);
-            LightComponent* light = p_scene->getComponent<LightComponent>(id);
-            light->setCastShadow();
-            light->setDirty();
+            LightComponent* light = p_scene->GetComponent<LightComponent>(id);
+            light->SetCastShadow();
+            light->SetDirty();
         } else if (type == "INFINITE_LIGHT") {
             id = p_scene->createInfiniteLightEntity(name);
-            LightComponent* light = p_scene->getComponent<LightComponent>(id);
-            light->setCastShadow();
-            light->setDirty();
+            LightComponent* light = p_scene->GetComponent<LightComponent>(id);
+            light->SetCastShadow();
+            light->SetDirty();
         } else {
             CRASH_NOW();
         }
@@ -90,7 +90,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
 
     if (sol::optional<sol::table> table = p_components["material"]; table) {
         material_id = create_material();
-        MaterialComponent* material = p_scene->getComponent<MaterialComponent>(material_id);
+        MaterialComponent* material = p_scene->GetComponent<MaterialComponent>(material_id);
         vec3 color{ 1 };
         bool ok = true;
         ok = ok && try_get_float(*table, "roughness", material->roughness);
@@ -129,12 +129,12 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         id = p_scene->createSphereEntity(name, material_id, radius, transform);
     }
 
-    if (TransformComponent* transform_component = p_scene->getComponent<TransformComponent>(id); !transform_component) {
+    if (TransformComponent* transform_component = p_scene->GetComponent<TransformComponent>(id); !transform_component) {
         DEV_ASSERT(!id.IsValid());
         id = p_scene->createNameEntity(name);
 
-        transform_component = &p_scene->create<TransformComponent>(id);
-        transform_component->setLocalTransform(transform);
+        transform_component = &p_scene->Create<TransformComponent>(id);
+        transform_component->SetLocalTransform(transform);
     }
 
     if (sol::optional<sol::table> table = p_components["rigid_body"]; table) {
@@ -144,12 +144,12 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             float mass = 0.0f;
             if (try_get_float(*table, "mass", mass)) {
                 if (*shape == "SHAPE_CUBE") {
-                    auto& rigid_body = p_scene->create<RigidBodyComponent>(id);
+                    auto& rigid_body = p_scene->Create<RigidBodyComponent>(id);
                     rigid_body.shape = RigidBodyComponent::SHAPE_CUBE;
                     rigid_body.mass = mass;
                     try_get_vec3(*table, "size", rigid_body.param.box.half_size);
                 } else if (*shape == "SHAPE_SPHERE") {
-                    auto& rigid_body = p_scene->create<RigidBodyComponent>(id);
+                    auto& rigid_body = p_scene->Create<RigidBodyComponent>(id);
                     rigid_body.shape = RigidBodyComponent::SHAPE_SPHERE;
                     rigid_body.mass = mass;
                     try_get_float(*table, "radius", rigid_body.param.sphere.radius);

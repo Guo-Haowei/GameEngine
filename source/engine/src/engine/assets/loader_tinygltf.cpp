@@ -50,31 +50,31 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     auto& node = m_model->nodes[node_index];
 
     if (node.mesh >= 0) {
-        DEV_ASSERT(node.mesh < (int)m_scene->getCount<MeshComponent>());
+        DEV_ASSERT(node.mesh < (int)m_scene->GetCount<MeshComponent>());
         if (node.skin >= 0) {  // this node is an armature
-            entity = m_scene->getEntity<ArmatureComponent>(node.skin);
-            MeshComponent& mesh = m_scene->m_MeshComponents.getComponent(node.mesh);
-            ecs::Entity mesh_id = m_scene->getEntity<MeshComponent>(node.mesh);
+            entity = m_scene->GetEntity<ArmatureComponent>(node.skin);
+            MeshComponent& mesh = m_scene->m_MeshComponents.GetComponent(node.mesh);
+            ecs::Entity mesh_id = m_scene->GetEntity<MeshComponent>(node.mesh);
             DEV_ASSERT(!mesh.joints_0.empty());
             if (mesh.armature_id.IsValid()) {
                 // Reuse mesh with different skin is not possible currently, so we create a new one:
                 LOG_WARN("Re-use mesh for different skin!");
                 mesh_id = entity;
-                MeshComponent& newMesh = m_scene->create<MeshComponent>(mesh_id);
-                newMesh = m_scene->m_MeshComponents.getComponent(node.mesh);
+                MeshComponent& newMesh = m_scene->Create<MeshComponent>(mesh_id);
+                newMesh = m_scene->m_MeshComponents.GetComponent(node.mesh);
                 mesh = newMesh;
             }
             mesh.armature_id = entity;
 
             // the object component will use an identity transform but will be parented to the armature
             ecs::Entity objectID = m_scene->createObjectEntity("Animated::" + node.name);
-            ObjectComponent& object = *m_scene->getComponent<ObjectComponent>(objectID);
-            object.mesh_id = mesh_id;
+            ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(objectID);
+            object.meshId = mesh_id;
             m_scene->attachComponent(objectID, entity);
         } else {  // this node is a mesh instance
             entity = m_scene->createObjectEntity("Object::" + node.name);
-            ObjectComponent& object = *m_scene->getComponent<ObjectComponent>(entity);
-            object.mesh_id = m_scene->getEntity<MeshComponent>(node.mesh);
+            ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(entity);
+            object.meshId = m_scene->GetEntity<MeshComponent>(node.mesh);
         }
     } else if (node.camera >= 0) {
         LOG_WARN("@TODO: camera");
@@ -85,13 +85,13 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     // transform
     if (!entity.IsValid()) {
         entity = ecs::Entity::Create();
-        m_scene->create<TransformComponent>(entity);
-        m_scene->create<NameComponent>(entity).setName("Transform::" + node.name);
+        m_scene->Create<TransformComponent>(entity);
+        m_scene->Create<NameComponent>(entity).SetName("Transform::" + node.name);
     }
 
     m_entity_map[node_index] = entity;
 
-    TransformComponent& transform = *m_scene->getComponent<TransformComponent>(entity);
+    TransformComponent& transform = *m_scene->GetComponent<TransformComponent>(entity);
     if (!node.matrix.empty()) {
         mat4 matrix;
         matrix[0].x = float(node.matrix.at(0));
@@ -110,7 +110,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
         matrix[3].y = float(node.matrix.at(13));
         matrix[3].z = float(node.matrix.at(14));
         matrix[3].w = float(node.matrix.at(15));
-        transform.matrixTransform(matrix);
+        transform.MatrixTransform(matrix);
     } else {
         if (!node.scale.empty()) {
             // Note: limiting min scale because scale <= 0.0001 will break matrix decompose and mess up the model (float precision issue?)
@@ -120,16 +120,16 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
                     node.scale[idx] = 0.0001001 * sign;
                 }
             }
-            transform.setScale(vec3(float(node.scale[0]), float(node.scale[1]), float(node.scale[2])));
+            transform.SetScale(vec3(float(node.scale[0]), float(node.scale[1]), float(node.scale[2])));
         }
         if (!node.rotation.empty()) {
-            transform.setRotation(vec4(float(node.rotation[0]), float(node.rotation[1]), float(node.rotation[2]), float(node.rotation[3])));
+            transform.SetRotation(vec4(float(node.rotation[0]), float(node.rotation[1]), float(node.rotation[2]), float(node.rotation[3])));
         }
         if (!node.translation.empty()) {
-            transform.setTranslation(vec3(float(node.translation[0]), float(node.translation[1]), float(node.translation[2])));
+            transform.SetTranslation(vec3(float(node.translation[0]), float(node.translation[1]), float(node.translation[2])));
         }
     }
-    transform.updateTransform();
+    transform.UpdateTransform();
 
     if (parent.IsValid()) {
         m_scene->attachComponent(entity, parent);
@@ -169,14 +169,14 @@ bool LoaderTinyGLTF::load(Scene* data) {
     }
 
     ecs::Entity root = ecs::Entity::Create();
-    m_scene->create<TransformComponent>(root);
-    m_scene->create<NameComponent>(root).setName(m_file_name);
+    m_scene->Create<TransformComponent>(root);
+    m_scene->Create<NameComponent>(root).SetName(m_file_name);
     m_scene->m_root = root;
 
     // Create materials
     for (const auto& x : m_model->materials) {
         ecs::Entity materialEntity = m_scene->createMaterialEntity(x.name);
-        MaterialComponent& material = *m_scene->getComponent<MaterialComponent>(materialEntity);
+        MaterialComponent& material = *m_scene->GetComponent<MaterialComponent>(materialEntity);
 
         // metallic-roughness workflow:
         auto baseColorTexture = x.values.find("baseColorTexture");
@@ -273,15 +273,15 @@ bool LoaderTinyGLTF::load(Scene* data) {
     // Create armatures
     for (const auto& skin : m_model->skins) {
         ecs::Entity armature_id = ecs::Entity::Create();
-        m_scene->create<NameComponent>(armature_id).setName(skin.name);
-        m_scene->create<TransformComponent>(armature_id);
-        ArmatureComponent& armature = m_scene->create<ArmatureComponent>(armature_id);
+        m_scene->Create<NameComponent>(armature_id).SetName(skin.name);
+        m_scene->Create<TransformComponent>(armature_id);
+        ArmatureComponent& armature = m_scene->Create<ArmatureComponent>(armature_id);
         if (skin.inverseBindMatrices >= 0) {
             const tinygltf::Accessor& accessor = m_model->accessors[skin.inverseBindMatrices];
             const tinygltf::BufferView& bufferView = m_model->bufferViews[accessor.bufferView];
             const tinygltf::Buffer& buffer = m_model->buffers[bufferView.buffer];
-            armature.inverse_bind_matrices.resize(accessor.count);
-            memcpy(armature.inverse_bind_matrices.data(), &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(mat4));
+            armature.inverseBindMatrices.resize(accessor.count);
+            memcpy(armature.inverseBindMatrices.data(), &buffer.data[accessor.byteOffset + bufferView.byteOffset], accessor.count * sizeof(mat4));
         } else {
             LOG_FATAL("No inverse matrices found");
         }
@@ -297,17 +297,17 @@ bool LoaderTinyGLTF::load(Scene* data) {
     // Create armature-bone mappings:
     int armatureIndex = 0;
     for (const auto& skin : m_model->skins) {
-        ecs::Entity armature_id = m_scene->getEntity<ArmatureComponent>(armatureIndex);
-        ArmatureComponent& armature = m_scene->m_ArmatureComponents.getComponent(armatureIndex++);
+        ecs::Entity armature_id = m_scene->GetEntity<ArmatureComponent>(armatureIndex);
+        ArmatureComponent& armature = m_scene->m_ArmatureComponents.GetComponent(armatureIndex++);
 
         const size_t jointCount = skin.joints.size();
-        armature.bone_collection.resize(jointCount);
+        armature.boneCollection.resize(jointCount);
 
         // create bone collection
         for (size_t i = 0; i < jointCount; ++i) {
             int jointIndex = skin.joints[i];
             ecs::Entity boneID = m_entity_map[jointIndex];
-            armature.bone_collection[i] = boneID;
+            armature.boneCollection[i] = boneID;
         }
     }
 
@@ -326,14 +326,14 @@ bool LoaderTinyGLTF::load(Scene* data) {
 void LoaderTinyGLTF::process_mesh(const tinygltf::Mesh& gltf_mesh, int) {
     ecs::Entity mesh_id = m_scene->createMeshEntity("Mesh::" + gltf_mesh.name);
     // m_scene->Component_Attach(mesh_id, state.rootEntity);
-    MeshComponent& mesh = *m_scene->getComponent<MeshComponent>(mesh_id);
+    MeshComponent& mesh = *m_scene->GetComponent<MeshComponent>(mesh_id);
 
     for (const auto& prim : gltf_mesh.primitives) {
         MeshComponent::MeshSubset subset;
-        if (m_scene->getCount<MaterialComponent>() == 0) {
+        if (m_scene->GetCount<MaterialComponent>() == 0) {
             LOG_FATAL("No material! Consider use default");
         }
-        subset.material_id = m_scene->getEntity<MaterialComponent>(glm::max(0, prim.material));
+        subset.material_id = m_scene->GetEntity<MaterialComponent>(glm::max(0, prim.material));
 
         const size_t index_remap[] = { 0, 1, 2 };
         uint32_t vertexOffset = (uint32_t)mesh.normals.size();
@@ -599,7 +599,7 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
     m_scene->attachComponent(entity);
 
     // m_scene->Component_Attach(entity, m_scene->m_root);
-    AnimationComponent& animation = m_scene->create<AnimationComponent>(entity);
+    AnimationComponent& animation = m_scene->Create<AnimationComponent>(entity);
     animation.samplers.resize(gltf_anim.samplers.size());
     animation.channels.resize(gltf_anim.channels.size());
     DEV_ASSERT(gltf_anim.samplers.size() == gltf_anim.channels.size());
@@ -620,7 +620,7 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
             int stride = accessor.ByteStride(bufferView);
             size_t count = accessor.count;
 
-            sampler.keyframe_times.resize(count);
+            sampler.keyframeTmes.resize(count);
 
             const unsigned char* data = buffer.data.data() + accessor.byteOffset + bufferView.byteOffset;
 
@@ -628,7 +628,7 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
 
             for (size_t j = 0; j < count; ++j) {
                 float time = ((float*)data)[j];
-                sampler.keyframe_times[j] = time;
+                sampler.keyframeTmes[j] = time;
                 animation.start = glm::min(animation.start, time);
                 animation.end = glm::max(animation.end, time);
             }
@@ -659,16 +659,16 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
                     LOG_FATAL("Invalid format {}", accessor.type);
                     break;
             }
-            sampler.keyframe_data.resize(count * stride / sizeof(float));
-            memcpy(sampler.keyframe_data.data(), data, count * stride);
+            sampler.keyframeData.resize(count * stride / sizeof(float));
+            memcpy(sampler.keyframeData.data(), data, count * stride);
         }
     }
 
     for (size_t index = 0; index < gltf_anim.channels.size(); ++index) {
         const auto& channel = gltf_anim.channels[index];
-        animation.channels[index].target_id = m_entity_map[channel.target_node];
+        animation.channels[index].targetId = m_entity_map[channel.target_node];
         DEV_ASSERT(channel.sampler >= 0);
-        animation.channels[index].sampler_index = (uint32_t)channel.sampler;
+        animation.channels[index].samplerIndex = (uint32_t)channel.sampler;
 
         if (channel.target_path == "scale") {
             animation.channels[index].path = AnimationComponent::Channel::PATH_SCALE;

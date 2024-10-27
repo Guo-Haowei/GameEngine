@@ -44,8 +44,8 @@ static bool tree_node_helper(const Scene& p_scene,
                              std::function<void()> p_on_left_click,
                              std::function<void()> p_on_right_click) {
 
-    const NameComponent* name_component = p_scene.getComponent<NameComponent>(p_id);
-    std::string name = name_component->getName();
+    const NameComponent* name_component = p_scene.GetComponent<NameComponent>(p_id);
+    std::string name = name_component->GetName();
     if (name.empty()) {
         name = "Untitled";
     }
@@ -79,10 +79,10 @@ static bool tree_node_helper(const Scene& p_scene,
 void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
     DEV_ASSERT(p_hier);
     Entity id = p_hier->entity;
-    const NameComponent* name_component = p_scene.getComponent<NameComponent>(id);
-    const char* name = name_component ? name_component->getName().c_str() : "Untitled";
-    const ObjectComponent* object_component = p_scene.getComponent<ObjectComponent>(id);
-    const MeshComponent* mesh_component = object_component ? p_scene.getComponent<MeshComponent>(object_component->mesh_id) : nullptr;
+    const NameComponent* name_component = p_scene.GetComponent<NameComponent>(id);
+    const char* name = name_component ? name_component->GetName().c_str() : "Untitled";
+    const ObjectComponent* object_component = p_scene.GetComponent<ObjectComponent>(id);
+    const MeshComponent* mesh_component = object_component ? p_scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
 
     auto node_name = std::format("##{}", id.GetId());
     auto tag = std::format("{}{}", name, node_name);
@@ -106,7 +106,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
 
         if (mesh_component) {
             for (const auto& subset : mesh_component->subsets) {
-                const MaterialComponent* material = p_scene.getComponent<MaterialComponent>(subset.material_id);
+                const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
                 if (material) {
                     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
                     tree_node_helper(
@@ -137,7 +137,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
 
 bool HierarchyCreator::build(const Scene& p_scene) {
     // @TODO: on scene change instead of build every frame
-    const size_t hierarchy_count = p_scene.getCount<HierarchyComponent>();
+    const size_t hierarchy_count = p_scene.GetCount<HierarchyComponent>();
     if (hierarchy_count == 0) {
         return false;
     }

@@ -24,12 +24,12 @@ static void create_empty_scene(Scene* scene) {
     scene->m_root = root;
     if (0) {
         auto light = scene->createInfiniteLightEntity("infinite light", vec3(1));
-        auto transform = scene->getComponent<TransformComponent>(light);
+        auto transform = scene->GetComponent<TransformComponent>(light);
         DEV_ASSERT(transform);
         constexpr float rx = glm::radians(-80.0f);
         constexpr float ry = glm::radians(0.0f);
         constexpr float rz = glm::radians(0.0f);
-        transform->rotate(vec3(rx, ry, rz));
+        transform->Rotate(vec3(rx, ry, rz));
 
         scene->attachComponent(light, root);
     }
