@@ -2,6 +2,7 @@
 #include "core/framework/graphics_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
+#include "core/math/matrix_transform.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
@@ -94,7 +95,7 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
     auto [width, height] = cube_map->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
+    auto view_matrices = buildOpenGLCubeMapViewMatrices(vec3(0.0f));
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::singleton().setRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -136,7 +137,7 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
     auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
+    auto view_matrices = buildOpenGLCubeMapViewMatrices(vec3(0.0f));
 
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::singleton().setRenderTarget(p_draw_pass, i);
@@ -159,7 +160,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
     auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = renderer::cube_map_view_matrices(vec3(0));
+    auto view_matrices = buildOpenGLCubeMapViewMatrices(vec3(0.0f));
     const uint32_t max_mip_levels = 5;
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {

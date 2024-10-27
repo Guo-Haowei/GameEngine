@@ -2,6 +2,7 @@
 
 #include "core/debugger/profiler.h"
 #include "core/math/frustum.h"
+#include "core/math/matrix_transform.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
@@ -17,71 +18,6 @@
 #endif
 
 namespace my {
-
-// @TODO: refactor
-static mat4 buildPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
-    const float tan_half_fovy = glm::tan(0.5f * p_fovy);
-    mat4 Result(0.0f);
-    Result[0][0] = 1.0f / (p_aspect * tan_half_fovy);
-    Result[1][1] = 1.0f / tan_half_fovy;
-    Result[2][2] = -p_far / (p_far - p_near);
-    Result[2][3] = -1.0f;
-    Result[3][2] = -(p_far * p_near) / (p_far - p_near);
-    return Result;
-}
-
-static mat4 buildOpenGLPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
-    const float tan_half_fovy = glm::tan(0.5f * p_fovy);
-    mat4 Result(0.0f);
-    Result[0][0] = 1.0f / (p_aspect * tan_half_fovy);
-    Result[1][1] = 1.0f / tan_half_fovy;
-    Result[2][2] = -(p_far + p_near) / (p_far - p_near);
-    Result[2][3] = -1.0f;
-    Result[3][2] = -(2.0f * p_far * p_near) / (p_far - p_near);
-    return Result;
-}
-
-static mat4 buildOrthoRHMatrix(const float p_left,
-                               const float p_right,
-                               const float p_bottom,
-                               const float p_top,
-                               const float p_near,
-                               const float p_far) {
-
-    const float reciprocal_width = 1.0f / (p_right - p_left);
-    const float reciprocal_height = 1.0f / (p_top - p_bottom);
-    const float reciprocal_depth = 1.0f / (p_far - p_near);
-
-    mat4 result(1.0f);
-    result[0][0] = 2.0f * reciprocal_width;
-    result[1][1] = 2.0f * reciprocal_height;
-    result[2][2] = -1.0f * reciprocal_depth;
-    result[3][0] = -(p_right + p_left) * reciprocal_width;
-    result[3][1] = -(p_top + p_bottom) * reciprocal_height;
-    result[3][2] = -p_near * reciprocal_depth;
-    return result;
-}
-
-static mat4 buildOpenGLOrthoRHMatrix(const float p_left,
-                                     const float p_right,
-                                     const float p_bottom,
-                                     const float p_top,
-                                     const float p_near,
-                                     const float p_far) {
-
-    const float reciprocal_width = 1.0f / (p_right - p_left);
-    const float reciprocal_height = 1.0f / (p_top - p_bottom);
-    const float reciprocal_depth = 1.0f / (p_far - p_near);
-
-    mat4 result(1.0f);
-    result[0][0] = 2.0f * reciprocal_width;
-    result[1][1] = 2.0f * reciprocal_height;
-    result[2][2] = -2.0f * reciprocal_depth;
-    result[3][0] = -(p_right + p_left) * reciprocal_width;
-    result[3][1] = -(p_top + p_bottom) * reciprocal_height;
-    result[3][2] = -(p_far + p_near) * reciprocal_depth;
-    return result;
-}
 
 template<typename T>
 static auto create_uniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
@@ -469,9 +405,9 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
                 light.view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
 
                 if (getBackend() == Backend::OPENGL) {
-                    light.projection_matrix = buildOpenGLOrthoRHMatrix(-size, size, -size, size, -size, 3.0f * size);
+                    light.projection_matrix = buildOpenGLOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
-                    light.projection_matrix = buildOrthoRHMatrix(-size, size, -size, size, -size, 3.0f * size);
+                    light.projection_matrix = buildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 }
 
                 mat4 light_space_matrix = light.projection_matrix * light.view_matrix;

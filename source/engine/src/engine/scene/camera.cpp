@@ -1,6 +1,7 @@
 #include "camera.h"
 
 #include "core/io/archive.h"
+#include "core/math/matrix_transform.h"
 
 namespace my {
 
@@ -13,7 +14,7 @@ void Camera::update() {
         m_right = glm::cross(m_front, vec3(0, 1, 0));
 
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
-        m_projection_matrix = glm::perspective(m_fovy.toRad(), getAspect(), m_near, m_far);
+        m_projection_matrix = buildOpenGLPerspectiveRH(m_fovy.toRad(), getAspect(), m_near, m_far);
         m_projection_view_matrix = m_projection_matrix * m_view_matrix;
 
         setDirty(false);
