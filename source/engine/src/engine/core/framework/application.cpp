@@ -69,7 +69,7 @@ int Application::run(int argc, const char** argv) {
     m_os = std::make_shared<OS>();
 
     // intialize
-    OS::singleton().initialize();
+    OS::singleton().Initialize();
 
     // dvars
     registerCommonDvars();
@@ -175,7 +175,7 @@ int Application::run(int argc, const char** argv) {
 
     DynamicVariableManager::Serialize();
 
-    OS::singleton().finalize();
+    OS::singleton().Finalize();
 
     return 0;
 }

@@ -23,7 +23,7 @@ public:
 
         auto source_binary = AssetManager::singleton().loadFileSync(path);
         if (!source_binary || source_binary->buffer.empty()) {
-            LOG_ERROR("failed to read file '{}'", path.string());
+            LOG_ERROR("failed to read file '{}'", path.String());
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         }
 

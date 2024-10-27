@@ -712,7 +712,7 @@ static void APIENTRY gl_debug_callback(GLenum source, GLenum type, unsigned int 
             break;
     }
 
-    my::logImpl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", message, id, sourceStr, typeStr));
+    my::LogImpl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", message, id, sourceStr, typeStr));
 }
 
 }  // namespace my

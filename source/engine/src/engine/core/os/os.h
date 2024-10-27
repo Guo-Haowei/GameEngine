@@ -6,12 +6,12 @@ namespace my {
 
 class OS : public Singleton<OS> {
 public:
-    void initialize();
-    void finalize();
+    void Initialize();
+    void Finalize();
 
-    virtual void print(LogLevel p_level, std::string_view p_message);
+    virtual void Print(LogLevel p_level, std::string_view p_message);
 
-    void addLogger(std::shared_ptr<ILogger> p_logger);
+    void AddLogger(std::shared_ptr<ILogger> p_logger);
 
 protected:
     CompositeLogger m_logger;

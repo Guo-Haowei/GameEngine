@@ -550,7 +550,7 @@ const MeshBuffers* D3d11GraphicsManager::createMesh(const MeshComponent& p_mesh)
             data.pSysMem = p_data;
             D3D_FAIL_V_MSG(p_device->CreateBuffer(&bufferDesc, &data, &buffer),
                            nullptr,
-                           "Failed to create vertex buffer");
+                           "Failed to Create vertex buffer");
             return buffer;
         };
 

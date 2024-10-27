@@ -94,7 +94,7 @@ public:
     virtual size_t getCount() const = 0;
     virtual Entity getEntity(size_t p_index) const = 0;
 
-    virtual bool Serialize(Archive& p_archive, uint32_t p_version) = 0;
+    virtual bool serialize(Archive& p_archive, uint32_t p_version) = 0;
 };
 
 template<typename T>
@@ -234,10 +234,10 @@ public:
 
     T& operator[](size_t p_index) { return getComponent(p_index); }
 
-    bool Serialize(Archive& p_archive, uint32_t p_version) override {
+    bool serialize(Archive& p_archive, uint32_t p_version) override {
         constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;
-        if (p_archive.isWriteMode()) {
+        if (p_archive.IsWriteMode()) {
             p_archive << magic;
             count = static_cast<uint32_t>(m_component_array.size());
             p_archive << count;

@@ -29,7 +29,7 @@ static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected
     // @TODO [FilePath]: fix
     auto source_binary = AssetManager::singleton().loadFileSync(FilePath{ p_path.string() });
     if (!source_binary || source_binary->buffer.empty()) {
-        return std::unexpected(std::format("failed to read file '{}'", p_path.string()));
+        return std::unexpected(std::format("failed to Read file '{}'", p_path.string()));
     }
 
     std::string source(source_binary->buffer.begin(), source_binary->buffer.end());

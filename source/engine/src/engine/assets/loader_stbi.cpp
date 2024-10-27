@@ -26,7 +26,7 @@ bool LoaderSTBIBase::load_impl(Image* image, bool is_float, STBILoadFunc func) {
     int height = 0;
     int num_channels = 0;
 
-    auto res = FileAccess::open(m_file_path, FileAccess::READ);
+    auto res = FileAccess::Open(m_file_path, FileAccess::READ);
     if (!res) {
         m_error = res.error().getMessage();
         return false;
@@ -35,10 +35,10 @@ bool LoaderSTBIBase::load_impl(Image* image, bool is_float, STBILoadFunc func) {
     int req_channel = is_float ? 0 : 4;  // force 4 channels
 
     std::shared_ptr<FileAccess> file_access = *res;
-    int buffer_length = (int)file_access->getLength();
+    int buffer_length = (int)file_access->GetLength();
     std::vector<uint8_t> file_buffer;
     file_buffer.resize(buffer_length);
-    file_access->readBuffer(file_buffer.data(), buffer_length);
+    file_access->ReadBuffer(file_buffer.data(), buffer_length);
 
     uint8_t* pixels = (uint8_t*)func(file_buffer.data(), buffer_length, &width, &height, &num_channels, req_channel);
     if (req_channel > num_channels) {

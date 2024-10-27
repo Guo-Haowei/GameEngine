@@ -477,7 +477,7 @@ void Scene::updateArmature(uint32_t p_index) {
 
 bool Scene::Serialize(Archive& p_archive) {
     uint32_t version = UINT_MAX;
-    bool is_read_mode = !p_archive.isWriteMode();
+    bool is_read_mode = !p_archive.IsWriteMode();
     if (is_read_mode) {
         uint32_t magic;
         uint32_t seed = Entity::MAX_ID;
@@ -502,11 +502,11 @@ bool Scene::Serialize(Archive& p_archive) {
     m_camera->Serialize(p_archive, version);
 
     constexpr uint64_t has_next_flag = 6368519827137030510;
-    if (p_archive.isWriteMode()) {
+    if (p_archive.IsWriteMode()) {
         for (const auto& it : m_component_lib.m_entries) {
             p_archive << has_next_flag;
             p_archive << it.first;  // write name
-            it.second.m_manager->Serialize(p_archive, version);
+            it.second.m_manager->serialize(p_archive, version);
         }
         p_archive << uint64_t(0);
         return true;
@@ -525,7 +525,7 @@ bool Scene::Serialize(Archive& p_archive) {
                 LOG_ERROR("scene corrupted");
                 return false;
             }
-            if (!it->second.m_manager->Serialize(p_archive, version)) {
+            if (!it->second.m_manager->serialize(p_archive, version)) {
                 return false;
             }
         }

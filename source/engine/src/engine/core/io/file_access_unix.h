@@ -7,16 +7,16 @@ class FileAccessUnix : public FileAccess {
 public:
     ~FileAccessUnix();
 
-    void close() override;
-    bool isOpen() const override;
-    size_t getLength() const override;
-    bool readBuffer(void* p_data, size_t p_size) const override;
-    bool writeBuffer(const void* p_data, size_t p_size) override;
+    void Close() override;
+    bool IsOpen() const override;
+    size_t GetLength() const override;
+    bool ReadBuffer(void* p_data, size_t p_size) const override;
+    bool WriteBuffer(const void* p_data, size_t p_size) override;
 
 protected:
-    ErrorCode openInternal(std::string_view p_path, ModeFlags p_mode_flags) override;
+    ErrorCode OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) override;
 
-    FILE* m_file_handle{ nullptr };
+    FILE* m_fileHandle{ nullptr };
 };
 
 }  // namespace my

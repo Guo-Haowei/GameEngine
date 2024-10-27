@@ -5,7 +5,7 @@ namespace my::ecs {
 const Entity Entity::INVALID{};
 
 void Entity::Serialize(Archive& p_archive) {
-    if (p_archive.isWriteMode()) {
+    if (p_archive.IsWriteMode()) {
         p_archive << m_id;
     } else {
         p_archive >> m_id;

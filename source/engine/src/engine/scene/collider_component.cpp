@@ -7,7 +7,7 @@ namespace my {
 void BoxColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
-    if (p_archive.isWriteMode()) {
+    if (p_archive.IsWriteMode()) {
         p_archive << box;
     } else {
         p_archive >> box;
@@ -17,7 +17,7 @@ void BoxColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 void MeshColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
-    if (p_archive.isWriteMode()) {
+    if (p_archive.IsWriteMode()) {
         p_archive << object_id;
     } else {
         p_archive >> object_id;

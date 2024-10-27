@@ -9,7 +9,7 @@ namespace my {
 static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
 
 void DynamicVariableManager::Serialize() {
-    auto res = FileAccess::open(DVAR_CACHE_FILE, FileAccess::WRITE);
+    auto res = FileAccess::Open(DVAR_CACHE_FILE, FileAccess::WRITE);
     if (!res) {
         LOG_ERROR("{}", res.error().getMessage());
         return;
@@ -21,26 +21,26 @@ void DynamicVariableManager::Serialize() {
     for (auto const& [key, dvar] : DynamicVariable::s_map) {
         if (dvar->m_flags & DVAR_FLAG_CACHE) {
             auto line = std::format("+set {} {}\n", dvar->m_name, dvar->valueToString());
-            writer->writeBuffer(line.data(), line.length());
+            writer->WriteBuffer(line.data(), line.length());
         }
     }
 
-    writer->close();
+    writer->Close();
 }
 
 void DynamicVariableManager::deserialize() {
-    auto res = FileAccess::open(DVAR_CACHE_FILE, FileAccess::READ);
+    auto res = FileAccess::Open(DVAR_CACHE_FILE, FileAccess::READ);
     if (!res) {
         LOG_ERROR("{}", res.error().getMessage());
         return;
     }
 
     auto reader = std::move(*res);
-    const size_t size = reader->getLength();
+    const size_t size = reader->GetLength();
     std::string buffer;
     buffer.resize(size);
-    reader->readBuffer(buffer.data(), size);
-    reader->close();
+    reader->ReadBuffer(buffer.data(), size);
+    reader->Close();
 
     std::stringstream ss{ buffer };
     std::vector<std::string> commands;
