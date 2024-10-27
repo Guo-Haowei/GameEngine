@@ -12,6 +12,7 @@
 #include "scene/mesh_component.h"
 #include "scene/name_component.h"
 #include "scene/object_component.h"
+#include "scene/particle_emitter_component.h"
 #include "scene/rigid_body_component.h"
 #include "scene/transform_component.h"
 
@@ -95,6 +96,9 @@ public:                                                                         
 
 private:
     ecs::ComponentLibrary m_componentLib;
+
+    // @TODO: make a proper component
+    ParticleEmitterComponent m_particleEmitter;
 
     REGISTER_COMPONENT(NameComponent, 0);
     REGISTER_COMPONENT(TransformComponent, 0);
