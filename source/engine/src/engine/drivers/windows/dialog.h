@@ -2,8 +2,8 @@
 
 namespace my {
 
-std::string open_file_dialog(const std::vector<const char*>& filters);
+std::string OpenFileDialog(const std::vector<const char*>& p_filters);
 
-bool open_save_dialog(std::filesystem::path& inout_path);
+bool OpenSaveDialog(std::filesystem::path& p_inout_path);
 
 }  // namespace my

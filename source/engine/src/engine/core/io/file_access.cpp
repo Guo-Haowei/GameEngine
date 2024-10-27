@@ -43,13 +43,13 @@ std::string FileAccess::fixPath(std::string_view p_path) {
     switch (m_access_type) {
         case ACCESS_RESOURCE: {
             if (p_path.starts_with("@res://")) {
-                StringUtils::replaceFirst(fixed_path, "@res:/", ROOT_FOLDER "resources");
+                StringUtils::ReplaceFirst(fixed_path, "@res:/", ROOT_FOLDER "resources");
                 return fixed_path;
             }
         } break;
         case ACCESS_USERDATA: {
             if (p_path.starts_with("@user://")) {
-                StringUtils::replaceFirst(fixed_path, "@user:/", ROOT_FOLDER "user");
+                StringUtils::ReplaceFirst(fixed_path, "@user:/", ROOT_FOLDER "user");
                 return fixed_path;
             }
         } break;

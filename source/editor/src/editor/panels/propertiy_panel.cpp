@@ -3,6 +3,7 @@
 // @TODO: remove this
 #include "ImGuizmo/ImGuizmo.h"
 #include "core/framework/scene_manager.h"
+#include "core/string/string_utils.h"
 #include "editor/editor_layer.h"
 #include "editor/panels/panel_util.h"
 #include "editor/widget.h"
@@ -243,7 +244,7 @@ void PropertyPanel::update_internal(Scene& scene) {
 
     DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
         char buffer[256];
-        snprintf(buffer, sizeof(buffer), "%d", collider.object_id.GetId());
+        StringUtils::Sprintf(buffer, "%d", collider.object_id.GetId());
         ImGui::Columns(2);
         ImGui::SetColumnWidth(0, kDefaultColumnWidth);
         ImGui::Text("Mesh ID");

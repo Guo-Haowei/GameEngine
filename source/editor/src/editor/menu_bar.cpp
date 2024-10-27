@@ -15,7 +15,7 @@ static void save_project(bool open_dialog) {
 
     std::filesystem::path path{ project.empty() ? "untitled.scene" : project.c_str() };
     if (open_dialog || project.empty()) {
-        if (!open_save_dialog(path)) {
+        if (!OpenSaveDialog(path)) {
             return;
         }
     }
