@@ -389,7 +389,7 @@ void GraphicsManager::updateLights(const Scene& p_scene) {
         light.color = material->base_color;
         light.color *= material->emissive;
         switch (light_component.getType()) {
-            case LIGHT_TYPE_OMNI: {
+            case LIGHT_TYPE_INFINITE: {
                 mat4 light_local_matrix = light_transform->getLocalMatrix();
                 vec3 light_dir = glm::normalize(light_local_matrix * vec4(0, 0, 1, 0));
                 light.cast_shadow = cast_shadow;

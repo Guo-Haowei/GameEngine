@@ -147,7 +147,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
         float shadow = 0.0;
         const vec3 radiance = light.color;
         switch (light.type) {
-            case LIGHT_TYPE_OMNI: {
+            case LIGHT_TYPE_INFINITE: {
                 vec3 L = light.position;
                 float atten = 1.0;
                 const vec3 H = normalize(V + L);

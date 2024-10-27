@@ -21,9 +21,9 @@ local material = {
 }
 --]]
 
-function scene_helper.create_omni_light(p_scene, p_name, p_rotation)
+function scene_helper.create_infinite_light(p_scene, p_name, p_rotation)
     return p_scene:create_entity({
-        type = 'OMNI_LIGHT',
+        type = 'INFINITE_LIGHT',
         name = p_name,
         transform = { rotate = p_rotation },
     })

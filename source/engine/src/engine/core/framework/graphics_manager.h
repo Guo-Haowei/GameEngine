@@ -228,7 +228,7 @@ public:
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<std::unique_ptr<PassContext>, MAX_LIGHT_CAST_SHADOW_COUNT> point_shadow_passes;
-    std::array<PassContext, 1> shadow_passes;  // @TODO: support multi omni lights
+    std::array<PassContext, 1> shadow_passes;  // @TODO: support multi ortho light
 
     PassContext voxel_pass;
     PassContext main_pass;

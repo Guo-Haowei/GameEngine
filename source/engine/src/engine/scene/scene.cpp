@@ -182,15 +182,15 @@ Entity Scene::createAreaLightEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::createOmniLightEntity(const std::string& p_name,
-                                    const vec3& p_color,
-                                    const float p_emissive) {
+Entity Scene::createInfiniteLightEntity(const std::string& p_name,
+                                        const vec3& p_color,
+                                        const float p_emissive) {
     Entity entity = createNameEntity(p_name);
 
     create<TransformComponent>(entity);
 
     LightComponent& light = create<LightComponent>(entity);
-    light.setType(LIGHT_TYPE_OMNI);
+    light.setType(LIGHT_TYPE_INFINITE);
     light.m_atten.constant = 1.0f;
     light.m_atten.linear = 0.0f;
     light.m_atten.quadratic = 0.0f;

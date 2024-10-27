@@ -114,7 +114,7 @@ void PropertyPanel::update_internal(Scene& scene) {
     bool disable_scale = false;
     if (light_component) {
         switch (light_component->getType()) {
-            case LIGHT_TYPE_OMNI:
+            case LIGHT_TYPE_INFINITE:
                 disable_translation = true;
                 disable_scale = true;
                 break;
@@ -158,8 +158,8 @@ void PropertyPanel::update_internal(Scene& scene) {
         bool dirty = false;
 
         switch (p_light.getType()) {
-            case LIGHT_TYPE_OMNI:
-                ImGui::Text("omni light");
+            case LIGHT_TYPE_INFINITE:
+                ImGui::Text("infinite light");
                 break;
             case LIGHT_TYPE_POINT:
                 ImGui::Text("point light");

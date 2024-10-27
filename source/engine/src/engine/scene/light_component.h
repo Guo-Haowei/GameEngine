@@ -42,7 +42,7 @@ public:
 
 private:
     uint32_t m_flags = DIRTY;
-    int m_type = LIGHT_TYPE_OMNI;
+    int m_type = LIGHT_TYPE_INFINITE;
 
     // Non-serialized
     float m_max_distance;
