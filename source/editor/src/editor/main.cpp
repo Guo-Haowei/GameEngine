@@ -7,7 +7,7 @@ public:
     }
 };
 
-int main(int argc, const char** argv) {
+int main(int p_argc, const char** p_argv) {
     Editor editor;
-    return editor.run(argc, argv);
+    return editor.run(p_argc, p_argv);
 }

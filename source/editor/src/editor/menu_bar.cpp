@@ -10,11 +10,11 @@
 
 namespace my {
 
-static void save_project(bool open_dialog) {
+static void SaveProject(bool p_need_open_dialog) {
     const std::string& project = DVAR_GET_STRING(project);
 
     std::filesystem::path path{ project.empty() ? "untitled.scene" : project.c_str() };
-    if (open_dialog || project.empty()) {
+    if (p_need_open_dialog || project.empty()) {
         if (!OpenSaveDialog(path)) {
             return;
         }
@@ -33,21 +33,21 @@ static void save_project(bool open_dialog) {
     }
 }
 
-void MenuBar::update(Scene&) {
+void MenuBar::Update(Scene&) {
     // @TODO: input system, key s handled here, don't handle it in viewer
     if (input::isKeyDown(KEY_LEFT_CONTROL)) {
         if (input::isKeyPressed(KEY_S)) {
-            save_project(false);
+            SaveProject(false);
         }
     }
 
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::MenuItem("Save", "Ctrl+S")) {
-                save_project(false);
+                SaveProject(false);
             }
             if (ImGui::MenuItem("Save As..")) {
-                save_project(true);
+                SaveProject(true);
             }
             ImGui::EndMenu();
         }
@@ -67,7 +67,7 @@ void MenuBar::update(Scene&) {
             ImGui::EndMenu();
         }
         ImGui::Separator();
-        EditorItem::open_add_entity_popup(ecs::Entity::INVALID);
+        EditorItem::OpenAddEntityPopup(ecs::Entity::INVALID);
         ImGui::EndMenuBar();
     }
 }

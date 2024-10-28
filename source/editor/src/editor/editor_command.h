@@ -33,12 +33,13 @@ protected:
     EditorCommandType type;
 };
 
+// @TODO: make proctected
 class EditorCommandAddEntity : public EditorCommand {
 public:
     EditorCommandAddEntity(EntityType p_entity_type)
-        : EditorCommand(EDITOR_ADD_ENTITY), entity_type(p_entity_type) {}
+        : EditorCommand(EDITOR_ADD_ENTITY), entityType(p_entity_type) {}
 
-    EntityType entity_type;
+    EntityType entityType;
     ecs::Entity parent;
     ecs::Entity entity;
 };
@@ -46,9 +47,9 @@ public:
 class EditorCommandAddComponent : public EditorCommand {
 public:
     EditorCommandAddComponent(ComponentType p_component_type)
-        : EditorCommand(EDITOR_ADD_COMPONENT), component_type(p_component_type) {}
+        : EditorCommand(EDITOR_ADD_COMPONENT), componentType(p_component_type) {}
 
-    ComponentType component_type;
+    ComponentType componentType;
     ecs::Entity target;
 };
 

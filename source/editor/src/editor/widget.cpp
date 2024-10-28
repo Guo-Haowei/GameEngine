@@ -2,22 +2,22 @@
 
 namespace my {
 
-void push_disabled() {
+void PushDisabled() {
     ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 }
 
-void pop_disabled() {
+void PopDisabled() {
     ImGui::PopItemFlag();
     ImGui::PopStyleVar();
 }
 
-bool draw_drag_float(const char* p_lable,
-                     float& p_out_float,
-                     float p_speed,
-                     float p_min,
-                     float p_max,
-                     float p_column_width) {
+bool DrawDragFloat(const char* p_lable,
+                   float& p_out_float,
+                   float p_speed,
+                   float p_min,
+                   float p_max,
+                   float p_column_width) {
     ImGui::Columns(2);
     ImGui::SetColumnWidth(0, p_column_width);
     ImGui::Text(p_lable);
@@ -32,11 +32,11 @@ enum {
     TYPE_COLOR,
 };
 
-bool draw_vec3_control_impl(int type,
-                            const char* p_label,
-                            glm::vec3& p_out_vec3,
-                            float p_reset_value,
-                            float p_column_width) {
+static bool DrawVec3ControlImpl(int type,
+                                const char* p_label,
+                                glm::vec3& p_out_vec3,
+                                float p_reset_value,
+                                float p_column_width) {
     bool dirty = false;
 
     ImGuiIO& io = ImGui::GetIO();
@@ -126,18 +126,18 @@ bool draw_vec3_control_impl(int type,
     return dirty;
 }
 
-bool draw_vec3_control(const char* p_lable,
-                       glm::vec3& p_out_vec3,
-                       float p_reset_value,
-                       float p_column_width) {
-    return draw_vec3_control_impl(TYPE_TRANSFORM, p_lable, p_out_vec3, p_reset_value, p_column_width);
+bool DrawVec3Control(const char* p_lable,
+                     glm::vec3& p_out_vec3,
+                     float p_reset_value,
+                     float p_column_width) {
+    return DrawVec3ControlImpl(TYPE_TRANSFORM, p_lable, p_out_vec3, p_reset_value, p_column_width);
 }
 
-bool draw_color_control(const char* p_lable,
-                        glm::vec3& p_out_vec3,
-                        float p_reset_value,
-                        float p_column_width) {
-    return draw_vec3_control_impl(TYPE_COLOR, p_lable, p_out_vec3, p_reset_value, p_column_width);
+bool DrawColorControl(const char* p_lable,
+                      glm::vec3& p_out_vec3,
+                      float p_reset_value,
+                      float p_column_width) {
+    return DrawVec3ControlImpl(TYPE_COLOR, p_lable, p_out_vec3, p_reset_value, p_column_width);
 }
 
 }  // namespace my

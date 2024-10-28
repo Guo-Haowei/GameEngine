@@ -8,10 +8,10 @@ class RenderGraphEditorDelegate;
 
 class RenderGraphEditor : public EditorWindow {
 public:
-    RenderGraphEditor(EditorLayer& editor);
+    RenderGraphEditor(EditorLayer& p_editor);
 
 protected:
-    void update_internal(Scene& scene) override;
+    void UpdateInternal(Scene& p_scene) override;
 
 private:
     GraphEditor::Options m_options;

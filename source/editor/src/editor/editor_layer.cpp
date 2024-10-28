@@ -16,15 +16,15 @@
 namespace my {
 
 EditorLayer::EditorLayer() : Layer("EditorLayer") {
-    add_panel(std::make_shared<RenderGraphEditor>(*this));
-    add_panel(std::make_shared<ConsolePanel>(*this));
-    add_panel(std::make_shared<RendererPanel>(*this));
-    add_panel(std::make_shared<HierarchyPanel>(*this));
-    add_panel(std::make_shared<PropertyPanel>(*this));
-    add_panel(std::make_shared<Viewer>(*this));
-    add_panel(std::make_shared<ContentBrowser>(*this));
+    AddPanel(std::make_shared<RenderGraphEditor>(*this));
+    AddPanel(std::make_shared<ConsolePanel>(*this));
+    AddPanel(std::make_shared<RendererPanel>(*this));
+    AddPanel(std::make_shared<HierarchyPanel>(*this));
+    AddPanel(std::make_shared<PropertyPanel>(*this));
+    AddPanel(std::make_shared<Viewer>(*this));
+    AddPanel(std::make_shared<ContentBrowser>(*this));
 
-    m_menu_bar = std::make_shared<MenuBar>(*this);
+    m_menuBar = std::make_shared<MenuBar>(*this);
 
     //// load assets
     // const char* light_icons[] = {
@@ -38,18 +38,18 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     // }
 }
 
-void EditorLayer::add_panel(std::shared_ptr<EditorItem> p_panel) {
+void EditorLayer::AddPanel(std::shared_ptr<EditorItem> p_panel) {
     m_panels.emplace_back(p_panel);
 }
 
-void EditorLayer::select_entity(ecs::Entity p_selected) {
+void EditorLayer::SelectEntity(ecs::Entity p_selected) {
     m_selected = p_selected;
     // TODO: fix this, shouldn't fetch globally
     SceneManager::getScene().m_selected = m_selected;
 }
 
 // @TODO: make this an item
-void EditorLayer::dock_space(Scene& p_scene) {
+void EditorLayer::DockSpace(Scene& p_scene) {
     ImGui::GetMainViewport();
 
     static bool opt_padding = false;
@@ -86,43 +86,43 @@ void EditorLayer::dock_space(Scene& p_scene) {
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
 
-    m_menu_bar->update(p_scene);
+    m_menuBar->Update(p_scene);
 
     ImGui::End();
     return;
 }
 
-void EditorLayer::update(float) {
+void EditorLayer::Update(float) {
     Scene& scene = SceneManager::getScene();
-    dock_space(scene);
+    DockSpace(scene);
     for (auto& it : m_panels) {
-        it->update(scene);
+        it->Update(scene);
     }
-    flush_commands(scene);
+    FlushCommand(scene);
 }
 
-void EditorLayer::render() {
+void EditorLayer::Render() {
 }
 
-void EditorLayer::add_component(ComponentType p_type, ecs::Entity p_target) {
+void EditorLayer::AddComponent(ComponentType p_type, ecs::Entity p_target) {
     auto command = std::make_shared<EditorCommandAddComponent>(p_type);
     command->target = p_target;
-    buffer_command(command);
+    BufferCommand(command);
 }
 
-void EditorLayer::add_entity(EntityType p_name, ecs::Entity p_parent) {
+void EditorLayer::AddEntity(EntityType p_name, ecs::Entity p_parent) {
     auto command = std::make_shared<EditorCommandAddEntity>(p_name);
     command->parent = p_parent;
-    buffer_command(command);
+    BufferCommand(command);
 }
 
-void EditorLayer::remove_entity(ecs::Entity p_target) {
+void EditorLayer::RemoveEntity(ecs::Entity p_target) {
     auto command = std::make_shared<EditorCommandRemoveEntity>(p_target);
-    buffer_command(command);
+    BufferCommand(command);
 }
 
-void EditorLayer::buffer_command(std::shared_ptr<EditorCommand> p_command) {
-    m_command_buffer.emplace_back(std::move(p_command));
+void EditorLayer::BufferCommand(std::shared_ptr<EditorCommand> p_command) {
+    m_commandBuffer.emplace_back(std::move(p_command));
 }
 
 static std::string gen_name(std::string_view p_name) {
@@ -130,14 +130,14 @@ static std::string gen_name(std::string_view p_name) {
     return std::format("{}-{}", p_name, ++s_counter);
 }
 
-void EditorLayer::flush_commands(Scene& scene) {
-    while (!m_command_buffer.empty()) {
-        auto task = m_command_buffer.front();
-        m_command_buffer.pop_front();
+void EditorLayer::FlushCommand(Scene& scene) {
+    while (!m_commandBuffer.empty()) {
+        auto task = m_commandBuffer.front();
+        m_commandBuffer.pop_front();
         do {
             if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
                 ecs::Entity id;
-                switch (add_command->entity_type) {
+                switch (add_command->entityType) {
                     case ENTITY_TYPE_INFINITE_LIGHT:
                         id = scene.CreateInfiniteLightEntity(gen_name("directional-light"));
                         break;
@@ -162,13 +162,13 @@ void EditorLayer::flush_commands(Scene& scene) {
                 }
 
                 scene.AttachComponent(id, add_command->parent.IsValid() ? add_command->parent : scene.m_root);
-                select_entity(id);
+                SelectEntity(id);
                 SceneManager::singleton().bumpRevision();
                 break;
             }
             if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {
                 DEV_ASSERT(command->target.IsValid());
-                switch (command->component_type) {
+                switch (command->componentType) {
                     case COMPONENT_TYPE_BOX_COLLIDER: {
                         auto& collider = scene.Create<BoxColliderComponent>(command->target);
                         collider.box = AABB::fromCenterSize(vec3(0), vec3(1));
@@ -192,11 +192,11 @@ void EditorLayer::flush_commands(Scene& scene) {
                 break;
             }
         } while (0);
-        m_command_history.push_back(task);
+        m_commandHistory.push_back(task);
     }
 }
 
-void EditorLayer::undo_command(Scene&) {
+void EditorLayer::UndoCommand(Scene&) {
     CRASH_NOW();
 }
 

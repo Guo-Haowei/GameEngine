@@ -8,10 +8,10 @@ public:
     HierarchyPanel(EditorLayer& editor) : EditorWindow("Scene", editor) {}
 
 protected:
-    void update_internal(Scene& scene) override;
+    void UpdateInternal(Scene& scene) override;
 
 private:
-    void draw_popup(Scene& scene);
+    void DrawPopup(Scene& scene);
 };
 
 }  // namespace my

@@ -18,38 +18,38 @@ public:
 
     EditorLayer();
 
-    void attach() override {}
-    void update(float dt) override;
-    void render() override;
+    void Attach() override {}
+    void Update(float dt) override;
+    void Render() override;
 
-    void select_entity(ecs::Entity p_selected);
-    ecs::Entity get_selected_entity() const { return m_selected; }
-    State get_state() const { return m_state; }
-    void set_state(State p_state) { m_state = p_state; }
+    void SelectEntity(ecs::Entity p_selected);
+    ecs::Entity GetSelectedEntity() const { return m_selected; }
+    State GetState() const { return m_state; }
+    void SetState(State p_state) { m_state = p_state; }
 
-    uint64_t get_displayed_image() const { return m_displayed_image; }
-    void set_displayed_image(uint64_t p_image) { m_displayed_image = p_image; }
+    uint64_t GetDisplayedImage() const { return m_displayedImage; }
+    void SetDisplayedImage(uint64_t p_image) { m_displayedImage = p_image; }
 
-    void add_component(ComponentType p_type, ecs::Entity p_target);
-    void add_entity(EntityType p_type, ecs::Entity p_parent);
-    void remove_entity(ecs::Entity p_target);
+    void AddComponent(ComponentType p_type, ecs::Entity p_target);
+    void AddEntity(EntityType p_type, ecs::Entity p_parent);
+    void RemoveEntity(ecs::Entity p_target);
 
 private:
-    void dock_space(Scene& p_scene);
-    void add_panel(std::shared_ptr<EditorItem> p_panel);
+    void DockSpace(Scene& p_scene);
+    void AddPanel(std::shared_ptr<EditorItem> p_panel);
 
-    void buffer_command(std::shared_ptr<EditorCommand> p_command);
-    void flush_commands(Scene& p_scene);
-    void undo_command(Scene& p_scene);
+    void BufferCommand(std::shared_ptr<EditorCommand> p_command);
+    void FlushCommand(Scene& p_scene);
+    void UndoCommand(Scene& p_scene);
 
-    std::shared_ptr<MenuBar> m_menu_bar;
+    std::shared_ptr<MenuBar> m_menuBar;
     std::vector<std::shared_ptr<EditorItem>> m_panels;
     ecs::Entity m_selected;
     State m_state{ STATE_TRANSLATE };
 
-    uint64_t m_displayed_image = 0;
-    std::list<std::shared_ptr<EditorCommand>> m_command_buffer;
-    RingBuffer<std::shared_ptr<EditorCommand>, 32> m_command_history;
+    uint64_t m_displayedImage = 0;
+    std::list<std::shared_ptr<EditorCommand>> m_commandBuffer;
+    RingBuffer<std::shared_ptr<EditorCommand>, 32> m_commandHistory;
 };
 
 }  // namespace my

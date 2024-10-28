@@ -11,38 +11,38 @@
 namespace my {
 
 template<typename T, typename UIFunction>
-static void DrawComponent(const std::string& name, T* component, UIFunction uiFunction) {
+static void DrawComponent(const std::string& p_name, T* p_component, UIFunction p_function) {
     const ImGuiTreeNodeFlags treeNodeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
                                              ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap |
                                              ImGuiTreeNodeFlags_FramePadding;
-    if (component) {
+    if (p_component) {
         ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
-        float lineHeight = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
+        float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
         ImGui::Separator();
-        bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
+        bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, p_name.c_str());
         ImGui::PopStyleVar();
-        ImGui::SameLine(contentRegionAvailable.x - lineHeight * 0.5f);
-        if (ImGui::Button("-", ImVec2{ lineHeight, lineHeight })) {
+        ImGui::SameLine(contentRegionAvailable.x - line_height * 0.5f);
+        if (ImGui::Button("-", ImVec2{ line_height, line_height })) {
             ImGui::OpenPopup("ComponentSettings");
         }
 
-        bool removeComponent = false;
+        bool should_remove_component = false;
         if (ImGui::BeginPopup("ComponentSettings")) {
             if (ImGui::MenuItem("remove component")) {
-                removeComponent = true;
+                should_remove_component = true;
             }
 
             ImGui::EndPopup();
         }
 
         if (open) {
-            uiFunction(*component);
+            p_function(*p_component);
             ImGui::TreePop();
         }
 
-        if (removeComponent) {
+        if (should_remove_component) {
             LOG_ERROR("TODO: implement remove component");
         }
     }
@@ -51,30 +51,30 @@ static void DrawComponent(const std::string& name, T* component, UIFunction uiFu
 template<typename... Args>
 static bool draw_vec3_control_disabled(bool disabled, Args&&... args) {
     if (disabled) {
-        push_disabled();
+        PushDisabled();
     }
-    bool dirty = draw_vec3_control(std::forward<Args>(args)...);
+    bool dirty = DrawVec3Control(std::forward<Args>(args)...);
     if (disabled) {
-        pop_disabled();
+        PopDisabled();
     }
     return dirty;
 };
 
-void PropertyPanel::update_internal(Scene& scene) {
-    ecs::Entity id = m_editor.get_selected_entity();
+void PropertyPanel::UpdateInternal(Scene& p_scene) {
+    ecs::Entity id = m_editor.GetSelectedEntity();
 
     if (!id.IsValid()) {
         return;
     }
 
-    NameComponent* name_component = scene.GetComponent<NameComponent>(id);
+    NameComponent* name_component = p_scene.GetComponent<NameComponent>(id);
     // @NOTE: when loading another scene, the selected entity will expire, thus don't have name
     if (!name_component) {
         // LOG_WARN("Entity {} does not have name", id.get_id());
         return;
     }
 
-    panel_util::edit_name(name_component);
+    panel_util::EditName(name_component);
 
     ImGui::SameLine();
     ImGui::PushItemWidth(-1);
@@ -90,25 +90,25 @@ void PropertyPanel::update_internal(Scene& scene) {
         if (ImGui::BeginMenu("Selectable")) {
             // @TODO: check if exists, if exists, disable
             if (ImGui::MenuItem("Box Collider")) {
-                m_editor.add_component(COMPONENT_TYPE_BOX_COLLIDER, id);
+                m_editor.AddComponent(COMPONENT_TYPE_BOX_COLLIDER, id);
             }
             if (ImGui::MenuItem("Mesh Collider")) {
-                m_editor.add_component(COMPONENT_TYPE_MESH_COLLIDER, id);
+                m_editor.AddComponent(COMPONENT_TYPE_MESH_COLLIDER, id);
             }
             ImGui::EndMenu();
         }
         ImGui::EndPopup();
     }
 
-    TransformComponent* transform_component = scene.GetComponent<TransformComponent>(id);
-    LightComponent* light_component = scene.GetComponent<LightComponent>(id);
-    ObjectComponent* object_component = scene.GetComponent<ObjectComponent>(id);
-    MeshComponent* mesh_component = object_component ? scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
-    MaterialComponent* material_component = scene.GetComponent<MaterialComponent>(id);
-    RigidBodyComponent* rigid_body_component = scene.GetComponent<RigidBodyComponent>(id);
-    BoxColliderComponent* box_collider = scene.GetComponent<BoxColliderComponent>(id);
-    MeshColliderComponent* mesh_collider = scene.GetComponent<MeshColliderComponent>(id);
-    AnimationComponent* animation_component = scene.GetComponent<AnimationComponent>(id);
+    TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
+    LightComponent* light_component = p_scene.GetComponent<LightComponent>(id);
+    ObjectComponent* object_component = p_scene.GetComponent<ObjectComponent>(id);
+    MeshComponent* mesh_component = object_component ? p_scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
+    MaterialComponent* material_component = p_scene.GetComponent<MaterialComponent>(id);
+    RigidBodyComponent* rigid_body_component = p_scene.GetComponent<RigidBodyComponent>(id);
+    BoxColliderComponent* box_collider = p_scene.GetComponent<BoxColliderComponent>(id);
+    MeshColliderComponent* mesh_collider = p_scene.GetComponent<MeshColliderComponent>(id);
+    AnimationComponent* animation_component = p_scene.GetComponent<AnimationComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -176,9 +176,9 @@ void PropertyPanel::update_internal(Scene& scene) {
             p_light.SetDirty();
         }
 
-        dirty |= draw_drag_float("constant", p_light.m_atten.constant, 0.1f, 0.0f, 1.0f);
-        dirty |= draw_drag_float("linear", p_light.m_atten.linear, 0.1f, 0.0f, 1.0f);
-        dirty |= draw_drag_float("quadratic", p_light.m_atten.quadratic, 0.1f, 0.0f, 1.0f);
+        dirty |= DrawDragFloat("constant", p_light.m_atten.constant, 0.1f, 0.0f, 1.0f);
+        dirty |= DrawDragFloat("linear", p_light.m_atten.linear, 0.1f, 0.0f, 1.0f);
+        dirty |= DrawDragFloat("quadratic", p_light.m_atten.quadratic, 0.1f, 0.0f, 1.0f);
         ImGui::Text("max distance: %0.3f", p_light.GetMaxDistance());
     });
 
@@ -197,12 +197,12 @@ void PropertyPanel::update_internal(Scene& scene) {
 
     DrawComponent("Material", material_component, [](MaterialComponent& p_material) {
         vec3 color = p_material.base_color;
-        if (draw_color_control("Color", color)) {
+        if (DrawColorControl("Color", color)) {
             p_material.base_color = vec4(color, p_material.base_color.a);
         }
-        draw_drag_float("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);
-        draw_drag_float("roughness", p_material.roughness, 0.01f, 0.0f, 1.0f);
-        draw_drag_float("emissive:", p_material.emissive, 0.1f, 0.0f, 100.0f);
+        DrawDragFloat("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);
+        DrawDragFloat("roughness", p_material.roughness, 0.01f, 0.0f, 1.0f);
+        DrawDragFloat("emissive:", p_material.emissive, 0.1f, 0.0f, 100.0f);
         for (int i = 0; i < MaterialComponent::TEXTURE_MAX; ++i) {
             auto& texture = p_material.textures[i];
             if (texture.path.empty()) {
@@ -237,7 +237,7 @@ void PropertyPanel::update_internal(Scene& scene) {
     DrawComponent("Box Collider", box_collider, [&](BoxColliderComponent& collider) {
         vec3 center = collider.box.center();
         vec3 size = collider.box.size();
-        if (draw_vec3_control("size", size)) {
+        if (DrawVec3Control("size", size)) {
             collider.box = AABB::fromCenterSize(center, size);
         }
     });
@@ -246,13 +246,13 @@ void PropertyPanel::update_internal(Scene& scene) {
         char buffer[256];
         StringUtils::Sprintf(buffer, "%d", collider.objectId.GetId());
         ImGui::Columns(2);
-        ImGui::SetColumnWidth(0, kDefaultColumnWidth);
+        ImGui::SetColumnWidth(0, DEFAULT_COLUMN_WIDTH);
         ImGui::Text("Mesh ID");
         ImGui::NextColumn();
         ImGui::InputText("##ID", buffer, sizeof(buffer));
         ImGui::Columns(1);
         ecs::Entity entity{ (uint32_t)std::stoi(buffer) };
-        if (scene.GetComponent<ObjectComponent>(entity) != nullptr) {
+        if (p_scene.GetComponent<ObjectComponent>(entity) != nullptr) {
             collider.objectId = entity;
         }
     });

@@ -9,38 +9,38 @@ namespace my {
 namespace fs = std::filesystem;
 
 ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Browser", p_editor) {
-    m_root_path = fs::path{ fs::path(ROOT_FOLDER) / "resources" };
+    m_rootPath = fs::path{ fs::path(ROOT_FOLDER) / "resources" };
 
     const std::string& cached_path = DVAR_GET_STRING(content_browser_path);
     if (!cached_path.empty() && fs::exists(cached_path)) {
-        m_current_path = cached_path;
+        m_currentPath = cached_path;
     } else {
-        m_current_path = m_root_path;
+        m_currentPath = m_rootPath;
     }
 
     auto folder_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/folder_icon.png" })->get();
     auto image_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/image_icon.png" })->get();
     auto scene_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/scene_icon.png" })->get();
 
-    m_icon_map["."] = { folder_icon, nullptr };
-    m_icon_map[".png"] = { image_icon, nullptr };
-    m_icon_map[".hdr"] = { image_icon, EditorItem::DRAG_DROP_ENV };
-    m_icon_map[".gltf"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
-    m_icon_map[".obj"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
-    m_icon_map[".scene"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
-    m_icon_map[".lua"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_iconMap["."] = { folder_icon, nullptr };
+    m_iconMap[".png"] = { image_icon, nullptr };
+    m_iconMap[".hdr"] = { image_icon, EditorItem::DRAG_DROP_ENV };
+    m_iconMap[".gltf"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_iconMap[".obj"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_iconMap[".scene"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
+    m_iconMap[".lua"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
 }
 
 ContentBrowser::~ContentBrowser() {
-    DVAR_SET_STRING(content_browser_path, m_current_path.string());
+    DVAR_SET_STRING(content_browser_path, m_currentPath.string());
 }
 
-void ContentBrowser::update_internal(Scene&) {
+void ContentBrowser::UpdateInternal(Scene&) {
     if (ImGui::Button("<-")) {
-        if (m_current_path == m_root_path) {
+        if (m_currentPath == m_rootPath) {
             LOG_WARN("TODO: don't go outside project dir");
         }
-        m_current_path = m_current_path.parent_path();
+        m_currentPath = m_currentPath.parent_path();
     }
 
     // ImGui::Image((ImTextureID)handle, ImVec2(dim.x, dim.y), ImVec2(0, 1), ImVec2(1, 0));
@@ -52,7 +52,7 @@ void ContentBrowser::update_internal(Scene&) {
 
     ImGui::Columns(num_col, nullptr, false);
 
-    for (const auto& entry : fs::directory_iterator(m_current_path)) {
+    for (const auto& entry : fs::directory_iterator(m_currentPath)) {
         const bool is_file = entry.is_regular_file();
         const bool is_dir = entry.is_directory();
         if (!is_dir && !is_file) {
@@ -60,7 +60,7 @@ void ContentBrowser::update_internal(Scene&) {
         }
 
         fs::path full_path = entry.path();
-        fs::path relative_path = fs::relative(full_path, m_root_path);
+        fs::path relative_path = fs::relative(full_path, m_rootPath);
         // std::string relative_path_string = relative_path.string();
 
         std::string name;
@@ -73,9 +73,9 @@ void ContentBrowser::update_internal(Scene&) {
             extention = full_path.extension().string();
         }
 
-        auto it = m_icon_map.find(extention);
+        auto it = m_iconMap.find(extention);
         ImVec2 size{ desired_icon_size, desired_icon_size };
-        if (it == m_icon_map.end()) {
+        if (it == m_iconMap.end()) {
             continue;
         }
 
@@ -107,7 +107,7 @@ void ContentBrowser::update_internal(Scene&) {
 
         if (clicked) {
             if (is_dir) {
-                m_current_path = full_path;
+                m_currentPath = full_path;
             } else if (is_file) {
             }
         }

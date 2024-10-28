@@ -8,11 +8,11 @@ public:
     ConsolePanel(EditorLayer& editor) : EditorWindow("Console", editor) {}
 
 protected:
-    void update_internal(Scene& scene) override;
+    void UpdateInternal(Scene& scene) override;
 
 private:
-    bool m_auto_scroll = true;
-    bool m_scroll_to_bottom = false;
+    bool m_autoScroll = true;
+    bool m_scrollToBottom = false;
 };
 
 }  // namespace my

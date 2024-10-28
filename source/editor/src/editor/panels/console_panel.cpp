@@ -5,7 +5,7 @@
 
 namespace my {
 
-static ImVec4 log_level_to_color(LogLevel level) {
+static ImVec4 GetLogLevelColor(LogLevel level) {
     Color color = Color::hex(ColorCode::COLOR_WHITE);
     switch (level) {
         case my::LOG_LEVEL_VERBOSE:
@@ -28,7 +28,7 @@ static ImVec4 log_level_to_color(LogLevel level) {
     return ImVec4(color.r, color.g, color.b, 1.0f);
 }
 
-void ConsolePanel::update_internal(Scene&) {
+void ConsolePanel::UpdateInternal(Scene&) {
     ImGui::Separator();
 
     // reserve enough left-over height for 1 separator + 1 input text
@@ -41,15 +41,15 @@ void ConsolePanel::update_internal(Scene&) {
     std::vector<my::CompositeLogger::Log> logs;
     my::CompositeLogger::singleton().RetrieveLog(logs);
     for (const auto& log : logs) {
-        ImGui::PushStyleColor(ImGuiCol_Text, log_level_to_color(log.level));
+        ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(log.level));
         ImGui::TextUnformatted(log.buffer);
         ImGui::PopStyleColor();
     }
 
-    if (m_scroll_to_bottom || (m_auto_scroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())) {
+    if (m_scrollToBottom || (m_autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())) {
         ImGui::SetScrollHereY(1.0f);
     }
-    m_scroll_to_bottom = false;
+    m_scrollToBottom = false;
 
     ImGui::PopStyleVar();
     ImGui::EndChild();
