@@ -58,8 +58,7 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
             const vec3 ray_end = ray_start + direction * camera.getFar();
             Ray ray(ray_start, ray_end);
 
-            const auto result = scene.intersects(ray);
-            // const auto result = scene.select(ray);
+            const auto result = scene.Intersects(ray);
 
             m_editor.select_entity(result.entity);
         }
@@ -192,7 +191,7 @@ void Viewer::update_internal(Scene& scene) {
     update_data();
 
     if (m_focused) {
-        m_camera_controller.move(scene.m_delta_time, camera);
+        m_camera_controller.move(scene.m_elapsedTime, camera);
     }
 
     select_entity(scene, camera);

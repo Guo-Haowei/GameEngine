@@ -139,29 +139,29 @@ void EditorLayer::flush_commands(Scene& scene) {
                 ecs::Entity id;
                 switch (add_command->entity_type) {
                     case ENTITY_TYPE_INFINITE_LIGHT:
-                        id = scene.createInfiniteLightEntity(gen_name("directional-light"));
+                        id = scene.CreateInfiniteLightEntity(gen_name("directional-light"));
                         break;
                     case ENTITY_TYPE_POINT_LIGHT:
-                        id = scene.createPointLightEntity(gen_name("point-light"), vec3(0, 1, 0));
+                        id = scene.CreatePointLightEntity(gen_name("point-light"), vec3(0, 1, 0));
                         break;
                     case ENTITY_TYPE_AREA_LIGHT:
-                        id = scene.createAreaLightEntity(gen_name("area-light"));
+                        id = scene.CreateAreaLightEntity(gen_name("area-light"));
                         break;
                     case ENTITY_TYPE_PLANE:
-                        id = scene.createPlaneEntity(gen_name("plane"));
+                        id = scene.CreatePlaneEntity(gen_name("plane"));
                         break;
                     case ENTITY_TYPE_CUBE:
-                        id = scene.createCubeEntity(gen_name("cube"));
+                        id = scene.CreateCubeEntity(gen_name("cube"));
                         break;
                     case ENTITY_TYPE_SPHERE:
-                        id = scene.createSphereEntity(gen_name("sphere"));
+                        id = scene.CreateSphereEntity(gen_name("sphere"));
                         break;
                     default:
                         CRASH_NOW();
                         break;
                 }
 
-                scene.attachComponent(id, add_command->parent.IsValid() ? add_command->parent : scene.m_root);
+                scene.AttachComponent(id, add_command->parent.IsValid() ? add_command->parent : scene.m_root);
                 select_entity(id);
                 SceneManager::singleton().bumpRevision();
                 break;
@@ -185,7 +185,7 @@ void EditorLayer::flush_commands(Scene& scene) {
             if (auto command = dynamic_cast<EditorCommandRemoveEntity*>(task.get()); command) {
                 auto entity = command->target;
                 DEV_ASSERT(entity.IsValid());
-                scene.removeEntity(entity);
+                scene.RemoveEntity(entity);
                 // if (scene.contains<TransformComponent>(entity)) {
 
                 //}

@@ -67,12 +67,12 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
             mesh.armature_id = entity;
 
             // the object component will use an identity transform but will be parented to the armature
-            ecs::Entity objectID = m_scene->createObjectEntity("Animated::" + node.name);
+            ecs::Entity objectID = m_scene->CreateObjectEntity("Animated::" + node.name);
             ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(objectID);
             object.meshId = mesh_id;
-            m_scene->attachComponent(objectID, entity);
+            m_scene->AttachComponent(objectID, entity);
         } else {  // this node is a mesh instance
-            entity = m_scene->createObjectEntity("Object::" + node.name);
+            entity = m_scene->CreateObjectEntity("Object::" + node.name);
             ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(entity);
             object.meshId = m_scene->GetEntity<MeshComponent>(node.mesh);
         }
@@ -132,7 +132,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     transform.UpdateTransform();
 
     if (parent.IsValid()) {
-        m_scene->attachComponent(entity, parent);
+        m_scene->AttachComponent(entity, parent);
     }
 
     for (int child : node.children) {
@@ -175,7 +175,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
 
     // Create materials
     for (const auto& x : m_model->materials) {
-        ecs::Entity materialEntity = m_scene->createMaterialEntity(x.name);
+        ecs::Entity materialEntity = m_scene->CreateMaterialEntity(x.name);
         MaterialComponent& material = *m_scene->GetComponent<MaterialComponent>(materialEntity);
 
         // metallic-roughness workflow:
@@ -324,7 +324,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
 }
 
 void LoaderTinyGLTF::process_mesh(const tinygltf::Mesh& gltf_mesh, int) {
-    ecs::Entity mesh_id = m_scene->createMeshEntity("Mesh::" + gltf_mesh.name);
+    ecs::Entity mesh_id = m_scene->CreateMeshEntity("Mesh::" + gltf_mesh.name);
     // m_scene->Component_Attach(mesh_id, state.rootEntity);
     MeshComponent& mesh = *m_scene->GetComponent<MeshComponent>(mesh_id);
 
@@ -595,8 +595,8 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
     if (tag.empty()) {
         tag = std::format("{}::animation_{}", m_file_name, ++s_counter);
     }
-    auto entity = m_scene->createNameEntity(tag);
-    m_scene->attachComponent(entity);
+    auto entity = m_scene->CreateNameEntity(tag);
+    m_scene->AttachComponent(entity);
 
     // m_scene->Component_Attach(entity, m_scene->m_root);
     AnimationComponent& animation = m_scene->Create<AnimationComponent>(entity);

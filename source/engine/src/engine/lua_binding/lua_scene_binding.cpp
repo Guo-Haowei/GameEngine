@@ -70,12 +70,12 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
 
     if (sol::optional<std::string> type = p_components["type"]; type) {
         if (type == "POINT_LIGHT") {
-            id = p_scene->createPointLightEntity(name, translate);
+            id = p_scene->CreatePointLightEntity(name, translate);
             LightComponent* light = p_scene->GetComponent<LightComponent>(id);
             light->SetCastShadow();
             light->SetDirty();
         } else if (type == "INFINITE_LIGHT") {
-            id = p_scene->createInfiniteLightEntity(name);
+            id = p_scene->CreateInfiniteLightEntity(name);
             LightComponent* light = p_scene->GetComponent<LightComponent>(id);
             light->SetCastShadow();
             light->SetDirty();
@@ -85,7 +85,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
     }
 
     auto create_material = [&]() {
-        return p_scene->createMaterialEntity(name + "-material");
+        return p_scene->CreateMaterialEntity(name + "-material");
     };
 
     if (sol::optional<sol::table> table = p_components["material"]; table) {
@@ -108,7 +108,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             material_id = create_material();
         }
 
-        id = p_scene->createCubeEntity(name, material_id, size, transform);
+        id = p_scene->CreateCubeEntity(name, material_id, size, transform);
     }
     if (sol::optional<sol::table> table = p_components["plane"]; table) {
         vec3 size{ 0.5f };
@@ -117,7 +117,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             material_id = create_material();
         }
 
-        id = p_scene->createPlaneEntity(name, material_id, size, transform);
+        id = p_scene->CreatePlaneEntity(name, material_id, size, transform);
     }
     if (sol::optional<sol::table> table = p_components["sphere"]; table) {
         float radius{ 0.5f };
@@ -126,12 +126,12 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
             material_id = create_material();
         }
 
-        id = p_scene->createSphereEntity(name, material_id, radius, transform);
+        id = p_scene->CreateSphereEntity(name, material_id, radius, transform);
     }
 
     if (TransformComponent* transform_component = p_scene->GetComponent<TransformComponent>(id); !transform_component) {
         DEV_ASSERT(!id.IsValid());
-        id = p_scene->createNameEntity(name);
+        id = p_scene->CreateNameEntity(name);
 
         transform_component = &p_scene->Create<TransformComponent>(id);
         transform_component->SetLocalTransform(transform);
@@ -171,7 +171,7 @@ struct LuaScene {
 
     uint32_t create_entity(const sol::table& p_components) {
         uint32_t id = create_entity_detached(p_components);
-        scene->attachComponent(Entity{ id }, scene->m_root);
+        scene->AttachComponent(Entity{ id }, scene->m_root);
         return id;
     }
 
@@ -181,11 +181,11 @@ struct LuaScene {
     }
 
     void attach(uint32_t p_child, uint32_t p_parent) {
-        scene->attachComponent(Entity{ p_child }, Entity{ p_parent });
+        scene->AttachComponent(Entity{ p_child }, Entity{ p_parent });
     }
 
     void attach_root(uint32_t p_child) {
-        scene->attachComponent(Entity{ p_child }, Entity{ scene->m_root });
+        scene->AttachComponent(Entity{ p_child }, Entity{ scene->m_root });
     }
 
     Scene* scene;

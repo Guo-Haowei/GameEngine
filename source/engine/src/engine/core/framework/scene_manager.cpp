@@ -18,12 +18,12 @@ static void create_empty_scene(Scene* scene) {
     Entity::SetSeed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-    scene->createCamera(frame_size.x, frame_size.y);
+    scene->CreateCamera(frame_size.x, frame_size.y);
 
-    auto root = scene->createTransformEntity("world");
+    auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;
     if (0) {
-        auto light = scene->createInfiniteLightEntity("infinite light", vec3(1));
+        auto light = scene->CreateInfiniteLightEntity("infinite light", vec3(1));
         auto transform = scene->GetComponent<TransformComponent>(light);
         DEV_ASSERT(transform);
         constexpr float rx = glm::radians(-80.0f);
@@ -31,7 +31,7 @@ static void create_empty_scene(Scene* scene) {
         constexpr float rz = glm::radians(0.0f);
         transform->Rotate(vec3(rx, ry, rz));
 
-        scene->attachComponent(light, root);
+        scene->AttachComponent(light, root);
     }
 }
 
@@ -63,8 +63,8 @@ bool SceneManager::trySwapScene() {
         queued_scene.pop();
         DEV_ASSERT(task.scene);
         if (m_scene && !task.replace) {
-            m_scene->merge(*task.scene);
-            m_scene->update(0.0f);
+            m_scene->Merge(*task.scene);
+            m_scene->Update(0.0f);
             delete task.scene;
         } else {
             Scene* old_scene = m_scene;
@@ -91,7 +91,7 @@ void SceneManager::update(float dt) {
         m_last_revision = m_revision;
     }
 
-    SceneManager::getScene().update(dt);
+    SceneManager::getScene().Update(dt);
 }
 
 void SceneManager::enqueueSceneLoadingTask(Scene* p_scene, bool p_replace) {
@@ -106,14 +106,14 @@ void SceneManager::requestScene(std::string_view p_path) {
         AssetManager::singleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
-            new_scene->update(0.0f);
+            new_scene->Update(0.0f);
             SceneManager::singleton().enqueueSceneLoadingTask(new_scene, true);
         });
     } else {
         AssetManager::singleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
-            new_scene->update(0.0f);
+            new_scene->Update(0.0f);
             SceneManager::singleton().enqueueSceneLoadingTask(new_scene, false);
         });
     }
