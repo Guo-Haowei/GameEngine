@@ -93,8 +93,8 @@ int Application::run(int argc, const char** argv) {
 
     initLayers();
     for (auto& layer : m_layers) {
-        layer->attach();
-        LOG("[Runtime] layer '{}' attached!", layer->getName());
+        layer->Attach();
+        LOG("[Runtime] layer '{}' attached!", layer->GetName());
     }
 
     LOG("\n********************************************************************************"
@@ -128,11 +128,11 @@ int Application::run(int argc, const char** argv) {
         // to avoid empty renderer crash
         ImGui::NewFrame();
         for (auto& layer : m_layers) {
-            layer->update(dt);
+            layer->Update(dt);
         }
 
         for (auto& layer : m_layers) {
-            layer->render();
+            layer->Render();
         }
         ImGui::Render();
 

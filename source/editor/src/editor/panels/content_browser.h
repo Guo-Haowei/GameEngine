@@ -10,16 +10,17 @@ public:
     ~ContentBrowser();
 
 protected:
-    void update_internal(Scene& p_scene) override;
+    void UpdateInternal(Scene& p_scene) override;
 
-    std::filesystem::path m_root_path;
-    std::filesystem::path m_current_path;
+    // @TODO: use FilePath
+    std::filesystem::path m_rootPath;
+    std::filesystem::path m_currentPath;
 
     struct ExtensionAction {
         Image* image;
         const char* action;
     };
-    std::map<std::string, ExtensionAction> m_icon_map;
+    std::map<std::string, ExtensionAction> m_iconMap;
 };
 
 }  // namespace my

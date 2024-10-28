@@ -44,7 +44,7 @@ bool LoaderAssimp::load(Scene* data) {
 }
 
 void LoaderAssimp::process_material(aiMaterial& material) {
-    auto material_id = m_scene->createMaterialEntity(std::string("Material::") + material.GetName().C_Str());
+    auto material_id = m_scene->CreateMaterialEntity(std::string("Material::") + material.GetName().C_Str());
     MaterialComponent* materialComponent = m_scene->GetComponent<MaterialComponent>(material_id);
     DEV_ASSERT(materialComponent);
 
@@ -83,7 +83,7 @@ void LoaderAssimp::process_mesh(const aiMesh& mesh) {
         LOG_WARN("mesh {} does not have texture coordinates", mesh_name);
     }
 
-    ecs::Entity mesh_id = m_scene->createMeshEntity("Mesh::" + mesh_name);
+    ecs::Entity mesh_id = m_scene->CreateMeshEntity("Mesh::" + mesh_name);
     MeshComponent& mesh_component = *m_scene->GetComponent<MeshComponent>(mesh_id);
 
     for (uint32_t i = 0; i < mesh.mNumVertices; ++i) {
@@ -129,20 +129,20 @@ ecs::Entity LoaderAssimp::process_node(const aiNode* node, ecs::Entity parent) {
     ecs::Entity entity;
 
     if (node->mNumMeshes == 1) {  // geometry node
-        entity = m_scene->createObjectEntity("Geometry::" + key);
+        entity = m_scene->CreateObjectEntity("Geometry::" + key);
 
         ObjectComponent& objComponent = *m_scene->GetComponent<ObjectComponent>(entity);
         objComponent.meshId = m_meshes[node->mMeshes[0]];
     } else {  // else make it a transform/bone node
-        entity = m_scene->createTransformEntity("Node::" + key);
+        entity = m_scene->CreateTransformEntity("Node::" + key);
 
         for (uint32_t i = 0; i < node->mNumMeshes; ++i) {
-            ecs::Entity child = m_scene->createObjectEntity("");
+            ecs::Entity child = m_scene->CreateObjectEntity("");
             auto tagComponent = m_scene->GetComponent<NameComponent>(child);
             tagComponent->SetName("SubGeometry_" + std::to_string(child.GetId()));
             ObjectComponent& objComponent = *m_scene->GetComponent<ObjectComponent>(child);
             objComponent.meshId = m_meshes[node->mMeshes[i]];
-            m_scene->attachComponent(child, entity);
+            m_scene->AttachComponent(child, entity);
         }
     }
 
@@ -158,7 +158,7 @@ ecs::Entity LoaderAssimp::process_node(const aiNode* node, ecs::Entity parent) {
     transform.MatrixTransform(localTransformColumnMajor);
 
     if (parent.IsValid()) {
-        m_scene->attachComponent(entity, parent);
+        m_scene->AttachComponent(entity, parent);
     }
 
     // process children

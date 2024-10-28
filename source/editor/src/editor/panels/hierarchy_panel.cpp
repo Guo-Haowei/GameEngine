@@ -20,22 +20,22 @@ public:
         std::vector<HierarchyNode*> children;
     };
 
-    HierarchyCreator(EditorLayer& p_editor) : m_editor_layer(p_editor) {}
+    HierarchyCreator(EditorLayer& p_editor) : m_editorLayer(p_editor) {}
 
-    void update(const Scene& scene) {
-        if (build(scene)) {
+    void Update(const Scene& scene) {
+        if (Build(scene)) {
             DEV_ASSERT(m_root);
-            draw_node(scene, m_root, ImGuiTreeNodeFlags_DefaultOpen);
+            DrawNode(scene, m_root, ImGuiTreeNodeFlags_DefaultOpen);
         }
     }
 
 private:
-    bool build(const Scene& p_scene);
-    void draw_node(const Scene& p_scene, HierarchyNode* p_node, ImGuiTreeNodeFlags p_flags = 0);
+    bool Build(const Scene& p_scene);
+    void DrawNode(const Scene& p_scene, HierarchyNode* p_node, ImGuiTreeNodeFlags p_flags = 0);
 
     std::map<Entity, std::shared_ptr<HierarchyNode>> m_nodes;
     HierarchyNode* m_root = nullptr;
-    EditorLayer& m_editor_layer;
+    EditorLayer& m_editorLayer;
 };
 
 static bool tree_node_helper(const Scene& p_scene,
@@ -76,7 +76,7 @@ static bool tree_node_helper(const Scene& p_scene,
 }
 
 // @TODO: make it an widget
-void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
+void HierarchyCreator::DrawNode(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
     DEV_ASSERT(p_hier);
     Entity id = p_hier->entity;
     const NameComponent* name_component = p_scene.GetComponent<NameComponent>(id);
@@ -88,15 +88,15 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
     auto tag = std::format("{}{}", name, node_name);
 
     p_flags |= (p_hier->children.empty() && !mesh_component) ? ImGuiTreeNodeFlags_Leaf : 0;
-    p_flags |= m_editor_layer.get_selected_entity() == id ? ImGuiTreeNodeFlags_Selected : 0;
+    p_flags |= m_editorLayer.GetSelectedEntity() == id ? ImGuiTreeNodeFlags_Selected : 0;
 
     const bool expanded = tree_node_helper(
         p_scene, id, p_flags,
         [&]() {
-            m_editor_layer.select_entity(id);
+            m_editorLayer.SelectEntity(id);
         },
         [&]() {
-            m_editor_layer.select_entity(id);
+            m_editorLayer.SelectEntity(id);
             ImGui::OpenPopup(POPUP_NAME_ID);
         });
 
@@ -112,7 +112,7 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
                     tree_node_helper(
                         p_scene, subset.material_id, flags,
                         [&]() {
-                            m_editor_layer.select_entity(subset.material_id);
+                            m_editorLayer.SelectEntity(subset.material_id);
                         },
                         nullptr);
                 }
@@ -122,20 +122,20 @@ void HierarchyCreator::draw_node(const Scene& p_scene, HierarchyNode* p_hier, Im
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
                 tree_node_helper(
                     p_scene, armature_id, flags, [&]() {
-                        m_editor_layer.select_entity(armature_id);
+                        m_editorLayer.SelectEntity(armature_id);
                     },
                     nullptr);
             }
         }
 
         for (auto& child : p_hier->children) {
-            draw_node(p_scene, child);
+            DrawNode(p_scene, child);
         }
         ImGui::Unindent(indentWidth);
     }
 }
 
-bool HierarchyCreator::build(const Scene& p_scene) {
+bool HierarchyCreator::Build(const Scene& p_scene) {
     // @TODO: on scene change instead of build every frame
     const size_t hierarchy_count = p_scene.GetCount<HierarchyComponent>();
     if (hierarchy_count == 0) {
@@ -172,25 +172,25 @@ bool HierarchyCreator::build(const Scene& p_scene) {
     return true;
 }
 
-void HierarchyPanel::update_internal(Scene& p_scene) {
+void HierarchyPanel::UpdateInternal(Scene& p_scene) {
     // @TODO: on scene change, rebuild hierarchy
     HierarchyCreator creator(m_editor);
 
-    draw_popup(p_scene);
+    DrawPopup(p_scene);
 
-    creator.update(p_scene);
+    creator.Update(p_scene);
 }
 
-void HierarchyPanel::draw_popup(Scene&) {
-    auto selected = m_editor.get_selected_entity();
+void HierarchyPanel::DrawPopup(Scene&) {
+    auto selected = m_editor.GetSelectedEntity();
     // @TODO: save commands for undo
 
     if (ImGui::BeginPopup(POPUP_NAME_ID)) {
-        open_add_entity_popup(selected);
+        OpenAddEntityPopup(selected);
         if (ImGui::MenuItem("Delete")) {
             if (selected.IsValid()) {
-                m_editor.select_entity(Entity::INVALID);
-                m_editor.remove_entity(selected);
+                m_editor.SelectEntity(Entity::INVALID);
+                m_editor.RemoveEntity(selected);
             }
         }
         ImGui::EndPopup();

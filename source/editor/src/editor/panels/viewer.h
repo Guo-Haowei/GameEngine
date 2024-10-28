@@ -9,18 +9,18 @@ public:
     Viewer(EditorLayer& p_editor) : EditorWindow("Viewer", p_editor) {}
 
 protected:
-    void update_internal(Scene& scene) override;
+    void UpdateInternal(Scene& p_scene) override;
 
 private:
-    void update_data();
-    void select_entity(Scene& scene, const Camera& camera);
-    void draw_gui(Scene& scene, Camera& camera);
+    void UpdateData();
+    void SelectEntity(Scene& p_scene, const Camera& p_camera);
+    void DrawGui(Scene& p_scene, Camera& p_camera);
 
-    vec2 m_canvas_min;
-    vec2 m_canvas_size;
+    vec2 m_canvasMin;
+    vec2 m_canvasSize;
     bool m_focused;
     // @TODO: move camera controller to somewhere else
-    CameraController m_camera_controller;
+    CameraController m_cameraController;
 };
 
 }  // namespace my

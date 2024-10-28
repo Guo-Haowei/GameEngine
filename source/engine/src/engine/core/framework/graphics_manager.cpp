@@ -364,8 +364,8 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     DEV_ASSERT(math::isPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    vec3 world_center = p_scene.getBound().center();
-    vec3 aabb_size = p_scene.getBound().size();
+    vec3 world_center = p_scene.GetBound().center();
+    vec3 aabb_size = p_scene.GetBound().size();
     float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
 
     const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
@@ -412,7 +412,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
-                const AABB& world_bound = p_scene.getBound();
+                const AABB& world_bound = p_scene.GetBound();
                 const vec3 center = world_bound.center();
                 const vec3 extents = world_bound.size();
                 const float size = 0.7f * glm::max(extents.x, glm::max(extents.y, extents.z));

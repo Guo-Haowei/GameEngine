@@ -27,13 +27,15 @@ private:
 
     int m_emittedParticleCount;
     int m_maxParticleCount;
-    int m_emittedParticlesPerFrame;
+    int m_emittedParticlesPerSecond;
     float m_particleScale;
     float m_particleLifeSpan;
+    vec3 m_startingVelocity;
 
     std::vector<Particle> m_particlePool;
 
     friend class GraphicsManager;
+    friend class EmitterPanel;
 };
 
 }  // namespace my

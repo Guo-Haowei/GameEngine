@@ -8,7 +8,7 @@ public:
     RendererPanel(EditorLayer& p_editor) : EditorWindow("Renderer", p_editor) {}
 
 protected:
-    void update_internal(Scene& p_scene) override;
+    void UpdateInternal(Scene& p_scene) override;
 };
 
 }  // namespace my

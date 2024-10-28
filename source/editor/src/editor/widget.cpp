@@ -2,42 +2,59 @@
 
 namespace my {
 
-void push_disabled() {
+void PushDisabled() {
     ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 }
 
-void pop_disabled() {
+void PopDisabled() {
     ImGui::PopItemFlag();
     ImGui::PopStyleVar();
 }
 
-bool draw_drag_float(const char* p_lable,
-                     float& p_out_float,
-                     float p_speed,
-                     float p_min,
-                     float p_max,
-                     float p_column_width) {
+bool DrawDragInt(const char* p_lable,
+                 int& p_out,
+                 float p_speed,
+                 int p_min,
+                 int p_max,
+                 float p_column_width) {
     ImGui::Columns(2);
     ImGui::SetColumnWidth(0, p_column_width);
     ImGui::Text(p_lable);
     ImGui::NextColumn();
-    auto dragFloatTag = std::format("##{}", p_lable);
-    bool dirty = ImGui::DragFloat(dragFloatTag.c_str(), &p_out_float, p_speed, p_min, p_max);
+    auto tag = std::format("##{}", p_lable);
+    bool is_dirty = ImGui::DragInt(tag.c_str(), &p_out, p_speed, p_min, p_max);
     ImGui::Columns(1);
-    return dirty;
+    return is_dirty;
 }
+
+bool DrawDragFloat(const char* p_lable,
+                   float& p_out,
+                   float p_speed,
+                   float p_min,
+                   float p_max,
+                   float p_column_width) {
+    ImGui::Columns(2);
+    ImGui::SetColumnWidth(0, p_column_width);
+    ImGui::Text(p_lable);
+    ImGui::NextColumn();
+    auto tag = std::format("##{}", p_lable);
+    bool is_dirty = ImGui::DragFloat(tag.c_str(), &p_out, p_speed, p_min, p_max);
+    ImGui::Columns(1);
+    return is_dirty;
+}
+
 enum {
     TYPE_TRANSFORM,
     TYPE_COLOR,
 };
 
-bool draw_vec3_control_impl(int type,
-                            const char* p_label,
-                            glm::vec3& p_out_vec3,
-                            float p_reset_value,
-                            float p_column_width) {
-    bool dirty = false;
+static bool DrawVec3ControlImpl(int type,
+                                const char* p_label,
+                                glm::vec3& p_out_vec3,
+                                float p_reset_value,
+                                float p_column_width) {
+    bool is_dirty = false;
 
     ImGuiIO& io = ImGui::GetIO();
     auto bold_font = io.Fonts->Fonts[0];
@@ -77,7 +94,7 @@ bool draw_vec3_control_impl(int type,
     auto draw_button = [&](int idx) {
         if (ImGui::Button(button_names[idx])) {
             p_out_vec3[idx] = p_reset_value;
-            dirty = true;
+            is_dirty = true;
         }
     };
 
@@ -87,7 +104,7 @@ bool draw_vec3_control_impl(int type,
     ImGui::PopStyleColor(3);
 
     ImGui::SameLine();
-    dirty |= ImGui::DragFloat("##X", &p_out_vec3.x, speed, min, max, "%.2f");
+    is_dirty |= ImGui::DragFloat("##X", &p_out_vec3.x, speed, min, max, "%.2f");
     ImGui::PopItemWidth();
     ImGui::SameLine();
 
@@ -102,7 +119,7 @@ bool draw_vec3_control_impl(int type,
     ImGui::PopStyleColor(3);
 
     ImGui::SameLine();
-    dirty |= ImGui::DragFloat("##Y", &p_out_vec3.y, speed, min, max, "%.2f");
+    is_dirty |= ImGui::DragFloat("##Y", &p_out_vec3.y, speed, min, max, "%.2f");
     ImGui::PopItemWidth();
     ImGui::SameLine();
 
@@ -115,7 +132,7 @@ bool draw_vec3_control_impl(int type,
     ImGui::PopStyleColor(3);
 
     ImGui::SameLine();
-    dirty |= ImGui::DragFloat("##Z", &p_out_vec3.z, speed, min, max, "%.2f");
+    is_dirty |= ImGui::DragFloat("##Z", &p_out_vec3.z, speed, min, max, "%.2f");
     ImGui::PopItemWidth();
 
     ImGui::PopStyleVar();
@@ -123,21 +140,21 @@ bool draw_vec3_control_impl(int type,
     ImGui::Columns(1);
 
     ImGui::PopID();
-    return dirty;
+    return is_dirty;
 }
 
-bool draw_vec3_control(const char* p_lable,
-                       glm::vec3& p_out_vec3,
-                       float p_reset_value,
-                       float p_column_width) {
-    return draw_vec3_control_impl(TYPE_TRANSFORM, p_lable, p_out_vec3, p_reset_value, p_column_width);
+bool DrawVec3Control(const char* p_lable,
+                     glm::vec3& p_out_vec3,
+                     float p_reset_value,
+                     float p_column_width) {
+    return DrawVec3ControlImpl(TYPE_TRANSFORM, p_lable, p_out_vec3, p_reset_value, p_column_width);
 }
 
-bool draw_color_control(const char* p_lable,
-                        glm::vec3& p_out_vec3,
-                        float p_reset_value,
-                        float p_column_width) {
-    return draw_vec3_control_impl(TYPE_COLOR, p_lable, p_out_vec3, p_reset_value, p_column_width);
+bool DrawColorControl(const char* p_lable,
+                      glm::vec3& p_out_vec3,
+                      float p_reset_value,
+                      float p_column_width) {
+    return DrawVec3ControlImpl(TYPE_COLOR, p_lable, p_out_vec3, p_reset_value, p_column_width);
 }
 
 }  // namespace my

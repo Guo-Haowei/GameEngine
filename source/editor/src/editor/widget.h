@@ -4,28 +4,33 @@
 
 namespace my {
 
-constexpr float kDefaultColumnWidth = 90.0f;
+constexpr float DEFAULT_COLUMN_WIDTH = 90.0f;
 
-void push_disabled();
-void pop_disabled();
+void PushDisabled();
+void PopDisabled();
 
-bool draw_drag_float(const char* p_lable,
-                     float& p_out_float,
-                     float p_speed,
-                     float p_min,
-                     float p_max,
-                     float p_column_width = kDefaultColumnWidth);
+bool DrawDragInt(const char* p_lable,
+                 int& p_out,
+                 float p_speed,
+                 int p_min,
+                 int p_max,
+                 float p_column_width = DEFAULT_COLUMN_WIDTH);
 
-bool draw_vec3_control(const char* p_lable,
-                       glm::vec3& p_out_vec3,
-                       float p_reset_value = 0.0f,
-                       float p_column_width = kDefaultColumnWidth);
+bool DrawDragFloat(const char* p_lable,
+                   float& p_out,
+                   float p_speed,
+                   float p_min,
+                   float p_max,
+                   float p_column_width = DEFAULT_COLUMN_WIDTH);
 
-bool draw_color_control(const char* p_lable,
-                        glm::vec3& p_out_vec3,
-                        float p_reset_value = 1.0f,
-                        float p_column_width = kDefaultColumnWidth);
+bool DrawVec3Control(const char* p_lable,
+                     glm::vec3& p_out,
+                     float p_reset_value = 0.0f,
+                     float p_column_width = DEFAULT_COLUMN_WIDTH);
 
-void scene_add_dropdown(Scene& scene);
+bool DrawColorControl(const char* p_lable,
+                      glm::vec3& p_out,
+                      float p_reset_value = 1.0f,
+                      float p_column_width = DEFAULT_COLUMN_WIDTH);
 
 }  // namespace my

@@ -30,7 +30,7 @@ void PhysicsManager::EventReceived(std::shared_ptr<Event> p_event) {
 }
 
 void PhysicsManager::update(Scene& p_scene) {
-    float delta_time = p_scene.m_delta_time;
+    float delta_time = p_scene.m_elapsedTime;
 
     if (hasWorld()) {
         m_dynamic_world->stepSimulation(delta_time, 10);

@@ -116,95 +116,95 @@ public:
 
     bool Serialize(Archive& p_archive);
 
-    void update(float p_delta_time);
+    void Update(float p_delta_time);
 
-    void merge(Scene& p_other);
+    void Merge(Scene& p_other);
 
-    void createCamera(int p_width,
+    void CreateCamera(int p_width,
                       int p_height,
                       float p_near_plane = Camera::DEFAULT_NEAR,
                       float p_far_plane = Camera::DEFAULT_FAR,
                       Degree p_fovy = Camera::DEFAULT_FOVY);
 
-    ecs::Entity createNameEntity(const std::string& p_name);
-    ecs::Entity createTransformEntity(const std::string& p_name);
-    ecs::Entity createObjectEntity(const std::string& p_name);
-    ecs::Entity createMeshEntity(const std::string& p_name);
-    ecs::Entity createMaterialEntity(const std::string& p_name);
+    ecs::Entity CreateNameEntity(const std::string& p_name);
+    ecs::Entity CreateTransformEntity(const std::string& p_name);
+    ecs::Entity CreateObjectEntity(const std::string& p_name);
+    ecs::Entity CreateMeshEntity(const std::string& p_name);
+    ecs::Entity CreateMaterialEntity(const std::string& p_name);
 
-    ecs::Entity createPointLightEntity(const std::string& p_name,
+    ecs::Entity CreatePointLightEntity(const std::string& p_name,
                                        const vec3& p_position,
                                        const vec3& p_color = vec3(1),
                                        const float p_emissive = 5.0f);
 
-    ecs::Entity createAreaLightEntity(const std::string& p_name,
+    ecs::Entity CreateAreaLightEntity(const std::string& p_name,
                                       const vec3& p_color = vec3(1),
                                       const float p_emissive = 5.0f);
 
-    ecs::Entity createInfiniteLightEntity(const std::string& p_name,
+    ecs::Entity CreateInfiniteLightEntity(const std::string& p_name,
                                           const vec3& p_color = vec3(1),
                                           const float p_emissive = 5.0f);
 
-    ecs::Entity createPlaneEntity(const std::string& p_name,
+    ecs::Entity CreatePlaneEntity(const std::string& p_name,
                                   const vec3& p_scale = vec3(0.5f),
                                   const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity createPlaneEntity(const std::string& p_name,
+    ecs::Entity CreatePlaneEntity(const std::string& p_name,
                                   ecs::Entity p_material_id,
                                   const vec3& p_scale = vec3(0.5f),
                                   const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity createCubeEntity(const std::string& p_name,
+    ecs::Entity CreateCubeEntity(const std::string& p_name,
                                  const vec3& p_scale = vec3(0.5f),
                                  const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity createCubeEntity(const std::string& p_name,
+    ecs::Entity CreateCubeEntity(const std::string& p_name,
                                  ecs::Entity p_material_id,
                                  const vec3& p_scale = vec3(0.5f),
                                  const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity createSphereEntity(const std::string& p_name,
+    ecs::Entity CreateSphereEntity(const std::string& p_name,
                                    float p_radius = 0.5f,
                                    const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity createSphereEntity(const std::string& p_name,
+    ecs::Entity CreateSphereEntity(const std::string& p_name,
                                    ecs::Entity p_material_id,
                                    float p_radius = 0.5f,
                                    const mat4& p_transform = mat4(1.0f));
 
-    void attachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
+    void AttachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
 
-    void attachComponent(ecs::Entity p_entity) { attachComponent(p_entity, m_root); }
+    void AttachComponent(ecs::Entity p_entity) { AttachComponent(p_entity, m_root); }
 
-    void removeEntity(ecs::Entity p_entity);
+    void RemoveEntity(ecs::Entity p_entity);
 
     struct RayIntersectionResult {
         ecs::Entity entity;
     };
 
-    RayIntersectionResult intersects(Ray& p_ray);
-    bool rayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray);
+    RayIntersectionResult Intersects(Ray& p_ray);
+    bool RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray);
 
-    const AABB& getBound() const { return m_bound; }
+    const AABB& GetBound() const { return m_bound; }
     // @TODO: refactor
     ecs::Entity m_root;
     ecs::Entity m_selected;
-    float m_delta_time = 0.0f;
+    float m_elapsedTime = 0.0f;
     std::shared_ptr<Camera> m_camera;
     bool m_replace = false;
 
 private:
-    void updateHierarchy(uint32_t p_index);
-    void updateAnimation(uint32_t p_index);
-    void updateArmature(uint32_t p_index);
-    void updateLight(uint32_t p_index);
+    void UpdateHierarchy(uint32_t p_index);
+    void UpdateAnimation(uint32_t p_index);
+    void UpdateArmature(uint32_t p_index);
+    void UpdateLight(uint32_t p_index);
 
-    void runLightUpdateSystem(jobsystem::Context& p_ctx);
-    void runTransformationUpdateSystem(jobsystem::Context& p_ctx);
-    void runHierarchyUpdateSystem(jobsystem::Context& p_ctx);
-    void runAnimationUpdateSystem(jobsystem::Context& p_ctx);
-    void runArmatureUpdateSystem(jobsystem::Context& p_ctx);
-    void runObjectUpdateSystem(jobsystem::Context& p_ctx);
+    void RunLightUpdateSystem(jobsystem::Context& p_ctx);
+    void RunTransformationUpdateSystem(jobsystem::Context& p_ctx);
+    void RunHierarchyUpdateSystem(jobsystem::Context& p_ctx);
+    void RunAnimationUpdateSystem(jobsystem::Context& p_ctx);
+    void RunArmatureUpdateSystem(jobsystem::Context& p_ctx);
+    void RunObjectUpdateSystem(jobsystem::Context& p_ctx);
 
     // @TODO: refactor
     AABB m_bound;

@@ -26,9 +26,10 @@ std::uniform_real_distribution<float> Random::s_distribution(0.0f, 1.0f);
 ParticleEmitterComponent::ParticleEmitterComponent() {
     m_emittedParticleCount = 0;
     m_maxParticleCount = 1000;
-    m_emittedParticlesPerFrame = 5;
+    m_emittedParticlesPerSecond = 100;
     m_particleScale = 0.02f;
     m_particleLifeSpan = 2.0f;
+    m_startingVelocity = vec3(0.0f);
 }
 
 void ParticleEmitterComponent::Update(float p_elapsedTime) {
@@ -36,11 +37,12 @@ void ParticleEmitterComponent::Update(float p_elapsedTime) {
     ResizePool(m_maxParticleCount);
 
     // emit particles
-    int numParticlesToEmit = glm::min(m_emittedParticlesPerFrame, m_maxParticleCount - m_emittedParticleCount);
-    numParticlesToEmit = glm::max(numParticlesToEmit, 0);
+    const int particle_emit_per_frame = static_cast<int>(m_emittedParticlesPerSecond * p_elapsedTime);
+    int particle_to_emit = glm::min(particle_emit_per_frame, m_maxParticleCount - m_emittedParticleCount);
+    particle_to_emit = glm::max(particle_to_emit, 0);
 
     std::vector<Particle*> free_slots;
-    free_slots.reserve(numParticlesToEmit);
+    free_slots.reserve(particle_to_emit);
 
     // update old particles
     for (size_t particle_idx = 0; particle_idx < m_particlePool.size(); ++particle_idx) {
@@ -60,8 +62,8 @@ void ParticleEmitterComponent::Update(float p_elapsedTime) {
     }
 
     // emit new particles
-    DEV_ASSERT(numParticlesToEmit <= free_slots.size());
-    for (int i = 0; i < numParticlesToEmit; ++i) {
+    DEV_ASSERT(particle_to_emit <= free_slots.size());
+    for (int i = 0; i < particle_to_emit; ++i) {
         Particle& particle = *free_slots[i];
         particle.position = vec3(0.0f);
         particle.velocity = vec3(0.0f);
@@ -72,9 +74,10 @@ void ParticleEmitterComponent::Update(float p_elapsedTime) {
         particle.velocity.x += Random::Float() - 0.5f;
         particle.velocity.y += Random::Float() - 0.5f;
         particle.velocity.z += Random::Float() - 0.5f;
+        particle.velocity += m_startingVelocity;
     }
 
-    m_emittedParticleCount += numParticlesToEmit;
+    m_emittedParticleCount += particle_to_emit;
 }
 
 void ParticleEmitterComponent::ResizePool(uint32_t p_size) {

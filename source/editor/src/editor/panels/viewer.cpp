@@ -15,28 +15,28 @@
 
 namespace my {
 
-void Viewer::update_data() {
+void Viewer::UpdateData() {
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     int frame_width = frame_size.x;
     int frame_height = frame_size.y;
     const float ratio = (float)frame_width / frame_height;
-    m_canvas_size.x = ImGui::GetWindowSize().x;
-    m_canvas_size.y = ImGui::GetWindowSize().y;
-    if (m_canvas_size.y * ratio > m_canvas_size.x) {
-        m_canvas_size.y = m_canvas_size.x / ratio;
+    m_canvasSize.x = ImGui::GetWindowSize().x;
+    m_canvasSize.y = ImGui::GetWindowSize().y;
+    if (m_canvasSize.y * ratio > m_canvasSize.x) {
+        m_canvasSize.y = m_canvasSize.x / ratio;
     } else {
-        m_canvas_size.x = m_canvas_size.y * ratio;
+        m_canvasSize.x = m_canvasSize.y * ratio;
     }
 
     ImGuiWindow* window = ImGui::FindWindowByName(m_name.c_str());
     DEV_ASSERT(window);
-    m_canvas_min.x = window->ContentRegionRect.Min.x;
-    m_canvas_min.y = window->ContentRegionRect.Min.y;
+    m_canvasMin.x = window->ContentRegionRect.Min.x;
+    m_canvasMin.y = window->ContentRegionRect.Min.y;
 
     m_focused = ImGui::IsWindowHovered();
 }
 
-void Viewer::select_entity(Scene& scene, const Camera& camera) {
+void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
     if (!m_focused) {
         return;
     }
@@ -44,29 +44,28 @@ void Viewer::select_entity(Scene& scene, const Camera& camera) {
     if (input::isButtonPressed(MOUSE_BUTTON_RIGHT)) {
         auto [window_x, window_y] = DisplayManager::singleton().getWindowPos();
         vec2 clicked = input::getCursor();
-        clicked.x = (clicked.x + window_x - m_canvas_min.x) / m_canvas_size.x;
-        clicked.y = (clicked.y + window_y - m_canvas_min.y) / m_canvas_size.y;
+        clicked.x = (clicked.x + window_x - m_canvasMin.x) / m_canvasSize.x;
+        clicked.y = (clicked.y + window_y - m_canvasMin.y) / m_canvasSize.y;
 
         if (clicked.x >= 0.0f && clicked.x <= 1.0f && clicked.y >= 0.0f && clicked.y <= 1.0f) {
             clicked *= 2.0f;
             clicked -= 1.0f;
 
-            const mat4 inversed_projection_view = glm::inverse(camera.getProjectionViewMatrix());
+            const mat4 inversed_projection_view = glm::inverse(p_camera.getProjectionViewMatrix());
 
-            const vec3 ray_start = camera.getPosition();
+            const vec3 ray_start = p_camera.getPosition();
             const vec3 direction = glm::normalize(vec3(inversed_projection_view * vec4(clicked.x, -clicked.y, 1.0f, 1.0f)));
-            const vec3 ray_end = ray_start + direction * camera.getFar();
+            const vec3 ray_end = ray_start + direction * p_camera.getFar();
             Ray ray(ray_start, ray_end);
 
-            const auto result = scene.intersects(ray);
-            // const auto result = scene.select(ray);
+            const auto result = p_scene.Intersects(ray);
 
-            m_editor.select_entity(result.entity);
+            m_editor.SelectEntity(result.entity);
         }
     }
 }
 
-void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
+void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     const mat4 view_matrix = p_camera.getViewMatrix();
     const mat4 proj_matrix = p_camera.getProjectionMatrix();
 
@@ -74,11 +73,11 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
     ImGuizmo::BeginFrame();
 
     ImGuizmo::SetDrawlist();
-    ImGuizmo::SetRect(m_canvas_min.x, m_canvas_min.y, m_canvas_size.x, m_canvas_size.y);
+    ImGuizmo::SetRect(m_canvasMin.x, m_canvasMin.y, m_canvasSize.x, m_canvasSize.y);
 
     // add image for drawing
-    ImVec2 top_left(m_canvas_min.x, m_canvas_min.y);
-    ImVec2 bottom_right(top_left.x + m_canvas_size.x, top_left.y + m_canvas_size.y);
+    ImVec2 top_left(m_canvasMin.x, m_canvasMin.y);
+    ImVec2 bottom_right(top_left.x + m_canvasSize.x, top_left.y + m_canvasSize.y);
 
     // @TODO: fix this
     uint64_t handle = GraphicsManager::singleton().GetFinalImage();
@@ -99,7 +98,7 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
         ImGuizmo::draw_grid(p_camera.getProjectionViewMatrix(), identity, 10.0f);
     }
 
-    ecs::Entity id = m_editor.get_selected_entity();
+    ecs::Entity id = m_editor.GetSelectedEntity();
     TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
 #if 0
     if (transform_component) {
@@ -146,7 +145,7 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
     };
 
     // draw gizmo
-    switch (m_editor.get_state()) {
+    switch (m_editor.GetState()) {
         case EditorLayer::STATE_TRANSLATE:
             draw_gizmo(ImGuizmo::TRANSLATE);
             break;
@@ -162,11 +161,11 @@ void Viewer::draw_gui(Scene& p_scene, Camera& p_camera) {
 
     // draw view cube
     const float size = 120.f;
-    ImGuizmo::ViewManipulate((float*)&view_matrix[0].x, 10.0f, ImVec2(m_canvas_min.x, m_canvas_min.y), ImVec2(size, size), IM_COL32(64, 64, 64, 96));
+    ImGuizmo::ViewManipulate((float*)&view_matrix[0].x, 10.0f, ImVec2(m_canvasMin.x, m_canvasMin.y), ImVec2(size, size), IM_COL32(64, 64, 64, 96));
 }
 
-void Viewer::update_internal(Scene& scene) {
-    Camera& camera = *scene.m_camera;
+void Viewer::UpdateInternal(Scene& p_scene) {
+    Camera& camera = *p_scene.m_camera;
 
     ImGui::Dummy(ImGui::GetContentRegionAvail());
     if (ImGui::BeginDragDropTarget()) {
@@ -189,26 +188,26 @@ void Viewer::update_internal(Scene& scene) {
         ImGui::EndDragDropTarget();
     }
 
-    update_data();
+    UpdateData();
 
     if (m_focused) {
-        m_camera_controller.move(scene.m_delta_time, camera);
+        m_cameraController.move(p_scene.m_elapsedTime, camera);
     }
 
-    select_entity(scene, camera);
+    SelectEntity(p_scene, camera);
 
     // Update state
-    if (m_editor.get_selected_entity().IsValid()) {
+    if (m_editor.GetSelectedEntity().IsValid()) {
         if (input::isKeyPressed(KEY_Z)) {
-            m_editor.set_state(EditorLayer::STATE_TRANSLATE);
+            m_editor.SetState(EditorLayer::STATE_TRANSLATE);
         } else if (input::isKeyPressed(KEY_X)) {
-            m_editor.set_state(EditorLayer::STATE_ROTATE);
+            m_editor.SetState(EditorLayer::STATE_ROTATE);
         } else if (input::isKeyPressed(KEY_C)) {
-            m_editor.set_state(EditorLayer::STATE_SCALE);
+            m_editor.SetState(EditorLayer::STATE_SCALE);
         }
     }
 
-    draw_gui(scene, camera);
+    DrawGui(p_scene, camera);
 }
 
 }  // namespace my

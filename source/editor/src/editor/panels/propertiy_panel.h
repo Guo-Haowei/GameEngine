@@ -5,10 +5,10 @@ namespace my {
 
 class PropertyPanel : public EditorWindow {
 public:
-    PropertyPanel(EditorLayer& editor) : EditorWindow("Properties", editor) {}
+    PropertyPanel(EditorLayer& p_editor) : EditorWindow("Properties", p_editor) {}
 
 protected:
-    void update_internal(Scene& scene) override;
+    void UpdateInternal(Scene& p_scene) override;
 };
 
 }  // namespace my

@@ -8,12 +8,12 @@ namespace my {
 
 class RenderGraphEditorDelegate : public GraphEditor::Delegate {
 public:
-    RenderGraphEditorDelegate(const RenderGraph& graph) {
+    RenderGraphEditorDelegate(const RenderGraph& p_graph) {
         float x_offset = 0.0f;
-        for (auto& level : graph.m_levels) {
+        for (auto& level : p_graph.m_levels) {
             float y_offset = 0.0f;
             for (int id : level) {
-                const std::shared_ptr<RenderPass>& pass = graph.m_render_passes[id];
+                const std::shared_ptr<RenderPass>& pass = p_graph.m_render_passes[id];
 
                 mNodes.push_back(
                     {
@@ -28,7 +28,7 @@ public:
             x_offset += 300.f;
         }
 
-        for (const auto& pair : graph.m_links) {
+        for (const auto& pair : p_graph.m_links) {
             GraphEditor::Link link{
                 .mInputNodeIndex = pair.first,
                 .mInputSlotIndex = 0,
@@ -136,7 +136,7 @@ RenderGraphEditor::RenderGraphEditor(EditorLayer& editor) : EditorWindow("Render
     m_delegate = std::make_shared<RenderGraphEditorDelegate>(GraphicsManager::singleton().GetActiveRenderGraph());
 }
 
-void RenderGraphEditor::update_internal(my::Scene&) {
+void RenderGraphEditor::UpdateInternal(my::Scene&) {
     if (ImGui::Button("Fit all nodes")) {
         m_fit = GraphEditor::Fit_AllNodes;
     }

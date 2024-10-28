@@ -36,47 +36,47 @@ static constexpr uint32_t kSceneMagicNumber = 'xScn';
     }
 #endif
 
-void Scene::update(float p_delta_time) {
-    m_delta_time = p_delta_time;
+void Scene::Update(float p_delta_time) {
+    m_elapsedTime = p_delta_time;
 
     Context ctx;
 
     // animation
-    runLightUpdateSystem(ctx);
-    runAnimationUpdateSystem(ctx);
+    RunLightUpdateSystem(ctx);
+    RunAnimationUpdateSystem(ctx);
     ctx.Wait();
     // transform, update local matrix from position, rotation and scale
-    runTransformationUpdateSystem(ctx);
+    RunTransformationUpdateSystem(ctx);
     // particle
     m_particleEmitter.Update(p_delta_time);
     ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
-    runHierarchyUpdateSystem(ctx);
+    RunHierarchyUpdateSystem(ctx);
     ctx.Wait();
     // armature
-    runArmatureUpdateSystem(ctx);
+    RunArmatureUpdateSystem(ctx);
     ctx.Wait();
 
     // update bounding box
-    runObjectUpdateSystem(ctx);
+    RunObjectUpdateSystem(ctx);
 
     if (m_camera) {
         m_camera->update();
     }
 }
 
-void Scene::merge(Scene& p_other) {
+void Scene::Merge(Scene& p_other) {
     for (auto& entry : m_componentLib.m_entries) {
         entry.second.m_manager->Merge(*p_other.m_componentLib.m_entries[entry.first].m_manager);
     }
     if (p_other.m_root.IsValid()) {
-        attachComponent(p_other.m_root, m_root);
+        AttachComponent(p_other.m_root, m_root);
     }
 
     m_bound.unionBox(p_other.m_bound);
 }
 
-void Scene::createCamera(int p_width,
+void Scene::CreateCamera(int p_width,
                          int p_height,
                          float p_near_plane,
                          float p_far_plane,
@@ -93,42 +93,42 @@ void Scene::createCamera(int p_width,
     m_camera->setDirty();
 }
 
-Entity Scene::createNameEntity(const std::string& p_name) {
+Entity Scene::CreateNameEntity(const std::string& p_name) {
     Entity entity = Entity::Create();
     Create<NameComponent>(entity).SetName(p_name);
     return entity;
 }
 
-Entity Scene::createTransformEntity(const std::string& p_name) {
-    Entity entity = createNameEntity(p_name);
+Entity Scene::CreateTransformEntity(const std::string& p_name) {
+    Entity entity = CreateNameEntity(p_name);
     Create<TransformComponent>(entity);
     return entity;
 }
 
-Entity Scene::createObjectEntity(const std::string& p_name) {
-    Entity entity = createNameEntity(p_name);
+Entity Scene::CreateObjectEntity(const std::string& p_name) {
+    Entity entity = CreateNameEntity(p_name);
     Create<ObjectComponent>(entity);
     Create<TransformComponent>(entity);
     return entity;
 }
 
-Entity Scene::createMeshEntity(const std::string& p_name) {
-    Entity entity = createNameEntity(p_name);
+Entity Scene::CreateMeshEntity(const std::string& p_name) {
+    Entity entity = CreateNameEntity(p_name);
     Create<MeshComponent>(entity);
     return entity;
 }
 
-Entity Scene::createMaterialEntity(const std::string& p_name) {
-    Entity entity = createNameEntity(p_name);
+Entity Scene::CreateMaterialEntity(const std::string& p_name) {
+    Entity entity = CreateNameEntity(p_name);
     Create<MaterialComponent>(entity);
     return entity;
 }
 
-Entity Scene::createPointLightEntity(const std::string& p_name,
+Entity Scene::CreatePointLightEntity(const std::string& p_name,
                                      const vec3& p_position,
                                      const vec3& p_color,
                                      const float p_emissive) {
-    Entity entity = createObjectEntity(p_name);
+    Entity entity = CreateObjectEntity(p_name);
 
     LightComponent& light = Create<LightComponent>(entity);
     light.SetType(LIGHT_TYPE_POINT);
@@ -145,7 +145,7 @@ Entity Scene::createPointLightEntity(const std::string& p_name,
     transform.SetTranslation(p_position);
     transform.SetDirty();
 
-    Entity mesh_id = createMeshEntity(p_name + ":mesh");
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
@@ -155,10 +155,10 @@ Entity Scene::createPointLightEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::createAreaLightEntity(const std::string& p_name,
+Entity Scene::CreateAreaLightEntity(const std::string& p_name,
                                     const vec3& p_color,
                                     const float p_emissive) {
-    Entity entity = createObjectEntity(p_name);
+    Entity entity = CreateObjectEntity(p_name);
 
     // light
     LightComponent& light = Create<LightComponent>(entity);
@@ -174,7 +174,7 @@ Entity Scene::createAreaLightEntity(const std::string& p_name,
 
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
 
-    Entity mesh_id = createMeshEntity(p_name + ":mesh");
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
     object.flags = ObjectComponent::RENDERABLE;
 
@@ -184,10 +184,10 @@ Entity Scene::createAreaLightEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::createInfiniteLightEntity(const std::string& p_name,
+Entity Scene::CreateInfiniteLightEntity(const std::string& p_name,
                                         const vec3& p_color,
                                         const float p_emissive) {
-    Entity entity = createNameEntity(p_name);
+    Entity entity = CreateNameEntity(p_name);
 
     Create<TransformComponent>(entity);
 
@@ -203,23 +203,23 @@ Entity Scene::createInfiniteLightEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::createPlaneEntity(const std::string& p_name,
+Entity Scene::CreatePlaneEntity(const std::string& p_name,
                                 const vec3& p_scale,
                                 const mat4& p_transform) {
-    Entity material_id = createMaterialEntity(p_name + ":mat");
-    return createPlaneEntity(p_name, material_id, p_scale, p_transform);
+    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+    return CreatePlaneEntity(p_name, material_id, p_scale, p_transform);
 }
 
-Entity Scene::createPlaneEntity(const std::string& p_name,
+Entity Scene::CreatePlaneEntity(const std::string& p_name,
                                 Entity p_material_id,
                                 const vec3& p_scale,
                                 const mat4& p_transform) {
-    ecs::Entity entity = createObjectEntity(p_name);
+    ecs::Entity entity = CreateObjectEntity(p_name);
     TransformComponent& trans = *GetComponent<TransformComponent>(entity);
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
     trans.MatrixTransform(p_transform);
 
-    ecs::Entity mesh_id = createMeshEntity(p_name + ":mesh");
+    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
@@ -229,23 +229,23 @@ Entity Scene::createPlaneEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::createCubeEntity(const std::string& p_name,
+Entity Scene::CreateCubeEntity(const std::string& p_name,
                                const vec3& p_scale,
                                const mat4& p_transform) {
-    Entity material_id = createMaterialEntity(p_name + ":mat");
-    return createCubeEntity(p_name, material_id, p_scale, p_transform);
+    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+    return CreateCubeEntity(p_name, material_id, p_scale, p_transform);
 }
 
-Entity Scene::createCubeEntity(const std::string& p_name,
+Entity Scene::CreateCubeEntity(const std::string& p_name,
                                Entity p_material_id,
                                const vec3& p_scale,
                                const mat4& p_transform) {
-    ecs::Entity entity = createObjectEntity(p_name);
+    ecs::Entity entity = CreateObjectEntity(p_name);
     TransformComponent& trans = *GetComponent<TransformComponent>(entity);
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
     trans.MatrixTransform(p_transform);
 
-    ecs::Entity mesh_id = createMeshEntity(p_name + ":mesh");
+    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
@@ -255,23 +255,23 @@ Entity Scene::createCubeEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::createSphereEntity(const std::string& p_name,
+Entity Scene::CreateSphereEntity(const std::string& p_name,
                                  float p_radius,
                                  const mat4& p_transform) {
-    Entity material_id = createMaterialEntity(p_name + ":mat");
-    return createSphereEntity(p_name, material_id, p_radius, p_transform);
+    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+    return CreateSphereEntity(p_name, material_id, p_radius, p_transform);
 }
 
-Entity Scene::createSphereEntity(const std::string& p_name,
+Entity Scene::CreateSphereEntity(const std::string& p_name,
                                  Entity p_material_id,
                                  float p_radius,
                                  const mat4& p_transform) {
-    ecs::Entity entity = createObjectEntity(p_name);
+    ecs::Entity entity = CreateObjectEntity(p_name);
     TransformComponent& trans = *GetComponent<TransformComponent>(entity);
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
     trans.MatrixTransform(p_transform);
 
-    ecs::Entity mesh_id = createMeshEntity(p_name + ":mesh");
+    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
@@ -281,7 +281,7 @@ Entity Scene::createSphereEntity(const std::string& p_name,
     return entity;
 }
 
-void Scene::attachComponent(Entity p_child, Entity p_parent) {
+void Scene::AttachComponent(Entity p_child, Entity p_parent) {
     DEV_ASSERT(p_child != p_parent);
     DEV_ASSERT(p_parent.IsValid());
 
@@ -294,7 +294,7 @@ void Scene::attachComponent(Entity p_child, Entity p_parent) {
     hier.m_parentId = p_parent;
 }
 
-void Scene::removeEntity(Entity p_entity) {
+void Scene::RemoveEntity(Entity p_entity) {
     LightComponent* light = GetComponent<LightComponent>(p_entity);
     if (light) {
         auto shadow_handle = light->GetShadowMapIndex();
@@ -308,14 +308,14 @@ void Scene::removeEntity(Entity p_entity) {
     m_ObjectComponents.Remove(p_entity);
 }
 
-void Scene::updateLight(uint32_t p_index) {
+void Scene::UpdateLight(uint32_t p_index) {
     Entity id = GetEntity<LightComponent>(p_index);
     const TransformComponent* transform = GetComponent<TransformComponent>(id);
     DEV_ASSERT(transform);
     m_LightComponents[p_index].Update(*transform);
 }
 
-void Scene::updateAnimation(uint32_t p_index) {
+void Scene::UpdateAnimation(uint32_t p_index) {
     AnimationComponent& animation = m_AnimationComponents[p_index];
     if (!animation.isPlaying()) {
         return;
@@ -406,11 +406,11 @@ void Scene::updateAnimation(uint32_t p_index) {
 
     if (animation.isPlaying()) {
         // @TODO: set delta time
-        animation.timer += m_delta_time * animation.speed;
+        animation.timer += m_elapsedTime * animation.speed;
     }
 }
 
-void Scene::updateHierarchy(uint32_t p_index) {
+void Scene::UpdateHierarchy(uint32_t p_index) {
     Entity self_id = GetEntity<HierarchyComponent>(p_index);
     TransformComponent* self_transform = GetComponent<TransformComponent>(self_id);
 
@@ -439,7 +439,7 @@ void Scene::updateHierarchy(uint32_t p_index) {
     self_transform->SetDirty(false);
 }
 
-void Scene::updateArmature(uint32_t p_index) {
+void Scene::UpdateArmature(uint32_t p_index) {
     Entity id = m_ArmatureComponents.GetEntity(p_index);
     ArmatureComponent& armature = m_ArmatureComponents[p_index];
     TransformComponent* transform = GetComponent<TransformComponent>(id);
@@ -534,7 +534,7 @@ bool Scene::Serialize(Archive& p_archive) {
     }
 }
 
-bool Scene::rayObjectIntersect(Entity p_object_id, Ray& p_ray) {
+bool Scene::RayObjectIntersect(Entity p_object_id, Ray& p_ray) {
     ObjectComponent* object = GetComponent<ObjectComponent>(p_object_id);
     MeshComponent* mesh = GetComponent<MeshComponent>(object->meshId);
     TransformComponent* transform = GetComponent<TransformComponent>(p_object_id);
@@ -567,13 +567,13 @@ bool Scene::rayObjectIntersect(Entity p_object_id, Ray& p_ray) {
     return false;
 }
 
-Scene::RayIntersectionResult Scene::intersects(Ray& p_ray) {
+Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
     RayIntersectionResult result;
 
     // @TODO: box collider
     for (int object_idx = 0; object_idx < GetCount<ObjectComponent>(); ++object_idx) {
         Entity entity = GetEntity<ObjectComponent>(object_idx);
-        if (rayObjectIntersect(entity, p_ray)) {
+        if (RayObjectIntersect(entity, p_ray)) {
             result.entity = entity;
         }
     }
@@ -581,27 +581,27 @@ Scene::RayIntersectionResult Scene::intersects(Ray& p_ray) {
     return result;
 }
 
-void Scene::runLightUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, updateLight(index));
+void Scene::RunLightUpdateSystem(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, UpdateLight(index));
 }
 
-void Scene::runTransformationUpdateSystem(Context& p_ctx) {
+void Scene::RunTransformationUpdateSystem(Context& p_ctx) {
     JS_PARALLEL_FOR(p_ctx, index, GetCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].UpdateTransform());
 }
 
-void Scene::runAnimationUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<AnimationComponent>(), 1, updateAnimation(index));
+void Scene::RunAnimationUpdateSystem(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, GetCount<AnimationComponent>(), 1, UpdateAnimation(index));
 }
 
-void Scene::runArmatureUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<ArmatureComponent>(), 1, updateArmature(index));
+void Scene::RunArmatureUpdateSystem(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, GetCount<ArmatureComponent>(), 1, UpdateArmature(index));
 }
 
-void Scene::runHierarchyUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, updateHierarchy(index));
+void Scene::RunHierarchyUpdateSystem(Context& p_ctx) {
+    JS_PARALLEL_FOR(p_ctx, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, UpdateHierarchy(index));
 }
 
-void Scene::runObjectUpdateSystem(jobsystem::Context&) {
+void Scene::RunObjectUpdateSystem(jobsystem::Context&) {
     m_bound.makeInvalid();
 
     for (auto [entity, obj] : m_ObjectComponents) {
