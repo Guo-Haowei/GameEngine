@@ -49,7 +49,7 @@ static void DrawComponent(const std::string& p_name, T* p_component, UIFunction 
 }
 
 template<typename... Args>
-static bool draw_vec3_control_disabled(bool disabled, Args&&... args) {
+static bool DrawVec3ControlDisabled(bool disabled, Args&&... args) {
     if (disabled) {
         PushDisabled();
     }
@@ -144,9 +144,9 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
         bool dirty = false;
 
-        dirty |= draw_vec3_control_disabled(disable_translation, "translation", translation);
-        dirty |= draw_vec3_control_disabled(disable_rotation, "rotation", rotation);
-        dirty |= draw_vec3_control_disabled(disable_scale, "scale", scale, 1.0f);
+        dirty |= DrawVec3ControlDisabled(disable_translation, "translation", translation);
+        dirty |= DrawVec3ControlDisabled(disable_rotation, "rotation", rotation);
+        dirty |= DrawVec3ControlDisabled(disable_scale, "scale", scale, 1.0f);
         if (dirty) {
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(transformMatrix));

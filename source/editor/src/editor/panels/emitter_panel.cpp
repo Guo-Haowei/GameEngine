@@ -1,40 +1,18 @@
 #include "emitter_panel.h"
 
+#include "editor/widget.h"
+
 namespace my {
 
-void EmitterPanel::UpdateInternal(Scene&) {
-    // ImGui::Separator();
+void EmitterPanel::UpdateInternal(Scene& p_scene) {
+    ParticleEmitterComponent& emitter = p_scene.m_particleEmitter;
 
-    // // reserve enough left-over height for 1 separator + 1 input text
-    // const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
-    // ImGui::BeginChild("ScrollingRegion", ImVec2(0, -footer_height_to_reserve), false,
-    //                   ImGuiWindowFlags_HorizontalScrollbar);
-
-    // ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));  // Tighten spacing
-
-    // std::vector<my::CompositeLogger::Log> logs;
-    // my::CompositeLogger::singleton().RetrieveLog(logs);
-    // for (const auto& log : logs) {
-    //     ImGui::PushStyleColor(ImGuiCol_Text, log_level_to_color(log.level));
-    //     ImGui::TextUnformatted(log.buffer);
-    //     ImGui::PopStyleColor();
-    // }
-
-    // if (m_scroll_to_bottom || (m_auto_scroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())) {
-    //     ImGui::SetScrollHereY(1.0f);
-    // }
-    // m_scroll_to_bottom = false;
-
-    // ImGui::PopStyleVar();
-    // ImGui::EndChild();
-    // ImGui::Separator();
-
-    // ImGui::SameLine();
-
-    // ImGui::Separator();
-
-    // // Auto-focus on window apparition
-    // ImGui::SetItemDefaultFocus();
+    const float column_width = 140.0f;
+    DrawVec3Control("Starting velocity", emitter.m_startingVelocity, 0.0f, column_width);
+    DrawDragInt("Max particle count", emitter.m_maxParticleCount, 10, 1000, 10000, column_width);
+    DrawDragInt("Emit count per second", emitter.m_emittedParticlesPerSecond, 1, 100, 1000, column_width);
+    DrawDragFloat("Scaling", emitter.m_particleScale, 0.01f, 0.01f, 10.0f, column_width);
+    DrawDragFloat("Life span", emitter.m_particleLifeSpan, 0.1f, 0.1f, 10.0f, column_width);
 }
 
 }  // namespace my
