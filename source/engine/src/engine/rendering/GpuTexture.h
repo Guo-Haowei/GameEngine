@@ -22,7 +22,7 @@ struct Texture3DCreateInfo {
     int mipLevel;
 };
 
-class GpuTexture {
+class OldTexture {
 public:
     void create2DEmpty(const Texture2DCreateInfo& info);
     void create3DEmpty(const Texture3DCreateInfo& info);

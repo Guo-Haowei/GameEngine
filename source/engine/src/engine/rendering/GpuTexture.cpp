@@ -5,16 +5,16 @@
 
 using std::string;
 
-void GpuTexture::bind() const { glBindTexture(m_type, mHandle); }
+void OldTexture::bind() const { glBindTexture(m_type, mHandle); }
 
-void GpuTexture::unbind() const { glBindTexture(m_type, 0); }
+void OldTexture::unbind() const { glBindTexture(m_type, 0); }
 
-void GpuTexture::genMipMap() {
+void OldTexture::genMipMap() {
     // make sure texture is bond first
     glGenerateMipmap(m_type);
 }
 
-void GpuTexture::create2DEmpty(const Texture2DCreateInfo& info) {
+void OldTexture::create2DEmpty(const Texture2DCreateInfo& info) {
     m_type = GL_TEXTURE_2D;
     m_format = info.internalFormat;
 
@@ -31,7 +31,7 @@ void GpuTexture::create2DEmpty(const Texture2DCreateInfo& info) {
     unbind();
 }
 
-void GpuTexture::create3DEmpty(const Texture3DCreateInfo& info) {
+void OldTexture::create3DEmpty(const Texture3DCreateInfo& info) {
     m_type = GL_TEXTURE_3D;
     m_format = info.format;
 
@@ -46,18 +46,18 @@ void GpuTexture::create3DEmpty(const Texture3DCreateInfo& info) {
     glTexStorage3D(m_type, info.mipLevel, m_format, info.size, info.size, info.size);
 }
 
-void GpuTexture::destroy() {
+void OldTexture::destroy() {
     if (mHandle != 0) {
         glDeleteTextures(1, &mHandle);
     }
     mHandle = 0;
 }
 
-void GpuTexture::bindImageTexture(int i, int mipLevel) {
+void OldTexture::bindImageTexture(int i, int mipLevel) {
     glBindImageTexture(i, mHandle, mipLevel, GL_TRUE, 0, GL_READ_WRITE, m_format);
 }
 
-void GpuTexture::clear() {
+void OldTexture::clear() {
     float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     /// Hard code format for now
     glClearTexImage(mHandle, 0, GL_RGBA, GL_FLOAT, clearColor);

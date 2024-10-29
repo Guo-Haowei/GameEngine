@@ -39,7 +39,7 @@ void ConsolePanel::UpdateInternal(Scene&) {
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));  // Tighten spacing
 
     std::vector<my::CompositeLogger::Log> logs;
-    my::CompositeLogger::singleton().RetrieveLog(logs);
+    my::CompositeLogger::GetSingleton().RetrieveLog(logs);
     for (const auto& log : logs) {
         ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(log.level));
         ImGui::TextUnformatted(log.buffer);

@@ -31,7 +31,10 @@ public:
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
-    void SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) final;
+    void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
+
+    std::shared_ptr<GpuBuffer> CreateBuffer(const GpuBufferDesc& p_desc) final;
+    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     std::shared_ptr<UniformBufferBase> CreateUniform(int p_slot, size_t p_capacity) final;
     void UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) final;
@@ -40,7 +43,6 @@ public:
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;
 
-    std::shared_ptr<Texture> CreateTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) final;
 
 protected:

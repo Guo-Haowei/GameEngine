@@ -21,7 +21,7 @@ public:
         // @TODO: fix search
         FilePath path = FilePath{ ROOT_FOLDER } / "source/shader/" / p_file;
 
-        auto source_binary = AssetManager::singleton().loadFileSync(path);
+        auto source_binary = AssetManager::GetSingleton().loadFileSync(path);
         if (!source_binary || source_binary->buffer.empty()) {
             LOG_ERROR("failed to read file '{}'", path.String());
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
@@ -76,7 +76,7 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
 }
 
 std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineCreateInfo& p_info) {
-    auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::singleton_ptr());
+    auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
 

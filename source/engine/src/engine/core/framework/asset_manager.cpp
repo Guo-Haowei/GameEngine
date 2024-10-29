@@ -120,7 +120,7 @@ ImageHandle* AssetManager::loadImageAsync(const FilePath& p_path, LoadSuccessFun
             DEV_ASSERT(handle);
 
             handle->set(image);
-            GraphicsManager::singleton().RequestTexture(handle);
+            GraphicsManager::GetSingleton().RequestTexture(handle);
         };
     }
     task.userdata = ret;
@@ -151,11 +151,11 @@ ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
         return nullptr;
     }
 
-    TextureDesc texture_desc{};
+    GpuTextureDesc texture_desc{};
     SamplerDesc sampler_desc{};
     renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-    image->gpu_texture = GraphicsManager::singleton().CreateTexture(texture_desc, sampler_desc);
+    image->gpu_texture = GraphicsManager::GetSingleton().CreateTexture(texture_desc, sampler_desc);
     handle->set(image);
     ImageHandle* ret = handle.get();
     m_image_cache[p_path] = std::move(handle);

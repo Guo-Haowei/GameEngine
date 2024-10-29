@@ -103,25 +103,25 @@ void SceneManager::requestScene(std::string_view p_path) {
 
     std::string ext = path.Extension();
     if (ext == ".lua" || ext == ".scene") {
-        AssetManager::singleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
+        AssetManager::GetSingleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
-            SceneManager::singleton().enqueueSceneLoadingTask(new_scene, true);
+            SceneManager::GetSingleton().enqueueSceneLoadingTask(new_scene, true);
         });
     } else {
-        AssetManager::singleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
+        AssetManager::GetSingleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
-            SceneManager::singleton().enqueueSceneLoadingTask(new_scene, false);
+            SceneManager::GetSingleton().enqueueSceneLoadingTask(new_scene, false);
         });
     }
 }
 
 Scene& SceneManager::getScene() {
-    assert(singleton().m_scene);
-    return *singleton().m_scene;
+    assert(GetSingleton().m_scene);
+    return *GetSingleton().m_scene;
 }
 
 }  // namespace my

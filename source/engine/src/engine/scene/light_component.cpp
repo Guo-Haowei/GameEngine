@@ -39,11 +39,11 @@ void LightComponent::Update(const TransformComponent& p_transform) {
         if (CastShadow()) {
             // @TODO: get rid of the
             if (m_shadowMapIndex == INVALID_POINT_SHADOW_HANDLE) {
-                m_shadowMapIndex = RenderManager::singleton().allocate_point_light_shadow_map();
+                m_shadowMapIndex = RenderManager::GetSingleton().allocate_point_light_shadow_map();
             }
         } else {
             if (m_shadowMapIndex != INVALID_POINT_SHADOW_HANDLE) {
-                RenderManager::singleton().free_point_light_shadow_map(m_shadowMapIndex);
+                RenderManager::GetSingleton().free_point_light_shadow_map(m_shadowMapIndex);
             }
         }
 
@@ -53,7 +53,7 @@ void LightComponent::Update(const TransformComponent& p_transform) {
                 case LIGHT_TYPE_POINT: {
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
                     const float far_plane = m_maxDistance;
-                    const bool is_opengl = GraphicsManager::singleton().GetBackend() == Backend::OPENGL;
+                    const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
                     glm::mat4 projection;
                     if (is_opengl) {
                         projection = buildOpenGLPerspectiveRH(glm::radians(90.0f), 1.0f, near_plane, far_plane);

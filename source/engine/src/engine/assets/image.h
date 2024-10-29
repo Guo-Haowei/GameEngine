@@ -1,7 +1,6 @@
 #pragma once
 #include "assets/asset_handle.h"
-#include "rendering/pixel_format.h"
-#include "rendering/texture.h"
+#include "rendering/gpu_resource.h"
 
 namespace my {
 
@@ -13,7 +12,7 @@ public:
     int num_channels = 0;
     std::vector<uint8_t> buffer;
 
-    std::shared_ptr<Texture> gpu_texture;
+    std::shared_ptr<GpuTexture> gpu_texture;
 };
 
 using ImageHandle = AssetHandle<Image>;

@@ -19,12 +19,12 @@ public:
         s_singleton = nullptr;
     }
 
-    static T& singleton() {
+    static T& GetSingleton() {
         DEV_ASSERT(s_singleton);
         return *s_singleton;
     }
 
-    static T* singleton_ptr() { return s_singleton; }
+    static T* GetSingletonPtr() { return s_singleton; }
 
 protected:
     inline static T* s_singleton;

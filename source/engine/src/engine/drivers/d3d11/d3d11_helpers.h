@@ -6,8 +6,7 @@
 
 #include <d3d11.h>
 
-#include "rendering/pixel_format.h"
-#include "rendering/texture.h"
+#include "rendering/gpu_resource.h"
 
 #if USING(DEBUG_BUILD)
 #pragma comment(lib, "dxguid.lib")

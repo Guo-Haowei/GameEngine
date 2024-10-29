@@ -71,6 +71,7 @@ void ParticleEmitterComponent::ResizePool(uint32_t p_size) {
 
 void ParticleEmitterComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
+
     if (p_archive.IsWriteMode()) {
         p_archive << m_maxParticleCount;
         p_archive << m_emittedParticlesPerSecond;

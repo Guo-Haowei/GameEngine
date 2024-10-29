@@ -5,6 +5,13 @@ namespace my {
 
 enum RenderTargetResourceName : uint8_t;
 
+enum class BufferUsage {
+    DEFAULT = 0,
+    IMMUTABLE = 1,
+    DYNAMIC = 2,
+    STAGING = 3,
+};
+
 enum class Dimension : uint32_t {
     TEXTURE_2D,
     TEXTURE_3D,
@@ -12,7 +19,10 @@ enum class Dimension : uint32_t {
     TEXTURE_CUBE,
 };
 
-// @TODO: enum class
+enum CpuAccessFlags {
+    CPU_ACCESS_WRITE = BIT(1),
+    CPU_ACCESS_READ = BIT(2),
+};
 
 enum BindFlags : uint32_t {
     BIND_NONE = BIT(0),
@@ -51,7 +61,7 @@ enum ResourceMiscFlags : uint32_t {
     RESOURCE_MISC_SHARED_EXCLUSIVE_WRITER = BIT(19),
 };
 
-struct TextureDesc {
+struct GpuTextureDesc {
     Dimension dimension;
     uint32_t width;
     uint32_t height;
@@ -65,17 +75,32 @@ struct TextureDesc {
     RenderTargetResourceName name;
 };
 
-struct Texture {
-    Texture(const TextureDesc& p_desc) : desc(p_desc) {}
+struct GpuBufferDesc {
+    uint32_t byteWidth;
+    BufferUsage usage;
+    uint32_t bindFlags;
+    uint32_t cpuAccessFlags;
+    uint32_t miscFlags;
+    uint32_t structureByteStride;
+};
 
-    virtual ~Texture() = default;
+struct GpuBuffer {
+    GpuBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
 
-    virtual uint64_t get_resident_handle() const = 0;
-    virtual uint64_t get_handle() const = 0;
+    const GpuBufferDesc desc;
+};
 
-    uint32_t get_handle32() const { return static_cast<uint32_t>(get_handle()); }
+struct GpuTexture {
+    GpuTexture(const GpuTextureDesc& p_desc) : desc(p_desc) {}
 
-    const TextureDesc desc;
+    virtual ~GpuTexture() = default;
+
+    virtual uint64_t GetResidentHandle() const = 0;
+    virtual uint64_t GetHandle() const = 0;
+
+    uint32_t GetHandle32() const { return static_cast<uint32_t>(GetHandle()); }
+
+    const GpuTextureDesc desc;
 };
 
 }  // namespace my

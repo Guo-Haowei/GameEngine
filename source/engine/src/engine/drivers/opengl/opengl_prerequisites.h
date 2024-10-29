@@ -7,9 +7,9 @@
 #endif
 #include <glad/glad.h>
 
+#include "rendering/gpu_resource.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/sampler.h"
-#include "rendering/texture.h"
 
 // @TODO: make this included by cpp only
 

@@ -18,9 +18,9 @@ ContentBrowser::ContentBrowser(EditorLayer& p_editor) : EditorWindow("Content Br
         m_currentPath = m_rootPath;
     }
 
-    auto folder_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/folder_icon.png" })->get();
-    auto image_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/image_icon.png" })->get();
-    auto scene_icon = AssetManager::singleton().loadImageSync(FilePath{ "@res://images/icons/scene_icon.png" })->get();
+    auto folder_icon = AssetManager::GetSingleton().loadImageSync(FilePath{ "@res://images/icons/folder_icon.png" })->get();
+    auto image_icon = AssetManager::GetSingleton().loadImageSync(FilePath{ "@res://images/icons/image_icon.png" })->get();
+    auto scene_icon = AssetManager::GetSingleton().loadImageSync(FilePath{ "@res://images/icons/scene_icon.png" })->get();
 
     m_iconMap["."] = { folder_icon, nullptr };
     m_iconMap[".png"] = { image_icon, nullptr };
@@ -82,7 +82,7 @@ void ContentBrowser::UpdateInternal(Scene&) {
         auto texture = it->second.image->gpu_texture;
         bool clicked = false;
         if (texture) {
-            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)texture->get_handle(), size);
+            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)texture->GetHandle(), size);
         } else {
             clicked = ImGui::Button(name.c_str(), size);
         }

@@ -1,7 +1,6 @@
 #pragma once
-#include "rendering/pixel_format.h"
+#include "rendering/gpu_resource.h"
 #include "rendering/render_graph/render_graph_defines.h"
-#include "rendering/texture.h"
 
 namespace my {
 
@@ -33,7 +32,7 @@ struct RenderTarget {
 
     std::tuple<int, int> getSize() const { return std::make_tuple(desc.width, desc.height); }
     const RenderTargetDesc desc;
-    std::shared_ptr<Texture> texture;
+    std::shared_ptr<GpuTexture> texture;
 };
 
 }  // namespace my

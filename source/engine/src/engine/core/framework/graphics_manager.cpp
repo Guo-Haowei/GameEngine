@@ -36,7 +36,7 @@ UniformBuffer<ParticleConstantBuffer> g_particle_cache;
 template<typename T>
 static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
     constexpr int slot = T::get_uniform_buffer_slot();
-    p_buffer.buffer = GraphicsManager::singleton().CreateUniform(slot, sizeof(T));
+    p_buffer.buffer = GraphicsManager::GetSingleton().CreateUniform(slot, sizeof(T));
 }
 
 bool GraphicsManager::Initialize() {
@@ -69,7 +69,7 @@ bool GraphicsManager::Initialize() {
             return;
         }
 
-        BindTexture(p_dimension, resource->texture->get_handle(), p_slot);
+        BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
     };
 
     // bind common textures
@@ -143,7 +143,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         Image* image = task.handle->get();
         DEV_ASSERT(image);
 
-        TextureDesc texture_desc{};
+        GpuTextureDesc texture_desc{};
         SamplerDesc sampler_desc{};
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
@@ -184,7 +184,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
     std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
 
     // @TODO: this part need rework
-    TextureDesc texture_desc{};
+    GpuTextureDesc texture_desc{};
     texture_desc.array_size = 1;
 
     switch (p_desc.type) {
@@ -255,7 +255,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::FindRenderTarget(RenderTargetReso
 }
 
 uint64_t GraphicsManager::GetFinalImage() const {
-    const Texture* texture = nullptr;
+    const GpuTexture* texture = nullptr;
     switch (m_method) {
         case RenderGraph::VXGI:
             texture = FindRenderTarget(RESOURCE_FINAL)->texture.get();
@@ -269,7 +269,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
     }
 
     if (texture) {
-        return texture->get_handle();
+        return texture->GetHandle();
     }
 
     return 0;
@@ -298,12 +298,12 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
             return false;
         }
 
-        auto texture = reinterpret_cast<Texture*>(image->gpu_texture.get());
+        auto texture = reinterpret_cast<GpuTexture*>(image->gpu_texture.get());
         if (!texture) {
             return false;
         }
 
-        p_out_handle = texture->get_handle();
+        p_out_handle = texture->GetHandle();
         return true;
     };
 

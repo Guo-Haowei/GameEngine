@@ -6,16 +6,16 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 
+#include "rendering/gpu_resource.h"
 #include "rendering/render_graph/draw_pass.h"
-#include "rendering/texture.h"
 
 namespace my {
 
-struct D3d11Texture : public Texture {
-    using Texture::Texture;
+struct D3d11Texture : public GpuTexture {
+    using GpuTexture::GpuTexture;
 
-    uint64_t get_resident_handle() const { return 0; }
-    uint64_t get_handle() const { return (uint64_t)srv.Get(); }
+    uint64_t GetResidentHandle() const { return 0; }
+    uint64_t GetHandle() const { return (uint64_t)srv.Get(); }
 
     Microsoft::WRL::ComPtr<ID3D11Resource> texture;
 
