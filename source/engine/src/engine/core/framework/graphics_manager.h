@@ -123,7 +123,6 @@ public:
     std::shared_ptr<RenderTarget> CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> FindRenderTarget(RenderTargetResourceName p_name) const;
 
-    // @TODO: make it pure virtual
     virtual std::shared_ptr<GpuBuffer> CreateBuffer(const GpuBufferDesc& p_desc) = 0;
     virtual std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
