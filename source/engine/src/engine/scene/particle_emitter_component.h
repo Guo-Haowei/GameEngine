@@ -40,13 +40,14 @@ public:
 private:
     void ResizePool(uint32_t p_size);
 
-    int m_emittedParticleCount;
     int m_maxParticleCount;
     int m_emittedParticlesPerSecond;
     float m_particleScale;
     float m_particleLifeSpan;
     vec3 m_startingVelocity;
 
+    // Non-Serialized
+    int m_emittedParticleCount;
     ParticlePool m_particlePool;
 };
 

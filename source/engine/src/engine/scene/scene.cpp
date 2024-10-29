@@ -18,7 +18,8 @@ static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // version 5: add validation
 // version 6: add collider component
 // version 7: add enabled to material
-static constexpr uint32_t kSceneVersion = 7;
+// version 8: add particle emitter
+static constexpr uint32_t kSceneVersion = 8;
 static constexpr uint32_t kSceneMagicNumber = 'xScn';
 
 // @TODO: refactor
@@ -47,12 +48,12 @@ void Scene::Update(float p_elapsedTime) {
     ctx.Wait();
     // transform, update local matrix from position, rotation and scale
     RunTransformationUpdateSystem(ctx);
-    // particle
-    RunParticleEmitterUpdateSystem(ctx);
     ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
     RunHierarchyUpdateSystem(ctx);
     ctx.Wait();
+    // particle
+    RunParticleEmitterUpdateSystem(ctx);
     // armature
     RunArmatureUpdateSystem(ctx);
     ctx.Wait();
