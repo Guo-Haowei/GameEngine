@@ -61,10 +61,8 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
         }
     }
 
-    if (gm.GetBackend() == Backend::OPENGL) {
-        gm.SetPipelineState(PROGRAM_PARTICLE);
-        RenderManager::GetSingleton().draw_quad_instanced(gm.m_particle_count);
-    }
+    gm.SetPipelineState(PROGRAM_PARTICLE);
+    RenderManager::GetSingleton().draw_quad_instanced(gm.m_particle_count);
 }
 
 void RenderPassCreator::addGBufferPass() {

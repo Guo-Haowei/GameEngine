@@ -632,7 +632,6 @@ void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
 }
 
 void D3d11GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
-    LOG_ERROR("NOT TESTED");
     m_ctx->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
 }
 

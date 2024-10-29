@@ -165,11 +165,6 @@ bool PipelineStateManager::initialize() {
         info.cs = "bloom_upsample.comp";
         m_cache[PROGRAM_BLOOM_UPSAMPLE] = create(info);
     }
-
-    // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
-        return true;
-    }
     {
         PipelineCreateInfo info;
         info.vs = "particle.vert";
@@ -178,6 +173,11 @@ bool PipelineStateManager::initialize() {
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_mesh;
         m_cache[PROGRAM_PARTICLE] = create(info);
+    }
+
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
+        return true;
     }
     {
         PipelineCreateInfo info;
