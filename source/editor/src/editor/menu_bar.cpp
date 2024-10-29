@@ -21,7 +21,7 @@ static void SaveProject(bool p_need_open_dialog) {
     }
 
     DVAR_SET_STRING(project, path.string());
-    Scene& scene = SceneManager::singleton().getScene();
+    Scene& scene = SceneManager::GetSingleton().getScene();
 
     Archive archive;
     if (!archive.OpenWrite(path.string())) {

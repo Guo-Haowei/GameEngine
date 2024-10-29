@@ -7,7 +7,7 @@
 namespace my {
 
 void PrintImpl(LogLevel p_level, const std::string& p_message) {
-    OS* os = OS::singleton_ptr();
+    OS* os = OS::GetSingletonPtr();
     if (os) [[likely]] {
         os->Print(p_level, p_message);
     } else {
@@ -17,7 +17,7 @@ void PrintImpl(LogLevel p_level, const std::string& p_message) {
 }
 
 void LogImpl(LogLevel p_level, const std::string& p_message) {
-    OS* os = OS::singleton_ptr();
+    OS* os = OS::GetSingletonPtr();
     const uint32_t thread_id = thread::GetThreadId();
     std::string thread_info;
     if (thread_id) {

@@ -5,7 +5,7 @@
 namespace my {
 
 void UniformBufferBase::update(const void* p_data, size_t p_size) {
-    auto& gm = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::GetSingleton();
     switch (gm.GetBackend()) {
         case Backend::OPENGL:
             gm.UpdateUniform(this, p_data, p_size);

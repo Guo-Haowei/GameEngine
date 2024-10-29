@@ -21,7 +21,7 @@ namespace my::rg {
 
 void voxelization_pass_func(const DrawPass*) {
     OPTICK_EVENT();
-    auto& gm = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
 
     if (!DVAR_GET_BOOL(r_enable_vxgi)) {
@@ -66,7 +66,7 @@ void voxelization_pass_func(const DrawPass*) {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     // post process
-    GraphicsManager::singleton().SetPipelineState(PROGRAM_VOXELIZATION_POST);
+    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_VOXELIZATION_POST);
 
     constexpr GLuint workGroupX = 512;
     constexpr GLuint workGroupY = 512;
@@ -90,20 +90,20 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::singleton().SetPipelineState(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
+    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
     auto cube_map = p_draw_pass->color_attachments[0];
     auto [width, height] = cube_map->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = buildOpenGLCubeMapViewMatrices(vec3(0.0f));
     for (int i = 0; i < 6; ++i) {
-        GraphicsManager::singleton().SetRenderTarget(p_draw_pass, i);
+        GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
         g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[i];
         g_env_cache.update();
-        RenderManager::singleton().draw_skybox();
+        RenderManager::GetSingleton().draw_skybox();
     }
 
     glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->texture->get_handle32());
@@ -119,12 +119,12 @@ void generate_brdf_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::singleton().SetPipelineState(PROGRAM_BRDF);
+    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_BRDF);
     auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
-    GraphicsManager::singleton().SetRenderTarget(p_draw_pass);
+    GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
-    RenderManager::singleton().draw_quad();
+    RenderManager::GetSingleton().draw_quad();
 }
 
 void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
@@ -133,20 +133,20 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::singleton().SetPipelineState(PROGRAM_DIFFUSE_IRRADIANCE);
+    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DIFFUSE_IRRADIANCE);
     auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = buildOpenGLCubeMapViewMatrices(vec3(0.0f));
 
     for (int i = 0; i < 6; ++i) {
-        GraphicsManager::singleton().SetRenderTarget(p_draw_pass, i);
+        GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
         g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[i];
         g_env_cache.update();
-        RenderManager::singleton().draw_skybox();
+        RenderManager::GetSingleton().draw_skybox();
     }
 }
 
@@ -156,7 +156,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::singleton().SetPipelineState(PROGRAM_PREFILTER);
+    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_PREFILTER);
     auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -169,10 +169,10 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
             g_env_cache.cache.g_env_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
             g_env_cache.update();
 
-            GraphicsManager::singleton().SetRenderTarget(p_draw_pass, face_id, mip_idx);
+            GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, face_id, mip_idx);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glViewport(0, 0, width, height);
-            RenderManager::singleton().draw_skybox();
+            RenderManager::GetSingleton().draw_skybox();
         }
     }
 
@@ -182,7 +182,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
 static void highlight_select_pass_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    auto& manager = GraphicsManager::singleton();
+    auto& manager = GraphicsManager::GetSingleton();
     manager.SetRenderTarget(p_draw_pass);
     DEV_ASSERT(!p_draw_pass->color_attachments.empty());
     auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
@@ -192,14 +192,14 @@ static void highlight_select_pass_func(const DrawPass* p_draw_pass) {
     manager.SetPipelineState(PROGRAM_HIGHLIGHT);
     manager.SetStencilRef(STENCIL_FLAG_SELECTED);
     glClear(GL_COLOR_BUFFER_BIT);
-    RenderManager::singleton().draw_quad();
+    RenderManager::GetSingleton().draw_quad();
     manager.SetStencilRef(0);
 }
 
 void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    GraphicsManager& gm = GraphicsManager::singleton();
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_draw_pass);
     DEV_ASSERT(!p_draw_pass->color_attachments.empty());
     auto depth_buffer = p_draw_pass->depth_attachment;
@@ -208,7 +208,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    GraphicsManager::singleton().SetPipelineState(PROGRAM_DEBUG_VOXEL);
+    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DEBUG_VOXEL);
 
     PassContext& pass = gm.m_mainPass;
     gm.BindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
@@ -234,23 +234,23 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     g_debug_draw_cache.cache.c_display_channel = p_channel;
     g_debug_draw_cache.cache.c_debug_draw_map = p_handle;
     g_debug_draw_cache.update();
-    RenderManager::singleton().draw_quad();
+    RenderManager::GetSingleton().draw_quad();
 }
 
 void final_pass_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    GraphicsManager::singleton().SetRenderTarget(p_draw_pass);
+    GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
     DEV_ASSERT(!p_draw_pass->color_attachments.empty());
     auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GraphicsManager::singleton().SetPipelineState(PROGRAM_IMAGE_2D);
+    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_IMAGE_2D);
 
     // @TODO: clean up
-    auto final_image_handle = GraphicsManager::singleton().FindRenderTarget(RESOURCE_TONE)->texture->get_resident_handle();
+    auto final_image_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_TONE)->texture->get_resident_handle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
     // if (0) {
@@ -265,7 +265,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     // }
 
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
-        auto shadow_map_handle = GraphicsManager::singleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->texture->get_resident_handle();
+        auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->texture->get_resident_handle();
         debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);
     }
 }
@@ -282,7 +282,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
     config.frame_height = h;
     RenderPassCreator creator(config, p_graph);
 
-    GraphicsManager& manager = GraphicsManager::singleton();
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     auto final_attachment = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_FINAL,
                                                                          PixelFormat::R8G8B8A8_UINT,

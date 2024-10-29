@@ -17,7 +17,7 @@ bool ImGuiModule::Initialize() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    auto asset = AssetManager::singleton().loadFileSync(FilePath{ "@res://fonts/DroidSans.ttf" });
+    auto asset = AssetManager::GetSingleton().loadFileSync(FilePath{ "@res://fonts/DroidSans.ttf" });
     DEV_ASSERT(asset);
     ImFontConfig font_cfg;
     font_cfg.FontDataOwnedByAtlas = false;

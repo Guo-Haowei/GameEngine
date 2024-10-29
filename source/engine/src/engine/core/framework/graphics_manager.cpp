@@ -36,7 +36,7 @@ UniformBuffer<ParticleConstantBuffer> g_particle_cache;
 template<typename T>
 static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
     constexpr int slot = T::get_uniform_buffer_slot();
-    p_buffer.buffer = GraphicsManager::singleton().CreateUniform(slot, sizeof(T));
+    p_buffer.buffer = GraphicsManager::GetSingleton().CreateUniform(slot, sizeof(T));
 }
 
 bool GraphicsManager::Initialize() {

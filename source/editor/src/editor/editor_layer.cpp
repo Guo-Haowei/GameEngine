@@ -169,7 +169,7 @@ void EditorLayer::FlushCommand(Scene& scene) {
 
                 scene.AttachComponent(id, add_command->parent.IsValid() ? add_command->parent : scene.m_root);
                 SelectEntity(id);
-                SceneManager::singleton().bumpRevision();
+                SceneManager::GetSingleton().bumpRevision();
                 break;
             }
             if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {

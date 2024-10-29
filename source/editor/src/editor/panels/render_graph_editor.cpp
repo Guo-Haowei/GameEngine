@@ -133,7 +133,7 @@ public:
 };
 
 RenderGraphEditor::RenderGraphEditor(EditorLayer& editor) : EditorWindow("Render Graph", editor) {
-    m_delegate = std::make_shared<RenderGraphEditorDelegate>(GraphicsManager::singleton().GetActiveRenderGraph());
+    m_delegate = std::make_shared<RenderGraphEditorDelegate>(GraphicsManager::GetSingleton().GetActiveRenderGraph());
 }
 
 void RenderGraphEditor::UpdateInternal(my::Scene&) {

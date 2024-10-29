@@ -186,7 +186,7 @@ bool D3d11GraphicsManager::CreateDevice() {
 }
 
 bool D3d11GraphicsManager::CreateSwapChain() {
-    auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::singleton_ptr());
+    auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::GetSingletonPtr());
     DEV_ASSERT(display_manager);
 
     DXGI_MODE_DESC buffer_desc{};

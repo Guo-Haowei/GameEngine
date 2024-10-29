@@ -69,7 +69,7 @@ int Application::run(int argc, const char** argv) {
     m_os = std::make_shared<OS>();
 
     // intialize
-    OS::singleton().Initialize();
+    OS::GetSingleton().Initialize();
 
     // dvars
     registerCommonDvars();
@@ -113,7 +113,7 @@ int Application::run(int argc, const char** argv) {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-    while (!DisplayManager::singleton().shouldClose()) {
+    while (!DisplayManager::GetSingleton().shouldClose()) {
         OPTICK_FRAME("MainThread");
 
         m_display_server->newFrame();
@@ -154,7 +154,7 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     // @TODO: fix
-    auto [w, h] = DisplayManager::singleton().getWindowSize();
+    auto [w, h] = DisplayManager::GetSingleton().getWindowSize();
     DVAR_SET_IVEC2(window_resolution, w, h);
 
     m_layers.clear();
@@ -175,7 +175,7 @@ int Application::run(int argc, const char** argv) {
 
     DynamicVariableManager::Serialize();
 
-    OS::singleton().Finalize();
+    OS::GetSingleton().Finalize();
 
     return 0;
 }

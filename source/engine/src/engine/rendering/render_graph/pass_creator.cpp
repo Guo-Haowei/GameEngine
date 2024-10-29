@@ -11,7 +11,7 @@ namespace my::rg {
 static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    auto& gm = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
     auto [width, height] = p_draw_pass->depth_attachment->getSize();
 
@@ -63,12 +63,12 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
 
     if (gm.GetBackend() == Backend::OPENGL) {
         gm.SetPipelineState(PROGRAM_PARTICLE);
-        RenderManager::singleton().draw_quad_instanced(gm.m_particle_count);
+        RenderManager::GetSingleton().draw_quad_instanced(gm.m_particle_count);
     }
 }
 
 void RenderPassCreator::addGBufferPass() {
-    GraphicsManager& manager = GraphicsManager::singleton();
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     int p_width = m_config.frame_width;
     int p_height = m_config.frame_height;
@@ -119,7 +119,7 @@ void RenderPassCreator::addGBufferPass() {
 static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     OPTICK_EVENT();
 
-    auto& gm = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
 
     auto& pass_ptr = gm.m_pointShadowPasses[p_pass_id];
@@ -166,7 +166,7 @@ static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
 static void shadowPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    auto& gm = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
 
     gm.SetRenderTarget(p_draw_pass);
@@ -199,7 +199,7 @@ static void shadowPassFunc(const DrawPass* p_draw_pass) {
 }
 
 void RenderPassCreator::addShadowPass() {
-    GraphicsManager& manager = GraphicsManager::singleton();
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     const int shadow_res = DVAR_GET_INT(r_shadow_res);
     DEV_ASSERT(math::isPowerOfTwo(shadow_res));
@@ -261,7 +261,7 @@ void RenderPassCreator::addShadowPass() {
 static void lightingPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    auto& gm = GraphicsManager::singleton();
+    auto& gm = GraphicsManager::GetSingleton();
     DEV_ASSERT(!p_draw_pass->color_attachments.empty());
     auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
 
@@ -296,7 +296,7 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_point_shadow_3_slot, Dimension::TEXTURE_CUBE);
 
     // @TODO: fix it
-    RenderManager::singleton().draw_quad();
+    RenderManager::GetSingleton().draw_quad();
 
     PassContext& pass = gm.m_mainPass;
     gm.BindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
@@ -310,8 +310,8 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
 
     // @TODO: fix skybox
     if (gm.GetBackend() == Backend::OPENGL) {
-        GraphicsManager::singleton().SetPipelineState(PROGRAM_ENV_SKYBOX);
-        RenderManager::singleton().draw_skybox();
+        GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX);
+        RenderManager::GetSingleton().draw_skybox();
     }
 
     // unbind stuff
@@ -330,7 +330,7 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
 }
 
 void RenderPassCreator::addLightingPass() {
-    GraphicsManager& manager = GraphicsManager::singleton();
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     auto gbuffer_depth = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
 
@@ -365,7 +365,7 @@ void RenderPassCreator::addLightingPass() {
 
 /// Bloom
 static void bloomFunction(const DrawPass*) {
-    GraphicsManager& gm = GraphicsManager::singleton();
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     // Step 1, select pixels contribute to bloom
     {
@@ -422,7 +422,7 @@ static void bloomFunction(const DrawPass*) {
 }
 
 void RenderPassCreator::addBloomPass() {
-    GraphicsManager& gm = GraphicsManager::singleton();
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
@@ -455,7 +455,7 @@ void RenderPassCreator::addBloomPass() {
 static void tonePassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    GraphicsManager& gm = GraphicsManager::singleton();
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_draw_pass);
 
     DEV_ASSERT(!p_draw_pass->color_attachments.empty());
@@ -485,7 +485,7 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
         gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
 
         gm.SetPipelineState(PROGRAM_TONE);
-        RenderManager::singleton().draw_quad();
+        RenderManager::GetSingleton().draw_quad();
 
         gm.UnbindTexture(Dimension::TEXTURE_2D, g_texture_lighting_slot);
         gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
@@ -493,7 +493,7 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
 }
 
 void RenderPassCreator::addTonePass() {
-    GraphicsManager& gm = GraphicsManager::singleton();
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
     desc.name = RenderPassName::TONE;
