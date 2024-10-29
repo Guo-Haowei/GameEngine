@@ -1,27 +1,9 @@
 #include "particle_emitter_component.h"
 
-#include <random>
+#include "core/base/random.h"
+#include "core/io/archive.h"
 
 namespace my {
-
-// @TODO: refactor
-class Random {
-public:
-    static void Initialize() {
-        s_randomEngine.seed(std::random_device()());
-    }
-
-    static float Float() {
-        return s_distribution(s_randomEngine);
-    }
-
-private:
-    static std::mt19937 s_randomEngine;
-    static std::uniform_real_distribution<float> s_distribution;
-};
-
-std::mt19937 Random::s_randomEngine;
-std::uniform_real_distribution<float> Random::s_distribution(0.0f, 1.0f);
 
 ParticleEmitterComponent::ParticleEmitterComponent() {
     m_emittedParticleCount = 0;
@@ -32,7 +14,7 @@ ParticleEmitterComponent::ParticleEmitterComponent() {
     m_startingVelocity = vec3(0.0f);
 }
 
-void ParticleEmitterComponent::Update(float p_elapsedTime) {
+void ParticleEmitterComponent::Update(float p_elapsedTime, const vec3& p_position) {
     // resize pool if necessary
     ResizePool(m_maxParticleCount);
 
@@ -65,16 +47,15 @@ void ParticleEmitterComponent::Update(float p_elapsedTime) {
     DEV_ASSERT(particle_to_emit <= free_slots.size());
     for (int i = 0; i < particle_to_emit; ++i) {
         Particle& particle = *free_slots[i];
-        particle.position = vec3(0.0f);
-        particle.velocity = vec3(0.0f);
+        particle.position = p_position;
         particle.lifeSpan = m_particleLifeSpan;
         particle.lifeRemaining = m_particleLifeSpan;
         particle.isActive = true;
 
+        particle.velocity = m_startingVelocity;
         particle.velocity.x += Random::Float() - 0.5f;
         particle.velocity.y += Random::Float() - 0.5f;
         particle.velocity.z += Random::Float() - 0.5f;
-        particle.velocity += m_startingVelocity;
     }
 
     m_emittedParticleCount += particle_to_emit;
@@ -85,6 +66,14 @@ void ParticleEmitterComponent::ResizePool(uint32_t p_size) {
 
     if (p_size > pool_size) {
         m_particlePool.resize(p_size);
+    }
+}
+
+void ParticleEmitterComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+    CRASH_NOW();
+    if (p_archive.IsWriteMode()) {
+    } else {
     }
 }
 

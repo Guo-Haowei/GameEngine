@@ -109,11 +109,9 @@ private:
     REGISTER_COMPONENT(RigidBodyComponent, 0);
     REGISTER_COMPONENT(BoxColliderComponent, 0);
     REGISTER_COMPONENT(MeshColliderComponent, 0);
+    REGISTER_COMPONENT(ParticleEmitterComponent, 0);
 
 public:
-    // @TODO: make a proper component
-    ParticleEmitterComponent m_particleEmitter;
-
     bool Serialize(Archive& p_archive);
 
     void Update(float p_delta_time);
@@ -201,12 +199,13 @@ private:
     void UpdateArmature(uint32_t p_index);
     void UpdateLight(uint32_t p_index);
 
-    void RunLightUpdateSystem(jobsystem::Context& p_ctx);
-    void RunTransformationUpdateSystem(jobsystem::Context& p_ctx);
-    void RunHierarchyUpdateSystem(jobsystem::Context& p_ctx);
-    void RunAnimationUpdateSystem(jobsystem::Context& p_ctx);
-    void RunArmatureUpdateSystem(jobsystem::Context& p_ctx);
-    void RunObjectUpdateSystem(jobsystem::Context& p_ctx);
+    void RunLightUpdateSystem(jobsystem::Context& p_context);
+    void RunTransformationUpdateSystem(jobsystem::Context& p_context);
+    void RunHierarchyUpdateSystem(jobsystem::Context& p_context);
+    void RunAnimationUpdateSystem(jobsystem::Context& p_context);
+    void RunArmatureUpdateSystem(jobsystem::Context& p_context);
+    void RunObjectUpdateSystem(jobsystem::Context& p_context);
+    void RunParticleEmitterUpdateSystem(jobsystem::Context& p_context);
 
     // @TODO: refactor
     AABB m_bound;

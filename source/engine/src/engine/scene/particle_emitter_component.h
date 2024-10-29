@@ -7,13 +7,6 @@ class Archive;
 
 class ParticleEmitterComponent {
 public:
-    ParticleEmitterComponent();
-
-    void Update(float p_elapsedTime);
-
-private:
-    void ResizePool(uint32_t p_size);
-
     struct Particle {
         vec3 position;
         vec3 velocity;
@@ -25,6 +18,28 @@ private:
         bool isActive = false;
     };
 
+    using ParticlePool = std::vector<Particle>;
+
+    ParticleEmitterComponent();
+
+    void Update(float p_elapsedTime, const vec3& p_position);
+
+    float GetParticleScale() const { return m_particleScale; }
+    float GetParticleLifeSpan() const { return m_particleLifeSpan; }
+
+    vec3& GetStartingVelocityRef() { return m_startingVelocity; }
+    int& GetMaxParticleCountRef() { return m_maxParticleCount; }
+    int& GetEmittedParticlesPerSecondRef() { return m_emittedParticlesPerSecond; }
+    float& GetParticleScaleRef() { return m_particleScale; }
+    float& GetParticleLifeSpanRef() { return m_particleLifeSpan; }
+    ParticlePool& GetParticlePoolRef() { return m_particlePool; }
+    const ParticlePool& GetParticlePoolRef() const { return m_particlePool; }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+
+private:
+    void ResizePool(uint32_t p_size);
+
     int m_emittedParticleCount;
     int m_maxParticleCount;
     int m_emittedParticlesPerSecond;
@@ -32,10 +47,7 @@ private:
     float m_particleLifeSpan;
     vec3 m_startingVelocity;
 
-    std::vector<Particle> m_particlePool;
-
-    friend class GraphicsManager;
-    friend class EmitterPanel;
+    ParticlePool m_particlePool;
 };
 
 }  // namespace my

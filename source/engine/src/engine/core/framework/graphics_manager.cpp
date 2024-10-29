@@ -118,20 +118,8 @@ void GraphicsManager::Update(Scene& p_scene) {
 
     Cleanup();
 
-    // @TODO: refactor particles
-    {
-        m_particle_count = 0;
-        for (const auto& particle : p_scene.m_particleEmitter.m_particlePool) {
-            if (particle.isActive) {
-                if (m_particle_count >= array_length(g_particle_cache.cache.globalPatricleTransforms)) {
-                    break;
-                }
-                g_particle_cache.cache.globalPatricleTransforms[m_particle_count++] = vec4(particle.position, p_scene.m_particleEmitter.m_particleScale);
-            }
-        }
-    }
-
     UpdateConstants(p_scene);
+    UpdateParticles(p_scene);
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
@@ -381,6 +369,27 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     cache.u_world_size_half = 0.5f * world_size;
     cache.u_texel_size = texel_size;
     cache.u_voxel_size = voxel_size;
+}
+
+void GraphicsManager::UpdateParticles(const Scene& p_scene) {
+    bool should_break = true;
+
+    for (auto [emitter_entity, emitter_component] : p_scene.m_ParticleEmitterComponents) {
+        m_particle_count = 0;
+        for (const auto& particle : emitter_component.GetParticlePoolRef()) {
+            if (particle.isActive) {
+                if (m_particle_count >= array_length(g_particle_cache.cache.globalPatricleTransforms)) {
+                    break;
+                }
+                g_particle_cache.cache.globalPatricleTransforms[m_particle_count++] = vec4(particle.position, emitter_component.GetParticleScale());
+            }
+        }
+
+        // @TODO: only support 1 emitter
+        if (should_break) {
+            break;
+        }
+    }
 }
 
 /// @TODO: refactor lights

@@ -36,8 +36,8 @@ static constexpr uint32_t kSceneMagicNumber = 'xScn';
     }
 #endif
 
-void Scene::Update(float p_delta_time) {
-    m_elapsedTime = p_delta_time;
+void Scene::Update(float p_elapsedTime) {
+    m_elapsedTime = p_elapsedTime;
 
     Context ctx;
 
@@ -48,7 +48,7 @@ void Scene::Update(float p_delta_time) {
     // transform, update local matrix from position, rotation and scale
     RunTransformationUpdateSystem(ctx);
     // particle
-    m_particleEmitter.Update(p_delta_time);
+    RunParticleEmitterUpdateSystem(ctx);
     ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
     RunHierarchyUpdateSystem(ctx);
@@ -415,7 +415,7 @@ void Scene::UpdateAnimation(uint32_t p_index) {
     }
 
     if (animation.isPlaying()) {
-        // @TODO: set delta time
+        // @TODO: set elapsed time
         animation.timer += m_elapsedTime * animation.speed;
     }
 }
@@ -591,27 +591,29 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
     return result;
 }
 
-void Scene::RunLightUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, UpdateLight(index));
+void Scene::RunLightUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, UpdateLight(index));
 }
 
-void Scene::RunTransformationUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].UpdateTransform());
+void Scene::RunTransformationUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].UpdateTransform());
 }
 
-void Scene::RunAnimationUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<AnimationComponent>(), 1, UpdateAnimation(index));
+void Scene::RunAnimationUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<AnimationComponent>(), 1, UpdateAnimation(index));
 }
 
-void Scene::RunArmatureUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<ArmatureComponent>(), 1, UpdateArmature(index));
+void Scene::RunArmatureUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<ArmatureComponent>(), 1, UpdateArmature(index));
 }
 
-void Scene::RunHierarchyUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, UpdateHierarchy(index));
+void Scene::RunHierarchyUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, UpdateHierarchy(index));
 }
 
-void Scene::RunObjectUpdateSystem(jobsystem::Context&) {
+void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
+    unused(p_context);
+
     m_bound.makeInvalid();
 
     for (auto [entity, obj] : m_ObjectComponents) {
@@ -627,6 +629,15 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context&) {
         AABB aabb = mesh.local_bound;
         aabb.applyMatrix(M);
         m_bound.unionBox(aabb);
+    }
+}
+
+void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
+    unused(p_context);
+
+    for (auto [entity, emitter] : m_ParticleEmitterComponents) {
+        const TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+        emitter.Update(m_elapsedTime, transform.GetTranslation());
     }
 }
 
