@@ -18,7 +18,8 @@ static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // version 5: add validation
 // version 6: add collider component
 // version 7: add enabled to material
-static constexpr uint32_t kSceneVersion = 7;
+// version 8: add particle emitter
+static constexpr uint32_t kSceneVersion = 8;
 static constexpr uint32_t kSceneMagicNumber = 'xScn';
 
 // @TODO: refactor
@@ -36,8 +37,8 @@ static constexpr uint32_t kSceneMagicNumber = 'xScn';
     }
 #endif
 
-void Scene::Update(float p_delta_time) {
-    m_elapsedTime = p_delta_time;
+void Scene::Update(float p_elapsedTime) {
+    m_elapsedTime = p_elapsedTime;
 
     Context ctx;
 
@@ -47,12 +48,12 @@ void Scene::Update(float p_delta_time) {
     ctx.Wait();
     // transform, update local matrix from position, rotation and scale
     RunTransformationUpdateSystem(ctx);
-    // particle
-    m_particleEmitter.Update(p_delta_time);
     ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
     RunHierarchyUpdateSystem(ctx);
     ctx.Wait();
+    // particle
+    RunParticleEmitterUpdateSystem(ctx);
     // armature
     RunArmatureUpdateSystem(ctx);
     ctx.Wait();
@@ -266,17 +267,27 @@ Entity Scene::CreateSphereEntity(const std::string& p_name,
                                  Entity p_material_id,
                                  float p_radius,
                                  const mat4& p_transform) {
-    ecs::Entity entity = CreateObjectEntity(p_name);
-    TransformComponent& trans = *GetComponent<TransformComponent>(entity);
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
-    trans.MatrixTransform(p_transform);
+    Entity entity = CreateObjectEntity(p_name);
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
 
-    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = makeSphereMesh(p_radius);
     mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
+Entity Scene::CreateParticleEmitter(const std::string& p_name, const mat4& p_transform) {
+    Entity entity = CreateTransformEntity(p_name);
+    Create<ParticleEmitterComponent>(entity);
+
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
 
     return entity;
 }
@@ -405,7 +416,7 @@ void Scene::UpdateAnimation(uint32_t p_index) {
     }
 
     if (animation.isPlaying()) {
-        // @TODO: set delta time
+        // @TODO: set elapsed time
         animation.timer += m_elapsedTime * animation.speed;
     }
 }
@@ -581,27 +592,29 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
     return result;
 }
 
-void Scene::RunLightUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, UpdateLight(index));
+void Scene::RunLightUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, UpdateLight(index));
 }
 
-void Scene::RunTransformationUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].UpdateTransform());
+void Scene::RunTransformationUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].UpdateTransform());
 }
 
-void Scene::RunAnimationUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<AnimationComponent>(), 1, UpdateAnimation(index));
+void Scene::RunAnimationUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<AnimationComponent>(), 1, UpdateAnimation(index));
 }
 
-void Scene::RunArmatureUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<ArmatureComponent>(), 1, UpdateArmature(index));
+void Scene::RunArmatureUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<ArmatureComponent>(), 1, UpdateArmature(index));
 }
 
-void Scene::RunHierarchyUpdateSystem(Context& p_ctx) {
-    JS_PARALLEL_FOR(p_ctx, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, UpdateHierarchy(index));
+void Scene::RunHierarchyUpdateSystem(Context& p_context) {
+    JS_PARALLEL_FOR(p_context, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, UpdateHierarchy(index));
 }
 
-void Scene::RunObjectUpdateSystem(jobsystem::Context&) {
+void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
+    unused(p_context);
+
     m_bound.makeInvalid();
 
     for (auto [entity, obj] : m_ObjectComponents) {
@@ -617,6 +630,15 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context&) {
         AABB aabb = mesh.local_bound;
         aabb.applyMatrix(M);
         m_bound.unionBox(aabb);
+    }
+}
+
+void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
+    unused(p_context);
+
+    for (auto [entity, emitter] : m_ParticleEmitterComponents) {
+        const TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+        emitter.Update(m_elapsedTime, transform.GetTranslation());
     }
 }
 

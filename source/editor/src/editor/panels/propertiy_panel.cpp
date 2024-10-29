@@ -90,10 +90,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         if (ImGui::BeginMenu("Selectable")) {
             // @TODO: check if exists, if exists, disable
             if (ImGui::MenuItem("Box Collider")) {
-                m_editor.AddComponent(COMPONENT_TYPE_BOX_COLLIDER, id);
+                m_editor.AddComponent(ComponentType::BOX_COLLIDER, id);
             }
             if (ImGui::MenuItem("Mesh Collider")) {
-                m_editor.AddComponent(COMPONENT_TYPE_MESH_COLLIDER, id);
+                m_editor.AddComponent(ComponentType::MESH_COLLIDER, id);
             }
             ImGui::EndMenu();
         }
@@ -109,6 +109,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     BoxColliderComponent* box_collider = p_scene.GetComponent<BoxColliderComponent>(id);
     MeshColliderComponent* mesh_collider = p_scene.GetComponent<MeshColliderComponent>(id);
     AnimationComponent* animation_component = p_scene.GetComponent<AnimationComponent>(id);
+    ParticleEmitterComponent* emitter_component = p_scene.GetComponent<ParticleEmitterComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -271,6 +272,14 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             p_animation.flags |= AnimationComponent::PLAYING;
         }
         ImGui::Separator();
+    });
+
+    DrawComponent("Emitter", emitter_component, [&](ParticleEmitterComponent& p_emitter) {
+        DrawVec3Control("Velocity", p_emitter.GetStartingVelocityRef(), 0.0f);
+        DrawDragInt("Max count", p_emitter.GetMaxParticleCountRef(), 10, 1000, 10000);
+        DrawDragInt("Emit per sec", p_emitter.GetEmittedParticlesPerSecondRef(), 1, 100, 1000);
+        DrawDragFloat("Scaling", p_emitter.GetParticleScaleRef(), 0.01f, 0.01f, 10.0f);
+        DrawDragFloat("Life span", p_emitter.GetParticleLifeSpanRef(), 0.1f, 0.1f, 10.0f);
     });
 }
 

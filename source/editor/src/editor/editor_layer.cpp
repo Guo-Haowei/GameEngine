@@ -7,7 +7,6 @@
 #include "core/input/input.h"
 #include "editor/panels/console_panel.h"
 #include "editor/panels/content_browser.h"
-#include "editor/panels/emitter_panel.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_editor.h"
@@ -24,7 +23,6 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<PropertyPanel>(*this));
     AddPanel(std::make_shared<Viewer>(*this));
     AddPanel(std::make_shared<ContentBrowser>(*this));
-    AddPanel(std::make_shared<EmitterPanel>(*this));
 
     m_menuBar = std::make_shared<MenuBar>(*this);
 
@@ -140,26 +138,32 @@ void EditorLayer::FlushCommand(Scene& scene) {
             if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
                 ecs::Entity id;
                 switch (add_command->entityType) {
-                    case ENTITY_TYPE_INFINITE_LIGHT:
+                    case EntityType::INFINITE_LIGHT:
                         id = scene.CreateInfiniteLightEntity(gen_name("directional-light"));
                         break;
-                    case ENTITY_TYPE_POINT_LIGHT:
+                    case EntityType::POINT_LIGHT:
                         id = scene.CreatePointLightEntity(gen_name("point-light"), vec3(0, 1, 0));
                         break;
-                    case ENTITY_TYPE_AREA_LIGHT:
+                    case EntityType::AREA_LIGHT:
                         id = scene.CreateAreaLightEntity(gen_name("area-light"));
                         break;
-                    case ENTITY_TYPE_PLANE:
+                    case EntityType::PLANE:
                         id = scene.CreatePlaneEntity(gen_name("plane"));
                         break;
-                    case ENTITY_TYPE_CUBE:
+                    case EntityType::CUBE:
                         id = scene.CreateCubeEntity(gen_name("cube"));
                         break;
-                    case ENTITY_TYPE_SPHERE:
+                    case EntityType::SPHERE:
                         id = scene.CreateSphereEntity(gen_name("sphere"));
                         break;
+                    case EntityType::TRANSFORM:
+                        id = scene.CreateTransformEntity(gen_name("node"));
+                        break;
+                    case EntityType::PARTICLE_EMITTER:
+                        id = scene.CreateParticleEmitter(gen_name("emitter"));
+                        break;
                     default:
-                        CRASH_NOW();
+                        LOG_FATAL("Entity type {} not supported", static_cast<int>(add_command->entityType));
                         break;
                 }
 
@@ -171,11 +175,11 @@ void EditorLayer::FlushCommand(Scene& scene) {
             if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {
                 DEV_ASSERT(command->target.IsValid());
                 switch (command->componentType) {
-                    case COMPONENT_TYPE_BOX_COLLIDER: {
+                    case ComponentType::BOX_COLLIDER: {
                         auto& collider = scene.Create<BoxColliderComponent>(command->target);
                         collider.box = AABB::fromCenterSize(vec3(0), vec3(1));
                     } break;
-                    case COMPONENT_TYPE_MESH_COLLIDER:
+                    case ComponentType::MESH_COLLIDER:
                         scene.Create<MeshColliderComponent>(command->target);
                         break;
                     default:
