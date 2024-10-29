@@ -8,9 +8,9 @@
 #include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/d3d11/d3d11_resources.h"
 #include "drivers/windows/win32_display_manager.h"
+#include "rendering/gpu_resource.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
-#include "rendering/texture.h"
 
 namespace my {
 
@@ -129,7 +129,7 @@ void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_grou
     m_ctx->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }
 
-void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) {
+void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
     if (!p_texture) {
         ID3D11UnorderedAccessView* uav = nullptr;
         m_ctx->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
@@ -276,7 +276,12 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     m_ctx->CSSetShaderResources(p_slot, 1, &srv);
 }
 
-std::shared_ptr<Texture> D3d11GraphicsManager::CreateTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuBuffer> D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) {
+    unused(p_desc);
+    return nullptr;
+}
+
+std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     ComPtr<ID3D11ShaderResourceView> srv;

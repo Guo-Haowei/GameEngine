@@ -216,7 +216,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             Image* image = texture.image ? texture.image->get() : nullptr;
             auto gpu_texture = image ? image->gpu_texture : nullptr;
             if (gpu_texture) {
-                ImGui::Image((ImTextureID)gpu_texture->get_handle(), ImVec2(128, 128));
+                ImGui::Image((ImTextureID)gpu_texture->GetHandle(), ImVec2(128, 128));
             }
         }
     });

@@ -151,7 +151,7 @@ ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
         return nullptr;
     }
 
-    TextureDesc texture_desc{};
+    GpuTextureDesc texture_desc{};
     SamplerDesc sampler_desc{};
     renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 

@@ -2,8 +2,8 @@
 #include "assets/image.h"
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
+#include "rendering/gpu_resource.h"
 #include "rendering/sampler.h"
-#include "rendering/texture.h"
 #include "scene/scene.h"
 
 // @TODO: remove this class
@@ -46,6 +46,6 @@ void request_env_map(const std::string& path);
 
 void register_rendering_dvars();
 
-void fill_texture_and_sampler_desc(const Image* p_image, TextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc);
+void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc);
 
 }  // namespace my::renderer

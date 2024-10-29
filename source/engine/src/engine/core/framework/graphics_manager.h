@@ -3,12 +3,12 @@
 #include "core/base/singleton.h"
 #include "core/framework/event_queue.h"
 #include "core/framework/module.h"
+#include "rendering/gpu_resource.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/pipeline_state_manager.h"
 #include "rendering/render_graph/draw_pass.h"
 #include "rendering/render_graph/render_graph.h"
 #include "rendering/sampler.h"
-#include "rendering/texture.h"
 #include "rendering/uniform_buffer.h"
 #include "scene/material_component.h"
 
@@ -116,12 +116,16 @@ public:
     virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
-    virtual void SetUnorderedAccessView(uint32_t p_slot, Texture* p_texture) = 0;
+    virtual void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
     void SetPipelineState(PipelineStateName p_name);
     virtual void SetStencilRef(uint32_t p_ref) = 0;
 
     std::shared_ptr<RenderTarget> CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> FindRenderTarget(RenderTargetResourceName p_name) const;
+
+    // @TODO: make it pure virtual
+    virtual std::shared_ptr<GpuBuffer> CreateBuffer(const GpuBufferDesc& p_desc) = 0;
+    virtual std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
     virtual std::shared_ptr<UniformBufferBase> CreateUniform(int p_slot, size_t p_capacity) = 0;
     virtual void UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
@@ -136,7 +140,6 @@ public:
     }
 
     virtual std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) = 0;
-    virtual std::shared_ptr<Texture> CreateTexture(const TextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
     virtual void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
     virtual void UnbindTexture(Dimension p_dimension, int p_slot) = 0;
 

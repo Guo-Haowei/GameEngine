@@ -36,7 +36,7 @@ void request_env_map(const std::string& path) {
     s_prev_env_map = path;
     if (auto handle = AssetManager::GetSingleton().findImage(FilePath{ path }); handle) {
         if (auto image = handle->get(); image && image->gpu_texture) {
-            g_constantCache.cache.c_hdr_env_map = image->gpu_texture->get_resident_handle();
+            g_constantCache.cache.c_hdr_env_map = image->gpu_texture->GetResidentHandle();
             g_constantCache.update();
             s_need_update_env = true;
             return;
@@ -53,7 +53,7 @@ void request_env_map(const std::string& path) {
         GraphicsManager::GetSingleton().RequestTexture(handle, [](Image* p_image) {
             // @TODO: better way
             if (p_image->gpu_texture) {
-                g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->get_resident_handle();
+                g_constantCache.cache.c_hdr_env_map = p_image->gpu_texture->GetResidentHandle();
                 g_constantCache.update();
                 s_need_update_env = true;
             }
@@ -68,7 +68,7 @@ void register_rendering_dvars() {
 #include "rendering_dvars.h"
 }
 
-void fill_texture_and_sampler_desc(const Image* p_image, TextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc) {
+void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc) {
     DEV_ASSERT(p_image);
     bool is_hdr_file = false;
 

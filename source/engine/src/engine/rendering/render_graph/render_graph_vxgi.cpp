@@ -13,8 +13,8 @@
 #include "rendering/GpuTexture.h"
 
 // @TODO: refactor
-extern GpuTexture g_albedoVoxel;
-extern GpuTexture g_normalVoxel;
+extern OldTexture g_albedoVoxel;
+extern OldTexture g_normalVoxel;
 extern OpenGLMeshBuffers* g_box;
 
 namespace my::rg {
@@ -106,7 +106,7 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
         RenderManager::GetSingleton().draw_skybox();
     }
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->texture->get_handle32());
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->texture->GetHandle32());
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
@@ -250,7 +250,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_IMAGE_2D);
 
     // @TODO: clean up
-    auto final_image_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_TONE)->texture->get_resident_handle();
+    auto final_image_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_TONE)->texture->GetResidentHandle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
     // if (0) {
@@ -265,7 +265,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     // }
 
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
-        auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->texture->get_resident_handle();
+        auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->texture->GetResidentHandle();
         debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);
     }
 }

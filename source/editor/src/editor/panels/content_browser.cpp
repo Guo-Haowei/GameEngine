@@ -82,7 +82,7 @@ void ContentBrowser::UpdateInternal(Scene&) {
         auto texture = it->second.image->gpu_texture;
         bool clicked = false;
         if (texture) {
-            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)texture->get_handle(), size);
+            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)texture->GetHandle(), size);
         } else {
             clicked = ImGui::Button(name.c_str(), size);
         }

@@ -280,7 +280,7 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
             return;
         }
 
-        gm.BindTexture(p_dimension, resource->texture->get_handle(), p_slot);
+        gm.BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
     };
 
     // bind common textures
@@ -377,7 +377,7 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
@@ -396,7 +396,7 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
@@ -413,7 +413,7 @@ static void bloomFunction(const DrawPass*) {
         const uint32_t work_group_x = math::ceilingDivision(width, 16);
         const uint32_t work_group_y = math::ceilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->get_handle(), g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
@@ -476,7 +476,7 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
                 return;
             }
 
-            gm.BindTexture(p_dimension, resource->texture->get_handle(), p_slot);
+            gm.BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
         };
         bind_slot(RESOURCE_LIGHTING, g_texture_lighting_slot);
         bind_slot(RESOURCE_BLOOM_0, g_bloom_input_image_slot);
