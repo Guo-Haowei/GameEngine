@@ -48,6 +48,8 @@ void Scene::Update(float p_elapsedTime) {
     ctx.Wait();
     // transform, update local matrix from position, rotation and scale
     RunTransformationUpdateSystem(ctx);
+    // particle
+    RunParticleEmitterUpdateSystem(ctx);
     ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
     RunHierarchyUpdateSystem(ctx);
