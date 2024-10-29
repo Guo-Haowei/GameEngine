@@ -266,17 +266,27 @@ Entity Scene::CreateSphereEntity(const std::string& p_name,
                                  Entity p_material_id,
                                  float p_radius,
                                  const mat4& p_transform) {
-    ecs::Entity entity = CreateObjectEntity(p_name);
-    TransformComponent& trans = *GetComponent<TransformComponent>(entity);
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
-    trans.MatrixTransform(p_transform);
+    Entity entity = CreateObjectEntity(p_name);
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
 
-    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = makeSphereMesh(p_radius);
     mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
+Entity Scene::CreateParticleEmitter(const std::string& p_name, const mat4& p_transform) {
+    Entity entity = CreateTransformEntity(p_name);
+    Create<ParticleEmitterComponent>(entity);
+
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
 
     return entity;
 }

@@ -172,6 +172,8 @@ public:
                                    float p_radius = 0.5f,
                                    const mat4& p_transform = mat4(1.0f));
 
+    ecs::Entity CreateParticleEmitter(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
+
     void AttachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
 
     void AttachComponent(ecs::Entity p_entity) { AttachComponent(p_entity, m_root); }

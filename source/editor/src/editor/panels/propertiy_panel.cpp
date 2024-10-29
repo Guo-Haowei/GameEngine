@@ -90,10 +90,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         if (ImGui::BeginMenu("Selectable")) {
             // @TODO: check if exists, if exists, disable
             if (ImGui::MenuItem("Box Collider")) {
-                m_editor.AddComponent(COMPONENT_TYPE_BOX_COLLIDER, id);
+                m_editor.AddComponent(ComponentType::BOX_COLLIDER, id);
             }
             if (ImGui::MenuItem("Mesh Collider")) {
-                m_editor.AddComponent(COMPONENT_TYPE_MESH_COLLIDER, id);
+                m_editor.AddComponent(ComponentType::MESH_COLLIDER, id);
             }
             ImGui::EndMenu();
         }
