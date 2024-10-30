@@ -49,8 +49,8 @@ struct OpenGLSubpass : public DrawPass {
     uint32_t handle = 0;
 };
 
-struct OpenGLUniformBuffer : public UniformBufferBase {
-    using UniformBufferBase::UniformBufferBase;
+struct OpenGLUniformBuffer : public ConstantBufferBase {
+    using ConstantBufferBase::ConstantBufferBase;
 
     ~OpenGLUniformBuffer() {
         clear();

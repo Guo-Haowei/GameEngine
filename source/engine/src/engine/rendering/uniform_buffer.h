@@ -2,11 +2,12 @@
 
 namespace my {
 
-class UniformBufferBase {
+// @TODO: rename
+class ConstantBufferBase {
 public:
-    UniformBufferBase(int p_slot, size_t p_capacity) : m_slot(p_slot), m_capacity(p_capacity) {}
+    ConstantBufferBase(int p_slot, size_t p_capacity) : m_slot(p_slot), m_capacity(p_capacity) {}
 
-    virtual ~UniformBufferBase() = default;
+    virtual ~ConstantBufferBase() = default;
 
     void update(const void* p_data, size_t p_size);
 
@@ -20,8 +21,8 @@ protected:
 
 // @TODO: remove this
 template<typename T>
-struct UniformBuffer {
-    std::shared_ptr<UniformBufferBase> buffer;
+struct ConstantBuffer {
+    std::shared_ptr<ConstantBufferBase> buffer;
     T cache;
 
     void update() {

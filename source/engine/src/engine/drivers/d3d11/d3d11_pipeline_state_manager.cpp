@@ -138,10 +138,10 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::createGraphicsPipeline
         D3D11_INPUT_ELEMENT_DESC desc;
         desc.SemanticName = ele.semantic_name.c_str();
         desc.SemanticIndex = ele.semantic_index;
-        desc.Format = convert(ele.format);
+        desc.Format = d3d::Convert(ele.format);
         desc.InputSlot = ele.input_slot;
         desc.AlignedByteOffset = ele.aligned_byte_offset;
-        desc.InputSlotClass = convert(ele.input_slot_class);
+        desc.InputSlotClass = d3d::Convert(ele.input_slot_class);
         desc.InstanceDataStepRate = ele.instance_data_step_rate;
         elements.emplace_back(desc);
     }
@@ -156,8 +156,8 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::createGraphicsPipeline
         auto it = m_rasterizer_states.find(p_info.rasterizer_desc);
         if (it == m_rasterizer_states.end()) {
             D3D11_RASTERIZER_DESC desc{};
-            desc.FillMode = convert(p_info.rasterizer_desc->fill_mode);
-            desc.CullMode = convert(p_info.rasterizer_desc->cull_mode);
+            desc.FillMode = d3d::Convert(p_info.rasterizer_desc->fill_mode);
+            desc.CullMode = d3d::Convert(p_info.rasterizer_desc->cull_mode);
             desc.FrontCounterClockwise = p_info.rasterizer_desc->front_counter_clockwise;
             hr = p_device->CreateRasterizerState(&desc, state.GetAddressOf());
             D3D_FAIL_V_MSG(hr, nullptr, "failed to create rasterizer state");
@@ -175,7 +175,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::createGraphicsPipeline
         if (it == m_depth_stencil_states.end()) {
             D3D11_DEPTH_STENCIL_DESC desc{};
             desc.DepthEnable = p_info.depth_stencil_desc->depth_enabled;
-            desc.DepthFunc = convert(p_info.depth_stencil_desc->depth_func);
+            desc.DepthFunc = d3d::Convert(p_info.depth_stencil_desc->depth_func);
             desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
             desc.StencilEnable = false;
             // desc.StencilEnable = p_info.depth_stencil_desc->stencil_enabled;

@@ -23,12 +23,12 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
 
         gm.SetPipelineState(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
@@ -37,7 +37,7 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
             gm.SetStencilRef(draw.flags);
         }
 
-        gm.BindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
 
@@ -47,7 +47,7 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
             gm.BindTexture(Dimension::TEXTURE_2D, material.u_normal_map_handle, u_normal_map_slot);
             gm.BindTexture(Dimension::TEXTURE_2D, material.u_material_map_handle, u_material_map_slot);
 
-            gm.BindUniformSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
 
             // @TODO: set material
 
@@ -148,12 +148,12 @@ static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.BindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
             }
 
             gm.SetPipelineState(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-            gm.BindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
             gm.SetMesh(draw.mesh_data);
             gm.DrawElements(draw.mesh_data->indexCount);
@@ -176,18 +176,18 @@ static void shadowPassFunc(const DrawPass* p_draw_pass) {
     gm.SetViewport(viewport);
 
     PassContext& pass = gm.m_shadowPasses[0];
-    gm.BindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
 
         // @TODO: sort the objects so there's no need to switch pipeline
         gm.SetPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-        gm.BindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
         gm.DrawElements(draw.mesh_data->indexCount);
@@ -297,7 +297,7 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     RenderManager::GetSingleton().draw_quad();
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
 
     // if (0) {
     //     // draw billboard grass here for now

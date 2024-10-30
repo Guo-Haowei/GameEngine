@@ -23,20 +23,20 @@ namespace my {
 template<typename T>
 static auto CreateUniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
-    return p_graphics_manager.CreateUniform(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
+    return p_graphics_manager.CreateConstantBuffer(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
 }
 
-UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
-UniformBuffer<PerSceneConstantBuffer> g_constantCache;
-UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
-UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
-UniformBuffer<EnvConstantBuffer> g_env_cache;
-UniformBuffer<ParticleConstantBuffer> g_particle_cache;
+ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
+ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
+ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
+ConstantBuffer<EnvConstantBuffer> g_env_cache;
+ConstantBuffer<ParticleConstantBuffer> g_particle_cache;
 
 template<typename T>
-static void create_uniform_buffer(UniformBuffer<T>& p_buffer) {
+static void create_uniform_buffer(ConstantBuffer<T>& p_buffer) {
     constexpr int slot = T::get_uniform_buffer_slot();
-    p_buffer.buffer = GraphicsManager::GetSingleton().CreateUniform(slot, sizeof(T));
+    p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(slot, sizeof(T));
 }
 
 bool GraphicsManager::Initialize() {
@@ -125,10 +125,10 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateMainPass(p_scene);
 
     // update uniform
-    UpdateUniform(m_context.batch_uniform.get(), m_context.batch_cache.buffer);
-    UpdateUniform(m_context.pass_uniform.get(), m_context.pass_cache);
-    UpdateUniform(m_context.material_uniform.get(), m_context.material_cache.buffer);
-    UpdateUniform(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
+    UpdateConstantBuffer(m_context.batch_uniform.get(), m_context.batch_cache.buffer);
+    UpdateConstantBuffer(m_context.pass_uniform.get(), m_context.pass_cache);
+    UpdateConstantBuffer(m_context.material_uniform.get(), m_context.material_cache.buffer);
+    UpdateConstantBuffer(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
 
     g_per_frame_cache.update();
     g_particle_cache.update();

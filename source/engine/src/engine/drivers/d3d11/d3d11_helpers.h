@@ -16,7 +16,7 @@
 #define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
 
 #if USING(DEBUG_BUILD)
-#define SET_DEBUG_NAME(RES, NAME) ::my::d3d11::set_debug_name(RES, NAME)
+#define SET_DEBUG_NAME(RES, NAME) ::my::d3d::SetDebugName(RES, NAME)
 #else
 #define SET_DEBUG_NAME(RES, NAME) \
     do {                          \
@@ -24,11 +24,11 @@
     } while (0)
 #endif
 
-namespace my::d3d11 {
+namespace my::d3d {
 
-void set_debug_name(ID3D11DeviceChild* p_resource, const std::string& p_name);
+void SetDebugName(ID3D11DeviceChild* p_resource, const std::string& p_name);
 
-inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
+inline D3D_SRV_DIMENSION ConvertDimension(Dimension p_dimension) {
     switch (p_dimension) {
         case Dimension::TEXTURE_2D:
             return D3D_SRV_DIMENSION_TEXTURE2D;
@@ -44,7 +44,7 @@ inline D3D_SRV_DIMENSION convert_dimension(Dimension p_dimension) {
     }
 }
 
-inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
+inline uint32_t ConvertResourceMiscFlags(uint32_t p_misc_flags) {
     // only support a few flags for now
     [[maybe_unused]] constexpr uint32_t supported_flags = RESOURCE_MISC_GENERATE_MIPS | RESOURCE_MISC_TEXTURECUBE;
     DEV_ASSERT((p_misc_flags & (~supported_flags)) == 0);
@@ -60,7 +60,7 @@ inline uint32_t convert_misc_flags(uint32_t p_misc_flags) {
     return flags;
 }
 
-inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
+inline uint32_t ConvertBindFlags(uint32_t p_bind_flags) {
     [[maybe_unused]] constexpr uint32_t supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL | BIND_UNORDERED_ACCESS;
     DEV_ASSERT((p_bind_flags & (~supported_flags)) == 0);
 
@@ -81,4 +81,19 @@ inline uint32_t convert_bind_flags(uint32_t p_bind_flags) {
     return flags;
 }
 
-}  // namespace my::d3d11
+inline uint32_t ConvertCpuAccessFlags(uint32_t p_access_flags) {
+    [[maybe_unused]] constexpr uint32_t supported_flags = CPU_ACCESS_READ | CPU_ACCESS_WRITE;
+    DEV_ASSERT((p_access_flags & (~supported_flags)) == 0);
+
+    uint32_t flags = 0;
+    if (p_access_flags & CPU_ACCESS_READ) {
+        flags |= D3D11_CPU_ACCESS_READ;
+    }
+    if (p_access_flags & CPU_ACCESS_WRITE) {
+        flags |= D3D11_CPU_ACCESS_WRITE;
+    }
+
+    return flags;
+}
+
+}  // namespace my::d3d

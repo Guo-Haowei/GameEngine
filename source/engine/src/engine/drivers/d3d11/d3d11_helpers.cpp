@@ -2,9 +2,9 @@
 
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 
-namespace my::d3d11 {
+namespace my::d3d {
 
-void set_debug_name(ID3D11DeviceChild* p_resource, const std::string& p_name) {
+void SetDebugName(ID3D11DeviceChild* p_resource, const std::string& p_name) {
     unused(p_resource);
     unused(p_name);
 #if USING(DEBUG_BUILD)
@@ -14,4 +14,4 @@ void set_debug_name(ID3D11DeviceChild* p_resource, const std::string& p_name) {
 #endif
 }
 
-}  // namespace my::d3d11
+}  // namespace my::d3d

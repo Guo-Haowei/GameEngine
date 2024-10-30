@@ -337,7 +337,7 @@ std::shared_ptr<GpuBuffer> OpenGLGraphicsManager::CreateBuffer(const GpuBufferDe
     return nullptr;
 }
 
-std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::CreateUniform(int p_slot, size_t p_capacity) {
+std::shared_ptr<ConstantBufferBase> OpenGLGraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
     auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
     GLuint handle = 0;
     glGenBuffers(1, &handle);
@@ -350,7 +350,7 @@ std::shared_ptr<UniformBufferBase> OpenGLGraphicsManager::CreateUniform(int p_sl
     return buffer;
 }
 
-void OpenGLGraphicsManager::UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) {
+void OpenGLGraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) {
     // ERR_FAIL_INDEX(p_size, p_buffer->get_capacity());
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
@@ -358,7 +358,7 @@ void OpenGLGraphicsManager::UpdateUniform(const UniformBufferBase* p_buffer, con
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void OpenGLGraphicsManager::BindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+void OpenGLGraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);

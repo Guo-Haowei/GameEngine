@@ -87,6 +87,8 @@ struct GpuBufferDesc {
 struct GpuBuffer {
     GpuBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
 
+    virtual ~GpuBuffer() = default;
+
     const GpuBufferDesc desc;
 };
 

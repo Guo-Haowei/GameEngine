@@ -33,9 +33,9 @@ public:
     std::shared_ptr<GpuBuffer> CreateBuffer(const GpuBufferDesc& p_desc) { return nullptr; }
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc&, const SamplerDesc&) { return nullptr; }
 
-    std::shared_ptr<UniformBufferBase> CreateUniform(int p_slot, size_t p_capacity) override { return nullptr; }
-    void UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) override {}
-    void BindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) override {}
+    std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) override { return nullptr; }
+    void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) override {}
+    void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) override {}
 
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
