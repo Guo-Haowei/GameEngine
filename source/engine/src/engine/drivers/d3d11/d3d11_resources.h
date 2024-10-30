@@ -30,10 +30,10 @@ struct D3d11DrawPass : public DrawPass {
     std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> dsvs;
 };
 
-struct D3d11UniformBuffer : public UniformBufferBase {
-    using UniformBufferBase::UniformBufferBase;
+struct D3d11UniformBuffer : public ConstantBufferBase {
+    using ConstantBufferBase::ConstantBufferBase;
 
-    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+    Microsoft::WRL::ComPtr<ID3D11Buffer> internalBuffer;
     mutable const char* data;
 };
 

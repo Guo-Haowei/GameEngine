@@ -16,6 +16,7 @@
 #define D3D_CULL_MODE(a)            D3D11_CULL_##a
 #define D3D_COMPARISON(a)           D3D11_COMPARISON_##a
 #define D3D_TEXTURE_ADDRESS_MODE(a) D3D11_TEXTURE_ADDRESS_##a
+#define D3D_USAGE(a)                D3D11_USAGE_##a
 #elif defined(INCLUDE_AS_D3D12)
 #include <d3d12.h>
 #define D3D(a)                      D3D12_##a
@@ -31,17 +32,18 @@
 #include "rendering/pipeline_state.h"
 #include "rendering/pixel_format.h"
 
-namespace my {
+namespace my::d3d {
 
-using INPUT_CLASSIFICATION = D3D(INPUT_CLASSIFICATION);
-using FILL_MODE = D3D(FILL_MODE);
-using CULL_MODE = D3D(CULL_MODE);
-using DEPTH_WRITE_MASK = D3D(DEPTH_WRITE_MASK);
-using COMPARISON_FUNC = D3D(COMPARISON_FUNC);
-using FILTER = D3D(FILTER);
-using TEXTURE_ADDRESS_MODE = D3D(TEXTURE_ADDRESS_MODE);
+using D3D_INPUT_CLASSIFICATION = D3D(INPUT_CLASSIFICATION);
+using D3D_FILL_MODE = D3D(FILL_MODE);
+using D3D_CULL_MODE = D3D(CULL_MODE);
+using D3D_DEPTH_WRITE_MASK = D3D(DEPTH_WRITE_MASK);
+using D3D_COMPARISON_FUNC = D3D(COMPARISON_FUNC);
+using D3D_FILTER = D3D(FILTER);
+using D3D_TEXTURE_ADDRESS_MODE = D3D(TEXTURE_ADDRESS_MODE);
+using D3D_USAGE = D3D(USAGE);
 
-static inline DXGI_FORMAT convert(PixelFormat p_format) {
+static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
         case PixelFormat::UNKNOWN:
             return DXGI_FORMAT_UNKNOWN;
@@ -87,7 +89,7 @@ static inline DXGI_FORMAT convert(PixelFormat p_format) {
     }
 }
 
-static inline INPUT_CLASSIFICATION convert(InputClassification p_input_classification) {
+static inline D3D_INPUT_CLASSIFICATION Convert(InputClassification p_input_classification) {
     switch (p_input_classification) {
         case InputClassification::PER_VERTEX_DATA:
             return D3D_INPUT_CLASSIFICATION(PER_VERTEX_DATA);
@@ -97,7 +99,7 @@ static inline INPUT_CLASSIFICATION convert(InputClassification p_input_classific
     return D3D_INPUT_CLASSIFICATION(PER_VERTEX_DATA);
 }
 
-static inline FILL_MODE convert(FillMode p_fill_mode) {
+static inline D3D_FILL_MODE Convert(FillMode p_fill_mode) {
     switch (p_fill_mode) {
         case FillMode::SOLID:
             return D3D_FILL_MODE(SOLID);
@@ -107,7 +109,7 @@ static inline FILL_MODE convert(FillMode p_fill_mode) {
     return D3D_FILL_MODE(SOLID);
 }
 
-static inline CULL_MODE convert(CullMode p_cull_mode) {
+static inline D3D_CULL_MODE Convert(CullMode p_cull_mode) {
     switch (p_cull_mode) {
         case CullMode::NONE:
             return D3D_CULL_MODE(NONE);
@@ -119,7 +121,7 @@ static inline CULL_MODE convert(CullMode p_cull_mode) {
     return D3D_CULL_MODE(NONE);
 }
 
-static inline COMPARISON_FUNC convert(ComparisonFunc p_func) {
+static inline D3D_COMPARISON_FUNC Convert(ComparisonFunc p_func) {
     switch (p_func) {
         case ComparisonFunc::NEVER:
             return D3D_COMPARISON(NEVER);
@@ -137,6 +139,20 @@ static inline COMPARISON_FUNC convert(ComparisonFunc p_func) {
             return D3D_COMPARISON(ALWAYS);
     }
     return D3D_COMPARISON(NEVER);
+}
+
+static inline D3D_USAGE Convert(BufferUsage p_usage) {
+    switch (p_usage) {
+        case my::BufferUsage::DEFAULT:
+            return D3D_USAGE(DEFAULT);
+        case my::BufferUsage::IMMUTABLE:
+            return D3D_USAGE(IMMUTABLE);
+        case my::BufferUsage::DYNAMIC:
+            return D3D_USAGE(DYNAMIC);
+        case my::BufferUsage::STAGING:
+            return D3D_USAGE(STAGING);
+    }
+    return D3D_USAGE(DEFAULT);
 }
 
 #if 0
@@ -185,5 +201,6 @@ static inline TEXTURE_ADDRESS_MODE Convert(TextureAddressMode texture_address_mo
 #undef D3D_CULL_MODE
 #undef D3D_COMPARISON_FUNC
 #undef D3D_TEXTURE_ADDRESS_MODE
+#undef D3D_USAGE
 
-}  // namespace my
+}  // namespace my::d3d

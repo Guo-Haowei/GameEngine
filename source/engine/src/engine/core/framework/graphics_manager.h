@@ -51,12 +51,12 @@ struct MeshBuffers {
 struct MeshBuffers;
 
 // @TODO: refactor
-extern UniformBuffer<PerFrameConstantBuffer> g_per_frame_cache;
-extern UniformBuffer<PerSceneConstantBuffer> g_constantCache;
-extern UniformBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
-extern UniformBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
-extern UniformBuffer<EnvConstantBuffer> g_env_cache;
-extern UniformBuffer<ParticleConstantBuffer> g_particle_cache;
+extern ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
+extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
+extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
+extern ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
+extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
+extern ConstantBuffer<ParticleConstantBuffer> g_particle_cache;
 
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),
@@ -88,7 +88,6 @@ struct PassContext {
 #include "texture_binding.h"
 #undef SHADER_TEXTURE
 
-// @TODO: move generic stuff to renderer
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
@@ -123,20 +122,20 @@ public:
     std::shared_ptr<RenderTarget> CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
     std::shared_ptr<RenderTarget> FindRenderTarget(RenderTargetResourceName p_name) const;
 
-    // @TODO: make it pure virtual
     virtual std::shared_ptr<GpuBuffer> CreateBuffer(const GpuBufferDesc& p_desc) = 0;
     virtual std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
-    virtual std::shared_ptr<UniformBufferBase> CreateUniform(int p_slot, size_t p_capacity) = 0;
-    virtual void UpdateUniform(const UniformBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
+    virtual std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) = 0;
+
+    virtual void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
     template<typename T>
-    void UpdateUniform(const UniformBufferBase* p_buffer, const std::vector<T>& p_vector) {
-        UpdateUniform(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
+    void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const std::vector<T>& p_vector) {
+        UpdateConstantBuffer(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
     }
-    virtual void BindUniformRange(const UniformBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
+    virtual void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
     template<typename T>
-    void BindUniformSlot(const UniformBufferBase* p_buffer, int slot) {
-        BindUniformRange(p_buffer, sizeof(T), slot * sizeof(T));
+    void BindConstantBufferSlot(const ConstantBufferBase* p_buffer, int slot) {
+        BindConstantBufferRange(p_buffer, sizeof(T), slot * sizeof(T));
     }
 
     virtual std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) = 0;
@@ -219,16 +218,16 @@ public:
 
     // @TODO: refactor names
     struct Context {
-        std::shared_ptr<UniformBufferBase> batch_uniform;
+        std::shared_ptr<ConstantBufferBase> batch_uniform;
         BufferCache<PerBatchConstantBuffer> batch_cache;
 
-        std::shared_ptr<UniformBufferBase> material_uniform;
+        std::shared_ptr<ConstantBufferBase> material_uniform;
         BufferCache<MaterialConstantBuffer> material_cache;
 
-        std::shared_ptr<UniformBufferBase> bone_uniform;
+        std::shared_ptr<ConstantBufferBase> bone_uniform;
         BufferCache<BoneConstantBuffer> bone_cache;
 
-        std::shared_ptr<UniformBufferBase> pass_uniform;
+        std::shared_ptr<ConstantBufferBase> pass_uniform;
         std::vector<PerPassConstantBuffer> pass_cache;
     } m_context;
 

@@ -42,22 +42,22 @@ void voxelization_pass_func(const DrawPass*) {
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
 
     PassContext& pass = gm.m_voxelPass;
-    gm.BindUniformSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindUniformSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
         }
 
         gm.SetPipelineState(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        gm.BindUniformSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            gm.BindUniformSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
 
             gm.DrawElements(subset.index_count, subset.index_offset);
         }
@@ -211,7 +211,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DEBUG_VOXEL);
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindUniformSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
 
     glBindVertexArray(g_box->vao);
 
