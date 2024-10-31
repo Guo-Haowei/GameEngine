@@ -12,6 +12,7 @@ public:
     int num_channels = 0;
     std::vector<uint8_t> buffer;
 
+    // @TODO: refactor
     std::shared_ptr<GpuTexture> gpu_texture;
 };
 

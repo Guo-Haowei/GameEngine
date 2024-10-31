@@ -11,13 +11,13 @@ public:
     bool Initialize() final;
     void Finalize() final;
 
-    bool shouldClose() final;
+    bool ShouldClose() final;
 
-    std::tuple<int, int> getWindowSize() final;
-    std::tuple<int, int> getWindowPos() final;
+    std::tuple<int, int> GetWindowSize() final;
+    std::tuple<int, int> GetWindowPos() final;
 
-    void newFrame() final;
-    void present() final;
+    void NewFrame() final;
+    void Present() final;
 
 private:
     void initialize_key_mapping();

@@ -34,8 +34,8 @@ void request_env_map(const std::string& path) {
     }
 
     s_prev_env_map = path;
-    if (auto handle = AssetManager::GetSingleton().findImage(FilePath{ path }); handle) {
-        if (auto image = handle->get(); image && image->gpu_texture) {
+    if (auto handle = AssetManager::GetSingleton().FindImage(FilePath{ path }); handle) {
+        if (auto image = handle->Get(); image && image->gpu_texture) {
             g_constantCache.cache.c_hdr_env_map = image->gpu_texture->GetResidentHandle();
             g_constantCache.update();
             s_need_update_env = true;
@@ -43,13 +43,13 @@ void request_env_map(const std::string& path) {
         }
     }
 
-    AssetManager::GetSingleton().loadImageAsync(FilePath{ path }, [](void* p_asset, void* p_userdata) {
+    AssetManager::GetSingleton().LoadImageAsync(FilePath{ path }, [](void* p_asset, void* p_userdata) {
         Image* image = reinterpret_cast<Image*>(p_asset);
         ImageHandle* handle = reinterpret_cast<ImageHandle*>(p_userdata);
         DEV_ASSERT(image);
         DEV_ASSERT(handle);
 
-        handle->set(image);
+        handle->Set(image);
         GraphicsManager::GetSingleton().RequestTexture(handle, [](Image* p_image) {
             // @TODO: better way
             if (p_image->gpu_texture) {
@@ -114,8 +114,8 @@ RenderManager::RenderManager() : Module("RenderManager") {
 }
 
 bool RenderManager::Initialize() {
-    m_screen_quad_buffers = GraphicsManager::GetSingleton().CreateMesh(makePlaneMesh(vec3(1)));
-    m_skybox_buffers = GraphicsManager::GetSingleton().CreateMesh(makeSkyBoxMesh());
+    m_screen_quad_buffers = GraphicsManager::GetSingleton().CreateMesh(MakePlaneMesh(vec3(1)));
+    m_skybox_buffers = GraphicsManager::GetSingleton().CreateMesh(MakeSkyBoxMesh());
 
     return true;
 }

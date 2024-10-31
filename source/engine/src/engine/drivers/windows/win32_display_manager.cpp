@@ -72,19 +72,19 @@ void Win32DisplayManager::Finalize() {
     ::UnregisterClassW(m_wnd_class.lpszClassName, m_wnd_class.hInstance);
 }
 
-bool Win32DisplayManager::shouldClose() {
+bool Win32DisplayManager::ShouldClose() {
     return m_should_quit;
 }
 
-std::tuple<int, int> Win32DisplayManager::getWindowSize() {
+std::tuple<int, int> Win32DisplayManager::GetWindowSize() {
     return std::make_tuple(m_frame_size.x, m_frame_size.y);
 }
 
-std::tuple<int, int> Win32DisplayManager::getWindowPos() {
+std::tuple<int, int> Win32DisplayManager::GetWindowPos() {
     return std::make_tuple(m_window_pos.x, m_window_pos.y);
 }
 
-void Win32DisplayManager::newFrame() {
+void Win32DisplayManager::NewFrame() {
     MSG msg{};
     while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
         ::TranslateMessage(&msg);
@@ -98,7 +98,7 @@ void Win32DisplayManager::newFrame() {
     // @TODO: move
 }
 
-void Win32DisplayManager::present() {
+void Win32DisplayManager::Present() {
 }
 
 LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -116,7 +116,7 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
                 m_frame_size.x = width;
                 m_frame_size.y = height;
                 auto event = std::make_shared<ResizeEvent>(width, height);
-                m_app->getEventQueue().DispatchEvent(event);
+                m_app->GetEventQueue().DispatchEvent(event);
             }
             return 0;
         }
@@ -146,36 +146,36 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
         case WM_MOUSEWHEEL: {
             const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
             float direction = (delta > 0) ? 1.0f : -1.0f;
-            input::setWheel(0.0f, direction);
+            input::SetWheel(0.0f, direction);
         } break;
         case WM_LBUTTONDOWN: {
-            input::setButton(MOUSE_BUTTON_LEFT, true);
+            input::SetButton(MOUSE_BUTTON_LEFT, true);
         } break;
         case WM_LBUTTONUP: {
-            input::setButton(MOUSE_BUTTON_LEFT, false);
+            input::SetButton(MOUSE_BUTTON_LEFT, false);
         } break;
         case WM_RBUTTONDOWN: {
-            input::setButton(MOUSE_BUTTON_RIGHT, true);
+            input::SetButton(MOUSE_BUTTON_RIGHT, true);
         } break;
         case WM_RBUTTONUP: {
-            input::setButton(MOUSE_BUTTON_RIGHT, false);
+            input::SetButton(MOUSE_BUTTON_RIGHT, false);
         } break;
         case WM_MBUTTONDOWN: {
-            input::setButton(MOUSE_BUTTON_MIDDLE, true);
+            input::SetButton(MOUSE_BUTTON_MIDDLE, true);
         } break;
         case WM_MBUTTONUP: {
-            input::setButton(MOUSE_BUTTON_MIDDLE, false);
+            input::SetButton(MOUSE_BUTTON_MIDDLE, false);
         } break;
         case WM_MOUSEMOVE: {
             int x = LOWORD(lParam);
             int y = HIWORD(lParam);
-            input::setCursor(static_cast<float>(x), static_cast<float>(y));
+            input::SetCursor(static_cast<float>(x), static_cast<float>(y));
         } break;
         case WM_KEYDOWN: {
             int key_code = LOWORD(wParam);
             auto it = m_key_mapping.find(key_code);
             if (it != m_key_mapping.end()) {
-                input::setKey(it->second, true);
+                input::SetKey(it->second, true);
             } else {
                 LOG_WARN("key {} not mapped", key_code);
             }
@@ -184,7 +184,7 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             int key_code = LOWORD(wParam);
             auto it = m_key_mapping.find(key_code);
             if (it != m_key_mapping.end()) {
-                input::setKey(it->second, false);
+                input::SetKey(it->second, false);
             }
         } break;
         default:

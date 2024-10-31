@@ -11,7 +11,7 @@ public:
     void Finalize() override;
 
 protected:
-    std::string m_ini_path;
+    std::string m_iniPath;
 };
 
 }  // namespace my

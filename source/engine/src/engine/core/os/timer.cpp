@@ -2,23 +2,23 @@
 
 namespace my {
 
-void Timer::start() {
-    m_start_point = Clock::now();
+void Timer::Start() {
+    m_startPoint = Clock::now();
 }
 
-NanoSecond Timer::getDuration() const {
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - m_start_point);
+NanoSecond Timer::GetDuration() const {
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - m_startPoint);
     return NanoSecond(static_cast<uint64_t>(duration.count()));
 }
 
-std::string Timer::getDurationString() const {
-    auto duration = getDuration();
+std::string Timer::GetDurationString() const {
+    auto duration = GetDuration();
 
     if (duration.m_value < (SECOND / 10)) {
-        return std::format("{:.2f} ms", duration.toMillisecond());
+        return std::format("{:.2f} ms", duration.ToMillisecond());
     }
 
-    return std::format("{:.2f} seconds", duration.toSecond());
+    return std::format("{:.2f} seconds", duration.ToSecond());
 }
 
 }  // namespace my

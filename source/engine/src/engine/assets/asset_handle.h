@@ -13,11 +13,11 @@ public:
     std::atomic<T*> data = nullptr;
     std::atomic<AssetLoadingState> state = ASSET_STATE_LOADING;
 
-    T* get() {
+    T* Get() {
         return state == ASSET_STATE_READY ? data.load() : nullptr;
     }
 
-    bool set(T* p_data) {
+    bool Set(T* p_data) {
         DEV_ASSERT(p_data);
         DEV_ASSERT(state != ASSET_STATE_READY);
         data.store(p_data);

@@ -21,21 +21,21 @@ public:
     bool Initialize() override;
     void Finalize() override;
 
-    void update(Scene& p_scene);
+    void Update(Scene& p_scene);
 
     void EventReceived(std::shared_ptr<Event> p_event) override;
 
 protected:
-    void createWorld(const Scene& p_scene);
-    void cleanWorld();
-    bool hasWorld() const { return m_collision_config != nullptr; }
+    void CreateWorld(const Scene& p_scene);
+    void CleanWorld();
+    bool HasWorld() const { return m_collisionConfig != nullptr; }
 
-    btDefaultCollisionConfiguration* m_collision_config = nullptr;
+    btDefaultCollisionConfiguration* m_collisionConfig = nullptr;
     btCollisionDispatcher* m_dispatcher = nullptr;
-    btBroadphaseInterface* m_overlapping_pair_cache = nullptr;
+    btBroadphaseInterface* m_overlappingPairCache = nullptr;
     btSequentialImpulseConstraintSolver* m_solver = nullptr;
-    btDiscreteDynamicsWorld* m_dynamic_world = nullptr;
-    std::vector<btCollisionShape*> m_collision_shapes;
+    btDiscreteDynamicsWorld* m_dynamicWorld = nullptr;
+    std::vector<btCollisionShape*> m_collisionShapes;
 };
 
 }  // namespace my

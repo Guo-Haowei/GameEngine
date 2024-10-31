@@ -15,7 +15,7 @@ public:
 
     const Plane& operator[](int p_index) const { return reinterpret_cast<const Plane*>(this)[p_index]; }
 
-    bool intersects(const AABB& p_box) const;
+    bool Intersects(const AABB& p_box) const;
 
 private:
     Plane m_left;

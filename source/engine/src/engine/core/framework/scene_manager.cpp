@@ -14,36 +14,36 @@ namespace my {
 using ecs::Entity;
 namespace fs = std::filesystem;
 
-static void create_empty_scene(Scene* scene) {
+static void CreateEmptyScene(Scene* p_scene) {
     Entity::SetSeed();
 
     ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-    scene->CreateCamera(frame_size.x, frame_size.y);
+    p_scene->CreateCamera(frame_size.x, frame_size.y);
 
-    auto root = scene->CreateTransformEntity("world");
-    scene->m_root = root;
+    auto root = p_scene->CreateTransformEntity("world");
+    p_scene->m_root = root;
     if (0) {
-        auto light = scene->CreateInfiniteLightEntity("infinite light", vec3(1));
-        auto transform = scene->GetComponent<TransformComponent>(light);
+        auto light = p_scene->CreateInfiniteLightEntity("infinite light", vec3(1));
+        auto transform = p_scene->GetComponent<TransformComponent>(light);
         DEV_ASSERT(transform);
         constexpr float rx = glm::radians(-80.0f);
         constexpr float ry = glm::radians(0.0f);
         constexpr float rz = glm::radians(0.0f);
         transform->Rotate(vec3(rx, ry, rz));
 
-        scene->AttachComponent(light, root);
+        p_scene->AttachComponent(light, root);
     }
 }
 
 bool SceneManager::Initialize() {
     // create an empty scene
     Scene* scene = new Scene;
-    create_empty_scene(scene);
+    CreateEmptyScene(scene);
     m_scene = scene;
 
     const std::string& path = DVAR_GET_STRING(project);
     if (!path.empty()) {
-        requestScene(path);
+        RequestScene(path);
     }
 
     return true;
@@ -51,8 +51,8 @@ bool SceneManager::Initialize() {
 
 void SceneManager::Finalize() {}
 
-bool SceneManager::trySwapScene() {
-    auto queued_scene = m_loading_queue.pop_all();
+bool SceneManager::TrySwapScene() {
+    auto queued_scene = m_loadingQueue.pop_all();
 
     if (queued_scene.empty()) {
         return false;
@@ -77,49 +77,49 @@ bool SceneManager::trySwapScene() {
     return true;
 }
 
-void SceneManager::update(float dt) {
+void SceneManager::Update(float p_elapsedTime) {
     OPTICK_EVENT();
 
-    trySwapScene();
+    TrySwapScene();
 
-    if (m_last_revision < m_revision) {
+    if (m_lastRevision < m_revision) {
         Timer timer;
         auto event = std::make_shared<SceneChangeEvent>(m_scene);
         LOG_WARN("offload p_scene properly");
-        m_app->getEventQueue().DispatchEvent(event);
-        LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_last_revision, m_revision, timer.getDurationString());
-        m_last_revision = m_revision;
+        m_app->GetEventQueue().DispatchEvent(event);
+        LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_lastRevision, m_revision, timer.GetDurationString());
+        m_lastRevision = m_revision;
     }
 
-    SceneManager::getScene().Update(dt);
+    SceneManager::GetScene().Update(p_elapsedTime);
 }
 
-void SceneManager::enqueueSceneLoadingTask(Scene* p_scene, bool p_replace) {
-    m_loading_queue.push({ p_replace, p_scene });
+void SceneManager::EnqueueSceneLoadingTask(Scene* p_scene, bool p_replace) {
+    m_loadingQueue.push({ p_replace, p_scene });
 }
 
-void SceneManager::requestScene(std::string_view p_path) {
+void SceneManager::RequestScene(std::string_view p_path) {
     FilePath path{ p_path };
 
     std::string ext = path.Extension();
     if (ext == ".lua" || ext == ".scene") {
-        AssetManager::GetSingleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
+        AssetManager::GetSingleton().LoadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
-            SceneManager::GetSingleton().enqueueSceneLoadingTask(new_scene, true);
+            SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, true);
         });
     } else {
-        AssetManager::GetSingleton().loadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
+        AssetManager::GetSingleton().LoadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
-            SceneManager::GetSingleton().enqueueSceneLoadingTask(new_scene, false);
+            SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, false);
         });
     }
 }
 
-Scene& SceneManager::getScene() {
+Scene& SceneManager::GetScene() {
     assert(GetSingleton().m_scene);
     return *GetSingleton().m_scene;
 }

@@ -22,8 +22,8 @@ TEST(dynamic_variable, wrong_type) {
     register_test_dvars();
 
     ErrorHandler handler;
-    handler.data.error_func = assert_handler;
-    addErrorHandler(&handler);
+    handler.data.errorFunc = assert_handler;
+    AddErrorHandler(&handler);
 
     EXPECT_EXIT(
         {
@@ -73,7 +73,7 @@ TEST(dynamic_variable, wrong_type) {
         },
         testing::ExitedWithCode(99), "m_type == VARIANT_TYPE_IVEC3");
 
-    removeErrorHandler(&handler);
+    RemoveErrorHandler(&handler);
 }
 
 TEST(dynamic_variable, int) {

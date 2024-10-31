@@ -9,11 +9,11 @@ class Box {
     using self_type = Box<N>;
 
 public:
-    Box() { makeInvalid(); }
+    Box() { MakeInvalid(); }
 
     Box(const vec_type& p_min, const vec_type& p_max) : m_min(p_min), m_max(p_max) {}
 
-    void makeInvalid() {
+    void MakeInvalid() {
         m_min = vec_type(std::numeric_limits<float>::infinity());
         m_max = vec_type(-std::numeric_limits<float>::infinity());
     }
@@ -27,7 +27,7 @@ public:
         return true;
     }
 
-    void makeValid() {
+    void MakeValid() {
         const vec_type size = glm::abs(m_max - m_min);
         constexpr float delta = 0.0001f;
         if (size.x == 0.0f) {
@@ -46,26 +46,26 @@ public:
         }
     }
 
-    void expandPoint(const vec_type& p_point) {
+    void ExpandPoint(const vec_type& p_point) {
         m_min = glm::min(m_min, p_point);
         m_max = glm::max(m_max, p_point);
     }
 
-    void unionBox(const self_type& p_other) {
+    void UnionBox(const self_type& p_other) {
         m_min = glm::min(m_min, p_other.m_min);
         m_max = glm::max(m_max, p_other.m_max);
     }
 
-    void intersectBox(const self_type& p_other) {
+    void IntersectBox(const self_type& p_other) {
         m_min = glm::max(m_min, p_other.m_min);
         m_max = glm::min(m_max, p_other.m_max);
     }
 
-    vec_type center() const { return 0.5f * (m_min + m_max); }
-    vec_type size() const { return m_max - m_min; }
+    vec_type Center() const { return 0.5f * (m_min + m_max); }
+    vec_type Size() const { return m_max - m_min; }
 
-    const vec_type& getMin() const { return m_min; }
-    const vec_type& getMax() const { return m_max; }
+    const vec_type& GetMin() const { return m_min; }
+    const vec_type& GetMax() const { return m_max; }
 
 protected:
     vec_type m_min;

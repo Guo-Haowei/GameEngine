@@ -7,14 +7,14 @@ namespace my {
 
 void Camera::update() {
     if (isDirty()) {
-        m_front.x = m_yaw.cos() * m_pitch.cos();
-        m_front.y = m_pitch.sin();
-        m_front.z = m_yaw.sin() * m_pitch.cos();
+        m_front.x = m_yaw.Cos() * m_pitch.Cos();
+        m_front.y = m_pitch.Sin();
+        m_front.z = m_yaw.Sin() * m_pitch.Cos();
 
         m_right = glm::cross(m_front, vec3(0, 1, 0));
 
         m_view_matrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
-        m_projection_matrix = buildOpenGLPerspectiveRH(m_fovy.toRad(), getAspect(), m_near, m_far);
+        m_projection_matrix = BuildOpenGLPerspectiveRH(m_fovy.ToRad(), getAspect(), m_near, m_far);
         m_projection_view_matrix = m_projection_matrix * m_view_matrix;
 
         setDirty(false);

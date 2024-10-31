@@ -11,20 +11,20 @@ namespace my {
 
 class LoaderTinyGLTF : public Loader<Scene> {
 public:
-    LoaderTinyGLTF(const std::string& path) : Loader<Scene>{ path } {}
+    LoaderTinyGLTF(const std::string& p_path) : Loader<Scene>{ p_path } {}
 
-    bool load(Scene* data) override;
+    bool Load(Scene* p_data) override;
 
-    static std::shared_ptr<Loader<Scene>> create(const std::string& path) {
-        return std::make_shared<LoaderTinyGLTF>(path);
+    static std::shared_ptr<Loader<Scene>> Create(const std::string& p_path) {
+        return std::make_shared<LoaderTinyGLTF>(p_path);
     }
 
 protected:
-    void process_node(int node_index, ecs::Entity parent);
-    void process_mesh(const tinygltf::Mesh& gltf_mesh, int id);
-    void process_animation(const tinygltf::Animation& gltf_anim, int id);
+    void ProcessNode(int p_node_index, ecs::Entity p_parent);
+    void ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int p_id);
+    void ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int p_id);
 
-    std::unordered_map<int, ecs::Entity> m_entity_map;
+    std::unordered_map<int, ecs::Entity> m_entityMap;
     std::shared_ptr<tinygltf::Model> m_model;
     Scene* m_scene;
 };

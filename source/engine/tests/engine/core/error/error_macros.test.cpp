@@ -62,49 +62,49 @@ void assert_handler(void*, std::string_view, std::string_view, int, std::string_
 
 std::string TestErrorHandler::s_buffer;
 
-TEST(error_macros, addErrorHandler) {
+TEST(error_macros, AddErrorHandler) {
     TestOS e;
 
     ErrorHandler handler1;
-    handler1.data.error_func = TestErrorHandler::error_handler1;
+    handler1.data.errorFunc = TestErrorHandler::error_handler1;
 
-    addErrorHandler(&handler1);
-    reportErrorImpl("a", "b", 2, "d");
+    AddErrorHandler(&handler1);
+    ReportErrorImpl("a", "b", 2, "d");
 
     EXPECT_EQ(TestErrorHandler::get_buffer(), "a,b,c,d;");
-    removeErrorHandler(&handler1);
+    RemoveErrorHandler(&handler1);
 
     TestErrorHandler::clear_buffer();
 }
 
-TEST(error_macros, removeErrorHandler) {
+TEST(error_macros, RemoveErrorHandler) {
     TestOS e;
 
     ErrorHandler handler1;
-    handler1.data.error_func = TestErrorHandler::error_handler1;
+    handler1.data.errorFunc = TestErrorHandler::error_handler1;
 
     ErrorHandler handler2;
-    handler2.data.error_func = TestErrorHandler::error_handler2;
+    handler2.data.errorFunc = TestErrorHandler::error_handler2;
 
     ErrorHandler handler3;
-    handler3.data.error_func = TestErrorHandler::error_handler3;
+    handler3.data.errorFunc = TestErrorHandler::error_handler3;
 
-    addErrorHandler(&handler1);
-    addErrorHandler(&handler2);
-    addErrorHandler(&handler3);
+    AddErrorHandler(&handler1);
+    AddErrorHandler(&handler2);
+    AddErrorHandler(&handler3);
 
-    reportErrorImpl("a", "b", 2, "d");
+    ReportErrorImpl("a", "b", 2, "d");
     EXPECT_EQ(TestErrorHandler::get_buffer(), "d,c,b,a;?;a,b,c,d;");
     TestErrorHandler::clear_buffer();
 
-    removeErrorHandler(&handler2);
+    RemoveErrorHandler(&handler2);
 
-    reportErrorImpl("b", "c", 3, "e");
+    ReportErrorImpl("b", "c", 3, "e");
     EXPECT_EQ(TestErrorHandler::get_buffer(), "e,d,c,b;b,c,d,e;");
     TestErrorHandler::clear_buffer();
 
-    removeErrorHandler(&handler1);
-    removeErrorHandler(&handler3);
+    RemoveErrorHandler(&handler1);
+    RemoveErrorHandler(&handler3);
 }
 
 TEST(error_macros, ERR_FAIL) {
@@ -286,9 +286,9 @@ Detail: ????
 
 TEST(error_macros, DEV_ASSERT) {
     ErrorHandler handler;
-    handler.data.error_func = assert_handler;
+    handler.data.errorFunc = assert_handler;
 
-    addErrorHandler(&handler);
+    AddErrorHandler(&handler);
 
     EXPECT_EXIT(
         {
@@ -298,14 +298,14 @@ TEST(error_macros, DEV_ASSERT) {
         },
         testing::ExitedWithCode(99), "FATAL: DEV_ASSERT failed \\(a - b\\)");
 
-    removeErrorHandler(&handler);
+    RemoveErrorHandler(&handler);
 }
 
 TEST(error_macros, DEV_ASSERT_INDEX) {
     ErrorHandler handler;
-    handler.data.error_func = assert_handler;
+    handler.data.errorFunc = assert_handler;
 
-    addErrorHandler(&handler);
+    AddErrorHandler(&handler);
 
     EXPECT_EXIT(
         {
@@ -315,7 +315,7 @@ TEST(error_macros, DEV_ASSERT_INDEX) {
         },
         testing::ExitedWithCode(99), "FATAL: DEV_ASSERT_INDEX failed Index a = 201 is out of bounds \\(b = 200\\).");
 
-    removeErrorHandler(&handler);
+    RemoveErrorHandler(&handler);
 }
 
 }  // namespace my

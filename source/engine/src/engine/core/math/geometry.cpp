@@ -22,7 +22,7 @@ namespace my {
 enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };
 // clang-format on
 
-MeshComponent makePlaneMesh(const vec3& p_scale) {
+MeshComponent MakePlaneMesh(const vec3& p_scale) {
     MeshComponent mesh;
     const float x = p_scale.x;
     const float y = p_scale.y;
@@ -69,7 +69,7 @@ MeshComponent makePlaneMesh(const vec3& p_scale) {
     return mesh;
 }
 
-MeshComponent makeCubeMesh(const vec3& p_scale) {
+MeshComponent MakeCubeMesh(const vec3& p_scale) {
     MeshComponent mesh;
     // clang-format off
     constexpr uint32_t indices[] = {
@@ -200,7 +200,7 @@ MeshComponent makeCubeMesh(const vec3& p_scale) {
     return mesh;
 }
 
-MeshComponent makeSphereMesh(float p_radius, int p_rings, int p_sectors) {
+MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     MeshComponent mesh;
 
     auto& indices = mesh.indices;
@@ -252,7 +252,7 @@ MeshComponent makeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     return mesh;
 }
 
-MeshComponent makeBoxMesh(float size) {
+MeshComponent MakeBoxMesh(float size) {
     MeshComponent mesh;
     mesh.positions = {
         vec3(-size, +size, +size),  // A
@@ -283,7 +283,7 @@ MeshComponent makeBoxMesh(float size) {
     return mesh;
 }
 
-MeshComponent makeGrassBillboard(const vec3& p_scale) {
+MeshComponent MakeGrassBillboard(const vec3& p_scale) {
     MeshComponent mesh;
 
     const float x = p_scale.x;
@@ -340,7 +340,7 @@ MeshComponent makeGrassBillboard(const vec3& p_scale) {
     return mesh;
 }
 
-MeshComponent makeSkyBoxMesh() {
+MeshComponent MakeSkyBoxMesh() {
     float size = 1.0f;
     MeshComponent mesh;
     mesh.positions = {
@@ -391,7 +391,7 @@ MeshComponent makeSkyBoxMesh() {
 }
 
 // load scene
-MeshComponent makeBoxWireframeMesh(float size) {
+MeshComponent MakeBoxWireframeMesh(float size) {
     MeshComponent mesh;
     mesh.positions = {
         vec3(-size, +size, +size),  // A

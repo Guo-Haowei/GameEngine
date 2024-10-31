@@ -12,18 +12,18 @@ namespace my::thread {
 
 struct ThreadObject {
     const char* name;
-    ThreadMainFunc thread_func;
+    ThreadMainFunc threadFunc;
     uint32_t id;
-    std::thread thread;
+    std::thread threadObject;
 };
 
-static thread_local uint32_t g_thread_id;
+static thread_local uint32_t g_threadId;
 static struct {
-    std::atomic_bool shutdown_requested;
+    std::atomic_bool shutdownRequested;
     std::array<ThreadObject, THREAD_MAX> threads = {
         ThreadObject{ "main" },
         ThreadObject{ "render thread", []() {} },
-        ThreadObject{ "asset thread 1", AssetManager::workerMain },
+        ThreadObject{ "asset thread 1", AssetManager::WorkerMain },
         // ThreadObject{ "asset thread 2", AssetManager::worker_main },
         ThreadObject{ "js worker 0", jobsystem::WorkerMain },
         ThreadObject{ "js worker 1", jobsystem::WorkerMain },
@@ -34,29 +34,29 @@ static struct {
         ThreadObject{ "js worker 6", jobsystem::WorkerMain },
         ThreadObject{ "js worker 7", jobsystem::WorkerMain },
     };
-} s_thread_glob;
+} s_threadGlob;
 
 bool Initialize() {
-    g_thread_id = THREAD_MAIN;
+    g_threadId = THREAD_MAIN;
 
     std::latch latch{ THREAD_MAX - 1 };
 
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
-        ThreadObject& thread = s_thread_glob.threads[id];
+        ThreadObject& thread = s_threadGlob.threads[id];
         thread.id = id;
-        thread.thread = std::thread(
-            [&](ThreadObject* object) {
+        thread.threadObject = std::thread(
+            [&](ThreadObject* p_object) {
                 // set thread id
-                g_thread_id = object->id;
+                g_threadId = p_object->id;
 
                 latch.count_down();
-                LOG_VERBOSE("[threads] thread '{}'(id: {}) starts.", object->name, object->id);
-                object->thread_func();
-                LOG_VERBOSE("[threads] thread '{}'(id: {}) ends.", object->name, object->id);
+                LOG_VERBOSE("[threads] thread '{}'(id: {}) starts.", p_object->name, p_object->id);
+                p_object->threadFunc();
+                LOG_VERBOSE("[threads] thread '{}'(id: {}) ends.", p_object->name, p_object->id);
             },
             &thread);
 
-        HANDLE handle = (HANDLE)thread.thread.native_handle();
+        HANDLE handle = (HANDLE)thread.threadObject.native_handle();
 
         // @TODO: set thread affinity
         // DWORD_PTR affinityMask = 1ull << threadID;
@@ -74,25 +74,25 @@ bool Initialize() {
 
 void Finailize() {
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
-        auto& thread = s_thread_glob.threads[id];
-        thread.thread.join();
+        auto& thread = s_threadGlob.threads[id];
+        thread.threadObject.join();
     }
 }
 
 bool ShutdownRequested() {
-    return s_thread_glob.shutdown_requested;
+    return s_threadGlob.shutdownRequested;
 }
 
 void RequestShutdown() {
-    s_thread_glob.shutdown_requested = true;
+    s_threadGlob.shutdownRequested = true;
 }
 
 bool IsMainThread() {
-    return g_thread_id == THREAD_MAIN;
+    return g_threadId == THREAD_MAIN;
 }
 
 uint32_t GetThreadId() {
-    return g_thread_id;
+    return g_threadId;
 }
 
 }  // namespace my::thread

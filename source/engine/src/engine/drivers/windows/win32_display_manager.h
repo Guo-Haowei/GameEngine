@@ -10,13 +10,13 @@ public:
     bool Initialize() final;
     void Finalize() final;
 
-    bool shouldClose() final;
+    bool ShouldClose() final;
 
-    std::tuple<int, int> getWindowSize() final;
-    std::tuple<int, int> getWindowPos() final;
+    std::tuple<int, int> GetWindowSize() final;
+    std::tuple<int, int> GetWindowPos() final;
 
-    void newFrame() final;
-    void present() final;
+    void NewFrame() final;
+    void Present() final;
 
     LRESULT wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

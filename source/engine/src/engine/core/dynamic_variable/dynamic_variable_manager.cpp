@@ -11,7 +11,7 @@ static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache"
 void DynamicVariableManager::Serialize() {
     auto res = FileAccess::Open(DVAR_CACHE_FILE, FileAccess::WRITE);
     if (!res) {
-        LOG_ERROR("{}", res.error().getMessage());
+        LOG_ERROR("{}", res.error().GetMessage());
         return;
     }
 
@@ -31,7 +31,7 @@ void DynamicVariableManager::Serialize() {
 void DynamicVariableManager::deserialize() {
     auto res = FileAccess::Open(DVAR_CACHE_FILE, FileAccess::READ);
     if (!res) {
-        LOG_ERROR("{}", res.error().getMessage());
+        LOG_ERROR("{}", res.error().GetMessage());
         return;
     }
 

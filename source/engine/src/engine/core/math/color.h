@@ -27,11 +27,11 @@ struct Color {
     constexpr Color(float p_red, float p_green, float p_blue, float p_alpha) : r(p_red), g(p_green), b(p_blue), a(p_alpha) {}
     constexpr Color(float p_red, float p_green, float p_blue) : Color(p_red, p_green, p_blue, 1.0f) {}
 
-    uint32_t toRgb() const;
-    uint32_t toRgba() const;
+    uint32_t ToRgb() const;
+    uint32_t ToRgba() const;
 
-    static Color hex(uint32_t hex);
-    static Color hexRgba(uint32_t hex);
+    static Color Hex(uint32_t hex);
+    static Color HexRgba(uint32_t hex);
 };
 
 }  // namespace my

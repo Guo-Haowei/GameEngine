@@ -41,9 +41,9 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
         return;
     }
 
-    if (input::isButtonPressed(MOUSE_BUTTON_RIGHT)) {
-        auto [window_x, window_y] = DisplayManager::GetSingleton().getWindowPos();
-        vec2 clicked = input::getCursor();
+    if (input::IsButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        auto [window_x, window_y] = DisplayManager::GetSingleton().GetWindowPos();
+        vec2 clicked = input::GetCursor();
         clicked.x = (clicked.x + window_x - m_canvasMin.x) / m_canvasSize.x;
         clicked.y = (clicked.y + window_y - m_canvasMin.y) / m_canvasSize.y;
 
@@ -180,7 +180,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(EditorItem::DRAG_DROP_IMPORT)) {
             IM_ASSERT(payload->DataSize == sizeof(const char*));
             char* dragged_data = *(char**)payload->Data;
-            SceneManager::GetSingleton().requestScene(dragged_data);
+            SceneManager::GetSingleton().RequestScene(dragged_data);
 
             // @TODO: no strdup and free
             free(dragged_data);
@@ -198,11 +198,11 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     // Update state
     if (m_editor.GetSelectedEntity().IsValid()) {
-        if (input::isKeyPressed(KEY_Z)) {
+        if (input::IsKeyPressed(KEY_Z)) {
             m_editor.SetState(EditorLayer::STATE_TRANSLATE);
-        } else if (input::isKeyPressed(KEY_X)) {
+        } else if (input::IsKeyPressed(KEY_X)) {
             m_editor.SetState(EditorLayer::STATE_ROTATE);
-        } else if (input::isKeyPressed(KEY_C)) {
+        } else if (input::IsKeyPressed(KEY_C)) {
             m_editor.SetState(EditorLayer::STATE_SCALE);
         }
     }

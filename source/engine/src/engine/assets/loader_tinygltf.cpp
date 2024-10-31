@@ -15,25 +15,25 @@
 
 namespace tinygltf {
 
-bool dummy_load_image(Image*,
-                      const int,
-                      std::string*,
-                      std::string*,
-                      int,
-                      int,
-                      const unsigned char*,
-                      int,
-                      void*) {
+static bool DummyLoadImage(Image*,
+                           const int,
+                           std::string*,
+                           std::string*,
+                           int,
+                           int,
+                           const unsigned char*,
+                           int,
+                           void*) {
     return true;
 }
 
-bool dummy_write_image(const std::string*,
-                       const std::string*,
-                       const Image*,
-                       bool,
-                       const URICallbacks*,
-                       std::string*,
-                       void*) {
+static bool DummyWriteImage(const std::string*,
+                            const std::string*,
+                            const Image*,
+                            bool,
+                            const URICallbacks*,
+                            std::string*,
+                            void*) {
     return true;
 }
 
@@ -41,13 +41,13 @@ bool dummy_write_image(const std::string*,
 
 namespace my {
 
-void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
-    if (node_index < 0 || m_entity_map.count(node_index)) {
+void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
+    if (p_node_index < 0 || m_entityMap.count(p_node_index)) {
         return;
     }
 
     ecs::Entity entity;
-    auto& node = m_model->nodes[node_index];
+    auto& node = m_model->nodes[p_node_index];
 
     if (node.mesh >= 0) {
         DEV_ASSERT(node.mesh < (int)m_scene->GetCount<MeshComponent>());
@@ -89,7 +89,7 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
         m_scene->Create<NameComponent>(entity).SetName("Transform::" + node.name);
     }
 
-    m_entity_map[node_index] = entity;
+    m_entityMap[p_node_index] = entity;
 
     TransformComponent& transform = *m_scene->GetComponent<TransformComponent>(entity);
     if (!node.matrix.empty()) {
@@ -131,17 +131,17 @@ void LoaderTinyGLTF::process_node(int node_index, ecs::Entity parent) {
     }
     transform.UpdateTransform();
 
-    if (parent.IsValid()) {
-        m_scene->AttachComponent(entity, parent);
+    if (p_parent.IsValid()) {
+        m_scene->AttachComponent(entity, p_parent);
     }
 
     for (int child : node.children) {
-        process_node(child, entity);
+        ProcessNode(child, entity);
     }
 }
 
-bool LoaderTinyGLTF::load(Scene* data) {
-    m_scene = data;
+bool LoaderTinyGLTF::Load(Scene* p_scene) {
+    m_scene = p_scene;
 
     tinygltf::TinyGLTF loader;
     std::string err;
@@ -149,28 +149,28 @@ bool LoaderTinyGLTF::load(Scene* data) {
 
     m_model = std::make_shared<tinygltf::Model>();
 
-    loader.SetImageLoader(tinygltf::dummy_load_image, nullptr);
-    loader.SetImageWriter(tinygltf::dummy_write_image, nullptr);
-    bool ret = loader.LoadASCIIFromFile(m_model.get(), &err, &warn, m_file_path);
+    loader.SetImageLoader(tinygltf::DummyLoadImage, nullptr);
+    loader.SetImageWriter(tinygltf::DummyWriteImage, nullptr);
+    bool ret = loader.LoadASCIIFromFile(m_model.get(), &err, &warn, m_filePath);
 
     if (!warn.empty()) {
-        m_error = std::format("Warn: failed to import scene '{}'\n\tdetails: {}", m_file_path, warn);
+        m_error = std::format("Warn: failed to import scene '{}'\n\tdetails: {}", m_filePath, warn);
         return false;
     }
 
     if (!err.empty()) {
-        m_error = std::format("Error: failed to import scene '{}'\n\tdetails: {}", m_file_path, err);
+        m_error = std::format("Error: failed to import scene '{}'\n\tdetails: {}", m_filePath, err);
         return false;
     }
 
     if (!ret) {
-        m_error = std::format("Error: failed to import scene '{}'", m_file_path);
+        m_error = std::format("Error: failed to import scene '{}'", m_filePath);
         return false;
     }
 
     ecs::Entity root = ecs::Entity::Create();
     m_scene->Create<TransformComponent>(root);
-    m_scene->Create<NameComponent>(root).SetName(m_file_name);
+    m_scene->Create<NameComponent>(root).SetName(m_fileName);
     m_scene->m_root = root;
 
     // Create materials
@@ -207,7 +207,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.requestImage(MaterialComponent::TEXTURE_BASE, m_base_path + img.uri);
+            material.requestImage(MaterialComponent::TEXTURE_BASE, m_basePath + img.uri);
 
             // @TODO:
             // material.mTextures[MaterialComponent::Base].image = g_assetManager->LoadImageSync(searchName);
@@ -220,7 +220,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.requestImage(MaterialComponent::TEXTURE_NORMAL, m_base_path + img.uri);
+            material.requestImage(MaterialComponent::TEXTURE_NORMAL, m_basePath + img.uri);
             // material.mTextures[MaterialComponent::Normal].image = g_assetManager->LoadImageSync(searchName);
             //  material.textures[MaterialComponent::NORMAL_MAP].uvset = normalTexture->second.TextureTexCoord();
         }
@@ -231,7 +231,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.requestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_base_path + img.uri);
+            material.requestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_basePath + img.uri);
             // material.mTextures[MaterialComponent::MetallicRoughness].resource = ;
         }
 #if 0
@@ -268,7 +268,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
     // Create meshes:
     for (int id = 0; id < (int)m_model->meshes.size(); ++id) {
         const tinygltf::Mesh& mesh = m_model->meshes[id];
-        process_mesh(mesh, id);
+        ProcessMesh(mesh, id);
     }
     // Create armatures
     for (const auto& skin : m_model->skins) {
@@ -291,7 +291,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
     DEV_ASSERT(m_model->scenes.size());
     const tinygltf::Scene& gltfScene = m_model->scenes[glm::max(0, m_model->defaultScene)];
     for (size_t i = 0; i < gltfScene.nodes.size(); ++i) {
-        process_node(gltfScene.nodes[i], root);
+        ProcessNode(gltfScene.nodes[i], root);
     }
 
     // Create armature-bone mappings:
@@ -306,7 +306,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
         // create bone collection
         for (size_t i = 0; i < jointCount; ++i) {
             int jointIndex = skin.joints[i];
-            ecs::Entity boneID = m_entity_map[jointIndex];
+            ecs::Entity boneID = m_entityMap[jointIndex];
             armature.boneCollection[i] = boneID;
         }
     }
@@ -314,7 +314,7 @@ bool LoaderTinyGLTF::load(Scene* data) {
     // Create animations:
     for (int id = 0; id < (int)m_model->animations.size(); ++id) {
         const tinygltf::Animation& anim = m_model->animations[id];
-        process_animation(anim, id);
+        ProcessAnimation(anim, id);
     }
     // Create lights:
     // Create cameras:
@@ -323,12 +323,12 @@ bool LoaderTinyGLTF::load(Scene* data) {
     return true;
 }
 
-void LoaderTinyGLTF::process_mesh(const tinygltf::Mesh& gltf_mesh, int) {
-    ecs::Entity mesh_id = m_scene->CreateMeshEntity("Mesh::" + gltf_mesh.name);
+void LoaderTinyGLTF::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
+    ecs::Entity mesh_id = m_scene->CreateMeshEntity("Mesh::" + p_gltf_mesh.name);
     // m_scene->Component_Attach(mesh_id, state.rootEntity);
     MeshComponent& mesh = *m_scene->GetComponent<MeshComponent>(mesh_id);
 
-    for (const auto& prim : gltf_mesh.primitives) {
+    for (const auto& prim : p_gltf_mesh.primitives) {
         MeshComponent::MeshSubset subset;
         if (m_scene->GetCount<MaterialComponent>() == 0) {
             LOG_FATAL("No material! Consider use default");
@@ -588,24 +588,24 @@ void LoaderTinyGLTF::process_mesh(const tinygltf::Mesh& gltf_mesh, int) {
     mesh.createRenderData();
 }
 
-void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int) {
+void LoaderTinyGLTF::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int) {
     static int s_counter = 0;
 
-    std::string tag = gltf_anim.name;
+    std::string tag = p_gltf_anim.name;
     if (tag.empty()) {
-        tag = std::format("{}::animation_{}", m_file_name, ++s_counter);
+        tag = std::format("{}::animation_{}", m_fileName, ++s_counter);
     }
     auto entity = m_scene->CreateNameEntity(tag);
     m_scene->AttachComponent(entity);
 
     // m_scene->Component_Attach(entity, m_scene->m_root);
     AnimationComponent& animation = m_scene->Create<AnimationComponent>(entity);
-    animation.samplers.resize(gltf_anim.samplers.size());
-    animation.channels.resize(gltf_anim.channels.size());
-    DEV_ASSERT(gltf_anim.samplers.size() == gltf_anim.channels.size());
+    animation.samplers.resize(p_gltf_anim.samplers.size());
+    animation.channels.resize(p_gltf_anim.channels.size());
+    DEV_ASSERT(p_gltf_anim.samplers.size() == p_gltf_anim.channels.size());
 
-    for (size_t index = 0; index < gltf_anim.samplers.size(); ++index) {
-        const auto& gltfSampler = gltf_anim.samplers[index];
+    for (size_t index = 0; index < p_gltf_anim.samplers.size(); ++index) {
+        const auto& gltfSampler = p_gltf_anim.samplers[index];
         DEV_ASSERT(gltfSampler.interpolation == "LINEAR");
         auto& sampler = animation.samplers[index];
 
@@ -664,9 +664,9 @@ void LoaderTinyGLTF::process_animation(const tinygltf::Animation& gltf_anim, int
         }
     }
 
-    for (size_t index = 0; index < gltf_anim.channels.size(); ++index) {
-        const auto& channel = gltf_anim.channels[index];
-        animation.channels[index].targetId = m_entity_map[channel.target_node];
+    for (size_t index = 0; index < p_gltf_anim.channels.size(); ++index) {
+        const auto& channel = p_gltf_anim.channels[index];
+        animation.channels[index].targetId = m_entityMap[channel.target_node];
         DEV_ASSERT(channel.sampler >= 0);
         animation.channels[index].samplerIndex = (uint32_t)channel.sampler;
 

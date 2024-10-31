@@ -213,7 +213,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             // @TODO: safer
             auto check_box_id = std::format("Enabled##{}", i);
             ImGui::Checkbox(check_box_id.c_str(), &texture.enabled);
-            Image* image = texture.image ? texture.image->get() : nullptr;
+            Image* image = texture.image ? texture.image->Get() : nullptr;
             auto gpu_texture = image ? image->gpu_texture : nullptr;
             if (gpu_texture) {
                 ImGui::Image((ImTextureID)gpu_texture->GetHandle(), ImVec2(128, 128));
@@ -236,10 +236,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Box Collider", box_collider, [&](BoxColliderComponent& collider) {
-        vec3 center = collider.box.center();
-        vec3 size = collider.box.size();
+        vec3 center = collider.box.Center();
+        vec3 size = collider.box.Size();
         if (DrawVec3Control("size", size)) {
-            collider.box = AABB::fromCenterSize(center, size);
+            collider.box = AABB::FromCenterSize(center, size);
         }
     });
 

@@ -7,7 +7,7 @@
 
 namespace my {
 
-std::shared_ptr<DisplayManager> DisplayManager::create() {
+std::shared_ptr<DisplayManager> DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(r_backend);
 
     if (backend == "opengl") {

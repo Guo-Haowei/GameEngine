@@ -2,7 +2,7 @@
 
 namespace my {
 
-const char* errorToString(ErrorCode p_error) {
+const char* ErrorToString(ErrorCode p_error) {
     static const char* s_error_names[] = {
 #define ERROR_CODE(NAME) #NAME,
         ERROR_LIST

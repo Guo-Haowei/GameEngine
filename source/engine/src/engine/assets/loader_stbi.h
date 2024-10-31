@@ -6,23 +6,23 @@ namespace my {
 
 class LoaderSTBIBase : public Loader<Image> {
 public:
-    using STBILoadFunc = void* (*)(uint8_t const* buffer, int len, int* x, int* y, int* comp, int req_comp);
+    using STBILoadFunc = void* (*)(uint8_t const* p_buffer, int p_len, int* p_x, int* p_y, int* p_comp, int p_req_comp);
 
     using Base = Loader<Image>;
-    LoaderSTBIBase(const std::string& path) : Base{ path } {}
+    LoaderSTBIBase(const std::string& p_path) : Base{ p_path } {}
 
-    bool load_impl(Image* data, bool is_float, STBILoadFunc p_func);
+    bool LoadImpl(Image* p_data, bool p_is_float, STBILoadFunc p_func);
 };
 
 class LoaderSTBI8 : public LoaderSTBIBase {
 
 public:
-    LoaderSTBI8(const std::string& path) : LoaderSTBIBase{ path } {}
+    LoaderSTBI8(const std::string& p_path) : LoaderSTBIBase{ p_path } {}
 
-    bool load(Image* data) override;
+    bool Load(Image* p_data) override;
 
-    static std::shared_ptr<Base> create(const std::string& path) {
-        return std::make_shared<LoaderSTBI8>(path);
+    static std::shared_ptr<Base> Create(const std::string& p_path) {
+        return std::make_shared<LoaderSTBI8>(p_path);
     }
 };
 
@@ -30,12 +30,12 @@ class LoaderSTBI32 : public LoaderSTBIBase {
     using Base = Loader<Image>;
 
 public:
-    LoaderSTBI32(const std::string& path) : LoaderSTBIBase{ path } {}
+    LoaderSTBI32(const std::string& p_path) : LoaderSTBIBase{ p_path } {}
 
-    bool load(Image* data) override;
+    bool Load(Image* p_data) override;
 
-    static std::shared_ptr<Base> create(const std::string& path) {
-        return std::make_shared<LoaderSTBI32>(path);
+    static std::shared_ptr<Base> Create(const std::string& p_path) {
+        return std::make_shared<LoaderSTBI32>(p_path);
     }
 };
 

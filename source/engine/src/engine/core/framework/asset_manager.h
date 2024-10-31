@@ -14,7 +14,7 @@ struct File {
 
 class Scene;
 
-using LoadSuccessFunc = void (*)(void* asset, void* userdata);
+using LoadSuccessFunc = void (*)(void* p_asset, void* p_userdata);
 
 enum LoadTaskType {
     LOAD_TASK_IMAGE,
@@ -23,8 +23,8 @@ enum LoadTaskType {
 
 struct LoadTask {
     LoadTaskType type;
-    FilePath asset_path;
-    LoadSuccessFunc on_success;
+    FilePath assetPath;
+    LoadSuccessFunc onSuccess;
     void* userdata;
 };
 
@@ -35,23 +35,23 @@ public:
     bool Initialize() override;
     void Finalize() override;
 
-    void loadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success);
+    void LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success);
 
-    ImageHandle* loadImageSync(const FilePath& p_path);
-    ImageHandle* loadImageAsync(const FilePath& p_path, LoadSuccessFunc = nullptr);
-    ImageHandle* findImage(const FilePath& p_path);
+    ImageHandle* LoadImageSync(const FilePath& p_path);
+    ImageHandle* LoadImageAsync(const FilePath& p_path, LoadSuccessFunc = nullptr);
+    ImageHandle* FindImage(const FilePath& p_path);
 
-    std::shared_ptr<File> loadFileSync(const FilePath& p_path);
-    std::shared_ptr<File> findFile(const FilePath& p_path);
+    std::shared_ptr<File> LoadFileSync(const FilePath& p_path);
+    std::shared_ptr<File> FindFile(const FilePath& p_path);
 
-    static void workerMain();
+    static void WorkerMain();
 
 private:
-    void enqueueLoadTask(LoadTask& task);
+    void EnqueueLoadTask(LoadTask& p_task);
 
-    std::map<FilePath, std::unique_ptr<ImageHandle>> m_image_cache;
-    std::map<FilePath, std::shared_ptr<File>> m_text_cache;
-    std::mutex m_image_cache_lock;
+    std::map<FilePath, std::unique_ptr<ImageHandle>> m_imageCache;
+    std::map<FilePath, std::shared_ptr<File>> m_textCache;
+    std::mutex m_imageCacheLock;
 };
 
 }  // namespace my
