@@ -375,7 +375,7 @@ void Scene::UpdateAnimation(uint32_t p_index) {
         if (key_left != key_right) {
             t = (animation.timer - left) / (right - left);
         }
-        t = saturate(t);
+        t = Saturate(t);
 
         TransformComponent* targetTransform = GetComponent<TransformComponent>(channel.targetId);
         DEV_ASSERT(targetTransform);

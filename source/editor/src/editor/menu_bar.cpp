@@ -21,7 +21,7 @@ static void SaveProject(bool p_need_open_dialog) {
     }
 
     DVAR_SET_STRING(project, path.string());
-    Scene& scene = SceneManager::GetSingleton().getScene();
+    Scene& scene = SceneManager::GetSingleton().GetScene();
 
     Archive archive;
     if (!archive.OpenWrite(path.string())) {
@@ -35,8 +35,8 @@ static void SaveProject(bool p_need_open_dialog) {
 
 void MenuBar::Update(Scene&) {
     // @TODO: input system, key s handled here, don't handle it in viewer
-    if (input::isKeyDown(KEY_LEFT_CONTROL)) {
-        if (input::isKeyPressed(KEY_S)) {
+    if (input::IsKeyDown(KEY_LEFT_CONTROL)) {
+        if (input::IsKeyPressed(KEY_S)) {
             SaveProject(false);
         }
     }

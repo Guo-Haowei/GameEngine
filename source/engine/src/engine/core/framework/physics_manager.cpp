@@ -15,7 +15,7 @@ bool PhysicsManager::Initialize() {
 }
 
 void PhysicsManager::Finalize() {
-    cleanWorld();
+    CleanWorld();
 }
 
 void PhysicsManager::EventReceived(std::shared_ptr<Event> p_event) {
@@ -26,17 +26,17 @@ void PhysicsManager::EventReceived(std::shared_ptr<Event> p_event) {
 
     const Scene& scene = *e->GetScene();
     // @TODO: fix
-    createWorld(scene);
+    CreateWorld(scene);
 }
 
-void PhysicsManager::update(Scene& p_scene) {
+void PhysicsManager::Update(Scene& p_scene) {
     float delta_time = p_scene.m_elapsedTime;
 
-    if (hasWorld()) {
-        m_dynamic_world->stepSimulation(delta_time, 10);
+    if (HasWorld()) {
+        m_dynamicWorld->stepSimulation(delta_time, 10);
 
-        for (int j = m_dynamic_world->getNumCollisionObjects() - 1; j >= 0; j--) {
-            btCollisionObject* collision_object = m_dynamic_world->getCollisionObjectArray()[j];
+        for (int j = m_dynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--) {
+            btCollisionObject* collision_object = m_dynamicWorld->getCollisionObjectArray()[j];
             btRigidBody* rigid_body = btRigidBody::upcast(collision_object);
             btTransform transform;
 
@@ -59,14 +59,14 @@ void PhysicsManager::update(Scene& p_scene) {
     }
 }
 
-void PhysicsManager::createWorld(const Scene& p_scene) {
-    m_collision_config = new btDefaultCollisionConfiguration();
-    m_dispatcher = new btCollisionDispatcher(m_collision_config);
-    m_overlapping_pair_cache = new btDbvtBroadphase();
+void PhysicsManager::CreateWorld(const Scene& p_scene) {
+    m_collisionConfig = new btDefaultCollisionConfiguration();
+    m_dispatcher = new btCollisionDispatcher(m_collisionConfig);
+    m_overlappingPairCache = new btDbvtBroadphase();
     m_solver = new btSequentialImpulseConstraintSolver;
-    m_dynamic_world = new btDiscreteDynamicsWorld(m_dispatcher, m_overlapping_pair_cache, m_solver, m_collision_config);
+    m_dynamicWorld = new btDiscreteDynamicsWorld(m_dispatcher, m_overlappingPairCache, m_solver, m_collisionConfig);
 
-    m_dynamic_world->setGravity(btVector3(0, -10, 0));
+    m_dynamicWorld->setGravity(btVector3(0, -10, 0));
 
     for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
         const TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
@@ -91,7 +91,7 @@ void PhysicsManager::createWorld(const Scene& p_scene) {
                 break;
         }
 
-        m_collision_shapes.push_back(shape);
+        m_collisionShapes.push_back(shape);
 
         const vec3& origin = transform_component->GetTranslation();
         const vec4& rotation = transform_component->GetRotation();
@@ -113,50 +113,50 @@ void PhysicsManager::createWorld(const Scene& p_scene) {
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
         btRigidBody* body = new btRigidBody(rbInfo);
         body->setUserPointer((void*)((size_t)id.GetId()));
-        m_dynamic_world->addRigidBody(body);
+        m_dynamicWorld->addRigidBody(body);
     }
 }
 
-void PhysicsManager::cleanWorld() {
-    if (hasWorld()) {
+void PhysicsManager::CleanWorld() {
+    if (HasWorld()) {
         // remove the rigidbodies from the dynamics world and delete them
-        for (int i = m_dynamic_world->getNumCollisionObjects() - 1; i >= 0; i--) {
-            btCollisionObject* obj = m_dynamic_world->getCollisionObjectArray()[i];
+        for (int i = m_dynamicWorld->getNumCollisionObjects() - 1; i >= 0; i--) {
+            btCollisionObject* obj = m_dynamicWorld->getCollisionObjectArray()[i];
             btRigidBody* body = btRigidBody::upcast(obj);
             if (body && body->getMotionState()) {
                 delete body->getMotionState();
             }
-            m_dynamic_world->removeCollisionObject(obj);
+            m_dynamicWorld->removeCollisionObject(obj);
             delete obj;
         }
 
         // delete collision shapes
-        for (int j = 0; j < m_collision_shapes.size(); j++) {
-            btCollisionShape* shape = m_collision_shapes[j];
-            m_collision_shapes[j] = 0;
+        for (int j = 0; j < m_collisionShapes.size(); j++) {
+            btCollisionShape* shape = m_collisionShapes[j];
+            m_collisionShapes[j] = 0;
             delete shape;
         }
 
         // delete dynamics world
-        delete m_dynamic_world;
-        m_dynamic_world = nullptr;
+        delete m_dynamicWorld;
+        m_dynamicWorld = nullptr;
 
         // delete m_solver
         delete m_solver;
         m_solver = nullptr;
 
         // delete broadphase
-        delete m_overlapping_pair_cache;
-        m_overlapping_pair_cache = nullptr;
+        delete m_overlappingPairCache;
+        m_overlappingPairCache = nullptr;
 
         // delete m_dispatcher
         delete m_dispatcher;
         m_dispatcher = nullptr;
 
-        delete m_collision_config;
-        m_collision_config = nullptr;
+        delete m_collisionConfig;
+        m_collisionConfig = nullptr;
 
-        m_collision_shapes.clear();
+        m_collisionShapes.clear();
     }
 }
 

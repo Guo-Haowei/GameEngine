@@ -10,15 +10,15 @@ class DisplayManager : public Singleton<DisplayManager>, public Module {
 public:
     DisplayManager() : Module("DisplayManager") {}
 
-    virtual bool shouldClose() = 0;
+    virtual bool ShouldClose() = 0;
 
-    virtual std::tuple<int, int> getWindowSize() = 0;
-    virtual std::tuple<int, int> getWindowPos() = 0;
+    virtual std::tuple<int, int> GetWindowSize() = 0;
+    virtual std::tuple<int, int> GetWindowPos() = 0;
 
-    virtual void newFrame() = 0;
-    virtual void present() = 0;
+    virtual void NewFrame() = 0;
+    virtual void Present() = 0;
 
-    static std::shared_ptr<DisplayManager> create();
+    static std::shared_ptr<DisplayManager> Create();
 };
 
 }  // namespace my

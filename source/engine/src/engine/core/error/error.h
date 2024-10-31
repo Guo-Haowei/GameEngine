@@ -89,17 +89,18 @@ public:
         m_message = std::format(p_format, std::forward<Args>(p_args)...);
     }
 
-    const T& getValue() const { return m_value; }
+    const T& GetValue() const { return m_value; }
 
-    const std::string& getMessage() const { return m_message; }
+    const std::string& GetMessage() const { return m_message; }
 
 private:
     T m_value;
     std::string m_message;
 };
 
+// @TODO: rename
 #define VCT_ERROR(VALUE, ...) std::unexpected(::my::Error(__FILE__, __FUNCTION__, __LINE__, VALUE, ##__VA_ARGS__))
 ;
-const char* errorToString(ErrorCode p_error);
+const char* ErrorToString(ErrorCode p_error);
 
 }  // namespace my

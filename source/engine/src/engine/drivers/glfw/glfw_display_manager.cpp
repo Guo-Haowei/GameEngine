@@ -62,11 +62,11 @@ void GlfwDisplayManager::Finalize() {
     glfwTerminate();
 }
 
-bool GlfwDisplayManager::shouldClose() {
+bool GlfwDisplayManager::ShouldClose() {
     return glfwWindowShouldClose(m_window);
 }
 
-void GlfwDisplayManager::newFrame() {
+void GlfwDisplayManager::NewFrame() {
     glfwPollEvents();
     glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
     glfwGetWindowPos(m_window, &m_window_pos.x, &m_window_pos.y);
@@ -74,11 +74,11 @@ void GlfwDisplayManager::newFrame() {
     ImGui_ImplGlfw_NewFrame();
 }
 
-std::tuple<int, int> GlfwDisplayManager::getWindowSize() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
+std::tuple<int, int> GlfwDisplayManager::GetWindowSize() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
 
-std::tuple<int, int> GlfwDisplayManager::getWindowPos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
+std::tuple<int, int> GlfwDisplayManager::GetWindowPos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
 
-void GlfwDisplayManager::present() {
+void GlfwDisplayManager::Present() {
     OPTICK_EVENT();
 
     GLFWwindow* oldContext = glfwGetCurrentContext();
@@ -92,7 +92,7 @@ void GlfwDisplayManager::present() {
 void GlfwDisplayManager::cursor_pos_callback(GLFWwindow* window, double x, double y) {
     ImGui_ImplGlfw_CursorPosCallback(window, x, y);
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::setCursor(static_cast<float>(x), static_cast<float>(y)); }
+    { input::SetCursor(static_cast<float>(x), static_cast<float>(y)); }
 }
 
 void GlfwDisplayManager::mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -101,9 +101,9 @@ void GlfwDisplayManager::mouse_button_callback(GLFWwindow* window, int button, i
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
         if (action == GLFW_PRESS) {
-            input::setButton(button, true);
+            input::SetButton(button, true);
         } else if (action == GLFW_RELEASE) {
-            input::setButton(button, false);
+            input::SetButton(button, false);
         }
     }
 }
@@ -117,9 +117,9 @@ void GlfwDisplayManager::key_callback(GLFWwindow* window, int keycode, int scanc
         KeyCode key = s_key_mapping[keycode];
 
         if (action == GLFW_PRESS) {
-            input::setKey(key, true);
+            input::SetKey(key, true);
         } else if (action == GLFW_RELEASE) {
-            input::setKey(key, false);
+            input::SetKey(key, false);
         }
     }
 }
@@ -128,7 +128,7 @@ void GlfwDisplayManager::scroll_callback(GLFWwindow* window, double xoffset, dou
     ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::setWheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
+    { input::SetWheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
 }
 
 void GlfwDisplayManager::initialize_key_mapping() {

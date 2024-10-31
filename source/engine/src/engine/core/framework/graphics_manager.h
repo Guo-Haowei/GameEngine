@@ -58,16 +58,19 @@ extern ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
 extern ConstantBuffer<ParticleConstantBuffer> g_particle_cache;
 
+// @TODO: refactor
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),
 };
 
+// @TODO: refactor
 struct DrawContext {
     uint32_t index_count;
     uint32_t index_offset;
     int material_idx;
 };
 
+// @TODO: refactor
 struct BatchContext {
     int bone_idx;
     int batch_idx;

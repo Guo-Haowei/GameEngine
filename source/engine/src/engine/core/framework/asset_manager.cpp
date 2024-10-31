@@ -16,18 +16,18 @@ namespace my {
 
 static struct {
     // @TODO: better wake up
-    std::condition_variable wake_condition;
-    std::mutex wake_mutex;
+    std::condition_variable wakeCondition;
+    std::mutex wakeMutex;
     // @TODO: better thread safe queue
-    ConcurrentQueue<LoadTask> job_queue;
-} s_asset_manager_glob;
+    ConcurrentQueue<LoadTask> jobQueue;
+} s_assetManagerGlob;
 
 // @TODO: refactor
 class LoaderDeserialize : public Loader<Scene> {
 public:
     LoaderDeserialize(const std::string& p_path) : Loader<Scene>{ p_path } {}
 
-    static std::shared_ptr<Loader<Scene>> create(const std::string& p_path) {
+    static std::shared_ptr<Loader<Scene>> Create(const std::string& p_path) {
         return std::make_shared<LoaderDeserialize>(p_path);
     }
 
@@ -45,7 +45,7 @@ class LoaderLuaScript : public Loader<Scene> {
 public:
     LoaderLuaScript(const std::string& p_path) : Loader<Scene>{ p_path } {}
 
-    static std::shared_ptr<Loader<Scene>> create(const std::string& p_path) {
+    static std::shared_ptr<Loader<Scene>> Create(const std::string& p_path) {
         return std::make_shared<LoaderLuaScript>(p_path);
     }
 
@@ -62,8 +62,8 @@ public:
 bool AssetManager::Initialize() {
     Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
     Loader<Scene>::RegisterLoader(".gltf", LoaderTinyGLTF::Create);
-    Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::create);
-    Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::create);
+    Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::Create);
+    Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::Create);
 
     Loader<Image>::RegisterLoader(".png", LoaderSTBI8::Create);
     Loader<Image>::RegisterLoader(".jpg", LoaderSTBI8::Create);
@@ -73,47 +73,47 @@ bool AssetManager::Initialize() {
 }
 
 void AssetManager::Finalize() {
-    s_asset_manager_glob.wake_condition.notify_all();
+    s_assetManagerGlob.wakeCondition.notify_all();
 }
 
-void AssetManager::enqueueLoadTask(LoadTask& task) {
-    s_asset_manager_glob.job_queue.push(std::move(task));
-    s_asset_manager_glob.wake_condition.notify_one();
+void AssetManager::EnqueueLoadTask(LoadTask& p_task) {
+    s_assetManagerGlob.jobQueue.push(std::move(p_task));
+    s_assetManagerGlob.wakeCondition.notify_one();
 }
 
-ImageHandle* AssetManager::findImage(const FilePath& p_path) {
-    std::lock_guard guard(m_image_cache_lock);
+ImageHandle* AssetManager::FindImage(const FilePath& p_path) {
+    std::lock_guard guard(m_imageCacheLock);
 
-    auto found = m_image_cache.find(p_path);
-    if (found != m_image_cache.end()) {
+    auto found = m_imageCache.find(p_path);
+    if (found != m_imageCache.end()) {
         return found->second.get();
     }
 
     return nullptr;
 }
 
-ImageHandle* AssetManager::loadImageAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
-    m_image_cache_lock.lock();
+ImageHandle* AssetManager::LoadImageAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
+    m_imageCacheLock.lock();
 
-    auto found = m_image_cache.find(p_path);
-    if (found != m_image_cache.end()) {
+    auto found = m_imageCache.find(p_path);
+    if (found != m_imageCache.end()) {
         auto ret = found->second.get();
-        m_image_cache_lock.unlock();
+        m_imageCacheLock.unlock();
         return ret;
     }
 
     auto handle = std::make_unique<AssetHandle<Image>>();
     handle->state = ASSET_STATE_LOADING;
     ImageHandle* ret = handle.get();
-    m_image_cache[p_path] = std::move(handle);
-    m_image_cache_lock.unlock();
+    m_imageCache[p_path] = std::move(handle);
+    m_imageCacheLock.unlock();
 
     LoadTask task;
     task.type = LOAD_TASK_IMAGE;
     if (p_on_success) {
-        task.on_success = p_on_success;
+        task.onSuccess = p_on_success;
     } else {
-        task.on_success = [](void* p_asset, void* p_userdata) {
+        task.onSuccess = [](void* p_asset, void* p_userdata) {
             Image* image = reinterpret_cast<Image*>(p_asset);
             ImageHandle* handle = reinterpret_cast<ImageHandle*>(p_userdata);
             DEV_ASSERT(image);
@@ -124,16 +124,16 @@ ImageHandle* AssetManager::loadImageAsync(const FilePath& p_path, LoadSuccessFun
         };
     }
     task.userdata = ret;
-    task.asset_path = p_path;
-    enqueueLoadTask(task);
+    task.assetPath = p_path;
+    EnqueueLoadTask(task);
     return ret;
 }
 
-ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
-    std::lock_guard guard(m_image_cache_lock);
+ImageHandle* AssetManager::LoadImageSync(const FilePath& p_path) {
+    std::lock_guard guard(m_imageCacheLock);
 
-    auto found = m_image_cache.find(p_path);
-    if (found != m_image_cache.end()) {
+    auto found = m_imageCache.find(p_path);
+    if (found != m_imageCache.end()) {
         DEV_ASSERT(found->second->state.load() == ASSET_STATE_READY);
         return found->second.get();
     }
@@ -158,23 +158,23 @@ ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
     image->gpu_texture = GraphicsManager::GetSingleton().CreateTexture(texture_desc, sampler_desc);
     handle->Set(image);
     ImageHandle* ret = handle.get();
-    m_image_cache[p_path] = std::move(handle);
+    m_imageCache[p_path] = std::move(handle);
     return ret;
 }
 
-void AssetManager::loadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
+void AssetManager::LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
     LoadTask task;
     task.type = LOAD_TASK_SCENE;
-    task.asset_path = p_path;
-    task.on_success = p_on_success;
+    task.assetPath = p_path;
+    task.onSuccess = p_on_success;
     task.userdata = nullptr;
-    enqueueLoadTask(task);
+    EnqueueLoadTask(task);
 }
 
 template<typename T>
-static void load_asset(LoadTask& p_task, T* p_asset) {
-    auto loader = Loader<T>::Create(p_task.asset_path);
-    const std::string& asset_path = p_task.asset_path.String();
+static void LoadAsset(LoadTask& p_task, T* p_asset) {
+    auto loader = Loader<T>::Create(p_task.assetPath);
+    const std::string& asset_path = p_task.assetPath.String();
     if (!loader) {
         LOG_ERROR("[AssetManager] not loader found for '{}'", asset_path);
         return;
@@ -182,34 +182,34 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
 
     Timer timer;
     if (loader->Load(p_asset)) {
-        p_task.on_success(p_asset, p_task.userdata);
+        p_task.onSuccess(p_asset, p_task.userdata);
         LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", asset_path, timer.GetDurationString());
     } else {
         LOG_ERROR("[AssetManager] failed to load '{}', details: {}", asset_path, loader->GetError());
     }
 }
 
-void AssetManager::workerMain() {
+void AssetManager::WorkerMain() {
     for (;;) {
         if (thread::ShutdownRequested()) {
             break;
         }
 
         LoadTask task;
-        if (!s_asset_manager_glob.job_queue.pop(task)) {
-            std::unique_lock<std::mutex> lock(s_asset_manager_glob.wake_mutex);
-            s_asset_manager_glob.wake_condition.wait(lock);
+        if (!s_assetManagerGlob.jobQueue.pop(task)) {
+            std::unique_lock<std::mutex> lock(s_assetManagerGlob.wakeMutex);
+            s_assetManagerGlob.wakeCondition.wait(lock);
             continue;
         }
 
         // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
         switch (task.type) {
             case LOAD_TASK_IMAGE: {
-                load_asset<Image>(task, new Image);
+                LoadAsset<Image>(task, new Image);
             } break;
             case LOAD_TASK_SCENE: {
-                LOG_VERBOSE("[AssetManager] start loading scene {}", task.asset_path.String());
-                load_asset<Scene>(task, new Scene);
+                LOG_VERBOSE("[AssetManager] start loading scene {}", task.assetPath.String());
+                LoadAsset<Scene>(task, new Scene);
             } break;
             default:
                 CRASH_NOW();
@@ -218,24 +218,24 @@ void AssetManager::workerMain() {
     }
 }
 
-std::shared_ptr<File> AssetManager::findFile(const FilePath& p_path) {
-    auto found = m_text_cache.find(p_path);
-    if (found != m_text_cache.end()) {
+std::shared_ptr<File> AssetManager::FindFile(const FilePath& p_path) {
+    auto found = m_textCache.find(p_path);
+    if (found != m_textCache.end()) {
         return found->second;
     }
 
     return nullptr;
 }
 
-std::shared_ptr<File> AssetManager::loadFileSync(const FilePath& p_path) {
-    auto found = m_text_cache.find(p_path);
-    if (found != m_text_cache.end()) {
+std::shared_ptr<File> AssetManager::LoadFileSync(const FilePath& p_path) {
+    auto found = m_textCache.find(p_path);
+    if (found != m_textCache.end()) {
         return found->second;
     }
 
     auto res = FileAccess::Open(p_path, FileAccess::READ);
     if (!res) {
-        LOG_ERROR("[FileAccess] Error: failed to Open file '{}', reason: {}", p_path.String(), res.error().getMessage());
+        LOG_ERROR("[FileAccess] Error: failed to Open file '{}', reason: {}", p_path.String(), res.error().GetMessage());
         return nullptr;
     }
 
@@ -248,7 +248,7 @@ std::shared_ptr<File> AssetManager::loadFileSync(const FilePath& p_path) {
     file_access->ReadBuffer(buffer.data(), size);
     auto text = std::make_shared<File>();
     text->buffer = std::move(buffer);
-    m_text_cache[p_path] = text;
+    m_textCache[p_path] = text;
     return text;
 }
 

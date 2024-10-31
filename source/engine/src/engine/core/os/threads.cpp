@@ -23,7 +23,7 @@ static struct {
     std::array<ThreadObject, THREAD_MAX> threads = {
         ThreadObject{ "main" },
         ThreadObject{ "render thread", []() {} },
-        ThreadObject{ "asset thread 1", AssetManager::workerMain },
+        ThreadObject{ "asset thread 1", AssetManager::WorkerMain },
         // ThreadObject{ "asset thread 2", AssetManager::worker_main },
         ThreadObject{ "js worker 0", jobsystem::WorkerMain },
         ThreadObject{ "js worker 1", jobsystem::WorkerMain },

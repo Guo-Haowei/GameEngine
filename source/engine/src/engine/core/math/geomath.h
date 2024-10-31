@@ -28,14 +28,14 @@ using glm::mat4;
 using glm::quat;
 
 template<typename T>
-constexpr inline T lerp(const T& p_a, const T& p_b, const T& p_f) {
+constexpr inline T Lerp(const T& p_a, const T& p_b, const T& p_f) {
     return p_a + p_f * (p_b - p_a);
 }
 
 template<typename T>
-constexpr inline float saturate(T p_x) { return glm::min(T(1), glm::max(T(0), p_x)); }
+constexpr inline float Saturate(T p_x) { return glm::min(T(1), glm::max(T(0), p_x)); }
 
-static inline void decompose(const mat4& p_matrix, vec3& p_scale, vec4& p_rotation, vec3& p_translation) {
+static inline void Decompose(const mat4& p_matrix, vec3& p_scale, vec4& p_rotation, vec3& p_translation) {
     vec3 _skew;
     vec4 _perspective;
     quat quaternion;

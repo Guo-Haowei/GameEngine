@@ -21,7 +21,7 @@ public:
         // @TODO: fix search
         FilePath path = FilePath{ ROOT_FOLDER } / "source/shader/" / p_file;
 
-        auto source_binary = AssetManager::GetSingleton().loadFileSync(path);
+        auto source_binary = AssetManager::GetSingleton().LoadFileSync(path);
         if (!source_binary || source_binary->buffer.empty()) {
             LOG_ERROR("failed to read file '{}'", path.String());
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);

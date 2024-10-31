@@ -12,18 +12,18 @@ bool ImGuiModule::Initialize() {
 
     std::filesystem::path path(ROOT_FOLDER);
     path = path.parent_path() / "user" / "imgui.ini";
-    m_ini_path = path.string();
-    LOG_VERBOSE("Set imgui ini file to {}", m_ini_path);
+    m_iniPath = path.string();
+    LOG_VERBOSE("Set imgui ini file to {}", m_iniPath);
 
     ImGuiIO& io = ImGui::GetIO();
 
-    auto asset = AssetManager::GetSingleton().loadFileSync(FilePath{ "@res://fonts/DroidSans.ttf" });
+    auto asset = AssetManager::GetSingleton().LoadFileSync(FilePath{ "@res://fonts/DroidSans.ttf" });
     DEV_ASSERT(asset);
     ImFontConfig font_cfg;
     font_cfg.FontDataOwnedByAtlas = false;
     io.Fonts->AddFontFromMemoryTTF(asset->buffer.data(), (int)asset->buffer.size(), 16, &font_cfg);
 
-    io.IniFilename = m_ini_path.c_str();
+    io.IniFilename = m_iniPath.c_str();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;

@@ -22,62 +22,62 @@
 
 namespace my {
 
-static void registerCommonDvars() {
+static void RegisterCommonDvars() {
 #define REGISTER_DVAR
 #include "core/framework/common_dvars.h"
 }
 
-void Application::addLayer(std::shared_ptr<Layer> layer) {
-    m_layers.emplace_back(layer);
+void Application::AddLayer(std::shared_ptr<Layer> p_layer) {
+    m_layers.emplace_back(p_layer);
 }
 
-void Application::saveCommandLine(int argc, const char** argv) {
-    m_app_name = argv[0];
-    for (int i = 1; i < argc; ++i) {
-        m_command_line.push_back(argv[i]);
+void Application::SaveCommandLine(int p_argc, const char** p_argv) {
+    m_appName = p_argv[0];
+    for (int i = 1; i < p_argc; ++i) {
+        m_commandLine.push_back(p_argv[i]);
     }
 }
 
-void Application::registerModule(Module* module) {
-    module->m_app = this;
-    m_modules.push_back(module);
+void Application::RegisterModule(Module* p_module) {
+    p_module->m_app = this;
+    m_modules.push_back(p_module);
 }
 
-void Application::setupModules() {
-    m_asset_manager = std::make_shared<AssetManager>();
-    m_scene_manager = std::make_shared<SceneManager>();
-    m_physics_manager = std::make_shared<PhysicsManager>();
-    m_imgui_module = std::make_shared<ImGuiModule>();
-    m_display_server = DisplayManager::create();
-    m_graphics_manager = GraphicsManager::Create();
-    m_render_manager = std::make_shared<RenderManager>();
+void Application::SetupModules() {
+    m_assetManager = std::make_shared<AssetManager>();
+    m_sceneManager = std::make_shared<SceneManager>();
+    m_physicsManager = std::make_shared<PhysicsManager>();
+    m_imguiModule = std::make_shared<ImGuiModule>();
+    m_displayServer = DisplayManager::Create();
+    m_graphicsManager = GraphicsManager::Create();
+    m_renderManager = std::make_shared<RenderManager>();
 
-    registerModule(m_asset_manager.get());
-    registerModule(m_scene_manager.get());
-    registerModule(m_physics_manager.get());
-    registerModule(m_imgui_module.get());
-    registerModule(m_display_server.get());
-    registerModule(m_graphics_manager.get());
-    registerModule(m_render_manager.get());
+    RegisterModule(m_assetManager.get());
+    RegisterModule(m_sceneManager.get());
+    RegisterModule(m_physicsManager.get());
+    RegisterModule(m_imguiModule.get());
+    RegisterModule(m_displayServer.get());
+    RegisterModule(m_graphicsManager.get());
+    RegisterModule(m_renderManager.get());
 
-    m_event_queue.RegisterListener(m_graphics_manager.get());
-    m_event_queue.RegisterListener(m_physics_manager.get());
+    m_eventQueue.RegisterListener(m_graphicsManager.get());
+    m_eventQueue.RegisterListener(m_physicsManager.get());
 }
 
-int Application::run(int argc, const char** argv) {
-    saveCommandLine(argc, argv);
+int Application::Run(int p_argc, const char** p_argv) {
+    SaveCommandLine(p_argc, p_argv);
     m_os = std::make_shared<OS>();
 
     // intialize
     OS::GetSingleton().Initialize();
 
     // dvars
-    registerCommonDvars();
+    RegisterCommonDvars();
     renderer::register_rendering_dvars();
     DynamicVariableManager::deserialize();
-    DynamicVariableManager::parse(m_command_line);
+    DynamicVariableManager::parse(m_commandLine);
 
-    setupModules();
+    SetupModules();
 
     thread::Initialize();
     jobsystem::Initialize();
@@ -91,7 +91,7 @@ int Application::run(int argc, const char** argv) {
         LOG("module '{}' initialized\n", module->GetName());
     }
 
-    initLayers();
+    InitLayers();
     for (auto& layer : m_layers) {
         layer->Attach();
         LOG("[Runtime] layer '{}' attached!", layer->GetName());
@@ -113,12 +113,12 @@ int Application::run(int argc, const char** argv) {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-    while (!DisplayManager::GetSingleton().shouldClose()) {
+    while (!DisplayManager::GetSingleton().ShouldClose()) {
         OPTICK_FRAME("MainThread");
 
-        m_display_server->newFrame();
+        m_displayServer->NewFrame();
 
-        input::beginFrame();
+        input::BeginFrame();
 
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.GetDuration().ToSecond());
@@ -136,17 +136,17 @@ int Application::run(int argc, const char** argv) {
         }
         ImGui::Render();
 
-        m_scene_manager->update(dt);
-        auto& scene = m_scene_manager->getScene();
+        m_sceneManager->Update(dt);
+        auto& scene = m_sceneManager->GetScene();
 
-        m_physics_manager->update(scene);
-        m_graphics_manager->Update(scene);
+        m_physicsManager->Update(scene);
+        m_graphicsManager->Update(scene);
 
         renderer::reset_need_update_env();
 
-        m_display_server->present();
+        m_displayServer->Present();
 
-        input::endFrame();
+        input::EndFrame();
     }
 
     LOG("\n********************************************************************************"
@@ -154,7 +154,7 @@ int Application::run(int argc, const char** argv) {
         "\n********************************************************************************");
 
     // @TODO: fix
-    auto [w, h] = DisplayManager::GetSingleton().getWindowSize();
+    auto [w, h] = DisplayManager::GetSingleton().GetWindowSize();
     DVAR_SET_IVEC2(window_resolution, w, h);
 
     m_layers.clear();

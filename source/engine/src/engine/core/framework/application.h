@@ -16,36 +16,37 @@ class SceneManager;
 
 class Application {
 public:
-    int run(int argc, const char** argv);
+    int Run(int p_argc, const char** p_argv);
 
-    virtual void initLayers(){};
+    virtual void InitLayers(){};
 
-    EventQueue& getEventQueue() { return m_event_queue; }
+    EventQueue& GetEventQueue() { return m_eventQueue; }
 
 protected:
-    void addLayer(std::shared_ptr<Layer> layer);
+    void AddLayer(std::shared_ptr<Layer> p_layer);
 
 private:
-    void saveCommandLine(int argc, const char** argv);
+    void SaveCommandLine(int p_argc, const char** p_argv);
 
-    void registerModule(Module* module);
-    void setupModules();
+    void RegisterModule(Module* p_module);
+    void SetupModules();
 
     std::vector<std::shared_ptr<Layer>> m_layers;
-    std::vector<std::string> m_command_line;
-    std::string m_app_name;
+    std::vector<std::string> m_commandLine;
+    std::string m_appName;
 
     std::shared_ptr<OS> m_os;
 
-    EventQueue m_event_queue;
+    EventQueue m_eventQueue;
 
-    std::shared_ptr<AssetManager> m_asset_manager;
-    std::shared_ptr<SceneManager> m_scene_manager;
-    std::shared_ptr<PhysicsManager> m_physics_manager;
-    std::shared_ptr<DisplayManager> m_display_server;
-    std::shared_ptr<GraphicsManager> m_graphics_manager;
-    std::shared_ptr<RenderManager> m_render_manager;
-    std::shared_ptr<ImGuiModule> m_imgui_module;
+    std::shared_ptr<AssetManager> m_assetManager;
+    std::shared_ptr<SceneManager> m_sceneManager;
+    std::shared_ptr<PhysicsManager> m_physicsManager;
+    std::shared_ptr<DisplayManager> m_displayServer;
+    std::shared_ptr<GraphicsManager> m_graphicsManager;
+    // @TODO: remove render manager
+    std::shared_ptr<RenderManager> m_renderManager;
+    std::shared_ptr<ImGuiModule> m_imguiModule;
 
     std::vector<Module*> m_modules;
 };

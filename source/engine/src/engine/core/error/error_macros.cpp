@@ -6,12 +6,12 @@
 
 namespace my {
 
-IntrusiveList<ErrorHandlerListNode> s_error_handlers;
+IntrusiveList<ErrorHandlerListNode> s_errorHandlers;
 
-void globalLock() {}
-void globalUnlock() {}
+void GlobalLock() {}
+void GlobalUnlock() {}
 
-void breakIfDebug() {
+void BreakIfDebug() {
 #if USING(DEBUG_BUILD)
     if (IsDebuggerPresent()) {
         __debugbreak();
@@ -19,24 +19,24 @@ void breakIfDebug() {
 #endif
 }
 
-bool addErrorHandler(ErrorHandler* p_handler) {
+bool AddErrorHandler(ErrorHandler* p_handler) {
     // if the handler already exists, remove it
-    removeErrorHandler(p_handler);
+    RemoveErrorHandler(p_handler);
 
-    globalLock();
-    s_error_handlers.node_push_front(p_handler);
-    globalUnlock();
+    GlobalLock();
+    s_errorHandlers.node_push_front(p_handler);
+    GlobalUnlock();
     return true;
 }
 
-bool removeErrorHandler(const ErrorHandler* p_handler) {
-    globalLock();
-    s_error_handlers.node_remove(p_handler);
-    globalUnlock();
+bool RemoveErrorHandler(const ErrorHandler* p_handler) {
+    GlobalLock();
+    s_errorHandlers.node_remove(p_handler);
+    GlobalUnlock();
     return true;
 }
 
-void reportErrorImpl(std::string_view p_function,
+void ReportErrorImpl(std::string_view p_function,
                      std::string_view p_file,
                      int p_line,
                      std::string_view p_error,
@@ -53,16 +53,16 @@ void reportErrorImpl(std::string_view p_function,
         fprintf(stderr, "%s", message.c_str());
     }
 
-    globalLock();
+    GlobalLock();
 
-    for (auto& handler : s_error_handlers) {
-        handler.error_func(handler.user_data, p_function, p_file, p_line, p_error);
+    for (auto& handler : s_errorHandlers) {
+        handler.errorFunc(handler.userdata, p_function, p_file, p_line, p_error);
     }
 
-    globalUnlock();
+    GlobalUnlock();
 }
 
-void reportErrorIndexImpl(std::string_view p_function,
+void ReportErrorIndexImpl(std::string_view p_function,
                           std::string_view p_file,
                           int p_line,
                           std::string_view p_prefix,
@@ -73,7 +73,7 @@ void reportErrorIndexImpl(std::string_view p_function,
                           std::string_view p_detail) {
     auto error2 = std::format("{}Index {} = {} is out of bounds ({} = {}).", p_prefix, p_index_string, p_index, p_bound_string, p_bound);
 
-    reportErrorImpl(p_function, p_file, p_line, error2, p_detail);
+    ReportErrorImpl(p_function, p_file, p_line, error2, p_detail);
 }
 
 }  // namespace my
