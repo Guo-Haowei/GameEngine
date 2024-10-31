@@ -349,11 +349,11 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
-    DEV_ASSERT(math::isPowerOfTwo(voxel_texture_size));
+    DEV_ASSERT(math::IsPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    vec3 world_center = p_scene.GetBound().center();
-    vec3 aabb_size = p_scene.GetBound().size();
+    vec3 world_center = p_scene.GetBound().Center();
+    vec3 aabb_size = p_scene.GetBound().Size();
     float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
 
     const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
@@ -422,8 +422,8 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 light.position = light_dir;
 
                 const AABB& world_bound = p_scene.GetBound();
-                const vec3 center = world_bound.center();
-                const vec3 extents = world_bound.size();
+                const vec3 center = world_bound.Center();
+                const vec3 extents = world_bound.Size();
                 const float size = 0.7f * glm::max(extents.x, glm::max(extents.y, extents.z));
 
                 vec3 light_up = glm::normalize(light_local_matrix * vec4(0, -1, 0, 0));
@@ -431,9 +431,9 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 light.view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
 
                 if (GetBackend() == Backend::OPENGL) {
-                    light.projection_matrix = buildOpenGLOrthoRH(-size, size, -size, size, -size, 3.0f * size);
+                    light.projection_matrix = BuildOpenGLOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
-                    light.projection_matrix = buildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
+                    light.projection_matrix = BuildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 }
 
                 mat4 light_space_matrix = light.projection_matrix * light.view_matrix;
@@ -528,12 +528,12 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
     PerPassConstantBuffer pass_constant;
     pass_constant.g_view_matrix = camera.getViewMatrix();
 
-    const float fovy = camera.getFovy().toRad();
+    const float fovy = camera.getFovy().ToRad();
     const float aspect = camera.getAspect();
     if (GetBackend() == Backend::OPENGL) {
-        pass_constant.g_projection_matrix = buildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.g_projection_matrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     } else {
-        pass_constant.g_projection_matrix = buildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.g_projection_matrix = BuildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     }
 
     m_mainPass.pass_idx = static_cast<int>(m_context.pass_cache.size());
@@ -546,7 +546,7 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
             return object.flags & ObjectComponent::RENDERABLE;
         },
         [&](const AABB& aabb) {
-            return camera_frustum.intersects(aabb);
+            return camera_frustum.Intersects(aabb);
         });
 }
 
@@ -566,7 +566,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
         const mat4& world_matrix = transform.GetWorldMatrix();
         AABB aabb = mesh.local_bound;
-        aabb.applyMatrix(world_matrix);
+        aabb.ApplyMatrix(world_matrix);
         if (!p_filter2(aabb)) {
             continue;
         }
@@ -598,7 +598,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
         for (const auto& subset : mesh.subsets) {
             aabb = subset.local_bound;
-            aabb.applyMatrix(world_matrix);
+            aabb.ApplyMatrix(world_matrix);
             if (!p_filter2(aabb)) {
                 continue;
             }

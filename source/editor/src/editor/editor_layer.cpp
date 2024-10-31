@@ -177,7 +177,7 @@ void EditorLayer::FlushCommand(Scene& scene) {
                 switch (command->componentType) {
                     case ComponentType::BOX_COLLIDER: {
                         auto& collider = scene.Create<BoxColliderComponent>(command->target);
-                        collider.box = AABB::fromCenterSize(vec3(0), vec3(1));
+                        collider.box = AABB::FromCenterSize(vec3(0), vec3(1));
                     } break;
                     case ComponentType::MESH_COLLIDER:
                         scene.Create<MeshColliderComponent>(command->target);

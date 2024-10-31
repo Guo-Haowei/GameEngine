@@ -236,10 +236,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Box Collider", box_collider, [&](BoxColliderComponent& collider) {
-        vec3 center = collider.box.center();
-        vec3 size = collider.box.size();
+        vec3 center = collider.box.Center();
+        vec3 size = collider.box.Size();
         if (DrawVec3Control("size", size)) {
-            collider.box = AABB::fromCenterSize(center, size);
+            collider.box = AABB::FromCenterSize(center, size);
         }
     });
 

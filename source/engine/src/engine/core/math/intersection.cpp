@@ -5,9 +5,9 @@
 
 namespace my {
 
-bool TestIntersection::aabbAabb(const AABB& p_aabb1, const AABB& p_aabb2) {
+bool TestIntersection::AabbAabb(const AABB& p_aabb1, const AABB& p_aabb2) {
     AABB tmp{ p_aabb1 };
-    tmp.intersectBox(p_aabb2);
+    tmp.IntersectBox(p_aabb2);
     bool result = true;
     result = result && tmp.m_min.x < tmp.m_max.x;
     result = result && tmp.m_min.y < tmp.m_max.y;
@@ -15,7 +15,7 @@ bool TestIntersection::aabbAabb(const AABB& p_aabb1, const AABB& p_aabb2) {
     return result;
 }
 
-bool TestIntersection::rayAabb(const AABB& p_aabb, Ray& p_ray) {
+bool TestIntersection::RayAabb(const AABB& p_aabb, Ray& p_ray) {
     const vec3 direction = p_ray.m_end - p_ray.m_start;
 
     vec3 inv_d = vec3(1) / direction;
@@ -37,7 +37,7 @@ bool TestIntersection::rayAabb(const AABB& p_aabb, Ray& p_ray) {
     return true;
 }
 
-bool TestIntersection::rayTriangle(const vec3& p_a, const vec3& p_b, const vec3& p_c, Ray& p_ray) {
+bool TestIntersection::RayTriangle(const vec3& p_a, const vec3& p_b, const vec3& p_c, Ray& p_ray) {
     // P = A + u(B - A) + v(C - A) => O - A = -tD + u(B - A) + v(C - A)
     // -tD + uAB + vAC = AO
     const vec3 direction = p_ray.m_end - p_ray.m_start;

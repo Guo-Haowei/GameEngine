@@ -6,20 +6,20 @@
 namespace my {
 
 static ImVec4 GetLogLevelColor(LogLevel level) {
-    Color color = Color::hex(ColorCode::COLOR_WHITE);
+    Color color = Color::Hex(ColorCode::COLOR_WHITE);
     switch (level) {
         case my::LOG_LEVEL_VERBOSE:
-            color = Color::hex(ColorCode::COLOR_SILVER);
+            color = Color::Hex(ColorCode::COLOR_SILVER);
             break;
         case my::LOG_LEVEL_OK:
-            color = Color::hex(ColorCode::COLOR_GREEN);
+            color = Color::Hex(ColorCode::COLOR_GREEN);
             break;
         case my::LOG_LEVEL_WARN:
-            color = Color::hex(ColorCode::COLOR_YELLOW);
+            color = Color::Hex(ColorCode::COLOR_YELLOW);
             break;
         case my::LOG_LEVEL_ERROR:
         case my::LOG_LEVEL_FATAL:
-            color = Color::hex(ColorCode::COLOR_RED);
+            color = Color::Hex(ColorCode::COLOR_RED);
             break;
         default:
             break;

@@ -183,7 +183,7 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
     Timer timer;
     if (loader->Load(p_asset)) {
         p_task.on_success(p_asset, p_task.userdata);
-        LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", asset_path, timer.getDurationString());
+        LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", asset_path, timer.GetDurationString());
     } else {
         LOG_ERROR("[AssetManager] failed to load '{}', details: {}", asset_path, loader->GetError());
     }

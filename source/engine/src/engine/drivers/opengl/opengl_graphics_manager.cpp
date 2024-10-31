@@ -581,8 +581,8 @@ void OpenGLGraphicsManager::CreateGpuResources() {
     auto grass_image = AssetManager::GetSingleton().loadImageSync(FilePath{ "@res://images/grass.png" })->Get();
 
     // @TODO: move to renderer
-    g_grass = (OpenGLMeshBuffers*)CreateMesh(makeGrassBillboard());
-    g_box = (OpenGLMeshBuffers*)CreateMesh(makeBoxMesh());
+    g_grass = (OpenGLMeshBuffers*)CreateMesh(MakeGrassBillboard());
+    g_box = (OpenGLMeshBuffers*)CreateMesh(MakeBoxMesh());
 
     const int voxelSize = DVAR_GET_INT(r_voxel_size);
 
@@ -593,7 +593,7 @@ void OpenGLGraphicsManager::CreateGpuResources() {
         info.size = voxelSize;
         info.minFilter = GL_LINEAR_MIPMAP_LINEAR;
         info.magFilter = GL_NEAREST;
-        info.mipLevel = math::logTwo(voxelSize);
+        info.mipLevel = math::LogTwo(voxelSize);
         info.format = GL_RGBA16F;
 
         g_albedoVoxel.create3DEmpty(info);

@@ -20,11 +20,11 @@ template<>
 class RIDAllocatorLock<true> {
 public:
     void lock() {
-        m_lock.lock();
+        m_lock.Lock();
     }
 
     void unlock() {
-        m_lock.unlock();
+        m_lock.Unlock();
     }
 
 private:
@@ -101,7 +101,7 @@ class RIDAllocator : public RIDAllocatorBase {
 public:
     RIDAllocator(uint32_t target_chunk_byte_size = 65536)
         : RIDAllocatorBase(
-              math::align<uint32_t>(sizeof(T) + sizeof(RIDAllocatorBase::ElementBlock), 16),
+              math::Align<uint32_t>(sizeof(T) + sizeof(RIDAllocatorBase::ElementBlock), 16),
               uint32_t(sizeof(T) > target_chunk_byte_size ? 1 : (target_chunk_byte_size / sizeof(T)))) {
     }
 

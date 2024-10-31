@@ -53,12 +53,12 @@ public:
     bool operator>=(Degree p_val) const {
         return m_value >= p_val.m_value;
     }
-    void clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
-    float toRad() const { return glm::radians(m_value); }
-    float getDegree() const { return m_value; }
-    float sin() const { return glm::sin(toRad()); }
-    float cos() const { return glm::cos(toRad()); }
-    float tan() const { return glm::tan(toRad()); }
+    void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
+    float ToRad() const { return glm::radians(m_value); }
+    float GetDegree() const { return m_value; }
+    float Sin() const { return glm::sin(ToRad()); }
+    float Cos() const { return glm::cos(ToRad()); }
+    float Tan() const { return glm::tan(ToRad()); }
 
 private:
     float m_value;
@@ -94,19 +94,19 @@ public:
         return *this;
     }
     Radians& operator+=(Degree p_val) {
-        m_value += p_val.toRad();
+        m_value += p_val.ToRad();
         return *this;
     }
     Radians& operator-=(Degree p_val) {
-        m_value -= p_val.toRad();
+        m_value -= p_val.ToRad();
         return *this;
     }
-    void clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
-    float toDegree() const { return glm::degrees(m_value); }
-    float getRad() const { return m_value; }
-    float sin() const { return glm::sin(m_value); }
-    float cos() const { return glm::cos(m_value); }
-    float tan() const { return glm::tan(m_value); }
+    void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
+    float ToDegree() const { return glm::degrees(m_value); }
+    float GetRad() const { return m_value; }
+    float Sin() const { return glm::sin(m_value); }
+    float Cos() const { return glm::cos(m_value); }
+    float Tan() const { return glm::tan(m_value); }
 
 private:
     float m_value;

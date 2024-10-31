@@ -54,7 +54,7 @@ void CameraController::move(float p_delta_time, Camera& p_camera) {
 
         if (rotate_x) {
             p_camera.m_pitch += Degree(rotate_x);
-            p_camera.m_pitch.clamp(-85.0f, 85.0f);
+            p_camera.m_pitch.Clamp(-85.0f, 85.0f);
         }
 
         return rotate_x || rotate_y;

@@ -200,9 +200,9 @@ void RenderPassCreator::addShadowPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     const int shadow_res = DVAR_GET_INT(r_shadow_res);
-    DEV_ASSERT(math::isPowerOfTwo(shadow_res));
+    DEV_ASSERT(math::IsPowerOfTwo(shadow_res));
     const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
-    DEV_ASSERT(math::isPowerOfTwo(point_shadow_res));
+    DEV_ASSERT(math::IsPowerOfTwo(point_shadow_res));
 
     auto shadow_map = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_SHADOW_MAP,
                                                                    PixelFormat::D32_FLOAT,
@@ -372,8 +372,8 @@ static void bloomFunction(const DrawPass*) {
         auto output = gm.FindRenderTarget(RESOURCE_BLOOM_0);
 
         auto [width, height] = input->getSize();
-        const uint32_t work_group_x = math::ceilingDivision(width, 16);
-        const uint32_t work_group_y = math::ceilingDivision(height, 16);
+        const uint32_t work_group_x = math::CeilingDivision(width, 16);
+        const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
         gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
@@ -391,8 +391,8 @@ static void bloomFunction(const DrawPass*) {
         DEV_ASSERT(input && output);
 
         auto [width, height] = output->getSize();
-        const uint32_t work_group_x = math::ceilingDivision(width, 16);
-        const uint32_t work_group_y = math::ceilingDivision(height, 16);
+        const uint32_t work_group_x = math::CeilingDivision(width, 16);
+        const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
         gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
@@ -408,8 +408,8 @@ static void bloomFunction(const DrawPass*) {
         auto output = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
         auto [width, height] = output->getSize();
-        const uint32_t work_group_x = math::ceilingDivision(width, 16);
-        const uint32_t work_group_y = math::ceilingDivision(height, 16);
+        const uint32_t work_group_x = math::CeilingDivision(width, 16);
+        const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
         gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());

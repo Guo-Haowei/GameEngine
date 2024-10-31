@@ -121,9 +121,9 @@ int Application::run(int argc, const char** argv) {
         input::beginFrame();
 
         // @TODO: better elapsed time
-        float dt = static_cast<float>(timer.getDuration().toSecond());
+        float dt = static_cast<float>(timer.GetDuration().ToSecond());
         dt = glm::min(dt, 0.5f);
-        timer.start();
+        timer.Start();
 
         // to avoid empty renderer crash
         ImGui::NewFrame();

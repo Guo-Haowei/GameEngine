@@ -10,7 +10,7 @@ struct Plane {
     Plane() = default;
     Plane(const vec3& p_normal, float p_dist) : normal(p_normal), dist(p_dist) {}
 
-    float distance(const vec3& p_point) const {
+    float Distance(const vec3& p_point) const {
         return glm::dot(p_point, normal) + dist;
     }
 };

@@ -8,12 +8,12 @@ inline constexpr uint64_t SECOND = MILLISECOND * 1000;
 struct NanoSecond {
     NanoSecond(const uint64_t p_value) : m_value(p_value) {}
 
-    double toMillisecond() const {
+    double ToMillisecond() const {
         constexpr double factor = 1.0 / MILLISECOND;
         return factor * m_value;
     }
 
-    double toSecond() const {
+    double ToSecond() const {
         constexpr double factor = 1.0 / SECOND;
         return factor * m_value;
     }
@@ -26,15 +26,15 @@ class Timer {
     using TimePoint = std::chrono::time_point<Clock>;
 
 public:
-    Timer() { start(); }
+    Timer() { Start(); }
 
-    void start();
+    void Start();
 
-    NanoSecond getDuration() const;
-    std::string getDurationString() const;
+    NanoSecond GetDuration() const;
+    std::string GetDurationString() const;
 
 protected:
-    TimePoint m_start_point{};
+    TimePoint m_startPoint{};
 };
 
 }  // namespace my

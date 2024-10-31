@@ -37,9 +37,9 @@ Frustum::Frustum(const mat4& p_project_view_matrix) {
     m_far.dist = p_project_view_matrix[3][3] - p_project_view_matrix[3][2];
 }
 
-bool Frustum::intersects(const AABB& p_box) const {
-    const vec3& box_min = p_box.getMin();
-    const vec3& box_max = p_box.getMax();
+bool Frustum::Intersects(const AABB& p_box) const {
+    const vec3& box_min = p_box.GetMin();
+    const vec3& box_max = p_box.GetMax();
     for (int i = 0; i < 6; ++i) {
         const Plane& plane = this->operator[](i);
         vec3 p;
@@ -47,7 +47,7 @@ bool Frustum::intersects(const AABB& p_box) const {
         p.y = plane.normal.y > static_cast<float>(0) ? box_max.y : box_min.y;
         p.z = plane.normal.z > static_cast<float>(0) ? box_max.z : box_min.z;
 
-        if (plane.distance(p) < static_cast<float>(0)) {
+        if (plane.Distance(p) < static_cast<float>(0)) {
             return false;
         }
     }

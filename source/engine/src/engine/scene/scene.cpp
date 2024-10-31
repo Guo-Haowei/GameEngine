@@ -74,7 +74,7 @@ void Scene::Merge(Scene& p_other) {
         AttachComponent(p_other.m_root, m_root);
     }
 
-    m_bound.unionBox(p_other.m_bound);
+    m_bound.UnionBox(p_other.m_bound);
 }
 
 void Scene::CreateCamera(int p_width,
@@ -151,7 +151,7 @@ Entity Scene::CreatePointLightEntity(const std::string& p_name,
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
-    mesh = makeSphereMesh(0.1f, 40, 40);
+    mesh = MakeSphereMesh(0.1f, 40, 40);
     mesh.subsets[0].material_id = entity;
     return entity;
 }
@@ -180,7 +180,7 @@ Entity Scene::CreateAreaLightEntity(const std::string& p_name,
     object.flags = ObjectComponent::RENDERABLE;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
-    mesh = makePlaneMesh();
+    mesh = MakePlaneMesh();
     mesh.subsets[0].material_id = entity;
     return entity;
 }
@@ -224,7 +224,7 @@ Entity Scene::CreatePlaneEntity(const std::string& p_name,
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
-    mesh = makePlaneMesh(p_scale);
+    mesh = MakePlaneMesh(p_scale);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -250,7 +250,7 @@ Entity Scene::CreateCubeEntity(const std::string& p_name,
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
-    mesh = makeCubeMesh(p_scale);
+    mesh = MakeCubeMesh(p_scale);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -276,7 +276,7 @@ Entity Scene::CreateSphereEntity(const std::string& p_name,
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
-    mesh = makeSphereMesh(p_radius);
+    mesh = MakeSphereMesh(p_radius);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -556,10 +556,10 @@ bool Scene::RayObjectIntersect(Entity p_object_id, Ray& p_ray) {
     }
 
     mat4 inversedModel = glm::inverse(transform->GetWorldMatrix());
-    Ray inversedRay = p_ray.inverse(inversedModel);
+    Ray inversedRay = p_ray.Inverse(inversedModel);
     Ray inversedRayAABB = inversedRay;  // make a copy, we don't want dist to be modified by AABB
     // Perform aabb test
-    if (!inversedRayAABB.intersects(mesh->local_bound)) {
+    if (!inversedRayAABB.Intersects(mesh->local_bound)) {
         return false;
     }
 
@@ -570,8 +570,8 @@ bool Scene::RayObjectIntersect(Entity p_object_id, Ray& p_ray) {
         const vec3& A = mesh->positions[mesh->indices[i]];
         const vec3& B = mesh->positions[mesh->indices[i + 1]];
         const vec3& C = mesh->positions[mesh->indices[i + 2]];
-        if (inversedRay.intersects(A, B, C)) {
-            p_ray.copyDist(inversedRay);
+        if (inversedRay.Intersects(A, B, C)) {
+            p_ray.CopyDist(inversedRay);
             return true;
         }
     }
@@ -615,7 +615,7 @@ void Scene::RunHierarchyUpdateSystem(Context& p_context) {
 void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
     unused(p_context);
 
-    m_bound.makeInvalid();
+    m_bound.MakeInvalid();
 
     for (auto [entity, obj] : m_ObjectComponents) {
         if (!Contains<TransformComponent>(entity)) {
@@ -628,8 +628,8 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
 
         mat4 M = transform.GetWorldMatrix();
         AABB aabb = mesh.local_bound;
-        aabb.applyMatrix(M);
-        m_bound.unionBox(aabb);
+        aabb.ApplyMatrix(M);
+        m_bound.UnionBox(aabb);
     }
 }
 

@@ -26,7 +26,7 @@ static size_t get_stride(MeshComponent::VertexAttribute::NAME p_name) {
 template<typename T>
 void vertex_attrib(MeshComponent::VertexAttribute& p_attrib, const std::vector<T>& p_buffer, size_t& p_in_out_offset) {
     p_attrib.offset_in_byte = (uint32_t)p_in_out_offset;
-    p_attrib.size_in_byte = (uint32_t)(math::align(sizeof(T) * p_buffer.size(), 16llu));
+    p_attrib.size_in_byte = (uint32_t)(math::Align(sizeof(T) * p_buffer.size(), 16llu));
     p_attrib.stride = (uint32_t)get_stride(p_attrib.name);
     p_in_out_offset += p_attrib.size_in_byte;
 }
@@ -44,15 +44,15 @@ void MeshComponent::createRenderData() {
     DEV_ASSERT(normals.size());
 #endif
     // AABB
-    local_bound.makeInvalid();
+    local_bound.MakeInvalid();
     for (MeshSubset& subset : subsets) {
-        subset.local_bound.makeInvalid();
+        subset.local_bound.MakeInvalid();
         for (uint32_t i = 0; i < subset.index_count; ++i) {
             const vec3& point = positions[indices[i + subset.index_offset]];
-            subset.local_bound.expandPoint(point);
+            subset.local_bound.ExpandPoint(point);
         }
-        subset.local_bound.makeValid();
-        local_bound.unionBox(subset.local_bound);
+        subset.local_bound.MakeValid();
+        local_bound.UnionBox(subset.local_bound);
     }
     // Attributes
     for (int i = 0; i < VertexAttribute::COUNT; ++i) {
