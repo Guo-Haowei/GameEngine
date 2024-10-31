@@ -31,9 +31,9 @@ public:
         return std::make_shared<LoaderDeserialize>(p_path);
     }
 
-    bool load(Scene* p_scene) {
+    bool Load(Scene* p_scene) override {
         Archive archive;
-        if (!archive.OpenRead(m_file_path)) {
+        if (!archive.OpenRead(m_filePath)) {
             return false;
         }
         p_scene->m_replace = true;
@@ -49,25 +49,25 @@ public:
         return std::make_shared<LoaderLuaScript>(p_path);
     }
 
-    bool load(Scene* p_scene) {
+    bool Load(Scene* p_scene) override {
         ivec2 frame_size = DVAR_GET_IVEC2(resolution);
         p_scene->CreateCamera(frame_size.x, frame_size.y);
         auto root = p_scene->CreateTransformEntity("world");
         p_scene->m_replace = true;
         p_scene->m_root = root;
-        return load_lua_scene(m_file_path, p_scene);
+        return load_lua_scene(m_filePath, p_scene);
     }
 };
 
 bool AssetManager::Initialize() {
-    Loader<Scene>::register_loader(".obj", LoaderAssimp::create);
-    Loader<Scene>::register_loader(".gltf", LoaderTinyGLTF::create);
-    Loader<Scene>::register_loader(".scene", LoaderDeserialize::create);
-    Loader<Scene>::register_loader(".lua", LoaderLuaScript::create);
+    Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
+    Loader<Scene>::RegisterLoader(".gltf", LoaderTinyGLTF::Create);
+    Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::create);
+    Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::create);
 
-    Loader<Image>::register_loader(".png", LoaderSTBI8::create);
-    Loader<Image>::register_loader(".jpg", LoaderSTBI8::create);
-    Loader<Image>::register_loader(".hdr", LoaderSTBI32::create);
+    Loader<Image>::RegisterLoader(".png", LoaderSTBI8::Create);
+    Loader<Image>::RegisterLoader(".jpg", LoaderSTBI8::Create);
+    Loader<Image>::RegisterLoader(".hdr", LoaderSTBI32::Create);
 
     return true;
 }
@@ -119,7 +119,7 @@ ImageHandle* AssetManager::loadImageAsync(const FilePath& p_path, LoadSuccessFun
             DEV_ASSERT(image);
             DEV_ASSERT(handle);
 
-            handle->set(image);
+            handle->Set(image);
             GraphicsManager::GetSingleton().RequestTexture(handle);
         };
     }
@@ -140,13 +140,13 @@ ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
 
     // LOG_VERBOSE("image {} not found in cache, loading...", path);
     auto handle = std::make_unique<AssetHandle<Image>>();
-    auto loader = Loader<Image>::create(p_path);
+    auto loader = Loader<Image>::Create(p_path);
     if (!loader) {
         return nullptr;
     }
 
     Image* image = new Image;
-    if (!loader->load(image)) {
+    if (!loader->Load(image)) {
         delete image;
         return nullptr;
     }
@@ -156,7 +156,7 @@ ImageHandle* AssetManager::loadImageSync(const FilePath& p_path) {
     renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
     image->gpu_texture = GraphicsManager::GetSingleton().CreateTexture(texture_desc, sampler_desc);
-    handle->set(image);
+    handle->Set(image);
     ImageHandle* ret = handle.get();
     m_image_cache[p_path] = std::move(handle);
     return ret;
@@ -173,7 +173,7 @@ void AssetManager::loadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_s
 
 template<typename T>
 static void load_asset(LoadTask& p_task, T* p_asset) {
-    auto loader = Loader<T>::create(p_task.asset_path);
+    auto loader = Loader<T>::Create(p_task.asset_path);
     const std::string& asset_path = p_task.asset_path.String();
     if (!loader) {
         LOG_ERROR("[AssetManager] not loader found for '{}'", asset_path);
@@ -181,11 +181,11 @@ static void load_asset(LoadTask& p_task, T* p_asset) {
     }
 
     Timer timer;
-    if (loader->load(p_asset)) {
+    if (loader->Load(p_asset)) {
         p_task.on_success(p_asset, p_task.userdata);
         LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", asset_path, timer.getDurationString());
     } else {
-        LOG_ERROR("[AssetManager] failed to load '{}', details: {}", asset_path, loader->get_error());
+        LOG_ERROR("[AssetManager] failed to load '{}', details: {}", asset_path, loader->GetError());
     }
 }
 

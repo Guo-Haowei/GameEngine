@@ -140,7 +140,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         auto task = loaded_images.front();
         loaded_images.pop();
         DEV_ASSERT(task.handle->state == ASSET_STATE_READY);
-        Image* image = task.handle->get();
+        Image* image = task.handle->Get();
         DEV_ASSERT(image);
 
         GpuTextureDesc texture_desc{};
@@ -149,7 +149,7 @@ void GraphicsManager::Update(Scene& p_scene) {
 
         image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
         if (task.func) {
-            task.func(task.handle->get());
+            task.func(task.handle->Get());
         }
     }
 
@@ -293,7 +293,7 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
             return false;
         }
 
-        Image* image = handle->get();
+        Image* image = handle->Get();
         if (!image) {
             return false;
         }
