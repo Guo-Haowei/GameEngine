@@ -1,6 +1,7 @@
 #include "loader_stbi.h"
 
-#include "assets/stb_image.h"
+#include <stb/stb_image.h>
+
 #include "core/io/file_access.h"
 
 namespace my {
