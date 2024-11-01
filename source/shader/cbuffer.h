@@ -130,7 +130,7 @@ CBUFFER(BoneConstantBuffer, 4) {
 };
 
 CBUFFER(ParticleConstantBuffer, 10) {
-    vec4 globalPatricleTransforms[MAX_PARTICLE_COUNT];
+    vec4 globalParticleTransforms[MAX_PARTICLE_COUNT];
 };
 
 #ifndef HLSL_LANG

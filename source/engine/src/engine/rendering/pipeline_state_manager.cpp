@@ -191,13 +191,12 @@ bool PipelineStateManager::Initialize() {
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
         return true;
     }
-    // @TODO: c
+
     {
         PipelineCreateInfo info;
-        info.cs = "bloom_upsample.comp";
+        info.cs = "particle_simulation.comp";
         ok = ok && Create(PROGRAM_PARTICLE_SIMULATION, info);
     }
-
     {
         PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";

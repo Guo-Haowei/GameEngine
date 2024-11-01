@@ -5,6 +5,14 @@
 #include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
+// @TODO: this is temporary
+#include "drivers/opengl/opengl_prerequisites.h"
+namespace {
+
+GLuint g_ssbo = 0;
+
+}
+
 namespace my::rg {
 
 /// Gbuffer
@@ -63,6 +71,17 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
 
     const bool is_opengl = gm.GetBackend() == Backend::OPENGL;
     if (is_opengl) {
+        if (g_ssbo == 0) {
+            glGenBuffers(1, &g_ssbo);
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_ssbo);
+            constexpr size_t buffer_size = sizeof(ParticleConstantBuffer);
+            glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_ssbo);
+        }
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_SIMULATION);
+        gm.Dispatch(MAX_PARTICLE_COUNT / 32, 1, 1);
+
         // Let's implement this step by step
         // Step 1: create a SSBO, copy the data from uniform buffer to SSBO for rendering
         // Step 2: move particle from CPU to GPU entirely

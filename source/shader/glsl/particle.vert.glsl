@@ -1,8 +1,12 @@
 #include "../cbuffer.h"
 #include "../vsinput.glsl.h"
 
+layout(std430, binding = 0) buffer ParticleData {
+    vec4 globalParticles[];
+};
+
 void main() {
-    vec4 transform = globalPatricleTransforms[gl_InstanceID];
+    vec4 transform = globalParticles[gl_InstanceID];
     float tx = transform.x;
     float ty = transform.y;
     float tz = transform.z;

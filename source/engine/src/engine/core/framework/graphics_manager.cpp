@@ -378,10 +378,10 @@ void GraphicsManager::UpdateParticles(const Scene& p_scene) {
         m_particle_count = 0;
         for (const auto& particle : emitter_component.GetParticlePoolRef()) {
             if (particle.isActive) {
-                if (m_particle_count >= array_length(g_particle_cache.cache.globalPatricleTransforms)) {
+                if (m_particle_count >= array_length(g_particle_cache.cache.globalParticleTransforms)) {
                     break;
                 }
-                g_particle_cache.cache.globalPatricleTransforms[m_particle_count++] = vec4(particle.position, emitter_component.GetParticleScale());
+                g_particle_cache.cache.globalParticleTransforms[m_particle_count++] = vec4(particle.position, emitter_component.GetParticleScale());
             }
         }
 

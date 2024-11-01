@@ -3,7 +3,7 @@
 
 float4 main(vsinput_position input, uint instance_id
             : SV_INSTANCEID) : SV_POSITION {
-    float4 transform = globalPatricleTransforms[instance_id];
+    float4 transform = globalParticleTransforms[instance_id];
     float tx = transform.x;
     float ty = transform.y;
     float tz = transform.z;
