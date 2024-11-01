@@ -59,7 +59,7 @@ bool GraphicsManager::Initialize() {
 
     DEV_ASSERT(m_pipelineStateManager);
 
-    if (!m_pipelineStateManager->initialize()) {
+    if (!m_pipelineStateManager->Initialize()) {
         return false;
     }
 

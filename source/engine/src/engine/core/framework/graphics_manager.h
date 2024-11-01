@@ -56,6 +56,8 @@ extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 extern ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
+
+// @TODO: remove this
 extern ConstantBuffer<ParticleConstantBuffer> g_particle_cache;
 
 // @TODO: refactor

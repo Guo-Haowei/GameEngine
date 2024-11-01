@@ -136,7 +136,7 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
     return shader_id;
 }
 
-std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const PipelineCreateInfo &p_info) {
+std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const PipelineCreateInfo &p_info) {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {

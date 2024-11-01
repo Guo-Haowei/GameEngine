@@ -7,13 +7,16 @@ class PipelineStateManager {
 public:
     virtual ~PipelineStateManager() = default;
 
-    bool initialize();
-    void finalize();
+    bool Initialize();
+    void Finalize();
 
-    PipelineState* find(PipelineStateName p_name);
+    PipelineState* Find(PipelineStateName p_name);
 
 protected:
-    virtual std::shared_ptr<PipelineState> create(const PipelineCreateInfo& p_info) = 0;
+    virtual std::shared_ptr<PipelineState> CreateInternal(const PipelineCreateInfo& p_info) = 0;
+
+private:
+    bool Create(PipelineStateName p_name, const PipelineCreateInfo& p_info);
 
     std::array<std::shared_ptr<PipelineState>, PIPELINE_STATE_MAX> m_cache;
 };

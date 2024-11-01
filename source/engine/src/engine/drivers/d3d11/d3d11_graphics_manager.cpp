@@ -664,7 +664,7 @@ void D3d11GraphicsManager::OnSceneChange(const Scene& p_scene) {
 }
 
 void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
-    auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipelineStateManager->find(p_name));
+    auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipelineStateManager->Find(p_name));
     DEV_ASSERT(pipeline);
     if (pipeline->compute_shader) {
         m_ctx->CSSetShader(pipeline->compute_shader.Get(), nullptr, 0);

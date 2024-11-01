@@ -105,13 +105,13 @@ bool OpenGLGraphicsManager::InitializeImpl() {
 }
 
 void OpenGLGraphicsManager::Finalize() {
-    m_pipelineStateManager->finalize();
+    m_pipelineStateManager->Finalize();
 
     ImGui_ImplOpenGL3_Shutdown();
 }
 
 void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
-    auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipelineStateManager->find(p_name));
+    auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipelineStateManager->Find(p_name));
 
     if (pipeline->rasterizer_desc) {
         const auto cull_mode = pipeline->rasterizer_desc->cull_mode;

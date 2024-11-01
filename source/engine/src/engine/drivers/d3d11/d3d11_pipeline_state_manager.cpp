@@ -75,7 +75,7 @@ static auto compile_shader(std::string_view p_path, const char* p_target, const 
     return source;
 }
 
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineCreateInfo& p_info) {
+std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateInternal(const PipelineCreateInfo& p_info) {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
@@ -92,13 +92,13 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::create(const PipelineC
     defines.push_back({ nullptr, nullptr });
 
     if (!p_info.cs.empty()) {
-        return createComputePipeline(device, p_info, defines);
+        return CreateComputePipeline(device, p_info, defines);
     }
 
-    return createGraphicsPipeline(device, p_info, defines);
+    return CreateGraphicsPipeline(device, p_info, defines);
 }
 
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::createGraphicsPipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineCreateInfo& p_info, const std::vector<D3D_SHADER_MACRO>& p_defines) {
+std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineCreateInfo& p_info, const std::vector<D3D_SHADER_MACRO>& p_defines) {
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_info.input_layout_desc,
                                                                p_info.rasterizer_desc,
                                                                p_info.depth_stencil_desc);
@@ -192,7 +192,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::createGraphicsPipeline
     return pipeline_state;
 }
 
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::createComputePipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineCreateInfo& p_info, const std::vector<D3D_SHADER_MACRO>& p_defines) {
+std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateComputePipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineCreateInfo& p_info, const std::vector<D3D_SHADER_MACRO>& p_defines) {
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_info.input_layout_desc,
                                                                p_info.rasterizer_desc,
                                                                p_info.depth_stencil_desc);

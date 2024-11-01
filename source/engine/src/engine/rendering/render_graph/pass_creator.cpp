@@ -61,7 +61,14 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
         }
     }
 
-    gm.SetPipelineState(PROGRAM_PARTICLE);
+    const bool is_opengl = gm.GetBackend() == Backend::OPENGL;
+    if (is_opengl) {
+        // Let's implement this step by step
+        // Step 1: create a SSBO, copy the data from uniform buffer to SSBO for rendering
+        // Step 2: move particle from CPU to GPU entirely
+    }
+
+    gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
     RenderManager::GetSingleton().draw_quad_instanced(gm.m_particle_count);
 }
 
