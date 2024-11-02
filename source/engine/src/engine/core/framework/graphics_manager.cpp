@@ -23,7 +23,7 @@ namespace my {
 template<typename T>
 static auto CreateUniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
-    return p_graphics_manager.CreateConstantBuffer(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
+    return p_graphics_manager.CreateConstantBuffer(T::GetUniformBufferSlot(), sizeof(T) * p_max_count);
 }
 
 ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
@@ -31,11 +31,11 @@ ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 ConstantBuffer<EnvConstantBuffer> g_env_cache;
-ConstantBuffer<ParticleConstantBuffer> g_particle_cache;
+ConstantBuffer<ParticleConstantBuffer> g_particleCache;
 
 template<typename T>
 static void create_uniform_buffer(ConstantBuffer<T>& p_buffer) {
-    constexpr int slot = T::get_uniform_buffer_slot();
+    constexpr int slot = T::GetUniformBufferSlot();
     p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(slot, sizeof(T));
 }
 
@@ -55,11 +55,11 @@ bool GraphicsManager::Initialize() {
     create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
     create_uniform_buffer<PointShadowConstantBuffer>(g_point_shadow_cache);
     create_uniform_buffer<EnvConstantBuffer>(g_env_cache);
-    create_uniform_buffer<ParticleConstantBuffer>(g_particle_cache);
+    create_uniform_buffer<ParticleConstantBuffer>(g_particleCache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
-    if (!m_pipelineStateManager->initialize()) {
+    if (!m_pipelineStateManager->Initialize()) {
         return false;
     }
 
@@ -131,7 +131,6 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateConstantBuffer(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
 
     g_per_frame_cache.update();
-    g_particle_cache.update();
     // update uniform
 
     // @TODO: make it a function
@@ -372,24 +371,26 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateParticles(const Scene& p_scene) {
-    bool should_break = true;
+    unused(p_scene);
 
-    for (auto [emitter_entity, emitter_component] : p_scene.m_ParticleEmitterComponents) {
-        m_particle_count = 0;
-        for (const auto& particle : emitter_component.GetParticlePoolRef()) {
-            if (particle.isActive) {
-                if (m_particle_count >= array_length(g_particle_cache.cache.globalPatricleTransforms)) {
-                    break;
-                }
-                g_particle_cache.cache.globalPatricleTransforms[m_particle_count++] = vec4(particle.position, emitter_component.GetParticleScale());
-            }
-        }
+    // bool should_break = true;
 
-        // @TODO: only support 1 emitter
-        if (should_break) {
-            break;
-        }
-    }
+    // for (auto [emitter_entity, emitter_component] : p_scene.m_ParticleEmitterComponents) {
+    //     m_particle_count = 0;
+    //     for (const auto& particle : emitter_component.GetParticlePoolRef()) {
+    //         if (particle.isActive) {
+    //             if (m_particle_count >= array_length(g_particleCache.cache.globalParticleTransforms)) {
+    //                 break;
+    //             }
+    //             g_particleCache.cache.globalParticleTransforms[m_particle_count++] = vec4(particle.position, emitter_component.GetParticleScale());
+    //         }
+    //     }
+
+    //    // @TODO: only support 1 emitter
+    //    if (should_break) {
+    //        break;
+    //    }
+    //}
 }
 
 /// @TODO: refactor lights

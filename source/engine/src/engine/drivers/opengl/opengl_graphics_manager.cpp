@@ -105,13 +105,13 @@ bool OpenGLGraphicsManager::InitializeImpl() {
 }
 
 void OpenGLGraphicsManager::Finalize() {
-    m_pipelineStateManager->finalize();
+    m_pipelineStateManager->Finalize();
 
     ImGui_ImplOpenGL3_Shutdown();
 }
 
 void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
-    auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipelineStateManager->find(p_name));
+    auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipelineStateManager->Find(p_name));
 
     if (pipeline->rasterizer_desc) {
         const auto cull_mode = pipeline->rasterizer_desc->cull_mode;
@@ -323,7 +323,7 @@ void OpenGLGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uin
 void OpenGLGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     glDispatchCompute(p_num_groups_x, p_num_groups_y, p_num_groups_z);
     // @TODO: this probably shouldn't be here
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void OpenGLGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
@@ -361,7 +361,7 @@ void OpenGLGraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buf
 void OpenGLGraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
-    glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
+    glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->GetSlot(), buffer->handle, p_offset, p_size);
 }
 
 void OpenGLGraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {

@@ -20,7 +20,7 @@ static constexpr TextureSlot s_texture_slots[] = {
 #undef SHADER_TEXTURE
 };
 
-static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected<std::string, std::string> {
+static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<std::string, std::string> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
         return std::unexpected("circular includes!");
@@ -28,8 +28,12 @@ static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected
 
     // @TODO [FilePath]: fix
     auto source_binary = AssetManager::GetSingleton().LoadFileSync(FilePath{ p_path.string() });
-    if (!source_binary || source_binary->buffer.empty()) {
-        return std::unexpected(std::format("failed to Read file '{}'", p_path.string()));
+    if (!source_binary) {
+        return std::unexpected(std::format("failed to read file '{}'", p_path.string()));
+    }
+
+    if (source_binary->buffer.empty()) {
+        return std::unexpected(std::format("file '{}' is empty", p_path.string()));
     }
 
     std::string source(source_binary->buffer.begin(), source_binary->buffer.end());
@@ -49,7 +53,7 @@ static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected
             new_path.remove_filename();
             new_path = new_path / file_to_include;
 
-            auto res = process_shader(new_path, p_depth + 1);
+            auto res = ProcessShader(new_path, p_depth + 1);
             if (!res) {
                 return res.error();
             }
@@ -65,7 +69,7 @@ static auto process_shader(const fs::path &p_path, int p_depth) -> std::expected
     return result;
 }
 
-static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
+static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
     std::string file{ p_file };
     file.append(".glsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
@@ -89,7 +93,7 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
         is_generated = true;
     }
 
-    auto res = process_shader(fullpath, 0);
+    auto res = ProcessShader(fullpath, 0);
     if (!res) {
         LOG_FATAL("Failed to create shader program '{}', reason: {}", p_file, res.error());
         return 0;
@@ -136,12 +140,12 @@ static GLuint create_shader(std::string_view p_file, GLenum p_type, const std::v
     return shader_id;
 }
 
-std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const PipelineCreateInfo &p_info) {
+std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const PipelineCreateInfo &p_info) {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
-    auto create_shader_helper = [&](std::string_view path, GLenum type) {
+    auto CreateShaderHelper = [&](std::string_view path, GLenum type) {
         if (!path.empty()) {
-            GLuint shader = create_shader(path, type, p_info.defines);
+            GLuint shader = CreateShader(path, type, p_info.defines);
             glAttachShader(program_id, shader);
             shaders.push_back(shader);
         }
@@ -157,12 +161,12 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::create(const Pipeline
         DEV_ASSERT(p_info.vs.empty());
         DEV_ASSERT(p_info.ps.empty());
         DEV_ASSERT(p_info.gs.empty());
-        create_shader_helper(p_info.cs, GL_COMPUTE_SHADER);
+        CreateShaderHelper(p_info.cs, GL_COMPUTE_SHADER);
     } else if (!p_info.vs.empty()) {
         DEV_ASSERT(p_info.cs.empty());
-        create_shader_helper(p_info.vs, GL_VERTEX_SHADER);
-        create_shader_helper(p_info.ps, GL_FRAGMENT_SHADER);
-        create_shader_helper(p_info.gs, GL_GEOMETRY_SHADER);
+        CreateShaderHelper(p_info.vs, GL_VERTEX_SHADER);
+        CreateShaderHelper(p_info.ps, GL_FRAGMENT_SHADER);
+        CreateShaderHelper(p_info.gs, GL_GEOMETRY_SHADER);
     }
 
     DEV_ASSERT(!shaders.empty());

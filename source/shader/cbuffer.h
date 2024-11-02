@@ -4,17 +4,18 @@
 
 // constant buffer
 #if defined(__cplusplus)
-#define CBUFFER(name, reg) \
-    struct name : public ConstantBufferBase<name, reg>
 
 template<typename T, int N>
 struct ConstantBufferBase {
     ConstantBufferBase() {
         static_assert(sizeof(T) % 16 == 0);
     }
-    constexpr int get_slot() { return N; }
-    static constexpr int get_uniform_buffer_slot() { return N; }
+    constexpr int GetSlot() { return N; }
+    static constexpr int GetUniformBufferSlot() { return N; }
 };
+
+#define CBUFFER(NAME, REG) \
+    struct NAME : public ConstantBufferBase<NAME, REG>
 
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
@@ -24,14 +25,14 @@ using TextureHandle = uint64_t;
 
 // @TODO: remove this constraint
 #elif defined(HLSL_LANG)
-#define CBUFFER(name, reg) cbuffer name : register(b##reg)
+#define CBUFFER(NAME, REG) cbuffer NAME : register(b##REG)
 
 #define TextureHandle float2
 #define sampler2D     float2
 #define samplerCube   float2
 
 #elif defined(GLSL_LANG)
-#define CBUFFER(name, reg) layout(std140, binding = reg) uniform name
+#define CBUFFER(NAME, REG) layout(std140, binding = REG) uniform NAME
 
 #define TextureHandle vec2
 
@@ -129,8 +130,16 @@ CBUFFER(BoneConstantBuffer, 4) {
     mat4 u_bones[MAX_BONE_COUNT];
 };
 
+// @TODO: fix this
 CBUFFER(ParticleConstantBuffer, 10) {
-    vec4 globalPatricleTransforms[MAX_PARTICLE_COUNT];
+    int u_PreSimIdx;
+    int u_PostSimIdx;
+    float u_ElapsedTime;
+    float u_LifeSpan;
+
+    vec4 _particle_padding_2;
+    vec4 _particle_padding_3;
+    vec4 _particle_padding_4;
 };
 
 #ifndef HLSL_LANG

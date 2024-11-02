@@ -68,13 +68,25 @@ static const DepthStencilDesc s_no_depth_test = {
     .stencil_enabled = false,
 };
 
-PipelineState* PipelineStateManager::find(PipelineStateName p_name) {
+PipelineState* PipelineStateManager::Find(PipelineStateName p_name) {
     DEV_ASSERT_INDEX(p_name, m_cache.size());
     return m_cache[p_name].get();
 }
 
-bool PipelineStateManager::initialize() {
+bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineCreateInfo& p_info) {
+    ERR_FAIL_COND_V_MSG(m_cache[p_name] != nullptr, false, "pipeline already exists");
+
+    auto pipeline = CreateInternal(p_info);
+    ERR_FAIL_COND_V_MSG(pipeline == nullptr, false, std::format("failed to create pipeline ''"));
+
+    m_cache[p_name] = pipeline;
+    return true;
+}
+
+bool PipelineStateManager::Initialize() {
     constexpr ShaderMacro has_animation = { "HAS_ANIMATION", "1" };
+    bool ok = true;
+
     {
         PipelineCreateInfo info;
         info.vs = "mesh.vert";
@@ -82,7 +94,7 @@ bool PipelineStateManager::initialize() {
         info.input_layout_desc = &s_input_layout_mesh;
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_gbuffer_depth_stencil;
-        m_cache[PROGRAM_GBUFFER_STATIC] = create(info);
+        ok = ok && Create(PROGRAM_GBUFFER_STATIC, info);
     }
     {
         PipelineCreateInfo info;
@@ -92,7 +104,7 @@ bool PipelineStateManager::initialize() {
         info.input_layout_desc = &s_input_layout_mesh;
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_gbuffer_depth_stencil;
-        m_cache[PROGRAM_GBUFFER_ANIMATED] = create(info);
+        ok = ok && Create(PROGRAM_GBUFFER_ANIMATED, info);
     }
     {
         PipelineCreateInfo info;
@@ -101,7 +113,7 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_position;
-        m_cache[PROGRAM_LIGHTING] = create(info);
+        ok = ok && Create(PROGRAM_LIGHTING, info);
     }
     {
         PipelineCreateInfo info;
@@ -110,7 +122,7 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_mesh;
-        m_cache[PROGRAM_DPETH_STATIC] = create(info);
+        ok = ok && Create(PROGRAM_DPETH_STATIC, info);
     }
     {
         PipelineCreateInfo info;
@@ -120,7 +132,7 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_mesh;
-        m_cache[PROGRAM_DPETH_ANIMATED] = create(info);
+        ok = ok && Create(PROGRAM_DPETH_ANIMATED, info);
     }
     {
         PipelineCreateInfo info;
@@ -129,7 +141,7 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_mesh;
-        m_cache[PROGRAM_POINT_SHADOW_STATIC] = create(info);
+        ok = ok && Create(PROGRAM_POINT_SHADOW_STATIC, info);
     }
     {
         PipelineCreateInfo info;
@@ -139,7 +151,7 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_shadow_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_mesh;
-        m_cache[PROGRAM_POINT_SHADOW_ANIMATED] = create(info);
+        ok = ok && Create(PROGRAM_POINT_SHADOW_ANIMATED, info);
     }
     {
         PipelineCreateInfo info;
@@ -148,22 +160,22 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_position;
-        m_cache[PROGRAM_TONE] = create(info);
+        ok = ok && Create(PROGRAM_TONE, info);
     }
     {
         PipelineCreateInfo info;
         info.cs = "bloom_setup.comp";
-        m_cache[PROGRAM_BLOOM_SETUP] = create(info);
+        ok = ok && Create(PROGRAM_BLOOM_SETUP, info);
     }
     {
         PipelineCreateInfo info;
         info.cs = "bloom_downsample.comp";
-        m_cache[PROGRAM_BLOOM_DOWNSAMPLE] = create(info);
+        ok = ok && Create(PROGRAM_BLOOM_DOWNSAMPLE, info);
     }
     {
         PipelineCreateInfo info;
         info.cs = "bloom_upsample.comp";
-        m_cache[PROGRAM_BLOOM_UPSAMPLE] = create(info);
+        ok = ok && Create(PROGRAM_BLOOM_UPSAMPLE, info);
     }
     {
         PipelineCreateInfo info;
@@ -172,20 +184,26 @@ bool PipelineStateManager::initialize() {
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
         info.input_layout_desc = &s_input_layout_mesh;
-        m_cache[PROGRAM_PARTICLE] = create(info);
+        ok = ok && Create(PROGRAM_PARTICLE_RENDERING, info);
     }
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
         return true;
     }
+
+    ok = ok && Create(PROGRAM_PARTICLE_INIT, { .cs = "particle_init.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_KICKOFF, { .cs = "particle_kickoff.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_EMIT, { .cs = "particle_emit.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_SIM, { .cs = "particle_sim.comp" });
+
     {
         PipelineCreateInfo info;
         info.vs = "screenspace_quad.vert";
         info.ps = "highlight.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_highlight_depth_stencil;
-        m_cache[PROGRAM_HIGHLIGHT] = create(info);
+        ok = ok && Create(PROGRAM_HIGHLIGHT, info);
     }
     {
         PipelineCreateInfo info;
@@ -194,7 +212,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "voxelization.pixel";
         info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
-        m_cache[PROGRAM_VOXELIZATION_STATIC] = create(info);
+        ok = ok && Create(PROGRAM_VOXELIZATION_STATIC, info);
     }
     {
         PipelineCreateInfo info;
@@ -204,12 +222,12 @@ bool PipelineStateManager::initialize() {
         info.defines = { has_animation };
         info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
-        m_cache[PROGRAM_VOXELIZATION_ANIMATED] = create(info);
+        ok = ok && Create(PROGRAM_VOXELIZATION_ANIMATED, info);
     }
     {
         PipelineCreateInfo info;
         info.cs = "post.comp";
-        m_cache[PROGRAM_VOXELIZATION_POST] = create(info);
+        ok = ok && Create(PROGRAM_VOXELIZATION_POST, info);
     }
     {
         PipelineCreateInfo info;
@@ -217,7 +235,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "visualization.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_DEBUG_VOXEL] = create(info);
+        ok = ok && Create(PROGRAM_DEBUG_VOXEL, info);
     }
     {
         PipelineCreateInfo info;
@@ -225,7 +243,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "to_cube_map.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_ENV_SKYBOX_TO_CUBE_MAP] = create(info);
+        ok = ok && Create(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP, info);
     }
     {
         PipelineCreateInfo info;
@@ -233,7 +251,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "diffuse_irradiance.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_DIFFUSE_IRRADIANCE] = create(info);
+        ok = ok && Create(PROGRAM_DIFFUSE_IRRADIANCE, info);
     }
     {
         PipelineCreateInfo info;
@@ -241,7 +259,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "prefilter.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_PREFILTER] = create(info);
+        ok = ok && Create(PROGRAM_PREFILTER, info);
     }
     {
         PipelineCreateInfo info;
@@ -249,7 +267,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "skybox.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_ENV_SKYBOX] = create(info);
+        ok = ok && Create(PROGRAM_ENV_SKYBOX, info);
     }
     {
         PipelineCreateInfo info;
@@ -257,7 +275,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "brdf.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
-        m_cache[PROGRAM_BRDF] = create(info);
+        ok = ok && Create(PROGRAM_BRDF, info);
     }
     {
         PipelineCreateInfo info;
@@ -265,7 +283,7 @@ bool PipelineStateManager::initialize() {
         info.ps = "debug_draw_texture.pixel";
         info.rasterizer_desc = &s_default_rasterizer;
         info.depth_stencil_desc = &s_no_depth_test;
-        m_cache[PROGRAM_IMAGE_2D] = create(info);
+        ok = ok && Create(PROGRAM_IMAGE_2D, info);
     }
     {
         PipelineCreateInfo info;
@@ -273,13 +291,13 @@ bool PipelineStateManager::initialize() {
         info.ps = "texture.pixel";
         info.rasterizer_desc = &s_cull_none_rasterizer;
         info.depth_stencil_desc = &s_default_depth_stencil;
-        m_cache[PROGRAM_BILLBOARD] = create(info);
+        ok = ok && Create(PROGRAM_BILLBOARD, info);
     }
 
-    return true;
+    return ok;
 }
 
-void PipelineStateManager::finalize() {
+void PipelineStateManager::Finalize() {
     for (size_t idx = 0; idx < m_cache.size(); ++idx) {
         m_cache[idx].reset();
     }
