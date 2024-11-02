@@ -138,9 +138,9 @@ CBUFFER(ParticleConstantBuffer, 10) {
     float u_LifeSpan;
 
     vec3 u_Seeds;
-    float _particle_padding_2;
+    float u_Scale;
     vec3 u_Position;
-    float _particle_padding_3;
+    int u_ParticlesPerFrame;
     vec3 u_Velocity;
     float _particle_padding_4;
 };

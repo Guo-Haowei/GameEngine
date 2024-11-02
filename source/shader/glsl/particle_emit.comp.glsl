@@ -1,7 +1,7 @@
-layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
-
 #include "../cbuffer.h"
 #include "../particle_defines.h"
+
+layout(local_size_x = PARTICLE_LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 float Random(vec3 co) {
     return fract(sin(dot(co.xyz, vec3(12.9898, 78.233, 45.5432))) * 43758.5453);
@@ -32,7 +32,7 @@ void main() {
         ParticleData.particles[particle_index].velocity.xyz = velocity;
         ParticleData.particles[particle_index].lifeSpan = u_LifeSpan;
         ParticleData.particles[particle_index].lifeRemaining = u_LifeSpan;
-        ParticleData.particles[particle_index].scale = 0.02;
+        ParticleData.particles[particle_index].scale = u_Scale;
 
         push_alive_index(particle_index);
     }

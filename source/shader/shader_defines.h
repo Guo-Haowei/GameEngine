@@ -14,9 +14,6 @@
 #define MAX_LIGHT_CAST_SHADOW_COUNT 4
 #define LIGHT_SHADOW_MIN_DISTANCE   0.1f
 
-// @TODO: remove this limit
-#define MAX_PARTICLE_COUNT 1024
-
 // light type
 #define LIGHT_TYPE_INFINITE 0
 #define LIGHT_TYPE_POINT    1
@@ -28,6 +25,10 @@
 #define DISPLAY_CHANNEL_RGB 0
 #define DISPLAY_CHANNEL_RRR 1
 #define DISPLAY_CHANNEL_AAA 2
+
+// particles
+#define PARTICLE_LOCAL_SIZE 32
+#define MAX_PARTICLE_COUNT  8192
 
 #if defined(__cplusplus) || defined(HLSL_LANG)
 #define global_const static const

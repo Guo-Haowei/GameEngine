@@ -154,8 +154,8 @@ bool PipelineStateManager::Initialize() {
 
     // Particle
     ok = ok && Create(PROGRAM_PARTICLE_RENDERING, {
-                                                      .vs = "particle.vert",
-                                                      .ps = "particle.pixel",
+                                                      .vs = "particle_draw.vert",
+                                                      .ps = "particle_draw.pixel",
                                                       .rasterizer_desc = &s_default_rasterizer,
                                                       .depth_stencil_desc = &s_default_depth_stencil,
                                                       .input_layout_desc = &s_input_layout_mesh,

@@ -16,8 +16,6 @@ input_shaders = [
     { 'path': 'bloom_upsample.comp', 'animated': False, },
     { 'path': 'shadowmap_point.vert', 'animated': True, },
     { 'path': 'shadowmap_point.pixel', 'animated': False, },
-    # { 'path': 'particle.vert', 'animated': False, },
-    # { 'path': 'particle.pixel', 'animated': False, },
 ]
 
 def generate(hlsl_source, animated):
