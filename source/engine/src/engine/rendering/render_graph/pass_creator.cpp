@@ -9,7 +9,7 @@
 #include "drivers/opengl/opengl_prerequisites.h"
 namespace {
 
-GLuint g_ssbo = 0;
+GLuint g_particleSsbo = 0;
 
 }
 
@@ -71,12 +71,15 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
 
     const bool is_opengl = gm.GetBackend() == Backend::OPENGL;
     if (is_opengl) {
-        if (g_ssbo == 0) {
-            glGenBuffers(1, &g_ssbo);
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_ssbo);
+        if (g_particleSsbo == 0) {
+            // init particles
+            glGenBuffers(1, &g_particleSsbo);
+            glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_particleSsbo);
             constexpr size_t buffer_size = sizeof(ParticleConstantBuffer);
             glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_ssbo);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_particleSsbo);
+
+            // init
         }
 
         gm.SetPipelineState(PROGRAM_PARTICLE_SIMULATION);

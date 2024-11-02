@@ -23,7 +23,7 @@ namespace my {
 template<typename T>
 static auto CreateUniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
-    return p_graphics_manager.CreateConstantBuffer(T::get_uniform_buffer_slot(), sizeof(T) * p_max_count);
+    return p_graphics_manager.CreateConstantBuffer(T::GetUniformBufferSlot(), sizeof(T) * p_max_count);
 }
 
 ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
@@ -35,7 +35,7 @@ ConstantBuffer<ParticleConstantBuffer> g_particle_cache;
 
 template<typename T>
 static void create_uniform_buffer(ConstantBuffer<T>& p_buffer) {
-    constexpr int slot = T::get_uniform_buffer_slot();
+    constexpr int slot = T::GetUniformBufferSlot();
     p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(slot, sizeof(T));
 }
 

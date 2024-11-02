@@ -38,7 +38,7 @@ public:
     }
 };
 
-static auto compile_shader(std::string_view p_path, const char* p_target, const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, std::string> {
+static auto CompileShader(std::string_view p_path, const char* p_target, const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, std::string> {
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
     std::string fullpath_str = fullpath.string();
 
@@ -107,7 +107,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
 
     ComPtr<ID3DBlob> vsblob;
     if (!p_info.vs.empty()) {
-        auto res = compile_shader(p_info.vs, "vs_5_0", p_defines.data());
+        auto res = CompileShader(p_info.vs, "vs_5_0", p_defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
             return nullptr;
@@ -120,7 +120,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
         vsblob = blob;
     }
     if (!p_info.ps.empty()) {
-        auto res = compile_shader(p_info.ps, "ps_5_0", p_defines.data());
+        auto res = CompileShader(p_info.ps, "ps_5_0", p_defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_info.vs, res.error());
             return nullptr;
@@ -197,7 +197,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateComputePipeline(
                                                                p_info.rasterizer_desc,
                                                                p_info.depth_stencil_desc);
 
-    auto res = compile_shader(p_info.cs, "cs_5_0", p_defines.data());
+    auto res = CompileShader(p_info.cs, "cs_5_0", p_defines.data());
     if (!res) {
         LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_info.cs, res.error());
         return nullptr;

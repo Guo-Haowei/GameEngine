@@ -11,7 +11,7 @@ public:
 
     void update(const void* p_data, size_t p_size);
 
-    int get_slot() const { return m_slot; }
+    int GetSlot() const { return m_slot; }
     size_t get_capacity() const { return m_capacity; }
 
 protected:

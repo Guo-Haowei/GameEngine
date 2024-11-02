@@ -361,7 +361,7 @@ void OpenGLGraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buf
 void OpenGLGraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
     auto buffer = reinterpret_cast<const OpenGLUniformBuffer*>(p_buffer);
-    glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->get_slot(), buffer->handle, p_offset, p_size);
+    glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->GetSlot(), buffer->handle, p_offset, p_size);
 }
 
 void OpenGLGraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
