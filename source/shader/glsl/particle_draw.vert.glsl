@@ -2,8 +2,16 @@
 #include "../cbuffer.h"
 #include "../particle_defines.h"
 
+layout(location = 0) out vec3 pass_color;
+
 void main() {
     Particle particle = ParticleData.particles[gl_InstanceID];
+
+    if (particle.lifeRemaining <= 0.0) {
+        gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0);
+        return;
+    }
+
     vec3 t = particle.position.xyz;
     float s = particle.scale;
 
@@ -34,8 +42,8 @@ void main() {
 
     vec4 position = scale_matrix * vec4(in_position, 1.0);
     position = view_model_matrix * position;
-    gl_Position = g_projection_matrix * position;
 
-    // @TODO: move dead particles away
+    pass_color = particle.color.rgb;
+    gl_Position = g_projection_matrix * position;
 }
 

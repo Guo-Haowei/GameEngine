@@ -1,7 +1,7 @@
-layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
-
 #include "../cbuffer.h"
 #include "../particle_defines.h"
+
+layout(local_size_x = PARTICLE_LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
 
 void push_dead_index(uint index) {
     uint insert_idx = atomicAdd(Counters.dead_count, 1);
@@ -36,7 +36,7 @@ void main() {
         if (particle.lifeRemaining <= 0.0f) {
             push_dead_index(particle_index);
         } else {
-            particle.lifeSpan.x -= u_ElapsedTime;
+            particle.lifeRemaining.x -= u_ElapsedTime;
             particle.position += u_ElapsedTime * particle.velocity;
 
             ParticleData.particles[particle_index] = particle;

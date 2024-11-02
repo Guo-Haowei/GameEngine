@@ -85,9 +85,9 @@ struct PipelineCreateInfo {
     std::string_view cs;
     std::vector<ShaderMacro> defines;
 
-    const InputLayoutDesc* input_layout_desc = nullptr;
     const RasterizerDesc* rasterizer_desc = nullptr;
     const DepthStencilDesc* depth_stencil_desc = nullptr;
+    const InputLayoutDesc* input_layout_desc = nullptr;
 };
 
 struct PipelineState {
