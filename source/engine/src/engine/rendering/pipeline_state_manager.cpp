@@ -87,109 +87,83 @@ bool PipelineStateManager::Initialize() {
     constexpr ShaderMacro has_animation = { "HAS_ANIMATION", "1" };
     bool ok = true;
 
-    {
-        PipelineCreateInfo info;
-        info.vs = "mesh.vert";
-        info.ps = "gbuffer.pixel";
-        info.input_layout_desc = &s_input_layout_mesh;
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_gbuffer_depth_stencil;
-        ok = ok && Create(PROGRAM_GBUFFER_STATIC, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "mesh.vert";
-        info.ps = "gbuffer.pixel";
-        info.defines = { has_animation };
-        info.input_layout_desc = &s_input_layout_mesh;
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_gbuffer_depth_stencil;
-        ok = ok && Create(PROGRAM_GBUFFER_ANIMATED, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "screenspace_quad.vert";
-        info.ps = "lighting.pixel";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        info.input_layout_desc = &s_input_layout_position;
-        ok = ok && Create(PROGRAM_LIGHTING, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "shadow.vert";
-        info.ps = "depth.pixel";
-        info.rasterizer_desc = &s_shadow_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        info.input_layout_desc = &s_input_layout_mesh;
-        ok = ok && Create(PROGRAM_DPETH_STATIC, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "shadow.vert";
-        info.ps = "depth.pixel";
-        info.defines = { has_animation };
-        info.rasterizer_desc = &s_shadow_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        info.input_layout_desc = &s_input_layout_mesh;
-        ok = ok && Create(PROGRAM_DPETH_ANIMATED, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "shadowmap_point.vert";
-        info.ps = "shadowmap_point.pixel";
-        info.rasterizer_desc = &s_shadow_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        info.input_layout_desc = &s_input_layout_mesh;
-        ok = ok && Create(PROGRAM_POINT_SHADOW_STATIC, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "shadowmap_point.vert";
-        info.ps = "shadowmap_point.pixel";
-        info.defines = { has_animation };
-        info.rasterizer_desc = &s_shadow_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        info.input_layout_desc = &s_input_layout_mesh;
-        ok = ok && Create(PROGRAM_POINT_SHADOW_ANIMATED, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "screenspace_quad.vert";
-        info.ps = "tone.pixel";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        info.input_layout_desc = &s_input_layout_position;
-        ok = ok && Create(PROGRAM_TONE, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.cs = "bloom_setup.comp";
-        ok = ok && Create(PROGRAM_BLOOM_SETUP, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.cs = "bloom_downsample.comp";
-        ok = ok && Create(PROGRAM_BLOOM_DOWNSAMPLE, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.cs = "bloom_upsample.comp";
-        ok = ok && Create(PROGRAM_BLOOM_UPSAMPLE, info);
-    }
-    {
-        PipelineCreateInfo info;
-        info.vs = "particle.vert";
-        info.ps = "particle.pixel";
-        info.rasterizer_desc = &s_default_rasterizer;
-        info.depth_stencil_desc = &s_default_depth_stencil;
-        info.input_layout_desc = &s_input_layout_mesh;
-        ok = ok && Create(PROGRAM_PARTICLE_RENDERING, info);
-    }
+    ok = ok && Create(PROGRAM_GBUFFER_STATIC, {
+                                                  .vs = "mesh.vert",
+                                                  .ps = "gbuffer.pixel",
+                                                  .rasterizer_desc = &s_default_rasterizer,
+                                                  .depth_stencil_desc = &s_gbuffer_depth_stencil,
+                                                  .input_layout_desc = &s_input_layout_mesh,
+                                              });
+    ok = ok && Create(PROGRAM_GBUFFER_ANIMATED, {
+                                                    .vs = "mesh.vert",
+                                                    .ps = "gbuffer.pixel",
+                                                    .defines = { has_animation },
+                                                    .rasterizer_desc = &s_default_rasterizer,
+                                                    .depth_stencil_desc = &s_gbuffer_depth_stencil,
+                                                    .input_layout_desc = &s_input_layout_mesh,
+                                                });
+    ok = ok && Create(PROGRAM_LIGHTING, {
+                                            .vs = "screenspace_quad.vert",
+                                            .ps = "lighting.pixel",
+                                            .rasterizer_desc = &s_default_rasterizer,
+                                            .depth_stencil_desc = &s_default_depth_stencil,
+                                            .input_layout_desc = &s_input_layout_position,
+                                        });
+    ok = ok && Create(PROGRAM_DPETH_STATIC, {
+                                                .vs = "shadow.vert",
+                                                .ps = "depth.pixel",
+                                                .rasterizer_desc = &s_shadow_rasterizer,
+                                                .depth_stencil_desc = &s_default_depth_stencil,
+                                                .input_layout_desc = &s_input_layout_mesh,
+                                            });
+    ok = ok && Create(PROGRAM_DPETH_ANIMATED, {
+                                                  .vs = "shadow.vert",
+                                                  .ps = "depth.pixel",
+                                                  .defines = { has_animation },
+                                                  .rasterizer_desc = &s_shadow_rasterizer,
+                                                  .depth_stencil_desc = &s_default_depth_stencil,
+                                                  .input_layout_desc = &s_input_layout_mesh,
+                                              });
+    ok = ok && Create(PROGRAM_POINT_SHADOW_STATIC, {
+                                                       .vs = "shadowmap_point.vert",
+                                                       .ps = "shadowmap_point.pixel",
+                                                       .rasterizer_desc = &s_shadow_rasterizer,
+                                                       .depth_stencil_desc = &s_default_depth_stencil,
+                                                       .input_layout_desc = &s_input_layout_mesh,
+                                                   });
+    ok = ok && Create(PROGRAM_POINT_SHADOW_ANIMATED, {
+                                                         .vs = "shadowmap_point.vert",
+                                                         .ps = "shadowmap_point.pixel",
+                                                         .defines = { has_animation },
+                                                         .rasterizer_desc = &s_shadow_rasterizer,
+                                                         .depth_stencil_desc = &s_default_depth_stencil,
+                                                         .input_layout_desc = &s_input_layout_mesh,
+                                                     });
+    ok = ok && Create(PROGRAM_TONE, {
+                                        .vs = "screenspace_quad.vert",
+                                        .ps = "tone.pixel",
+                                        .rasterizer_desc = &s_default_rasterizer,
+                                        .depth_stencil_desc = &s_default_depth_stencil,
+                                        .input_layout_desc = &s_input_layout_position,
+                                    });
+
+    // Bloom
+    ok = ok && Create(PROGRAM_BLOOM_SETUP, { .cs = "bloom_setup.comp" });
+    ok = ok && Create(PROGRAM_BLOOM_DOWNSAMPLE, { .cs = "bloom_downsample.comp" });
+    ok = ok && Create(PROGRAM_BLOOM_UPSAMPLE, { .cs = "bloom_upsample.comp" });
+
+    // Particle
+    ok = ok && Create(PROGRAM_PARTICLE_RENDERING, {
+                                                      .vs = "particle.vert",
+                                                      .ps = "particle.pixel",
+                                                      .rasterizer_desc = &s_default_rasterizer,
+                                                      .depth_stencil_desc = &s_default_depth_stencil,
+                                                      .input_layout_desc = &s_input_layout_mesh,
+                                                  });
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
-        return true;
+        return ok;
     }
 
     ok = ok && Create(PROGRAM_PARTICLE_INIT, { .cs = "particle_init.comp" });
