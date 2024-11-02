@@ -36,7 +36,7 @@ void main() {
         if (particle.lifeRemaining <= 0.0f) {
             push_dead_index(particle_index);
         } else {
-            particle.lifeSpan.x -= u_ElapsedTime;
+            particle.lifeRemaining.x -= u_ElapsedTime;
             particle.position += u_ElapsedTime * particle.velocity;
 
             ParticleData.particles[particle_index] = particle;

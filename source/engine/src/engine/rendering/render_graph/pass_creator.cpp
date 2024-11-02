@@ -6,6 +6,7 @@
 #include "rendering/rendering_dvars.h"
 
 // @TODO: this is temporary
+#include "core/base/random.h"
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 namespace {
@@ -121,10 +122,24 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
 
         int pre_sim_idx = mSimIndex;
         int post_sim_idx = 1 - mSimIndex;
+        const Scene& scene = SceneManager::GetScene();
+
+        g_particleCache.cache.u_Position = vec3(0.0f);
+        g_particleCache.cache.u_Velocity = vec3(0.0f);
+
+        if (scene.GetCount<ParticleEmitterComponent>()) {
+            for (auto [emitter_entity, emitter_component] : scene.m_ParticleEmitterComponents) {
+                const TransformComponent* transform = scene.GetComponent<TransformComponent>(emitter_entity);
+                g_particleCache.cache.u_Velocity = emitter_component.GetStartingVelocityRef();
+                g_particleCache.cache.u_Position = transform->GetTranslation();
+            }
+        }
+
         g_particleCache.cache.u_PreSimIdx = pre_sim_idx;
         g_particleCache.cache.u_PostSimIdx = post_sim_idx;
         g_particleCache.cache.u_LifeSpan = 2.0f;
-        g_particleCache.cache.u_ElapsedTime = SceneManager::GetScene().m_elapsedTime;
+        g_particleCache.cache.u_ElapsedTime = scene.m_elapsedTime;
+        g_particleCache.cache.u_Seeds = vec3(Random::Float(), Random::Float(), Random::Float());
         g_particleCache.update();
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, g_aliveSsbo[pre_sim_idx]);

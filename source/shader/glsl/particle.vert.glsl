@@ -4,6 +4,12 @@
 
 void main() {
     Particle particle = ParticleData.particles[gl_InstanceID];
+
+    if (particle.lifeRemaining <= 0.0) {
+        gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0);
+        return;
+    }
+
     vec3 t = particle.position.xyz;
     float s = particle.scale;
 
