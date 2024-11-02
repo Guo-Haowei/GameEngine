@@ -6,12 +6,16 @@
 #include "rendering/rendering_dvars.h"
 
 // @TODO: this is temporary
+#include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 namespace {
 
-GLuint g_particleSsbo = 0;
+GLuint g_particleSsbo;
+GLuint g_counterSsbo;
+GLuint g_deadSsbo;
+GLuint g_aliveSsbo[2];
 
-}
+}  // namespace
 
 namespace my::rg {
 
@@ -72,26 +76,72 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     const bool is_opengl = gm.GetBackend() == Backend::OPENGL;
     if (is_opengl) {
         if (g_particleSsbo == 0) {
-            // init particles
-            glGenBuffers(1, &g_particleSsbo);
-            glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_particleSsbo);
-            constexpr size_t buffer_size = sizeof(ParticleConstantBuffer);
-            glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_particleSsbo);
+            {  // particles
+                glGenBuffers(1, &g_particleSsbo);
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_particleSsbo);
+                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * 4 * sizeof(vec4);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, g_particleSsbo);
+            }
+            {  // counters
+                glGenBuffers(1, &g_counterSsbo);
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_counterSsbo);
+                constexpr size_t buffer_size = 256;
+                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, g_counterSsbo);
+            }
+            {  // dead particles
+                glGenBuffers(1, &g_deadSsbo);
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_deadSsbo);
+                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * sizeof(int);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, g_deadSsbo);
+            }
+            {  // alive particles 0
+                glGenBuffers(1, &g_aliveSsbo[0]);
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_aliveSsbo[0]);
+                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * sizeof(int);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
+            }
+            {  // alive particles 1
+                glGenBuffers(1, &g_aliveSsbo[1]);
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_aliveSsbo[1]);
+                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * sizeof(int);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
+            }
 
-            // init
+            // @TODO: only run once
+            gm.SetPipelineState(PROGRAM_PARTICLE_INIT);
+            gm.Dispatch(MAX_PARTICLE_COUNT / 32, 1, 1);
         }
 
-        gm.SetPipelineState(PROGRAM_PARTICLE_SIMULATION);
+        // @TODO: use 1 bit
+        static int mSimIndex = 1;
+        mSimIndex = 1 - mSimIndex;
+
+        int pre_sim_idx = mSimIndex;
+        int post_sim_idx = 1 - mSimIndex;
+        g_particleCache.cache.u_PreSimIdx = pre_sim_idx;
+        g_particleCache.cache.u_PostSimIdx = post_sim_idx;
+        g_particleCache.cache.u_LifeSpan = 2.0f;
+        g_particleCache.cache.u_ElapsedTime = SceneManager::GetScene().m_elapsedTime;
+        g_particleCache.update();
+
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, g_aliveSsbo[pre_sim_idx]);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, g_aliveSsbo[post_sim_idx]);
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
+        gm.Dispatch(1, 1, 1);
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
         gm.Dispatch(MAX_PARTICLE_COUNT / 32, 1, 1);
 
-        // Let's implement this step by step
-        // Step 1: create a SSBO, copy the data from uniform buffer to SSBO for rendering
-        // Step 2: move particle from CPU to GPU entirely
+        gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
+        gm.Dispatch(MAX_PARTICLE_COUNT / 32, 1, 1);
     }
 
     gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
-    RenderManager::GetSingleton().draw_quad_instanced(gm.m_particle_count);
+    RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
 }
 
 void RenderPassCreator::addGBufferPass() {

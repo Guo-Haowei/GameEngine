@@ -323,7 +323,7 @@ void OpenGLGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uin
 void OpenGLGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     glDispatchCompute(p_num_groups_x, p_num_groups_y, p_num_groups_z);
     // @TODO: this probably shouldn't be here
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void OpenGLGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {

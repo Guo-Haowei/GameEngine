@@ -130,8 +130,16 @@ CBUFFER(BoneConstantBuffer, 4) {
     mat4 u_bones[MAX_BONE_COUNT];
 };
 
+// @TODO: fix this
 CBUFFER(ParticleConstantBuffer, 10) {
-    vec4 globalParticleTransforms[MAX_PARTICLE_COUNT];
+    int u_PreSimIdx;
+    int u_PostSimIdx;
+    float u_ElapsedTime;
+    float u_LifeSpan;
+
+    vec4 _particle_padding_2;
+    vec4 _particle_padding_3;
+    vec4 _particle_padding_4;
 };
 
 #ifndef HLSL_LANG

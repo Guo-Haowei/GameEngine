@@ -3,8 +3,9 @@
 #include "../particle_defines.h"
 
 void main() {
-    vec3 t = globalParticles[gl_InstanceID].position;
-    float s = globalParticles[gl_InstanceID].scale;
+    Particle particle = ParticleData.particles[gl_InstanceID];
+    vec3 t = particle.position.xyz;
+    float s = particle.scale;
 
     mat4 scale_matrix = mat4(
         s, 0.0, 0.0, 0.0,
@@ -34,5 +35,7 @@ void main() {
     vec4 position = scale_matrix * vec4(in_position, 1.0);
     position = view_model_matrix * position;
     gl_Position = g_projection_matrix * position;
+
+    // @TODO: move dead particles away
 }
 
