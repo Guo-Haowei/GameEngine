@@ -166,10 +166,10 @@ bool PipelineStateManager::Initialize() {
         return ok;
     }
 
-    ok = ok && Create(PROGRAM_PARTICLE_INIT, { .cs = "particle_init.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_INIT, { .cs = "particle_initialization.comp" });
     ok = ok && Create(PROGRAM_PARTICLE_KICKOFF, { .cs = "particle_kickoff.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_EMIT, { .cs = "particle_emit.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_SIM, { .cs = "particle_sim.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_EMIT, { .cs = "particle_emission.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_SIM, { .cs = "particle_simulation.comp" });
 
     {
         PipelineCreateInfo info;

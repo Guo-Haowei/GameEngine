@@ -28,11 +28,18 @@ void main() {
         velocity.y += Random(u_Seeds.yzx / (index + 1)) - 0.5;
         velocity.z += Random(u_Seeds.zxy / (index + 1)) - 0.5;
 
+        vec3 color;
+        color.r = Random(u_Seeds.xzy / (index + 1));
+        color.g = Random(u_Seeds.zyx / (index + 1));
+        color.b = Random(u_Seeds.yzx / (index + 1));
+        color = 2.0 * color;
+
         ParticleData.particles[particle_index].position.xyz = u_Position;
         ParticleData.particles[particle_index].velocity.xyz = velocity;
         ParticleData.particles[particle_index].lifeSpan = u_LifeSpan;
         ParticleData.particles[particle_index].lifeRemaining = u_LifeSpan;
         ParticleData.particles[particle_index].scale = u_Scale;
+        ParticleData.particles[particle_index].color.rgb = color;
 
         push_alive_index(particle_index);
     }

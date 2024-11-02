@@ -7,16 +7,16 @@
 #define SBUFFER(NAME, REG) layout(std430, binding = REG) buffer NAME
 #endif
 
+// @TODO: shader naming style
 struct Particle {
     vec4 position;
     vec4 velocity;
+    vec4 color;
 
     float scale;
     float lifeSpan;
     float lifeRemaining;
     int isActive;
-
-    vec4 _padding;
 };
 
 layout(std430, binding = 0) buffer ParticleData_t {
