@@ -116,65 +116,11 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
 
     g_particleCache.update();
 
-    const bool is_opengl = gm.GetBackend() == Backend::OPENGL;
-
-    gm.BindStructuredBuffer(particle_emitter->aliveBuffer[pre_sim_idx].get(), 13);
-    gm.BindStructuredBuffer(particle_emitter->aliveBuffer[post_sim_idx].get(), 14);
-
-    if (!is_opengl) {
-        D3d11GraphicsManager* d3d_gm = dynamic_cast<D3d11GraphicsManager*>(&gm);
-        DEV_ASSERT(d3d_gm);
-        auto& device = d3d_gm->GetD3dDevice();
-        auto& context = d3d_gm->GetD3dContext();
-        auto CreateUAV = [&](UAV& p_uav, uint32_t p_size, uint32_t p_num_elements) {
-            D3D11_BUFFER_DESC bufferDesc = {};
-            bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-            bufferDesc.ByteWidth = p_size * p_num_elements;
-            bufferDesc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
-            bufferDesc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
-            bufferDesc.CPUAccessFlags = 0;
-            bufferDesc.StructureByteStride = p_size;
-
-            HRESULT hr = device->CreateBuffer(&bufferDesc, nullptr, p_uav.rwBuffer.GetAddressOf());
-            DEV_ASSERT(!FAILED(hr));
-
-            D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-            uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-            uavDesc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
-            uavDesc.Buffer.FirstElement = 0;
-            uavDesc.Buffer.NumElements = p_num_elements;
-            hr = device->CreateUnorderedAccessView(p_uav.rwBuffer.Get(), &uavDesc, p_uav.uav.GetAddressOf());
-            DEV_ASSERT(!FAILED(hr));
-
-            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-            srvDesc.Format = DXGI_FORMAT_UNKNOWN;
-            srvDesc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
-            srvDesc.Buffer.FirstElement = 0;
-            srvDesc.Buffer.NumElements = p_num_elements;
-            hr = device->CreateShaderResourceView(p_uav.rwBuffer.Get(), &srvDesc, p_uav.srv.GetAddressOf());
-            DEV_ASSERT(!FAILED(hr));
-        };
-
-        auto BindUAV = [&](UAV& p_uav, int p_slot) {
-            context->CSSetUnorderedAccessViews(p_slot, 1, p_uav.uav.GetAddressOf(), nullptr);
-        };
-        if (s_particleSsbo.rwBuffer == nullptr) {
-            CreateUAV(s_particleSsbo, 4 * sizeof(vec4), MAX_PARTICLE_COUNT);
-            CreateUAV(s_counterSsbo, 20, 1);
-            BindUAV(s_counterSsbo, 11);
-            CreateUAV(s_deadSsbo, sizeof(int), MAX_PARTICLE_COUNT);
-            BindUAV(s_deadSsbo, 12);
-            CreateUAV(s_aliveSsbo[0], sizeof(int), MAX_PARTICLE_COUNT);
-            CreateUAV(s_aliveSsbo[1], sizeof(int), MAX_PARTICLE_COUNT);
-
-            gm.SetPipelineState(PROGRAM_PARTICLE_INIT);
-            gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-        }
-
-        BindUAV(s_particleSsbo, 10);
-        BindUAV(s_aliveSsbo[pre_sim_idx], 13);
-        BindUAV(s_aliveSsbo[post_sim_idx], 14);
-    }
+    gm.BindStructuredBuffer(16, particle_emitter->counterBuffer.get());
+    gm.BindStructuredBuffer(17, particle_emitter->deadBuffer.get());
+    gm.BindStructuredBuffer(18, particle_emitter->aliveBuffer[pre_sim_idx].get());
+    gm.BindStructuredBuffer(19, particle_emitter->aliveBuffer[post_sim_idx].get());
+    gm.BindStructuredBuffer(20, particle_emitter->particleBuffer.get());
 
     gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
     gm.Dispatch(1, 1, 1);
@@ -185,29 +131,18 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
     gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
 
-    // Rendering
-    if (!is_opengl) {
-        D3d11GraphicsManager* d3d_gm = dynamic_cast<D3d11GraphicsManager*>(&gm);
-        DEV_ASSERT(d3d_gm);
-        auto& context = d3d_gm->GetD3dContext();
-        ID3D11UnorderedAccessView* uavs = nullptr;
-        context->CSSetUnorderedAccessViews(10, 1, &uavs, nullptr);
-        context->CSSetUnorderedAccessViews(13, 1, &uavs, nullptr);
-        context->CSSetUnorderedAccessViews(14, 1, &uavs, nullptr);
+    gm.UnbindStructuredBuffer(16);
+    gm.UnbindStructuredBuffer(17);
+    gm.UnbindStructuredBuffer(18);
+    gm.UnbindStructuredBuffer(19);
+    gm.UnbindStructuredBuffer(20);
 
-        context->VSSetShaderResources(20, 1, s_particleSsbo.srv.GetAddressOf());
-    }
-
+    // Renderering
     gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
-    RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
 
-    if (!is_opengl) {
-        D3d11GraphicsManager* d3d_gm = dynamic_cast<D3d11GraphicsManager*>(&gm);
-        DEV_ASSERT(d3d_gm);
-        auto& context = d3d_gm->GetD3dContext();
-        ID3D11ShaderResourceView* srvs = nullptr;
-        context->VSSetShaderResources(20, 1, &srvs);
-    }
+    gm.BindStructuredBufferSRV(20, particle_emitter->particleBuffer.get());
+    RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
+    gm.UnbindStructuredBufferSRV(20);
 }
 
 void RenderPassCreator::addGBufferPass() {

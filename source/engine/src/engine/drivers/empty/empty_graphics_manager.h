@@ -30,8 +30,11 @@ public:
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) override {}
     void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) override {}
 
-    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) { return nullptr; }
-    void BindStructuredBuffer(const GpuStructuredBuffer* p_buffer, int p_slot) override {}
+    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) override { return nullptr; }
+    void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) override {}
+    void UnbindStructuredBuffer(int p_slot) override {}
+    void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) override {}
+    void UnbindStructuredBufferSRV(int p_slot) override {}
 
     std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) override { return nullptr; }
     void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) override {}

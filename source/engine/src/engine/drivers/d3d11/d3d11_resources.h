@@ -37,4 +37,12 @@ struct D3d11UniformBuffer : public ConstantBufferBase {
     mutable const char* data;
 };
 
+struct D3d11StructuredBuffer : GpuStructuredBuffer {
+    using GpuStructuredBuffer::GpuStructuredBuffer;
+
+    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+    Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+};
+
 }  // namespace my

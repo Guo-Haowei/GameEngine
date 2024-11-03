@@ -23,8 +23,8 @@ SHADER_TEXTURE(Texture2D, g_texture_lighting, 14)
 SHADER_TEXTURE(Texture2D, g_bloom_input_image, 15)
 
 // [SCRUM-34] @TODO: shadow atlas?
-SHADER_TEXTURE(Texture2D, t_shadow_map, 20)
 SHADER_TEXTURE(TextureCube, t_point_shadow_0, 21)
 SHADER_TEXTURE(TextureCube, t_point_shadow_1, 22)
 SHADER_TEXTURE(TextureCube, t_point_shadow_2, 23)
 SHADER_TEXTURE(TextureCube, t_point_shadow_3, 24)
+SHADER_TEXTURE(Texture2D, t_shadow_map, 25)

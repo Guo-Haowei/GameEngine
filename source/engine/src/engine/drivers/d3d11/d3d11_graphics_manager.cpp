@@ -278,30 +278,70 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
 }
 
 std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
-    unused(p_desc);
-    // D3D11_BUFFER_DESC buffer_desc{};
-    // buffer_desc.ByteWidth = p_desc.byteWidth;
-    // buffer_desc.Usage = d3d::Convert(p_desc.usage);
-    // buffer_desc.BindFlags = d3d::ConvertBindFlags(p_desc.bindFlags);
-    // buffer_desc.CPUAccessFlags = d3d::ConvertCpuAccessFlags(p_desc.cpuAccessFlags);
-    // buffer_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_desc.miscFlags);
-    // buffer_desc.StructureByteStride = p_desc.structureByteStride;
+    ComPtr<ID3D11Buffer> buffer;
+    ComPtr<ID3D11UnorderedAccessView> uav;
+    ComPtr<ID3D11ShaderResourceView> srv;
 
-    // ComPtr<ID3D11Buffer> d3d_buffer;
+    D3D11_BUFFER_DESC buffer_desc = {};
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.ByteWidth = p_desc.elementCount * p_desc.elementSize;
+    buffer_desc.BindFlags = D3D11_BIND_UNORDERED_ACCESS | D3D11_BIND_SHADER_RESOURCE;
+    buffer_desc.MiscFlags = D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.StructureByteStride = p_desc.elementSize;
 
-    // D3D_FAIL_V_MSG(m_device->CreateBuffer(&buffer_desc, nullptr, d3d_buffer.GetAddressOf()),
-    //                nullptr,
-    //                "Failed to create buffer");
+    D3D_FAIL_V_MSG(m_device->CreateBuffer(&buffer_desc, nullptr, buffer.GetAddressOf()),
+                   nullptr,
+                   "Failed to create buffer (StructuredBuffer)");
 
-    // auto result = std::make_shared<D3d11Buffer>(p_desc);
-    // result->internalBuffer = d3d_buffer;
-    return nullptr;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
+    uav_desc.Format = DXGI_FORMAT_UNKNOWN;
+    uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+    uav_desc.Buffer.FirstElement = 0;
+    uav_desc.Buffer.NumElements = p_desc.elementCount;
+    D3D_FAIL_V_MSG(m_device->CreateUnorderedAccessView(buffer.Get(), &uav_desc, uav.GetAddressOf()),
+                   nullptr,
+                   "Failed to create UAV (StructuredBuffer)");
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
+    srv_desc.Format = DXGI_FORMAT_UNKNOWN;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
+    srv_desc.Buffer.FirstElement = 0;
+    srv_desc.Buffer.NumElements = p_desc.elementCount;
+    D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(buffer.Get(), &srv_desc, srv.GetAddressOf()),
+                   nullptr,
+                   "Failed to create SRV (StructuredBuffer)");
+
+    auto structured_buffer = std::make_shared<D3d11StructuredBuffer>(p_desc);
+    structured_buffer->buffer = buffer;
+    structured_buffer->uav = uav;
+    structured_buffer->srv = srv;
+
+    BindStructuredBuffer(p_desc.defaultSlot, structured_buffer.get());
+    return structured_buffer;
 }
 
-void D3d11GraphicsManager::BindStructuredBuffer(const GpuStructuredBuffer* p_buffer, int p_slot) {
-    unused(p_buffer);
-    unused(p_slot);
-    return;
+void D3d11GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    auto structured_buffer = reinterpret_cast<const D3d11StructuredBuffer*>(p_buffer);
+    m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, structured_buffer->uav.GetAddressOf(), nullptr);
+}
+
+void D3d11GraphicsManager::UnbindStructuredBuffer(int p_slot) {
+    ID3D11UnorderedAccessView* uav = nullptr;
+    m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
+}
+
+void D3d11GraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    auto structured_buffer = reinterpret_cast<const D3d11StructuredBuffer*>(p_buffer);
+
+    if (structured_buffer->srv != nullptr) {
+        m_deviceContext->VSSetShaderResources(p_slot, 1, structured_buffer->srv.GetAddressOf());
+    }
+}
+
+void D3d11GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
+    ID3D11ShaderResourceView* srv = nullptr;
+    m_deviceContext->VSSetShaderResources(p_slot, 1, &srv);
 }
 
 std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {

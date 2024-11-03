@@ -37,7 +37,10 @@ public:
     void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
 
     std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) final;
-    void BindStructuredBuffer(const GpuStructuredBuffer* p_buffer, int p_slot) final;
+    void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) final;
+    void UnbindStructuredBuffer(int p_slot) final;
+    void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) final;
+    void UnbindStructuredBufferSRV(int p_slot) final;
 
     std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) final;
     void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) final;

@@ -128,7 +128,10 @@ public:
     std::shared_ptr<RenderTarget> FindRenderTarget(RenderTargetResourceName p_name) const;
 
     virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) = 0;
-    virtual void BindStructuredBuffer(const GpuStructuredBuffer* p_buffer, int p_slot) = 0;
+    virtual void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
+    virtual void UnbindStructuredBuffer(int p_slot) = 0;
+    virtual void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
+    virtual void UnbindStructuredBufferSRV(int p_slot) = 0;
 
     virtual std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) = 0;
 
