@@ -16,7 +16,7 @@ DVAR_STRING(r_render_graph, 0, "Renderer graph", "vxgi");
 DVAR_BOOL(r_gpu_validation, 0, "Enable GPU validation", true);
 
 // voxel GI
-DVAR_INT(r_voxel_size, 0, "Voxel size", 64);
+DVAR_INT(r_voxel_size, 0, "Voxel size", 128);
 DVAR_FLOAT(r_vxgi_max_world_size, 0, "Maxium voxel size when using vxgi", 40.0f);
 DVAR_INT(r_debug_vxgi_voxel, DVAR_FLAG_CACHE, "", 0);
 

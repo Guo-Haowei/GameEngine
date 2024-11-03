@@ -28,6 +28,29 @@ void voxelization_pass_func(const DrawPass*) {
         return;
     }
 
+    // @TODO: refactor pass to auto bind resources,
+    // and make it a class so don't do a map search every frame
+    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
+        std::shared_ptr<RenderTarget> resource = gm.FindRenderTarget(p_name);
+        if (!resource) {
+            return;
+        }
+
+        gm.BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
+    };
+
+    // bind common textures
+    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
+    bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
+    bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
+    bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+
+    bind_slot(RESOURCE_SHADOW_MAP, t_shadow_map_slot);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_point_shadow_0_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_point_shadow_1_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_point_shadow_2_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_point_shadow_3_slot, Dimension::TEXTURE_CUBE);
+
     g_albedoVoxel.clear();
     g_normalVoxel.clear();
 
@@ -81,6 +104,20 @@ void voxelization_pass_func(const DrawPass*) {
     g_normalVoxel.genMipMap();
 
     glEnable(GL_BLEND);
+
+    // unbind stuff
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_2_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
+
+    // @TODO: [SCRUM-28] refactor
+    gm.SetRenderTarget(nullptr);
 }
 
 void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
