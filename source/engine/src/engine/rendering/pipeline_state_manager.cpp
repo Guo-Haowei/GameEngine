@@ -153,6 +153,10 @@ bool PipelineStateManager::Initialize() {
     ok = ok && Create(PROGRAM_BLOOM_UPSAMPLE, { .cs = "bloom_upsample.comp" });
 
     // Particle
+    ok = ok && Create(PROGRAM_PARTICLE_INIT, { .cs = "particle_initialization.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_KICKOFF, { .cs = "particle_kickoff.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_EMIT, { .cs = "particle_emission.comp" });
+    ok = ok && Create(PROGRAM_PARTICLE_SIM, { .cs = "particle_simulation.comp" });
     ok = ok && Create(PROGRAM_PARTICLE_RENDERING, {
                                                       .vs = "particle_draw.vert",
                                                       .ps = "particle_draw.pixel",
@@ -165,11 +169,6 @@ bool PipelineStateManager::Initialize() {
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
         return ok;
     }
-
-    ok = ok && Create(PROGRAM_PARTICLE_INIT, { .cs = "particle_initialization.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_KICKOFF, { .cs = "particle_kickoff.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_EMIT, { .cs = "particle_emission.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_SIM, { .cs = "particle_simulation.comp" });
     ok = ok && Create(PROGRAM_HIGHLIGHT, {
                                              .vs = "screenspace_quad.vert",
                                              .ps = "highlight.pixel",

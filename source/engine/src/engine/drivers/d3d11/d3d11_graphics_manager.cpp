@@ -30,13 +30,13 @@ bool D3d11GraphicsManager::InitializeImpl() {
     ok = ok && CreateDevice();
     ok = ok && CreateSwapChain();
     ok = ok && CreateRenderTarget();
-    ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_ctx.Get());
+    ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get());
 
     ImGui_ImplDX11_NewFrame();
 
     SelectRenderGraph();
     // @TODO: refactor this
-    m_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     {
         // @TODO: refactor sampler
@@ -52,8 +52,8 @@ bool D3d11GraphicsManager::InitializeImpl() {
         auto hr = m_device->CreateSamplerState(&sampler_desc, g_sampler_state.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 
-        m_ctx->CSSetSamplers(0, 1, g_sampler_state.GetAddressOf());
-        m_ctx->PSSetSamplers(0, 1, g_sampler_state.GetAddressOf());
+        m_deviceContext->CSSetSamplers(0, 1, g_sampler_state.GetAddressOf());
+        m_deviceContext->PSSetSamplers(0, 1, g_sampler_state.GetAddressOf());
     }
     {
         D3D11_SAMPLER_DESC sampler_desc{};
@@ -73,8 +73,8 @@ bool D3d11GraphicsManager::InitializeImpl() {
         auto hr = m_device->CreateSamplerState(&sampler_desc, g_shadow_sampler_state.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 
-        m_ctx->CSSetSamplers(1, 1, g_sampler_state.GetAddressOf());
-        m_ctx->PSSetSamplers(1, 1, g_sampler_state.GetAddressOf());
+        m_deviceContext->CSSetSamplers(1, 1, g_sampler_state.GetAddressOf());
+        m_deviceContext->PSSetSamplers(1, 1, g_sampler_state.GetAddressOf());
     }
     {
         // @TODO: refactor sampler
@@ -90,8 +90,8 @@ bool D3d11GraphicsManager::InitializeImpl() {
         auto hr = m_device->CreateSamplerState(&sampler_desc, g_linear_clamp_sampler.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 
-        m_ctx->CSSetSamplers(2, 1, g_linear_clamp_sampler.GetAddressOf());
-        m_ctx->PSSetSamplers(2, 1, g_linear_clamp_sampler.GetAddressOf());
+        m_deviceContext->CSSetSamplers(2, 1, g_linear_clamp_sampler.GetAddressOf());
+        m_deviceContext->PSSetSamplers(2, 1, g_linear_clamp_sampler.GetAddressOf());
     }
 
     m_meshes.set_description("GPU-Mesh-Allocator");
@@ -107,8 +107,8 @@ void D3d11GraphicsManager::Render() {
 
     // @TODO: fix the following
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    m_ctx->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
-    m_ctx->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
+    m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
+    m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
     ImGuiIO& io = ImGui::GetIO();
@@ -126,19 +126,19 @@ void D3d11GraphicsManager::SetStencilRef(uint32_t p_ref) {
 }
 
 void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
-    m_ctx->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
+    m_deviceContext->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }
 
 void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
     if (!p_texture) {
         ID3D11UnorderedAccessView* uav = nullptr;
-        m_ctx->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
+        m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
         return;
     }
 
     auto texture = dynamic_cast<D3d11Texture*>(p_texture);
 
-    m_ctx->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
+    m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
 }
 
 void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
@@ -150,7 +150,7 @@ void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
 }
 
 bool D3d11GraphicsManager::CreateDevice() {
-    D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_0;
+    D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_1;
     UINT create_device_flags = 0;
     if (DVAR_GET_BOOL(r_gpu_validation)) {
         create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
@@ -166,7 +166,7 @@ bool D3d11GraphicsManager::CreateDevice() {
         D3D11_SDK_VERSION,
         m_device.GetAddressOf(),
         nullptr,
-        m_ctx.GetAddressOf());
+        m_deviceContext.GetAddressOf());
 
     D3D_FAIL_V_MSG(hr, false, "Failed to create d3d11 device");
 
@@ -237,8 +237,9 @@ std::shared_ptr<ConstantBufferBase> D3d11GraphicsManager::CreateConstantBuffer(i
     auto uniform_buffer = std::make_shared<D3d11UniformBuffer>(p_slot, p_capacity);
     uniform_buffer->internalBuffer = d3d_buffer;
 
-    m_ctx->VSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
-    m_ctx->PSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
+    m_deviceContext->VSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
+    m_deviceContext->PSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
+    m_deviceContext->CSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
     return uniform_buffer;
 }
 
@@ -253,9 +254,9 @@ void D3d11GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_b
     DEV_ASSERT(p_size + p_offset <= buffer->get_capacity());
     D3D11_MAPPED_SUBRESOURCE mapped;
     ZeroMemory(&mapped, sizeof(D3D11_MAPPED_SUBRESOURCE));
-    m_ctx->Map(buffer->internalBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+    m_deviceContext->Map(buffer->internalBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
     memcpy(mapped.pData, buffer->data + p_offset, p_size);
-    m_ctx->Unmap(buffer->internalBuffer.Get(), 0);
+    m_deviceContext->Unmap(buffer->internalBuffer.Get(), 0);
 }
 
 void D3d11GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
@@ -263,8 +264,8 @@ void D3d11GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle,
 
     if (p_handle) {
         ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
-        m_ctx->PSSetShaderResources(p_slot, 1, &srv);
-        m_ctx->CSSetShaderResources(p_slot, 1, &srv);
+        m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
+        m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
     }
 }
 
@@ -272,8 +273,8 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
 
     ID3D11ShaderResourceView* srv = nullptr;
-    m_ctx->PSSetShaderResources(p_slot, 1, &srv);
-    m_ctx->CSSetShaderResources(p_slot, 1, &srv);
+    m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
+    m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
 }
 
 std::shared_ptr<GpuBuffer> D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) {
@@ -345,7 +346,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
 
     if (p_texture_desc.initial_data) {
         uint32_t row_pitch = p_texture_desc.width * channel_count(format) * channel_size(format);
-        m_ctx->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initial_data, row_pitch, 0);
+        m_deviceContext->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initial_data, row_pitch, 0);
     }
 
     auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
@@ -365,7 +366,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
                        "Failed to create shader resource view");
 
         if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
-            m_ctx->GenerateMips(srv.Get());
+            m_deviceContext->GenerateMips(srv.Get());
         }
 
         gpu_texture->srv = srv;
@@ -483,7 +484,7 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     if (p_draw_pass == nullptr) {
         // [SCRUM-28] @TODO: Should unbind render target after each render pass
         ID3D11RenderTargetView* rtvs[3] = { nullptr, nullptr, nullptr };
-        m_ctx->OMSetRenderTargets(3, rtvs, nullptr);
+        m_deviceContext->OMSetRenderTargets(3, rtvs, nullptr);
         return;
     }
 
@@ -491,7 +492,7 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
             ID3D11RenderTargetView* rtv = nullptr;
-            m_ctx->OMSetRenderTargets(1, &rtv, draw_pass->dsvs[p_index].Get());
+            m_deviceContext->OMSetRenderTargets(1, &rtv, draw_pass->dsvs[p_index].Get());
             return;
         }
     }
@@ -503,12 +504,12 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     }
 
     ID3D11DepthStencilView* dsv = draw_pass->dsvs[0].Get();
-    m_ctx->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
+    m_deviceContext->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 
 void D3d11GraphicsManager::UnsetRenderTarget() {
     ID3D11RenderTargetView* rtv = nullptr;
-    m_ctx->OMSetRenderTargets(1, &rtv, nullptr);
+    m_deviceContext->OMSetRenderTargets(1, &rtv, nullptr);
 }
 
 void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
@@ -524,7 +525,7 @@ void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, 
         }
 
         for (auto& rtv : draw_pass->rtvs) {
-            m_ctx->ClearRenderTargetView(rtv.Get(), clear_color);
+            m_deviceContext->ClearRenderTargetView(rtv.Get(), clear_color);
         }
     }
 
@@ -538,7 +539,7 @@ void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, 
     if (clear_flags) {
         // @TODO: better way?
         DEV_ASSERT_INDEX(p_index, draw_pass->dsvs.size());
-        m_ctx->ClearDepthStencilView(draw_pass->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
+        m_deviceContext->ClearDepthStencilView(draw_pass->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
     }
 }
 
@@ -552,7 +553,7 @@ void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
 
-    m_ctx->RSSetViewports(1, &vp);
+    m_deviceContext->RSSetViewports(1, &vp);
 }
 
 const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
@@ -639,16 +640,16 @@ void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     UINT offset[6] = { 0, 0, 0, 0, 0, 0 };
 
     // @TODO: fix
-    m_ctx->IASetVertexBuffers(0, 6, buffers, stride, offset);
-    m_ctx->IASetIndexBuffer(mesh->index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+    m_deviceContext->IASetVertexBuffers(0, 6, buffers, stride, offset);
+    m_deviceContext->IASetIndexBuffer(mesh->index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 }
 
 void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
-    m_ctx->DrawIndexed(p_count, p_offset, 0);
+    m_deviceContext->DrawIndexed(p_count, p_offset, 0);
 }
 
 void D3d11GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
-    m_ctx->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
+    m_deviceContext->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
 }
 
 void D3d11GraphicsManager::OnSceneChange(const Scene& p_scene) {
@@ -667,23 +668,23 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipelineStateManager->Find(p_name));
     DEV_ASSERT(pipeline);
     if (pipeline->compute_shader) {
-        m_ctx->CSSetShader(pipeline->compute_shader.Get(), nullptr, 0);
+        m_deviceContext->CSSetShader(pipeline->compute_shader.Get(), nullptr, 0);
     } else {
         if (pipeline->vertex_shader) {
-            m_ctx->VSSetShader(pipeline->vertex_shader.Get(), 0, 0);
-            m_ctx->IASetInputLayout(pipeline->input_layout.Get());
+            m_deviceContext->VSSetShader(pipeline->vertex_shader.Get(), 0, 0);
+            m_deviceContext->IASetInputLayout(pipeline->input_layout.Get());
         }
         if (pipeline->pixel_shader) {
-            m_ctx->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
+            m_deviceContext->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
         }
 
         if (pipeline->rasterizer.Get() != m_stateCache.rasterizer) {
-            m_ctx->RSSetState(pipeline->rasterizer.Get());
+            m_deviceContext->RSSetState(pipeline->rasterizer.Get());
             m_stateCache.rasterizer = pipeline->rasterizer.Get();
         }
 
         if (pipeline->depth_stencil.Get() != m_stateCache.depth_stencil) {
-            m_ctx->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
+            m_deviceContext->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
             m_stateCache.depth_stencil = pipeline->depth_stencil.Get();
         }
     }
