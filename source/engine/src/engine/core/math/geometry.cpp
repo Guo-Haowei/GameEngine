@@ -65,7 +65,7 @@ MeshComponent MakePlaneMesh(const vec3& p_scale) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.createRenderData();
+    mesh.CreateRenderData();
     return mesh;
 }
 
@@ -196,7 +196,7 @@ MeshComponent MakeCubeMesh(const vec3& p_scale) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.createRenderData();
+    mesh.CreateRenderData();
     return mesh;
 }
 
@@ -248,7 +248,103 @@ MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.createRenderData();
+    mesh.CreateRenderData();
+    return mesh;
+}
+
+MeshComponent MakeCylinder(float p_radius, float p_height, int p_sectors) {
+    unused(p_sectors);
+    unused(p_height);
+
+    MeshComponent mesh;
+
+    auto& indices = mesh.indices;
+    constexpr float pi = glm::pi<float>();
+
+    std::array<float, 2> heights = { 0.5f * p_height, -0.5f * p_height };
+
+    // cylinder side
+    for (int index = 0; index <= p_sectors; ++index) {
+        float angle = 2.0f * pi * index / p_sectors;
+        float x = p_radius * glm::cos(angle);
+        float z = p_radius * glm::sin(angle);
+
+        vec3 point_1(x, heights[0], z);
+        vec3 point_2(x, heights[1], z);
+
+        vec3 normal = glm::normalize(vec3(x, 0.0f, z));
+
+        mesh.positions.push_back(point_1);
+        mesh.normals.push_back(normal);
+        mesh.texcoords_0.push_back(vec2());
+
+        mesh.positions.push_back(point_2);
+        mesh.normals.push_back(normal);
+        mesh.texcoords_0.push_back(vec2());
+    }
+
+    for (int index = 0; index < p_sectors; ++index) {
+        /*
+        a - b
+        |   |
+        c - d
+        */
+        const uint32_t a = 2 * index;
+        const uint32_t c = 2 * index + 1;
+        const uint32_t b = 2 * index + 2;
+        const uint32_t d = 2 * index + 3;
+
+        indices.push_back(a);
+        indices.push_back(b);
+        indices.push_back(c);
+
+        indices.push_back(c);
+        indices.push_back(b);
+        indices.push_back(d);
+    }
+
+    // cylinder circles
+    for (float height : heights) {
+        uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
+
+        vec3 normal = glm::normalize(vec3(0.0f, height, 0.0f));
+
+        for (int index = 0; index <= p_sectors; ++index) {
+            float angle = 2.0f * pi * index / p_sectors;
+            float x = p_radius * glm::cos(angle);
+            float z = p_radius * glm::sin(angle);
+
+            vec3 point(x, height, z);
+
+            mesh.positions.push_back(point);
+            mesh.normals.push_back(normal);
+            mesh.texcoords_0.push_back(vec2());
+        }
+
+        mesh.positions.push_back(vec3(0.0f, height, 0.0f));
+        mesh.normals.push_back(normal);
+        mesh.texcoords_0.push_back(vec2());
+
+        uint32_t center_index = static_cast<uint32_t>(mesh.positions.size()) - 1;
+        for (int index = 0; index < p_sectors; ++index) {
+            if (height < 0) {
+                indices.push_back(offset + index);
+                indices.push_back(offset + index + 1);
+                indices.push_back(center_index);
+            } else {
+                indices.push_back(offset + index + 1);
+                indices.push_back(offset + index);
+                indices.push_back(center_index);
+            }
+        }
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.CreateRenderData();
     return mesh;
 }
 
@@ -336,7 +432,7 @@ MeshComponent MakeGrassBillboard(const vec3& p_scale) {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.createRenderData();
+    mesh.CreateRenderData();
     return mesh;
 }
 
@@ -386,7 +482,7 @@ MeshComponent MakeSkyBoxMesh() {
     subset.index_offset = 0;
     mesh.subsets.emplace_back(subset);
 
-    mesh.createRenderData();
+    mesh.CreateRenderData();
     return mesh;
 }
 

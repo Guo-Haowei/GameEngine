@@ -245,7 +245,7 @@ void OpenGLGraphicsManager::SetViewport(const Viewport& p_viewport) {
 const MeshBuffers* OpenGLGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     RID rid = m_meshes.make_rid();
     OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-    p_mesh.gpu_resource = mesh_buffers;
+    p_mesh.gpuResource = mesh_buffers;
 
     auto createMesh_data = [](const MeshComponent& p_mesh, OpenGLMeshBuffers& p_out_mesh) {
         const bool has_normals = !p_mesh.normals.empty();
@@ -597,7 +597,7 @@ void OpenGLGraphicsManager::UnsetRenderTarget() {
 // @TODO: refactor this, instead off iterate through all the meshes, find a better way
 void OpenGLGraphicsManager::OnSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
-        if (mesh.gpu_resource != nullptr) {
+        if (mesh.gpuResource != nullptr) {
             continue;
         }
 

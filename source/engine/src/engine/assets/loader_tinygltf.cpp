@@ -56,7 +56,7 @@ void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
             MeshComponent& mesh = m_scene->m_MeshComponents.GetComponent(node.mesh);
             ecs::Entity mesh_id = m_scene->GetEntity<MeshComponent>(node.mesh);
             DEV_ASSERT(!mesh.joints_0.empty());
-            if (mesh.armature_id.IsValid()) {
+            if (mesh.armatureId.IsValid()) {
                 // Reuse mesh with different skin is not possible currently, so we create a new one:
                 LOG_WARN("Re-use mesh for different skin!");
                 mesh_id = entity;
@@ -64,7 +64,7 @@ void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
                 newMesh = m_scene->m_MeshComponents.GetComponent(node.mesh);
                 mesh = newMesh;
             }
-            mesh.armature_id = entity;
+            mesh.armatureId = entity;
 
             // the object component will use an identity transform but will be parented to the armature
             ecs::Entity objectID = m_scene->CreateObjectEntity("Animated::" + node.name);
@@ -585,7 +585,7 @@ void LoaderTinyGLTF::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
         CRASH_NOW_MSG("No normal detected");
     }
 
-    mesh.createRenderData();
+    mesh.CreateRenderData();
 }
 
 void LoaderTinyGLTF::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int) {

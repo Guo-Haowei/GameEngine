@@ -598,7 +598,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
         const MeshComponent& mesh = *p_scene.GetComponent<MeshComponent>(obj.meshId);
 
         const mat4& world_matrix = transform.GetWorldMatrix();
-        AABB aabb = mesh.local_bound;
+        AABB aabb = mesh.localBound;
         aabb.ApplyMatrix(world_matrix);
         if (!p_filter2(aabb)) {
             continue;
@@ -614,20 +614,20 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
         }
 
         draw.batch_idx = m_context.batch_cache.FindOrAdd(entity, batch_buffer);
-        if (mesh.armature_id.IsValid()) {
-            auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armature_id);
+        if (mesh.armatureId.IsValid()) {
+            auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armatureId);
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
 
             BoneConstantBuffer bone;
             memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
-            draw.bone_idx = m_context.bone_cache.FindOrAdd(mesh.armature_id, bone);
+            draw.bone_idx = m_context.bone_cache.FindOrAdd(mesh.armatureId, bone);
         } else {
             draw.bone_idx = -1;
         }
-        DEV_ASSERT(mesh.gpu_resource);
-        draw.mesh_data = (MeshBuffers*)mesh.gpu_resource;
+        DEV_ASSERT(mesh.gpuResource);
+        draw.mesh_data = (MeshBuffers*)mesh.gpuResource;
 
         for (const auto& subset : mesh.subsets) {
             aabb = subset.local_bound;

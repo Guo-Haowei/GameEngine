@@ -16,6 +16,12 @@ void EditorItem::OpenAddEntityPopup(ecs::Entity p_parent) {
             if (ImGui::MenuItem("Sphere")) {
                 m_editor.AddEntity(EntityType::SPHERE, p_parent);
             }
+            if (ImGui::MenuItem("Cylinder")) {
+                m_editor.AddEntity(EntityType::CYLINDER, p_parent);
+            }
+            if (ImGui::MenuItem("Torus")) {
+                m_editor.AddEntity(EntityType::TORUS, p_parent);
+            }
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Light")) {

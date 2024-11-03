@@ -282,6 +282,35 @@ Entity Scene::CreateSphereEntity(const std::string& p_name,
     return entity;
 }
 
+Entity Scene::CreateCylinderEntity(const std::string& p_name,
+                                   float p_radius,
+                                   float p_height,
+                                   const mat4& p_transform) {
+    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+    return CreateCylinderEntity(p_name, material_id, p_radius, p_height, p_transform);
+}
+
+Entity Scene::CreateCylinderEntity(const std::string& p_name,
+                                   Entity p_material_id,
+                                   float p_radius,
+                                   float p_height,
+                                   const mat4& p_transform) {
+
+    Entity entity = CreateObjectEntity(p_name);
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
+
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    object.meshId = mesh_id;
+
+    MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
+    mesh = MakeCylinder(p_radius, p_height);
+    mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
 Entity Scene::CreateParticleEmitter(const std::string& p_name, const mat4& p_transform) {
     Entity entity = CreateTransformEntity(p_name);
     Create<ParticleEmitterComponent>(entity);
@@ -559,7 +588,7 @@ bool Scene::RayObjectIntersect(Entity p_object_id, Ray& p_ray) {
     Ray inversedRay = p_ray.Inverse(inversedModel);
     Ray inversedRayAABB = inversedRay;  // make a copy, we don't want dist to be modified by AABB
     // Perform aabb test
-    if (!inversedRayAABB.Intersects(mesh->local_bound)) {
+    if (!inversedRayAABB.Intersects(mesh->localBound)) {
         return false;
     }
 
@@ -627,7 +656,7 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
         const MeshComponent& mesh = *GetComponent<MeshComponent>(obj.meshId);
 
         mat4 M = transform.GetWorldMatrix();
-        AABB aabb = mesh.local_bound;
+        AABB aabb = mesh.localBound;
         aabb.ApplyMatrix(M);
         m_bound.UnionBox(aabb);
     }

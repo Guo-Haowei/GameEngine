@@ -55,17 +55,17 @@ struct MeshComponent {
     };
     std::vector<MeshSubset> subsets;
 
-    ecs::Entity armature_id;
+    ecs::Entity armatureId;
 
     // Non-serialized
-    mutable void* gpu_resource = nullptr;
-    AABB local_bound;
+    mutable void* gpuResource = nullptr;
+    AABB localBound;
 
     VertexAttribute attributes[VertexAttribute::COUNT];
-    size_t vertex_buffer_size = 0;  // combine vertex buffer
+    size_t vertexBufferSize = 0;  // combine vertex buffer
 
-    void createRenderData();
-    std::vector<char> generateCombinedBuffer() const;
+    void CreateRenderData();
+    std::vector<char> GenerateCombinedBuffer() const;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };
