@@ -332,7 +332,7 @@ void OpenGLGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* 
     glBindImageTexture(p_slot, handle, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 }
 
-std::shared_ptr<GpuBuffer> OpenGLGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) {
+std::shared_ptr<GpuStructuredBuffer> OpenGLGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
     unused(p_desc);
     return nullptr;
 }

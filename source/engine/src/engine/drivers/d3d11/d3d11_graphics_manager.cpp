@@ -277,7 +277,7 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
 }
 
-std::shared_ptr<GpuBuffer> D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) {
+std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
     unused(p_desc);
     // D3D11_BUFFER_DESC buffer_desc{};
     // buffer_desc.ByteWidth = p_desc.byteWidth;

@@ -110,11 +110,11 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     if (scene.GetCount<ParticleEmitterComponent>()) {
         for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
             const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
-            cache.u_Velocity = emitter.GetStartingVelocity();
             cache.u_Position = transform->GetTranslation();
-            cache.u_Scale = emitter.GetParticleScale();
-            cache.u_LifeSpan = emitter.GetParticleLifeSpan();
-            cache.u_ParticlesPerFrame = static_cast<int>(emitter.GetEmittedParticlesPerSecondRef() * scene.m_elapsedTime);
+            cache.u_Velocity = emitter.startingVelocity;
+            cache.u_Scale = emitter.particleScale;
+            cache.u_LifeSpan = emitter.particleLifeSpan;
+            cache.u_ParticlesPerFrame = static_cast<int>(emitter.particlesPerSec * scene.m_elapsedTime);
         }
     }
 

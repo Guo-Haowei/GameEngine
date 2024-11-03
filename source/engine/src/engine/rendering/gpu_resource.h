@@ -84,10 +84,10 @@ struct GpuBufferDesc {
     uint32_t structureByteStride;
 };
 
-struct GpuBuffer {
-    GpuBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
+struct GpuStructuredBuffer {
+    GpuStructuredBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
 
-    virtual ~GpuBuffer() = default;
+    virtual ~GpuStructuredBuffer() = default;
 
     const GpuBufferDesc desc;
 };

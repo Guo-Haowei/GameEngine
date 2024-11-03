@@ -33,7 +33,7 @@ public:
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
 
-    std::shared_ptr<GpuBuffer> CreateBuffer(const GpuBufferDesc& p_desc) final;
+    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) final;
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) final;
