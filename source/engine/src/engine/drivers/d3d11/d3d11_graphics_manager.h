@@ -48,7 +48,9 @@ public:
 
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc&) final;
 
+    // For fast and dirty access to device and device context, try not to use it
     Microsoft::WRL::ComPtr<ID3D11Device>& GetD3dDevice() { return m_device; }
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetD3dContext() { return m_deviceContext; }
 
 protected:
     void OnSceneChange(const Scene& p_scene) final;
@@ -60,7 +62,7 @@ protected:
     bool CreateRenderTarget();
 
     Microsoft::WRL::ComPtr<ID3D11Device> m_device;
-    Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_ctx;
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_deviceContext;
     Microsoft::WRL::ComPtr<IDXGISwapChain> m_swapChain;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView> m_windowRtv;
     Microsoft::WRL::ComPtr<IDXGIDevice> m_dxgiDevice;

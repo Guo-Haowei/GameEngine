@@ -29,10 +29,10 @@ struct ParticleCounter {
     uint emission_count;
 };
 
-SBUFFER(Particle, GlobalParticleData, 0);
-SBUFFER(ParticleCounter, GlobalParticleCounter, 1);
-SBUFFER(uint, GlobalDeadIndices, 2);
-SBUFFER(uint, GlobalAliveIndicesPreSim, 3);
-SBUFFER(uint, GlobalAliveIndicesPostSim, 4);
+SBUFFER(Particle, GlobalParticleData, 10);
+SBUFFER(ParticleCounter, GlobalParticleCounter, 11);
+SBUFFER(uint, GlobalDeadIndices, 12);
+SBUFFER(uint, GlobalAliveIndicesPreSim, 13);
+SBUFFER(uint, GlobalAliveIndicesPostSim, 14);
 
 #endif

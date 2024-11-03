@@ -1,6 +1,20 @@
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
-#include "particle_defines.h"
+
+// @TODO: shader naming style
+struct Particle {
+    vec4 position;
+    vec4 velocity;
+    vec4 color;
+
+    float scale;
+    float lifeSpan;
+    float lifeRemaining;
+    int isActive;
+};
+
+// @TODO: refactor
+StructuredBuffer<Particle> GlobalParticleData : register(t20);
 
 float4 main(vsinput_position input, uint instance_id
             : SV_INSTANCEID) : SV_POSITION {
