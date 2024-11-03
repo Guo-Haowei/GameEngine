@@ -131,7 +131,7 @@ CBUFFER(BoneConstantBuffer, 4) {
 };
 
 // @TODO: refactor name
-CBUFFER(ParticleConstantBuffer, 10) {
+CBUFFER(EmitterConstantBuffer, 5) {
     int c_preSimIdx;
     int c_postSimIdx;
     float c_elapsedTime;
@@ -143,6 +143,10 @@ CBUFFER(ParticleConstantBuffer, 10) {
     int c_particlesPerFrame;
     vec3 c_emitterStartingVelocity;
     int c_emitterMaxParticleCount;
+
+    mat4 _emitter_padding_0;
+    mat4 _emitter_padding_1;
+    mat4 _emitter_padding_2;
 };
 
 #ifndef HLSL_LANG

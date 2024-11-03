@@ -10,8 +10,8 @@ namespace my {
 using ecs::Entity;
 using jobsystem::Context;
 
-static constexpr uint32_t kSmallSubtaskGroupSize = 64;
-// kSceneVersion history
+static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
+// SCENE_VERSION history
 // version 2: don't serialize scene.m_bound
 // version 3: light component atten
 // version 4: light component flags
@@ -19,8 +19,8 @@ static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // version 6: add collider component
 // version 7: add enabled to material
 // version 8: add particle emitter
-static constexpr uint32_t kSceneVersion = 8;
-static constexpr uint32_t kSceneMagicNumber = 'xScn';
+static constexpr uint32_t SCENE_VERSION = 8;
+static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
 #if 1
@@ -496,15 +496,15 @@ bool Scene::Serialize(Archive& p_archive) {
         uint32_t seed = Entity::MAX_ID;
 
         p_archive >> magic;
-        ERR_FAIL_COND_V_MSG(magic != kSceneMagicNumber, false, "file corrupted");
+        ERR_FAIL_COND_V_MSG(magic != SCENE_MAGIC, false, "file corrupted");
         p_archive >> version;
-        ERR_FAIL_COND_V_MSG(version > kSceneMagicNumber, false, std::format("file version {} is greater than max version {}", version, kSceneVersion));
+        ERR_FAIL_COND_V_MSG(version > SCENE_MAGIC, false, std::format("file version {} is greater than max version {}", version, SCENE_VERSION));
         p_archive >> seed;
         Entity::SetSeed(seed);
 
     } else {
-        p_archive << kSceneMagicNumber;
-        p_archive << kSceneVersion;
+        p_archive << SCENE_MAGIC;
+        p_archive << SCENE_VERSION;
         p_archive << Entity::GetSeed();
     }
 
@@ -593,11 +593,11 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, UpdateLight(index));
+    JS_PARALLEL_FOR(p_context, index, GetCount<LightComponent>(), SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].UpdateTransform());
+    JS_PARALLEL_FOR(p_context, index, GetCount<TransformComponent>(), SMALL_SUBTASK_GROUP_SIZE, m_TransformComponents[index].UpdateTransform());
 }
 
 void Scene::RunAnimationUpdateSystem(Context& p_context) {
@@ -609,7 +609,7 @@ void Scene::RunArmatureUpdateSystem(Context& p_context) {
 }
 
 void Scene::RunHierarchyUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, UpdateHierarchy(index));
+    JS_PARALLEL_FOR(p_context, index, GetCount<HierarchyComponent>(), SMALL_SUBTASK_GROUP_SIZE, UpdateHierarchy(index));
 }
 
 void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
@@ -637,8 +637,7 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
     unused(p_context);
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
-        const TransformComponent& transform = *GetComponent<TransformComponent>(entity);
-        emitter.Update(m_elapsedTime, transform.GetTranslation());
+        emitter.Update(m_elapsedTime);
     }
 }
 

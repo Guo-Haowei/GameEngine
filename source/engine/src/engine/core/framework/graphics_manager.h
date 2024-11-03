@@ -57,9 +57,6 @@ extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 extern ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
 
-// @TODO: remove this
-extern ConstantBuffer<ParticleConstantBuffer> g_particleCache;
-
 // @TODO: refactor
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),
@@ -239,6 +236,9 @@ public:
 
         std::shared_ptr<ConstantBufferBase> pass_uniform;
         std::vector<PerPassConstantBuffer> pass_cache;
+
+        std::shared_ptr<ConstantBufferBase> emitter_uniform;
+        std::vector<EmitterConstantBuffer> emitter_cache;
     } m_context;
 
     Context& GetContext() { return m_context; }
@@ -253,7 +253,7 @@ public:
 private:
     void Cleanup();
     void UpdateConstants(const Scene& p_scene);
-    void UpdateParticles(const Scene& p_scene);
+    void UpdateEmitters(const Scene& p_scene);
     void UpdateLights(const Scene& p_scene);
     void UpdateVoxelPass(const Scene& p_scene);
     void UpdateMainPass(const Scene& p_scene);

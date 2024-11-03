@@ -8,7 +8,6 @@
 #include "rendering/rendering_dvars.h"
 
 // @TODO: this is temporary
-#include "core/base/random.h"
 #include "core/framework/scene_manager.h"
 
 namespace my::rg {
@@ -67,32 +66,16 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
         }
     }
 
-    // @TODO: refactor particles
-    // this should be in a different pass
     const Scene& scene = SceneManager::GetScene();
-    auto& cache = g_particleCache.cache;
-
+    int particle_idx = 0;
     for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
-        const uint32_t pre_sim_idx = emitter.GetPreIndex();
-        const uint32_t post_sim_idx = emitter.GetPostIndex();
-        const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
-        cache.c_preSimIdx = pre_sim_idx;
-        cache.c_postSimIdx = post_sim_idx;
-        cache.c_elapsedTime = scene.m_elapsedTime;
-        cache.c_lifeSpan = emitter.particleLifeSpan;
-        cache.c_seeds = vec3(Random::Float(), Random::Float(), Random::Float());
-        cache.c_emitterScale = emitter.particleScale;
-        cache.c_emitterPosition = transform->GetTranslation();
-        cache.c_particlesPerFrame = emitter.particlesPerFrame;
-        cache.c_emitterStartingVelocity = emitter.startingVelocity;
-        cache.c_emitterMaxParticleCount = emitter.maxParticleCount;
 
-        g_particleCache.update();
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(ctx.emitter_uniform.get(), particle_idx++);
 
         gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
         gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[pre_sim_idx].get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[post_sim_idx].get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
         gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
 
         gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);

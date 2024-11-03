@@ -1,5 +1,6 @@
 #include "graphics_manager.h"
 
+#include "core/base/random.h"
 #include "core/debugger/profiler.h"
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
@@ -32,7 +33,6 @@ ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 ConstantBuffer<EnvConstantBuffer> g_env_cache;
-ConstantBuffer<ParticleConstantBuffer> g_particleCache;
 
 template<typename T>
 static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
@@ -50,13 +50,13 @@ bool GraphicsManager::Initialize() {
     m_context.pass_uniform = ::my::CreateUniform<PerPassConstantBuffer>(*this, 32);
     m_context.material_uniform = ::my::CreateUniform<MaterialConstantBuffer>(*this, 2048 * 16);
     m_context.bone_uniform = ::my::CreateUniform<BoneConstantBuffer>(*this, 16);
+    m_context.emitter_uniform = ::my::CreateUniform<EmitterConstantBuffer>(*this, 32);
 
     CreateUniformBuffer<PerFrameConstantBuffer>(g_per_frame_cache);
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
     CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
     CreateUniformBuffer<PointShadowConstantBuffer>(g_point_shadow_cache);
     CreateUniformBuffer<EnvConstantBuffer>(g_env_cache);
-    CreateUniformBuffer<ParticleConstantBuffer>(g_particleCache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
@@ -120,16 +120,18 @@ void GraphicsManager::Update(Scene& p_scene) {
     Cleanup();
 
     UpdateConstants(p_scene);
-    UpdateParticles(p_scene);
+    UpdateEmitters(p_scene);
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
 
     // update uniform
     UpdateConstantBuffer(m_context.batch_uniform.get(), m_context.batch_cache.buffer);
-    UpdateConstantBuffer(m_context.pass_uniform.get(), m_context.pass_cache);
     UpdateConstantBuffer(m_context.material_uniform.get(), m_context.material_cache.buffer);
     UpdateConstantBuffer(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
+
+    UpdateConstantBuffer(m_context.pass_uniform.get(), m_context.pass_cache);
+    UpdateConstantBuffer(m_context.emitter_uniform.get(), m_context.emitter_cache);
 
     g_per_frame_cache.update();
     // update uniform
@@ -318,6 +320,7 @@ void GraphicsManager::Cleanup() {
     m_context.material_cache.Clear();
     m_context.bone_cache.Clear();
     m_context.pass_cache.clear();
+    m_context.emitter_cache.clear();
 
     for (auto& pass : m_shadowPasses) {
         pass.draws.clear();
@@ -372,7 +375,7 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     cache.u_voxel_size = voxel_size;
 }
 
-void GraphicsManager::UpdateParticles(const Scene& p_scene) {
+void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
     for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
         if (!emitter.particleBuffer) {
             // create buffer
@@ -405,6 +408,23 @@ void GraphicsManager::UpdateParticles(const Scene& p_scene) {
             UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
             UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
         }
+
+        const uint32_t pre_sim_idx = emitter.GetPreIndex();
+        const uint32_t post_sim_idx = emitter.GetPostIndex();
+        EmitterConstantBuffer buffer;
+        const TransformComponent* transform = p_scene.GetComponent<TransformComponent>(id);
+        buffer.c_preSimIdx = pre_sim_idx;
+        buffer.c_postSimIdx = post_sim_idx;
+        buffer.c_elapsedTime = p_scene.m_elapsedTime;
+        buffer.c_lifeSpan = emitter.particleLifeSpan;
+        buffer.c_seeds = vec3(Random::Float(), Random::Float(), Random::Float());
+        buffer.c_emitterScale = emitter.particleScale;
+        buffer.c_emitterPosition = transform->GetTranslation();
+        buffer.c_particlesPerFrame = emitter.particlesPerFrame;
+        buffer.c_emitterStartingVelocity = emitter.startingVelocity;
+        buffer.c_emitterMaxParticleCount = emitter.maxParticleCount;
+
+        m_context.emitter_cache.push_back(buffer);
     }
 }
 
