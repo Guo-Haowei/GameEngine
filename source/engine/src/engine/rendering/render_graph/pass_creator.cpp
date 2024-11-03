@@ -8,22 +8,6 @@
 // @TODO: this is temporary
 #include "core/base/random.h"
 #include "core/framework/scene_manager.h"
-#include "drivers/d3d11/d3d11_graphics_manager.h"
-
-namespace {
-
-struct UAV {
-    Microsoft::WRL::ComPtr<ID3D11Buffer> rwBuffer;
-    Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
-    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
-};
-
-UAV s_particleSsbo;
-UAV s_counterSsbo;
-UAV s_deadSsbo;
-UAV s_aliveSsbo[2];
-
-}  // namespace
 
 namespace my::rg {
 
@@ -82,67 +66,54 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     }
 
     // @TODO: refactor particles
-    // @TODO: use 1 bit
-    static int mSimIndex = 1;
-    mSimIndex = 1 - mSimIndex;
-
-    int pre_sim_idx = mSimIndex;
-    int post_sim_idx = 1 - mSimIndex;
     const Scene& scene = SceneManager::GetScene();
-
     auto& cache = g_particleCache.cache;
-    cache.u_Position = vec3(0.0f);
-    cache.u_Velocity = vec3(0.0f);
-    cache.u_Scale = 1.0f;
-    cache.u_LifeSpan = 2.0f;
-    cache.u_PreSimIdx = pre_sim_idx;
-    cache.u_PostSimIdx = post_sim_idx;
-    cache.u_ElapsedTime = scene.m_elapsedTime;
-    cache.u_Seeds = vec3(Random::Float(), Random::Float(), Random::Float());
-    cache.u_ParticlesPerFrame = 5;
 
-    ParticleEmitterComponent* particle_emitter = nullptr;
-    if (scene.GetCount<ParticleEmitterComponent>()) {
-        for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
-            const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
-            cache.u_Position = transform->GetTranslation();
-            cache.u_Velocity = emitter.startingVelocity;
-            cache.u_Scale = emitter.particleScale;
-            cache.u_LifeSpan = emitter.particleLifeSpan;
-            cache.u_ParticlesPerFrame = static_cast<int>(emitter.particlesPerSec * scene.m_elapsedTime);
-            particle_emitter = &emitter;
-        }
+    for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
+        const uint32_t pre_sim_idx = emitter.GetPreIndex();
+        const uint32_t post_sim_idx = emitter.GetPostIndex();
+        const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
+        cache.u_PreSimIdx = pre_sim_idx;
+        cache.u_PostSimIdx = post_sim_idx;
+        cache.u_ElapsedTime = scene.m_elapsedTime;
+        cache.u_LifeSpan = emitter.particleLifeSpan;
+        cache.u_Seeds = vec3(Random::Float(), Random::Float(), Random::Float());
+        cache.u_Scale = emitter.particleScale;
+        cache.u_Position = transform->GetTranslation();
+        cache.u_ParticlesPerFrame = emitter.particlesPerFrame;
+        cache.u_Velocity = emitter.startingVelocity;
+        cache.u_MaxParticleCount = emitter.maxParticleCount;
+
+        g_particleCache.update();
+
+        gm.BindStructuredBuffer(16, emitter.counterBuffer.get());
+        gm.BindStructuredBuffer(17, emitter.deadBuffer.get());
+        gm.BindStructuredBuffer(18, emitter.aliveBuffer[pre_sim_idx].get());
+        gm.BindStructuredBuffer(19, emitter.aliveBuffer[post_sim_idx].get());
+        gm.BindStructuredBuffer(20, emitter.particleBuffer.get());
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
+        gm.Dispatch(1, 1, 1);
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.UnbindStructuredBuffer(16);
+        gm.UnbindStructuredBuffer(17);
+        gm.UnbindStructuredBuffer(18);
+        gm.UnbindStructuredBuffer(19);
+        gm.UnbindStructuredBuffer(20);
+
+        // Renderering
+        gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
+
+        gm.BindStructuredBufferSRV(20, emitter.particleBuffer.get());
+        RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
+        gm.UnbindStructuredBufferSRV(20);
     }
-
-    g_particleCache.update();
-
-    gm.BindStructuredBuffer(16, particle_emitter->counterBuffer.get());
-    gm.BindStructuredBuffer(17, particle_emitter->deadBuffer.get());
-    gm.BindStructuredBuffer(18, particle_emitter->aliveBuffer[pre_sim_idx].get());
-    gm.BindStructuredBuffer(19, particle_emitter->aliveBuffer[post_sim_idx].get());
-    gm.BindStructuredBuffer(20, particle_emitter->particleBuffer.get());
-
-    gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
-    gm.Dispatch(1, 1, 1);
-
-    gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
-    gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-    gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
-    gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-    gm.UnbindStructuredBuffer(16);
-    gm.UnbindStructuredBuffer(17);
-    gm.UnbindStructuredBuffer(18);
-    gm.UnbindStructuredBuffer(19);
-    gm.UnbindStructuredBuffer(20);
-
-    // Renderering
-    gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
-
-    gm.BindStructuredBufferSRV(20, particle_emitter->particleBuffer.get());
-    RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
-    gm.UnbindStructuredBufferSRV(20);
 }
 
 void RenderPassCreator::addGBufferPass() {

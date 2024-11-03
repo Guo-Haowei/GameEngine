@@ -317,7 +317,6 @@ std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffe
     structured_buffer->uav = uav;
     structured_buffer->srv = srv;
 
-    BindStructuredBuffer(p_desc.defaultSlot, structured_buffer.get());
     return structured_buffer;
 }
 

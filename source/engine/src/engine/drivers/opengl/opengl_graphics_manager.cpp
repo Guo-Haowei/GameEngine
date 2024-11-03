@@ -337,7 +337,6 @@ std::shared_ptr<GpuStructuredBuffer> OpenGLGraphicsManager::CreateStructuredBuff
     glGenBuffers(1, &handle);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
     glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_desc.defaultSlot, handle);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     auto buffer = std::make_shared<OpenGLStructuredBuffer>(p_desc);
@@ -356,15 +355,15 @@ void OpenGLGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructured
 // @TODO: refactor
 void OpenGLGraphicsManager::UnbindStructuredBuffer(int p_slot) {
     unused(p_slot);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, 0);
 }
 
 void OpenGLGraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
-    unused(p_slot);
-    unused(p_buffer);
+    BindStructuredBuffer(p_slot, p_buffer);
 }
 
 void OpenGLGraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
-    unused(p_slot);
+    UnbindStructuredBuffer(p_slot);
 }
 
 std::shared_ptr<ConstantBufferBase> OpenGLGraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {

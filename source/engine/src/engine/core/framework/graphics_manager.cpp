@@ -378,12 +378,10 @@ void GraphicsManager::UpdateParticles(const Scene& p_scene) {
             emitter.counterBuffer = CreateStructuredBuffer({
                 .elementSize = 20,
                 .elementCount = 1,
-                .defaultSlot = 16,
             });
             emitter.deadBuffer = CreateStructuredBuffer({
                 .elementSize = sizeof(int),
                 .elementCount = MAX_PARTICLE_COUNT,
-                .defaultSlot = 17,
             });
             emitter.aliveBuffer[0] = CreateStructuredBuffer({
                 .elementSize = sizeof(int),
@@ -396,11 +394,15 @@ void GraphicsManager::UpdateParticles(const Scene& p_scene) {
             emitter.particleBuffer = CreateStructuredBuffer({
                 .elementSize = 4 * sizeof(vec4),
                 .elementCount = MAX_PARTICLE_COUNT,
-                .defaultSlot = 20,
             });
 
             SetPipelineState(PROGRAM_PARTICLE_INIT);
+
+            BindStructuredBuffer(16, emitter.counterBuffer.get());
+            BindStructuredBuffer(17, emitter.deadBuffer.get());
             Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+            UnbindStructuredBuffer(16);
+            UnbindStructuredBuffer(17);
         }
     }
 }

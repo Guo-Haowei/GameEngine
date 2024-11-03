@@ -142,7 +142,7 @@ CBUFFER(ParticleConstantBuffer, 10) {
     vec3 u_Position;
     int u_ParticlesPerFrame;
     vec3 u_Velocity;
-    float _particle_padding_4;
+    int u_MaxParticleCount;
 };
 
 #ifndef HLSL_LANG

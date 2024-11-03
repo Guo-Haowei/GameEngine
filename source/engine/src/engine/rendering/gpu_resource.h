@@ -78,7 +78,6 @@ struct GpuTextureDesc {
 struct GpuStructuredBufferDesc {
     uint32_t elementSize;
     uint32_t elementCount;
-    uint32_t defaultSlot;
 };
 
 struct GpuStructuredBuffer {
