@@ -1,6 +1,7 @@
 #include "particle_emitter_component.h"
 
 #include "core/base/random.h"
+#include "core/framework/event_queue.h"
 #include "core/io/archive.h"
 
 namespace my {
@@ -14,7 +15,6 @@ ParticleEmitterComponent::ParticleEmitterComponent() {
 }
 
 void ParticleEmitterComponent::Update(float p_elapsedTime, const vec3& p_position) {
-    // @TODO: update properly
     unused(p_elapsedTime);
     unused(p_position);
 }

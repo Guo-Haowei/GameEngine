@@ -1,5 +1,6 @@
 #pragma once
 #include "core/math/geomath.h"
+#include "rendering/gpu_resource.h"
 
 namespace my {
 
@@ -17,6 +18,12 @@ struct ParticleEmitterComponent {
     float particleScale;
     float particleLifeSpan;
     vec3 startingVelocity;
+
+    // Non-Serialized
+    std::shared_ptr<GpuStructuredBuffer> particleBuffer;
+    std::shared_ptr<GpuStructuredBuffer> counterBuffer;
+    std::shared_ptr<GpuStructuredBuffer> deadBuffer;
+    std::shared_ptr<GpuStructuredBuffer> aliveBuffer[2]{ nullptr, nullptr };
 };
 
 }  // namespace my

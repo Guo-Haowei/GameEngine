@@ -30,13 +30,14 @@ public:
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) override {}
     void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) override {}
 
-    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) { return nullptr; }
-    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc&, const SamplerDesc&) { return nullptr; }
+    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) { return nullptr; }
+    void BindStructuredBuffer(const GpuStructuredBuffer* p_buffer, int p_slot) override {}
 
     std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) override { return nullptr; }
     void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) override {}
     void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) override {}
 
+    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc&, const SamplerDesc&) { return nullptr; }
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
 

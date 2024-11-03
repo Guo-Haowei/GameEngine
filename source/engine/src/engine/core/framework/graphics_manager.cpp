@@ -34,7 +34,7 @@ ConstantBuffer<EnvConstantBuffer> g_env_cache;
 ConstantBuffer<ParticleConstantBuffer> g_particleCache;
 
 template<typename T>
-static void create_uniform_buffer(ConstantBuffer<T>& p_buffer) {
+static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     constexpr int slot = T::GetUniformBufferSlot();
     p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(slot, sizeof(T));
 }
@@ -50,12 +50,12 @@ bool GraphicsManager::Initialize() {
     m_context.material_uniform = ::my::CreateUniform<MaterialConstantBuffer>(*this, 2048 * 16);
     m_context.bone_uniform = ::my::CreateUniform<BoneConstantBuffer>(*this, 16);
 
-    create_uniform_buffer<PerFrameConstantBuffer>(g_per_frame_cache);
-    create_uniform_buffer<PerSceneConstantBuffer>(g_constantCache);
-    create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
-    create_uniform_buffer<PointShadowConstantBuffer>(g_point_shadow_cache);
-    create_uniform_buffer<EnvConstantBuffer>(g_env_cache);
-    create_uniform_buffer<ParticleConstantBuffer>(g_particleCache);
+    CreateUniformBuffer<PerFrameConstantBuffer>(g_per_frame_cache);
+    CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
+    CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
+    CreateUniformBuffer<PointShadowConstantBuffer>(g_point_shadow_cache);
+    CreateUniformBuffer<EnvConstantBuffer>(g_env_cache);
+    CreateUniformBuffer<ParticleConstantBuffer>(g_particleCache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
@@ -274,6 +274,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
     return 0;
 }
 
+// @TODO: remove this
 static void FillMaterialConstantBuffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
     cb.u_base_color = material->base_color;
     cb.u_metallic = material->metallic;
@@ -371,26 +372,37 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateParticles(const Scene& p_scene) {
-    unused(p_scene);
+    for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
+        if (!emitter.particleBuffer) {
+            // create buffer
+            emitter.particleBuffer = CreateStructuredBuffer({
+                .elementSize = 4 * sizeof(vec4),
+                .elementCount = MAX_PARTICLE_COUNT,
+                .defaultSlot = 10,
+            });
+            emitter.counterBuffer = CreateStructuredBuffer({
+                .elementSize = 20,
+                .elementCount = 1,
+                .defaultSlot = 11,
+            });
+            emitter.deadBuffer = CreateStructuredBuffer({
+                .elementSize = sizeof(int),
+                .elementCount = MAX_PARTICLE_COUNT,
+                .defaultSlot = 12,
+            });
+            emitter.aliveBuffer[0] = CreateStructuredBuffer({
+                .elementSize = sizeof(int),
+                .elementCount = MAX_PARTICLE_COUNT,
+            });
+            emitter.aliveBuffer[1] = CreateStructuredBuffer({
+                .elementSize = sizeof(int),
+                .elementCount = MAX_PARTICLE_COUNT,
+            });
 
-    // bool should_break = true;
-
-    // for (auto [emitter_entity, emitter_component] : p_scene.m_ParticleEmitterComponents) {
-    //     m_particle_count = 0;
-    //     for (const auto& particle : emitter_component.GetParticlePoolRef()) {
-    //         if (particle.isActive) {
-    //             if (m_particle_count >= array_length(g_particleCache.cache.globalParticleTransforms)) {
-    //                 break;
-    //             }
-    //             g_particleCache.cache.globalParticleTransforms[m_particle_count++] = vec4(particle.position, emitter_component.GetParticleScale());
-    //         }
-    //     }
-
-    //    // @TODO: only support 1 emitter
-    //    if (should_break) {
-    //        break;
-    //    }
-    //}
+            SetPipelineState(PROGRAM_PARTICLE_INIT);
+            Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+        }
+    }
 }
 
 /// @TODO: refactor lights

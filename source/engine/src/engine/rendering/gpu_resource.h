@@ -75,21 +75,18 @@ struct GpuTextureDesc {
     RenderTargetResourceName name;
 };
 
-struct GpuBufferDesc {
-    uint32_t byteWidth;
-    BufferUsage usage;
-    uint32_t bindFlags;
-    uint32_t cpuAccessFlags;
-    uint32_t miscFlags;
-    uint32_t structureByteStride;
+struct GpuStructuredBufferDesc {
+    uint32_t elementSize;
+    uint32_t elementCount;
+    uint32_t defaultSlot;
 };
 
 struct GpuStructuredBuffer {
-    GpuStructuredBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
+    GpuStructuredBuffer(const GpuStructuredBufferDesc& p_desc) : desc(p_desc) {}
 
     virtual ~GpuStructuredBuffer() = default;
 
-    const GpuBufferDesc desc;
+    const GpuStructuredBufferDesc desc;
 };
 
 struct GpuTexture {

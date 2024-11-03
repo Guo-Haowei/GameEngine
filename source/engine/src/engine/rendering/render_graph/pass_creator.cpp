@@ -9,14 +9,8 @@
 #include "core/base/random.h"
 #include "core/framework/scene_manager.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
-#include "drivers/opengl/opengl_prerequisites.h"
 
 namespace {
-
-GLuint g_particleSsbo;
-GLuint g_counterSsbo;
-GLuint g_deadSsbo;
-GLuint g_aliveSsbo[2];
 
 struct UAV {
     Microsoft::WRL::ComPtr<ID3D11Buffer> rwBuffer;
@@ -107,6 +101,7 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     cache.u_Seeds = vec3(Random::Float(), Random::Float(), Random::Float());
     cache.u_ParticlesPerFrame = 5;
 
+    ParticleEmitterComponent* particle_emitter = nullptr;
     if (scene.GetCount<ParticleEmitterComponent>()) {
         for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
             const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
@@ -115,6 +110,7 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
             cache.u_Scale = emitter.particleScale;
             cache.u_LifeSpan = emitter.particleLifeSpan;
             cache.u_ParticlesPerFrame = static_cast<int>(emitter.particlesPerSec * scene.m_elapsedTime);
+            particle_emitter = &emitter;
         }
     }
 
@@ -122,49 +118,10 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
 
     const bool is_opengl = gm.GetBackend() == Backend::OPENGL;
 
-    if (is_opengl) {
-        if (g_particleSsbo == 0) {
-            {  // particles
-                glGenBuffers(1, &g_particleSsbo);
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_particleSsbo);
-                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * 4 * sizeof(vec4);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 10, g_particleSsbo);
-            }
-            {  // counters
-                glGenBuffers(1, &g_counterSsbo);
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_counterSsbo);
-                constexpr size_t buffer_size = 256;
-                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 11, g_counterSsbo);
-            }
-            {  // dead particles
-                glGenBuffers(1, &g_deadSsbo);
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_deadSsbo);
-                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * sizeof(int);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, g_deadSsbo);
-            }
-            {  // alive particles 0
-                glGenBuffers(1, &g_aliveSsbo[0]);
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_aliveSsbo[0]);
-                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * sizeof(int);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
-            }
-            {  // alive particles 1
-                glGenBuffers(1, &g_aliveSsbo[1]);
-                glBindBuffer(GL_SHADER_STORAGE_BUFFER, g_aliveSsbo[1]);
-                constexpr size_t buffer_size = MAX_PARTICLE_COUNT * sizeof(int);
-                glBufferData(GL_SHADER_STORAGE_BUFFER, buffer_size, nullptr, GL_STATIC_DRAW);
-            }
+    gm.BindStructuredBuffer(particle_emitter->aliveBuffer[pre_sim_idx].get(), 13);
+    gm.BindStructuredBuffer(particle_emitter->aliveBuffer[post_sim_idx].get(), 14);
 
-            gm.SetPipelineState(PROGRAM_PARTICLE_INIT);
-            gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-        }
-
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 13, g_aliveSsbo[pre_sim_idx]);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 14, g_aliveSsbo[post_sim_idx]);
-    } else {
+    if (!is_opengl) {
         D3d11GraphicsManager* d3d_gm = dynamic_cast<D3d11GraphicsManager*>(&gm);
         DEV_ASSERT(d3d_gm);
         auto& device = d3d_gm->GetD3dDevice();

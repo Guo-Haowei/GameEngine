@@ -277,7 +277,7 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
 }
 
-std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
+std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
     unused(p_desc);
     // D3D11_BUFFER_DESC buffer_desc{};
     // buffer_desc.ByteWidth = p_desc.byteWidth;
@@ -296,6 +296,12 @@ std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffe
     // auto result = std::make_shared<D3d11Buffer>(p_desc);
     // result->internalBuffer = d3d_buffer;
     return nullptr;
+}
+
+void D3d11GraphicsManager::BindStructuredBuffer(const GpuStructuredBuffer* p_buffer, int p_slot) {
+    unused(p_buffer);
+    unused(p_slot);
+    return;
 }
 
 std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
