@@ -11,11 +11,15 @@ dxc_path = os.path.join(project_dir, 'bin/dxc')
 spriv_cross_path = os.path.join(project_dir, 'bin/spirv-cross')
 
 input_shaders = [
+    { 'path': 'shadowmap_point.vert', 'animated': True, },
+    { 'path': 'shadowmap_point.pixel', 'animated': False, },
     { 'path': 'bloom_setup.comp', 'animated': False, },
     { 'path': 'bloom_downsample.comp', 'animated': False, },
     { 'path': 'bloom_upsample.comp', 'animated': False, },
-    { 'path': 'shadowmap_point.vert', 'animated': True, },
-    { 'path': 'shadowmap_point.pixel', 'animated': False, },
+    { 'path': 'particle_initialization.comp', 'animated': False, },
+    { 'path': 'particle_kickoff.comp', 'animated': False, },
+    { 'path': 'particle_emission.comp', 'animated': False, },
+    { 'path': 'particle_simulation.comp', 'animated': False, },
 ]
 
 def generate(hlsl_source, animated):
