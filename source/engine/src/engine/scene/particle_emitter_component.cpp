@@ -1,39 +1,33 @@
 #include "particle_emitter_component.h"
 
 #include "core/base/random.h"
+#include "core/framework/event_queue.h"
 #include "core/io/archive.h"
 
 namespace my {
 
-ParticleEmitterComponent::ParticleEmitterComponent() {
-    m_maxParticleCount = 1000;
-    m_emittedParticlesPerSecond = 100;
-    m_particleScale = 0.02f;
-    m_particleLifeSpan = 2.0f;
-    m_startingVelocity = vec3(0.0f);
-}
-
 void ParticleEmitterComponent::Update(float p_elapsedTime, const vec3& p_position) {
-    // @TODO: update properly
     unused(p_elapsedTime);
     unused(p_position);
+
+    aliveBufferIndex = 1 - aliveBufferIndex;
 }
 
 void ParticleEmitterComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     if (p_archive.IsWriteMode()) {
-        p_archive << m_maxParticleCount;
-        p_archive << m_emittedParticlesPerSecond;
-        p_archive << m_particleScale;
-        p_archive << m_particleLifeSpan;
-        p_archive << m_startingVelocity;
+        p_archive << maxParticleCount;
+        p_archive << particlesPerFrame;
+        p_archive << particleScale;
+        p_archive << particleLifeSpan;
+        p_archive << startingVelocity;
     } else {
-        p_archive >> m_maxParticleCount;
-        p_archive >> m_emittedParticlesPerSecond;
-        p_archive >> m_particleScale;
-        p_archive >> m_particleLifeSpan;
-        p_archive >> m_startingVelocity;
+        p_archive >> maxParticleCount;
+        p_archive >> particlesPerFrame;
+        p_archive >> particleScale;
+        p_archive >> particleLifeSpan;
+        p_archive >> startingVelocity;
     }
 }
 

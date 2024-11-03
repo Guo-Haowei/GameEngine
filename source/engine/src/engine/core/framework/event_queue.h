@@ -5,9 +5,9 @@ namespace my {
 class EventListener;
 class Scene;
 
-enum EventType {
-    EVENT_WINDOW_RESIZE,
-    EVENT_SCENE_CHANGED,
+enum class EventType {
+    WINDOW_RESIZE,
+    SCENE_CHANGED,
 };
 
 class Event {
@@ -22,7 +22,7 @@ protected:
 
 class SceneChangeEvent : public Event {
 public:
-    SceneChangeEvent(Scene* scene) : Event(EVENT_SCENE_CHANGED), m_scene(scene) {}
+    SceneChangeEvent(Scene* scene) : Event(EventType::SCENE_CHANGED), m_scene(scene) {}
 
     const Scene* GetScene() const { return m_scene; }
 
@@ -32,7 +32,7 @@ protected:
 
 class ResizeEvent : public Event {
 public:
-    ResizeEvent(int width, int height) : Event(EVENT_WINDOW_RESIZE), m_width(width), m_height(height) {}
+    ResizeEvent(int width, int height) : Event(EventType::WINDOW_RESIZE), m_width(width), m_height(height) {}
 
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }

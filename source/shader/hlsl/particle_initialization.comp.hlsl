@@ -7,9 +7,9 @@
 
     // @TODO: consider remove this branching
     if (index == 0) {
-        GlobalParticleCounter[0].dead_count = MAX_PARTICLE_COUNT;
-        GlobalParticleCounter[0].alive_count[0] = 0;
-        GlobalParticleCounter[0].alive_count[1] = 0;
+        GlobalParticleCounter[0].deadCount = MAX_PARTICLE_COUNT;
+        GlobalParticleCounter[0].aliveCount[0] = 0;
+        GlobalParticleCounter[0].aliveCount[1] = 0;
     }
 
     if (index < MAX_PARTICLE_COUNT) {

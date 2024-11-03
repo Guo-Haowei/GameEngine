@@ -6,6 +6,7 @@
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
+#include "particle_defines.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
@@ -34,7 +35,7 @@ ConstantBuffer<EnvConstantBuffer> g_env_cache;
 ConstantBuffer<ParticleConstantBuffer> g_particleCache;
 
 template<typename T>
-static void create_uniform_buffer(ConstantBuffer<T>& p_buffer) {
+static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     constexpr int slot = T::GetUniformBufferSlot();
     p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(slot, sizeof(T));
 }
@@ -50,12 +51,12 @@ bool GraphicsManager::Initialize() {
     m_context.material_uniform = ::my::CreateUniform<MaterialConstantBuffer>(*this, 2048 * 16);
     m_context.bone_uniform = ::my::CreateUniform<BoneConstantBuffer>(*this, 16);
 
-    create_uniform_buffer<PerFrameConstantBuffer>(g_per_frame_cache);
-    create_uniform_buffer<PerSceneConstantBuffer>(g_constantCache);
-    create_uniform_buffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
-    create_uniform_buffer<PointShadowConstantBuffer>(g_point_shadow_cache);
-    create_uniform_buffer<EnvConstantBuffer>(g_env_cache);
-    create_uniform_buffer<ParticleConstantBuffer>(g_particleCache);
+    CreateUniformBuffer<PerFrameConstantBuffer>(g_per_frame_cache);
+    CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
+    CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
+    CreateUniformBuffer<PointShadowConstantBuffer>(g_point_shadow_cache);
+    CreateUniformBuffer<EnvConstantBuffer>(g_env_cache);
+    CreateUniformBuffer<ParticleConstantBuffer>(g_particleCache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
@@ -274,6 +275,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
     return 0;
 }
 
+// @TODO: remove this
 static void FillMaterialConstantBuffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
     cb.u_base_color = material->base_color;
     cb.u_metallic = material->metallic;
@@ -371,26 +373,39 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateParticles(const Scene& p_scene) {
-    unused(p_scene);
+    for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
+        if (!emitter.particleBuffer) {
+            // create buffer
+            emitter.counterBuffer = CreateStructuredBuffer({
+                .elementSize = sizeof(ParticleCounter),
+                .elementCount = 1,
+            });
+            emitter.deadBuffer = CreateStructuredBuffer({
+                .elementSize = sizeof(int),
+                .elementCount = MAX_PARTICLE_COUNT,
+            });
+            emitter.aliveBuffer[0] = CreateStructuredBuffer({
+                .elementSize = sizeof(int),
+                .elementCount = MAX_PARTICLE_COUNT,
+            });
+            emitter.aliveBuffer[1] = CreateStructuredBuffer({
+                .elementSize = sizeof(int),
+                .elementCount = MAX_PARTICLE_COUNT,
+            });
+            emitter.particleBuffer = CreateStructuredBuffer({
+                .elementSize = sizeof(Particle),
+                .elementCount = MAX_PARTICLE_COUNT,
+            });
 
-    // bool should_break = true;
+            SetPipelineState(PROGRAM_PARTICLE_INIT);
 
-    // for (auto [emitter_entity, emitter_component] : p_scene.m_ParticleEmitterComponents) {
-    //     m_particle_count = 0;
-    //     for (const auto& particle : emitter_component.GetParticlePoolRef()) {
-    //         if (particle.isActive) {
-    //             if (m_particle_count >= array_length(g_particleCache.cache.globalParticleTransforms)) {
-    //                 break;
-    //             }
-    //             g_particleCache.cache.globalParticleTransforms[m_particle_count++] = vec4(particle.position, emitter_component.GetParticleScale());
-    //         }
-    //     }
-
-    //    // @TODO: only support 1 emitter
-    //    if (should_break) {
-    //        break;
-    //    }
-    //}
+            BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
+            BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
+            Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+            UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
+            UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
+        }
+    }
 }
 
 /// @TODO: refactor lights
@@ -441,8 +456,8 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
 
                 PerPassConstantBuffer pass_constant;
                 // @TODO: Build correct matrices
-                pass_constant.g_projection_matrix = light.projection_matrix;
-                pass_constant.g_view_matrix = light.view_matrix;
+                pass_constant.c_projectionMatrix = light.projection_matrix;
+                pass_constant.c_viewMatrix = light.view_matrix;
                 m_shadowPasses[0].pass_idx = static_cast<int>(m_context.pass_cache.size());
                 m_context.pass_cache.emplace_back(pass_constant);
 
@@ -527,14 +542,14 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
 
     // main pass
     PerPassConstantBuffer pass_constant;
-    pass_constant.g_view_matrix = camera.getViewMatrix();
+    pass_constant.c_viewMatrix = camera.getViewMatrix();
 
     const float fovy = camera.getFovy().ToRad();
     const float aspect = camera.getAspect();
     if (GetBackend() == Backend::OPENGL) {
-        pass_constant.g_projection_matrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.c_projectionMatrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     } else {
-        pass_constant.g_projection_matrix = BuildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     }
 
     m_mainPass.pass_idx = static_cast<int>(m_context.pass_cache.size());
@@ -573,7 +588,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
         }
 
         PerBatchConstantBuffer batch_buffer;
-        batch_buffer.u_world_matrix = world_matrix;
+        batch_buffer.c_worldMatrix = world_matrix;
 
         BatchContext draw;
         draw.flags = 0;

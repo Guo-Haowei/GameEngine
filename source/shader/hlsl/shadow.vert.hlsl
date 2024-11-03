@@ -7,15 +7,15 @@ float4 main(vsinput_mesh input) : SV_POSITION {
     boneTransform += u_bones[input.boneIndex.y] * input.boneWeight.y;
     boneTransform += u_bones[input.boneIndex.z] * input.boneWeight.z;
     boneTransform += u_bones[input.boneIndex.w] * input.boneWeight.w;
-    float4x4 world_matrix = mul(u_world_matrix, boneTransform);
+    float4x4 world_matrix = mul(c_worldMatrix, boneTransform);
 #else
-    float4x4 world_matrix = u_world_matrix;
+    float4x4 world_matrix = c_worldMatrix;
 #endif
 
     float4 position = float4(input.position, 1.0);
     position = mul(world_matrix, position);
-    position = mul(g_view_matrix, position);
-    position = mul(g_projection_matrix, position);
+    position = mul(c_viewMatrix, position);
+    position = mul(c_projectionMatrix, position);
 
     return position;
 }

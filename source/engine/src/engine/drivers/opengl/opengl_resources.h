@@ -53,10 +53,27 @@ struct OpenGLUniformBuffer : public ConstantBufferBase {
     using ConstantBufferBase::ConstantBufferBase;
 
     ~OpenGLUniformBuffer() {
-        clear();
+        Clear();
     }
 
-    void clear() {
+    void Clear() {
+        if (handle) {
+            glDeleteBuffers(1, &handle);
+            handle = 0;
+        }
+    }
+
+    uint32_t handle = 0;
+};
+
+struct OpenGLStructuredBuffer : public GpuStructuredBuffer {
+    using GpuStructuredBuffer::GpuStructuredBuffer;
+
+    ~OpenGLStructuredBuffer() {
+        Clear();
+    }
+
+    void Clear() {
         if (handle) {
             glDeleteBuffers(1, &handle);
             handle = 0;

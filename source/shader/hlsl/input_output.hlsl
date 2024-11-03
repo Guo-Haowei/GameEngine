@@ -23,6 +23,11 @@ struct vsoutput_position {
     float3 world_position : POSITION;
 };
 
+struct vsoutput_color {
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
 struct vsoutput_mesh {
     float4 position : SV_POSITION;
     float3 world_position : POSITION;

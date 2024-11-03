@@ -332,20 +332,51 @@ void OpenGLGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* 
     glBindImageTexture(p_slot, handle, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 }
 
-std::shared_ptr<GpuBuffer> OpenGLGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) {
-    unused(p_desc);
-    return nullptr;
+std::shared_ptr<GpuStructuredBuffer> OpenGLGraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
+    GLuint handle = 0;
+    glGenBuffers(1, &handle);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    auto buffer = std::make_shared<OpenGLStructuredBuffer>(p_desc);
+    buffer->handle = handle;
+    return buffer;
+}
+
+void OpenGLGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<const OpenGLStructuredBuffer*>(p_buffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, buffer->handle);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    return;
+}
+
+// @TODO: refactor
+void OpenGLGraphicsManager::UnbindStructuredBuffer(int p_slot) {
+    unused(p_slot);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, 0);
+}
+
+void OpenGLGraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    BindStructuredBuffer(p_slot, p_buffer);
+}
+
+void OpenGLGraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
+    UnbindStructuredBuffer(p_slot);
 }
 
 std::shared_ptr<ConstantBufferBase> OpenGLGraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
-    auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
     GLuint handle = 0;
+
     glGenBuffers(1, &handle);
     glBindBuffer(GL_UNIFORM_BUFFER, handle);
     glBufferData(GL_UNIFORM_BUFFER, p_capacity, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     glBindBufferBase(GL_UNIFORM_BUFFER, p_slot, handle);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    auto buffer = std::make_shared<OpenGLUniformBuffer>(p_slot, p_capacity);
     buffer->handle = handle;
     return buffer;
 }

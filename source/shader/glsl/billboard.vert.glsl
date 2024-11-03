@@ -15,7 +15,7 @@ void main() {
     position.x += 0.3 * x_offset;
     position.z += 0.3 * z_offset;
 
-    mat4 view_model = g_view_matrix;
+    mat4 view_model = c_viewMatrix;
 #if 0
     view_model[0][0] = 1.0;
     view_model[0][1] = 0.0;
@@ -28,5 +28,5 @@ void main() {
     view_model[2][2] = 1.0;
 #endif
 
-    gl_Position = g_projection_matrix * view_model * position;
+    gl_Position = c_projectionMatrix * view_model * position;
 }
