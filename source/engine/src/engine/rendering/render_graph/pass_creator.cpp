@@ -115,51 +115,53 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
             gm.SetPipelineState(PROGRAM_PARTICLE_INIT);
             gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
         }
+    }
 
-        // @TODO: use 1 bit
-        static int mSimIndex = 1;
-        mSimIndex = 1 - mSimIndex;
+    // @TODO: use 1 bit
+    static int mSimIndex = 1;
+    mSimIndex = 1 - mSimIndex;
 
-        int pre_sim_idx = mSimIndex;
-        int post_sim_idx = 1 - mSimIndex;
-        const Scene& scene = SceneManager::GetScene();
+    int pre_sim_idx = mSimIndex;
+    int post_sim_idx = 1 - mSimIndex;
+    const Scene& scene = SceneManager::GetScene();
 
-        auto& cache = g_particleCache.cache;
-        cache.u_Position = vec3(0.0f);
-        cache.u_Velocity = vec3(0.0f);
-        cache.u_Scale = 1.0f;
-        cache.u_LifeSpan = 2.0f;
-        cache.u_PreSimIdx = pre_sim_idx;
-        cache.u_PostSimIdx = post_sim_idx;
-        cache.u_ElapsedTime = scene.m_elapsedTime;
-        cache.u_Seeds = vec3(Random::Float(), Random::Float(), Random::Float());
-        cache.u_ParticlesPerFrame = 5;
+    auto& cache = g_particleCache.cache;
+    cache.u_Position = vec3(0.0f);
+    cache.u_Velocity = vec3(0.0f);
+    cache.u_Scale = 1.0f;
+    cache.u_LifeSpan = 2.0f;
+    cache.u_PreSimIdx = pre_sim_idx;
+    cache.u_PostSimIdx = post_sim_idx;
+    cache.u_ElapsedTime = scene.m_elapsedTime;
+    cache.u_Seeds = vec3(Random::Float(), Random::Float(), Random::Float());
+    cache.u_ParticlesPerFrame = 5;
 
-        if (scene.GetCount<ParticleEmitterComponent>()) {
-            for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
-                const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
-                cache.u_Velocity = emitter.GetStartingVelocity();
-                cache.u_Position = transform->GetTranslation();
-                cache.u_Scale = emitter.GetParticleScale();
-                cache.u_LifeSpan = emitter.GetParticleLifeSpan();
-                cache.u_ParticlesPerFrame = static_cast<int>(emitter.GetEmittedParticlesPerSecondRef() * scene.m_elapsedTime);
-            }
+    if (scene.GetCount<ParticleEmitterComponent>()) {
+        for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
+            const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
+            cache.u_Velocity = emitter.GetStartingVelocity();
+            cache.u_Position = transform->GetTranslation();
+            cache.u_Scale = emitter.GetParticleScale();
+            cache.u_LifeSpan = emitter.GetParticleLifeSpan();
+            cache.u_ParticlesPerFrame = static_cast<int>(emitter.GetEmittedParticlesPerSecondRef() * scene.m_elapsedTime);
         }
+    }
 
-        g_particleCache.update();
+    g_particleCache.update();
 
+    if (is_opengl) {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, g_aliveSsbo[pre_sim_idx]);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, g_aliveSsbo[post_sim_idx]);
-
-        gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
-        gm.Dispatch(1, 1, 1);
-
-        gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-        gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
     }
+
+    gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
+    gm.Dispatch(1, 1, 1);
+
+    gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
+    gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+    gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
+    gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
 
     gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
     RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);

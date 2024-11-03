@@ -1,30 +1,33 @@
-#include "../cbuffer.h"
-#include "../particle_defines.h"
-
-layout(local_size_x = PARTICLE_LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
+#include "cbuffer.h"
+#include "particle_defines.h"
 
 void push_dead_index(uint index) {
-    uint insert_idx = atomicAdd(GlobalParticleCounter[0].dead_count, 1);
+    uint insert_idx;
+    InterlockedAdd(GlobalParticleCounter[0].dead_count, 1, insert_idx);
     GlobalDeadIndices[insert_idx] = index;
 }
 
 uint pop_dead_index() {
-    uint index = atomicAdd(GlobalParticleCounter[0].dead_count, -1);
+    uint index;
+    InterlockedAdd(GlobalParticleCounter[0].dead_count, -1, index);
     return GlobalDeadIndices[index - 1];
 }
 
 void push_alive_index(uint index) {
-    uint insert_idx = atomicAdd(GlobalParticleCounter[0].alive_count[u_PostSimIdx], 1);
+    uint insert_idx;
+    InterlockedAdd(GlobalParticleCounter[0].alive_count[u_PostSimIdx], 1, insert_idx);
     GlobalAliveIndicesPostSim[insert_idx] = index;
 }
 
 uint pop_alive_index() {
-    uint index = atomicAdd(GlobalParticleCounter[0].alive_count[u_PreSimIdx], -1);
+    uint index;
+    InterlockedAdd(GlobalParticleCounter[0].alive_count[u_PreSimIdx], -1, index);
     return GlobalAliveIndicesPreSim[index - 1];
 }
 
-void main() {
-    uint index = gl_GlobalInvocationID.x;
+[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id
+                                                  : SV_DISPATCHTHREADID) {
+    uint index = dispatch_thread_id.x;
 
     if (index < GlobalParticleCounter[0].simulation_count) {
         // Consume an Alive particle index
@@ -41,11 +44,7 @@ void main() {
 
             GlobalParticleData[particle_index] = particle;
 
-            // Append index back into AliveIndices list
             push_alive_index(particle_index);
-
-            // Increment draw count
         }
     }
 }
-

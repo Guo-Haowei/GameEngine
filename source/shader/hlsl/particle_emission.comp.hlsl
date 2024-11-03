@@ -1,34 +1,35 @@
-#include "../cbuffer.h"
-#include "../particle_defines.h"
+#include "cbuffer.h"
+#include "particle_defines.h"
 
-layout(local_size_x = PARTICLE_LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
-
-float Random(vec3 co) {
-    return fract(sin(dot(co.xyz, vec3(12.9898, 78.233, 45.5432))) * 43758.5453);
+float Random(float3 co) {
+    return frac(sin(dot(co.xyz, float3(12.9898, 78.233, 45.5432))) * 43758.5453);
 }
 
 uint pop_dead_index() {
-    uint index = atomicAdd(GlobalParticleCounter[0].dead_count, -1);
+    int index;
+    InterlockedAdd(GlobalParticleCounter[0].dead_count, -1, index);
     return GlobalDeadIndices[index - 1];
 }
 
-void push_alive_index(uint index) {
-    uint insert_idx = atomicAdd(GlobalParticleCounter[0].alive_count[u_PreSimIdx], 1);
-    GlobalAliveIndicesPreSim[insert_idx] = index;
+void push_alive_index(uint p_index) {
+    uint insert_index;
+    InterlockedAdd(GlobalParticleCounter[0].alive_count[u_PreSimIdx], 1, insert_index);
+    GlobalAliveIndicesPreSim[insert_index] = p_index;
 }
 
-void main() {
-    uint index = gl_GlobalInvocationID.x;
+[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id
+                                                  : SV_DISPATCHTHREADID) {
+    uint index = dispatch_thread_id.x;
 
     if (index < GlobalParticleCounter[0].emission_count) {
         uint particle_index = pop_dead_index();
 
-        vec3 velocity = u_Velocity;
+        float3 velocity = u_Velocity;
         velocity.x += Random(u_Seeds.xyz / (index + 1)) - 0.5;
         velocity.y += Random(u_Seeds.yzx / (index + 1)) - 0.5;
         velocity.z += Random(u_Seeds.zxy / (index + 1)) - 0.5;
 
-        vec3 color;
+        float3 color;
         color.r = Random(u_Seeds.xzy / (index + 1));
         color.g = Random(u_Seeds.zyx / (index + 1));
         color.b = Random(u_Seeds.yzx / (index + 1));

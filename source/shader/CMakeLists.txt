@@ -12,7 +12,15 @@ foreach(FILENAME ${SRC})
     endif()
 endforeach()
 
-add_library(${LIB_NAME} STATIC ${SRC})
+set(FILTERED_SRC)
+
+foreach(ITEM ${SRC})
+    if(NOT ITEM MATCHES "glsl_generated")
+        list(APPEND FILTERED_SRC ${ITEM})
+    endif()
+endforeach()
+
+add_library(${LIB_NAME} STATIC ${FILTERED_SRC})
 
 set_target_properties(${LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/ FILES ${SRC})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/ FILES ${FILTERED_SRC})

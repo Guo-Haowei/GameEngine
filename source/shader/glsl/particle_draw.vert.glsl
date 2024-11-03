@@ -5,7 +5,7 @@
 layout(location = 0) out vec3 pass_color;
 
 void main() {
-    Particle particle = ParticleData.particles[gl_InstanceID];
+    Particle particle = GlobalParticleData[gl_InstanceID];
 
     if (particle.lifeRemaining <= 0.0) {
         gl_Position = vec4(1000.0, 1000.0, 1000.0, 1.0);

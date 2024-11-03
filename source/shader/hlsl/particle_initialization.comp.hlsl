@@ -1,10 +1,9 @@
-#include "../cbuffer.h"
-#include "../particle_defines.h"
+#include "cbuffer.h"
+#include "particle_defines.h"
 
-layout(local_size_x = PARTICLE_LOCAL_SIZE, local_size_y = 1, local_size_z = 1) in;
-
-void main() {
-    uint index = gl_GlobalInvocationID.x;
+[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id
+                                                  : SV_DISPATCHTHREADID) {
+    const uint index = dispatch_thread_id.x;
 
     // @TODO: consider remove this branching
     if (index == 0) {
