@@ -96,7 +96,7 @@ vec3 LTC_Evaluate(vec3 N, vec3 V, vec3 P, mat3 Minv, vec4 points[4]) {
     texcoord = texcoord * LUT_SCALE + LUT_BIAS;
 
     // Fetch the form factor for horizon clipping
-    float scale = texture(u_ltc_2, texcoord).w;
+    float scale = texture(c_ltc2, texcoord).w;
 
     float sum = len * scale;
     if (!behind)

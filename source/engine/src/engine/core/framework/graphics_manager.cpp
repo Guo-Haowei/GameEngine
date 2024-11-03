@@ -279,10 +279,10 @@ uint64_t GraphicsManager::GetFinalImage() const {
 
 // @TODO: remove this
 static void FillMaterialConstantBuffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.u_base_color = material->base_color;
-    cb.u_metallic = material->metallic;
-    cb.u_roughness = material->roughness;
-    cb.u_emissive_power = material->emissive;
+    cb.c_baseColor = material->base_color;
+    cb.c_metallic = material->metallic;
+    cb.c_roughness = material->roughness;
+    cb.c_emissivePower = material->emissive;
 
     auto set_texture = [&](int p_idx, sampler2D& p_out_handle) {
         p_out_handle = 0;
@@ -310,9 +310,9 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
         return true;
     };
 
-    cb.u_has_base_color_map = set_texture(MaterialComponent::TEXTURE_BASE, cb.u_base_color_map_handle);
-    cb.u_has_normal_map = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.u_normal_map_handle);
-    cb.u_has_pbr_map = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.u_material_map_handle);
+    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.u_base_color_map_handle);
+    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.u_normal_map_handle);
+    cb.c_hasPbrMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.u_material_map_handle);
 }
 
 void GraphicsManager::Cleanup() {
@@ -338,18 +338,15 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
 
     auto& cache = g_per_frame_cache.cache;
-    cache.u_camera_position = camera.getPosition();
+    cache.c_cameraPosition = camera.getPosition();
 
-    cache.u_enable_vxgi = DVAR_GET_BOOL(r_enable_vxgi);
-    cache.u_debug_voxel_id = DVAR_GET_INT(r_debug_vxgi_voxel);
-    cache.u_no_texture = DVAR_GET_BOOL(r_no_texture);
-
-    cache.u_screen_width = (int)camera.getWidth();
-    cache.u_screen_height = (int)camera.getHeight();
+    cache.c_enableVxgi = DVAR_GET_BOOL(r_enable_vxgi);
+    cache.c_debugVoxelId = DVAR_GET_INT(r_debug_vxgi_voxel);
+    cache.c_noTexture = DVAR_GET_BOOL(r_no_texture);
 
     // Bloom
-    cache.u_bloom_threshold = DVAR_GET_FLOAT(r_bloom_threshold);
-    cache.u_enable_bloom = DVAR_GET_BOOL(r_enable_bloom);
+    cache.c_bloomThreshold = DVAR_GET_FLOAT(r_bloom_threshold);
+    cache.c_enableBloom = DVAR_GET_BOOL(r_enable_bloom);
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
@@ -369,10 +366,10 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = world_size * texel_size;
 
-    cache.u_world_center = world_center;
-    cache.u_world_size_half = 0.5f * world_size;
-    cache.u_texel_size = texel_size;
-    cache.u_voxel_size = voxel_size;
+    cache.c_worldCenter = world_center;
+    cache.c_worldSizeHalf = 0.5f * world_size;
+    cache.c_texelSize = texel_size;
+    cache.c_voxelSize = voxel_size;
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
@@ -434,7 +431,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
 
     auto& cache = g_per_frame_cache.cache;
 
-    cache.u_light_count = light_count;
+    cache.c_lightCount = light_count;
 
     int idx = 0;
     for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
@@ -444,7 +441,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
         DEV_ASSERT(light_transform && material);
 
         // SHOULD BE THIS INDEX
-        Light& light = cache.u_lights[idx];
+        Light& light = cache.c_lights[idx];
         bool cast_shadow = light_component.CastShadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.GetType();
@@ -622,7 +619,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
 
             BoneConstantBuffer bone;
-            memcpy(bone.u_bones, armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
+            memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
             draw.bone_idx = m_context.bone_cache.FindOrAdd(mesh.armature_id, bone);

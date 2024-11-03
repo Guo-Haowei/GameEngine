@@ -112,7 +112,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     float2 texcoord = input.uv;
 
     float3 base_color = u_gbuffer_base_color_map.Sample(u_sampler, texcoord).rgb;
-    if (u_no_texture != 0) {
+    if (c_noTexture != 0) {
         base_color = float3(0.6, 0.6, 0.6);
     }
 
@@ -129,7 +129,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     float3 N = u_gbuffer_normal_map.Sample(u_sampler, texcoord).rgb;
     float3 color = 0.5 * (N + float3(1.0, 1.0, 1.0));
 
-    const vec3 V = normalize(u_camera_position - world_position);
+    const vec3 V = normalize(c_cameraPosition - world_position);
     const float NdotV = clamp(dot(N, V), 0.0, 1.0);
     vec3 R = reflect(-V, N);
 
@@ -137,12 +137,12 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     vec3 F0 = lerp(float3(0.04, 0.04, 0.04), base_color, metallic);
 
     for (int light_idx = 0; light_idx < MAX_LIGHT_COUNT; ++light_idx) {
-        if (light_idx >= u_light_count) {
+        if (light_idx >= c_lightCount) {
             break;
         }
 
-        Light light = u_lights[light_idx];
-        int light_type = u_lights[light_idx].type;
+        Light light = c_lights[light_idx];
+        int light_type = c_lights[light_idx].type;
         vec3 direct_lighting = vec3(0.0, 0.0, 0.0);
         float shadow = 0.0;
         const vec3 radiance = light.color;
@@ -169,7 +169,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
                     const vec3 H = normalize(V + L);
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                     if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(light, world_position, u_camera_position);
+                        shadow = point_shadow_calculation(light, world_position, c_cameraPosition);
                     }
                 }
             } break;

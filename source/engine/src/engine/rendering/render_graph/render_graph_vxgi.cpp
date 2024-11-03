@@ -138,7 +138,7 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[i];
+        g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[i];
         g_env_cache.update();
         RenderManager::GetSingleton().draw_skybox();
     }
@@ -181,7 +181,7 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[i];
+        g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[i];
         g_env_cache.update();
         RenderManager::GetSingleton().draw_skybox();
     }
@@ -202,8 +202,8 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
-            g_env_cache.cache.g_cube_projection_view_matrix = projection * view_matrices[face_id];
-            g_env_cache.cache.g_env_pass_roughness = (float)mip_idx / (float)(max_mip_levels - 1);
+            g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[face_id];
+            g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(max_mip_levels - 1);
             g_env_cache.update();
 
             GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, face_id, mip_idx);
@@ -266,10 +266,10 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     pos.x = 1.0f - half_width_ndc;
     pos.y = 1.0f - half_height_ndc;
 
-    g_debug_draw_cache.cache.c_debug_draw_size = size;
-    g_debug_draw_cache.cache.c_debug_draw_pos = pos;
-    g_debug_draw_cache.cache.c_display_channel = p_channel;
-    g_debug_draw_cache.cache.c_debug_draw_map = p_handle;
+    g_debug_draw_cache.cache.c_debugDrawSize = size;
+    g_debug_draw_cache.cache.c_debugDrawPos = pos;
+    g_debug_draw_cache.cache.c_displayChannel = p_channel;
+    g_debug_draw_cache.cache.c_debugDrawMap = p_handle;
     g_debug_draw_cache.update();
     RenderManager::GetSingleton().draw_quad();
 }

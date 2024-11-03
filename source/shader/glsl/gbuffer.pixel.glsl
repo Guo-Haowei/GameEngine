@@ -15,18 +15,18 @@ in struct PS_INPUT {
 #include "../texture_binding.h"
 
 void main() {
-    vec4 albedo = u_base_color;
+    vec4 albedo = c_baseColor;
 
-    if (u_has_base_color_map != 0) {
+    if (c_hasBaseColorMap != 0) {
         albedo = texture(u_base_color_map, ps_in.uv, 0);
     }
     if (albedo.a < 0.001) {
         discard;
     }
 
-    float metallic = u_metallic;
-    float roughness = u_roughness;
-    if (u_has_pbr_map != 0) {
+    float metallic = c_metallic;
+    float roughness = c_roughness;
+    if (c_hasPbrMap != 0) {
         vec3 mr = texture(u_material_map, ps_in.uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
@@ -34,7 +34,7 @@ void main() {
 
     // TODO: get rid of branching
     vec3 N;
-    if (u_has_normal_map != 0) {
+    if (c_hasNormalMap != 0) {
         mat3 TBN = mat3(ps_in.T, ps_in.B, ps_in.N);
         N = normalize(TBN * (2.0 * texture(u_normal_map, ps_in.uv).xyz - 1.0));
     } else {
@@ -45,7 +45,7 @@ void main() {
     out_position = ps_in.position;
     out_normal = N;
 
-    out_emissive_roughness_metallic.r = u_emissive_power;
+    out_emissive_roughness_metallic.r = c_emissivePower;
     out_emissive_roughness_metallic.g = roughness;
     out_emissive_roughness_metallic.b = metallic;
 }
