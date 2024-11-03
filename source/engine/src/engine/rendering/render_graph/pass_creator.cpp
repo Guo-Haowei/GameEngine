@@ -2,6 +2,8 @@
 
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
+#include "core/math/geomath.h"
+#include "particle_defines.h"
 #include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
 
@@ -66,6 +68,7 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     }
 
     // @TODO: refactor particles
+    // this should be in a different pass
     const Scene& scene = SceneManager::GetScene();
     auto& cache = g_particleCache.cache;
 
@@ -73,24 +76,24 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
         const uint32_t pre_sim_idx = emitter.GetPreIndex();
         const uint32_t post_sim_idx = emitter.GetPostIndex();
         const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
-        cache.u_PreSimIdx = pre_sim_idx;
-        cache.u_PostSimIdx = post_sim_idx;
-        cache.u_ElapsedTime = scene.m_elapsedTime;
-        cache.u_LifeSpan = emitter.particleLifeSpan;
-        cache.u_Seeds = vec3(Random::Float(), Random::Float(), Random::Float());
-        cache.u_Scale = emitter.particleScale;
-        cache.u_Position = transform->GetTranslation();
-        cache.u_ParticlesPerFrame = emitter.particlesPerFrame;
-        cache.u_Velocity = emitter.startingVelocity;
-        cache.u_MaxParticleCount = emitter.maxParticleCount;
+        cache.c_preSimIdx = pre_sim_idx;
+        cache.c_postSimIdx = post_sim_idx;
+        cache.c_elapsedTime = scene.m_elapsedTime;
+        cache.c_lifeSpan = emitter.particleLifeSpan;
+        cache.c_seeds = vec3(Random::Float(), Random::Float(), Random::Float());
+        cache.c_emitterScale = emitter.particleScale;
+        cache.c_emitterPosition = transform->GetTranslation();
+        cache.c_particlesPerFrame = emitter.particlesPerFrame;
+        cache.c_emitterStartingVelocity = emitter.startingVelocity;
+        cache.c_emitterMaxParticleCount = emitter.maxParticleCount;
 
         g_particleCache.update();
 
-        gm.BindStructuredBuffer(16, emitter.counterBuffer.get());
-        gm.BindStructuredBuffer(17, emitter.deadBuffer.get());
-        gm.BindStructuredBuffer(18, emitter.aliveBuffer[pre_sim_idx].get());
-        gm.BindStructuredBuffer(19, emitter.aliveBuffer[post_sim_idx].get());
-        gm.BindStructuredBuffer(20, emitter.particleBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[pre_sim_idx].get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[post_sim_idx].get());
+        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
 
         gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
         gm.Dispatch(1, 1, 1);
@@ -101,18 +104,18 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
         gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
         gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
 
-        gm.UnbindStructuredBuffer(16);
-        gm.UnbindStructuredBuffer(17);
-        gm.UnbindStructuredBuffer(18);
-        gm.UnbindStructuredBuffer(19);
-        gm.UnbindStructuredBuffer(20);
+        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
+        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
 
         // Renderering
         gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
 
-        gm.BindStructuredBufferSRV(20, emitter.particleBuffer.get());
+        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
         RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
-        gm.UnbindStructuredBufferSRV(20);
+        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
     }
 }
 

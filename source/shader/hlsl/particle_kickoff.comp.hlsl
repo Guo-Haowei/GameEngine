@@ -3,12 +3,12 @@
 
 [numthreads(1, 1, 1)] void main(uint3 dispatch_thread_id
                                 : SV_DISPATCHTHREADID) {
-    int max_allocs = max(u_MaxParticleCount - int(GlobalParticleCounter[0].alive_count[u_PreSimIdx]), 0);
+    int max_allocs = max(c_emitterMaxParticleCount - int(GlobalParticleCounter[0].aliveCount[c_preSimIdx]), 0);
 
-    uint emission_count = min(uint(u_ParticlesPerFrame), GlobalParticleCounter[0].dead_count);
-    emission_count = min(uint(max_allocs), emission_count);
+    int emissionCount = min(c_particlesPerFrame, GlobalParticleCounter[0].deadCount);
+    emissionCount = min(max_allocs, emissionCount);
 
-    GlobalParticleCounter[0].emission_count = emission_count;
-    GlobalParticleCounter[0].simulation_count = GlobalParticleCounter[0].alive_count[u_PreSimIdx] + GlobalParticleCounter[0].emission_count;
-    GlobalParticleCounter[0].alive_count[u_PostSimIdx] = 0;
+    GlobalParticleCounter[0].emissionCount = emissionCount;
+    GlobalParticleCounter[0].simulationCount = GlobalParticleCounter[0].aliveCount[c_preSimIdx] + GlobalParticleCounter[0].emissionCount;
+    GlobalParticleCounter[0].aliveCount[c_postSimIdx] = 0;
 }

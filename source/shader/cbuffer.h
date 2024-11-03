@@ -60,15 +60,15 @@ struct Light {
 };
 
 CBUFFER(PerBatchConstantBuffer, 0) {
-    mat4 u_world_matrix;
+    mat4 c_worldMatrix;
     mat4 _per_batch_padding_0;
     mat4 _per_batch_padding_1;
     mat4 _per_batch_padding_2;
 };
 
 CBUFFER(PerPassConstantBuffer, 1) {
-    mat4 g_view_matrix;
-    mat4 g_projection_matrix;
+    mat4 c_viewMatrix;
+    mat4 c_projectionMatrix;
 
     mat4 _per_pass_padding_0;
     mat4 _per_pass_padding_1;
@@ -132,17 +132,17 @@ CBUFFER(BoneConstantBuffer, 4) {
 
 // @TODO: refactor name
 CBUFFER(ParticleConstantBuffer, 10) {
-    int u_PreSimIdx;
-    int u_PostSimIdx;
-    float u_ElapsedTime;
-    float u_LifeSpan;
+    int c_preSimIdx;
+    int c_postSimIdx;
+    float c_elapsedTime;
+    float c_lifeSpan;
 
-    vec3 u_Seeds;
-    float u_Scale;
-    vec3 u_Position;
-    int u_ParticlesPerFrame;
-    vec3 u_Velocity;
-    int u_MaxParticleCount;
+    vec3 c_seeds;
+    float c_emitterScale;
+    vec3 c_emitterPosition;
+    int c_particlesPerFrame;
+    vec3 c_emitterStartingVelocity;
+    int c_emitterMaxParticleCount;
 };
 
 #ifndef HLSL_LANG

@@ -6,6 +6,7 @@
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
+#include "particle_defines.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
 #include "rendering/rendering_dvars.h"
@@ -376,7 +377,7 @@ void GraphicsManager::UpdateParticles(const Scene& p_scene) {
         if (!emitter.particleBuffer) {
             // create buffer
             emitter.counterBuffer = CreateStructuredBuffer({
-                .elementSize = 20,
+                .elementSize = sizeof(ParticleCounter),
                 .elementCount = 1,
             });
             emitter.deadBuffer = CreateStructuredBuffer({
@@ -392,17 +393,17 @@ void GraphicsManager::UpdateParticles(const Scene& p_scene) {
                 .elementCount = MAX_PARTICLE_COUNT,
             });
             emitter.particleBuffer = CreateStructuredBuffer({
-                .elementSize = 4 * sizeof(vec4),
+                .elementSize = sizeof(Particle),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
 
             SetPipelineState(PROGRAM_PARTICLE_INIT);
 
-            BindStructuredBuffer(16, emitter.counterBuffer.get());
-            BindStructuredBuffer(17, emitter.deadBuffer.get());
+            BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
+            BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
             Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-            UnbindStructuredBuffer(16);
-            UnbindStructuredBuffer(17);
+            UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
+            UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
         }
     }
 }
@@ -455,8 +456,8 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
 
                 PerPassConstantBuffer pass_constant;
                 // @TODO: Build correct matrices
-                pass_constant.g_projection_matrix = light.projection_matrix;
-                pass_constant.g_view_matrix = light.view_matrix;
+                pass_constant.c_projectionMatrix = light.projection_matrix;
+                pass_constant.c_viewMatrix = light.view_matrix;
                 m_shadowPasses[0].pass_idx = static_cast<int>(m_context.pass_cache.size());
                 m_context.pass_cache.emplace_back(pass_constant);
 
@@ -541,14 +542,14 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
 
     // main pass
     PerPassConstantBuffer pass_constant;
-    pass_constant.g_view_matrix = camera.getViewMatrix();
+    pass_constant.c_viewMatrix = camera.getViewMatrix();
 
     const float fovy = camera.getFovy().ToRad();
     const float aspect = camera.getAspect();
     if (GetBackend() == Backend::OPENGL) {
-        pass_constant.g_projection_matrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.c_projectionMatrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     } else {
-        pass_constant.g_projection_matrix = BuildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
     }
 
     m_mainPass.pass_idx = static_cast<int>(m_context.pass_cache.size());
@@ -587,7 +588,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
         }
 
         PerBatchConstantBuffer batch_buffer;
-        batch_buffer.u_world_matrix = world_matrix;
+        batch_buffer.c_worldMatrix = world_matrix;
 
         BatchContext draw;
         draw.flags = 0;

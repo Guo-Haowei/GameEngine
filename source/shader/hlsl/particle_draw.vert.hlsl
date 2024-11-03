@@ -16,11 +16,15 @@ struct Particle {
 // @TODO: refactor
 StructuredBuffer<Particle> GlobalParticleData : register(t20);
 
-float4 main(vsinput_position input, uint instance_id
-            : SV_INSTANCEID) : SV_POSITION {
+vsoutput_color main(vsinput_position input, uint instance_id
+                    : SV_INSTANCEID) {
+    vsoutput_color output;
+
     Particle particle = GlobalParticleData[instance_id];
     if (particle.lifeRemaining <= 0.0) {
-        return float4(1000.0, 1000.0, 1000.0, 1.0);
+        output.color = float4(1.0, 1.0, 1.0, 1.0);
+        output.position = float4(1000.0, 1000.0, 1000.0, 1.0);
+        return output;
     }
 
     float3 t = particle.position.xyz;
@@ -40,7 +44,7 @@ float4 main(vsinput_position input, uint instance_id
 
     // make sure always face to screen
     // https://blog.42yeah.is/opengl/rendering/2023/06/24/opengl-billboards.html
-    float4x4 view_model_matrix = mul(g_view_matrix, model_matrix);
+    float4x4 view_model_matrix = mul(c_viewMatrix, model_matrix);
     view_model_matrix[0][0] = 1.0;
     view_model_matrix[0][1] = 0.0;
     view_model_matrix[0][2] = 0.0;
@@ -53,6 +57,9 @@ float4 main(vsinput_position input, uint instance_id
 
     float4 position = mul(scale_matrix, float4(input.position, 1.0));
     position = mul(view_model_matrix, position);
-    position = mul(g_projection_matrix, position);
-    return position;
+    position = mul(c_projectionMatrix, position);
+
+    output.position = position;
+    output.color.rgb = particle.color.rgb;
+    return output;
 }

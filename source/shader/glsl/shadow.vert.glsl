@@ -10,10 +10,10 @@ void main() {
     bone_matrix += u_bones[in_bone_id.y] * in_bone_weight.y;
     bone_matrix += u_bones[in_bone_id.z] * in_bone_weight.z;
     bone_matrix += u_bones[in_bone_id.w] * in_bone_weight.w;
-    mat4 world_matrix = u_world_matrix * bone_matrix;
+    mat4 world_matrix = c_worldMatrix * bone_matrix;
 #else
-    mat4 world_matrix = u_world_matrix;
+    mat4 world_matrix = c_worldMatrix;
 #endif
 
-    gl_Position = g_projection_matrix * g_view_matrix * world_matrix * vec4(in_position, 1.0);
+    gl_Position = c_projectionMatrix * c_viewMatrix * world_matrix * vec4(in_position, 1.0);
 }

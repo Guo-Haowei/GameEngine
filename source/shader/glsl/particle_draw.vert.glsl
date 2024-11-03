@@ -29,7 +29,7 @@ void main() {
 
     // make sure always face to screen
     // https://blog.42yeah.is/opengl/rendering/2023/06/24/opengl-billboards.html
-    mat4 view_model_matrix = g_view_matrix * model_matrix;
+    mat4 view_model_matrix = c_viewMatrix * model_matrix;
     view_model_matrix[0][0] = 1.0;
     view_model_matrix[0][1] = 0.0;
     view_model_matrix[0][2] = 0.0;
@@ -44,6 +44,6 @@ void main() {
     position = view_model_matrix * position;
 
     pass_color = particle.color.rgb;
-    gl_Position = g_projection_matrix * position;
+    gl_Position = c_projectionMatrix * position;
 }
 
