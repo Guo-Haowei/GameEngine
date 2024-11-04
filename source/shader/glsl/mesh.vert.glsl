@@ -11,10 +11,10 @@ out struct PS_INPUT {
 
 void main() {
 #ifdef HAS_ANIMATION
-    mat4 bone_matrix = u_bones[in_bone_id.x] * in_bone_weight.x;
-    bone_matrix += u_bones[in_bone_id.y] * in_bone_weight.y;
-    bone_matrix += u_bones[in_bone_id.z] * in_bone_weight.z;
-    bone_matrix += u_bones[in_bone_id.w] * in_bone_weight.w;
+    mat4 bone_matrix = c_bones[in_bone_id.x] * in_bone_weight.x;
+    bone_matrix += c_bones[in_bone_id.y] * in_bone_weight.y;
+    bone_matrix += c_bones[in_bone_id.z] * in_bone_weight.z;
+    bone_matrix += c_bones[in_bone_id.w] * in_bone_weight.w;
 
     mat4 world_matrix = c_worldMatrix * bone_matrix;
 #else

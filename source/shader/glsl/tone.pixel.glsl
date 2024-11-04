@@ -41,8 +41,8 @@ void main() {
     // @TODO: add bloom
     vec3 color = texture(g_texture_lighting, uv).rgb;
 
-    if (u_enable_bloom == 1) {
-        vec3 bloom = texture(u_final_bloom, uv).rgb;
+    if (c_enableBloom == 1) {
+        vec3 bloom = texture(c_finalBloom, uv).rgb;
         color += bloom;
     }
 

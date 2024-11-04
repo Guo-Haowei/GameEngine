@@ -13,7 +13,7 @@ void main() {
     vec3 R = N;
     vec3 V = R;
 
-    float roughness = g_env_pass_roughness;
+    float roughness = c_envPassRoughness;
 
     vec3 prefilteredColor = vec3(0.0);
     float totalWeight = 0.0;
@@ -38,7 +38,7 @@ void main() {
 
             float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
 
-            prefilteredColor += textureLod(c_env_map, L, mipLevel).rgb * NdotL;
+            prefilteredColor += textureLod(c_envMap, L, mipLevel).rgb * NdotL;
             totalWeight += NdotL;
         }
     }

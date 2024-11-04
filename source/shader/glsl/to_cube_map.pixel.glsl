@@ -15,6 +15,6 @@ vec2 sample_spherical_map(in vec3 v) {
 
 void main() {
     vec2 uv = sample_spherical_map(normalize(pass_position));
-    vec3 color = texture(c_hdr_env_map, uv).rgb;
+    vec3 color = texture(c_hdrEnvMap, uv).rgb;
     out_color = vec4(color, 1.0);
 }

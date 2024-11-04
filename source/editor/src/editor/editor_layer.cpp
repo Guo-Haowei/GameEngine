@@ -125,7 +125,7 @@ void EditorLayer::BufferCommand(std::shared_ptr<EditorCommand> p_command) {
     m_commandBuffer.emplace_back(std::move(p_command));
 }
 
-static std::string gen_name(std::string_view p_name) {
+static std::string GenerateName(std::string_view p_name) {
     static int s_counter = 0;
     return std::format("{}-{}", p_name, ++s_counter);
 }
@@ -139,28 +139,34 @@ void EditorLayer::FlushCommand(Scene& scene) {
                 ecs::Entity id;
                 switch (add_command->entityType) {
                     case EntityType::INFINITE_LIGHT:
-                        id = scene.CreateInfiniteLightEntity(gen_name("directional-light"));
+                        id = scene.CreateInfiniteLightEntity(GenerateName("directional-light"));
                         break;
                     case EntityType::POINT_LIGHT:
-                        id = scene.CreatePointLightEntity(gen_name("point-light"), vec3(0, 1, 0));
+                        id = scene.CreatePointLightEntity(GenerateName("point-light"), vec3(0, 1, 0));
                         break;
                     case EntityType::AREA_LIGHT:
-                        id = scene.CreateAreaLightEntity(gen_name("area-light"));
+                        id = scene.CreateAreaLightEntity(GenerateName("area-light"));
                         break;
                     case EntityType::PLANE:
-                        id = scene.CreatePlaneEntity(gen_name("plane"));
+                        id = scene.CreatePlaneEntity(GenerateName("plane"));
                         break;
                     case EntityType::CUBE:
-                        id = scene.CreateCubeEntity(gen_name("cube"));
+                        id = scene.CreateCubeEntity(GenerateName("cube"));
                         break;
                     case EntityType::SPHERE:
-                        id = scene.CreateSphereEntity(gen_name("sphere"));
+                        id = scene.CreateSphereEntity(GenerateName("sphere"));
+                        break;
+                    case EntityType::CYLINDER:
+                        id = scene.CreateCylinderEntity(GenerateName("cylinder"));
+                        break;
+                    case EntityType::TORUS:
+                        id = scene.CreateTorusEntity(GenerateName("torus"));
                         break;
                     case EntityType::TRANSFORM:
-                        id = scene.CreateTransformEntity(gen_name("node"));
+                        id = scene.CreateTransformEntity(GenerateName("node"));
                         break;
                     case EntityType::PARTICLE_EMITTER:
-                        id = scene.CreateParticleEmitter(gen_name("emitter"));
+                        id = scene.CreateParticleEmitter(GenerateName("emitter"));
                         break;
                     default:
                         LOG_FATAL("Entity type {} not supported", static_cast<int>(add_command->entityType));

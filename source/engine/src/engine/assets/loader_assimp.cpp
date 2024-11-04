@@ -118,7 +118,7 @@ void LoaderAssimp::ProcessMesh(const aiMesh& p_mesh) {
     subset.material_id = m_materials.at(p_mesh.mMaterialIndex);
     mesh_component.subsets.emplace_back(subset);
 
-    mesh_component.createRenderData();
+    mesh_component.CreateRenderData();
 
     m_meshes.push_back(mesh_id);
 }

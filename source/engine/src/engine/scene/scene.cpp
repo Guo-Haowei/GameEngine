@@ -10,8 +10,8 @@ namespace my {
 using ecs::Entity;
 using jobsystem::Context;
 
-static constexpr uint32_t kSmallSubtaskGroupSize = 64;
-// kSceneVersion history
+static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
+// SCENE_VERSION history
 // version 2: don't serialize scene.m_bound
 // version 3: light component atten
 // version 4: light component flags
@@ -19,8 +19,8 @@ static constexpr uint32_t kSmallSubtaskGroupSize = 64;
 // version 6: add collider component
 // version 7: add enabled to material
 // version 8: add particle emitter
-static constexpr uint32_t kSceneVersion = 8;
-static constexpr uint32_t kSceneMagicNumber = 'xScn';
+static constexpr uint32_t SCENE_VERSION = 8;
+static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
 #if 1
@@ -282,6 +282,65 @@ Entity Scene::CreateSphereEntity(const std::string& p_name,
     return entity;
 }
 
+Entity Scene::CreateCylinderEntity(const std::string& p_name,
+                                   float p_radius,
+                                   float p_height,
+                                   const mat4& p_transform) {
+    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+    return CreateCylinderEntity(p_name, material_id, p_radius, p_height, p_transform);
+}
+
+Entity Scene::CreateCylinderEntity(const std::string& p_name,
+                                   Entity p_material_id,
+                                   float p_radius,
+                                   float p_height,
+                                   const mat4& p_transform) {
+    Entity entity = CreateObjectEntity(p_name);
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
+
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    object.meshId = mesh_id;
+
+    MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
+    mesh = MakeCylinder(p_radius, p_height);
+    mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
+Entity Scene::CreateTorusEntity(const std::string& p_name,
+                                float p_radius,
+                                float p_tube_radius,
+                                const mat4& p_transform) {
+    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+    return CreateTorusEntity(p_name, material_id, p_radius, p_tube_radius, p_transform);
+}
+
+Entity Scene::CreateTorusEntity(const std::string& p_name,
+                                ecs::Entity p_material_id,
+                                float p_radius,
+                                float p_tube_radius,
+                                const mat4& p_transform) {
+    p_radius = 0.4f;
+    p_tube_radius = 0.1f;
+
+    Entity entity = CreateObjectEntity(p_name);
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
+
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    object.meshId = mesh_id;
+
+    MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
+    mesh = MakeTorus(p_radius, p_tube_radius);
+    mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
 Entity Scene::CreateParticleEmitter(const std::string& p_name, const mat4& p_transform) {
     Entity entity = CreateTransformEntity(p_name);
     Create<ParticleEmitterComponent>(entity);
@@ -496,15 +555,15 @@ bool Scene::Serialize(Archive& p_archive) {
         uint32_t seed = Entity::MAX_ID;
 
         p_archive >> magic;
-        ERR_FAIL_COND_V_MSG(magic != kSceneMagicNumber, false, "file corrupted");
+        ERR_FAIL_COND_V_MSG(magic != SCENE_MAGIC, false, "file corrupted");
         p_archive >> version;
-        ERR_FAIL_COND_V_MSG(version > kSceneMagicNumber, false, std::format("file version {} is greater than max version {}", version, kSceneVersion));
+        ERR_FAIL_COND_V_MSG(version > SCENE_MAGIC, false, std::format("file version {} is greater than max version {}", version, SCENE_VERSION));
         p_archive >> seed;
         Entity::SetSeed(seed);
 
     } else {
-        p_archive << kSceneMagicNumber;
-        p_archive << kSceneVersion;
+        p_archive << SCENE_MAGIC;
+        p_archive << SCENE_VERSION;
         p_archive << Entity::GetSeed();
     }
 
@@ -559,7 +618,7 @@ bool Scene::RayObjectIntersect(Entity p_object_id, Ray& p_ray) {
     Ray inversedRay = p_ray.Inverse(inversedModel);
     Ray inversedRayAABB = inversedRay;  // make a copy, we don't want dist to be modified by AABB
     // Perform aabb test
-    if (!inversedRayAABB.Intersects(mesh->local_bound)) {
+    if (!inversedRayAABB.Intersects(mesh->localBound)) {
         return false;
     }
 
@@ -593,11 +652,11 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<LightComponent>(), kSmallSubtaskGroupSize, UpdateLight(index));
+    JS_PARALLEL_FOR(p_context, index, GetCount<LightComponent>(), SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<TransformComponent>(), kSmallSubtaskGroupSize, m_TransformComponents[index].UpdateTransform());
+    JS_PARALLEL_FOR(p_context, index, GetCount<TransformComponent>(), SMALL_SUBTASK_GROUP_SIZE, m_TransformComponents[index].UpdateTransform());
 }
 
 void Scene::RunAnimationUpdateSystem(Context& p_context) {
@@ -609,7 +668,7 @@ void Scene::RunArmatureUpdateSystem(Context& p_context) {
 }
 
 void Scene::RunHierarchyUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<HierarchyComponent>(), kSmallSubtaskGroupSize, UpdateHierarchy(index));
+    JS_PARALLEL_FOR(p_context, index, GetCount<HierarchyComponent>(), SMALL_SUBTASK_GROUP_SIZE, UpdateHierarchy(index));
 }
 
 void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
@@ -627,7 +686,7 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
         const MeshComponent& mesh = *GetComponent<MeshComponent>(obj.meshId);
 
         mat4 M = transform.GetWorldMatrix();
-        AABB aabb = mesh.local_bound;
+        AABB aabb = mesh.localBound;
         aabb.ApplyMatrix(M);
         m_bound.UnionBox(aabb);
     }
@@ -637,8 +696,7 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
     unused(p_context);
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
-        const TransformComponent& transform = *GetComponent<TransformComponent>(entity);
-        emitter.Update(m_elapsedTime, transform.GetTranslation());
+        emitter.Update(m_elapsedTime);
     }
 }
 

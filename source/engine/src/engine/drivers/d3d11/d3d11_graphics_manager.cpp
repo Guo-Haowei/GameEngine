@@ -656,7 +656,7 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
 
     RID rid = m_meshes.make_rid();
     D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-    p_mesh.gpu_resource = mesh_buffers;
+    p_mesh.gpuResource = mesh_buffers;
     createMesh_data(m_device.Get(), p_mesh, *mesh_buffers);
     return mesh_buffers;
 }
@@ -699,7 +699,7 @@ void D3d11GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint
 
 void D3d11GraphicsManager::OnSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
-        if (mesh.gpu_resource != nullptr) {
+        if (mesh.gpuResource != nullptr) {
             const NameComponent& name = *p_scene.GetComponent<NameComponent>(entity);
             LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.GetName());
             continue;

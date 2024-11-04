@@ -4,9 +4,9 @@ layout(location = 0) out vec4 out_color;
 #include "../cbuffer.h"
 
 void main() {
-    vec4 color = texture(c_debug_draw_map, pass_uv);
+    vec4 color = texture(c_debugDrawMap, pass_uv);
 
-    switch (c_display_channel) {
+    switch (c_displayChannel) {
         case DISPLAY_CHANNEL_RGB:
             out_color = vec4(color.rgb, 1.0);
             break;

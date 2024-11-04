@@ -15,7 +15,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
 
     float3 color = g_texture_lighting.Sample(linear_clamp_sampler, uv).rgb;
 
-    if (u_enable_bloom == 1) {
+    if (c_enableBloom == 1) {
         float3 bloom = g_bloom_input_image.Sample(linear_clamp_sampler, uv).rgb;
         color += bloom;
     }

@@ -3,10 +3,10 @@
 
 float4 main(vsinput_mesh input) : SV_POSITION {
 #ifdef HAS_ANIMATION
-    float4x4 boneTransform = u_bones[input.boneIndex.x] * input.boneWeight.x;
-    boneTransform += u_bones[input.boneIndex.y] * input.boneWeight.y;
-    boneTransform += u_bones[input.boneIndex.z] * input.boneWeight.z;
-    boneTransform += u_bones[input.boneIndex.w] * input.boneWeight.w;
+    float4x4 boneTransform = c_bones[input.boneIndex.x] * input.boneWeight.x;
+    boneTransform += c_bones[input.boneIndex.y] * input.boneWeight.y;
+    boneTransform += c_bones[input.boneIndex.z] * input.boneWeight.z;
+    boneTransform += c_bones[input.boneIndex.w] * input.boneWeight.w;
     float4x4 world_matrix = mul(c_worldMatrix, boneTransform);
 #else
     float4x4 world_matrix = c_worldMatrix;

@@ -16,6 +16,8 @@ enum class EntityType : uint8_t {
     PLANE,
     CUBE,
     SPHERE,
+    CYLINDER,
+    TORUS,
     TRANSFORM,
     PARTICLE_EMITTER,
 };

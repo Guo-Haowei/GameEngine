@@ -31,7 +31,7 @@ void vertex_attrib(MeshComponent::VertexAttribute& p_attrib, const std::vector<T
     p_in_out_offset += p_attrib.size_in_byte;
 }
 
-void MeshComponent::createRenderData() {
+void MeshComponent::CreateRenderData() {
     // @HACK: fill dummy textures
 #if 0
     if (texcoords_0.empty()) {
@@ -44,7 +44,7 @@ void MeshComponent::createRenderData() {
     DEV_ASSERT(normals.size());
 #endif
     // AABB
-    local_bound.MakeInvalid();
+    localBound.MakeInvalid();
     for (MeshSubset& subset : subsets) {
         subset.local_bound.MakeInvalid();
         for (uint32_t i = 0; i < subset.index_count; ++i) {
@@ -52,28 +52,28 @@ void MeshComponent::createRenderData() {
             subset.local_bound.ExpandPoint(point);
         }
         subset.local_bound.MakeValid();
-        local_bound.UnionBox(subset.local_bound);
+        localBound.UnionBox(subset.local_bound);
     }
     // Attributes
     for (int i = 0; i < VertexAttribute::COUNT; ++i) {
         attributes[i].name = static_cast<VertexAttribute::NAME>(i);
     }
 
-    vertex_buffer_size = 0;
-    vertex_attrib(attributes[VertexAttribute::POSITION], positions, vertex_buffer_size);
-    vertex_attrib(attributes[VertexAttribute::NORMAL], normals, vertex_buffer_size);
-    vertex_attrib(attributes[VertexAttribute::TEXCOORD_0], texcoords_0, vertex_buffer_size);
-    vertex_attrib(attributes[VertexAttribute::TEXCOORD_1], texcoords_1, vertex_buffer_size);
-    vertex_attrib(attributes[VertexAttribute::TANGENT], tangents, vertex_buffer_size);
-    vertex_attrib(attributes[VertexAttribute::JOINTS_0], joints_0, vertex_buffer_size);
-    vertex_attrib(attributes[VertexAttribute::WEIGHTS_0], weights_0, vertex_buffer_size);
-    vertex_attrib(attributes[VertexAttribute::COLOR_0], color_0, vertex_buffer_size);
+    vertexBufferSize = 0;
+    vertex_attrib(attributes[VertexAttribute::POSITION], positions, vertexBufferSize);
+    vertex_attrib(attributes[VertexAttribute::NORMAL], normals, vertexBufferSize);
+    vertex_attrib(attributes[VertexAttribute::TEXCOORD_0], texcoords_0, vertexBufferSize);
+    vertex_attrib(attributes[VertexAttribute::TEXCOORD_1], texcoords_1, vertexBufferSize);
+    vertex_attrib(attributes[VertexAttribute::TANGENT], tangents, vertexBufferSize);
+    vertex_attrib(attributes[VertexAttribute::JOINTS_0], joints_0, vertexBufferSize);
+    vertex_attrib(attributes[VertexAttribute::WEIGHTS_0], weights_0, vertexBufferSize);
+    vertex_attrib(attributes[VertexAttribute::COLOR_0], color_0, vertexBufferSize);
     return;
 }
 
-std::vector<char> MeshComponent::generateCombinedBuffer() const {
+std::vector<char> MeshComponent::GenerateCombinedBuffer() const {
     std::vector<char> result;
-    result.resize(vertex_buffer_size);
+    result.resize(vertexBufferSize);
 
     auto safe_copy = [&](const VertexAttribute& attrib, const void* data) {
         if (attrib.size_in_byte == 0) {
@@ -107,7 +107,7 @@ void MeshComponent::Serialize(Archive& p_archive, uint32_t) {
         p_archive << weights_0;
         p_archive << color_0;
         p_archive << subsets;
-        p_archive << armature_id;
+        p_archive << armatureId;
     } else {
         p_archive >> flags;
         p_archive >> indices;
@@ -120,9 +120,9 @@ void MeshComponent::Serialize(Archive& p_archive, uint32_t) {
         p_archive >> weights_0;
         p_archive >> color_0;
         p_archive >> subsets;
-        p_archive >> armature_id;
+        p_archive >> armatureId;
 
-        createRenderData();
+        CreateRenderData();
     }
 }
 

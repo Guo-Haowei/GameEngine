@@ -40,7 +40,6 @@ float point_shadow_calculation(Light p_light, vec3 p_frag_pos, vec3 p_eye) {
 
     float view_distance = length(p_eye - p_frag_pos);
     float disk_radius = (1.0 + (view_distance / light_far)) / 100.0;
-    // float disk_radius = (1.0 + (view_distance / light_far)) / 25.0;
     float shadow = 0.0;
     for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
         // @HACK

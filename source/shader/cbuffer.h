@@ -75,42 +75,39 @@ CBUFFER(PerPassConstantBuffer, 1) {
 };
 
 CBUFFER(PerFrameConstantBuffer, 2) {
-    Light u_lights[MAX_LIGHT_COUNT];
+    Light c_lights[MAX_LIGHT_COUNT];
 
-    int u_light_count;
-    int u_display_method;
-    int u_enable_bloom;
-    float u_bloom_threshold;
+    int c_lightCount;
+    int c_enableBloom;
+    int c_debugCsm;
+    float c_bloomThreshold;
 
-    int u_debug_voxel_id;
-    int u_no_texture;
-    int u_screen_width;
-    int u_screen_height;
+    int c_debugVoxelId;
+    int c_noTexture;
+    int c_enableVxgi;
+    float c_texelSize;
 
-    vec3 u_camera_position;
-    float u_voxel_size;
+    vec3 c_cameraPosition;
+    float c_voxelSize;
 
-    vec3 u_world_center;
-    float u_world_size_half;
+    vec3 c_worldCenter;
+    float c_worldSizeHalf;
 
-    float u_texel_size;
-    int u_enable_vxgi;
-    int u_debug_csm;
-    int _frame_constant_padding0;
+    vec4 _per_frame_padding_0;
 };
 
 CBUFFER(MaterialConstantBuffer, 3) {
-    vec4 u_base_color;
+    vec4 c_baseColor;
 
-    float u_metallic;
-    float u_roughness;
-    float u_reflect_power;
-    float u_emissive_power;
+    float c_metallic;
+    float c_roughness;
+    float c_reflectPower;
+    float c_emissivePower;
 
-    int u_has_base_color_map;
-    int u_has_pbr_map;
-    int u_has_normal_map;
-    int u_has_height_map;
+    int c_hasBaseColorMap;
+    int c_hasPbrMap;
+    int c_hasNormalMap;
+    int c_hasHeightMap;
 
     TextureHandle u_base_color_map_handle;
     TextureHandle u_normal_map_handle;
@@ -127,11 +124,11 @@ CBUFFER(MaterialConstantBuffer, 3) {
 
 // @TODO: change to unordered access buffer
 CBUFFER(BoneConstantBuffer, 4) {
-    mat4 u_bones[MAX_BONE_COUNT];
+    mat4 c_bones[MAX_BONE_COUNT];
 };
 
 // @TODO: refactor name
-CBUFFER(ParticleConstantBuffer, 10) {
+CBUFFER(EmitterConstantBuffer, 5) {
     int c_preSimIdx;
     int c_postSimIdx;
     float c_elapsedTime;
@@ -143,47 +140,51 @@ CBUFFER(ParticleConstantBuffer, 10) {
     int c_particlesPerFrame;
     vec3 c_emitterStartingVelocity;
     int c_emitterMaxParticleCount;
+
+    mat4 _emitter_padding_0;
+    mat4 _emitter_padding_1;
+    mat4 _emitter_padding_2;
 };
 
 #ifndef HLSL_LANG
 
 CBUFFER(PerSceneConstantBuffer, 6) {
     // @TODO: remove the following
-    sampler2D u_gbuffer_depth_map;
-    sampler2D u_final_bloom;
+    sampler2D c_gbufferDepthMap;
+    sampler2D c_finalBloom;
 
-    sampler2D u_grass_base_color;
-    sampler2D c_hdr_env_map;
-    sampler3D c_voxel_map;
-    sampler3D c_voxel_normal_map;
+    sampler2D c_grassBaseColor;
+    sampler2D c_hdrEnvMap;
+    sampler3D c_voxelMap;
+    sampler3D c_voxelNormalMap;
 
-    sampler2D c_kernel_noise_map;
-    sampler2D c_tone_image;
+    sampler2D c_kernelNoiseMap;
+    sampler2D c_toneImage;
     // @TODO: unordered access
-    sampler2D u_ltc_1;
-    sampler2D u_ltc_2;
+    sampler2D c_ltc1;
+    sampler2D c_ltc2;
 
-    sampler2D c_brdf_map;
-    samplerCube c_env_map;
-    samplerCube c_diffuse_irradiance_map;
-    samplerCube c_prefiltered_map;
+    sampler2D c_brdfMap;
+    samplerCube c_envMap;
+    samplerCube c_diffuseIrradianceMap;
+    samplerCube c_prefilteredMap;
 };
 
 // @TODO: make it more general, something like 2D draw
 CBUFFER(DebugDrawConstantBuffer, 7) {
-    vec2 c_debug_draw_pos;
-    vec2 c_debug_draw_size;
+    vec2 c_debugDrawPos;
+    vec2 c_debugDrawSize;
 
-    sampler2D c_debug_draw_map;
-    int c_display_channel;
-    int c_another_padding;
+    sampler2D c_debugDrawMap;
+    int c_displayChannel;
+    int _debug_draw_padding_0;
 };
 #endif
 
 CBUFFER(PointShadowConstantBuffer, 8) {
-    mat4 g_point_light_matrix;    // 64
-    vec3 g_point_light_position;  // 12
-    float g_point_light_far;      // 4
+    mat4 c_pointLightMatrix;    // 64
+    vec3 c_pointLightPosition;  // 12
+    float c_pointLightFar;      // 4
 
     vec4 _point_shadow_padding_0;  // 16
     vec4 _point_shadow_padding_1;  // 16
@@ -195,19 +196,19 @@ CBUFFER(PointShadowConstantBuffer, 8) {
 
 // @TODO: refactor this
 CBUFFER(EnvConstantBuffer, 9) {
-    mat4 g_cube_projection_view_matrix;
+    mat4 c_cubeProjectionViewMatrix;
 
-    float g_env_pass_roughness;  // for environment map
-    float _per_env_padding_0;
-    float _per_env_padding_1;
-    float _per_env_padding_2;
+    float c_envPassRoughness;  // for environment map
+    float _env_padding_0;
+    float _env_padding_1;
+    float _env_padding_2;
 
-    vec4 _per_env_padding_3;
-    vec4 _per_env_padding_4;
-    vec4 _per_env_padding_5;
+    vec4 _env_padding_3;
+    vec4 _env_padding_4;
+    vec4 _env_padding_5;
 
-    mat4 _per_env_padding_6;
-    mat4 _per_env_padding_7;
+    mat4 _env_padding_6;
+    mat4 _env_padding_7;
 };
 
 #endif

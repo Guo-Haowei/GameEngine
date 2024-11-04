@@ -245,7 +245,7 @@ void OpenGLGraphicsManager::SetViewport(const Viewport& p_viewport) {
 const MeshBuffers* OpenGLGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     RID rid = m_meshes.make_rid();
     OpenGLMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-    p_mesh.gpu_resource = mesh_buffers;
+    p_mesh.gpuResource = mesh_buffers;
 
     auto createMesh_data = [](const MeshComponent& p_mesh, OpenGLMeshBuffers& p_out_mesh) {
         const bool has_normals = !p_mesh.normals.empty();
@@ -597,7 +597,7 @@ void OpenGLGraphicsManager::UnsetRenderTarget() {
 // @TODO: refactor this, instead off iterate through all the meshes, find a better way
 void OpenGLGraphicsManager::OnSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
-        if (mesh.gpu_resource != nullptr) {
+        if (mesh.gpuResource != nullptr) {
             continue;
         }
 
@@ -636,13 +636,13 @@ void OpenGLGraphicsManager::CreateGpuResources() {
     // @TODO: delete!
     unsigned int m1 = LoadMTexture(LTC1);
     unsigned int m2 = LoadMTexture(LTC2);
-    cache.u_ltc_1 = MakeTextureResident(m1);
-    cache.u_ltc_2 = MakeTextureResident(m2);
+    cache.c_ltc1 = MakeTextureResident(m1);
+    cache.c_ltc2 = MakeTextureResident(m2);
 
-    cache.c_voxel_map = MakeTextureResident(g_albedoVoxel.GetHandle());
-    cache.c_voxel_normal_map = MakeTextureResident(g_normalVoxel.GetHandle());
+    cache.c_voxelMap = MakeTextureResident(g_albedoVoxel.GetHandle());
+    cache.c_voxelNormalMap = MakeTextureResident(g_normalVoxel.GetHandle());
 
-    cache.u_grass_base_color = grass_image->gpu_texture->GetResidentHandle();
+    cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
 
     // @TODO: refactor
     auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {
@@ -654,13 +654,13 @@ void OpenGLGraphicsManager::CreateGpuResources() {
         }
     };
 
-    make_resident(RESOURCE_TONE, cache.c_tone_image);
-    make_resident(RESOURCE_GBUFFER_DEPTH, cache.u_gbuffer_depth_map);
-    make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_env_map);
-    make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuse_irradiance_map);
-    make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefiltered_map);
-    make_resident(RESOURCE_BRDF, cache.c_brdf_map);
-    make_resident(RESOURCE_BLOOM_0, cache.u_final_bloom);
+    make_resident(RESOURCE_TONE, cache.c_toneImage);
+    make_resident(RESOURCE_GBUFFER_DEPTH, cache.c_gbufferDepthMap);
+    make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_envMap);
+    make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuseIrradianceMap);
+    make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefilteredMap);
+    make_resident(RESOURCE_BRDF, cache.c_brdfMap);
+    make_resident(RESOURCE_BLOOM_0, cache.c_finalBloom);
 
     g_constantCache.update();
 }

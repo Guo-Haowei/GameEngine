@@ -117,7 +117,7 @@ void HierarchyCreator::DrawNode(const Scene& p_scene, HierarchyNode* p_hier, ImG
                         nullptr);
                 }
             }
-            Entity armature_id = mesh_component->armature_id;
+            Entity armature_id = mesh_component->armatureId;
             if (armature_id.IsValid()) {
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
                 tree_node_helper(

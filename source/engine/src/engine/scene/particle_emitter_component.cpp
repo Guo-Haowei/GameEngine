@@ -6,9 +6,8 @@
 
 namespace my {
 
-void ParticleEmitterComponent::Update(float p_elapsedTime, const vec3& p_position) {
+void ParticleEmitterComponent::Update(float p_elapsedTime) {
     unused(p_elapsedTime);
-    unused(p_position);
 
     aliveBufferIndex = 1 - aliveBufferIndex;
 }
