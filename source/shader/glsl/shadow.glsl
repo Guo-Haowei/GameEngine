@@ -15,19 +15,19 @@ float point_shadow_calculation(Light p_light, vec3 p_frag_pos, vec3 p_eye) {
     vec3 light_position = p_light.position;
     float light_far = p_light.max_distance;
 
-    samplerCube point_shadow_map;
+    samplerCube point_shadowMap;
     switch (p_light.shadow_map_index) {
         case 0:
-            point_shadow_map = t_point_shadow_0;
+            point_shadowMap = t_pointShadow0;
             break;
         case 1:
-            point_shadow_map = t_point_shadow_1;
+            point_shadowMap = t_pointShadow1;
             break;
         case 2:
-            point_shadow_map = t_point_shadow_2;
+            point_shadowMap = t_pointShadow2;
             break;
         case 3:
-            point_shadow_map = t_point_shadow_3;
+            point_shadowMap = t_pointShadow3;
             break;
         default:
             break;
@@ -43,7 +43,7 @@ float point_shadow_calculation(Light p_light, vec3 p_frag_pos, vec3 p_eye) {
     float shadow = 0.0;
     for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
         // @HACK
-        float closest_depth = texture(point_shadow_map, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
+        float closest_depth = texture(point_shadowMap, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
         closest_depth *= light_far;
         if (current_depth - bias > closest_depth) {
             shadow += 1.0;

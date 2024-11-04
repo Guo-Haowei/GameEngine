@@ -109,10 +109,10 @@ CBUFFER(MaterialConstantBuffer, 3) {
     int c_hasNormalMap;
     int c_hasHeightMap;
 
-    TextureHandle u_base_color_map_handle;
-    TextureHandle u_normal_map_handle;
+    TextureHandle t_baseColorMap_handle;
+    TextureHandle t_normalMap_handle;
 
-    TextureHandle u_material_map_handle;
+    TextureHandle t_materialMap_handle;
     TextureHandle u_height_map_handle;
 
     vec4 _material_padding_0;

@@ -128,7 +128,7 @@ void RenderManager::Finalize() {
     return;
 }
 
-PointShadowHandle RenderManager::allocate_point_light_shadow_map() {
+PointShadowHandle RenderManager::allocate_point_light_shadowMap() {
     if (m_free_point_light_shadow.empty()) {
         LOG_WARN("OUT OUT POINT SHADOW MAP");
         return INVALID_POINT_SHADOW_HANDLE;
@@ -139,7 +139,7 @@ PointShadowHandle RenderManager::allocate_point_light_shadow_map() {
     return handle;
 }
 
-void RenderManager::free_point_light_shadow_map(PointShadowHandle& p_handle) {
+void RenderManager::free_point_light_shadowMap(PointShadowHandle& p_handle) {
     DEV_ASSERT_INDEX(p_handle, MAX_LIGHT_CAST_SHADOW_COUNT);
     m_free_point_light_shadow.push_back(p_handle);
     p_handle = INVALID_POINT_SHADOW_HANDLE;

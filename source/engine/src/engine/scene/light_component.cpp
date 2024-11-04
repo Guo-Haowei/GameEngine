@@ -39,11 +39,11 @@ void LightComponent::Update(const TransformComponent& p_transform) {
         if (CastShadow()) {
             // @TODO: get rid of the
             if (m_shadowMapIndex == INVALID_POINT_SHADOW_HANDLE) {
-                m_shadowMapIndex = RenderManager::GetSingleton().allocate_point_light_shadow_map();
+                m_shadowMapIndex = RenderManager::GetSingleton().allocate_point_light_shadowMap();
             }
         } else {
             if (m_shadowMapIndex != INVALID_POINT_SHADOW_HANDLE) {
-                RenderManager::GetSingleton().free_point_light_shadow_map(m_shadowMapIndex);
+                RenderManager::GetSingleton().free_point_light_shadowMap(m_shadowMapIndex);
             }
         }
 

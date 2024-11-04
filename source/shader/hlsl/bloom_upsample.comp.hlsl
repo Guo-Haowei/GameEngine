@@ -16,7 +16,7 @@ SamplerState linear_clamp_sampler : register(s2);
                        output_coord.y / output_image_size.y);
 
     uint input_width, input_height;
-    g_bloom_input_image.GetDimensions(input_width, input_height);
+    t_bloomInputImage.GetDimensions(input_width, input_height);
     float x = 1.0f / input_width;
     float y = 1.0f / input_height;
     uv.x += 0.5f * x;
@@ -31,17 +31,17 @@ SamplerState linear_clamp_sampler : register(s2);
     // d - e - f
     // g - h - i
     // === ('e' is the current texel) ===
-    float3 a = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y + y), 0).rgb;
-    float3 b = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y + y), 0).rgb;
-    float3 c = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y + y), 0).rgb;
+    float3 a = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y + y), 0).rgb;
+    float3 b = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y + y), 0).rgb;
+    float3 c = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y + y), 0).rgb;
 
-    float3 d = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y), 0).rgb;
-    float3 e = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y), 0).rgb;
-    float3 f = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y), 0).rgb;
+    float3 d = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y), 0).rgb;
+    float3 e = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y), 0).rgb;
+    float3 f = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y), 0).rgb;
 
-    float3 g = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y - y), 0).rgb;
-    float3 h = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y - y), 0).rgb;
-    float3 i = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y - y), 0).rgb;
+    float3 g = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y - y), 0).rgb;
+    float3 h = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y - y), 0).rgb;
+    float3 i = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y - y), 0).rgb;
 
     // Apply weighted distribution, by using a 3x3 tent filter:
     //  1   | 1 2 1 |

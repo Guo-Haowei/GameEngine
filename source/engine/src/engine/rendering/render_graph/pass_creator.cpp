@@ -48,9 +48,9 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
         for (const auto& subset : draw.subsets) {
             const MaterialConstantBuffer& material = gm.m_context.material_cache.buffer[subset.material_idx];
-            gm.BindTexture(Dimension::TEXTURE_2D, material.u_base_color_map_handle, u_base_color_map_slot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.u_normal_map_handle, u_normal_map_slot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.u_material_map_handle, u_material_map_slot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.t_baseColorMap_handle, t_baseColorMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.t_normalMap_handle, t_normalMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.t_materialMap_handle, t_materialMapSlot);
 
             gm.BindConstantBufferSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
 
@@ -241,14 +241,14 @@ void RenderPassCreator::AddShadowPass() {
 
     {
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-            auto point_shadow_map = manager.CreateRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
-                                                                                 PixelFormat::D32_FLOAT,
-                                                                                 AttachmentType::SHADOW_CUBE_MAP,
-                                                                                 point_shadow_res, point_shadow_res },
-                                                               shadow_cube_map_sampler());
+            auto point_shadowMap = manager.CreateRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
+                                                                                PixelFormat::D32_FLOAT,
+                                                                                AttachmentType::SHADOW_CUBE_MAP,
+                                                                                point_shadow_res, point_shadow_res },
+                                                              shadow_cube_map_sampler());
 
             auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-                .depth_attachment = point_shadow_map,
+                .depth_attachment = point_shadowMap,
                 .exec_func = funcs[i],
             });
             pass->AddDrawPass(draw_pass);
@@ -282,17 +282,17 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
-    bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
-    bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
-    bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
-    bind_slot(RESOURCE_GBUFFER_DEPTH, t_gbufferDepth_slot);
+    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, t_gbufferBaseColorMapSlot);
+    bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
+    bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
+    bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
+    bind_slot(RESOURCE_GBUFFER_DEPTH, t_gbufferDepthSlot);
 
-    bind_slot(RESOURCE_SHADOW_MAP, t_shadow_map_slot);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_point_shadow_0_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_point_shadow_1_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_point_shadow_2_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_point_shadow_3_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_pointShadow0Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_pointShadow1Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_pointShadow2Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_pointShadow3Slot, Dimension::TEXTURE_CUBE);
 
     // @TODO: fix it
     RenderManager::GetSingleton().draw_quad();
@@ -314,16 +314,16 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     // }
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferDepth_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_2_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferBaseColorMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferPositionMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferNormalMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferMaterialMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferDepthSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow0Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow1Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow2Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow3Slot);
 
     // @TODO: [SCRUM-28] refactor
     gm.UnsetRenderTarget();
@@ -445,11 +445,11 @@ static void BloomFunc(const DrawPass*) {
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), t_bloomInputImageSlot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
     }
 
     // Step 2, down sampling
@@ -464,11 +464,11 @@ static void BloomFunc(const DrawPass*) {
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), t_bloomInputImageSlot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
     }
 
     // Step 3, up sampling
@@ -481,11 +481,11 @@ static void BloomFunc(const DrawPass*) {
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), g_bloom_input_image_slot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), t_bloomInputImageSlot);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
     }
 }
 
@@ -547,8 +547,8 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
 
             gm.BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
         };
-        bind_slot(RESOURCE_LIGHTING, g_texture_lighting_slot);
-        bind_slot(RESOURCE_BLOOM_0, g_bloom_input_image_slot);
+        bind_slot(RESOURCE_LIGHTING, t_textureLightingSlot);
+        bind_slot(RESOURCE_BLOOM_0, t_bloomInputImageSlot);
 
         gm.SetViewport(Viewport(width, height));
         gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
@@ -556,8 +556,8 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         gm.SetPipelineState(PROGRAM_TONE);
         RenderManager::GetSingleton().draw_quad();
 
-        gm.UnbindTexture(Dimension::TEXTURE_2D, g_texture_lighting_slot);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, g_bloom_input_image_slot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, t_textureLightingSlot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
     }
 }
 

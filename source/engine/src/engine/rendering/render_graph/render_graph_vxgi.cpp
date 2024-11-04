@@ -40,16 +40,16 @@ void voxelization_pass_func(const DrawPass*) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
-    bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
-    bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
-    bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, t_gbufferBaseColorMapSlot);
+    bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
+    bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
+    bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
 
-    bind_slot(RESOURCE_SHADOW_MAP, t_shadow_map_slot);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_point_shadow_0_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_point_shadow_1_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_point_shadow_2_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_point_shadow_3_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_pointShadow0Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_pointShadow1Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_pointShadow2Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_pointShadow3Slot, Dimension::TEXTURE_CUBE);
 
     g_albedoVoxel.clear();
     g_normalVoxel.clear();
@@ -106,15 +106,15 @@ void voxelization_pass_func(const DrawPass*) {
     glEnable(GL_BLEND);
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_2_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferBaseColorMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferPositionMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferNormalMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferMaterialMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow0Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow1Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow2Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow3Slot);
 
     // @TODO: [SCRUM-28] refactor
     gm.SetRenderTarget(nullptr);

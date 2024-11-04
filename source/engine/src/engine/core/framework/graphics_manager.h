@@ -86,7 +86,7 @@ struct PassContext {
 };
 
 #define SHADER_TEXTURE(TYPE, NAME, SLOT) \
-    constexpr int NAME##_slot = SLOT;
+    constexpr int NAME##Slot = SLOT;
 #include "texture_binding.h"
 #undef SHADER_TEXTURE
 
