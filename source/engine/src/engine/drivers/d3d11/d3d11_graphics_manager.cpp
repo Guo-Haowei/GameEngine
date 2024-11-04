@@ -103,7 +103,7 @@ void D3d11GraphicsManager::Finalize() {
 }
 
 void D3d11GraphicsManager::Render() {
-    m_renderGraph.execute();
+    m_renderGraph.Execute();
 
     // @TODO: fix the following
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -385,7 +385,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
                    nullptr,
                    "Failed to create texture");
 
-    const char* debug_name = renderTargetResourceNameToString(p_texture_desc.name);
+    const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
 
     texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
 

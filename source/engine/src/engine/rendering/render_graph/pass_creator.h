@@ -21,11 +21,11 @@ public:
         : m_config(p_config),
           m_graph(p_graph) {}
 
-    void addGBufferPass();
-    void addShadowPass();
-    void addLightingPass();
-    void addBloomPass();
-    void addTonePass();
+    void AddGBufferPass();
+    void AddShadowPass();
+    void AddLightingPass();
+    void AddBloomPass();
+    void AddTonePass();
 
 private:
     Config m_config;

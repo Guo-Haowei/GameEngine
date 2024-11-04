@@ -307,12 +307,11 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     }
 }
 
-void createRenderGraphVxgi(RenderGraph& p_graph) {
+void CreateRenderGraphVxgi(RenderGraph& p_graph) {
     // @TODO: early-z
-
-    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-    int w = frame_size.x;
-    int h = frame_size.y;
+    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const int w = frame_size.x;
+    const int h = frame_size.y;
 
     RenderPassCreator::Config config;
     config.frame_width = w;
@@ -330,7 +329,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
     {  // environment pass
         RenderPassDesc desc;
         desc.name = RenderPassName::ENV;
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
 
         auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.CreateRenderTarget(RenderTargetDesc{ cube_map_name,
@@ -365,8 +364,8 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         pass->addDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
-    creator.addShadowPass();
-    creator.addGBufferPass();
+    creator.AddShadowPass();
+    creator.AddGBufferPass();
 
     auto gbuffer_depth = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
     {  // highlight selected pass
@@ -379,7 +378,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         RenderPassDesc desc;
         desc.name = RenderPassName::HIGHLIGHT_SELECT;
         desc.dependencies = { RenderPassName::GBUFFER };
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
@@ -392,23 +391,23 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         RenderPassDesc desc;
         desc.name = RenderPassName::VOXELIZATION;
         desc.dependencies = { RenderPassName::SHADOW };
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .exec_func = voxelization_pass_func,
         });
         pass->addDrawPass(draw_pass);
     }
 
-    creator.addLightingPass();
-    creator.addBloomPass();
-    creator.addTonePass();
+    creator.AddLightingPass();
+    creator.AddBloomPass();
+    creator.AddTonePass();
 
     {
         // final pass
         RenderPassDesc desc;
         desc.name = RenderPassName::FINAL;
         desc.dependencies = { RenderPassName::TONE };
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .color_attachments = { final_attachment },
             .exec_func = final_pass_func,
@@ -417,7 +416,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
     }
 
     // @TODO: allow recompile
-    p_graph.compile();
+    p_graph.Compile();
 }
 
 }  // namespace my::rg

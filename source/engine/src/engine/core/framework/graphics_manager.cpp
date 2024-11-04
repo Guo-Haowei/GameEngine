@@ -173,10 +173,10 @@ void GraphicsManager::SelectRenderGraph() {
 
     switch (m_method) {
         case RenderGraph::VXGI:
-            createRenderGraphVxgi(m_renderGraph);
+            CreateRenderGraphVxgi(m_renderGraph);
             break;
         default:
-            createRenderGraphDefault(m_renderGraph);
+            CreateRenderGraphDefault(m_renderGraph);
             break;
     }
 }

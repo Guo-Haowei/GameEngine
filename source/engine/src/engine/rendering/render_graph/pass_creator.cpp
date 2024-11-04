@@ -13,7 +13,7 @@
 namespace my::rg {
 
 /// Gbuffer
-static void gbufferPassFunc(const DrawPass* p_draw_pass) {
+static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -102,7 +102,7 @@ static void gbufferPassFunc(const DrawPass* p_draw_pass) {
     }
 }
 
-void RenderPassCreator::addGBufferPass() {
+void RenderPassCreator::AddGBufferPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     int p_width = m_config.frame_width;
@@ -141,17 +141,17 @@ void RenderPassCreator::addGBufferPass() {
 
     RenderPassDesc desc;
     desc.name = RenderPassName::GBUFFER;
-    auto pass = m_graph.createPass(desc);
+    auto pass = m_graph.CreatePass(desc);
     auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
         .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
         .depth_attachment = gbuffer_depth,
-        .exec_func = gbufferPassFunc,
+        .exec_func = GbufferPassFunc,
     });
     pass->addDrawPass(draw_pass);
 }
 
 /// Shadow
-static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
+static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -198,7 +198,7 @@ static void pointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     }
 }
 
-static void shadowPassFunc(const DrawPass* p_draw_pass) {
+static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -233,7 +233,7 @@ static void shadowPassFunc(const DrawPass* p_draw_pass) {
     gm.UnsetRenderTarget();
 }
 
-void RenderPassCreator::addShadowPass() {
+void RenderPassCreator::AddShadowPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     const int shadow_res = DVAR_GET_INT(r_shadow_res);
@@ -248,11 +248,11 @@ void RenderPassCreator::addShadowPass() {
                                                  shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = RenderPassName::SHADOW;
-    auto pass = m_graph.createPass(desc);
+    auto pass = m_graph.CreatePass(desc);
     {
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .depth_attachment = shadow_map,
-            .exec_func = shadowPassFunc,
+            .exec_func = ShadowPassFunc,
         });
         pass->addDrawPass(draw_pass);
     }
@@ -260,16 +260,16 @@ void RenderPassCreator::addShadowPass() {
     // @TODO: refactor
     DrawPassExecuteFunc funcs[] = {
         [](const DrawPass* p_draw_pass) {
-            pointShadowPassFunc(p_draw_pass, 0);
+            PointShadowPassFunc(p_draw_pass, 0);
         },
         [](const DrawPass* p_draw_pass) {
-            pointShadowPassFunc(p_draw_pass, 1);
+            PointShadowPassFunc(p_draw_pass, 1);
         },
         [](const DrawPass* p_draw_pass) {
-            pointShadowPassFunc(p_draw_pass, 2);
+            PointShadowPassFunc(p_draw_pass, 2);
         },
         [](const DrawPass* p_draw_pass) {
-            pointShadowPassFunc(p_draw_pass, 3);
+            PointShadowPassFunc(p_draw_pass, 3);
         },
     };
 
@@ -293,7 +293,7 @@ void RenderPassCreator::addShadowPass() {
 }
 
 /// Lighting
-static void lightingPassFunc(const DrawPass* p_draw_pass) {
+static void LightingPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -364,7 +364,7 @@ static void lightingPassFunc(const DrawPass* p_draw_pass) {
     gm.SetRenderTarget(nullptr);
 }
 
-void RenderPassCreator::addLightingPass() {
+void RenderPassCreator::AddLightingPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     auto gbuffer_depth = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
@@ -389,17 +389,17 @@ void RenderPassCreator::addLightingPass() {
         desc.dependencies.push_back(RenderPassName::ENV);
     }
 
-    auto pass = m_graph.createPass(desc);
+    auto pass = m_graph.CreatePass(desc);
     auto drawpass = manager.CreateDrawPass(DrawPassDesc{
         .color_attachments = { lighting_attachment },
         .depth_attachment = gbuffer_depth,
-        .exec_func = lightingPassFunc,
+        .exec_func = LightingPassFunc,
     });
     pass->addDrawPass(drawpass);
 }
 
 /// Bloom
-static void bloomFunction(const DrawPass*) {
+static void BloomFunc(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     // Step 1, select pixels contribute to bloom
@@ -456,13 +456,13 @@ static void bloomFunction(const DrawPass*) {
     }
 }
 
-void RenderPassCreator::addBloomPass() {
+void RenderPassCreator::AddBloomPass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
     desc.dependencies = { RenderPassName::LIGHTING };
-    auto pass = m_graph.createPass(desc);
+    auto pass = m_graph.CreatePass(desc);
 
     int width = m_config.frame_width;
     int height = m_config.frame_height;
@@ -481,13 +481,14 @@ void RenderPassCreator::addBloomPass() {
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .color_attachments = {},
-        .exec_func = bloomFunction,
+        .exec_func = BloomFunc,
     });
     pass->addDrawPass(draw_pass);
 }
 
 /// Tone
-static void tonePassFunc(const DrawPass* p_draw_pass) {
+/// Change to post processing?
+static void TonePassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -527,14 +528,14 @@ static void tonePassFunc(const DrawPass* p_draw_pass) {
     }
 }
 
-void RenderPassCreator::addTonePass() {
+void RenderPassCreator::AddTonePass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
     desc.name = RenderPassName::TONE;
     desc.dependencies = { RenderPassName::BLOOM };
 
-    auto pass = m_graph.createPass(desc);
+    auto pass = m_graph.CreatePass(desc);
 
     int width = m_config.frame_width;
     int height = m_config.frame_height;
@@ -550,7 +551,7 @@ void RenderPassCreator::addTonePass() {
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .color_attachments = { attachment },
         .depth_attachment = gbuffer_depth,
-        .exec_func = tonePassFunc,
+        .exec_func = TonePassFunc,
     });
     pass->addDrawPass(draw_pass);
 }

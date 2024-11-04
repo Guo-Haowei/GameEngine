@@ -16,7 +16,7 @@ public:
     void execute();
 
     RenderPassName getName() const { return m_name; }
-    const char* getNameString() const { return renderPassNameToString(m_name); }
+    const char* getNameString() const { return RenderPassNameToString(m_name); }
 
 protected:
     virtual void createInternal(RenderPassDesc& pass_desc);
