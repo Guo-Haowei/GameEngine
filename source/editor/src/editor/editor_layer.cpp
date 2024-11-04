@@ -160,8 +160,7 @@ void EditorLayer::FlushCommand(Scene& scene) {
                         id = scene.CreateCylinderEntity(GenerateName("cylinder"));
                         break;
                     case EntityType::TORUS:
-                        LOG_FATAL("???");
-                        id = scene.CreateSphereEntity(GenerateName("torus"));
+                        id = scene.CreateTorusEntity(GenerateName("torus"));
                         break;
                     case EntityType::TRANSFORM:
                         id = scene.CreateTransformEntity(GenerateName("node"));

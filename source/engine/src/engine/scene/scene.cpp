@@ -295,7 +295,6 @@ Entity Scene::CreateCylinderEntity(const std::string& p_name,
                                    float p_radius,
                                    float p_height,
                                    const mat4& p_transform) {
-
     Entity entity = CreateObjectEntity(p_name);
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);
@@ -306,6 +305,37 @@ Entity Scene::CreateCylinderEntity(const std::string& p_name,
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = MakeCylinder(p_radius, p_height);
+    mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
+Entity Scene::CreateTorusEntity(const std::string& p_name,
+                                float p_radius,
+                                float p_tube_radius,
+                                const mat4& p_transform) {
+    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+    return CreateTorusEntity(p_name, material_id, p_radius, p_tube_radius, p_transform);
+}
+
+Entity Scene::CreateTorusEntity(const std::string& p_name,
+                                ecs::Entity p_material_id,
+                                float p_radius,
+                                float p_tube_radius,
+                                const mat4& p_transform) {
+    p_radius = 0.4f;
+    p_tube_radius = 0.1f;
+
+    Entity entity = CreateObjectEntity(p_name);
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
+
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    object.meshId = mesh_id;
+
+    MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
+    mesh = MakeTorus(p_radius, p_tube_radius);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;

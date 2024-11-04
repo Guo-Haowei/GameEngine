@@ -186,9 +186,9 @@ MeshComponent MakeCubeMesh(const vec3& p_scale) {
     };
 
     for (int i = 0; i < array_length(indices); i += 3) {
-        mesh.indices.push_back(indices[i]);
-        mesh.indices.push_back(indices[i + 2]);
-        mesh.indices.push_back(indices[i + 1]);
+        mesh.indices.emplace_back(indices[i]);
+        mesh.indices.emplace_back(indices[i + 2]);
+        mesh.indices.emplace_back(indices[i + 1]);
     }
 
     MeshComponent::MeshSubset subset;
@@ -215,31 +215,29 @@ MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
                 std::sin(x_seg * 2.0f * pi) * std::sin(y_seg * pi)
             };
 
-            mesh.positions.push_back(p_radius * normal);
-            mesh.normals.push_back(normal);
-            mesh.texcoords_0.push_back(vec2(x_seg, y_seg));
+            mesh.positions.emplace_back(p_radius * normal);
+            mesh.normals.emplace_back(normal);
+            mesh.texcoords_0.emplace_back(vec2(x_seg, y_seg));
         }
     }
 
     for (int y = 0; y < p_rings; ++y) {
         for (int x = 0; x < p_sectors; ++x) {
-            /*
-            a - b
-            |   |
-            c - d
-            */
+            /* a - b
+               |   |
+               c - d */
             uint32_t a = (y * (p_sectors + 1) + x);
             uint32_t b = (y * (p_sectors + 1) + x + 1);
             uint32_t c = ((y + 1) * (p_sectors + 1) + x);
             uint32_t d = ((y + 1) * (p_sectors + 1) + x + 1);
 
-            indices.push_back(a);
-            indices.push_back(c);
-            indices.push_back(b);
+            indices.emplace_back(a);
+            indices.emplace_back(c);
+            indices.emplace_back(b);
 
-            indices.push_back(b);
-            indices.push_back(c);
-            indices.push_back(d);
+            indices.emplace_back(b);
+            indices.emplace_back(c);
+            indices.emplace_back(d);
         }
     }
 
@@ -252,10 +250,9 @@ MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     return mesh;
 }
 
-MeshComponent MakeCylinder(float p_radius, float p_height, int p_sectors) {
-    unused(p_sectors);
-    unused(p_height);
-
+MeshComponent MakeCylinder(float p_radius,
+                           float p_height,
+                           int p_sectors) {
     MeshComponent mesh;
 
     auto& indices = mesh.indices;
@@ -274,33 +271,31 @@ MeshComponent MakeCylinder(float p_radius, float p_height, int p_sectors) {
 
         vec3 normal = glm::normalize(vec3(x, 0.0f, z));
 
-        mesh.positions.push_back(point_1);
-        mesh.normals.push_back(normal);
-        mesh.texcoords_0.push_back(vec2());
+        mesh.positions.emplace_back(point_1);
+        mesh.normals.emplace_back(normal);
+        mesh.texcoords_0.emplace_back(vec2());
 
-        mesh.positions.push_back(point_2);
-        mesh.normals.push_back(normal);
-        mesh.texcoords_0.push_back(vec2());
+        mesh.positions.emplace_back(point_2);
+        mesh.normals.emplace_back(normal);
+        mesh.texcoords_0.emplace_back(vec2());
     }
 
     for (int index = 0; index < p_sectors; ++index) {
-        /*
-        a - b
-        |   |
-        c - d
-        */
+        /* a - b
+           |   |
+           c - d */
         const uint32_t a = 2 * index;
         const uint32_t c = 2 * index + 1;
         const uint32_t b = 2 * index + 2;
         const uint32_t d = 2 * index + 3;
 
-        indices.push_back(a);
-        indices.push_back(b);
-        indices.push_back(c);
+        indices.emplace_back(a);
+        indices.emplace_back(b);
+        indices.emplace_back(c);
 
-        indices.push_back(c);
-        indices.push_back(b);
-        indices.push_back(d);
+        indices.emplace_back(c);
+        indices.emplace_back(b);
+        indices.emplace_back(d);
     }
 
     // cylinder circles
@@ -316,26 +311,81 @@ MeshComponent MakeCylinder(float p_radius, float p_height, int p_sectors) {
 
             vec3 point(x, height, z);
 
-            mesh.positions.push_back(point);
-            mesh.normals.push_back(normal);
-            mesh.texcoords_0.push_back(vec2());
+            mesh.positions.emplace_back(point);
+            mesh.normals.emplace_back(normal);
+            mesh.texcoords_0.emplace_back(vec2());
         }
 
-        mesh.positions.push_back(vec3(0.0f, height, 0.0f));
-        mesh.normals.push_back(normal);
-        mesh.texcoords_0.push_back(vec2());
+        mesh.positions.emplace_back(vec3(0.0f, height, 0.0f));
+        mesh.normals.emplace_back(normal);
+        mesh.texcoords_0.emplace_back(vec2());
 
         uint32_t center_index = static_cast<uint32_t>(mesh.positions.size()) - 1;
         for (int index = 0; index < p_sectors; ++index) {
             if (height < 0) {
-                indices.push_back(offset + index);
-                indices.push_back(offset + index + 1);
-                indices.push_back(center_index);
+                indices.emplace_back(offset + index);
+                indices.emplace_back(offset + index + 1);
+                indices.emplace_back(center_index);
             } else {
-                indices.push_back(offset + index + 1);
-                indices.push_back(offset + index);
-                indices.push_back(center_index);
+                indices.emplace_back(offset + index + 1);
+                indices.emplace_back(offset + index);
+                indices.emplace_back(center_index);
             }
+        }
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.CreateRenderData();
+    return mesh;
+}
+
+MeshComponent MakeTorus(float p_radius,
+                        float p_tube_radius,
+                        int p_sectors,
+                        int p_tube_sectors) {
+    MeshComponent mesh;
+
+    constexpr float two_pi = 2.0f * glm::pi<float>();
+    for (int index_1 = 0; index_1 <= p_sectors; ++index_1) {
+        const float angle_1 = two_pi * index_1 / p_sectors;
+        for (int index_2 = 0; index_2 <= p_tube_sectors; ++index_2) {
+            const float angle_2 = two_pi * index_2 / p_tube_sectors;
+            const float x = (p_radius + p_tube_radius * glm::cos(angle_2)) * glm::cos(angle_1);
+            const float y = p_tube_radius * glm::sin(angle_2);
+            const float z = (p_radius + p_tube_radius * glm::cos(angle_2)) * glm::sin(angle_1);
+            const float nx = p_tube_radius * glm::cos(angle_2) * glm::cos(angle_1);
+            const float ny = p_tube_radius * glm::sin(angle_2);
+            const float nz = p_tube_radius * glm::cos(angle_2) * glm::sin(angle_1);
+
+            mesh.positions.emplace_back(vec3(x, y, z));
+            mesh.normals.emplace_back(glm::normalize(vec3(nx, ny, nz)));
+            mesh.texcoords_0.emplace_back(vec2());
+        }
+    }
+
+    auto& indices = mesh.indices;
+
+    for (int index_1 = 0; index_1 < p_sectors; ++index_1) {
+        for (int index_2 = 0; index_2 < p_tube_sectors; ++index_2) {
+            /* a - b
+               |   |
+               c - d */
+            const uint32_t a = index_2 + index_1 * (p_tube_sectors + 1);
+            const uint32_t b = a + (p_tube_sectors + 1);
+            const uint32_t c = a + 1;
+            const uint32_t d = b + 1;
+
+            indices.emplace_back(a);
+            indices.emplace_back(c);
+            indices.emplace_back(b);
+
+            indices.emplace_back(b);
+            indices.emplace_back(c);
+            indices.emplace_back(d);
         }
     }
 
@@ -412,13 +462,13 @@ MeshComponent MakeGrassBillboard(const vec3& p_scale) {
 
         uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
         for (int j = 0; j < points.size(); ++j) {
-            mesh.positions.push_back(rotation * points[j]);
-            mesh.normals.push_back(normal);
-            mesh.texcoords_0.push_back(uvs[j]);
+            mesh.positions.emplace_back(rotation * points[j]);
+            mesh.normals.emplace_back(normal);
+            mesh.texcoords_0.emplace_back(uvs[j]);
         }
 
         for (int j = 0; j < array_length(indices); ++j) {
-            mesh.indices.push_back(indices[j] + offset);
+            mesh.indices.emplace_back(indices[j] + offset);
         }
     }
 
