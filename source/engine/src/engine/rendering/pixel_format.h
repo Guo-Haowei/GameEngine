@@ -28,7 +28,13 @@ enum class PixelFormat {
     R10G10B10A2_UINT,
 
     D32_FLOAT,
+
+    R24G8_TYPELESS,
+    R24_UNORM_X8_TYPELESS,
     D24_UNORM_S8_UINT,
+    X24_TYPELESS_G8_UINT,
+
+    COUNT,
 };
 
 inline uint32_t channel_size(PixelFormat p_format) {

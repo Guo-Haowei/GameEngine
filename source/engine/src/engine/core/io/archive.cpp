@@ -28,9 +28,14 @@ void Archive::Close() {
     m_file.reset();
 
     if (m_isWriteMode) {
-        std::filesystem::path final_path{ m_path };
+        namespace fs = std::filesystem;
+
+        fs::path final_path{ m_path };
         final_path.replace_extension();
-        std::filesystem::rename(m_path, final_path);
+        if (fs::exists(final_path)) {
+            fs::remove(final_path);
+        }
+        fs::rename(m_path, final_path);
     }
 }
 

@@ -23,8 +23,8 @@ public:
 
     void update(Scene&) {}
 
-    PointShadowHandle allocate_point_light_shadow_map();
-    void free_point_light_shadow_map(PointShadowHandle& p_handle);
+    PointShadowHandle allocate_point_light_shadowMap();
+    void free_point_light_shadowMap(PointShadowHandle& p_handle);
 
     void draw_quad();
     void draw_quad_instanced(uint32_t p_instance_count);

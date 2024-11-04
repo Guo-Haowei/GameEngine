@@ -19,22 +19,23 @@ void main() {
     const vec2 texcoord = pass_uv;
 
     // @TODO: check if this is necessary
-    float depth = texture(c_gbufferDepthMap, texcoord).r;
+    float depth = texture(t_gbufferDepth, texcoord).r;
 
-    if (depth > 0.999) discard;
-
+    if (depth > 0.9999) {
+        discard;
+    }
     gl_FragDepth = depth;
 
-    vec3 N = texture(u_gbuffer_normal_map, texcoord).rgb;
+    vec3 N = texture(t_gbufferNormalMap, texcoord).rgb;
     // N = (2.0 * N) - vec3(1.0);
 
-    const vec3 world_position = texture(u_gbuffer_position_map, texcoord).rgb;
-    const vec3 emissive_roughness_metallic = texture(u_gbuffer_material_map, texcoord).rgb;
+    const vec3 world_position = texture(t_gbufferPositionMap, texcoord).rgb;
+    const vec3 emissive_roughness_metallic = texture(t_gbufferMaterialMap, texcoord).rgb;
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;
 
-    vec3 base_color = texture(u_gbuffer_base_color_map, texcoord).rgb;
+    vec3 base_color = texture(t_gbufferBaseColorMap, texcoord).rgb;
     if (c_noTexture != 0) {
         base_color = vec3(0.6);
     }
@@ -82,7 +83,7 @@ void main() {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, t_shadow_map, world_position, NdotL);
+                    shadow = shadowTest(light, t_shadowMap, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;

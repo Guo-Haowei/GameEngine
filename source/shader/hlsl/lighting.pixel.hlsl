@@ -48,16 +48,16 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     float closest_depth = 0.0f;
     switch (p_light.shadow_map_index) {
         case 0:
-            closest_depth = t_point_shadow_0.Sample(g_shadow_sampler, frag_to_light).r;
+            closest_depth = t_pointShadow0.Sample(g_shadow_sampler, frag_to_light).r;
             break;
         case 1:
-            closest_depth = t_point_shadow_1.Sample(g_shadow_sampler, frag_to_light).r;
+            closest_depth = t_pointShadow1.Sample(g_shadow_sampler, frag_to_light).r;
             break;
         case 2:
-            closest_depth = t_point_shadow_2.Sample(g_shadow_sampler, frag_to_light).r;
+            closest_depth = t_pointShadow2.Sample(g_shadow_sampler, frag_to_light).r;
             break;
         case 3:
-            closest_depth = t_point_shadow_3.Sample(g_shadow_sampler, frag_to_light).r;
+            closest_depth = t_pointShadow3.Sample(g_shadow_sampler, frag_to_light).r;
             break;
         default:
             break;
@@ -70,7 +70,7 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
 
 #if 0
     for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
-        float closest_depth = t_point_shadow_0.Sample(g_shadow_sampler, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
+        float closest_depth = t_pointShadow0.Sample(g_shadow_sampler, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
         closest_depth *= light_far;
         if (current_depth - bias > closest_depth) {
             shadow += 1.0;
@@ -108,25 +108,36 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     return direct_lighting;
 }
 
-float4 main(vsoutput_uv input) : SV_TARGET {
+struct ps_output {
+    float4 color : SV_TARGET;
+    float depth : SV_DEPTH;
+};
+
+ps_output main(vsoutput_uv input) {
+    ps_output output;
+
     float2 texcoord = input.uv;
 
-    float3 base_color = u_gbuffer_base_color_map.Sample(u_sampler, texcoord).rgb;
+    output.depth = t_gbufferDepth.Sample(u_sampler, texcoord).r;
+    clip(0.9999 - output.depth);
+
+    float3 base_color = t_gbufferBaseColorMap.Sample(u_sampler, texcoord).rgb;
     if (c_noTexture != 0) {
         base_color = float3(0.6, 0.6, 0.6);
     }
 
-    const vec3 world_position = u_gbuffer_position_map.Sample(u_sampler, texcoord).rgb;
-    const vec3 emissive_roughness_metallic = u_gbuffer_material_map.Sample(u_sampler, texcoord).rgb;
+    const vec3 world_position = t_gbufferPositionMap.Sample(u_sampler, texcoord).rgb;
+    const vec3 emissive_roughness_metallic = t_gbufferMaterialMap.Sample(u_sampler, texcoord).rgb;
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;
 
     if (emissive > 0.0) {
-        return float4(emissive * base_color, 1.0);
+        output.color = float4(emissive * base_color, 1.0);
+        return output;
     }
 
-    float3 N = u_gbuffer_normal_map.Sample(u_sampler, texcoord).rgb;
+    float3 N = t_gbufferNormalMap.Sample(u_sampler, texcoord).rgb;
     float3 color = 0.5 * (N + float3(1.0, 1.0, 1.0));
 
     const vec3 V = normalize(c_cameraPosition - world_position);
@@ -154,7 +165,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, t_shadow_map, world_position, NdotL);
+                    shadow = shadowTest(light, t_shadowMap, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;
@@ -180,5 +191,6 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     }
 
     color = Lo;
-    return float4(color, 1.0);
+    output.color = float4(color, 1.0);
+    return output;
 }

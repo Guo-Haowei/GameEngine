@@ -16,7 +16,7 @@ ps_output main(vsoutput_mesh input) {
     float4 color = c_baseColor;
 
     if (c_hasBaseColorMap) {
-        color = u_base_color_map.Sample(u_sampler, input.uv);
+        color = t_baseColorMap.Sample(u_sampler, input.uv);
     }
 
     if (color.a <= 0.0) {
@@ -27,7 +27,7 @@ ps_output main(vsoutput_mesh input) {
     float roughness;
 
     if (c_hasPbrMap != 0) {
-        float3 value = u_material_map.Sample(u_sampler, input.uv);
+        float3 value = t_materialMap.Sample(u_sampler, input.uv);
         metallic = value.b;
         roughness = value.g;
     } else {

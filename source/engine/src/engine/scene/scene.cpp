@@ -369,7 +369,7 @@ void Scene::RemoveEntity(Entity p_entity) {
     if (light) {
         auto shadow_handle = light->GetShadowMapIndex();
         if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
-            RenderManager::GetSingleton().free_point_light_shadow_map(shadow_handle);
+            RenderManager::GetSingleton().free_point_light_shadowMap(shadow_handle);
         }
         m_LightComponents.Remove(p_entity);
     }

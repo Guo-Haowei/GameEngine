@@ -103,7 +103,7 @@ void D3d11GraphicsManager::Finalize() {
 }
 
 void D3d11GraphicsManager::Render() {
-    m_renderGraph.execute();
+    m_renderGraph.Execute();
 
     // @TODO: fix the following
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -367,6 +367,10 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
     if (format == PixelFormat::D24_UNORM_S8_UINT) {
         texture_format = DXGI_FORMAT_R24G8_TYPELESS;
     }
+    if (format == PixelFormat::R24G8_TYPELESS) {
+        srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+        gen_mip_map = false;
+    }
 
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
@@ -385,7 +389,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
                    nullptr,
                    "Failed to create texture");
 
-    const char* debug_name = renderTargetResourceNameToString(p_texture_desc.name);
+    const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
 
     texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
 
@@ -525,13 +529,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
 
 void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
-
-    if (p_draw_pass == nullptr) {
-        // [SCRUM-28] @TODO: Should unbind render target after each render pass
-        ID3D11RenderTargetView* rtvs[3] = { nullptr, nullptr, nullptr };
-        m_deviceContext->OMSetRenderTargets(3, rtvs, nullptr);
-        return;
-    }
+    DEV_ASSERT(p_draw_pass);
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
     if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
@@ -548,13 +546,14 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
         rtvs.push_back(rtv.Get());
     }
 
-    ID3D11DepthStencilView* dsv = draw_pass->dsvs[0].Get();
+    ID3D11DepthStencilView* dsv = draw_pass->dsvs.size() ? draw_pass->dsvs[0].Get() : nullptr;
     m_deviceContext->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 
 void D3d11GraphicsManager::UnsetRenderTarget() {
-    ID3D11RenderTargetView* rtv = nullptr;
-    m_deviceContext->OMSetRenderTargets(1, &rtv, nullptr);
+    // [SCRUM-28] @TODO: Should unbind render target after each render pass
+    ID3D11RenderTargetView* rtvs[] = { nullptr, nullptr, nullptr };
+    m_deviceContext->OMSetRenderTargets(array_length(rtvs), rtvs, nullptr);
 }
 
 void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {

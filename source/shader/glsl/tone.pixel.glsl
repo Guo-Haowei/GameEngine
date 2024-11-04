@@ -18,14 +18,14 @@ void main() {
     const float gamma = 1.0 / 2.2;
 
     // edge detection
-    vec2 texel_size = textureSize(u_selection_highlight, 0);
+    vec2 texel_size = textureSize(t_selectionHighlight, 0);
     texel_size = 1.0 / texel_size;
 
     mat3 I;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             vec2 offset = uv + texel_size * vec2(i - 1, j - 1);
-            I[i][j] = texture(u_selection_highlight, offset).r;
+            I[i][j] = texture(t_selectionHighlight, offset).r;
         }
     }
 
@@ -39,7 +39,7 @@ void main() {
     }
 
     // @TODO: add bloom
-    vec3 color = texture(g_texture_lighting, uv).rgb;
+    vec3 color = texture(t_textureLighting, uv).rgb;
 
     if (c_enableBloom == 1) {
         vec3 bloom = texture(c_finalBloom, uv).rgb;

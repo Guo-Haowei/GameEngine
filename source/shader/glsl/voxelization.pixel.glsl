@@ -12,7 +12,7 @@ in vec2 pass_uv;
 void main() {
     vec4 base_color = c_baseColor;
     if (c_hasBaseColorMap != 0) {
-        base_color = texture(u_base_color_map, pass_uv);
+        base_color = texture(t_baseColorMap, pass_uv);
     }
     if (base_color.a < 0.001) {
         discard;
@@ -22,7 +22,7 @@ void main() {
     float roughness = c_roughness;
     if (c_hasPbrMap != 0) {
         // g roughness, b metallic
-        vec3 mr = texture(u_material_map, pass_uv).rgb;
+        vec3 mr = texture(t_materialMap, pass_uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }
@@ -48,7 +48,7 @@ void main() {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color.rgb);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, t_shadow_map, world_position, NdotL);
+                    shadow = shadowTest(light, t_shadowMap, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;

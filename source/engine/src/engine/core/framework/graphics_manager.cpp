@@ -74,11 +74,11 @@ bool GraphicsManager::Initialize() {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_HIGHLIGHT_SELECT, u_selection_highlight_slot);
-    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
-    bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
-    bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
-    bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RESOURCE_HIGHLIGHT_SELECT, t_selectionHighlightSlot);
+    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, t_gbufferBaseColorMapSlot);
+    bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
+    bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
+    bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
 
     return true;
 }
@@ -173,10 +173,10 @@ void GraphicsManager::SelectRenderGraph() {
 
     switch (m_method) {
         case RenderGraph::VXGI:
-            createRenderGraphVxgi(m_renderGraph);
+            CreateRenderGraphVxgi(m_renderGraph);
             break;
         default:
-            createRenderGraphDefault(m_renderGraph);
+            CreateRenderGraphDefault(m_renderGraph);
             break;
     }
 }
@@ -217,7 +217,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
             break;
         case AttachmentType::DEPTH_2D:
         case AttachmentType::DEPTH_STENCIL_2D:
-            texture_desc.bind_flags |= BIND_DEPTH_STENCIL;
+            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
             break;
         default:
             break;
@@ -310,9 +310,9 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
         return true;
     };
 
-    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.u_base_color_map_handle);
-    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.u_normal_map_handle);
-    cb.c_hasPbrMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.u_material_map_handle);
+    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.t_baseColorMap_handle);
+    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.t_normalMap_handle);
+    cb.c_hasPbrMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.t_materialMap_handle);
 }
 
 void GraphicsManager::Cleanup() {

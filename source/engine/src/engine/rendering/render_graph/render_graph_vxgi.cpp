@@ -40,16 +40,16 @@ void voxelization_pass_func(const DrawPass*) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, u_gbuffer_base_color_map_slot);
-    bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
-    bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
-    bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, t_gbufferBaseColorMapSlot);
+    bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
+    bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
+    bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
 
-    bind_slot(RESOURCE_SHADOW_MAP, t_shadow_map_slot);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_point_shadow_0_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_point_shadow_1_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_point_shadow_2_slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_point_shadow_3_slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_pointShadow0Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_pointShadow1Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_pointShadow2Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_pointShadow3Slot, Dimension::TEXTURE_CUBE);
 
     g_albedoVoxel.clear();
     g_normalVoxel.clear();
@@ -106,15 +106,15 @@ void voxelization_pass_func(const DrawPass*) {
     glEnable(GL_BLEND);
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_2_slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferBaseColorMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferPositionMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferNormalMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferMaterialMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow0Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow1Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow2Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow3Slot);
 
     // @TODO: [SCRUM-28] refactor
     gm.SetRenderTarget(nullptr);
@@ -307,12 +307,11 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     }
 }
 
-void createRenderGraphVxgi(RenderGraph& p_graph) {
+void CreateRenderGraphVxgi(RenderGraph& p_graph) {
     // @TODO: early-z
-
-    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
-    int w = frame_size.x;
-    int h = frame_size.y;
+    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const int w = frame_size.x;
+    const int h = frame_size.y;
 
     RenderPassCreator::Config config;
     config.frame_width = w;
@@ -330,7 +329,7 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
     {  // environment pass
         RenderPassDesc desc;
         desc.name = RenderPassName::ENV;
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
 
         auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_map = manager.CreateRenderTarget(RenderTargetDesc{ cube_map_name,
@@ -359,14 +358,14 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
             .exec_func = generate_brdf_func,
         });
 
-        pass->addDrawPass(brdf_subpass);
-        pass->addDrawPass(create_cube_map_subpass(RESOURCE_ENV_SKYBOX_CUBE_MAP, RESOURCE_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
-        pass->addDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
-        pass->addDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
+        pass->AddDrawPass(brdf_subpass);
+        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_SKYBOX_CUBE_MAP, RESOURCE_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
+        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
+        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
-    creator.addShadowPass();
-    creator.addGBufferPass();
+    creator.AddShadowPass();
+    creator.AddGBufferPass();
 
     auto gbuffer_depth = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
     {  // highlight selected pass
@@ -379,45 +378,46 @@ void createRenderGraphVxgi(RenderGraph& p_graph) {
         RenderPassDesc desc;
         desc.name = RenderPassName::HIGHLIGHT_SELECT;
         desc.dependencies = { RenderPassName::GBUFFER };
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .color_attachments = { attachment },
             .depth_attachment = gbuffer_depth,
             .exec_func = highlight_select_pass_func,
         });
-        pass->addDrawPass(draw_pass);
+        pass->AddDrawPass(draw_pass);
     }
 
     {  // voxel pass
         RenderPassDesc desc;
         desc.name = RenderPassName::VOXELIZATION;
         desc.dependencies = { RenderPassName::SHADOW };
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .exec_func = voxelization_pass_func,
         });
-        pass->addDrawPass(draw_pass);
+        pass->AddDrawPass(draw_pass);
     }
 
-    creator.addLightingPass();
-    creator.addBloomPass();
-    creator.addTonePass();
+    creator.AddLightingPass();
+    creator.AddEmitterPass();
+    creator.AddBloomPass();
+    creator.AddTonePass();
 
     {
         // final pass
         RenderPassDesc desc;
         desc.name = RenderPassName::FINAL;
         desc.dependencies = { RenderPassName::TONE };
-        auto pass = p_graph.createPass(desc);
+        auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .color_attachments = { final_attachment },
             .exec_func = final_pass_func,
         });
-        pass->addDrawPass(draw_pass);
+        pass->AddDrawPass(draw_pass);
     }
 
     // @TODO: allow recompile
-    p_graph.compile();
+    p_graph.Compile();
 }
 
 }  // namespace my::rg

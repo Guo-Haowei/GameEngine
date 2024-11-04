@@ -7,22 +7,22 @@ namespace my::rg {
 
 class RenderGraph : public NonCopyable {
 public:
-    std::shared_ptr<RenderPass> createPass(RenderPassDesc& p_desc);
-    std::shared_ptr<RenderPass> findPass(RenderPassName p_name) const;
+    std::shared_ptr<RenderPass> CreatePass(RenderPassDesc& p_desc);
+    std::shared_ptr<RenderPass> FindPass(RenderPassName p_name) const;
 
     // @TODO: graph should not own resource, move to graphics manager
 
-    void compile();
+    void Compile();
 
-    void execute();
+    void Execute();
 
 private:
-    std::vector<std::shared_ptr<RenderPass>> m_render_passes;
-    std::vector<int> m_sorted_order;
+    std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
+    std::vector<int> m_sortedOrder;
     std::vector<std::pair<int, int>> m_links;
     std::vector<std::vector<int>> m_levels;
 
-    std::map<RenderPassName, int> m_render_pass_lookup;
+    std::map<RenderPassName, int> m_renderPassLookup;
 
     friend class RenderGraphEditorDelegate;
 };

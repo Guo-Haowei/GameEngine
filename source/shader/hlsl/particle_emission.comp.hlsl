@@ -1,9 +1,12 @@
 #include "cbuffer.h"
 #include "particle_defines.h"
 
-float Random(float3 co) {
-    return frac(sin(dot(co.xyz, float3(12.9898, 78.233, 45.5432))) * 43758.5453);
+float Random(float3 co, uint index) {
+    return frac(sin(dot(float4(co.xyz, float(index)), float4(12.9898, 78.233, 45.5432, 22.1458))) * 43758.5453);
 }
+// float Random(float3 co, uint index) {
+//     return frac(sin(dot(co.xyz, float3(12.9898, 78.233, 45.5432))) * 43758.5453);
+// }
 
 uint pop_dead_index() {
     int index;
@@ -25,16 +28,15 @@ void push_alive_index(uint p_index) {
         uint particle_index = pop_dead_index();
 
         float3 velocity = c_emitterStartingVelocity;
-        velocity.x += Random(c_seeds.xyz / (index + 1)) - 0.5;
-        velocity.y += Random(c_seeds.yzx / (index + 1)) - 0.5;
-        velocity.z += Random(c_seeds.zxy / (index + 1)) - 0.5;
+        velocity.x += Random(c_seeds.xyz, (index + 1)) - 0.5;
+        velocity.y += Random(c_seeds.yzx, (index + 1)) - 0.5;
+        velocity.z += Random(c_seeds.zxy, (index + 1)) - 0.5;
 
         float3 color;
-        color.r = Random(c_seeds.xzy / (index + 1));
-        color.g = Random(c_seeds.zyx / (index + 1));
-        color.b = Random(c_seeds.yzx / (index + 1));
-        color *= 2.0;
-        color += float3(0.2, 0.2, 0.2);
+        color.r = Random(c_seeds.xzy, index);
+        color.g = Random(c_seeds.zyx, index);
+        color.b = Random(c_seeds.yzx, index);
+        color *= 3.0;
 
         GlobalParticleData[particle_index].position.xyz = c_emitterPosition;
         GlobalParticleData[particle_index].velocity.xyz = velocity;

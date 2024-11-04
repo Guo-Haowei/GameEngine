@@ -16,7 +16,7 @@ SamplerState linear_clamp_sampler : register(s2);
                        output_coord.y / output_image_size.y);
 
     uint input_width, input_height;
-    g_bloom_input_image.GetDimensions(input_width, input_height);
+    t_bloomInputImage.GetDimensions(input_width, input_height);
     float x = 1.0f / input_width;
     float y = 1.0f / input_height;
     uv.x += 0.5f * x;
@@ -29,22 +29,22 @@ SamplerState linear_clamp_sampler : register(s2);
     // - l - m -
     // g - h - i
     // === ('e' is the current texel) ===
-    float3 a = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - 2 * x, uv.y + 2 * y), 0).rgb;
-    float3 b = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y + 2 * y), 0).rgb;
-    float3 c = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + 2 * x, uv.y + 2 * y), 0).rgb;
+    float3 a = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - 2 * x, uv.y + 2 * y), 0).rgb;
+    float3 b = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y + 2 * y), 0).rgb;
+    float3 c = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + 2 * x, uv.y + 2 * y), 0).rgb;
 
-    float3 d = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - 2 * x, uv.y), 0).rgb;
-    float3 e = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y), 0).rgb;
-    float3 f = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + 2 * x, uv.y), 0).rgb;
+    float3 d = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - 2 * x, uv.y), 0).rgb;
+    float3 e = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y), 0).rgb;
+    float3 f = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + 2 * x, uv.y), 0).rgb;
 
-    float3 g = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - 2 * x, uv.y - 2 * y), 0).rgb;
-    float3 h = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y - 2 * y), 0).rgb;
-    float3 i = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + 2 * x, uv.y - 2 * y), 0).rgb;
+    float3 g = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - 2 * x, uv.y - 2 * y), 0).rgb;
+    float3 h = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x, uv.y - 2 * y), 0).rgb;
+    float3 i = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + 2 * x, uv.y - 2 * y), 0).rgb;
 
-    float3 j = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y + y), 0).rgb;
-    float3 k = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y + y), 0).rgb;
-    float3 l = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y - y), 0).rgb;
-    float3 m = g_bloom_input_image.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y - y), 0).rgb;
+    float3 j = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y + y), 0).rgb;
+    float3 k = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y + y), 0).rgb;
+    float3 l = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x - x, uv.y - y), 0).rgb;
+    float3 m = t_bloomInputImage.SampleLevel(linear_clamp_sampler, float2(uv.x + x, uv.y - y), 0).rgb;
 
     // This shows 5 square areas that are being sampled. But some of them overlap,
     // so to have an energy preserving downsample we need to make some adjustments.

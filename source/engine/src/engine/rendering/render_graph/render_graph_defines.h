@@ -10,6 +10,7 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
     RENDER_PASS_NAME(SHADOW)           \
     RENDER_PASS_NAME(GBUFFER)          \
     RENDER_PASS_NAME(LIGHTING)         \
+    RENDER_PASS_NAME(EMITTER)          \
     RENDER_PASS_NAME(BLOOM)            \
     RENDER_PASS_NAME(ENV)              \
     RENDER_PASS_NAME(HIGHLIGHT_SELECT) \
@@ -17,7 +18,7 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
     RENDER_PASS_NAME(TONE)             \
     RENDER_PASS_NAME(FINAL)
 
-// RESOURCE_SHADOW_MAP same as spot shadow, maybe make it shadow atlas?
+// @TODO: RESOURCE_SHADOW_MAP same as spot shadow, maybe make it shadow atlas?
 #define RENDER_TARGET_RESOURCE_NAME_LIST                                  \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_SHADOW_MAP)                      \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_POINT_SHADOW_MAP_0)              \
@@ -72,7 +73,7 @@ enum RenderTargetResourceName : uint8_t {
 
 static_assert(RESOURCE_BLOOM_MAX - RESOURCE_BLOOM_MIN + 1 == BLOOM_MIP_CHAIN_MAX);
 
-static inline const char* renderPassNameToString(RenderPassName p_name) {
+static inline const char* RenderPassNameToString(RenderPassName p_name) {
     DEV_ASSERT_INDEX(p_name, RenderPassName::COUNT);
 
     static const char* s_names[static_cast<int>(RenderPassName::COUNT)] = {
@@ -83,7 +84,7 @@ static inline const char* renderPassNameToString(RenderPassName p_name) {
     return s_names[static_cast<int>(p_name)];
 }
 
-static inline const char* renderTargetResourceNameToString(RenderTargetResourceName p_name) {
+static inline const char* RenderTargetResourceNameToString(RenderTargetResourceName p_name) {
     DEV_ASSERT_INDEX(p_name, RenderTargetResourceName::COUNT);
 
     static const char* s_names[static_cast<int>(RenderTargetResourceName::COUNT)] = {
@@ -100,9 +101,9 @@ namespace my::rg {
 
 class RenderGraph;
 
-void createRenderGraphDefault(RenderGraph& p_graph);
-void createRenderGraphVxgi(RenderGraph& p_graph);
+void CreateRenderGraphDefault(RenderGraph& p_graph);
+void CreateRenderGraphVxgi(RenderGraph& p_graph);
 // @TODO: add this
-void createRenderGraphPathTracer(RenderGraph& p_graph);
+void CreateRenderGraphPathTracer(RenderGraph& p_graph);
 
 }  // namespace my::rg

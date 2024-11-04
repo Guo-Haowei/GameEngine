@@ -13,11 +13,11 @@ public:
         for (auto& level : p_graph.m_levels) {
             float y_offset = 0.0f;
             for (int id : level) {
-                const std::shared_ptr<RenderPass>& pass = p_graph.m_render_passes[id];
+                const std::shared_ptr<RenderPass>& pass = p_graph.m_renderPasses[id];
 
                 mNodes.push_back(
                     {
-                        pass->getNameString(),
+                        pass->GetNameString(),
                         0,
                         x_offset,
                         y_offset,

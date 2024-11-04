@@ -81,8 +81,14 @@ static inline DXGI_FORMAT Convert(PixelFormat p_format) {
             return DXGI_FORMAT_R11G11B10_FLOAT;
         case PixelFormat::D32_FLOAT:
             return DXGI_FORMAT_D32_FLOAT;
+        case PixelFormat::R24G8_TYPELESS:
+            return DXGI_FORMAT_R24G8_TYPELESS;
+        case PixelFormat::R24_UNORM_X8_TYPELESS:
+            return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
         case PixelFormat::D24_UNORM_S8_UINT:
             return DXGI_FORMAT_D24_UNORM_S8_UINT;
+        case PixelFormat::X24_TYPELESS_G8_UINT:
+            return DXGI_FORMAT_X24_TYPELESS_G8_UINT;
         default:
             CRASH_NOW();
             return DXGI_FORMAT_UNKNOWN;

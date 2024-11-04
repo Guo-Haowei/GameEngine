@@ -655,7 +655,6 @@ void OpenGLGraphicsManager::CreateGpuResources() {
     };
 
     make_resident(RESOURCE_TONE, cache.c_toneImage);
-    make_resident(RESOURCE_GBUFFER_DEPTH, cache.c_gbufferDepthMap);
     make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_envMap);
     make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuseIrradianceMap);
     make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefilteredMap);
@@ -668,7 +667,7 @@ void OpenGLGraphicsManager::CreateGpuResources() {
 void OpenGLGraphicsManager::Render() {
     OPTICK_EVENT();
 
-    m_renderGraph.execute();
+    m_renderGraph.Execute();
 
     // @TODO: move it somewhere else
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
