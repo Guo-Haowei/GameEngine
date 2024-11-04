@@ -65,41 +65,6 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
             gm.SetStencilRef(0);
         }
     }
-
-    const Scene& scene = SceneManager::GetScene();
-    int particle_idx = 0;
-    for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
-
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(ctx.emitter_uniform.get(), particle_idx++);
-
-        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-
-        gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
-        gm.Dispatch(1, 1, 1);
-
-        gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-        gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
-        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
-
-        // Renderering
-        gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
-
-        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-        RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
-        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
-    }
 }
 
 void RenderPassCreator::AddGBufferPass() {
@@ -147,7 +112,7 @@ void RenderPassCreator::AddGBufferPass() {
         .depth_attachment = gbuffer_depth,
         .exec_func = GbufferPassFunc,
     });
-    pass->addDrawPass(draw_pass);
+    pass->AddDrawPass(draw_pass);
 }
 
 /// Shadow
@@ -179,8 +144,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
         gm.SetRenderTarget(p_draw_pass, i);
         gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT, nullptr, i);
 
-        Viewport viewport{ width, height };
-        gm.SetViewport(viewport);
+        gm.SetViewport(Viewport(width, height));
 
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
@@ -209,8 +173,7 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
 
     gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT);
 
-    Viewport viewport{ width, height };
-    gm.SetViewport(viewport);
+    gm.SetViewport(Viewport(width, height));
 
     PassContext& pass = gm.m_shadowPasses[0];
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
@@ -254,7 +217,7 @@ void RenderPassCreator::AddShadowPass() {
             .depth_attachment = shadow_map,
             .exec_func = ShadowPassFunc,
         });
-        pass->addDrawPass(draw_pass);
+        pass->AddDrawPass(draw_pass);
     }
 
     // @TODO: refactor
@@ -287,7 +250,7 @@ void RenderPassCreator::AddShadowPass() {
                 .depth_attachment = point_shadow_map,
                 .exec_func = funcs[i],
             });
-            pass->addDrawPass(draw_pass);
+            pass->AddDrawPass(draw_pass);
         }
     }
 }
@@ -302,8 +265,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
 
     gm.SetRenderTarget(p_draw_pass);
 
-    Viewport viewport(width, height);
-    gm.SetViewport(viewport);
+    gm.SetViewport(Viewport(width, height));
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
     gm.SetPipelineState(PROGRAM_LIGHTING);
 
@@ -361,7 +323,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_3_slot);
 
     // @TODO: [SCRUM-28] refactor
-    gm.SetRenderTarget(nullptr);
+    gm.UnsetRenderTarget();
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -395,7 +357,76 @@ void RenderPassCreator::AddLightingPass() {
         .depth_attachment = gbuffer_depth,
         .exec_func = LightingPassFunc,
     });
-    pass->addDrawPass(drawpass);
+    pass->AddDrawPass(drawpass);
+}
+
+/// Emitter
+static void EmitterPassFunc(const DrawPass* p_draw_pass) {
+    OPTICK_EVENT();
+
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& ctx = gm.GetContext();
+    auto [width, height] = p_draw_pass->depth_attachment->getSize();
+
+    gm.SetRenderTarget(p_draw_pass);
+    gm.SetViewport(Viewport(width, height));
+
+    PassContext& pass = gm.m_mainPass;
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+
+    const Scene& scene = SceneManager::GetScene();
+    int particle_idx = 0;
+    for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
+
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(ctx.emitter_uniform.get(), particle_idx++);
+
+        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
+        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
+        gm.Dispatch(1, 1, 1);
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
+        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
+
+        // Renderering
+        gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
+
+        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+        RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
+        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
+    }
+
+    gm.UnsetRenderTarget();
+}
+
+void RenderPassCreator::AddEmitterPass() {
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::EMITTER;
+
+    desc.dependencies = { RenderPassName::LIGHTING };
+
+    auto pass = m_graph.CreatePass(desc);
+    auto drawpass = manager.CreateDrawPass(DrawPassDesc{
+        .color_attachments = { manager.FindRenderTarget(RESOURCE_LIGHTING) },
+        .depth_attachment = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH),
+        .exec_func = EmitterPassFunc,
+    });
+    pass->AddDrawPass(drawpass);
 }
 
 /// Bloom
@@ -483,7 +514,7 @@ void RenderPassCreator::AddBloomPass() {
         .color_attachments = {},
         .exec_func = BloomFunc,
     });
-    pass->addDrawPass(draw_pass);
+    pass->AddDrawPass(draw_pass);
 }
 
 /// Tone
@@ -553,7 +584,7 @@ void RenderPassCreator::AddTonePass() {
         .depth_attachment = gbuffer_depth,
         .exec_func = TonePassFunc,
     });
-    pass->addDrawPass(draw_pass);
+    pass->AddDrawPass(draw_pass);
 }
 
 }  // namespace my::rg

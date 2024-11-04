@@ -358,10 +358,10 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
             .exec_func = generate_brdf_func,
         });
 
-        pass->addDrawPass(brdf_subpass);
-        pass->addDrawPass(create_cube_map_subpass(RESOURCE_ENV_SKYBOX_CUBE_MAP, RESOURCE_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
-        pass->addDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
-        pass->addDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
+        pass->AddDrawPass(brdf_subpass);
+        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_SKYBOX_CUBE_MAP, RESOURCE_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
+        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
+        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
     creator.AddShadowPass();
@@ -384,7 +384,7 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
             .depth_attachment = gbuffer_depth,
             .exec_func = highlight_select_pass_func,
         });
-        pass->addDrawPass(draw_pass);
+        pass->AddDrawPass(draw_pass);
     }
 
     {  // voxel pass
@@ -395,10 +395,11 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .exec_func = voxelization_pass_func,
         });
-        pass->addDrawPass(draw_pass);
+        pass->AddDrawPass(draw_pass);
     }
 
     creator.AddLightingPass();
+    creator.AddEmitterPass();
     creator.AddBloomPass();
     creator.AddTonePass();
 
@@ -412,7 +413,7 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
             .color_attachments = { final_attachment },
             .exec_func = final_pass_func,
         });
-        pass->addDrawPass(draw_pass);
+        pass->AddDrawPass(draw_pass);
     }
 
     // @TODO: allow recompile

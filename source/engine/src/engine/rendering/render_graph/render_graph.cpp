@@ -1,10 +1,12 @@
 #include "render_graph.h"
 
+#define RENDER_GRAPH_DEBUG_PRINT IN_USE
+
 namespace my::rg {
 
 std::shared_ptr<RenderPass> RenderGraph::CreatePass(RenderPassDesc& p_desc) {
     std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPass>();
-    render_pass->createInternal(p_desc);
+    render_pass->CreateInternal(p_desc);
     m_renderPasses.emplace_back(render_pass);
 
     DEV_ASSERT(m_renderPassLookup.find(render_pass->m_name) == m_renderPassLookup.end());
@@ -58,17 +60,27 @@ void RenderGraph::Compile() {
                 if (graph.has_edge(from, to)) {
                     const RenderPass* a = m_renderPasses[from].get();
                     const RenderPass* b = m_renderPasses[to].get();
-                    LOG_VERBOSE("[render graph] dependency from '{}' to '{}'", a->getNameString(), b->getNameString());
+                    LOG_VERBOSE("[render graph] dependency from '{}' to '{}'", a->GetNameString(), b->GetNameString());
                     m_links.push_back({ from, to });
                 }
             }
         }
     }
+
+#if USING(RENDER_GRAPH_DEBUG_PRINT)
+    int i = 0;
+    for (int index : m_sortedOrder) {
+        auto& pass = m_renderPasses[index];
+        ++i;
+        LOG_VERBOSE("Excuting order {}: '{}'", i, pass->GetNameString());
+    }
+#endif
 }
 
 void RenderGraph::Execute() {
     for (int index : m_sortedOrder) {
-        m_renderPasses[index]->execute();
+        auto& pass = m_renderPasses[index];
+        pass->Execute();
     }
 }
 

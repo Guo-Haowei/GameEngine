@@ -20,6 +20,7 @@ void CreateRenderGraphDefault(RenderGraph& p_graph) {
     creator.AddShadowPass();
     creator.AddGBufferPass();
     creator.AddLightingPass();
+    creator.AddEmitterPass();
     creator.AddBloomPass();
     creator.AddTonePass();
 

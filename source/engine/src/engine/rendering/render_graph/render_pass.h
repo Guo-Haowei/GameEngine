@@ -11,19 +11,19 @@ struct RenderPassDesc {
 
 class RenderPass {
 public:
-    void addDrawPass(std::shared_ptr<DrawPass> p_draw_pass);
+    void AddDrawPass(std::shared_ptr<DrawPass> p_draw_pass);
 
-    void execute();
+    void Execute();
 
-    RenderPassName getName() const { return m_name; }
-    const char* getNameString() const { return RenderPassNameToString(m_name); }
+    RenderPassName GetName() const { return m_name; }
+    const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
 protected:
-    virtual void createInternal(RenderPassDesc& pass_desc);
+    virtual void CreateInternal(RenderPassDesc& pass_desc);
 
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;
-    std::vector<std::shared_ptr<DrawPass>> m_draw_passes;
+    std::vector<std::shared_ptr<DrawPass>> m_drawPasses;
 
     friend class RenderGraph;
 };

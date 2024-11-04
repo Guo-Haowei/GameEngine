@@ -24,6 +24,7 @@ public:
     void AddGBufferPass();
     void AddShadowPass();
     void AddLightingPass();
+    void AddEmitterPass();
     void AddBloomPass();
     void AddTonePass();
 

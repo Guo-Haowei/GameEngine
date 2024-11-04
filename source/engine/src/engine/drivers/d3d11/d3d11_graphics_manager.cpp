@@ -525,13 +525,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
 
 void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
-
-    if (p_draw_pass == nullptr) {
-        // [SCRUM-28] @TODO: Should unbind render target after each render pass
-        ID3D11RenderTargetView* rtvs[3] = { nullptr, nullptr, nullptr };
-        m_deviceContext->OMSetRenderTargets(3, rtvs, nullptr);
-        return;
-    }
+    DEV_ASSERT(p_draw_pass);
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
     if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
@@ -553,8 +547,9 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
 }
 
 void D3d11GraphicsManager::UnsetRenderTarget() {
-    ID3D11RenderTargetView* rtv = nullptr;
-    m_deviceContext->OMSetRenderTargets(1, &rtv, nullptr);
+    // [SCRUM-28] @TODO: Should unbind render target after each render pass
+    ID3D11RenderTargetView* rtvs[] = { nullptr, nullptr, nullptr };
+    m_deviceContext->OMSetRenderTargets(array_length(rtvs), rtvs, nullptr);
 }
 
 void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
