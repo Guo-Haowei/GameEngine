@@ -150,7 +150,7 @@ CBUFFER(EmitterConstantBuffer, 5) {
 
 CBUFFER(PerSceneConstantBuffer, 6) {
     // @TODO: remove the following
-    sampler2D c_gbufferDepthMap;
+    sampler2D _per_scene_padding_0;
     sampler2D c_finalBloom;
 
     sampler2D c_grassBaseColor;

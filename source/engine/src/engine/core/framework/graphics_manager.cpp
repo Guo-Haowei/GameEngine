@@ -217,7 +217,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
             break;
         case AttachmentType::DEPTH_2D:
         case AttachmentType::DEPTH_STENCIL_2D:
-            texture_desc.bind_flags |= BIND_DEPTH_STENCIL;
+            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
             break;
         default:
             break;

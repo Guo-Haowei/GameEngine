@@ -19,10 +19,11 @@ void main() {
     const vec2 texcoord = pass_uv;
 
     // @TODO: check if this is necessary
-    float depth = texture(c_gbufferDepthMap, texcoord).r;
+    float depth = texture(t_gbufferDepth, texcoord).r;
 
-    if (depth > 0.999) discard;
-
+    if (depth > 0.9999) {
+        discard;
+    }
     gl_FragDepth = depth;
 
     vec3 N = texture(u_gbuffer_normal_map, texcoord).rgb;

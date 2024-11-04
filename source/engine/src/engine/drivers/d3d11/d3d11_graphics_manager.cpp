@@ -367,6 +367,10 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
     if (format == PixelFormat::D24_UNORM_S8_UINT) {
         texture_format = DXGI_FORMAT_R24G8_TYPELESS;
     }
+    if (format == PixelFormat::R24G8_TYPELESS) {
+        srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+        gen_mip_map = false;
+    }
 
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
@@ -542,7 +546,7 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
         rtvs.push_back(rtv.Get());
     }
 
-    ID3D11DepthStencilView* dsv = draw_pass->dsvs[0].Get();
+    ID3D11DepthStencilView* dsv = draw_pass->dsvs.size() ? draw_pass->dsvs[0].Get() : nullptr;
     m_deviceContext->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 

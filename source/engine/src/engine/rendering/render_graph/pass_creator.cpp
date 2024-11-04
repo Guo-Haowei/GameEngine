@@ -75,7 +75,8 @@ void RenderPassCreator::AddGBufferPass() {
 
     // @TODO: decouple sampler and render target
     auto gbuffer_depth = manager.CreateRenderTarget(RenderTargetDesc(RESOURCE_GBUFFER_DEPTH,
-                                                                     PixelFormat::D24_UNORM_S8_UINT,
+                                                                     PixelFormat::R24G8_TYPELESS,
+                                                                     // PixelFormat::D24_UNORM_S8_UINT,
                                                                      AttachmentType::DEPTH_STENCIL_2D,
                                                                      p_width, p_height),
                                                     nearest_sampler());
@@ -285,6 +286,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     bind_slot(RESOURCE_GBUFFER_POSITION, u_gbuffer_position_map_slot);
     bind_slot(RESOURCE_GBUFFER_NORMAL, u_gbuffer_normal_map_slot);
     bind_slot(RESOURCE_GBUFFER_MATERIAL, u_gbuffer_material_map_slot);
+    bind_slot(RESOURCE_GBUFFER_DEPTH, t_gbufferDepth_slot);
 
     bind_slot(RESOURCE_SHADOW_MAP, t_shadow_map_slot);
     bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_point_shadow_0_slot, Dimension::TEXTURE_CUBE);
@@ -306,16 +308,17 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     // }
 
     // @TODO: fix skybox
-    if (gm.GetBackend() == Backend::OPENGL) {
-        GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX);
-        RenderManager::GetSingleton().draw_skybox();
-    }
+    // if (gm.GetBackend() == Backend::OPENGL) {
+    //     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX);
+    //     RenderManager::GetSingleton().draw_skybox();
+    // }
 
     // unbind stuff
     gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_base_color_map_slot);
     gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_position_map_slot);
     gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_normal_map_slot);
     gm.UnbindTexture(Dimension::TEXTURE_2D, u_gbuffer_material_map_slot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferDepth_slot);
     gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadow_map_slot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_0_slot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_point_shadow_1_slot);
@@ -354,7 +357,6 @@ void RenderPassCreator::AddLightingPass() {
     auto pass = m_graph.CreatePass(desc);
     auto drawpass = manager.CreateDrawPass(DrawPassDesc{
         .color_attachments = { lighting_attachment },
-        .depth_attachment = gbuffer_depth,
         .exec_func = LightingPassFunc,
     });
     pass->AddDrawPass(drawpass);

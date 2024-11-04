@@ -108,8 +108,18 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     return direct_lighting;
 }
 
-float4 main(vsoutput_uv input) : SV_TARGET {
+struct ps_output {
+    float4 color : SV_TARGET;
+    float depth : SV_DEPTH;
+};
+
+ps_output main(vsoutput_uv input) {
+    ps_output output;
+
     float2 texcoord = input.uv;
+
+    output.depth = t_gbufferDepth.Sample(u_sampler, texcoord).r;
+    clip(0.9999 - output.depth);
 
     float3 base_color = u_gbuffer_base_color_map.Sample(u_sampler, texcoord).rgb;
     if (c_noTexture != 0) {
@@ -123,7 +133,8 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     float metallic = emissive_roughness_metallic.b;
 
     if (emissive > 0.0) {
-        return float4(emissive * base_color, 1.0);
+        output.color = float4(emissive * base_color, 1.0);
+        return output;
     }
 
     float3 N = u_gbuffer_normal_map.Sample(u_sampler, texcoord).rgb;
@@ -180,5 +191,6 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     }
 
     color = Lo;
-    return float4(color, 1.0);
+    output.color = float4(color, 1.0);
+    return output;
 }
