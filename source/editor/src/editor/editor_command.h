@@ -20,6 +20,7 @@ enum class EntityType : uint8_t {
     TORUS,
     TRANSFORM,
     PARTICLE_EMITTER,
+    FORCE_FIELD,
 };
 
 enum class ComponentType : uint8_t {

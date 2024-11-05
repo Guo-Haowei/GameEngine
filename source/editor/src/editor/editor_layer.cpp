@@ -136,6 +136,7 @@ void EditorLayer::FlushCommand(Scene& scene) {
         m_commandBuffer.pop_front();
         do {
             if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
+                // @TODO: refactor
                 ecs::Entity id;
                 switch (add_command->entityType) {
                     case EntityType::INFINITE_LIGHT:
@@ -167,6 +168,9 @@ void EditorLayer::FlushCommand(Scene& scene) {
                         break;
                     case EntityType::PARTICLE_EMITTER:
                         id = scene.CreateParticleEmitter(GenerateName("emitter"));
+                        break;
+                    case EntityType::FORCE_FIELD:
+                        id = scene.CreateForceField(GenerateName("forcefield"));
                         break;
                     default:
                         LOG_FATAL("Entity type {} not supported", static_cast<int>(add_command->entityType));

@@ -6,6 +6,7 @@
 #include "scene/armature_component.h"
 #include "scene/camera.h"
 #include "scene/collider_component.h"
+#include "scene/force_field_component.h"
 #include "scene/hierarchy_component.h"
 #include "scene/light_component.h"
 #include "scene/material_component.h"
@@ -110,6 +111,7 @@ private:
     REGISTER_COMPONENT(BoxColliderComponent, 0);
     REGISTER_COMPONENT(MeshColliderComponent, 0);
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
+    REGISTER_COMPONENT(ForceFieldComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
@@ -193,6 +195,8 @@ public:
                                   const mat4& p_transform = mat4(1.0f));
 
     ecs::Entity CreateParticleEmitter(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
+
+    ecs::Entity CreateForceField(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
 
     void AttachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
 

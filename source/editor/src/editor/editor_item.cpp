@@ -46,6 +46,9 @@ void EditorItem::OpenAddEntityPopup(ecs::Entity p_parent) {
             if (ImGui::MenuItem("Particle Emitter")) {
                 m_editor.AddEntity(EntityType::PARTICLE_EMITTER, p_parent);
             }
+            if (ImGui::MenuItem("Force Field")) {
+                m_editor.AddEntity(EntityType::FORCE_FIELD, p_parent);
+            }
             ImGui::EndMenu();
         }
         ImGui::EndMenu();
