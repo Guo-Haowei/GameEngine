@@ -59,6 +59,11 @@ struct Light {
     int shadow_map_index;
 };
 
+struct ForceField {
+    vec3 position;
+    float strength;
+};
+
 CBUFFER(PerBatchConstantBuffer, 0) {
     mat4 c_worldMatrix;
     mat4 _per_batch_padding_0;
@@ -93,7 +98,10 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     vec3 c_worldCenter;
     float c_worldSizeHalf;
 
-    vec4 _per_frame_padding_0;
+    vec3 _per_frame_padding_0;
+    int c_forceFieldsCount;
+
+    ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
 
 CBUFFER(MaterialConstantBuffer, 3) {
@@ -141,9 +149,14 @@ CBUFFER(EmitterConstantBuffer, 5) {
     vec3 c_emitterStartingVelocity;
     int c_emitterMaxParticleCount;
 
-    mat4 _emitter_padding_0;
-    mat4 _emitter_padding_1;
-    mat4 _emitter_padding_2;
+    vec3 _emitter_padding_0;
+    int c_emitterHasGravity;
+
+    vec4 _emitter_padding_1;
+    vec4 _emitter_padding_2;
+    vec4 _emitter_padding_3;
+    mat4 _emitter_padding_4;
+    mat4 _emitter_padding_5;
 };
 
 #ifndef HLSL_LANG

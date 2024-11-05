@@ -254,6 +254,7 @@ private:
     void Cleanup();
     void UpdateConstants(const Scene& p_scene);
     void UpdateEmitters(const Scene& p_scene);
+    void UpdateForceFields(const Scene& p_scene);
     void UpdateLights(const Scene& p_scene);
     void UpdateVoxelPass(const Scene& p_scene);
     void UpdateMainPass(const Scene& p_scene);

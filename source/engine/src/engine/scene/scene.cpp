@@ -19,7 +19,9 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 // version 6: add collider component
 // version 7: add enabled to material
 // version 8: add particle emitter
-static constexpr uint32_t SCENE_VERSION = 8;
+// version 9: add ParticleEmitterComponent.gravity
+// version 10: add ForceFieldComponent
+static constexpr uint32_t SCENE_VERSION = 10;
 static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
@@ -341,9 +343,19 @@ Entity Scene::CreateTorusEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::CreateParticleEmitter(const std::string& p_name, const mat4& p_transform) {
+Entity Scene::CreateEmitterEntity(const std::string& p_name, const mat4& p_transform) {
     Entity entity = CreateTransformEntity(p_name);
     Create<ParticleEmitterComponent>(entity);
+
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
+
+    return entity;
+}
+
+Entity Scene::CreateForceFieldEntity(const std::string& p_name, const mat4& p_transform) {
+    Entity entity = CreateTransformEntity(p_name);
+    Create<ForceFieldComponent>(entity);
 
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);

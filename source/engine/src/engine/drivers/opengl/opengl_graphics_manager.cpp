@@ -336,7 +336,7 @@ std::shared_ptr<GpuStructuredBuffer> OpenGLGraphicsManager::CreateStructuredBuff
     GLuint handle = 0;
     glGenBuffers(1, &handle);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     auto buffer = std::make_shared<OpenGLStructuredBuffer>(p_desc);
