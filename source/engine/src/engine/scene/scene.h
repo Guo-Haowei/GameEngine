@@ -133,8 +133,8 @@ public:
     ecs::Entity CreateMaterialEntity(const std::string& p_name);
 
     ecs::Entity CreatePointLightEntity(const std::string& p_name,
-                                       const vec3& p_position,
-                                       const vec3& p_color = vec3(1),
+                                       const vec3& p_position = vec3(0.0f, 1.0f, 0.0f),
+                                       const vec3& p_color = vec3(1.0f),
                                        const float p_emissive = 5.0f);
 
     ecs::Entity CreateAreaLightEntity(const std::string& p_name,
@@ -194,9 +194,9 @@ public:
                                   float p_tube_radius = 0.2f,
                                   const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity CreateParticleEmitter(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
+    ecs::Entity CreateEmitterEntity(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
 
-    ecs::Entity CreateForceField(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
+    ecs::Entity CreateForceFieldEntity(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
 
     void AttachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
 

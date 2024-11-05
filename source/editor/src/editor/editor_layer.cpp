@@ -136,42 +136,14 @@ void EditorLayer::FlushCommand(Scene& scene) {
         m_commandBuffer.pop_front();
         do {
             if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
-                // @TODO: refactor
                 ecs::Entity id;
                 switch (add_command->entityType) {
-                    case EntityType::INFINITE_LIGHT:
-                        id = scene.CreateInfiniteLightEntity(GenerateName("directional-light"));
-                        break;
-                    case EntityType::POINT_LIGHT:
-                        id = scene.CreatePointLightEntity(GenerateName("point-light"), vec3(0, 1, 0));
-                        break;
-                    case EntityType::AREA_LIGHT:
-                        id = scene.CreateAreaLightEntity(GenerateName("area-light"));
-                        break;
-                    case EntityType::PLANE:
-                        id = scene.CreatePlaneEntity(GenerateName("plane"));
-                        break;
-                    case EntityType::CUBE:
-                        id = scene.CreateCubeEntity(GenerateName("cube"));
-                        break;
-                    case EntityType::SPHERE:
-                        id = scene.CreateSphereEntity(GenerateName("sphere"));
-                        break;
-                    case EntityType::CYLINDER:
-                        id = scene.CreateCylinderEntity(GenerateName("cylinder"));
-                        break;
-                    case EntityType::TORUS:
-                        id = scene.CreateTorusEntity(GenerateName("torus"));
-                        break;
-                    case EntityType::TRANSFORM:
-                        id = scene.CreateTransformEntity(GenerateName("node"));
-                        break;
-                    case EntityType::PARTICLE_EMITTER:
-                        id = scene.CreateParticleEmitter(GenerateName("emitter"));
-                        break;
-                    case EntityType::FORCE_FIELD:
-                        id = scene.CreateForceField(GenerateName("forcefield"));
-                        break;
+#define ENTITY_TYPE(ENUM, NAME, ...)                          \
+    case EntityType::ENUM: {                                  \
+        id = scene.Create##NAME##Entity(GenerateName(#NAME)); \
+    } break;
+                    ENTITY_TYPE_LIST
+#undef ENTITY_TYPE
                     default:
                         LOG_FATAL("Entity type {} not supported", static_cast<int>(add_command->entityType));
                         break;

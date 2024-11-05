@@ -12,4 +12,3 @@ struct ForceFieldComponent {
 };
 
 }  // namespace my
-

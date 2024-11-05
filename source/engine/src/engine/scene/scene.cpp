@@ -343,7 +343,7 @@ Entity Scene::CreateTorusEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::CreateParticleEmitter(const std::string& p_name, const mat4& p_transform) {
+Entity Scene::CreateEmitterEntity(const std::string& p_name, const mat4& p_transform) {
     Entity entity = CreateTransformEntity(p_name);
     Create<ParticleEmitterComponent>(entity);
 
@@ -353,7 +353,7 @@ Entity Scene::CreateParticleEmitter(const std::string& p_name, const mat4& p_tra
     return entity;
 }
 
-Entity Scene::CreateForceField(const std::string& p_name, const mat4& p_transform) {
+Entity Scene::CreateForceFieldEntity(const std::string& p_name, const mat4& p_transform) {
     Entity entity = CreateTransformEntity(p_name);
     Create<ForceFieldComponent>(entity);
 
