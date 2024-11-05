@@ -420,6 +420,7 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
         buffer.c_particlesPerFrame = emitter.particlesPerFrame;
         buffer.c_emitterStartingVelocity = emitter.startingVelocity;
         buffer.c_emitterMaxParticleCount = emitter.maxParticleCount;
+        buffer.c_emitterHasGravity = emitter.gravity;
 
         m_context.emitter_cache.push_back(buffer);
     }

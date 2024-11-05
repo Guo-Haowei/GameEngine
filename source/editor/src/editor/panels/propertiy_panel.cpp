@@ -276,9 +276,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("Emitter", emitter_component, [&](ParticleEmitterComponent& p_emitter) {
         const float width = 120.0f;
+        ImGui::Checkbox("Gravity", &p_emitter.gravity);
         DrawVec3Control("Velocity", p_emitter.startingVelocity, 0.0f, width);
-        DrawDragInt("Max count", p_emitter.maxParticleCount, 100.f, 1000, MAX_PARTICLE_COUNT, width);
-        DrawDragInt("Emit per frame", p_emitter.particlesPerFrame, 1.0f, 1, 1000, width);
+        DrawDragInt("Max count", p_emitter.maxParticleCount, 1000.f, 1000, MAX_PARTICLE_COUNT, width);
+        DrawDragInt("Emit per frame", p_emitter.particlesPerFrame, 10.0f, 1, 10000, width);
         DrawDragFloat("Scaling", p_emitter.particleScale, 0.01f, 0.01f, 10.0f, width);
         DrawDragFloat("Life span", p_emitter.particleLifeSpan, 0.1f, 0.1f, 10.0f, width);
     });

@@ -12,6 +12,7 @@ struct ParticleEmitterComponent {
     uint32_t GetPreIndex() const { return aliveBufferIndex; }
     uint32_t GetPostIndex() const { return 1 - aliveBufferIndex; }
 
+    bool gravity{ false };
     int maxParticleCount{ 1000 };
     int particlesPerFrame{ 10 };
     float particleScale{ 1.0f };

@@ -40,6 +40,11 @@ uint pop_alive_index() {
             push_dead_index(particle_index);
         } else {
             particle.lifeRemaining.x -= c_elapsedTime;
+            const float3 GRAVITY = float3(0.0f, -9.18f, 0.0f);
+
+            if (c_emitterHasGravity == 1) {
+                particle.velocity.xyz += c_elapsedTime * GRAVITY;
+            }
             particle.position += c_elapsedTime * particle.velocity;
 
             GlobalParticleData[particle_index] = particle;

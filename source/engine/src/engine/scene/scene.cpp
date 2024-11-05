@@ -19,7 +19,8 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 // version 6: add collider component
 // version 7: add enabled to material
 // version 8: add particle emitter
-static constexpr uint32_t SCENE_VERSION = 8;
+// version 9: add ParticleEmitterComponent.gravity
+static constexpr uint32_t SCENE_VERSION = 9;
 static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor

@@ -141,9 +141,14 @@ CBUFFER(EmitterConstantBuffer, 5) {
     vec3 c_emitterStartingVelocity;
     int c_emitterMaxParticleCount;
 
-    mat4 _emitter_padding_0;
-    mat4 _emitter_padding_1;
-    mat4 _emitter_padding_2;
+    vec3 _emitter_padding_0;
+    int c_emitterHasGravity;
+
+    vec4 _emitter_padding_1;
+    vec4 _emitter_padding_2;
+    vec4 _emitter_padding_3;
+    mat4 _emitter_padding_4;
+    mat4 _emitter_padding_5;
 };
 
 #ifndef HLSL_LANG
