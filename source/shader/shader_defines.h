@@ -27,8 +27,9 @@
 #define DISPLAY_CHANNEL_AAA 2
 
 // particles
-#define PARTICLE_LOCAL_SIZE 32
-#define MAX_PARTICLE_COUNT  1048576
+#define PARTICLE_LOCAL_SIZE   32
+#define MAX_PARTICLE_COUNT    1048576
+#define MAX_FORCE_FIELD_COUNT 64
 
 #if defined(__cplusplus) || defined(HLSL_LANG)
 #define global_const static const

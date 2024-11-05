@@ -27,7 +27,7 @@ uint pop_alive_index() {
 
 [numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id
                                                   : SV_DISPATCHTHREADID) {
-    uint index = dispatch_thread_id.x;
+    int index = int(dispatch_thread_id.x);
 
     if (index < GlobalParticleCounter[0].simulationCount) {
         // Consume an Alive particle index
@@ -40,11 +40,27 @@ uint pop_alive_index() {
             push_dead_index(particle_index);
         } else {
             particle.lifeRemaining.x -= c_elapsedTime;
-            const float3 GRAVITY = float3(0.0f, -9.18f, 0.0f);
+
+            vec3 net_force = float3(0.0f, 0.0f, 0.0f);
+            // apply gravity
 
             if (c_emitterHasGravity == 1) {
-                particle.velocity.xyz += c_elapsedTime * GRAVITY;
+                const float3 GRAVITY = float3(0.0f, -9.18f, 0.0f);
+                net_force += GRAVITY;
             }
+
+            for (int index = 0; index < c_forceFieldsCount; ++index) {
+                ForceField force_field = c_forceFields[index];
+                float3 delta = force_field.position - particle.position.xyz;
+                float dist = length(delta);
+                if (dist <= 0.001) {
+                    continue;
+                }
+                float strength = force_field.strength * (1.0f / dist);
+                net_force += strength * delta;
+            }
+
+            particle.velocity.xyz += c_elapsedTime * net_force;
             particle.position += c_elapsedTime * particle.velocity;
 
             GlobalParticleData[particle_index] = particle;

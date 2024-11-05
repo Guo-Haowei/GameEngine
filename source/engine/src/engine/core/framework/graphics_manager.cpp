@@ -121,6 +121,7 @@ void GraphicsManager::Update(Scene& p_scene) {
 
     UpdateConstants(p_scene);
     UpdateEmitters(p_scene);
+    UpdateForceFields(p_scene);
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
@@ -370,6 +371,18 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     cache.c_worldSizeHalf = 0.5f * world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
+
+    // Force fields
+
+    int counter = 0;
+    for (auto [id, force_field_component] : p_scene.m_ForceFieldComponents) {
+        ForceField& force_field = cache.c_forceFields[counter++];
+        const TransformComponent& transform = *p_scene.GetComponent<TransformComponent>(id);
+        force_field.position = transform.GetTranslation();
+        force_field.strength = force_field_component.strength;
+    }
+
+    cache.c_forceFieldsCount = counter;
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
@@ -424,6 +437,10 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
 
         m_context.emitter_cache.push_back(buffer);
     }
+}
+
+void GraphicsManager::UpdateForceFields(const Scene& p_scene) {
+    unused(p_scene);
 }
 
 /// @TODO: refactor lights

@@ -287,7 +287,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("Force Field", force_field_component, [&](ForceFieldComponent& p_force_field) {
         const float width = 120.0f;
-        DrawDragFloat("Strength", p_force_field.strength, 0.1f, 0.01f, 10.0f, width);
+        DrawDragFloat("Strength", p_force_field.strength, 0.1f, -10.0f, 10.0f, width);
         DrawDragFloat("Radius", p_force_field.radius, 0.1f, 0.1f, 100.0f, width);
     });
 }

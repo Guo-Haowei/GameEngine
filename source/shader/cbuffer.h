@@ -59,6 +59,11 @@ struct Light {
     int shadow_map_index;
 };
 
+struct ForceField {
+    vec3 position;
+    float strength;
+};
+
 CBUFFER(PerBatchConstantBuffer, 0) {
     mat4 c_worldMatrix;
     mat4 _per_batch_padding_0;
@@ -93,7 +98,10 @@ CBUFFER(PerFrameConstantBuffer, 2) {
     vec3 c_worldCenter;
     float c_worldSizeHalf;
 
-    vec4 _per_frame_padding_0;
+    vec3 _per_frame_padding_0;
+    int c_forceFieldsCount;
+
+    ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
 
 CBUFFER(MaterialConstantBuffer, 3) {
