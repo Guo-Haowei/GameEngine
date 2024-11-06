@@ -22,6 +22,22 @@ input_shaders = [
     { 'path': 'particle_simulation.comp', 'animated': False, },
 ]
 
+def insert_file_name(file_path):
+    if not os.path.isfile(file_path):
+        return
+
+    with open(file_path, 'r') as file:
+        content = file.readlines()
+
+    file_name = os.path.basename(file_path)
+    content.insert(0, f'// {file_name}\n')
+
+    with open(file_path, 'w') as file:
+        file.writelines(content)
+
+    # print(f"Inserted filename '{filename}' as the first line of {filename}")
+    return
+
 def generate(hlsl_source, animated):
     full_input_path = f'source/shader/hlsl/{hlsl_source}.hlsl'
     # shader model
@@ -52,10 +68,12 @@ def generate(hlsl_source, animated):
         generate_files.append({ 'filename': new_path, 'command': new_command })
 
     for generate_file in generate_files:
+        generated_file_name = generate_file['filename']
         print(f'running: {' '.join(generate_file['command'])}')
         subprocess.run(generate_file['command'])
-        subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generate_file['filename']])
-        print(f'file "{generate_file['filename']}" generated')
+        subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generated_file_name])
+        print(f'file "{generated_file_name}" generated')
+        insert_file_name(generated_file_name)
     return
 
 def delete_and_create_folder(folder):

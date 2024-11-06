@@ -172,13 +172,18 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const 
     DEV_ASSERT(!shaders.empty());
 
     glLinkProgram(program_id);
-    GLint status = GL_FALSE, length = 0;
+    GLint status = GL_FALSE;
+    GLint length = 0;
     glGetProgramiv(program_id, GL_LINK_STATUS, &status);
     glGetProgramiv(program_id, GL_INFO_LOG_LENGTH, &length);
     if (length > 0) {
         std::vector<char> buffer(length + 1);
         glGetProgramInfoLog(program_id, length, nullptr, buffer.data());
-        LOG_FATAL("[glsl] failed to link program\ndetails:\n{}", buffer.data());
+        if (status == GL_TRUE) {
+            LOG_WARN("[glsl] warning\ndetails:\n{}", buffer.data());
+        } else {
+            LOG_FATAL("[glsl] failed to link program\ndetails:\n{}", buffer.data());
+        }
     }
 
     if (status == GL_FALSE) {
