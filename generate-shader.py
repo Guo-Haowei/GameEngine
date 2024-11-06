@@ -30,12 +30,11 @@ def insert_file_name(file_path):
         content = file.readlines()
 
     file_name = os.path.basename(file_path)
-    content.insert(0, f'// {file_name}\n')
+    content.insert(0, f'/// File: {file_name}\n')
 
     with open(file_path, 'w') as file:
         file.writelines(content)
 
-    # print(f"Inserted filename '{filename}' as the first line of {filename}")
     return
 
 def generate(hlsl_source, animated):
@@ -82,12 +81,25 @@ def delete_and_create_folder(folder):
         shutil.rmtree(folder)
     os.makedirs(folder)
 
-try:
+def func_generate_files():
     # remove generated path
     delete_and_create_folder(generated_dir)
 
     for l in input_shaders:
         generate(l['path'], l['animated'])
+
+def func_insert_names():
+    for root, _, files in os.walk('source/shader', topdown=False):
+        for name in files:
+            file_path = os.path.join(root, name)
+            _, file_ext = os.path.splitext(file_path)
+            if file_ext in ['.h', '.hlsl', '.glsl']:
+                print(f'*** formatting file {file_path}')
+                insert_file_name(file_path)
+
+try:
+    func_generate_files()
+
 except RuntimeError as e:
     print(f'RuntimeError: {e}')
     sys.exit(1)
