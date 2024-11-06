@@ -1,3 +1,4 @@
+/// File: vsinput.glsl.h
 #ifndef VSINPUT_INCLUDED
 #define VSINPUT_INCLUDED
 

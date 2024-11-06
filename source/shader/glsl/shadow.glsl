@@ -1,3 +1,4 @@
+/// File: shadow.glsl
 #ifndef SHADOW_GLSL_INCLUDED
 #define SHADOW_GLSL_INCLUDED
 #include "../shadow.hlsl"

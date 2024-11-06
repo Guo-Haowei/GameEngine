@@ -1,3 +1,4 @@
+/// File: texture.pixel.glsl
 #include "../cbuffer.h"
 
 layout(location = 0) in vec2 pass_uv;

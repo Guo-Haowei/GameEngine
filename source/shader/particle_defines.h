@@ -1,3 +1,4 @@
+/// File: particle_defines.h
 #ifndef PARTICLE_DEFINES_INCLUDE
 #define PARTICLE_DEFINES_INCLUDE
 #include "shader_defines.h"

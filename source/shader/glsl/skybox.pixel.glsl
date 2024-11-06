@@ -1,3 +1,4 @@
+/// File: skybox.pixel.glsl
 #include "../cbuffer.h"
 
 in vec3 pass_position;

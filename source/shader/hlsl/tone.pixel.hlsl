@@ -1,3 +1,4 @@
+/// File: tone.pixel.hlsl
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
 #include "texture_binding.h"

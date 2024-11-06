@@ -1,3 +1,4 @@
+/// File: pbr.glsl
 #include "../pbr.hlsl"
 
 // @TODO: refactor the names

@@ -1,3 +1,4 @@
+/// File: texture_binding.h
 #if defined(__cplusplus)
 #ifndef SHADER_TEXTURE
 #define SHADER_TEXTURE(...)

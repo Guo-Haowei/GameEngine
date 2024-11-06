@@ -1,3 +1,4 @@
+/// File: screenspace_quad.vert.glsl
 layout(location = 0) in vec3 in_position;
 layout(location = 0) out vec2 pass_uv;
 

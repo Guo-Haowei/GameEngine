@@ -1,3 +1,4 @@
+/// File: particle_draw.vert.glsl
 #include "../vsinput.glsl.h"
 #include "../cbuffer.h"
 #include "../particle_defines.h"

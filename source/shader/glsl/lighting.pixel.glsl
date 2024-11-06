@@ -1,3 +1,4 @@
+/// File: lighting.pixel.glsl
 #include "../cbuffer.h"
 
 #define ENABLE_VXGI 1

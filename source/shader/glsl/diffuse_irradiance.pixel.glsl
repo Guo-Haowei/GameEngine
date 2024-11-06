@@ -1,3 +1,4 @@
+/// File: diffuse_irradiance.pixel.glsl
 #include "../cbuffer.h"
 
 layout(location = 0) out vec4 out_color;

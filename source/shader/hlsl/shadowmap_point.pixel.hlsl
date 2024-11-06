@@ -1,3 +1,4 @@
+/// File: shadowmap_point.pixel.hlsl
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
 

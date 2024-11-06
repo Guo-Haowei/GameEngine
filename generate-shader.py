@@ -22,6 +22,21 @@ input_shaders = [
     { 'path': 'particle_simulation.comp', 'animated': False, },
 ]
 
+def insert_file_name(file_path):
+    if not os.path.isfile(file_path):
+        return
+
+    with open(file_path, 'r') as file:
+        content = file.readlines()
+
+    file_name = os.path.basename(file_path)
+    content.insert(0, f'/// File: {file_name}\n')
+
+    with open(file_path, 'w') as file:
+        file.writelines(content)
+
+    return
+
 def generate(hlsl_source, animated):
     full_input_path = f'source/shader/hlsl/{hlsl_source}.hlsl'
     # shader model
@@ -52,10 +67,12 @@ def generate(hlsl_source, animated):
         generate_files.append({ 'filename': new_path, 'command': new_command })
 
     for generate_file in generate_files:
+        generated_file_name = generate_file['filename']
         print(f'running: {' '.join(generate_file['command'])}')
         subprocess.run(generate_file['command'])
-        subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generate_file['filename']])
-        print(f'file "{generate_file['filename']}" generated')
+        subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generated_file_name])
+        print(f'file "{generated_file_name}" generated')
+        insert_file_name(generated_file_name)
     return
 
 def delete_and_create_folder(folder):
@@ -64,12 +81,25 @@ def delete_and_create_folder(folder):
         shutil.rmtree(folder)
     os.makedirs(folder)
 
-try:
+def func_generate_files():
     # remove generated path
     delete_and_create_folder(generated_dir)
 
     for l in input_shaders:
         generate(l['path'], l['animated'])
+
+def func_insert_names():
+    for root, _, files in os.walk('source/shader', topdown=False):
+        for name in files:
+            file_path = os.path.join(root, name)
+            _, file_ext = os.path.splitext(file_path)
+            if file_ext in ['.h', '.hlsl', '.glsl']:
+                print(f'*** formatting file {file_path}')
+                insert_file_name(file_path)
+
+try:
+    func_generate_files()
+
 except RuntimeError as e:
     print(f'RuntimeError: {e}')
     sys.exit(1)

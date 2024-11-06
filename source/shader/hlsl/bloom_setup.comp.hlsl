@@ -1,3 +1,4 @@
+/// File: bloom_setup.comp.hlsl
 #include "texture_binding.h"
 
 RWTexture2D<float3> g_output_image : register(u3);

@@ -1,3 +1,4 @@
+/// File: input_output.hlsl
 // Input
 struct vsinput_position {
     float3 position : POSITION;

@@ -1,3 +1,4 @@
+/// File: shadow.vert.hlsl
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
 
