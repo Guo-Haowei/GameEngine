@@ -1,3 +1,4 @@
+/// File: lighting.pixel.hlsl
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
 #include "pbr.hlsl"

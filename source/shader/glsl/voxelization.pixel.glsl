@@ -1,3 +1,4 @@
+/// File: voxelization.pixel.glsl
 layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;
 layout(rgba16f, binding = 1) uniform image3D u_normal_texture;
 

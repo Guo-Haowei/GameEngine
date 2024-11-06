@@ -1,3 +1,4 @@
+/// File: vxgi.glsl
 struct DiffuseCone {
     vec3 direction;
     float weight;

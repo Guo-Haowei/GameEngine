@@ -1,3 +1,4 @@
+/// File: pbr.hlsl
 #ifndef PBR_HLSL_INCLUDED
 #define PBR_HLSL_INCLUDED
 #include "shader_defines.h"

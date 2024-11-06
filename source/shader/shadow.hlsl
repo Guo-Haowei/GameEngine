@@ -1,3 +1,4 @@
+/// File: shadow.hlsl
 #include "cbuffer.h"
 #include "texture_binding.h"
 

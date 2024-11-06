@@ -1,3 +1,4 @@
+/// File: debug_draw_texture.pixel.glsl
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out vec4 out_color;
 

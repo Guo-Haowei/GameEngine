@@ -1,3 +1,4 @@
+/// File: shader_defines.h
 #ifndef SHADER_DEFINES_INCLUDED
 #define SHADER_DEFINES_INCLUDED
 

@@ -1,3 +1,4 @@
+/// File: particle_emission.comp.hlsl
 #include "cbuffer.h"
 #include "particle_defines.h"
 

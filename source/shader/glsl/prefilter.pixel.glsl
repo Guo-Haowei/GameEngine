@@ -1,3 +1,4 @@
+/// File: prefilter.pixel.glsl
 #include "../cbuffer.h"
 #include "lighting.glsl"
 

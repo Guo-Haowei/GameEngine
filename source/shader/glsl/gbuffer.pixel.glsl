@@ -1,3 +1,4 @@
+/// File: gbuffer.pixel.glsl
 layout(location = 0) out vec3 out_base_color;
 layout(location = 1) out vec3 out_position;
 layout(location = 2) out vec3 out_normal;

@@ -1,3 +1,4 @@
+/// File: particle_draw.pixel.glsl
 layout(location = 0) in vec3 pass_color;
 layout(location = 0) out vec4 out_color;
 

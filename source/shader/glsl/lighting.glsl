@@ -1,3 +1,4 @@
+/// File: lighting.glsl
 #include "pbr.glsl"
 #include "shadow.glsl"
 
