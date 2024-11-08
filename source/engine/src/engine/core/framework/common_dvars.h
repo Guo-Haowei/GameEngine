@@ -1,9 +1,10 @@
 #include "core/dynamic_variable/dynamic_variable_begin.h"
 
-DVAR_STRING(project, 0, "Open project at start", "");
-
 // window
 DVAR_IVEC2(window_resolution, DVAR_FLAG_CACHE, "Request window resolution", 800, 600);
+
+// project
+DVAR_STRING(project, 0, "Open project at start", "");
 
 // IO
 DVAR_BOOL(verbose, 0, "Print verbose log", true);

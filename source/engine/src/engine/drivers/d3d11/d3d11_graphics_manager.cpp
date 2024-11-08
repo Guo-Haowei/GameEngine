@@ -202,7 +202,7 @@ bool D3d11GraphicsManager::CreateSwapChain() {
     swap_chain_desc.BufferCount = 2;
     swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.OutputWindow = display_manager->get_hwnd();
+    swap_chain_desc.OutputWindow = display_manager->GetHwnd();
     swap_chain_desc.Windowed = true;
     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 

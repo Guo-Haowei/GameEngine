@@ -20,7 +20,7 @@ void DynamicVariableManager::Serialize() {
 
     for (auto const& [key, dvar] : DynamicVariable::s_map) {
         if (dvar->m_flags & DVAR_FLAG_CACHE) {
-            auto line = std::format("+set {} {}\n", dvar->m_name, dvar->valueToString());
+            auto line = std::format("+set {} {}\n", dvar->m_name, dvar->ValueToString());
             writer->WriteBuffer(line.data(), line.length());
         }
     }
@@ -50,14 +50,14 @@ void DynamicVariableManager::deserialize() {
     }
 
     DynamicVariableParser parser(commands, DynamicVariableParser::SOURCE_CACHE);
-    if (!parser.parse()) {
-        LOG_ERROR("[dvar] Error: {}", parser.getError());
+    if (!parser.Parse()) {
+        LOG_ERROR("[dvar] Error: {}", parser.GetError());
     }
 }
 
-void DynamicVariableManager::dumpDvars() {
+void DynamicVariableManager::DumpDvars() {
     for (const auto& it : DynamicVariable::s_map) {
-        PRINT("-- {}, '{}'", it.first, it.second->getDesc());
+        PRINT("-- {}, '{}'", it.first, it.second->GetDesc());
     }
 }
 
@@ -65,21 +65,21 @@ void DynamicVariableManager::dumpDvars() {
 // Dynamic Varialbe Parser
 //--------------------------------------------------------------------------------------------------
 
-bool DynamicVariableParser::parse() {
+bool DynamicVariableParser::Parse() {
     for (;;) {
-        const std::string& command = peek();
+        const std::string& command = Peek();
         if (command == s_eof) {
             return true;
         }
 
         if (command == "+set") {
-            consume();  // pop set
-            if (!processSetCmd()) {
+            Consume();  // pop set
+            if (!ProcessSetCmd()) {
                 return false;
             }
         } else if (command == "+list") {
-            consume();
-            processListCmd();
+            Consume();
+            ProcessListCmd();
             return true;
         } else {
             m_error = std::format("unknown command '{}'", command);
@@ -88,20 +88,20 @@ bool DynamicVariableParser::parse() {
     }
 }
 
-bool DynamicVariableParser::processSetCmd() {
-    const std::string& name = consume();
+bool DynamicVariableParser::ProcessSetCmd() {
+    const std::string& name = Consume();
     if (name == s_eof) {
         m_error = "unexpected <EOF>";
         return false;
     }
 
-    DynamicVariable* dvar = DynamicVariable::findDvar(name);
+    DynamicVariable* dvar = DynamicVariable::FindDvar(name);
     if (dvar == nullptr) {
         m_error = std::format("dvar '{}' not found", name);
         return false;
     }
 
-    VariantType type = dvar->getType();
+    VariantType type = dvar->GetType();
     bool ok = true;
     std::string_view str;
     int ix = 0, iy = 0, iz = 0, iw = 0;
@@ -109,52 +109,52 @@ bool DynamicVariableParser::processSetCmd() {
     size_t arg_start_index = m_cursor;
     switch (type) {
         case VARIANT_TYPE_INT:
-            ok = ok && tryGetInt(ix);
-            ok = ok && dvar->setInt(ix);
+            ok = ok && TryGetInt(ix);
+            ok = ok && dvar->SetInt(ix);
             break;
         case VARIANT_TYPE_FLOAT:
-            ok = ok && tryGetFloat(fx);
-            ok = ok && dvar->setFloat(fx);
+            ok = ok && TryGetFloat(fx);
+            ok = ok && dvar->SetFloat(fx);
             break;
         case VARIANT_TYPE_STRING:
-            ok = ok && tryGetString(str);
-            ok = ok && dvar->setString(str);
+            ok = ok && TryGetString(str);
+            ok = ok && dvar->SetString(str);
             break;
         case VARIANT_TYPE_VEC2:
-            ok = ok && tryGetFloat(fx);
-            ok = ok && tryGetFloat(fy);
-            ok = ok && dvar->setVec2(fx, fy);
+            ok = ok && TryGetFloat(fx);
+            ok = ok && TryGetFloat(fy);
+            ok = ok && dvar->SetVec2(fx, fy);
             break;
         case VARIANT_TYPE_VEC3:
-            ok = ok && tryGetFloat(fx);
-            ok = ok && tryGetFloat(fy);
-            ok = ok && tryGetFloat(fz);
-            ok = ok && dvar->setVec3(fx, fy, fz);
+            ok = ok && TryGetFloat(fx);
+            ok = ok && TryGetFloat(fy);
+            ok = ok && TryGetFloat(fz);
+            ok = ok && dvar->SetVec3(fx, fy, fz);
             break;
         case VARIANT_TYPE_VEC4:
-            ok = ok && tryGetFloat(fx);
-            ok = ok && tryGetFloat(fy);
-            ok = ok && tryGetFloat(fz);
-            ok = ok && tryGetFloat(fw);
-            ok = ok && dvar->setVec4(fx, fy, fz, fw);
+            ok = ok && TryGetFloat(fx);
+            ok = ok && TryGetFloat(fy);
+            ok = ok && TryGetFloat(fz);
+            ok = ok && TryGetFloat(fw);
+            ok = ok && dvar->SetVec4(fx, fy, fz, fw);
             break;
         case VARIANT_TYPE_IVEC2:
-            ok = ok && tryGetInt(ix);
-            ok = ok && tryGetInt(iy);
-            ok = ok && dvar->setIvec2(ix, iy);
+            ok = ok && TryGetInt(ix);
+            ok = ok && TryGetInt(iy);
+            ok = ok && dvar->SetIvec2(ix, iy);
             break;
         case VARIANT_TYPE_IVEC3:
-            ok = ok && tryGetInt(ix);
-            ok = ok && tryGetInt(iy);
-            ok = ok && tryGetInt(iz);
-            ok = ok && dvar->setIvec3(ix, iy, iz);
+            ok = ok && TryGetInt(ix);
+            ok = ok && TryGetInt(iy);
+            ok = ok && TryGetInt(iz);
+            ok = ok && dvar->SetIvec3(ix, iy, iz);
             break;
         case VARIANT_TYPE_IVEC4:
-            ok = ok && tryGetInt(ix);
-            ok = ok && tryGetInt(iy);
-            ok = ok && tryGetInt(iz);
-            ok = ok && tryGetInt(iw);
-            ok = ok && dvar->setIvec4(ix, iy, iz, iw);
+            ok = ok && TryGetInt(ix);
+            ok = ok && TryGetInt(iy);
+            ok = ok && TryGetInt(iz);
+            ok = ok && TryGetInt(iw);
+            ok = ok && dvar->SetIvec4(ix, iy, iz, iw);
             break;
         default:
             CRASH_NOW();
@@ -173,10 +173,10 @@ bool DynamicVariableParser::processSetCmd() {
     // @TODO: refactor
     switch (m_source) {
         case SOURCE_CACHE:
-            dvar->printValueChange("cache");
+            dvar->PrintValueChange("cache");
             break;
         case SOURCE_COMMAND_LINE:
-            dvar->printValueChange("command line");
+            dvar->PrintValueChange("command line");
             break;
         default:
             break;
@@ -184,32 +184,32 @@ bool DynamicVariableParser::processSetCmd() {
     return true;
 }
 
-bool DynamicVariableParser::processListCmd() {
-    DynamicVariableManager::dumpDvars();
+bool DynamicVariableParser::ProcessListCmd() {
+    DynamicVariableManager::DumpDvars();
     return true;
 }
 
-const std::string& DynamicVariableParser::peek() {
-    if (outOfBound()) {
+const std::string& DynamicVariableParser::Peek() {
+    if (OutOfBound()) {
         return s_eof;
     }
 
     return m_commands[m_cursor];
 }
 
-const std::string& DynamicVariableParser::consume() {
-    if (outOfBound()) {
+const std::string& DynamicVariableParser::Consume() {
+    if (OutOfBound()) {
         return s_eof;
     }
 
     return m_commands[m_cursor++];
 }
 
-bool DynamicVariableParser::tryGetInt(int& p_out) {
-    if (outOfBound()) {
+bool DynamicVariableParser::TryGetInt(int& p_out) {
+    if (OutOfBound()) {
         return false;
     }
-    const std::string& value = consume();
+    const std::string& value = Consume();
     if (value == "true") {
         p_out = 1;
     } else if (value == "false") {
@@ -220,20 +220,20 @@ bool DynamicVariableParser::tryGetInt(int& p_out) {
     return true;
 }
 
-bool DynamicVariableParser::tryGetFloat(float& p_out) {
-    if (outOfBound()) {
+bool DynamicVariableParser::TryGetFloat(float& p_out) {
+    if (OutOfBound()) {
         return false;
     }
-    p_out = (float)atof(consume().c_str());
+    p_out = (float)atof(Consume().c_str());
     return true;
 }
 
-bool DynamicVariableParser::tryGetString(std::string_view& p_out) {
-    if (outOfBound()) {
+bool DynamicVariableParser::TryGetString(std::string_view& p_out) {
+    if (OutOfBound()) {
         return false;
     }
 
-    const std::string& next = consume();
+    const std::string& next = Consume();
     if (next.length() >= 2 && next.front() == '"' && next.back() == '"') {
         p_out = std::string_view(next.data() + 1, next.length() - 2);
     } else {
@@ -243,15 +243,15 @@ bool DynamicVariableParser::tryGetString(std::string_view& p_out) {
     return true;
 }
 
-bool DynamicVariableParser::outOfBound() {
+bool DynamicVariableParser::OutOfBound() {
     return m_cursor >= m_commands.size();
 }
 
-bool DynamicVariableManager::parse(const std::vector<std::string>& p_commands) {
+bool DynamicVariableManager::Parse(const std::vector<std::string>& p_commands) {
     DynamicVariableParser parser(p_commands, DynamicVariableParser::SOURCE_COMMAND_LINE);
-    bool ok = parser.parse();
+    bool ok = parser.Parse();
     if (!ok) {
-        LOG_ERROR("[dvar] Error: {}", parser.getError());
+        LOG_ERROR("[dvar] Error: {}", parser.GetError());
     }
     return ok;
 }

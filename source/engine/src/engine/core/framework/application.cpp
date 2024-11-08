@@ -19,12 +19,14 @@
 
 #define DEFINE_DVAR
 #include "core/framework/common_dvars.h"
+#undef DEFINE_DVAR
 
 namespace my {
 
 static void RegisterCommonDvars() {
 #define REGISTER_DVAR
 #include "core/framework/common_dvars.h"
+#undef REGISTER_DVAR
 }
 
 void Application::AddLayer(std::shared_ptr<Layer> p_layer) {
@@ -75,7 +77,7 @@ int Application::Run(int p_argc, const char** p_argv) {
     RegisterCommonDvars();
     renderer::register_rendering_dvars();
     DynamicVariableManager::deserialize();
-    DynamicVariableManager::parse(m_commandLine);
+    DynamicVariableManager::Parse(m_commandLine);
 
     SetupModules();
 

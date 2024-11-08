@@ -8,24 +8,22 @@
 
 namespace my {
 
-static LRESULT wnd_proc_wrapper(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    if (msg == WM_NCCREATE) {
-        LPCREATESTRUCT lpcs = reinterpret_cast<LPCREATESTRUCT>(lParam);
+static LRESULT WndProcWrapper(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p_lparam) {
+    if (p_msg == WM_NCCREATE) {
+        LPCREATESTRUCT lpcs = reinterpret_cast<LPCREATESTRUCT>(p_lparam);
         Win32DisplayManager* window = static_cast<Win32DisplayManager*>(lpcs->lpCreateParams);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
+        SetWindowLongPtr(p_hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(window));
     }
 
-    Win32DisplayManager* window = reinterpret_cast<Win32DisplayManager*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    Win32DisplayManager* window = reinterpret_cast<Win32DisplayManager*>(GetWindowLongPtr(p_hwnd, GWLP_USERDATA));
     if (!window) {
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return DefWindowProc(p_hwnd, p_msg, p_wparam, p_lparam);
     }
 
-    return window->wnd_proc(hwnd, msg, wParam, lParam);
+    return window->WndProc(p_hwnd, p_msg, p_wparam, p_lparam);
 }
 
-bool Win32DisplayManager::Initialize() {
-    initialize_key_mapping();
-
+bool Win32DisplayManager::InitializeWindow() {
     const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
     const ivec2 min_size = ivec2(600, 400);
     const ivec2 size = glm::max(min_size, resolution);
@@ -33,27 +31,27 @@ bool Win32DisplayManager::Initialize() {
     RECT rect = { 0, 0, size.x, size.y };
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
 
-    m_wnd_class = { sizeof(m_wnd_class),
-                    CS_CLASSDC,
-                    wnd_proc_wrapper,
-                    0L,
-                    0L,
-                    GetModuleHandle(NULL),
-                    NULL,
-                    NULL,
-                    NULL,
-                    NULL,
-                    L"MyEngine",
-                    NULL };
-    ::RegisterClassExW(&m_wnd_class);
-    m_hwnd = ::CreateWindowW(m_wnd_class.lpszClassName,
+    m_wndClass = { sizeof(m_wndClass),
+                   CS_CLASSDC,
+                   WndProcWrapper,
+                   0L,
+                   0L,
+                   GetModuleHandle(NULL),
+                   NULL,
+                   NULL,
+                   NULL,
+                   NULL,
+                   L"MyEngine",
+                   NULL };
+    ::RegisterClassExW(&m_wndClass);
+    m_hwnd = ::CreateWindowW(m_wndClass.lpszClassName,
                              L"Editor (D3d11)",
                              WS_OVERLAPPEDWINDOW,
                              40, 40,
                              rect.right - rect.left, rect.bottom - rect.top,
                              NULL,
                              NULL,
-                             m_wnd_class.hInstance,
+                             m_wndClass.hInstance,
                              this);
 
     // Show the window
@@ -69,19 +67,19 @@ void Win32DisplayManager::Finalize() {
     ImGui_ImplWin32_Shutdown();
 
     ::DestroyWindow(m_hwnd);
-    ::UnregisterClassW(m_wnd_class.lpszClassName, m_wnd_class.hInstance);
+    ::UnregisterClassW(m_wndClass.lpszClassName, m_wndClass.hInstance);
 }
 
 bool Win32DisplayManager::ShouldClose() {
-    return m_should_quit;
+    return m_shouldQuit;
 }
 
 std::tuple<int, int> Win32DisplayManager::GetWindowSize() {
-    return std::make_tuple(m_frame_size.x, m_frame_size.y);
+    return std::make_tuple(m_frameSize.x, m_frameSize.y);
 }
 
 std::tuple<int, int> Win32DisplayManager::GetWindowPos() {
-    return std::make_tuple(m_window_pos.x, m_window_pos.y);
+    return std::make_tuple(m_windowPos.x, m_windowPos.y);
 }
 
 void Win32DisplayManager::NewFrame() {
@@ -90,7 +88,7 @@ void Win32DisplayManager::NewFrame() {
         ::TranslateMessage(&msg);
         ::DispatchMessage(&msg);
         if (msg.message == WM_QUIT) {
-            m_should_quit = true;
+            m_shouldQuit = true;
         }
     }
 
@@ -101,34 +99,34 @@ void Win32DisplayManager::NewFrame() {
 void Win32DisplayManager::Present() {
 }
 
-LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p_lparam) {
     extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
-    if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam)) {
+    if (ImGui_ImplWin32_WndProcHandler(p_hwnd, p_msg, p_wparam, p_lparam)) {
         return true;
     }
 
-    switch (msg) {
+    switch (p_msg) {
         case WM_SIZE: {
-            int width = LOWORD(lParam);
-            int height = HIWORD(lParam);
-            if (wParam != SIZE_MINIMIZED) {
+            int width = LOWORD(p_lparam);
+            int height = HIWORD(p_lparam);
+            if (p_wparam != SIZE_MINIMIZED) {
                 // @TODO: only dispatch when resize stops
-                m_frame_size.x = width;
-                m_frame_size.y = height;
+                m_frameSize.x = width;
+                m_frameSize.y = height;
                 auto event = std::make_shared<ResizeEvent>(width, height);
                 m_app->GetEventQueue().DispatchEvent(event);
             }
             return 0;
         }
         case WM_MOVE: {
-            int x = LOWORD(lParam);
-            int y = HIWORD(lParam);
-            m_window_pos.x = x;
-            m_window_pos.y = y;
+            int x = LOWORD(p_lparam);
+            int y = HIWORD(p_lparam);
+            m_windowPos.x = x;
+            m_windowPos.y = y;
             return 0;
         }
         case WM_SYSCOMMAND:
-            if ((wParam & 0xfff0) == SC_KEYMENU) {
+            if ((p_wparam & 0xfff0) == SC_KEYMENU) {
                 return 0;
             }
             break;
@@ -137,14 +135,14 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             return 0;
         case WM_DPICHANGED:
             if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
-                // const int dpi = HIWORD(wParam);
+                // const int dpi = HIWORD(p_wparam);
                 // printf("WM_DPICHANGED to %d (%.0f%%)\n", dpi, (float)dpi / 96.0f * 100.0f);
-                const RECT* suggested_rect = (RECT*)lParam;
-                ::SetWindowPos(hwnd, NULL, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
+                const RECT* suggested_rect = (RECT*)p_lparam;
+                ::SetWindowPos(p_hwnd, NULL, suggested_rect->left, suggested_rect->top, suggested_rect->right - suggested_rect->left, suggested_rect->bottom - suggested_rect->top, SWP_NOZORDER | SWP_NOACTIVATE);
             }
             break;
         case WM_MOUSEWHEEL: {
-            const int delta = GET_WHEEL_DELTA_WPARAM(wParam);
+            const int delta = GET_WHEEL_DELTA_WPARAM(p_wparam);
             float direction = (delta > 0) ? 1.0f : -1.0f;
             input::SetWheel(0.0f, direction);
         } break;
@@ -167,23 +165,23 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             input::SetButton(MOUSE_BUTTON_MIDDLE, false);
         } break;
         case WM_MOUSEMOVE: {
-            int x = LOWORD(lParam);
-            int y = HIWORD(lParam);
+            int x = LOWORD(p_lparam);
+            int y = HIWORD(p_lparam);
             input::SetCursor(static_cast<float>(x), static_cast<float>(y));
         } break;
         case WM_KEYDOWN: {
-            int key_code = LOWORD(wParam);
-            auto it = m_key_mapping.find(key_code);
-            if (it != m_key_mapping.end()) {
+            int key_code = LOWORD(p_wparam);
+            auto it = m_keyMapping.find(key_code);
+            if (it != m_keyMapping.end()) {
                 input::SetKey(it->second, true);
             } else {
                 LOG_WARN("key {} not mapped", key_code);
             }
         } break;
         case WM_KEYUP: {
-            int key_code = LOWORD(wParam);
-            auto it = m_key_mapping.find(key_code);
-            if (it != m_key_mapping.end()) {
+            int key_code = LOWORD(p_wparam);
+            auto it = m_keyMapping.find(key_code);
+            if (it != m_keyMapping.end()) {
                 input::SetKey(it->second, false);
             }
         } break;
@@ -191,23 +189,23 @@ LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
             break;
     }
 
-    return ::DefWindowProcW(hwnd, msg, wParam, lParam);
+    return ::DefWindowProcW(p_hwnd, p_msg, p_wparam, p_lparam);
 }
 
-void Win32DisplayManager::initialize_key_mapping() {
-    DEV_ASSERT(m_key_mapping.empty());
+void Win32DisplayManager::InitializeKeyMapping() {
+    DEV_ASSERT(m_keyMapping.empty());
 
-    m_key_mapping[VK_SPACE] = KEY_SPACE;
-    m_key_mapping[VK_LEFT] = KEY_LEFT;
-    m_key_mapping[VK_RIGHT] = KEY_RIGHT;
-    m_key_mapping[VK_UP] = KEY_UP;
-    m_key_mapping[VK_DOWN] = KEY_DOWN;
+    m_keyMapping[VK_SPACE] = KEY_SPACE;
+    m_keyMapping[VK_LEFT] = KEY_LEFT;
+    m_keyMapping[VK_RIGHT] = KEY_RIGHT;
+    m_keyMapping[VK_UP] = KEY_UP;
+    m_keyMapping[VK_DOWN] = KEY_DOWN;
 
     for (char i = 0; i <= 9; ++i) {
-        m_key_mapping['0' + i] = static_cast<KeyCode>(KEY_0 + i);
+        m_keyMapping['0' + i] = static_cast<KeyCode>(KEY_0 + i);
     }
     for (char i = 0; i < 26; ++i) {
-        m_key_mapping['A' + i] = static_cast<KeyCode>(KEY_A + i);
+        m_keyMapping['A' + i] = static_cast<KeyCode>(KEY_A + i);
     }
 
     // @TODO: do the rest

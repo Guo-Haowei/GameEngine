@@ -27,50 +27,50 @@ public:
     DynamicVariable(VariantType p_type, uint32_t p_flags, const char* p_desc)
         : m_type(p_type), m_desc(p_desc), m_flags(p_flags), m_int(0) {}
 
-    void registerInt(std::string_view p_key, int p_value);
-    void registerFloat(std::string_view p_key, float p_value);
-    void registerString(std::string_view p_key, std::string_view p_value);
-    void registerVec2(std::string_view p_key, float p_x, float p_y);
-    void registerVec3(std::string_view p_key, float p_x, float p_y, float p_z);
-    void registerVec4(std::string_view p_key, float p_x, float p_y, float p_z, float p_w);
-    void registerIvec2(std::string_view p_key, int p_x, int p_y);
-    void registerIvec3(std::string_view p_key, int p_x, int p_y, int p_z);
-    void registerIvec4(std::string_view p_key, int p_x, int p_y, int p_z, int p_w);
+    void RegisterInt(std::string_view p_key, int p_value);
+    void RegisterFloat(std::string_view p_key, float p_value);
+    void RegisterString(std::string_view p_key, std::string_view p_value);
+    void RegisterVec2(std::string_view p_key, float p_x, float p_y);
+    void RegisterVec3(std::string_view p_key, float p_x, float p_y, float p_z);
+    void RegisterVec4(std::string_view p_key, float p_x, float p_y, float p_z, float p_w);
+    void RegisterIvec2(std::string_view p_key, int p_x, int p_y);
+    void RegisterIvec3(std::string_view p_key, int p_x, int p_y, int p_z);
+    void RegisterIvec4(std::string_view p_key, int p_x, int p_y, int p_z, int p_w);
 
-    int asInt() const;
-    float asFloat() const;
-    const std::string& asString() const;
-    vec2 asVec2() const;
-    vec3 asVec3() const;
-    vec4 asVec4() const;
-    ivec2 asIvec2() const;
-    ivec3 asIvec3() const;
-    ivec4 asIvec4() const;
-    void* asPointer();
+    int AsInt() const;
+    float AsFloat() const;
+    const std::string& AsString() const;
+    vec2 AsVec2() const;
+    vec3 AsVec3() const;
+    vec4 AsVec4() const;
+    ivec2 AsIvec2() const;
+    ivec3 AsIvec3() const;
+    ivec4 AsIvec4() const;
+    void* AsPointer();
 
-    bool setInt(int p_value);
-    bool setFloat(float p_value);
-    bool setString(const std::string& p_value);
-    bool setString(std::string_view p_value);
-    bool setVec2(float p_x, float p_y);
-    bool setVec3(float p_x, float p_y, float p_z);
-    bool setVec4(float p_x, float p_y, float p_z, float p_w);
-    bool setIvec2(int p_x, int p_y);
-    bool setIvec3(int p_x, int p_y, int p_z);
-    bool setIvec4(int p_x, int p_y, int p_z, int p_w);
+    bool SetInt(int p_value);
+    bool SetFloat(float p_value);
+    bool SetString(const std::string& p_value);
+    bool SetString(std::string_view p_value);
+    bool SetVec2(float p_x, float p_y);
+    bool SetVec3(float p_x, float p_y, float p_z);
+    bool SetVec4(float p_x, float p_y, float p_z, float p_w);
+    bool SetIvec2(int p_x, int p_y);
+    bool SetIvec3(int p_x, int p_y, int p_z);
+    bool SetIvec4(int p_x, int p_y, int p_z, int p_w);
 
-    void setFlag(uint32_t p_flag) { m_flags |= p_flag; }
-    void unsetFlag(uint32_t p_flag) { m_flags &= ~p_flag; }
+    void SetFlag(uint32_t p_flag) { m_flags |= p_flag; }
+    void UnsetFlag(uint32_t p_flag) { m_flags &= ~p_flag; }
 
-    std::string valueToString() const;
-    void printValueChange(std::string_view p_source) const;
+    std::string ValueToString() const;
+    void PrintValueChange(std::string_view p_source) const;
 
-    VariantType getType() const { return m_type; }
-    const char* getDesc() const { return m_desc; }
-    uint32_t getFlags() const { return m_flags; }
+    VariantType GetType() const { return m_type; }
+    const char* GetDesc() const { return m_desc; }
+    uint32_t GetFlags() const { return m_flags; }
 
-    static DynamicVariable* findDvar(const std::string& p_name);
-    static void registerDvar(std::string_view p_key, DynamicVariable* p_dvar);
+    static DynamicVariable* FindDvar(const std::string& p_name);
+    static void RegisterDvar(std::string_view p_key, DynamicVariable* p_dvar);
 
 private:
     const VariantType m_type;
@@ -96,25 +96,25 @@ private:
 
 }  // namespace my
 
-#define DVAR_GET_BOOL(name)    (!!(DVAR_##name).asInt())
-#define DVAR_GET_INT(name)     (DVAR_##name).asInt()
-#define DVAR_GET_FLOAT(name)   (DVAR_##name).asFloat()
-#define DVAR_GET_STRING(name)  (DVAR_##name).asString()
-#define DVAR_GET_VEC2(name)    (DVAR_##name).asVec2()
-#define DVAR_GET_VEC3(name)    (DVAR_##name).asVec3()
-#define DVAR_GET_VEC4(name)    (DVAR_##name).asVec4()
-#define DVAR_GET_IVEC2(name)   (DVAR_##name).asIvec2()
-#define DVAR_GET_IVEC3(name)   (DVAR_##name).asIvec3()
-#define DVAR_GET_IVEC4(name)   (DVAR_##name).asIvec4()
-#define DVAR_GET_POINTER(name) (DVAR_##name).asPointer()
+#define DVAR_GET_BOOL(name)    (!!(DVAR_##name).AsInt())
+#define DVAR_GET_INT(name)     (DVAR_##name).AsInt()
+#define DVAR_GET_FLOAT(name)   (DVAR_##name).AsFloat()
+#define DVAR_GET_STRING(name)  (DVAR_##name).AsString()
+#define DVAR_GET_VEC2(name)    (DVAR_##name).AsVec2()
+#define DVAR_GET_VEC3(name)    (DVAR_##name).AsVec3()
+#define DVAR_GET_VEC4(name)    (DVAR_##name).AsVec4()
+#define DVAR_GET_IVEC2(name)   (DVAR_##name).AsIvec2()
+#define DVAR_GET_IVEC3(name)   (DVAR_##name).AsIvec3()
+#define DVAR_GET_IVEC4(name)   (DVAR_##name).AsIvec4()
+#define DVAR_GET_POINTER(name) (DVAR_##name).AsPointer()
 
-#define DVAR_SET_BOOL(name, value)       (DVAR_##name).setInt(!!(value))
-#define DVAR_SET_INT(name, value)        (DVAR_##name).setInt(value)
-#define DVAR_SET_FLOAT(name, value)      (DVAR_##name).setFloat(value)
-#define DVAR_SET_STRING(name, value)     (DVAR_##name).setString(value)
-#define DVAR_SET_VEC2(name, x, y)        (DVAR_##name).setVec2(x, y)
-#define DVAR_SET_VEC3(name, x, y, z)     (DVAR_##name).setVec3(x, y, z)
-#define DVAR_SET_VEC4(name, x, y, z, w)  (DVAR_##name).setVec4(x, y, z, w)
-#define DVAR_SET_IVEC2(name, x, y)       (DVAR_##name).setIvec2(x, y)
-#define DVAR_SET_IVEC3(name, x, y, z)    (DVAR_##name).setIvec3(x, y, z)
-#define DVAR_SET_IVEC4(name, x, y, z, w) (DVAR_##name).setIvec4(x, y, z, w)
+#define DVAR_SET_BOOL(name, value)       (DVAR_##name).SetInt(!!(value))
+#define DVAR_SET_INT(name, value)        (DVAR_##name).SetInt(value)
+#define DVAR_SET_FLOAT(name, value)      (DVAR_##name).SetFloat(value)
+#define DVAR_SET_STRING(name, value)     (DVAR_##name).SetString(value)
+#define DVAR_SET_VEC2(name, x, y)        (DVAR_##name).SetVec2(x, y)
+#define DVAR_SET_VEC3(name, x, y, z)     (DVAR_##name).SetVec3(x, y, z)
+#define DVAR_SET_VEC4(name, x, y, z, w)  (DVAR_##name).SetVec4(x, y, z, w)
+#define DVAR_SET_IVEC2(name, x, y)       (DVAR_##name).SetIvec2(x, y)
+#define DVAR_SET_IVEC3(name, x, y, z)    (DVAR_##name).SetIvec3(x, y, z)
+#define DVAR_SET_IVEC4(name, x, y, z, w) (DVAR_##name).SetIvec4(x, y, z, w)
