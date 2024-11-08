@@ -11,8 +11,7 @@
 
 namespace my {
 
-bool GlfwDisplayManager::Initialize() {
-    GlfwDisplayManager::initialize_key_mapping();
+bool GlfwDisplayManager::InitializeWindow() {
 
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
@@ -40,7 +39,7 @@ bool GlfwDisplayManager::Initialize() {
 
     glfwMakeContextCurrent(m_window);
 
-    glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
+    glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
 
     ImGui_ImplGlfw_InitForOpenGL(m_window, false);
 
@@ -68,15 +67,15 @@ bool GlfwDisplayManager::ShouldClose() {
 
 void GlfwDisplayManager::NewFrame() {
     glfwPollEvents();
-    glfwGetFramebufferSize(m_window, &m_frame_size.x, &m_frame_size.y);
-    glfwGetWindowPos(m_window, &m_window_pos.x, &m_window_pos.y);
+    glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
+    glfwGetWindowPos(m_window, &m_windowPos.x, &m_windowPos.y);
 
     ImGui_ImplGlfw_NewFrame();
 }
 
-std::tuple<int, int> GlfwDisplayManager::GetWindowSize() { return std::tuple<int, int>(m_frame_size.x, m_frame_size.y); }
+std::tuple<int, int> GlfwDisplayManager::GetWindowSize() { return std::tuple<int, int>(m_frameSize.x, m_frameSize.y); }
 
-std::tuple<int, int> GlfwDisplayManager::GetWindowPos() { return std::tuple<int, int>(m_window_pos.x, m_window_pos.y); }
+std::tuple<int, int> GlfwDisplayManager::GetWindowPos() { return std::tuple<int, int>(m_windowPos.x, m_windowPos.y); }
 
 void GlfwDisplayManager::Present() {
     OPTICK_EVENT();
@@ -131,7 +130,7 @@ void GlfwDisplayManager::scroll_callback(GLFWwindow* window, double xoffset, dou
     { input::SetWheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
 }
 
-void GlfwDisplayManager::initialize_key_mapping() {
+void GlfwDisplayManager::InitializeKeyMapping() {
     if (!s_key_mapping.empty()) {
         return;
     }

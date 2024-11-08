@@ -10,6 +10,8 @@ class DisplayManager : public Singleton<DisplayManager>, public Module {
 public:
     DisplayManager() : Module("DisplayManager") {}
 
+    bool Initialize() final;
+
     virtual bool ShouldClose() = 0;
 
     virtual std::tuple<int, int> GetWindowSize() = 0;
@@ -19,6 +21,14 @@ public:
     virtual void Present() = 0;
 
     static std::shared_ptr<DisplayManager> Create();
+
+protected:
+    virtual bool InitializeWindow() = 0;
+    virtual void InitializeKeyMapping() = 0;
+
+    struct {
+        int x, y;
+    } m_frameSize, m_windowPos;
 };
 
 }  // namespace my

@@ -5,7 +5,6 @@ namespace my {
 
 class EmptyDisplayManager : public DisplayManager {
 public:
-    bool Initialize() override { return true; }
     void Finalize() override {}
 
     bool ShouldClose() override { return true; }
@@ -19,6 +18,10 @@ public:
 
     void NewFrame() override {}
     void Present() override {}
+
+protected:
+    bool InitializeWindow() override { return true; }
+    void InitializeKeyMapping() override{};
 };
 
 }  // namespace my

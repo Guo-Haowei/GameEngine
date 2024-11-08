@@ -7,7 +7,6 @@ namespace my {
 
 class Win32DisplayManager : public DisplayManager {
 public:
-    bool Initialize() final;
     void Finalize() final;
 
     bool ShouldClose() final;
@@ -18,22 +17,19 @@ public:
     void NewFrame() final;
     void Present() final;
 
-    LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    LRESULT WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p_lparam);
 
     HWND GetHwnd() const { return m_hwnd; }
 
 private:
-    void initialize_key_mapping();
+    bool InitializeWindow() final;
+    void InitializeKeyMapping() final;
 
-    struct {
-        int x, y;
-    } m_frame_size, m_window_pos;
-
-    WNDCLASSEXW m_wnd_class{};
+    WNDCLASSEXW m_wndClass{};
     HWND m_hwnd{};
-    bool m_should_quit{ false };
+    bool m_shouldQuit{ false };
 
-    std::unordered_map<int, KeyCode> m_key_mapping;
+    std::unordered_map<int, KeyCode> m_keyMapping;
 };
 
 }  // namespace my

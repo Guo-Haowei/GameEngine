@@ -7,6 +7,11 @@
 
 namespace my {
 
+bool DisplayManager::Initialize() {
+    InitializeKeyMapping();
+    return InitializeWindow();
+}
+
 std::shared_ptr<DisplayManager> DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(r_backend);
 
