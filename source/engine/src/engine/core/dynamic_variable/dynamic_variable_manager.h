@@ -14,21 +14,21 @@ public:
     DynamicVariableParser(const std::vector<std::string>& p_commands, Source p_source)
         : m_source(p_source), m_commands(p_commands) {}
 
-    bool parse();
+    bool Parse();
 
-    const std::string& getError() const { return m_error; }
+    const std::string& GetError() const { return m_error; }
 
 private:
-    bool processSetCmd();
-    bool processListCmd();
+    bool ProcessSetCmd();
+    bool ProcessListCmd();
 
-    bool outOfBound();
-    const std::string& peek();
-    const std::string& consume();
+    bool OutOfBound();
+    const std::string& Peek();
+    const std::string& Consume();
 
-    bool tryGetInt(int& p_out);
-    bool tryGetFloat(float& p_out);
-    bool tryGetString(std::string_view& p_out);
+    bool TryGetInt(int& p_out);
+    bool TryGetFloat(float& p_out);
+    bool TryGetString(std::string_view& p_out);
 
     const Source m_source;
     const std::vector<std::string>& m_commands;
@@ -41,8 +41,8 @@ class DynamicVariableManager {
 public:
     static void Serialize();
     static void deserialize();
-    static bool parse(const std::vector<std::string>& p_commands);
-    static void dumpDvars();
+    static bool Parse(const std::vector<std::string>& p_commands);
+    static void DumpDvars();
 };
 
 }  // namespace my

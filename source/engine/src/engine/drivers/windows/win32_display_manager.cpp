@@ -20,7 +20,7 @@ static LRESULT wnd_proc_wrapper(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
 
-    return window->wnd_proc(hwnd, msg, wParam, lParam);
+    return window->WndProc(hwnd, msg, wParam, lParam);
 }
 
 bool Win32DisplayManager::Initialize() {
@@ -101,7 +101,7 @@ void Win32DisplayManager::NewFrame() {
 void Win32DisplayManager::Present() {
 }
 
-LRESULT Win32DisplayManager::wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT Win32DisplayManager::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND, UINT, WPARAM, LPARAM);
     if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam)) {
         return true;

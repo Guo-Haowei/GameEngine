@@ -18,9 +18,9 @@ public:
     void NewFrame() final;
     void Present() final;
 
-    LRESULT wnd_proc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    LRESULT WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-    HWND get_hwnd() const { return m_hwnd; }
+    HWND GetHwnd() const { return m_hwnd; }
 
 private:
     void initialize_key_mapping();
