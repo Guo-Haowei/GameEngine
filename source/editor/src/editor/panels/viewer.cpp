@@ -51,11 +51,11 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
             clicked *= 2.0f;
             clicked -= 1.0f;
 
-            const mat4 inversed_projection_view = glm::inverse(p_camera.getProjectionViewMatrix());
+            const mat4 inversed_projection_view = glm::inverse(p_camera.GetProjectionViewMatrix());
 
-            const vec3 ray_start = p_camera.getPosition();
+            const vec3 ray_start = p_camera.GetPosition();
             const vec3 direction = glm::normalize(vec3(inversed_projection_view * vec4(clicked.x, -clicked.y, 1.0f, 1.0f)));
-            const vec3 ray_end = ray_start + direction * p_camera.getFar();
+            const vec3 ray_end = ray_start + direction * p_camera.GetFar();
             Ray ray(ray_start, ray_end);
 
             const auto result = p_scene.Intersects(ray);
@@ -66,8 +66,8 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
 }
 
 void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
-    const mat4 view_matrix = p_camera.getViewMatrix();
-    const mat4 proj_matrix = p_camera.getProjectionMatrix();
+    const mat4 view_matrix = p_camera.GetViewMatrix();
+    const mat4 proj_matrix = p_camera.GetProjectionMatrix();
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
@@ -95,7 +95,7 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     if (draw_grid) {
         mat4 identity(1);
         // draw grid
-        ImGuizmo::draw_grid(p_camera.getProjectionViewMatrix(), identity, 10.0f);
+        ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
     }
 
     ecs::Entity id = m_editor.GetSelectedEntity();

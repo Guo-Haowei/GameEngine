@@ -30,10 +30,10 @@ struct AnimationComponent {
         std::vector<float> keyframeData;
     };
 
-    bool isPlaying() const { return flags & PLAYING; }
-    bool isLooped() const { return flags & LOOPED; }
-    float getLegnth() const { return end - start; }
-    float isEnd() const { return timer > end; }
+    bool IsPlaying() const { return flags & PLAYING; }
+    bool IsLooped() const { return flags & LOOPED; }
+    float GetLegnth() const { return end - start; }
+    float IsEnd() const { return timer > end; }
 
     uint32_t flags = LOOPED;
     float start = 0;

@@ -260,7 +260,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Animation", animation_component, [&](AnimationComponent& p_animation) {
-        if (!p_animation.isPlaying()) {
+        if (!p_animation.IsPlaying()) {
             if (ImGui::Button("play")) {
                 p_animation.flags |= AnimationComponent::PLAYING;
             }
