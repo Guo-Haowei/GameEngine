@@ -1,23 +1,22 @@
 #pragma once
-#include "drivers/opengl/opengl_prerequisites.h"
 
 // @TODO: refactor
 struct Texture2DCreateInfo {
-    GLenum wrapS = 0;
-    GLenum wrapT = 0;
-    GLenum minFilter = 0;
-    GLenum magFilter = 0;
-    GLenum internalFormat;
-    GLenum format;
-    GLenum dataType;
+    uint32_t wrapS = 0;
+    uint32_t wrapT = 0;
+    uint32_t minFilter = 0;
+    uint32_t magFilter = 0;
+    uint32_t internalFormat;
+    uint32_t format;
+    uint32_t dataType;
     int width;
     int height;
 };
 
 struct Texture3DCreateInfo {
-    GLenum wrapS, wrapT, wrapR;
-    GLenum minFilter, magFilter;
-    GLenum format;
+    uint32_t wrapS, wrapT, wrapR;
+    uint32_t minFilter, magFilter;
+    uint32_t format;
     int size;
     int mipLevel;
 };
@@ -34,12 +33,12 @@ public:
     void unbind() const;
     void genMipMap();
 
-    inline GLuint GetHandle() const { return mHandle; }
+    inline uint32_t GetHandle() const { return mHandle; }
 
 protected:
-    GLenum m_type;
-    GLenum m_format;
-    GLuint mHandle = 0;
+    uint32_t m_type;
+    uint32_t m_format;
+    uint32_t mHandle = 0;
 
     friend class RenderTarget;
     friend class GBuffer;

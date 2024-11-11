@@ -191,7 +191,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
     UpdateData();
 
     if (m_focused) {
-        m_cameraController.move(p_scene.m_elapsedTime, camera);
+        m_cameraController.Move(p_scene.m_elapsedTime, camera);
     }
 
     SelectEntity(p_scene, camera);

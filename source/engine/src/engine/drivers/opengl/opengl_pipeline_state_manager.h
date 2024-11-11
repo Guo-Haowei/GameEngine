@@ -1,5 +1,4 @@
 #pragma once
-#include "drivers/opengl/opengl_prerequisites.h"
 #include "rendering/pipeline_state_manager.h"
 
 namespace my {
@@ -7,13 +6,9 @@ namespace my {
 struct OpenGLPipelineState : public PipelineState {
     using PipelineState::PipelineState;
 
-    GLuint program_id;
+    uint32_t programId;
 
-    ~OpenGLPipelineState() {
-        if (program_id) {
-            glDeleteProgram(program_id);
-        }
-    }
+    ~OpenGLPipelineState();
 };
 
 class OpenGLPipelineStateManager : public PipelineStateManager {

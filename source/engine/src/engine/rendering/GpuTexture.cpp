@@ -2,6 +2,7 @@
 #include "GpuTexture.h"
 
 #include "core/framework/asset_manager.h"
+#include "drivers/opengl/opengl_prerequisites.h"
 
 using std::string;
 

@@ -3,7 +3,6 @@
 #endif
 #define OPENGL_RESOURCES_INCLUDED
 
-#include "drivers/opengl/opengl_prerequisites.h"
 #include "rendering/gpu_resource.h"
 #include "rendering/render_graph/draw_pass.h"
 #include "rendering/uniform_buffer.h"
@@ -14,37 +13,24 @@ struct OpenGLTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
     ~OpenGLTexture() {
-        clear();
+        Clear();
     }
 
-    void clear() {
-        if (handle) {
-            // glMakeTextureHandleNonResidentARB();
+    void Clear();
 
-            glDeleteTextures(1, &handle);
-            handle = 0;
-            resident_handle = 0;
-        }
-    }
-
-    uint64_t GetResidentHandle() const final { return resident_handle; }
+    uint64_t GetResidentHandle() const final { return residentHandle; }
     uint64_t GetHandle() const final { return handle; }
 
     uint32_t handle = 0;
-    uint64_t resident_handle = 0;
+    uint64_t residentHandle = 0;
 };
 
 struct OpenGLSubpass : public DrawPass {
     ~OpenGLSubpass() {
-        clear();
+        Clear();
     }
 
-    void clear() {
-        if (handle) {
-            glDeleteFramebuffers(1, &handle);
-            handle = 0;
-        }
-    }
+    void Clear();
 
     uint32_t handle = 0;
 };
@@ -56,12 +42,7 @@ struct OpenGLUniformBuffer : public ConstantBufferBase {
         Clear();
     }
 
-    void Clear() {
-        if (handle) {
-            glDeleteBuffers(1, &handle);
-            handle = 0;
-        }
-    }
+    void Clear();
 
     uint32_t handle = 0;
 };
@@ -73,12 +54,7 @@ struct OpenGLStructuredBuffer : public GpuStructuredBuffer {
         Clear();
     }
 
-    void Clear() {
-        if (handle) {
-            glDeleteBuffers(1, &handle);
-            handle = 0;
-        }
-    }
+    void Clear();
 
     uint32_t handle = 0;
 };

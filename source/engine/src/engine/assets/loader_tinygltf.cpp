@@ -196,7 +196,7 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
         if (baseColorFactor != x.values.end()) {
             const auto& number_array = baseColorFactor->second.number_array;
             for (int idx = 0; idx < (int)number_array.size(); ++idx) {
-                material.base_color[idx] = (float)number_array[idx];
+                material.baseColor[idx] = (float)number_array[idx];
             }
         }
 
@@ -207,7 +207,7 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.requestImage(MaterialComponent::TEXTURE_BASE, m_basePath + img.uri);
+            material.RequestImage(MaterialComponent::TEXTURE_BASE, m_basePath + img.uri);
 
             // @TODO:
             // material.mTextures[MaterialComponent::Base].image = g_assetManager->LoadImageSync(searchName);
@@ -220,7 +220,7 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.requestImage(MaterialComponent::TEXTURE_NORMAL, m_basePath + img.uri);
+            material.RequestImage(MaterialComponent::TEXTURE_NORMAL, m_basePath + img.uri);
             // material.mTextures[MaterialComponent::Normal].image = g_assetManager->LoadImageSync(searchName);
             //  material.textures[MaterialComponent::NORMAL_MAP].uvset = normalTexture->second.TextureTexCoord();
         }
@@ -231,7 +231,7 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.requestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_basePath + img.uri);
+            material.RequestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_basePath + img.uri);
             // material.mTextures[MaterialComponent::MetallicRoughness].resource = ;
         }
 #if 0

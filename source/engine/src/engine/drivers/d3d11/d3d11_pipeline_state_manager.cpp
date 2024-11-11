@@ -115,7 +115,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
 
         ComPtr<ID3DBlob> blob;
         blob = *res;
-        hr = p_device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->vertex_shader.GetAddressOf());
+        hr = p_device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->vertexShader.GetAddressOf());
         D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
         vsblob = blob;
     }
@@ -128,7 +128,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
 
         ComPtr<ID3DBlob> blob;
         blob = *res;
-        hr = p_device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->pixel_shader.GetAddressOf());
+        hr = p_device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->pixelShader.GetAddressOf());
         D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
     }
 
@@ -147,32 +147,32 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
     }
     DEV_ASSERT(elements.size());
 
-    hr = p_device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->input_layout.GetAddressOf());
+    hr = p_device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->inputLayout.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create input layout");
 
     if (p_info.rasterizer_desc) {
         ComPtr<ID3D11RasterizerState> state;
 
-        auto it = m_rasterizer_states.find(p_info.rasterizer_desc);
-        if (it == m_rasterizer_states.end()) {
+        auto it = m_rasterizerStates.find(p_info.rasterizer_desc);
+        if (it == m_rasterizerStates.end()) {
             D3D11_RASTERIZER_DESC desc{};
             desc.FillMode = d3d::Convert(p_info.rasterizer_desc->fill_mode);
             desc.CullMode = d3d::Convert(p_info.rasterizer_desc->cull_mode);
             desc.FrontCounterClockwise = p_info.rasterizer_desc->front_counter_clockwise;
             hr = p_device->CreateRasterizerState(&desc, state.GetAddressOf());
             D3D_FAIL_V_MSG(hr, nullptr, "failed to create rasterizer state");
-            m_rasterizer_states[p_info.rasterizer_desc] = state;
+            m_rasterizerStates[p_info.rasterizer_desc] = state;
         } else {
             state = it->second;
         }
         DEV_ASSERT(state);
-        pipeline_state->rasterizer = state;
+        pipeline_state->rasterizerState = state;
     }
     if (p_info.depth_stencil_desc) {
         ComPtr<ID3D11DepthStencilState> state;
 
-        auto it = m_depth_stencil_states.find(p_info.depth_stencil_desc);
-        if (it == m_depth_stencil_states.end()) {
+        auto it = m_depthStencilStates.find(p_info.depth_stencil_desc);
+        if (it == m_depthStencilStates.end()) {
             D3D11_DEPTH_STENCIL_DESC desc{};
             desc.DepthEnable = p_info.depth_stencil_desc->depth_enabled;
             desc.DepthFunc = d3d::Convert(p_info.depth_stencil_desc->depth_func);
@@ -181,12 +181,12 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
             // desc.StencilEnable = p_info.depth_stencil_desc->stencil_enabled;
             p_device->CreateDepthStencilState(&desc, state.GetAddressOf());
             D3D_FAIL_V_MSG(hr, nullptr, "failed to create depth stencil state");
-            m_depth_stencil_states[p_info.depth_stencil_desc] = state;
+            m_depthStencilStates[p_info.depth_stencil_desc] = state;
         } else {
             state = it->second.Get();
         }
         DEV_ASSERT(state);
-        pipeline_state->depth_stencil = state;
+        pipeline_state->depthStencilState = state;
     }
 
     return pipeline_state;
@@ -205,7 +205,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateComputePipeline(
 
     ComPtr<ID3DBlob> blob;
     blob = *res;
-    HRESULT hr = p_device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->compute_shader.GetAddressOf());
+    HRESULT hr = p_device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->computeShader.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
 
     return pipeline_state;

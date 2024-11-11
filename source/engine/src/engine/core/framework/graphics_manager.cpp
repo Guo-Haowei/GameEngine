@@ -280,7 +280,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
 
 // @TODO: remove this
 static void FillMaterialConstantBuffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.c_baseColor = material->base_color;
+    cb.c_baseColor = material->baseColor;
     cb.c_metallic = material->metallic;
     cb.c_roughness = material->roughness;
     cb.c_emissivePower = material->emissive;
@@ -463,7 +463,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
         bool cast_shadow = light_component.CastShadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.GetType();
-        light.color = material->base_color;
+        light.color = material->baseColor;
         light.color *= material->emissive;
         switch (light_component.GetType()) {
             case LIGHT_TYPE_INFINITE: {

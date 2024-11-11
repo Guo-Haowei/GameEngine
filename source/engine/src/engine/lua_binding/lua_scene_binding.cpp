@@ -97,7 +97,7 @@ static Entity lua_scene_create_entity(Scene* p_scene, const sol::table& p_compon
         ok = ok && try_get_float(*table, "metallic", material->metallic);
         DEV_ASSERT(ok);
         if (try_get_vec3(*table, "base_color", color)) {
-            material->base_color = vec4(color, 1.0f);
+            material->baseColor = vec4(color, 1.0f);
         }
     }
 

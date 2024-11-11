@@ -3,6 +3,7 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/graphics_manager.h"
 #include "core/string/string_utils.h"
+#include "opengl_prerequisites.h"
 
 namespace my {
 
@@ -19,6 +20,12 @@ static constexpr TextureSlot s_texture_slots[] = {
 #include "texture_binding.h"
 #undef SHADER_TEXTURE
 };
+
+OpenGLPipelineState::~OpenGLPipelineState() {
+    if (programId) {
+        glDeleteProgram(programId);
+    }
+}
 
 static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<std::string, std::string> {
     constexpr int max_depth = 100;
@@ -194,7 +201,7 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const 
     auto program = std::make_shared<OpenGLPipelineState>(p_info.input_layout_desc,
                                                          p_info.rasterizer_desc,
                                                          p_info.depth_stencil_desc);
-    program->program_id = program_id;
+    program->programId = program_id;
 
     // set constants
     glUseProgram(program_id);

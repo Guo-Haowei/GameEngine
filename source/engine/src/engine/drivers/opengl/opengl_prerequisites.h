@@ -1,3 +1,8 @@
+#ifdef OPENGL_PREREQUISITES_INCLUDED
+#error DO NOT INCLUDE THIS FILE IN HEADER
+#endif
+#define OPENGL_PREREQUISITES_INCLUDED
+
 #pragma once
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -15,8 +20,8 @@
 
 namespace my::gl {
 
-inline GLuint convert_format(PixelFormat format) {
-    switch (format) {
+inline GLuint ConvertFormat(PixelFormat p_format) {
+    switch (p_format) {
         case PixelFormat::R8_UINT:
         case PixelFormat::R16_FLOAT:
         case PixelFormat::R32_FLOAT:
@@ -48,8 +53,8 @@ inline GLuint convert_format(PixelFormat format) {
     }
 }
 
-inline GLuint convert_internal_format(PixelFormat format) {
-    switch (format) {
+inline GLuint ConvertInternalFormat(PixelFormat p_format) {
+    switch (p_format) {
         case PixelFormat::R8_UINT:
             return GL_RED;
         case PixelFormat::R8G8_UINT:
@@ -91,8 +96,8 @@ inline GLuint convert_internal_format(PixelFormat format) {
     }
 }
 
-inline GLuint convert_data_type(PixelFormat format) {
-    switch (format) {
+inline GLuint ConvertDataType(PixelFormat p_format) {
+    switch (p_format) {
         case PixelFormat::R8_UINT:
         case PixelFormat::R8G8_UINT:
         case PixelFormat::R8G8B8_UINT:
@@ -121,7 +126,7 @@ inline GLuint convert_data_type(PixelFormat format) {
     }
 }
 
-inline GLenum convert_filter(FilterMode p_mode) {
+inline GLenum ConvertFilter(FilterMode p_mode) {
     switch (p_mode) {
         case FilterMode::NEAREST:
             return GL_NEAREST;
@@ -135,7 +140,7 @@ inline GLenum convert_filter(FilterMode p_mode) {
     }
 }
 
-inline GLenum convert_address_mode(AddressMode p_mode) {
+inline GLenum ConvertAddressMode(AddressMode p_mode) {
     switch (p_mode) {
         case AddressMode::WRAP:
             return GL_REPEAT;
@@ -149,7 +154,7 @@ inline GLenum convert_address_mode(AddressMode p_mode) {
     }
 }
 
-static inline GLenum convert(ComparisonFunc p_func) {
+static inline GLenum ConvertComparisonFunc(ComparisonFunc p_func) {
     switch (p_func) {
         case ComparisonFunc::NEVER:
             return GL_NEVER;
@@ -173,12 +178,12 @@ static inline GLenum convert(ComparisonFunc p_func) {
     }
 };
 
-inline void set_sampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
-    glTexParameteri(p_texture_type, GL_TEXTURE_MIN_FILTER, convert_filter(p_desc.min));
-    glTexParameteri(p_texture_type, GL_TEXTURE_MAG_FILTER, convert_filter(p_desc.mag));
-    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_S, convert_address_mode(p_desc.mode_u));
-    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_T, convert_address_mode(p_desc.mode_v));
-    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_R, convert_address_mode(p_desc.mode_w));
+inline void SetSampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
+    glTexParameteri(p_texture_type, GL_TEXTURE_MIN_FILTER, ConvertFilter(p_desc.min));
+    glTexParameteri(p_texture_type, GL_TEXTURE_MAG_FILTER, ConvertFilter(p_desc.mag));
+    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_S, ConvertAddressMode(p_desc.mode_u));
+    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_T, ConvertAddressMode(p_desc.mode_v));
+    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_R, ConvertAddressMode(p_desc.mode_w));
 
     // @TODO: border
     if (p_desc.mode_u == AddressMode::BORDER ||
@@ -188,7 +193,7 @@ inline void set_sampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
     }
 }
 
-inline GLenum convert_dimension(Dimension p_dimension) {
+inline GLenum ConvertDimension(Dimension p_dimension) {
     switch (p_dimension) {
         case Dimension::TEXTURE_2D:
             return GL_TEXTURE_2D;

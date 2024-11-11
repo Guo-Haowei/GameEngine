@@ -161,7 +161,7 @@ void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             if (enable_depth_test) {
                 const auto func = pipeline->depth_stencil_desc->depth_func;
                 if (func != m_state_cache.depth_func) {
-                    glDepthFunc(gl::convert(func));
+                    glDepthFunc(gl::ConvertComparisonFunc(func));
                     m_state_cache.depth_func = func;
                 }
             }
@@ -202,7 +202,7 @@ void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
         }
     }
 
-    glUseProgram(pipeline->program_id);
+    glUseProgram(pipeline->programId);
 }
 
 void OpenGLGraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
@@ -400,13 +400,13 @@ void OpenGLGraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle
         return;
     }
 
-    const GLuint texture_type = gl::convert_dimension(p_dimension);
+    const GLuint texture_type = gl::ConvertDimension(p_dimension);
     glActiveTexture(GL_TEXTURE0 + p_slot);
     glBindTexture(texture_type, static_cast<GLuint>(p_handle));
 }
 
 void OpenGLGraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
-    const GLuint texture_type = gl::convert_dimension(p_dimension);
+    const GLuint texture_type = gl::ConvertDimension(p_dimension);
 
     glActiveTexture(GL_TEXTURE0 + p_slot);
     glBindTexture(texture_type, 0);
@@ -416,10 +416,10 @@ std::shared_ptr<GpuTexture> OpenGLGraphicsManager::CreateTexture(const GpuTextur
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
-    GLenum texture_type = gl::convert_dimension(p_texture_desc.dimension);
-    GLenum internal_format = gl::convert_internal_format(p_texture_desc.format);
-    GLenum format = gl::convert_format(p_texture_desc.format);
-    GLenum data_type = gl::convert_data_type(p_texture_desc.format);
+    GLenum texture_type = gl::ConvertDimension(p_texture_desc.dimension);
+    GLenum internal_format = gl::ConvertInternalFormat(p_texture_desc.format);
+    GLenum format = gl::ConvertFormat(p_texture_desc.format);
+    GLenum data_type = gl::ConvertDataType(p_texture_desc.format);
 
     glBindTexture(texture_type, texture_id);
 
@@ -453,7 +453,7 @@ std::shared_ptr<GpuTexture> OpenGLGraphicsManager::CreateTexture(const GpuTextur
             break;
     }
 
-    gl::set_sampler(texture_type, p_sampler_desc);
+    gl::SetSampler(texture_type, p_sampler_desc);
     if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
         glGenerateMipmap(texture_type);
     }
@@ -465,7 +465,7 @@ std::shared_ptr<GpuTexture> OpenGLGraphicsManager::CreateTexture(const GpuTextur
 
     auto texture = std::make_shared<OpenGLTexture>(p_texture_desc);
     texture->handle = texture_id;
-    texture->resident_handle = resident_id;
+    texture->residentHandle = resident_id;
     return texture;
 }
 

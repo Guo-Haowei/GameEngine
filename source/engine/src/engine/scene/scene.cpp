@@ -140,7 +140,7 @@ Entity Scene::CreatePointLightEntity(const std::string& p_name,
     light.m_atten.quadratic = 0.05f;
 
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.base_color = vec4(p_color, 1.0f);
+    material.baseColor = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
 
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
@@ -172,7 +172,7 @@ Entity Scene::CreateAreaLightEntity(const std::string& p_name,
 
     // material
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.base_color = vec4(p_color, 1.0f);
+    material.baseColor = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
 
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
@@ -201,7 +201,7 @@ Entity Scene::CreateInfiniteLightEntity(const std::string& p_name,
     light.m_atten.quadratic = 0.0f;
 
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.base_color = vec4(p_color, 1.0f);
+    material.baseColor = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
     return entity;
 }

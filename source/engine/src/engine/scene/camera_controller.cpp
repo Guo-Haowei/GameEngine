@@ -4,7 +4,7 @@
 
 namespace my {
 
-void CameraController::move(float p_delta_time, Camera& p_camera) {
+void CameraController::Move(float p_delta_time, Camera& p_camera) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
     auto translate_camera = [&]() {
