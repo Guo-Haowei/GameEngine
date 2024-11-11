@@ -1,7 +1,5 @@
 #include "render_pass.h"
 
-#include "drivers/opengl/opengl_prerequisites.h"
-
 namespace my::rg {
 
 void RenderPass::AddDrawPass(std::shared_ptr<DrawPass> p_draw_pass) {

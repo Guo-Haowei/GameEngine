@@ -9,22 +9,22 @@ namespace my {
 struct D3d11PipelineState : public PipelineState {
     using PipelineState::PipelineState;
 
-    Microsoft::WRL::ComPtr<ID3D11VertexShader> vertex_shader;
-    Microsoft::WRL::ComPtr<ID3D11GeometryShader> geometry_shader;
-    Microsoft::WRL::ComPtr<ID3D11PixelShader> pixel_shader;
-    Microsoft::WRL::ComPtr<ID3D11ComputeShader> compute_shader;
-    Microsoft::WRL::ComPtr<ID3D11InputLayout> input_layout;
+    Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
+    Microsoft::WRL::ComPtr<ID3D11GeometryShader> geometryShader;
+    Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
+    Microsoft::WRL::ComPtr<ID3D11ComputeShader> computeShader;
+    Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 
-    Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizer;
-    Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depth_stencil;
+    Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState;
+    Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
 };
 
 class D3d11PipelineStateManager : public PipelineStateManager {
 protected:
     std::shared_ptr<PipelineState> CreateInternal(const PipelineCreateInfo& p_info) final;
 
-    std::unordered_map<const RasterizerDesc*, Microsoft::WRL::ComPtr<ID3D11RasterizerState>> m_rasterizer_states;
-    std::unordered_map<const DepthStencilDesc*, Microsoft::WRL::ComPtr<ID3D11DepthStencilState>> m_depth_stencil_states;
+    std::unordered_map<const RasterizerDesc*, Microsoft::WRL::ComPtr<ID3D11RasterizerState>> m_rasterizerStates;
+    std::unordered_map<const DepthStencilDesc*, Microsoft::WRL::ComPtr<ID3D11DepthStencilState>> m_depthStencilStates;
 
 private:
     std::shared_ptr<PipelineState> CreateGraphicsPipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineCreateInfo& p_info, const std::vector<D3D_SHADER_MACRO>& p_defines);

@@ -280,7 +280,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
 
 // @TODO: remove this
 static void FillMaterialConstantBuffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.c_baseColor = material->base_color;
+    cb.c_baseColor = material->baseColor;
     cb.c_metallic = material->metallic;
     cb.c_roughness = material->roughness;
     cb.c_emissivePower = material->emissive;
@@ -339,7 +339,7 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
 
     auto& cache = g_per_frame_cache.cache;
-    cache.c_cameraPosition = camera.getPosition();
+    cache.c_cameraPosition = camera.GetPosition();
 
     cache.c_enableVxgi = DVAR_GET_BOOL(r_enable_vxgi);
     cache.c_debugVoxelId = DVAR_GET_INT(r_debug_vxgi_voxel);
@@ -360,7 +360,7 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 
     const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
     if (world_size > max_world_size) {
-        world_center = camera.getPosition();
+        world_center = camera.GetPosition();
         world_size = max_world_size;
     }
 
@@ -463,7 +463,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
         bool cast_shadow = light_component.CastShadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.GetType();
-        light.color = material->base_color;
+        light.color = material->baseColor;
         light.color *= material->emissive;
         switch (light_component.GetType()) {
             case LIGHT_TYPE_INFINITE: {
@@ -573,18 +573,18 @@ void GraphicsManager::UpdateVoxelPass(const Scene& p_scene) {
 
 void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
     const Camera& camera = *p_scene.m_camera;
-    Frustum camera_frustum(camera.getProjectionViewMatrix());
+    Frustum camera_frustum(camera.GetProjectionViewMatrix());
 
     // main pass
     PerPassConstantBuffer pass_constant;
-    pass_constant.c_viewMatrix = camera.getViewMatrix();
+    pass_constant.c_viewMatrix = camera.GetViewMatrix();
 
-    const float fovy = camera.getFovy().ToRad();
-    const float aspect = camera.getAspect();
+    const float fovy = camera.GetFovy().ToRad();
+    const float aspect = camera.GetAspect();
     if (GetBackend() == Backend::OPENGL) {
-        pass_constant.c_projectionMatrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.c_projectionMatrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     } else {
-        pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.getNear(), camera.getFar());
+        pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     }
 
     m_mainPass.pass_idx = static_cast<int>(m_context.pass_cache.size());

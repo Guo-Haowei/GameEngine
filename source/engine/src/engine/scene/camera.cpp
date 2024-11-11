@@ -5,27 +5,27 @@
 
 namespace my {
 
-void Camera::update() {
-    if (isDirty()) {
+void Camera::Update() {
+    if (IsDirty()) {
         m_front.x = m_yaw.Cos() * m_pitch.Cos();
         m_front.y = m_pitch.Sin();
         m_front.z = m_yaw.Sin() * m_pitch.Cos();
 
         m_right = glm::cross(m_front, vec3(0, 1, 0));
 
-        m_view_matrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
-        m_projection_matrix = BuildOpenGLPerspectiveRH(m_fovy.ToRad(), getAspect(), m_near, m_far);
-        m_projection_view_matrix = m_projection_matrix * m_view_matrix;
+        m_viewMatrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
+        m_projectionMatrix = BuildOpenGLPerspectiveRH(m_fovy.ToRad(), GetAspect(), m_near, m_far);
+        m_projectionViewMatrix = m_projectionMatrix * m_viewMatrix;
 
-        setDirty(false);
+        SetDirty(false);
     }
 }
 
-void Camera::setDimension(int p_width, int p_height) {
+void Camera::SetDimension(int p_width, int p_height) {
     if (m_width != p_width || m_height != p_height) {
         m_width = p_width;
         m_height = p_height;
-        setDirty();
+        SetDirty();
     }
 }
 
@@ -51,7 +51,7 @@ void Camera::Serialize(Archive& p_archive, uint32_t) {
         p_archive >> m_yaw;
         p_archive >> m_position;
 
-        setDirty();
+        SetDirty();
     }
 }
 

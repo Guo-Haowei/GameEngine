@@ -64,7 +64,7 @@ void Scene::Update(float p_elapsedTime) {
     RunObjectUpdateSystem(ctx);
 
     if (m_camera) {
-        m_camera->update();
+        m_camera->Update();
     }
 }
 
@@ -93,7 +93,7 @@ void Scene::CreateCamera(int p_width,
     m_camera->m_pitch = Degree{ -10.0f };
     m_camera->m_yaw = Degree{ -90.0f };
     m_camera->m_position = vec3{ 0, 4, 10 };
-    m_camera->setDirty();
+    m_camera->SetDirty();
 }
 
 Entity Scene::CreateNameEntity(const std::string& p_name) {
@@ -140,7 +140,7 @@ Entity Scene::CreatePointLightEntity(const std::string& p_name,
     light.m_atten.quadratic = 0.05f;
 
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.base_color = vec4(p_color, 1.0f);
+    material.baseColor = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
 
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
@@ -172,7 +172,7 @@ Entity Scene::CreateAreaLightEntity(const std::string& p_name,
 
     // material
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.base_color = vec4(p_color, 1.0f);
+    material.baseColor = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
 
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
@@ -201,7 +201,7 @@ Entity Scene::CreateInfiniteLightEntity(const std::string& p_name,
     light.m_atten.quadratic = 0.0f;
 
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.base_color = vec4(p_color, 1.0f);
+    material.baseColor = vec4(p_color, 1.0f);
     material.emissive = p_emissive;
     return entity;
 }
@@ -399,7 +399,7 @@ void Scene::UpdateLight(uint32_t p_index) {
 
 void Scene::UpdateAnimation(uint32_t p_index) {
     AnimationComponent& animation = m_AnimationComponents[p_index];
-    if (!animation.isPlaying()) {
+    if (!animation.IsPlaying()) {
         return;
     }
 
@@ -482,11 +482,11 @@ void Scene::UpdateAnimation(uint32_t p_index) {
         targetTransform->SetDirty();
     }
 
-    if (animation.isLooped() && animation.timer > animation.end) {
+    if (animation.IsLooped() && animation.timer > animation.end) {
         animation.timer = animation.start;
     }
 
-    if (animation.isPlaying()) {
+    if (animation.IsPlaying()) {
         // @TODO: set elapsed time
         animation.timer += m_elapsedTime * animation.speed;
     }

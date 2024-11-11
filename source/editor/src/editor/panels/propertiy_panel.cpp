@@ -198,9 +198,9 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Material", material_component, [](MaterialComponent& p_material) {
-        vec3 color = p_material.base_color;
+        vec3 color = p_material.baseColor;
         if (DrawColorControl("Color", color)) {
-            p_material.base_color = vec4(color, p_material.base_color.a);
+            p_material.baseColor = vec4(color, p_material.baseColor.a);
         }
         DrawDragFloat("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);
         DrawDragFloat("roughness", p_material.roughness, 0.01f, 0.0f, 1.0f);
@@ -260,7 +260,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Animation", animation_component, [&](AnimationComponent& p_animation) {
-        if (!p_animation.isPlaying()) {
+        if (!p_animation.IsPlaying()) {
             if (ImGui::Button("play")) {
                 p_animation.flags |= AnimationComponent::PLAYING;
             }

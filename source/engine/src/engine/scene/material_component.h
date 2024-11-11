@@ -24,12 +24,12 @@ struct MaterialComponent {
     float metallic = 0.0f;
     float roughness = 1.0f;
     float emissive = 0.0f;
-    vec4 base_color = vec4(1);
+    vec4 baseColor = vec4(1);
     TextureMap textures[TEXTURE_MAX];
-    bool use_textures;
+    bool useTexures;
 
     // @TODO: remove this, this is poorly designed
-    void requestImage(int p_slot, const std::string& p_path);
+    void RequestImage(int p_slot, const std::string& p_path);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

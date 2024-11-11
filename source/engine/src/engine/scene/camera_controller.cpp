@@ -4,7 +4,7 @@
 
 namespace my {
 
-void CameraController::move(float p_delta_time, Camera& p_camera) {
+void CameraController::Move(float p_delta_time, Camera& p_camera) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
     auto translate_camera = [&]() {
@@ -18,7 +18,7 @@ void CameraController::move(float p_delta_time, Camera& p_camera) {
             dz = scroll;
         }
         if (dx || dz) {
-            vec3 delta = (move_speed * dz) * p_camera.getFront() + (move_speed * dx) * p_camera.getRight();
+            vec3 delta = (move_speed * dz) * p_camera.GetFront() + (move_speed * dx) * p_camera.GetRight();
             p_camera.m_position += delta;
         }
         if (dy) {
@@ -62,7 +62,7 @@ void CameraController::move(float p_delta_time, Camera& p_camera) {
 
     bool dirty = translate_camera() | rotate_camera();
     if (dirty) {
-        p_camera.setDirty();
+        p_camera.SetDirty();
     }
 }
 

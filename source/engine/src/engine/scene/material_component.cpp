@@ -5,7 +5,7 @@
 
 namespace my {
 
-void MaterialComponent::requestImage(int p_slot, const std::string& p_path) {
+void MaterialComponent::RequestImage(int p_slot, const std::string& p_path) {
     if (!p_path.empty()) {
         textures[p_slot].path = p_path;
         textures[p_slot].image = AssetManager::GetSingleton().LoadImageAsync(FilePath{ p_path });
@@ -19,7 +19,7 @@ void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
         p_archive << metallic;
         p_archive << roughness;
         p_archive << emissive;
-        p_archive << base_color;
+        p_archive << baseColor;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
             p_archive << textures[i].enabled;
             p_archive << textures[i].path;
@@ -28,7 +28,7 @@ void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
         p_archive >> metallic;
         p_archive >> roughness;
         p_archive >> emissive;
-        p_archive >> base_color;
+        p_archive >> baseColor;
         for (int i = 0; i < TEXTURE_MAX; ++i) {
             p_archive >> textures[i].enabled;
             std::string& path = textures[i].path;

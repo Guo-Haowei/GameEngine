@@ -711,25 +711,25 @@ void D3d11GraphicsManager::OnSceneChange(const Scene& p_scene) {
 void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipelineStateManager->Find(p_name));
     DEV_ASSERT(pipeline);
-    if (pipeline->compute_shader) {
-        m_deviceContext->CSSetShader(pipeline->compute_shader.Get(), nullptr, 0);
+    if (pipeline->computeShader) {
+        m_deviceContext->CSSetShader(pipeline->computeShader.Get(), nullptr, 0);
     } else {
-        if (pipeline->vertex_shader) {
-            m_deviceContext->VSSetShader(pipeline->vertex_shader.Get(), 0, 0);
-            m_deviceContext->IASetInputLayout(pipeline->input_layout.Get());
+        if (pipeline->vertexShader) {
+            m_deviceContext->VSSetShader(pipeline->vertexShader.Get(), 0, 0);
+            m_deviceContext->IASetInputLayout(pipeline->inputLayout.Get());
         }
-        if (pipeline->pixel_shader) {
-            m_deviceContext->PSSetShader(pipeline->pixel_shader.Get(), 0, 0);
-        }
-
-        if (pipeline->rasterizer.Get() != m_stateCache.rasterizer) {
-            m_deviceContext->RSSetState(pipeline->rasterizer.Get());
-            m_stateCache.rasterizer = pipeline->rasterizer.Get();
+        if (pipeline->pixelShader) {
+            m_deviceContext->PSSetShader(pipeline->pixelShader.Get(), 0, 0);
         }
 
-        if (pipeline->depth_stencil.Get() != m_stateCache.depth_stencil) {
-            m_deviceContext->OMSetDepthStencilState(pipeline->depth_stencil.Get(), 0);
-            m_stateCache.depth_stencil = pipeline->depth_stencil.Get();
+        if (pipeline->rasterizerState.Get() != m_stateCache.rasterizer) {
+            m_deviceContext->RSSetState(pipeline->rasterizerState.Get());
+            m_stateCache.rasterizer = pipeline->rasterizerState.Get();
+        }
+
+        if (pipeline->depthStencilState.Get() != m_stateCache.depth_stencil) {
+            m_deviceContext->OMSetDepthStencilState(pipeline->depthStencilState.Get(), 0);
+            m_stateCache.depth_stencil = pipeline->depthStencilState.Get();
         }
     }
 }

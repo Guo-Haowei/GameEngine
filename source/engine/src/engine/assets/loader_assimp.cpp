@@ -60,17 +60,17 @@ void LoaderAssimp::ProcessMaterial(aiMaterial& p_material) {
     if (path.empty()) {
         path = getMaterialPath(aiTextureType_DIFFUSE, 0);
     }
-    materialComponent->requestImage(MaterialComponent::TEXTURE_BASE, path);
+    materialComponent->RequestImage(MaterialComponent::TEXTURE_BASE, path);
 
     path = getMaterialPath(aiTextureType_NORMALS, 0);
     if (path.empty()) {
         path = getMaterialPath(aiTextureType_HEIGHT, 0);
     }
 
-    materialComponent->requestImage(MaterialComponent::TEXTURE_NORMAL, path);
+    materialComponent->RequestImage(MaterialComponent::TEXTURE_NORMAL, path);
 
     path = getMaterialPath(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
-    materialComponent->requestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, path);
+    materialComponent->RequestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, path);
 
     m_materials.emplace_back(material_id);
 }
