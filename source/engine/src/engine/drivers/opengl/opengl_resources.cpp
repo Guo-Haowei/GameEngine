@@ -6,8 +6,6 @@ namespace my {
 
 void OpenGLTexture::Clear() {
     if (handle) {
-        // glMakeTextureHandleNonResidentARB();
-
         glDeleteTextures(1, &handle);
         handle = 0;
         residentHandle = 0;

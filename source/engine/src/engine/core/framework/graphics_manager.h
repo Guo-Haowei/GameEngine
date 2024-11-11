@@ -24,6 +24,7 @@ enum class Backend : uint8_t {
     EMPTY,
     OPENGL,
     D3D11,
+    D3D12,
 };
 
 enum ClearFlags : uint32_t {

@@ -5,6 +5,7 @@
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
+#include "drivers/d3d12/d3d12_graphics_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "particle_defines.h"
@@ -99,8 +100,10 @@ std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
         return std::make_shared<OpenGLGraphicsManager>();
     } else if (backend == "d3d11") {
         return std::make_shared<D3d11GraphicsManager>();
+    } else if (backend == "d3d12") {
+        return std::make_shared<D3d12GraphicsManager>();
     }
-    return std::make_shared<EmptyGraphicsManager>(Backend::EMPTY);
+    return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsmanager", Backend::EMPTY);
 }
 
 void GraphicsManager::SetPipelineState(PipelineStateName p_name) {

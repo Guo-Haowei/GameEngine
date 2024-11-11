@@ -8,7 +8,7 @@ namespace my {
 
 class EmptyGraphicsManager : public GraphicsManager {
 public:
-    EmptyGraphicsManager(Backend p_backend) : GraphicsManager("EmptyGraphicsManager", p_backend) {}
+    EmptyGraphicsManager(std::string_view p_name, Backend p_backend) : GraphicsManager(p_name, p_backend) {}
 
     bool InitializeImpl() override { return true; }
     void Finalize() override {}
