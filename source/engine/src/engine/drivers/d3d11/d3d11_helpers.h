@@ -10,22 +10,6 @@
 
 namespace my::d3d {
 
-inline D3D_SRV_DIMENSION ConvertDimension(Dimension p_dimension) {
-    switch (p_dimension) {
-        case Dimension::TEXTURE_2D:
-            return D3D_SRV_DIMENSION_TEXTURE2D;
-        case Dimension::TEXTURE_3D:
-            return D3D_SRV_DIMENSION_TEXTURE3D;
-        case Dimension::TEXTURE_2D_ARRAY:
-            return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
-        case Dimension::TEXTURE_CUBE:
-            return D3D_SRV_DIMENSION_TEXTURECUBE;
-        default:
-            CRASH_NOW();
-            return D3D_SRV_DIMENSION_TEXTURE2D;
-    }
-}
-
 inline uint32_t ConvertResourceMiscFlags(uint32_t p_misc_flags) {
     // only support a few flags for now
     [[maybe_unused]] constexpr uint32_t supported_flags = RESOURCE_MISC_GENERATE_MIPS | RESOURCE_MISC_TEXTURECUBE;

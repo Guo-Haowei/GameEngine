@@ -400,7 +400,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
     if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.Format = srv_format;
-        srv_desc.ViewDimension = d3d::ConvertDimension(p_texture_desc.dimension);
+        srv_desc.ViewDimension = ConvertDimension(p_texture_desc.dimension);
         srv_desc.Texture2D.MipLevels = p_texture_desc.mip_levels;
         srv_desc.Texture2D.MostDetailedMip = 0;
 

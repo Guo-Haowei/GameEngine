@@ -1,4 +1,7 @@
 #pragma once
+#include <d3dcommon.h>
+
+#include "rendering/gpu_resource.h"
 
 #define USE_D3D_DEBUG_NAME USE_IF(USING(DEBUG_BUILD))
 
@@ -29,7 +32,25 @@ void SafeRelease(T*& ptr) {
     }
 }
 
+static inline D3D_SRV_DIMENSION ConvertDimension(Dimension p_dimension) {
+    switch (p_dimension) {
+        case Dimension::TEXTURE_2D:
+            return D3D_SRV_DIMENSION_TEXTURE2D;
+        case Dimension::TEXTURE_3D:
+            return D3D_SRV_DIMENSION_TEXTURE3D;
+        case Dimension::TEXTURE_2D_ARRAY:
+            return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
+        case Dimension::TEXTURE_CUBE:
+            return D3D_SRV_DIMENSION_TEXTURECUBE;
+        default:
+            CRASH_NOW();
+            return D3D_SRV_DIMENSION_TEXTURE2D;
+    }
+}
+
+#if USING(USE_D3D_DEBUG_NAME)
 void SetDebugName(ID3D11DeviceChild* p_resource, const std::string& p_name);
 void SetDebugName(ID3D12DeviceChild* p_resource, const std::string& p_name);
+#endif
 
 }  // namespace my
