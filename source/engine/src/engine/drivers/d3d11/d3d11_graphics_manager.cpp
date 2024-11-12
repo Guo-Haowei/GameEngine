@@ -152,10 +152,7 @@ void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
 
 bool D3d11GraphicsManager::CreateDevice() {
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_1;
-    UINT create_device_flags = 0;
-    if (DVAR_GET_BOOL(r_gpu_validation)) {
-        create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
-    }
+    UINT create_device_flags = m_enableValidationLayer ? D3D11_CREATE_DEVICE_DEBUG : 0;
 
     HRESULT hr = D3D11CreateDevice(
         nullptr,

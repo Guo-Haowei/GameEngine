@@ -121,16 +121,6 @@ ErrorCode D3D12Context::initialize(const CreateInfo& info)
     return OK;
 }
 
-void D3D12Context::finalize()
-{
-    CleanupRenderTarget();
-
-    ImGui_ImplDX12_Shutdown();
-
-    m_graphicsContext.Finalize();
-    m_copyContext.Finalize();
-}
-
 bool D3D12Context::LoadAssets()
 {
     // Create a root signature consisting of a descriptor table with a single CBV.

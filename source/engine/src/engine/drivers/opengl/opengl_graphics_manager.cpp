@@ -80,7 +80,7 @@ bool OpenGLGraphicsManager::InitializeImpl() {
     LOG_VERBOSE("[opengl] renderer: {}", (const char*)glGetString(GL_RENDERER));
     LOG_VERBOSE("[opengl] version: {}", (const char*)glGetString(GL_VERSION));
 
-    if (DVAR_GET_BOOL(r_gpu_validation)) {
+    if (m_enableValidationLayer) {
         int flags;
         glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
         if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {

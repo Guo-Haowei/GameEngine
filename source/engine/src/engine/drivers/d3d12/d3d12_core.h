@@ -5,14 +5,12 @@
 
 #include <mutex>
 
+#include "core/framework/graphics_manager.h"
 #include "drivers/d3d_common/d3d_common.h"
 
 namespace my {
 
-// @TODO: move to graphics
-constexpr int NUM_FRAMES_IN_FLIGHT = 2;
-constexpr int NUM_BACK_BUFFERS = 2;
-
+// @TODO: refactor
 struct GPUBufferDesc {
     uint32_t byteWidth = 0;
     // Usage usage = Usage::DEFAULT;
@@ -34,19 +32,19 @@ class UploadBuffer {
     UploadBuffer(const UploadBuffer&) = delete;
     UploadBuffer& operator=(const UploadBuffer&) = delete;
 
-    static constexpr size_t GetSize(size_t size, bool is_constant_buffer) {
-        if (is_constant_buffer) {
-            return math::Align(size, 256);
+    static constexpr size_t GetSize(size_t p_size, bool p_is_constant_buffer) {
+        if (p_is_constant_buffer) {
+            return math::Align(p_size, 256);
         }
-        return size;
+        return p_size;
     }
 
 public:
-    UploadBuffer(ID3D12Device* device, uint32_t element_count, bool is_constant_buffer)
-        : m_elementSizeInByte((uint32_t)GetSize(sizeof(T), is_constant_buffer)), m_elementCount(element_count) {
+    UploadBuffer(ID3D12Device* p_device, uint32_t p_element_count, bool p_is_constant_buffer)
+        : m_elementSizeInByte((uint32_t)GetSize(sizeof(T), p_is_constant_buffer)), m_elementCount(p_element_count) {
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-        auto buffer = CD3DX12_RESOURCE_DESC::Buffer(m_elementSizeInByte * element_count);
-        D3D_CALL(device->CreateCommittedResource(
+        auto buffer = CD3DX12_RESOURCE_DESC::Buffer(m_elementSizeInByte * p_element_count);
+        D3D_CALL(p_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &buffer,
@@ -87,7 +85,7 @@ struct FrameContext {
     // std::unique_ptr<UploadBuffer<PerBatchConstants>> perBatchBuffer;
     // std::unique_ptr<UploadBuffer<BoneConstants>> boneConstants;
 
-    void Wait(HANDLE fence_event, ID3D12Fence1* fence);
+    void Wait(HANDLE p_fence_event, ID3D12Fence1* p_fence);
 };
 
 struct DescriptorHeapGPU {
@@ -98,14 +96,14 @@ struct DescriptorHeapGPU {
 
     uint32_t m_incrementSize = 0;
 
-    [[nodiscard]] auto initialize(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t num_descriptors, ID3D12Device* device, bool shard_visible = false) -> std::expected<void, Error<HRESULT>>;
+    bool Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shard_visible = false);
 };
 
 struct GraphicsContext {
     GraphicsContext() = default;
     ~GraphicsContext();
 
-    [[nodiscard]] auto initialize(D3d12GraphicsManager* device) -> std::expected<void, Error<HRESULT>>;
+    bool Initialize(D3d12GraphicsManager* p_device);
     void Finalize();
 
     FrameContext& BeginFrame();
@@ -120,34 +118,28 @@ struct GraphicsContext {
     uint64_t m_lastSignaledFenceValue = 0;
     HANDLE m_fenceEvent = NULL;
 
-    std::array<FrameContext, NUM_FRAMES_IN_FLIGHT> m_frames;
+    std::array<FrameContext, GraphicsManager::NUM_FRAMES_IN_FLIGHT> m_frames;
     uint32_t m_frameIndex = 0;
 };
 
 class CopyContext {
 public:
     struct CopyCommand {
-        Microsoft::WRL::
-            ComPtr<ID3D12CommandAllocator>
-                commandAllocator;
-        Microsoft::WRL::
-            ComPtr<ID3D12GraphicsCommandList>
-                commandList;
-        Microsoft::WRL::
-            ComPtr<ID3D12Fence>
-                fence;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
+        Microsoft::WRL::ComPtr<ID3D12Fence> fence;
         GPUBuffer uploadBuffer;
         void* data = nullptr;
         // ID3D12Resource* uploadResource = nullptr;
     };
 
-    [[nodiscard]] auto initialize(D3d12GraphicsManager* device) -> std::expected<void, Error<HRESULT>>;
+    bool Initialize(D3d12GraphicsManager* p_device);
 
     void Finalize();
 
-    CopyCommand Allocate(uint32_t staging_size);
+    CopyCommand Allocate(uint32_t p_staging_size);
 
-    void Submit(CopyCommand cmd);
+    void Submit(CopyCommand p_cmd);
 
 private:
     D3d12GraphicsManager* m_device = nullptr;
@@ -215,6 +207,7 @@ static std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers() {
 }
 }  // namespace my
 
+// @TODO: refactor
 #if 1
 #define NAME_DX12_OBJECT(OBJ, NAME) \
     do {                            \

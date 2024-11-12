@@ -26,9 +26,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
 
     ok = ok && CreateDevice();
 
-    // @TODO: refactor
-    bool m_enable_debug_layer = true;
-    if (m_enable_debug_layer) {
+    if (m_enableValidationLayer) {
         if (EnableDebugLayer()) {
             LOG("[GraphicsManager_DX12] Debug layer enabled");
         } else {
@@ -37,8 +35,8 @@ bool D3d12GraphicsManager::InitializeImpl() {
     }
 
     ok = ok && CreateDescriptorHeaps();
-    ok = ok && m_graphicsContext.initialize(this);
-    ok = ok && m_copyContext.initialize(this);
+    ok = ok && m_graphicsContext.Initialize(this);
+    ok = ok && m_copyContext.Initialize(this);
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvDescHeap.m_startCPU;
     for (int i = 0; i < NUM_BACK_BUFFERS; i++) {
@@ -100,6 +98,12 @@ bool D3d12GraphicsManager::InitializeImpl() {
 }
 
 void D3d12GraphicsManager::Finalize() {
+    CleanupRenderTarget();
+
+    ImGui_ImplDX12_Shutdown();
+
+    m_graphicsContext.Finalize();
+    m_copyContext.Finalize();
 }
 
 void D3d12GraphicsManager::Render() {
@@ -296,15 +300,13 @@ void D3d12GraphicsManager::Render() {
 }
 
 bool D3d12GraphicsManager::CreateDevice() {
-    bool m_enable_debug_layer = true;
-    if (m_enable_debug_layer) {
+    if (m_enableValidationLayer) {
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)))) {
             m_debugController->EnableDebugLayer();
         }
     }
 
-    HRESULT hr = S_OK;
-    D3D_FAIL_V(hr = CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)), false);
+    D3D_FAIL_V(CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)), false);
 
     auto get_hardware_adapter = [](IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter) {
         *ppAdapter = nullptr;
@@ -330,9 +332,9 @@ bool D3d12GraphicsManager::CreateDevice() {
 
     if (FAILED(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)))) {
         ComPtr<IDXGIAdapter> warpAdapter;
-        D3D_FAIL_V(hr = m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), false);
+        D3D_FAIL_V(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), false);
 
-        D3D_FAIL_V(hr = D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)), false);
+        D3D_FAIL_V(D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)), false);
     }
 
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0 };
@@ -423,13 +425,13 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
 bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     bool ok = true;
-    ok = ok && m_rtvDescHeap.initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
-    ok = ok && m_dsvDescHeap.initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
-    ok = ok && m_srvDescHeap.initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
+    ok = ok && m_rtvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
+    ok = ok && m_dsvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
+    ok = ok && m_srvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
     return ok;
 }
 
-bool D3d12GraphicsManager::CreateSwapChain(uint32_t width, uint32_t height) {
+bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) {
     auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::GetSingletonPtr());
     DEV_ASSERT(display_manager);
 
@@ -437,8 +439,8 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t width, uint32_t height) {
     DXGI_SWAP_CHAIN_DESC1 scd{};
 
     // fill the swap chain description struct
-    scd.Width = width;
-    scd.Height = height;
+    scd.Width = p_width;
+    scd.Height = p_height;
     scd.Format = SURFACE_FORMAT;
     scd.Stereo = FALSE;
     scd.SampleDesc = { 1, 0 };
@@ -469,7 +471,7 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t width, uint32_t height) {
     return true;
 }
 
-bool D3d12GraphicsManager::CreateRenderTarget(uint32_t width, uint32_t height) {
+bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_height) {
     for (int32_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
         ID3D12Resource* pBackBuffer = nullptr;
         D3D_CALL(m_swap_chain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
@@ -491,20 +493,20 @@ bool D3d12GraphicsManager::CreateRenderTarget(uint32_t width, uint32_t height) {
     prop.CreationNodeMask = 1;
     prop.VisibleNodeMask = 1;
 
-    D3D12_RESOURCE_DESC resourceDesc{};
-    resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    resourceDesc.Alignment = 0;
-    resourceDesc.Width = width;
-    resourceDesc.Height = height;
-    resourceDesc.DepthOrArraySize = 1;
-    resourceDesc.MipLevels = 1;
-    resourceDesc.Format = DEFAULT_DEPTH_STENCIL_FORMAT;
-    resourceDesc.SampleDesc = { 1, 0 };
-    resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    D3D12_RESOURCE_DESC resource_desc{};
+    resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    resource_desc.Alignment = 0;
+    resource_desc.Width = p_width;
+    resource_desc.Height = p_height;
+    resource_desc.DepthOrArraySize = 1;
+    resource_desc.MipLevels = 1;
+    resource_desc.Format = DEFAULT_DEPTH_STENCIL_FORMAT;
+    resource_desc.SampleDesc = { 1, 0 };
+    resource_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    resource_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
     HRESULT hr = m_device->CreateCommittedResource(
-        &prop, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+        &prop, D3D12_HEAP_FLAG_NONE, &resource_desc,
         D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue,
         IID_PPV_ARGS(&m_depthStencilBuffer));
 
