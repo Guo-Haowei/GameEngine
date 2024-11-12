@@ -3,15 +3,12 @@
 #include <imgui/backends/imgui_impl_dx12.h>
 
 #include "drivers/d3d12/d3d12_pipeline_state_manager.h"
+#include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
 
 namespace my {
 
 // @TODO: move to a common place
-#define D3D_FAIL(HR)                 ERR_FAIL_COND_MSG(FAILED(HR), #HR)
-#define D3D_FAIL_V(HR, RET)          ERR_FAIL_COND_V_MSG(FAILED(HR), RET, #HR)
-#define D3D_FAIL_MSG(HR, MSG)        ERR_FAIL_COND_MSG(FAILED(HR), MSG)
-#define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
 static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
 
@@ -68,7 +65,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
         size_t bufferSize = sizeof(vec4) * 1000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -80,7 +77,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
         size_t bufferSize = sizeof(uint32_t) * 3000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -146,6 +143,7 @@ void D3d12GraphicsManager::Render() {
     cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     // clear the back buffer to a deep blue
+    constexpr float kGreenClearColor[4] = { 0.3f, 0.4f, 0.3f, 1.0f };
     cmdList->ClearRenderTargetView(rtvHandle, kGreenClearColor, 0, nullptr);
     cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -248,7 +246,7 @@ void D3d12GraphicsManager::Render() {
         {
             UINT8* pVertexDataBegin;
             CD3DX12_RANGE readRange(0, 0);
-            WIN_CALL(m_debugVertexData->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+            D3D_CALL(m_debugVertexData->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
             memcpy(pVertexDataBegin, draw_data.debugData.m_vertices.data(), vbv.SizeInBytes);
             m_debugVertexData->Unmap(0, nullptr);
         }
@@ -259,7 +257,7 @@ void D3d12GraphicsManager::Render() {
         {
             UINT8* pIndexDataBegin;
             CD3DX12_RANGE readRange(0, 0);
-            WIN_CALL(m_debugIndexData->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+            D3D_CALL(m_debugIndexData->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
             memcpy(pIndexDataBegin, draw_data.debugData.m_indices.data(), ibv.SizeInBytes);
             m_debugIndexData->Unmap(0, nullptr);
         }
@@ -293,14 +291,14 @@ void D3d12GraphicsManager::Render() {
         ImGui::RenderPlatformWindowsDefault();
     }
 
-    WIN_CALL(m_swap_chain->Present(1, 0));  // Present with vsync
+    D3D_CALL(m_swap_chain->Present(1, 0));  // Present with vsync
     m_graphicsContext.MoveToNextFrame();
 }
 
 bool D3d12GraphicsManager::CreateDevice() {
     bool m_enable_debug_layer = true;
     if (m_enable_debug_layer) {
-        if (SUCCEEDED(WIN_CALL(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController))))) {
+        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)))) {
             m_debugController->EnableDebugLayer();
         }
     }
@@ -342,7 +340,7 @@ bool D3d12GraphicsManager::CreateDevice() {
     D3D12_FEATURE_DATA_FEATURE_LEVELS featLevels = { array_length(featureLevels), featureLevels, D3D_FEATURE_LEVEL_12_0 };
 
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
-    WIN_CALL(m_device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels)));
+    D3D_CALL(m_device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels)));
     featureLevel = featLevels.MaxSupportedFeatureLevel;
     switch (featureLevel) {
         case D3D_FEATURE_LEVEL_12_0:
@@ -367,10 +365,8 @@ ID3D12CommandQueue* D3d12GraphicsManager::CreateCommandQueue(D3D12_COMMAND_LIST_
     desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 
     ID3D12CommandQueue* queue;
-    HRESULT hr = WIN_CALL(m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&queue)));
-    if (FAILED(hr)) {
-        return nullptr;
-    }
+
+    D3D_CALL(m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&queue)));
 
     const wchar_t* debugName = nullptr;
     switch (p_type) {
@@ -476,7 +472,7 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t width, uint32_t height) {
 bool D3d12GraphicsManager::CreateRenderTarget(uint32_t width, uint32_t height) {
     for (int32_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
         ID3D12Resource* pBackBuffer = nullptr;
-        WIN_CALL(m_swap_chain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
+        D3D_CALL(m_swap_chain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
         m_device->CreateRenderTargetView(pBackBuffer, nullptr, m_renderTargetDescriptor[i]);
         std::wstring name = std::wstring(L"Render Target Buffer") + std::to_wstring(i);
         pBackBuffer->SetName(name.c_str());
@@ -545,8 +541,8 @@ bool D3d12GraphicsManager::LoadAssets() {
 
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
-        WIN_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-        WIN_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+        D3D_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+        D3D_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
     }
 
     return true;
@@ -557,7 +553,7 @@ void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
         m_graphicsContext.Flush();
 
         CleanupRenderTarget();
-        WIN_CALL(m_swap_chain->ResizeBuffers(0, p_width, p_height,
+        D3D_CALL(m_swap_chain->ResizeBuffers(0, p_width, p_height,
                                              DXGI_FORMAT_UNKNOWN,
                                              DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT));
 

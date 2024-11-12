@@ -89,7 +89,7 @@ ErrorCode D3D12Context::initialize(const CreateInfo& info)
         size_t bufferSize = sizeof(PosColor) * 1000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -101,7 +101,7 @@ ErrorCode D3D12Context::initialize(const CreateInfo& info)
         size_t bufferSize = sizeof(uint32_t) * 3000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -157,8 +157,8 @@ bool D3D12Context::LoadAssets()
 
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
-        WIN_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-        WIN_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+        D3D_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+        D3D_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
     }
 
     return true;
@@ -187,7 +187,7 @@ bool D3D12Context::CreateTexture(const Image& image)
     desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     ID3D12Resource* pTexture = nullptr;
-    HRESULT hr = WIN_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&pTexture)));
+    HRESULT hr = D3D_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&pTexture)));
     if (FAILED(hr))
     {
         return false;
@@ -212,7 +212,7 @@ bool D3D12Context::CreateTexture(const Image& image)
     props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     ComPtr<ID3D12Resource> uploadBuffer;
-    hr = WIN_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&uploadBuffer)));
+    hr = D3D_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&uploadBuffer)));
     if (FAILED(hr))
     {
         return false;
@@ -254,7 +254,7 @@ bool D3D12Context::CreateTexture(const Image& image)
 
     // Create a temporary command queue to do the copy with
     ComPtr<ID3D12Fence> fence;
-    hr = WIN_CALL(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+    hr = D3D_CALL(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
     if (FAILED(hr))
     {
         return false;
@@ -272,21 +272,21 @@ bool D3D12Context::CreateTexture(const Image& image)
     queueDesc.NodeMask = 1;
 
     ComPtr<ID3D12CommandQueue> cmdQueue;
-    hr = WIN_CALL(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue)));
+    hr = D3D_CALL(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue)));
     if (FAILED(hr))
     {
         return false;
     }
 
     ComPtr<ID3D12CommandAllocator> cmdAlloc;
-    hr = WIN_CALL(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc)));
+    hr = D3D_CALL(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc)));
     if (FAILED(hr))
     {
         return false;
     }
 
     ComPtr<ID3D12GraphicsCommandList> cmdList;
-    hr = WIN_CALL(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc.Get(), NULL, IID_PPV_ARGS(&cmdList)));
+    hr = D3D_CALL(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc.Get(), NULL, IID_PPV_ARGS(&cmdList)));
     if (FAILED(hr))
     {
         return false;
@@ -295,12 +295,12 @@ bool D3D12Context::CreateTexture(const Image& image)
     cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, NULL);
     cmdList->ResourceBarrier(1, &barrier);
 
-    WIN_CALL(hr = cmdList->Close());
+    D3D_CALL(hr = cmdList->Close());
 
     // Execute the copy
     ID3D12CommandList* commandLists[] = { cmdList.Get() };
     cmdQueue->ExecuteCommandLists(array_length(commandLists), commandLists);
-    hr = WIN_CALL(cmdQueue->Signal(fence.Get(), 1));
+    hr = D3D_CALL(cmdQueue->Signal(fence.Get(), 1));
 
     // Wait for everything to complete
     fence->SetEventOnCompletion(1, event);
@@ -350,7 +350,7 @@ void D3D12Context::BeginScene(const Scene& scene)
             auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byte_size);
             // Create the actual default buffer resource.
-            WIN_CALL(m_device->CreateCommittedResource(
+            D3D_CALL(m_device->CreateCommittedResource(
                 &heapProperties,
                 D3D12_HEAP_FLAG_NONE,
                 &bufferDesc,
@@ -495,7 +495,7 @@ bool D3D12Context::CreatePipelineState(const PipelineStateDesc& desc, PipelineSt
     psoDesc.DSVFormat = DEFAULT_DEPTH_STENCIL_FORMAT;
     psoDesc.SampleDesc.Count = 1;
 
-    if (FAILED(WIN_CALL(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&internalState->pso)))))
+    if (FAILED(D3D_CALL(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&internalState->pso)))))
     {
         return false;
     }

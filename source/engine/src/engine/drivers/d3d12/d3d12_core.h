@@ -5,7 +5,7 @@
 
 #include <mutex>
 
-#include "d3d12_utils.h"
+#include "drivers/d3d_common/d3d_common.h"
 
 namespace my {
 
@@ -20,8 +20,6 @@ struct GPUBufferDesc {
     // uint32_t cpuAccessFlag = 0;
     // uint32_t stride = 0;
 };
-
-#define WIN_CALL(expr) (expr)
 
 struct GPUBuffer {
     GPUBufferDesc desc;
@@ -48,14 +46,14 @@ public:
         : m_elementSizeInByte((uint32_t)GetSize(sizeof(T), is_constant_buffer)), m_elementCount(element_count) {
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto buffer = CD3DX12_RESOURCE_DESC::Buffer(m_elementSizeInByte * element_count);
-        WIN_CALL(device->CreateCommittedResource(
+        D3D_CALL(device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &buffer,
             D3D12_RESOURCE_STATE_GENERIC_READ,
             nullptr, IID_PPV_ARGS(&m_gpuBuffer)));
 
-        WIN_CALL(m_gpuBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
+        D3D_CALL(m_gpuBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
     }
 
     ~UploadBuffer() {

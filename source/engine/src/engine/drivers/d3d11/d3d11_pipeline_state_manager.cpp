@@ -5,9 +5,10 @@
 #include <fstream>
 
 #include "core/framework/asset_manager.h"
-#include "drivers/d3d11/convert.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d11/d3d11_helpers.h"
+#include "drivers/d3d_common/d3d_common.h"
+#include "drivers/d3d_common/d3d_convert.h"
 
 namespace my {
 

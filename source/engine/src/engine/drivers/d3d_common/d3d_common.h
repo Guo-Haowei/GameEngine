@@ -1,7 +1,10 @@
 #pragma once
-#include <d3dcommon.h>
-#include <dxgi.h>
-#include <wrl/client.h>
+
+#define D3D_FAIL(HR)                 ERR_FAIL_COND_MSG(FAILED(HR), #HR)
+#define D3D_FAIL_V(HR, RET)          ERR_FAIL_COND_V_MSG(FAILED(HR), RET, #HR)
+#define D3D_FAIL_MSG(HR, MSG)        ERR_FAIL_COND_MSG(FAILED(HR), MSG)
+#define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
+#define D3D_CALL(HR)                 CRASH_COND_MSG(FAILED(HR), #HR)
 
 // @TODO: refactor
 #define D3D_RETURN_IF_FAIL(expr)                           \
@@ -11,9 +14,6 @@
         (void)0
 
 namespace my {
-
-inline constexpr float kRedClearColor[4] = { 0.4f, 0.3f, 0.3f, 1.0f };
-inline constexpr float kGreenClearColor[4] = { 0.3f, 0.4f, 0.3f, 1.0f };
 
 template<class T>
 void SafeRelease(T*& ptr) {

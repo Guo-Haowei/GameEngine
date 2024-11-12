@@ -1,6 +1,7 @@
 #include "d3d12_core.h"
 
-#include "d3d12_graphics_manager.h"
+#include "drivers/d3d12/d3d12_graphics_manager.h"
+#include "drivers/d3d_common/d3d_common.h"
 
 namespace my {
 
@@ -8,7 +9,7 @@ namespace my {
 // FrameContext
 void FrameContext::Wait(HANDLE fence_event, ID3D12Fence1* fence) {
     if (fence->GetCompletedValue() < m_fenceValue) {
-        WIN_CALL(fence->SetEventOnCompletion(m_fenceValue, fence_event));
+        D3D_CALL(fence->SetEventOnCompletion(m_fenceValue, fence_event));
         WaitForSingleObject(fence_event, INFINITE);
     }
 }
@@ -78,13 +79,13 @@ void GraphicsContext::Finalize() {
 FrameContext& GraphicsContext::BeginFrame() {
     FrameContext& frame = m_frames[m_frameIndex];
     frame.Wait(m_fenceEvent, m_fence.Get());
-    WIN_CALL(frame.m_commandAllocator->Reset());
-    WIN_CALL(m_commandList->Reset(frame.m_commandAllocator, nullptr));
+    D3D_CALL(frame.m_commandAllocator->Reset());
+    D3D_CALL(m_commandList->Reset(frame.m_commandAllocator, nullptr));
     return frame;
 }
 
 void GraphicsContext::EndFrame() {
-    WIN_CALL(m_commandList->Close());
+    D3D_CALL(m_commandList->Close());
     ID3D12CommandList* cmdLists[] = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(array_length(cmdLists), cmdLists);
 }
@@ -155,13 +156,13 @@ CopyContext::CopyCommand CopyContext::Allocate(uint32_t staging_size) {
     // create a new command list if there are no free ones
     if (m_freeList.empty()) {
         CopyCommand cmd;
-        WIN_CALL(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY,
+        D3D_CALL(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY,
                                                 IID_PPV_ARGS(cmd.commandAllocator.GetAddressOf())));
-        WIN_CALL(device->CreateCommandList1(0,
+        D3D_CALL(device->CreateCommandList1(0,
                                             D3D12_COMMAND_LIST_TYPE_COPY,
                                             D3D12_COMMAND_LIST_FLAG_NONE,
                                             IID_PPV_ARGS(cmd.commandList.GetAddressOf())));
-        WIN_CALL(device->CreateFence(0,
+        D3D_CALL(device->CreateFence(0,
                                      D3D12_FENCE_FLAG_NONE,
                                      IID_PPV_ARGS(cmd.fence.GetAddressOf())));
         m_freeList.emplace_back(cmd);
@@ -190,7 +191,7 @@ CopyContext::CopyCommand CopyContext::Allocate(uint32_t staging_size) {
         cmd.uploadBuffer.desc.byteWidth = math::NextPowerOfTwo(staging_size);
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto buffer = CD3DX12_RESOURCE_DESC::Buffer(cmd.uploadBuffer.desc.byteWidth);
-        WIN_CALL(device->CreateCommittedResource(
+        D3D_CALL(device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &buffer,
@@ -204,18 +205,18 @@ CopyContext::CopyCommand CopyContext::Allocate(uint32_t staging_size) {
     // }
 
     // begine command list in valid state
-    WIN_CALL(cmd.commandAllocator->Reset());
-    WIN_CALL(cmd.commandList->Reset(cmd.commandAllocator.Get(), nullptr));
+    D3D_CALL(cmd.commandAllocator->Reset());
+    D3D_CALL(cmd.commandList->Reset(cmd.commandAllocator.Get(), nullptr));
     return cmd;
 }
 
 void CopyContext::Submit(CopyCommand cmd) {
-    WIN_CALL(cmd.commandList->Close());
+    D3D_CALL(cmd.commandList->Close());
     ID3D12CommandList* commandLists[] = { cmd.commandList.Get() };
     m_queue->ExecuteCommandLists(array_length(commandLists), commandLists);
-    WIN_CALL(m_queue->Signal(cmd.fence.Get(), 1));
-    WIN_CALL(cmd.fence->SetEventOnCompletion(1, NULL));
-    WIN_CALL(cmd.fence->Signal(0));
+    D3D_CALL(m_queue->Signal(cmd.fence.Get(), 1));
+    D3D_CALL(cmd.fence->SetEventOnCompletion(1, NULL));
+    D3D_CALL(cmd.fence->Signal(0));
 
     m_lock.lock();
     m_freeList.push_back(cmd);

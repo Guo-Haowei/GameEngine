@@ -3,10 +3,11 @@
 #include <dxgi.h>
 #include <imgui/backends/imgui_impl_dx11.h>
 
-#include "drivers/d3d11/convert.h"
 #include "drivers/d3d11/d3d11_helpers.h"
 #include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/d3d11/d3d11_resources.h"
+#include "drivers/d3d_common/d3d_common.h"
+#include "drivers/d3d_common/d3d_convert.h"
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/gpu_resource.h"
 #include "rendering/render_graph/render_graph_defines.h"

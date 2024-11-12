@@ -12,9 +12,6 @@
 #pragma comment(lib, "dxguid.lib")
 #endif
 
-#define D3D_FAIL_MSG(HR, MSG)        ERR_FAIL_COND_MSG(FAILED(HR), MSG)
-#define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
-
 #if USING(DEBUG_BUILD)
 #define SET_DEBUG_NAME(RES, NAME) ::my::d3d::SetDebugName(RES, NAME)
 #else
