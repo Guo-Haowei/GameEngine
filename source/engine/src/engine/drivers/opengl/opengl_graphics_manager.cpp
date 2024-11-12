@@ -113,8 +113,8 @@ void OpenGLGraphicsManager::Finalize() {
 void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<OpenGLPipelineState*>(m_pipelineStateManager->Find(p_name));
 
-    if (pipeline->rasterizerDesc) {
-        const auto cull_mode = pipeline->rasterizerDesc->cullMode;
+    if (pipeline->desc.rasterizerDesc) {
+        const auto cull_mode = pipeline->desc.rasterizerDesc->cullMode;
         if (cull_mode != m_state_cache.cull_mode) {
             switch (cull_mode) {
                 case my::CullMode::NONE:
@@ -139,16 +139,16 @@ void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             m_state_cache.cull_mode = cull_mode;
         }
 
-        const bool front_counter_clockwise = pipeline->rasterizerDesc->frontCounterClockwise;
+        const bool front_counter_clockwise = pipeline->desc.rasterizerDesc->frontCounterClockwise;
         if (front_counter_clockwise != m_state_cache.front_counter_clockwise) {
             glFrontFace(front_counter_clockwise ? GL_CCW : GL_CW);
             m_state_cache.front_counter_clockwise = front_counter_clockwise;
         }
     }
 
-    if (pipeline->depthStencilDesc) {
+    if (pipeline->desc.depthStencilDesc) {
         {
-            const bool enable_depth_test = pipeline->depthStencilDesc->depthEnabled;
+            const bool enable_depth_test = pipeline->desc.depthStencilDesc->depthEnabled;
             if (enable_depth_test != m_state_cache.enable_depth_test) {
                 if (enable_depth_test) {
                     glEnable(GL_DEPTH_TEST);
@@ -159,7 +159,7 @@ void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             }
 
             if (enable_depth_test) {
-                const auto func = pipeline->depthStencilDesc->depthFunc;
+                const auto func = pipeline->desc.depthStencilDesc->depthFunc;
                 if (func != m_state_cache.depth_func) {
                     glDepthFunc(gl::ConvertComparisonFunc(func));
                     m_state_cache.depth_func = func;
@@ -167,7 +167,7 @@ void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             }
         }
         {
-            const bool enable_stencil_test = pipeline->depthStencilDesc->stencilEnabled;
+            const bool enable_stencil_test = pipeline->desc.depthStencilDesc->stencilEnabled;
             if (enable_stencil_test != m_state_cache.enable_stencil_test) {
                 if (enable_stencil_test) {
                     glEnable(GL_STENCIL_TEST);
@@ -178,7 +178,7 @@ void OpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             }
 
             if (enable_stencil_test) {
-                switch (pipeline->depthStencilDesc->op) {
+                switch (pipeline->desc.depthStencilDesc->op) {
                     case DepthStencilOpDesc::ALWAYS:
                         glStencilFunc(GL_ALWAYS, 0, 0xFF);
                         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);

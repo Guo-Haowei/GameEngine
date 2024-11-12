@@ -147,12 +147,12 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::ve
     return shader_id;
 }
 
-std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const PipelineCreateInfo &p_info) {
+std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const PipelineStateDesc &p_desc) {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
     auto CreateShaderHelper = [&](std::string_view path, GLenum type) {
         if (!path.empty()) {
-            GLuint shader = CreateShader(path, type, p_info.defines);
+            GLuint shader = CreateShader(path, type, p_desc.defines);
             glAttachShader(program_id, shader);
             shaders.push_back(shader);
         }
@@ -164,16 +164,16 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const 
         }
     });
 
-    if (!p_info.cs.empty()) {
-        DEV_ASSERT(p_info.vs.empty());
-        DEV_ASSERT(p_info.ps.empty());
-        DEV_ASSERT(p_info.gs.empty());
-        CreateShaderHelper(p_info.cs, GL_COMPUTE_SHADER);
-    } else if (!p_info.vs.empty()) {
-        DEV_ASSERT(p_info.cs.empty());
-        CreateShaderHelper(p_info.vs, GL_VERTEX_SHADER);
-        CreateShaderHelper(p_info.ps, GL_FRAGMENT_SHADER);
-        CreateShaderHelper(p_info.gs, GL_GEOMETRY_SHADER);
+    if (!p_desc.cs.empty()) {
+        DEV_ASSERT(p_desc.vs.empty());
+        DEV_ASSERT(p_desc.ps.empty());
+        DEV_ASSERT(p_desc.gs.empty());
+        CreateShaderHelper(p_desc.cs, GL_COMPUTE_SHADER);
+    } else if (!p_desc.vs.empty()) {
+        DEV_ASSERT(p_desc.cs.empty());
+        CreateShaderHelper(p_desc.vs, GL_VERTEX_SHADER);
+        CreateShaderHelper(p_desc.ps, GL_FRAGMENT_SHADER);
+        CreateShaderHelper(p_desc.gs, GL_GEOMETRY_SHADER);
     }
 
     DEV_ASSERT(!shaders.empty());
@@ -198,9 +198,7 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const 
         program_id = 0;
     }
 
-    auto program = std::make_shared<OpenGLPipelineState>(p_info.inputLayoutDesc,
-                                                         p_info.rasterizerDesc,
-                                                         p_info.depthStencilDesc);
+    auto program = std::make_shared<OpenGLPipelineState>(p_desc);
     program->programId = program_id;
 
     // set constants

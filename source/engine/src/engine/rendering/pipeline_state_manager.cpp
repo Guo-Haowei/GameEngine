@@ -73,7 +73,7 @@ PipelineState* PipelineStateManager::Find(PipelineStateName p_name) {
     return m_cache[p_name].get();
 }
 
-bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineCreateInfo& p_info) {
+bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_info) {
     ERR_FAIL_COND_V_MSG(m_cache[p_name] != nullptr, false, "pipeline already exists");
 
     auto pipeline = CreateInternal(p_info);
@@ -87,10 +87,7 @@ bool PipelineStateManager::Initialize() {
     const ShaderMacro has_animation = { "HAS_ANIMATION", "1" };
 
     bool ok = true;
-    // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
-        return ok;
-    }
+
     ok = ok && Create(PROGRAM_GBUFFER_STATIC, {
                                                   .vs = "mesh.vert",
                                                   .ps = "gbuffer.pixel",
@@ -98,6 +95,11 @@ bool PipelineStateManager::Initialize() {
                                                   .depthStencilDesc = &s_gbuffer_depth_stencil,
                                                   .inputLayoutDesc = &s_input_layout_mesh,
                                               });
+
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+        return ok;
+    }
     ok = ok && Create(PROGRAM_GBUFFER_ANIMATED, {
                                                     .vs = "mesh.vert",
                                                     .ps = "gbuffer.pixel",

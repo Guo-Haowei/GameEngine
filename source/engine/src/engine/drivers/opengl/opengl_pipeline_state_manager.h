@@ -13,7 +13,7 @@ struct OpenGLPipelineState : public PipelineState {
 
 class OpenGLPipelineStateManager : public PipelineStateManager {
 protected:
-    std::shared_ptr<PipelineState> CreateInternal(const PipelineCreateInfo& info) final;
+    std::shared_ptr<PipelineState> CreateInternal(const PipelineStateDesc& p_desc) final;
 };
 
 }  // namespace my

@@ -14,7 +14,7 @@ struct D3d12PipelineState : public PipelineState {
 
 class D3d12PipelineStateManager : public PipelineStateManager {
 protected:
-    std::shared_ptr<PipelineState> CreateInternal(const PipelineCreateInfo& p_info) final;
+    std::shared_ptr<PipelineState> CreateInternal(const PipelineStateDesc& p_desc) final;
 };
 
 }  // namespace my
