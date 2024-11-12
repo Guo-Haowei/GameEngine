@@ -30,7 +30,7 @@ bool GraphicsContext::Initialize(D3d12GraphicsManager* p_device) {
 
         D3D_FAIL_V(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frame.m_commandAllocator)), false);
 
-        NAME_DX12_OBJECT_INDEXED(frame.m_commandAllocator, L"GraphicsCommandAllocator", i);
+        D3D12_SET_DEBUG_NAME(frame.m_commandAllocator, std::format("GraphicsCommandAllocator {}", i));
 
         // @TODO: refactor
         // frame.perFrameBuffer = std::make_unique<UploadBuffer<PerFrameConstants>>(dev, 1, true);
@@ -41,11 +41,11 @@ bool GraphicsContext::Initialize(D3d12GraphicsManager* p_device) {
     D3D_FAIL_V(device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_frames[0].m_commandAllocator, nullptr, IID_PPV_ARGS(&m_commandList)), false);
 
     m_commandList->Close();
-    NAME_DX12_OBJECT(m_commandList, L"GraphicsCommandList");
+    D3D12_SET_DEBUG_NAME(m_commandList.Get(), "GraphicsCommandList");
 
     D3D_FAIL_V(device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)), false);
 
-    NAME_DX12_OBJECT(m_fence, L"GraphicsFence");
+    D3D12_SET_DEBUG_NAME(m_fence.Get(), "GraphicsFence");
 
     m_fenceEvent = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
 
@@ -111,23 +111,23 @@ bool DescriptorHeapGPU::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p
 
     D3D_FAIL_V(p_device->CreateDescriptorHeap(&m_desc, IID_PPV_ARGS(&m_heap)), false);
 
-    const wchar_t* debugName = nullptr;
+#if USING(USE_D3D_DEBUG_NAME)
     switch (p_type) {
         case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
-            debugName = L"SRV Heap";
+            D3D12_SET_DEBUG_NAME(m_heap.Get(), "SRV Heap");
             break;
         case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
-            debugName = L"RTV Heap";
+            D3D12_SET_DEBUG_NAME(m_heap.Get(), "RTV Heap");
             break;
         case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
-            debugName = L"DSV Heap";
+            D3D12_SET_DEBUG_NAME(m_heap.Get(), "DSV Heap");
             break;
         default:
             CRASH_NOW();
             break;
     }
+#endif
 
-    NAME_DX12_OBJECT(m_heap, debugName);
     m_incrementSize = p_device->GetDescriptorHandleIncrementSize(p_type);
     m_startCPU = m_heap->GetCPUDescriptorHandleForHeapStart();
     m_startGPU = m_heap->GetGPUDescriptorHandleForHeapStart();

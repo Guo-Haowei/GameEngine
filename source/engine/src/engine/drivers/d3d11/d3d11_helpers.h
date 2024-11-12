@@ -8,22 +8,7 @@
 
 #include "rendering/gpu_resource.h"
 
-#if USING(DEBUG_BUILD)
-#pragma comment(lib, "dxguid.lib")
-#endif
-
-#if USING(DEBUG_BUILD)
-#define SET_DEBUG_NAME(RES, NAME) ::my::d3d::SetDebugName(RES, NAME)
-#else
-#define SET_DEBUG_NAME(RES, NAME) \
-    do {                          \
-        (void)RES, (void)NAME;    \
-    } while (0)
-#endif
-
 namespace my::d3d {
-
-void SetDebugName(ID3D11DeviceChild* p_resource, const std::string& p_name);
 
 inline D3D_SRV_DIMENSION ConvertDimension(Dimension p_dimension) {
     switch (p_dimension) {

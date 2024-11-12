@@ -370,23 +370,23 @@ ID3D12CommandQueue* D3d12GraphicsManager::CreateCommandQueue(D3D12_COMMAND_LIST_
 
     D3D_CALL(m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&queue)));
 
-    const wchar_t* debugName = nullptr;
+#if USING(USE_D3D_DEBUG_NAME)
     switch (p_type) {
         case D3D12_COMMAND_LIST_TYPE_DIRECT:
-            debugName = L"GraphicsCommandQueue";
+            D3D12_SET_DEBUG_NAME(queue, "GraphicsCommandQueue");
             break;
         case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-            debugName = L"ComputeCommandQueue";
+            D3D12_SET_DEBUG_NAME(queue, "ComputeCommandQueue");
             break;
         case D3D12_COMMAND_LIST_TYPE_COPY:
-            debugName = L"CopyCommandQueue";
+            D3D12_SET_DEBUG_NAME(queue, "CopyCommandQueue");
             break;
         default:
             CRASH_NOW();
             break;
     }
+#endif
 
-    NAME_DX12_OBJECT(queue, debugName);
     return queue;
 }
 

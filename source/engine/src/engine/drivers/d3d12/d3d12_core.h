@@ -206,20 +206,3 @@ static std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers() {
     };
 }
 }  // namespace my
-
-// @TODO: refactor
-#if 1
-#define NAME_DX12_OBJECT(OBJ, NAME) \
-    do {                            \
-        (OBJ)->SetName(NAME);       \
-    } while (0)
-#define NAME_DX12_OBJECT_INDEXED(OBJ, NAME, IDX)  \
-    do {                                          \
-        wchar_t buffer[256] = { 0 };              \
-        swprintf_s(buffer, L"%s[%d]", NAME, IDX); \
-        (OBJ)->SetName(buffer);                   \
-    } while (0)
-#else
-#define NAME_DX12_OBJECT(OBJ, NAME)
-#define NAME_DX12_OBJECT_INDEXED(OBJ, NAME, IDX)
-#endif
