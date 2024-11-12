@@ -198,9 +198,9 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const 
         program_id = 0;
     }
 
-    auto program = std::make_shared<OpenGLPipelineState>(p_info.input_layout_desc,
-                                                         p_info.rasterizer_desc,
-                                                         p_info.depth_stencil_desc);
+    auto program = std::make_shared<OpenGLPipelineState>(p_info.inputLayoutDesc,
+                                                         p_info.rasterizerDesc,
+                                                         p_info.depthStencilDesc);
     program->programId = program_id;
 
     // set constants

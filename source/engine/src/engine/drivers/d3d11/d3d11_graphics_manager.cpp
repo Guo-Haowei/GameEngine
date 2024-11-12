@@ -7,11 +7,13 @@
 #include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/d3d11/d3d11_resources.h"
 #include "drivers/d3d_common/d3d_common.h"
-#include "drivers/d3d_common/d3d_convert.h"
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/gpu_resource.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
+
+#define INCLUDE_AS_D3D11
+#include "drivers/d3d_common/d3d_convert.h"
 
 namespace my {
 
@@ -733,3 +735,5 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
 }
 
 }  // namespace my
+
+#undef INCLUDE_AS_D3D11

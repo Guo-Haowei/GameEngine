@@ -10,14 +10,13 @@ enum class InputClassification {
 
 struct InputLayoutDesc {
     struct Element {
-        // @TODO: rename
-        std::string semantic_name;
-        uint32_t semantic_index;
+        std::string semanticName;
+        uint32_t semanticIndex;
         PixelFormat format;
-        uint32_t input_slot;
-        uint32_t aligned_byte_offset;
-        InputClassification input_slot_class;
-        uint32_t instance_data_step_rate;
+        uint32_t inputSlot;
+        uint32_t alignedByteOffset;
+        InputClassification inputSlotClass;
+        uint32_t instanceDataStepRate;
     };
 
     std::vector<Element> elements;
@@ -36,16 +35,16 @@ enum class CullMode : uint8_t {
 };
 
 struct RasterizerDesc {
-    FillMode fill_mode = FillMode::SOLID;
-    CullMode cull_mode = CullMode::BACK;
-    bool front_counter_clockwise = false;
-    int depth_bias = 0;
-    float depth_bias_clamp = 0.0f;
-    float slope_scaled_depth_bias = 0.0f;
-    bool depth_clip_enable = false;
-    bool scissor_enable = false;
-    bool multisample_enable = false;
-    bool antialiased_line_enable = false;
+    FillMode fillMode = FillMode::SOLID;
+    CullMode cullMode = CullMode::BACK;
+    bool frontCounterClockwise = false;
+    int depthBias = 0;
+    float depthBiasClamp = 0.0f;
+    float slopeScaledDepthBias = 0.0f;
+    bool depthClipEnable = false;
+    bool scissorEnable = false;
+    bool multisampleEnable = false;
+    bool antialiasedLineEnable = false;
 };
 
 enum class ComparisonFunc : uint8_t {
@@ -66,9 +65,9 @@ enum class DepthStencilOpDesc : uint8_t {
 };
 
 struct DepthStencilDesc {
-    ComparisonFunc depth_func;
-    bool depth_enabled;
-    bool stencil_enabled;
+    ComparisonFunc depthFunc;
+    bool depthEnabled;
+    bool stencilEnabled;
 
     DepthStencilOpDesc op = DepthStencilOpDesc::ALWAYS;
 };
@@ -84,25 +83,26 @@ struct PipelineCreateInfo {
     std::string_view gs;
     std::string_view cs;
     std::vector<ShaderMacro> defines;
+    // primitiveTopologyType;
 
-    const RasterizerDesc* rasterizer_desc = nullptr;
-    const DepthStencilDesc* depth_stencil_desc = nullptr;
-    const InputLayoutDesc* input_layout_desc = nullptr;
+    const RasterizerDesc* rasterizerDesc = nullptr;
+    const DepthStencilDesc* depthStencilDesc = nullptr;
+    const InputLayoutDesc* inputLayoutDesc = nullptr;
 };
 
 struct PipelineState {
     PipelineState(const InputLayoutDesc* p_input_layout_desc,
                   const RasterizerDesc* p_rasterizer_desc,
                   const DepthStencilDesc* p_depth_stencil_desc)
-        : input_layout_desc(p_input_layout_desc),
-          rasterizer_desc(p_rasterizer_desc),
-          depth_stencil_desc(p_depth_stencil_desc) {}
+        : inputLayoutDesc(p_input_layout_desc),
+          rasterizerDesc(p_rasterizer_desc),
+          depthStencilDesc(p_depth_stencil_desc) {}
 
     virtual ~PipelineState() = default;
 
-    const InputLayoutDesc* input_layout_desc;
-    const RasterizerDesc* rasterizer_desc;
-    const DepthStencilDesc* depth_stencil_desc;
+    const InputLayoutDesc* inputLayoutDesc;
+    const RasterizerDesc* rasterizerDesc;
+    const DepthStencilDesc* depthStencilDesc;
 };
 
 enum PipelineStateName {
