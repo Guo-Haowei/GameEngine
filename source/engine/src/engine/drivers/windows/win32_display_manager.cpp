@@ -4,6 +4,7 @@
 
 #include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
+#include "core/framework/graphics_manager.h"
 #include "core/input/input.h"
 
 namespace my {
@@ -31,6 +32,9 @@ bool Win32DisplayManager::InitializeWindow() {
     RECT rect = { 0, 0, size.x, size.y };
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
 
+    // @TODO: configure title
+    auto title = GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11 ? L"Editor (D3d11)" : L"Editor (D3d12)";
+
     m_wndClass = { sizeof(m_wndClass),
                    CS_CLASSDC,
                    WndProcWrapper,
@@ -45,7 +49,7 @@ bool Win32DisplayManager::InitializeWindow() {
                    NULL };
     ::RegisterClassExW(&m_wndClass);
     m_hwnd = ::CreateWindowW(m_wndClass.lpszClassName,
-                             L"Editor (D3d11)",
+                             title,
                              WS_OVERLAPPEDWINDOW,
                              40, 40,
                              rect.right - rect.left, rect.bottom - rect.top,

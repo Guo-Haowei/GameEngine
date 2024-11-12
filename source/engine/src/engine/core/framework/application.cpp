@@ -106,12 +106,14 @@ int Application::Run(int p_argc, const char** p_argv) {
     LOG_WARN("TODO: properly unload scene");
     LOG_WARN("TODO: make camera a component");
     LOG_WARN("TODO: refactor render graph");
+    LOG_WARN("TODO: reverse z");
+    LOG_WARN("TODO: cloth physics");
 
-    LOG_ERROR("TODO: path tracer here");
-    LOG_ERROR("TODO: cloth physics");
-    LOG_ERROR("TODO: reverse z");
-
-    LOG_OK("TODO: particles");
+    LOG_VERBOSE("This is a verbose log");
+    LOG("This is a log");
+    LOG_OK("This is an ok log");
+    LOG_WARN("This is a warning");
+    LOG_ERROR("This is an error");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
@@ -143,6 +145,7 @@ int Application::Run(int p_argc, const char** p_argv) {
 
         m_physicsManager->Update(scene);
         m_graphicsManager->Update(scene);
+        m_graphicsManager->Render();
 
         renderer::reset_need_update_env();
 

@@ -87,6 +87,10 @@ bool PipelineStateManager::Initialize() {
     const ShaderMacro has_animation = { "HAS_ANIMATION", "1" };
 
     bool ok = true;
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+        return ok;
+    }
     ok = ok && Create(PROGRAM_GBUFFER_STATIC, {
                                                   .vs = "mesh.vert",
                                                   .ps = "gbuffer.pixel",

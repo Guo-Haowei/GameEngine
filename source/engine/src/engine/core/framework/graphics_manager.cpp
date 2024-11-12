@@ -5,6 +5,7 @@
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
 #include "drivers/d3d11/d3d11_graphics_manager.h"
+#include "drivers/d3d12/d3d12_graphics_manager.h"
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "particle_defines.h"
@@ -99,8 +100,10 @@ std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
         return std::make_shared<OpenGLGraphicsManager>();
     } else if (backend == "d3d11") {
         return std::make_shared<D3d11GraphicsManager>();
+    } else if (backend == "d3d12") {
+        return std::make_shared<D3d12GraphicsManager>();
     }
-    return std::make_shared<EmptyGraphicsManager>(Backend::EMPTY);
+    return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsmanager", Backend::EMPTY);
 }
 
 void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
@@ -116,6 +119,10 @@ void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_
 
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
+
+    if (GetBackend() == Backend::D3D12) {
+        return;
+    }
 
     Cleanup();
 
@@ -155,8 +162,6 @@ void GraphicsManager::Update(Scene& p_scene) {
             task.func(task.handle->Get());
         }
     }
-
-    Render();
 }
 
 void GraphicsManager::SelectRenderGraph() {
@@ -171,8 +176,13 @@ void GraphicsManager::SelectRenderGraph() {
     if (m_backend == Backend::D3D11) {
         m_method = RenderGraph::DEFAULT;
     }
+    if (m_backend == Backend::D3D12) {
+        m_method = RenderGraph::EMPTY;
+    }
 
     switch (m_method) {
+        case RenderGraph::EMPTY:
+            break;
         case RenderGraph::VXGI:
             CreateRenderGraphVxgi(m_renderGraph);
             break;
@@ -260,6 +270,8 @@ std::shared_ptr<RenderTarget> GraphicsManager::FindRenderTarget(RenderTargetReso
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_method) {
+        case RenderGraph::EMPTY:
+            break;
         case RenderGraph::VXGI:
             texture = FindRenderTarget(RESOURCE_FINAL)->texture.get();
             break;

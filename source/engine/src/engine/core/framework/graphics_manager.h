@@ -24,6 +24,7 @@ enum class Backend : uint8_t {
     EMPTY,
     OPENGL,
     D3D11,
+    D3D12,
 };
 
 enum ClearFlags : uint32_t {
@@ -95,6 +96,7 @@ public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
 
     enum class RenderGraph : uint8_t {
+        EMPTY,
         DEFAULT,
         VXGI,
     };
@@ -104,6 +106,7 @@ public:
     bool Initialize() final;
 
     void Update(Scene& p_scene);
+    virtual void Render() = 0;
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
@@ -169,9 +172,8 @@ public:
 
 protected:
     virtual void OnSceneChange(const Scene& p_scene) = 0;
-    virtual void OnWindowResize(int, int) {}
+    virtual void OnWindowResize(int p_width, int p_height) = 0;
     virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
-    virtual void Render() = 0;
     virtual bool InitializeImpl() = 0;
 
     const Backend m_backend;
