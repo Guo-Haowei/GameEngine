@@ -101,6 +101,9 @@ public:
         VXGI,
     };
 
+    static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
+    static constexpr int NUM_BACK_BUFFERS = 2;
+
     GraphicsManager(std::string_view p_name, Backend p_backend) : Module(p_name), m_backend(p_backend) {}
 
     bool Initialize() final;
@@ -178,7 +181,7 @@ protected:
 
     const Backend m_backend;
     RenderGraph m_method = RenderGraph::DEFAULT;
-
+    bool m_enableValidationLayer;
     // @TODO: cache
     PipelineStateName m_lastPipelineName = PIPELINE_STATE_MAX;
 

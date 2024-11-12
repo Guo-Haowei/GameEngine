@@ -3,53 +3,25 @@
 
 namespace my {
 
-enum class InputClassification {
-    PER_VERTEX_DATA,
+enum class InputClassification : uint8_t {
+    PER_VERTEX_DATA = 0,
     PER_INSTANCE_DATA,
 };
 
-struct InputLayoutDesc {
-    struct Element {
-        // @TODO: rename
-        std::string semantic_name;
-        uint32_t semantic_index;
-        PixelFormat format;
-        uint32_t input_slot;
-        uint32_t aligned_byte_offset;
-        InputClassification input_slot_class;
-        uint32_t instance_data_step_rate;
-    };
-
-    std::vector<Element> elements;
-};
-
 enum class FillMode : uint8_t {
-    WIREFRAME,
+    WIREFRAME = 0,
     SOLID,
 };
 
 enum class CullMode : uint8_t {
-    NONE,
+    NONE = 0,
     FRONT,
     BACK,
     FRONT_AND_BACK,
 };
 
-struct RasterizerDesc {
-    FillMode fill_mode = FillMode::SOLID;
-    CullMode cull_mode = CullMode::BACK;
-    bool front_counter_clockwise = false;
-    int depth_bias = 0;
-    float depth_bias_clamp = 0.0f;
-    float slope_scaled_depth_bias = 0.0f;
-    bool depth_clip_enable = false;
-    bool scissor_enable = false;
-    bool multisample_enable = false;
-    bool antialiased_line_enable = false;
-};
-
 enum class ComparisonFunc : uint8_t {
-    NEVER,
+    NEVER = 0,
     LESS,
     EQUAL,
     LESS_EQUAL,
@@ -60,15 +32,50 @@ enum class ComparisonFunc : uint8_t {
 };
 
 enum class DepthStencilOpDesc : uint8_t {
-    ALWAYS,
+    ALWAYS = 0,
     Z_PASS,
     EQUAL,
 };
 
+enum class PrimitiveTopology : uint8_t {
+    UNDEFINED = 0,
+    POINT,
+    LINE,
+    TRIANGLE,
+    PATCH,
+};
+
+struct InputLayoutDesc {
+    struct Element {
+        std::string semanticName;
+        uint32_t semanticIndex;
+        PixelFormat format;
+        uint32_t inputSlot;
+        uint32_t alignedByteOffset;
+        InputClassification inputSlotClass;
+        uint32_t instanceDataStepRate;
+    };
+
+    std::vector<Element> elements;
+};
+
+struct RasterizerDesc {
+    FillMode fillMode = FillMode::SOLID;
+    CullMode cullMode = CullMode::BACK;
+    bool frontCounterClockwise = false;
+    int depthBias = 0;
+    float depthBiasClamp = 0.0f;
+    float slopeScaledDepthBias = 0.0f;
+    bool depthClipEnable = false;
+    bool scissorEnable = false;
+    bool multisampleEnable = false;
+    bool antialiasedLineEnable = false;
+};
+
 struct DepthStencilDesc {
-    ComparisonFunc depth_func;
-    bool depth_enabled;
-    bool stencil_enabled;
+    ComparisonFunc depthFunc;
+    bool depthEnabled;
+    bool stencilEnabled;
 
     DepthStencilOpDesc op = DepthStencilOpDesc::ALWAYS;
 };
@@ -78,31 +85,25 @@ struct ShaderMacro {
     const char* value;
 };
 
-struct PipelineCreateInfo {
+struct PipelineStateDesc {
     std::string_view vs;
     std::string_view ps;
     std::string_view gs;
     std::string_view cs;
     std::vector<ShaderMacro> defines;
 
-    const RasterizerDesc* rasterizer_desc = nullptr;
-    const DepthStencilDesc* depth_stencil_desc = nullptr;
-    const InputLayoutDesc* input_layout_desc = nullptr;
+    PrimitiveTopology primitiveTopology{ PrimitiveTopology::TRIANGLE };
+    const RasterizerDesc* rasterizerDesc{ nullptr };
+    const DepthStencilDesc* depthStencilDesc{ nullptr };
+    const InputLayoutDesc* inputLayoutDesc{ nullptr };
 };
 
 struct PipelineState {
-    PipelineState(const InputLayoutDesc* p_input_layout_desc,
-                  const RasterizerDesc* p_rasterizer_desc,
-                  const DepthStencilDesc* p_depth_stencil_desc)
-        : input_layout_desc(p_input_layout_desc),
-          rasterizer_desc(p_rasterizer_desc),
-          depth_stencil_desc(p_depth_stencil_desc) {}
+    PipelineState(const PipelineStateDesc& p_desc) : desc(p_desc) {}
 
     virtual ~PipelineState() = default;
 
-    const InputLayoutDesc* input_layout_desc;
-    const RasterizerDesc* rasterizer_desc;
-    const DepthStencilDesc* depth_stencil_desc;
+    const PipelineStateDesc desc;
 };
 
 enum PipelineStateName {

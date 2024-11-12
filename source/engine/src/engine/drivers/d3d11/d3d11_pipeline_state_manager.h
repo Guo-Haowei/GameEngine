@@ -21,14 +21,14 @@ struct D3d11PipelineState : public PipelineState {
 
 class D3d11PipelineStateManager : public PipelineStateManager {
 protected:
-    std::shared_ptr<PipelineState> CreateInternal(const PipelineCreateInfo& p_info) final;
+    std::shared_ptr<PipelineState> CreateInternal(const PipelineStateDesc& p_desc) final;
 
     std::unordered_map<const RasterizerDesc*, Microsoft::WRL::ComPtr<ID3D11RasterizerState>> m_rasterizerStates;
     std::unordered_map<const DepthStencilDesc*, Microsoft::WRL::ComPtr<ID3D11DepthStencilState>> m_depthStencilStates;
 
 private:
-    std::shared_ptr<PipelineState> CreateGraphicsPipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineCreateInfo& p_info, const std::vector<D3D_SHADER_MACRO>& p_defines);
-    std::shared_ptr<PipelineState> CreateComputePipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineCreateInfo& p_info, const std::vector<D3D_SHADER_MACRO>& p_defines);
+    std::shared_ptr<PipelineState> CreateGraphicsPipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineStateDesc& p_desc, const std::vector<D3D_SHADER_MACRO>& p_defines);
+    std::shared_ptr<PipelineState> CreateComputePipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineStateDesc& p_desc, const std::vector<D3D_SHADER_MACRO>& p_defines);
 };
 
 }  // namespace my

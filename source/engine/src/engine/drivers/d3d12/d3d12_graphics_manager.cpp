@@ -3,15 +3,12 @@
 #include <imgui/backends/imgui_impl_dx12.h>
 
 #include "drivers/d3d12/d3d12_pipeline_state_manager.h"
+#include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
 
 namespace my {
 
 // @TODO: move to a common place
-#define D3D_FAIL(HR)                 ERR_FAIL_COND_MSG(FAILED(HR), #HR)
-#define D3D_FAIL_V(HR, RET)          ERR_FAIL_COND_V_MSG(FAILED(HR), RET, #HR)
-#define D3D_FAIL_MSG(HR, MSG)        ERR_FAIL_COND_MSG(FAILED(HR), MSG)
-#define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
 static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
 
@@ -29,9 +26,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
 
     ok = ok && CreateDevice();
 
-    // @TODO: refactor
-    bool m_enable_debug_layer = true;
-    if (m_enable_debug_layer) {
+    if (m_enableValidationLayer) {
         if (EnableDebugLayer()) {
             LOG("[GraphicsManager_DX12] Debug layer enabled");
         } else {
@@ -40,8 +35,8 @@ bool D3d12GraphicsManager::InitializeImpl() {
     }
 
     ok = ok && CreateDescriptorHeaps();
-    ok = ok && m_graphicsContext.initialize(this);
-    ok = ok && m_copyContext.initialize(this);
+    ok = ok && m_graphicsContext.Initialize(this);
+    ok = ok && m_copyContext.Initialize(this);
 
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvDescHeap.m_startCPU;
     for (int i = 0; i < NUM_BACK_BUFFERS; i++) {
@@ -68,7 +63,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
         size_t bufferSize = sizeof(vec4) * 1000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -80,7 +75,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
         size_t bufferSize = sizeof(uint32_t) * 3000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -103,6 +98,12 @@ bool D3d12GraphicsManager::InitializeImpl() {
 }
 
 void D3d12GraphicsManager::Finalize() {
+    CleanupRenderTarget();
+
+    ImGui_ImplDX12_Shutdown();
+
+    m_graphicsContext.Finalize();
+    m_copyContext.Finalize();
 }
 
 void D3d12GraphicsManager::Render() {
@@ -146,6 +147,7 @@ void D3d12GraphicsManager::Render() {
     cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     // clear the back buffer to a deep blue
+    constexpr float kGreenClearColor[4] = { 0.3f, 0.4f, 0.3f, 1.0f };
     cmdList->ClearRenderTargetView(rtvHandle, kGreenClearColor, 0, nullptr);
     cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
@@ -248,7 +250,7 @@ void D3d12GraphicsManager::Render() {
         {
             UINT8* pVertexDataBegin;
             CD3DX12_RANGE readRange(0, 0);
-            WIN_CALL(m_debugVertexData->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
+            D3D_CALL(m_debugVertexData->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
             memcpy(pVertexDataBegin, draw_data.debugData.m_vertices.data(), vbv.SizeInBytes);
             m_debugVertexData->Unmap(0, nullptr);
         }
@@ -259,7 +261,7 @@ void D3d12GraphicsManager::Render() {
         {
             UINT8* pIndexDataBegin;
             CD3DX12_RANGE readRange(0, 0);
-            WIN_CALL(m_debugIndexData->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
+            D3D_CALL(m_debugIndexData->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
             memcpy(pIndexDataBegin, draw_data.debugData.m_indices.data(), ibv.SizeInBytes);
             m_debugIndexData->Unmap(0, nullptr);
         }
@@ -293,20 +295,18 @@ void D3d12GraphicsManager::Render() {
         ImGui::RenderPlatformWindowsDefault();
     }
 
-    WIN_CALL(m_swap_chain->Present(1, 0));  // Present with vsync
+    D3D_CALL(m_swap_chain->Present(1, 0));  // Present with vsync
     m_graphicsContext.MoveToNextFrame();
 }
 
 bool D3d12GraphicsManager::CreateDevice() {
-    bool m_enable_debug_layer = true;
-    if (m_enable_debug_layer) {
-        if (SUCCEEDED(WIN_CALL(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController))))) {
+    if (m_enableValidationLayer) {
+        if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)))) {
             m_debugController->EnableDebugLayer();
         }
     }
 
-    HRESULT hr = S_OK;
-    D3D_FAIL_V(hr = CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)), false);
+    D3D_FAIL_V(CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)), false);
 
     auto get_hardware_adapter = [](IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter) {
         *ppAdapter = nullptr;
@@ -332,9 +332,9 @@ bool D3d12GraphicsManager::CreateDevice() {
 
     if (FAILED(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)))) {
         ComPtr<IDXGIAdapter> warpAdapter;
-        D3D_FAIL_V(hr = m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), false);
+        D3D_FAIL_V(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), false);
 
-        D3D_FAIL_V(hr = D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)), false);
+        D3D_FAIL_V(D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)), false);
     }
 
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0 };
@@ -342,7 +342,7 @@ bool D3d12GraphicsManager::CreateDevice() {
     D3D12_FEATURE_DATA_FEATURE_LEVELS featLevels = { array_length(featureLevels), featureLevels, D3D_FEATURE_LEVEL_12_0 };
 
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
-    WIN_CALL(m_device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels)));
+    D3D_CALL(m_device->CheckFeatureSupport(D3D12_FEATURE_FEATURE_LEVELS, &featLevels, sizeof(featLevels)));
     featureLevel = featLevels.MaxSupportedFeatureLevel;
     switch (featureLevel) {
         case D3D_FEATURE_LEVEL_12_0:
@@ -367,28 +367,26 @@ ID3D12CommandQueue* D3d12GraphicsManager::CreateCommandQueue(D3D12_COMMAND_LIST_
     desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 
     ID3D12CommandQueue* queue;
-    HRESULT hr = WIN_CALL(m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&queue)));
-    if (FAILED(hr)) {
-        return nullptr;
-    }
 
-    const wchar_t* debugName = nullptr;
+    D3D_CALL(m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&queue)));
+
+#if USING(USE_D3D_DEBUG_NAME)
     switch (p_type) {
         case D3D12_COMMAND_LIST_TYPE_DIRECT:
-            debugName = L"GraphicsCommandQueue";
+            D3D12_SET_DEBUG_NAME(queue, "GraphicsCommandQueue");
             break;
         case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-            debugName = L"ComputeCommandQueue";
+            D3D12_SET_DEBUG_NAME(queue, "ComputeCommandQueue");
             break;
         case D3D12_COMMAND_LIST_TYPE_COPY:
-            debugName = L"CopyCommandQueue";
+            D3D12_SET_DEBUG_NAME(queue, "CopyCommandQueue");
             break;
         default:
             CRASH_NOW();
             break;
     }
+#endif
 
-    NAME_DX12_OBJECT(queue, debugName);
     return queue;
 }
 
@@ -427,13 +425,13 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
 bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     bool ok = true;
-    ok = ok && m_rtvDescHeap.initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
-    ok = ok && m_dsvDescHeap.initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
-    ok = ok && m_srvDescHeap.initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
+    ok = ok && m_rtvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
+    ok = ok && m_dsvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
+    ok = ok && m_srvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
     return ok;
 }
 
-bool D3d12GraphicsManager::CreateSwapChain(uint32_t width, uint32_t height) {
+bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) {
     auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::GetSingletonPtr());
     DEV_ASSERT(display_manager);
 
@@ -441,8 +439,8 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t width, uint32_t height) {
     DXGI_SWAP_CHAIN_DESC1 scd{};
 
     // fill the swap chain description struct
-    scd.Width = width;
-    scd.Height = height;
+    scd.Width = p_width;
+    scd.Height = p_height;
     scd.Format = SURFACE_FORMAT;
     scd.Stereo = FALSE;
     scd.SampleDesc = { 1, 0 };
@@ -473,10 +471,10 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t width, uint32_t height) {
     return true;
 }
 
-bool D3d12GraphicsManager::CreateRenderTarget(uint32_t width, uint32_t height) {
+bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_height) {
     for (int32_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
         ID3D12Resource* pBackBuffer = nullptr;
-        WIN_CALL(m_swap_chain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
+        D3D_CALL(m_swap_chain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
         m_device->CreateRenderTargetView(pBackBuffer, nullptr, m_renderTargetDescriptor[i]);
         std::wstring name = std::wstring(L"Render Target Buffer") + std::to_wstring(i);
         pBackBuffer->SetName(name.c_str());
@@ -495,20 +493,20 @@ bool D3d12GraphicsManager::CreateRenderTarget(uint32_t width, uint32_t height) {
     prop.CreationNodeMask = 1;
     prop.VisibleNodeMask = 1;
 
-    D3D12_RESOURCE_DESC resourceDesc{};
-    resourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
-    resourceDesc.Alignment = 0;
-    resourceDesc.Width = width;
-    resourceDesc.Height = height;
-    resourceDesc.DepthOrArraySize = 1;
-    resourceDesc.MipLevels = 1;
-    resourceDesc.Format = DEFAULT_DEPTH_STENCIL_FORMAT;
-    resourceDesc.SampleDesc = { 1, 0 };
-    resourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    resourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+    D3D12_RESOURCE_DESC resource_desc{};
+    resource_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    resource_desc.Alignment = 0;
+    resource_desc.Width = p_width;
+    resource_desc.Height = p_height;
+    resource_desc.DepthOrArraySize = 1;
+    resource_desc.MipLevels = 1;
+    resource_desc.Format = DEFAULT_DEPTH_STENCIL_FORMAT;
+    resource_desc.SampleDesc = { 1, 0 };
+    resource_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    resource_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
 
     HRESULT hr = m_device->CreateCommittedResource(
-        &prop, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+        &prop, D3D12_HEAP_FLAG_NONE, &resource_desc,
         D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue,
         IID_PPV_ARGS(&m_depthStencilBuffer));
 
@@ -545,8 +543,8 @@ bool D3d12GraphicsManager::LoadAssets() {
 
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
-        WIN_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-        WIN_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+        D3D_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+        D3D_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
     }
 
     return true;
@@ -557,7 +555,7 @@ void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
         m_graphicsContext.Flush();
 
         CleanupRenderTarget();
-        WIN_CALL(m_swap_chain->ResizeBuffers(0, p_width, p_height,
+        D3D_CALL(m_swap_chain->ResizeBuffers(0, p_width, p_height,
                                              DXGI_FORMAT_UNKNOWN,
                                              DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT));
 

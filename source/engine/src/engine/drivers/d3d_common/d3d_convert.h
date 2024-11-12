@@ -16,7 +16,6 @@
 #define D3D_CULL_MODE(a)            D3D11_CULL_##a
 #define D3D_COMPARISON(a)           D3D11_COMPARISON_##a
 #define D3D_TEXTURE_ADDRESS_MODE(a) D3D11_TEXTURE_ADDRESS_##a
-#define D3D_USAGE(a)                D3D11_USAGE_##a
 #elif defined(INCLUDE_AS_D3D12)
 #include <d3d12.h>
 #define D3D(a)                      D3D12_##a
@@ -41,7 +40,6 @@ using D3D_DEPTH_WRITE_MASK = D3D(DEPTH_WRITE_MASK);
 using D3D_COMPARISON_FUNC = D3D(COMPARISON_FUNC);
 using D3D_FILTER = D3D(FILTER);
 using D3D_TEXTURE_ADDRESS_MODE = D3D(TEXTURE_ADDRESS_MODE);
-using D3D_USAGE = D3D(USAGE);
 
 static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
@@ -147,19 +145,22 @@ static inline D3D_COMPARISON_FUNC Convert(ComparisonFunc p_func) {
     return D3D_COMPARISON(NEVER);
 }
 
-static inline D3D_USAGE Convert(BufferUsage p_usage) {
+#if defined(INCLUDE_AS_D3D11)
+static inline D3D11_USAGE Convert(BufferUsage p_usage) {
     switch (p_usage) {
-        case my::BufferUsage::DEFAULT:
-            return D3D_USAGE(DEFAULT);
         case my::BufferUsage::IMMUTABLE:
-            return D3D_USAGE(IMMUTABLE);
+            return D3D11_USAGE_IMMUTABLE;
         case my::BufferUsage::DYNAMIC:
-            return D3D_USAGE(DYNAMIC);
+            return D3D11_USAGE_DYNAMIC;
         case my::BufferUsage::STAGING:
-            return D3D_USAGE(STAGING);
+            return D3D11_USAGE_STAGING;
+        case my::BufferUsage::DEFAULT:
+            [[fallthrough]];
+        default:
+            return D3D11_USAGE_DEFAULT;
     }
-    return D3D_USAGE(DEFAULT);
 }
+#endif
 
 #if 0
 static inline DEPTH_WRITE_MASK Convert(DepthWriteMask depth_write_mask) {
@@ -207,6 +208,5 @@ static inline TEXTURE_ADDRESS_MODE Convert(TextureAddressMode texture_address_mo
 #undef D3D_CULL_MODE
 #undef D3D_COMPARISON_FUNC
 #undef D3D_TEXTURE_ADDRESS_MODE
-#undef D3D_USAGE
 
 }  // namespace my::d3d

@@ -89,7 +89,7 @@ ErrorCode D3D12Context::initialize(const CreateInfo& info)
         size_t bufferSize = sizeof(PosColor) * 1000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -101,7 +101,7 @@ ErrorCode D3D12Context::initialize(const CreateInfo& info)
         size_t bufferSize = sizeof(uint32_t) * 3000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        WIN_CALL(m_device->CreateCommittedResource(
+        D3D_CALL(m_device->CreateCommittedResource(
             &heapProperties,
             D3D12_HEAP_FLAG_NONE,
             &bufferDesc,
@@ -119,16 +119,6 @@ ErrorCode D3D12Context::initialize(const CreateInfo& info)
     ImGui_ImplDX12_CreateDeviceObjects();
 
     return OK;
-}
-
-void D3D12Context::finalize()
-{
-    CleanupRenderTarget();
-
-    ImGui_ImplDX12_Shutdown();
-
-    m_graphicsContext.Finalize();
-    m_copyContext.Finalize();
 }
 
 bool D3D12Context::LoadAssets()
@@ -157,8 +147,8 @@ bool D3D12Context::LoadAssets()
 
         ComPtr<ID3DBlob> signature;
         ComPtr<ID3DBlob> error;
-        WIN_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-        WIN_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+        D3D_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+        D3D_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
     }
 
     return true;
@@ -187,7 +177,7 @@ bool D3D12Context::CreateTexture(const Image& image)
     desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
     ID3D12Resource* pTexture = nullptr;
-    HRESULT hr = WIN_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&pTexture)));
+    HRESULT hr = D3D_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&pTexture)));
     if (FAILED(hr))
     {
         return false;
@@ -212,7 +202,7 @@ bool D3D12Context::CreateTexture(const Image& image)
     props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
     ComPtr<ID3D12Resource> uploadBuffer;
-    hr = WIN_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&uploadBuffer)));
+    hr = D3D_CALL(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&uploadBuffer)));
     if (FAILED(hr))
     {
         return false;
@@ -254,7 +244,7 @@ bool D3D12Context::CreateTexture(const Image& image)
 
     // Create a temporary command queue to do the copy with
     ComPtr<ID3D12Fence> fence;
-    hr = WIN_CALL(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+    hr = D3D_CALL(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
     if (FAILED(hr))
     {
         return false;
@@ -272,21 +262,21 @@ bool D3D12Context::CreateTexture(const Image& image)
     queueDesc.NodeMask = 1;
 
     ComPtr<ID3D12CommandQueue> cmdQueue;
-    hr = WIN_CALL(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue)));
+    hr = D3D_CALL(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&cmdQueue)));
     if (FAILED(hr))
     {
         return false;
     }
 
     ComPtr<ID3D12CommandAllocator> cmdAlloc;
-    hr = WIN_CALL(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc)));
+    hr = D3D_CALL(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&cmdAlloc)));
     if (FAILED(hr))
     {
         return false;
     }
 
     ComPtr<ID3D12GraphicsCommandList> cmdList;
-    hr = WIN_CALL(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc.Get(), NULL, IID_PPV_ARGS(&cmdList)));
+    hr = D3D_CALL(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, cmdAlloc.Get(), NULL, IID_PPV_ARGS(&cmdList)));
     if (FAILED(hr))
     {
         return false;
@@ -295,12 +285,12 @@ bool D3D12Context::CreateTexture(const Image& image)
     cmdList->CopyTextureRegion(&dstLocation, 0, 0, 0, &srcLocation, NULL);
     cmdList->ResourceBarrier(1, &barrier);
 
-    WIN_CALL(hr = cmdList->Close());
+    D3D_CALL(hr = cmdList->Close());
 
     // Execute the copy
     ID3D12CommandList* commandLists[] = { cmdList.Get() };
     cmdQueue->ExecuteCommandLists(array_length(commandLists), commandLists);
-    hr = WIN_CALL(cmdQueue->Signal(fence.Get(), 1));
+    hr = D3D_CALL(cmdQueue->Signal(fence.Get(), 1));
 
     // Wait for everything to complete
     fence->SetEventOnCompletion(1, event);
@@ -350,7 +340,7 @@ void D3D12Context::BeginScene(const Scene& scene)
             auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
             auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(byte_size);
             // Create the actual default buffer resource.
-            WIN_CALL(m_device->CreateCommittedResource(
+            D3D_CALL(m_device->CreateCommittedResource(
                 &heapProperties,
                 D3D12_HEAP_FLAG_NONE,
                 &bufferDesc,
@@ -413,97 +403,6 @@ static uint32_t SizeOfVector(const std::vector<T>& vec)
 
 bool D3D12Context::CreatePipelineState(const PipelineStateDesc& desc, PipelineState& out_pso)
 {
-    auto internalState = std::make_shared<PipelineState_DX12>();
-    ComPtr<ID3DBlob> vsBlob = CompileShaderFromFile(
-        desc.vertexShader.c_str(), SHADER_TYPE_VERTEX, true);
-    if (!vsBlob)
-    {
-        return false;
-    }
-    ComPtr<ID3DBlob> psBlob = CompileShaderFromFile(
-        desc.pixelShader.c_str(), SHADER_TYPE_PIXEL, true);
-    if (!psBlob)
-    {
-        return false;
-    }
-
-    std::vector<D3D12_INPUT_ELEMENT_DESC> elements;
-    elements.reserve(desc.inputlayoutDesc.elements.size());
-    for (const auto& ele : desc.inputlayoutDesc.elements)
-    {
-        D3D12_INPUT_ELEMENT_DESC ildesc;
-        ildesc.SemanticName = ele.semanticName.c_str();
-        ildesc.SemanticIndex = ele.semanticIndex;
-        ildesc.Format = Convert(ele.format);
-        ildesc.InputSlot = ele.inputSlot;
-        ildesc.AlignedByteOffset = ele.alignedByteOffset;
-        ildesc.InputSlotClass = Convert(ele.inputSlotClass);
-        ildesc.InstanceDataStepRate = ele.instanceDataStepRate;
-        elements.push_back(ildesc);
-    }
-    DEV_ASSERT(elements.size());
-
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-
-    D3D12_PRIMITIVE_TOPOLOGY_TYPE tp = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
-    switch (desc.primitiveTopologyType)
-    {
-        case PrimitiveTopologyType::LINE:
-            tp = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-            break;
-        case PrimitiveTopologyType::TRIANGLE:
-            tp = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-            break;
-        default:
-            PANIC("");
-            break;
-    }
-
-    D3D12_RASTERIZER_DESC rsDesc{};
-    rsDesc.FillMode = Convert(desc.rasterizer.fillMode);
-    rsDesc.CullMode = Convert(desc.rasterizer.cullMode);
-    rsDesc.FrontCounterClockwise = desc.rasterizer.frontCounterClockwise;
-    rsDesc.DepthBias = desc.rasterizer.depthBias;
-    rsDesc.SlopeScaledDepthBias = desc.rasterizer.slopeScaledDepthBias;
-    rsDesc.DepthClipEnable = desc.rasterizer.depthClipEnable;
-    // rsDesc.ScissorEnable = desc.rasterizer.scissorEnable;
-    rsDesc.MultisampleEnable = desc.rasterizer.multisampleEnable;
-    rsDesc.AntialiasedLineEnable = desc.rasterizer.antialiasedLineEnable;
-
-    D3D12_DEPTH_STENCIL_DESC dssDesc{};
-    dssDesc.DepthEnable = desc.depthStencil.depthEnable;
-    dssDesc.DepthWriteMask = Convert(desc.depthStencil.depthWriteMask);
-    dssDesc.DepthFunc = Convert(desc.depthStencil.depthFunc);
-    dssDesc.StencilEnable = desc.depthStencil.stencilEnable;
-    dssDesc.StencilReadMask = desc.depthStencil.stencilReadMask;
-    dssDesc.StencilWriteMask = desc.depthStencil.stencilWriteMask;
-    // @TODO:
-    // dssDesc.FrontFace;
-    // dssDesc.BackFace;
-
-    psoDesc.InputLayout = { elements.data(), (uint32_t)elements.size() };
-    psoDesc.pRootSignature = m_rootSignature.Get();
-    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
-    psoDesc.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
-    psoDesc.RasterizerState = rsDesc;
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState = dssDesc;
-    psoDesc.SampleMask = UINT_MAX;
-    psoDesc.PrimitiveTopologyType = tp;
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    psoDesc.DSVFormat = DEFAULT_DEPTH_STENCIL_FORMAT;
-    psoDesc.SampleDesc.Count = 1;
-
-    if (FAILED(WIN_CALL(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&internalState->pso)))))
-    {
-        return false;
-    }
-
-    out_pso.internalState = internalState;
-    out_pso.desc = desc;
-
-    return true;
 }
 
 void D3D12Context::SetPipelineState(PipelineState& pipeline_state, CommandList cmd)

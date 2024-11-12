@@ -42,6 +42,12 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
 }
 
 bool GraphicsManager::Initialize() {
+#if USING(DEBUG_BUILD)
+    m_enableValidationLayer = true;
+#else
+    m_enableValidationLayer = DVAR_GET_BOOL(r_gpu_validation);
+#endif
+
     if (!InitializeImpl()) {
         return false;
     }

@@ -3,14 +3,17 @@
 #include <dxgi.h>
 #include <imgui/backends/imgui_impl_dx11.h>
 
-#include "drivers/d3d11/convert.h"
 #include "drivers/d3d11/d3d11_helpers.h"
 #include "drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "drivers/d3d11/d3d11_resources.h"
+#include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/gpu_resource.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/rendering_dvars.h"
+
+#define INCLUDE_AS_D3D11
+#include "drivers/d3d_common/d3d_convert.h"
 
 namespace my {
 
@@ -151,10 +154,7 @@ void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
 
 bool D3d11GraphicsManager::CreateDevice() {
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_1;
-    UINT create_device_flags = 0;
-    if (DVAR_GET_BOOL(r_gpu_validation)) {
-        create_device_flags |= D3D11_CREATE_DEVICE_DEBUG;
-    }
+    UINT create_device_flags = m_enableValidationLayer ? D3D11_CREATE_DEVICE_DEBUG : 0;
 
     HRESULT hr = D3D11CreateDevice(
         nullptr,
@@ -402,7 +402,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
     if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.Format = srv_format;
-        srv_desc.ViewDimension = d3d::ConvertDimension(p_texture_desc.dimension);
+        srv_desc.ViewDimension = ConvertDimension(p_texture_desc.dimension);
         srv_desc.Texture2D.MipLevels = p_texture_desc.mip_levels;
         srv_desc.Texture2D.MostDetailedMip = 0;
 
@@ -735,3 +735,5 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
 }
 
 }  // namespace my
+
+#undef INCLUDE_AS_D3D11

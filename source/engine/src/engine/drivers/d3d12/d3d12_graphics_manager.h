@@ -17,6 +17,7 @@ public:
     ID3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE p_type);
 
     ID3D12Device4* const GetDevice() const { return m_device.Get(); }
+    ID3D12RootSignature* const GetRootSignature() const { return m_rootSignature.Get(); }
 
 protected:
     void OnWindowResize(int p_width, int p_height) final;
