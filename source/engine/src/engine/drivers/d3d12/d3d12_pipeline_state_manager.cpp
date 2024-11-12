@@ -16,20 +16,33 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
-     ComPtr<ID3DBlob> vsBlob;
-    //= CompileShaderFromFile(
-    //     desc.vertexShader.c_str(), SHADER_TYPE_VERTEX, true);
-    // if (!vsBlob)
-    //{
-    //     return false;
-    // }
-     ComPtr<ID3DBlob> psBlob;
-    //= CompileShaderFromFile(
-    //     desc.pixelShader.c_str(), SHADER_TYPE_PIXEL, true);
-    // if (!psBlob)
-    //{
-    //     return false;
-    // }
+    ComPtr<ID3DBlob> vs_blob;
+    ComPtr<ID3DBlob> ps_blob;
+
+    // @TODO: refactor
+    std::vector<D3D_SHADER_MACRO> defines;
+    for (const auto& define : p_desc.defines) {
+        defines.push_back({ define.name, define.value });
+    }
+    defines.push_back({ "HLSL_LANG", "1" });
+    defines.push_back({ nullptr, nullptr });
+
+    if (!p_desc.vs.empty()) {
+        auto res = CompileShader(p_desc.vs, "vs_5_0", defines.data());
+        if (!res) {
+            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
+            return nullptr;
+        }
+        vs_blob = *res;
+    }
+    if (!p_desc.ps.empty()) {
+        auto res = CompileShader(p_desc.ps, "ps_5_0", defines.data());
+        if (!res) {
+            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.ps, res.error());
+            return nullptr;
+        }
+        ps_blob = *res;
+    }
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> elements;
     elements.reserve(p_desc.inputLayoutDesc->elements.size());
@@ -46,8 +59,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     }
     DEV_ASSERT(elements.size());
 
-    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-
+    // @TODO: make it a Convert
     D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
     switch (p_desc.primitiveTopology) {
         case PrimitiveTopology::LINE:
@@ -68,7 +80,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     rasterizer_desc.DepthBias = p_desc.rasterizerDesc->depthBias;
     rasterizer_desc.SlopeScaledDepthBias = p_desc.rasterizerDesc->slopeScaledDepthBias;
     rasterizer_desc.DepthClipEnable = p_desc.rasterizerDesc->depthClipEnable;
-    //rasterizer_desc.ScissorEnable = p_desc.rasterizerDesc->scissorEnable;
+    // rasterizer_desc.ScissorEnable = p_desc.rasterizerDesc->scissorEnable;
     rasterizer_desc.MultisampleEnable = p_desc.rasterizerDesc->multisampleEnable;
     rasterizer_desc.AntialiasedLineEnable = p_desc.rasterizerDesc->antialiasedLineEnable;
 
@@ -76,34 +88,38 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     depth_stencil_desc.DepthEnable = p_desc.depthStencilDesc->depthEnabled;
     depth_stencil_desc.DepthFunc = d3d::Convert(p_desc.depthStencilDesc->depthFunc);
     depth_stencil_desc.StencilEnable = p_desc.depthStencilDesc->stencilEnabled;
-    //depth_stencil_desc.DepthWriteMask = d3d::Convert(p_desc.depthStencilDesc->depthWriteMask);
-    //depth_stencil_desc.StencilReadMask = p_desc.depthStencilDesc->stencilReadMask;
-    //depth_stencil_desc.StencilWriteMask = p_desc.depthStencilDesc->stencilWriteMask;
+    // depth_stencil_desc.DepthWriteMask = d3d::Convert(p_desc.depthStencilDesc->depthWriteMask);
+    // depth_stencil_desc.StencilReadMask = p_desc.depthStencilDesc->stencilReadMask;
+    // depth_stencil_desc.StencilWriteMask = p_desc.depthStencilDesc->stencilWriteMask;
     depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     depth_stencil_desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     depth_stencil_desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    // @TODO:
-    // depth_stencil_desc.FrontFace;
-    // depth_stencil_desc.BackFace;
-#if 0
+    const D3D12_DEPTH_STENCILOP_DESC default_stencil_op = {
+        D3D12_STENCIL_OP_KEEP,
+        D3D12_STENCIL_OP_KEEP,
+        D3D12_STENCIL_OP_KEEP,
+        D3D12_COMPARISON_FUNC_ALWAYS,
+    };
+    depth_stencil_desc.FrontFace = default_stencil_op;
+    depth_stencil_desc.BackFace = default_stencil_op;
 
-#endif
-    psoDesc.InputLayout = { elements.data(), (uint32_t)elements.size() };
-    psoDesc.pRootSignature = graphics_manager->GetRootSignature();
-    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
-    psoDesc.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
-    psoDesc.RasterizerState = rasterizer_desc;
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState = depth_stencil_desc;
-    psoDesc.SampleMask = UINT_MAX;
-    psoDesc.PrimitiveTopologyType = topology;
-    psoDesc.NumRenderTargets = 1;
-    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    psoDesc.DSVFormat = DEFAULT_DEPTH_STENCIL_FORMAT;
-    psoDesc.SampleDesc.Count = 1;
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
+    pso_desc.InputLayout = { elements.data(), (uint32_t)elements.size() };
+    pso_desc.pRootSignature = graphics_manager->GetRootSignature();
+    pso_desc.VS = CD3DX12_SHADER_BYTECODE(vs_blob.Get());
+    pso_desc.PS = CD3DX12_SHADER_BYTECODE(ps_blob.Get());
+    pso_desc.RasterizerState = rasterizer_desc;
+    pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    pso_desc.DepthStencilState = depth_stencil_desc;
+    pso_desc.SampleMask = UINT_MAX;
+    pso_desc.PrimitiveTopologyType = topology;
+    pso_desc.NumRenderTargets = 1;
+    pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    pso_desc.DSVFormat = DEFAULT_DEPTH_STENCIL_FORMAT;
+    pso_desc.SampleDesc.Count = 1;
 
     ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr())->GetDevice();
-    D3D_FAIL_V(device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipeline_state->pso)), nullptr);
+    D3D_FAIL_V(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), nullptr);
 
     return pipeline_state;
 }
