@@ -120,6 +120,10 @@ void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
+    if (GetBackend() == Backend::D3D12) {
+        return;
+    }
+
     Cleanup();
 
     UpdateConstants(p_scene);
@@ -158,8 +162,6 @@ void GraphicsManager::Update(Scene& p_scene) {
             task.func(task.handle->Get());
         }
     }
-
-    Render();
 }
 
 void GraphicsManager::SelectRenderGraph() {
@@ -174,8 +176,13 @@ void GraphicsManager::SelectRenderGraph() {
     if (m_backend == Backend::D3D11) {
         m_method = RenderGraph::DEFAULT;
     }
+    if (m_backend == Backend::D3D12) {
+        m_method = RenderGraph::EMPTY;
+    }
 
     switch (m_method) {
+        case RenderGraph::EMPTY:
+            break;
         case RenderGraph::VXGI:
             CreateRenderGraphVxgi(m_renderGraph);
             break;
@@ -263,6 +270,8 @@ std::shared_ptr<RenderTarget> GraphicsManager::FindRenderTarget(RenderTargetReso
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_method) {
+        case RenderGraph::EMPTY:
+            break;
         case RenderGraph::VXGI:
             texture = FindRenderTarget(RESOURCE_FINAL)->texture.get();
             break;

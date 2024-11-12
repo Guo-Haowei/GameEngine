@@ -39,6 +39,8 @@ target_link_libraries(${TARGET_NAME} PUBLIC
     bullet
     optick
     d3d11.lib
+    d3d12.lib
+    dxgi.lib
     d3dcompiler.lib
 )
 

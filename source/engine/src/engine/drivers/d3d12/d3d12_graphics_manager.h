@@ -10,11 +10,29 @@ class D3d12GraphicsManager : public EmptyGraphicsManager {
 public:
     D3d12GraphicsManager();
 
+    bool InitializeImpl() final;
+    void Finalize() final;
+    void Render() final;
+
     ID3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE p_type);
 
     ID3D12Device4* const GetDevice() const { return m_device.Get(); }
 
+protected:
+    void OnWindowResize(int p_width, int p_height) final;
+
 private:
+    bool CreateDevice();
+    bool EnableDebugLayer();
+    bool CreateDescriptorHeaps();
+    bool CreateSwapChain(uint32_t p_width, uint32_t p_height);
+    bool CreateRenderTarget(uint32_t p_width, uint32_t p_height);
+    void CleanupRenderTarget();
+    bool LoadAssets();
+
+    void BeginFrame();
+    void EndFrame();
+
     GraphicsContext m_graphicsContext;
     CopyContext m_copyContext;
 

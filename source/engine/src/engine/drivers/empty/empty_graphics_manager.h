@@ -48,6 +48,7 @@ public:
 
 protected:
     void OnSceneChange(const Scene&) override {}
+    void OnWindowResize(int, int) override {}
     void SetPipelineStateImpl(PipelineStateName) override {}
 };
 

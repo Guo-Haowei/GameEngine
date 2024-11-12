@@ -145,6 +145,7 @@ int Application::Run(int p_argc, const char** p_argv) {
 
         m_physicsManager->Update(scene);
         m_graphicsManager->Update(scene);
+        m_graphicsManager->Render();
 
         renderer::reset_need_update_env();
 
