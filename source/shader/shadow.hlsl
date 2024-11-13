@@ -17,7 +17,7 @@ int2 textureSizeTexture2D(Texture2D p_texture) {
 }
 
 float4 sampleShadow(Texture2D textureObject, float2 offset) {
-    return textureObject.Sample(g_shadow_sampler, offset);
+    return textureObject.Sample(s_shadowSampler, offset);
 }
 
 #elif defined(GLSL_LANG)

@@ -14,6 +14,12 @@ enum class AddressMode {
     BORDER,
 };
 
+enum class StaticBorderColor {
+    TRANSPARENT_BLACK = 0,
+    OPAQUE_BLACK,
+    OPAQUE_WHITE,
+};
+
 enum class InputClassification : uint8_t {
     PER_VERTEX_DATA = 0,
     PER_INSTANCE_DATA,

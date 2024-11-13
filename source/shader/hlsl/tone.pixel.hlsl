@@ -12,10 +12,10 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     // flip uv
     uv.y = 1 - uv.y;
 
-    float3 color = t_textureLighting.Sample(linear_clamp_sampler, uv).rgb;
+    float3 color = t_textureLighting.Sample(s_linearClampSampler, uv).rgb;
 
     if (c_enableBloom == 1) {
-        float3 bloom = t_bloomInputImage.Sample(linear_clamp_sampler, uv).rgb;
+        float3 bloom = t_bloomInputImage.Sample(s_linearClampSampler, uv).rgb;
         color += bloom;
     }
 

@@ -145,6 +145,20 @@ static inline D3D_COMPARISON_FUNC Convert(ComparisonFunc p_func) {
     return D3D_COMPARISON(NEVER);
 }
 
+static inline D3D_TEXTURE_ADDRESS_MODE Convert(AddressMode texture_address_mode) {
+    switch (texture_address_mode) {
+        case AddressMode::WRAP:
+            return D3D_TEXTURE_ADDRESS_MODE(WRAP);
+        case AddressMode::CLAMP:
+            return D3D_TEXTURE_ADDRESS_MODE(CLAMP);
+        case AddressMode::BORDER:
+            return D3D_TEXTURE_ADDRESS_MODE(BORDER);
+        default:
+            CRASH_NOW();
+            return D3D_TEXTURE_ADDRESS_MODE(WRAP);
+    }
+}
+
 #if defined(INCLUDE_AS_D3D11)
 static inline D3D11_USAGE Convert(BufferUsage p_usage) {
     switch (p_usage) {
@@ -183,22 +197,6 @@ static inline FILTER Convert(Filter filter) {
             return D3D(FILTER_ANISOTROPIC);
     }
     return D3D(FILTER_MIN_MAG_MIP_POINT);
-}
-
-static inline TEXTURE_ADDRESS_MODE Convert(TextureAddressMode texture_address_mode) {
-    switch (texture_address_mode) {
-        case TextureAddressMode::WRAP:
-            return D3D_TEXTURE_ADDRESS_MODE(WRAP);
-        case TextureAddressMode::MIRROR:
-            return D3D_TEXTURE_ADDRESS_MODE(MIRROR);
-        case TextureAddressMode::CLAMP:
-            return D3D_TEXTURE_ADDRESS_MODE(CLAMP);
-        case TextureAddressMode::BORDER:
-            return D3D_TEXTURE_ADDRESS_MODE(BORDER);
-        case TextureAddressMode::MIRROR_ONCE:
-            return D3D_TEXTURE_ADDRESS_MODE(MIRROR_ONCE);
-    }
-    return D3D_TEXTURE_ADDRESS_MODE(WRAP);
 }
 #endif
 
