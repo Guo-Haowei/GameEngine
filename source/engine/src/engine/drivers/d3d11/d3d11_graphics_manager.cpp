@@ -51,7 +51,7 @@ bool D3d11GraphicsManager::InitializeImpl() {
         sampler_desc.MaxAnisotropy = 1;
         sampler_desc.MinLOD = 0;
         sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
-        sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+        sampler_desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
         auto hr = m_device->CreateSamplerState(&sampler_desc, g_sampler_state.GetAddressOf());
         DEV_ASSERT(SUCCEEDED(hr));
 

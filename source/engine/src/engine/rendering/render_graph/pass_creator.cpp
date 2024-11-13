@@ -79,31 +79,31 @@ void RenderPassCreator::AddGBufferPass() {
                                                                      // PixelFormat::D24_UNORM_S8_UINT,
                                                                      AttachmentType::DEPTH_STENCIL_2D,
                                                                      p_width, p_height),
-                                                    nearest_sampler());
+                                                    PointClampSampler());
 
     auto attachment0 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_BASE_COLOR,
                                                                     PixelFormat::R11G11B10_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
-                                                  nearest_sampler());
+                                                  PointClampSampler());
 
     auto attachment1 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_POSITION,
                                                                     PixelFormat::R16G16B16_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
-                                                  nearest_sampler());
+                                                  PointClampSampler());
 
     auto attachment2 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_NORMAL,
                                                                     PixelFormat::R16G16B16_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
-                                                  nearest_sampler());
+                                                  PointClampSampler());
 
     auto attachment3 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_MATERIAL,
                                                                     PixelFormat::R11G11B10_FLOAT,
                                                                     AttachmentType::COLOR_2D,
                                                                     p_width, p_height },
-                                                  nearest_sampler());
+                                                  PointClampSampler());
 
     RenderPassDesc desc;
     desc.name = RenderPassName::GBUFFER;
@@ -338,7 +338,7 @@ void RenderPassCreator::AddLightingPass() {
                                                                             PixelFormat::R11G11B10_FLOAT,
                                                                             AttachmentType::COLOR_2D,
                                                                             m_config.frame_width, m_config.frame_height },
-                                                          nearest_sampler());
+                                                          PointClampSampler());
 
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
@@ -509,7 +509,7 @@ void RenderPassCreator::AddBloomPass() {
                                                                  PixelFormat::R11G11B10_FLOAT,
                                                                  AttachmentType::COLOR_2D,
                                                                  width, height, false, true),
-                                                linear_clamp_sampler());
+                                                LinearClampSampler());
     }
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
@@ -577,7 +577,7 @@ void RenderPassCreator::AddTonePass() {
                                                               PixelFormat::R11G11B10_FLOAT,
                                                               AttachmentType::COLOR_2D,
                                                               width, height },
-                                            nearest_sampler());
+                                            PointClampSampler());
 
     auto gbuffer_depth = gm.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
 

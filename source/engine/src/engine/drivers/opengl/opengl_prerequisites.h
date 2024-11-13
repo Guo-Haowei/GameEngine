@@ -128,7 +128,7 @@ inline GLuint ConvertDataType(PixelFormat p_format) {
 
 inline GLenum ConvertFilter(FilterMode p_mode) {
     switch (p_mode) {
-        case FilterMode::NEAREST:
+        case FilterMode::POINT:
             return GL_NEAREST;
         case FilterMode::LINEAR:
             return GL_LINEAR;
@@ -179,16 +179,16 @@ static inline GLenum ConvertComparisonFunc(ComparisonFunc p_func) {
 };
 
 inline void SetSampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
-    glTexParameteri(p_texture_type, GL_TEXTURE_MIN_FILTER, ConvertFilter(p_desc.min));
-    glTexParameteri(p_texture_type, GL_TEXTURE_MAG_FILTER, ConvertFilter(p_desc.mag));
-    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_S, ConvertAddressMode(p_desc.mode_u));
-    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_T, ConvertAddressMode(p_desc.mode_v));
-    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_R, ConvertAddressMode(p_desc.mode_w));
+    glTexParameteri(p_texture_type, GL_TEXTURE_MIN_FILTER, ConvertFilter(p_desc.minFilter));
+    glTexParameteri(p_texture_type, GL_TEXTURE_MAG_FILTER, ConvertFilter(p_desc.magFilter));
+    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_S, ConvertAddressMode(p_desc.addressU));
+    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_T, ConvertAddressMode(p_desc.addressV));
+    glTexParameteri(p_texture_type, GL_TEXTURE_WRAP_R, ConvertAddressMode(p_desc.addressW));
 
     // @TODO: border
-    if (p_desc.mode_u == AddressMode::BORDER ||
-        p_desc.mode_v == AddressMode::BORDER ||
-        p_desc.mode_w == AddressMode::BORDER) {
+    if (p_desc.addressU == AddressMode::BORDER ||
+        p_desc.addressV == AddressMode::BORDER ||
+        p_desc.addressW == AddressMode::BORDER) {
         glTexParameterfv(p_texture_type, GL_TEXTURE_BORDER_COLOR, p_desc.border);
     }
 }

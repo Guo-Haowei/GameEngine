@@ -1,9 +1,8 @@
 /// File: gbuffer.pixel.hlsl
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
+#include "sampler.hlsl.h"
 #include "texture_binding.h"
-
-SamplerState u_sampler : register(s0);
 
 struct ps_output {
     float4 base_color : SV_TARGET0;

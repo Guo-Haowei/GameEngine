@@ -2,10 +2,8 @@
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
 #include "pbr.hlsl"
+#include "sampler.hlsl.h"
 #include "shadow.hlsl"
-
-// @TODO: fix sampler
-SamplerState u_sampler : register(s0);
 
 // @TODO: refactor shadow
 #define NUM_POINT_SHADOW_SAMPLES 20

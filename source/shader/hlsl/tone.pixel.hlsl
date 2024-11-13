@@ -1,10 +1,8 @@
 /// File: tone.pixel.hlsl
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
+#include "sampler.hlsl.h"
 #include "texture_binding.h"
-
-// @TODO: fix sampler
-SamplerState linear_clamp_sampler : register(s2);
 
 float4 main(vsoutput_uv input) : SV_TARGET {
     const float v = 1.0 / 2.0;

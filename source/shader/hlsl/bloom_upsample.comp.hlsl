@@ -1,9 +1,8 @@
 /// File: bloom_upsample.comp.hlsl
+#include "sampler.hlsl.h"
 #include "texture_binding.h"
 
 RWTexture2D<float3> g_output_image : register(u3);
-
-SamplerState linear_clamp_sampler : register(s2);
 
 [numthreads(16, 16, 1)] void main(uint3 dispatch_thread_id
                                   : SV_DISPATCHTHREADID) {

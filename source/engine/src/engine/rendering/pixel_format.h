@@ -37,6 +37,7 @@ enum class PixelFormat {
     COUNT,
 };
 
+// @TODO: refactor
 inline uint32_t channel_size(PixelFormat p_format) {
     switch (p_format) {
         case PixelFormat::R8_UINT:

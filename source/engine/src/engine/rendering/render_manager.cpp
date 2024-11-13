@@ -93,13 +93,13 @@ void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_textu
     p_texture_desc.mip_levels = 1;
 
     if (is_hdr_file) {
-        p_sampler_desc.min = p_sampler_desc.mag = FilterMode::LINEAR;
-        p_sampler_desc.mode_u = p_sampler_desc.mode_v = AddressMode::CLAMP;
+        p_sampler_desc.minFilter = p_sampler_desc.magFilter = FilterMode::LINEAR;
+        p_sampler_desc.addressU = p_sampler_desc.addressV = AddressMode::CLAMP;
     } else {
         p_texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
 
-        p_sampler_desc.min = FilterMode::MIPMAP_LINEAR;
-        p_sampler_desc.mag = FilterMode::LINEAR;
+        p_sampler_desc.minFilter = FilterMode::MIPMAP_LINEAR;
+        p_sampler_desc.magFilter = FilterMode::LINEAR;
     }
 }
 

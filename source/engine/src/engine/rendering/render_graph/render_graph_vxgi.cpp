@@ -325,7 +325,7 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
                                                                          PixelFormat::R8G8B8A8_UINT,
                                                                          AttachmentType::COLOR_2D,
                                                                          w, h },
-                                                       nearest_sampler());
+                                                       PointClampSampler());
 
     {  // environment pass
         RenderPassDesc desc;
@@ -342,7 +342,7 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
                                                                           PixelFormat::D32_FLOAT,
                                                                           AttachmentType::DEPTH_2D,
                                                                           size, size, gen_mipmap },
-                                                        nearest_sampler());
+                                                        PointClampSampler());
 
             auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
                 .color_attachments = { cube_map },
@@ -353,7 +353,7 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
         };
 
         auto brdf_image = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, 512, 512, false },
-                                                     linear_clamp_sampler());
+                                                     LinearClampSampler());
         auto brdf_subpass = manager.CreateDrawPass(DrawPassDesc{
             .color_attachments = { brdf_image },
             .exec_func = generate_brdf_func,
@@ -361,7 +361,7 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
 
         pass->AddDrawPass(brdf_subpass);
         pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_SKYBOX_CUBE_MAP, RESOURCE_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
-        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, linear_clamp_sampler(), false));
+        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, LinearClampSampler(), false));
         pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }
 
@@ -374,7 +374,7 @@ void CreateRenderGraphVxgi(RenderGraph& p_graph) {
                                                                        PixelFormat::R8_UINT,
                                                                        AttachmentType::COLOR_2D,
                                                                        w, h },
-                                                     nearest_sampler());
+                                                     PointClampSampler());
 
         RenderPassDesc desc;
         desc.name = RenderPassName::HIGHLIGHT_SELECT;
