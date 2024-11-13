@@ -19,11 +19,6 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-// @TODO: fix this
-ComPtr<ID3D11SamplerState> g_sampler_state;
-ComPtr<ID3D11SamplerState> g_shadow_sampler_state;
-ComPtr<ID3D11SamplerState> g_linear_clamp_sampler;
-
 D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
     m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
@@ -33,6 +28,7 @@ bool D3d11GraphicsManager::InitializeImpl() {
     ok = ok && CreateDevice();
     ok = ok && CreateSwapChain();
     ok = ok && CreateRenderTarget();
+    ok = ok && InitSamplers();
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get());
 
     ImGui_ImplDX11_NewFrame();
@@ -40,62 +36,6 @@ bool D3d11GraphicsManager::InitializeImpl() {
     SelectRenderGraph();
     // @TODO: refactor this
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    {
-        // @TODO: refactor sampler
-        D3D11_SAMPLER_DESC sampler_desc{};
-        sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-        sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-        sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-        sampler_desc.MaxAnisotropy = 1;
-        sampler_desc.MinLOD = 0;
-        sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
-        sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-        auto hr = m_device->CreateSamplerState(&sampler_desc, g_sampler_state.GetAddressOf());
-        DEV_ASSERT(SUCCEEDED(hr));
-
-        m_deviceContext->CSSetSamplers(0, 1, g_sampler_state.GetAddressOf());
-        m_deviceContext->PSSetSamplers(0, 1, g_sampler_state.GetAddressOf());
-    }
-    {
-        D3D11_SAMPLER_DESC sampler_desc{};
-        sampler_desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-        sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-        sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-        sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-        sampler_desc.MaxAnisotropy = 16;
-        sampler_desc.MinLOD = 0;
-        sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
-        sampler_desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-        sampler_desc.BorderColor[0] = 0.0f;
-        sampler_desc.BorderColor[1] = 0.0f;
-        sampler_desc.BorderColor[2] = 0.0f;
-        sampler_desc.BorderColor[3] = 1.0f;
-
-        auto hr = m_device->CreateSamplerState(&sampler_desc, g_shadow_sampler_state.GetAddressOf());
-        DEV_ASSERT(SUCCEEDED(hr));
-
-        m_deviceContext->CSSetSamplers(1, 1, g_sampler_state.GetAddressOf());
-        m_deviceContext->PSSetSamplers(1, 1, g_sampler_state.GetAddressOf());
-    }
-    {
-        // @TODO: refactor sampler
-        D3D11_SAMPLER_DESC sampler_desc{};
-        sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-        sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-        sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-        sampler_desc.MaxAnisotropy = 1;
-        sampler_desc.MinLOD = 0;
-        sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
-        sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-        auto hr = m_device->CreateSamplerState(&sampler_desc, g_linear_clamp_sampler.GetAddressOf());
-        DEV_ASSERT(SUCCEEDED(hr));
-
-        m_deviceContext->CSSetSamplers(2, 1, g_linear_clamp_sampler.GetAddressOf());
-        m_deviceContext->PSSetSamplers(2, 1, g_linear_clamp_sampler.GetAddressOf());
-    }
 
     m_meshes.set_description("GPU-Mesh-Allocator");
     return ok;
@@ -218,6 +158,43 @@ bool D3d11GraphicsManager::CreateRenderTarget() {
     m_swapChain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
     m_device->CreateRenderTargetView(back_buffer.Get(), nullptr, m_windowRtv.GetAddressOf());
     return true;
+}
+
+bool D3d11GraphicsManager::CreateSampler(uint32_t p_slot, D3D11_SAMPLER_DESC p_desc) {
+    ComPtr<ID3D11SamplerState> sampler_state;
+    D3D_FAIL_V(m_device->CreateSamplerState(&p_desc, sampler_state.GetAddressOf()), false);
+
+    m_deviceContext->CSSetSamplers(p_slot, 1, sampler_state.GetAddressOf());
+    m_deviceContext->PSSetSamplers(p_slot, 1, sampler_state.GetAddressOf());
+    m_samplers.emplace_back(sampler_state);
+    return true;
+}
+
+bool D3d11GraphicsManager::InitSamplers() {
+    auto FillSamplerDesc = [](const SamplerDesc& p_desc) {
+        D3D11_SAMPLER_DESC sampler_desc;
+
+        sampler_desc.Filter = d3d::Convert(p_desc.minFilter, p_desc.magFilter);
+        sampler_desc.AddressU = d3d::Convert(p_desc.addressU);
+        sampler_desc.AddressV = d3d::Convert(p_desc.addressV);
+        sampler_desc.AddressW = d3d::Convert(p_desc.addressW);
+        sampler_desc.MipLODBias = p_desc.mipLodBias;
+        sampler_desc.MaxAnisotropy = p_desc.maxAnisotropy;
+        sampler_desc.ComparisonFunc = d3d::Convert(p_desc.comparisonFunc);
+        sampler_desc.BorderColor[0] = p_desc.border[0];
+        sampler_desc.BorderColor[1] = p_desc.border[1];
+        sampler_desc.BorderColor[2] = p_desc.border[2];
+        sampler_desc.BorderColor[3] = p_desc.border[3];
+        sampler_desc.MinLOD = p_desc.minLod;
+        sampler_desc.MaxLOD = p_desc.maxLod;
+        return sampler_desc;
+    };
+
+    bool ok = true;
+#define SAMPLER_STATE(REG, NAME, DESC) ok = ok && CreateSampler(REG, FillSamplerDesc(DESC))
+#include "sampler.hlsl.h"
+#undef SAMPLER_STATE
+    return ok;
 }
 
 std::shared_ptr<ConstantBufferBase> D3d11GraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {

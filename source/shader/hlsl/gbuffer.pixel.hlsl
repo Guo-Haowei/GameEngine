@@ -1,9 +1,8 @@
 /// File: gbuffer.pixel.hlsl
 #include "cbuffer.h"
 #include "hlsl/input_output.hlsl"
+#include "sampler.hlsl.h"
 #include "texture_binding.h"
-
-SamplerState u_sampler : register(s0);
 
 struct ps_output {
     float4 base_color : SV_TARGET0;
@@ -17,7 +16,7 @@ ps_output main(vsoutput_mesh input) {
     float4 color = c_baseColor;
 
     if (c_hasBaseColorMap) {
-        color = t_baseColorMap.Sample(u_sampler, input.uv);
+        color = t_baseColorMap.Sample(s_linearMipWrapSampler, input.uv);
     }
 
     if (color.a <= 0.0) {
@@ -28,7 +27,7 @@ ps_output main(vsoutput_mesh input) {
     float roughness;
 
     if (c_hasPbrMap != 0) {
-        float3 value = t_materialMap.Sample(u_sampler, input.uv);
+        float3 value = t_materialMap.Sample(s_linearMipWrapSampler, input.uv);
         metallic = value.b;
         roughness = value.g;
     } else {

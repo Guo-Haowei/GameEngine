@@ -1,9 +1,8 @@
 /// File: bloom_setup.comp.hlsl
+#include "sampler.hlsl.h"
 #include "texture_binding.h"
 
 RWTexture2D<float3> g_output_image : register(u3);
-
-SamplerState linear_clamp_sampler : register(s2);
 
 float rgb_to_luma(float3 rgb) {
     return sqrt(dot(rgb, float3(0.299, 0.587, 0.114)));
@@ -19,7 +18,7 @@ float rgb_to_luma(float3 rgb) {
     float2 uv = float2(output_coord.x / output_image_size.x,
                        output_coord.y / output_image_size.y);
 
-    float3 color = t_bloomInputImage.SampleLevel(linear_clamp_sampler, uv, 0).rgb;
+    float3 color = t_bloomInputImage.SampleLevel(s_linearClampSampler, uv, 0).rgb;
     float luma = rgb_to_luma(color);
 
     const float THRESHOLD = 1.3;

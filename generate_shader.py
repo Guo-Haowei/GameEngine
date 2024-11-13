@@ -57,7 +57,7 @@ def generate(hlsl_source, animated):
     output_spv = 'tmp.spv'
     include_path = 'source/shader/'
 
-    spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1']
+    spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1', '-D HLSL_LANG_D3D11=1']
     generate_files = [ { 'filename': glsl_file, 'command' : spv_command } ]
     if animated:
         new_command = spv_command + ['-D HAS_ANIMATION=1']

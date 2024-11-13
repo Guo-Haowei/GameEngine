@@ -64,6 +64,8 @@ protected:
     bool CreateDevice();
     bool CreateSwapChain();
     bool CreateRenderTarget();
+    bool CreateSampler(uint32_t p_slot, D3D11_SAMPLER_DESC p_desc);
+    bool InitSamplers();
 
     Microsoft::WRL::ComPtr<ID3D11Device> m_device;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_deviceContext;
@@ -72,6 +74,7 @@ protected:
     Microsoft::WRL::ComPtr<IDXGIDevice> m_dxgiDevice;
     Microsoft::WRL::ComPtr<IDXGIAdapter> m_dxgiAdapter;
     Microsoft::WRL::ComPtr<IDXGIFactory> m_dxgiFactory;
+    std::vector<Microsoft::WRL::ComPtr<ID3D11SamplerState>> m_samplers;
 
     RIDAllocator<D3d11MeshBuffers> m_meshes;
 

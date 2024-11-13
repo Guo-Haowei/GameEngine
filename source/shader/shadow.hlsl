@@ -1,5 +1,6 @@
 /// File: shadow.hlsl
 #include "cbuffer.h"
+#include "sampler.hlsl.h"
 #include "texture_binding.h"
 
 // @TODO: refactor this part
@@ -14,10 +15,9 @@ int2 textureSizeTexture2D(Texture2D p_texture) {
     p_texture.GetDimensions(width, height);
     return int2(width, height);
 }
-SamplerState g_shadow_sampler : register(s1);
 
 float4 sampleShadow(Texture2D textureObject, float2 offset) {
-    return textureObject.Sample(g_shadow_sampler, offset);
+    return textureObject.Sample(s_shadowSampler, offset);
 }
 
 #elif defined(GLSL_LANG)
