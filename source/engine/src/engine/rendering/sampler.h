@@ -18,6 +18,7 @@ struct SamplerDesc {
         addressU = p_address_mode;
         addressV = p_address_mode;
         addressW = p_address_mode;
+        staticBorderColor = p_border_color;
         mipLodBias = p_min_lod_bias;
         maxAnisotropy = p_max_anisotropy;
         comparisonFunc = p_func;
@@ -55,6 +56,8 @@ struct SamplerDesc {
     AddressMode addressU;
     AddressMode addressV;
     AddressMode addressW;
+
+    StaticBorderColor staticBorderColor;
 
     float mipLodBias;
     uint32_t maxAnisotropy;

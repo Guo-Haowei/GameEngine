@@ -28,48 +28,8 @@ bool D3d11GraphicsManager::InitializeImpl() {
     ok = ok && CreateDevice();
     ok = ok && CreateSwapChain();
     ok = ok && CreateRenderTarget();
+    ok = ok && InitSamplers();
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get());
-
-    // @TODO: refactor his part
-    auto Convert = [](FilterMode p_min_filter, FilterMode p_mag_filter) {
-        if (p_min_filter == FilterMode::MIPMAP_LINEAR && p_mag_filter == FilterMode::MIPMAP_LINEAR) {
-            return D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        }
-        if (p_min_filter == FilterMode::POINT && p_mag_filter == FilterMode::POINT) {
-            return D3D11_FILTER_MIN_MAG_MIP_POINT;
-        }
-        if (p_min_filter == FilterMode::LINEAR && p_mag_filter == FilterMode::LINEAR) {
-            return D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
-        }
-
-        CRASH_NOW_MSG(std::format("Unknown filter {} and {}", static_cast<int>(p_min_filter), static_cast<int>(p_mag_filter)));
-        return D3D11_FILTER_MIN_MAG_MIP_POINT;
-    };
-
-    auto CreateSamplerDesc = [&](const SamplerDesc& p_desc) {
-        D3D11_SAMPLER_DESC sampler_desc;
-        // HACK:
-
-        // @TODO:
-        sampler_desc.Filter = Convert(p_desc.minFilter, p_desc.magFilter);
-        sampler_desc.AddressU = d3d::Convert(p_desc.addressU);
-        sampler_desc.AddressV = d3d::Convert(p_desc.addressV);
-        sampler_desc.AddressW = d3d::Convert(p_desc.addressW);
-        sampler_desc.MipLODBias = p_desc.mipLodBias;
-        sampler_desc.MaxAnisotropy = p_desc.maxAnisotropy;
-        sampler_desc.ComparisonFunc = d3d::Convert(p_desc.comparisonFunc);
-        sampler_desc.BorderColor[0] = p_desc.border[0];
-        sampler_desc.BorderColor[1] = p_desc.border[1];
-        sampler_desc.BorderColor[2] = p_desc.border[2];
-        sampler_desc.BorderColor[3] = p_desc.border[3];
-        sampler_desc.MinLOD = p_desc.minLod;
-        sampler_desc.MaxLOD = p_desc.maxLod;
-        return sampler_desc;
-    };
-
-#define SAMPLER_STATE(REG, NAME, DESC) ok = ok && CreateSampler(REG, CreateSamplerDesc(DESC))
-#include "sampler.hlsl.h"
-#undef SAMPLER_STATE
 
     ImGui_ImplDX11_NewFrame();
 
@@ -202,13 +162,39 @@ bool D3d11GraphicsManager::CreateRenderTarget() {
 
 bool D3d11GraphicsManager::CreateSampler(uint32_t p_slot, D3D11_SAMPLER_DESC p_desc) {
     ComPtr<ID3D11SamplerState> sampler_state;
-    HRESULT hr = m_device->CreateSamplerState(&p_desc, sampler_state.GetAddressOf());
-    DEV_ASSERT(SUCCEEDED(hr));
+    D3D_FAIL_V(m_device->CreateSamplerState(&p_desc, sampler_state.GetAddressOf()), false);
 
     m_deviceContext->CSSetSamplers(p_slot, 1, sampler_state.GetAddressOf());
     m_deviceContext->PSSetSamplers(p_slot, 1, sampler_state.GetAddressOf());
     m_samplers.emplace_back(sampler_state);
     return true;
+}
+
+bool D3d11GraphicsManager::InitSamplers() {
+    auto FillSamplerDesc = [](const SamplerDesc& p_desc) {
+        D3D11_SAMPLER_DESC sampler_desc;
+
+        sampler_desc.Filter = d3d::Convert(p_desc.minFilter, p_desc.magFilter);
+        sampler_desc.AddressU = d3d::Convert(p_desc.addressU);
+        sampler_desc.AddressV = d3d::Convert(p_desc.addressV);
+        sampler_desc.AddressW = d3d::Convert(p_desc.addressW);
+        sampler_desc.MipLODBias = p_desc.mipLodBias;
+        sampler_desc.MaxAnisotropy = p_desc.maxAnisotropy;
+        sampler_desc.ComparisonFunc = d3d::Convert(p_desc.comparisonFunc);
+        sampler_desc.BorderColor[0] = p_desc.border[0];
+        sampler_desc.BorderColor[1] = p_desc.border[1];
+        sampler_desc.BorderColor[2] = p_desc.border[2];
+        sampler_desc.BorderColor[3] = p_desc.border[3];
+        sampler_desc.MinLOD = p_desc.minLod;
+        sampler_desc.MaxLOD = p_desc.maxLod;
+        return sampler_desc;
+    };
+
+    bool ok = true;
+#define SAMPLER_STATE(REG, NAME, DESC) ok = ok && CreateSampler(REG, FillSamplerDesc(DESC))
+#include "sampler.hlsl.h"
+#undef SAMPLER_STATE
+    return ok;
 }
 
 std::shared_ptr<ConstantBufferBase> D3d11GraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {

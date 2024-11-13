@@ -65,6 +65,7 @@ protected:
     bool CreateSwapChain();
     bool CreateRenderTarget();
     bool CreateSampler(uint32_t p_slot, D3D11_SAMPLER_DESC p_desc);
+    bool InitSamplers();
 
     Microsoft::WRL::ComPtr<ID3D11Device> m_device;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> m_deviceContext;

@@ -30,6 +30,7 @@ private:
     bool CreateSwapChain(uint32_t p_width, uint32_t p_height);
     bool CreateRenderTarget(uint32_t p_width, uint32_t p_height);
     void CleanupRenderTarget();
+    void InitStaticSamplers();
 
     void BeginFrame();
     void EndFrame();
@@ -62,6 +63,7 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D12Resource> m_debugVertexData;
     Microsoft::WRL::ComPtr<ID3D12Resource> m_debugIndexData;
+    std::vector<CD3DX12_STATIC_SAMPLER_DESC> m_staticSamplers;
 
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_textures;
     std::atomic_int m_textureCounter = 1;  // slot 0 is for imgui

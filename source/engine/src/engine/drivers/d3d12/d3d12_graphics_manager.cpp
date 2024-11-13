@@ -7,6 +7,9 @@
 #include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
 
+#define INCLUDE_AS_D3D12
+#include "drivers/d3d_common/d3d_convert.h"
+
 namespace my {
 
 // @TODO: move to a common place
@@ -518,6 +521,29 @@ bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_heigh
     return true;
 }
 
+void D3d12GraphicsManager::InitStaticSamplers() {
+    auto FillSamplerDesc = [](uint32_t p_slot, const SamplerDesc& p_desc) {
+        CD3DX12_STATIC_SAMPLER_DESC sampler_desc(
+            p_slot,
+            d3d::Convert(p_desc.minFilter, p_desc.magFilter),
+            d3d::Convert(p_desc.addressU),
+            d3d::Convert(p_desc.addressV),
+            d3d::Convert(p_desc.addressW),
+            p_desc.mipLodBias,
+            p_desc.maxAnisotropy,
+            d3d::Convert(p_desc.comparisonFunc),
+            d3d::Convert(p_desc.staticBorderColor),
+            p_desc.minLod,
+            p_desc.maxLod);
+
+        return sampler_desc;
+    };
+
+#define SAMPLER_STATE(REG, NAME, DESC) m_staticSamplers.emplace_back(FillSamplerDesc(REG, DESC));
+#include "sampler.hlsl.h"
+#undef SAMPLER_STATE
+}
+
 bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
     CD3DX12_DESCRIPTOR_RANGE tex_table[64];
@@ -535,13 +561,13 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(3);
     root_parameters[param_count++].InitAsDescriptorTable(tex_count, tex_table, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    auto staticSamplers = GetStaticSamplers();
+    InitStaticSamplers();
 
     // A root signature is an array of root parameters.
     CD3DX12_ROOT_SIGNATURE_DESC root_signature_desc(param_count,
                                                     root_parameters,
-                                                    (uint32_t)staticSamplers.size(),
-                                                    staticSamplers.data(),
+                                                    (uint32_t)m_staticSamplers.size(),
+                                                    m_staticSamplers.data(),
                                                     D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
