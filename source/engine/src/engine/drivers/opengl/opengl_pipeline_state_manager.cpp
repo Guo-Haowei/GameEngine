@@ -213,8 +213,8 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const 
     // Setup texture locations
     {
         // @TODO: refactor
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImagelinear_clamp_sampler"), t_bloomInputImageSlot);
         glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImageSPIRV_Cross_DummySampler"), t_bloomInputImageSlot);
+        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImages_linearClampSampler"), t_bloomInputImageSlot);
     }
     glUseProgram(0);
     return program;
