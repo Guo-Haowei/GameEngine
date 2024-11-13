@@ -148,7 +148,7 @@ private:
     std::mutex m_lock;
 };
 
-// @TODO: refactor
+// @TODO: refactor as samplers
 static std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers() {
     // Applications usually only need a handful of samplers.  So just define them all up front
     // and keep them available as part of the root signature.

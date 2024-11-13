@@ -80,32 +80,7 @@ CBUFFER(PerPassConstantBuffer, 1) {
     mat4 _per_pass_padding_1;
 };
 
-CBUFFER(PerFrameConstantBuffer, 2) {
-    Light c_lights[MAX_LIGHT_COUNT];
-
-    int c_lightCount;
-    int c_enableBloom;
-    int c_debugCsm;
-    float c_bloomThreshold;
-
-    int c_debugVoxelId;
-    int c_noTexture;
-    int c_enableVxgi;
-    float c_texelSize;
-
-    vec3 c_cameraPosition;
-    float c_voxelSize;
-
-    vec3 c_worldCenter;
-    float c_worldSizeHalf;
-
-    vec3 _per_frame_padding_0;
-    int c_forceFieldsCount;
-
-    ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
-};
-
-CBUFFER(MaterialConstantBuffer, 3) {
+CBUFFER(MaterialConstantBuffer, 2) {
     vec4 c_baseColor;
 
     float c_metallic;
@@ -132,8 +107,35 @@ CBUFFER(MaterialConstantBuffer, 3) {
 };
 
 // @TODO: change to unordered access buffer
-CBUFFER(BoneConstantBuffer, 4) {
+CBUFFER(BoneConstantBuffer, 3) {
     mat4 c_bones[MAX_BONE_COUNT];
+};
+
+#if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
+
+CBUFFER(PerFrameConstantBuffer, 4) {
+    Light c_lights[MAX_LIGHT_COUNT];
+
+    int c_lightCount;
+    int c_enableBloom;
+    int c_debugCsm;
+    float c_bloomThreshold;
+
+    int c_debugVoxelId;
+    int c_noTexture;
+    int c_enableVxgi;
+    float c_texelSize;
+
+    vec3 c_cameraPosition;
+    float c_voxelSize;
+
+    vec3 c_worldCenter;
+    float c_worldSizeHalf;
+
+    vec3 _per_frame_padding_0;
+    int c_forceFieldsCount;
+
+    ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
 
 // @TODO: refactor name
@@ -160,7 +162,7 @@ CBUFFER(EmitterConstantBuffer, 5) {
     mat4 _emitter_padding_5;
 };
 
-#ifndef HLSL_LANG
+#if defined(GLSL_LANG) || defined(__cplusplus)
 
 CBUFFER(PerSceneConstantBuffer, 6) {
     // @TODO: remove the following
@@ -224,5 +226,7 @@ CBUFFER(EnvConstantBuffer, 9) {
     mat4 _env_padding_6;
     mat4 _env_padding_7;
 };
+
+#endif
 
 #endif

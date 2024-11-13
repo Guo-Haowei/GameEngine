@@ -2,6 +2,7 @@
 
 #include <imgui/backends/imgui_impl_dx12.h>
 
+#include "core/string/string_utils.h"
 #include "drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
@@ -48,6 +49,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
 
     ok = ok && CreateSwapChain(w, h);
     ok = ok && CreateRenderTarget(w, h);
+    ok = ok && CreateRootSignature();
 
     if (!ok) {
         // auto err = res.error();
@@ -55,8 +57,6 @@ bool D3d12GraphicsManager::InitializeImpl() {
         // return ERR_CANT_CREATE;
         return false;
     }
-
-    LoadAssets();
 
     // Create debug buffer.
     {
@@ -518,34 +518,44 @@ bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_heigh
     return true;
 }
 
-bool D3d12GraphicsManager::LoadAssets() {
+bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
-    {
-        CD3DX12_DESCRIPTOR_RANGE texTable;
-        texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-                      1,   // number of descriptors
-                      0);  // register t0
+    CD3DX12_DESCRIPTOR_RANGE tex_table[64];
+    int tex_count = 0;
 
-        CD3DX12_ROOT_PARAMETER rootParams[4];
-        rootParams[0].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
-        rootParams[1].InitAsConstantBufferView(0);
-        rootParams[2].InitAsConstantBufferView(1);
-        rootParams[3].InitAsConstantBufferView(2);
+#define SHADER_TEXTURE(TYPE, NAME, SLOT) tex_table[tex_count++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, SLOT);
+#include "texture_binding.h"
+#undef SHADER_TEXTURE
 
-        auto staticSamplers = GetStaticSamplers();
+    CD3DX12_ROOT_PARAMETER root_parameters[64]{};
+    int param_count = 0;
+    root_parameters[param_count++].InitAsConstantBufferView(0);
+    root_parameters[param_count++].InitAsConstantBufferView(1);
+    root_parameters[param_count++].InitAsConstantBufferView(2);
+    root_parameters[param_count++].InitAsConstantBufferView(3);
+    root_parameters[param_count++].InitAsDescriptorTable(tex_count, tex_table, D3D12_SHADER_VISIBILITY_PIXEL);
 
-        // A root signature is an array of root parameters.
-        CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(array_length(rootParams),
-                                                      rootParams,
-                                                      (uint32_t)staticSamplers.size(),
-                                                      staticSamplers.data(),
-                                                      D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    auto staticSamplers = GetStaticSamplers();
 
-        ComPtr<ID3DBlob> signature;
-        ComPtr<ID3DBlob> error;
-        D3D_CALL(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
-        D3D_CALL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+    // A root signature is an array of root parameters.
+    CD3DX12_ROOT_SIGNATURE_DESC root_signature_desc(param_count,
+                                                    root_parameters,
+                                                    (uint32_t)staticSamplers.size(),
+                                                    staticSamplers.data(),
+                                                    D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+    ComPtr<ID3DBlob> signature;
+    ComPtr<ID3DBlob> error;
+    // @TODO: print error
+    HRESULT hr = D3D12SerializeRootSignature(&root_signature_desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error);
+    if (FAILED(hr)) {
+        char buffer[256]{ 0 };
+        StringUtils::Sprintf(buffer, "%.*s", error->GetBufferSize(), error->GetBufferPointer());
+        LOG_ERROR("Failed to create root signature, reason {}", buffer);
+        return false;
     }
+
+    D3D_FAIL_V(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)), false);
 
     return true;
 }

@@ -25,6 +25,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateInternal(const P
         defines.push_back({ define.name, define.value });
     }
     defines.push_back({ "HLSL_LANG", "1" });
+    defines.push_back({ "HLSL_LANG_D3D11", "1" });
     defines.push_back({ nullptr, nullptr });
 
     if (!p_desc.cs.empty()) {

@@ -26,10 +26,10 @@ private:
     bool CreateDevice();
     bool EnableDebugLayer();
     bool CreateDescriptorHeaps();
+    bool CreateRootSignature();
     bool CreateSwapChain(uint32_t p_width, uint32_t p_height);
     bool CreateRenderTarget(uint32_t p_width, uint32_t p_height);
     void CleanupRenderTarget();
-    bool LoadAssets();
 
     void BeginFrame();
     void EndFrame();
