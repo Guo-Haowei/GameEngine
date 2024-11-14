@@ -4,7 +4,7 @@
 
 #include "core/framework/common_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -42,16 +42,16 @@ void RendererPanel::UpdateInternal(Scene&) {
     ImGui::Text("Debug");
     ImGui::Text("Frame rate:%.2f", ImGui::GetIO().Framerate);
     ImGui::Checkbox("show editor", (bool*)DVAR_GET_POINTER(show_editor));
-    ImGui::Checkbox("no texture", (bool*)DVAR_GET_POINTER(r_no_texture));
+    ImGui::Checkbox("no texture", (bool*)DVAR_GET_POINTER(gfx_no_texture));
 
     CollapseWindow("VXGI", []() {
-        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(r_enable_vxgi));
-        ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(r_debug_vxgi));
-        int value = DVAR_GET_INT(r_debug_vxgi_voxel);
+        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_vxgi));
+        ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_vxgi));
+        int value = DVAR_GET_INT(gfx_debug_vxgi_voxel);
         ImGui::RadioButton("lighting", &value, 0);
         ImGui::SameLine();
         ImGui::RadioButton("Normal", &value, 1);
-        DVAR_SET_INT(r_debug_vxgi_voxel, value);
+        DVAR_SET_INT(gfx_debug_vxgi_voxel, value);
     });
 
     CollapseWindow("Shadow", []() {
@@ -59,9 +59,8 @@ void RendererPanel::UpdateInternal(Scene&) {
     });
 
     CollapseWindow("Bloom", []() {
-        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(r_enable_bloom));
-        ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(r_bloom_threshold), 0.01f, 0.0f, 3.0f);
-        // ImGui::DragInt("Bloom downsample", (int*)DVAR_GET_POINTER(r_debug_bloom_downsample), 0.1f, 0, BLOOM_MIP_CHAIN_MAX - 1);
+        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_bloom));
+        ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);
     });
 }
 

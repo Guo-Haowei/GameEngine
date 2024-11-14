@@ -3,7 +3,7 @@
 #include "drivers/empty/empty_display_manager.h"
 #include "drivers/glfw/glfw_display_manager.h"
 #include "drivers/windows/win32_display_manager.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 namespace my {
 
@@ -13,7 +13,7 @@ bool DisplayManager::Initialize() {
 }
 
 std::shared_ptr<DisplayManager> DisplayManager::Create() {
-    const std::string& backend = DVAR_GET_STRING(r_backend);
+    const std::string& backend = DVAR_GET_STRING(gfx_backend);
 
     if (backend == "opengl") {
         return std::make_shared<GlfwDisplayManager>();

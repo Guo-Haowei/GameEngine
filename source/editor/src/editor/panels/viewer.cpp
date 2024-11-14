@@ -11,7 +11,7 @@
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
 #include "rendering/render_manager.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 namespace my {
 

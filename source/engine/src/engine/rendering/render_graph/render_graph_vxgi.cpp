@@ -6,7 +6,7 @@
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
@@ -25,7 +25,7 @@ void voxelization_pass_func(const DrawPass*) {
     auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
 
-    if (!DVAR_GET_BOOL(r_enable_vxgi)) {
+    if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
         return;
     }
 
@@ -55,7 +55,7 @@ void voxelization_pass_func(const DrawPass*) {
     g_albedoVoxel.clear();
     g_normalVoxel.clear();
 
-    const int voxel_size = DVAR_GET_INT(r_voxel_size);
+    const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
     glDisable(GL_BLEND);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -253,7 +253,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
 
     glBindVertexArray(g_box->vao);
 
-    const int size = DVAR_GET_INT(r_voxel_size);
+    const int size = DVAR_GET_INT(gfx_voxel_size);
     glDrawElementsInstanced(GL_TRIANGLES, g_box->indexCount, GL_UNSIGNED_INT, 0, size * size * size);
 }
 
@@ -296,11 +296,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     //     debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
     // }
 
-    // if (0) {
-    //     int level = DVAR_GET_INT(r_debug_bloom_downsample);
-    //     auto handle = GraphicsManager::singleton().findRenderTarget(static_cast<RenderTargetRe std::format("{}_{}", RT_RES_BLOOM, level))->texture->get_resident_handle();
-    //     debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 1980 / 4, 1080 / 4);
-    // }
+
 
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
         auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->texture->GetResidentHandle();
