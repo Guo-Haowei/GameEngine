@@ -7,7 +7,7 @@
 #include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
 #include "core/input/input.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 namespace my {
 
@@ -22,7 +22,7 @@ bool GlfwDisplayManager::InitializeWindow() {
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    if (DVAR_GET_BOOL(r_gpu_validation)) {
+    if (DVAR_GET_BOOL(gfx_gpu_validation)) {
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
     }
 

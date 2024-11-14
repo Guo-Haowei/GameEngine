@@ -5,7 +5,7 @@
 #include "core/math/geomath.h"
 #include "particle_defines.h"
 #include "rendering/render_manager.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
@@ -200,9 +200,9 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
 void RenderPassCreator::AddShadowPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
-    const int shadow_res = DVAR_GET_INT(r_shadow_res);
+    const int shadow_res = DVAR_GET_INT(gfx_shadow_res);
     DEV_ASSERT(math::IsPowerOfTwo(shadow_res));
-    const int point_shadow_res = DVAR_GET_INT(r_point_shadow_res);
+    const int point_shadow_res = DVAR_GET_INT(gfx_point_shadow_res);
     DEV_ASSERT(math::IsPowerOfTwo(point_shadow_res));
 
     auto shadow_map = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_SHADOW_MAP,
@@ -534,7 +534,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
     // draw billboards
 
     // HACK:
-    if (DVAR_GET_BOOL(r_debug_vxgi) && gm.GetBackend() == Backend::OPENGL) {
+    if (DVAR_GET_BOOL(gfx_debug_vxgi) && gm.GetBackend() == Backend::OPENGL) {
         // @TODO: remove
         extern void debug_vxgi_pass_func(const DrawPass* p_draw_pass);
         debug_vxgi_pass_func(p_draw_pass);

@@ -10,7 +10,7 @@
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/gpu_resource.h"
 #include "rendering/render_graph/render_graph_defines.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 #define INCLUDE_AS_D3D11
 #include "drivers/d3d_common/d3d_convert.h"

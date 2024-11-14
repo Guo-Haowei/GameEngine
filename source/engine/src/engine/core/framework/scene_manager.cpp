@@ -7,7 +7,7 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
 #include "core/os/timer.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 namespace my {
 

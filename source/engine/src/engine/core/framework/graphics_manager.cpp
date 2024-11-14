@@ -11,7 +11,7 @@
 #include "particle_defines.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 // @TODO: refactor
 #ifdef min
@@ -45,7 +45,7 @@ bool GraphicsManager::Initialize() {
 #if USING(DEBUG_BUILD)
     m_enableValidationLayer = true;
 #else
-    m_enableValidationLayer = DVAR_GET_BOOL(r_gpu_validation);
+    m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
 #endif
 
     if (!InitializeImpl()) {
@@ -100,7 +100,7 @@ void GraphicsManager::EventReceived(std::shared_ptr<Event> event) {
 }
 
 std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
-    const std::string& backend = DVAR_GET_STRING(r_backend);
+    const std::string& backend = DVAR_GET_STRING(gfx_backend);
 
     if (backend == "opengl") {
         return std::make_shared<OpenGLGraphicsManager>();
@@ -171,7 +171,7 @@ void GraphicsManager::Update(Scene& p_scene) {
 }
 
 void GraphicsManager::SelectRenderGraph() {
-    std::string method(DVAR_GET_STRING(r_render_graph));
+    std::string method(DVAR_GET_STRING(gfx_render_graph));
     if (method == "vxgi") {
         m_method = RenderGraph::VXGI;
     } else {
@@ -359,16 +359,16 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     auto& cache = g_per_frame_cache.cache;
     cache.c_cameraPosition = camera.GetPosition();
 
-    cache.c_enableVxgi = DVAR_GET_BOOL(r_enable_vxgi);
-    cache.c_debugVoxelId = DVAR_GET_INT(r_debug_vxgi_voxel);
-    cache.c_noTexture = DVAR_GET_BOOL(r_no_texture);
+    cache.c_enableVxgi = DVAR_GET_BOOL(gfx_enable_vxgi);
+    cache.c_debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
+    cache.c_noTexture = DVAR_GET_BOOL(gfx_no_texture);
 
     // Bloom
-    cache.c_bloomThreshold = DVAR_GET_FLOAT(r_bloom_threshold);
-    cache.c_enableBloom = DVAR_GET_BOOL(r_enable_bloom);
+    cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
+    cache.c_enableBloom = DVAR_GET_BOOL(gfx_enable_bloom);
 
     // @TODO: refactor the following
-    const int voxel_texture_size = DVAR_GET_INT(r_voxel_size);
+    const int voxel_texture_size = DVAR_GET_INT(gfx_voxel_size);
     DEV_ASSERT(math::IsPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
@@ -376,7 +376,7 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     vec3 aabb_size = p_scene.GetBound().Size();
     float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
 
-    const float max_world_size = DVAR_GET_FLOAT(r_vxgi_max_world_size);
+    const float max_world_size = DVAR_GET_FLOAT(gfx_vxgi_max_world_size);
     if (world_size > max_world_size) {
         world_center = camera.GetPosition();
         world_size = max_world_size;

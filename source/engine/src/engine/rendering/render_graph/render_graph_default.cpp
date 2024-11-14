@@ -1,6 +1,6 @@
 #include "core/framework/graphics_manager.h"
 #include "rendering/render_graph/pass_creator.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 namespace my::rg {
 

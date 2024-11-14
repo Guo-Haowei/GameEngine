@@ -7,7 +7,7 @@
 #include "rendering/render_graph/render_graph_defines.h"
 
 #define DEFINE_DVAR
-#include "rendering_dvars.h"
+#include "graphics_dvars.h"
 
 namespace {
 std::string s_prev_env_map;
@@ -65,7 +65,7 @@ void request_env_map(const std::string& path) {
 
 void register_rendering_dvars() {
 #define REGISTER_DVAR
-#include "rendering_dvars.h"
+#include "graphics_dvars.h"
 }
 
 void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc) {

@@ -6,7 +6,7 @@
 #include "core/input/input.h"
 #include "drivers/windows/dialog.h"
 #include "editor/editor_layer.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 
 namespace my {
 

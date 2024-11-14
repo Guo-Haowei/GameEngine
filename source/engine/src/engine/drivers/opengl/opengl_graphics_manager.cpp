@@ -10,7 +10,7 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "rendering/GpuTexture.h"
 #include "rendering/render_graph/render_graph_defines.h"
-#include "rendering/rendering_dvars.h"
+#include "rendering/graphics_dvars.h"
 #include "vsinput.glsl.h"
 
 // @TODO: remove
@@ -615,7 +615,7 @@ void OpenGLGraphicsManager::CreateGpuResources() {
     g_grass = (OpenGLMeshBuffers*)CreateMesh(MakeGrassBillboard());
     g_box = (OpenGLMeshBuffers*)CreateMesh(MakeBoxMesh());
 
-    const int voxelSize = DVAR_GET_INT(r_voxel_size);
+    const int voxelSize = DVAR_GET_INT(gfx_voxel_size);
 
     /// create voxel image
     {
