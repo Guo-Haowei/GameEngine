@@ -13,15 +13,15 @@ namespace my::thread {
 struct ThreadObject {
     const char* name;
     ThreadMainFunc threadFunc;
-    uint32_t id;
-    std::thread threadObject;
+    uint32_t id{ 0 };
+    std::thread threadObject{};
 };
 
 static thread_local uint32_t g_threadId;
 static struct {
     std::atomic_bool shutdownRequested;
     std::array<ThreadObject, THREAD_MAX> threads = {
-        ThreadObject{ "main" },
+        ThreadObject{ "main", []() {} },
         ThreadObject{ "render thread", []() {} },
         ThreadObject{ "asset thread 1", AssetManager::WorkerMain },
         // ThreadObject{ "asset thread 2", AssetManager::worker_main },
@@ -56,6 +56,7 @@ bool Initialize() {
             },
             &thread);
 
+#if USING(PLATFORM_WINDOWS)
         HANDLE handle = (HANDLE)thread.threadObject.native_handle();
 
         // @TODO: set thread affinity
@@ -66,6 +67,7 @@ bool Initialize() {
         std::wstring wname(name.begin(), name.end());
         HRESULT hr = SetThreadDescription(handle, wname.c_str());
         DEV_ASSERT(!FAILED(hr));
+#endif
     }
 
     latch.wait();

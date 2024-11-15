@@ -1,11 +1,11 @@
 // copyied from https://learnopengl.com/Guest-Articles/2022/Area-Lights
 // LTC1 is the inverse M
 // LTC2 is for (GGX norm, fresnel, 0(unused), sphere for horizon-clipping)
+WARNING_PUSH()
+WARNING_DISABLE(4305, "-Wunused-parameter")
 
 namespace my {
 
-#pragma warning(push)
-#pragma warning(disable : 4305)
 // clang-format off
 static const float s_LTC1[] = {
 	1, 0, 0, 2e-05,
@@ -8205,9 +8205,10 @@ static const float s_LTC2[] = {
 	0.932164, 0.0471899, 0, 1,
 };
 // clang-format on
-#pragma warning(pop)
 
 const float* LTC1 = s_LTC1;
 const float* LTC2 = s_LTC2;
 
 }  // namespace my
+
+WARNING_POP()

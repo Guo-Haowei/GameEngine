@@ -14,8 +14,8 @@
 #include "core/os/timer.h"
 #include "core/systems/job_system.h"
 #include "imgui/imgui.h"
-#include "rendering/render_manager.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_manager.h"
 
 #define DEFINE_DVAR
 #include "core/framework/common_dvars.h"

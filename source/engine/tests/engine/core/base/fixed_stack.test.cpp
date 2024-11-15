@@ -19,9 +19,11 @@ TEST(fixed_stack, constructor_initializer_list) {
 }
 
 TEST(fixed_stack, constructor_initializer_list_over_flow) {
+#if USING(DEBUG_BUILD)
     auto func = []() { [[maybe_unused]] FixedStack<int, 2> stack{ 1, 2, 3 }; };
 
     EXPECT_DEATH({ func(); }, "index out of range");
+#endif
 }
 
 TEST(fixed_stack, emtpy) {
@@ -77,7 +79,9 @@ TEST(fixed_stack, push_back) {
     stack.push_back(11);
     EXPECT_EQ(stack[4], 11);
 
+#if USING(DEBUG_BUILD)
     EXPECT_DEATH({ stack.push_back(12); }, "index out of range");
+#endif
 }
 
 TEST(fixed_stack, pop_back) {
@@ -89,13 +93,17 @@ TEST(fixed_stack, pop_back) {
     EXPECT_EQ(stack.back(), 1);
     stack.pop_back();
 
+#if USING(DEBUG_BUILD)
     EXPECT_DEATH({ stack.pop_back(); }, "index out of range");
+#endif
 }
 
 TEST(fixed_stack, front_and_back) {
     FixedStack<int, 5> stack;
+#if USING(DEBUG_BUILD)
     EXPECT_DEATH({ stack.front(); }, "index out of range");
     EXPECT_DEATH({ stack.back(); }, "index out of range");
+#endif
     stack.push_back(10);
     EXPECT_EQ(stack.front(), 10);
     EXPECT_EQ(stack.back(), 10);

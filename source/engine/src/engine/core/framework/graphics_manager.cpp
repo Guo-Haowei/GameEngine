@@ -4,14 +4,16 @@
 #include "core/debugger/profiler.h"
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
+#if USING(PLATFORM_WINDOWS)
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d12/d3d12_graphics_manager.h"
+#endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "particle_defines.h"
+#include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
-#include "rendering/graphics_dvars.h"
 
 // @TODO: refactor
 #ifdef min
@@ -104,11 +106,14 @@ std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
 
     if (backend == "opengl") {
         return std::make_shared<OpenGLGraphicsManager>();
-    } else if (backend == "d3d11") {
+    }
+#if USING(PLATFORM_WINDOWS)
+    else if (backend == "d3d11") {
         return std::make_shared<D3d11GraphicsManager>();
     } else if (backend == "d3d12") {
         return std::make_shared<D3d12GraphicsManager>();
     }
+#endif
     return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsmanager", Backend::EMPTY);
 }
 
@@ -495,8 +500,6 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 const vec3 extents = world_bound.Size();
                 const float size = 0.7f * glm::max(extents.x, glm::max(extents.y, extents.z));
 
-                vec3 light_up = glm::normalize(light_local_matrix * vec4(0, -1, 0, 0));
-
                 light.view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
 
                 if (GetBackend() == Backend::OPENGL) {
@@ -504,8 +507,6 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 } else {
                     light.projection_matrix = BuildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 }
-
-                mat4 light_space_matrix = light.projection_matrix * light.view_matrix;
 
                 PerPassConstantBuffer pass_constant;
                 // @TODO: Build correct matrices

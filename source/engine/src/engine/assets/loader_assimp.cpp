@@ -1,5 +1,6 @@
 #include "loader_assimp.h"
 
+#if USING(USING_ASSIMP)
 #include <assimp/pbrmaterial.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -170,3 +171,4 @@ ecs::Entity LoaderAssimp::ProcessNode(const aiNode* p_node, ecs::Entity p_parent
 }
 
 }  // namespace my
+#endif

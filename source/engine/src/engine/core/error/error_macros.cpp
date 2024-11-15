@@ -1,8 +1,7 @@
 #include "error_macros.h"
 
-#include <windows.h>
-
 #include "core/os/os.h"
+#include "drivers/windows/win32_prerequisites.h"
 
 namespace my {
 
@@ -12,9 +11,9 @@ void GlobalLock() {}
 void GlobalUnlock() {}
 
 void BreakIfDebug() {
-#if USING(DEBUG_BUILD)
+#if USING(PLATFORM_WINDOWS)
     if (IsDebuggerPresent()) {
-        __debugbreak();
+        GENERATE_TRAP();
     }
 #endif
 }

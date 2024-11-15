@@ -1,7 +1,10 @@
 #include "lua_scene_binding.h"
 
 #include "rendering/render_manager.h"
+WARNING_PUSH()
+WARNING_DISABLE(4100, "-Wunused-parameter")
 #include "sol/sol.hpp"
+WARNING_POP()
 
 namespace my {
 

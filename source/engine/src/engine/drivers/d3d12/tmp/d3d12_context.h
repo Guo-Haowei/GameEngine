@@ -48,12 +48,6 @@ protected:
 private:
     static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 
-    [[nodiscard]] auto create_device() -> std::expected<void, Error<HRESULT>>;
-    [[nodiscard]] auto enable_debug_layer() -> std::expected<void, Error<HRESULT>>;
-    [[nodiscard]] auto create_descriptor_heaps() -> std::expected<void, Error<HRESULT>>;
-    [[nodiscard]] auto create_swap_chain(uint32_t width, uint32_t height) -> std::expected<void, Error<HRESULT>>;
-    [[nodiscard]] auto create_render_target(uint32_t width, uint32_t height) -> std::expected<void, Error<HRESULT>>;
-
     void CleanupRenderTarget();
     bool LoadAssets();
 

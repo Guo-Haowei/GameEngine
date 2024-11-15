@@ -3,10 +3,10 @@
 #include "core/framework/scene_manager.h"
 #include "scene/scene.h"
 
-#pragma warning(push)
-#pragma warning(disable : 4127)
+WARNING_PUSH()
+WARNING_DISABLE(4127, "-Wunused-parameter")
 #include "bullet3/btBulletDynamicsCommon.h"
-#pragma warning(pop)
+WARNING_POP()
 
 namespace my {
 
@@ -131,7 +131,7 @@ void PhysicsManager::CleanWorld() {
         }
 
         // delete collision shapes
-        for (int j = 0; j < m_collisionShapes.size(); j++) {
+        for (size_t j = 0; j < m_collisionShapes.size(); j++) {
             btCollisionShape* shape = m_collisionShapes[j];
             m_collisionShapes[j] = 0;
             delete shape;

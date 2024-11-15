@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(MyEngine)
+project(GameEngine)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
 
@@ -28,9 +28,11 @@ add_subdirectory(thirdparty/bullet3)
 set_target_properties(bullet PROPERTIES FOLDER thirdparty)
 
 ################################################################################
-message(STATUS "Configuring optick...")
-add_subdirectory(thirdparty/optick)
-set_target_properties(optick PROPERTIES FOLDER thirdparty)
+if(NOT APPLE)
+    message(STATUS "Configuring optick...")
+    add_subdirectory(thirdparty/optick)
+    set_target_properties(optick PROPERTIES FOLDER thirdparty)
+endif()
 
 include(cmake/build-lua.cmake)
 include(cmake/build-imgui.cmake)
@@ -47,8 +49,10 @@ set_target_properties(gtest_main PROPERTIES FOLDER thirdparty)
 function(target_set_warning_level TARGET)
     if(MSVC)
         target_compile_options(${TARGET} PRIVATE /W4 /WX)
+    elseif(APPLE)
+        target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     else()
-        message(FATAL_ERROR "platform not supported")
+        message(FATAL_ERROR "Platform not supported")
     endif()
 endfunction()
 

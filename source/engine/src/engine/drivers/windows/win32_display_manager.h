@@ -1,4 +1,3 @@
-#pragma once
 #include "core/framework/display_manager.h"
 #include "core/input/input_code.h"
 #include "drivers/windows/win32_prerequisites.h"

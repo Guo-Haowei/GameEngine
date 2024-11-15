@@ -77,15 +77,19 @@ private:
     const char* m_desc;
     uint32_t m_flags;
 
+    struct Vec4f {
+        float x, y, z, w;
+    };
+
+    struct Vec4i {
+        int x, y, z, w;
+    };
+
     union {
         int m_int;
         float m_float;
-        struct {
-            float x, y, z, w;
-        } m_vec;
-        struct {
-            int x, y, z, w;
-        } m_ivec;
+        Vec4f m_vec;
+        Vec4i m_ivec;
     };
     std::string m_string;
     std::string m_name;

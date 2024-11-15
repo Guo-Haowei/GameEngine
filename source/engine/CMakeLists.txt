@@ -6,10 +6,25 @@ file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.natvis"
 )
+set(FILTERED_SRC "")
 
-add_library(${TARGET_NAME} STATIC ${SRC})
+foreach(file ${SRC})
+    if(WIN32)
+        list(APPEND FILTERED_SRC ${file})
+    elseif(APPLE)
+        if(file MATCHES "d3d" OR file MATCHES "windows" )
+            # message("- ${file}")
+        else()
+            list(APPEND FILTERED_SRC ${file})
+        endif()
+    else()
+        message(FATAL_ERROR "Platform not supported")
+    endif()
+endforeach()
 
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src/engine FILES ${SRC})
+add_library(${TARGET_NAME} STATIC ${FILTERED_SRC})
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src/engine FILES ${FILTERED_SRC})
 
 target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/assimp/include
@@ -31,18 +46,25 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
     -DROOT_FOLDER="${PROJECT_SOURCE_DIR}/"
 )
 
-target_link_libraries(${TARGET_NAME} PUBLIC
+set(TARGET_LIBS 
     imgui
     glfw
     glad
     lua
     bullet
-    optick
-    d3d11.lib
-    d3d12.lib
-    dxgi.lib
-    d3dcompiler.lib
 )
+
+if(WIN32)
+    list(APPEND TARGET_LIBS
+        optick
+        d3d11.lib
+        d3d12.lib
+        dxgi.lib
+        d3dcompiler.lib
+    )
+endif()
+
+target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
 
 target_set_warning_level(${TARGET_NAME})
 

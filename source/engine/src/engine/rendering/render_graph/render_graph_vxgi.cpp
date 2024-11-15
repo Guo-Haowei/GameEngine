@@ -3,10 +3,10 @@
 #include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
+#include "rendering/graphics_dvars.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
-#include "rendering/graphics_dvars.h"
 
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
@@ -199,7 +199,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGLCubeMapViewMatrices(vec3(0.0f));
-    const uint32_t max_mip_levels = 5;
+    constexpr int max_mip_levels = 5;
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
@@ -295,8 +295,6 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     //     auto handle = GraphicsManager::singleton().findRenderTarget(RESOURCE_BRDF)->texture->get_resident_handle();
     //     debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
     // }
-
-
 
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
         auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->texture->GetResidentHandle();

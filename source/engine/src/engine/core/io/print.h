@@ -1,18 +1,18 @@
 #pragma once
 #include "core/math/math.h"
 
-#define LOG_VERBOSE(FMT, ...)   ::my::LogImpl(::my::LOG_LEVEL_VERBOSE, FMT, ##__VA_ARGS__)
-#define LOG(FMT, ...)           ::my::LogImpl(::my::LOG_LEVEL_NORMAL, FMT, ##__VA_ARGS__)
-#define LOG_OK(FMT, ...)        ::my::LogImpl(::my::LOG_LEVEL_OK, FMT, ##__VA_ARGS__)
-#define LOG_WARN(FMT, ...)      ::my::LogImpl(::my::LOG_LEVEL_WARN, FMT, ##__VA_ARGS__)
-#define LOG_ERROR(FMT, ...)     ::my::LogImpl(::my::LOG_LEVEL_ERROR, FMT, ##__VA_ARGS__)
-#define LOG_FATAL(FMT, ...)     ::my::LogImpl(::my::LOG_LEVEL_FATAL, FMT, ##__VA_ARGS__)
-#define PRINT_VERBOSE(FMT, ...) ::my::PrintImpl(::my::LOG_LEVEL_VERBOSE, FMT, ##__VA_ARGS__)
-#define PRINT(FMT, ...)         ::my::PrintImpl(::my::LOG_LEVEL_NORMAL, FMT, ##__VA_ARGS__)
-#define PRINT_OK(FMT, ...)      ::my::PrintImpl(::my::LOG_LEVEL_OK, FMT, ##__VA_ARGS__)
-#define PRINT_WARN(FMT, ...)    ::my::PrintImpl(::my::LOG_LEVEL_WARN, FMT, ##__VA_ARGS__)
-#define PRINT_ERROR(FMT, ...)   ::my::PrintImpl(::my::LOG_LEVEL_ERROR, FMT, ##__VA_ARGS__)
-#define PRINT_FATAL(FMT, ...)   ::my::PrintImpl(::my::LOG_LEVEL_FATAL, FMT, ##__VA_ARGS__)
+#define LOG_VERBOSE(...)   ::my::LogImpl(::my::LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define LOG(...)           ::my::LogImpl(::my::LOG_LEVEL_NORMAL, __VA_ARGS__)
+#define LOG_OK(...)        ::my::LogImpl(::my::LOG_LEVEL_OK, __VA_ARGS__)
+#define LOG_WARN(...)      ::my::LogImpl(::my::LOG_LEVEL_WARN, __VA_ARGS__)
+#define LOG_ERROR(...)     ::my::LogImpl(::my::LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LOG_FATAL(...)     ::my::LogImpl(::my::LOG_LEVEL_FATAL, __VA_ARGS__)
+#define PRINT_VERBOSE(...) ::my::PrintImpl(::my::LOG_LEVEL_VERBOSE, __VA_ARGS__)
+#define PRINT(...)         ::my::PrintImpl(::my::LOG_LEVEL_NORMAL, __VA_ARGS__)
+#define PRINT_OK(...)      ::my::PrintImpl(::my::LOG_LEVEL_OK, __VA_ARGS__)
+#define PRINT_WARN(...)    ::my::PrintImpl(::my::LOG_LEVEL_WARN, __VA_ARGS__)
+#define PRINT_ERROR(...)   ::my::PrintImpl(::my::LOG_LEVEL_ERROR, __VA_ARGS__)
+#define PRINT_FATAL(...)   ::my::PrintImpl(::my::LOG_LEVEL_FATAL, __VA_ARGS__)
 
 namespace my {
 

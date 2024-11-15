@@ -3,10 +3,20 @@
 A GameEngine
 
 ## Build
+
+### Windows
 ```shell
-$ sh build-assimp.sh
+$ sh build_assimp.bat
 $ mkdir build && cd build
 $ cmake ..
+$ cmake --build . --config Debug
+```
+
+### MacOS
+```shell
+$ sh build_assimp.sh
+$ mkdir build && cd build
+$ cmake -G Xcode ..
 $ cmake --build . --config Debug
 ```
 

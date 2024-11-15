@@ -1,4 +1,3 @@
-#pragma once
 #include "graph.h"
 
 namespace my {
@@ -82,19 +81,6 @@ void Graph::remove_redundant() {
             }
         }
     }
-}
-
-std::vector<int> Graph::sort() const {
-    std::vector<int> sorted;
-    sorted.reserve(m_num_vertex);
-    for (int i = 0; i < m_num_vertex; ++i) {
-        sorted.emplace_back(i);
-    }
-
-    std::sort(sorted.begin(), sorted.end(), [this](const int& a, const int& b) {
-        return is_reachable(a, b);
-    });
-    return sorted;
 }
 
 std::vector<std::vector<int>> Graph::build_level() const {

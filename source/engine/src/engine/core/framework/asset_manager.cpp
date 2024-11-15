@@ -8,8 +8,8 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "lua_binding/lua_scene_binding.h"
-#include "rendering/render_manager.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_manager.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -60,7 +60,9 @@ public:
 };
 
 bool AssetManager::Initialize() {
+#if USING(USING_ASSIMP)
     Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
+#endif
     Loader<Scene>::RegisterLoader(".gltf", LoaderTinyGLTF::Create);
     Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::Create);
     Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::Create);

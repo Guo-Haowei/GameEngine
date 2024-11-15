@@ -10,7 +10,7 @@ build_job:
   stage: build
   script:
     - echo "Building the project..."
-    - .\build-assimp.bat
+    - .\build_assimp.bat
     - .\ci-scripts\build_job.bat
   artifacts:
     paths:

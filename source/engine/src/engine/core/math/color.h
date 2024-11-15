@@ -12,18 +12,9 @@ enum ColorCode : uint32_t {
 };
 
 struct Color {
-#pragma warning(push)
-#pragma warning(disable : 4201)
-    union {
-        struct
-        {
-            float r, g, b, a;
-        };
-        float components[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    };
-#pragma warning(pop)
+    float r, g, b, a;
 
-    constexpr Color() = default;
+    constexpr Color() : r(0.0f), g(0.0f), b(0.0f), a(1.0f) {}
     constexpr Color(float p_red, float p_green, float p_blue, float p_alpha) : r(p_red), g(p_green), b(p_blue), a(p_alpha) {}
     constexpr Color(float p_red, float p_green, float p_blue) : Color(p_red, p_green, p_blue, 1.0f) {}
 
