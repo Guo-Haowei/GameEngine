@@ -13,12 +13,30 @@
 #define RELEASE_BUILD IN_USE
 #endif
 
+#if defined(WIN32) || defined(_WIN32)
+#define PLATFORM_WINDOWS IN_USE
+#define PLATFORM_MACOS   NOT_IN_USE
+#elif defined(__APPLE__)
+#define PLATFORM_WINDOWS NOT_IN_USE
+#define PLATFORM_MACOS   IN_USE
+#else
+#error Platform not supported
+#endif
+
 #if USING(DEBUG_BUILD)
 #define DISABLE_OPTIMIZATION() static_assert(0, "DISABLE_OPTIMIZATION() should not been used width DEBUG_BUILD")
 #define ENABLE_OPTIMIZATION()  static_assert(0, "ENABLE_OPTIMIZATION() should not been used width DEBUG_BUILD")
 #else
 #define DISABLE_OPTIMIZATION() __pragma(optimize("", off))
 #define ENABLE_OPTIMIZATION()  __pragma(optimize("", on))
+#endif
+
+#if USING(PLATFORM_WINDOWS)
+#define GENERATE_TRAP() __debugbreak()
+#elif USING(PLATFORM_MACOS)
+#define GENERATE_TRAP() __breakpoint(42)
+#else
+#error Platform not supported
 #endif
 
 #ifdef _STR

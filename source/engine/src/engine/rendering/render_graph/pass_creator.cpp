@@ -4,8 +4,8 @@
 #include "core/framework/graphics_manager.h"
 #include "core/math/geomath.h"
 #include "particle_defines.h"
-#include "rendering/render_manager.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_manager.h"
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"

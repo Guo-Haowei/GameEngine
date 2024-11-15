@@ -8,8 +8,8 @@
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "lua_binding/lua_scene_binding.h"
-#include "rendering/render_manager.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_manager.h"
 #include "scene/scene.h"
 
 namespace my {

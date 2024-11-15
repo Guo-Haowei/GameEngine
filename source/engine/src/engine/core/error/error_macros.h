@@ -4,12 +4,6 @@
 
 namespace my {
 
-#ifdef _MSC_VER
-#define GENERATE_TRAP() __debugbreak()
-#else
-#error "compiler not supported"
-#endif
-
 void BreakIfDebug();
 
 using ErrorHandlerFunc = void (*)(void* p_user_data,

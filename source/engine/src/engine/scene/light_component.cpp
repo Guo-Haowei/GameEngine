@@ -25,7 +25,7 @@ void LightComponent::Update(const TransformComponent& p_transform) {
 
             float discriminant = b * b - 4 * a * c;
             if (discriminant < 0.0f) {
-                __debugbreak();
+                CRASH_NOW_MSG("TODO: fix");
             }
 
             float sqrt_d = glm::sqrt(discriminant);

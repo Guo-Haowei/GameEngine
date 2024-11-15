@@ -9,9 +9,9 @@
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "particle_defines.h"
+#include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
-#include "rendering/graphics_dvars.h"
 
 // @TODO: refactor
 #ifdef min

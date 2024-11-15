@@ -14,7 +14,7 @@ void GlobalUnlock() {}
 void BreakIfDebug() {
 #if USING(DEBUG_BUILD)
     if (IsDebuggerPresent()) {
-        __debugbreak();
+        GENERATE_TRAP();
     }
 #endif
 }
