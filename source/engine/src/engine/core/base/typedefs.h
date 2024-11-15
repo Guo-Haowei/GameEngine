@@ -43,8 +43,8 @@
 #elif defined(__clang__)
 #define WARNING_PUSH()        _Pragma("clang diagnostic push")
 #define WARNING_POP()         _Pragma("clang diagnostic pop")
-#define DO_PRAGMA_(x) _Pragma (#x)
-#define DO_PRAGMA(x) DO_PRAGMA_(x)
+#define DO_PRAGMA_(x)         _Pragma(#x)
+#define DO_PRAGMA(x)          DO_PRAGMA_(x)
 #define WARNING_DISABLE(a, b) DO_PRAGMA(clang diagnostic ignored b)
 #else
 #error Compiler not supported!
