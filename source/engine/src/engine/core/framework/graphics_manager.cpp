@@ -12,6 +12,7 @@
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "particle_defines.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
 
@@ -177,28 +178,35 @@ void GraphicsManager::Update(Scene& p_scene) {
 
 void GraphicsManager::SelectRenderGraph() {
     std::string method(DVAR_GET_STRING(gfx_render_graph));
-    if (method == "vxgi") {
-        m_method = RenderGraph::VXGI;
+    const std::map<std::string, RenderGraphName> lookup = {
+        { "dummy", RenderGraphName::DUMMY },
+        { "vxgi", RenderGraphName::VXGI },
+    };
+
+    auto it = lookup.find(method);
+    if (it == lookup.end()) {
+        m_method = RenderGraphName::DEFAULT;
     } else {
-        m_method = RenderGraph::DEFAULT;
+        m_method = it->second;
     }
 
     // force to default
-    if (m_backend == Backend::D3D11) {
-        m_method = RenderGraph::DEFAULT;
+    if (m_backend == Backend::D3D11 && m_method == RenderGraphName::VXGI) {
+        m_method = RenderGraphName::DEFAULT;
     }
     if (m_backend == Backend::D3D12) {
-        m_method = RenderGraph::EMPTY;
+        m_method = RenderGraphName::DUMMY;
     }
 
     switch (m_method) {
-        case RenderGraph::EMPTY:
+        case RenderGraphName::DUMMY:
+            rg::RenderPassCreator::CreateDummy(m_renderGraph);
             break;
-        case RenderGraph::VXGI:
-            CreateRenderGraphVxgi(m_renderGraph);
+        case RenderGraphName::VXGI:
+            rg::RenderPassCreator::CreateVxgi(m_renderGraph);
             break;
         default:
-            CreateRenderGraphDefault(m_renderGraph);
+            rg::RenderPassCreator::CreateDefault(m_renderGraph);
             break;
     }
 }
@@ -281,12 +289,13 @@ std::shared_ptr<RenderTarget> GraphicsManager::FindRenderTarget(RenderTargetReso
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_method) {
-        case RenderGraph::EMPTY:
+        case RenderGraphName::DUMMY:
+            texture = FindRenderTarget(RESOURCE_GBUFFER_BASE_COLOR)->texture.get();
             break;
-        case RenderGraph::VXGI:
+        case RenderGraphName::VXGI:
             texture = FindRenderTarget(RESOURCE_FINAL)->texture.get();
             break;
-        case RenderGraph::DEFAULT:
+        case RenderGraphName::DEFAULT:
             texture = FindRenderTarget(RESOURCE_TONE)->texture.get();
             break;
         default:

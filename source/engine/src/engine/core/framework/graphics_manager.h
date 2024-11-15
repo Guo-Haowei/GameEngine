@@ -95,9 +95,9 @@ class GraphicsManager : public Singleton<GraphicsManager>, public Module, public
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
 
-    enum class RenderGraph : uint8_t {
-        EMPTY,
-        DEFAULT,
+    enum class RenderGraphName : uint8_t {
+        DEFAULT = 0,
+        DUMMY,
         VXGI,
     };
 
@@ -180,7 +180,7 @@ protected:
     virtual bool InitializeImpl() = 0;
 
     const Backend m_backend;
-    RenderGraph m_method = RenderGraph::DEFAULT;
+    RenderGraphName m_method;
     bool m_enableValidationLayer;
     // @TODO: cache
     PipelineStateName m_lastPipelineName = PIPELINE_STATE_MAX;

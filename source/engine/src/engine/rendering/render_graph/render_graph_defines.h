@@ -96,14 +96,3 @@ static inline const char* RenderTargetResourceNameToString(RenderTargetResourceN
 }
 
 }  // namespace my
-
-namespace my::rg {
-
-class RenderGraph;
-
-void CreateRenderGraphDefault(RenderGraph& p_graph);
-void CreateRenderGraphVxgi(RenderGraph& p_graph);
-// @TODO: add this
-void CreateRenderGraphPathTracer(RenderGraph& p_graph);
-
-}  // namespace my::rg

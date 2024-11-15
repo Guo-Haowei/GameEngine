@@ -162,12 +162,14 @@ public:
             return;
         }
 
-        CRASH_NOW_MSG("TODO: make block invalid, instead of erase it");
+        CRASH_NOW_MSG("TODO: fix it");
+#if 0
         size_t index = it->second;
         m_lookup.erase(it);
         DEV_ASSERT_INDEX(index, m_entityArray.size());
         m_entityArray.erase(m_entityArray.begin() + index);
         m_componentArray.erase(m_componentArray.begin() + index);
+#endif
     }
 
     bool Contains(const Entity& p_entity) const override {
