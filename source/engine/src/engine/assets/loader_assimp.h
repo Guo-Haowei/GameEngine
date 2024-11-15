@@ -1,4 +1,7 @@
 #pragma once
+#define USING_ASSIMP USE_IF(USING(PLATFORM_WINDOWS))
+
+#if USING(USING_ASSIMP)
 #include "assets/loader.h"
 #include "scene/scene.h"
 
@@ -33,3 +36,4 @@ protected:
 };
 
 }  // namespace my
+#endif

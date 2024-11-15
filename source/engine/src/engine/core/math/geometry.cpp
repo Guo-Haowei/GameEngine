@@ -461,7 +461,7 @@ MeshComponent MakeGrassBillboard(const vec3& p_scale) {
         vec4 normal = rotation * vec4{ 0, 0, 1, 0 };
 
         uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
-        for (int j = 0; j < points.size(); ++j) {
+        for (size_t j = 0; j < points.size(); ++j) {
             mesh.positions.emplace_back(rotation * points[j]);
             mesh.normals.emplace_back(normal);
             mesh.texcoords_0.emplace_back(uvs[j]);

@@ -1,14 +1,14 @@
 #pragma once
 
-#pragma warning(push)
-#pragma warning(disable : 4201)
+WARNING_PUSH()
+WARNING_DISABLE(4201, "")
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/vector_angle.hpp>
-#pragma warning(pop)
+WARNING_POP()
 
 using glm::vec2;
 using glm::vec3;

@@ -6,7 +6,6 @@ namespace my {
 class RID {
 public:
     constexpr RID() = default;
-    constexpr RID(const RID& rhs) : m_id(rhs.m_id) {}
 
     bool is_valid() const { return m_id != 0; }
     bool is_null() const { return m_id == 0; }
@@ -20,7 +19,7 @@ public:
     }
 
 private:
-    uint64_t m_id = 0;
+    uint64_t m_id{ 0 };
 
     friend class RIDAllocatorBase;
 };

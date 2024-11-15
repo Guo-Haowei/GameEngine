@@ -1,4 +1,4 @@
-#include "Scene.h"
+#include "scene.h"
 
 #include "core/io/archive.h"
 #include "core/math/geometry.h"
@@ -653,7 +653,7 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
     RayIntersectionResult result;
 
     // @TODO: box collider
-    for (int object_idx = 0; object_idx < GetCount<ObjectComponent>(); ++object_idx) {
+    for (size_t object_idx = 0; object_idx < GetCount<ObjectComponent>(); ++object_idx) {
         Entity entity = GetEntity<ObjectComponent>(object_idx);
         if (RayObjectIntersect(entity, p_ray)) {
             result.entity = entity;

@@ -28,9 +28,11 @@ add_subdirectory(thirdparty/bullet3)
 set_target_properties(bullet PROPERTIES FOLDER thirdparty)
 
 ################################################################################
-message(STATUS "Configuring optick...")
-add_subdirectory(thirdparty/optick)
-set_target_properties(optick PROPERTIES FOLDER thirdparty)
+if(NOT APPLE)
+    message(STATUS "Configuring optick...")
+    add_subdirectory(thirdparty/optick)
+    set_target_properties(optick PROPERTIES FOLDER thirdparty)
+endif()
 
 include(cmake/build-lua.cmake)
 include(cmake/build-imgui.cmake)
@@ -50,7 +52,7 @@ function(target_set_warning_level TARGET)
     elseif(APPLE)
         target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra -Wpedantic -Werror)
     else()
-        message(FATAL_ERROR "platform not supported")
+        message(FATAL_ERROR "Platform not supported")
     endif()
 endfunction()
 

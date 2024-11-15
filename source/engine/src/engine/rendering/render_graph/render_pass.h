@@ -19,7 +19,7 @@ public:
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
 protected:
-    virtual void CreateInternal(RenderPassDesc& pass_desc);
+    void CreateInternal(RenderPassDesc& pass_desc);
 
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;

@@ -1,4 +1,3 @@
-#pragma once
 #include "GpuTexture.h"
 
 #include "core/framework/asset_manager.h"

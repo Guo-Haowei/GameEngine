@@ -294,7 +294,7 @@ public:
 private:
     std::unordered_map<std::string, LibraryEntry> m_entries;
 
-    friend class Scene;
+    friend class ::my::Scene;
 };
 
 }  // namespace my::ecs

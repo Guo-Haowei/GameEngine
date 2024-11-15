@@ -60,8 +60,7 @@ void CameraController::Move(float p_delta_time, Camera& p_camera) {
         return rotate_x || rotate_y;
     };
 
-    bool dirty = translate_camera() | rotate_camera();
-    if (dirty) {
+    if (translate_camera() || rotate_camera()) {
         p_camera.SetDirty();
     }
 }

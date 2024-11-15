@@ -1,5 +1,6 @@
-#pragma once
 #include "graph.h"
+
+#include <algorithm>
 
 namespace my {
 

@@ -2,7 +2,9 @@
 
 #include "drivers/empty/empty_display_manager.h"
 #include "drivers/glfw/glfw_display_manager.h"
+#if USING(PLATFORM_WINDOWS)
 #include "drivers/windows/win32_display_manager.h"
+#endif
 #include "rendering/graphics_dvars.h"
 
 namespace my {
@@ -17,9 +19,12 @@ std::shared_ptr<DisplayManager> DisplayManager::Create() {
 
     if (backend == "opengl") {
         return std::make_shared<GlfwDisplayManager>();
-    } else if (backend == "d3d11" || backend == "d3d12") {
+    }
+#if USING(PLATFORM_WINDOWS)
+    else if (backend == "d3d11" || backend == "d3d12") {
         return std::make_shared<Win32DisplayManager>();
     }
+#endif
 
     return std::make_shared<EmptyDisplayManager>();
 }

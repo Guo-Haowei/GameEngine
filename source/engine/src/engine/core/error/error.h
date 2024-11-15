@@ -99,7 +99,7 @@ private:
 };
 
 // @TODO: rename
-#define VCT_ERROR(VALUE, ...) std::unexpected(::my::Error(__FILE__, __FUNCTION__, __LINE__, VALUE, ##__VA_ARGS__))
+#define VCT_ERROR(...) std::unexpected(::my::Error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__))
 ;
 const char* ErrorToString(ErrorCode p_error);
 

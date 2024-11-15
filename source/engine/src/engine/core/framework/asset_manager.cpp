@@ -60,7 +60,9 @@ public:
 };
 
 bool AssetManager::Initialize() {
+#if USING(USING_ASSIMP)
     Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
+#endif
     Loader<Scene>::RegisterLoader(".gltf", LoaderTinyGLTF::Create);
     Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::Create);
     Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::Create);

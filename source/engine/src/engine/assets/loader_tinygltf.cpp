@@ -7,11 +7,11 @@
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NOEXCEPTION
 
-#pragma warning(push)
-#pragma warning(disable : 4018)
-#pragma warning(disable : 4267)
+WARNING_PUSH()
+WARNING_DISABLE(4018, "-Wconversion")
+WARNING_DISABLE(4267, "-Wconversion")
 #include "tinygltf/tiny_gltf.h"
-#pragma warning(pop)
+WARNING_POP()
 
 namespace tinygltf {
 
@@ -182,16 +182,16 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
         auto baseColorTexture = x.values.find("baseColorTexture");
         auto metallicRoughnessTexture = x.values.find("metallicRoughnessTexture");
         auto baseColorFactor = x.values.find("baseColorFactor");
-        auto roughnessFactor = x.values.find("roughnessFactor");
-        auto metallicFactor = x.values.find("metallicFactor");
+        // auto roughnessFactor = x.values.find("roughnessFactor");
+        // auto metallicFactor = x.values.find("metallicFactor");
 
         // common workflow:
         auto normalTexture = x.additionalValues.find("normalTexture");
-        auto emissiveTexture = x.additionalValues.find("emissiveTexture");
-        auto occlusionTexture = x.additionalValues.find("occlusionTexture");
-        auto emissiveFactor = x.additionalValues.find("emissiveFactor");
-        auto alphaCutoff = x.additionalValues.find("alphaCutoff");
-        auto alphaMode = x.additionalValues.find("alphaMode");
+        // auto emissiveTexture = x.additionalValues.find("emissiveTexture");
+        // auto occlusionTexture = x.additionalValues.find("occlusionTexture");
+        // auto emissiveFactor = x.additionalValues.find("emissiveFactor");
+        // auto alphaCutoff = x.additionalValues.find("alphaCutoff");
+        // auto alphaMode = x.additionalValues.find("alphaMode");
 
         if (baseColorFactor != x.values.end()) {
             const auto& number_array = baseColorFactor->second.number_array;
@@ -297,7 +297,7 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
     // Create armature-bone mappings:
     int armatureIndex = 0;
     for (const auto& skin : m_model->skins) {
-        ecs::Entity armature_id = m_scene->GetEntity<ArmatureComponent>(armatureIndex);
+        //        ecs::Entity armature_id = m_scene->GetEntity<ArmatureComponent>(armatureIndex);
         ArmatureComponent& armature = m_scene->m_ArmatureComponents.GetComponent(armatureIndex++);
 
         const size_t jointCount = skin.joints.size();
@@ -335,7 +335,7 @@ void LoaderTinyGLTF::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
         }
         subset.material_id = m_scene->GetEntity<MaterialComponent>(glm::max(0, prim.material));
 
-        const size_t index_remap[] = { 0, 1, 2 };
+        //        const size_t index_remap[] = { 0, 1, 2 };
         uint32_t vertexOffset = (uint32_t)mesh.normals.size();
 
         if (prim.indices >= 0) {
