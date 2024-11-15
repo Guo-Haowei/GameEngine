@@ -1,6 +1,5 @@
 #include "d3d11_graphics_manager.h"
 
-#include <dxgi.h>
 #include <imgui/backends/imgui_impl_dx11.h>
 
 #include "drivers/d3d11/d3d11_helpers.h"
@@ -34,6 +33,7 @@ bool D3d11GraphicsManager::InitializeImpl() {
     ImGui_ImplDX11_NewFrame();
 
     SelectRenderGraph();
+
     // @TODO: refactor this
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

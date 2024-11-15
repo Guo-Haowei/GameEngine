@@ -14,8 +14,8 @@ class OpenGLGraphicsManager : public GraphicsManager {
 public:
     OpenGLGraphicsManager();
 
-    bool InitializeImpl() final;
     void Finalize() final;
+    void Render() final;
 
     void SetStencilRef(uint32_t p_ref) final;
 
@@ -50,10 +50,11 @@ public:
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) final;
 
 protected:
+    bool InitializeImpl() final;
+
     void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int, int) final {}
     void SetPipelineStateImpl(PipelineStateName p_name) final;
-    void Render() final;
 
     void CreateGpuResources();
 

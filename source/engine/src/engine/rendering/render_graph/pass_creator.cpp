@@ -76,7 +76,6 @@ void RenderPassCreator::AddGBufferPass() {
     // @TODO: decouple sampler and render target
     auto gbuffer_depth = manager.CreateRenderTarget(RenderTargetDesc(RESOURCE_GBUFFER_DEPTH,
                                                                      PixelFormat::R24G8_TYPELESS,
-                                                                     // PixelFormat::D24_UNORM_S8_UINT,
                                                                      AttachmentType::DEPTH_STENCIL_2D,
                                                                      p_width, p_height),
                                                     PointClampSampler());
@@ -589,6 +588,7 @@ void RenderPassCreator::AddTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
+/// Create pre-defined passes
 void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;

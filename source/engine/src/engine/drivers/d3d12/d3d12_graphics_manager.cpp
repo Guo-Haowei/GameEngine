@@ -18,7 +18,7 @@ static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOA
 
 using Microsoft::WRL::ComPtr;
 
-D3d12GraphicsManager::D3d12GraphicsManager() : EmptyGraphicsManager("D3d12GraphicsManager", Backend::D3D12) {
+D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsManager", Backend::D3D12) {
     m_pipelineStateManager = std::make_shared<D3d12PipelineStateManager>();
 }
 
@@ -114,6 +114,9 @@ void D3d12GraphicsManager::Render() {
     BeginFrame();
 
     ID3D12GraphicsCommandList* cmdList = m_graphicsContext.m_commandList.Get();
+
+    m_renderGraph.Execute();
+
     // CommandList cmd = 0;
     // FrameContext* frameContext = m_currentFrameContext;
     // DEV_ASSERT(draw_data.batchConstants.size() <= 3000);
@@ -301,6 +304,99 @@ void D3d12GraphicsManager::Render() {
     D3D_CALL(m_swap_chain->Present(1, 0));  // Present with vsync
     m_graphicsContext.MoveToNextFrame();
 }
+
+// @TODO: remove
+WARNING_PUSH()
+WARNING_DISABLE(4100, "-Wunused-parameter")
+void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
+}
+
+void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+}
+
+void D3d12GraphicsManager::UnsetRenderTarget() {
+}
+
+void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
+}
+
+void D3d12GraphicsManager::SetViewport(const Viewport& p_viewport) {
+}
+
+const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
+    return nullptr;
+}
+
+void D3d12GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
+}
+
+void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
+}
+
+void D3d12GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+}
+
+void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+}
+
+void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+}
+
+std::shared_ptr<GpuStructuredBuffer> D3d12GraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
+    return nullptr;
+}
+
+void D3d12GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    CRASH_NOW_MSG("Implement");
+}
+
+void D3d12GraphicsManager::UnbindStructuredBuffer(int p_slot) {
+    CRASH_NOW_MSG("Implement");
+}
+
+void D3d12GraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    CRASH_NOW_MSG("Implement");
+}
+
+void D3d12GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
+    CRASH_NOW_MSG("Implement");
+}
+
+std::shared_ptr<ConstantBufferBase> D3d12GraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
+    CRASH_NOW_MSG("Implement");
+    return nullptr;
+}
+
+void D3d12GraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) {
+    CRASH_NOW_MSG("Implement");
+}
+
+void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+    CRASH_NOW_MSG("Implement");
+}
+
+std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+    unused(p_sampler_desc);
+
+    // @TODO: create texture
+    CRASH_NOW_MSG("Implement");
+    return nullptr;
+}
+
+void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+    CRASH_NOW_MSG("Implement");
+}
+
+void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
+    CRASH_NOW_MSG("Implement");
+}
+
+std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc&) {
+    CRASH_NOW_MSG("Implement");
+    return nullptr;
+}
+
+WARNING_POP()
 
 bool D3d12GraphicsManager::CreateDevice() {
     if (m_enableValidationLayer) {
@@ -586,6 +682,11 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     return true;
 }
 
+void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {
+    unused(p_scene);
+    CRASH_NOW();
+}
+
 void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
     if (m_swap_chain) {
         m_graphicsContext.Flush();
@@ -597,6 +698,11 @@ void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
 
         [[maybe_unused]] auto err = CreateRenderTarget(p_width, p_height);
     }
+}
+
+void D3d12GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
+    unused(p_name);
+    CRASH_NOW();
 }
 
 void D3d12GraphicsManager::CleanupRenderTarget() {

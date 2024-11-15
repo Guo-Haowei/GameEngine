@@ -10,9 +10,8 @@ class EmptyGraphicsManager : public GraphicsManager {
 public:
     EmptyGraphicsManager(std::string_view p_name, Backend p_backend) : GraphicsManager(p_name, p_backend) {}
 
-    bool InitializeImpl() override { return true; }
-    void Finalize() override {}
     void Render() override {}
+    void Finalize() override {}
 
     void SetStencilRef(uint32_t p_ref) override {}
 
@@ -40,16 +39,18 @@ public:
     void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) override {}
     void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) override {}
 
-    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc&, const SamplerDesc&) override { return nullptr; }
+    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
 
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc&) override { return nullptr; }
 
 protected:
-    void OnSceneChange(const Scene&) override {}
-    void OnWindowResize(int, int) override {}
-    void SetPipelineStateImpl(PipelineStateName) override {}
+    bool InitializeImpl() override { return true; }
+
+    void OnSceneChange(const Scene& p_scene) override {}
+    void OnWindowResize(int p_width, int p_height) override {}
+    void SetPipelineStateImpl(PipelineStateName p_name) override {}
 };
 
 WARNING_POP()
