@@ -1,7 +1,7 @@
 #pragma once
 
 WARNING_PUSH()
-WARNING_DISABLE(4201, "")
+WARNING_DISABLE(4201, "-Wunused-parameter")
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>

@@ -40,10 +40,12 @@
 #define WARNING_POP()         __pragma(warning(pop))
 #define WARNING_DISABLE(a, b) __pragma(warning(disable \
                                                : a))
-#elif
-#define WARNING_PUSH()        __pragma(clang diagnostic push)
-#define WARNING_POP()         __pragma(clang diagnostic pop)
-#define WARNING_DISABLE(a, b) __pragma(clang diagnostic ignored b)
+#elif defined(__clang__)
+#define WARNING_PUSH()        _Pragma("clang diagnostic push")
+#define WARNING_POP()         _Pragma("clang diagnostic pop")
+#define DO_PRAGMA_(x) _Pragma (#x)
+#define DO_PRAGMA(x) DO_PRAGMA_(x)
+#define WARNING_DISABLE(a, b) DO_PRAGMA(clang diagnostic ignored b)
 #else
 #error Compiler not supported!
 #endif

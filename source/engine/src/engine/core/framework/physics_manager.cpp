@@ -4,7 +4,7 @@
 #include "scene/scene.h"
 
 WARNING_PUSH()
-WARNING_DISABLE(4127, "")
+WARNING_DISABLE(4127, "-Wunused-parameter")
 #include "bullet3/btBulletDynamicsCommon.h"
 WARNING_POP()
 
