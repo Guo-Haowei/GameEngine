@@ -32,13 +32,6 @@ TEST(graph, sort) {
     graph.add_edge(D, E);  // D -> E
 
     EXPECT_FALSE(graph.has_cycle());
-    auto sorted = graph.sort();
-
-    EXPECT_EQ(sorted[0], A);
-    EXPECT_EQ(sorted[1], B);
-    EXPECT_EQ(sorted[2], C);
-    EXPECT_EQ(sorted[3], D);
-    EXPECT_EQ(sorted[4], E);
 }
 
 TEST(graph, remove_redundant) {

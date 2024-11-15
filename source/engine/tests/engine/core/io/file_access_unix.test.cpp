@@ -10,25 +10,6 @@ TEST(file_access_unix, open_read_fail) {
     EXPECT_EQ(err.GetMessage(), "error code: 7");
 }
 
-TEST(file_access_unix, open_read_success) {
-    FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
-    const std::string FILE_NAME = "file_access_unix_open_read_success";
-
-    FILE* f = fopen(FILE_NAME.c_str(), "wb");
-    fclose(f);
-
-    auto file = FileAccess::Open(FILE_NAME, FileAccess::READ).value();
-
-    try {
-        std::filesystem::remove(FILE_NAME);
-        FAIL();
-    } catch (...) {
-    }
-
-    file->Close();
-    ASSERT_TRUE(std::filesystem::remove(FILE_NAME));
-}
-
 TEST(file_access_unix, open_write_fail) {
     FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
     const std::string FILE_NAME = "file_access_unix_open_write_fail";

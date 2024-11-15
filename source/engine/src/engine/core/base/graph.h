@@ -18,8 +18,6 @@ public:
 
     void remove_redundant();
 
-    std::vector<int> sort() const;
-
     std::vector<std::vector<int>> build_level() const;
 
 private:
