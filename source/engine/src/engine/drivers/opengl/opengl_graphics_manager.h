@@ -2,7 +2,7 @@
 #include "core/framework/graphics_manager.h"
 
 // @TODO: fix
-struct OpenGLMeshBuffers : public my::MeshBuffers {
+struct OpenGlMeshBuffers : public my::MeshBuffers {
     uint32_t vao = 0;
     uint32_t ebo = 0;
     uint32_t vbos[6] = { 0 };
@@ -10,12 +10,12 @@ struct OpenGLMeshBuffers : public my::MeshBuffers {
 
 namespace my {
 
-class OpenGLGraphicsManager : public GraphicsManager {
+class OpenGlGraphicsManager : public GraphicsManager {
 public:
-    OpenGLGraphicsManager();
+    OpenGlGraphicsManager();
 
-    bool InitializeImpl() final;
     void Finalize() final;
+    void Render() final;
 
     void SetStencilRef(uint32_t p_ref) final;
 
@@ -50,16 +50,17 @@ public:
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) final;
 
 protected:
+    bool InitializeImpl() final;
+
     void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int, int) final {}
     void SetPipelineStateImpl(PipelineStateName p_name) final;
-    void Render() final;
 
     void CreateGpuResources();
 
 private:
     // @TODO: rename
-    RIDAllocator<OpenGLMeshBuffers> m_meshes;
+    RIDAllocator<OpenGlMeshBuffers> m_meshes;
 
     struct {
         CullMode cull_mode;

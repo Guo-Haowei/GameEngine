@@ -33,7 +33,7 @@ bool GlfwDisplayManager::InitializeWindow() {
     const ivec2 max_size = ivec2(vidmode->width, vidmode->height);
     const ivec2 size = glm::clamp(resolution, min_size, max_size);
 
-    m_window = glfwCreateWindow(size.x, size.y, "Editor (OpenGL)", nullptr, nullptr);
+    m_window = glfwCreateWindow(size.x, size.y, "Editor (OpenGl)", nullptr, nullptr);
     DEV_ASSERT(m_window);
     glfwSetWindowPos(m_window, 40, 40);
 

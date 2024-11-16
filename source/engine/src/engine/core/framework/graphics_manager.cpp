@@ -12,6 +12,7 @@
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "particle_defines.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
 
@@ -105,7 +106,7 @@ std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
 
     if (backend == "opengl") {
-        return std::make_shared<OpenGLGraphicsManager>();
+        return std::make_shared<OpenGlGraphicsManager>();
     }
 #if USING(PLATFORM_WINDOWS)
     else if (backend == "d3d11") {
@@ -177,28 +178,35 @@ void GraphicsManager::Update(Scene& p_scene) {
 
 void GraphicsManager::SelectRenderGraph() {
     std::string method(DVAR_GET_STRING(gfx_render_graph));
-    if (method == "vxgi") {
-        m_method = RenderGraph::VXGI;
+    const std::map<std::string, RenderGraphName> lookup = {
+        { "dummy", RenderGraphName::DUMMY },
+        { "vxgi", RenderGraphName::VXGI },
+    };
+
+    auto it = lookup.find(method);
+    if (it == lookup.end()) {
+        m_method = RenderGraphName::DEFAULT;
     } else {
-        m_method = RenderGraph::DEFAULT;
+        m_method = it->second;
     }
 
     // force to default
-    if (m_backend == Backend::D3D11) {
-        m_method = RenderGraph::DEFAULT;
+    if (m_backend == Backend::D3D11 && m_method == RenderGraphName::VXGI) {
+        m_method = RenderGraphName::DEFAULT;
     }
     if (m_backend == Backend::D3D12) {
-        m_method = RenderGraph::EMPTY;
+        m_method = RenderGraphName::DUMMY;
     }
 
     switch (m_method) {
-        case RenderGraph::EMPTY:
+        case RenderGraphName::DUMMY:
+            rg::RenderPassCreator::CreateDummy(m_renderGraph);
             break;
-        case RenderGraph::VXGI:
-            CreateRenderGraphVxgi(m_renderGraph);
+        case RenderGraphName::VXGI:
+            rg::RenderPassCreator::CreateVxgi(m_renderGraph);
             break;
         default:
-            CreateRenderGraphDefault(m_renderGraph);
+            rg::RenderPassCreator::CreateDefault(m_renderGraph);
             break;
     }
 }
@@ -209,7 +217,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
 
     // @TODO: this part need rework
     GpuTextureDesc texture_desc{};
-    texture_desc.array_size = 1;
+    texture_desc.arraySize = 1;
 
     switch (p_desc.type) {
         case AttachmentType::COLOR_2D:
@@ -221,8 +229,8 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
         case AttachmentType::SHADOW_CUBE_MAP:
         case AttachmentType::COLOR_CUBE_MAP:
             texture_desc.dimension = Dimension::TEXTURE_CUBE;
-            texture_desc.misc_flags |= RESOURCE_MISC_TEXTURECUBE;
-            texture_desc.array_size = 6;
+            texture_desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
+            texture_desc.arraySize = 6;
             break;
         default:
             CRASH_NOW();
@@ -231,15 +239,15 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
     switch (p_desc.type) {
         case AttachmentType::COLOR_2D:
         case AttachmentType::COLOR_CUBE_MAP:
-            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
             break;
         case AttachmentType::SHADOW_2D:
         case AttachmentType::SHADOW_CUBE_MAP:
-            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
             break;
         case AttachmentType::DEPTH_2D:
         case AttachmentType::DEPTH_STENCIL_2D:
-            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
             break;
         default:
             break;
@@ -249,15 +257,15 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
     texture_desc.format = p_desc.format;
     texture_desc.width = p_desc.width;
     texture_desc.height = p_desc.height;
-    texture_desc.initial_data = nullptr;
-    texture_desc.mip_levels = 1;
+    texture_desc.initialData = nullptr;
+    texture_desc.mipLevels = 1;
 
     if (p_desc.need_uav) {
-        texture_desc.bind_flags |= BIND_UNORDERED_ACCESS;
+        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
     }
 
     if (p_desc.gen_mipmap) {
-        texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
+        texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
     }
 
     resource->texture = CreateTexture(texture_desc, p_sampler);
@@ -281,12 +289,13 @@ std::shared_ptr<RenderTarget> GraphicsManager::FindRenderTarget(RenderTargetReso
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_method) {
-        case RenderGraph::EMPTY:
+        case RenderGraphName::DUMMY:
+            texture = FindRenderTarget(RESOURCE_GBUFFER_BASE_COLOR)->texture.get();
             break;
-        case RenderGraph::VXGI:
+        case RenderGraphName::VXGI:
             texture = FindRenderTarget(RESOURCE_FINAL)->texture.get();
             break;
-        case RenderGraph::DEFAULT:
+        case RenderGraphName::DEFAULT:
             texture = FindRenderTarget(RESOURCE_TONE)->texture.get();
             break;
         default:
@@ -503,7 +512,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 light.view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
 
                 if (GetBackend() == Backend::OPENGL) {
-                    light.projection_matrix = BuildOpenGLOrthoRH(-size, size, -size, size, -size, 3.0f * size);
+                    light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
                     light.projection_matrix = BuildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 }
@@ -601,7 +610,7 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
     const float fovy = camera.GetFovy().ToRad();
     const float aspect = camera.GetAspect();
     if (GetBackend() == Backend::OPENGL) {
-        pass_constant.c_projectionMatrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
+        pass_constant.c_projectionMatrix = BuildOpenGlPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     } else {
         pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     }

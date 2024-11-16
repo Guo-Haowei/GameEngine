@@ -95,9 +95,9 @@ class GraphicsManager : public Singleton<GraphicsManager>, public Module, public
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
 
-    enum class RenderGraph : uint8_t {
-        EMPTY,
-        DEFAULT,
+    enum class RenderGraphName : uint8_t {
+        DEFAULT = 0,
+        DUMMY,
         VXGI,
     };
 
@@ -107,7 +107,6 @@ public:
     GraphicsManager(std::string_view p_name, Backend p_backend) : Module(p_name), m_backend(p_backend) {}
 
     bool Initialize() final;
-
     void Update(Scene& p_scene);
     virtual void Render() = 0;
 
@@ -174,13 +173,14 @@ public:
     void SelectRenderGraph();
 
 protected:
+    virtual bool InitializeImpl() = 0;
+
     virtual void OnSceneChange(const Scene& p_scene) = 0;
     virtual void OnWindowResize(int p_width, int p_height) = 0;
     virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
-    virtual bool InitializeImpl() = 0;
 
     const Backend m_backend;
-    RenderGraph m_method = RenderGraph::DEFAULT;
+    RenderGraphName m_method;
     bool m_enableValidationLayer;
     // @TODO: cache
     PipelineStateName m_lastPipelineName = PIPELINE_STATE_MAX;

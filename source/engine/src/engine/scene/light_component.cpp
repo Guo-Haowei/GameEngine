@@ -56,11 +56,11 @@ void LightComponent::Update(const TransformComponent& p_transform) {
                     const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
                     glm::mat4 projection;
                     if (is_opengl) {
-                        projection = BuildOpenGLPerspectiveRH(glm::radians(90.0f), 1.0f, near_plane, far_plane);
+                        projection = BuildOpenGlPerspectiveRH(glm::radians(90.0f), 1.0f, near_plane, far_plane);
                     } else {
                         projection = BuildPerspectiveLH(glm::radians(90.0f), 1.0f, near_plane, far_plane);
                     }
-                    auto view_matrices = is_opengl ? BuildOpenGLCubeMapViewMatrices(m_position) : BuildCubeMapViewMatrices(m_position);
+                    auto view_matrices = is_opengl ? BuildOpenGlCubeMapViewMatrices(m_position) : BuildCubeMapViewMatrices(m_position);
 
                     for (size_t i = 0; i < view_matrices.size(); ++i) {
                         m_lightSpaceMatrices[i] = projection * view_matrices[i];

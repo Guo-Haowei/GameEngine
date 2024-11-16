@@ -4,28 +4,28 @@
 
 namespace my {
 
-void OpenGLTexture::Clear() {
+void OpenGlGpuTexture::Clear() {
     if (handle) {
         glDeleteTextures(1, &handle);
         handle = 0;
         residentHandle = 0;
     }
 }
-void OpenGLSubpass::Clear() {
+void OpenGlSubpass::Clear() {
     if (handle) {
         glDeleteFramebuffers(1, &handle);
         handle = 0;
     }
 }
 
-void OpenGLUniformBuffer::Clear() {
+void OpenGlUniformBuffer::Clear() {
     if (handle) {
         glDeleteBuffers(1, &handle);
         handle = 0;
     }
 }
 
-void OpenGLStructuredBuffer::Clear() {
+void OpenGlStructuredBuffer::Clear() {
     if (handle) {
         glDeleteBuffers(1, &handle);
         handle = 0;

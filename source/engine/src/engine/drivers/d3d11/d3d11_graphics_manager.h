@@ -16,7 +16,6 @@ class D3d11GraphicsManager : public GraphicsManager {
 public:
     D3d11GraphicsManager();
 
-    bool InitializeImpl() final;
     void Finalize() final;
     void Render() final;
 
@@ -57,6 +56,7 @@ public:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetD3dContext() { return m_deviceContext; }
 
 protected:
+    bool InitializeImpl() final;
     void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) final;

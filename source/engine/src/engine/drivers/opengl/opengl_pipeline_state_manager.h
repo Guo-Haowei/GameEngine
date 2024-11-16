@@ -3,15 +3,15 @@
 
 namespace my {
 
-struct OpenGLPipelineState : public PipelineState {
+struct OpenGlPipelineState : public PipelineState {
     using PipelineState::PipelineState;
 
     uint32_t programId;
 
-    ~OpenGLPipelineState();
+    ~OpenGlPipelineState();
 };
 
-class OpenGLPipelineStateManager : public PipelineStateManager {
+class OpenGlPipelineStateManager : public PipelineStateManager {
 protected:
     std::shared_ptr<PipelineState> CreateInternal(const PipelineStateDesc& p_desc) final;
 };

@@ -3,6 +3,7 @@
 #include <d3dx12/d3dx12.h>
 #include <dxgi1_6.h>
 
+#include <atomic>
 #include <mutex>
 
 #include "core/framework/graphics_manager.h"
@@ -88,15 +89,30 @@ struct FrameContext {
     void Wait(HANDLE p_fence_event, ID3D12Fence1* p_fence);
 };
 
-struct DescriptorHeapGPU {
-    D3D12_DESCRIPTOR_HEAP_DESC m_desc = {};
-    D3D12_CPU_DESCRIPTOR_HANDLE m_startCPU = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE m_startGPU = {};
-    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_heap;
+class DescriptorHeapGPU {
+public:
+    struct Handle {
+        int index;
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+        D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+    };
 
-    uint32_t m_incrementSize = 0;
+    bool Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shard_visible = false);
 
-    bool Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shard_visible = false);
+    Handle AllocHandle();
+
+    D3D12_CPU_DESCRIPTOR_HANDLE GetStartCpu() const { return m_startCpu; }
+    D3D12_GPU_DESCRIPTOR_HANDLE GetStartGpu() const { return m_startGpu; };
+    ID3D12DescriptorHeap* GetHeap() { return m_heap.Get(); }
+
+private:
+    D3D12_DESCRIPTOR_HEAP_DESC m_desc{};
+    D3D12_CPU_DESCRIPTOR_HANDLE m_startCpu{};
+    D3D12_GPU_DESCRIPTOR_HANDLE m_startGpu{};
+    Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_heap{};
+
+    uint32_t m_incrementSize{ 0 };
+    std::atomic_int m_counter{ 0 };
 };
 
 struct GraphicsContext {

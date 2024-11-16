@@ -1,6 +1,5 @@
 #include "d3d11_graphics_manager.h"
 
-#include <dxgi.h>
 #include <imgui/backends/imgui_impl_dx11.h>
 
 #include "drivers/d3d11/d3d11_helpers.h"
@@ -34,6 +33,7 @@ bool D3d11GraphicsManager::InitializeImpl() {
     ImGui_ImplDX11_NewFrame();
 
     SelectRenderGraph();
+
     // @TODO: refactor this
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -79,7 +79,7 @@ void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p
         return;
     }
 
-    auto texture = dynamic_cast<D3d11Texture*>(p_texture);
+    auto texture = dynamic_cast<D3d11GpuTexture*>(p_texture);
 
     m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
 }
@@ -330,7 +330,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
     DXGI_FORMAT texture_format = d3d::Convert(format);
     DXGI_FORMAT srv_format = d3d::Convert(format);
     // @TODO: fix this
-    bool gen_mip_map = p_texture_desc.bind_flags & BIND_SHADER_RESOURCE;
+    bool gen_mip_map = p_texture_desc.bindFlags & BIND_SHADER_RESOURCE;
     if (p_texture_desc.dimension == Dimension::TEXTURE_CUBE) {
         gen_mip_map = false;
     }
@@ -352,15 +352,15 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
-    texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mip_levels;
+    texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mipLevels;
     // texture_desc.MipLevels = 0;
-    texture_desc.ArraySize = p_texture_desc.array_size;
+    texture_desc.ArraySize = p_texture_desc.arraySize;
     texture_desc.Format = texture_format;
     texture_desc.SampleDesc = { 1, 0 };
     texture_desc.Usage = D3D11_USAGE_DEFAULT;
-    texture_desc.BindFlags = d3d::ConvertBindFlags(p_texture_desc.bind_flags);
+    texture_desc.BindFlags = d3d::ConvertBindFlags(p_texture_desc.bindFlags);
     texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.misc_flags);
+    texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
     D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()),
                    nullptr,
@@ -370,17 +370,17 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
 
     texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
 
-    if (p_texture_desc.initial_data) {
+    if (p_texture_desc.initialData) {
         uint32_t row_pitch = p_texture_desc.width * channel_count(format) * channel_size(format);
-        m_deviceContext->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initial_data, row_pitch, 0);
+        m_deviceContext->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initialData, row_pitch, 0);
     }
 
-    auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
-    if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
+    auto gpu_texture = std::make_shared<D3d11GpuTexture>(p_texture_desc);
+    if (p_texture_desc.bindFlags & BIND_SHADER_RESOURCE) {
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.Format = srv_format;
         srv_desc.ViewDimension = ConvertDimension(p_texture_desc.dimension);
-        srv_desc.Texture2D.MipLevels = p_texture_desc.mip_levels;
+        srv_desc.Texture2D.MipLevels = p_texture_desc.mipLevels;
         srv_desc.Texture2D.MostDetailedMip = 0;
 
         if (gen_mip_map) {
@@ -391,7 +391,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
                        nullptr,
                        "Failed to create shader resource view");
 
-        if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+        if (p_texture_desc.miscFlags & RESOURCE_MISC_GENERATE_MIPS) {
             m_deviceContext->GenerateMips(srv.Get());
         }
 
@@ -420,18 +420,16 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
 
 std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
     auto draw_pass = std::make_shared<D3d11DrawPass>();
-    draw_pass->exec_func = p_subpass_desc.exec_func;
-    draw_pass->color_attachments = p_subpass_desc.color_attachments;
-    draw_pass->depth_attachment = p_subpass_desc.depth_attachment;
+    draw_pass->execFunc = p_subpass_desc.execFunc;
+    draw_pass->colorAttachments = p_subpass_desc.colorAttachments;
+    draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
 
-    for (const auto& color_attachment : p_subpass_desc.color_attachments) {
-        auto texture = reinterpret_cast<const D3d11Texture*>(color_attachment->texture.get());
+    for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment->texture.get());
         switch (color_attachment->desc.type) {
             case AttachmentType::COLOR_2D: {
                 ComPtr<ID3D11RenderTargetView> rtv;
-                D3D_FAIL_V_MSG(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create render target view");
+                D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()), nullptr);
                 draw_pass->rtvs.emplace_back(rtv);
             } break;
             default:
@@ -440,58 +438,50 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    if (auto& depth_attachment = draw_pass->depth_attachment; depth_attachment) {
-        auto texture = reinterpret_cast<const D3d11Texture*>(depth_attachment->texture.get());
+    if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment->texture.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
-                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                desc.Format = DXGI_FORMAT_D32_FLOAT;
-                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-                desc.Texture2D.MipSlice = 0;
+                D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
 
-                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create depth stencil view");
+                D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                 draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
-                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-                desc.Texture2D.MipSlice = 0;
+                D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
 
-                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create depth stencil view");
+                D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                 draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
-                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                desc.Format = DXGI_FORMAT_D32_FLOAT;
-                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-                desc.Texture2D.MipSlice = 0;
+                D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
 
-                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create depth stencil view");
+                D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                 draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
                 for (int face = 0; face < 6; ++face) {
                     ComPtr<ID3D11DepthStencilView> dsv;
-                    D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                    desc.Format = DXGI_FORMAT_D32_FLOAT;
-                    desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-                    desc.Texture2DArray.MipSlice = 0;
-                    desc.Texture2DArray.ArraySize = 1;
-                    desc.Texture2DArray.FirstArraySlice = face;
+                    D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                    dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                    dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+                    dsv_desc.Texture2DArray.MipSlice = 0;
+                    dsv_desc.Texture2DArray.ArraySize = 1;
+                    dsv_desc.Texture2DArray.FirstArraySlice = face;
 
-                    D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                                   nullptr,
-                                   "Failed to create depth stencil view");
+                    D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                     draw_pass->dsvs.push_back(dsv);
                 }
             } break;
@@ -509,7 +499,7 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     DEV_ASSERT(p_draw_pass);
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
-    if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
+    if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
             ID3D11RenderTargetView* rtv = nullptr;
             m_deviceContext->OMSetRenderTargets(1, &rtv, draw_pass->dsvs[p_index].Get());

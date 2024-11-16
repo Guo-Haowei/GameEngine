@@ -103,7 +103,7 @@ void GraphicsContext::MoveToNextFrame() {
 
 //------------------------------------------------------------------------------
 // DescriptorHeapGPU
-bool DescriptorHeapGPU::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shader_visible) {
+bool DescriptorHeapGPU::Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shader_visible) {
     m_desc.Type = p_type;
     m_desc.NumDescriptors = p_num_descriptors;
     m_desc.Flags = p_shader_visible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
@@ -128,11 +128,26 @@ bool DescriptorHeapGPU::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p
     }
 #endif
 
+    m_counter = p_start;
     m_incrementSize = p_device->GetDescriptorHandleIncrementSize(p_type);
-    m_startCPU = m_heap->GetCPUDescriptorHandleForHeapStart();
-    m_startGPU = m_heap->GetGPUDescriptorHandleForHeapStart();
+    m_startCpu = m_heap->GetCPUDescriptorHandleForHeapStart();
+    m_startGpu = m_heap->GetGPUDescriptorHandleForHeapStart();
 
     return true;
+}
+
+DescriptorHeapGPU::Handle DescriptorHeapGPU::AllocHandle() {
+    int index = m_counter.fetch_add(1);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpu_handle(m_startCpu);
+    cpu_handle.Offset(index, m_incrementSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpu_handle(m_startGpu);
+    gpu_handle.Offset(index, m_incrementSize);
+
+    return {
+        index,
+        cpu_handle,
+        gpu_handle,
+    };
 }
 
 //------------------------------------------------------------------------------

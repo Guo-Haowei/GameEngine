@@ -23,6 +23,7 @@ enum CpuAccessFlags {
     CPU_ACCESS_WRITE = BIT(1),
     CPU_ACCESS_READ = BIT(2),
 };
+DEFINE_ENUM_BITWISE_OPERATIONS(CpuAccessFlags)
 
 enum BindFlags : uint32_t {
     BIND_NONE = BIT(0),
@@ -37,6 +38,7 @@ enum BindFlags : uint32_t {
     BIND_DECODER = BIT(9),
     BIND_VIDEO_ENCODER = BIT(10),
 };
+DEFINE_ENUM_BITWISE_OPERATIONS(BindFlags)
 
 enum ResourceMiscFlags : uint32_t {
     RESOURCE_MISC_NONE = BIT(0),
@@ -60,17 +62,18 @@ enum ResourceMiscFlags : uint32_t {
     RESOURCE_MISC_SHARED_DISPLAYABLE = BIT(18),
     RESOURCE_MISC_SHARED_EXCLUSIVE_WRITER = BIT(19),
 };
+DEFINE_ENUM_BITWISE_OPERATIONS(ResourceMiscFlags)
 
 struct GpuTextureDesc {
     Dimension dimension;
     uint32_t width;
     uint32_t height;
-    uint32_t mip_levels;
-    uint32_t array_size;
+    uint32_t mipLevels;
+    uint32_t arraySize;
     PixelFormat format;
-    uint32_t bind_flags;
-    uint32_t misc_flags;
-    const void* initial_data;
+    BindFlags bindFlags;
+    ResourceMiscFlags miscFlags;
+    const void* initialData;
     // @TODO: refactor
     RenderTargetResourceName name;
 };

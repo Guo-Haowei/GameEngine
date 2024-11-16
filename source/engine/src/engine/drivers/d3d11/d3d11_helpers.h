@@ -10,9 +10,9 @@
 
 namespace my::d3d {
 
-inline uint32_t ConvertResourceMiscFlags(uint32_t p_misc_flags) {
+inline uint32_t ConvertResourceMiscFlags(ResourceMiscFlags p_misc_flags) {
     // only support a few flags for now
-    [[maybe_unused]] constexpr uint32_t supported_flags = RESOURCE_MISC_GENERATE_MIPS | RESOURCE_MISC_TEXTURECUBE;
+    [[maybe_unused]] constexpr ResourceMiscFlags supported_flags = RESOURCE_MISC_GENERATE_MIPS | RESOURCE_MISC_TEXTURECUBE;
     DEV_ASSERT((p_misc_flags & (~supported_flags)) == 0);
 
     uint32_t flags = 0;
@@ -26,8 +26,8 @@ inline uint32_t ConvertResourceMiscFlags(uint32_t p_misc_flags) {
     return flags;
 }
 
-inline uint32_t ConvertBindFlags(uint32_t p_bind_flags) {
-    [[maybe_unused]] constexpr uint32_t supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL | BIND_UNORDERED_ACCESS;
+inline uint32_t ConvertBindFlags(BindFlags p_bind_flags) {
+    [[maybe_unused]] constexpr BindFlags supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL | BIND_UNORDERED_ACCESS;
     DEV_ASSERT((p_bind_flags & (~supported_flags)) == 0);
 
     uint32_t flags = 0;

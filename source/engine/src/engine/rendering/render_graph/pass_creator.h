@@ -4,6 +4,8 @@
 // @TODO: refactor this
 namespace my::rg {
 
+class RenderGraph;
+
 class RenderPassCreator {
 public:
     struct Config {
@@ -21,6 +23,13 @@ public:
         : m_config(p_config),
           m_graph(p_graph) {}
 
+    static void CreateDummy(RenderGraph& p_graph);
+    static void CreateDefault(RenderGraph& p_graph);
+    static void CreateVxgi(RenderGraph& p_graph);
+    // @TODO: add this
+    static void CreatePathTracer(RenderGraph& p_graph);
+
+private:
     void AddGBufferPass();
     void AddShadowPass();
     void AddLightingPass();
@@ -28,7 +37,6 @@ public:
     void AddBloomPass();
     void AddTonePass();
 
-private:
     Config m_config;
     RenderGraph& m_graph;
 };
