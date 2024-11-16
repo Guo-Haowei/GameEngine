@@ -75,7 +75,7 @@ bool GraphicsManager::Initialize() {
     }
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = FindGpuTexture(p_name);
         if (!resource) {
             return;
         }
@@ -169,7 +169,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         SamplerDesc sampler_desc{};
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-        image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
+        image->gpu_texture = CreateGpuTexture(texture_desc, sampler_desc);
         if (task.func) {
             task.func(task.handle->Get());
         }
@@ -211,69 +211,16 @@ void GraphicsManager::SelectRenderGraph() {
     }
 }
 
-std::shared_ptr<GpuTexture> GraphicsManager::CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
-    DEV_ASSERT(m_resourceLookup.find(p_desc.name) == m_resourceLookup.end());
-
-    // @TODO: this part need rework
-    GpuTextureDesc texture_desc{};
-    texture_desc.arraySize = 1;
-    texture_desc.type = p_desc.type;
-
-    switch (p_desc.type) {
-        case AttachmentType::COLOR_2D:
-        case AttachmentType::DEPTH_2D:
-        case AttachmentType::DEPTH_STENCIL_2D:
-        case AttachmentType::SHADOW_2D:
-            texture_desc.dimension = Dimension::TEXTURE_2D;
-            break;
-        case AttachmentType::SHADOW_CUBE_MAP:
-        case AttachmentType::COLOR_CUBE_MAP:
-            texture_desc.dimension = Dimension::TEXTURE_CUBE;
-            texture_desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
-            texture_desc.arraySize = 6;
-            break;
-        default:
-            CRASH_NOW();
-            break;
+std::shared_ptr<GpuTexture> GraphicsManager::CreateGpuTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+    auto texture = CreateGpuTextureImpl(p_texture_desc, p_sampler_desc);
+    if (p_texture_desc.type != AttachmentType::NONE) {
+        DEV_ASSERT(m_resourceLookup.find(p_texture_desc.name) == m_resourceLookup.end());
+        m_resourceLookup[p_texture_desc.name] = texture;
     }
-    switch (p_desc.type) {
-        case AttachmentType::COLOR_2D:
-        case AttachmentType::COLOR_CUBE_MAP:
-            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
-            break;
-        case AttachmentType::SHADOW_2D:
-        case AttachmentType::SHADOW_CUBE_MAP:
-            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
-            break;
-        case AttachmentType::DEPTH_2D:
-        case AttachmentType::DEPTH_STENCIL_2D:
-            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
-            break;
-        default:
-            break;
-    }
-
-    texture_desc.name = p_desc.name;
-    texture_desc.format = p_desc.format;
-    texture_desc.width = p_desc.width;
-    texture_desc.height = p_desc.height;
-    texture_desc.initialData = nullptr;
-    texture_desc.mipLevels = 1;
-
-    if (p_desc.need_uav) {
-        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
-    }
-
-    if (p_desc.gen_mipmap) {
-        texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
-    }
-
-    auto texture = CreateTexture(texture_desc, p_sampler);
-    m_resourceLookup[p_desc.name] = texture;
     return texture;
 }
 
-std::shared_ptr<GpuTexture> GraphicsManager::FindRenderTarget(RenderTargetResourceName p_name) const {
+std::shared_ptr<GpuTexture> GraphicsManager::FindGpuTexture(RenderTargetResourceName p_name) const {
     if (m_resourceLookup.empty()) {
         return nullptr;
     }
@@ -289,13 +236,13 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_method) {
         case RenderGraphName::DUMMY:
-            texture = FindRenderTarget(RESOURCE_GBUFFER_BASE_COLOR).get();
+            texture = FindGpuTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;
         case RenderGraphName::VXGI:
-            texture = FindRenderTarget(RESOURCE_FINAL).get();
+            texture = FindGpuTexture(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::DEFAULT:
-            texture = FindRenderTarget(RESOURCE_TONE).get();
+            texture = FindGpuTexture(RESOURCE_TONE).get();
             break;
         default:
             CRASH_NOW();

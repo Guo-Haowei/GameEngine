@@ -1,5 +1,6 @@
 #pragma once
-#include "rendering/render_target.h"
+#include "rendering/gpu_resource.h"
+#include "rendering/render_graph/render_graph_defines.h"
 
 namespace my {
 

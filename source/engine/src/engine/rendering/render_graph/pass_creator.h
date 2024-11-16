@@ -1,4 +1,6 @@
 #pragma once
+#include "rendering/gpu_resource.h"
+#include "rendering/pixel_format.h"
 #include "rendering/render_graph/render_graph_defines.h"
 
 // @TODO: refactor this
@@ -36,6 +38,12 @@ private:
     void AddEmitterPass();
     void AddBloomPass();
     void AddTonePass();
+
+    static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
+                                                  PixelFormat p_format,
+                                                  AttachmentType p_type,
+                                                  uint32_t p_width,
+                                                  uint32_t p_height);
 
     Config m_config;
     RenderGraph& m_graph;

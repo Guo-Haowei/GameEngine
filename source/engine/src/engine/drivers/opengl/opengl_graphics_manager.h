@@ -43,7 +43,6 @@ public:
     void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) final;
     void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
-    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;
 
@@ -51,6 +50,7 @@ public:
 
 protected:
     bool InitializeImpl() final;
+    std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int, int) final {}

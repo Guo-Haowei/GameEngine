@@ -32,7 +32,7 @@ void voxelization_pass_func(const DrawPass*) {
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = gm.FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = gm.FindGpuTexture(p_name);
         if (!resource) {
             return;
         }
@@ -295,7 +295,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_IMAGE_2D);
 
     // @TODO: clean up
-    auto final_image_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_TONE)->GetResidentHandle();
+    auto final_image_handle = GraphicsManager::GetSingleton().FindGpuTexture(RESOURCE_TONE)->GetResidentHandle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
     // if (0) {
@@ -304,7 +304,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     // }
 
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
-        auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->GetResidentHandle();
+        auto shadow_map_handle = GraphicsManager::GetSingleton().FindGpuTexture(RESOURCE_SHADOW_MAP)->GetResidentHandle();
         debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);
     }
 }
@@ -322,28 +322,32 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
 
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
-    auto final_attachment = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_FINAL,
-                                                                         PixelFormat::R8G8B8A8_UINT,
-                                                                         AttachmentType::COLOR_2D,
-                                                                         w, h },
-                                                       PointClampSampler());
+    auto final_attachment = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
+                                                                             PixelFormat::R8G8B8A8_UINT,
+                                                                             AttachmentType::COLOR_2D,
+                                                                             w, h),
+                                                     PointClampSampler());
 
+    // @TODO: refactor
     {  // environment pass
         RenderPassDesc desc;
         desc.name = RenderPassName::ENV;
         auto pass = p_graph.CreatePass(desc);
 
         auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
-            auto cube_map = manager.CreateRenderTarget(RenderTargetDesc{ cube_map_name,
-                                                                         PixelFormat::R16G16B16_FLOAT,
-                                                                         AttachmentType::COLOR_CUBE_MAP,
-                                                                         size, size, gen_mipmap },
-                                                       p_sampler);
-            auto depth_map = manager.CreateRenderTarget(RenderTargetDesc{ depth_name,
-                                                                          PixelFormat::D32_FLOAT,
-                                                                          AttachmentType::DEPTH_2D,
-                                                                          size, size, gen_mipmap },
-                                                        PointClampSampler());
+            auto cube_texture_desc = BuildDefaultTextureDesc(cube_map_name,
+                                                             PixelFormat::R16G16B16_FLOAT,
+                                                             AttachmentType::COLOR_CUBE_MAP,
+                                                             size, size);
+            cube_texture_desc.miscFlags |= gen_mipmap ? RESOURCE_MISC_GENERATE_MIPS : RESOURCE_MISC_NONE;
+            auto cube_map = manager.CreateGpuTexture(cube_texture_desc, p_sampler);
+
+            auto depth_texture_desc = BuildDefaultTextureDesc(depth_name,
+                                                              PixelFormat::D32_FLOAT,
+                                                              AttachmentType::DEPTH_2D,
+                                                              size, size);
+            depth_texture_desc.miscFlags |= gen_mipmap ? RESOURCE_MISC_GENERATE_MIPS : RESOURCE_MISC_NONE;
+            auto depth_map = manager.CreateGpuTexture(depth_texture_desc, PointClampSampler());
 
             auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
                 .colorAttachments = { cube_map },
@@ -353,8 +357,7 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
             return draw_pass;
         };
 
-        auto brdf_image = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, 512, 512, false },
-                                                     LinearClampSampler());
+        auto brdf_image = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, 512, 512), LinearClampSampler());
         auto brdf_subpass = manager.CreateDrawPass(DrawPassDesc{
             .colorAttachments = { brdf_image },
             .execFunc = generate_brdf_func,
@@ -369,13 +372,13 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
     creator.AddShadowPass();
     creator.AddGBufferPass();
 
-    auto gbuffer_depth = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
+    auto gbuffer_depth = manager.FindGpuTexture(RESOURCE_GBUFFER_DEPTH);
     {  // highlight selected pass
-        auto attachment = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_HIGHLIGHT_SELECT,
-                                                                       PixelFormat::R8_UINT,
-                                                                       AttachmentType::COLOR_2D,
-                                                                       w, h },
-                                                     PointClampSampler());
+        auto attachment = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_HIGHLIGHT_SELECT,
+                                                                           PixelFormat::R8_UINT,
+                                                                           AttachmentType::COLOR_2D,
+                                                                           w, h),
+                                                   PointClampSampler());
 
         RenderPassDesc desc;
         desc.name = RenderPassName::HIGHLIGHT_SELECT;

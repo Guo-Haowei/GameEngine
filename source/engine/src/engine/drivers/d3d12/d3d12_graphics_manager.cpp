@@ -401,7 +401,7 @@ void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_b
     unused(p_offset);
 }
 
-std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     PixelFormat format = p_texture_desc.format;

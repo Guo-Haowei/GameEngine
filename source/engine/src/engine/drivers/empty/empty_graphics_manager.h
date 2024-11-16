@@ -39,7 +39,6 @@ public:
     void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) override {}
     void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) override {}
 
-    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
 
@@ -47,6 +46,7 @@ public:
 
 protected:
     bool InitializeImpl() override { return true; }
+    std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
 
     void OnSceneChange(const Scene& p_scene) override {}
     void OnWindowResize(int p_width, int p_height) override {}

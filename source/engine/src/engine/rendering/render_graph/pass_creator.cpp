@@ -9,64 +9,6 @@
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
-using namespace my;
-using namespace my::rg;
-
-GpuTextureDesc BuildRenderTargeTextureDesc(const RenderTargetDesc& p_desc) {
-    GpuTextureDesc texture_desc{};
-    texture_desc.arraySize = 1;
-
-    switch (p_desc.type) {
-        case AttachmentType::COLOR_2D:
-        case AttachmentType::DEPTH_2D:
-        case AttachmentType::DEPTH_STENCIL_2D:
-        case AttachmentType::SHADOW_2D:
-            texture_desc.dimension = Dimension::TEXTURE_2D;
-            break;
-        case AttachmentType::SHADOW_CUBE_MAP:
-        case AttachmentType::COLOR_CUBE_MAP:
-            texture_desc.dimension = Dimension::TEXTURE_CUBE;
-            texture_desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
-            texture_desc.arraySize = 6;
-            break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-    switch (p_desc.type) {
-        case AttachmentType::COLOR_2D:
-        case AttachmentType::COLOR_CUBE_MAP:
-            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
-            break;
-        case AttachmentType::SHADOW_2D:
-        case AttachmentType::SHADOW_CUBE_MAP:
-            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
-            break;
-        case AttachmentType::DEPTH_2D:
-        case AttachmentType::DEPTH_STENCIL_2D:
-            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
-            break;
-        default:
-            break;
-    }
-
-    texture_desc.name = p_desc.name;
-    texture_desc.format = p_desc.format;
-    texture_desc.width = p_desc.width;
-    texture_desc.height = p_desc.height;
-    texture_desc.initialData = nullptr;
-    texture_desc.mipLevels = 1;
-
-    if (p_desc.need_uav) {
-        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
-    }
-
-    if (p_desc.gen_mipmap) {
-        texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
-    }
-
-    return texture_desc;
-}
 
 namespace my::rg {
 
@@ -132,36 +74,35 @@ void RenderPassCreator::AddGBufferPass() {
     int p_width = m_config.frame_width;
     int p_height = m_config.frame_height;
 
-    // @TODO: decouple sampler and render target
-    auto gbuffer_depth = manager.CreateRenderTarget(RenderTargetDesc(RESOURCE_GBUFFER_DEPTH,
-                                                                     PixelFormat::R24G8_TYPELESS,
-                                                                     AttachmentType::DEPTH_STENCIL_2D,
-                                                                     p_width, p_height),
-                                                    PointClampSampler());
-
-    auto attachment0 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_BASE_COLOR,
-                                                                    PixelFormat::R11G11B10_FLOAT,
-                                                                    AttachmentType::COLOR_2D,
-                                                                    p_width, p_height },
+    auto gbuffer_depth = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
+                                                                          PixelFormat::R24G8_TYPELESS,
+                                                                          AttachmentType::DEPTH_STENCIL_2D,
+                                                                          p_width, p_height),
                                                   PointClampSampler());
 
-    auto attachment1 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_POSITION,
-                                                                    PixelFormat::R16G16B16_FLOAT,
-                                                                    AttachmentType::COLOR_2D,
-                                                                    p_width, p_height },
-                                                  PointClampSampler());
+    auto attachment0 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
+                                                                        PixelFormat::R11G11B10_FLOAT,
+                                                                        AttachmentType::COLOR_2D,
+                                                                        p_width, p_height),
+                                                PointClampSampler());
 
-    auto attachment2 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_NORMAL,
-                                                                    PixelFormat::R16G16B16_FLOAT,
-                                                                    AttachmentType::COLOR_2D,
-                                                                    p_width, p_height },
-                                                  PointClampSampler());
+    auto attachment1 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
+                                                                        PixelFormat::R16G16B16_FLOAT,
+                                                                        AttachmentType::COLOR_2D,
+                                                                        p_width, p_height),
+                                                PointClampSampler());
 
-    auto attachment3 = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_GBUFFER_MATERIAL,
-                                                                    PixelFormat::R11G11B10_FLOAT,
-                                                                    AttachmentType::COLOR_2D,
-                                                                    p_width, p_height },
-                                                  PointClampSampler());
+    auto attachment2 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
+                                                                        PixelFormat::R16G16B16_FLOAT,
+                                                                        AttachmentType::COLOR_2D,
+                                                                        p_width, p_height),
+                                                PointClampSampler());
+
+    auto attachment3 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
+                                                                        PixelFormat::R11G11B10_FLOAT,
+                                                                        AttachmentType::COLOR_2D,
+                                                                        p_width, p_height),
+                                                PointClampSampler());
 
     RenderPassDesc desc;
     desc.name = RenderPassName::GBUFFER;
@@ -265,11 +206,11 @@ void RenderPassCreator::AddShadowPass() {
     const int point_shadow_res = DVAR_GET_INT(gfx_point_shadow_res);
     DEV_ASSERT(math::IsPowerOfTwo(point_shadow_res));
 
-    auto shadow_map = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_SHADOW_MAP,
-                                                                   PixelFormat::D32_FLOAT,
-                                                                   AttachmentType::SHADOW_2D,
-                                                                   1 * shadow_res, shadow_res },
-                                                 shadow_map_sampler());
+    auto shadow_map = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
+                                                                       PixelFormat::D32_FLOAT,
+                                                                       AttachmentType::SHADOW_2D,
+                                                                       1 * shadow_res, shadow_res),
+                                               shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = RenderPassName::SHADOW;
     auto pass = m_graph.CreatePass(desc);
@@ -301,11 +242,11 @@ void RenderPassCreator::AddShadowPass() {
 
     {
         for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
-            auto point_shadowMap = manager.CreateRenderTarget(RenderTargetDesc{ static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
-                                                                                PixelFormat::D32_FLOAT,
-                                                                                AttachmentType::SHADOW_CUBE_MAP,
-                                                                                point_shadow_res, point_shadow_res },
-                                                              shadow_cube_map_sampler());
+            auto point_shadowMap = manager.CreateGpuTexture(BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_MAP_0 + i),
+                                                                                    PixelFormat::D32_FLOAT,
+                                                                                    AttachmentType::SHADOW_CUBE_MAP,
+                                                                                    point_shadow_res, point_shadow_res),
+                                                            shadow_cube_map_sampler());
 
             auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
                 .depthAttachment = point_shadowMap,
@@ -334,7 +275,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = gm.FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = gm.FindGpuTexture(p_name);
         if (!resource) {
             return;
         }
@@ -393,13 +334,13 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
 void RenderPassCreator::AddLightingPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
-    auto gbuffer_depth = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
+    auto gbuffer_depth = manager.FindGpuTexture(RESOURCE_GBUFFER_DEPTH);
 
-    auto lighting_attachment = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_LIGHTING,
-                                                                            PixelFormat::R11G11B10_FLOAT,
-                                                                            AttachmentType::COLOR_2D,
-                                                                            m_config.frame_width, m_config.frame_height },
-                                                          PointClampSampler());
+    auto lighting_attachment = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
+                                                                                PixelFormat::R11G11B10_FLOAT,
+                                                                                AttachmentType::COLOR_2D,
+                                                                                m_config.frame_width, m_config.frame_height),
+                                                        PointClampSampler());
 
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
@@ -486,8 +427,8 @@ void RenderPassCreator::AddEmitterPass() {
 
     auto pass = m_graph.CreatePass(desc);
     auto drawpass = manager.CreateDrawPass(DrawPassDesc{
-        .colorAttachments = { manager.FindRenderTarget(RESOURCE_LIGHTING) },
-        .depthAttachment = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH),
+        .colorAttachments = { manager.FindGpuTexture(RESOURCE_LIGHTING) },
+        .depthAttachment = manager.FindGpuTexture(RESOURCE_GBUFFER_DEPTH),
         .execFunc = EmitterPassFunc,
     });
     pass->AddDrawPass(drawpass);
@@ -500,8 +441,8 @@ static void BloomFunc(const DrawPass*) {
     // Step 1, select pixels contribute to bloom
     {
         gm.SetPipelineState(PROGRAM_BLOOM_SETUP);
-        auto input = gm.FindRenderTarget(RESOURCE_LIGHTING);
-        auto output = gm.FindRenderTarget(RESOURCE_BLOOM_0);
+        auto input = gm.FindGpuTexture(RESOURCE_LIGHTING);
+        auto output = gm.FindGpuTexture(RESOURCE_BLOOM_0);
 
         const uint32_t width = input->desc.width;
         const uint32_t height = input->desc.height;
@@ -518,8 +459,8 @@ static void BloomFunc(const DrawPass*) {
     // Step 2, down sampling
     gm.SetPipelineState(PROGRAM_BLOOM_DOWNSAMPLE);
     for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
-        auto input = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-        auto output = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto input = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        auto output = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
 
         DEV_ASSERT(input && output);
 
@@ -538,8 +479,8 @@ static void BloomFunc(const DrawPass*) {
     // Step 3, up sampling
     gm.SetPipelineState(PROGRAM_BLOOM_UPSAMPLE);
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        auto input = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
         const uint32_t width = output->desc.width;
         const uint32_t height = output->desc.height;
@@ -570,11 +511,12 @@ void RenderPassCreator::AddBloomPass() {
 
         LOG_WARN("bloom size {}x{}", width, height);
 
-        auto attachment = gm.CreateRenderTarget(RenderTargetDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
-                                                                 PixelFormat::R11G11B10_FLOAT,
-                                                                 AttachmentType::COLOR_2D,
-                                                                 width, height, false, true),
-                                                LinearClampSampler());
+        GpuTextureDesc texture_desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
+                                                              PixelFormat::R11G11B10_FLOAT,
+                                                              AttachmentType::COLOR_2D,
+                                                              width, height);
+        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
+        auto attachment = gm.CreateGpuTexture(texture_desc, LinearClampSampler());
     }
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
@@ -606,7 +548,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         debug_vxgi_pass_func(p_draw_pass);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-            std::shared_ptr<GpuTexture> resource = gm.FindRenderTarget(p_name);
+            std::shared_ptr<GpuTexture> resource = gm.FindGpuTexture(p_name);
             if (!resource) {
                 return;
             }
@@ -639,13 +581,13 @@ void RenderPassCreator::AddTonePass() {
     int width = m_config.frame_width;
     int height = m_config.frame_height;
 
-    auto attachment = gm.CreateRenderTarget(RenderTargetDesc{ RESOURCE_TONE,
-                                                              PixelFormat::R11G11B10_FLOAT,
-                                                              AttachmentType::COLOR_2D,
-                                                              width, height },
-                                            PointClampSampler());
+    auto attachment = gm.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
+                                                                  PixelFormat::R11G11B10_FLOAT,
+                                                                  AttachmentType::COLOR_2D,
+                                                                  width, height),
+                                          PointClampSampler());
 
-    auto gbuffer_depth = gm.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
+    auto gbuffer_depth = gm.FindGpuTexture(RESOURCE_GBUFFER_DEPTH);
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { attachment },
@@ -696,5 +638,57 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
 
     p_graph.Compile();
 }
+
+GpuTextureDesc RenderPassCreator::BuildDefaultTextureDesc(RenderTargetResourceName p_name,
+                                                          PixelFormat p_format,
+                                                          AttachmentType p_type,
+                                                          uint32_t p_width,
+                                                          uint32_t p_height) {
+    GpuTextureDesc desc{};
+    desc.type = p_type;
+    desc.name = p_name;
+    desc.format = p_format;
+    desc.arraySize = 1;
+    desc.dimension = Dimension::TEXTURE_2D;
+    desc.width = p_width;
+    desc.height = p_height;
+    desc.mipLevels = 1;
+    desc.initialData = nullptr;
+
+    switch (p_type) {
+        case AttachmentType::COLOR_2D:
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::DEPTH_STENCIL_2D:
+        case AttachmentType::SHADOW_2D:
+            desc.dimension = Dimension::TEXTURE_2D;
+            break;
+        case AttachmentType::SHADOW_CUBE_MAP:
+        case AttachmentType::COLOR_CUBE_MAP:
+            desc.dimension = Dimension::TEXTURE_CUBE;
+            desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
+            desc.arraySize = 6;
+            break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+    switch (p_type) {
+        case AttachmentType::COLOR_2D:
+        case AttachmentType::COLOR_CUBE_MAP:
+            desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+            break;
+        case AttachmentType::SHADOW_2D:
+        case AttachmentType::SHADOW_CUBE_MAP:
+            desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            break;
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::DEPTH_STENCIL_2D:
+            desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            break;
+        default:
+            break;
+    }
+    return desc;
+};
 
 }  // namespace my::rg

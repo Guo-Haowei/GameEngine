@@ -66,6 +66,7 @@ DEFINE_ENUM_BITWISE_OPERATIONS(ResourceMiscFlags)
 
 // @TODO: refactor
 enum class AttachmentType {
+    NONE = 0,
     COLOR_2D,
     COLOR_CUBE_MAP,
     DEPTH_2D,

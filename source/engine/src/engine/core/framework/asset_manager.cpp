@@ -157,7 +157,7 @@ ImageHandle* AssetManager::LoadImageSync(const FilePath& p_path) {
     SamplerDesc sampler_desc{};
     renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-    image->gpu_texture = GraphicsManager::GetSingleton().CreateTexture(texture_desc, sampler_desc);
+    image->gpu_texture = GraphicsManager::GetSingleton().CreateGpuTexture(texture_desc, sampler_desc);
     handle->Set(image);
     ImageHandle* ret = handle.get();
     m_imageCache[p_path] = std::move(handle);

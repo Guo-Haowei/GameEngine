@@ -412,7 +412,7 @@ void OpenGlGraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     glBindTexture(texture_type, 0);
 }
 
-std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
@@ -646,7 +646,7 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 
     // @TODO: refactor
     auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {
-        std::shared_ptr<GpuTexture> resource = FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = FindGpuTexture(p_name);
         if (resource) {
             p_out_id = resource->GetResidentHandle();
         } else {
