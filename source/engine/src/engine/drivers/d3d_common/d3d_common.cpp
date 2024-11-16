@@ -82,8 +82,7 @@ auto CompileShader(std::string_view p_path,
 
 #if USING(USE_D3D_DEBUG_NAME)
 void SetDebugName(ID3D11DeviceChild* p_resource, const std::string& p_name) {
-    std::wstring name(p_name.begin(), p_name.end());
-    p_resource->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)name.size() * sizeof(wchar_t), name.c_str());
+    p_resource->SetPrivateData(WKPDID_D3DDebugObjectName, (uint32_t)p_name.length(), p_name.c_str());
 }
 
 void SetDebugName(ID3D12DeviceChild* p_resource, const std::string& p_name) {

@@ -362,9 +362,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateGpuTextureImpl(const Gpu
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
-    D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()),
-                   nullptr,
-                   "Failed to create texture");
+    D3D_FAIL_V(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
 
     const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
 
@@ -413,6 +411,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateGpuTextureImpl(const Gpu
         gpu_texture->uav = uav;
     }
 
+    SetDebugName(texture.Get(), RenderTargetResourceNameToString(p_texture_desc.name));
     gpu_texture->texture = texture;
 
     return gpu_texture;
