@@ -17,7 +17,7 @@ struct D3d12GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
     uint64_t GetResidentHandle() const override { return 0; }
-    uint64_t GetHandle() const override { return cpuHandle; }
+    uint64_t GetHandle() const override { return gpuHandle; }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> texture;
     int index{ -1 };
@@ -33,6 +33,8 @@ struct D3d12DrawPass : public DrawPass {
 // @TODO: move to a common place
 static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
+static constexpr uint32_t SRV_DESCRIPTOR_OFFSET = 0;
+static constexpr uint32_t CBV_DESCRIPTOR_OFFSET = 32;
 
 using Microsoft::WRL::ComPtr;
 
@@ -180,8 +182,6 @@ void D3d12GraphicsManager::Render() {
     ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
 
     cmdList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
-
-    cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 
     // ID3D12Resource* perFrameBuffer = frameContext->perFrameBuffer->Resource();
     // ID3D12Resource* perBatchBuffer = frameContext->perBatchBuffer->Resource();
@@ -381,20 +381,25 @@ void D3d12GraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructur
 void D3d12GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
     CRASH_NOW_MSG("Implement");
 }
+WARNING_POP()
 
 std::shared_ptr<ConstantBufferBase> D3d12GraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
-    CRASH_NOW_MSG("Implement");
+    unused(p_slot);
+    unused(p_capacity);
     return nullptr;
 }
 
 void D3d12GraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) {
-    CRASH_NOW_MSG("Implement");
+    unused(p_buffer);
+    unused(p_data);
+    unused(p_size);
 }
 
 void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
-    CRASH_NOW_MSG("Implement");
+    unused(p_buffer);
+    unused(p_size);
+    unused(p_offset);
 }
-WARNING_POP()
 
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
@@ -574,15 +579,18 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTexture
 
 void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     unused(p_dimension);
-    unused(p_handle);
-    unused(p_slot);
-    CRASH_NOW_MSG("Implement");
+
+    m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
+        SRV_DESCRIPTOR_OFFSET + p_slot,
+        D3D12_GPU_DESCRIPTOR_HANDLE{ p_handle });
 }
 
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
-    unused(p_slot);
-    CRASH_NOW_MSG("Implement");
+
+    m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
+        SRV_DESCRIPTOR_OFFSET + p_slot,
+        D3D12_GPU_DESCRIPTOR_HANDLE{ 0 });
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
@@ -889,7 +897,40 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 }
 
 bool D3d12GraphicsManager::CreateRootSignature() {
-    // Create a root signature consisting of a descriptor table with a single CBV.
+// Create a root signature consisting of a descriptor table with a single CBV.
+#if 0
+    D3D12_ROOT_PARAMETER rootParameters[2];
+    D3D12_DESCRIPTOR_RANGE textureRange{};
+    textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;  // Shader Resource View (SRV)
+    textureRange.NumDescriptors = 32;                          // 10 textures
+    textureRange.BaseShaderRegister = 0;                       // Starting at register t0 (for example)
+    textureRange.RegisterSpace = 0;                            // Space 0
+    textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
+    rootParameters[0].DescriptorTable.pDescriptorRanges = &textureRange;
+    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+    D3D12_DESCRIPTOR_RANGE constantBufferRange{};
+    constantBufferRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;  // Constant Buffer View (CBV)
+    constantBufferRange.NumDescriptors = 32;                          // 4 constant buffers
+    constantBufferRange.BaseShaderRegister = 0;                       // Starting at register b0 (for example)
+    constantBufferRange.RegisterSpace = 0;                            // Space 0
+    constantBufferRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+    rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
+    rootParameters[1].DescriptorTable.pDescriptorRanges = &constantBufferRange;
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+#endif
+
+    // Define the root signature
+    // D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
+    // rootSignatureDesc.NumParameters = 2;
+    // rootSignatureDesc.pParameters = rootParameters;
+    // rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
     CD3DX12_DESCRIPTOR_RANGE tex_table[64];
     int tex_count = 0;
 
@@ -926,6 +967,10 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     }
 
     D3D_FAIL_V(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)), false);
+
+    m_graphicsContext.BeginFrame();
+    m_graphicsContext.m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+    m_graphicsContext.EndFrame();
 
     return true;
 }
