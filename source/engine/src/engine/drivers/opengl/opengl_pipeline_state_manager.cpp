@@ -21,7 +21,7 @@ static constexpr TextureSlot s_texture_slots[] = {
 #undef SHADER_TEXTURE
 };
 
-OpenGLPipelineState::~OpenGLPipelineState() {
+OpenGlPipelineState::~OpenGlPipelineState() {
     if (programId) {
         glDeleteProgram(programId);
     }
@@ -147,7 +147,7 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::ve
     return shader_id;
 }
 
-std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const PipelineStateDesc &p_desc) {
+std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const PipelineStateDesc &p_desc) {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
     auto CreateShaderHelper = [&](std::string_view path, GLenum type) {
@@ -198,7 +198,7 @@ std::shared_ptr<PipelineState> OpenGLPipelineStateManager::CreateInternal(const 
         program_id = 0;
     }
 
-    auto program = std::make_shared<OpenGLPipelineState>(p_desc);
+    auto program = std::make_shared<OpenGlPipelineState>(p_desc);
     program->programId = program_id;
 
     // set constants

@@ -106,7 +106,7 @@ std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
 
     if (backend == "opengl") {
-        return std::make_shared<OpenGLGraphicsManager>();
+        return std::make_shared<OpenGlGraphicsManager>();
     }
 #if USING(PLATFORM_WINDOWS)
     else if (backend == "d3d11") {
@@ -512,7 +512,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 light.view_matrix = glm::lookAt(center + light_dir * size, center, vec3(0, 1, 0));
 
                 if (GetBackend() == Backend::OPENGL) {
-                    light.projection_matrix = BuildOpenGLOrthoRH(-size, size, -size, size, -size, 3.0f * size);
+                    light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
                     light.projection_matrix = BuildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 }
@@ -610,7 +610,7 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
     const float fovy = camera.GetFovy().ToRad();
     const float aspect = camera.GetAspect();
     if (GetBackend() == Backend::OPENGL) {
-        pass_constant.c_projectionMatrix = BuildOpenGLPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
+        pass_constant.c_projectionMatrix = BuildOpenGlPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     } else {
         pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     }

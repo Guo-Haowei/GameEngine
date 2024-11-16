@@ -9,10 +9,10 @@
 
 namespace my {
 
-struct OpenGLTexture : public GpuTexture {
+struct OpenGlGpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
-    ~OpenGLTexture() {
+    ~OpenGlGpuTexture() {
         Clear();
     }
 
@@ -25,8 +25,8 @@ struct OpenGLTexture : public GpuTexture {
     uint64_t residentHandle = 0;
 };
 
-struct OpenGLSubpass : public DrawPass {
-    ~OpenGLSubpass() {
+struct OpenGlSubpass : public DrawPass {
+    ~OpenGlSubpass() {
         Clear();
     }
 
@@ -35,10 +35,10 @@ struct OpenGLSubpass : public DrawPass {
     uint32_t handle = 0;
 };
 
-struct OpenGLUniformBuffer : public ConstantBufferBase {
+struct OpenGlUniformBuffer : public ConstantBufferBase {
     using ConstantBufferBase::ConstantBufferBase;
 
-    ~OpenGLUniformBuffer() {
+    ~OpenGlUniformBuffer() {
         Clear();
     }
 
@@ -47,10 +47,10 @@ struct OpenGLUniformBuffer : public ConstantBufferBase {
     uint32_t handle = 0;
 };
 
-struct OpenGLStructuredBuffer : public GpuStructuredBuffer {
+struct OpenGlStructuredBuffer : public GpuStructuredBuffer {
     using GpuStructuredBuffer::GpuStructuredBuffer;
 
-    ~OpenGLStructuredBuffer() {
+    ~OpenGlStructuredBuffer() {
         Clear();
     }
 

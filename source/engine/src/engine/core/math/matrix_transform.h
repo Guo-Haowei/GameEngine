@@ -25,7 +25,7 @@ inline mat4 BuildPerspectiveRH(float p_fovy, float p_aspect, float p_near, float
     return result;
 }
 
-inline mat4 BuildOpenGLPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
+inline mat4 BuildOpenGlPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
     const float tan_half_fovy = glm::tan(0.5f * p_fovy);
     mat4 Result(0.0f);
     Result[0][0] = 1.0f / (p_aspect * tan_half_fovy);
@@ -57,7 +57,7 @@ inline mat4 BuildOrthoRH(const float p_left,
     return result;
 }
 
-inline mat4 BuildOpenGLOrthoRH(const float p_left,
+inline mat4 BuildOpenGlOrthoRH(const float p_left,
                                const float p_right,
                                const float p_bottom,
                                const float p_top,
@@ -90,7 +90,7 @@ inline std::array<mat4, 6> BuildCubeMapViewMatrices(const vec3& p_eye) {
     return matrices;
 }
 
-inline std::array<mat4, 6> BuildOpenGLCubeMapViewMatrices(const vec3& p_eye) {
+inline std::array<mat4, 6> BuildOpenGlCubeMapViewMatrices(const vec3& p_eye) {
     std::array<mat4, 6> matrices;
     matrices[0] = glm::lookAtRH(p_eye, p_eye + glm::vec3(+1, +0, +0), glm::vec3(0, -1, +0));
     matrices[1] = glm::lookAtRH(p_eye, p_eye + glm::vec3(-1, +0, +0), glm::vec3(0, -1, +0));
