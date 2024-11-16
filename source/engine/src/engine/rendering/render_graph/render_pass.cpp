@@ -13,7 +13,7 @@ void RenderPass::CreateInternal(RenderPassDesc& p_desc) {
 
 void RenderPass::Execute() {
     for (auto& draw_pass : m_drawPasses) {
-        draw_pass->exec_func(draw_pass.get());
+        draw_pass->execFunc(draw_pass.get());
     }
 }
 

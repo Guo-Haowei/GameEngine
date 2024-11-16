@@ -11,7 +11,7 @@
 
 namespace my {
 
-struct D3d11Texture : public GpuTexture {
+struct D3d11GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
     uint64_t GetResidentHandle() const override { return 0; }

@@ -129,8 +129,8 @@ bool DescriptorHeapGPU::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p
 #endif
 
     m_incrementSize = p_device->GetDescriptorHandleIncrementSize(p_type);
-    m_startCPU = m_heap->GetCPUDescriptorHandleForHeapStart();
-    m_startGPU = m_heap->GetGPUDescriptorHandleForHeapStart();
+    m_startCpu = m_heap->GetCPUDescriptorHandleForHeapStart();
+    m_startGpu = m_heap->GetGPUDescriptorHandleForHeapStart();
 
     return true;
 }

@@ -79,7 +79,7 @@ void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p
         return;
     }
 
-    auto texture = dynamic_cast<D3d11Texture*>(p_texture);
+    auto texture = dynamic_cast<D3d11GpuTexture*>(p_texture);
 
     m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
 }
@@ -375,7 +375,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
         m_deviceContext->UpdateSubresource(texture.Get(), 0, nullptr, p_texture_desc.initial_data, row_pitch, 0);
     }
 
-    auto gpu_texture = std::make_shared<D3d11Texture>(p_texture_desc);
+    auto gpu_texture = std::make_shared<D3d11GpuTexture>(p_texture_desc);
     if (p_texture_desc.bind_flags & BIND_SHADER_RESOURCE) {
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.Format = srv_format;
@@ -420,12 +420,12 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
 
 std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
     auto draw_pass = std::make_shared<D3d11DrawPass>();
-    draw_pass->exec_func = p_subpass_desc.exec_func;
-    draw_pass->color_attachments = p_subpass_desc.color_attachments;
-    draw_pass->depth_attachment = p_subpass_desc.depth_attachment;
+    draw_pass->execFunc = p_subpass_desc.execFunc;
+    draw_pass->colorAttachments = p_subpass_desc.colorAttachments;
+    draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
 
-    for (const auto& color_attachment : p_subpass_desc.color_attachments) {
-        auto texture = reinterpret_cast<const D3d11Texture*>(color_attachment->texture.get());
+    for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment->texture.get());
         switch (color_attachment->desc.type) {
             case AttachmentType::COLOR_2D: {
                 ComPtr<ID3D11RenderTargetView> rtv;
@@ -440,8 +440,8 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    if (auto& depth_attachment = draw_pass->depth_attachment; depth_attachment) {
-        auto texture = reinterpret_cast<const D3d11Texture*>(depth_attachment->texture.get());
+    if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment->texture.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -509,7 +509,7 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     DEV_ASSERT(p_draw_pass);
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
-    if (const auto depth_attachment = draw_pass->depth_attachment; depth_attachment) {
+    if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
             ID3D11RenderTargetView* rtv = nullptr;
             m_deviceContext->OMSetRenderTargets(1, &rtv, draw_pass->dsvs[p_index].Get());

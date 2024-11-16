@@ -18,7 +18,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
-    auto [width, height] = p_draw_pass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depthAttachment->getSize();
 
     gm.SetRenderTarget(p_draw_pass);
 
@@ -108,9 +108,9 @@ void RenderPassCreator::AddGBufferPass() {
     desc.name = RenderPassName::GBUFFER;
     auto pass = m_graph.CreatePass(desc);
     auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-        .color_attachments = { attachment0, attachment1, attachment2, attachment3 },
-        .depth_attachment = gbuffer_depth,
-        .exec_func = GbufferPassFunc,
+        .colorAttachments = { attachment0, attachment1, attachment2, attachment3 },
+        .depthAttachment = gbuffer_depth,
+        .execFunc = GbufferPassFunc,
     });
     pass->AddDrawPass(draw_pass);
 }
@@ -128,7 +128,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     }
 
     // prepare render data
-    auto [width, height] = p_draw_pass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depthAttachment->getSize();
 
     // @TODO: instead of render the same object 6 times
     // set up different object list for different pass
@@ -169,7 +169,7 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     auto& ctx = gm.GetContext();
 
     gm.SetRenderTarget(p_draw_pass);
-    auto [width, height] = p_draw_pass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depthAttachment->getSize();
 
     gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT);
 
@@ -214,8 +214,8 @@ void RenderPassCreator::AddShadowPass() {
     auto pass = m_graph.CreatePass(desc);
     {
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-            .depth_attachment = shadow_map,
-            .exec_func = ShadowPassFunc,
+            .depthAttachment = shadow_map,
+            .execFunc = ShadowPassFunc,
         });
         pass->AddDrawPass(draw_pass);
     }
@@ -247,8 +247,8 @@ void RenderPassCreator::AddShadowPass() {
                                                               shadow_cube_map_sampler());
 
             auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-                .depth_attachment = point_shadowMap,
-                .exec_func = funcs[i],
+                .depthAttachment = point_shadowMap,
+                .execFunc = funcs[i],
             });
             pass->AddDrawPass(draw_pass);
         }
@@ -260,8 +260,8 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    DEV_ASSERT(!p_draw_pass->color_attachments.empty());
-    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
+    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
+    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
 
     gm.SetRenderTarget(p_draw_pass);
 
@@ -355,8 +355,8 @@ void RenderPassCreator::AddLightingPass() {
 
     auto pass = m_graph.CreatePass(desc);
     auto drawpass = manager.CreateDrawPass(DrawPassDesc{
-        .color_attachments = { lighting_attachment },
-        .exec_func = LightingPassFunc,
+        .colorAttachments = { lighting_attachment },
+        .execFunc = LightingPassFunc,
     });
     pass->AddDrawPass(drawpass);
 }
@@ -367,7 +367,7 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
-    auto [width, height] = p_draw_pass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depthAttachment->getSize();
 
     gm.SetRenderTarget(p_draw_pass);
     gm.SetViewport(Viewport(width, height));
@@ -423,9 +423,9 @@ void RenderPassCreator::AddEmitterPass() {
 
     auto pass = m_graph.CreatePass(desc);
     auto drawpass = manager.CreateDrawPass(DrawPassDesc{
-        .color_attachments = { manager.FindRenderTarget(RESOURCE_LIGHTING) },
-        .depth_attachment = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH),
-        .exec_func = EmitterPassFunc,
+        .colorAttachments = { manager.FindRenderTarget(RESOURCE_LIGHTING) },
+        .depthAttachment = manager.FindRenderTarget(RESOURCE_GBUFFER_DEPTH),
+        .execFunc = EmitterPassFunc,
     });
     pass->AddDrawPass(drawpass);
 }
@@ -512,8 +512,8 @@ void RenderPassCreator::AddBloomPass() {
     }
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
-        .color_attachments = {},
-        .exec_func = BloomFunc,
+        .colorAttachments = {},
+        .execFunc = BloomFunc,
     });
     pass->AddDrawPass(draw_pass);
 }
@@ -526,9 +526,9 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_draw_pass);
 
-    DEV_ASSERT(!p_draw_pass->color_attachments.empty());
-    auto depth_buffer = p_draw_pass->depth_attachment;
-    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
+    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
+    auto depth_buffer = p_draw_pass->depthAttachment;
+    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
 
     // draw billboards
 
@@ -581,9 +581,9 @@ void RenderPassCreator::AddTonePass() {
     auto gbuffer_depth = gm.FindRenderTarget(RESOURCE_GBUFFER_DEPTH);
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
-        .color_attachments = { attachment },
-        .depth_attachment = gbuffer_depth,
-        .exec_func = TonePassFunc,
+        .colorAttachments = { attachment },
+        .depthAttachment = gbuffer_depth,
+        .execFunc = TonePassFunc,
     });
     pass->AddDrawPass(draw_pass);
 }

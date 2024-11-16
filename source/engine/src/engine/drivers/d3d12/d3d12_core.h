@@ -90,8 +90,8 @@ struct FrameContext {
 
 struct DescriptorHeapGPU {
     D3D12_DESCRIPTOR_HEAP_DESC m_desc = {};
-    D3D12_CPU_DESCRIPTOR_HANDLE m_startCPU = {};
-    D3D12_GPU_DESCRIPTOR_HANDLE m_startGPU = {};
+    D3D12_CPU_DESCRIPTOR_HANDLE m_startCpu = {};
+    D3D12_GPU_DESCRIPTOR_HANDLE m_startGpu = {};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_heap;
 
     uint32_t m_incrementSize = 0;

@@ -129,7 +129,7 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
-    auto cube_map = p_draw_pass->color_attachments[0];
+    auto cube_map = p_draw_pass->colorAttachments[0];
     auto [width, height] = cube_map->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -158,7 +158,7 @@ void generate_brdf_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_BRDF);
-    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
+    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
@@ -172,7 +172,7 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DIFFUSE_IRRADIANCE);
-    auto [width, height] = p_draw_pass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depthAttachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGLCubeMapViewMatrices(vec3(0.0f));
@@ -195,7 +195,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_PREFILTER);
-    auto [width, height] = p_draw_pass->depth_attachment->getSize();
+    auto [width, height] = p_draw_pass->depthAttachment->getSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGLCubeMapViewMatrices(vec3(0.0f));
@@ -222,8 +222,8 @@ static void highlight_select_pass_func(const DrawPass* p_draw_pass) {
 
     auto& manager = GraphicsManager::GetSingleton();
     manager.SetRenderTarget(p_draw_pass);
-    DEV_ASSERT(!p_draw_pass->color_attachments.empty());
-    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
+    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
+    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
 
     glViewport(0, 0, width, height);
 
@@ -239,9 +239,9 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_draw_pass);
-    DEV_ASSERT(!p_draw_pass->color_attachments.empty());
-    auto depth_buffer = p_draw_pass->depth_attachment;
-    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
+    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
+    auto depth_buffer = p_draw_pass->depthAttachment;
+    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -279,8 +279,8 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
-    DEV_ASSERT(!p_draw_pass->color_attachments.empty());
-    auto [width, height] = p_draw_pass->color_attachments[0]->getSize();
+    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
+    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -339,9 +339,9 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
                                                         PointClampSampler());
 
             auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-                .color_attachments = { cube_map },
-                .depth_attachment = depth_map,
-                .exec_func = p_func,
+                .colorAttachments = { cube_map },
+                .depthAttachment = depth_map,
+                .execFunc = p_func,
             });
             return draw_pass;
         };
@@ -349,8 +349,8 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
         auto brdf_image = manager.CreateRenderTarget(RenderTargetDesc{ RESOURCE_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, 512, 512, false },
                                                      LinearClampSampler());
         auto brdf_subpass = manager.CreateDrawPass(DrawPassDesc{
-            .color_attachments = { brdf_image },
-            .exec_func = generate_brdf_func,
+            .colorAttachments = { brdf_image },
+            .execFunc = generate_brdf_func,
         });
 
         pass->AddDrawPass(brdf_subpass);
@@ -375,9 +375,9 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
         desc.dependencies = { RenderPassName::GBUFFER };
         auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-            .color_attachments = { attachment },
-            .depth_attachment = gbuffer_depth,
-            .exec_func = highlight_select_pass_func,
+            .colorAttachments = { attachment },
+            .depthAttachment = gbuffer_depth,
+            .execFunc = highlight_select_pass_func,
         });
         pass->AddDrawPass(draw_pass);
     }
@@ -388,7 +388,7 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
         desc.dependencies = { RenderPassName::SHADOW };
         auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-            .exec_func = voxelization_pass_func,
+            .execFunc = voxelization_pass_func,
         });
         pass->AddDrawPass(draw_pass);
     }
@@ -405,8 +405,8 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
         desc.dependencies = { RenderPassName::TONE };
         auto pass = p_graph.CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-            .color_attachments = { final_attachment },
-            .exec_func = final_pass_func,
+            .colorAttachments = { final_attachment },
+            .execFunc = final_pass_func,
         });
         pass->AddDrawPass(draw_pass);
     }

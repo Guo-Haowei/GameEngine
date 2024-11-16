@@ -12,6 +12,18 @@
 
 namespace my {
 
+// @TODO: refactor
+struct D3d12GpuTexture : public GpuTexture {
+    using GpuTexture::GpuTexture;
+
+    uint64_t GetResidentHandle() const override { return 0; }
+    uint64_t GetHandle() const override { return cpuHandle; }
+
+    int index{ -1 };
+    size_t cpuHandle{ 0 };
+    uint64_t gpuHandle{ 0 };
+};
+
 // @TODO: move to a common place
 static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
@@ -42,13 +54,13 @@ bool D3d12GraphicsManager::InitializeImpl() {
     ok = ok && m_graphicsContext.Initialize(this);
     ok = ok && m_copyContext.Initialize(this);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvDescHeap.m_startCPU;
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvDescHeap.m_startCpu;
     for (int i = 0; i < NUM_BACK_BUFFERS; i++) {
         m_renderTargetDescriptor[i] = rtvHandle;
         rtvHandle.ptr += m_rtvDescHeap.m_incrementSize;
     }
 
-    m_depthStencilDescriptor = m_dsvDescHeap.m_startCPU;
+    m_depthStencilDescriptor = m_dsvDescHeap.m_startCpu;
 
     ok = ok && CreateSwapChain(w, h);
     ok = ok && CreateRenderTarget(w, h);
@@ -91,8 +103,8 @@ bool D3d12GraphicsManager::InitializeImpl() {
                         NUM_FRAMES_IN_FLIGHT,
                         DXGI_FORMAT_R8G8B8A8_UNORM,
                         m_srvDescHeap.m_heap.Get(),
-                        m_srvDescHeap.m_startCPU,
-                        m_srvDescHeap.m_startGPU);
+                        m_srvDescHeap.m_startCpu,
+                        m_srvDescHeap.m_startGpu);
 
     ImGui_ImplDX12_NewFrame();
 
@@ -378,9 +390,149 @@ void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_b
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
-    // @TODO: create texture
-    CRASH_NOW_MSG("Implement");
-    return nullptr;
+    D3D12_HEAP_PROPERTIES props{};
+    props.Type = D3D12_HEAP_TYPE_DEFAULT;
+    props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+    D3D12_RESOURCE_DESC texture_desc{};
+    texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+    texture_desc.Alignment = 0;
+    texture_desc.Width = p_texture_desc.width;
+    texture_desc.Height = p_texture_desc.height;
+    texture_desc.DepthOrArraySize = 1;
+    texture_desc.MipLevels = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+    texture_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    ID3D12Resource* texture_ptr = nullptr;
+    D3D_FAIL_V(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&texture_ptr)), nullptr);
+
+    // Create a temporary upload resource to move the data in
+    uint32_t upload_pitch = math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+    uint32_t upload_size = p_texture_desc.height * upload_pitch;
+    texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    texture_desc.Alignment = 0;
+    texture_desc.Width = upload_size;
+    texture_desc.Height = 1;
+    texture_desc.DepthOrArraySize = 1;
+    texture_desc.MipLevels = 1;
+    texture_desc.Format = DXGI_FORMAT_UNKNOWN;
+    texture_desc.SampleDesc = { 1, 0 };
+    texture_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    texture_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+    props.Type = D3D12_HEAP_TYPE_UPLOAD;
+    props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+    props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+    auto initial_data = reinterpret_cast<const uint8_t*>(p_texture_desc.initial_data);
+
+    if (initial_data) {
+        // @TODO: refactor
+        ComPtr<ID3D12Resource> upload_buffer;
+        D3D_FAIL_V(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&upload_buffer)), nullptr);
+
+        // Write pixels into the upload resource
+        void* mapped = NULL;
+        D3D12_RANGE range = { 0, upload_size };
+
+        upload_buffer->Map(0, &range, &mapped);
+        for (uint32_t y = 0; y < p_texture_desc.height; y++) {
+            memcpy((void*)((uintptr_t)mapped + y * upload_pitch), initial_data + y * p_texture_desc.width * 4, p_texture_desc.width * 4);
+        }
+        upload_buffer->Unmap(0, &range);
+
+        // Copy the upload resource content into the real resource
+        D3D12_TEXTURE_COPY_LOCATION source_location = {};
+        source_location.pResource = upload_buffer.Get();
+        source_location.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+        source_location.PlacedFootprint.Footprint.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        source_location.PlacedFootprint.Footprint.Width = p_texture_desc.width;
+        source_location.PlacedFootprint.Footprint.Height = p_texture_desc.height;
+        source_location.PlacedFootprint.Footprint.Depth = 1;
+        source_location.PlacedFootprint.Footprint.RowPitch = upload_pitch;
+
+        D3D12_TEXTURE_COPY_LOCATION dest_location = {};
+        dest_location.pResource = texture_ptr;
+        dest_location.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
+        dest_location.SubresourceIndex = 0;
+
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+        barrier.Transition.pResource = texture_ptr;
+        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+
+        // Create a temporary command queue to do the copy with
+        ComPtr<ID3D12Fence> fence;
+        D3D_FAIL_V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)), nullptr);
+
+        HANDLE event = CreateEvent(0, 0, 0, 0);
+        if (event == NULL) {
+            return nullptr;
+        }
+
+        D3D12_COMMAND_QUEUE_DESC queue_desc = {};
+        queue_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        queue_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queue_desc.NodeMask = 1;
+
+        ComPtr<ID3D12CommandQueue> copy_queue;
+        D3D_FAIL_V(m_device->CreateCommandQueue(&queue_desc, IID_PPV_ARGS(&copy_queue)), nullptr);
+
+        ComPtr<ID3D12CommandAllocator> copy_alloc;
+        D3D_FAIL_V(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&copy_alloc)), nullptr);
+
+        ComPtr<ID3D12GraphicsCommandList> command_list;
+        D3D_FAIL_V(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, copy_alloc.Get(), NULL, IID_PPV_ARGS(&command_list)), nullptr);
+
+        command_list->CopyTextureRegion(&dest_location, 0, 0, 0, &source_location, NULL);
+        command_list->ResourceBarrier(1, &barrier);
+        command_list->Close();
+
+        // Execute the copy
+        ID3D12CommandList* command_lists[] = { command_list.Get() };
+        copy_queue->ExecuteCommandLists(array_length(command_lists), command_lists);
+        copy_queue->Signal(fence.Get(), 1);
+
+        // Wait for everything to complete
+        fence->SetEventOnCompletion(1, event);
+        WaitForSingleObject(event, INFINITE);
+
+        // Tear down our temporary command queue and release the upload resource
+        CloseHandle(event);
+    }
+
+    int index = m_textureCounter.fetch_add(1);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_srvDescHeap.m_startCpu);
+    cpuHandle.Offset(index, m_srvDescHeap.m_incrementSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_srvDescHeap.m_startGpu);
+    gpuHandle.Offset(index, m_srvDescHeap.m_incrementSize);
+
+    // Create a shader resource view for the texture
+    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
+    ZeroMemory(&srvDesc, sizeof(srvDesc));
+    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srvDesc.Texture2D.MipLevels = texture_desc.MipLevels;
+    srvDesc.Texture2D.MostDetailedMip = 0;
+    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    m_device->CreateShaderResourceView(texture_ptr, &srvDesc, cpuHandle);
+
+    // Return results
+    m_textures.emplace_back(ComPtr<ID3D12Resource>(texture_ptr));
+    auto gpu_texture = std::make_shared<D3d12GpuTexture>(p_texture_desc);
+    gpu_texture->index = index;
+    gpu_texture->cpuHandle = cpuHandle.ptr;
+    gpu_texture->gpuHandle = gpuHandle.ptr;
+
+    return gpu_texture;
 }
 
 void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {

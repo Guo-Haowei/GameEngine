@@ -7,16 +7,17 @@ struct DrawPass;
 
 using DrawPassExecuteFunc = void (*)(const DrawPass*);
 
+// @TODO: fix this, DrawPassDesc and DrawPass the same
 struct DrawPassDesc {
-    std::vector<std::shared_ptr<RenderTarget>> color_attachments;
-    std::shared_ptr<RenderTarget> depth_attachment;
-    DrawPassExecuteFunc exec_func = nullptr;
+    std::vector<std::shared_ptr<RenderTarget>> colorAttachments;
+    std::shared_ptr<RenderTarget> depthAttachment;
+    DrawPassExecuteFunc execFunc{ nullptr };
 };
 
 struct DrawPass {
-    DrawPassExecuteFunc exec_func;
-    std::vector<std::shared_ptr<RenderTarget>> color_attachments;
-    std::shared_ptr<RenderTarget> depth_attachment;
+    DrawPassExecuteFunc execFunc{ nullptr };
+    std::vector<std::shared_ptr<RenderTarget>> colorAttachments;
+    std::shared_ptr<RenderTarget> depthAttachment;
 };
 
 }  // namespace my
