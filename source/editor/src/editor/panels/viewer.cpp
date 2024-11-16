@@ -85,6 +85,7 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     switch (GraphicsManager::GetSingleton().GetBackend()) {
         case Backend::OPENGL:
         case Backend::D3D11:
+        case Backend::D3D12:
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, ImVec2(0, 1), ImVec2(1, 0));
             break;
         default:

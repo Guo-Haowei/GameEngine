@@ -8,6 +8,7 @@
 #include "rendering/pipeline_state_manager.h"
 #include "rendering/render_graph/draw_pass.h"
 #include "rendering/render_graph/render_graph.h"
+#include "rendering/render_graph/render_pass.h"
 #include "rendering/sampler.h"
 #include "rendering/uniform_buffer.h"
 #include "scene/material_component.h"
@@ -17,6 +18,7 @@
 #include "rendering/uniform_buffer.h"
 #include "scene/scene.h"
 struct MaterialConstantBuffer;
+using my::rg::RenderPass;
 
 namespace my {
 
@@ -33,6 +35,7 @@ enum ClearFlags : uint32_t {
     CLEAR_DEPTH_BIT = BIT(2),
     CLEAR_STENCIL_BIT = BIT(3),
 };
+DEFINE_ENUM_BITWISE_OPERATIONS(ClearFlags);
 
 struct Viewport {
     Viewport(int p_width, int p_height) : width(p_width), height(p_height), topLeftX(0), topLeftY(0) {}
@@ -86,10 +89,12 @@ struct PassContext {
     std::vector<BatchContext> draws;
 };
 
-#define SHADER_TEXTURE(TYPE, NAME, SLOT) \
+#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
     constexpr int NAME##Slot = SLOT;
 #include "texture_binding.h"
 #undef SHADER_TEXTURE
+
+inline constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
@@ -112,8 +117,10 @@ public:
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
+    virtual void BeginPass(const RenderPass* p_render_pass);
+    virtual void EndPass(const RenderPass* p_render_pass);
 
-    virtual void Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color = nullptr, int p_index = 0) = 0;
+    virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
     virtual const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) = 0;
@@ -125,9 +132,6 @@ public:
     virtual void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
     void SetPipelineState(PipelineStateName p_name);
     virtual void SetStencilRef(uint32_t p_ref) = 0;
-
-    std::shared_ptr<RenderTarget> CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
-    std::shared_ptr<RenderTarget> FindRenderTarget(RenderTargetResourceName p_name) const;
 
     virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) = 0;
     virtual void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
@@ -150,7 +154,8 @@ public:
 
     virtual std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) = 0;
 
-    virtual std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
+    std::shared_ptr<GpuTexture> CreateGpuTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc);
+    std::shared_ptr<GpuTexture> FindGpuTexture(RenderTargetResourceName p_name) const;
     virtual void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
     virtual void UnbindTexture(Dimension p_dimension, int p_slot) = 0;
 
@@ -174,6 +179,7 @@ public:
 
 protected:
     virtual bool InitializeImpl() = 0;
+    virtual std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
     virtual void OnSceneChange(const Scene& p_scene) = 0;
     virtual void OnWindowResize(int p_width, int p_height) = 0;
@@ -187,7 +193,7 @@ protected:
 
     rg::RenderGraph m_renderGraph;
 
-    std::map<RenderTargetResourceName, std::shared_ptr<RenderTarget>> m_resourceLookup;
+    std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
     struct ImageTask {
         ImageHandle* handle;

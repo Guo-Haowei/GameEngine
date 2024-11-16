@@ -20,6 +20,7 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
 
 // @TODO: RESOURCE_SHADOW_MAP same as spot shadow, maybe make it shadow atlas?
 #define RENDER_TARGET_RESOURCE_NAME_LIST                                  \
+    RENDER_TARGET_RESOURCE_NAME(RESOURCE_NONE)                            \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_SHADOW_MAP)                      \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_POINT_SHADOW_MAP_0)              \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_POINT_SHADOW_MAP_1)              \

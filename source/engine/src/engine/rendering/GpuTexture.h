@@ -40,6 +40,5 @@ protected:
     uint32_t m_format;
     uint32_t mHandle = 0;
 
-    friend class RenderTarget;
     friend class GBuffer;
 };

@@ -46,7 +46,7 @@ void D3d11GraphicsManager::Finalize() {
 }
 
 void D3d11GraphicsManager::Render() {
-    m_renderGraph.Execute();
+    m_renderGraph.Execute(*this);
 
     // @TODO: fix the following
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -320,7 +320,7 @@ void D3d11GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
     m_deviceContext->VSSetShaderResources(p_slot, 1, &srv);
 }
 
-std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     ComPtr<ID3D11ShaderResourceView> srv;
@@ -362,9 +362,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
-    D3D_FAIL_V_MSG(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()),
-                   nullptr,
-                   "Failed to create texture");
+    D3D_FAIL_V(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
 
     const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
 
@@ -413,6 +411,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTexture(const GpuTexture
         gpu_texture->uav = uav;
     }
 
+    SetDebugName(texture.Get(), RenderTargetResourceNameToString(p_texture_desc.name));
     gpu_texture->texture = texture;
 
     return gpu_texture;
@@ -425,7 +424,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
     draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
-        auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment->texture.get());
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment.get());
         switch (color_attachment->desc.type) {
             case AttachmentType::COLOR_2D: {
                 ComPtr<ID3D11RenderTargetView> rtv;
@@ -439,7 +438,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
     }
 
     if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
-        auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment->texture.get());
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -510,7 +509,7 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     // @TODO: fixed_vector
     std::vector<ID3D11RenderTargetView*> rtvs;
     for (auto& rtv : draw_pass->rtvs) {
-        rtvs.push_back(rtv.Get());
+        rtvs.emplace_back(rtv.Get());
     }
 
     ID3D11DepthStencilView* dsv = draw_pass->dsvs.size() ? draw_pass->dsvs[0].Get() : nullptr;
@@ -518,25 +517,16 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
 }
 
 void D3d11GraphicsManager::UnsetRenderTarget() {
-    // [SCRUM-28] @TODO: Should unbind render target after each render pass
-    ID3D11RenderTargetView* rtvs[] = { nullptr, nullptr, nullptr };
+    ID3D11RenderTargetView* rtvs[] = { nullptr, nullptr, nullptr, nullptr };
     m_deviceContext->OMSetRenderTargets(array_length(rtvs), rtvs, nullptr);
 }
 
-void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
+void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 
     if (p_flags & CLEAR_COLOR_BIT) {
-        float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        if (p_clear_color) {
-            clear_color[0] = p_clear_color[0];
-            clear_color[1] = p_clear_color[1];
-            clear_color[2] = p_clear_color[2];
-            clear_color[3] = p_clear_color[3];
-        }
-
         for (auto& rtv : draw_pass->rtvs) {
-            m_deviceContext->ClearRenderTargetView(rtv.Get(), clear_color);
+            m_deviceContext->ClearRenderTargetView(rtv.Get(), p_clear_color);
         }
     }
 
@@ -544,7 +534,7 @@ void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, 
     if (p_flags & CLEAR_DEPTH_BIT) {
         clear_flags |= D3D11_CLEAR_DEPTH;
     }
-    if (p_flags & D3D11_CLEAR_STENCIL) {
+    if (p_flags & CLEAR_STENCIL_BIT) {
         clear_flags |= D3D11_CLEAR_STENCIL;
     }
     if (clear_flags) {

@@ -77,10 +77,10 @@ void RenderGraph::Compile() {
 #endif
 }
 
-void RenderGraph::Execute() {
+void RenderGraph::Execute(GraphicsManager& p_graphics_manager) {
     for (int index : m_sortedOrder) {
         auto& pass = m_renderPasses[index];
-        pass->Execute();
+        pass->Execute(p_graphics_manager);
     }
 }
 

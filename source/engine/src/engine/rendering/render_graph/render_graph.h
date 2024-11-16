@@ -3,6 +3,10 @@
 #include "core/base/noncopyable.h"
 #include "render_pass.h"
 
+namespace my {
+class GraphicsManager;
+}
+
 namespace my::rg {
 
 class RenderGraph : public NonCopyable {
@@ -14,7 +18,7 @@ public:
 
     void Compile();
 
-    void Execute();
+    void Execute(GraphicsManager& p_graphics_manager);
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
