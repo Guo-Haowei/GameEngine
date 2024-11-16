@@ -4,7 +4,8 @@
 
 namespace my {
 class GraphicsManager;
-}
+class D3d12GraphicsManager;
+}  // namespace my
 
 namespace my::rg {
 
@@ -31,6 +32,8 @@ protected:
     std::vector<std::shared_ptr<GpuTexture>> m_outputs;
 
     friend class RenderGraph;
+    friend class GraphicsManager;
+    friend class D3d12GraphicsManager;
 };
 
 }  // namespace my::rg

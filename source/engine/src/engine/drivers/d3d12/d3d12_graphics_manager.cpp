@@ -175,8 +175,8 @@ void D3d12GraphicsManager::Render() {
     cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     // clear the back buffer to a deep blue
-    constexpr float kGreenClearColor[4] = { 0.3f, 0.4f, 0.3f, 1.0f };
-    cmdList->ClearRenderTargetView(rtvHandle, kGreenClearColor, 0, nullptr);
+    constexpr float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    cmdList->ClearRenderTargetView(rtvHandle, clear_color, 0, nullptr);
     cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
@@ -325,44 +325,146 @@ void D3d12GraphicsManager::Render() {
     m_graphicsContext.MoveToNextFrame();
 }
 
-// @TODO: remove
-WARNING_PUSH()
-WARNING_DISABLE(4100, "-Wunused-parameter")
 void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
+    unused(p_ref);
+    CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+    unused(p_mip_level);
+    unused(p_index);
+    DEV_ASSERT(p_draw_pass);
+
+    ID3D12GraphicsCommandList* command_list = m_graphicsContext.m_commandList.Get();
+
+    auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
+    if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
+        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
+            CRASH_NOW_MSG("Implement");
+            return;
+        }
+    }
+
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvs;
+    for (auto& rtv : draw_pass->rtvs) {
+        rtvs.emplace_back(rtv);
+    }
+
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv{ 0 };
+    if (draw_pass->dsvs.size()) {
+        dsv = draw_pass->dsvs[0];
+    }
+    command_list->OMSetRenderTargets((uint32_t)rtvs.size(), rtvs.data(), false, &dsv);
 }
 
 void D3d12GraphicsManager::UnsetRenderTarget() {
 }
 
-void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
+void D3d12GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
+    ID3D12GraphicsCommandList* command_list = m_graphicsContext.m_commandList.Get();
+    for (auto& texture : p_render_pass->m_outputs) {
+        D3D12_RESOURCE_STATES resource_state{};
+        if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
+            resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        } else if (texture->desc.bindFlags & BIND_DEPTH_STENCIL) {
+            resource_state = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        } else {
+            CRASH_NOW();
+        }
+
+        auto d3d_texture = reinterpret_cast<D3d12GpuTexture*>(texture.get());
+        auto barriers = CD3DX12_RESOURCE_BARRIER::Transition(d3d_texture->texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, resource_state);
+        command_list->ResourceBarrier(1, &barriers);
+    }
+}
+
+void D3d12GraphicsManager::EndPass(const RenderPass* p_render_pass) {
+    UnsetRenderTarget();
+    ID3D12GraphicsCommandList* command_list = m_graphicsContext.m_commandList.Get();
+    for (auto& texture : p_render_pass->m_outputs) {
+        D3D12_RESOURCE_STATES resource_state{};
+        if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
+            resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
+        } else if (texture->desc.bindFlags & BIND_DEPTH_STENCIL) {
+            resource_state = D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        } else {
+            CRASH_NOW();
+        }
+
+        auto d3d_texture = reinterpret_cast<D3d12GpuTexture*>(texture.get());
+        auto barriers = CD3DX12_RESOURCE_BARRIER::Transition(d3d_texture->texture.Get(), resource_state, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        command_list->ResourceBarrier(1, &barriers);
+    }
+}
+
+void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
+    DEV_ASSERT(p_clear_color);
+
+    auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
+
+    if (p_flags & CLEAR_COLOR_BIT) {
+        for (auto& rtv : draw_pass->rtvs) {
+            m_graphicsContext.m_commandList->ClearRenderTargetView(rtv, p_clear_color, 0, nullptr);
+        }
+    }
+
+    D3D12_CLEAR_FLAGS clear_flags{ static_cast<D3D12_CLEAR_FLAGS>(0) };
+    if (p_flags & CLEAR_DEPTH_BIT) {
+        clear_flags |= D3D12_CLEAR_FLAG_DEPTH;
+    }
+    if (p_flags & CLEAR_STENCIL_BIT) {
+        clear_flags |= D3D12_CLEAR_FLAG_STENCIL;
+    }
+    if (clear_flags) {
+        // @TODO: better way?
+        DEV_ASSERT_INDEX(p_index, draw_pass->dsvs.size());
+        m_graphicsContext.m_commandList->ClearDepthStencilView(draw_pass->dsvs[p_index], clear_flags, 1.0f, 0, 0, nullptr);
+    }
 }
 
 void D3d12GraphicsManager::SetViewport(const Viewport& p_viewport) {
+    CD3DX12_VIEWPORT view_port(
+        static_cast<float>(p_viewport.topLeftX),
+        static_cast<float>(p_viewport.topLeftY),
+        static_cast<float>(p_viewport.width),
+        static_cast<float>(p_viewport.height));
+
+    m_graphicsContext.m_commandList->RSSetViewports(1, &view_port);
+
+    // D3D12_RECT sissor_rect{};
+    // m_graphicsContext.m_commandList->RSSetScissorRects(1, &sissor_rect);
 }
 
+// @TODO: remove
+WARNING_PUSH()
+WARNING_DISABLE(4100, "-Wunused-parameter")
 const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
+    LOG_WARN("@TODO: Implement D3d12GraphicsManager::CreateMesh");
     return nullptr;
 }
 
 void D3d12GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
+    CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
+    CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+    CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+    CRASH_NOW_MSG("Implement");
 }
 
 std::shared_ptr<GpuStructuredBuffer> D3d12GraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
+    CRASH_NOW_MSG("Implement");
     return nullptr;
 }
 
@@ -404,19 +506,28 @@ void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_b
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
+    auto initial_data = reinterpret_cast<const uint8_t*>(p_texture_desc.initialData);
+
     PixelFormat format = p_texture_desc.format;
     DXGI_FORMAT texture_format = d3d::Convert(format);
     DXGI_FORMAT srv_format = d3d::Convert(format);
+    D3D12_RESOURCE_STATES initial_state = D3D12_RESOURCE_STATE_COPY_DEST;
 
     if (format == PixelFormat::D32_FLOAT) {
         texture_format = DXGI_FORMAT_R32_TYPELESS;
         srv_format = DXGI_FORMAT_R32_FLOAT;
-    }
-    if (format == PixelFormat::D24_UNORM_S8_UINT) {
+    } else if (format == PixelFormat::D24_UNORM_S8_UINT) {
         texture_format = DXGI_FORMAT_R24G8_TYPELESS;
-    }
-    if (format == PixelFormat::R24G8_TYPELESS) {
+    } else if (format == PixelFormat::R24G8_TYPELESS) {
         srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    }
+    switch (p_texture_desc.type) {
+        case AttachmentType::NONE:
+            initial_state = D3D12_RESOURCE_STATE_COPY_DEST;
+            break;
+        default:
+            initial_state = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+            break;
     }
 
     D3D12_HEAP_PROPERTIES props{};
@@ -424,8 +535,8 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
     props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
 
-    auto ConvertBindFlags = [](uint32_t p_bind_flags) {
-        [[maybe_unused]] constexpr uint32_t supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL | BIND_UNORDERED_ACCESS;
+    auto ConvertBindFlags = [](BindFlags p_bind_flags) {
+        [[maybe_unused]] constexpr BindFlags supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL | BIND_UNORDERED_ACCESS;
         DEV_ASSERT((p_bind_flags & (~supported_flags)) == 0);
 
         D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
@@ -458,9 +569,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
     texture_desc.Flags = ConvertBindFlags(p_texture_desc.bindFlags);
 
     ID3D12Resource* texture_ptr = nullptr;
-    D3D_FAIL_V(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&texture_ptr)), nullptr);
-
-    auto initial_data = reinterpret_cast<const uint8_t*>(p_texture_desc.initialData);
+    D3D_FAIL_V(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &texture_desc, initial_state, NULL, IID_PPV_ARGS(&texture_ptr)), nullptr);
 
     if (initial_data) {
         // Create a temporary upload resource to move the data in
@@ -574,23 +683,27 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
     gpu_texture->cpuHandle = handle.cpuHandle.ptr;
     gpu_texture->gpuHandle = handle.gpuHandle.ptr;
     gpu_texture->texture = ComPtr<ID3D12Resource>(texture_ptr);
+    SetDebugName(texture_ptr, RenderTargetResourceNameToString(p_texture_desc.name));
     return gpu_texture;
 }
 
 void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     unused(p_dimension);
+    unused(p_handle);
+    unused(p_slot);
 
-    m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
-        SRV_DESCRIPTOR_OFFSET + p_slot,
-        D3D12_GPU_DESCRIPTOR_HANDLE{ p_handle });
+    // m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
+    //     SRV_DESCRIPTOR_OFFSET + p_slot,
+    //     D3D12_GPU_DESCRIPTOR_HANDLE{ p_handle });
 }
 
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
+    unused(p_slot);
 
-    m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
-        SRV_DESCRIPTOR_OFFSET + p_slot,
-        D3D12_GPU_DESCRIPTOR_HANDLE{ 0 });
+    // m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
+    //     SRV_DESCRIPTOR_OFFSET + p_slot,
+    //     D3D12_GPU_DESCRIPTOR_HANDLE{ 0 });
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
@@ -749,30 +862,28 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
     m_debugController->EnableDebugLayer();
 
-    ComPtr<ID3D12Debug> debugDevice;
-    m_device->QueryInterface(IID_PPV_ARGS(debugDevice.GetAddressOf()));
+    ComPtr<ID3D12Debug> debug_device;
+    m_device->QueryInterface(IID_PPV_ARGS(debug_device.GetAddressOf()));
 
-    ComPtr<ID3D12InfoQueue> d3dInfoQueue;
+    ComPtr<ID3D12InfoQueue> info_queue;
 
-    D3D_FAIL_V(m_device->QueryInterface(IID_PPV_ARGS(&d3dInfoQueue)), false);
+    D3D_FAIL_V(m_device->QueryInterface(IID_PPV_ARGS(&info_queue)), false);
 
-    d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
-    d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
-    d3dInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+    info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
+    info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
+    info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
 
-#if 0
-            D3D12_MESSAGE_ID blockedIds[] = {
-                D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
-                D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE,
-                D3D12_MESSAGE_ID_COPY_DESCRIPTORS_INVALID_RANGES
-            };
+    D3D12_MESSAGE_ID ignore_list[] = {
+        D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,
+        D3D12_MESSAGE_ID_CLEARDEPTHSTENCILVIEW_MISMATCHINGCLEARVALUE,
+        // D3D12_MESSAGE_ID_COPY_DESCRIPTORS_INVALID_RANGES
+    };
 
-            D3D12_INFO_QUEUE_FILTER filter = {};
-            filter.DenyList.pIDList = blockedIds;
-            filter.DenyList.NumIDs = array_length(blockedIds);
-            d3dInfoQueue->AddRetrievalFilterEntries(&filter);
-            d3dInfoQueue->AddStorageFilterEntries(&filter);
-#endif
+    D3D12_INFO_QUEUE_FILTER filter = {};
+    filter.DenyList.pIDList = ignore_list;
+    filter.DenyList.NumIDs = array_length(ignore_list);
+    info_queue->AddRetrievalFilterEntries(&filter);
+    info_queue->AddStorageFilterEntries(&filter);
 
     return true;
 }
@@ -968,16 +1079,16 @@ bool D3d12GraphicsManager::CreateRootSignature() {
 
     D3D_FAIL_V(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)), false);
 
-    m_graphicsContext.BeginFrame();
-    m_graphicsContext.m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-    m_graphicsContext.EndFrame();
+    // m_graphicsContext.BeginFrame();
+    // m_graphicsContext.m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+    // m_graphicsContext.EndFrame();
 
     return true;
 }
 
 void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {
     unused(p_scene);
-    CRASH_NOW();
+    LOG_WARN("@TODO: Implement D3d12GraphicsManager::OnSceneChange()");
 }
 
 void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {

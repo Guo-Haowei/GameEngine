@@ -24,7 +24,7 @@ public:
     void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
     void UnsetRenderTarget() final;
 
-    void Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) final;
+    void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
     const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;

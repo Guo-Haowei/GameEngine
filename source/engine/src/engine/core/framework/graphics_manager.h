@@ -8,6 +8,7 @@
 #include "rendering/pipeline_state_manager.h"
 #include "rendering/render_graph/draw_pass.h"
 #include "rendering/render_graph/render_graph.h"
+#include "rendering/render_graph/render_pass.h"
 #include "rendering/sampler.h"
 #include "rendering/uniform_buffer.h"
 #include "scene/material_component.h"
@@ -17,6 +18,7 @@
 #include "rendering/uniform_buffer.h"
 #include "scene/scene.h"
 struct MaterialConstantBuffer;
+using my::rg::RenderPass;
 
 namespace my {
 
@@ -33,6 +35,7 @@ enum ClearFlags : uint32_t {
     CLEAR_DEPTH_BIT = BIT(2),
     CLEAR_STENCIL_BIT = BIT(3),
 };
+DEFINE_ENUM_BITWISE_OPERATIONS(ClearFlags);
 
 struct Viewport {
     Viewport(int p_width, int p_height) : width(p_width), height(p_height), topLeftX(0), topLeftY(0) {}
@@ -91,6 +94,8 @@ struct PassContext {
 #include "texture_binding.h"
 #undef SHADER_TEXTURE
 
+inline constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
+
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
@@ -112,8 +117,10 @@ public:
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
+    virtual void BeginPass(const RenderPass* p_render_pass);
+    virtual void EndPass(const RenderPass* p_render_pass);
 
-    virtual void Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color = nullptr, int p_index = 0) = 0;
+    virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
     virtual const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) = 0;

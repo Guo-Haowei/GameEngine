@@ -12,10 +12,13 @@ public:
     void Render() final;
 
     void SetStencilRef(uint32_t p_ref) final;
+
     void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
     void UnsetRenderTarget() final;
+    void BeginPass(const RenderPass* p_render_pass) final;
+    void EndPass(const RenderPass* p_render_pass) final;
 
-    void Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) final;
+    void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
     const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
@@ -36,6 +39,7 @@ public:
     void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) final;
     void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
+    // @TODO: remove Dimension
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;
 

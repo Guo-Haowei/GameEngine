@@ -193,6 +193,25 @@ void GraphicsManager::Update(Scene& p_scene) {
     }
 }
 
+void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
+    for (auto& texture : p_render_pass->m_outputs) {
+        if (texture->slot >= 0) {
+            UnbindTexture(Dimension::TEXTURE_2D, texture->slot);
+            // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
+        }
+    }
+}
+
+void GraphicsManager::EndPass(const RenderPass* p_render_pass) {
+    UnsetRenderTarget();
+    for (auto& texture : p_render_pass->m_outputs) {
+        if (texture->slot >= 0) {
+            BindTexture(Dimension::TEXTURE_2D, texture->GetHandle(), texture->slot);
+            // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
+        }
+    }
+}
+
 void GraphicsManager::SelectRenderGraph() {
     std::string method(DVAR_GET_STRING(gfx_render_graph));
     const std::map<std::string, RenderGraphName> lookup = {

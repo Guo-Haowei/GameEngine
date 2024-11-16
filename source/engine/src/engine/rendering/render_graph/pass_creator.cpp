@@ -25,7 +25,12 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
     gm.SetViewport(Viewport(width, height));
 
-    float clear_color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    if (gm.GetBackend() == Backend::D3D12) {
+        clear_color[0] = 0.3f;
+        clear_color[1] = 0.3f;
+        clear_color[2] = 0.4f;
+    }
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     PassContext& pass = gm.m_mainPass;

@@ -509,7 +509,7 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     // @TODO: fixed_vector
     std::vector<ID3D11RenderTargetView*> rtvs;
     for (auto& rtv : draw_pass->rtvs) {
-        rtvs.push_back(rtv.Get());
+        rtvs.emplace_back(rtv.Get());
     }
 
     ID3D11DepthStencilView* dsv = draw_pass->dsvs.size() ? draw_pass->dsvs[0].Get() : nullptr;
@@ -517,25 +517,16 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
 }
 
 void D3d11GraphicsManager::UnsetRenderTarget() {
-    // [SCRUM-28] @TODO: Should unbind render target after each render pass
-    ID3D11RenderTargetView* rtvs[] = { nullptr, nullptr, nullptr };
+    ID3D11RenderTargetView* rtvs[] = { nullptr, nullptr, nullptr, nullptr };
     m_deviceContext->OMSetRenderTargets(array_length(rtvs), rtvs, nullptr);
 }
 
-void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, float* p_clear_color, int p_index) {
+void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
 
     if (p_flags & CLEAR_COLOR_BIT) {
-        float clear_color[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        if (p_clear_color) {
-            clear_color[0] = p_clear_color[0];
-            clear_color[1] = p_clear_color[1];
-            clear_color[2] = p_clear_color[2];
-            clear_color[3] = p_clear_color[3];
-        }
-
         for (auto& rtv : draw_pass->rtvs) {
-            m_deviceContext->ClearRenderTargetView(rtv.Get(), clear_color);
+            m_deviceContext->ClearRenderTargetView(rtv.Get(), p_clear_color);
         }
     }
 
@@ -543,7 +534,7 @@ void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, uint32_t p_flags, 
     if (p_flags & CLEAR_DEPTH_BIT) {
         clear_flags |= D3D11_CLEAR_DEPTH;
     }
-    if (p_flags & D3D11_CLEAR_STENCIL) {
+    if (p_flags & CLEAR_STENCIL_BIT) {
         clear_flags |= D3D11_CLEAR_STENCIL;
     }
     if (clear_flags) {
