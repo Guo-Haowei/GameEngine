@@ -54,11 +54,6 @@ private:
     GraphicsContext m_graphicsContext;
     CopyContext m_copyContext;
 
-    DescriptorHeapGPU m_rtvDescHeap;
-    DescriptorHeapGPU m_dsvDescHeap;
-    DescriptorHeapGPU m_srvDescHeap;
-    FrameContext* m_currentFrameContext = nullptr;
-
     ComPtr<ID3D12Device4> m_device;
     ComPtr<ID3D12Debug> m_debugController;
     ComPtr<IDXGIFactory4> m_factory;

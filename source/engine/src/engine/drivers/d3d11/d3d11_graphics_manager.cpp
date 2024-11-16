@@ -429,9 +429,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
         switch (color_attachment->desc.type) {
             case AttachmentType::COLOR_2D: {
                 ComPtr<ID3D11RenderTargetView> rtv;
-                D3D_FAIL_V_MSG(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create render target view");
+                D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()), nullptr);
                 draw_pass->rtvs.emplace_back(rtv);
             } break;
             default:
@@ -445,53 +443,45 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
-                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                desc.Format = DXGI_FORMAT_D32_FLOAT;
-                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-                desc.Texture2D.MipSlice = 0;
+                D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
 
-                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create depth stencil view");
+                D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                 draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
-                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-                desc.Texture2D.MipSlice = 0;
+                D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
 
-                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create depth stencil view");
+                D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                 draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
-                D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                desc.Format = DXGI_FORMAT_D32_FLOAT;
-                desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-                desc.Texture2D.MipSlice = 0;
+                D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
 
-                D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                               nullptr,
-                               "Failed to create depth stencil view");
+                D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                 draw_pass->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
                 for (int face = 0; face < 6; ++face) {
                     ComPtr<ID3D11DepthStencilView> dsv;
-                    D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
-                    desc.Format = DXGI_FORMAT_D32_FLOAT;
-                    desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-                    desc.Texture2DArray.MipSlice = 0;
-                    desc.Texture2DArray.ArraySize = 1;
-                    desc.Texture2DArray.FirstArraySlice = face;
+                    D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                    dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                    dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+                    dsv_desc.Texture2DArray.MipSlice = 0;
+                    dsv_desc.Texture2DArray.ArraySize = 1;
+                    dsv_desc.Texture2DArray.FirstArraySlice = face;
 
-                    D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
-                                   nullptr,
-                                   "Failed to create depth stencil view");
+                    D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                     draw_pass->dsvs.push_back(dsv);
                 }
             } break;

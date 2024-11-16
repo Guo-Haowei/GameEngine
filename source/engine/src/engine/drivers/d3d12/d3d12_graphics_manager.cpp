@@ -19,9 +19,15 @@ struct D3d12GpuTexture : public GpuTexture {
     uint64_t GetResidentHandle() const override { return 0; }
     uint64_t GetHandle() const override { return cpuHandle; }
 
+    Microsoft::WRL::ComPtr<ID3D12Resource> texture;
     int index{ -1 };
     size_t cpuHandle{ 0 };
     uint64_t gpuHandle{ 0 };
+};
+
+struct D3d12DrawPass : public DrawPass {
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvs;
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> dsvs;
 };
 
 // @TODO: move to a common place
@@ -54,13 +60,15 @@ bool D3d12GraphicsManager::InitializeImpl() {
     ok = ok && m_graphicsContext.Initialize(this);
     ok = ok && m_copyContext.Initialize(this);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_rtvDescHeap.m_startCpu;
     for (int i = 0; i < NUM_BACK_BUFFERS; i++) {
-        m_renderTargetDescriptor[i] = rtvHandle;
-        rtvHandle.ptr += m_rtvDescHeap.m_incrementSize;
+        auto handle = m_rtvDescHeap.AllocHandle();
+        m_renderTargetDescriptor[i] = handle.cpuHandle;
     }
 
-    m_depthStencilDescriptor = m_dsvDescHeap.m_startCpu;
+    {
+        auto handle = m_dsvDescHeap.AllocHandle();
+        m_depthStencilDescriptor = handle.cpuHandle;
+    }
 
     ok = ok && CreateSwapChain(w, h);
     ok = ok && CreateRenderTarget(w, h);
@@ -102,9 +110,9 @@ bool D3d12GraphicsManager::InitializeImpl() {
     ImGui_ImplDX12_Init(m_device.Get(),
                         NUM_FRAMES_IN_FLIGHT,
                         DXGI_FORMAT_R8G8B8A8_UNORM,
-                        m_srvDescHeap.m_heap.Get(),
-                        m_srvDescHeap.m_startCpu,
-                        m_srvDescHeap.m_startGpu);
+                        m_srvDescHeap.GetHeap(),
+                        m_srvDescHeap.GetStartCpu(),
+                        m_srvDescHeap.GetStartGpu());
 
     ImGui_ImplDX12_NewFrame();
 
@@ -169,9 +177,9 @@ void D3d12GraphicsManager::Render() {
     cmdList->ClearRenderTargetView(rtvHandle, kGreenClearColor, 0, nullptr);
     cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { m_srvDescHeap.m_heap.Get() };
+    ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
 
-    cmdList->SetDescriptorHeaps(array_length(descriptorHeaps), descriptorHeaps);
+    cmdList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
 
     cmdList->SetGraphicsRootSignature(m_rootSignature.Get());
 
@@ -386,14 +394,50 @@ void D3d12GraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buff
 void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     CRASH_NOW_MSG("Implement");
 }
+WARNING_POP()
 
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
+
+    PixelFormat format = p_texture_desc.format;
+    DXGI_FORMAT texture_format = d3d::Convert(format);
+    DXGI_FORMAT srv_format = d3d::Convert(format);
+
+    if (format == PixelFormat::D32_FLOAT) {
+        texture_format = DXGI_FORMAT_R32_TYPELESS;
+        srv_format = DXGI_FORMAT_R32_FLOAT;
+    }
+    if (format == PixelFormat::D24_UNORM_S8_UINT) {
+        texture_format = DXGI_FORMAT_R24G8_TYPELESS;
+    }
+    if (format == PixelFormat::R24G8_TYPELESS) {
+        srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    }
 
     D3D12_HEAP_PROPERTIES props{};
     props.Type = D3D12_HEAP_TYPE_DEFAULT;
     props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
     props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
+    auto ConvertBindFlags = [](uint32_t p_bind_flags) {
+        [[maybe_unused]] constexpr uint32_t supported_flags = BIND_SHADER_RESOURCE | BIND_RENDER_TARGET | BIND_DEPTH_STENCIL | BIND_UNORDERED_ACCESS;
+        DEV_ASSERT((p_bind_flags & (~supported_flags)) == 0);
+
+        D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE;
+        // if (p_bind_flags & BIND_SHADER_RESOURCE) {
+        // }
+        if (p_bind_flags & BIND_RENDER_TARGET) {
+            flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+        }
+        if (p_bind_flags & BIND_DEPTH_STENCIL) {
+            flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+        }
+        if (p_bind_flags & BIND_UNORDERED_ACCESS) {
+            flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+        }
+
+        return flags;
+    };
 
     D3D12_RESOURCE_DESC texture_desc{};
     texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -402,36 +446,36 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTexture
     texture_desc.Height = p_texture_desc.height;
     texture_desc.DepthOrArraySize = 1;
     texture_desc.MipLevels = 1;
-    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.Format = texture_format;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    texture_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+    texture_desc.Flags = ConvertBindFlags(p_texture_desc.bind_flags);
 
     ID3D12Resource* texture_ptr = nullptr;
     D3D_FAIL_V(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&texture_ptr)), nullptr);
 
-    // Create a temporary upload resource to move the data in
-    uint32_t upload_pitch = math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-    uint32_t upload_size = p_texture_desc.height * upload_pitch;
-    texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-    texture_desc.Alignment = 0;
-    texture_desc.Width = upload_size;
-    texture_desc.Height = 1;
-    texture_desc.DepthOrArraySize = 1;
-    texture_desc.MipLevels = 1;
-    texture_desc.Format = DXGI_FORMAT_UNKNOWN;
-    texture_desc.SampleDesc = { 1, 0 };
-    texture_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-    texture_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-    props.Type = D3D12_HEAP_TYPE_UPLOAD;
-    props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-    props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-
     auto initial_data = reinterpret_cast<const uint8_t*>(p_texture_desc.initial_data);
 
     if (initial_data) {
+        // Create a temporary upload resource to move the data in
+        const uint32_t upload_pitch = math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+        const uint32_t upload_size = p_texture_desc.height * upload_pitch;
+        texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+        texture_desc.Alignment = 0;
+        texture_desc.Width = upload_size;
+        texture_desc.Height = 1;
+        texture_desc.DepthOrArraySize = 1;
+        texture_desc.MipLevels = 1;
+        texture_desc.Format = DXGI_FORMAT_UNKNOWN;
+        texture_desc.SampleDesc = { 1, 0 };
+        texture_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+        texture_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+        props.Type = D3D12_HEAP_TYPE_UPLOAD;
+        props.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+        props.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+
         // @TODO: refactor
         ComPtr<ID3D12Resource> upload_buffer;
         D3D_FAIL_V(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&upload_buffer)), nullptr);
@@ -509,46 +553,97 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTexture
         CloseHandle(event);
     }
 
-    int index = m_textureCounter.fetch_add(1);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_srvDescHeap.m_startCpu);
-    cpuHandle.Offset(index, m_srvDescHeap.m_incrementSize);
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_srvDescHeap.m_startGpu);
-    gpuHandle.Offset(index, m_srvDescHeap.m_incrementSize);
+    auto handle = m_srvDescHeap.AllocHandle();
 
     // Create a shader resource view for the texture
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc;
-    ZeroMemory(&srvDesc, sizeof(srvDesc));
-    srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels = texture_desc.MipLevels;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    m_device->CreateShaderResourceView(texture_ptr, &srvDesc, cpuHandle);
+    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+    srv_desc.Format = srv_format;
+    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+    srv_desc.Texture2D.MostDetailedMip = 0;
+    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    m_device->CreateShaderResourceView(texture_ptr, &srv_desc, handle.cpuHandle);
 
-    // Return results
-    m_textures.emplace_back(ComPtr<ID3D12Resource>(texture_ptr));
     auto gpu_texture = std::make_shared<D3d12GpuTexture>(p_texture_desc);
-    gpu_texture->index = index;
-    gpu_texture->cpuHandle = cpuHandle.ptr;
-    gpu_texture->gpuHandle = gpuHandle.ptr;
-
+    gpu_texture->index = handle.index;
+    gpu_texture->cpuHandle = handle.cpuHandle.ptr;
+    gpu_texture->gpuHandle = handle.gpuHandle.ptr;
+    gpu_texture->texture = ComPtr<ID3D12Resource>(texture_ptr);
     return gpu_texture;
 }
 
 void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+    unused(p_dimension);
+    unused(p_handle);
+    unused(p_slot);
     CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
+    unused(p_dimension);
+    unused(p_slot);
     CRASH_NOW_MSG("Implement");
 }
 
-std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc&) {
-    CRASH_NOW_MSG("Implement");
-    return nullptr;
-}
+std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
+    auto draw_pass = std::make_shared<D3d12DrawPass>();
+    draw_pass->execFunc = p_subpass_desc.execFunc;
+    draw_pass->colorAttachments = p_subpass_desc.colorAttachments;
+    draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
 
-WARNING_POP()
+    for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
+        auto texture = reinterpret_cast<const D3d12GpuTexture*>(color_attachment->texture.get());
+        switch (color_attachment->desc.type) {
+            case AttachmentType::COLOR_2D: {
+                auto handle = m_rtvDescHeap.AllocHandle();
+                m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, handle.cpuHandle);
+                draw_pass->rtvs.emplace_back(handle.cpuHandle);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
+    if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
+        auto texture = reinterpret_cast<const D3d12GpuTexture*>(depth_attachment->texture.get());
+        switch (depth_attachment->desc.type) {
+            case AttachmentType::DEPTH_2D: {
+                // ComPtr<ID3D11DepthStencilView> dsv;
+                // D3D11_DEPTH_STENCIL_VIEW_DESC desc{};
+                // desc.Format = DXGI_FORMAT_D32_FLOAT;
+                // desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+                // desc.Texture2D.MipSlice = 0;
+
+                // D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
+                //                nullptr,
+                //                "Failed to create depth stencil view");
+                // draw_pass->dsvs.push_back(dsv);
+                CRASH_NOW();
+            } break;
+            case AttachmentType::DEPTH_STENCIL_2D: {
+                D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
+                auto handle = m_dsvDescHeap.AllocHandle();
+                m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
+                draw_pass->dsvs.emplace_back(handle.cpuHandle);
+            } break;
+            case AttachmentType::SHADOW_2D: {
+                CRASH_NOW();
+            } break;
+            case AttachmentType::SHADOW_CUBE_MAP: {
+                CRASH_NOW();
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+    }
+
+    return draw_pass;
+}
 
 bool D3d12GraphicsManager::CreateDevice() {
     if (m_enableValidationLayer) {
@@ -676,9 +771,10 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
 bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     bool ok = true;
-    ok = ok && m_rtvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
-    ok = ok && m_dsvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
-    ok = ok && m_srvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
+    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
+    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
+    // 1 slot for imgui
+    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
     return ok;
 }
 

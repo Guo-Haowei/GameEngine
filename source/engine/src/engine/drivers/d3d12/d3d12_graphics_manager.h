@@ -40,7 +40,7 @@ public:
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;
 
-    std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc&) final;
+    std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) final;
 
     ID3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE p_type);
 
@@ -98,7 +98,6 @@ private:
     std::vector<CD3DX12_STATIC_SAMPLER_DESC> m_staticSamplers;
 
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_textures;
-    std::atomic_int m_textureCounter = 1;  // slot 0 is for imgui
 };
 
 }  // namespace my

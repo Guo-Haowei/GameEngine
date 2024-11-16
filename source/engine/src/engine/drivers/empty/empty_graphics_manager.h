@@ -43,7 +43,7 @@ public:
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
 
-    std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc&) override { return nullptr; }
+    std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) override { return nullptr; }
 
 protected:
     bool InitializeImpl() override { return true; }
