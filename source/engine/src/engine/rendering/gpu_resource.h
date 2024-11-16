@@ -64,7 +64,20 @@ enum ResourceMiscFlags : uint32_t {
 };
 DEFINE_ENUM_BITWISE_OPERATIONS(ResourceMiscFlags)
 
+// @TODO: refactor
+enum class AttachmentType {
+    COLOR_2D,
+    COLOR_CUBE_MAP,
+    DEPTH_2D,
+    DEPTH_STENCIL_2D,
+    SHADOW_2D,
+    SHADOW_CUBE_MAP,
+};
+
 struct GpuTextureDesc {
+    // @TODO: change to usage
+    AttachmentType type;
+    // @TODO: add debug name
     Dimension dimension;
     uint32_t width;
     uint32_t height;

@@ -9,15 +9,15 @@ using DrawPassExecuteFunc = void (*)(const DrawPass*);
 
 // @TODO: fix this, DrawPassDesc and DrawPass the same
 struct DrawPassDesc {
-    std::vector<std::shared_ptr<RenderTarget>> colorAttachments;
-    std::shared_ptr<RenderTarget> depthAttachment;
+    std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
+    std::shared_ptr<GpuTexture> depthAttachment;
     DrawPassExecuteFunc execFunc{ nullptr };
 };
 
 struct DrawPass {
     DrawPassExecuteFunc execFunc{ nullptr };
-    std::vector<std::shared_ptr<RenderTarget>> colorAttachments;
-    std::shared_ptr<RenderTarget> depthAttachment;
+    std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
+    std::shared_ptr<GpuTexture> depthAttachment;
 };
 
 }  // namespace my

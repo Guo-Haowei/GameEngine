@@ -126,8 +126,8 @@ public:
     void SetPipelineState(PipelineStateName p_name);
     virtual void SetStencilRef(uint32_t p_ref) = 0;
 
-    std::shared_ptr<RenderTarget> CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
-    std::shared_ptr<RenderTarget> FindRenderTarget(RenderTargetResourceName p_name) const;
+    std::shared_ptr<GpuTexture> CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler);
+    std::shared_ptr<GpuTexture> FindRenderTarget(RenderTargetResourceName p_name) const;
 
     virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) = 0;
     virtual void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
@@ -187,7 +187,7 @@ protected:
 
     rg::RenderGraph m_renderGraph;
 
-    std::map<RenderTargetResourceName, std::shared_ptr<RenderTarget>> m_resourceLookup;
+    std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
     struct ImageTask {
         ImageHandle* handle;

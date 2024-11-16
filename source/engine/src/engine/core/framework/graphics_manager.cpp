@@ -75,12 +75,12 @@ bool GraphicsManager::Initialize() {
     }
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = FindRenderTarget(p_name);
         if (!resource) {
             return;
         }
 
-        BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
+        BindTexture(p_dimension, resource->GetHandle(), p_slot);
     };
 
     // bind common textures
@@ -211,13 +211,13 @@ void GraphicsManager::SelectRenderGraph() {
     }
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
+std::shared_ptr<GpuTexture> GraphicsManager::CreateRenderTarget(const RenderTargetDesc& p_desc, const SamplerDesc& p_sampler) {
     DEV_ASSERT(m_resourceLookup.find(p_desc.name) == m_resourceLookup.end());
-    std::shared_ptr<RenderTarget> resource = std::make_shared<RenderTarget>(p_desc);
 
     // @TODO: this part need rework
     GpuTextureDesc texture_desc{};
     texture_desc.arraySize = 1;
+    texture_desc.type = p_desc.type;
 
     switch (p_desc.type) {
         case AttachmentType::COLOR_2D:
@@ -268,13 +268,12 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
         texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
     }
 
-    resource->texture = CreateTexture(texture_desc, p_sampler);
-
-    m_resourceLookup[resource->desc.name] = resource;
-    return resource;
+    auto texture = CreateTexture(texture_desc, p_sampler);
+    m_resourceLookup[p_desc.name] = texture;
+    return texture;
 }
 
-std::shared_ptr<RenderTarget> GraphicsManager::FindRenderTarget(RenderTargetResourceName p_name) const {
+std::shared_ptr<GpuTexture> GraphicsManager::FindRenderTarget(RenderTargetResourceName p_name) const {
     if (m_resourceLookup.empty()) {
         return nullptr;
     }
@@ -290,13 +289,13 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_method) {
         case RenderGraphName::DUMMY:
-            texture = FindRenderTarget(RESOURCE_GBUFFER_BASE_COLOR)->texture.get();
+            texture = FindRenderTarget(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;
         case RenderGraphName::VXGI:
-            texture = FindRenderTarget(RESOURCE_FINAL)->texture.get();
+            texture = FindRenderTarget(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::DEFAULT:
-            texture = FindRenderTarget(RESOURCE_TONE)->texture.get();
+            texture = FindRenderTarget(RESOURCE_TONE).get();
             break;
         default:
             CRASH_NOW();

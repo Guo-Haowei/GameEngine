@@ -9,6 +9,64 @@
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
+using namespace my;
+using namespace my::rg;
+
+GpuTextureDesc BuildRenderTargeTextureDesc(const RenderTargetDesc& p_desc) {
+    GpuTextureDesc texture_desc{};
+    texture_desc.arraySize = 1;
+
+    switch (p_desc.type) {
+        case AttachmentType::COLOR_2D:
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::DEPTH_STENCIL_2D:
+        case AttachmentType::SHADOW_2D:
+            texture_desc.dimension = Dimension::TEXTURE_2D;
+            break;
+        case AttachmentType::SHADOW_CUBE_MAP:
+        case AttachmentType::COLOR_CUBE_MAP:
+            texture_desc.dimension = Dimension::TEXTURE_CUBE;
+            texture_desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
+            texture_desc.arraySize = 6;
+            break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+    switch (p_desc.type) {
+        case AttachmentType::COLOR_2D:
+        case AttachmentType::COLOR_CUBE_MAP:
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+            break;
+        case AttachmentType::SHADOW_2D:
+        case AttachmentType::SHADOW_CUBE_MAP:
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            break;
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::DEPTH_STENCIL_2D:
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            break;
+        default:
+            break;
+    }
+
+    texture_desc.name = p_desc.name;
+    texture_desc.format = p_desc.format;
+    texture_desc.width = p_desc.width;
+    texture_desc.height = p_desc.height;
+    texture_desc.initialData = nullptr;
+    texture_desc.mipLevels = 1;
+
+    if (p_desc.need_uav) {
+        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
+    }
+
+    if (p_desc.gen_mipmap) {
+        texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+    }
+
+    return texture_desc;
+}
 
 namespace my::rg {
 
@@ -18,7 +76,8 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
-    auto [width, height] = p_draw_pass->depthAttachment->getSize();
+    const uint32_t width = p_draw_pass->depthAttachment->desc.width;
+    const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
     gm.SetRenderTarget(p_draw_pass);
 
@@ -128,7 +187,8 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     }
 
     // prepare render data
-    auto [width, height] = p_draw_pass->depthAttachment->getSize();
+    const uint32_t width = p_draw_pass->depthAttachment->desc.width;
+    const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
     // @TODO: instead of render the same object 6 times
     // set up different object list for different pass
@@ -169,7 +229,8 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     auto& ctx = gm.GetContext();
 
     gm.SetRenderTarget(p_draw_pass);
-    auto [width, height] = p_draw_pass->depthAttachment->getSize();
+    const uint32_t width = p_draw_pass->depthAttachment->desc.width;
+    const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
     gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT);
 
@@ -261,7 +322,8 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
 
     auto& gm = GraphicsManager::GetSingleton();
     DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
-    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
+    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
+    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
 
     gm.SetRenderTarget(p_draw_pass);
 
@@ -272,12 +334,12 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = gm.FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = gm.FindRenderTarget(p_name);
         if (!resource) {
             return;
         }
 
-        gm.BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
+        gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
     };
 
     // bind common textures
@@ -367,7 +429,8 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& ctx = gm.GetContext();
-    auto [width, height] = p_draw_pass->depthAttachment->getSize();
+    const uint32_t width = p_draw_pass->depthAttachment->desc.width;
+    const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
     gm.SetRenderTarget(p_draw_pass);
     gm.SetViewport(Viewport(width, height));
@@ -440,12 +503,13 @@ static void BloomFunc(const DrawPass*) {
         auto input = gm.FindRenderTarget(RESOURCE_LIGHTING);
         auto output = gm.FindRenderTarget(RESOURCE_BLOOM_0);
 
-        auto [width, height] = input->getSize();
+        const uint32_t width = input->desc.width;
+        const uint32_t height = input->desc.height;
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), t_bloomInputImageSlot);
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), t_bloomInputImageSlot);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
         gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
@@ -459,12 +523,13 @@ static void BloomFunc(const DrawPass*) {
 
         DEV_ASSERT(input && output);
 
-        auto [width, height] = output->getSize();
+        const uint32_t width = input->desc.width;
+        const uint32_t height = input->desc.height;
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), t_bloomInputImageSlot);
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), t_bloomInputImageSlot);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
         gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
@@ -476,12 +541,13 @@ static void BloomFunc(const DrawPass*) {
         auto input = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
         auto output = gm.FindRenderTarget(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
-        auto [width, height] = output->getSize();
+        const uint32_t width = output->desc.width;
+        const uint32_t height = output->desc.height;
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->texture->GetHandle(), t_bloomInputImageSlot);
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output->texture.get());
+        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), t_bloomInputImageSlot);
+        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
         gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
@@ -528,7 +594,8 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
 
     DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
     auto depth_buffer = p_draw_pass->depthAttachment;
-    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
+    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
+    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
 
     // draw billboards
 
@@ -539,12 +606,12 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         debug_vxgi_pass_func(p_draw_pass);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-            std::shared_ptr<RenderTarget> resource = gm.FindRenderTarget(p_name);
+            std::shared_ptr<GpuTexture> resource = gm.FindRenderTarget(p_name);
             if (!resource) {
                 return;
             }
 
-            gm.BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
+            gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
         };
         bind_slot(RESOURCE_LIGHTING, t_textureLightingSlot);
         bind_slot(RESOURCE_BLOOM_0, t_bloomInputImageSlot);

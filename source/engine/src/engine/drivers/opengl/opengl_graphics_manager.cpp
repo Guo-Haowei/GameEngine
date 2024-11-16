@@ -497,7 +497,7 @@ std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDe
             attachments.push_back(attachment);
 
             const auto& color_attachment = p_desc.colorAttachments[idx];
-            uint32_t texture_handle = static_cast<uint32_t>(color_attachment->texture->GetHandle());
+            uint32_t texture_handle = static_cast<uint32_t>(color_attachment->GetHandle());
             switch (color_attachment->desc.type) {
                 case AttachmentType::COLOR_2D: {
                     glFramebufferTexture2D(GL_FRAMEBUFFER,  // target
@@ -519,7 +519,7 @@ std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDe
     }
 
     if (auto depth_attachment = p_desc.depthAttachment; depth_attachment) {
-        uint32_t texture_handle = static_cast<uint32_t>(depth_attachment->texture->GetHandle());
+        uint32_t texture_handle = static_cast<uint32_t>(depth_attachment->GetHandle());
         switch (depth_attachment->desc.type) {
             case AttachmentType::SHADOW_2D:
             case AttachmentType::DEPTH_2D: {
@@ -572,7 +572,7 @@ void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_i
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   static_cast<uint32_t>(resource->texture->GetHandle()),
+                                   static_cast<uint32_t>(resource->GetHandle()),
                                    p_mip_level);
         }
     }
@@ -582,7 +582,7 @@ void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_i
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_DEPTH_ATTACHMENT,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   static_cast<uint32_t>(depth_attachment->texture->GetHandle()),
+                                   static_cast<uint32_t>(depth_attachment->GetHandle()),
                                    p_mip_level);
         }
     }
@@ -646,9 +646,9 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 
     // @TODO: refactor
     auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {
-        std::shared_ptr<RenderTarget> resource = FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = FindRenderTarget(p_name);
         if (resource) {
-            p_out_id = resource->texture->GetResidentHandle();
+            p_out_id = resource->GetResidentHandle();
         } else {
             p_out_id = 0;
         }

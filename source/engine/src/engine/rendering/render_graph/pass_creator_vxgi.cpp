@@ -32,12 +32,12 @@ void voxelization_pass_func(const DrawPass*) {
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<RenderTarget> resource = gm.FindRenderTarget(p_name);
+        std::shared_ptr<GpuTexture> resource = gm.FindRenderTarget(p_name);
         if (!resource) {
             return;
         }
 
-        gm.BindTexture(p_dimension, resource->texture->GetHandle(), p_slot);
+        gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
     };
 
     // bind common textures
@@ -130,7 +130,8 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
     auto cube_map = p_draw_pass->colorAttachments[0];
-    auto [width, height] = cube_map->getSize();
+    const uint32_t width = cube_map->desc.width;
+    const uint32_t height = cube_map->desc.height;
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
@@ -144,7 +145,7 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
         RenderManager::GetSingleton().draw_skybox();
     }
 
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->texture->GetHandle32());
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->GetHandle32());
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
@@ -158,7 +159,8 @@ void generate_brdf_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_BRDF);
-    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
+    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
+    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
@@ -172,7 +174,8 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DIFFUSE_IRRADIANCE);
-    auto [width, height] = p_draw_pass->depthAttachment->getSize();
+    const uint32_t width = p_draw_pass->depthAttachment->desc.width;
+    const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
@@ -195,7 +198,8 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_PREFILTER);
-    auto [width, height] = p_draw_pass->depthAttachment->getSize();
+    uint32_t width = p_draw_pass->depthAttachment->desc.width;
+    uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
@@ -223,7 +227,8 @@ static void highlight_select_pass_func(const DrawPass* p_draw_pass) {
     auto& manager = GraphicsManager::GetSingleton();
     manager.SetRenderTarget(p_draw_pass);
     DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
-    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
+    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
+    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
 
     glViewport(0, 0, width, height);
 
@@ -241,7 +246,8 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     gm.SetRenderTarget(p_draw_pass);
     DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
     auto depth_buffer = p_draw_pass->depthAttachment;
-    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
+    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
+    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -280,7 +286,8 @@ void final_pass_func(const DrawPass* p_draw_pass) {
 
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
     DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
-    auto [width, height] = p_draw_pass->colorAttachments[0]->getSize();
+    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
+    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -288,7 +295,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_IMAGE_2D);
 
     // @TODO: clean up
-    auto final_image_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_TONE)->texture->GetResidentHandle();
+    auto final_image_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_TONE)->GetResidentHandle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
     // if (0) {
@@ -297,7 +304,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     // }
 
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
-        auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->texture->GetResidentHandle();
+        auto shadow_map_handle = GraphicsManager::GetSingleton().FindRenderTarget(RESOURCE_SHADOW_MAP)->GetResidentHandle();
         debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);
     }
 }

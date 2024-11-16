@@ -425,7 +425,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
     draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
-        auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment->texture.get());
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment.get());
         switch (color_attachment->desc.type) {
             case AttachmentType::COLOR_2D: {
                 ComPtr<ID3D11RenderTargetView> rtv;
@@ -439,7 +439,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
     }
 
     if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
-        auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment->texture.get());
+        auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
