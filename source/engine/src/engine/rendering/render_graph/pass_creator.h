@@ -11,14 +11,14 @@ class RenderGraph;
 class RenderPassCreator {
 public:
     struct Config {
-        bool enable_shadow = true;
-        bool enable_point_shadow = true;
-        bool enable_voxel_gi = true;
-        bool enable_ibl = true;
-        bool enable_bloom = true;
+        bool enableShadow = true;
+        bool enablePointShadow = true;
+        bool enableVxgi = true;
+        bool enableIbl = true;
+        bool enableBloom = true;
 
-        int frame_width;
-        int frame_height;
+        int frameWidth;
+        int frameHeight;
     };
 
     RenderPassCreator(const Config& p_config, RenderGraph& p_graph)

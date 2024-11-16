@@ -316,8 +316,8 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
     const int h = frame_size.y;
 
     RenderPassCreator::Config config;
-    config.frame_width = w;
-    config.frame_height = h;
+    config.frameWidth = w;
+    config.frameHeight = h;
     RenderPassCreator creator(config, p_graph);
 
     GraphicsManager& manager = GraphicsManager::GetSingleton();

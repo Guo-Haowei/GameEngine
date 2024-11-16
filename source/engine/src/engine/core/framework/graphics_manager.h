@@ -86,7 +86,7 @@ struct PassContext {
     std::vector<BatchContext> draws;
 };
 
-#define SHADER_TEXTURE(TYPE, NAME, SLOT) \
+#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
     constexpr int NAME##Slot = SLOT;
 #include "texture_binding.h"
 #undef SHADER_TEXTURE

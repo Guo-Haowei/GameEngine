@@ -667,7 +667,7 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 void OpenGlGraphicsManager::Render() {
     OPTICK_EVENT();
 
-    m_renderGraph.Execute();
+    m_renderGraph.Execute(*this);
 
     // @TODO: move it somewhere else
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

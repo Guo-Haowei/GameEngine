@@ -137,7 +137,7 @@ void D3d12GraphicsManager::Render() {
 
     ID3D12GraphicsCommandList* cmdList = m_graphicsContext.m_commandList.Get();
 
-    m_renderGraph.Execute();
+    m_renderGraph.Execute(*this);
 
     // CommandList cmd = 0;
     // FrameContext* frameContext = m_currentFrameContext;
@@ -934,7 +934,7 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     CD3DX12_DESCRIPTOR_RANGE tex_table[64];
     int tex_count = 0;
 
-#define SHADER_TEXTURE(TYPE, NAME, SLOT) tex_table[tex_count++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, SLOT);
+#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) tex_table[tex_count++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, SLOT);
 #include "texture_binding.h"
 #undef SHADER_TEXTURE
 

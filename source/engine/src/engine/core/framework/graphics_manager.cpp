@@ -74,6 +74,7 @@ bool GraphicsManager::Initialize() {
         return false;
     }
 
+#if 0
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
         std::shared_ptr<GpuTexture> resource = FindGpuTexture(p_name);
         if (!resource) {
@@ -89,6 +90,22 @@ bool GraphicsManager::Initialize() {
     bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
     bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
     bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
+#endif
+
+    // @TODO: set slots
+    auto bind_slot2 = [&](RenderTargetResourceName p_name, int p_slot) {
+        std::shared_ptr<GpuTexture> texture = FindGpuTexture(p_name);
+        if (!texture) {
+            return;
+        }
+
+        DEV_ASSERT(p_slot >= 0);
+        texture->slot = p_slot;
+        // BindTexture(p_dimension, texture->GetHandle(), p_slot);
+    };
+#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) bind_slot2(BINDING, SLOT);
+#include "texture_binding.h"
+#undef SHADER_TEXTURE
 
     return true;
 }

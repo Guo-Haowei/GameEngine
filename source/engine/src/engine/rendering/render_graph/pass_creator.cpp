@@ -71,8 +71,8 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 void RenderPassCreator::AddGBufferPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
-    int p_width = m_config.frame_width;
-    int p_height = m_config.frame_height;
+    int p_width = m_config.frameWidth;
+    int p_height = m_config.frameHeight;
 
     auto gbuffer_depth = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
                                                                           PixelFormat::R24G8_TYPELESS,
@@ -194,8 +194,6 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
         gm.SetMesh(draw.mesh_data);
         gm.DrawElements(draw.mesh_data->indexCount);
     }
-
-    gm.UnsetRenderTarget();
 }
 
 void RenderPassCreator::AddShadowPass() {
@@ -284,10 +282,6 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, t_gbufferBaseColorMapSlot);
-    bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
-    bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
-    bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
     bind_slot(RESOURCE_GBUFFER_DEPTH, t_gbufferDepthSlot);
 
     bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
@@ -316,19 +310,12 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     // }
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferBaseColorMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferPositionMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferNormalMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferMaterialMapSlot);
     gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferDepthSlot);
     gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow0Slot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow1Slot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow2Slot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow3Slot);
-
-    // @TODO: [SCRUM-28] refactor
-    gm.UnsetRenderTarget();
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -339,20 +326,20 @@ void RenderPassCreator::AddLightingPass() {
     auto lighting_attachment = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
                                                                                 PixelFormat::R11G11B10_FLOAT,
                                                                                 AttachmentType::COLOR_2D,
-                                                                                m_config.frame_width, m_config.frame_height),
+                                                                                m_config.frameWidth, m_config.frameHeight),
                                                         PointClampSampler());
 
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
 
     desc.dependencies = { RenderPassName::GBUFFER };
-    if (m_config.enable_shadow) {
+    if (m_config.enableShadow) {
         desc.dependencies.push_back(RenderPassName::SHADOW);
     }
-    if (m_config.enable_voxel_gi) {
+    if (m_config.enableVxgi) {
         desc.dependencies.push_back(RenderPassName::VOXELIZATION);
     }
-    if (m_config.enable_ibl) {
+    if (m_config.enableIbl) {
         desc.dependencies.push_back(RenderPassName::ENV);
     }
 
@@ -413,8 +400,6 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
         RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
         gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
     }
-
-    gm.UnsetRenderTarget();
 }
 
 void RenderPassCreator::AddEmitterPass() {
@@ -503,8 +488,8 @@ void RenderPassCreator::AddBloomPass() {
     desc.dependencies = { RenderPassName::LIGHTING };
     auto pass = m_graph.CreatePass(desc);
 
-    int width = m_config.frame_width;
-    int height = m_config.frame_height;
+    int width = m_config.frameWidth;
+    int height = m_config.frameHeight;
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX; ++i, width /= 2, height /= 2) {
         DEV_ASSERT(width > 1);
         DEV_ASSERT(height > 1);
@@ -578,8 +563,8 @@ void RenderPassCreator::AddTonePass() {
 
     auto pass = m_graph.CreatePass(desc);
 
-    int width = m_config.frame_width;
-    int height = m_config.frame_height;
+    int width = m_config.frameWidth;
+    int height = m_config.frameHeight;
 
     auto attachment = gm.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
                                                                   PixelFormat::R11G11B10_FLOAT,
@@ -604,11 +589,11 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     const int h = frame_size.y;
 
     RenderPassCreator::Config config;
-    config.frame_width = w;
-    config.frame_height = h;
-    config.enable_bloom = false;
-    config.enable_ibl = false;
-    config.enable_voxel_gi = false;
+    config.frameWidth = w;
+    config.frameHeight = h;
+    config.enableBloom = false;
+    config.enableIbl = false;
+    config.enableVxgi = false;
     RenderPassCreator creator(config, p_graph);
 
     creator.AddGBufferPass();
@@ -622,11 +607,11 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     const int h = frame_size.y;
 
     RenderPassCreator::Config config;
-    config.frame_width = w;
-    config.frame_height = h;
-    config.enable_bloom = false;
-    config.enable_ibl = false;
-    config.enable_voxel_gi = false;
+    config.frameWidth = w;
+    config.frameHeight = h;
+    config.enableBloom = false;
+    config.enableIbl = false;
+    config.enableVxgi = false;
     RenderPassCreator creator(config, p_graph);
 
     creator.AddShadowPass();
