@@ -450,12 +450,12 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTexture(const GpuTexture
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
     texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-    texture_desc.Flags = ConvertBindFlags(p_texture_desc.bind_flags);
+    texture_desc.Flags = ConvertBindFlags(p_texture_desc.bindFlags);
 
     ID3D12Resource* texture_ptr = nullptr;
     D3D_FAIL_V(m_device->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &texture_desc, D3D12_RESOURCE_STATE_COPY_DEST, NULL, IID_PPV_ARGS(&texture_ptr)), nullptr);
 
-    auto initial_data = reinterpret_cast<const uint8_t*>(p_texture_desc.initial_data);
+    auto initial_data = reinterpret_cast<const uint8_t*>(p_texture_desc.initialData);
 
     if (initial_data) {
         // Create a temporary upload resource to move the data in

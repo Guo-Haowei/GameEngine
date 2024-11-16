@@ -433,7 +433,7 @@ std::shared_ptr<GpuTexture> OpenGLGraphicsManager::CreateTexture(const GpuTextur
                          0,
                          format,
                          data_type,
-                         p_texture_desc.initial_data);
+                         p_texture_desc.initialData);
         } break;
         case GL_TEXTURE_CUBE_MAP: {
             for (int i = 0; i < 6; ++i) {
@@ -445,7 +445,7 @@ std::shared_ptr<GpuTexture> OpenGLGraphicsManager::CreateTexture(const GpuTextur
                              0,
                              format,
                              data_type,
-                             p_texture_desc.initial_data);
+                             p_texture_desc.initialData);
             }
         } break;
         default:
@@ -454,7 +454,7 @@ std::shared_ptr<GpuTexture> OpenGLGraphicsManager::CreateTexture(const GpuTextur
     }
 
     gl::SetSampler(texture_type, p_sampler_desc);
-    if (p_texture_desc.misc_flags & RESOURCE_MISC_GENERATE_MIPS) {
+    if (p_texture_desc.miscFlags & RESOURCE_MISC_GENERATE_MIPS) {
         glGenerateMipmap(texture_type);
     }
 

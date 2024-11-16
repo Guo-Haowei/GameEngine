@@ -2,7 +2,7 @@
 
 #define IN_USE     &&
 #define NOT_IN_USE &&!
-#define USE_IF(x)  &&((x) ? 1 : 0) &&
+#define USE_IF(x)  &&((x) ? 1 : 0)&&
 #define USING(x)   (1 x 1)
 
 /// Build
@@ -58,12 +58,31 @@
 #error Platform not supported
 #endif
 
+/// String
 #ifdef _STR
 #undef _STR
 #endif
 #define _STR(x) #x
 
+/// Scope exit
 #define ON_SCOPE_EXIT(FUNC) auto __on_scope_exit_call = ::my::MakeScopeDrop(FUNC)
+
+/// Enum
+#define DEFINE_ENUM_BITWISE_OPERATIONS(ENUM)                                              \
+    constexpr ENUM& operator&=(ENUM& p_lhs, const ENUM& p_rhs) {                          \
+        p_lhs = static_cast<ENUM>(std::to_underlying(p_lhs) & std::to_underlying(p_rhs)); \
+        return p_lhs;                                                                     \
+    }                                                                                     \
+    constexpr ENUM& operator|=(ENUM& p_lhs, const ENUM& p_rhs) {                          \
+        p_lhs = static_cast<ENUM>(std::to_underlying(p_lhs) | std::to_underlying(p_rhs)); \
+        return p_lhs;                                                                     \
+    }                                                                                     \
+    constexpr ENUM operator&(const ENUM& p_lhs, const ENUM& p_rhs) {                      \
+        return static_cast<ENUM>(std::to_underlying(p_lhs) & std::to_underlying(p_rhs));  \
+    }                                                                                     \
+    constexpr ENUM operator|(const ENUM& p_lhs, const ENUM& p_rhs) {                      \
+        return static_cast<ENUM>(std::to_underlying(p_lhs) | std::to_underlying(p_rhs));  \
+    }
 
 namespace my {
 
@@ -77,7 +96,7 @@ inline constexpr int array_length(T (&)[N]) {
 }
 
 template<typename T>
-void unused(T &) {}
+void unused(T&) {}
 
 template<typename FUNC>
 class ScopeDrop {

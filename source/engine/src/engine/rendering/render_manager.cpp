@@ -87,16 +87,16 @@ void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_textu
     p_texture_desc.dimension = Dimension::TEXTURE_2D;
     p_texture_desc.width = p_image->width;
     p_texture_desc.height = p_image->height;
-    p_texture_desc.array_size = 1;
-    p_texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
-    p_texture_desc.initial_data = p_image->buffer.data();
-    p_texture_desc.mip_levels = 1;
+    p_texture_desc.arraySize = 1;
+    p_texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+    p_texture_desc.initialData = p_image->buffer.data();
+    p_texture_desc.mipLevels = 1;
 
     if (is_hdr_file) {
         p_sampler_desc.minFilter = p_sampler_desc.magFilter = FilterMode::LINEAR;
         p_sampler_desc.addressU = p_sampler_desc.addressV = AddressMode::CLAMP;
     } else {
-        p_texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
+        p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
 
         p_sampler_desc.minFilter = FilterMode::MIPMAP_LINEAR;
         p_sampler_desc.magFilter = FilterMode::LINEAR;

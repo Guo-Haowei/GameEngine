@@ -217,7 +217,7 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
 
     // @TODO: this part need rework
     GpuTextureDesc texture_desc{};
-    texture_desc.array_size = 1;
+    texture_desc.arraySize = 1;
 
     switch (p_desc.type) {
         case AttachmentType::COLOR_2D:
@@ -229,8 +229,8 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
         case AttachmentType::SHADOW_CUBE_MAP:
         case AttachmentType::COLOR_CUBE_MAP:
             texture_desc.dimension = Dimension::TEXTURE_CUBE;
-            texture_desc.misc_flags |= RESOURCE_MISC_TEXTURECUBE;
-            texture_desc.array_size = 6;
+            texture_desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
+            texture_desc.arraySize = 6;
             break;
         default:
             CRASH_NOW();
@@ -239,15 +239,15 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
     switch (p_desc.type) {
         case AttachmentType::COLOR_2D:
         case AttachmentType::COLOR_CUBE_MAP:
-            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
             break;
         case AttachmentType::SHADOW_2D:
         case AttachmentType::SHADOW_CUBE_MAP:
-            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
             break;
         case AttachmentType::DEPTH_2D:
         case AttachmentType::DEPTH_STENCIL_2D:
-            texture_desc.bind_flags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
+            texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
             break;
         default:
             break;
@@ -257,15 +257,15 @@ std::shared_ptr<RenderTarget> GraphicsManager::CreateRenderTarget(const RenderTa
     texture_desc.format = p_desc.format;
     texture_desc.width = p_desc.width;
     texture_desc.height = p_desc.height;
-    texture_desc.initial_data = nullptr;
-    texture_desc.mip_levels = 1;
+    texture_desc.initialData = nullptr;
+    texture_desc.mipLevels = 1;
 
     if (p_desc.need_uav) {
-        texture_desc.bind_flags |= BIND_UNORDERED_ACCESS;
+        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
     }
 
     if (p_desc.gen_mipmap) {
-        texture_desc.misc_flags |= RESOURCE_MISC_GENERATE_MIPS;
+        texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
     }
 
     resource->texture = CreateTexture(texture_desc, p_sampler);
