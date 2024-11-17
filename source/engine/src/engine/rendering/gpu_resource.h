@@ -148,5 +148,4 @@ struct ConstantBuffer {
     }
 };
 
-
 }  // namespace my

@@ -23,7 +23,7 @@ namespace my::rg {
 void voxelization_pass_func(const DrawPass*) {
     OPTICK_EVENT();
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetCurrentFrame();
+    auto& frame = gm.GetCurrentFrame();
 
     if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
         return;
@@ -66,22 +66,22 @@ void voxelization_pass_func(const DrawPass*) {
     g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
 
     PassContext& pass = gm.m_voxelPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
         }
 
         gm.SetPipelineState(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialUniform.get(), subset.material_idx);
 
             gm.DrawElements(subset.index_count, subset.index_offset);
         }
@@ -255,7 +255,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DEBUG_VOXEL);
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passUniform.get(), pass.pass_idx);
 
     glBindVertexArray(g_box->vao);
 

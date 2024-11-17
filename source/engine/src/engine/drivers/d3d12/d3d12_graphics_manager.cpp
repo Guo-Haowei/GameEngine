@@ -541,16 +541,16 @@ void D3d12GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
 WARNING_POP()
 
 std::shared_ptr<GpuConstantBuffer> D3d12GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
-    //auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    //auto buffer = CD3DX12_RESOURCE_DESC::Buffer(m_elementSizeInByte * p_element_count);
-    //D3D_CALL(p_device->CreateCommittedResource(
-    //    &heapProperties,
-    //    D3D12_HEAP_FLAG_NONE,
-    //    &buffer,
-    //    D3D12_RESOURCE_STATE_GENERIC_READ,
-    //    nullptr, IID_PPV_ARGS(&m_gpuBuffer)));
+    // auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    // auto buffer = CD3DX12_RESOURCE_DESC::Buffer(m_elementSizeInByte * p_element_count);
+    // D3D_CALL(p_device->CreateCommittedResource(
+    //     &heapProperties,
+    //     D3D12_HEAP_FLAG_NONE,
+    //     &buffer,
+    //     D3D12_RESOURCE_STATE_GENERIC_READ,
+    //     nullptr, IID_PPV_ARGS(&m_gpuBuffer)));
 
-    //D3D_CALL(m_gpuBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
+    // D3D_CALL(m_gpuBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
     unused(p_desc);
     CRASH_NOW_MSG("Implement");
     return nullptr;
@@ -1206,12 +1206,12 @@ void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {
 
 void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
     if (m_swapChain) {
-        //FlushGraphicsContext();
+        // FlushGraphicsContext();
 
         CleanupRenderTarget();
         D3D_CALL(m_swapChain->ResizeBuffers(0, p_width, p_height,
-                                             DXGI_FORMAT_UNKNOWN,
-                                             DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT));
+                                            DXGI_FORMAT_UNKNOWN,
+                                            DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT));
 
         [[maybe_unused]] auto err = CreateRenderTarget(p_width, p_height);
     }

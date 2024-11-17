@@ -62,6 +62,8 @@ extern ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
 
 // @TODO: refactor
+inline constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
+
 enum StencilFlags {
     STENCIL_FLAG_SELECTED = BIT(1),
 };
@@ -94,48 +96,44 @@ struct PassContext {
 #include "texture_binding.h"
 #undef SHADER_TEXTURE
 
-inline constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
+struct FrameContext {
+    template<typename BUFFER>
+    struct BufferCache {
+        std::vector<BUFFER> buffer;
+        std::unordered_map<ecs::Entity, uint32_t> lookup;
 
-// @TODO: make it two frames
-// @TODO: refactor names
-template<typename BUFFER>
-struct BufferCache {
-    std::vector<BUFFER> buffer;
-    std::unordered_map<ecs::Entity, uint32_t> lookup;
+        uint32_t FindOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
+            auto it = lookup.find(p_entity);
+            if (it != lookup.end()) {
+                return it->second;
+            }
 
-    uint32_t FindOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
-        auto it = lookup.find(p_entity);
-        if (it != lookup.end()) {
-            return it->second;
+            uint32_t index = static_cast<uint32_t>(buffer.size());
+            lookup[p_entity] = index;
+            buffer.emplace_back(p_buffer);
+            return index;
         }
 
-        uint32_t index = static_cast<uint32_t>(buffer.size());
-        lookup[p_entity] = index;
-        buffer.emplace_back(p_buffer);
-        return index;
-    }
+        void Clear() {
+            buffer.clear();
+            lookup.clear();
+        }
+    };
 
-    void Clear() {
-        buffer.clear();
-        lookup.clear();
-    }
-};
+    std::shared_ptr<GpuConstantBuffer> batchUniform;
+    BufferCache<PerBatchConstantBuffer> batchCache;
 
-struct FrameContext {
-    std::shared_ptr<GpuConstantBuffer> batch_uniform;
-    BufferCache<PerBatchConstantBuffer> batch_cache;
+    std::shared_ptr<GpuConstantBuffer> materialUniform;
+    BufferCache<MaterialConstantBuffer> materialCache;
 
-    std::shared_ptr<GpuConstantBuffer> material_uniform;
-    BufferCache<MaterialConstantBuffer> material_cache;
+    std::shared_ptr<GpuConstantBuffer> boneUniform;
+    BufferCache<BoneConstantBuffer> boneCache;
 
-    std::shared_ptr<GpuConstantBuffer> bone_uniform;
-    BufferCache<BoneConstantBuffer> bone_cache;
+    std::shared_ptr<GpuConstantBuffer> passUniform;
+    std::vector<PerPassConstantBuffer> passCache;
 
-    std::shared_ptr<GpuConstantBuffer> pass_uniform;
-    std::vector<PerPassConstantBuffer> pass_cache;
-
-    std::shared_ptr<GpuConstantBuffer> emitter_uniform;
-    std::vector<EmitterConstantBuffer> emitter_cache;
+    std::shared_ptr<GpuConstantBuffer> emitterUniform;
+    std::vector<EmitterConstantBuffer> emitterCache;
 };
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {

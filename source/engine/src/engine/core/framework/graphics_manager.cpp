@@ -70,11 +70,11 @@ bool GraphicsManager::Initialize() {
 
     for (int i = 0; i < num_frames; ++i) {
         FrameContext& frame_context = *m_frameContexts[i].get();
-        frame_context.batch_uniform = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
-        frame_context.pass_uniform = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
-        frame_context.material_uniform = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
-        frame_context.bone_uniform = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
-        frame_context.emitter_uniform = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
+        frame_context.batchUniform = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
+        frame_context.passUniform = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
+        frame_context.materialUniform = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
+        frame_context.boneUniform = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
+        frame_context.emitterUniform = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
     }
 
     // @TODO: refactor
@@ -157,13 +157,13 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateMainPass(p_scene);
 
     // update uniform
-    auto& frame_context = GetCurrentFrame();
-    UpdateConstantBuffer(frame_context.batch_uniform.get(), frame_context.batch_cache.buffer);
-    UpdateConstantBuffer(frame_context.material_uniform.get(), frame_context.material_cache.buffer);
-    UpdateConstantBuffer(frame_context.bone_uniform.get(), frame_context.bone_cache.buffer);
+    auto& frame = GetCurrentFrame();
+    UpdateConstantBuffer(frame.batchUniform.get(), frame.batchCache.buffer);
+    UpdateConstantBuffer(frame.materialUniform.get(), frame.materialCache.buffer);
+    UpdateConstantBuffer(frame.boneUniform.get(), frame.boneCache.buffer);
 
-    UpdateConstantBuffer(frame_context.pass_uniform.get(), frame_context.pass_cache);
-    UpdateConstantBuffer(frame_context.emitter_uniform.get(), frame_context.emitter_cache);
+    UpdateConstantBuffer(frame.passUniform.get(), frame.passCache);
+    UpdateConstantBuffer(frame.emitterUniform.get(), frame.emitterCache);
 
     g_per_frame_cache.update();
     // update uniform
@@ -350,11 +350,11 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
 
 void GraphicsManager::Cleanup() {
     auto& frame_context = GetCurrentFrame();
-    frame_context.batch_cache.Clear();
-    frame_context.material_cache.Clear();
-    frame_context.bone_cache.Clear();
-    frame_context.pass_cache.clear();
-    frame_context.emitter_cache.clear();
+    frame_context.batchCache.Clear();
+    frame_context.materialCache.Clear();
+    frame_context.boneCache.Clear();
+    frame_context.passCache.clear();
+    frame_context.emitterCache.clear();
 
     for (auto& pass : m_shadowPasses) {
         pass.draws.clear();
@@ -468,7 +468,7 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
         buffer.c_emitterMaxParticleCount = emitter.maxParticleCount;
         buffer.c_emitterHasGravity = emitter.gravity;
 
-        GetCurrentFrame().emitter_cache.push_back(buffer);
+        GetCurrentFrame().emitterCache.push_back(buffer);
     }
 }
 
@@ -522,8 +522,8 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
-                m_shadowPasses[0].pass_idx = static_cast<int>(GetCurrentFrame().pass_cache.size());
-                GetCurrentFrame().pass_cache.emplace_back(pass_constant);
+                m_shadowPasses[0].pass_idx = static_cast<int>(GetCurrentFrame().passCache.size());
+                GetCurrentFrame().passCache.emplace_back(pass_constant);
 
                 // Frustum light_frustum(light_space_matrix);
                 FillPass(
@@ -616,8 +616,8 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
         pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     }
 
-    m_mainPass.pass_idx = static_cast<int>(GetCurrentFrame().pass_cache.size());
-    GetCurrentFrame().pass_cache.emplace_back(pass_constant);
+    m_mainPass.pass_idx = static_cast<int>(GetCurrentFrame().passCache.size());
+    GetCurrentFrame().passCache.emplace_back(pass_constant);
 
     FillPass(
         p_scene,
@@ -660,7 +660,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
             draw.flags |= STENCIL_FLAG_SELECTED;
         }
 
-        draw.batch_idx = GetCurrentFrame().batch_cache.FindOrAdd(entity, batch_buffer);
+        draw.batch_idx = GetCurrentFrame().batchCache.FindOrAdd(entity, batch_buffer);
         if (mesh.armatureId.IsValid()) {
             auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armatureId);
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
@@ -669,7 +669,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
             memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
-            draw.bone_idx = GetCurrentFrame().bone_cache.FindOrAdd(mesh.armatureId, bone);
+            draw.bone_idx = GetCurrentFrame().boneCache.FindOrAdd(mesh.armatureId, bone);
         } else {
             draw.bone_idx = -1;
         }
@@ -690,7 +690,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
             DrawContext sub_mesh;
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
-            sub_mesh.material_idx = GetCurrentFrame().material_cache.FindOrAdd(subset.material_id, material_buffer);
+            sub_mesh.material_idx = GetCurrentFrame().materialCache.FindOrAdd(subset.material_id, material_buffer);
 
             draw.subsets.emplace_back(std::move(sub_mesh));
         }

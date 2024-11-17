@@ -46,9 +46,6 @@ void D3d11GraphicsManager::Finalize() {
 }
 
 void D3d11GraphicsManager::Render() {
-    m_renderGraph.Execute(*this);
-
-    // @TODO: fix the following
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
     m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
