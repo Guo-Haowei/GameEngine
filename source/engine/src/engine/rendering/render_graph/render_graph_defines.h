@@ -1,4 +1,5 @@
 #pragma once
+#include "rendering/pixel_format.h"
 
 // @TODO: move to shader_defines
 constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
@@ -52,7 +53,13 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
 
 namespace my {
 
-inline constexpr int BLOOM_MIP_CHAIN_MAX = 7;
+constexpr int BLOOM_MIP_CHAIN_MAX = 7;
+
+constexpr PixelFormat GBUFFER_DEPTH_FORMAT = PixelFormat::R24G8_TYPELESS;
+constexpr PixelFormat GBUFFER_BASE_COLOR_FORMAT = PixelFormat::R11G11B10_FLOAT;
+constexpr PixelFormat GBUFFER_POSITION_FORMAT = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat GBUFFER_NORMAL_FORMAT = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat GBUFFER_MATERIAL_FORMAT = PixelFormat::R11G11B10_FLOAT;
 
 enum class RenderPassName {
 #define RENDER_PASS_NAME(name) name,

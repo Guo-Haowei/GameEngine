@@ -1,7 +1,7 @@
 /// File: shadow.hlsl
-#include "cbuffer.h"
+#include "cbuffer.hlsl.h"
 #include "sampler.hlsl.h"
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 
 // @TODO: refactor this part
 #if defined(HLSL_LANG)

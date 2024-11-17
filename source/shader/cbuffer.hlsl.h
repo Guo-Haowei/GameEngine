@@ -1,7 +1,7 @@
-/// File: cbuffer.h
+/// File: cbuffer.hlsl.h
 #ifndef CBUFFER_INCLUDED
 #define CBUFFER_INCLUDED
-#include "shader_defines.h"
+#include "shader_defines.hlsl.h"
 
 // constant buffer
 #if defined(__cplusplus)

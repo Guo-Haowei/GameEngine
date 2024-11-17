@@ -88,26 +88,27 @@ bool PipelineStateManager::Initialize() {
 
     bool ok = true;
 
-    ok = ok && Create(PROGRAM_GBUFFER_STATIC, {
-                                                  .vs = "mesh.vert",
-                                                  .ps = "gbuffer.pixel",
-                                                  .rasterizerDesc = &s_default_rasterizer,
-                                                  .depthStencilDesc = &s_gbuffer_depth_stencil,
-                                                  .inputLayoutDesc = &s_input_layout_mesh,
-                                              });
+    {
+        PipelineStateDesc desc{
+            .vs = "mesh.vert",
+            .ps = "gbuffer.pixel",
+            .rasterizerDesc = &s_default_rasterizer,
+            .depthStencilDesc = &s_gbuffer_depth_stencil,
+            .inputLayoutDesc = &s_input_layout_mesh,
+            .numRenderTargets = 4,
+            .rtvFormats = { GBUFFER_BASE_COLOR_FORMAT, GBUFFER_POSITION_FORMAT, GBUFFER_NORMAL_FORMAT, GBUFFER_MATERIAL_FORMAT },
+            .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
+        };
+
+        ok = ok && Create(PROGRAM_GBUFFER_STATIC, desc);
+        desc.defines = { has_animation };
+        ok = ok && Create(PROGRAM_GBUFFER_ANIMATED, desc);
+    }
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
     }
-    ok = ok && Create(PROGRAM_GBUFFER_ANIMATED, {
-                                                    .vs = "mesh.vert",
-                                                    .ps = "gbuffer.pixel",
-                                                    .defines = { has_animation },
-                                                    .rasterizerDesc = &s_default_rasterizer,
-                                                    .depthStencilDesc = &s_gbuffer_depth_stencil,
-                                                    .inputLayoutDesc = &s_input_layout_mesh,
-                                                });
     ok = ok && Create(PROGRAM_LIGHTING, {
                                             .vs = "screenspace_quad.vert",
                                             .ps = "lighting.pixel",

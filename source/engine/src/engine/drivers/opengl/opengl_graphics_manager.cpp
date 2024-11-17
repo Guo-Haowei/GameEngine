@@ -67,7 +67,7 @@ namespace my {
 
 static void APIENTRY DebugCallback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
-OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphicsManager", Backend::OPENGL) {
+OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphicsManager", Backend::OPENGL, 1) {
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 
@@ -247,7 +247,7 @@ const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh
     OpenGlMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
     p_mesh.gpuResource = mesh_buffers;
 
-    auto createMesh_data = [](const MeshComponent& p_mesh, OpenGlMeshBuffers& p_out_mesh) {
+    auto create_mesh_data = [](const MeshComponent& p_mesh, OpenGlMeshBuffers& p_out_mesh) {
         const bool has_normals = !p_mesh.normals.empty();
         const bool has_uvs = !p_mesh.texcoords_0.empty();
         const bool has_tangents = !p_mesh.tangents.empty();
@@ -303,7 +303,7 @@ const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh
         glBindVertexArray(0);
     };
 
-    createMesh_data(p_mesh, *mesh_buffers);
+    create_mesh_data(p_mesh, *mesh_buffers);
     return mesh_buffers;
 }
 
@@ -332,18 +332,6 @@ void OpenGlGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* 
     glBindImageTexture(p_slot, handle, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
 }
 
-std::shared_ptr<GpuStructuredBuffer> OpenGlGraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
-    GLuint handle = 0;
-    glGenBuffers(1, &handle);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    auto buffer = std::make_shared<OpenGlStructuredBuffer>(p_desc);
-    buffer->handle = handle;
-    return buffer;
-}
-
 void OpenGlGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
     auto buffer = reinterpret_cast<const OpenGlStructuredBuffer*>(p_buffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
@@ -366,31 +354,42 @@ void OpenGlGraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
     UnbindStructuredBuffer(p_slot);
 }
 
-std::shared_ptr<ConstantBufferBase> OpenGlGraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
+std::shared_ptr<GpuConstantBuffer> OpenGlGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
     GLuint handle = 0;
 
     glGenBuffers(1, &handle);
     glBindBuffer(GL_UNIFORM_BUFFER, handle);
-    glBufferData(GL_UNIFORM_BUFFER, p_capacity, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-    glBindBufferBase(GL_UNIFORM_BUFFER, p_slot, handle);
+    glBindBufferBase(GL_UNIFORM_BUFFER, p_desc.slot, handle);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    auto buffer = std::make_shared<OpenGlUniformBuffer>(p_slot, p_capacity);
+    auto buffer = std::make_shared<OpenGlUniformBuffer>(p_desc);
     buffer->handle = handle;
     return buffer;
 }
 
-void OpenGlGraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) {
-    // ERR_FAIL_INDEX(p_size, p_buffer->get_capacity());
+std::shared_ptr<GpuStructuredBuffer> OpenGlGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
+    GLuint handle = 0;
+    glGenBuffers(1, &handle);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    auto buffer = std::make_shared<OpenGlStructuredBuffer>(p_desc);
+    buffer->handle = handle;
+    return buffer;
+}
+
+void OpenGlGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
     glBufferData(GL_UNIFORM_BUFFER, p_size, p_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void OpenGlGraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
-    ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->get_capacity() + 1);
+void OpenGlGraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
+    ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->capacity + 1);
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->GetSlot(), buffer->handle, p_offset, p_size);
 }
@@ -665,17 +664,11 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 }
 
 void OpenGlGraphicsManager::Render() {
-    OPTICK_EVENT();
-
-    m_renderGraph.Execute(*this);
-
-    // @TODO: move it somewhere else
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
 
-    {
-        OPTICK_EVENT("ImGui_ImplOpenGL3_RenderDrawData");
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    }
+void OpenGlGraphicsManager::Present() {
 }
 
 static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,

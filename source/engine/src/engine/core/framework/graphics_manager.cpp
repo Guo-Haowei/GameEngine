@@ -10,7 +10,7 @@
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
-#include "particle_defines.h"
+#include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_graph/render_graph_defines.h"
@@ -27,9 +27,13 @@
 namespace my {
 
 template<typename T>
-static auto CreateUniform(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
+static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
-    return p_graphics_manager.CreateConstantBuffer(T::GetUniformBufferSlot(), sizeof(T) * p_max_count);
+    GpuBufferDesc buffer_desc{};
+    buffer_desc.slot = T::GetUniformBufferSlot();
+    buffer_desc.elementCount = p_max_count;
+    buffer_desc.elementSize = sizeof(T);
+    return p_graphics_manager.CreateConstantBuffer(buffer_desc);
 }
 
 ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
@@ -38,29 +42,39 @@ ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 ConstantBuffer<EnvConstantBuffer> g_env_cache;
 
+// @TODO: refactor this
 template<typename T>
 static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
-    constexpr int slot = T::GetUniformBufferSlot();
-    p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(slot, sizeof(T));
+    GpuBufferDesc buffer_desc{};
+    buffer_desc.slot = T::GetUniformBufferSlot();
+    buffer_desc.elementCount = 1;
+    buffer_desc.elementSize = sizeof(T);
+    p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
 bool GraphicsManager::Initialize() {
-#if USING(DEBUG_BUILD)
-    m_enableValidationLayer = true;
-#else
     m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
-#endif
+
+    const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
+    m_frameContexts.resize(num_frames);
+    for (int i = 0; i < num_frames; ++i) {
+        m_frameContexts[i] = std::move(CreateFrameContext());
+    }
 
     if (!InitializeImpl()) {
         return false;
     }
 
+    for (int i = 0; i < num_frames; ++i) {
+        FrameContext& frame_context = *m_frameContexts[i].get();
+        frame_context.batchUniform = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
+        frame_context.passUniform = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
+        frame_context.materialUniform = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
+        frame_context.boneUniform = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
+        frame_context.emitterUniform = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
+    }
+
     // @TODO: refactor
-    m_context.batch_uniform = ::my::CreateUniform<PerBatchConstantBuffer>(*this, 4096 * 16);
-    m_context.pass_uniform = ::my::CreateUniform<PerPassConstantBuffer>(*this, 32);
-    m_context.material_uniform = ::my::CreateUniform<MaterialConstantBuffer>(*this, 2048 * 16);
-    m_context.bone_uniform = ::my::CreateUniform<BoneConstantBuffer>(*this, 16);
-    m_context.emitter_uniform = ::my::CreateUniform<EmitterConstantBuffer>(*this, 32);
 
     CreateUniformBuffer<PerFrameConstantBuffer>(g_per_frame_cache);
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
@@ -74,26 +88,7 @@ bool GraphicsManager::Initialize() {
         return false;
     }
 
-#if 0
-    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = FindGpuTexture(p_name);
-        if (!resource) {
-            return;
-        }
-
-        BindTexture(p_dimension, resource->GetHandle(), p_slot);
-    };
-
-    // bind common textures
-    bind_slot(RESOURCE_HIGHLIGHT_SELECT, t_selectionHighlightSlot);
-    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, t_gbufferBaseColorMapSlot);
-    bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
-    bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
-    bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
-#endif
-
-    // @TODO: set slots
-    auto bind_slot2 = [&](RenderTargetResourceName p_name, int p_slot) {
+    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot) {
         std::shared_ptr<GpuTexture> texture = FindGpuTexture(p_name);
         if (!texture) {
             return;
@@ -103,8 +98,8 @@ bool GraphicsManager::Initialize() {
         texture->slot = p_slot;
         // BindTexture(p_dimension, texture->GetHandle(), p_slot);
     };
-#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) bind_slot2(BINDING, SLOT);
-#include "texture_binding.h"
+#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
+#include "texture_binding.hlsl.h"
 #undef SHADER_TEXTURE
 
     return true;
@@ -132,14 +127,11 @@ std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
         return std::make_shared<D3d12GraphicsManager>();
     }
 #endif
-    return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsmanager", Backend::EMPTY);
+    return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsmanager", Backend::EMPTY, 1);
 }
 
 void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
-    if (m_lastPipelineName != p_name) {
-        SetPipelineStateImpl(p_name);
-        m_lastPipelineName = p_name;
-    }
+    SetPipelineStateImpl(p_name);
 }
 
 void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
@@ -149,10 +141,6 @@ void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
-    if (GetBackend() == Backend::D3D12) {
-        return;
-    }
-
     Cleanup();
 
     UpdateConstants(p_scene);
@@ -161,14 +149,6 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
-
-    // update uniform
-    UpdateConstantBuffer(m_context.batch_uniform.get(), m_context.batch_cache.buffer);
-    UpdateConstantBuffer(m_context.material_uniform.get(), m_context.material_cache.buffer);
-    UpdateConstantBuffer(m_context.bone_uniform.get(), m_context.bone_cache.buffer);
-
-    UpdateConstantBuffer(m_context.pass_uniform.get(), m_context.pass_cache);
-    UpdateConstantBuffer(m_context.emitter_uniform.get(), m_context.emitter_cache);
 
     g_per_frame_cache.update();
     // update uniform
@@ -191,6 +171,39 @@ void GraphicsManager::Update(Scene& p_scene) {
             task.func(task.handle->Get());
         }
     }
+
+    {
+        OPTICK_EVENT("Render");
+        BeginFrame();
+
+        // update uniform after BeginFrame()
+        auto& frame = GetCurrentFrame();
+        UpdateConstantBuffer(frame.batchUniform.get(), frame.batchCache.buffer);
+        UpdateConstantBuffer(frame.materialUniform.get(), frame.materialCache.buffer);
+        UpdateConstantBuffer(frame.boneUniform.get(), frame.boneCache.buffer);
+
+        UpdateConstantBuffer(frame.passUniform.get(), frame.passCache);
+        UpdateConstantBuffer(frame.emitterUniform.get(), frame.emitterCache);
+
+        m_renderGraph.Execute(*this);
+        Render();
+        EndFrame();
+        Present();
+        MoveToNextFrame();
+    }
+}
+
+void GraphicsManager::BeginFrame() {
+}
+
+void GraphicsManager::EndFrame() {
+}
+
+void GraphicsManager::MoveToNextFrame() {
+}
+
+std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
+    return std::make_unique<FrameContext>();
 }
 
 void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
@@ -331,11 +344,12 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
 }
 
 void GraphicsManager::Cleanup() {
-    m_context.batch_cache.Clear();
-    m_context.material_cache.Clear();
-    m_context.bone_cache.Clear();
-    m_context.pass_cache.clear();
-    m_context.emitter_cache.clear();
+    auto& frame_context = GetCurrentFrame();
+    frame_context.batchCache.Clear();
+    frame_context.materialCache.Clear();
+    frame_context.boneCache.Clear();
+    frame_context.passCache.clear();
+    frame_context.emitterCache.clear();
 
     for (auto& pass : m_shadowPasses) {
         pass.draws.clear();
@@ -449,7 +463,7 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
         buffer.c_emitterMaxParticleCount = emitter.maxParticleCount;
         buffer.c_emitterHasGravity = emitter.gravity;
 
-        m_context.emitter_cache.push_back(buffer);
+        GetCurrentFrame().emitterCache.push_back(buffer);
     }
 }
 
@@ -503,8 +517,8 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
-                m_shadowPasses[0].pass_idx = static_cast<int>(m_context.pass_cache.size());
-                m_context.pass_cache.emplace_back(pass_constant);
+                m_shadowPasses[0].pass_idx = static_cast<int>(GetCurrentFrame().passCache.size());
+                GetCurrentFrame().passCache.emplace_back(pass_constant);
 
                 // Frustum light_frustum(light_space_matrix);
                 FillPass(
@@ -597,8 +611,8 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
         pass_constant.c_projectionMatrix = BuildPerspectiveRH(fovy, aspect, camera.GetNear(), camera.GetFar());
     }
 
-    m_mainPass.pass_idx = static_cast<int>(m_context.pass_cache.size());
-    m_context.pass_cache.emplace_back(pass_constant);
+    m_mainPass.pass_idx = static_cast<int>(GetCurrentFrame().passCache.size());
+    GetCurrentFrame().passCache.emplace_back(pass_constant);
 
     FillPass(
         p_scene,
@@ -641,7 +655,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
             draw.flags |= STENCIL_FLAG_SELECTED;
         }
 
-        draw.batch_idx = m_context.batch_cache.FindOrAdd(entity, batch_buffer);
+        draw.batch_idx = GetCurrentFrame().batchCache.FindOrAdd(entity, batch_buffer);
         if (mesh.armatureId.IsValid()) {
             auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armatureId);
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
@@ -650,7 +664,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
             memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
-            draw.bone_idx = m_context.bone_cache.FindOrAdd(mesh.armatureId, bone);
+            draw.bone_idx = GetCurrentFrame().boneCache.FindOrAdd(mesh.armatureId, bone);
         } else {
             draw.bone_idx = -1;
         }
@@ -671,7 +685,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
             DrawContext sub_mesh;
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
-            sub_mesh.material_idx = m_context.material_cache.FindOrAdd(subset.material_id, material_buffer);
+            sub_mesh.material_idx = GetCurrentFrame().materialCache.FindOrAdd(subset.material_id, material_buffer);
 
             draw.subsets.emplace_back(std::move(sub_mesh));
         }

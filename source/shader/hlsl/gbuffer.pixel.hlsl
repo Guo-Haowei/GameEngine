@@ -1,13 +1,13 @@
 /// File: gbuffer.pixel.hlsl
-#include "cbuffer.h"
+#include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "sampler.hlsl.h"
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 
 struct ps_output {
-    float4 base_color : SV_TARGET0;
-    float3 position : SV_TARGET1;
-    float3 normal : SV_TARGET2;
+    float3 base_color : SV_TARGET0;
+    float4 position : SV_TARGET1;
+    float4 normal : SV_TARGET2;
     float3 out_emissive_roughness_metallic : SV_TARGET3;
 };
 
@@ -36,9 +36,9 @@ ps_output main(vsoutput_mesh input) {
     }
 
     ps_output output;
-    output.base_color = float4(color.rgb, 1.0);
-    output.position = input.world_position;
-    output.normal = N;
+    output.base_color = color.rgb;
+    output.position.xyz = input.world_position;
+    output.normal.xyz = N;
 
     // [SCRUM-29] Generate this code with cross compiler
     output.out_emissive_roughness_metallic.r = c_emissivePower;

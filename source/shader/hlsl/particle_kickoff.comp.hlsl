@@ -1,6 +1,6 @@
 /// File: particle_kickoff.comp.hlsl
-#include "cbuffer.h"
-#include "particle_defines.h"
+#include "cbuffer.hlsl.h"
+#include "particle_defines.hlsl.h"
 
 [numthreads(1, 1, 1)] void main(uint3 dispatch_thread_id
                                 : SV_DISPATCHTHREADID) {

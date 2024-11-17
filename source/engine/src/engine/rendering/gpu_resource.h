@@ -92,17 +92,33 @@ struct GpuTextureDesc {
     RenderTargetResourceName name;
 };
 
-struct GpuStructuredBufferDesc {
+struct GpuBufferDesc {
+    uint32_t slot;
     uint32_t elementSize;
     uint32_t elementCount;
 };
 
+struct GpuConstantBuffer {
+    GpuConstantBuffer(const GpuBufferDesc& p_desc) : desc(p_desc), capacity(desc.elementCount * desc.elementSize) {}
+
+    virtual ~GpuConstantBuffer() = default;
+
+    // @TODO: remove this
+    void update(const void* p_data, size_t p_size);
+
+    int GetSlot() const { return desc.slot; }
+
+    const GpuBufferDesc desc;
+    // @TODO: refactor this
+    const uint32_t capacity;
+};
+
 struct GpuStructuredBuffer {
-    GpuStructuredBuffer(const GpuStructuredBufferDesc& p_desc) : desc(p_desc) {}
+    GpuStructuredBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
 
     virtual ~GpuStructuredBuffer() = default;
 
-    const GpuStructuredBufferDesc desc;
+    const GpuBufferDesc desc;
 };
 
 struct GpuTexture {
@@ -117,6 +133,19 @@ struct GpuTexture {
 
     const GpuTextureDesc desc;
     int slot;
+};
+
+// @TODO: remove this
+template<typename T>
+struct ConstantBuffer {
+    std::shared_ptr<GpuConstantBuffer> buffer;
+    T cache;
+
+    void update() {
+        if (buffer) {
+            buffer->update(&cache, sizeof(T));
+        }
+    }
 };
 
 }  // namespace my

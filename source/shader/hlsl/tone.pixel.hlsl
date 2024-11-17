@@ -1,8 +1,8 @@
 /// File: tone.pixel.hlsl
-#include "cbuffer.h"
+#include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "sampler.hlsl.h"
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 
 float4 main(vsoutput_uv input) : SV_TARGET {
     const float v = 1.0 / 2.0;

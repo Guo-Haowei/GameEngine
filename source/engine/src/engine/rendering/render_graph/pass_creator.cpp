@@ -3,8 +3,9 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "core/math/geomath.h"
-#include "particle_defines.h"
+#include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
 
 // @TODO: this is temporary
@@ -17,7 +18,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& frame = gm.GetCurrentFrame();
     const uint32_t width = p_draw_pass->depthAttachment->desc.width;
     const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
@@ -25,21 +26,16 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
     gm.SetViewport(Viewport(width, height));
 
-    float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (gm.GetBackend() == Backend::D3D12) {
-        clear_color[0] = 0.3f;
-        clear_color[1] = 0.3f;
-        clear_color[2] = 0.4f;
-    }
+    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
         }
 
         gm.SetPipelineState(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
@@ -48,17 +44,17 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
             gm.SetStencilRef(draw.flags);
         }
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            const MaterialConstantBuffer& material = gm.m_context.material_cache.buffer[subset.material_idx];
+            const MaterialConstantBuffer& material = gm.GetCurrentFrame().materialCache.buffer[subset.material_idx];
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_baseColorMap_handle, t_baseColorMapSlot);
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_normalMap_handle, t_normalMapSlot);
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_materialMap_handle, t_materialMapSlot);
 
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(ctx.material_uniform.get(), subset.material_idx);
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialUniform.get(), subset.material_idx);
 
             // @TODO: set material
 
@@ -80,31 +76,31 @@ void RenderPassCreator::AddGBufferPass() {
     int p_height = m_config.frameHeight;
 
     auto gbuffer_depth = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
-                                                                          PixelFormat::R24G8_TYPELESS,
+                                                                          GBUFFER_DEPTH_FORMAT,
                                                                           AttachmentType::DEPTH_STENCIL_2D,
                                                                           p_width, p_height),
                                                   PointClampSampler());
 
     auto attachment0 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
-                                                                        PixelFormat::R11G11B10_FLOAT,
+                                                                        GBUFFER_BASE_COLOR_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment1 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
-                                                                        PixelFormat::R16G16B16_FLOAT,
+                                                                        GBUFFER_POSITION_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment2 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
-                                                                        PixelFormat::R16G16B16_FLOAT,
+                                                                        GBUFFER_NORMAL_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment3 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
-                                                                        PixelFormat::R11G11B10_FLOAT,
+                                                                        GBUFFER_MATERIAL_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
@@ -125,7 +121,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& frame = gm.GetCurrentFrame();
 
     auto& pass_ptr = gm.m_pointShadowPasses[p_pass_id];
     if (!pass_ptr) {
@@ -155,12 +151,12 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
         for (const auto& draw : pass.draws) {
             bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
             }
 
             gm.SetPipelineState(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 
             gm.SetMesh(draw.mesh_data);
             gm.DrawElements(draw.mesh_data->indexCount);
@@ -172,7 +168,7 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& frame = gm.GetCurrentFrame();
 
     gm.SetRenderTarget(p_draw_pass);
     const uint32_t width = p_draw_pass->depthAttachment->desc.width;
@@ -183,18 +179,18 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     gm.SetViewport(Viewport(width, height));
 
     PassContext& pass = gm.m_shadowPasses[0];
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
     for (const auto& draw : pass.draws) {
         bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(ctx.bone_uniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
         }
 
         // @TODO: sort the objects so there's no need to switch pipeline
         gm.SetPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(ctx.batch_uniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
         gm.DrawElements(draw.mesh_data->indexCount);
@@ -299,7 +295,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     RenderManager::GetSingleton().draw_quad();
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passUniform.get(), pass.pass_idx);
 
     // if (0) {
     //     // draw billboard grass here for now
@@ -361,7 +357,7 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& frame = gm.GetCurrentFrame();
     const uint32_t width = p_draw_pass->depthAttachment->desc.width;
     const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
@@ -369,13 +365,13 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
     gm.SetViewport(Viewport(width, height));
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(ctx.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
     const Scene& scene = SceneManager::GetScene();
     int particle_idx = 0;
     for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
 
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(ctx.emitter_uniform.get(), particle_idx++);
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterUniform.get(), particle_idx++);
 
         gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
         gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());

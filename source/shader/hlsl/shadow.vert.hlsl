@@ -1,5 +1,5 @@
 /// File: shadow.vert.hlsl
-#include "cbuffer.h"
+#include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 
 float4 main(vsinput_mesh input) : SV_POSITION {

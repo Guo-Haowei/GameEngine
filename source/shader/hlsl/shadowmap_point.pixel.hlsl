@@ -1,5 +1,5 @@
 /// File: shadowmap_point.pixel.hlsl
-#include "cbuffer.h"
+#include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 
 float main(vsoutput_position input) : SV_DEPTH {

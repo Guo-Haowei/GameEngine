@@ -1,6 +1,6 @@
 /// File: bloom_upsample.comp.hlsl
 #include "sampler.hlsl.h"
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 
 RWTexture2D<float3> g_output_image : register(u3);
 

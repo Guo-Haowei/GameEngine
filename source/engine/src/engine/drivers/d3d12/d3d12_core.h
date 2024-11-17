@@ -77,18 +77,6 @@ private:
     bool m_isConstantBuffer = false;
 };
 
-struct FrameContext {
-    ID3D12CommandAllocator* m_commandAllocator = nullptr;
-    uint64_t m_fenceValue = 0;
-
-    // @TODO: fix
-    // std::unique_ptr<UploadBuffer<PerFrameConstants>> perFrameBuffer;
-    // std::unique_ptr<UploadBuffer<PerBatchConstants>> perBatchBuffer;
-    // std::unique_ptr<UploadBuffer<BoneConstants>> boneConstants;
-
-    void Wait(HANDLE p_fence_event, ID3D12Fence1* p_fence);
-};
-
 class DescriptorHeapGPU {
 public:
     struct Handle {
@@ -113,29 +101,6 @@ private:
 
     uint32_t m_incrementSize{ 0 };
     std::atomic_int m_counter{ 0 };
-};
-
-struct GraphicsContext {
-    GraphicsContext() = default;
-    ~GraphicsContext();
-
-    bool Initialize(D3d12GraphicsManager* p_device);
-    void Finalize();
-
-    FrameContext& BeginFrame();
-    void EndFrame();
-    void MoveToNextFrame();
-    void Flush();
-
-    Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
-    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
-    Microsoft::WRL::ComPtr<ID3D12Fence1> m_fence;
-
-    uint64_t m_lastSignaledFenceValue = 0;
-    HANDLE m_fenceEvent = NULL;
-
-    std::array<FrameContext, GraphicsManager::NUM_FRAMES_IN_FLIGHT> m_frames;
-    uint32_t m_frameIndex = 0;
 };
 
 class CopyContext {

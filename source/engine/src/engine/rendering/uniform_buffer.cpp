@@ -4,7 +4,7 @@
 
 namespace my {
 
-void ConstantBufferBase::update(const void* p_data, size_t p_size) {
+void GpuConstantBuffer::update(const void* p_data, size_t p_size) {
     auto& gm = GraphicsManager::GetSingleton();
     switch (gm.GetBackend()) {
         case Backend::OPENGL:

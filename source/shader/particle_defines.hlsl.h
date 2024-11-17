@@ -1,7 +1,7 @@
-/// File: particle_defines.h
+/// File: particle_defines.hlsl.h
 #ifndef PARTICLE_DEFINES_INCLUDE
 #define PARTICLE_DEFINES_INCLUDE
-#include "shader_defines.h"
+#include "shader_defines.hlsl.h"
 
 #if defined(__cplusplus)
 #define SBUFFER(DATA_TYPE, NAME, REG) \

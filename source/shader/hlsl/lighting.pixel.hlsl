@@ -1,5 +1,5 @@
 /// File: lighting.pixel.hlsl
-#include "cbuffer.h"
+#include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "pbr.hlsl"
 #include "sampler.hlsl.h"
