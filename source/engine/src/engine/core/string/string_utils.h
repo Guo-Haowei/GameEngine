@@ -8,6 +8,8 @@ public:
 
     static void ReplaceFirst(std::string& p_string, std::string_view p_pattern, std::string_view p_replacement);
 
+    static char* Strdup(const char* p_source);
+
     template<int N>
     static int Sprintf(char (&p_buffer)[N], const char* p_format, ...) {
         va_list args;

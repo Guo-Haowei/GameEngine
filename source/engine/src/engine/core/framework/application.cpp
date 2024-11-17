@@ -99,10 +99,6 @@ int Application::Run(int p_argc, const char** p_argv) {
         LOG("[Runtime] layer '{}' attached!", layer->GetName());
     }
 
-    LOG("\n********************************************************************************"
-        "\nMain Loop"
-        "\n********************************************************************************");
-
     LOG_WARN("TODO: properly unload scene");
     LOG_WARN("TODO: make camera a component");
     LOG_WARN("TODO: refactor render graph");
@@ -114,6 +110,10 @@ int Application::Run(int p_argc, const char** p_argv) {
     LOG_OK("This is an ok log");
     LOG_WARN("This is a warning");
     LOG_ERROR("This is an error");
+
+    LOG("\n********************************************************************************"
+        "\nMain Loop"
+        "\n********************************************************************************");
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;

@@ -2,6 +2,7 @@
 
 #include "core/framework/asset_manager.h"
 #include "core/framework/common_dvars.h"
+#include "core/string/string_utils.h"
 #include "editor/panels/panel_util.h"
 
 namespace my {
@@ -89,8 +90,7 @@ void ContentBrowser::UpdateInternal(Scene&) {
 
         if (is_file) {
             std::string full_path_string = full_path.string();
-            char* dragged_data = strdup(full_path_string.c_str());
-
+            char* dragged_data = StringUtils::Strdup(full_path_string.c_str());
             const char* action = it->second.action;
 
             if (action) {

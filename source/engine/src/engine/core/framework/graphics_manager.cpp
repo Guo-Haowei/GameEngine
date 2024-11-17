@@ -414,6 +414,11 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
+    // @HACK: skip for now
+    if (GetBackend() == Backend::D3D12) {
+        return;
+    }
+
     for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
         if (!emitter.particleBuffer) {
             // create buffer

@@ -23,6 +23,7 @@ public:
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
     const auto& GetOutputs() const { return m_outputs; }
+
 protected:
     void CreateInternal(RenderPassDesc& pass_desc);
 
