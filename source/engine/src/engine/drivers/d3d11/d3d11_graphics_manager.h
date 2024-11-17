@@ -34,15 +34,16 @@ public:
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
 
-    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) final;
+    std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) final;
+    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) final;
+
     void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) final;
     void UnbindStructuredBuffer(int p_slot) final;
     void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) final;
     void UnbindStructuredBufferSRV(int p_slot) final;
 
-    std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) final;
-    void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) final;
-    void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) final;
+    void UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) final;
+    void BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;

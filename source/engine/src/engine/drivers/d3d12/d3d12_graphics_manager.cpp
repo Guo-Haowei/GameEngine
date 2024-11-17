@@ -30,6 +30,14 @@ struct D3d12DrawPass : public DrawPass {
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> dsvs;
 };
 
+struct D3d12ConstantBuffer : public GpuConstantBuffer {
+    using GpuConstantBuffer::GpuConstantBuffer;
+
+    // @TODO: desc
+    uint32_t byteWidth = 0;
+    Microsoft::WRL::ComPtr<ID3D12Resource> buffer;
+};
+
 struct D3d12FrameContext : FrameContext {
     ~D3d12FrameContext() {
         SafeRelease(m_commandAllocator);
@@ -510,7 +518,7 @@ void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p
     CRASH_NOW_MSG("Implement");
 }
 
-std::shared_ptr<GpuStructuredBuffer> D3d12GraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
+std::shared_ptr<GpuStructuredBuffer> D3d12GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
     CRASH_NOW_MSG("Implement");
     return nullptr;
 }
@@ -532,25 +540,34 @@ void D3d12GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
 }
 WARNING_POP()
 
-std::shared_ptr<ConstantBufferBase> D3d12GraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
-    unused(p_slot);
-    unused(p_capacity);
-    // CRASH_NOW_MSG("Implement");
+std::shared_ptr<GpuConstantBuffer> D3d12GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
+    //auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    //auto buffer = CD3DX12_RESOURCE_DESC::Buffer(m_elementSizeInByte * p_element_count);
+    //D3D_CALL(p_device->CreateCommittedResource(
+    //    &heapProperties,
+    //    D3D12_HEAP_FLAG_NONE,
+    //    &buffer,
+    //    D3D12_RESOURCE_STATE_GENERIC_READ,
+    //    nullptr, IID_PPV_ARGS(&m_gpuBuffer)));
+
+    //D3D_CALL(m_gpuBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
+    unused(p_desc);
+    CRASH_NOW_MSG("Implement");
     return nullptr;
 }
 
-void D3d12GraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) {
+void D3d12GraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
     unused(p_buffer);
     unused(p_data);
     unused(p_size);
-    // CRASH_NOW_MSG("Implement");
+    CRASH_NOW_MSG("Implement");
 }
 
-void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
+void D3d12GraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
     unused(p_buffer);
     unused(p_size);
     unused(p_offset);
-    // CRASH_NOW_MSG("Implement");
+    CRASH_NOW_MSG("Implement");
 }
 
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -1201,8 +1218,9 @@ void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
 }
 
 void D3d12GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
-    unused(p_name);
-    CRASH_NOW();
+    auto pipeline = reinterpret_cast<D3d12PipelineState*>(m_pipelineStateManager->Find(p_name));
+    DEV_ASSERT(pipeline);
+    m_graphicsCommandList->SetPipelineState(pipeline->pso.Get());
 }
 
 void D3d12GraphicsManager::CleanupRenderTarget() {

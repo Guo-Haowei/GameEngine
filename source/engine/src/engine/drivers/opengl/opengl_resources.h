@@ -35,8 +35,8 @@ struct OpenGlSubpass : public DrawPass {
     uint32_t handle = 0;
 };
 
-struct OpenGlUniformBuffer : public ConstantBufferBase {
-    using ConstantBufferBase::ConstantBufferBase;
+struct OpenGlUniformBuffer : public GpuConstantBuffer {
+    using GpuConstantBuffer::GpuConstantBuffer;
 
     ~OpenGlUniformBuffer() {
         Clear();

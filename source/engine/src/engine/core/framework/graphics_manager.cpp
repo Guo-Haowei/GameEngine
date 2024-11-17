@@ -29,7 +29,11 @@ namespace my {
 template<typename T>
 static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
-    return p_graphics_manager.CreateConstantBuffer(T::GetUniformBufferSlot(), sizeof(T) * p_max_count);
+    GpuBufferDesc buffer_desc{};
+    buffer_desc.slot = T::GetUniformBufferSlot();
+    buffer_desc.elementCount = p_max_count;
+    buffer_desc.elementSize = sizeof(T);
+    return p_graphics_manager.CreateConstantBuffer(buffer_desc);
 }
 
 ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
@@ -41,8 +45,11 @@ ConstantBuffer<EnvConstantBuffer> g_env_cache;
 // @TODO: refactor this
 template<typename T>
 static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
-    constexpr int slot = T::GetUniformBufferSlot();
-    p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(slot, sizeof(T));
+    GpuBufferDesc buffer_desc{};
+    buffer_desc.slot = T::GetUniformBufferSlot();
+    buffer_desc.elementCount = 1;
+    buffer_desc.elementSize = sizeof(T);
+    p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
 bool GraphicsManager::Initialize() {

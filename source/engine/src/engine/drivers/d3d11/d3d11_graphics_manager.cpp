@@ -199,9 +199,9 @@ bool D3d11GraphicsManager::InitSamplers() {
     return ok;
 }
 
-std::shared_ptr<ConstantBufferBase> D3d11GraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
+std::shared_ptr<GpuConstantBuffer> D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
     D3D11_BUFFER_DESC buffer_desc{};
-    buffer_desc.ByteWidth = (UINT)p_capacity;
+    buffer_desc.ByteWidth = p_desc.elementCount * p_desc.elementSize;
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
     buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -209,54 +209,18 @@ std::shared_ptr<ConstantBufferBase> D3d11GraphicsManager::CreateConstantBuffer(i
     buffer_desc.StructureByteStride = 0;
 
     ComPtr<ID3D11Buffer> d3d_buffer;
-    D3D_FAIL_V_MSG(m_device->CreateBuffer(&buffer_desc, nullptr, d3d_buffer.GetAddressOf()),
-                   nullptr,
-                   "Failed to create buffer");
+    D3D_FAIL_V(m_device->CreateBuffer(&buffer_desc, nullptr, d3d_buffer.GetAddressOf()), nullptr);
 
-    auto uniform_buffer = std::make_shared<D3d11UniformBuffer>(p_slot, p_capacity);
+    auto uniform_buffer = std::make_shared<D3d11UniformBuffer>(p_desc);
     uniform_buffer->internalBuffer = d3d_buffer;
 
-    m_deviceContext->VSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
-    m_deviceContext->PSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
-    m_deviceContext->CSSetConstantBuffers(p_slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
+    m_deviceContext->VSSetConstantBuffers(p_desc.slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
+    m_deviceContext->PSSetConstantBuffers(p_desc.slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
+    m_deviceContext->CSSetConstantBuffers(p_desc.slot, 1, uniform_buffer->internalBuffer.GetAddressOf());
     return uniform_buffer;
 }
 
-void D3d11GraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) {
-    auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
-    DEV_ASSERT(p_size <= buffer->get_capacity());
-    buffer->data = (const char*)p_data;
-}
-
-void D3d11GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
-    auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
-    DEV_ASSERT(p_size + p_offset <= buffer->get_capacity());
-    D3D11_MAPPED_SUBRESOURCE mapped;
-    ZeroMemory(&mapped, sizeof(D3D11_MAPPED_SUBRESOURCE));
-    m_deviceContext->Map(buffer->internalBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-    memcpy(mapped.pData, buffer->data + p_offset, p_size);
-    m_deviceContext->Unmap(buffer->internalBuffer.Get(), 0);
-}
-
-void D3d11GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
-    unused(p_dimension);
-
-    if (p_handle) {
-        ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
-        m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
-        m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
-    }
-}
-
-void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
-    unused(p_dimension);
-
-    ID3D11ShaderResourceView* srv = nullptr;
-    m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
-    m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
-}
-
-std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) {
+std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
     ComPtr<ID3D11Buffer> buffer;
     ComPtr<ID3D11UnorderedAccessView> uav;
     ComPtr<ID3D11ShaderResourceView> srv;
@@ -297,6 +261,40 @@ std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffe
     structured_buffer->srv = srv;
 
     return structured_buffer;
+}
+
+void D3d11GraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
+    auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
+    DEV_ASSERT(p_size <= buffer->capacity);
+    buffer->data = (const char*)p_data;
+}
+
+void D3d11GraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
+    auto buffer = reinterpret_cast<const D3d11UniformBuffer*>(p_buffer);
+    DEV_ASSERT(p_size + p_offset <= buffer->capacity);
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    ZeroMemory(&mapped, sizeof(D3D11_MAPPED_SUBRESOURCE));
+    m_deviceContext->Map(buffer->internalBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+    memcpy(mapped.pData, buffer->data + p_offset, p_size);
+    m_deviceContext->Unmap(buffer->internalBuffer.Get(), 0);
+}
+
+void D3d11GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+    unused(p_dimension);
+
+    if (p_handle) {
+        ID3D11ShaderResourceView* srv = (ID3D11ShaderResourceView*)(p_handle);
+        m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
+        m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
+    }
+}
+
+void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
+    unused(p_dimension);
+
+    ID3D11ShaderResourceView* srv = nullptr;
+    m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
+    m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
 }
 
 void D3d11GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {

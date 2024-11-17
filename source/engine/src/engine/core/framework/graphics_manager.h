@@ -122,19 +122,19 @@ struct BufferCache {
 };
 
 struct FrameContext {
-    std::shared_ptr<ConstantBufferBase> batch_uniform;
+    std::shared_ptr<GpuConstantBuffer> batch_uniform;
     BufferCache<PerBatchConstantBuffer> batch_cache;
 
-    std::shared_ptr<ConstantBufferBase> material_uniform;
+    std::shared_ptr<GpuConstantBuffer> material_uniform;
     BufferCache<MaterialConstantBuffer> material_cache;
 
-    std::shared_ptr<ConstantBufferBase> bone_uniform;
+    std::shared_ptr<GpuConstantBuffer> bone_uniform;
     BufferCache<BoneConstantBuffer> bone_cache;
 
-    std::shared_ptr<ConstantBufferBase> pass_uniform;
+    std::shared_ptr<GpuConstantBuffer> pass_uniform;
     std::vector<PerPassConstantBuffer> pass_cache;
 
-    std::shared_ptr<ConstantBufferBase> emitter_uniform;
+    std::shared_ptr<GpuConstantBuffer> emitter_uniform;
     std::vector<EmitterConstantBuffer> emitter_cache;
 };
 
@@ -177,22 +177,22 @@ public:
     void SetPipelineState(PipelineStateName p_name);
     virtual void SetStencilRef(uint32_t p_ref) = 0;
 
-    virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuStructuredBufferDesc& p_desc) = 0;
+    virtual std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) = 0;
+    virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) = 0;
+
     virtual void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
     virtual void UnbindStructuredBuffer(int p_slot) = 0;
     virtual void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
     virtual void UnbindStructuredBufferSRV(int p_slot) = 0;
 
-    virtual std::shared_ptr<ConstantBufferBase> CreateConstantBuffer(int p_slot, size_t p_capacity) = 0;
-
-    virtual void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const void* p_data, size_t p_size) = 0;
+    virtual void UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) = 0;
     template<typename T>
-    void UpdateConstantBuffer(const ConstantBufferBase* p_buffer, const std::vector<T>& p_vector) {
+    void UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const std::vector<T>& p_vector) {
         UpdateConstantBuffer(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
     }
-    virtual void BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
+    virtual void BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
     template<typename T>
-    void BindConstantBufferSlot(const ConstantBufferBase* p_buffer, int slot) {
+    void BindConstantBufferSlot(const GpuConstantBuffer* p_buffer, int slot) {
         BindConstantBufferRange(p_buffer, sizeof(T), slot * sizeof(T));
     }
 
