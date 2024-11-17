@@ -17,7 +17,6 @@ public:
     D3d11GraphicsManager();
 
     void Finalize() final;
-    void Render() final;
 
     void SetStencilRef(uint32_t p_ref) final;
 
@@ -57,6 +56,9 @@ public:
 protected:
     bool InitializeImpl() final;
     std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
+
+    void Render() final;
+    void Present() final;
 
     void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int p_width, int p_height) final;

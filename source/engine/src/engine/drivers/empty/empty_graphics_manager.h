@@ -8,9 +8,8 @@ WARNING_DISABLE(4100, "-Wunused-parameter")
 
 class EmptyGraphicsManager : public GraphicsManager {
 public:
-    EmptyGraphicsManager(std::string_view p_name, Backend p_backend) : GraphicsManager(p_name, p_backend) {}
+    EmptyGraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count) : GraphicsManager(p_name, p_backend, p_frame_count) {}
 
-    void Render() override {}
     void Finalize() override {}
 
     void SetStencilRef(uint32_t p_ref) override {}
@@ -49,6 +48,9 @@ public:
 protected:
     bool InitializeImpl() override { return true; }
     std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
+
+    void Render() override {}
+    void Present() override {}
 
     void OnSceneChange(const Scene& p_scene) override {}
     void OnWindowResize(int p_width, int p_height) override {}

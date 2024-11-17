@@ -77,7 +77,7 @@ private:
     bool m_isConstantBuffer = false;
 };
 
-struct FrameContext {
+struct D3d12FrameContext {
     ID3D12CommandAllocator* m_commandAllocator = nullptr;
     uint64_t m_fenceValue = 0;
 
@@ -122,7 +122,7 @@ struct GraphicsContext {
     bool Initialize(D3d12GraphicsManager* p_device);
     void Finalize();
 
-    FrameContext& BeginFrame();
+    D3d12FrameContext& BeginFrame();
     void EndFrame();
     void MoveToNextFrame();
     void Flush();
@@ -134,7 +134,7 @@ struct GraphicsContext {
     uint64_t m_lastSignaledFenceValue = 0;
     HANDLE m_fenceEvent = NULL;
 
-    std::array<FrameContext, GraphicsManager::NUM_FRAMES_IN_FLIGHT> m_frames;
+    std::array<D3d12FrameContext, GraphicsManager::NUM_FRAMES_IN_FLIGHT> m_frames;
     uint32_t m_frameIndex = 0;
 };
 

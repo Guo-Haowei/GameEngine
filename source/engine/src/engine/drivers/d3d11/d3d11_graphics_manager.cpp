@@ -18,7 +18,7 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11) {
+D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11, 1) {
     m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
 
@@ -53,7 +53,9 @@ void D3d11GraphicsManager::Render() {
     m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
     m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+}
 
+void D3d11GraphicsManager::Present() {
     ImGuiIO& io = ImGui::GetIO();
     // Update and Render additional Platform Windows
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {

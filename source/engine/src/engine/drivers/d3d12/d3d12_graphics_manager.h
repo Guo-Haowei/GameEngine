@@ -9,7 +9,6 @@ public:
     D3d12GraphicsManager();
 
     void Finalize() final;
-    void Render() final;
 
     void SetStencilRef(uint32_t p_ref) final;
 
@@ -54,6 +53,12 @@ protected:
     bool InitializeImpl() final;
     std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
+    void Render() final;
+    void Present() final;
+    void BeginFrame() final;
+    void EndFrame() final;
+    void MoveToNextFrame() final;
+
     void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) final;
@@ -68,16 +73,13 @@ private:
     void CleanupRenderTarget();
     void InitStaticSamplers();
 
-    void BeginFrame();
-    void EndFrame();
-
     GraphicsContext m_graphicsContext;
     CopyContext m_copyContext;
 
     DescriptorHeapGPU m_rtvDescHeap;
     DescriptorHeapGPU m_dsvDescHeap;
     DescriptorHeapGPU m_srvDescHeap;
-    FrameContext* m_currentFrameContext = nullptr;
+    D3d12FrameContext* m_currentFrameContext = nullptr;
 
     Microsoft::WRL::ComPtr<ID3D12Device4> m_device;
     Microsoft::WRL::ComPtr<ID3D12Debug> m_debugController;

@@ -67,7 +67,7 @@ namespace my {
 
 static void APIENTRY DebugCallback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
-OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphicsManager", Backend::OPENGL) {
+OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphicsManager", Backend::OPENGL, 1) {
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 
@@ -665,17 +665,11 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 }
 
 void OpenGlGraphicsManager::Render() {
-    OPTICK_EVENT();
-
-    m_renderGraph.Execute(*this);
-
-    // @TODO: move it somewhere else
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
 
-    {
-        OPTICK_EVENT("ImGui_ImplOpenGL3_RenderDrawData");
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    }
+void OpenGlGraphicsManager::Present() {
 }
 
 static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,

@@ -96,6 +96,48 @@ struct PassContext {
 
 inline constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
 
+// @TODO: make it two frames
+// @TODO: refactor names
+template<typename BUFFER>
+struct BufferCache {
+    std::vector<BUFFER> buffer;
+    std::unordered_map<ecs::Entity, uint32_t> lookup;
+
+    uint32_t FindOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
+        auto it = lookup.find(p_entity);
+        if (it != lookup.end()) {
+            return it->second;
+        }
+
+        uint32_t index = static_cast<uint32_t>(buffer.size());
+        lookup[p_entity] = index;
+        buffer.emplace_back(p_buffer);
+        return index;
+    }
+
+    void Clear() {
+        buffer.clear();
+        lookup.clear();
+    }
+};
+
+struct FrameContext {
+    std::shared_ptr<ConstantBufferBase> batch_uniform;
+    BufferCache<PerBatchConstantBuffer> batch_cache;
+
+    std::shared_ptr<ConstantBufferBase> material_uniform;
+    BufferCache<MaterialConstantBuffer> material_cache;
+
+    std::shared_ptr<ConstantBufferBase> bone_uniform;
+    BufferCache<BoneConstantBuffer> bone_cache;
+
+    std::shared_ptr<ConstantBufferBase> pass_uniform;
+    std::vector<PerPassConstantBuffer> pass_cache;
+
+    std::shared_ptr<ConstantBufferBase> emitter_uniform;
+    std::vector<EmitterConstantBuffer> emitter_cache;
+};
+
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     using OnTextureLoadFunc = void (*)(Image* p_image);
@@ -109,11 +151,13 @@ public:
     static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
     static constexpr int NUM_BACK_BUFFERS = 2;
 
-    GraphicsManager(std::string_view p_name, Backend p_backend) : Module(p_name), m_backend(p_backend) {}
+    GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
+        : Module(p_name),
+          m_backend(p_backend),
+          m_frameCount(p_frame_count) {}
 
     bool Initialize() final;
     void Update(Scene& p_scene);
-    virtual void Render() = 0;
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
@@ -177,9 +221,17 @@ public:
     // @TODO: move to renderer
     void SelectRenderGraph();
 
+    FrameContext& GetCurrentFrame() { return m_frameContexts[m_frameIndex]; }
+
 protected:
     virtual bool InitializeImpl() = 0;
     virtual std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
+
+    virtual void BeginFrame();
+    virtual void EndFrame();
+    virtual void MoveToNextFrame();
+    virtual void Render() = 0;
+    virtual void Present() = 0;
 
     virtual void OnSceneChange(const Scene& p_scene) = 0;
     virtual void OnWindowResize(int p_width, int p_height) = 0;
@@ -202,57 +254,13 @@ protected:
     ConcurrentQueue<ImageTask> m_loadedImages;
 
     std::shared_ptr<PipelineStateManager> m_pipelineStateManager;
+    std::vector<FrameContext> m_frameContexts;
+    int m_frameIndex{ 0 };
+    const int m_frameCount;
 
 public:
-    // @TODO: refactor
-    // tmp particle stuff
-    int m_particle_count = 0;
-
     using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
     using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
-
-    template<typename BUFFER>
-    struct BufferCache {
-        std::vector<BUFFER> buffer;
-        std::unordered_map<ecs::Entity, uint32_t> lookup;
-
-        uint32_t FindOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
-            auto it = lookup.find(p_entity);
-            if (it != lookup.end()) {
-                return it->second;
-            }
-
-            uint32_t index = static_cast<uint32_t>(buffer.size());
-            lookup[p_entity] = index;
-            buffer.emplace_back(p_buffer);
-            return index;
-        }
-
-        void Clear() {
-            buffer.clear();
-            lookup.clear();
-        }
-    };
-
-    // @TODO: refactor names
-    struct Context {
-        std::shared_ptr<ConstantBufferBase> batch_uniform;
-        BufferCache<PerBatchConstantBuffer> batch_cache;
-
-        std::shared_ptr<ConstantBufferBase> material_uniform;
-        BufferCache<MaterialConstantBuffer> material_cache;
-
-        std::shared_ptr<ConstantBufferBase> bone_uniform;
-        BufferCache<BoneConstantBuffer> bone_cache;
-
-        std::shared_ptr<ConstantBufferBase> pass_uniform;
-        std::vector<PerPassConstantBuffer> pass_cache;
-
-        std::shared_ptr<ConstantBufferBase> emitter_uniform;
-        std::vector<EmitterConstantBuffer> emitter_cache;
-    } m_context;
-
-    Context& GetContext() { return m_context; }
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
     std::array<std::unique_ptr<PassContext>, MAX_LIGHT_CAST_SHADOW_COUNT> m_pointShadowPasses;

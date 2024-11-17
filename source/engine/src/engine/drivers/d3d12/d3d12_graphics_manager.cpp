@@ -38,7 +38,7 @@ static constexpr uint32_t CBV_DESCRIPTOR_OFFSET = 32;
 
 using Microsoft::WRL::ComPtr;
 
-D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsManager", Backend::D3D12) {
+D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsManager", Backend::D3D12, NUM_FRAMES_IN_FLIGHT) {
     m_pipelineStateManager = std::make_shared<D3d12PipelineStateManager>();
 }
 
@@ -132,12 +132,7 @@ void D3d12GraphicsManager::Finalize() {
 }
 
 void D3d12GraphicsManager::Render() {
-    // @TODO: refactor
-    BeginFrame();
-
     ID3D12GraphicsCommandList* cmdList = m_graphicsContext.m_commandList.Get();
-
-    m_renderGraph.Execute(*this);
 
     // CommandList cmd = 0;
     // FrameContext* frameContext = m_currentFrameContext;
@@ -312,16 +307,32 @@ void D3d12GraphicsManager::Render() {
     barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
     cmdList->ResourceBarrier(1, &barrier);
+}
 
-    EndFrame();
-
+void D3d12GraphicsManager::Present() {
     ImGuiIO& io = ImGui::GetIO();
     if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
     }
-
     D3D_CALL(m_swap_chain->Present(1, 0));  // Present with vsync
+}
+
+void D3d12GraphicsManager::BeginFrame() {
+    // @TODO: wait for swap chain
+    D3d12FrameContext& frame = m_graphicsContext.BeginFrame();
+
+    WaitForSingleObject(m_swapChainWaitObject, INFINITE);
+
+    m_currentFrameContext = &frame;
+    m_backbufferIndex = m_swap_chain->GetCurrentBackBufferIndex();
+}
+
+void D3d12GraphicsManager::EndFrame() {
+    m_graphicsContext.EndFrame();
+}
+
+void D3d12GraphicsManager::MoveToNextFrame() {
     m_graphicsContext.MoveToNextFrame();
 }
 
@@ -488,6 +499,7 @@ WARNING_POP()
 std::shared_ptr<ConstantBufferBase> D3d12GraphicsManager::CreateConstantBuffer(int p_slot, size_t p_capacity) {
     unused(p_slot);
     unused(p_capacity);
+    // CRASH_NOW_MSG("Implement");
     return nullptr;
 }
 
@@ -495,12 +507,14 @@ void D3d12GraphicsManager::UpdateConstantBuffer(const ConstantBufferBase* p_buff
     unused(p_buffer);
     unused(p_data);
     unused(p_size);
+    // CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::BindConstantBufferRange(const ConstantBufferBase* p_buffer, uint32_t p_size, uint32_t p_offset) {
     unused(p_buffer);
     unused(p_size);
     unused(p_offset);
+    // CRASH_NOW_MSG("Implement");
 }
 
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -1079,10 +1093,6 @@ bool D3d12GraphicsManager::CreateRootSignature() {
 
     D3D_FAIL_V(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)), false);
 
-    // m_graphicsContext.BeginFrame();
-    // m_graphicsContext.m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-    // m_graphicsContext.EndFrame();
-
     return true;
 }
 
@@ -1116,20 +1126,6 @@ void D3d12GraphicsManager::CleanupRenderTarget() {
         SafeRelease(m_renderTargets[i]);
     }
     SafeRelease(m_depthStencilBuffer);
-}
-
-void D3d12GraphicsManager::BeginFrame() {
-    // @TODO: wait for swap chain
-    FrameContext& frame = m_graphicsContext.BeginFrame();
-
-    WaitForSingleObject(m_swapChainWaitObject, INFINITE);
-
-    m_currentFrameContext = &frame;
-    m_backbufferIndex = m_swap_chain->GetCurrentBackBufferIndex();
-}
-
-void D3d12GraphicsManager::EndFrame() {
-    m_graphicsContext.EndFrame();
 }
 
 }  // namespace my

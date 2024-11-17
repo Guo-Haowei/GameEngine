@@ -7,7 +7,7 @@ namespace my {
 
 //------------------------------------------------------------------------------
 // FrameContext
-void FrameContext::Wait(HANDLE p_fence_event, ID3D12Fence1* p_fence) {
+void D3d12FrameContext::Wait(HANDLE p_fence_event, ID3D12Fence1* p_fence) {
     if (p_fence->GetCompletedValue() < m_fenceValue) {
         D3D_CALL(p_fence->SetEventOnCompletion(m_fenceValue, p_fence_event));
         WaitForSingleObject(p_fence_event, INFINITE);
@@ -26,7 +26,7 @@ bool GraphicsContext::Initialize(D3d12GraphicsManager* p_device) {
     DEV_ASSERT(m_commandQueue);
 
     for (int i = 0; i < static_cast<int>(m_frames.size()); ++i) {
-        FrameContext& frame = m_frames[i];
+        D3d12FrameContext& frame = m_frames[i];
 
         D3D_FAIL_V(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frame.m_commandAllocator)), false);
 
@@ -76,8 +76,8 @@ void GraphicsContext::Finalize() {
     }
 }
 
-FrameContext& GraphicsContext::BeginFrame() {
-    FrameContext& frame = m_frames[m_frameIndex];
+D3d12FrameContext& GraphicsContext::BeginFrame() {
+    D3d12FrameContext& frame = m_frames[m_frameIndex];
     frame.Wait(m_fenceEvent, m_fence.Get());
     D3D_CALL(frame.m_commandAllocator->Reset());
     D3D_CALL(m_commandList->Reset(frame.m_commandAllocator, nullptr));
@@ -95,7 +95,7 @@ void GraphicsContext::MoveToNextFrame() {
     m_commandQueue->Signal(m_fence.Get(), fenceValue);
     m_lastSignaledFenceValue = fenceValue;
 
-    FrameContext& frame = m_frames[m_frameIndex];
+    D3d12FrameContext& frame = m_frames[m_frameIndex];
     frame.m_fenceValue = fenceValue;
 
     m_frameIndex = (m_frameIndex + 1) % static_cast<uint32_t>(m_frames.size());

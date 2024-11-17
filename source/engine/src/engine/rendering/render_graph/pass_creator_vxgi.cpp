@@ -23,7 +23,7 @@ namespace my::rg {
 void voxelization_pass_func(const DrawPass*) {
     OPTICK_EVENT();
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& ctx = gm.GetCurrentFrame();
 
     if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
         return;
@@ -255,7 +255,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DEBUG_VOXEL);
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().pass_uniform.get(), pass.pass_idx);
 
     glBindVertexArray(g_box->vao);
 

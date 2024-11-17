@@ -17,7 +17,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& ctx = gm.GetCurrentFrame();
     const uint32_t width = p_draw_pass->depthAttachment->desc.width;
     const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
@@ -53,7 +53,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
         gm.SetMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            const MaterialConstantBuffer& material = gm.m_context.material_cache.buffer[subset.material_idx];
+            const MaterialConstantBuffer& material = gm.GetCurrentFrame().material_cache.buffer[subset.material_idx];
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_baseColorMap_handle, t_baseColorMapSlot);
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_normalMap_handle, t_normalMapSlot);
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_materialMap_handle, t_materialMapSlot);
@@ -125,7 +125,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& ctx = gm.GetCurrentFrame();
 
     auto& pass_ptr = gm.m_pointShadowPasses[p_pass_id];
     if (!pass_ptr) {
@@ -172,7 +172,7 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& ctx = gm.GetCurrentFrame();
 
     gm.SetRenderTarget(p_draw_pass);
     const uint32_t width = p_draw_pass->depthAttachment->desc.width;
@@ -299,7 +299,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     RenderManager::GetSingleton().draw_quad();
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.m_context.pass_uniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().pass_uniform.get(), pass.pass_idx);
 
     // if (0) {
     //     // draw billboard grass here for now
@@ -361,7 +361,7 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto& ctx = gm.GetContext();
+    auto& ctx = gm.GetCurrentFrame();
     const uint32_t width = p_draw_pass->depthAttachment->desc.width;
     const uint32_t height = p_draw_pass->depthAttachment->desc.height;
 
