@@ -221,17 +221,19 @@ public:
     // @TODO: move to renderer
     void SelectRenderGraph();
 
-    FrameContext& GetCurrentFrame() { return m_frameContexts[m_frameIndex]; }
+    FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
 protected:
     virtual bool InitializeImpl() = 0;
     virtual std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
+    virtual void Render() = 0;
+    virtual void Present() = 0;
+
     virtual void BeginFrame();
     virtual void EndFrame();
     virtual void MoveToNextFrame();
-    virtual void Render() = 0;
-    virtual void Present() = 0;
+    virtual std::unique_ptr<FrameContext> CreateFrameContext();
 
     virtual void OnSceneChange(const Scene& p_scene) = 0;
     virtual void OnWindowResize(int p_width, int p_height) = 0;
@@ -254,7 +256,7 @@ protected:
     ConcurrentQueue<ImageTask> m_loadedImages;
 
     std::shared_ptr<PipelineStateManager> m_pipelineStateManager;
-    std::vector<FrameContext> m_frameContexts;
+    std::vector<std::unique_ptr<FrameContext>> m_frameContexts;
     int m_frameIndex{ 0 };
     const int m_frameCount;
 

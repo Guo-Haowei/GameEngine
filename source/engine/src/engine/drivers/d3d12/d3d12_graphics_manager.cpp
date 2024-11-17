@@ -30,6 +30,28 @@ struct D3d12DrawPass : public DrawPass {
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> dsvs;
 };
 
+struct D3d12FrameContext : FrameContext {
+    ~D3d12FrameContext() {
+        SafeRelease(m_commandAllocator);
+    }
+
+    void Wait(HANDLE p_fence_event, ID3D12Fence1* p_fence) {
+        if (p_fence->GetCompletedValue() < m_fenceValue) {
+            D3D_CALL(p_fence->SetEventOnCompletion(m_fenceValue, p_fence_event));
+            WaitForSingleObject(p_fence_event, INFINITE);
+        }
+    }
+
+    ID3D12CommandAllocator* m_commandAllocator = nullptr;
+    uint64_t m_fenceValue = 0;
+
+    // @TODO: fix
+    // std::unique_ptr<UploadBuffer<PerFrameConstants>> perFrameBuffer;
+    // std::unique_ptr<UploadBuffer<PerBatchConstants>> perBatchBuffer;
+    // std::unique_ptr<UploadBuffer<BoneConstants>> boneConstants;
+};
+// @TODO: refactor
+
 // @TODO: move to a common place
 static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
 static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
@@ -59,7 +81,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
     }
 
     ok = ok && CreateDescriptorHeaps();
-    ok = ok && m_graphicsContext.Initialize(this);
+    ok = ok && InitGraphicsContext();
     ok = ok && m_copyContext.Initialize(this);
 
     for (int i = 0; i < NUM_BACK_BUFFERS; i++) {
@@ -127,12 +149,12 @@ void D3d12GraphicsManager::Finalize() {
 
     ImGui_ImplDX12_Shutdown();
 
-    m_graphicsContext.Finalize();
+    FinalizeGraphicsContext();
     m_copyContext.Finalize();
 }
 
 void D3d12GraphicsManager::Render() {
-    ID3D12GraphicsCommandList* cmdList = m_graphicsContext.m_commandList.Get();
+    ID3D12GraphicsCommandList* cmdList = m_graphicsCommandList.Get();
 
     // CommandList cmd = 0;
     // FrameContext* frameContext = m_currentFrameContext;
@@ -315,25 +337,39 @@ void D3d12GraphicsManager::Present() {
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
     }
-    D3D_CALL(m_swap_chain->Present(1, 0));  // Present with vsync
+    D3D_CALL(m_swapChain->Present(1, 0));  // Present with vsync
 }
 
 void D3d12GraphicsManager::BeginFrame() {
     // @TODO: wait for swap chain
-    D3d12FrameContext& frame = m_graphicsContext.BeginFrame();
+    D3d12FrameContext& frame = reinterpret_cast<D3d12FrameContext&>(GetCurrentFrame());
+    frame.Wait(m_graphicsFenceEvent, m_graphicsQueueFence.Get());
+    D3D_CALL(frame.m_commandAllocator->Reset());
+    D3D_CALL(m_graphicsCommandList->Reset(frame.m_commandAllocator, nullptr));
 
     WaitForSingleObject(m_swapChainWaitObject, INFINITE);
 
-    m_currentFrameContext = &frame;
-    m_backbufferIndex = m_swap_chain->GetCurrentBackBufferIndex();
+    m_backbufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
 void D3d12GraphicsManager::EndFrame() {
-    m_graphicsContext.EndFrame();
+    D3D_CALL(m_graphicsCommandList->Close());
+    ID3D12CommandList* cmdLists[] = { m_graphicsCommandList.Get() };
+    m_graphicsCommandQueue->ExecuteCommandLists(array_length(cmdLists), cmdLists);
 }
 
 void D3d12GraphicsManager::MoveToNextFrame() {
-    m_graphicsContext.MoveToNextFrame();
+    uint64_t fenceValue = m_lastSignaledFenceValue + 1;
+    m_graphicsCommandQueue->Signal(m_graphicsQueueFence.Get(), fenceValue);
+    m_lastSignaledFenceValue = fenceValue;
+
+    D3d12FrameContext& frame = reinterpret_cast<D3d12FrameContext&>(GetCurrentFrame());
+    frame.m_fenceValue = fenceValue;
+    m_frameIndex = (m_frameIndex + 1) % static_cast<uint32_t>(m_frameContexts.size());
+}
+
+std::unique_ptr<FrameContext> D3d12GraphicsManager::CreateFrameContext() {
+    return std::make_unique<D3d12FrameContext>();
 }
 
 void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
@@ -346,7 +382,7 @@ void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     unused(p_index);
     DEV_ASSERT(p_draw_pass);
 
-    ID3D12GraphicsCommandList* command_list = m_graphicsContext.m_commandList.Get();
+    ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
 
     auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
     if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
@@ -372,7 +408,7 @@ void D3d12GraphicsManager::UnsetRenderTarget() {
 }
 
 void D3d12GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
-    ID3D12GraphicsCommandList* command_list = m_graphicsContext.m_commandList.Get();
+    ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
     for (auto& texture : p_render_pass->m_outputs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
@@ -391,7 +427,7 @@ void D3d12GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
 
 void D3d12GraphicsManager::EndPass(const RenderPass* p_render_pass) {
     UnsetRenderTarget();
-    ID3D12GraphicsCommandList* command_list = m_graphicsContext.m_commandList.Get();
+    ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
     for (auto& texture : p_render_pass->m_outputs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
@@ -415,7 +451,7 @@ void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags
 
     if (p_flags & CLEAR_COLOR_BIT) {
         for (auto& rtv : draw_pass->rtvs) {
-            m_graphicsContext.m_commandList->ClearRenderTargetView(rtv, p_clear_color, 0, nullptr);
+            m_graphicsCommandList->ClearRenderTargetView(rtv, p_clear_color, 0, nullptr);
         }
     }
 
@@ -429,7 +465,7 @@ void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags
     if (clear_flags) {
         // @TODO: better way?
         DEV_ASSERT_INDEX(p_index, draw_pass->dsvs.size());
-        m_graphicsContext.m_commandList->ClearDepthStencilView(draw_pass->dsvs[p_index], clear_flags, 1.0f, 0, 0, nullptr);
+        m_graphicsCommandList->ClearDepthStencilView(draw_pass->dsvs[p_index], clear_flags, 1.0f, 0, 0, nullptr);
     }
 }
 
@@ -440,7 +476,7 @@ void D3d12GraphicsManager::SetViewport(const Viewport& p_viewport) {
         static_cast<float>(p_viewport.width),
         static_cast<float>(p_viewport.height));
 
-    m_graphicsContext.m_commandList->RSSetViewports(1, &view_port);
+    m_graphicsCommandList->RSSetViewports(1, &view_port);
 
     // D3D12_RECT sissor_rect{};
     // m_graphicsContext.m_commandList->RSSetScissorRects(1, &sissor_rect);
@@ -840,6 +876,56 @@ bool D3d12GraphicsManager::CreateDevice() {
     return true;
 }
 
+bool D3d12GraphicsManager::InitGraphicsContext() {
+    m_graphicsCommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+    DEV_ASSERT(m_graphicsCommandQueue);
+
+    int frame_idx = 0;
+    for (auto& it : m_frameContexts) {
+        D3d12FrameContext& frame = reinterpret_cast<D3d12FrameContext&>(*it.get());
+        D3D_FAIL_V(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frame.m_commandAllocator)), false);
+        D3D12_SET_DEBUG_NAME(frame.m_commandAllocator, std::format("GraphicsCommandAllocator {}", frame_idx++));
+
+        if (m_graphicsCommandList == nullptr) {
+            D3D_FAIL_V(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, frame.m_commandAllocator, nullptr, IID_PPV_ARGS(&m_graphicsCommandList)), false);
+        }
+    }
+
+    m_graphicsCommandList->Close();
+    D3D12_SET_DEBUG_NAME(m_graphicsCommandList.Get(), "GraphicsCommandList");
+
+    D3D_FAIL_V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_graphicsQueueFence)), false);
+
+    D3D12_SET_DEBUG_NAME(m_graphicsQueueFence.Get(), "GraphicsFence");
+
+    m_graphicsFenceEvent = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
+
+    return true;
+}
+
+void D3d12GraphicsManager::FinalizeGraphicsContext() {
+    FlushGraphicsContext();
+
+    m_graphicsQueueFence.Reset();
+    m_lastSignaledFenceValue = 0;
+
+    CloseHandle(m_graphicsFenceEvent);
+    m_graphicsFenceEvent = NULL;
+
+    m_graphicsCommandList.Reset();
+    m_graphicsCommandQueue.Reset();
+
+    m_frameContexts.clear();
+}
+
+void D3d12GraphicsManager::FlushGraphicsContext() {
+    for (auto& it : m_frameContexts) {
+        D3d12FrameContext& frame = reinterpret_cast<D3d12FrameContext&>(*it.get());
+        frame.Wait(m_graphicsFenceEvent, m_graphicsQueueFence.Get());
+    }
+    m_frameIndex = 0;
+}
+
 ID3D12CommandQueue* D3d12GraphicsManager::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE p_type) {
     D3D12_COMMAND_QUEUE_DESC desc;
     desc.Type = p_type;
@@ -934,7 +1020,7 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) 
     IDXGISwapChain1* pSwapChain = nullptr;
 
     HRESULT hr = m_factory->CreateSwapChainForHwnd(
-        m_graphicsContext.m_commandQueue.Get(),
+        m_graphicsCommandQueue.Get(),
         display_manager->GetHwnd(),
         &scd,
         NULL,
@@ -943,10 +1029,10 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) 
 
     D3D_FAIL_V_MSG(hr, false, "Failed to create swapchain");
 
-    m_swap_chain.Attach(reinterpret_cast<IDXGISwapChain3*>(pSwapChain));
+    m_swapChain.Attach(reinterpret_cast<IDXGISwapChain3*>(pSwapChain));
 
-    m_swap_chain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
-    m_swapChainWaitObject = m_swap_chain->GetFrameLatencyWaitableObject();
+    m_swapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
+    m_swapChainWaitObject = m_swapChain->GetFrameLatencyWaitableObject();
 
     return true;
 }
@@ -954,7 +1040,7 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) 
 bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_height) {
     for (int32_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
         ID3D12Resource* pBackBuffer = nullptr;
-        D3D_CALL(m_swap_chain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
+        D3D_CALL(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
         m_device->CreateRenderTargetView(pBackBuffer, nullptr, m_renderTargetDescriptor[i]);
         std::wstring name = std::wstring(L"Render Target Buffer") + std::to_wstring(i);
         pBackBuffer->SetName(name.c_str());
@@ -1102,11 +1188,11 @@ void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {
 }
 
 void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
-    if (m_swap_chain) {
-        m_graphicsContext.Flush();
+    if (m_swapChain) {
+        //FlushGraphicsContext();
 
         CleanupRenderTarget();
-        D3D_CALL(m_swap_chain->ResizeBuffers(0, p_width, p_height,
+        D3D_CALL(m_swapChain->ResizeBuffers(0, p_width, p_height,
                                              DXGI_FORMAT_UNKNOWN,
                                              DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT));
 
@@ -1120,7 +1206,7 @@ void D3d12GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
 }
 
 void D3d12GraphicsManager::CleanupRenderTarget() {
-    m_graphicsContext.Flush();
+    FlushGraphicsContext();
 
     for (uint32_t i = 0; i < NUM_BACK_BUFFERS; ++i) {
         SafeRelease(m_renderTargets[i]);

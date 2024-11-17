@@ -51,15 +51,18 @@ bool GraphicsManager::Initialize() {
 #else
     m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
 #endif
+    const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
+    m_frameContexts.resize(num_frames);
+    for (int i = 0; i < num_frames; ++i) {
+        m_frameContexts[i] = std::move(CreateFrameContext());
+    }
 
     if (!InitializeImpl()) {
         return false;
     }
 
-    const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
-    m_frameContexts.resize(num_frames);
     for (int i = 0; i < num_frames; ++i) {
-        FrameContext& frame_context = m_frameContexts[i];
+        FrameContext& frame_context = *m_frameContexts[i].get();
         frame_context.batch_uniform = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
         frame_context.pass_uniform = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
         frame_context.material_uniform = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
@@ -137,11 +140,6 @@ void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
-    // @TODO: fix
-    // if (GetBackend() == Backend::D3D12) {
-    //    return;
-    //}
-
     Cleanup();
 
     UpdateConstants(p_scene);
@@ -200,6 +198,10 @@ void GraphicsManager::EndFrame() {
 }
 
 void GraphicsManager::MoveToNextFrame() {
+}
+
+std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
+    return std::make_unique<FrameContext>();
 }
 
 void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {

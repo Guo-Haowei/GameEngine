@@ -55,9 +55,11 @@ protected:
 
     void Render() final;
     void Present() final;
+
     void BeginFrame() final;
     void EndFrame() final;
     void MoveToNextFrame() final;
+    std::unique_ptr<FrameContext> CreateFrameContext() final;
 
     void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int p_width, int p_height) final;
@@ -65,6 +67,10 @@ protected:
 
 private:
     bool CreateDevice();
+    bool InitGraphicsContext();
+    void FinalizeGraphicsContext();
+    void FlushGraphicsContext();
+
     bool EnableDebugLayer();
     bool CreateDescriptorHeaps();
     bool CreateRootSignature();
@@ -73,18 +79,25 @@ private:
     void CleanupRenderTarget();
     void InitStaticSamplers();
 
-    GraphicsContext m_graphicsContext;
-    CopyContext m_copyContext;
-
     DescriptorHeapGPU m_rtvDescHeap;
     DescriptorHeapGPU m_dsvDescHeap;
     DescriptorHeapGPU m_srvDescHeap;
-    D3d12FrameContext* m_currentFrameContext = nullptr;
 
     Microsoft::WRL::ComPtr<ID3D12Device4> m_device;
     Microsoft::WRL::ComPtr<ID3D12Debug> m_debugController;
     Microsoft::WRL::ComPtr<IDXGIFactory4> m_factory;
-    Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swap_chain;
+    Microsoft::WRL::ComPtr<IDXGISwapChain3> m_swapChain;
+
+    // Graphics Queue
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_graphicsCommandQueue;
+    Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_graphicsCommandList;
+    Microsoft::WRL::ComPtr<ID3D12Fence1> m_graphicsQueueFence;
+
+    uint64_t m_lastSignaledFenceValue = 0;
+    HANDLE m_graphicsFenceEvent = NULL;
+
+    // Copy Queue
+    CopyContext m_copyContext;
 
     HANDLE m_swapChainWaitObject = INVALID_HANDLE_VALUE;
 
