@@ -1,8 +1,16 @@
 #pragma once
+#include "core/base/rid_owner.h"
 #include "core/framework/graphics_manager.h"
 #include "drivers/d3d12/d3d12_core.h"
 
 namespace my {
+
+struct D3d12MeshBuffers : public MeshBuffers {
+    Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffers[6]{};
+    D3D12_VERTEX_BUFFER_VIEW vbvs[6]{};
+    Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer;
+    uint32_t indexBufferByte{ 0 };
+};
 
 class D3d12GraphicsManager : public GraphicsManager {
 public:
@@ -117,6 +125,8 @@ private:
     std::vector<CD3DX12_STATIC_SAMPLER_DESC> m_staticSamplers;
 
     std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> m_textures;
+
+    RIDAllocator<D3d12MeshBuffers> m_meshes;
 };
 
 }  // namespace my

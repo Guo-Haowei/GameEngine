@@ -5,6 +5,7 @@
 #include "core/math/geomath.h"
 #include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
+#include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
 
 // @TODO: this is temporary
@@ -25,12 +26,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
     gm.SetViewport(Viewport(width, height));
 
-    float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    if (gm.GetBackend() == Backend::D3D12) {
-        clear_color[0] = 0.3f;
-        clear_color[1] = 0.3f;
-        clear_color[2] = 0.4f;
-    }
+    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     PassContext& pass = gm.m_mainPass;
@@ -80,31 +76,31 @@ void RenderPassCreator::AddGBufferPass() {
     int p_height = m_config.frameHeight;
 
     auto gbuffer_depth = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
-                                                                          PixelFormat::R24G8_TYPELESS,
+                                                                          GBUFFER_DEPTH_FORMAT,
                                                                           AttachmentType::DEPTH_STENCIL_2D,
                                                                           p_width, p_height),
                                                   PointClampSampler());
 
     auto attachment0 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
-                                                                        PixelFormat::R11G11B10_FLOAT,
+                                                                        GBUFFER_BASE_COLOR_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment1 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
-                                                                        PixelFormat::R16G16B16_FLOAT,
+                                                                        GBUFFER_POSITION_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment2 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
-                                                                        PixelFormat::R16G16B16_FLOAT,
+                                                                        GBUFFER_NORMAL_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment3 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
-                                                                        PixelFormat::R11G11B10_FLOAT,
+                                                                        GBUFFER_MATERIAL_FORMAT,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());

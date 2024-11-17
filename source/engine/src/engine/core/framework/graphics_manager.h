@@ -240,8 +240,6 @@ protected:
     const Backend m_backend;
     RenderGraphName m_method;
     bool m_enableValidationLayer;
-    // @TODO: cache
-    PipelineStateName m_lastPipelineName = PIPELINE_STATE_MAX;
 
     rg::RenderGraph m_renderGraph;
 

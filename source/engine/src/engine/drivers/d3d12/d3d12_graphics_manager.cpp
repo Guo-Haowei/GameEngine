@@ -12,6 +12,17 @@
 
 namespace my {
 
+// @TODO: move to a common place
+static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
+static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
+
+// @TODO: move to a common place
+template<typename T>
+inline size_t SizeInByte(const std::vector<T>& vec) {
+    static_assert(std::is_trivially_copyable<T>());
+    return vec.size() * sizeof(T);
+}
+
 // @TODO: refactor
 struct D3d12GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
@@ -33,9 +44,15 @@ struct D3d12DrawPass : public DrawPass {
 struct D3d12ConstantBuffer : public GpuConstantBuffer {
     using GpuConstantBuffer::GpuConstantBuffer;
 
-    // @TODO: desc
-    uint32_t byteWidth = 0;
-    Microsoft::WRL::ComPtr<ID3D12Resource> buffer;
+    ~D3d12ConstantBuffer() {
+        if (buffer) {
+            buffer->Unmap(0, nullptr);
+        }
+        mappedData = nullptr;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> buffer{};
+    uint8_t* mappedData{ nullptr };
 };
 
 struct D3d12FrameContext : FrameContext {
@@ -52,19 +69,7 @@ struct D3d12FrameContext : FrameContext {
 
     ID3D12CommandAllocator* m_commandAllocator = nullptr;
     uint64_t m_fenceValue = 0;
-
-    // @TODO: fix
-    // std::unique_ptr<UploadBuffer<PerFrameConstants>> perFrameBuffer;
-    // std::unique_ptr<UploadBuffer<PerBatchConstants>> perBatchBuffer;
-    // std::unique_ptr<UploadBuffer<BoneConstants>> boneConstants;
 };
-// @TODO: refactor
-
-// @TODO: move to a common place
-static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
-static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
-static constexpr uint32_t SRV_DESCRIPTOR_OFFSET = 0;
-static constexpr uint32_t CBV_DESCRIPTOR_OFFSET = 32;
 
 using Microsoft::WRL::ComPtr;
 
@@ -208,11 +213,6 @@ void D3d12GraphicsManager::Render() {
 
     cmdList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
 
-    // ID3D12Resource* perFrameBuffer = frameContext->perFrameBuffer->Resource();
-    // ID3D12Resource* perBatchBuffer = frameContext->perBatchBuffer->Resource();
-    // ID3D12Resource* boneConstantBuffer = frameContext->boneConstants->Resource();
-
-    // cmdList->SetGraphicsRootConstantBufferView(1, perFrameBuffer->GetGPUVirtualAddress());
 #if 0
     // draw objects
     for (size_t i = 0; i < draw_data.geometries.size(); ++i) {
@@ -220,53 +220,6 @@ void D3d12GraphicsManager::Render() {
         const ObjectComponent& obj = scene.get_component_array<ObjectComponent>()[objectIdx];
         const MeshComponent& meshComponent = *scene.get_component<MeshComponent>(obj.meshID);
         const MeshGeometry* geometry = reinterpret_cast<const MeshGeometry*>(meshComponent.gpuResource);
-
-        auto CreateVBV = [&](const MeshComponent::VertexAttribute& attrib) {
-            D3D12_VERTEX_BUFFER_VIEW vbv;
-            vbv.BufferLocation = geometry->VertexBufferGPU->GetGPUVirtualAddress() + attrib.offsetInByte;
-            vbv.SizeInBytes = attrib.sizeInByte;
-            vbv.StrideInBytes = attrib.stride;
-            return vbv;
-        };
-
-        D3D12_VERTEX_BUFFER_VIEW vbvs[] = {
-            CreateVBV(meshComponent.attributes[MeshComponent::VertexAttribute::POSITION]),
-            CreateVBV(meshComponent.attributes[MeshComponent::VertexAttribute::TEXCOORD_0]),
-            CreateVBV(meshComponent.attributes[MeshComponent::VertexAttribute::NORMAL]),
-            CreateVBV(meshComponent.attributes[MeshComponent::VertexAttribute::JOINTS_0]),
-            CreateVBV(meshComponent.attributes[MeshComponent::VertexAttribute::WEIGHTS_0]),
-        };
-
-        D3D12_INDEX_BUFFER_VIEW ibv;
-        ibv.BufferLocation = geometry->IndexBufferGPU->GetGPUVirtualAddress();
-        ibv.Format = DXGI_FORMAT_R32_UINT;
-        ibv.SizeInBytes = sizeof(uint32_t) * (uint32_t)meshComponent.indices.size();
-
-        uint32_t numVertices = 3;
-
-        if (meshComponent.armatureID.is_valid())
-        {
-            // upload bone matrices
-            auto& armature = *scene.get_component<ArmatureComponent>(meshComponent.armatureID);
-
-            frameContext->boneConstants->CopyData(armature.boneTransforms.data(), sizeof(mat4) * armature.boneTransforms.size());
-            cmdList->SetGraphicsRootConstantBufferView(3, boneConstantBuffer->GetGPUVirtualAddress());
-
-            SetPipelineState(g_boneMeshPSO, cmd);
-            numVertices = 5;
-        }
-        else
-        {
-            SetPipelineState(g_meshPSO, cmd);
-        }
-
-        cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        cmdList->IASetVertexBuffers(0, array_length(vbvs), vbvs);
-        cmdList->IASetIndexBuffer(&ibv);
-
-        D3D12_GPU_VIRTUAL_ADDRESS batchAddress = perBatchBuffer->GetGPUVirtualAddress();
-        batchAddress += i * sizeof(PerBatchConstants);
-        cmdList->SetGraphicsRootConstantBufferView(2, batchAddress);
 
         for (const MeshComponent::MeshSubset& subset : meshComponent.subsets)
         {
@@ -286,43 +239,6 @@ void D3d12GraphicsManager::Render() {
 
             cmdList->DrawIndexedInstanced(subset.indexCount, 1, subset.indexOffset, 0, 0);
         }
-    }
-
-    // draw lines
-    const uint32_t pointCount = static_cast<uint32_t>(draw_data.debugData.m_indices.size());
-    if (pointCount)
-    {
-        DEV_ASSERT(pointCount % 2 == 0);
-
-        D3D12_VERTEX_BUFFER_VIEW vbv;
-        vbv.BufferLocation = m_debugVertexData->GetGPUVirtualAddress();
-        vbv.StrideInBytes = static_cast<uint32_t>(sizeof(PosColor));
-        vbv.SizeInBytes = SizeOfVector(draw_data.debugData.m_vertices);
-        {
-            UINT8* pVertexDataBegin;
-            CD3DX12_RANGE readRange(0, 0);
-            D3D_CALL(m_debugVertexData->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin)));
-            memcpy(pVertexDataBegin, draw_data.debugData.m_vertices.data(), vbv.SizeInBytes);
-            m_debugVertexData->Unmap(0, nullptr);
-        }
-        D3D12_INDEX_BUFFER_VIEW ibv;
-        ibv.BufferLocation = m_debugIndexData->GetGPUVirtualAddress();
-        ibv.Format = DXGI_FORMAT_R32_UINT;
-        ibv.SizeInBytes = SizeOfVector(draw_data.debugData.m_indices);
-        {
-            UINT8* pIndexDataBegin;
-            CD3DX12_RANGE readRange(0, 0);
-            D3D_CALL(m_debugIndexData->Map(0, &readRange, reinterpret_cast<void**>(&pIndexDataBegin)));
-            memcpy(pIndexDataBegin, draw_data.debugData.m_indices.data(), ibv.SizeInBytes);
-            m_debugIndexData->Unmap(0, nullptr);
-        }
-
-        SetPipelineState(g_gridPSO, cmd);
-        cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-
-        cmdList->IASetVertexBuffers(0, 1, &vbv);
-        cmdList->IASetIndexBuffer(&ibv);
-        cmdList->DrawIndexedInstanced(pointCount, 1, 0, 0, 0);
     }
 #endif
 
@@ -358,6 +274,8 @@ void D3d12GraphicsManager::BeginFrame() {
     WaitForSingleObject(m_swapChainWaitObject, INFINITE);
 
     m_backbufferIndex = m_swapChain->GetCurrentBackBufferIndex();
+
+    m_graphicsCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -382,7 +300,7 @@ std::unique_ptr<FrameContext> D3d12GraphicsManager::CreateFrameContext() {
 
 void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
     unused(p_ref);
-    CRASH_NOW_MSG("Implement");
+    LOG_WARN("TODO: D3d12GraphicsManager::SetStencilRef");
 }
 
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
@@ -478,38 +396,108 @@ void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags
 }
 
 void D3d12GraphicsManager::SetViewport(const Viewport& p_viewport) {
-    CD3DX12_VIEWPORT view_port(
+    CD3DX12_VIEWPORT viewport(
         static_cast<float>(p_viewport.topLeftX),
         static_cast<float>(p_viewport.topLeftY),
         static_cast<float>(p_viewport.width),
         static_cast<float>(p_viewport.height));
 
-    m_graphicsCommandList->RSSetViewports(1, &view_port);
+    D3D12_RECT rect{};
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = p_viewport.topLeftX + p_viewport.width;
+    rect.bottom = p_viewport.topLeftY + p_viewport.height;
 
-    // D3D12_RECT sissor_rect{};
-    // m_graphicsContext.m_commandList->RSSetScissorRects(1, &sissor_rect);
+    m_graphicsCommandList->RSSetViewports(1, &viewport);
+    m_graphicsCommandList->RSSetScissorRects(1, &rect);
+}
+
+const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
+    auto upload_buffer = [&](uint32_t p_byte_size, const void* p_init_data) -> ID3D12Resource* {
+        if (p_byte_size == 0) {
+            DEV_ASSERT(p_init_data == nullptr);
+            return nullptr;
+        }
+
+        ID3D12Resource* buffer = nullptr;
+        auto heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+        auto buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(p_byte_size);
+        // Create the actual default buffer resource.
+        D3D_FAIL_V(m_device->CreateCommittedResource(
+                       &heap_properties,
+                       D3D12_HEAP_FLAG_NONE,
+                       &buffer_desc,
+                       D3D12_RESOURCE_STATE_COMMON,
+                       nullptr,
+                       IID_PPV_ARGS(&buffer)),
+                   nullptr);
+
+        // Describe the data we want to copy into the default buffer.
+        D3D12_SUBRESOURCE_DATA sub_resource_data = {};
+        sub_resource_data.pData = p_init_data;
+        sub_resource_data.RowPitch = p_byte_size;
+        sub_resource_data.SlicePitch = sub_resource_data.RowPitch;
+
+        auto cmd = m_copyContext.Allocate(p_byte_size);
+        UpdateSubresources<1>(cmd.commandList.Get(), buffer, cmd.uploadBuffer.buffer.Get(), 0, 0, 1, &sub_resource_data);
+        m_copyContext.Submit(cmd);
+        return buffer;
+    };
+
+    RID rid = m_meshes.make_rid();
+    D3d12MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+
+#define INIT_BUFFER(INDEX, BUFFER)                                                        \
+    do {                                                                                  \
+        const uint32_t size_in_byte = static_cast<uint32_t>(SizeInByte(BUFFER));          \
+        mesh_buffers->vertexBuffers[INDEX] = upload_buffer(size_in_byte, BUFFER.data());  \
+        if (!mesh_buffers->vertexBuffers[INDEX]) {                                        \
+            break;                                                                        \
+        };                                                                                \
+        mesh_buffers->vbvs[INDEX] = {                                                     \
+            .BufferLocation = mesh_buffers->vertexBuffers[INDEX]->GetGPUVirtualAddress(), \
+            .SizeInBytes = size_in_byte,                                                  \
+            .StrideInBytes = sizeof(BUFFER[0]),                                           \
+        };                                                                                \
+    } while (0)
+    INIT_BUFFER(0, p_mesh.positions);
+    INIT_BUFFER(1, p_mesh.normals);
+    INIT_BUFFER(2, p_mesh.texcoords_0);
+    INIT_BUFFER(3, p_mesh.tangents);
+    INIT_BUFFER(4, p_mesh.joints_0);
+    INIT_BUFFER(5, p_mesh.weights_0);
+#undef INIT_BUFFER
+
+    mesh_buffers->indexBufferByte = static_cast<uint32_t>(SizeInByte(p_mesh.indices));
+    mesh_buffers->indexBuffer = upload_buffer(mesh_buffers->indexBufferByte, p_mesh.indices.data());
+
+    p_mesh.gpuResource = mesh_buffers;
+    return mesh_buffers;
+}
+
+void D3d12GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
+    auto mesh = reinterpret_cast<const D3d12MeshBuffers*>(p_mesh);
+
+    D3D12_INDEX_BUFFER_VIEW ibv;
+    ibv.BufferLocation = mesh->indexBuffer->GetGPUVirtualAddress();
+    ibv.Format = DXGI_FORMAT_R32_UINT;
+    ibv.SizeInBytes = mesh->indexBufferByte;
+
+    m_graphicsCommandList->IASetVertexBuffers(0, array_length(mesh->vbvs), mesh->vbvs);
+    m_graphicsCommandList->IASetIndexBuffer(&ibv);
+}
+
+void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
+    m_graphicsCommandList->DrawIndexedInstanced(p_count, 1, p_offset, 0, 0);
+}
+
+void D3d12GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    m_graphicsCommandList->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
 }
 
 // @TODO: remove
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
-const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
-    LOG_WARN("@TODO: Implement D3d12GraphicsManager::CreateMesh");
-    return nullptr;
-}
-
-void D3d12GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
-    CRASH_NOW_MSG("Implement");
-}
-
-void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
-    CRASH_NOW_MSG("Implement");
-}
-
-void D3d12GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
-    CRASH_NOW_MSG("Implement");
-}
-
 void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     CRASH_NOW_MSG("Implement");
 }
@@ -519,7 +507,7 @@ void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p
 }
 
 std::shared_ptr<GpuStructuredBuffer> D3d12GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
-    CRASH_NOW_MSG("Implement");
+    // CRASH_NOW_MSG("Implement");
     return nullptr;
 }
 
@@ -541,33 +529,44 @@ void D3d12GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
 WARNING_POP()
 
 std::shared_ptr<GpuConstantBuffer> D3d12GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
-    // auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-    // auto buffer = CD3DX12_RESOURCE_DESC::Buffer(m_elementSizeInByte * p_element_count);
-    // D3D_CALL(p_device->CreateCommittedResource(
-    //     &heapProperties,
-    //     D3D12_HEAP_FLAG_NONE,
-    //     &buffer,
-    //     D3D12_RESOURCE_STATE_GENERIC_READ,
-    //     nullptr, IID_PPV_ARGS(&m_gpuBuffer)));
+    const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
+    CD3DX12_HEAP_PROPERTIES heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(size_in_byte);
+    ComPtr<ID3D12Resource> buffer;
+    D3D_FAIL_V(m_device->CreateCommittedResource(
+                   &heap_properties,
+                   D3D12_HEAP_FLAG_NONE,
+                   &buffer_desc,
+                   D3D12_RESOURCE_STATE_GENERIC_READ,
+                   nullptr, IID_PPV_ARGS(&buffer)),
+               nullptr);
 
-    // D3D_CALL(m_gpuBuffer->Map(0, nullptr, reinterpret_cast<void**>(&m_mappedData)));
-    unused(p_desc);
-    CRASH_NOW_MSG("Implement");
-    return nullptr;
+    auto result = std::make_shared<D3d12ConstantBuffer>(p_desc);
+    result->buffer = buffer;
+
+    D3D_FAIL_V(result->buffer->Map(0, nullptr, reinterpret_cast<void**>(&result->mappedData)), nullptr);
+
+    // @TODO: set debug name
+    // SetDebugName(buffer.Get(), "");
+
+    return result;
 }
 
 void D3d12GraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
-    unused(p_buffer);
-    unused(p_data);
-    unused(p_size);
-    CRASH_NOW_MSG("Implement");
+    if (p_size) {
+        auto cb = reinterpret_cast<const D3d12ConstantBuffer*>(p_buffer);
+        memcpy(cb->mappedData, p_data, p_size);
+    }
 }
 
 void D3d12GraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
-    unused(p_buffer);
-    unused(p_size);
-    unused(p_offset);
-    CRASH_NOW_MSG("Implement");
+    auto buffer = reinterpret_cast<const D3d12ConstantBuffer*>(p_buffer);
+    DEV_ASSERT(p_size + p_offset <= buffer->capacity);
+
+    D3D12_GPU_VIRTUAL_ADDRESS batch_address = buffer->buffer->GetGPUVirtualAddress();
+
+    batch_address += p_offset;
+    m_graphicsCommandList->SetGraphicsRootConstantBufferView(buffer->desc.slot, batch_address);
 }
 
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -1200,8 +1199,15 @@ bool D3d12GraphicsManager::CreateRootSignature() {
 }
 
 void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {
-    unused(p_scene);
-    LOG_WARN("@TODO: Implement D3d12GraphicsManager::OnSceneChange()");
+    for (auto [entity, mesh] : p_scene.m_MeshComponents) {
+        if (mesh.gpuResource != nullptr) {
+            const NameComponent& name = *p_scene.GetComponent<NameComponent>(entity);
+            LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.GetName());
+            continue;
+        }
+
+        CreateMesh(mesh);
+    }
 }
 
 void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
@@ -1218,6 +1224,9 @@ void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
 }
 
 void D3d12GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
+    // @TODO: refactor topology
+    m_graphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
     auto pipeline = reinterpret_cast<D3d12PipelineState*>(m_pipelineStateManager->Find(p_name));
     DEV_ASSERT(pipeline);
     m_graphicsCommandList->SetPipelineState(pipeline->pso.Get());

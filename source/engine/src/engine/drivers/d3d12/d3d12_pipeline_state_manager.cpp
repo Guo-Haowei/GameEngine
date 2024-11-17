@@ -89,9 +89,6 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     depth_stencil_desc.DepthEnable = p_desc.depthStencilDesc->depthEnabled;
     depth_stencil_desc.DepthFunc = d3d::Convert(p_desc.depthStencilDesc->depthFunc);
     depth_stencil_desc.StencilEnable = p_desc.depthStencilDesc->stencilEnabled;
-    // depth_stencil_desc.DepthWriteMask = d3d::Convert(p_desc.depthStencilDesc->depthWriteMask);
-    // depth_stencil_desc.StencilReadMask = p_desc.depthStencilDesc->stencilReadMask;
-    // depth_stencil_desc.StencilWriteMask = p_desc.depthStencilDesc->stencilWriteMask;
     depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
     depth_stencil_desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     depth_stencil_desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
@@ -105,19 +102,22 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     depth_stencil_desc.BackFace = default_stencil_op;
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
-    pso_desc.InputLayout = { elements.data(), (uint32_t)elements.size() };
     pso_desc.pRootSignature = graphics_manager->GetRootSignature();
     pso_desc.VS = CD3DX12_SHADER_BYTECODE(vs_blob.Get());
     pso_desc.PS = CD3DX12_SHADER_BYTECODE(ps_blob.Get());
-    pso_desc.RasterizerState = rasterizer_desc;
     pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    pso_desc.DepthStencilState = depth_stencil_desc;
     pso_desc.SampleMask = UINT_MAX;
+    pso_desc.RasterizerState = rasterizer_desc;
+    pso_desc.DepthStencilState = depth_stencil_desc;
+    pso_desc.InputLayout = { elements.data(), (uint32_t)elements.size() };
     pso_desc.PrimitiveTopologyType = topology;
-    pso_desc.NumRenderTargets = 1;
-    pso_desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    pso_desc.DSVFormat = DEFAULT_DEPTH_STENCIL_FORMAT;
     pso_desc.SampleDesc.Count = 1;
+
+    pso_desc.NumRenderTargets = p_desc.numRenderTargets;
+    for (uint32_t index = 0; index < p_desc.numRenderTargets; ++index) {
+        pso_desc.RTVFormats[index] = d3d::Convert(p_desc.rtvFormats[index]);
+    }
+    pso_desc.DSVFormat = d3d::Convert(p_desc.dsvFormat);
 
     ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr())->GetDevice();
     D3D_FAIL_V(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), nullptr);

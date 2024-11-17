@@ -53,11 +53,8 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
 }
 
 bool GraphicsManager::Initialize() {
-#if USING(DEBUG_BUILD)
-    m_enableValidationLayer = true;
-#else
     m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
-#endif
+
     const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
     m_frameContexts.resize(num_frames);
     for (int i = 0; i < num_frames; ++i) {
@@ -134,10 +131,7 @@ std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
 }
 
 void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
-    if (m_lastPipelineName != p_name) {
-        SetPipelineStateImpl(p_name);
-        m_lastPipelineName = p_name;
-    }
+    SetPipelineStateImpl(p_name);
 }
 
 void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
@@ -155,15 +149,6 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
-
-    // update uniform
-    auto& frame = GetCurrentFrame();
-    UpdateConstantBuffer(frame.batchUniform.get(), frame.batchCache.buffer);
-    UpdateConstantBuffer(frame.materialUniform.get(), frame.materialCache.buffer);
-    UpdateConstantBuffer(frame.boneUniform.get(), frame.boneCache.buffer);
-
-    UpdateConstantBuffer(frame.passUniform.get(), frame.passCache);
-    UpdateConstantBuffer(frame.emitterUniform.get(), frame.emitterCache);
 
     g_per_frame_cache.update();
     // update uniform
@@ -190,6 +175,16 @@ void GraphicsManager::Update(Scene& p_scene) {
     {
         OPTICK_EVENT("Render");
         BeginFrame();
+
+        // update uniform after BeginFrame()
+        auto& frame = GetCurrentFrame();
+        UpdateConstantBuffer(frame.batchUniform.get(), frame.batchCache.buffer);
+        UpdateConstantBuffer(frame.materialUniform.get(), frame.materialCache.buffer);
+        UpdateConstantBuffer(frame.boneUniform.get(), frame.boneCache.buffer);
+
+        UpdateConstantBuffer(frame.passUniform.get(), frame.passCache);
+        UpdateConstantBuffer(frame.emitterUniform.get(), frame.emitterCache);
+
         m_renderGraph.Execute(*this);
         Render();
         EndFrame();

@@ -82,6 +82,7 @@ protected:
 
     RIDAllocator<D3d11MeshBuffers> m_meshes;
 
+    // @TODO: cache
     struct {
         ID3D11RasterizerState* rasterizer = nullptr;
         ID3D11DepthStencilState* depth_stencil = nullptr;

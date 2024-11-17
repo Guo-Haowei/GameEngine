@@ -247,7 +247,7 @@ const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh
     OpenGlMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
     p_mesh.gpuResource = mesh_buffers;
 
-    auto createMesh_data = [](const MeshComponent& p_mesh, OpenGlMeshBuffers& p_out_mesh) {
+    auto create_mesh_data = [](const MeshComponent& p_mesh, OpenGlMeshBuffers& p_out_mesh) {
         const bool has_normals = !p_mesh.normals.empty();
         const bool has_uvs = !p_mesh.texcoords_0.empty();
         const bool has_tangents = !p_mesh.tangents.empty();
@@ -303,7 +303,7 @@ const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh
         glBindVertexArray(0);
     };
 
-    createMesh_data(p_mesh, *mesh_buffers);
+    create_mesh_data(p_mesh, *mesh_buffers);
     return mesh_buffers;
 }
 

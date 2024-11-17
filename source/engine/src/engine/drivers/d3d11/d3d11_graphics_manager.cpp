@@ -555,7 +555,7 @@ void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
 }
 
 const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
-    auto createMesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
+    auto create_mesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
         auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
             ID3D11Buffer* buffer = nullptr;
             // vertex buffer
@@ -574,6 +574,7 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
             return buffer;
         };
 
+        // @TODO: refactor
         out_mesh.vertex_buffer[0] = create_vertex_buffer(sizeof(vec3) * mesh.positions.size(), mesh.positions.data());
 
         if (!mesh.normals.empty()) {
@@ -582,6 +583,10 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
 
         if (!mesh.texcoords_0.empty()) {
             out_mesh.vertex_buffer[2] = create_vertex_buffer(sizeof(vec2) * mesh.texcoords_0.size(), mesh.texcoords_0.data());
+        }
+
+        if (!mesh.tangents.empty()) {
+            out_mesh.vertex_buffer[3] = create_vertex_buffer(sizeof(vec3) * mesh.tangents.size(), mesh.tangents.data());
         }
 
         if (!mesh.joints_0.empty()) {
@@ -610,13 +615,14 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
     RID rid = m_meshes.make_rid();
     D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
     p_mesh.gpuResource = mesh_buffers;
-    createMesh_data(m_device.Get(), p_mesh, *mesh_buffers);
+    create_mesh_data(m_device.Get(), p_mesh, *mesh_buffers);
     return mesh_buffers;
 }
 
 void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
+    // @TODO: refactor
     ID3D11Buffer* buffers[6] = {
         mesh->vertex_buffer[0].Get(),
         mesh->vertex_buffer[1].Get(),
