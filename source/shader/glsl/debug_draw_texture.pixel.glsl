@@ -2,7 +2,7 @@
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out vec4 out_color;
 
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 void main() {
     vec4 color = texture(c_debugDrawMap, pass_uv);

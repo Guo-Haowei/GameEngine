@@ -1,7 +1,7 @@
 /// File: particle_draw.vert.glsl
 #include "../vsinput.glsl.h"
-#include "../cbuffer.h"
-#include "../particle_defines.h"
+#include "../cbuffer.hlsl.h"
+#include "../particle_defines.hlsl.h"
 
 layout(location = 0) out vec3 pass_color;
 

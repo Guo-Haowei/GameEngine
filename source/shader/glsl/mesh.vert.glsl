@@ -1,5 +1,5 @@
 /// File: mesh.vert.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 #include "../vsinput.glsl.h"
 
 out struct PS_INPUT {

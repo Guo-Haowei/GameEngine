@@ -1,5 +1,5 @@
 /// File: lighting.pixel.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 #define ENABLE_VXGI 1
 

@@ -2,7 +2,7 @@
 layout(location = 0) in vec4 pass_color;
 layout(location = 0) out vec4 out_color;
 
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 void main() {
     if (c_debugVoxelId == 1)  // abledo

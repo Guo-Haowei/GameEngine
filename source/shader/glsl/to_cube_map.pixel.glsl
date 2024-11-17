@@ -1,5 +1,5 @@
 /// File: to_cube_map.pixel.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 layout(location = 0) out vec4 out_color;
 

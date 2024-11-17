@@ -17,7 +17,7 @@ struct TextureSlot {
 static constexpr TextureSlot s_texture_slots[] = {
 #define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
     TextureSlot{ #NAME, SLOT },
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 #undef SHADER_TEXTURE
 };
 

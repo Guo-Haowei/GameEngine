@@ -1163,7 +1163,7 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     int tex_count = 0;
 
 #define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) tex_table[tex_count++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, SLOT);
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 #undef SHADER_TEXTURE
 
     CD3DX12_ROOT_PARAMETER root_parameters[64]{};

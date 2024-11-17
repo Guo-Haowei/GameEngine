@@ -1,6 +1,6 @@
 /// File: tone.pixel.glsl
-#include "../cbuffer.h"
-#include "../texture_binding.h"
+#include "../cbuffer.hlsl.h"
+#include "../texture_binding.hlsl.h"
 
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out vec3 out_color;

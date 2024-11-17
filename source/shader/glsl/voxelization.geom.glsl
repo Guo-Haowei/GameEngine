@@ -6,7 +6,7 @@ in vec3 pass_positions[];
 in vec3 pass_normals[];
 in vec2 pass_uvs[];
 
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 out vec3 pass_position;
 out vec3 pass_normal;

@@ -1,5 +1,5 @@
 /// File: prefilter.pixel.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 #include "lighting.glsl"
 
 layout(location = 0) out vec4 out_color;

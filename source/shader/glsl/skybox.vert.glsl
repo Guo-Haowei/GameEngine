@@ -1,5 +1,5 @@
 /// File: skybox.vert.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 layout(location = 0) in vec3 in_position;
 

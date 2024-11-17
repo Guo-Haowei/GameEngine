@@ -12,8 +12,8 @@ in struct PS_INPUT {
     vec3 N;
 } ps_in;
 
-#include "../cbuffer.h"
-#include "../texture_binding.h"
+#include "../cbuffer.hlsl.h"
+#include "../texture_binding.hlsl.h"
 
 void main() {
     vec4 albedo = c_baseColor;

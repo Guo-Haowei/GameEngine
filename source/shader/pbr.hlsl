@@ -1,7 +1,7 @@
 /// File: pbr.hlsl
 #ifndef PBR_HLSL_INCLUDED
 #define PBR_HLSL_INCLUDED
-#include "shader_defines.h"
+#include "shader_defines.hlsl.h"
 
 // @TODO: refactor the functions
 // NDF(n, h, alpha) = alpha^2 / (pi * ((n dot h)^2 * (alpha^2 - 1) + 1)^2)

@@ -1,5 +1,5 @@
 /// File: skybox.pixel.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 in vec3 pass_position;
 out vec4 out_color;

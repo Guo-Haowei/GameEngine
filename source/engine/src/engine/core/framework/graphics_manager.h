@@ -14,7 +14,7 @@
 #include "scene/material_component.h"
 
 // @TODO: refactor
-#include "cbuffer.h"
+#include "cbuffer.hlsl.h"
 #include "rendering/uniform_buffer.h"
 #include "scene/scene.h"
 struct MaterialConstantBuffer;
@@ -93,7 +93,7 @@ struct PassContext {
 
 #define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
     constexpr int NAME##Slot = SLOT;
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 #undef SHADER_TEXTURE
 
 struct FrameContext {

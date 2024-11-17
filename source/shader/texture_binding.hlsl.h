@@ -1,4 +1,4 @@
-/// File: texture_binding.h
+/// File: texture_binding.hlsl.h
 #if defined(__cplusplus)
 #ifndef SHADER_TEXTURE
 #define SHADER_TEXTURE(...)

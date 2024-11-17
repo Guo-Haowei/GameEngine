@@ -1,5 +1,5 @@
 /// File: shadow.vert.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 layout(location = 0) in vec3 in_position;
 layout(location = 4) in ivec4 in_bone_id;

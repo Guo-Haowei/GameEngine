@@ -1,5 +1,5 @@
 /// File: voxelization.vert.glsl
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 #include "../vsinput.glsl.h"
 
 out vec3 pass_positions;

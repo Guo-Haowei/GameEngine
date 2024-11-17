@@ -3,7 +3,7 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "core/math/geomath.h"
-#include "particle_defines.h"
+#include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_manager.h"
 

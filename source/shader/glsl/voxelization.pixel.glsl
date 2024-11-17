@@ -2,7 +2,7 @@
 layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;
 layout(rgba16f, binding = 1) uniform image3D u_normal_texture;
 
-#include "../cbuffer.h"
+#include "../cbuffer.hlsl.h"
 
 in vec3 pass_position;
 in vec3 pass_normal;

@@ -10,7 +10,7 @@
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
-#include "particle_defines.h"
+#include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_graph/render_graph_defines.h"
@@ -102,7 +102,7 @@ bool GraphicsManager::Initialize() {
         // BindTexture(p_dimension, texture->GetHandle(), p_slot);
     };
 #define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
-#include "texture_binding.h"
+#include "texture_binding.hlsl.h"
 #undef SHADER_TEXTURE
 
     return true;
