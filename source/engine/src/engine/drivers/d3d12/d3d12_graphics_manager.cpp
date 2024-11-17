@@ -6,22 +6,12 @@
 #include "drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
+#include "rendering/graphics_private.h"
 
 #define INCLUDE_AS_D3D12
 #include "drivers/d3d_common/d3d_convert.h"
 
 namespace my {
-
-// @TODO: move to a common place
-static constexpr DXGI_FORMAT SURFACE_FORMAT = DXGI_FORMAT::DXGI_FORMAT_R8G8B8A8_UNORM;
-static constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
-
-// @TODO: move to a common place
-template<typename T>
-inline size_t SizeInByte(const std::vector<T>& vec) {
-    static_assert(std::is_trivially_copyable<T>());
-    return vec.size() * sizeof(T);
-}
 
 // @TODO: refactor
 struct D3d12GpuTexture : public GpuTexture {
@@ -146,7 +136,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
 
     ImGui_ImplDX12_Init(m_device.Get(),
                         NUM_FRAMES_IN_FLIGHT,
-                        DXGI_FORMAT_R8G8B8A8_UNORM,
+                        d3d::Convert(DEFAULT_SURFACE_FORMAT),
                         m_srvDescHeap.GetHeap(),
                         m_srvDescHeap.GetStartCpu(),
                         m_srvDescHeap.GetStartGpu());
@@ -449,7 +439,7 @@ const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
 
 #define INIT_BUFFER(INDEX, BUFFER)                                                        \
     do {                                                                                  \
-        const uint32_t size_in_byte = static_cast<uint32_t>(SizeInByte(BUFFER));          \
+        const uint32_t size_in_byte = static_cast<uint32_t>(VectorSizeInByte(BUFFER));    \
         mesh_buffers->vertexBuffers[INDEX] = upload_buffer(size_in_byte, BUFFER.data());  \
         if (!mesh_buffers->vertexBuffers[INDEX]) {                                        \
             break;                                                                        \
@@ -468,7 +458,7 @@ const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
     INIT_BUFFER(5, p_mesh.weights_0);
 #undef INIT_BUFFER
 
-    mesh_buffers->indexBufferByte = static_cast<uint32_t>(SizeInByte(p_mesh.indices));
+    mesh_buffers->indexBufferByte = static_cast<uint32_t>(VectorSizeInByte(p_mesh.indices));
     mesh_buffers->indexBuffer = upload_buffer(mesh_buffers->indexBufferByte, p_mesh.indices.data());
 
     p_mesh.gpuResource = mesh_buffers;
@@ -758,6 +748,8 @@ void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle,
     unused(p_handle);
     unused(p_slot);
 
+    CRASH_NOW();
+
     // m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
     //     SRV_DESCRIPTOR_OFFSET + p_slot,
     //     D3D12_GPU_DESCRIPTOR_HANDLE{ p_handle });
@@ -766,6 +758,8 @@ void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle,
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
     unused(p_slot);
+
+    CRASH_NOW();
 
     // m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
     //     SRV_DESCRIPTOR_OFFSET + p_slot,
@@ -1023,7 +1017,7 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) 
     // fill the swap chain description struct
     scd.Width = p_width;
     scd.Height = p_height;
-    scd.Format = SURFACE_FORMAT;
+    scd.Format = d3d::Convert(DEFAULT_SURFACE_FORMAT);
     scd.Stereo = FALSE;
     scd.SampleDesc = { 1, 0 };
     scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;  // how swap chain is to be used
@@ -1064,7 +1058,7 @@ bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_heigh
     }
 
     D3D12_CLEAR_VALUE depthOptimizedClearValue{};
-    depthOptimizedClearValue.Format = DEFAULT_DEPTH_STENCIL_FORMAT;
+    depthOptimizedClearValue.Format = d3d::Convert(DEFAULT_DEPTH_STENCIL_FORMAT);
     depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
     depthOptimizedClearValue.DepthStencil.Stencil = 0;
 
@@ -1082,7 +1076,7 @@ bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_heigh
     resource_desc.Height = p_height;
     resource_desc.DepthOrArraySize = 1;
     resource_desc.MipLevels = 1;
-    resource_desc.Format = DEFAULT_DEPTH_STENCIL_FORMAT;
+    resource_desc.Format = d3d::Convert(DEFAULT_DEPTH_STENCIL_FORMAT);
     resource_desc.SampleDesc = { 1, 0 };
     resource_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     resource_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
@@ -1212,8 +1206,6 @@ void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {
 
 void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
     if (m_swapChain) {
-        // FlushGraphicsContext();
-
         CleanupRenderTarget();
         D3D_CALL(m_swapChain->ResizeBuffers(0, p_width, p_height,
                                             DXGI_FORMAT_UNKNOWN,

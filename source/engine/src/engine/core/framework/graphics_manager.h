@@ -10,49 +10,15 @@
 #include "rendering/render_graph/render_graph.h"
 #include "rendering/render_graph/render_pass.h"
 #include "rendering/sampler.h"
-#include "rendering/uniform_buffer.h"
 #include "scene/material_component.h"
 
 // @TODO: refactor
 #include "cbuffer.hlsl.h"
-#include "rendering/uniform_buffer.h"
 #include "scene/scene.h"
 struct MaterialConstantBuffer;
 using my::rg::RenderPass;
 
 namespace my {
-
-enum class Backend : uint8_t {
-    EMPTY,
-    OPENGL,
-    D3D11,
-    D3D12,
-};
-
-enum ClearFlags : uint32_t {
-    CLEAR_NONE = BIT(0),
-    CLEAR_COLOR_BIT = BIT(1),
-    CLEAR_DEPTH_BIT = BIT(2),
-    CLEAR_STENCIL_BIT = BIT(3),
-};
-DEFINE_ENUM_BITWISE_OPERATIONS(ClearFlags);
-
-struct Viewport {
-    Viewport(int p_width, int p_height) : width(p_width), height(p_height), topLeftX(0), topLeftY(0) {}
-
-    int width;
-    int height;
-    int topLeftX;
-    int topLeftY;
-};
-
-struct MeshBuffers {
-    virtual ~MeshBuffers() = default;
-
-    uint32_t indexCount = 0;
-};
-
-struct MeshBuffers;
 
 // @TODO: refactor
 extern ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
@@ -60,13 +26,6 @@ extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 extern ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
-
-// @TODO: refactor
-inline constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
-
-enum StencilFlags {
-    STENCIL_FLAG_SELECTED = BIT(1),
-};
 
 // @TODO: refactor
 struct DrawContext {
@@ -138,6 +97,12 @@ struct FrameContext {
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
+    static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
+    static constexpr int NUM_BACK_BUFFERS = 2;
+    static constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
+    static constexpr PixelFormat DEFAULT_SURFACE_FORMAT = PixelFormat::R8G8B8A8_UNORM;
+    static constexpr PixelFormat DEFAULT_DEPTH_STENCIL_FORMAT = PixelFormat::D32_FLOAT;
+
     using OnTextureLoadFunc = void (*)(Image* p_image);
 
     enum class RenderGraphName : uint8_t {
@@ -145,9 +110,6 @@ public:
         DUMMY,
         VXGI,
     };
-
-    static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
-    static constexpr int NUM_BACK_BUFFERS = 2;
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
         : Module(p_name),

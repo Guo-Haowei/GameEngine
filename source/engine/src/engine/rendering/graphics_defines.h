@@ -2,6 +2,25 @@
 
 namespace my {
 
+enum class Backend : uint8_t {
+    EMPTY,
+    OPENGL,
+    D3D11,
+    D3D12,
+};
+
+enum ClearFlags : uint32_t {
+    CLEAR_NONE = BIT(0),
+    CLEAR_COLOR_BIT = BIT(1),
+    CLEAR_DEPTH_BIT = BIT(2),
+    CLEAR_STENCIL_BIT = BIT(3),
+};
+DEFINE_ENUM_BITWISE_OPERATIONS(ClearFlags);
+
+enum StencilFlags {
+    STENCIL_FLAG_SELECTED = BIT(1),
+};
+
 enum class FilterMode {
     POINT,
     LINEAR,
@@ -60,6 +79,15 @@ enum class PrimitiveTopology : uint8_t {
     LINE,
     TRIANGLE,
     PATCH,
+};
+
+struct Viewport {
+    Viewport(int p_width, int p_height) : width(p_width), height(p_height), topLeftX(0), topLeftY(0) {}
+
+    int width;
+    int height;
+    int topLeftX;
+    int topLeftY;
 };
 
 }  // namespace my

@@ -5,7 +5,6 @@
 
 #include "rendering/gpu_resource.h"
 #include "rendering/render_graph/draw_pass.h"
-#include "rendering/uniform_buffer.h"
 
 namespace my {
 

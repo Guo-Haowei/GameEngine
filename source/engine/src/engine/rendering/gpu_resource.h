@@ -121,6 +121,12 @@ struct GpuStructuredBuffer {
     const GpuBufferDesc desc;
 };
 
+struct MeshBuffers {
+    virtual ~MeshBuffers() = default;
+
+    uint32_t indexCount = 0;
+};
+
 struct GpuTexture {
     GpuTexture(const GpuTextureDesc& p_desc) : desc(p_desc), slot(-1) {}
 

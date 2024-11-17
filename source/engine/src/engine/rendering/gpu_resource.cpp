@@ -1,4 +1,4 @@
-#include "uniform_buffer.h"
+#include "gpu_resource.h"
 
 #include "core/framework/graphics_manager.h"
 

@@ -8,7 +8,7 @@
 #include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/gpu_resource.h"
-#include "rendering/graphics_dvars.h"
+#include "rendering/graphics_private.h"
 #include "rendering/render_graph/render_graph_defines.h"
 
 #define INCLUDE_AS_D3D11
@@ -132,7 +132,7 @@ bool D3d11GraphicsManager::CreateSwapChain() {
     buffer_desc.Width = 0;
     buffer_desc.Height = 0;
     buffer_desc.RefreshRate = { 60, 1 };
-    buffer_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    buffer_desc.Format = d3d::Convert(DEFAULT_SURFACE_FORMAT);
     buffer_desc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 
     DXGI_SWAP_CHAIN_DESC swap_chain_desc{};
@@ -557,6 +557,9 @@ void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
 const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     auto create_mesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
         auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
+            if (!p_data) {
+                return nullptr;
+            }
             ID3D11Buffer* buffer = nullptr;
             // vertex buffer
             D3D11_BUFFER_DESC bufferDesc{};
@@ -574,27 +577,12 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
             return buffer;
         };
 
-        // @TODO: refactor
-        out_mesh.vertex_buffer[0] = create_vertex_buffer(sizeof(vec3) * mesh.positions.size(), mesh.positions.data());
-
-        if (!mesh.normals.empty()) {
-            out_mesh.vertex_buffer[1] = create_vertex_buffer(sizeof(vec3) * mesh.normals.size(), mesh.normals.data());
-        }
-
-        if (!mesh.texcoords_0.empty()) {
-            out_mesh.vertex_buffer[2] = create_vertex_buffer(sizeof(vec2) * mesh.texcoords_0.size(), mesh.texcoords_0.data());
-        }
-
-        if (!mesh.tangents.empty()) {
-            out_mesh.vertex_buffer[3] = create_vertex_buffer(sizeof(vec3) * mesh.tangents.size(), mesh.tangents.data());
-        }
-
-        if (!mesh.joints_0.empty()) {
-            out_mesh.vertex_buffer[4] = create_vertex_buffer(sizeof(ivec4) * mesh.joints_0.size(), mesh.joints_0.data());
-        }
-        if (!mesh.weights_0.empty()) {
-            out_mesh.vertex_buffer[5] = create_vertex_buffer(sizeof(vec4) * mesh.weights_0.size(), mesh.weights_0.data());
-        }
+        out_mesh.vertex_buffer[0] = create_vertex_buffer(VectorSizeInByte(mesh.positions), mesh.positions.data());
+        out_mesh.vertex_buffer[1] = create_vertex_buffer(VectorSizeInByte(mesh.normals), mesh.normals.data());
+        out_mesh.vertex_buffer[2] = create_vertex_buffer(VectorSizeInByte(mesh.texcoords_0), mesh.texcoords_0.data());
+        out_mesh.vertex_buffer[3] = create_vertex_buffer(VectorSizeInByte(mesh.tangents), mesh.tangents.data());
+        out_mesh.vertex_buffer[4] = create_vertex_buffer(VectorSizeInByte(mesh.joints_0), mesh.joints_0.data());
+        out_mesh.vertex_buffer[5] = create_vertex_buffer(VectorSizeInByte(mesh.weights_0), mesh.weights_0.data());
         {
             // index buffer
             out_mesh.indexCount = static_cast<uint32_t>(mesh.indices.size());
