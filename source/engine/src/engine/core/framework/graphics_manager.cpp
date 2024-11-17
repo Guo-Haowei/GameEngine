@@ -58,7 +58,7 @@ bool GraphicsManager::Initialize() {
     const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
     m_frameContexts.resize(num_frames);
     for (int i = 0; i < num_frames; ++i) {
-        m_frameContexts[i] = std::move(CreateFrameContext());
+        m_frameContexts[i] = CreateFrameContext();
     }
 
     if (!InitializeImpl()) {
@@ -207,7 +207,7 @@ std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
 }
 
 void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
-    for (auto& texture : p_render_pass->m_outputs) {
+    for (auto& texture : p_render_pass->GetOutputs()) {
         if (texture->slot >= 0) {
             UnbindTexture(Dimension::TEXTURE_2D, texture->slot);
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
@@ -217,7 +217,7 @@ void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
 
 void GraphicsManager::EndPass(const RenderPass* p_render_pass) {
     UnsetRenderTarget();
-    for (auto& texture : p_render_pass->m_outputs) {
+    for (auto& texture : p_render_pass->GetOutputs()) {
         if (texture->slot >= 0) {
             BindTexture(Dimension::TEXTURE_2D, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);

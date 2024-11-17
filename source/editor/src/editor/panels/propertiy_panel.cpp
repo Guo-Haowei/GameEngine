@@ -21,7 +21,7 @@ static void DrawComponent(const std::string& p_name, T* p_component, UIFunction 
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
         float line_height = GImGui->Font->FontSize + GImGui->Style.FramePadding.y * 2.0f;
         ImGui::Separator();
-        bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, p_name.c_str());
+        bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, "%s", p_name.c_str());
         ImGui::PopStyleVar();
         ImGui::SameLine(contentRegionAvailable.x - line_height * 0.5f);
         if (ImGui::Button("-", ImVec2{ line_height, line_height })) {
@@ -159,6 +159,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("Light", light_component, [&](LightComponent& p_light) {
         bool dirty = false;
+        unused(dirty);
 
         switch (p_light.GetType()) {
             case LIGHT_TYPE_INFINITE:

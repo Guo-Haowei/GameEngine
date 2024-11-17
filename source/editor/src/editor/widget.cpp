@@ -20,7 +20,7 @@ bool DrawDragInt(const char* p_lable,
                  float p_column_width) {
     ImGui::Columns(2);
     ImGui::SetColumnWidth(0, p_column_width);
-    ImGui::Text(p_lable);
+    ImGui::Text("%s", p_lable);
     ImGui::NextColumn();
     auto tag = std::format("##{}", p_lable);
     bool is_dirty = ImGui::DragInt(tag.c_str(), &p_out, p_speed, p_min, p_max);
@@ -36,7 +36,7 @@ bool DrawDragFloat(const char* p_lable,
                    float p_column_width) {
     ImGui::Columns(2);
     ImGui::SetColumnWidth(0, p_column_width);
-    ImGui::Text(p_lable);
+    ImGui::Text("%s", p_lable);
     ImGui::NextColumn();
     auto tag = std::format("##{}", p_lable);
     bool is_dirty = ImGui::DragFloat(tag.c_str(), &p_out, p_speed, p_min, p_max);
@@ -80,7 +80,7 @@ static bool DrawVec3ControlImpl(int type,
 
     ImGui::Columns(2);
     ImGui::SetColumnWidth(0, p_column_width);
-    ImGui::Text(p_label);
+    ImGui::Text("%s", p_label);
     ImGui::NextColumn();
 
     ImGui::PushMultiItemsWidths(3, ImGui::CalcItemWidth());

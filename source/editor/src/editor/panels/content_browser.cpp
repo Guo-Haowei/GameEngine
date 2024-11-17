@@ -89,7 +89,7 @@ void ContentBrowser::UpdateInternal(Scene&) {
 
         if (is_file) {
             std::string full_path_string = full_path.string();
-            char* dragged_data = _strdup(full_path_string.c_str());
+            char* dragged_data = strdup(full_path_string.c_str());
 
             const char* action = it->second.action;
 
@@ -103,7 +103,7 @@ void ContentBrowser::UpdateInternal(Scene&) {
             }
         }
 
-        ImGui::Text(name.c_str());
+        ImGui::Text("%s", name.c_str());
 
         if (clicked) {
             if (is_dir) {

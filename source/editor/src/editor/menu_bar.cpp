@@ -15,9 +15,14 @@ static void SaveProject(bool p_need_open_dialog) {
 
     std::filesystem::path path{ project.empty() ? "untitled.scene" : project.c_str() };
     if (p_need_open_dialog || project.empty()) {
+        // @TODO: implement
+        #if USING(PLATFORM_WINDOWS)
         if (!OpenSaveDialog(path)) {
             return;
         }
+        #else
+        LOG_WARN("OpenSaveDialog not implemented");
+        #endif
     }
 
     DVAR_SET_STRING(project, path.string());

@@ -57,7 +57,7 @@ static bool tree_node_helper(const Scene& p_scene,
     const bool expanded = ImGui::TreeNodeEx(node_name.c_str(), p_flags);
     ImGui::SameLine();
     if (!p_on_left_click && !p_on_right_click) {
-        ImGui::Text(tag.c_str());
+        ImGui::Text("%s", tag.c_str());
     } else {
         ImGui::Selectable(tag.c_str());
         if (ImGui::IsItemHovered()) {

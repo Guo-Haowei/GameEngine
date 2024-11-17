@@ -28,7 +28,7 @@ static void CollapseWindow(const std::string& p_window_name, std::function<void(
     {
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2{ 4, 4 });
         ImGui::Separator();
-        bool open = ImGui::TreeNodeEx(p_window_name.c_str(), flags, p_window_name.c_str());
+        bool open = ImGui::TreeNodeEx(p_window_name.c_str(), flags, "%s", p_window_name.c_str());
         ImGui::PopStyleVar();
 
         if (open) {
