@@ -298,7 +298,6 @@ void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
 
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
-    unused(p_index);
     DEV_ASSERT(p_draw_pass);
 
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
@@ -306,7 +305,8 @@ void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
     if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
-            CRASH_NOW_MSG("Implement");
+            D3D12_CPU_DESCRIPTOR_HANDLE dsv{ draw_pass->dsvs[p_index] };
+            command_list->OMSetRenderTargets(0, nullptr, false, &dsv);
             return;
         }
     }
@@ -364,11 +364,10 @@ void D3d12GraphicsManager::EndPass(const RenderPass* p_render_pass) {
 }
 
 void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
-    DEV_ASSERT(p_clear_color);
-
     auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
 
     if (p_flags & CLEAR_COLOR_BIT) {
+        DEV_ASSERT(p_clear_color);
         for (auto& rtv : draw_pass->rtvs) {
             m_graphicsCommandList->ClearRenderTargetView(rtv, p_clear_color, 0, nullptr);
         }
@@ -461,8 +460,8 @@ const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
     INIT_BUFFER(5, p_mesh.weights_0);
 #undef INIT_BUFFER
 
-    mesh_buffers->indexBufferByte = static_cast<uint32_t>(VectorSizeInByte(p_mesh.indices));
-    mesh_buffers->indexBuffer = upload_buffer(mesh_buffers->indexBufferByte, p_mesh.indices.data());
+    mesh_buffers->indexCount = static_cast<uint32_t>(p_mesh.indices.size());
+    mesh_buffers->indexBuffer = upload_buffer(static_cast<uint32_t>(VectorSizeInByte(p_mesh.indices)), p_mesh.indices.data());
 
     p_mesh.gpuResource = mesh_buffers;
     return mesh_buffers;
@@ -474,7 +473,7 @@ void D3d12GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     D3D12_INDEX_BUFFER_VIEW ibv;
     ibv.BufferLocation = mesh->indexBuffer->GetGPUVirtualAddress();
     ibv.Format = DXGI_FORMAT_R32_UINT;
-    ibv.SizeInBytes = mesh->indexBufferByte;
+    ibv.SizeInBytes = mesh->indexCount * sizeof(uint32_t);
 
     m_graphicsCommandList->IASetVertexBuffers(0, array_length(mesh->vbvs), mesh->vbvs);
     m_graphicsCommandList->IASetIndexBuffer(&ibv);
@@ -1189,6 +1188,7 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(1);
     root_parameters[param_count++].InitAsConstantBufferView(2);
     root_parameters[param_count++].InitAsConstantBufferView(3);
+    root_parameters[param_count++].InitAsConstantBufferView(4);
     root_parameters[param_count++].InitAsDescriptorTable(tex_count, tex_table);
 
     InitStaticSamplers();
