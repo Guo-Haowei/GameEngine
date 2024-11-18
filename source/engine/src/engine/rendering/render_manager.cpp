@@ -108,7 +108,7 @@ void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_textu
 namespace my {
 
 RenderManager::RenderManager() : Module("RenderManager") {
-    for (int i = 0; i < MAX_LIGHT_CAST_SHADOW_COUNT; ++i) {
+    for (int i = 0; i < MAX_POINT_LIGHT_SHADOW_COUNT; ++i) {
         m_free_point_light_shadow.push_back(i);
     }
 }
@@ -140,7 +140,7 @@ PointShadowHandle RenderManager::allocate_point_light_shadowMap() {
 }
 
 void RenderManager::free_point_light_shadowMap(PointShadowHandle& p_handle) {
-    DEV_ASSERT_INDEX(p_handle, MAX_LIGHT_CAST_SHADOW_COUNT);
+    DEV_ASSERT_INDEX(p_handle, MAX_POINT_LIGHT_SHADOW_COUNT);
     m_free_point_light_shadow.push_back(p_handle);
     p_handle = INVALID_POINT_SHADOW_HANDLE;
 }

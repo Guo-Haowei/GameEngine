@@ -44,7 +44,7 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     float disk_radius = (1.0 + (view_distance / light_far)) / 100.0;
     float shadow = 0.0;
 
-    float closest_depth = t_pointShadowArray.Sample(s_shadowSampler, frag_to_light, p_light.shadow_map_index).r;
+    float closest_depth = t_pointShadowArray.Sample(s_shadowSampler, float4(frag_to_light, (float)p_light.shadow_map_index)).r;
     closest_depth *= light_far;
     if (current_depth - bias > closest_depth) {
         shadow += 1.0;

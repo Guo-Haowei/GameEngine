@@ -24,7 +24,7 @@ struct DrawPass {
         }
 
         DEV_ASSERT(!desc.colorAttachments.empty());
-        return std::make_tuple(desc.colorAttachments[0]->desc.width, desc.colorAttachments[0]->desc.width);
+        return std::make_tuple(desc.colorAttachments[0]->desc.width, desc.colorAttachments[0]->desc.height);
     }
 
     DrawPassDesc desc;

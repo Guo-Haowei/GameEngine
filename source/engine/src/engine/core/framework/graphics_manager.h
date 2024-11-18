@@ -93,7 +93,7 @@ struct FrameContext {
     std::vector<EmitterConstantBuffer> emitterCache;
 
     std::shared_ptr<GpuConstantBuffer> pointShadowCb;
-    std::array<PointShadowConstantBuffer, MAX_LIGHT_CAST_SHADOW_COUNT * 6> pointShadowCache;
+    std::array<PointShadowConstantBuffer, MAX_POINT_LIGHT_SHADOW_COUNT * 6> pointShadowCache;
 };
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
@@ -230,7 +230,7 @@ public:
     using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
     // @TODO: save pass item somewhere and use index instead of keeping many copies
-    std::array<std::unique_ptr<PassContext>, MAX_LIGHT_CAST_SHADOW_COUNT> m_pointShadowPasses;
+    std::array<std::unique_ptr<PassContext>, MAX_POINT_LIGHT_SHADOW_COUNT> m_pointShadowPasses;
     std::array<PassContext, 1> m_shadowPasses;  // @TODO: support multi ortho light
 
     PassContext m_voxelPass;

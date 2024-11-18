@@ -165,7 +165,7 @@ void D3d12GraphicsManager::Render() {
     // frameContext->perFrameBuffer->CopyData(&draw_data.frameCB, sizeof(PerFrameConstants));
     // frameContext->perBatchBuffer->CopyData(draw_data.batchConstants.data(), sizeof(PerBatchConstants) * draw_data.batchConstants.size());
 
-    auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
+    const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
     D3D12_RECT sissorRect{};
     sissorRect.left = 0;
     sissorRect.top = 0;

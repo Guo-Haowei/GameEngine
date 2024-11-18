@@ -71,7 +71,7 @@ bool GraphicsManager::Initialize() {
         frame_context.materialCb = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
         frame_context.boneCb = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
         frame_context.emitterCb = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
-        frame_context.pointShadowCb = ::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_LIGHT_CAST_SHADOW_COUNT);
+        frame_context.pointShadowCb = ::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
     }
 
     // @TODO: refactor
@@ -562,7 +562,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                             return true;
                         });
 
-                    DEV_ASSERT_INDEX(shadow_map_index, MAX_LIGHT_CAST_SHADOW_COUNT);
+                    DEV_ASSERT_INDEX(shadow_map_index, MAX_POINT_LIGHT_SHADOW_COUNT);
                     const auto& light_matrices = light_component.GetMatrices();
                     for (int face_id = 0; face_id < 6; ++face_id) {
                         const uint32_t slot = shadow_map_index * 6 + face_id;

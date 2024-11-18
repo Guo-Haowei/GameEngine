@@ -434,6 +434,7 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateGpuTextureImpl(const Gp
                          data_type,
                          p_texture_desc.initialData);
         } break;
+        // @TODO: same
         case GL_TEXTURE_CUBE_MAP: {
             for (int i = 0; i < 6; ++i) {
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -446,6 +447,15 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateGpuTextureImpl(const Gp
                              data_type,
                              p_texture_desc.initialData);
             }
+        } break;
+        case GL_TEXTURE_CUBE_MAP_ARRAY: {
+            glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY,
+                         0,
+                         internal_format,
+                         p_texture_desc.width,
+                         p_texture_desc.height,
+                         p_texture_desc.arraySize,
+                         0, format, data_type, p_texture_desc.initialData);
         } break;
         default:
             CRASH_NOW();
@@ -533,7 +543,7 @@ std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDe
                                        0);                           // level
             } break;
             case AttachmentType::SHADOW_CUBE_ARRAY: {
-                CRASH_NOW();
+                glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture_handle, 0);
             } break;
             default:
                 CRASH_NOW();
@@ -576,12 +586,11 @@ void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_i
 
     if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
-            CRASH_NOW();
-            glFramebufferTexture2D(GL_FRAMEBUFFER,
-                                   GL_DEPTH_ATTACHMENT,
-                                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   static_cast<uint32_t>(depth_attachment->GetHandle()),
-                                   p_mip_level);
+            glFramebufferTextureLayer(GL_FRAMEBUFFER,
+                                      GL_DEPTH_ATTACHMENT,
+                                      depth_attachment->GetHandle32(),
+                                      0,
+                                      p_index);
         }
     }
 

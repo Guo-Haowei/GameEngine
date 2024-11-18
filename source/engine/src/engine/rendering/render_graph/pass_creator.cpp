@@ -125,7 +125,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass) {
     // prepare render data
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    for (int pass_id = 0; pass_id < MAX_LIGHT_CAST_SHADOW_COUNT; ++pass_id) {
+    for (int pass_id = 0; pass_id < MAX_POINT_LIGHT_SHADOW_COUNT; ++pass_id) {
         auto& pass_ptr = gm.m_pointShadowPasses[pass_id];
         if (!pass_ptr) {
             continue;
@@ -164,7 +164,7 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     auto& frame = gm.GetCurrentFrame();
 
     gm.SetRenderTarget(p_draw_pass);
-    auto [width, height] = p_draw_pass->GetBufferSize();
+    const auto [width, height] = p_draw_pass->GetBufferSize();
 
     gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT);
 
@@ -214,7 +214,7 @@ void RenderPassCreator::AddShadowPass() {
     auto point_shadowMap = manager.CreateGpuTexture(BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
                                                                             PixelFormat::D32_FLOAT,
                                                                             AttachmentType::SHADOW_CUBE_ARRAY,
-                                                                            point_shadow_res, point_shadow_res, 6 * MAX_LIGHT_CAST_SHADOW_COUNT),
+                                                                            point_shadow_res, point_shadow_res, 6 * MAX_POINT_LIGHT_SHADOW_COUNT),
                                                     shadow_cube_map_sampler());
 
     auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
@@ -229,7 +229,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    auto [width, height] = p_draw_pass->GetBufferSize();
+    const auto [width, height] = p_draw_pass->GetBufferSize();
 
     gm.SetRenderTarget(p_draw_pass);
 
@@ -318,7 +318,7 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
-    auto [width, height] = p_draw_pass->GetBufferSize();
+    const auto [width, height] = p_draw_pass->GetBufferSize();
 
     gm.SetRenderTarget(p_draw_pass);
     gm.SetViewport(Viewport(width, height));
@@ -479,7 +479,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
     gm.SetRenderTarget(p_draw_pass);
 
     auto depth_buffer = p_draw_pass->desc.depthAttachment;
-    auto [width, height] = p_draw_pass->GetBufferSize();
+    const auto [width, height] = p_draw_pass->GetBufferSize();
 
     // draw billboards
 

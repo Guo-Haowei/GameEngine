@@ -28,5 +28,5 @@ SHADER_TEXTURE(Texture2D, t_gbufferMaterialMap, 13, RESOURCE_GBUFFER_MATERIAL)
 SHADER_TEXTURE(Texture2D, t_textureLighting, 14, RESOURCE_LIGHTING)
 
 // [SCRUM-34] @TODO: texture cube array
-SHADER_TEXTURE(TextureCube, t_pointShadowArray, 21, RESOURCE_NONE)
+SHADER_TEXTURE(TextureCubeArray, t_pointShadowArray, 21, RESOURCE_NONE)
 SHADER_TEXTURE(Texture2D, t_shadowMap, 25, RESOURCE_NONE)
