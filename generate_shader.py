@@ -107,9 +107,9 @@ def func_insert_names():
 
 try:
     func_generate_files()
-
 except RuntimeError as e:
     print(f'RuntimeError: {e}')
+    exit(1)
 finally:
     # delete .spv
     if (os.path.isfile(output_spv)):

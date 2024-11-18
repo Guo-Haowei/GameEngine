@@ -1,7 +1,7 @@
 /// File: shadowmap_point.vert.hlsl
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
-
+#error ?????
 vsoutput_position main(vsinput_mesh input) {
 #ifdef HAS_ANIMATION
     float4x4 boneTransform = c_bones[input.boneIndex.x] * input.boneWeight.x;
