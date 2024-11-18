@@ -115,9 +115,22 @@ CBUFFER(BoneConstantBuffer, 3) {
     mat4 c_bones[MAX_BONE_COUNT];
 };
 
+CBUFFER(PointShadowConstantBuffer, 4) {
+    mat4 c_pointLightMatrix;    // 64
+    vec3 c_pointLightPosition;  // 12
+    float c_pointLightFar;      // 4
+
+    vec4 _point_shadow_padding_0;  // 16
+    vec4 _point_shadow_padding_1;  // 16
+    vec4 _point_shadow_padding_2;  // 16
+
+    mat4 _point_shadow_padding_3;  // 64
+    mat4 _point_shadow_padding_4;  // 64
+};
+
 #if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
 
-CBUFFER(PerFrameConstantBuffer, 4) {
+CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
     int c_lightCount;
@@ -143,7 +156,7 @@ CBUFFER(PerFrameConstantBuffer, 4) {
 };
 
 // @TODO: refactor name
-CBUFFER(EmitterConstantBuffer, 5) {
+CBUFFER(EmitterConstantBuffer, 6) {
     int c_preSimIdx;
     int c_postSimIdx;
     float c_elapsedTime;
@@ -168,7 +181,7 @@ CBUFFER(EmitterConstantBuffer, 5) {
 
 #if defined(GLSL_LANG) || defined(__cplusplus)
 
-CBUFFER(PerSceneConstantBuffer, 6) {
+CBUFFER(PerSceneConstantBuffer, 7) {
     // @TODO: remove the following
     sampler2D _per_scene_padding_0;
     sampler2D c_finalBloom;
@@ -191,7 +204,7 @@ CBUFFER(PerSceneConstantBuffer, 6) {
 };
 
 // @TODO: make it more general, something like 2D draw
-CBUFFER(DebugDrawConstantBuffer, 7) {
+CBUFFER(DebugDrawConstantBuffer, 8) {
     vec2 c_debugDrawPos;
     vec2 c_debugDrawSize;
 
@@ -200,19 +213,6 @@ CBUFFER(DebugDrawConstantBuffer, 7) {
     int _debug_draw_padding_0;
 };
 #endif
-
-CBUFFER(PointShadowConstantBuffer, 8) {
-    mat4 c_pointLightMatrix;    // 64
-    vec3 c_pointLightPosition;  // 12
-    float c_pointLightFar;      // 4
-
-    vec4 _point_shadow_padding_0;  // 16
-    vec4 _point_shadow_padding_1;  // 16
-    vec4 _point_shadow_padding_2;  // 16
-
-    mat4 _point_shadow_padding_3;  // 64
-    mat4 _point_shadow_padding_4;  // 64
-};
 
 // @TODO: refactor this
 CBUFFER(EnvConstantBuffer, 9) {

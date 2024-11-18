@@ -24,7 +24,6 @@ namespace my {
 extern ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
-extern ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
 
 // @TODO: refactor
@@ -45,7 +44,6 @@ struct BatchContext {
 
 struct PassContext {
     int pass_idx{ 0 };
-    LightComponent light_component;
 
     std::vector<BatchContext> draws;
 };
@@ -79,20 +77,23 @@ struct FrameContext {
         }
     };
 
-    std::shared_ptr<GpuConstantBuffer> batchUniform;
+    std::shared_ptr<GpuConstantBuffer> batchCb;
     BufferCache<PerBatchConstantBuffer> batchCache;
 
-    std::shared_ptr<GpuConstantBuffer> materialUniform;
+    std::shared_ptr<GpuConstantBuffer> materialCb;
     BufferCache<MaterialConstantBuffer> materialCache;
 
-    std::shared_ptr<GpuConstantBuffer> boneUniform;
+    std::shared_ptr<GpuConstantBuffer> boneCb;
     BufferCache<BoneConstantBuffer> boneCache;
 
-    std::shared_ptr<GpuConstantBuffer> passUniform;
+    std::shared_ptr<GpuConstantBuffer> passCb;
     std::vector<PerPassConstantBuffer> passCache;
 
-    std::shared_ptr<GpuConstantBuffer> emitterUniform;
+    std::shared_ptr<GpuConstantBuffer> emitterCb;
     std::vector<EmitterConstantBuffer> emitterCache;
+
+    std::shared_ptr<GpuConstantBuffer> pointShadowCb;
+    std::array<PointShadowConstantBuffer, MAX_LIGHT_CAST_SHADOW_COUNT * 6> pointShadowCache;
 };
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
@@ -150,6 +151,11 @@ public:
     void UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const std::vector<T>& p_vector) {
         UpdateConstantBuffer(p_buffer, p_vector.data(), sizeof(T) * (uint32_t)p_vector.size());
     }
+    template<typename T, int N>
+    void UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const std::array<T, N>& p_array) {
+        UpdateConstantBuffer(p_buffer, p_array.data(), sizeof(T) * N);
+    }
+
     virtual void BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) = 0;
     template<typename T>
     void BindConstantBufferSlot(const GpuConstantBuffer* p_buffer, int slot) {

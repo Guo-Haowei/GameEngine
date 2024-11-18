@@ -39,7 +39,6 @@ static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t
 ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
-ConstantBuffer<PointShadowConstantBuffer> g_point_shadow_cache;
 ConstantBuffer<EnvConstantBuffer> g_env_cache;
 
 // @TODO: refactor this
@@ -67,11 +66,12 @@ bool GraphicsManager::Initialize() {
 
     for (int i = 0; i < num_frames; ++i) {
         FrameContext& frame_context = *m_frameContexts[i].get();
-        frame_context.batchUniform = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
-        frame_context.passUniform = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
-        frame_context.materialUniform = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
-        frame_context.boneUniform = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
-        frame_context.emitterUniform = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
+        frame_context.batchCb = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
+        frame_context.passCb = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
+        frame_context.materialCb = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
+        frame_context.boneCb = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
+        frame_context.emitterCb = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
+        frame_context.pointShadowCb = ::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_LIGHT_CAST_SHADOW_COUNT);
     }
 
     // @TODO: refactor
@@ -79,7 +79,6 @@ bool GraphicsManager::Initialize() {
     CreateUniformBuffer<PerFrameConstantBuffer>(g_per_frame_cache);
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
     CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
-    CreateUniformBuffer<PointShadowConstantBuffer>(g_point_shadow_cache);
     CreateUniformBuffer<EnvConstantBuffer>(g_env_cache);
 
     DEV_ASSERT(m_pipelineStateManager);
@@ -178,12 +177,12 @@ void GraphicsManager::Update(Scene& p_scene) {
 
         // update uniform after BeginFrame()
         auto& frame = GetCurrentFrame();
-        UpdateConstantBuffer(frame.batchUniform.get(), frame.batchCache.buffer);
-        UpdateConstantBuffer(frame.materialUniform.get(), frame.materialCache.buffer);
-        UpdateConstantBuffer(frame.boneUniform.get(), frame.boneCache.buffer);
-
-        UpdateConstantBuffer(frame.passUniform.get(), frame.passCache);
-        UpdateConstantBuffer(frame.emitterUniform.get(), frame.emitterCache);
+        UpdateConstantBuffer(frame.batchCb.get(), frame.batchCache.buffer);
+        UpdateConstantBuffer(frame.materialCb.get(), frame.materialCache.buffer);
+        UpdateConstantBuffer(frame.boneCb.get(), frame.boneCache.buffer);
+        UpdateConstantBuffer(frame.passCb.get(), frame.passCache);
+        UpdateConstantBuffer(frame.emitterCb.get(), frame.emitterCache);
+        UpdateConstantBuffer(frame.pointShadowCb.get(), frame.pointShadowCache);
 
         m_renderGraph.Execute(*this);
         Render();
@@ -481,8 +480,9 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
     auto& cache = g_per_frame_cache.cache;
-
     cache.c_lightCount = light_count;
+
+    auto& point_shadow_cache = GetCurrentFrame().pointShadowCache;
 
     int idx = 0;
     for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
@@ -563,7 +563,13 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                         });
 
                     DEV_ASSERT_INDEX(shadow_map_index, MAX_LIGHT_CAST_SHADOW_COUNT);
-                    pass->light_component = light_component;
+                    const auto& light_matrices = light_component.GetMatrices();
+                    for (int face_id = 0; face_id < 6; ++face_id) {
+                        const uint32_t slot = shadow_map_index * 6 + face_id;
+                        point_shadow_cache[slot].c_pointLightMatrix = light_matrices[face_id];
+                        point_shadow_cache[slot].c_pointLightPosition = light_component.GetPosition();
+                        point_shadow_cache[slot].c_pointLightFar = light_component.GetMaxDistance();
+                    }
 
                     m_pointShadowPasses[shadow_map_index] = std::move(pass);
                 } else {

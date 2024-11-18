@@ -389,8 +389,8 @@ void OpenGlGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buff
 }
 
 void OpenGlGraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
-    ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->capacity + 1);
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
+    DEV_ASSERT(p_size + p_offset <= buffer->capacity);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->GetSlot(), buffer->handle, p_offset, p_size);
 }
 

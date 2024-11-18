@@ -30,20 +30,20 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     gm.SetPipelineState(PROGRAM_GBUFFER);
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
         }
 
         if (draw.flags) {
             gm.SetStencilRef(draw.flags);
         }
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
 
@@ -53,7 +53,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_normalMap_handle, t_normalMapSlot);
             gm.BindTexture(Dimension::TEXTURE_2D, material.t_materialMap_handle, t_materialMapSlot);
 
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialUniform.get(), subset.material_idx);
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
 
             // @TODO: set material
 
@@ -135,15 +135,12 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
     // set up different object list for different pass
     const PassContext& pass = *pass_ptr.get();
 
-    const auto& light_matrices = pass.light_component.GetMatrices();
-    for (int i = 0; i < 6; ++i) {
-        g_point_shadow_cache.cache.c_pointLightMatrix = light_matrices[i];
-        g_point_shadow_cache.cache.c_pointLightPosition = pass.light_component.GetPosition();
-        g_point_shadow_cache.cache.c_pointLightFar = pass.light_component.GetMaxDistance();
-        g_point_shadow_cache.update();
+    for (int face_id = 0; face_id < 6; ++face_id) {
+        const uint32_t slot = p_pass_id * 6 + face_id;
+        gm.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
 
-        gm.SetRenderTarget(p_draw_pass, i);
-        gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT, nullptr, i);
+        gm.SetRenderTarget(p_draw_pass, face_id);
+        gm.Clear(p_draw_pass, CLEAR_DEPTH_BIT, nullptr, face_id);
 
         gm.SetViewport(Viewport(width, height));
 
@@ -151,10 +148,10 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
         for (const auto& draw : pass.draws) {
             const bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
             }
 
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
             gm.SetMesh(draw.mesh_data);
             gm.DrawElements(draw.mesh_data->indexCount);
@@ -177,16 +174,16 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     gm.SetViewport(Viewport(width, height));
 
     PassContext& pass = gm.m_shadowPasses[0];
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     gm.SetPipelineState(PROGRAM_DPETH);
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
         }
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
         gm.DrawElements(draw.mesh_data->indexCount);
@@ -291,7 +288,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     RenderManager::GetSingleton().draw_quad();
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passUniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     // if (0) {
     //     // draw billboard grass here for now
@@ -361,13 +358,12 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
     gm.SetViewport(Viewport(width, height));
 
     PassContext& pass = gm.m_mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     const Scene& scene = SceneManager::GetScene();
     int particle_idx = 0;
     for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
-
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterUniform.get(), particle_idx++);
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx++);
 
         gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
         gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
