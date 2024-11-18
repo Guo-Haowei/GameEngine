@@ -45,6 +45,7 @@ using D3D_TEXTURE_ADDRESS_MODE = D3D_(TEXTURE_ADDRESS_MODE);
 
 static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
+        // @TODO: use macro
         case PixelFormat::UNKNOWN:
             return DXGI_FORMAT_UNKNOWN;
         case PixelFormat::R8_UINT:
@@ -89,6 +90,8 @@ static inline DXGI_FORMAT Convert(PixelFormat p_format) {
             return DXGI_FORMAT_D24_UNORM_S8_UINT;
         case PixelFormat::X24_TYPELESS_G8_UINT:
             return DXGI_FORMAT_X24_TYPELESS_G8_UINT;
+        case PixelFormat::R8G8B8A8_UNORM:
+            return DXGI_FORMAT_R8G8B8A8_UNORM;
         default:
             CRASH_NOW();
             return DXGI_FORMAT_UNKNOWN;

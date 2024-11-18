@@ -10,6 +10,8 @@ enum class PixelFormat {
     R8G8B8_UINT,
     R8G8B8A8_UINT,
 
+    R8G8B8A8_UNORM,
+
     R16_FLOAT,
     R16G16_FLOAT,
     R16G16B16_FLOAT,

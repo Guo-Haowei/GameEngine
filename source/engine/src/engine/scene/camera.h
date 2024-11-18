@@ -7,6 +7,7 @@ namespace my {
 
 class Archive;
 
+// @TODO: make it a component
 class Camera : public NonCopyable {
 public:
     enum : uint32_t {
@@ -46,10 +47,10 @@ private:
     uint32_t m_flags = DIRTY;
 
     Degree m_fovy{ DEFAULT_FOVY };
-    float m_near = DEFAULT_NEAR;
-    float m_far = DEFAULT_FAR;
-    int m_width = 0;
-    int m_height = 0;
+    float m_near{ DEFAULT_NEAR };
+    float m_far{ DEFAULT_FAR };
+    int m_width{ 0 };
+    int m_height{ 0 };
     Degree m_pitch;  // x-axis
     Degree m_yaw;    // y-axis
     vec3 m_position{ 0 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "rendering/graphics_enum.h"
+#include "rendering/graphics_defines.h"
 
 namespace my {
 

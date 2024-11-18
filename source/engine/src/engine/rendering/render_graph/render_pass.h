@@ -4,7 +4,6 @@
 
 namespace my {
 class GraphicsManager;
-class D3d12GraphicsManager;
 }  // namespace my
 
 namespace my::rg {
@@ -23,6 +22,8 @@ public:
     RenderPassName GetName() const { return m_name; }
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
+    const auto& GetOutputs() const { return m_outputs; }
+
 protected:
     void CreateInternal(RenderPassDesc& pass_desc);
 
@@ -32,8 +33,6 @@ protected:
     std::vector<std::shared_ptr<GpuTexture>> m_outputs;
 
     friend class RenderGraph;
-    friend class GraphicsManager;
-    friend class D3d12GraphicsManager;
 };
 
 }  // namespace my::rg

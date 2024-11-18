@@ -349,13 +349,13 @@ vec_t BuildPlan(const vec_t& p_point1, const vec_t& p_normal) {
 
 struct matrix_t {
 public:
+    struct _Views {
+        vec_t right, up, dir, position;
+    };
     union {
         float m[4][4];
         float m16[16];
-        struct
-        {
-            vec_t right, up, dir, position;
-        } v;
+        _Views v;
         vec_t component[4];
     };
 

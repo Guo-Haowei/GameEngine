@@ -34,4 +34,6 @@ struct vsoutput_mesh {
     float3 world_position : POSITION;
     float2 uv : TEXCOORD;
     float3 normal : NORMAL;
+    float3 T : TANGENT;
+    float3 B : BITANGENT;
 };

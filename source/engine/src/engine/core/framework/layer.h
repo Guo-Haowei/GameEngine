@@ -6,6 +6,7 @@ namespace my {
 class Layer : public NonCopyable {
 public:
     Layer(const std::string& p_name = "Layer") : m_name(p_name) {}
+    virtual ~Layer() = default;
 
     virtual void Attach() = 0;
     virtual void Render() = 0;
