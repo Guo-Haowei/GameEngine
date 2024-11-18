@@ -608,7 +608,7 @@ void OpenGlGraphicsManager::OnSceneChange(const Scene& p_scene) {
 
 void OpenGlGraphicsManager::CreateGpuResources() {
     // @TODO: appropriate sampler
-    auto grass_image = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/grass.png" })->Get();
+    //auto grass_image = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/grass.png" })->Get();
 
     // @TODO: move to renderer
     g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
@@ -641,7 +641,7 @@ void OpenGlGraphicsManager::CreateGpuResources() {
     cache.c_voxelMap = MakeTextureResident(g_albedoVoxel.GetHandle());
     cache.c_voxelNormalMap = MakeTextureResident(g_normalVoxel.GetHandle());
 
-    cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
+    //cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
 
     // @TODO: refactor
     auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {

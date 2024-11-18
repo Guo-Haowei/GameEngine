@@ -1,4 +1,4 @@
-#include "console_panel.h"
+#include "log_panel.h"
 
 #include "core/io/logger.h"
 #include "core/math/color.h"
@@ -28,7 +28,7 @@ static ImVec4 GetLogLevelColor(LogLevel level) {
     return ImVec4(color.r, color.g, color.b, 1.0f);
 }
 
-void ConsolePanel::UpdateInternal(Scene&) {
+void LogPanel::UpdateInternal(Scene&) {
     ImGui::Separator();
 
     // reserve enough left-over height for 1 separator + 1 input text
@@ -38,12 +38,15 @@ void ConsolePanel::UpdateInternal(Scene&) {
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4, 1));  // Tighten spacing
 
+    auto& logger = CompositeLogger::GetSingleton();
     std::vector<my::CompositeLogger::Log> logs;
-    my::CompositeLogger::GetSingleton().RetrieveLog(logs);
+    logger.RetrieveLog(logs);
     for (const auto& log : logs) {
-        ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(log.level));
-        ImGui::TextUnformatted(log.buffer);
-        ImGui::PopStyleColor();
+        if (log.level & m_filter) {
+            ImGui::PushStyleColor(ImGuiCol_Text, GetLogLevelColor(log.level));
+            ImGui::TextUnformatted(log.buffer);
+            ImGui::PopStyleColor();
+        }
     }
 
     if (m_scrollToBottom || (m_autoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())) {
@@ -55,6 +58,21 @@ void ConsolePanel::UpdateInternal(Scene&) {
     ImGui::EndChild();
     ImGui::Separator();
 
+    if (ImGui::SmallButton("All")) {
+        m_filter = LOG_LEVEL_ALL;
+    }
+    ImGui::SameLine();
+    if (ImGui::SmallButton("No Verbose")) {
+        m_filter = LOG_LEVEL_ALL & (~LOG_LEVEL_VERBOSE);
+    }
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Warning")) {
+        m_filter = LOG_LEVEL_WARN;
+    }
+    ImGui::SameLine();
+    if (ImGui::SmallButton("Error")) {
+        m_filter = LOG_LEVEL_ERROR;
+    }
     ImGui::SameLine();
 
     ImGui::Separator();

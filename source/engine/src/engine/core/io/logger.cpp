@@ -26,6 +26,12 @@ void CompositeLogger::Print(LogLevel p_level, std::string_view p_message) {
     m_logHistoryMutex.unlock();
 }
 
+void CompositeLogger::ClearLog() {
+    m_logHistoryMutex.lock();
+    m_logHistory.clear();
+    m_logHistoryMutex.unlock();
+}
+
 void CompositeLogger::RetrieveLog(std::vector<Log>& p_buffer) {
     m_logHistoryMutex.lock();
 

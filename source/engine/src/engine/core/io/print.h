@@ -30,6 +30,7 @@ enum LogLevel : uint8_t {
                     LOG_LEVEL_ERROR |
                     LOG_LEVEL_FATAL,
 };
+DEFINE_ENUM_BITWISE_OPERATIONS(LogLevel);
 
 void PrintImpl(LogLevel p_level, const std::string& p_message);
 

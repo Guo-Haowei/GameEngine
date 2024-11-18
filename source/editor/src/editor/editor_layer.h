@@ -36,6 +36,7 @@ public:
 
 private:
     void DockSpace(Scene& p_scene);
+    void DrawToolbar();
     void AddPanel(std::shared_ptr<EditorItem> p_panel);
 
     void BufferCommand(std::shared_ptr<EditorCommand> p_command);
@@ -50,6 +51,9 @@ private:
     uint64_t m_displayedImage = 0;
     std::list<std::shared_ptr<EditorCommand>> m_commandBuffer;
     RingBuffer<std::shared_ptr<EditorCommand>, 32> m_commandHistory;
+
+    ImageHandle* m_playButtonImage{ nullptr };
+    ImageHandle* m_pauseButtonImage{ nullptr };
 };
 
 }  // namespace my

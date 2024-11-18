@@ -18,8 +18,7 @@ bool LoaderAssimp::Load(Scene* p_data) {
     const aiScene* aiscene = importer.ReadFile(m_filePath, flag);
 
     // check for errors
-    if (!aiscene || aiscene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !aiscene->mRootNode)  // if is Not Zero
-    {
+    if (!aiscene || aiscene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !aiscene->mRootNode) {
         m_error = std::format("Error: failed to import scene '{}'\n\tdetails: {}", m_filePath, importer.GetErrorString());
         return false;
     }

@@ -5,9 +5,9 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/scene_manager.h"
 #include "core/input/input.h"
-#include "editor/panels/console_panel.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
+#include "editor/panels/log_panel.h"
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/renderer_panel.h"
 #include "editor/panels/viewer.h"
@@ -15,7 +15,7 @@
 namespace my {
 
 EditorLayer::EditorLayer() : Layer("EditorLayer") {
-    AddPanel(std::make_shared<ConsolePanel>(*this));
+    AddPanel(std::make_shared<LogPanel>(*this));
     AddPanel(std::make_shared<RendererPanel>(*this));
     AddPanel(std::make_shared<HierarchyPanel>(*this));
     AddPanel(std::make_shared<PropertyPanel>(*this));
@@ -24,16 +24,21 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 
     m_menuBar = std::make_shared<MenuBar>(*this);
 
-    //// load assets
-    // const char* light_icons[] = {
-    //     "@res://images/arealight.png",
-    //     "@res://images/pointlight.png",
-    //     "@res://images/infinitelight.png",
-    // };
+    auto& asset_manager = AssetManager::GetSingleton();
+    m_playButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/play.png" });
+    m_pauseButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/pause.png" });
 
-    // for (int i = 0; i < array_length(light_icons); ++i) {
-    //     AssetManager::singleton().load_image_sync(light_icons[i]);
-    // }
+#if 0
+    const char* light_icons[] = {
+        "@res://images/arealight.png",
+        "@res://images/pointlight.png",
+        "@res://images/infinitelight.png",
+    };
+
+    for (int i = 0; i < array_length(light_icons); ++i) {
+        asset_manager.LoadImageSync(FilePath{ light_icons[i] });
+    }
+#endif
 }
 
 void EditorLayer::AddPanel(std::shared_ptr<EditorItem> p_panel) {
@@ -46,7 +51,6 @@ void EditorLayer::SelectEntity(ecs::Entity p_selected) {
     SceneManager::GetScene().m_selected = m_selected;
 }
 
-// @TODO: make this an item
 void EditorLayer::DockSpace(Scene& p_scene) {
     ImGui::GetMainViewport();
 
@@ -90,12 +94,53 @@ void EditorLayer::DockSpace(Scene& p_scene) {
     return;
 }
 
+void EditorLayer::DrawToolbar() {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    auto& colors = ImGui::GetStyle().Colors;
+    const auto& button_hovered = colors[ImGuiCol_ButtonHovered];
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(button_hovered.x, button_hovered.y, button_hovered.z, 0.5f));
+    const auto& button_active = colors[ImGuiCol_ButtonActive];
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(button_active.x, button_active.y, button_active.z, 0.5f));
+
+    ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+
+    bool toolbar_enabled = true;
+    ImVec4 tint_color = ImVec4(1, 1, 1, 1);
+    if (!toolbar_enabled) {
+        tint_color.w = 0.5f;
+    }
+
+    float size = ImGui::GetWindowHeight() - 4.0f;
+    ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+
+    if (auto image = m_playButtonImage->Get(); image) {
+        ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
+        if (ImGui::ImageButton((ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
+            LOG_ERROR("Play not implemented");
+        }
+    }
+    ImGui::SameLine();
+    if (auto image = m_pauseButtonImage->Get(); image) {
+        ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
+        if (ImGui::ImageButton((ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
+            LOG_ERROR("Pause not implemented");
+        }
+    }
+
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(3);
+    ImGui::End();
+}
+
 void EditorLayer::Update(float) {
     Scene& scene = SceneManager::GetScene();
     DockSpace(scene);
     for (auto& it : m_panels) {
         it->Update(scene);
     }
+    DrawToolbar();
     FlushCommand(scene);
 }
 
