@@ -177,6 +177,7 @@ public:
     static std::shared_ptr<GraphicsManager> Create();
 
     Backend GetBackend() const { return m_backend; }
+    RenderGraphName GetRenderGraphName() const { return m_renderGraphName; }
 
     // @TODO: move to renderer
     void SelectRenderGraph();
@@ -200,7 +201,7 @@ protected:
     virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
 
     const Backend m_backend;
-    RenderGraphName m_method;
+    RenderGraphName m_renderGraphName;
     bool m_enableValidationLayer;
 
     rg::RenderGraph m_renderGraph;

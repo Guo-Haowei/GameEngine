@@ -3,6 +3,6 @@
 
 namespace my {
 
-bool load_lua_scene(const std::string& p_path, Scene* p_scene);
+bool LoadLuaScene(const std::string& p_path, Scene* p_scene);
 
 }

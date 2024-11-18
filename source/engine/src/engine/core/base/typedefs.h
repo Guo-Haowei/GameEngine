@@ -82,6 +82,9 @@
     }                                                                                     \
     constexpr ENUM operator|(const ENUM& p_lhs, const ENUM& p_rhs) {                      \
         return static_cast<ENUM>(std::to_underlying(p_lhs) | std::to_underlying(p_rhs));  \
+    }                                                                                     \
+    constexpr ENUM operator~(const ENUM& p_enum) {                                        \
+        return static_cast<ENUM>(~std::to_underlying(p_enum));                            \
     }
 
 namespace my {

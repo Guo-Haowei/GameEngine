@@ -30,6 +30,7 @@ public:
     void AddChannel(LogLevel p_log) { m_channels |= p_log; }
     void RemoveChannel(LogLevel p_log) { m_channels &= ~p_log; }
 
+    void ClearLog();
     // @TODO: change to array
     void RetrieveLog(std::vector<Log>& p_buffer);
 

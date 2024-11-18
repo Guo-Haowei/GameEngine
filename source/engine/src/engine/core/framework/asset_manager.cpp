@@ -55,7 +55,7 @@ public:
         auto root = p_scene->CreateTransformEntity("world");
         p_scene->m_replace = true;
         p_scene->m_root = root;
-        return load_lua_scene(m_filePath, p_scene);
+        return LoadLuaScene(m_filePath, p_scene);
     }
 };
 
@@ -144,11 +144,13 @@ ImageHandle* AssetManager::LoadImageSync(const FilePath& p_path) {
     auto handle = std::make_unique<AssetHandle<Image>>();
     auto loader = Loader<Image>::Create(p_path);
     if (!loader) {
+        LOG_ERROR("No loader found for image '{}'", p_path.String());
         return nullptr;
     }
 
     Image* image = new Image;
     if (!loader->Load(image)) {
+        LOG_ERROR("Failed to load image image '{}', {}", p_path.String(), loader->GetError());
         delete image;
         return nullptr;
     }

@@ -26,12 +26,17 @@ enum TestEnum {
     TEST_ENUM_3 = BIT(3),
     TEST_ENUM_4 = BIT(4),
     TEST_ENUM_5 = BIT(5),
+    TEST_ENUM_ALL = TEST_ENUM_1 |
+                    TEST_ENUM_2 |
+                    TEST_ENUM_3 |
+                    TEST_ENUM_4 |
+                    TEST_ENUM_5,
 };
 DEFINE_ENUM_BITWISE_OPERATIONS(TestEnum);
 
 TEST(enum_bitwise_operation, test_bitwise_and) {
-    TestEnum flag1 = TEST_ENUM_1 | TEST_ENUM_2 | TEST_ENUM_4;
-    TestEnum flag2 = TEST_ENUM_2 | TEST_ENUM_3 | TEST_ENUM_5;
+    constexpr TestEnum flag1 = TEST_ENUM_1 | TEST_ENUM_2 | TEST_ENUM_4;
+    constexpr TestEnum flag2 = TEST_ENUM_2 | TEST_ENUM_3 | TEST_ENUM_5;
     EXPECT_EQ(std::to_underlying(flag1 & flag2), 2);
 }
 
@@ -52,6 +57,14 @@ TEST(enum_bitwise_operation, test_bitwise_or_assign) {
     TestEnum flag2 = TEST_ENUM_5;
     flag1 |= flag2;
     EXPECT_EQ(std::to_underlying(flag1), 0b11000);
+}
+
+TEST(enum_bitwise_operation, test_bitwise_flip) {
+    constexpr TestEnum flag1 = TEST_ENUM_1 | TEST_ENUM_2;
+    constexpr TestEnum flag2 = TEST_ENUM_ALL & (~flag1);
+    constexpr TestEnum flag3 = TEST_ENUM_3 | TEST_ENUM_4 | TEST_ENUM_5;
+    static_assert(flag2 == flag3);
+    EXPECT_EQ(flag2, flag3);
 }
 
 TEST(array_length, test_int_array) {

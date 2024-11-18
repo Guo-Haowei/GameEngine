@@ -234,20 +234,20 @@ void GraphicsManager::SelectRenderGraph() {
 
     auto it = lookup.find(method);
     if (it == lookup.end()) {
-        m_method = RenderGraphName::DEFAULT;
+        m_renderGraphName = RenderGraphName::DEFAULT;
     } else {
-        m_method = it->second;
+        m_renderGraphName = it->second;
     }
 
     // force to default
-    if (m_backend == Backend::D3D11 && m_method == RenderGraphName::VXGI) {
-        m_method = RenderGraphName::DEFAULT;
+    if (m_backend == Backend::D3D11 && m_renderGraphName == RenderGraphName::VXGI) {
+        m_renderGraphName = RenderGraphName::DEFAULT;
     }
     if (m_backend == Backend::D3D12) {
-        m_method = RenderGraphName::DUMMY;
+        m_renderGraphName = RenderGraphName::DUMMY;
     }
 
-    switch (m_method) {
+    switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
             rg::RenderPassCreator::CreateDummy(m_renderGraph);
             break;
@@ -283,7 +283,7 @@ std::shared_ptr<GpuTexture> GraphicsManager::FindGpuTexture(RenderTargetResource
 
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
-    switch (m_method) {
+    switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
             texture = FindGpuTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;

@@ -12,6 +12,7 @@ void register_test_dvars() {
     if (!s_registered) {
 #define REGISTER_DVAR
 #include "test_dvars.h"
+#undef REGISTER_DVAR
     }
     s_registered = true;
 }
