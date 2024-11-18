@@ -13,15 +13,19 @@ spriv_cross_path = os.path.join(project_dir, 'bin/spirv-cross')
 output_spv = 'tmp.spv'
 
 input_shaders = [
-    'shadowmap_point.vert',
-    'shadowmap_point.pixel',
     'bloom_setup.comp',
     'bloom_downsample.comp',
     'bloom_upsample.comp',
+    'depth.pixel',
+    'particle_draw.vert',
+    'particle_draw.pixel',
     'particle_initialization.comp',
     'particle_kickoff.comp',
     'particle_emission.comp',
     'particle_simulation.comp',
+    'shadowmap_point.vert',
+    'shadowmap_point.pixel',
+    'shadow.vert',
 ]
 
 def insert_file_name(file_path):

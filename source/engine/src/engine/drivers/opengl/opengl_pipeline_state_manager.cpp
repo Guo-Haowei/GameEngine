@@ -79,13 +79,12 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
 static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
     std::string file{ p_file };
     file.append(".glsl");
-    fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
+    fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
 
-    bool is_generated = false;
+    bool is_generated = true;
     if (!fs::exists(fullpath)) {
-        fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
-
-        is_generated = true;
+        is_generated = false;
+        fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
     }
 
     auto res = ProcessShader(fullpath, 0);
