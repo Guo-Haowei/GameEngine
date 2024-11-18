@@ -97,6 +97,24 @@ bool PipelineStateManager::Initialize() {
                        .rtvFormats = { GBUFFER_BASE_COLOR_FORMAT, GBUFFER_POSITION_FORMAT, GBUFFER_NORMAL_FORMAT, GBUFFER_MATERIAL_FORMAT },
                        .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                    });
+    ok = ok && Create(PROGRAM_DPETH, {
+                                         .vs = "shadow.vert",
+                                         .ps = "depth.pixel",
+                                         .rasterizerDesc = &s_rasterizerBackFace,
+                                         .depthStencilDesc = &s_depthStencilDefault,
+                                         .inputLayoutDesc = &s_input_layout_mesh,
+                                         .numRenderTargets = 0,
+                                         .dsvFormat = PixelFormat::D32_FLOAT,
+                                     });
+    ok = ok && Create(PROGRAM_POINT_SHADOW, {
+                                                .vs = "shadowmap_point.vert",
+                                                .ps = "shadowmap_point.pixel",
+                                                .rasterizerDesc = &s_rasterizerBackFace,
+                                                .depthStencilDesc = &s_depthStencilDefault,
+                                                .inputLayoutDesc = &s_input_layout_mesh,
+                                                .numRenderTargets = 0,
+                                                .dsvFormat = PixelFormat::D32_FLOAT,
+                                            });
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
@@ -109,20 +127,6 @@ bool PipelineStateManager::Initialize() {
                                             .depthStencilDesc = &s_depthStencilDefault,
                                             .inputLayoutDesc = &s_input_layout_position,
                                         });
-    ok = ok && Create(PROGRAM_DPETH, {
-                                         .vs = "shadow.vert",
-                                         .ps = "depth.pixel",
-                                         .rasterizerDesc = &s_rasterizerBackFace,
-                                         .depthStencilDesc = &s_depthStencilDefault,
-                                         .inputLayoutDesc = &s_input_layout_mesh,
-                                     });
-    ok = ok && Create(PROGRAM_POINT_SHADOW, {
-                                                .vs = "shadowmap_point.vert",
-                                                .ps = "shadowmap_point.pixel",
-                                                .rasterizerDesc = &s_rasterizerBackFace,
-                                                .depthStencilDesc = &s_depthStencilDefault,
-                                                .inputLayoutDesc = &s_input_layout_mesh,
-                                            });
     ok = ok && Create(PROGRAM_TONE, {
                                         .vs = "screenspace_quad.vert",
                                         .ps = "tone.pixel",

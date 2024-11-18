@@ -619,7 +619,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
     texture_desc.Alignment = 0;
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
-    texture_desc.DepthOrArraySize = 1;
+    texture_desc.DepthOrArraySize = static_cast<UINT16>(p_texture_desc.arraySize);
     texture_desc.MipLevels = 1;
     texture_desc.Format = texture_format;
     texture_desc.SampleDesc.Count = 1;
@@ -820,10 +820,26 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                 draw_pass->dsvs.emplace_back(handle.cpuHandle);
             } break;
             case AttachmentType::SHADOW_2D: {
-                CRASH_NOW();
+                D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
+                auto handle = m_dsvDescHeap.AllocHandle();
+                m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
+                draw_pass->dsvs.emplace_back(handle.cpuHandle);
             } break;
             case AttachmentType::SHADOW_CUBE_MAP: {
-                CRASH_NOW();
+                for (int face = 0; face < 6; ++face) {
+                    D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                    dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                    dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+                    dsv_desc.Texture2DArray.MipSlice = 0;
+                    dsv_desc.Texture2DArray.ArraySize = 1;
+                    dsv_desc.Texture2DArray.FirstArraySlice = face;
+                    auto handle = m_dsvDescHeap.AllocHandle();
+                    m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
+                    draw_pass->dsvs.emplace_back(handle.cpuHandle);
+                }
             } break;
             default:
                 CRASH_NOW();
@@ -1008,10 +1024,10 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
 bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     bool ok = true;
-    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
-    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
+    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, m_device.Get());
+    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 64, m_device.Get());
     // 1 slot for imgui
-    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
+    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, m_device.Get(), true);
     return ok;
 }
 
