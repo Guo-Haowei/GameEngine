@@ -3,15 +3,17 @@
 #include "hlsl/input_output.hlsl"
 
 vsoutput_mesh main(vsinput_mesh input) {
-#ifdef HAS_ANIMATION
-    float4x4 boneTransform = c_bones[input.boneIndex.x] * input.boneWeight.x;
-    boneTransform += c_bones[input.boneIndex.y] * input.boneWeight.y;
-    boneTransform += c_bones[input.boneIndex.z] * input.boneWeight.z;
-    boneTransform += c_bones[input.boneIndex.w] * input.boneWeight.w;
-    float4x4 world_matrix = mul(c_worldMatrix, boneTransform);
-#else
-    float4x4 world_matrix = c_worldMatrix;
-#endif
+    float4x4 world_matrix;
+    if (c_hasAnimation == 0) {
+        world_matrix = c_worldMatrix;
+    } else {
+        float4x4 bone_matrix = c_bones[input.boneIndex.x] * input.boneWeight.x;
+        bone_matrix += c_bones[input.boneIndex.y] * input.boneWeight.y;
+        bone_matrix += c_bones[input.boneIndex.z] * input.boneWeight.z;
+        bone_matrix += c_bones[input.boneIndex.w] * input.boneWeight.w;
+        world_matrix = mul(c_worldMatrix, bone_matrix);
+    }
+
     float3x3 rotation = (float3x3)world_matrix;
     float3 T = normalize(mul(rotation, input.tangent));
     float3 N = normalize(mul(rotation, input.normal));

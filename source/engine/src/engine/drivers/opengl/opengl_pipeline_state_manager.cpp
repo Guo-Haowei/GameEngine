@@ -83,18 +83,6 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::ve
 
     bool is_generated = false;
     if (!fs::exists(fullpath)) {
-        auto check_if_animated = [](const std::vector<ShaderMacro> &p_defines) {
-            for (const ShaderMacro &macro : p_defines) {
-                if (StringUtils::StringEqual(macro.name, "HAS_ANIMATION")) {
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        if (p_type == GL_VERTEX_SHADER && check_if_animated(p_defines)) {
-            file = "animated_" + file;
-        }
         fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
 
         is_generated = true;

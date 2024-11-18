@@ -68,13 +68,12 @@ void voxelization_pass_func(const DrawPass*) {
     PassContext& pass = gm.m_voxelPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
+    gm.SetPipelineState(PROGRAM_VOXELIZATION);
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
+        const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
             gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
         }
-
-        gm.SetPipelineState(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
         gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 

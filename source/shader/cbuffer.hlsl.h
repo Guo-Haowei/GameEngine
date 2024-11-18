@@ -67,9 +67,13 @@ struct ForceField {
 
 CBUFFER(PerBatchConstantBuffer, 0) {
     mat4 c_worldMatrix;
-    mat4 _per_batch_padding_0;
-    mat4 _per_batch_padding_1;
-    mat4 _per_batch_padding_2;
+    vec3 _per_batch_padding_0;
+    int c_hasAnimation;
+    vec4 _per_batch_padding_1;
+    vec4 _per_batch_padding_2;
+    vec4 _per_batch_padding_3;
+    mat4 _per_batch_padding_4;
+    mat4 _per_batch_padding_5;
 };
 
 CBUFFER(PerPassConstantBuffer, 1) {

@@ -13,15 +13,15 @@ spriv_cross_path = os.path.join(project_dir, 'bin/spirv-cross')
 output_spv = 'tmp.spv'
 
 input_shaders = [
-    { 'path': 'shadowmap_point.vert', 'animated': True, },
-    { 'path': 'shadowmap_point.pixel', 'animated': False, },
-    { 'path': 'bloom_setup.comp', 'animated': False, },
-    { 'path': 'bloom_downsample.comp', 'animated': False, },
-    { 'path': 'bloom_upsample.comp', 'animated': False, },
-    { 'path': 'particle_initialization.comp', 'animated': False, },
-    { 'path': 'particle_kickoff.comp', 'animated': False, },
-    { 'path': 'particle_emission.comp', 'animated': False, },
-    { 'path': 'particle_simulation.comp', 'animated': False, },
+    'shadowmap_point.vert',
+    'shadowmap_point.pixel',
+    'bloom_setup.comp',
+    'bloom_downsample.comp',
+    'bloom_upsample.comp',
+    'particle_initialization.comp',
+    'particle_kickoff.comp',
+    'particle_emission.comp',
+    'particle_simulation.comp',
 ]
 
 def insert_file_name(file_path):
@@ -39,7 +39,7 @@ def insert_file_name(file_path):
 
     return
 
-def generate(hlsl_source, animated):
+def generate(hlsl_source):
     full_input_path = os.path.join(
         project_dir,
         f'source/shader/hlsl/{hlsl_source}.hlsl')
@@ -62,12 +62,6 @@ def generate(hlsl_source, animated):
 
     spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1', '-D HLSL_LANG_D3D11=1']
     generate_files = [ { 'filename': glsl_file, 'command' : spv_command } ]
-    if animated:
-        new_command = spv_command + ['-D HAS_ANIMATION=1']
-        if not hlsl_source.endswith('.vert'):
-            raise RuntimeError(f'"{full_input_path}" is not vertex shader')
-        new_path = f'source/shader/glsl_generated/animated_{hlsl_source}.glsl'
-        generate_files.append({ 'filename': new_path, 'command': new_command })
 
     for generate_file in generate_files:
         generated_file_name = generate_file['filename']
@@ -93,8 +87,8 @@ def func_generate_files():
     # remove generated path
     delete_and_create_folder(generated_dir)
 
-    for l in input_shaders:
-        generate(l['path'], l['animated'])
+    for file in input_shaders:
+        generate(file)
 
 def func_insert_names():
     for root, _, files in os.walk('source/shader', topdown=False):

@@ -32,13 +32,12 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     PassContext& pass = gm.m_mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
+    gm.SetPipelineState(PROGRAM_GBUFFER);
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
+        const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
             gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
         }
-
-        gm.SetPipelineState(has_bone ? PROGRAM_GBUFFER_ANIMATED : PROGRAM_GBUFFER_STATIC);
 
         if (draw.flags) {
             gm.SetStencilRef(draw.flags);
@@ -148,13 +147,12 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass, int p_pass_id) {
 
         gm.SetViewport(Viewport(width, height));
 
+        gm.SetPipelineState(PROGRAM_POINT_SHADOW);
         for (const auto& draw : pass.draws) {
-            bool has_bone = draw.bone_idx >= 0;
+            const bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
                 gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
             }
-
-            gm.SetPipelineState(has_bone ? PROGRAM_POINT_SHADOW_ANIMATED : PROGRAM_POINT_SHADOW_STATIC);
 
             gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 
@@ -181,14 +179,12 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     PassContext& pass = gm.m_shadowPasses[0];
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
+    gm.SetPipelineState(PROGRAM_DPETH);
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
+        const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
             gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
         }
-
-        // @TODO: sort the objects so there's no need to switch pipeline
-        gm.SetPipelineState(has_bone ? PROGRAM_DPETH_ANIMATED : PROGRAM_DPETH_STATIC);
 
         gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 
