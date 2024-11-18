@@ -7,7 +7,7 @@ TEST(file_access_unix, open_read_fail) {
 
     auto err = FileAccess::Open("file_access_unix_open_read_fail", FileAccess::READ).error();
     EXPECT_EQ(err.GetValue(), ERR_FILE_NOT_FOUND);
-    EXPECT_EQ(err.GetMessage(), "error code: 7");
+    EXPECT_EQ(err.GetMessage(), "error code: ERR_FILE_NOT_FOUND");
 }
 
 TEST(file_access_unix, open_write_fail) {
