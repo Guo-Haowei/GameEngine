@@ -303,8 +303,9 @@ void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
 
     auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
-    if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
-        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
+    if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
+            CRASH_NOW();
             D3D12_CPU_DESCRIPTOR_HANDLE dsv{ draw_pass->dsvs[p_index] };
             command_list->OMSetRenderTargets(0, nullptr, false, &dsv);
             return;
@@ -774,10 +775,7 @@ void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
-    auto draw_pass = std::make_shared<D3d12DrawPass>();
-    draw_pass->execFunc = p_subpass_desc.execFunc;
-    draw_pass->colorAttachments = p_subpass_desc.colorAttachments;
-    draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
+    auto draw_pass = std::make_shared<D3d12DrawPass>(p_subpass_desc);
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
         auto texture = reinterpret_cast<const D3d12GpuTexture*>(color_attachment.get());
@@ -793,7 +791,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
+    if (auto& depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
         auto texture = reinterpret_cast<const D3d12GpuTexture*>(depth_attachment.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
@@ -827,7 +825,8 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                 m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
                 draw_pass->dsvs.emplace_back(handle.cpuHandle);
             } break;
-            case AttachmentType::SHADOW_CUBE_MAP: {
+            case AttachmentType::SHADOW_CUBE_ARRAY: {
+                CRASH_NOW();
                 for (int face = 0; face < 6; ++face) {
                     D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
                     dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;

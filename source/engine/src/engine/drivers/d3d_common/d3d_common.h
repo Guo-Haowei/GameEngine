@@ -43,6 +43,8 @@ static inline D3D_SRV_DIMENSION ConvertDimension(Dimension p_dimension) {
             return D3D_SRV_DIMENSION_TEXTURE2DARRAY;
         case Dimension::TEXTURE_CUBE:
             return D3D_SRV_DIMENSION_TEXTURECUBE;
+        case Dimension::TEXTURE_CUBE_ARRAY:
+            return D3D_SRV_DIMENSION_TEXTURECUBEARRAY;
         default:
             CRASH_NOW();
             return D3D_SRV_DIMENSION_TEXTURE2D;

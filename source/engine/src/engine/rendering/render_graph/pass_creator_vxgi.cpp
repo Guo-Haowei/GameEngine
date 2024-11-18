@@ -42,10 +42,7 @@ void voxelization_pass_func(const DrawPass*) {
 
     // bind common textures
     bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_pointShadow0Slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_pointShadow1Slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_2, t_pointShadow2Slot, Dimension::TEXTURE_CUBE);
-    bind_slot(RESOURCE_POINT_SHADOW_MAP_3, t_pointShadow3Slot, Dimension::TEXTURE_CUBE);
+    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, t_pointShadowArraySlot, Dimension::TEXTURE_CUBE_ARRAY);
 
     g_albedoVoxel.clear();
     g_normalVoxel.clear();
@@ -102,10 +99,7 @@ void voxelization_pass_func(const DrawPass*) {
 
     // unbind stuff
     gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow0Slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow1Slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow2Slot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow3Slot);
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, t_pointShadowArraySlot);
 
     // @TODO: [SCRUM-28] refactor
     gm.SetRenderTarget(nullptr);
@@ -119,9 +113,8 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
-    auto cube_map = p_draw_pass->colorAttachments[0];
-    const uint32_t width = cube_map->desc.width;
-    const uint32_t height = cube_map->desc.height;
+    auto cube_map = p_draw_pass->desc.colorAttachments[0];
+    auto [width, height] = p_draw_pass->GetBufferSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
@@ -149,8 +142,7 @@ void generate_brdf_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_BRDF);
-    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
-    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
+    auto [width, height] = p_draw_pass->GetBufferSize();
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, width, height);
@@ -164,8 +156,7 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DIFFUSE_IRRADIANCE);
-    const uint32_t width = p_draw_pass->depthAttachment->desc.width;
-    const uint32_t height = p_draw_pass->depthAttachment->desc.height;
+    auto [width, height] = p_draw_pass->GetBufferSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
@@ -188,8 +179,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
     }
 
     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_PREFILTER);
-    uint32_t width = p_draw_pass->depthAttachment->desc.width;
-    uint32_t height = p_draw_pass->depthAttachment->desc.height;
+    auto [width, height] = p_draw_pass->GetBufferSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
     auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
@@ -216,9 +206,7 @@ static void highlight_select_pass_func(const DrawPass* p_draw_pass) {
 
     auto& manager = GraphicsManager::GetSingleton();
     manager.SetRenderTarget(p_draw_pass);
-    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
-    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
-    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
+    auto [width, height] = p_draw_pass->GetBufferSize();
 
     glViewport(0, 0, width, height);
 
@@ -234,10 +222,8 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_draw_pass);
-    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
-    auto depth_buffer = p_draw_pass->depthAttachment;
-    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
-    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
+    auto depth_buffer = p_draw_pass->desc.depthAttachment;
+    auto [width, height] = p_draw_pass->GetBufferSize();
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -275,9 +261,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
-    DEV_ASSERT(!p_draw_pass->colorAttachments.empty());
-    const uint32_t width = p_draw_pass->colorAttachments[0]->desc.width;
-    const uint32_t height = p_draw_pass->colorAttachments[0]->desc.height;
+    auto [width, height] = p_draw_pass->GetBufferSize();
 
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -327,7 +311,7 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
         auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_texture_desc = BuildDefaultTextureDesc(cube_map_name,
                                                              PixelFormat::R16G16B16_FLOAT,
-                                                             AttachmentType::COLOR_CUBE_MAP,
+                                                             AttachmentType::COLOR_CUBE,
                                                              size, size);
             cube_texture_desc.miscFlags |= gen_mipmap ? RESOURCE_MISC_GENERATE_MIPS : RESOURCE_MISC_NONE;
             auto cube_map = manager.CreateGpuTexture(cube_texture_desc, p_sampler);

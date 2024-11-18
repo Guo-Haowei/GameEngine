@@ -17,6 +17,7 @@ enum class Dimension : uint32_t {
     TEXTURE_3D,
     TEXTURE_2D_ARRAY,
     TEXTURE_CUBE,
+    TEXTURE_CUBE_ARRAY,
 };
 
 enum CpuAccessFlags {
@@ -68,11 +69,11 @@ DEFINE_ENUM_BITWISE_OPERATIONS(ResourceMiscFlags)
 enum class AttachmentType {
     NONE = 0,
     COLOR_2D,
-    COLOR_CUBE_MAP,
+    COLOR_CUBE,
     DEPTH_2D,
     DEPTH_STENCIL_2D,
     SHADOW_2D,
-    SHADOW_CUBE_MAP,
+    SHADOW_CUBE_ARRAY,
 };
 
 struct GpuTextureDesc {

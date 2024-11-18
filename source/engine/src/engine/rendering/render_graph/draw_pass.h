@@ -16,9 +16,18 @@ struct DrawPassDesc {
 };
 
 struct DrawPass {
-    DrawPassExecuteFunc execFunc{ nullptr };
-    std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
-    std::shared_ptr<GpuTexture> depthAttachment;
+    DrawPass(const DrawPassDesc& p_desc) : desc(p_desc) {}
+
+    std::tuple<uint32_t, uint32_t> GetBufferSize() const {
+        if (desc.depthAttachment) {
+            return std::make_tuple(desc.depthAttachment->desc.width, desc.depthAttachment->desc.height);
+        }
+
+        DEV_ASSERT(!desc.colorAttachments.empty());
+        return std::make_tuple(desc.colorAttachments[0]->desc.width, desc.colorAttachments[0]->desc.width);
+    }
+
+    DrawPassDesc desc;
 };
 
 }  // namespace my

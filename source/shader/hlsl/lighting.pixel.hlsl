@@ -44,24 +44,7 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     float disk_radius = (1.0 + (view_distance / light_far)) / 100.0;
     float shadow = 0.0;
 
-    float closest_depth = 0.0f;
-    switch (p_light.shadow_map_index) {
-        case 0:
-            closest_depth = t_pointShadow0.Sample(s_shadowSampler, frag_to_light).r;
-            break;
-        case 1:
-            closest_depth = t_pointShadow1.Sample(s_shadowSampler, frag_to_light).r;
-            break;
-        case 2:
-            closest_depth = t_pointShadow2.Sample(s_shadowSampler, frag_to_light).r;
-            break;
-        case 3:
-            closest_depth = t_pointShadow3.Sample(s_shadowSampler, frag_to_light).r;
-            break;
-        default:
-            break;
-    }
-
+    float closest_depth = t_pointShadowArray.Sample(s_shadowSampler, frag_to_light, p_light.shadow_map_index).r;
     closest_depth *= light_far;
     if (current_depth - bias > closest_depth) {
         shadow += 1.0;
@@ -69,7 +52,7 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
 
 #if 0
     for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
-        float closest_depth = t_pointShadow0.Sample(s_shadowSampler, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
+        float closest_depth = t_pointShadowArray.Sample(s_shadowSampler, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
         closest_depth *= light_far;
         if (current_depth - bias > closest_depth) {
             shadow += 1.0;

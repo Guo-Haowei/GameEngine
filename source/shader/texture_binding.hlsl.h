@@ -9,6 +9,7 @@
 #define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) uniform TYPE NAME;
 #define Texture2D                                 sampler2D
 #define TextureCube                               samplerCube
+#define TextureCubeArray                          samplerCubeArray
 #endif
 
 // dynamic srvs
@@ -27,8 +28,5 @@ SHADER_TEXTURE(Texture2D, t_gbufferMaterialMap, 13, RESOURCE_GBUFFER_MATERIAL)
 SHADER_TEXTURE(Texture2D, t_textureLighting, 14, RESOURCE_LIGHTING)
 
 // [SCRUM-34] @TODO: texture cube array
-SHADER_TEXTURE(TextureCube, t_pointShadow0, 21, RESOURCE_NONE)
-SHADER_TEXTURE(TextureCube, t_pointShadow1, 22, RESOURCE_NONE)
-SHADER_TEXTURE(TextureCube, t_pointShadow2, 23, RESOURCE_NONE)
-SHADER_TEXTURE(TextureCube, t_pointShadow3, 24, RESOURCE_NONE)
+SHADER_TEXTURE(TextureCube, t_pointShadowArray, 21, RESOURCE_NONE)
 SHADER_TEXTURE(Texture2D, t_shadowMap, 25, RESOURCE_NONE)

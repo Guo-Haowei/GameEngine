@@ -14,11 +14,11 @@ namespace my::rg {
 void RenderPass::AddDrawPass(std::shared_ptr<DrawPass> p_draw_pass) {
     m_drawPasses.push_back(p_draw_pass);
 
-    for (auto it : p_draw_pass->colorAttachments) {
+    for (auto it : p_draw_pass->desc.colorAttachments) {
         m_outputs.emplace_back(it);
     }
-    if (p_draw_pass->depthAttachment) {
-        m_outputs.emplace_back(p_draw_pass->depthAttachment);
+    if (p_draw_pass->desc.depthAttachment) {
+        m_outputs.emplace_back(p_draw_pass->desc.depthAttachment);
     }
 }
 
@@ -33,7 +33,7 @@ void RenderPass::Execute(GraphicsManager& p_graphics_manager) {
     p_graphics_manager.BeginPass(this);
 
     for (auto& draw_pass : m_drawPasses) {
-        draw_pass->execFunc(draw_pass.get());
+        draw_pass->desc.execFunc(draw_pass.get());
     }
 
     // @TODO: fix this
