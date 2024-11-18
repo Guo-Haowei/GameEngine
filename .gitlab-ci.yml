@@ -2,9 +2,15 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
 stages:
+  - prepare
   - build
   - test
   - deploy
+
+shader_generation_job:
+  stage: prepare
+  script:
+    - python generate_shader.py
 
 build_job:
   stage: build
