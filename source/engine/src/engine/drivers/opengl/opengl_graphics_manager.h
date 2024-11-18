@@ -66,12 +66,12 @@ private:
     RIDAllocator<OpenGlMeshBuffers> m_meshes;
 
     struct {
-        CullMode cull_mode;
-        bool front_counter_clockwise;
-        ComparisonFunc depth_func;
-        bool enable_depth_test;
-        bool enable_stencil_test;
-        uint32_t stencil_func;
+        CullMode cullMode;
+        bool frontCounterClockwise;
+        ComparisonFunc depthFunc;
+        bool enableDepthTest;
+        bool enableStencilTest;
+        uint32_t stencilFunc;
     } m_state_cache;
 };
 

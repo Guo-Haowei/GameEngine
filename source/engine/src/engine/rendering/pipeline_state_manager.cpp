@@ -23,46 +23,45 @@ static const InputLayoutDesc s_input_layout_position = {
     }
 };
 
-// rasterizer states
-static const RasterizerDesc s_default_rasterizer = {
+static const RasterizerDesc s_rasterizerFrontFace = {
     .fillMode = FillMode::SOLID,
     .cullMode = CullMode::BACK,
     .frontCounterClockwise = true,
 };
 
-static const RasterizerDesc s_shadow_rasterizer = {
+static const RasterizerDesc s_rasterizerBackFace = {
     .fillMode = FillMode::SOLID,
     .cullMode = CullMode::FRONT,
     .frontCounterClockwise = true,
 };
 
-static const RasterizerDesc s_cull_none_rasterizer = {
+static const RasterizerDesc s_rasterizerDoubleSided = {
     .fillMode = FillMode::SOLID,
     .cullMode = CullMode::NONE,
     .frontCounterClockwise = true,
 };
 
-static const DepthStencilDesc s_default_depth_stencil = {
+static const DepthStencilDesc s_depthStencilDefault = {
     .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = true,
     .stencilEnabled = false,
 };
 
-static const DepthStencilDesc s_highlight_depth_stencil = {
+static const DepthStencilDesc s_depthStencilHighlight = {
     .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = false,
     .stencilEnabled = true,
     .op = DepthStencilOpDesc::EQUAL,
 };
 
-static const DepthStencilDesc s_gbuffer_depth_stencil = {
+static const DepthStencilDesc s_depthStencilGbuffer = {
     .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = true,
     .stencilEnabled = true,
     .op = DepthStencilOpDesc::Z_PASS,
 };
 
-static const DepthStencilDesc s_no_depth_test = {
+static const DepthStencilDesc s_depthStencilNoTest = {
     .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = false,
     .stencilEnabled = false,
@@ -91,8 +90,8 @@ bool PipelineStateManager::Initialize() {
                    {
                        .vs = "mesh.vert",
                        .ps = "gbuffer.pixel",
-                       .rasterizerDesc = &s_default_rasterizer,
-                       .depthStencilDesc = &s_gbuffer_depth_stencil,
+                       .rasterizerDesc = &s_rasterizerFrontFace,
+                       .depthStencilDesc = &s_depthStencilGbuffer,
                        .inputLayoutDesc = &s_input_layout_mesh,
                        .numRenderTargets = 4,
                        .rtvFormats = { GBUFFER_BASE_COLOR_FORMAT, GBUFFER_POSITION_FORMAT, GBUFFER_NORMAL_FORMAT, GBUFFER_MATERIAL_FORMAT },
@@ -106,29 +105,29 @@ bool PipelineStateManager::Initialize() {
     ok = ok && Create(PROGRAM_LIGHTING, {
                                             .vs = "screenspace_quad.vert",
                                             .ps = "lighting.pixel",
-                                            .rasterizerDesc = &s_default_rasterizer,
-                                            .depthStencilDesc = &s_default_depth_stencil,
+                                            .rasterizerDesc = &s_rasterizerFrontFace,
+                                            .depthStencilDesc = &s_depthStencilDefault,
                                             .inputLayoutDesc = &s_input_layout_position,
                                         });
     ok = ok && Create(PROGRAM_DPETH, {
                                          .vs = "shadow.vert",
                                          .ps = "depth.pixel",
-                                         .rasterizerDesc = &s_shadow_rasterizer,
-                                         .depthStencilDesc = &s_default_depth_stencil,
+                                         .rasterizerDesc = &s_rasterizerBackFace,
+                                         .depthStencilDesc = &s_depthStencilDefault,
                                          .inputLayoutDesc = &s_input_layout_mesh,
                                      });
     ok = ok && Create(PROGRAM_POINT_SHADOW, {
                                                 .vs = "shadowmap_point.vert",
                                                 .ps = "shadowmap_point.pixel",
-                                                .rasterizerDesc = &s_shadow_rasterizer,
-                                                .depthStencilDesc = &s_default_depth_stencil,
+                                                .rasterizerDesc = &s_rasterizerBackFace,
+                                                .depthStencilDesc = &s_depthStencilDefault,
                                                 .inputLayoutDesc = &s_input_layout_mesh,
                                             });
     ok = ok && Create(PROGRAM_TONE, {
                                         .vs = "screenspace_quad.vert",
                                         .ps = "tone.pixel",
-                                        .rasterizerDesc = &s_default_rasterizer,
-                                        .depthStencilDesc = &s_default_depth_stencil,
+                                        .rasterizerDesc = &s_rasterizerFrontFace,
+                                        .depthStencilDesc = &s_depthStencilDefault,
                                         .inputLayoutDesc = &s_input_layout_position,
                                     });
 
@@ -145,8 +144,8 @@ bool PipelineStateManager::Initialize() {
     ok = ok && Create(PROGRAM_PARTICLE_RENDERING, {
                                                       .vs = "particle_draw.vert",
                                                       .ps = "particle_draw.pixel",
-                                                      .rasterizerDesc = &s_default_rasterizer,
-                                                      .depthStencilDesc = &s_default_depth_stencil,
+                                                      .rasterizerDesc = &s_rasterizerFrontFace,
+                                                      .depthStencilDesc = &s_depthStencilDefault,
                                                       .inputLayoutDesc = &s_input_layout_mesh,
                                                   });
 
@@ -157,8 +156,8 @@ bool PipelineStateManager::Initialize() {
     ok = ok && Create(PROGRAM_HIGHLIGHT, {
                                              .vs = "screenspace_quad.vert",
                                              .ps = "highlight.pixel",
-                                             .rasterizerDesc = &s_default_rasterizer,
-                                             .depthStencilDesc = &s_highlight_depth_stencil,
+                                             .rasterizerDesc = &s_rasterizerFrontFace,
+                                             .depthStencilDesc = &s_depthStencilHighlight,
                                          });
 
     // Voxel
@@ -166,59 +165,59 @@ bool PipelineStateManager::Initialize() {
                                                 .vs = "voxelization.vert",
                                                 .ps = "voxelization.pixel",
                                                 .gs = "voxelization.geom",
-                                                .rasterizerDesc = &s_cull_none_rasterizer,
-                                                .depthStencilDesc = &s_no_depth_test,
+                                                .rasterizerDesc = &s_rasterizerDoubleSided,
+                                                .depthStencilDesc = &s_depthStencilNoTest,
                                             });
     ok = ok && Create(PROGRAM_VOXELIZATION_POST, { .cs = "post.comp" });
     ok = ok && Create(PROGRAM_DEBUG_VOXEL, {
                                                .vs = "visualization.vert",
                                                .ps = "visualization.pixel",
-                                               .rasterizerDesc = &s_default_rasterizer,
-                                               .depthStencilDesc = &s_default_depth_stencil,
+                                               .rasterizerDesc = &s_rasterizerFrontFace,
+                                               .depthStencilDesc = &s_depthStencilDefault,
                                            });
 
     // PBR
     ok = ok && Create(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP, {
                                                           .vs = "cube_map.vert",
                                                           .ps = "to_cube_map.pixel",
-                                                          .rasterizerDesc = &s_default_rasterizer,
-                                                          .depthStencilDesc = &s_default_depth_stencil,
+                                                          .rasterizerDesc = &s_rasterizerFrontFace,
+                                                          .depthStencilDesc = &s_depthStencilDefault,
                                                       });
     ok = ok && Create(PROGRAM_DIFFUSE_IRRADIANCE, {
                                                       .vs = "cube_map.vert",
                                                       .ps = "diffuse_irradiance.pixel",
-                                                      .rasterizerDesc = &s_default_rasterizer,
-                                                      .depthStencilDesc = &s_default_depth_stencil,
+                                                      .rasterizerDesc = &s_rasterizerFrontFace,
+                                                      .depthStencilDesc = &s_depthStencilDefault,
                                                   });
     ok = ok && Create(PROGRAM_PREFILTER, {
                                              .vs = "cube_map.vert",
                                              .ps = "prefilter.pixel",
-                                             .rasterizerDesc = &s_default_rasterizer,
-                                             .depthStencilDesc = &s_default_depth_stencil,
+                                             .rasterizerDesc = &s_rasterizerFrontFace,
+                                             .depthStencilDesc = &s_depthStencilDefault,
                                          });
     ok = ok && Create(PROGRAM_ENV_SKYBOX, {
                                               .vs = "skybox.vert",
                                               .ps = "skybox.pixel",
-                                              .rasterizerDesc = &s_default_rasterizer,
-                                              .depthStencilDesc = &s_default_depth_stencil,
+                                              .rasterizerDesc = &s_rasterizerFrontFace,
+                                              .depthStencilDesc = &s_depthStencilDefault,
                                           });
     ok = ok && Create(PROGRAM_BRDF, {
                                         .vs = "screenspace_quad.vert",
                                         .ps = "brdf.pixel",
-                                        .rasterizerDesc = &s_default_rasterizer,
-                                        .depthStencilDesc = &s_no_depth_test,
+                                        .rasterizerDesc = &s_rasterizerFrontFace,
+                                        .depthStencilDesc = &s_depthStencilNoTest,
                                     });
     ok = ok && Create(PROGRAM_IMAGE_2D, {
                                             .vs = "debug_draw_texture.vert",
                                             .ps = "debug_draw_texture.pixel",
-                                            .rasterizerDesc = &s_default_rasterizer,
-                                            .depthStencilDesc = &s_no_depth_test,
+                                            .rasterizerDesc = &s_rasterizerFrontFace,
+                                            .depthStencilDesc = &s_depthStencilNoTest,
                                         });
     ok = ok && Create(PROGRAM_BILLBOARD, {
                                              .vs = "billboard.vert",
                                              .ps = "texture.pixel",
-                                             .rasterizerDesc = &s_cull_none_rasterizer,
-                                             .depthStencilDesc = &s_default_depth_stencil,
+                                             .rasterizerDesc = &s_rasterizerDoubleSided,
+                                             .depthStencilDesc = &s_depthStencilDefault,
                                          });
 
     return ok;

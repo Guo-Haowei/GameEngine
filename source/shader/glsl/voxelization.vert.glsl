@@ -20,7 +20,8 @@ void main() {
 
     vec4 world_position = world_matrix * vec4(in_position, 1.0);
     pass_positions = world_position.xyz;
-    pass_normals = normalize(in_normal);
+    vec3 normal = normalize(in_normal);
+    pass_normals = normalize((world_matrix * vec4(normal, 0.0)).xyz);
     pass_uvs = in_uv;
     gl_Position = world_position;
 }

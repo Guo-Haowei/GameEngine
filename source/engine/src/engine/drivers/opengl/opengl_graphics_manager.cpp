@@ -115,7 +115,7 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
 
     if (pipeline->desc.rasterizerDesc) {
         const auto cull_mode = pipeline->desc.rasterizerDesc->cullMode;
-        if (cull_mode != m_state_cache.cull_mode) {
+        if (cull_mode != m_state_cache.cullMode) {
             switch (cull_mode) {
                 case my::CullMode::NONE:
                     glDisable(GL_CULL_FACE);
@@ -136,45 +136,45 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
                     CRASH_NOW();
                     break;
             }
-            m_state_cache.cull_mode = cull_mode;
+            m_state_cache.cullMode = cull_mode;
         }
 
         const bool front_counter_clockwise = pipeline->desc.rasterizerDesc->frontCounterClockwise;
-        if (front_counter_clockwise != m_state_cache.front_counter_clockwise) {
+        if (front_counter_clockwise != m_state_cache.frontCounterClockwise) {
             glFrontFace(front_counter_clockwise ? GL_CCW : GL_CW);
-            m_state_cache.front_counter_clockwise = front_counter_clockwise;
+            m_state_cache.frontCounterClockwise = front_counter_clockwise;
         }
     }
 
     if (pipeline->desc.depthStencilDesc) {
         {
             const bool enable_depth_test = pipeline->desc.depthStencilDesc->depthEnabled;
-            if (enable_depth_test != m_state_cache.enable_depth_test) {
+            if (enable_depth_test != m_state_cache.enableDepthTest) {
                 if (enable_depth_test) {
                     glEnable(GL_DEPTH_TEST);
                 } else {
                     glDisable(GL_DEPTH_TEST);
                 }
-                m_state_cache.enable_depth_test = enable_depth_test;
+                m_state_cache.enableDepthTest = enable_depth_test;
             }
 
             if (enable_depth_test) {
                 const auto func = pipeline->desc.depthStencilDesc->depthFunc;
-                if (func != m_state_cache.depth_func) {
+                if (func != m_state_cache.depthFunc) {
                     glDepthFunc(gl::ConvertComparisonFunc(func));
-                    m_state_cache.depth_func = func;
+                    m_state_cache.depthFunc = func;
                 }
             }
         }
         {
             const bool enable_stencil_test = pipeline->desc.depthStencilDesc->stencilEnabled;
-            if (enable_stencil_test != m_state_cache.enable_stencil_test) {
+            if (enable_stencil_test != m_state_cache.enableStencilTest) {
                 if (enable_stencil_test) {
                     glEnable(GL_STENCIL_TEST);
                 } else {
                     glDisable(GL_STENCIL_TEST);
                 }
-                m_state_cache.enable_stencil_test = enable_stencil_test;
+                m_state_cache.enableStencilTest = enable_stencil_test;
             }
 
             if (enable_stencil_test) {
@@ -182,17 +182,17 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
                     case DepthStencilOpDesc::ALWAYS:
                         glStencilFunc(GL_ALWAYS, 0, 0xFF);
                         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                        m_state_cache.stencil_func = GL_ALWAYS;
+                        m_state_cache.stencilFunc = GL_ALWAYS;
                         break;
                     case DepthStencilOpDesc::Z_PASS:
                         glStencilFunc(GL_ALWAYS, 0, 0xFF);
                         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-                        m_state_cache.stencil_func = GL_ALWAYS;
+                        m_state_cache.stencilFunc = GL_ALWAYS;
                         break;
                     case DepthStencilOpDesc::EQUAL:
                         glStencilFunc(GL_EQUAL, 0, 0xFF);
                         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                        m_state_cache.stencil_func = GL_EQUAL;
+                        m_state_cache.stencilFunc = GL_EQUAL;
                         break;
                     default:
                         CRASH_NOW();
@@ -552,7 +552,7 @@ std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDe
 }
 
 void OpenGlGraphicsManager::SetStencilRef(uint32_t p_ref) {
-    glStencilFunc(m_state_cache.stencil_func, p_ref, 0xFF);
+    glStencilFunc(m_state_cache.stencilFunc, p_ref, 0xFF);
 }
 
 void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
@@ -608,7 +608,7 @@ void OpenGlGraphicsManager::OnSceneChange(const Scene& p_scene) {
 
 void OpenGlGraphicsManager::CreateGpuResources() {
     // @TODO: appropriate sampler
-    //auto grass_image = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/grass.png" })->Get();
+    // auto grass_image = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/grass.png" })->Get();
 
     // @TODO: move to renderer
     g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
@@ -641,7 +641,7 @@ void OpenGlGraphicsManager::CreateGpuResources() {
     cache.c_voxelMap = MakeTextureResident(g_albedoVoxel.GetHandle());
     cache.c_voxelNormalMap = MakeTextureResident(g_normalVoxel.GetHandle());
 
-    //cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
+    // cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
 
     // @TODO: refactor
     auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {
