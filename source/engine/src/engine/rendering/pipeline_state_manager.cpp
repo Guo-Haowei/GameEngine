@@ -84,26 +84,20 @@ bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
 }
 
 bool PipelineStateManager::Initialize() {
-    const ShaderMacro has_animation = { "HAS_ANIMATION", "1" };
-
     bool ok = true;
 
-    {
-        PipelineStateDesc desc{
-            .vs = "mesh.vert",
-            .ps = "gbuffer.pixel",
-            .rasterizerDesc = &s_default_rasterizer,
-            .depthStencilDesc = &s_gbuffer_depth_stencil,
-            .inputLayoutDesc = &s_input_layout_mesh,
-            .numRenderTargets = 4,
-            .rtvFormats = { GBUFFER_BASE_COLOR_FORMAT, GBUFFER_POSITION_FORMAT, GBUFFER_NORMAL_FORMAT, GBUFFER_MATERIAL_FORMAT },
-            .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
-        };
-
-        ok = ok && Create(PROGRAM_GBUFFER_STATIC, desc);
-        desc.defines = { has_animation };
-        ok = ok && Create(PROGRAM_GBUFFER_ANIMATED, desc);
-    }
+    ok = ok && Create(
+                   PROGRAM_GBUFFER,
+                   {
+                       .vs = "mesh.vert",
+                       .ps = "gbuffer.pixel",
+                       .rasterizerDesc = &s_default_rasterizer,
+                       .depthStencilDesc = &s_gbuffer_depth_stencil,
+                       .inputLayoutDesc = &s_input_layout_mesh,
+                       .numRenderTargets = 4,
+                       .rtvFormats = { GBUFFER_BASE_COLOR_FORMAT, GBUFFER_POSITION_FORMAT, GBUFFER_NORMAL_FORMAT, GBUFFER_MATERIAL_FORMAT },
+                       .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
+                   });
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
@@ -116,36 +110,20 @@ bool PipelineStateManager::Initialize() {
                                             .depthStencilDesc = &s_default_depth_stencil,
                                             .inputLayoutDesc = &s_input_layout_position,
                                         });
-    ok = ok && Create(PROGRAM_DPETH_STATIC, {
-                                                .vs = "shadow.vert",
-                                                .ps = "depth.pixel",
+    ok = ok && Create(PROGRAM_DPETH, {
+                                         .vs = "shadow.vert",
+                                         .ps = "depth.pixel",
+                                         .rasterizerDesc = &s_shadow_rasterizer,
+                                         .depthStencilDesc = &s_default_depth_stencil,
+                                         .inputLayoutDesc = &s_input_layout_mesh,
+                                     });
+    ok = ok && Create(PROGRAM_POINT_SHADOW, {
+                                                .vs = "shadowmap_point.vert",
+                                                .ps = "shadowmap_point.pixel",
                                                 .rasterizerDesc = &s_shadow_rasterizer,
                                                 .depthStencilDesc = &s_default_depth_stencil,
                                                 .inputLayoutDesc = &s_input_layout_mesh,
                                             });
-    ok = ok && Create(PROGRAM_DPETH_ANIMATED, {
-                                                  .vs = "shadow.vert",
-                                                  .ps = "depth.pixel",
-                                                  .defines = { has_animation },
-                                                  .rasterizerDesc = &s_shadow_rasterizer,
-                                                  .depthStencilDesc = &s_default_depth_stencil,
-                                                  .inputLayoutDesc = &s_input_layout_mesh,
-                                              });
-    ok = ok && Create(PROGRAM_POINT_SHADOW_STATIC, {
-                                                       .vs = "shadowmap_point.vert",
-                                                       .ps = "shadowmap_point.pixel",
-                                                       .rasterizerDesc = &s_shadow_rasterizer,
-                                                       .depthStencilDesc = &s_default_depth_stencil,
-                                                       .inputLayoutDesc = &s_input_layout_mesh,
-                                                   });
-    ok = ok && Create(PROGRAM_POINT_SHADOW_ANIMATED, {
-                                                         .vs = "shadowmap_point.vert",
-                                                         .ps = "shadowmap_point.pixel",
-                                                         .defines = { has_animation },
-                                                         .rasterizerDesc = &s_shadow_rasterizer,
-                                                         .depthStencilDesc = &s_default_depth_stencil,
-                                                         .inputLayoutDesc = &s_input_layout_mesh,
-                                                     });
     ok = ok && Create(PROGRAM_TONE, {
                                         .vs = "screenspace_quad.vert",
                                         .ps = "tone.pixel",
@@ -184,21 +162,13 @@ bool PipelineStateManager::Initialize() {
                                          });
 
     // Voxel
-    ok = ok && Create(PROGRAM_VOXELIZATION_STATIC, {
-                                                       .vs = "voxelization.vert",
-                                                       .ps = "voxelization.pixel",
-                                                       .gs = "voxelization.geom",
-                                                       .rasterizerDesc = &s_cull_none_rasterizer,
-                                                       .depthStencilDesc = &s_no_depth_test,
-                                                   });
-    ok = ok && Create(PROGRAM_VOXELIZATION_ANIMATED, {
-                                                         .vs = "voxelization.vert",
-                                                         .ps = "voxelization.pixel",
-                                                         .gs = "voxelization.geom",
-                                                         .defines = { has_animation },
-                                                         .rasterizerDesc = &s_cull_none_rasterizer,
-                                                         .depthStencilDesc = &s_no_depth_test,
-                                                     });
+    ok = ok && Create(PROGRAM_VOXELIZATION, {
+                                                .vs = "voxelization.vert",
+                                                .ps = "voxelization.pixel",
+                                                .gs = "voxelization.geom",
+                                                .rasterizerDesc = &s_cull_none_rasterizer,
+                                                .depthStencilDesc = &s_no_depth_test,
+                                            });
     ok = ok && Create(PROGRAM_VOXELIZATION_POST, { .cs = "post.comp" });
     ok = ok && Create(PROGRAM_DEBUG_VOXEL, {
                                                .vs = "visualization.vert",

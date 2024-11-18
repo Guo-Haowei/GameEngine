@@ -41,11 +41,6 @@ void voxelization_pass_func(const DrawPass*) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_GBUFFER_BASE_COLOR, t_gbufferBaseColorMapSlot);
-    bind_slot(RESOURCE_GBUFFER_POSITION, t_gbufferPositionMapSlot);
-    bind_slot(RESOURCE_GBUFFER_NORMAL, t_gbufferNormalMapSlot);
-    bind_slot(RESOURCE_GBUFFER_MATERIAL, t_gbufferMaterialMapSlot);
-
     bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
     bind_slot(RESOURCE_POINT_SHADOW_MAP_0, t_pointShadow0Slot, Dimension::TEXTURE_CUBE);
     bind_slot(RESOURCE_POINT_SHADOW_MAP_1, t_pointShadow1Slot, Dimension::TEXTURE_CUBE);
@@ -68,13 +63,12 @@ void voxelization_pass_func(const DrawPass*) {
     PassContext& pass = gm.m_voxelPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passUniform.get(), pass.pass_idx);
 
+    gm.SetPipelineState(PROGRAM_VOXELIZATION);
     for (const auto& draw : pass.draws) {
-        bool has_bone = draw.bone_idx >= 0;
+        const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
             gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneUniform.get(), draw.bone_idx);
         }
-
-        gm.SetPipelineState(has_bone ? PROGRAM_VOXELIZATION_ANIMATED : PROGRAM_VOXELIZATION_STATIC);
 
         gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchUniform.get(), draw.batch_idx);
 
@@ -107,10 +101,6 @@ void voxelization_pass_func(const DrawPass*) {
     glEnable(GL_BLEND);
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferBaseColorMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferPositionMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferNormalMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferMaterialMapSlot);
     gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow0Slot);
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, t_pointShadow1Slot);

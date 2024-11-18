@@ -653,6 +653,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
         PerBatchConstantBuffer batch_buffer;
         batch_buffer.c_worldMatrix = world_matrix;
+        batch_buffer.c_hasAnimation = mesh.armatureId.IsValid();
 
         BatchContext draw;
         draw.flags = 0;

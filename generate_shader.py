@@ -5,21 +5,27 @@ import subprocess
 import sys
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
-generated_dir = 'source/shader/glsl_generated'
+generated_dir = os.path.join(project_dir, 'source/shader/glsl_generated')
 
 dxc_path = os.path.join(project_dir, 'bin/dxc')
 spriv_cross_path = os.path.join(project_dir, 'bin/spirv-cross')
 
+output_spv = 'tmp.spv'
+
 input_shaders = [
-    { 'path': 'shadowmap_point.vert', 'animated': True, },
-    { 'path': 'shadowmap_point.pixel', 'animated': False, },
-    { 'path': 'bloom_setup.comp', 'animated': False, },
-    { 'path': 'bloom_downsample.comp', 'animated': False, },
-    { 'path': 'bloom_upsample.comp', 'animated': False, },
-    { 'path': 'particle_initialization.comp', 'animated': False, },
-    { 'path': 'particle_kickoff.comp', 'animated': False, },
-    { 'path': 'particle_emission.comp', 'animated': False, },
-    { 'path': 'particle_simulation.comp', 'animated': False, },
+    'bloom_setup.comp',
+    'bloom_downsample.comp',
+    'bloom_upsample.comp',
+    'depth.pixel',
+    'particle_draw.vert',
+    'particle_draw.pixel',
+    'particle_initialization.comp',
+    'particle_kickoff.comp',
+    'particle_emission.comp',
+    'particle_simulation.comp',
+    'shadowmap_point.vert',
+    'shadowmap_point.pixel',
+    'shadow.vert',
 ]
 
 def insert_file_name(file_path):
@@ -37,8 +43,10 @@ def insert_file_name(file_path):
 
     return
 
-def generate(hlsl_source, animated):
-    full_input_path = f'source/shader/hlsl/{hlsl_source}.hlsl'
+def generate(hlsl_source):
+    full_input_path = os.path.join(
+        project_dir,
+        f'source/shader/hlsl/{hlsl_source}.hlsl')
     # shader model
     shader_model = ''
     if hlsl_source.endswith('.vert'):
@@ -54,23 +62,21 @@ def generate(hlsl_source, animated):
     glsl_file = f'{generated_dir}/{hlsl_source}.glsl'
 
     # generate shader
-    output_spv = 'tmp.spv'
-    include_path = 'source/shader/'
+    include_path = os.path.join(project_dir, 'source/shader/')
 
     spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1', '-D HLSL_LANG_D3D11=1']
     generate_files = [ { 'filename': glsl_file, 'command' : spv_command } ]
-    if animated:
-        new_command = spv_command + ['-D HAS_ANIMATION=1']
-        if not hlsl_source.endswith('.vert'):
-            raise RuntimeError(f'"{full_input_path}" is not vertex shader')
-        new_path = f'source/shader/glsl_generated/animated_{hlsl_source}.glsl'
-        generate_files.append({ 'filename': new_path, 'command': new_command })
 
     for generate_file in generate_files:
         generated_file_name = generate_file['filename']
-        print(f'running: {' '.join(generate_file['command'])}')
-        subprocess.run(generate_file['command'])
-        subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generated_file_name])
+        proc = subprocess.run(generate_file['command'])
+        if (proc.returncode != 0):
+            print(f'running: {' '.join(generate_file['command'])}')
+            raise RuntimeError(f'Failed to generate "{generated_file_name}"')
+        proc = subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generated_file_name])
+        if (proc.returncode != 0):
+            print(f'running: {' '.join(generate_file['command'])}')
+            raise RuntimeError(f'Failed to generate "{generated_file_name}"')
         print(f'file "{generated_file_name}" generated')
         insert_file_name(generated_file_name)
     return
@@ -85,8 +91,8 @@ def func_generate_files():
     # remove generated path
     delete_and_create_folder(generated_dir)
 
-    for l in input_shaders:
-        generate(l['path'], l['animated'])
+    for file in input_shaders:
+        generate(file)
 
 def func_insert_names():
     for root, _, files in os.walk('source/shader', topdown=False):
@@ -99,10 +105,10 @@ def func_insert_names():
 
 try:
     func_generate_files()
-
 except RuntimeError as e:
     print(f'RuntimeError: {e}')
-    sys.exit(1)
+    exit(1)
 finally:
     # delete .spv
-    os.remove('tmp.spv')
+    if (os.path.isfile(output_spv)):
+        os.remove(output_spv)
