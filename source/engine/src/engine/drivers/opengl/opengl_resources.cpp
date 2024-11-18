@@ -11,7 +11,7 @@ void OpenGlGpuTexture::Clear() {
         residentHandle = 0;
     }
 }
-void OpenGlSubpass::Clear() {
+void OpenGlDrawPass::Clear() {
     if (handle) {
         glDeleteFramebuffers(1, &handle);
         handle = 0;

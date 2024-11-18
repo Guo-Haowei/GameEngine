@@ -389,8 +389,8 @@ void OpenGlGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buff
 }
 
 void OpenGlGraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
-    ERR_FAIL_INDEX(p_offset + p_offset, p_buffer->capacity + 1);
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
+    DEV_ASSERT(p_size + p_offset <= buffer->capacity);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->GetSlot(), buffer->handle, p_offset, p_size);
 }
 
@@ -434,6 +434,7 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateGpuTextureImpl(const Gp
                          data_type,
                          p_texture_desc.initialData);
         } break;
+        // @TODO: same
         case GL_TEXTURE_CUBE_MAP: {
             for (int i = 0; i < 6; ++i) {
                 glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -446,6 +447,15 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateGpuTextureImpl(const Gp
                              data_type,
                              p_texture_desc.initialData);
             }
+        } break;
+        case GL_TEXTURE_CUBE_MAP_ARRAY: {
+            glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY,
+                         0,
+                         internal_format,
+                         p_texture_desc.width,
+                         p_texture_desc.height,
+                         p_texture_desc.arraySize,
+                         0, format, data_type, p_texture_desc.initialData);
         } break;
         default:
             CRASH_NOW();
@@ -469,10 +479,7 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateGpuTextureImpl(const Gp
 }
 
 std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDesc& p_desc) {
-    auto draw_pass = std::make_shared<OpenGlSubpass>();
-    draw_pass->execFunc = p_desc.execFunc;
-    draw_pass->colorAttachments = p_desc.colorAttachments;
-    draw_pass->depthAttachment = p_desc.depthAttachment;
+    auto draw_pass = std::make_shared<OpenGlDrawPass>(p_desc);
     GLuint fbo_handle = 0;
 
     const int num_depth_attachment = p_desc.depthAttachment != nullptr;
@@ -506,7 +513,7 @@ std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDe
                                            0                // level
                     );
                 } break;
-                case AttachmentType::COLOR_CUBE_MAP: {
+                case AttachmentType::COLOR_CUBE: {
                 } break;
                 default:
                     CRASH_NOW();
@@ -535,7 +542,8 @@ std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDe
                                        texture_handle,               // texture
                                        0);                           // level
             } break;
-            case AttachmentType::SHADOW_CUBE_MAP: {
+            case AttachmentType::SHADOW_CUBE_ARRAY: {
+                glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture_handle, 0);
             } break;
             default:
                 CRASH_NOW();
@@ -556,7 +564,7 @@ void OpenGlGraphicsManager::SetStencilRef(uint32_t p_ref) {
 }
 
 void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
-    auto draw_pass = reinterpret_cast<const OpenGlSubpass*>(p_draw_pass);
+    auto draw_pass = reinterpret_cast<const OpenGlDrawPass*>(p_draw_pass);
     if (!draw_pass || draw_pass->handle == 0) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         return;
@@ -565,9 +573,9 @@ void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_i
     glBindFramebuffer(GL_FRAMEBUFFER, draw_pass->handle);
 
     // @TODO: bind cube map/texture 2d array
-    if (!draw_pass->colorAttachments.empty()) {
-        const auto resource = draw_pass->colorAttachments[0];
-        if (resource->desc.type == AttachmentType::COLOR_CUBE_MAP) {
+    if (!draw_pass->desc.colorAttachments.empty()) {
+        const auto resource = draw_pass->desc.colorAttachments[0];
+        if (resource->desc.type == AttachmentType::COLOR_CUBE) {
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
                                    GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
@@ -576,13 +584,13 @@ void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_i
         }
     }
 
-    if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
-        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
-            glFramebufferTexture2D(GL_FRAMEBUFFER,
-                                   GL_DEPTH_ATTACHMENT,
-                                   GL_TEXTURE_CUBE_MAP_POSITIVE_X + p_index,
-                                   static_cast<uint32_t>(depth_attachment->GetHandle()),
-                                   p_mip_level);
+    if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
+            glFramebufferTextureLayer(GL_FRAMEBUFFER,
+                                      GL_DEPTH_ATTACHMENT,
+                                      depth_attachment->GetHandle32(),
+                                      0,
+                                      p_index);
         }
     }
 

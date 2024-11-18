@@ -326,9 +326,12 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateGpuTextureImpl(const Gpu
     PixelFormat format = p_texture_desc.format;
     DXGI_FORMAT texture_format = d3d::Convert(format);
     DXGI_FORMAT srv_format = d3d::Convert(format);
-    // @TODO: fix this
+    // @TODO: refactor this
     bool gen_mip_map = p_texture_desc.bindFlags & BIND_SHADER_RESOURCE;
     if (p_texture_desc.dimension == Dimension::TEXTURE_CUBE) {
+        gen_mip_map = false;
+    }
+    if (p_texture_desc.dimension == Dimension::TEXTURE_CUBE_ARRAY) {
         gen_mip_map = false;
     }
 
@@ -378,6 +381,11 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateGpuTextureImpl(const Gpu
         srv_desc.Texture2D.MipLevels = p_texture_desc.mipLevels;
         srv_desc.Texture2D.MostDetailedMip = 0;
 
+        if (srv_desc.ViewDimension == D3D_SRV_DIMENSION_TEXTURECUBEARRAY) {
+            srv_desc.TextureCubeArray.First2DArrayFace = 0;
+            srv_desc.TextureCubeArray.NumCubes = p_texture_desc.arraySize / 6;
+        }
+
         if (gen_mip_map) {
             srv_desc.Texture2D.MipLevels = (UINT)-1;
         }
@@ -415,10 +423,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateGpuTextureImpl(const Gpu
 }
 
 std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
-    auto draw_pass = std::make_shared<D3d11DrawPass>();
-    draw_pass->execFunc = p_subpass_desc.execFunc;
-    draw_pass->colorAttachments = p_subpass_desc.colorAttachments;
-    draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
+    auto draw_pass = std::make_shared<D3d11DrawPass>(p_subpass_desc);
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
         auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment.get());
@@ -434,7 +439,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
+    if (auto& depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
         auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
@@ -467,8 +472,8 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                 D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
                 draw_pass->dsvs.push_back(dsv);
             } break;
-            case AttachmentType::SHADOW_CUBE_MAP: {
-                for (int face = 0; face < 6; ++face) {
+            case AttachmentType::SHADOW_CUBE_ARRAY: {
+                for (uint32_t face = 0; face < depth_attachment->desc.arraySize; ++face) {
                     ComPtr<ID3D11DepthStencilView> dsv;
                     D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
                     dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -495,8 +500,8 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
     DEV_ASSERT(p_draw_pass);
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
-    if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
-        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
+    if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
             ID3D11RenderTargetView* rtv = nullptr;
             m_deviceContext->OMSetRenderTargets(1, &rtv, draw_pass->dsvs[p_index].Get());
             return;

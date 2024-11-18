@@ -9,7 +9,6 @@ struct D3d12MeshBuffers : public MeshBuffers {
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffers[6]{};
     D3D12_VERTEX_BUFFER_VIEW vbvs[6]{};
     Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer;
-    uint32_t indexBufferByte{ 0 };
 };
 
 class D3d12GraphicsManager : public GraphicsManager {

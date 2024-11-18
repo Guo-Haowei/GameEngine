@@ -203,6 +203,8 @@ inline GLenum ConvertDimension(Dimension p_dimension) {
             return GL_TEXTURE_2D_ARRAY;
         case Dimension::TEXTURE_CUBE:
             return GL_TEXTURE_CUBE_MAP;
+        case Dimension::TEXTURE_CUBE_ARRAY:
+            return GL_TEXTURE_CUBE_MAP_ARRAY;
         default:
             CRASH_NOW();
             return GL_TEXTURE_2D;

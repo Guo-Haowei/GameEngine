@@ -10,10 +10,10 @@
 #define MY_TWO_PI 6.283185307179586
 #endif
 
-#define MAX_LIGHT_COUNT             16
-#define MAX_BONE_COUNT              64
-#define MAX_LIGHT_CAST_SHADOW_COUNT 4
-#define LIGHT_SHADOW_MIN_DISTANCE   0.1f
+#define MAX_LIGHT_COUNT              16
+#define MAX_BONE_COUNT               64
+#define MAX_POINT_LIGHT_SHADOW_COUNT 8
+#define LIGHT_SHADOW_MIN_DISTANCE    0.1f
 
 // light type
 #define LIGHT_TYPE_INFINITE 0

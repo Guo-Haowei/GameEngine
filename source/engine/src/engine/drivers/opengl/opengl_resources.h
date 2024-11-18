@@ -24,8 +24,8 @@ struct OpenGlGpuTexture : public GpuTexture {
     uint64_t residentHandle = 0;
 };
 
-struct OpenGlSubpass : public DrawPass {
-    ~OpenGlSubpass() {
+struct OpenGlDrawPass : public DrawPass {
+    ~OpenGlDrawPass() {
         Clear();
     }
 

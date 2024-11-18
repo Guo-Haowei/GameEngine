@@ -165,7 +165,7 @@ void D3d12GraphicsManager::Render() {
     // frameContext->perFrameBuffer->CopyData(&draw_data.frameCB, sizeof(PerFrameConstants));
     // frameContext->perBatchBuffer->CopyData(draw_data.batchConstants.data(), sizeof(PerBatchConstants) * draw_data.batchConstants.size());
 
-    auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
+    const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
     D3D12_RECT sissorRect{};
     sissorRect.left = 0;
     sissorRect.top = 0;
@@ -298,15 +298,16 @@ void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
 
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
-    unused(p_index);
     DEV_ASSERT(p_draw_pass);
 
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
 
     auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
-    if (const auto depth_attachment = draw_pass->depthAttachment; depth_attachment) {
-        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_MAP) {
-            CRASH_NOW_MSG("Implement");
+    if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+        if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
+            CRASH_NOW();
+            D3D12_CPU_DESCRIPTOR_HANDLE dsv{ draw_pass->dsvs[p_index] };
+            command_list->OMSetRenderTargets(0, nullptr, false, &dsv);
             return;
         }
     }
@@ -364,11 +365,10 @@ void D3d12GraphicsManager::EndPass(const RenderPass* p_render_pass) {
 }
 
 void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
-    DEV_ASSERT(p_clear_color);
-
     auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
 
     if (p_flags & CLEAR_COLOR_BIT) {
+        DEV_ASSERT(p_clear_color);
         for (auto& rtv : draw_pass->rtvs) {
             m_graphicsCommandList->ClearRenderTargetView(rtv, p_clear_color, 0, nullptr);
         }
@@ -461,8 +461,8 @@ const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
     INIT_BUFFER(5, p_mesh.weights_0);
 #undef INIT_BUFFER
 
-    mesh_buffers->indexBufferByte = static_cast<uint32_t>(VectorSizeInByte(p_mesh.indices));
-    mesh_buffers->indexBuffer = upload_buffer(mesh_buffers->indexBufferByte, p_mesh.indices.data());
+    mesh_buffers->indexCount = static_cast<uint32_t>(p_mesh.indices.size());
+    mesh_buffers->indexBuffer = upload_buffer(static_cast<uint32_t>(VectorSizeInByte(p_mesh.indices)), p_mesh.indices.data());
 
     p_mesh.gpuResource = mesh_buffers;
     return mesh_buffers;
@@ -474,7 +474,7 @@ void D3d12GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     D3D12_INDEX_BUFFER_VIEW ibv;
     ibv.BufferLocation = mesh->indexBuffer->GetGPUVirtualAddress();
     ibv.Format = DXGI_FORMAT_R32_UINT;
-    ibv.SizeInBytes = mesh->indexBufferByte;
+    ibv.SizeInBytes = mesh->indexCount * sizeof(uint32_t);
 
     m_graphicsCommandList->IASetVertexBuffers(0, array_length(mesh->vbvs), mesh->vbvs);
     m_graphicsCommandList->IASetIndexBuffer(&ibv);
@@ -619,7 +619,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
     texture_desc.Alignment = 0;
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
-    texture_desc.DepthOrArraySize = 1;
+    texture_desc.DepthOrArraySize = static_cast<UINT16>(p_texture_desc.arraySize);
     texture_desc.MipLevels = 1;
     texture_desc.Format = texture_format;
     texture_desc.SampleDesc.Count = 1;
@@ -775,10 +775,7 @@ void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
-    auto draw_pass = std::make_shared<D3d12DrawPass>();
-    draw_pass->execFunc = p_subpass_desc.execFunc;
-    draw_pass->colorAttachments = p_subpass_desc.colorAttachments;
-    draw_pass->depthAttachment = p_subpass_desc.depthAttachment;
+    auto draw_pass = std::make_shared<D3d12DrawPass>(p_subpass_desc);
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
         auto texture = reinterpret_cast<const D3d12GpuTexture*>(color_attachment.get());
@@ -794,7 +791,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    if (auto& depth_attachment = draw_pass->depthAttachment; depth_attachment) {
+    if (auto& depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
         auto texture = reinterpret_cast<const D3d12GpuTexture*>(depth_attachment.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
@@ -820,10 +817,27 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                 draw_pass->dsvs.emplace_back(handle.cpuHandle);
             } break;
             case AttachmentType::SHADOW_2D: {
-                CRASH_NOW();
+                D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+                dsv_desc.Texture2D.MipSlice = 0;
+                auto handle = m_dsvDescHeap.AllocHandle();
+                m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
+                draw_pass->dsvs.emplace_back(handle.cpuHandle);
             } break;
-            case AttachmentType::SHADOW_CUBE_MAP: {
+            case AttachmentType::SHADOW_CUBE_ARRAY: {
                 CRASH_NOW();
+                for (int face = 0; face < 6; ++face) {
+                    D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
+                    dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+                    dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
+                    dsv_desc.Texture2DArray.MipSlice = 0;
+                    dsv_desc.Texture2DArray.ArraySize = 1;
+                    dsv_desc.Texture2DArray.FirstArraySlice = face;
+                    auto handle = m_dsvDescHeap.AllocHandle();
+                    m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
+                    draw_pass->dsvs.emplace_back(handle.cpuHandle);
+                }
             } break;
             default:
                 CRASH_NOW();
@@ -1008,10 +1022,10 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
 bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     bool ok = true;
-    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, m_device.Get());
-    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 16, m_device.Get());
+    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, m_device.Get());
+    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 64, m_device.Get());
     // 1 slot for imgui
-    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100, m_device.Get(), true);
+    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, m_device.Get(), true);
     return ok;
 }
 
@@ -1173,6 +1187,7 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(1);
     root_parameters[param_count++].InitAsConstantBufferView(2);
     root_parameters[param_count++].InitAsConstantBufferView(3);
+    root_parameters[param_count++].InitAsConstantBufferView(4);
     root_parameters[param_count++].InitAsDescriptorTable(tex_count, tex_table);
 
     InitStaticSamplers();
