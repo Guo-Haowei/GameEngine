@@ -5,10 +5,12 @@ import subprocess
 import sys
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
-generated_dir = 'source/shader/glsl_generated'
+generated_dir = os.path.join(project_dir, 'source/shader/glsl_generated')
 
 dxc_path = os.path.join(project_dir, 'bin/dxc')
 spriv_cross_path = os.path.join(project_dir, 'bin/spirv-cross')
+
+output_spv = 'tmp.spv'
 
 input_shaders = [
     { 'path': 'shadowmap_point.vert', 'animated': True, },
@@ -38,7 +40,9 @@ def insert_file_name(file_path):
     return
 
 def generate(hlsl_source, animated):
-    full_input_path = f'source/shader/hlsl/{hlsl_source}.hlsl'
+    full_input_path = os.path.join(
+        project_dir,
+        f'source/shader/hlsl/{hlsl_source}.hlsl')
     # shader model
     shader_model = ''
     if hlsl_source.endswith('.vert'):
@@ -54,8 +58,7 @@ def generate(hlsl_source, animated):
     glsl_file = f'{generated_dir}/{hlsl_source}.glsl'
 
     # generate shader
-    output_spv = 'tmp.spv'
-    include_path = 'source/shader/'
+    include_path = os.path.join(project_dir, 'source/shader/')
 
     spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1', '-D HLSL_LANG_D3D11=1']
     generate_files = [ { 'filename': glsl_file, 'command' : spv_command } ]
@@ -68,9 +71,14 @@ def generate(hlsl_source, animated):
 
     for generate_file in generate_files:
         generated_file_name = generate_file['filename']
-        print(f'running: {' '.join(generate_file['command'])}')
-        subprocess.run(generate_file['command'])
-        subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generated_file_name])
+        proc = subprocess.run(generate_file['command'])
+        if (proc.returncode != 0):
+            print(f'running: {' '.join(generate_file['command'])}')
+            raise RuntimeError(f'Failed to generate "{generated_file_name}"')
+        proc = subprocess.run([spriv_cross_path, output_spv, '--version', '450', '--output', generated_file_name])
+        if (proc.returncode != 0):
+            print(f'running: {' '.join(generate_file['command'])}')
+            raise RuntimeError(f'Failed to generate "{generated_file_name}"')
         print(f'file "{generated_file_name}" generated')
         insert_file_name(generated_file_name)
     return
@@ -102,7 +110,7 @@ try:
 
 except RuntimeError as e:
     print(f'RuntimeError: {e}')
-    sys.exit(1)
 finally:
     # delete .spv
-    os.remove('tmp.spv')
+    if (os.path.isfile(output_spv)):
+        os.remove(output_spv)
