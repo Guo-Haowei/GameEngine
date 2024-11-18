@@ -12,6 +12,10 @@ vsoutput_mesh main(vsinput_mesh input) {
 #else
     float4x4 world_matrix = c_worldMatrix;
 #endif
+    float3x3 rotation = (float3x3)world_matrix;
+    float3 T = normalize(mul(rotation, input.tangent));
+    float3 N = normalize(mul(rotation, input.normal));
+    float3 B = cross(N, T);
 
     float4 position = float4(input.position, 1.0);
     position = mul(world_matrix, position);
@@ -23,8 +27,9 @@ vsoutput_mesh main(vsinput_mesh input) {
     result.position = position;
     result.world_position = world_position;
     // @TODO: fix normal
-    float4 normal4 = mul(world_matrix, float4(input.normal, 0.0));
-    result.normal = normal4.xyz;
+    result.normal = N;
+    result.T = T;
+    result.B = B;
     result.uv = input.uv;
     return result;
 }

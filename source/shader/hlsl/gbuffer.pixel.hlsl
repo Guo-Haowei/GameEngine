@@ -12,7 +12,6 @@ struct ps_output {
 };
 
 ps_output main(vsoutput_mesh input) {
-    float3 N = normalize(input.normal);
     float4 color = c_baseColor;
 
     if (c_hasBaseColorMap) {
@@ -27,12 +26,24 @@ ps_output main(vsoutput_mesh input) {
     float roughness;
 
     if (c_hasPbrMap != 0) {
-        float3 value = t_materialMap.Sample(s_linearMipWrapSampler, input.uv);
+        float3 value = t_materialMap.Sample(s_linearMipWrapSampler, input.uv).rgb;
         metallic = value.b;
         roughness = value.g;
     } else {
         metallic = c_metallic;
         roughness = c_roughness;
+    }
+
+    float3 N;
+    if (c_hasNormalMap != 0) {
+        float3x3 TBN;
+        TBN[0] = input.T;
+        TBN[1] = input.B;
+        TBN[2] = input.normal;
+        float3 value = t_normalMap.Sample(s_linearMipWrapSampler, input.uv).rgb;
+        N = normalize(mul((2.0f * value) - 1.0f, TBN));
+    } else {
+        N = normalize(input.normal);
     }
 
     ps_output output;

@@ -266,6 +266,9 @@ void D3d12GraphicsManager::BeginFrame() {
     m_backbufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 
     m_graphicsCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
+    m_graphicsCommandList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -745,25 +748,30 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
 
 void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     unused(p_dimension);
-    unused(p_handle);
-    unused(p_slot);
 
-    CRASH_NOW();
+    if (!p_handle) {
+        return;
+    }
 
-    // m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
-    //     SRV_DESCRIPTOR_OFFSET + p_slot,
-    //     D3D12_GPU_DESCRIPTOR_HANDLE{ p_handle });
+    if (p_slot >= 1) {
+        return;
+    }
+
+    DEV_ASSERT(p_slot <= 3);
+    m_graphicsCommandList->SetGraphicsRootDescriptorTable(
+        4 + p_slot,
+        D3D12_GPU_DESCRIPTOR_HANDLE{ p_handle });
 }
 
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
     unused(p_slot);
 
-    CRASH_NOW();
+    DEV_ASSERT(p_slot <= 3);
 
-    // m_graphicsContext.m_commandList->SetGraphicsRootDescriptorTable(
-    //     SRV_DESCRIPTOR_OFFSET + p_slot,
-    //     D3D12_GPU_DESCRIPTOR_HANDLE{ 0 });
+    m_graphicsCommandList->SetGraphicsRootDescriptorTable(
+        4 + p_slot,
+        D3D12_GPU_DESCRIPTOR_HANDLE{ 0 });
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
@@ -1165,7 +1173,7 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(1);
     root_parameters[param_count++].InitAsConstantBufferView(2);
     root_parameters[param_count++].InitAsConstantBufferView(3);
-    root_parameters[param_count++].InitAsDescriptorTable(tex_count, tex_table, D3D12_SHADER_VISIBILITY_PIXEL);
+    root_parameters[param_count++].InitAsDescriptorTable(tex_count, tex_table);
 
     InitStaticSamplers();
 
