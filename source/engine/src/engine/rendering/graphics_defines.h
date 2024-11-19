@@ -2,12 +2,20 @@
 
 namespace my {
 
+// clang-format off
+#define BACKEND_LIST                       \
+    BACKEND_DECLARE(EMPTY,  "None")        \
+    BACKEND_DECLARE(OPENGL, "OpenGL")      \
+    BACKEND_DECLARE(D3D11,  "Direct3D 11") \
+    BACKEND_DECLARE(D3D12,  "Direct3D 12") \
+    BACKEND_DECLARE(VULKAN, "Vulkan")      \
+    BACKEND_DECLARE(METAL,  "Metal")
+// clang-format on
+
 enum class Backend : uint8_t {
-    EMPTY,
-    OPENGL,
-    D3D11,
-    D3D12,
-    METAL,
+#define BACKEND_DECLARE(ENUM, STR) ENUM,
+    BACKEND_LIST
+#undef BACKEND_DECLARE
 };
 
 enum ClearFlags : uint32_t {
