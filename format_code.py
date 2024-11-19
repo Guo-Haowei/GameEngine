@@ -1,9 +1,12 @@
 import os
 import re
 import subprocess
+import platform
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 clang_format_path = os.path.join(project_dir, 'bin/clang-format')
+if platform.system() == 'Darwin':
+    clang_format_path = 'clang-format'
 
 skip_patterns = [
     'stb_image.h'
@@ -12,7 +15,7 @@ skip_patterns = [
 def need_format(file):
     # choose files
     _, file_ext = os.path.splitext(file)
-    if not (file_ext in ['.hpp', '.cpp', '.h', '.c', '.hlsl']):
+    if not (file_ext in ['.hpp', '.cpp', '.h', '.c', '.hlsl', '.mm', '.m']):
         return False
 
     # white list

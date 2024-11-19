@@ -3,6 +3,7 @@
 
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
+#include "core/input/input_code.h"
 
 namespace my {
 
@@ -29,6 +30,8 @@ protected:
     struct {
         int x, y;
     } m_frameSize, m_windowPos;
+
+    std::unordered_map<int, KeyCode> m_keyMapping;
 };
 
 }  // namespace my

@@ -21,8 +21,7 @@ void push_alive_index(uint p_index) {
     GlobalAliveIndicesPreSim[insert_index] = p_index;
 }
 
-[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id
-                                                  : SV_DISPATCHTHREADID) {
+[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     uint index = dispatch_thread_id.x;
 
     if (index < GlobalParticleCounter[0].emissionCount) {

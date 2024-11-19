@@ -1,5 +1,6 @@
 #pragma once
 #include "core/framework/graphics_manager.h"
+#include "empty_pipeline_state_manager.h"
 
 namespace my {
 
@@ -8,7 +9,11 @@ WARNING_DISABLE(4100, "-Wunused-parameter")
 
 class EmptyGraphicsManager : public GraphicsManager {
 public:
-    EmptyGraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count) : GraphicsManager(p_name, p_backend, p_frame_count) {}
+    EmptyGraphicsManager(std::string_view p_name,
+                         Backend p_backend,
+                         int p_frame_count) : GraphicsManager(p_name, p_backend, p_frame_count) {
+        m_pipelineStateManager = std::make_shared<EmptyPipelineStateManager>();
+    }
 
     void Finalize() override {}
 

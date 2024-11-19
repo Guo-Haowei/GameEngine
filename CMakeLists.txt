@@ -3,6 +3,10 @@ project(GameEngine)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
 
+if(APPLE)
+    enable_language(OBJCXX)
+endif()
+
 message("***********************************************************************")
 message(STATUS "CMAKE_CXX_COMPILER_ID   : ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")

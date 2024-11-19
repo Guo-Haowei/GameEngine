@@ -84,6 +84,9 @@ bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
 
 bool PipelineStateManager::Initialize() {
     bool ok = true;
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::METAL) {
+        return ok;
+    }
 
     ok = ok && Create(
                    PROGRAM_GBUFFER,
