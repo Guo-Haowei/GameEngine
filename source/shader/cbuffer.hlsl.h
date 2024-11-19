@@ -18,11 +18,13 @@ struct ConstantBufferBase {
 #define CBUFFER(NAME, REG) \
     struct NAME : public ConstantBufferBase<NAME, REG>
 
+// @TODO: refactor
+using TextureHandle = uint64_t;
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
 using samplerCube = uint64_t;
 
-using TextureHandle = uint64_t;
+using uint = uint32_t;
 
 // @TODO: remove this constraint
 #elif defined(HLSL_LANG)
@@ -93,17 +95,20 @@ CBUFFER(MaterialConstantBuffer, 2) {
     float c_emissivePower;
 
     int c_hasBaseColorMap;
-    int c_hasPbrMap;
+    int c_hasMaterialMap;
     int c_hasNormalMap;
     int c_hasHeightMap;
 
-    TextureHandle t_baseColorMap_handle;
-    TextureHandle t_normalMap_handle;
+    uint c_baseColorMapIndex;
+    uint c_normalMapIndex;
+    uint c_materialMapIndex;
+    uint c_heightMapIndex;
 
-    TextureHandle t_materialMap_handle;
-    TextureHandle u_height_map_handle;
+    TextureHandle c_baseColorMapHandle;
+    TextureHandle c_normalMapHandle;
+    TextureHandle c_materialMapHandle;
+    TextureHandle c_heightMapHandle;
 
-    vec4 _material_padding_0;
     vec4 _material_padding_1;
     vec4 _material_padding_2;
     mat4 _material_padding_3;

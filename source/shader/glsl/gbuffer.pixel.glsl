@@ -27,7 +27,7 @@ void main() {
 
     float metallic = c_metallic;
     float roughness = c_roughness;
-    if (c_hasPbrMap != 0) {
+    if (c_hasMaterialMap != 0) {
         vec3 mr = texture(t_materialMap, ps_in.uv).rgb;
         metallic = mr.b;
         roughness = mr.g;

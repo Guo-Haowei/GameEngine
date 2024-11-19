@@ -14,8 +14,8 @@ namespace my {
 struct D3d11GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
-    uint64_t GetResidentHandle() const override { return 0; }
-    uint64_t GetHandle() const override { return (uint64_t)srv.Get(); }
+    uint64_t GetResidentHandle() const final { return 0; }
+    uint64_t GetHandle() const final { return (uint64_t)srv.Get(); }
 
     Microsoft::WRL::ComPtr<ID3D11Resource> texture;
 

@@ -17,8 +17,8 @@ namespace my {
 struct D3d12GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
-    uint64_t GetResidentHandle() const override { return 0; }
-    uint64_t GetHandle() const override { return gpuHandle; }
+    uint64_t GetResidentHandle() const final { return static_cast<uint64_t>(index); }
+    uint64_t GetHandle() const final { return gpuHandle; }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> texture;
     int index{ -1 };
@@ -266,6 +266,8 @@ void D3d12GraphicsManager::BeginFrame() {
 
     ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
     m_graphicsCommandList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
+    // @TODO: fix this hard code shit
+    m_graphicsCommandList->SetGraphicsRootDescriptorTable(5, m_srvDescHeap.GetStartGpu());
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -745,30 +747,13 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
 
 void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     unused(p_dimension);
-
-    if (!p_handle) {
-        return;
-    }
-
-    if (p_slot >= 1) {
-        return;
-    }
-
-    DEV_ASSERT(p_slot <= 3);
-    m_graphicsCommandList->SetGraphicsRootDescriptorTable(
-        4 + p_slot,
-        D3D12_GPU_DESCRIPTOR_HANDLE{ p_handle });
+    unused(p_handle);
+    unused(p_slot);
 }
 
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
     unused(p_slot);
-
-    DEV_ASSERT(p_slot <= 3);
-
-    m_graphicsCommandList->SetGraphicsRootDescriptorTable(
-        4 + p_slot,
-        D3D12_GPU_DESCRIPTOR_HANDLE{ 0 });
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
@@ -1138,55 +1123,23 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 }
 
 bool D3d12GraphicsManager::CreateRootSignature() {
-// Create a root signature consisting of a descriptor table with a single CBV.
-#if 0
-    D3D12_ROOT_PARAMETER rootParameters[2];
-    D3D12_DESCRIPTOR_RANGE textureRange{};
-    textureRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;  // Shader Resource View (SRV)
-    textureRange.NumDescriptors = 32;                          // 10 textures
-    textureRange.BaseShaderRegister = 0;                       // Starting at register t0 (for example)
-    textureRange.RegisterSpace = 0;                            // Space 0
-    textureRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+    // Create a root signature consisting of a descriptor table with a single CBV.
 
-    rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    rootParameters[0].DescriptorTable.NumDescriptorRanges = 1;
-    rootParameters[0].DescriptorTable.pDescriptorRanges = &textureRange;
-    rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+    CD3DX12_DESCRIPTOR_RANGE tex_table;
+    tex_table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                   128,  // number of descriptors
+                   0);   // register t0
 
-    D3D12_DESCRIPTOR_RANGE constantBufferRange{};
-    constantBufferRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;  // Constant Buffer View (CBV)
-    constantBufferRange.NumDescriptors = 32;                          // 4 constant buffers
-    constantBufferRange.BaseShaderRegister = 0;                       // Starting at register b0 (for example)
-    constantBufferRange.RegisterSpace = 0;                            // Space 0
-    constantBufferRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-
-    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-    rootParameters[1].DescriptorTable.NumDescriptorRanges = 1;
-    rootParameters[1].DescriptorTable.pDescriptorRanges = &constantBufferRange;
-    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-#endif
-
-    // Define the root signature
-    // D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc = {};
-    // rootSignatureDesc.NumParameters = 2;
-    // rootSignatureDesc.pParameters = rootParameters;
-    // rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
-
-    CD3DX12_DESCRIPTOR_RANGE tex_table[64];
-    int tex_count = 0;
-
-#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) tex_table[tex_count++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, SLOT);
-#include "texture_binding.hlsl.h"
-#undef SHADER_TEXTURE
-
-    CD3DX12_ROOT_PARAMETER root_parameters[64]{};
+    // TODO: Order from most frequent to least frequent.
+    CD3DX12_ROOT_PARAMETER root_parameters[16]{};
     int param_count = 0;
     root_parameters[param_count++].InitAsConstantBufferView(0);
     root_parameters[param_count++].InitAsConstantBufferView(1);
     root_parameters[param_count++].InitAsConstantBufferView(2);
     root_parameters[param_count++].InitAsConstantBufferView(3);
     root_parameters[param_count++].InitAsConstantBufferView(4);
-    root_parameters[param_count++].InitAsDescriptorTable(tex_count, tex_table);
+
+    root_parameters[param_count++].InitAsDescriptorTable(1, &tex_table);
 
     InitStaticSamplers();
 

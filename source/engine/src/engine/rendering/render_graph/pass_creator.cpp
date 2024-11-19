@@ -49,9 +49,9 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
         for (const auto& subset : draw.subsets) {
             const MaterialConstantBuffer& material = gm.GetCurrentFrame().materialCache.buffer[subset.material_idx];
-            gm.BindTexture(Dimension::TEXTURE_2D, material.t_baseColorMap_handle, t_baseColorMapSlot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.t_normalMap_handle, t_normalMapSlot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.t_materialMap_handle, t_materialMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, t_baseColorMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, t_normalMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, t_materialMapSlot);
 
             gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
 

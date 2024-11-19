@@ -311,8 +311,11 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
     cb.c_roughness = material->roughness;
     cb.c_emissivePower = material->emissive;
 
-    auto set_texture = [&](int p_idx, sampler2D& p_out_handle) {
+    auto set_texture = [&](int p_idx,
+                           TextureHandle& p_out_handle,
+                           uint& p_out_resident_handle) {
         p_out_handle = 0;
+        p_out_resident_handle = 0;
 
         if (!material->textures[p_idx].enabled) {
             return false;
@@ -334,12 +337,13 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
         }
 
         p_out_handle = texture->GetHandle();
+        p_out_resident_handle = static_cast<uint32_t>(texture->GetResidentHandle());
         return true;
     };
 
-    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.t_baseColorMap_handle);
-    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.t_normalMap_handle);
-    cb.c_hasPbrMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.t_materialMap_handle);
+    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_baseColorMapIndex);
+    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_normalMapIndex);
+    cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_materialMapIndex);
 }
 
 void GraphicsManager::Cleanup() {

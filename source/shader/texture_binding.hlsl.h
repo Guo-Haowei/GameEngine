@@ -12,6 +12,9 @@
 #define TextureCubeArray                          samplerCubeArray
 #endif
 
+#if defined(HLSL_LANG_D3D12)
+Texture2D t_texture2DArray[128] : register(t0);
+#else
 // dynamic srvs
 SHADER_TEXTURE(Texture2D, t_baseColorMap, 0, RESOURCE_NONE)
 SHADER_TEXTURE(Texture2D, t_normalMap, 1, RESOURCE_NONE)
@@ -27,6 +30,6 @@ SHADER_TEXTURE(Texture2D, t_gbufferNormalMap, 12, RESOURCE_GBUFFER_NORMAL)
 SHADER_TEXTURE(Texture2D, t_gbufferMaterialMap, 13, RESOURCE_GBUFFER_MATERIAL)
 SHADER_TEXTURE(Texture2D, t_textureLighting, 14, RESOURCE_LIGHTING)
 
-// [SCRUM-34] @TODO: texture cube array
 SHADER_TEXTURE(TextureCubeArray, t_pointShadowArray, 21, RESOURCE_NONE)
 SHADER_TEXTURE(Texture2D, t_shadowMap, 25, RESOURCE_NONE)
+#endif

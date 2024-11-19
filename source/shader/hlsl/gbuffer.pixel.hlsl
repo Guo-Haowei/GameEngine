@@ -15,7 +15,11 @@ ps_output main(vsoutput_mesh input) {
     float4 color = c_baseColor;
 
     if (c_hasBaseColorMap) {
+#ifdef HLSL_LANG_D3D12
+        color = t_texture2DArray[c_baseColorMapIndex].Sample(s_linearMipWrapSampler, input.uv);
+#else
         color = t_baseColorMap.Sample(s_linearMipWrapSampler, input.uv);
+#endif
     }
 
     if (color.a <= 0.0) {
@@ -25,8 +29,12 @@ ps_output main(vsoutput_mesh input) {
     float metallic;
     float roughness;
 
-    if (c_hasPbrMap != 0) {
+    if (c_hasMaterialMap != 0) {
+#ifdef HLSL_LANG_D3D12
+        float3 value = t_texture2DArray[c_materialMapIndex].Sample(s_linearMipWrapSampler, input.uv).rgb;
+#else
         float3 value = t_materialMap.Sample(s_linearMipWrapSampler, input.uv).rgb;
+#endif
         metallic = value.b;
         roughness = value.g;
     } else {
@@ -40,7 +48,11 @@ ps_output main(vsoutput_mesh input) {
         TBN[0] = input.T;
         TBN[1] = input.B;
         TBN[2] = input.normal;
+#ifdef HLSL_LANG_D3D12
+        float3 value = t_texture2DArray[c_normalMapIndex].Sample(s_linearMipWrapSampler, input.uv).rgb;
+#else
         float3 value = t_normalMap.Sample(s_linearMipWrapSampler, input.uv).rgb;
+#endif
         N = normalize(mul((2.0f * value) - 1.0f, TBN));
     } else {
         N = normalize(input.normal);

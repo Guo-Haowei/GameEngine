@@ -29,7 +29,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     defines.push_back({ nullptr, nullptr });
 
     if (!p_desc.vs.empty()) {
-        auto res = CompileShader(p_desc.vs, "vs_5_0", defines.data());
+        auto res = CompileShader(p_desc.vs, "vs_5_1", defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
             return nullptr;
@@ -37,7 +37,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
         vs_blob = *res;
     }
     if (!p_desc.ps.empty()) {
-        auto res = CompileShader(p_desc.ps, "ps_5_0", defines.data());
+        auto res = CompileShader(p_desc.ps, "ps_5_1", defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.ps, res.error());
             return nullptr;
