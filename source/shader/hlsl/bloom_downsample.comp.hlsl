@@ -4,8 +4,7 @@
 
 RWTexture2D<float3> g_output_image : register(u3);
 
-[numthreads(16, 16, 1)] void main(uint3 dispatch_thread_id
-                                  : SV_DISPATCHTHREADID) {
+[numthreads(16, 16, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     const uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;

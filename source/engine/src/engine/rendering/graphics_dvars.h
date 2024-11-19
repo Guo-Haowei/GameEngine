@@ -3,7 +3,11 @@
 DVAR_IVEC2(resolution, 0, "Frame resolution", 1920, 1080);
 
 // General
+#if USING(PLATFORM_APPLE)
+DVAR_STRING(gfx_backend, 0, "Renderer backend", "metal");
+#else
 DVAR_STRING(gfx_backend, 0, "Renderer backend", "opengl");
+#endif
 DVAR_STRING(gfx_render_graph, 0, "Renderer graph", "vxgi");
 DVAR_BOOL(gfx_gpu_validation, 0, "Enable GPU validation", true);
 

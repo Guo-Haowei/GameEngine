@@ -8,8 +8,7 @@ float rgb_to_luma(float3 rgb) {
     return sqrt(dot(rgb, float3(0.299, 0.587, 0.114)));
 }
 
-[numthreads(16, 16, 1)] void main(uint3 dispatch_thread_id
-                                  : SV_DISPATCHTHREADID) {
+[numthreads(16, 16, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;

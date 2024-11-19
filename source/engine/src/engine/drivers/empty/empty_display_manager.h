@@ -21,7 +21,7 @@ public:
 
 protected:
     bool InitializeWindow() override { return true; }
-    void InitializeKeyMapping() override{};
+    void InitializeKeyMapping() override {};
 };
 
 }  // namespace my

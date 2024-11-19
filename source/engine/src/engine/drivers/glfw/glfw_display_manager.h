@@ -1,6 +1,5 @@
 #pragma once
 #include "core/framework/display_manager.h"
-#include "core/input/input_code.h"
 
 struct GLFWwindow;
 
@@ -22,15 +21,12 @@ private:
     bool InitializeWindow() final;
     void InitializeKeyMapping() final;
 
-    static void cursor_pos_callback(GLFWwindow* window, double x, double y);
-    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-    static void key_callback(GLFWwindow* window, int keycode, int scancode, int action, int mods);
-    static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+    static void CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y);
+    static void MouseButtonCallback(GLFWwindow* p_window, int p_button, int p_action, int p_mods);
+    static void KeyCallback(GLFWwindow* p_window, int p_keycode, int p_scancode, int p_action, int p_mods);
+    static void ScrollCallback(GLFWwindow* p_window, double p_xoffset, double p_yoffset);
 
-    GLFWwindow* m_window = nullptr;
-
-    // @TODO: make it non-static
-    inline static std::unordered_map<int, KeyCode> s_key_mapping;
+    GLFWwindow* m_window{ nullptr };
 };
 
 }  // namespace my

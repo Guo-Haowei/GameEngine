@@ -17,10 +17,10 @@
 /// Platform
 #if defined(WIN32) || defined(_WIN32)
 #define PLATFORM_WINDOWS IN_USE
-#define PLATFORM_MACOS   NOT_IN_USE
+#define PLATFORM_APPLE   NOT_IN_USE
 #elif defined(__APPLE__)
 #define PLATFORM_WINDOWS NOT_IN_USE
-#define PLATFORM_MACOS   IN_USE
+#define PLATFORM_APPLE   IN_USE
 #else
 #error Platform not supported!
 #endif
@@ -38,8 +38,7 @@
 #if defined(_MSC_VER)
 #define WARNING_PUSH()        __pragma(warning(push))
 #define WARNING_POP()         __pragma(warning(pop))
-#define WARNING_DISABLE(a, b) __pragma(warning(disable \
-                                               : a))
+#define WARNING_DISABLE(a, b) __pragma(warning(disable : a))
 #elif defined(__clang__)
 #define WARNING_PUSH()        _Pragma("clang diagnostic push")
 #define WARNING_POP()         _Pragma("clang diagnostic pop")
@@ -52,7 +51,7 @@
 
 #if USING(PLATFORM_WINDOWS)
 #define GENERATE_TRAP() __debugbreak()
-#elif USING(PLATFORM_MACOS)
+#elif USING(PLATFORM_APPLE)
 #define GENERATE_TRAP() __builtin_trap()
 #else
 #error Platform not supported
