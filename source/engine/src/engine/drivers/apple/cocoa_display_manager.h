@@ -3,8 +3,12 @@
 
 namespace my {
 
+class NSWindowWrapperImpl;
+
 class CocoaDisplayManager : public DisplayManager {
 public:
+    CocoaDisplayManager();
+
     void Finalize() final;
 
     bool ShouldClose() final;
@@ -19,8 +23,7 @@ private:
     bool InitializeWindow() final;
     void InitializeKeyMapping() final;
 
-    // @TODO: fix it
-    std::unordered_map<int, KeyCode> m_keyMapping;
+    std::shared_ptr<NSWindowWrapperImpl> m_impl;
 };
 
 }  // namespace my

@@ -1,9 +1,12 @@
 import os
 import re
 import subprocess
+import platform
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
 clang_format_path = os.path.join(project_dir, 'bin/clang-format')
+if platform.system() == 'Darwin':
+    clang_format_path = 'clang-format'
 
 skip_patterns = [
     'stb_image.h'

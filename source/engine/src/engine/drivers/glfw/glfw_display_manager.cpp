@@ -94,7 +94,9 @@ void GlfwDisplayManager::Present() {
 void GlfwDisplayManager::CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y) {
     ImGui_ImplGlfw_CursorPosCallback(p_window, p_x, p_y);
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::SetCursor(static_cast<float>(p_x), static_cast<float>(p_y)); }
+    {
+        input::SetCursor(static_cast<float>(p_x), static_cast<float>(p_y));
+    }
 }
 
 void GlfwDisplayManager::MouseButtonCallback(GLFWwindow* p_window,
@@ -142,7 +144,9 @@ void GlfwDisplayManager::ScrollCallback(GLFWwindow* p_window,
     ImGui_ImplGlfw_ScrollCallback(p_window, p_xoffset, p_yoffset);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::SetWheel(static_cast<float>(p_xoffset), static_cast<float>(p_yoffset)); }
+    {
+        input::SetWheel(static_cast<float>(p_xoffset), static_cast<float>(p_yoffset));
+    }
 }
 
 void GlfwDisplayManager::InitializeKeyMapping() {

@@ -2,8 +2,7 @@
 #include "cbuffer.hlsl.h"
 #include "particle_defines.hlsl.h"
 
-[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id
-                                                  : SV_DISPATCHTHREADID) {
+[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     const uint index = dispatch_thread_id.x;
 
     // @TODO: consider remove this branching

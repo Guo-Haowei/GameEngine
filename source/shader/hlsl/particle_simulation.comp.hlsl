@@ -26,8 +26,7 @@ uint pop_alive_index() {
     return GlobalAliveIndicesPreSim[index - 1];
 }
 
-[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id
-                                                  : SV_DISPATCHTHREADID) {
+[numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     int index = int(dispatch_thread_id.x);
 
     if (index < GlobalParticleCounter[0].simulationCount) {

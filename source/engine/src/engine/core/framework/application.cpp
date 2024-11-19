@@ -149,6 +149,12 @@ int Application::Run(int p_argc, const char** p_argv) {
         dt = glm::min(dt, 0.5f);
         timer.Start();
 
+        // HACK: skip
+        bool skip = USING(PLATFORM_APPLE);
+        if (skip) {
+            continue;
+        }
+
         // to avoid empty renderer crash
         ImGui::NewFrame();
         for (auto& layer : m_layers) {

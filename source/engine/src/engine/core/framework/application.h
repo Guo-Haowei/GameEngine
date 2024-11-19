@@ -18,7 +18,7 @@ class Application {
 public:
     int Run(int p_argc, const char** p_argv);
 
-    virtual void InitLayers(){};
+    virtual void InitLayers() {};
 
     EventQueue& GetEventQueue() { return m_eventQueue; }
 

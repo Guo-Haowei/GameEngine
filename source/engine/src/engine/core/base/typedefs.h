@@ -38,8 +38,7 @@
 #if defined(_MSC_VER)
 #define WARNING_PUSH()        __pragma(warning(push))
 #define WARNING_POP()         __pragma(warning(pop))
-#define WARNING_DISABLE(a, b) __pragma(warning(disable \
-                                               : a))
+#define WARNING_DISABLE(a, b) __pragma(warning(disable : a))
 #elif defined(__clang__)
 #define WARNING_PUSH()        _Pragma("clang diagnostic push")
 #define WARNING_POP()         _Pragma("clang diagnostic pop")

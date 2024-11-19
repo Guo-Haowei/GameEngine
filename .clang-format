@@ -5,10 +5,10 @@ Standard: Cpp11
 UseTab: Never
 IndentWidth: 4
 PointerAlignment: Left
-ReferenceAlignment: Left
+# ReferenceAlignment: Left
 
 AccessModifierOffset: -4
-AllowShortBlocksOnASingleLine: false
+AllowShortBlocksOnASingleLine: true
 # AllowShortCaseLabelsOnASingleLine: true
 # AllowShortFunctionsOnASingleLine: true
 # AllowShortIfStatementsOnASingleLine: false
