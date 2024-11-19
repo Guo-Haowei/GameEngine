@@ -16,17 +16,16 @@ bool DisplayManager::Initialize() {
 
 std::shared_ptr<DisplayManager> DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
-
     if (backend == "opengl") {
         return std::make_shared<GlfwDisplayManager>();
     }
 #if USING(PLATFORM_WINDOWS)
-    else if (backend == "d3d11" || backend == "d3d12") {
-        return std::make_shared<Win32DisplayManager>();
-    }
-#endif
-
+    return std::make_shared<Win32DisplayManager>();
+#elif USING(PLATFORM_APPLE)
     return std::make_shared<EmptyDisplayManager>();
+#else
+    return std::make_shared<EmptyDisplayManager>();
+#endif
 }
 
 }  // namespace my

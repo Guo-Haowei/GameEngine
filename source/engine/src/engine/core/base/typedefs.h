@@ -17,10 +17,10 @@
 /// Platform
 #if defined(WIN32) || defined(_WIN32)
 #define PLATFORM_WINDOWS IN_USE
-#define PLATFORM_MACOS   NOT_IN_USE
+#define PLATFORM_APPLE   NOT_IN_USE
 #elif defined(__APPLE__)
 #define PLATFORM_WINDOWS NOT_IN_USE
-#define PLATFORM_MACOS   IN_USE
+#define PLATFORM_APPLE   IN_USE
 #else
 #error Platform not supported!
 #endif
@@ -52,7 +52,7 @@
 
 #if USING(PLATFORM_WINDOWS)
 #define GENERATE_TRAP() __debugbreak()
-#elif USING(PLATFORM_MACOS)
+#elif USING(PLATFORM_APPLE)
 #define GENERATE_TRAP() __builtin_trap()
 #else
 #error Platform not supported

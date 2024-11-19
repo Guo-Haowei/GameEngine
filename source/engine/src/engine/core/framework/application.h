@@ -29,7 +29,7 @@ private:
     void SaveCommandLine(int p_argc, const char** p_argv);
 
     void RegisterModule(Module* p_module);
-    void SetupModules();
+    [[nodiscard]] ErrorCode SetupModules();
 
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_commandLine;

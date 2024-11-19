@@ -7,6 +7,7 @@ enum class Backend : uint8_t {
     OPENGL,
     D3D11,
     D3D12,
+    METAL,
 };
 
 enum ClearFlags : uint32_t {

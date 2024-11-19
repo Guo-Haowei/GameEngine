@@ -41,18 +41,33 @@ void Application::SaveCommandLine(int p_argc, const char** p_argv) {
 }
 
 void Application::RegisterModule(Module* p_module) {
+    DEV_ASSERT(p_module);
     p_module->m_app = this;
     m_modules.push_back(p_module);
 }
 
-void Application::SetupModules() {
-    m_assetManager = std::make_shared<AssetManager>();
-    m_sceneManager = std::make_shared<SceneManager>();
-    m_physicsManager = std::make_shared<PhysicsManager>();
-    m_imguiModule = std::make_shared<ImGuiModule>();
-    m_displayServer = DisplayManager::Create();
-    m_graphicsManager = GraphicsManager::Create();
-    m_renderManager = std::make_shared<RenderManager>();
+ErrorCode Application::SetupModules() {
+    if (!(m_assetManager = std::make_shared<AssetManager>())){
+        return ERR_CANT_CREATE;
+    }
+    if (!(m_sceneManager = std::make_shared<SceneManager>())){
+        return ERR_CANT_CREATE;
+    }
+    if (!(m_physicsManager = std::make_shared<PhysicsManager>())){
+        return ERR_CANT_CREATE;
+    }
+    if (!(m_imguiModule = std::make_shared<ImGuiModule>())){
+        return ERR_CANT_CREATE;
+    }
+    if (!(m_displayServer = DisplayManager::Create())){
+        return ERR_CANT_CREATE;
+    }
+    if (!(m_graphicsManager = GraphicsManager::Create())){
+        return ERR_CANT_CREATE;
+    }
+    if (!(m_renderManager = std::make_shared<RenderManager>())){
+        return ERR_CANT_CREATE;
+    }
 
     RegisterModule(m_assetManager.get());
     RegisterModule(m_sceneManager.get());
@@ -64,9 +79,12 @@ void Application::SetupModules() {
 
     m_eventQueue.RegisterListener(m_graphicsManager.get());
     m_eventQueue.RegisterListener(m_physicsManager.get());
+
+    return OK;
 }
 
 int Application::Run(int p_argc, const char** p_argv) {
+    ErrorCode ret = OK;
     SaveCommandLine(p_argc, p_argv);
     m_os = std::make_shared<OS>();
 
@@ -79,7 +97,9 @@ int Application::Run(int p_argc, const char** p_argv) {
     DynamicVariableManager::deserialize();
     DynamicVariableManager::Parse(m_commandLine);
 
-    SetupModules();
+    if ((ret = SetupModules()) != OK) {
+        return ret;
+    }
 
     thread::Initialize();
     jobsystem::Initialize();

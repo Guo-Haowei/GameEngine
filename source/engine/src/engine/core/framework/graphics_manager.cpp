@@ -116,17 +116,26 @@ void GraphicsManager::EventReceived(std::shared_ptr<Event> event) {
 std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
 
+#if USING(PLATFORM_APPLE)
+    ERR_FAIL_COND_V_MSG(backend != "metal", nullptr, "only support Metal backend on Apple");
+    return std::make_shared<EmptyGraphicsManager>("MetalGraphicsManager", Backend::METAL, 1);
+#else
+#if USING(PLATFORM_WINDOWS)
+    if (backend == "d3d11") {
+        return std::make_shared<D3d11GraphicsManager>();
+    }
+    if (backend == "d3d12") {
+        return std::make_shared<D3d12GraphicsManager>();
+    }
+#else
+#error Platform not supported
+#endif
     if (backend == "opengl") {
         return std::make_shared<OpenGlGraphicsManager>();
     }
-#if USING(PLATFORM_WINDOWS)
-    else if (backend == "d3d11") {
-        return std::make_shared<D3d11GraphicsManager>();
-    } else if (backend == "d3d12") {
-        return std::make_shared<D3d12GraphicsManager>();
-    }
-#endif
+
     return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsmanager", Backend::EMPTY, 1);
+#endif
 }
 
 void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
@@ -182,7 +191,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         UpdateConstantBuffer(frame.boneCb.get(), frame.boneCache.buffer);
         UpdateConstantBuffer(frame.passCb.get(), frame.passCache);
         UpdateConstantBuffer(frame.emitterCb.get(), frame.emitterCache);
-        UpdateConstantBuffer(frame.pointShadowCb.get(), frame.pointShadowCache);
+        UpdateConstantBuffer<PointShadowConstantBuffer, 6 *MAX_POINT_LIGHT_SHADOW_COUNT >(frame.pointShadowCb.get(), frame.pointShadowCache);
 
         m_renderGraph.Execute(*this);
         Render();
