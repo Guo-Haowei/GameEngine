@@ -18,7 +18,7 @@ protected:
 private:
     bool Create(PipelineStateName p_name, const PipelineStateDesc& p_info);
 
-    std::array<std::shared_ptr<PipelineState>, PIPELINE_STATE_MAX> m_cache;
+    std::array<std::shared_ptr<PipelineState>, PSO_MAX> m_cache;
 };
 
 }  // namespace my

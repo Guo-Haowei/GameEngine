@@ -32,7 +32,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     PassContext& pass = gm.m_mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PROGRAM_GBUFFER);
+    gm.SetPipelineState(PSO_GBUFFER);
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
@@ -71,37 +71,37 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 void RenderPassCreator::AddGBufferPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
-    int p_width = m_config.frameWidth;
-    int p_height = m_config.frameHeight;
+    const int w = m_config.frameWidth;
+    const int h = m_config.frameHeight;
 
     auto gbuffer_depth = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
                                                                        RESOURCE_FORMAT_GBUFFER_DEPTH,
                                                                        AttachmentType::DEPTH_STENCIL_2D,
-                                                                       p_width, p_height),
+                                                                       w, h),
                                                PointClampSampler());
 
     auto attachment0 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
                                                                      RESOURCE_FORMAT_GBUFFER_BASE_COLOR,
                                                                      AttachmentType::COLOR_2D,
-                                                                     p_width, p_height),
+                                                                     w, h),
                                              PointClampSampler());
 
     auto attachment1 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
                                                                      RESOURCE_FORMAT_GBUFFER_POSITION,
                                                                      AttachmentType::COLOR_2D,
-                                                                     p_width, p_height),
+                                                                     w, h),
                                              PointClampSampler());
 
     auto attachment2 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
                                                                      RESOURCE_FORMAT_GBUFFER_NORMAL,
                                                                      AttachmentType::COLOR_2D,
-                                                                     p_width, p_height),
+                                                                     w, h),
                                              PointClampSampler());
 
     auto attachment3 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
                                                                      RESOURCE_FORMAT_GBUFFER_MATERIAL,
                                                                      AttachmentType::COLOR_2D,
-                                                                     p_width, p_height),
+                                                                     w, h),
                                              PointClampSampler());
 
     RenderPassDesc desc;
@@ -111,6 +111,47 @@ void RenderPassCreator::AddGBufferPass() {
         .colorAttachments = { attachment0, attachment1, attachment2, attachment3 },
         .depthAttachment = gbuffer_depth,
         .execFunc = GbufferPassFunc,
+    });
+    pass->AddDrawPass(draw_pass);
+}
+
+static void HighlightPassFunc(const DrawPass* p_draw_pass) {
+    OPTICK_EVENT();
+
+    auto& gm = GraphicsManager::GetSingleton();
+    gm.SetRenderTarget(p_draw_pass);
+    const auto [width, height] = p_draw_pass->GetBufferSize();
+
+    gm.SetViewport(Viewport(width, height));
+
+    gm.SetPipelineState(PSO_HIGHLIGHT);
+    gm.SetStencilRef(STENCIL_FLAG_SELECTED);
+    gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
+    RenderManager::GetSingleton().draw_quad();
+    gm.SetStencilRef(0);
+}
+
+void RenderPassCreator::AddHighlightPass() {
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
+
+    const int w = m_config.frameWidth;
+    const int h = m_config.frameHeight;
+
+    auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
+    auto attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_HIGHLIGHT_SELECT,
+                                                                    PixelFormat::R8_UINT,
+                                                                    AttachmentType::COLOR_2D,
+                                                                    w, h),
+                                            PointClampSampler());
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::HIGHLIGHT_SELECT;
+    desc.dependencies = { RenderPassName::GBUFFER };
+    auto pass = m_graph.CreatePass(desc);
+    auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
+        .colorAttachments = { attachment },
+        .depthAttachment = gbuffer_depth,
+        .execFunc = HighlightPassFunc,
     });
     pass->AddDrawPass(draw_pass);
 }
@@ -141,7 +182,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass) {
 
             gm.SetViewport(Viewport(width, height));
 
-            gm.SetPipelineState(PROGRAM_POINT_SHADOW);
+            gm.SetPipelineState(PSO_POINT_SHADOW);
             for (const auto& draw : pass.draws) {
                 const bool has_bone = draw.bone_idx >= 0;
                 if (has_bone) {
@@ -173,7 +214,7 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
     PassContext& pass = gm.m_shadowPasses[0];
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PROGRAM_DPETH);
+    gm.SetPipelineState(PSO_DPETH);
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
@@ -235,7 +276,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
 
     gm.SetViewport(Viewport(width, height));
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
-    gm.SetPipelineState(PROGRAM_LIGHTING);
+    gm.SetPipelineState(PSO_LIGHTING);
 
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
@@ -262,14 +303,14 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
 
     // if (0) {
     //     // draw billboard grass here for now
-    //     manager.SetPipelineState(PROGRAM_BILLBOARD);
+    //     manager.SetPipelineState(PSO_BILLBOARD);
     //     manager.setMesh(&g_grass);
     //     glDrawElementsInstanced(GL_TRIANGLES, g_grass.index_count, GL_UNSIGNED_INT, 0, 64);
     // }
 
     // @TODO: fix skybox
     // if (gm.GetBackend() == Backend::OPENGL) {
-    //     GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX);
+    //     GraphicsManager::GetSingleton().SetPipelineState(PSO_ENV_SKYBOX);
     //     RenderManager::GetSingleton().draw_skybox();
     // }
 
@@ -337,13 +378,13 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
         gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
         gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
 
-        gm.SetPipelineState(PROGRAM_PARTICLE_KICKOFF);
+        gm.SetPipelineState(PSO_PARTICLE_KICKOFF);
         gm.Dispatch(1, 1, 1);
 
-        gm.SetPipelineState(PROGRAM_PARTICLE_EMIT);
+        gm.SetPipelineState(PSO_PARTICLE_EMIT);
         gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
 
-        gm.SetPipelineState(PROGRAM_PARTICLE_SIM);
+        gm.SetPipelineState(PSO_PARTICLE_SIM);
         gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
 
         gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
@@ -353,7 +394,7 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
         gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
 
         // Renderering
-        gm.SetPipelineState(PROGRAM_PARTICLE_RENDERING);
+        gm.SetPipelineState(PSO_PARTICLE_RENDERING);
 
         gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
         RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
@@ -384,7 +425,7 @@ static void BloomFunc(const DrawPass*) {
 
     // Step 1, select pixels contribute to bloom
     {
-        gm.SetPipelineState(PROGRAM_BLOOM_SETUP);
+        gm.SetPipelineState(PSO_BLOOM_SETUP);
         auto input = gm.FindTexture(RESOURCE_LIGHTING);
         auto output = gm.FindTexture(RESOURCE_BLOOM_0);
 
@@ -401,7 +442,7 @@ static void BloomFunc(const DrawPass*) {
     }
 
     // Step 2, down sampling
-    gm.SetPipelineState(PROGRAM_BLOOM_DOWNSAMPLE);
+    gm.SetPipelineState(PSO_BLOOM_DOWNSAMPLE);
     for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
         auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
@@ -421,7 +462,7 @@ static void BloomFunc(const DrawPass*) {
     }
 
     // Step 3, up sampling
-    gm.SetPipelineState(PROGRAM_BLOOM_UPSAMPLE);
+    gm.SetPipelineState(PSO_BLOOM_UPSAMPLE);
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
         auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
@@ -503,7 +544,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         gm.SetViewport(Viewport(width, height));
         gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
 
-        gm.SetPipelineState(PROGRAM_TONE);
+        gm.SetPipelineState(PSO_TONE);
         RenderManager::GetSingleton().draw_quad();
 
         gm.UnbindTexture(Dimension::TEXTURE_2D, t_textureLightingSlot);
@@ -575,6 +616,7 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
 
     creator.AddShadowPass();
     creator.AddGBufferPass();
+    creator.AddHighlightPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();
     creator.AddBloomPass();

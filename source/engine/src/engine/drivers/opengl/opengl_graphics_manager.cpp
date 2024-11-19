@@ -178,26 +178,28 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             }
 
             if (enable_stencil_test) {
-                switch (pipeline->desc.depthStencilDesc->op) {
-                    case DepthStencilOpDesc::ALWAYS:
-                        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-                        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                        m_state_cache.stencilFunc = GL_ALWAYS;
-                        break;
-                    case DepthStencilOpDesc::Z_PASS:
-                        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-                        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-                        m_state_cache.stencilFunc = GL_ALWAYS;
-                        break;
-                    case DepthStencilOpDesc::EQUAL:
-                        glStencilFunc(GL_EQUAL, 0, 0xFF);
-                        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-                        m_state_cache.stencilFunc = GL_EQUAL;
-                        break;
+                const auto& front = pipeline->desc.depthStencilDesc->frontFace;
+                switch (front.stencilFunc) {
+                    case ComparisonFunc::NEVER:
+                        glStencilFunc(GL_NEVER, 0, 0xFF);
                     default:
                         CRASH_NOW();
                         break;
                 }
+                // @TODO: fix
+                //    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                //    m_state_cache.stencilFunc = GL_ALWAYS;
+                //    break;
+                // case StencilOp::Z_PASS:
+                //    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+                //    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+                //    m_state_cache.stencilFunc = GL_ALWAYS;
+                //    break;
+                // case StencilOp::EQUAL:
+                //    glStencilFunc(GL_EQUAL, 0, 0xFF);
+                //    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+                //    m_state_cache.stencilFunc = GL_EQUAL;
+                //    break;
             }
         }
     }

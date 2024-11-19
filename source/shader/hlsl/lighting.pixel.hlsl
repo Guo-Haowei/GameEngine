@@ -95,7 +95,7 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
 
 struct ps_output {
     float4 color : SV_TARGET;
-    float depth : SV_DEPTH;
+    // float depth : SV_DEPTH;
 };
 
 ps_output main(vsoutput_uv input) {
@@ -103,8 +103,8 @@ ps_output main(vsoutput_uv input) {
 
     float2 texcoord = input.uv;
 
-    output.depth = TEXTURE_2D(gbufferDepth).Sample(s_linearMipWrapSampler, texcoord).r;
-    clip(0.9999 - output.depth);
+    // output.depth = TEXTURE_2D(gbufferDepth).Sample(s_linearMipWrapSampler, texcoord).r;
+    // clip(0.9999 - output.depth);
 
     float3 base_color = TEXTURE_2D(gbufferBaseColorMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
     if (c_noTexture != 0) {

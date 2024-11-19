@@ -471,7 +471,7 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
                 .elementCount = MAX_PARTICLE_COUNT,
             });
 
-            SetPipelineState(PROGRAM_PARTICLE_INIT);
+            SetPipelineState(PSO_PARTICLE_INIT);
 
             BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
             BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());

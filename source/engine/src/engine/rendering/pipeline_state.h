@@ -31,12 +31,25 @@ struct RasterizerDesc {
     bool antialiasedLineEnable = false;
 };
 
-struct DepthStencilDesc {
-    ComparisonFunc depthFunc;
-    bool depthEnabled;
-    bool stencilEnabled;
+constexpr uint8_t DEFAULT_STENCIL_READ_MASK = 0xff;
+constexpr uint8_t DEFAULT_STENCIL_WRITE_MASK = 0xff;
 
-    DepthStencilOpDesc op = DepthStencilOpDesc::ALWAYS;
+struct StencilOpDesc {
+    StencilOp stencilFailOp{ StencilOp::KEEP };
+    StencilOp stencilDepthFailOp{ StencilOp::KEEP };
+    StencilOp stencilPassOp{ StencilOp::KEEP };
+    ComparisonFunc stencilFunc{ ComparisonFunc::ALWAYS };
+};
+
+struct DepthStencilDesc {
+    bool depthEnabled;
+    ComparisonFunc depthFunc;
+
+    bool stencilEnabled;
+    uint8_t stencilReadMask{ DEFAULT_STENCIL_READ_MASK };
+    uint8_t stencilWriteMask{ DEFAULT_STENCIL_WRITE_MASK };
+    StencilOpDesc frontFace{};
+    StencilOpDesc backFace{};
 };
 
 struct ShaderMacro {
@@ -70,34 +83,33 @@ struct PipelineState {
 };
 
 enum PipelineStateName {
-    // @TODO: split render passes to static and dynamic
-    PROGRAM_DPETH,
-    PROGRAM_POINT_SHADOW,
-    PROGRAM_GBUFFER,
-    PROGRAM_VOXELIZATION,
-    PROGRAM_VOXELIZATION_POST,
-    PROGRAM_HIGHLIGHT,
-    PROGRAM_LIGHTING,
-    PROGRAM_BLOOM_SETUP,
-    PROGRAM_BLOOM_DOWNSAMPLE,
-    PROGRAM_BLOOM_UPSAMPLE,
-    PROGRAM_TONE,
-    PROGRAM_DEBUG_VOXEL,
-    PROGRAM_ENV_SKYBOX_TO_CUBE_MAP,
-    PROGRAM_DIFFUSE_IRRADIANCE,
-    PROGRAM_PREFILTER,
-    PROGRAM_ENV_SKYBOX,
-    PROGRAM_BRDF,
-    PROGRAM_BILLBOARD,
-    PROGRAM_IMAGE_2D,
+    PSO_DPETH,
+    PSO_POINT_SHADOW,
+    PSO_GBUFFER,
+    PSO_VOXELIZATION,
+    PSO_VOXELIZATION_POST,
+    PSO_HIGHLIGHT,
+    PSO_LIGHTING,
+    PSO_BLOOM_SETUP,
+    PSO_BLOOM_DOWNSAMPLE,
+    PSO_BLOOM_UPSAMPLE,
+    PSO_TONE,
+    PSO_DEBUG_VOXEL,
+    PSO_ENV_SKYBOX_TO_CUBE_MAP,
+    PSO_DIFFUSE_IRRADIANCE,
+    PSO_PREFILTER,
+    PSO_ENV_SKYBOX,
+    PSO_BRDF,
+    PSO_BILLBOARD,
+    PSO_IMAGE_2D,
 
-    PROGRAM_PARTICLE_INIT,
-    PROGRAM_PARTICLE_KICKOFF,
-    PROGRAM_PARTICLE_EMIT,
-    PROGRAM_PARTICLE_SIM,
-    PROGRAM_PARTICLE_RENDERING,
+    PSO_PARTICLE_INIT,
+    PSO_PARTICLE_KICKOFF,
+    PSO_PARTICLE_EMIT,
+    PSO_PARTICLE_SIM,
+    PSO_PARTICLE_RENDERING,
 
-    PIPELINE_STATE_MAX,
+    PSO_MAX,
 };
 
 }  // namespace my

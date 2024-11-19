@@ -87,6 +87,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     depth_stencil_desc.DepthFunc = d3d::Convert(p_desc.depthStencilDesc->depthFunc);
     depth_stencil_desc.StencilEnable = p_desc.depthStencilDesc->stencilEnabled;
     depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+
     depth_stencil_desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     depth_stencil_desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
     const D3D12_DEPTH_STENCILOP_DESC default_stencil_op = {

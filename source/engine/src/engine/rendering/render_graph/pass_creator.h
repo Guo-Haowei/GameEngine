@@ -33,6 +33,7 @@ public:
 
 private:
     void AddGBufferPass();
+    void AddHighlightPass();
     void AddShadowPass();
     void AddLightingPass();
     void AddEmitterPass();

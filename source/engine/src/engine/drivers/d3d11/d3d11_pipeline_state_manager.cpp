@@ -108,15 +108,17 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
 
         auto it = m_depthStencilStates.find(p_desc.depthStencilDesc);
         if (it == m_depthStencilStates.end()) {
+            const auto& dss = p_desc.depthStencilDesc;
             D3D11_DEPTH_STENCIL_DESC desc{};
-            desc.DepthEnable = p_desc.depthStencilDesc->depthEnabled;
-            desc.DepthFunc = d3d::Convert(p_desc.depthStencilDesc->depthFunc);
+            desc.DepthEnable = dss->depthEnabled;
+            desc.DepthFunc = d3d::Convert(dss->depthFunc);
             desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-            desc.StencilEnable = false;
-            // desc.StencilEnable = p_desc.depthStencilDesc->stencilEnabled;
-            p_device->CreateDepthStencilState(&desc, state.GetAddressOf());
-            D3D_FAIL_V_MSG(hr, nullptr, "failed to create depth stencil state");
-            m_depthStencilStates[p_desc.depthStencilDesc] = state;
+            desc.StencilEnable = dss->stencilEnabled;
+            desc.StencilWriteMask = dss->stencilWriteMask;
+            desc.StencilReadMask = dss->stencilReadMask;
+
+            D3D_FAIL_V(p_device->CreateDepthStencilState(&desc, state.GetAddressOf()), nullptr);
+            m_depthStencilStates[dss] = state;
         } else {
             state = it->second.Get();
         }

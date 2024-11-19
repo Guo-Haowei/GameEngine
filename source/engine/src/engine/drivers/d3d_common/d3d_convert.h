@@ -17,6 +17,7 @@
 #define D3D_COMPARISON_(a)           D3D11_COMPARISON_##a
 #define D3D_FILTER_(a)               D3D11_FILTER_##a
 #define D3D_TEXTURE_ADDRESS_MODE_(a) D3D11_TEXTURE_ADDRESS_##a
+#define D3D_STENCIL_OP_(a)           D3D11_STENCIL_OP_##a
 #elif defined(INCLUDE_AS_D3D12)
 #include <d3d12.h>
 #define D3D_(a)                      D3D12_##a
@@ -26,6 +27,7 @@
 #define D3D_COMPARISON_(a)           D3D12_COMPARISON_FUNC_##a
 #define D3D_FILTER_(a)               D3D12_FILTER_##a
 #define D3D_TEXTURE_ADDRESS_MODE_(a) D3D12_TEXTURE_ADDRESS_MODE_##a
+#define D3D_STENCIL_OP_(a)           D3D12_STENCIL_OP_##a
 #else
 #error "Unknown API"
 #endif
@@ -42,6 +44,7 @@ using D3D_DEPTH_WRITE_MASK = D3D_(DEPTH_WRITE_MASK);
 using D3D_COMPARISON_FUNC = D3D_(COMPARISON_FUNC);
 using D3D_FILTER = D3D_(FILTER);
 using D3D_TEXTURE_ADDRESS_MODE = D3D_(TEXTURE_ADDRESS_MODE);
+using D3D_STENCIL_OP = D3D_(STENCIL_OP);
 
 static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
@@ -132,26 +135,19 @@ static inline D3D_CULL_MODE Convert(CullMode p_cull_mode) {
 
 static inline D3D_COMPARISON_FUNC Convert(ComparisonFunc p_func) {
     switch (p_func) {
-        case ComparisonFunc::NEVER:
+#define COMPARISON_FUNC_ENUM(ENUM, VALUE) \
+    case ComparisonFunc::ENUM:            \
+        return D3D_COMPARISON_(ENUM);
+        COMPARISON_FUNC_ENUM_LIST
+#undef COMPARISON_FUNC_ENUM
+        default:
+            CRASH_NOW();
             return D3D_COMPARISON_(NEVER);
-        case ComparisonFunc::LESS:
-            return D3D_COMPARISON_(LESS);
-        case ComparisonFunc::EQUAL:
-            return D3D_COMPARISON_(EQUAL);
-        case ComparisonFunc::LESS_EQUAL:
-            return D3D_COMPARISON_(LESS_EQUAL);
-        case ComparisonFunc::GREATER:
-            return D3D_COMPARISON_(GREATER);
-        case ComparisonFunc::GREATER_EQUAL:
-            return D3D_COMPARISON_(GREATER_EQUAL);
-        case ComparisonFunc::ALWAYS:
-            return D3D_COMPARISON_(ALWAYS);
     }
-    return D3D_COMPARISON_(NEVER);
 }
 
-static inline D3D_TEXTURE_ADDRESS_MODE Convert(AddressMode texture_address_mode) {
-    switch (texture_address_mode) {
+static inline D3D_TEXTURE_ADDRESS_MODE Convert(AddressMode p_mode) {
+    switch (p_mode) {
         case AddressMode::WRAP:
             return D3D_TEXTURE_ADDRESS_MODE_(WRAP);
         case AddressMode::CLAMP:
@@ -164,6 +160,18 @@ static inline D3D_TEXTURE_ADDRESS_MODE Convert(AddressMode texture_address_mode)
     }
 }
 
+static inline D3D_STENCIL_OP Convert(StencilOp p_op) {
+    switch (p_op) {
+#define STENCIL_OP_ENUM(ENUM, VALUE) \
+    case StencilOp::ENUM:            \
+        return D3D_STENCIL_OP_(ENUM);
+        STENCIL_OP_ENUM_LIST
+#undef STENCIL_OP_ENUM
+        default:
+            CRASH_NOW();
+            return D3D_STENCIL_OP_(KEEP);
+    }
+}
 static inline D3D_FILTER Convert(FilterMode p_min_filter, FilterMode p_mag_filter) {
     // @TODO: refactor this
     if (p_min_filter == FilterMode::MIPMAP_LINEAR && p_mag_filter == FilterMode::MIPMAP_LINEAR) {
@@ -232,5 +240,6 @@ static inline DEPTH_WRITE_MASK Convert(DepthWriteMask depth_write_mask) {
 #undef D3D_COMPARISON_FUNC_
 #undef D3D_FILTER_
 #undef D3D_TEXTURE_ADDRESS_MODE_
+#undef D3D_STENCIL_OP_
 
 }  // namespace my::d3d
