@@ -31,7 +31,7 @@ UseCRLF: true
 
 AlignConsecutiveDeclarations: false
 
-# brace
+# Braces
 BraceWrapping:
   AfterClass            : false
   AfterStruct           : false
@@ -44,3 +44,7 @@ BraceWrapping:
 BreakBeforeBraces: Custom
 
 AlignAfterOpenBracket: true
+
+# Objective-C
+ObjCSpaceAfterProperty: true
+ObjCSpaceBeforeProtocolList: true

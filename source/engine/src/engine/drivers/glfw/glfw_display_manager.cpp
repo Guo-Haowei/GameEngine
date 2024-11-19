@@ -35,6 +35,9 @@ bool GlfwDisplayManager::InitializeWindow() {
 
     m_window = glfwCreateWindow(size.x, size.y, "Editor (OpenGl)", nullptr, nullptr);
     DEV_ASSERT(m_window);
+
+    glfwSetWindowUserPointer(m_window, this);
+
     glfwSetWindowPos(m_window, 40, 40);
 
     glfwMakeContextCurrent(m_window);
@@ -43,10 +46,10 @@ bool GlfwDisplayManager::InitializeWindow() {
 
     ImGui_ImplGlfw_InitForOpenGL(m_window, false);
 
-    glfwSetCursorPosCallback(m_window, cursor_pos_callback);
-    glfwSetMouseButtonCallback(m_window, mouse_button_callback);
-    glfwSetKeyCallback(m_window, key_callback);
-    glfwSetScrollCallback(m_window, scroll_callback);
+    glfwSetCursorPosCallback(m_window, CursorPosCallback);
+    glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
+    glfwSetKeyCallback(m_window, KeyCallback);
+    glfwSetScrollCallback(m_window, ScrollCallback);
 
     glfwSetWindowFocusCallback(m_window, ImGui_ImplGlfw_WindowFocusCallback);
     glfwSetCursorEnterCallback(m_window, ImGui_ImplGlfw_CursorEnterCallback);
@@ -88,174 +91,186 @@ void GlfwDisplayManager::Present() {
     glfwSwapBuffers(m_window);
 }
 
-void GlfwDisplayManager::cursor_pos_callback(GLFWwindow* window, double x, double y) {
-    ImGui_ImplGlfw_CursorPosCallback(window, x, y);
+void GlfwDisplayManager::CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y) {
+    ImGui_ImplGlfw_CursorPosCallback(p_window, p_x, p_y);
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::SetCursor(static_cast<float>(x), static_cast<float>(y)); }
+    { input::SetCursor(static_cast<float>(p_x), static_cast<float>(p_y)); }
 }
 
-void GlfwDisplayManager::mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+void GlfwDisplayManager::MouseButtonCallback(GLFWwindow* p_window,
+                                             int p_button,
+                                             int p_action,
+                                             int p_mods) {
+    ImGui_ImplGlfw_MouseButtonCallback(p_window, p_button, p_action, p_mods);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
-        if (action == GLFW_PRESS) {
-            input::SetButton(button, true);
-        } else if (action == GLFW_RELEASE) {
-            input::SetButton(button, false);
+        if (p_action == GLFW_PRESS) {
+            input::SetButton(p_button, true);
+        } else if (p_action == GLFW_RELEASE) {
+            input::SetButton(p_button, false);
         }
     }
 }
 
-void GlfwDisplayManager::key_callback(GLFWwindow* window, int keycode, int scancode, int action, int mods) {
-    ImGui_ImplGlfw_KeyCallback(window, keycode, scancode, action, mods);
+void GlfwDisplayManager::KeyCallback(GLFWwindow* p_window,
+                                     int p_keycode,
+                                     int p_scancode,
+                                     int p_action,
+                                     int p_mods) {
+    ImGui_ImplGlfw_KeyCallback(p_window, p_keycode, p_scancode, p_action, p_mods);
+
+    auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    auto& keyMapping = window->m_keyMapping;
 
     // if (!ImGui::GetIO().WantCaptureKeyboard)
     {
-        DEV_ASSERT(s_key_mapping.find(keycode) != s_key_mapping.end());
-        KeyCode key = s_key_mapping[keycode];
+        DEV_ASSERT(keyMapping.find(p_keycode) != keyMapping.end());
+        KeyCode key = keyMapping[p_keycode];
 
-        if (action == GLFW_PRESS) {
+        if (p_action == GLFW_PRESS) {
             input::SetKey(key, true);
-        } else if (action == GLFW_RELEASE) {
+        } else if (p_action == GLFW_RELEASE) {
             input::SetKey(key, false);
         }
     }
 }
 
-void GlfwDisplayManager::scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+void GlfwDisplayManager::ScrollCallback(GLFWwindow* p_window,
+                                        double p_xoffset,
+                                        double p_yoffset) {
+    ImGui_ImplGlfw_ScrollCallback(p_window, p_xoffset, p_yoffset);
 
     // if (!ImGui::GetIO().WantCaptureMouse)
-    { input::SetWheel(static_cast<float>(xoffset), static_cast<float>(yoffset)); }
+    { input::SetWheel(static_cast<float>(p_xoffset), static_cast<float>(p_yoffset)); }
 }
 
 void GlfwDisplayManager::InitializeKeyMapping() {
-    if (!s_key_mapping.empty()) {
+    if (!m_keyMapping.empty()) {
         return;
     }
 
-    s_key_mapping[GLFW_KEY_SPACE] = KEY_SPACE;
-    s_key_mapping[GLFW_KEY_APOSTROPHE] = KEY_APOSTROPHE;
-    s_key_mapping[GLFW_KEY_COMMA] = KEY_COMMA;
-    s_key_mapping[GLFW_KEY_MINUS] = KEY_MINUS;
-    s_key_mapping[GLFW_KEY_PERIOD] = KEY_PERIOD;
-    s_key_mapping[GLFW_KEY_SLASH] = KEY_SLASH;
-    s_key_mapping[GLFW_KEY_0] = KEY_0;
-    s_key_mapping[GLFW_KEY_1] = KEY_1;
-    s_key_mapping[GLFW_KEY_2] = KEY_2;
-    s_key_mapping[GLFW_KEY_3] = KEY_3;
-    s_key_mapping[GLFW_KEY_4] = KEY_4;
-    s_key_mapping[GLFW_KEY_5] = KEY_5;
-    s_key_mapping[GLFW_KEY_6] = KEY_6;
-    s_key_mapping[GLFW_KEY_7] = KEY_7;
-    s_key_mapping[GLFW_KEY_8] = KEY_8;
-    s_key_mapping[GLFW_KEY_9] = KEY_9;
-    s_key_mapping[GLFW_KEY_SEMICOLON] = KEY_SEMICOLON;
-    s_key_mapping[GLFW_KEY_EQUAL] = KEY_EQUAL;
-    s_key_mapping[GLFW_KEY_A] = KEY_A;
-    s_key_mapping[GLFW_KEY_B] = KEY_B;
-    s_key_mapping[GLFW_KEY_C] = KEY_C;
-    s_key_mapping[GLFW_KEY_D] = KEY_D;
-    s_key_mapping[GLFW_KEY_E] = KEY_E;
-    s_key_mapping[GLFW_KEY_F] = KEY_F;
-    s_key_mapping[GLFW_KEY_G] = KEY_G;
-    s_key_mapping[GLFW_KEY_H] = KEY_H;
-    s_key_mapping[GLFW_KEY_I] = KEY_I;
-    s_key_mapping[GLFW_KEY_J] = KEY_J;
-    s_key_mapping[GLFW_KEY_K] = KEY_K;
-    s_key_mapping[GLFW_KEY_L] = KEY_L;
-    s_key_mapping[GLFW_KEY_M] = KEY_M;
-    s_key_mapping[GLFW_KEY_N] = KEY_N;
-    s_key_mapping[GLFW_KEY_O] = KEY_O;
-    s_key_mapping[GLFW_KEY_P] = KEY_P;
-    s_key_mapping[GLFW_KEY_Q] = KEY_Q;
-    s_key_mapping[GLFW_KEY_R] = KEY_R;
-    s_key_mapping[GLFW_KEY_S] = KEY_S;
-    s_key_mapping[GLFW_KEY_T] = KEY_T;
-    s_key_mapping[GLFW_KEY_U] = KEY_U;
-    s_key_mapping[GLFW_KEY_V] = KEY_V;
-    s_key_mapping[GLFW_KEY_W] = KEY_W;
-    s_key_mapping[GLFW_KEY_X] = KEY_X;
-    s_key_mapping[GLFW_KEY_Y] = KEY_Y;
-    s_key_mapping[GLFW_KEY_Z] = KEY_Z;
+    m_keyMapping[GLFW_KEY_SPACE] = KEY_SPACE;
+    m_keyMapping[GLFW_KEY_APOSTROPHE] = KEY_APOSTROPHE;
+    m_keyMapping[GLFW_KEY_COMMA] = KEY_COMMA;
+    m_keyMapping[GLFW_KEY_MINUS] = KEY_MINUS;
+    m_keyMapping[GLFW_KEY_PERIOD] = KEY_PERIOD;
+    m_keyMapping[GLFW_KEY_SLASH] = KEY_SLASH;
+    m_keyMapping[GLFW_KEY_0] = KEY_0;
+    m_keyMapping[GLFW_KEY_1] = KEY_1;
+    m_keyMapping[GLFW_KEY_2] = KEY_2;
+    m_keyMapping[GLFW_KEY_3] = KEY_3;
+    m_keyMapping[GLFW_KEY_4] = KEY_4;
+    m_keyMapping[GLFW_KEY_5] = KEY_5;
+    m_keyMapping[GLFW_KEY_6] = KEY_6;
+    m_keyMapping[GLFW_KEY_7] = KEY_7;
+    m_keyMapping[GLFW_KEY_8] = KEY_8;
+    m_keyMapping[GLFW_KEY_9] = KEY_9;
+    m_keyMapping[GLFW_KEY_SEMICOLON] = KEY_SEMICOLON;
+    m_keyMapping[GLFW_KEY_EQUAL] = KEY_EQUAL;
+    m_keyMapping[GLFW_KEY_A] = KEY_A;
+    m_keyMapping[GLFW_KEY_B] = KEY_B;
+    m_keyMapping[GLFW_KEY_C] = KEY_C;
+    m_keyMapping[GLFW_KEY_D] = KEY_D;
+    m_keyMapping[GLFW_KEY_E] = KEY_E;
+    m_keyMapping[GLFW_KEY_F] = KEY_F;
+    m_keyMapping[GLFW_KEY_G] = KEY_G;
+    m_keyMapping[GLFW_KEY_H] = KEY_H;
+    m_keyMapping[GLFW_KEY_I] = KEY_I;
+    m_keyMapping[GLFW_KEY_J] = KEY_J;
+    m_keyMapping[GLFW_KEY_K] = KEY_K;
+    m_keyMapping[GLFW_KEY_L] = KEY_L;
+    m_keyMapping[GLFW_KEY_M] = KEY_M;
+    m_keyMapping[GLFW_KEY_N] = KEY_N;
+    m_keyMapping[GLFW_KEY_O] = KEY_O;
+    m_keyMapping[GLFW_KEY_P] = KEY_P;
+    m_keyMapping[GLFW_KEY_Q] = KEY_Q;
+    m_keyMapping[GLFW_KEY_R] = KEY_R;
+    m_keyMapping[GLFW_KEY_S] = KEY_S;
+    m_keyMapping[GLFW_KEY_T] = KEY_T;
+    m_keyMapping[GLFW_KEY_U] = KEY_U;
+    m_keyMapping[GLFW_KEY_V] = KEY_V;
+    m_keyMapping[GLFW_KEY_W] = KEY_W;
+    m_keyMapping[GLFW_KEY_X] = KEY_X;
+    m_keyMapping[GLFW_KEY_Y] = KEY_Y;
+    m_keyMapping[GLFW_KEY_Z] = KEY_Z;
 
-    s_key_mapping[GLFW_KEY_LEFT_BRACKET] = KEY_LEFT_BRACKET;
-    s_key_mapping[GLFW_KEY_BACKSLASH] = KEY_BACKSLASH;
-    s_key_mapping[GLFW_KEY_RIGHT_BRACKET] = KEY_RIGHT_BRACKET;
-    s_key_mapping[GLFW_KEY_GRAVE_ACCENT] = KEY_GRAVE_ACCENT;
-    s_key_mapping[GLFW_KEY_WORLD_1] = KEY_WORLD_1;
-    s_key_mapping[GLFW_KEY_WORLD_2] = KEY_WORLD_2;
-    s_key_mapping[GLFW_KEY_ESCAPE] = KEY_ESCAPE;
-    s_key_mapping[GLFW_KEY_ENTER] = KEY_ENTER;
-    s_key_mapping[GLFW_KEY_TAB] = KEY_TAB;
-    s_key_mapping[GLFW_KEY_BACKSPACE] = KEY_BACKSPACE;
-    s_key_mapping[GLFW_KEY_INSERT] = KEY_INSERT;
-    s_key_mapping[GLFW_KEY_DELETE] = KEY_DELETE;
-    s_key_mapping[GLFW_KEY_RIGHT] = KEY_RIGHT;
-    s_key_mapping[GLFW_KEY_LEFT] = KEY_LEFT;
-    s_key_mapping[GLFW_KEY_DOWN] = KEY_DOWN;
-    s_key_mapping[GLFW_KEY_UP] = KEY_UP;
-    s_key_mapping[GLFW_KEY_PAGE_UP] = KEY_PAGE_UP;
-    s_key_mapping[GLFW_KEY_PAGE_DOWN] = KEY_PAGE_DOWN;
-    s_key_mapping[GLFW_KEY_HOME] = KEY_HOME;
-    s_key_mapping[GLFW_KEY_END] = KEY_END;
-    s_key_mapping[GLFW_KEY_CAPS_LOCK] = KEY_CAPS_LOCK;
-    s_key_mapping[GLFW_KEY_SCROLL_LOCK] = KEY_SCROLL_LOCK;
-    s_key_mapping[GLFW_KEY_NUM_LOCK] = KEY_NUM_LOCK;
-    s_key_mapping[GLFW_KEY_PRINT_SCREEN] = KEY_PRINT_SCREEN;
-    s_key_mapping[GLFW_KEY_PAUSE] = KEY_PAUSE;
-    s_key_mapping[GLFW_KEY_F1] = KEY_F1;
-    s_key_mapping[GLFW_KEY_F2] = KEY_F2;
-    s_key_mapping[GLFW_KEY_F3] = KEY_F3;
-    s_key_mapping[GLFW_KEY_F4] = KEY_F4;
-    s_key_mapping[GLFW_KEY_F5] = KEY_F5;
-    s_key_mapping[GLFW_KEY_F6] = KEY_F6;
-    s_key_mapping[GLFW_KEY_F7] = KEY_F7;
-    s_key_mapping[GLFW_KEY_F8] = KEY_F8;
-    s_key_mapping[GLFW_KEY_F9] = KEY_F9;
-    s_key_mapping[GLFW_KEY_F10] = KEY_F10;
-    s_key_mapping[GLFW_KEY_F11] = KEY_F11;
-    s_key_mapping[GLFW_KEY_F12] = KEY_F12;
-    s_key_mapping[GLFW_KEY_F13] = KEY_F13;
-    s_key_mapping[GLFW_KEY_F14] = KEY_F14;
-    s_key_mapping[GLFW_KEY_F15] = KEY_F15;
-    s_key_mapping[GLFW_KEY_F16] = KEY_F16;
-    s_key_mapping[GLFW_KEY_F17] = KEY_F17;
-    s_key_mapping[GLFW_KEY_F18] = KEY_F18;
-    s_key_mapping[GLFW_KEY_F19] = KEY_F19;
-    s_key_mapping[GLFW_KEY_F20] = KEY_F20;
-    s_key_mapping[GLFW_KEY_F21] = KEY_F21;
-    s_key_mapping[GLFW_KEY_F22] = KEY_F22;
-    s_key_mapping[GLFW_KEY_F23] = KEY_F23;
-    s_key_mapping[GLFW_KEY_F24] = KEY_F24;
-    s_key_mapping[GLFW_KEY_F25] = KEY_F25;
-    s_key_mapping[GLFW_KEY_KP_0] = KEY_KP_0;
-    s_key_mapping[GLFW_KEY_KP_1] = KEY_KP_1;
-    s_key_mapping[GLFW_KEY_KP_2] = KEY_KP_2;
-    s_key_mapping[GLFW_KEY_KP_3] = KEY_KP_3;
-    s_key_mapping[GLFW_KEY_KP_4] = KEY_KP_4;
-    s_key_mapping[GLFW_KEY_KP_5] = KEY_KP_5;
-    s_key_mapping[GLFW_KEY_KP_6] = KEY_KP_6;
-    s_key_mapping[GLFW_KEY_KP_7] = KEY_KP_7;
-    s_key_mapping[GLFW_KEY_KP_8] = KEY_KP_8;
-    s_key_mapping[GLFW_KEY_KP_9] = KEY_KP_9;
-    s_key_mapping[GLFW_KEY_KP_DECIMAL] = KEY_KP_DECIMAL;
-    s_key_mapping[GLFW_KEY_KP_DIVIDE] = KEY_KP_DIVIDE;
-    s_key_mapping[GLFW_KEY_KP_MULTIPLY] = KEY_KP_MULTIPLY;
-    s_key_mapping[GLFW_KEY_KP_SUBTRACT] = KEY_KP_SUBTRACT;
-    s_key_mapping[GLFW_KEY_KP_ADD] = KEY_KP_ADD;
-    s_key_mapping[GLFW_KEY_KP_ENTER] = KEY_KP_ENTER;
-    s_key_mapping[GLFW_KEY_KP_EQUAL] = KEY_KP_EQUAL;
-    s_key_mapping[GLFW_KEY_LEFT_SHIFT] = KEY_LEFT_SHIFT;
-    s_key_mapping[GLFW_KEY_LEFT_CONTROL] = KEY_LEFT_CONTROL;
-    s_key_mapping[GLFW_KEY_LEFT_ALT] = KEY_LEFT_ALT;
-    s_key_mapping[GLFW_KEY_LEFT_SUPER] = KEY_LEFT_SUPER;
-    s_key_mapping[GLFW_KEY_RIGHT_SHIFT] = KEY_RIGHT_SHIFT;
-    s_key_mapping[GLFW_KEY_RIGHT_CONTROL] = KEY_RIGHT_CONTROL;
-    s_key_mapping[GLFW_KEY_RIGHT_ALT] = KEY_RIGHT_ALT;
-    s_key_mapping[GLFW_KEY_RIGHT_SUPER] = KEY_RIGHT_SUPER;
-    s_key_mapping[GLFW_KEY_MENU] = KEY_MENU;
+    m_keyMapping[GLFW_KEY_LEFT_BRACKET] = KEY_LEFT_BRACKET;
+    m_keyMapping[GLFW_KEY_BACKSLASH] = KEY_BACKSLASH;
+    m_keyMapping[GLFW_KEY_RIGHT_BRACKET] = KEY_RIGHT_BRACKET;
+    m_keyMapping[GLFW_KEY_GRAVE_ACCENT] = KEY_GRAVE_ACCENT;
+    m_keyMapping[GLFW_KEY_WORLD_1] = KEY_WORLD_1;
+    m_keyMapping[GLFW_KEY_WORLD_2] = KEY_WORLD_2;
+    m_keyMapping[GLFW_KEY_ESCAPE] = KEY_ESCAPE;
+    m_keyMapping[GLFW_KEY_ENTER] = KEY_ENTER;
+    m_keyMapping[GLFW_KEY_TAB] = KEY_TAB;
+    m_keyMapping[GLFW_KEY_BACKSPACE] = KEY_BACKSPACE;
+    m_keyMapping[GLFW_KEY_INSERT] = KEY_INSERT;
+    m_keyMapping[GLFW_KEY_DELETE] = KEY_DELETE;
+    m_keyMapping[GLFW_KEY_RIGHT] = KEY_RIGHT;
+    m_keyMapping[GLFW_KEY_LEFT] = KEY_LEFT;
+    m_keyMapping[GLFW_KEY_DOWN] = KEY_DOWN;
+    m_keyMapping[GLFW_KEY_UP] = KEY_UP;
+    m_keyMapping[GLFW_KEY_PAGE_UP] = KEY_PAGE_UP;
+    m_keyMapping[GLFW_KEY_PAGE_DOWN] = KEY_PAGE_DOWN;
+    m_keyMapping[GLFW_KEY_HOME] = KEY_HOME;
+    m_keyMapping[GLFW_KEY_END] = KEY_END;
+    m_keyMapping[GLFW_KEY_CAPS_LOCK] = KEY_CAPS_LOCK;
+    m_keyMapping[GLFW_KEY_SCROLL_LOCK] = KEY_SCROLL_LOCK;
+    m_keyMapping[GLFW_KEY_NUM_LOCK] = KEY_NUM_LOCK;
+    m_keyMapping[GLFW_KEY_PRINT_SCREEN] = KEY_PRINT_SCREEN;
+    m_keyMapping[GLFW_KEY_PAUSE] = KEY_PAUSE;
+    m_keyMapping[GLFW_KEY_F1] = KEY_F1;
+    m_keyMapping[GLFW_KEY_F2] = KEY_F2;
+    m_keyMapping[GLFW_KEY_F3] = KEY_F3;
+    m_keyMapping[GLFW_KEY_F4] = KEY_F4;
+    m_keyMapping[GLFW_KEY_F5] = KEY_F5;
+    m_keyMapping[GLFW_KEY_F6] = KEY_F6;
+    m_keyMapping[GLFW_KEY_F7] = KEY_F7;
+    m_keyMapping[GLFW_KEY_F8] = KEY_F8;
+    m_keyMapping[GLFW_KEY_F9] = KEY_F9;
+    m_keyMapping[GLFW_KEY_F10] = KEY_F10;
+    m_keyMapping[GLFW_KEY_F11] = KEY_F11;
+    m_keyMapping[GLFW_KEY_F12] = KEY_F12;
+    m_keyMapping[GLFW_KEY_F13] = KEY_F13;
+    m_keyMapping[GLFW_KEY_F14] = KEY_F14;
+    m_keyMapping[GLFW_KEY_F15] = KEY_F15;
+    m_keyMapping[GLFW_KEY_F16] = KEY_F16;
+    m_keyMapping[GLFW_KEY_F17] = KEY_F17;
+    m_keyMapping[GLFW_KEY_F18] = KEY_F18;
+    m_keyMapping[GLFW_KEY_F19] = KEY_F19;
+    m_keyMapping[GLFW_KEY_F20] = KEY_F20;
+    m_keyMapping[GLFW_KEY_F21] = KEY_F21;
+    m_keyMapping[GLFW_KEY_F22] = KEY_F22;
+    m_keyMapping[GLFW_KEY_F23] = KEY_F23;
+    m_keyMapping[GLFW_KEY_F24] = KEY_F24;
+    m_keyMapping[GLFW_KEY_F25] = KEY_F25;
+    m_keyMapping[GLFW_KEY_KP_0] = KEY_KP_0;
+    m_keyMapping[GLFW_KEY_KP_1] = KEY_KP_1;
+    m_keyMapping[GLFW_KEY_KP_2] = KEY_KP_2;
+    m_keyMapping[GLFW_KEY_KP_3] = KEY_KP_3;
+    m_keyMapping[GLFW_KEY_KP_4] = KEY_KP_4;
+    m_keyMapping[GLFW_KEY_KP_5] = KEY_KP_5;
+    m_keyMapping[GLFW_KEY_KP_6] = KEY_KP_6;
+    m_keyMapping[GLFW_KEY_KP_7] = KEY_KP_7;
+    m_keyMapping[GLFW_KEY_KP_8] = KEY_KP_8;
+    m_keyMapping[GLFW_KEY_KP_9] = KEY_KP_9;
+    m_keyMapping[GLFW_KEY_KP_DECIMAL] = KEY_KP_DECIMAL;
+    m_keyMapping[GLFW_KEY_KP_DIVIDE] = KEY_KP_DIVIDE;
+    m_keyMapping[GLFW_KEY_KP_MULTIPLY] = KEY_KP_MULTIPLY;
+    m_keyMapping[GLFW_KEY_KP_SUBTRACT] = KEY_KP_SUBTRACT;
+    m_keyMapping[GLFW_KEY_KP_ADD] = KEY_KP_ADD;
+    m_keyMapping[GLFW_KEY_KP_ENTER] = KEY_KP_ENTER;
+    m_keyMapping[GLFW_KEY_KP_EQUAL] = KEY_KP_EQUAL;
+    m_keyMapping[GLFW_KEY_LEFT_SHIFT] = KEY_LEFT_SHIFT;
+    m_keyMapping[GLFW_KEY_LEFT_CONTROL] = KEY_LEFT_CONTROL;
+    m_keyMapping[GLFW_KEY_LEFT_ALT] = KEY_LEFT_ALT;
+    m_keyMapping[GLFW_KEY_LEFT_SUPER] = KEY_LEFT_SUPER;
+    m_keyMapping[GLFW_KEY_RIGHT_SHIFT] = KEY_RIGHT_SHIFT;
+    m_keyMapping[GLFW_KEY_RIGHT_CONTROL] = KEY_RIGHT_CONTROL;
+    m_keyMapping[GLFW_KEY_RIGHT_ALT] = KEY_RIGHT_ALT;
+    m_keyMapping[GLFW_KEY_RIGHT_SUPER] = KEY_RIGHT_SUPER;
+    m_keyMapping[GLFW_KEY_MENU] = KEY_MENU;
 }
 
 }  // namespace my

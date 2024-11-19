@@ -47,25 +47,25 @@ void Application::RegisterModule(Module* p_module) {
 }
 
 ErrorCode Application::SetupModules() {
-    if (!(m_assetManager = std::make_shared<AssetManager>())){
+    if (!(m_assetManager = std::make_shared<AssetManager>())) {
         return ERR_CANT_CREATE;
     }
-    if (!(m_sceneManager = std::make_shared<SceneManager>())){
+    if (!(m_sceneManager = std::make_shared<SceneManager>())) {
         return ERR_CANT_CREATE;
     }
-    if (!(m_physicsManager = std::make_shared<PhysicsManager>())){
+    if (!(m_physicsManager = std::make_shared<PhysicsManager>())) {
         return ERR_CANT_CREATE;
     }
-    if (!(m_imguiModule = std::make_shared<ImGuiModule>())){
+    if (!(m_imguiModule = std::make_shared<ImGuiModule>())) {
         return ERR_CANT_CREATE;
     }
-    if (!(m_displayServer = DisplayManager::Create())){
+    if (!(m_displayServer = DisplayManager::Create())) {
         return ERR_CANT_CREATE;
     }
-    if (!(m_graphicsManager = GraphicsManager::Create())){
+    if (!(m_graphicsManager = GraphicsManager::Create())) {
         return ERR_CANT_CREATE;
     }
-    if (!(m_renderManager = std::make_shared<RenderManager>())){
+    if (!(m_renderManager = std::make_shared<RenderManager>())) {
         return ERR_CANT_CREATE;
     }
 
@@ -108,6 +108,10 @@ int Application::Run(int p_argc, const char** p_argv) {
         LOG("module '{}' being initialized...", module->GetName());
         if (!module->Initialize()) {
             LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
+            // @TODO: refactor this part
+            thread::RequestShutdown();
+            jobsystem::Finalize();
+            thread::Finailize();
             return 1;
         }
         LOG("module '{}' initialized\n", module->GetName());
@@ -119,17 +123,13 @@ int Application::Run(int p_argc, const char** p_argv) {
         LOG("[Runtime] layer '{}' attached!", layer->GetName());
     }
 
-    LOG_WARN("TODO: properly unload scene");
-    LOG_WARN("TODO: make camera a component");
-    LOG_WARN("TODO: refactor render graph");
     LOG_WARN("TODO: reverse z");
-    LOG_WARN("TODO: cloth physics");
 
-    LOG_VERBOSE("This is a verbose log");
-    LOG("This is a log");
-    LOG_OK("This is an ok log");
-    LOG_WARN("This is a warning");
-    LOG_ERROR("This is an error");
+    // LOG_VERBOSE("This is a verbose log");
+    // LOG("This is a log");
+    // LOG_OK("This is an ok log");
+    // LOG_WARN("This is a warning");
+    // LOG_ERROR("This is an error");
 
     LOG("\n********************************************************************************"
         "\nMain Loop"

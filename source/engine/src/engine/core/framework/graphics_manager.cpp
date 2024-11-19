@@ -191,7 +191,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         UpdateConstantBuffer(frame.boneCb.get(), frame.boneCache.buffer);
         UpdateConstantBuffer(frame.passCb.get(), frame.passCache);
         UpdateConstantBuffer(frame.emitterCb.get(), frame.emitterCache);
-        UpdateConstantBuffer<PointShadowConstantBuffer, 6 *MAX_POINT_LIGHT_SHADOW_COUNT >(frame.pointShadowCb.get(), frame.pointShadowCache);
+        UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(frame.pointShadowCb.get(), frame.pointShadowCache);
 
         m_renderGraph.Execute(*this);
         Render();

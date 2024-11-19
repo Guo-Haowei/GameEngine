@@ -3,6 +3,7 @@ set(TARGET_NAME engine)
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.mm"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.natvis"
 )
@@ -10,7 +11,11 @@ set(FILTERED_SRC "")
 
 foreach(file ${SRC})
     if(WIN32)
-        list(APPEND FILTERED_SRC ${file})
+        if(file MATCHES "apple" OR file MATCHES "metal" )
+            # message("- ${file}")
+        else()
+            list(APPEND FILTERED_SRC ${file})
+        endif()
     elseif(APPLE)
         if(file MATCHES "d3d" OR file MATCHES "windows" )
             # message("- ${file}")
@@ -70,7 +75,7 @@ target_set_warning_level(${TARGET_NAME})
 target_precompile_headers(${TARGET_NAME} PRIVATE src/engine/pch.h)
 
 # @TODO: move to plugin
-if(MSVC)
+if(WIN32)
     set(LIB_ASSIMP_DEBUG_DIR ${PROJECT_SOURCE_DIR}/thirdparty/assimp/build/lib/Debug)
     target_link_libraries(${TARGET_NAME} PUBLIC debug
         ${LIB_ASSIMP_DEBUG_DIR}/assimp-vc143-mtd.lib
@@ -82,6 +87,12 @@ if(MSVC)
         ${LIB_ASSIMP_RELEASE_DIR}/assimp-vc143-mt.lib
         ${LIB_ASSIMP_RELEASE_DIR}/IrrXML.lib
         ${LIB_ASSIMP_RELEASE_DIR}/zlibstatic.lib)
+endif()
+
+if(APPLE)
+    target_link_libraries(${TARGET_NAME} PRIVATE
+        "-framework Cocoa"
+    )
 endif()
 
 add_subdirectory(tests)

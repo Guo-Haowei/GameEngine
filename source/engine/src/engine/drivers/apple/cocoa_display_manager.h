@@ -1,9 +1,9 @@
 #include "core/framework/display_manager.h"
-#include "drivers/windows/win32_prerequisites.h"
+#include "core/input/input_code.h"
 
 namespace my {
 
-class Win32DisplayManager : public DisplayManager {
+class CocoaDisplayManager : public DisplayManager {
 public:
     void Finalize() final;
 
@@ -15,17 +15,12 @@ public:
     void NewFrame() final;
     void Present() final;
 
-    LRESULT WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p_lparam);
-
-    HWND GetHwnd() const { return m_hwnd; }
-
 private:
     bool InitializeWindow() final;
     void InitializeKeyMapping() final;
 
-    WNDCLASSEXW m_wndClass{};
-    HWND m_hwnd{};
-    bool m_shouldQuit{ false };
+    // @TODO: fix it
+    std::unordered_map<int, KeyCode> m_keyMapping;
 };
 
 }  // namespace my
