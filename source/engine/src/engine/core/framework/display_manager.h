@@ -24,7 +24,13 @@ public:
     static std::shared_ptr<DisplayManager> Create();
 
 protected:
-    virtual bool InitializeWindow() = 0;
+    struct CreateInfo {
+        int width;
+        int height;
+        std::string title;
+    };
+
+    virtual bool InitializeWindow(const CreateInfo& p_info) = 0;
     virtual void InitializeKeyMapping() = 0;
 
     struct {

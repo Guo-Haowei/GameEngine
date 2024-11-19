@@ -11,8 +11,7 @@
 
 namespace my {
 
-bool GlfwDisplayManager::InitializeWindow() {
-
+bool GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) {
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
     glfwInit();
@@ -26,14 +25,10 @@ bool GlfwDisplayManager::InitializeWindow() {
         glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
     }
 
-    const GLFWvidmode* vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-
-    const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
-    const ivec2 min_size = ivec2(600, 400);
-    const ivec2 max_size = ivec2(vidmode->width, vidmode->height);
-    const ivec2 size = glm::clamp(resolution, min_size, max_size);
-
-    m_window = glfwCreateWindow(size.x, size.y, "Editor (OpenGl)", nullptr, nullptr);
+    m_window = glfwCreateWindow(p_info.width,
+                                p_info.height,
+                                p_info.title.c_str(),
+                                nullptr, nullptr);
     DEV_ASSERT(m_window);
 
     glfwSetWindowUserPointer(m_window, this);

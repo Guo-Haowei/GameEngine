@@ -49,9 +49,9 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
         for (const auto& subset : draw.subsets) {
             const MaterialConstantBuffer& material = gm.GetCurrentFrame().materialCache.buffer[subset.material_idx];
-            gm.BindTexture(Dimension::TEXTURE_2D, material.t_baseColorMap_handle, t_baseColorMapSlot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.t_normalMap_handle, t_normalMapSlot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.t_materialMap_handle, t_materialMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, t_baseColorMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, t_normalMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, t_materialMapSlot);
 
             gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
 
@@ -74,35 +74,35 @@ void RenderPassCreator::AddGBufferPass() {
     int p_width = m_config.frameWidth;
     int p_height = m_config.frameHeight;
 
-    auto gbuffer_depth = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
-                                                                          GBUFFER_DEPTH_FORMAT,
-                                                                          AttachmentType::DEPTH_STENCIL_2D,
-                                                                          p_width, p_height),
-                                                  PointClampSampler());
+    auto gbuffer_depth = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
+                                                                       RESOURCE_FORMAT_GBUFFER_DEPTH,
+                                                                       AttachmentType::DEPTH_STENCIL_2D,
+                                                                       p_width, p_height),
+                                               PointClampSampler());
 
-    auto attachment0 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
-                                                                        GBUFFER_BASE_COLOR_FORMAT,
-                                                                        AttachmentType::COLOR_2D,
-                                                                        p_width, p_height),
-                                                PointClampSampler());
+    auto attachment0 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
+                                                                     RESOURCE_FORMAT_GBUFFER_BASE_COLOR,
+                                                                     AttachmentType::COLOR_2D,
+                                                                     p_width, p_height),
+                                             PointClampSampler());
 
-    auto attachment1 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
-                                                                        GBUFFER_POSITION_FORMAT,
-                                                                        AttachmentType::COLOR_2D,
-                                                                        p_width, p_height),
-                                                PointClampSampler());
+    auto attachment1 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
+                                                                     RESOURCE_FORMAT_GBUFFER_POSITION,
+                                                                     AttachmentType::COLOR_2D,
+                                                                     p_width, p_height),
+                                             PointClampSampler());
 
-    auto attachment2 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
-                                                                        GBUFFER_NORMAL_FORMAT,
-                                                                        AttachmentType::COLOR_2D,
-                                                                        p_width, p_height),
-                                                PointClampSampler());
+    auto attachment2 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
+                                                                     RESOURCE_FORMAT_GBUFFER_NORMAL,
+                                                                     AttachmentType::COLOR_2D,
+                                                                     p_width, p_height),
+                                             PointClampSampler());
 
-    auto attachment3 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
-                                                                        GBUFFER_MATERIAL_FORMAT,
-                                                                        AttachmentType::COLOR_2D,
-                                                                        p_width, p_height),
-                                                PointClampSampler());
+    auto attachment3 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
+                                                                     RESOURCE_FORMAT_GBUFFER_MATERIAL,
+                                                                     AttachmentType::COLOR_2D,
+                                                                     p_width, p_height),
+                                             PointClampSampler());
 
     RenderPassDesc desc;
     desc.name = RenderPassName::GBUFFER;
@@ -195,11 +195,11 @@ void RenderPassCreator::AddShadowPass() {
     const int point_shadow_res = DVAR_GET_INT(gfx_point_shadow_res);
     DEV_ASSERT(math::IsPowerOfTwo(point_shadow_res));
 
-    auto shadow_map = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
-                                                                       PixelFormat::D32_FLOAT,
-                                                                       AttachmentType::SHADOW_2D,
-                                                                       1 * shadow_res, shadow_res),
-                                               shadow_map_sampler());
+    auto shadow_map = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
+                                                                    PixelFormat::D32_FLOAT,
+                                                                    AttachmentType::SHADOW_2D,
+                                                                    1 * shadow_res, shadow_res),
+                                            shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = RenderPassName::SHADOW;
     auto pass = m_graph.CreatePass(desc);
@@ -211,11 +211,11 @@ void RenderPassCreator::AddShadowPass() {
         pass->AddDrawPass(draw_pass);
     }
 
-    auto point_shadowMap = manager.CreateGpuTexture(BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
-                                                                            PixelFormat::D32_FLOAT,
-                                                                            AttachmentType::SHADOW_CUBE_ARRAY,
-                                                                            point_shadow_res, point_shadow_res, 6 * MAX_POINT_LIGHT_SHADOW_COUNT),
-                                                    shadow_cube_map_sampler());
+    auto point_shadowMap = manager.CreateTexture(BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
+                                                                         PixelFormat::D32_FLOAT,
+                                                                         AttachmentType::SHADOW_CUBE_ARRAY,
+                                                                         point_shadow_res, point_shadow_res, 6 * MAX_POINT_LIGHT_SHADOW_COUNT),
+                                                 shadow_cube_map_sampler());
 
     auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
         .depthAttachment = point_shadowMap,
@@ -240,7 +240,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = gm.FindGpuTexture(p_name);
+        std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
         if (!resource) {
             return;
         }
@@ -282,13 +282,13 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
 void RenderPassCreator::AddLightingPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
-    auto gbuffer_depth = manager.FindGpuTexture(RESOURCE_GBUFFER_DEPTH);
+    auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
-    auto lighting_attachment = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
-                                                                                PixelFormat::R11G11B10_FLOAT,
-                                                                                AttachmentType::COLOR_2D,
-                                                                                m_config.frameWidth, m_config.frameHeight),
-                                                        PointClampSampler());
+    auto lighting_attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
+                                                                             RESOURCE_FORMAT_LIGHTING,
+                                                                             AttachmentType::COLOR_2D,
+                                                                             m_config.frameWidth, m_config.frameHeight),
+                                                     PointClampSampler());
 
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
@@ -371,8 +371,8 @@ void RenderPassCreator::AddEmitterPass() {
 
     auto pass = m_graph.CreatePass(desc);
     auto drawpass = manager.CreateDrawPass(DrawPassDesc{
-        .colorAttachments = { manager.FindGpuTexture(RESOURCE_LIGHTING) },
-        .depthAttachment = manager.FindGpuTexture(RESOURCE_GBUFFER_DEPTH),
+        .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
+        .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
         .execFunc = EmitterPassFunc,
     });
     pass->AddDrawPass(drawpass);
@@ -385,8 +385,8 @@ static void BloomFunc(const DrawPass*) {
     // Step 1, select pixels contribute to bloom
     {
         gm.SetPipelineState(PROGRAM_BLOOM_SETUP);
-        auto input = gm.FindGpuTexture(RESOURCE_LIGHTING);
-        auto output = gm.FindGpuTexture(RESOURCE_BLOOM_0);
+        auto input = gm.FindTexture(RESOURCE_LIGHTING);
+        auto output = gm.FindTexture(RESOURCE_BLOOM_0);
 
         const uint32_t width = input->desc.width;
         const uint32_t height = input->desc.height;
@@ -403,8 +403,8 @@ static void BloomFunc(const DrawPass*) {
     // Step 2, down sampling
     gm.SetPipelineState(PROGRAM_BLOOM_DOWNSAMPLE);
     for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
-        auto input = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-        auto output = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
 
         DEV_ASSERT(input && output);
 
@@ -423,8 +423,8 @@ static void BloomFunc(const DrawPass*) {
     // Step 3, up sampling
     gm.SetPipelineState(PROGRAM_BLOOM_UPSAMPLE);
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.FindGpuTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
         const uint32_t width = output->desc.width;
         const uint32_t height = output->desc.height;
@@ -460,7 +460,7 @@ void RenderPassCreator::AddBloomPass() {
                                                               AttachmentType::COLOR_2D,
                                                               width, height);
         texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
-        auto attachment = gm.CreateGpuTexture(texture_desc, LinearClampSampler());
+        auto attachment = gm.CreateTexture(texture_desc, LinearClampSampler());
     }
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
@@ -490,7 +490,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         debug_vxgi_pass_func(p_draw_pass);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-            std::shared_ptr<GpuTexture> resource = gm.FindGpuTexture(p_name);
+            std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
             if (!resource) {
                 return;
             }
@@ -523,13 +523,13 @@ void RenderPassCreator::AddTonePass() {
     int width = m_config.frameWidth;
     int height = m_config.frameHeight;
 
-    auto attachment = gm.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
-                                                                  PixelFormat::R11G11B10_FLOAT,
-                                                                  AttachmentType::COLOR_2D,
-                                                                  width, height),
-                                          PointClampSampler());
+    auto attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
+                                                               PixelFormat::R11G11B10_FLOAT,
+                                                               AttachmentType::COLOR_2D,
+                                                               width, height),
+                                       PointClampSampler());
 
-    auto gbuffer_depth = gm.FindGpuTexture(RESOURCE_GBUFFER_DEPTH);
+    auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { attachment },
@@ -555,6 +555,7 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
 
     creator.AddShadowPass();
     creator.AddGBufferPass();
+    creator.AddLightingPass();
 
     p_graph.Compile();
 }

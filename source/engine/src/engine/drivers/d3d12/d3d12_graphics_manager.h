@@ -58,7 +58,7 @@ public:
 
 protected:
     bool InitializeImpl() final;
-    std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
+    std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;
     void Present() final;
@@ -86,9 +86,9 @@ private:
     void CleanupRenderTarget();
     void InitStaticSamplers();
 
-    DescriptorHeapGPU m_rtvDescHeap;
-    DescriptorHeapGPU m_dsvDescHeap;
-    DescriptorHeapGPU m_srvDescHeap;
+    DescriptorHeap m_rtvDescHeap;
+    DescriptorHeap m_dsvDescHeap;
+    DescriptorHeapSrv m_srvDescHeap;
 
     Microsoft::WRL::ComPtr<ID3D12Device4> m_device;
     Microsoft::WRL::ComPtr<ID3D12Debug> m_debugController;

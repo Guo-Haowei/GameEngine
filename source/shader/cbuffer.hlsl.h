@@ -18,11 +18,13 @@ struct ConstantBufferBase {
 #define CBUFFER(NAME, REG) \
     struct NAME : public ConstantBufferBase<NAME, REG>
 
+// @TODO: refactor
+using TextureHandle = uint64_t;
 using sampler2D = uint64_t;
 using sampler3D = uint64_t;
 using samplerCube = uint64_t;
 
-using TextureHandle = uint64_t;
+using uint = uint32_t;
 
 // @TODO: remove this constraint
 #elif defined(HLSL_LANG)
@@ -93,17 +95,20 @@ CBUFFER(MaterialConstantBuffer, 2) {
     float c_emissivePower;
 
     int c_hasBaseColorMap;
-    int c_hasPbrMap;
+    int c_hasMaterialMap;
     int c_hasNormalMap;
     int c_hasHeightMap;
 
-    TextureHandle t_baseColorMap_handle;
-    TextureHandle t_normalMap_handle;
+    uint c_baseColorMapIndex;
+    uint c_normalMapIndex;
+    uint c_materialMapIndex;
+    uint c_heightMapIndex;
 
-    TextureHandle t_materialMap_handle;
-    TextureHandle u_height_map_handle;
+    TextureHandle c_baseColorMapHandle;
+    TextureHandle c_normalMapHandle;
+    TextureHandle c_materialMapHandle;
+    TextureHandle c_heightMapHandle;
 
-    vec4 _material_padding_0;
     vec4 _material_padding_1;
     vec4 _material_padding_2;
     mat4 _material_padding_3;
@@ -128,32 +133,45 @@ CBUFFER(PointShadowConstantBuffer, 4) {
     mat4 _point_shadow_padding_4;  // 64
 };
 
-#if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
-
 CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
     int c_lightCount;
     int c_enableBloom;
     int c_debugCsm;
-    float c_bloomThreshold;
+    float c_bloomThreshold;  // 16
 
     int c_debugVoxelId;
     int c_noTexture;
     int c_enableVxgi;
-    float c_texelSize;
+    float c_texelSize;  // 16
 
     vec3 c_cameraPosition;
-    float c_voxelSize;
+    float c_voxelSize;  // 16
 
     vec3 c_worldCenter;
-    float c_worldSizeHalf;
+    float c_worldSizeHalf;  // 16
 
-    vec3 _per_frame_padding_0;
+    uint c_gbufferBaseColorMapIndex;
+    uint c_gbufferPositionMapIndex;
+    uint c_gbufferNormalMapIndex;
+    uint c_gbufferMaterialMapIndex;  // 16
+
+    uint c_gbufferDepthIndex;
+    uint c_pointShadowArrayIndex;
+    uint c_shadowMapIndex;
     int c_forceFieldsCount;
+
+    vec4 _per_frame_padding_1;  // 16
+    vec4 _per_frame_padding_2;  // 16
+
+    mat4 _per_frame_padding_3;  // 64
+    mat4 _per_frame_padding_4;  // 64
 
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
+
+#if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
 
 // @TODO: refactor name
 CBUFFER(EmitterConstantBuffer, 6) {
@@ -181,6 +199,7 @@ CBUFFER(EmitterConstantBuffer, 6) {
 
 #if defined(GLSL_LANG) || defined(__cplusplus)
 
+// @TODO: merge it with per frame
 CBUFFER(PerSceneConstantBuffer, 7) {
     // @TODO: remove the following
     sampler2D _per_scene_padding_0;

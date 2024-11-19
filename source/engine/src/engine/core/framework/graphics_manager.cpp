@@ -36,7 +36,6 @@ static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t
     return p_graphics_manager.CreateConstantBuffer(buffer_desc);
 }
 
-ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 ConstantBuffer<EnvConstantBuffer> g_env_cache;
@@ -72,11 +71,10 @@ bool GraphicsManager::Initialize() {
         frame_context.boneCb = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
         frame_context.emitterCb = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
         frame_context.pointShadowCb = ::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
+        frame_context.perFrameCb = ::my::CreateUniformCheckSize<PerFrameConstantBuffer>(*this, 1);
     }
 
     // @TODO: refactor
-
-    CreateUniformBuffer<PerFrameConstantBuffer>(g_per_frame_cache);
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
     CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
     CreateUniformBuffer<EnvConstantBuffer>(g_env_cache);
@@ -88,7 +86,7 @@ bool GraphicsManager::Initialize() {
     }
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot) {
-        std::shared_ptr<GpuTexture> texture = FindGpuTexture(p_name);
+        std::shared_ptr<GpuTexture> texture = FindTexture(p_name);
         if (!texture) {
             return;
         }
@@ -158,9 +156,6 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
 
-    g_per_frame_cache.update();
-    // update uniform
-
     // @TODO: make it a function
     auto loaded_images = m_loadedImages.pop_all();
     while (!loaded_images.empty()) {
@@ -174,7 +169,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         SamplerDesc sampler_desc{};
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-        image->gpu_texture = CreateGpuTexture(texture_desc, sampler_desc);
+        image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
         if (task.func) {
             task.func(task.handle->Get());
         }
@@ -184,7 +179,6 @@ void GraphicsManager::Update(Scene& p_scene) {
         OPTICK_EVENT("Render");
         BeginFrame();
 
-        // update uniform after BeginFrame()
         auto& frame = GetCurrentFrame();
         UpdateConstantBuffer(frame.batchCb.get(), frame.batchCache.buffer);
         UpdateConstantBuffer(frame.materialCb.get(), frame.materialCache.buffer);
@@ -192,6 +186,8 @@ void GraphicsManager::Update(Scene& p_scene) {
         UpdateConstantBuffer(frame.passCb.get(), frame.passCache);
         UpdateConstantBuffer(frame.emitterCb.get(), frame.emitterCache);
         UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(frame.pointShadowCb.get(), frame.pointShadowCache);
+        UpdateConstantBuffer(frame.perFrameCb.get(), &frame.perFrameCache, sizeof(PerFrameConstantBuffer));
+        BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
         m_renderGraph.Execute(*this);
         Render();
@@ -268,8 +264,8 @@ void GraphicsManager::SelectRenderGraph() {
     }
 }
 
-std::shared_ptr<GpuTexture> GraphicsManager::CreateGpuTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
-    auto texture = CreateGpuTextureImpl(p_texture_desc, p_sampler_desc);
+std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+    auto texture = CreateTextureImpl(p_texture_desc, p_sampler_desc);
     if (p_texture_desc.type != AttachmentType::NONE) {
         DEV_ASSERT(m_resourceLookup.find(p_texture_desc.name) == m_resourceLookup.end());
         m_resourceLookup[p_texture_desc.name] = texture;
@@ -277,7 +273,7 @@ std::shared_ptr<GpuTexture> GraphicsManager::CreateGpuTexture(const GpuTextureDe
     return texture;
 }
 
-std::shared_ptr<GpuTexture> GraphicsManager::FindGpuTexture(RenderTargetResourceName p_name) const {
+std::shared_ptr<GpuTexture> GraphicsManager::FindTexture(RenderTargetResourceName p_name) const {
     if (m_resourceLookup.empty()) {
         return nullptr;
     }
@@ -293,13 +289,13 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
-            texture = FindGpuTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
+            texture = FindTexture(RESOURCE_LIGHTING).get();
             break;
         case RenderGraphName::VXGI:
-            texture = FindGpuTexture(RESOURCE_FINAL).get();
+            texture = FindTexture(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::DEFAULT:
-            texture = FindGpuTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RESOURCE_TONE).get();
             break;
         default:
             CRASH_NOW();
@@ -320,8 +316,11 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
     cb.c_roughness = material->roughness;
     cb.c_emissivePower = material->emissive;
 
-    auto set_texture = [&](int p_idx, sampler2D& p_out_handle) {
+    auto set_texture = [&](int p_idx,
+                           TextureHandle& p_out_handle,
+                           uint& p_out_resident_handle) {
         p_out_handle = 0;
+        p_out_resident_handle = 0;
 
         if (!material->textures[p_idx].enabled) {
             return false;
@@ -343,12 +342,13 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
         }
 
         p_out_handle = texture->GetHandle();
+        p_out_resident_handle = static_cast<uint32_t>(texture->GetResidentHandle());
         return true;
     };
 
-    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.t_baseColorMap_handle);
-    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.t_normalMap_handle);
-    cb.c_hasPbrMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.t_materialMap_handle);
+    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_baseColorMapIndex);
+    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_normalMapIndex);
+    cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_materialMapIndex);
 }
 
 void GraphicsManager::Cleanup() {
@@ -374,7 +374,7 @@ void GraphicsManager::Cleanup() {
 void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
 
-    auto& cache = g_per_frame_cache.cache;
+    auto& cache = GetCurrentFrame().perFrameCache;
     cache.c_cameraPosition = camera.GetPosition();
 
     cache.c_enableVxgi = DVAR_GET_BOOL(gfx_enable_vxgi);
@@ -419,6 +419,26 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     }
 
     cache.c_forceFieldsCount = counter;
+
+    // @TODO: cache the slots
+    // Texture indices
+    auto find_index = [&](RenderTargetResourceName p_name) -> uint32_t {
+        std::shared_ptr<GpuTexture> resource = FindTexture(p_name);
+        if (!resource) {
+            return 0;
+        }
+
+        return static_cast<uint32_t>(resource->GetResidentHandle());
+    };
+
+    cache.c_gbufferBaseColorMapIndex = find_index(RESOURCE_GBUFFER_BASE_COLOR);
+    cache.c_gbufferPositionMapIndex = find_index(RESOURCE_GBUFFER_POSITION);
+    cache.c_gbufferNormalMapIndex = find_index(RESOURCE_GBUFFER_NORMAL);
+    cache.c_gbufferMaterialMapIndex = find_index(RESOURCE_GBUFFER_MATERIAL);
+
+    cache.c_gbufferDepthIndex = find_index(RESOURCE_GBUFFER_DEPTH);
+    cache.c_pointShadowArrayIndex = find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY);
+    cache.c_shadowMapIndex = find_index(RESOURCE_SHADOW_MAP);
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
@@ -488,7 +508,7 @@ void GraphicsManager::UpdateForceFields(const Scene& p_scene) {
 void GraphicsManager::UpdateLights(const Scene& p_scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
-    auto& cache = g_per_frame_cache.cache;
+    auto& cache = GetCurrentFrame().perFrameCache;
     cache.c_lightCount = light_count;
 
     auto& point_shadow_cache = GetCurrentFrame().pointShadowCache;

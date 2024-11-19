@@ -6,8 +6,8 @@
 namespace my {
 
 //------------------------------------------------------------------------------
-// DescriptorHeapGPU
-bool DescriptorHeapGPU::Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shader_visible) {
+// DescriptorHeap
+bool DescriptorHeap::Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shader_visible) {
     m_desc.Type = p_type;
     m_desc.NumDescriptors = p_num_descriptors;
     m_desc.Flags = p_shader_visible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
@@ -40,7 +40,7 @@ bool DescriptorHeapGPU::Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_typ
     return true;
 }
 
-DescriptorHeapGPU::Handle DescriptorHeapGPU::AllocHandle() {
+DescriptorHeap::Handle DescriptorHeap::AllocHandle() {
     int index = m_counter.fetch_add(1);
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpu_handle(m_startCpu);
     cpu_handle.Offset(index, m_incrementSize);
@@ -52,6 +52,36 @@ DescriptorHeapGPU::Handle DescriptorHeapGPU::AllocHandle() {
         cpu_handle,
         gpu_handle,
     };
+}
+
+DescriptorHeap::Handle DescriptorHeapSrv::AllocHandle(int p_begin, int p_max, std::atomic_int& p_counter) {
+    int index = p_counter.fetch_add(1);
+    DEV_ASSERT(index < p_begin + p_max);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpu_handle(m_startCpu);
+    cpu_handle.Offset(index, m_incrementSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpu_handle(m_startGpu);
+    gpu_handle.Offset(index, m_incrementSize);
+
+    return {
+        index,
+        cpu_handle,
+        gpu_handle,
+    };
+}
+
+DescriptorHeap::Handle DescriptorHeapSrv::AllocHandle(Dimension p_dimension) {
+    switch (p_dimension) {
+        case my::Dimension::TEXTURE_2D:
+            return AllocHandle(m_2dArrayStart, m_2dArrayMax, m_2dArrayCounter);
+        case my::Dimension::TEXTURE_CUBE_ARRAY:
+            return AllocHandle(m_cubeArrayStart, m_cubeArrayMax, m_cubeArrayCounter);
+        case my::Dimension::TEXTURE_3D:
+        case my::Dimension::TEXTURE_2D_ARRAY:
+        case my::Dimension::TEXTURE_CUBE:
+        default:
+            CRASH_NOW();
+            return DescriptorHeap::AllocHandle();
+    }
 }
 
 //------------------------------------------------------------------------------

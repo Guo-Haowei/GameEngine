@@ -6,7 +6,7 @@
 namespace my {
 
 // input layouts
-static const InputLayoutDesc s_input_layout_mesh = {
+static const InputLayoutDesc s_inputLayoutMesh = {
     .elements = {
         { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, PixelFormat::R32G32B32_FLOAT, 1, 0, InputClassification::PER_VERTEX_DATA, 0 },
@@ -17,7 +17,7 @@ static const InputLayoutDesc s_input_layout_mesh = {
     }
 };
 
-static const InputLayoutDesc s_input_layout_position = {
+static const InputLayoutDesc s_inputLayoutPosition = {
     .elements = {
         { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
     }
@@ -44,6 +44,12 @@ static const RasterizerDesc s_rasterizerDoubleSided = {
 static const DepthStencilDesc s_depthStencilDefault = {
     .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = true,
+    .stencilEnabled = false,
+};
+
+static const DepthStencilDesc s_noDepthStencil = {
+    .depthFunc = ComparisonFunc::NEVER,
+    .depthEnabled = false,
     .stencilEnabled = false,
 };
 
@@ -95,9 +101,9 @@ bool PipelineStateManager::Initialize() {
                        .ps = "gbuffer.pixel",
                        .rasterizerDesc = &s_rasterizerFrontFace,
                        .depthStencilDesc = &s_depthStencilGbuffer,
-                       .inputLayoutDesc = &s_input_layout_mesh,
+                       .inputLayoutDesc = &s_inputLayoutMesh,
                        .numRenderTargets = 4,
-                       .rtvFormats = { GBUFFER_BASE_COLOR_FORMAT, GBUFFER_POSITION_FORMAT, GBUFFER_NORMAL_FORMAT, GBUFFER_MATERIAL_FORMAT },
+                       .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
                        .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                    });
     ok = ok && Create(PROGRAM_DPETH, {
@@ -105,16 +111,28 @@ bool PipelineStateManager::Initialize() {
                                          .ps = "depth.pixel",
                                          .rasterizerDesc = &s_rasterizerBackFace,
                                          .depthStencilDesc = &s_depthStencilDefault,
-                                         .inputLayoutDesc = &s_input_layout_mesh,
+                                         .inputLayoutDesc = &s_inputLayoutMesh,
                                          .numRenderTargets = 0,
                                          .dsvFormat = PixelFormat::D32_FLOAT,
                                      });
+
+    ok = ok && Create(PROGRAM_LIGHTING, {
+                                            .vs = "screenspace_quad.vert",
+                                            .ps = "lighting.pixel",
+                                            .rasterizerDesc = &s_rasterizerFrontFace,
+                                            .depthStencilDesc = &s_noDepthStencil,
+                                            .inputLayoutDesc = &s_inputLayoutPosition,
+                                            .numRenderTargets = 1,
+                                            .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                            .dsvFormat = PixelFormat::UNKNOWN,
+                                        });
+
     ok = ok && Create(PROGRAM_POINT_SHADOW, {
                                                 .vs = "shadowmap_point.vert",
                                                 .ps = "shadowmap_point.pixel",
                                                 .rasterizerDesc = &s_rasterizerBackFace,
                                                 .depthStencilDesc = &s_depthStencilDefault,
-                                                .inputLayoutDesc = &s_input_layout_mesh,
+                                                .inputLayoutDesc = &s_inputLayoutMesh,
                                                 .numRenderTargets = 0,
                                                 .dsvFormat = PixelFormat::D32_FLOAT,
                                             });
@@ -123,19 +141,13 @@ bool PipelineStateManager::Initialize() {
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
     }
-    ok = ok && Create(PROGRAM_LIGHTING, {
-                                            .vs = "screenspace_quad.vert",
-                                            .ps = "lighting.pixel",
-                                            .rasterizerDesc = &s_rasterizerFrontFace,
-                                            .depthStencilDesc = &s_depthStencilDefault,
-                                            .inputLayoutDesc = &s_input_layout_position,
-                                        });
+
     ok = ok && Create(PROGRAM_TONE, {
                                         .vs = "screenspace_quad.vert",
                                         .ps = "tone.pixel",
                                         .rasterizerDesc = &s_rasterizerFrontFace,
                                         .depthStencilDesc = &s_depthStencilDefault,
-                                        .inputLayoutDesc = &s_input_layout_position,
+                                        .inputLayoutDesc = &s_inputLayoutPosition,
                                     });
 
     // Bloom
@@ -153,7 +165,7 @@ bool PipelineStateManager::Initialize() {
                                                       .ps = "particle_draw.pixel",
                                                       .rasterizerDesc = &s_rasterizerFrontFace,
                                                       .depthStencilDesc = &s_depthStencilDefault,
-                                                      .inputLayoutDesc = &s_input_layout_mesh,
+                                                      .inputLayoutDesc = &s_inputLayoutMesh,
                                                   });
 
     // @HACK: only support this many shaders
