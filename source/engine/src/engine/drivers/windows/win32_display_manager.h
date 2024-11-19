@@ -20,7 +20,7 @@ public:
     HWND GetHwnd() const { return m_hwnd; }
 
 private:
-    bool InitializeWindow() final;
+    bool InitializeWindow(const CreateInfo& p_info) final;
     void InitializeKeyMapping() final;
 
     WNDCLASSEXW m_wndClass{};

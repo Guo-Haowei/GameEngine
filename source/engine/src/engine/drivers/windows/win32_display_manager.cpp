@@ -3,7 +3,6 @@
 #include <imgui/backends/imgui_impl_win32.h>
 
 #include "core/framework/application.h"
-#include "core/framework/common_dvars.h"
 #include "core/framework/graphics_manager.h"
 #include "core/input/input.h"
 
@@ -24,16 +23,10 @@ static LRESULT WndProcWrapper(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p
     return window->WndProc(p_hwnd, p_msg, p_wparam, p_lparam);
 }
 
-bool Win32DisplayManager::InitializeWindow() {
-    const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
-    const ivec2 min_size = ivec2(600, 400);
-    const ivec2 size = glm::max(min_size, resolution);
-
-    RECT rect = { 0, 0, size.x, size.y };
+bool Win32DisplayManager::InitializeWindow(const CreateInfo& p_info) {
+    RECT rect = { 0, 0, p_info.width, p_info.height };
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-
-    // @TODO: configure title
-    auto title = GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11 ? L"Editor (D3d11)" : L"Editor (D3d12)";
+    std::wstring title(p_info.title.begin(), p_info.title.end());
 
     m_wndClass = { sizeof(m_wndClass),
                    CS_CLASSDC,
@@ -49,7 +42,7 @@ bool Win32DisplayManager::InitializeWindow() {
                    NULL };
     ::RegisterClassExW(&m_wndClass);
     m_hwnd = ::CreateWindowW(m_wndClass.lpszClassName,
-                             title,
+                             title.c_str(),
                              WS_OVERLAPPEDWINDOW,
                              40, 40,
                              rect.right - rect.left, rect.bottom - rect.top,

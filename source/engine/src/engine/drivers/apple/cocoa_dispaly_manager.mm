@@ -6,7 +6,7 @@ namespace my {
 
 class NSWindowWrapperImpl {
 public:
-    bool Initialize();
+    bool Initialize(const DisplayManager::CreateInfo& p_info);
 
 private:
     NSWindow* window_; // Pointer to the NSWindow
@@ -15,25 +15,25 @@ private:
     friend class CocoaDisplayManager;
 };
 
-bool NSWindowWrapperImpl::Initialize() {
+bool NSWindowWrapperImpl::Initialize(const DisplayManager::CreateInfo& p_info) {
             // Initialize the application
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; // Ensure regular activation
 
-    window_ = [[NSWindow alloc] initWithContentRect:NSMakeRect(100, 100, 800, 600)
+    window_ = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, p_info.width, p_info.height)
                                                        styleMask:(NSWindowStyleMaskTitled |
                                                                   NSWindowStyleMaskClosable |
                                                                   NSWindowStyleMaskResizable)
                                                          backing:NSBackingStoreBuffered
                                                            defer:NO];
+    // @TODO: set correct title
+    [window_ setTitle:@"Dummy(Metal)"];
 
     [window_ cascadeTopLeftFromPoint:NSMakePoint(20, 20)];
     [window_ setMinSize:NSMakeSize(300, 200)];
     [window_ setAcceptsMouseMovedEvents:YES];
     [window_ makeKeyAndOrderFront:nil];
     [window_ center];
-    
-    [window_ setTitle:@"Editor(Metal)"];
 
     // Activate the application
     [NSApp activateIgnoringOtherApps:YES];
@@ -97,8 +97,8 @@ void CocoaDisplayManager::Present() {
 
 }
 
-bool CocoaDisplayManager::InitializeWindow() {
-    return m_impl->Initialize();
+bool CocoaDisplayManager::InitializeWindow(const CreateInfo& p_info) {
+    return m_impl->Initialize(p_info);
 }
 
 void CocoaDisplayManager::InitializeKeyMapping() {
