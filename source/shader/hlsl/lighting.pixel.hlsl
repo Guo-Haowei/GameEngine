@@ -8,7 +8,7 @@
 // @TODO: refactor shadow
 #define NUM_POINT_SHADOW_SAMPLES 20
 
-float3 POINT_LIGHT_SHADOW_SAMPLE_OFFSET[NUM_POINT_SHADOW_SAMPLES] = {
+static float3 POINT_LIGHT_SHADOW_SAMPLE_OFFSET[NUM_POINT_SHADOW_SAMPLES] = {
     float3(1, 1, 1),
     float3(1, -1, 1),
     float3(-1, -1, 1),
@@ -41,25 +41,27 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     float bias = 0.01;
 
     float view_distance = length(p_eye - p_frag_pos);
-    float disk_radius = (1.0 + (view_distance / light_far)) / 100.0;
+    float disk_radius = (1.0 + (view_distance / light_far)) / 300.0;
+
     float shadow = 0.0;
 
+#if 1
     float4 uv = float4(frag_to_light, (float)p_light.shadow_map_index);
-    float closest_depth = TEXTURE_CUBE_ARRAY(pointShadowArray).Sample(s_shadowSampler, uv).r;
+    float closest_depth = TEXTURE_CUBE_ARRAY(pointShadowArray).SampleLevel(s_shadowSampler, uv, 0).r;
     closest_depth *= light_far;
     if (current_depth - bias > closest_depth) {
         shadow += 1.0;
     }
-
-#if 0
-    //for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
-    //    float closest_depth = t_pointShadowArray.Sample(s_shadowSampler, frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius).r;
-    //    closest_depth *= light_far;
-    //    if (current_depth - bias > closest_depth) {
-    //        shadow += 1.0;
-    //    }
-    //}
-    //shadow /= float(NUM_POINT_SHADOW_SAMPLES);
+#else
+    for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
+        float4 uv = float4(frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius, (float)p_light.shadow_map_index);
+        float closest_depth = TEXTURE_CUBE_ARRAY(pointShadowArray).SampleLevel(s_shadowSampler, uv, 0).r;
+        closest_depth *= light_far;
+        if (current_depth - bias > closest_depth) {
+            shadow += 1.0;
+        }
+    }
+    shadow /= float(NUM_POINT_SHADOW_SAMPLES);
 #endif
 
     return shadow;
@@ -111,6 +113,7 @@ ps_output main(vsoutput_uv input) {
 
     const vec3 world_position = TEXTURE_2D(gbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
     const vec3 emissive_roughness_metallic = TEXTURE_2D(gbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;
@@ -121,7 +124,7 @@ ps_output main(vsoutput_uv input) {
     }
 
     float3 N = TEXTURE_2D(gbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
-    float3 color = 0.5 * (N + float3(1.0, 1.0, 1.0));
+    float3 color = float3(0.0, 0.0, 0.0);
 
     const vec3 V = normalize(c_cameraPosition - world_position);
     const float NdotV = clamp(dot(N, V), 0.0, 1.0);
@@ -158,6 +161,7 @@ ps_output main(vsoutput_uv input) {
                 float atten = (light.atten_constant + light.atten_linear * dist +
                                light.atten_quadratic * (dist * dist));
                 atten = 1.0 / atten;
+
                 if (atten > 0.01) {
                     vec3 L = normalize(delta);
                     const vec3 H = normalize(V + L);
@@ -173,7 +177,6 @@ ps_output main(vsoutput_uv input) {
         Lo += (1.0 - shadow) * direct_lighting;
     }
 
-    color = Lo;
-    output.color = float4(color, 1.0);
+    output.color = float4(Lo, 1.0);
     return output;
 }

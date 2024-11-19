@@ -47,6 +47,12 @@ static const DepthStencilDesc s_depthStencilDefault = {
     .stencilEnabled = false,
 };
 
+static const DepthStencilDesc s_noDepthStencil = {
+    .depthFunc = ComparisonFunc::NEVER,
+    .depthEnabled = false,
+    .stencilEnabled = false,
+};
+
 static const DepthStencilDesc s_depthStencilHighlight = {
     .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = false,
@@ -109,6 +115,18 @@ bool PipelineStateManager::Initialize() {
                                          .numRenderTargets = 0,
                                          .dsvFormat = PixelFormat::D32_FLOAT,
                                      });
+
+    ok = ok && Create(PROGRAM_LIGHTING, {
+                                            .vs = "screenspace_quad.vert",
+                                            .ps = "lighting.pixel",
+                                            .rasterizerDesc = &s_rasterizerFrontFace,
+                                            .depthStencilDesc = &s_noDepthStencil,
+                                            .inputLayoutDesc = &s_inputLayoutPosition,
+                                            .numRenderTargets = 1,
+                                            .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                            .dsvFormat = PixelFormat::UNKNOWN,
+                                        });
+
     ok = ok && Create(PROGRAM_POINT_SHADOW, {
                                                 .vs = "shadowmap_point.vert",
                                                 .ps = "shadowmap_point.pixel",
@@ -118,17 +136,6 @@ bool PipelineStateManager::Initialize() {
                                                 .numRenderTargets = 0,
                                                 .dsvFormat = PixelFormat::D32_FLOAT,
                                             });
-
-    ok = ok && Create(PROGRAM_LIGHTING, {
-                                            .vs = "screenspace_quad.vert",
-                                            .ps = "lighting.pixel",
-                                            .rasterizerDesc = &s_rasterizerFrontFace,
-                                            .depthStencilDesc = &s_depthStencilDefault,
-                                            .inputLayoutDesc = &s_inputLayoutPosition,
-                                            .numRenderTargets = 1,
-                                            .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
-                                            .dsvFormat = PixelFormat::UNKNOWN,
-                                        });
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {

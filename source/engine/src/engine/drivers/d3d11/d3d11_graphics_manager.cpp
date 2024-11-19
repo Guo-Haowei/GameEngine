@@ -317,7 +317,7 @@ void D3d11GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
     m_deviceContext->VSSetShaderResources(p_slot, 1, &srv);
 }
 
-std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     ComPtr<ID3D11ShaderResourceView> srv;

@@ -166,8 +166,8 @@ public:
 
     virtual std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) = 0;
 
-    std::shared_ptr<GpuTexture> CreateGpuTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc);
-    std::shared_ptr<GpuTexture> FindGpuTexture(RenderTargetResourceName p_name) const;
+    std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc);
+    std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const;
     virtual void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
     virtual void UnbindTexture(Dimension p_dimension, int p_slot) = 0;
 
@@ -194,7 +194,7 @@ public:
 
 protected:
     virtual bool InitializeImpl() = 0;
-    virtual std::shared_ptr<GpuTexture> CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
+    virtual std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
     virtual void Render() = 0;
     virtual void Present() = 0;

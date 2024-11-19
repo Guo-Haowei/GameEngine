@@ -49,17 +49,25 @@ float shadowTest(Light light, Vector3f worldPos, float NdotL) {
     float currentDepth = lightSpacePos.z;
 
     float shadow = 0.0;
+#if defined(GLSL_LANG)
+    Vector2f texelSize = 1.0 / Vector2f(textureSizeTexture2D(t_shadowMap));
+#else
     Vector2f texelSize = 1.0 / Vector2f(textureSizeTexture2D(TEXTURE_2D(shadowMap)));
+#endif
 
     // @TODO: better bias
     float bias = max(0.005 * (1.0 - NdotL), 0.0005);
 
     // @TODO: refactor
-    [unroll(4)] for (int sample = 0; sample < 4; ++sample) {
-        int x = sample / 2;
-        int y = sample % 2;
+    for (int SAMPLE = 0; SAMPLE < 4; ++SAMPLE) {
+        int x = SAMPLE / 2;
+        int y = SAMPLE % 2;
         Vector2f offset = Vector2f(x, y) * texelSize;
+#if defined(GLSL_LANG)
+        float closestDepth = texture(t_shadowMap, lightSpacePos.xy + offset).r;
+#else
         float closestDepth = TEXTURE_2D(shadowMap).Sample(s_shadowSampler, lightSpacePos.xy + offset).r;
+#endif
         shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
     }
 

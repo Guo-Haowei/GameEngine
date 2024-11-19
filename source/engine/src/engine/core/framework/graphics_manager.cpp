@@ -86,7 +86,7 @@ bool GraphicsManager::Initialize() {
     }
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot) {
-        std::shared_ptr<GpuTexture> texture = FindGpuTexture(p_name);
+        std::shared_ptr<GpuTexture> texture = FindTexture(p_name);
         if (!texture) {
             return;
         }
@@ -169,7 +169,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         SamplerDesc sampler_desc{};
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
-        image->gpu_texture = CreateGpuTexture(texture_desc, sampler_desc);
+        image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
         if (task.func) {
             task.func(task.handle->Get());
         }
@@ -264,8 +264,8 @@ void GraphicsManager::SelectRenderGraph() {
     }
 }
 
-std::shared_ptr<GpuTexture> GraphicsManager::CreateGpuTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
-    auto texture = CreateGpuTextureImpl(p_texture_desc, p_sampler_desc);
+std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+    auto texture = CreateTextureImpl(p_texture_desc, p_sampler_desc);
     if (p_texture_desc.type != AttachmentType::NONE) {
         DEV_ASSERT(m_resourceLookup.find(p_texture_desc.name) == m_resourceLookup.end());
         m_resourceLookup[p_texture_desc.name] = texture;
@@ -273,7 +273,7 @@ std::shared_ptr<GpuTexture> GraphicsManager::CreateGpuTexture(const GpuTextureDe
     return texture;
 }
 
-std::shared_ptr<GpuTexture> GraphicsManager::FindGpuTexture(RenderTargetResourceName p_name) const {
+std::shared_ptr<GpuTexture> GraphicsManager::FindTexture(RenderTargetResourceName p_name) const {
     if (m_resourceLookup.empty()) {
         return nullptr;
     }
@@ -289,13 +289,13 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
-            texture = FindGpuTexture(RESOURCE_LIGHTING).get();
+            texture = FindTexture(RESOURCE_LIGHTING).get();
             break;
         case RenderGraphName::VXGI:
-            texture = FindGpuTexture(RESOURCE_FINAL).get();
+            texture = FindTexture(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::DEFAULT:
-            texture = FindGpuTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RESOURCE_TONE).get();
             break;
         default:
             CRASH_NOW();
@@ -423,7 +423,7 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     // @TODO: cache the slots
     // Texture indices
     auto find_index = [&](RenderTargetResourceName p_name) -> uint32_t {
-        std::shared_ptr<GpuTexture> resource = FindGpuTexture(p_name);
+        std::shared_ptr<GpuTexture> resource = FindTexture(p_name);
         if (!resource) {
             return 0;
         }

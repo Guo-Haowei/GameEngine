@@ -17,7 +17,19 @@ namespace my {
 struct D3d12GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
-    uint64_t GetResidentHandle() const final { return static_cast<uint64_t>(index); }
+    uint64_t GetResidentHandle() const final {
+        uint64_t handle = index;
+        switch (desc.dimension) {
+            case Dimension::TEXTURE_2D:
+                return handle;
+            case Dimension::TEXTURE_CUBE_ARRAY:
+                // @TODO: refactor
+                return handle - MAX_TEXTURE_2D_COUNT;
+            default:
+                CRASH_NOW();
+                return 0;
+        }
+    }
     uint64_t GetHandle() const final { return gpuHandle; }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> texture;
@@ -206,10 +218,14 @@ void D3d12GraphicsManager::BeginFrame() {
 
     m_graphicsCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
-    ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
-    m_graphicsCommandList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
-    // @TODO: fix this hard code shit
-    m_graphicsCommandList->SetGraphicsRootDescriptorTable(6, m_srvDescHeap.GetStartGpu());
+    ID3D12DescriptorHeap* heap = m_srvDescHeap.GetHeap();
+    m_graphicsCommandList->SetDescriptorHeaps(1, &heap);
+
+    // @TODO: NO HARDCODE
+    CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvDescHeap.GetStartGpu() };
+    m_graphicsCommandList->SetGraphicsRootDescriptorTable(6, handle);
+    handle.Offset(MAX_TEXTURE_2D_COUNT * m_srvDescHeap.GetIncrementSize());
+    m_graphicsCommandList->SetGraphicsRootDescriptorTable(7, handle);
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -234,7 +250,7 @@ std::unique_ptr<FrameContext> D3d12GraphicsManager::CreateFrameContext() {
 
 void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
     unused(p_ref);
-    LOG_WARN("TODO: D3d12GraphicsManager::SetStencilRef");
+    // LOG_WARN("TODO: D3d12GraphicsManager::SetStencilRef");
 }
 
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
@@ -502,7 +518,7 @@ void D3d12GraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_bu
     m_graphicsCommandList->SetGraphicsRootConstantBufferView(buffer->desc.slot, batch_address);
 }
 
-std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     unused(p_sampler_desc);
 
     auto initial_data = reinterpret_cast<const uint8_t*>(p_texture_desc.initialData);
@@ -563,8 +579,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
     texture_desc.DepthOrArraySize = static_cast<UINT16>(p_texture_desc.arraySize);
     texture_desc.MipLevels = static_cast<UINT16>(gen_mip_map ? 0 : p_texture_desc.mipLevels);
     texture_desc.Format = texture_format;
-    texture_desc.SampleDesc.Count = 1;
-    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.SampleDesc = { 1, 0 };
     texture_desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
     texture_desc.Flags = ConvertBindFlags(p_texture_desc.bindFlags);
 
@@ -667,16 +682,32 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateGpuTextureImpl(const Gpu
         CloseHandle(event);
     }
 
-    auto handle = m_srvDescHeap.AllocHandle();
+    DescriptorHeap::Handle handle = m_srvDescHeap.AllocHandle(p_texture_desc.dimension);
 
     // Create a shader resource view for the texture
     D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
-    srv_desc.Format = srv_format;
-    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
-    srv_desc.Texture2D.MostDetailedMip = 0;
-    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    m_device->CreateShaderResourceView(texture_ptr, &srv_desc, handle.cpuHandle);
+    if (p_texture_desc.bindFlags & BIND_SHADER_RESOURCE) {
+        srv_desc.Format = srv_format;
+        switch (p_texture_desc.dimension) {
+            case Dimension::TEXTURE_2D:
+                srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+                srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
+                srv_desc.Texture2D.MostDetailedMip = 0;
+                break;
+            case Dimension::TEXTURE_CUBE_ARRAY:
+                srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+                srv_desc.TextureCubeArray.MipLevels = texture_desc.MipLevels;
+                srv_desc.TextureCubeArray.MostDetailedMip = 0;
+                srv_desc.TextureCubeArray.First2DArrayFace = 0;
+                srv_desc.TextureCubeArray.NumCubes = p_texture_desc.arraySize / 6;
+                break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+        srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+        m_device->CreateShaderResourceView(texture_ptr, &srv_desc, handle.cpuHandle);
+    }
 
     auto gpu_texture = std::make_shared<D3d12GpuTexture>(p_texture_desc);
     gpu_texture->index = handle.index;
@@ -947,10 +978,10 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
 bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     bool ok = true;
-    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, m_device.Get());
-    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 64, m_device.Get());
-    // 1 slot for imgui
-    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, m_device.Get(), true);
+    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, m_device.Get(), false);
+    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 64, m_device.Get(), false);
+    // reserve one srv for ImGui
+    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 512, m_device.Get(), true);
     return ok;
 }
 
@@ -1067,19 +1098,21 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
 
-    CD3DX12_DESCRIPTOR_RANGE tex_table[2];
-    tex_table[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
-                      MAX_TEXTURE_2D_COUNT,             // number of descriptors
-                      0,                                // register t0
-                      0);                               // space 0
-    tex_table[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
-                      MAX_TEXTURE_CUBE_ARRAY_COUNT,     // number of descriptors
-                      0,                                // register t0
-                      1);                               // space 1
+    CD3DX12_DESCRIPTOR_RANGE texture2d_range(
+        D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
+        MAX_TEXTURE_2D_COUNT,             // number of descriptors
+        0,                                // register t0
+        0);                               // space 0
+    CD3DX12_DESCRIPTOR_RANGE texture_cube_array_range(
+        D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
+        MAX_TEXTURE_CUBE_ARRAY_COUNT,     // number of descriptors
+        0,                                // register t0
+        1);                               // space 1
 
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
     int param_count = 0;
+
     // @TODO: fix this
     root_parameters[param_count++].InitAsConstantBufferView(0);
     root_parameters[param_count++].InitAsConstantBufferView(1);
@@ -1088,7 +1121,8 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(4);
     root_parameters[param_count++].InitAsConstantBufferView(5);
 
-    root_parameters[param_count++].InitAsDescriptorTable(array_length(tex_table), tex_table);
+    root_parameters[param_count++].InitAsDescriptorTable(1, &texture2d_range);
+    root_parameters[param_count++].InitAsDescriptorTable(1, &texture_cube_array_range);
 
     InitStaticSamplers();
 
