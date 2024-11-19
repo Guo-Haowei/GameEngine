@@ -156,89 +156,31 @@ void D3d12GraphicsManager::Finalize() {
 void D3d12GraphicsManager::Render() {
     ID3D12GraphicsCommandList* cmdList = m_graphicsCommandList.Get();
 
-    // CommandList cmd = 0;
-    // FrameContext* frameContext = m_currentFrameContext;
-    // DEV_ASSERT(draw_data.batchConstants.size() <= 3000);
-    // frameContext->perFrameBuffer->CopyData(&draw_data.frameCB, sizeof(PerFrameConstants));
-    // frameContext->perBatchBuffer->CopyData(draw_data.batchConstants.data(), sizeof(PerBatchConstants) * draw_data.batchConstants.size());
-
     const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
-    D3D12_RECT sissorRect{};
-    sissorRect.left = 0;
-    sissorRect.top = 0;
-    sissorRect.right = width;
-    sissorRect.bottom = height;
-
-    D3D12_VIEWPORT vp{};
-    vp.Width = float(width);
-    vp.Height = float(height);
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-
-    cmdList->RSSetViewports(1, &vp);
-    cmdList->RSSetScissorRects(1, &sissorRect);
+    CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+    cmdList->RSSetViewports(1, &viewport);
+    D3D12_RECT rect{ 0, 0, width, height };
+    cmdList->RSSetScissorRects(1, &rect);
 
     // bind the frame buffer
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = m_depthStencilDescriptor;
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_renderTargetDescriptor[m_backbufferIndex];
+    D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = m_depthStencilDescriptor;
+    D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle = m_renderTargetDescriptor[m_backbufferIndex];
 
     // transfer resource state
-    auto barriers = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backbufferIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    cmdList->ResourceBarrier(1, &barriers);
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backbufferIndex],
+                                                        D3D12_RESOURCE_STATE_PRESENT,
+                                                        D3D12_RESOURCE_STATE_RENDER_TARGET);
+    cmdList->ResourceBarrier(1, &barrier);
 
-    // set frame buffers
-    cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-    // clear the back buffer to a deep blue
-    constexpr float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    cmdList->ClearRenderTargetView(rtvHandle, clear_color, 0, nullptr);
-    cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-    ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
-
-    cmdList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
-
-#if 0
-    // draw objects
-    for (size_t i = 0; i < draw_data.geometries.size(); ++i) {
-        uint32_t objectIdx = draw_data.geometries[i];
-        const ObjectComponent& obj = scene.get_component_array<ObjectComponent>()[objectIdx];
-        const MeshComponent& meshComponent = *scene.get_component<MeshComponent>(obj.meshID);
-        const MeshGeometry* geometry = reinterpret_cast<const MeshGeometry*>(meshComponent.gpuResource);
-
-        for (const MeshComponent::MeshSubset& subset : meshComponent.subsets)
-        {
-            // texture
-            const MaterialComponent* mat = scene.get_component<MaterialComponent>(subset.materialID);
-            DEV_ASSERT(mat);
-            ImageHandle handle = nullptr;
-            handle = mat->textures[MaterialComponent::BASE_COLOR_MAP].image;
-            if (!handle)
-            {
-                // @TODO: cache it somewhere
-                handle = g_assetManager->LoadImageSync("DefaultWhite");
-            }
-
-            D3D12_GPU_DESCRIPTOR_HANDLE tex{ handle->gpuHandle };
-            cmdList->SetGraphicsRootDescriptorTable(0, tex);
-
-            cmdList->DrawIndexedInstanced(subset.indexCount, 1, subset.indexOffset, 0, 0);
-        }
-    }
-#endif
+    cmdList->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
+    cmdList->ClearRenderTargetView(rtv_handle, DEFAULT_CLEAR_COLOR, 0, nullptr);
+    cmdList->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
 
-    D3D12_RESOURCE_BARRIER barrier;
-    barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-    barrier.Transition.pResource = m_renderTargets[m_backbufferIndex];
-    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-    barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-
+    barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backbufferIndex],
+                                                   D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                   D3D12_RESOURCE_STATE_PRESENT);
     cmdList->ResourceBarrier(1, &barrier);
 }
 
@@ -267,7 +209,7 @@ void D3d12GraphicsManager::BeginFrame() {
     ID3D12DescriptorHeap* descriptor_heaps[] = { m_srvDescHeap.GetHeap() };
     m_graphicsCommandList->SetDescriptorHeaps(array_length(descriptor_heaps), descriptor_heaps);
     // @TODO: fix this hard code shit
-    m_graphicsCommandList->SetGraphicsRootDescriptorTable(5, m_srvDescHeap.GetStartGpu());
+    m_graphicsCommandList->SetGraphicsRootDescriptorTable(6, m_srvDescHeap.GetStartGpu());
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -315,11 +257,11 @@ void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
         rtvs.emplace_back(rtv);
     }
 
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv{ 0 };
-    if (draw_pass->dsvs.size()) {
-        dsv = draw_pass->dsvs[0];
+    const D3D12_CPU_DESCRIPTOR_HANDLE* dsv_ptr = nullptr;
+    if (!draw_pass->dsvs.empty()) {
+        dsv_ptr = &(draw_pass->dsvs[0]);
     }
-    command_list->OMSetRenderTargets((uint32_t)rtvs.size(), rtvs.data(), false, &dsv);
+    command_list->OMSetRenderTargets((uint32_t)rtvs.size(), rtvs.data(), false, dsv_ptr);
 }
 
 void D3d12GraphicsManager::UnsetRenderTarget() {
@@ -1008,7 +950,7 @@ bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, m_device.Get());
     ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 64, m_device.Get());
     // 1 slot for imgui
-    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 128, m_device.Get(), true);
+    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256, m_device.Get(), true);
     return ok;
 }
 
@@ -1125,21 +1067,28 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
 
-    CD3DX12_DESCRIPTOR_RANGE tex_table;
-    tex_table.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
-                   128,  // number of descriptors
-                   0);   // register t0
+    CD3DX12_DESCRIPTOR_RANGE tex_table[2];
+    tex_table[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
+                      MAX_TEXTURE_2D_COUNT,             // number of descriptors
+                      0,                                // register t0
+                      0);                               // space 0
+    tex_table[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
+                      MAX_TEXTURE_CUBE_ARRAY_COUNT,     // number of descriptors
+                      0,                                // register t0
+                      1);                               // space 1
 
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
     int param_count = 0;
+    // @TODO: fix this
     root_parameters[param_count++].InitAsConstantBufferView(0);
     root_parameters[param_count++].InitAsConstantBufferView(1);
     root_parameters[param_count++].InitAsConstantBufferView(2);
     root_parameters[param_count++].InitAsConstantBufferView(3);
     root_parameters[param_count++].InitAsConstantBufferView(4);
+    root_parameters[param_count++].InitAsConstantBufferView(5);
 
-    root_parameters[param_count++].InitAsDescriptorTable(1, &tex_table);
+    root_parameters[param_count++].InitAsDescriptorTable(array_length(tex_table), tex_table);
 
     InitStaticSamplers();
 

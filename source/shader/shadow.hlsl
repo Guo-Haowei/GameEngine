@@ -16,10 +16,6 @@ int2 textureSizeTexture2D(Texture2D p_texture) {
     return int2(width, height);
 }
 
-float4 sampleShadow(Texture2D textureObject, float2 offset) {
-    return textureObject.Sample(s_shadowSampler, offset);
-}
-
 #elif defined(GLSL_LANG)
 
 #define Vector2f       vec2
@@ -38,7 +34,7 @@ vec4 sampleShadow(Texture2D textureObject, vec2 offset) {
 #error "Unknown shading language"
 #endif
 
-float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float NdotL) {
+float shadowTest(Light light, Vector3f worldPos, float NdotL) {
     Vector4f lightSpacePos = Multiply(light.view_matrix, Vector4f(worldPos, 1.0));
     lightSpacePos = Multiply(light.projection_matrix, lightSpacePos);
     lightSpacePos /= lightSpacePos.w;
@@ -53,21 +49,21 @@ float shadowTest(Light light, Texture2D shadowMap, Vector3f worldPos, float Ndot
     float currentDepth = lightSpacePos.z;
 
     float shadow = 0.0;
-    Vector2f texelSize = 1.0 / Vector2f(textureSizeTexture2D(shadowMap));
+    Vector2f texelSize = 1.0 / Vector2f(textureSizeTexture2D(TEXTURE_2D(shadowMap)));
 
     // @TODO: better bias
     float bias = max(0.005 * (1.0 - NdotL), 0.0005);
 
-    const int quality = 1;
-    for (int x = -quality; x <= quality; ++x) {
-        for (int y = -quality; y <= quality; ++y) {
-            Vector2f offset = Vector2f(x, y) * texelSize;
-            float closestDepth = sampleShadow(shadowMap, lightSpacePos.xy + offset).r;
-            shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
-        }
+    // @TODO: refactor
+    [unroll(4)] for (int sample = 0; sample < 4; ++sample) {
+        int x = sample / 2;
+        int y = sample % 2;
+        Vector2f offset = Vector2f(x, y) * texelSize;
+        float closestDepth = TEXTURE_2D(shadowMap).Sample(s_shadowSampler, lightSpacePos.xy + offset).r;
+        shadow += currentDepth - bias > closestDepth ? 1.0 : 0.0;
     }
 
-    const float samples = float(2 * quality + 1);
-    shadow /= samples * samples;
+    const float samples = float(4);
+    shadow /= samples;
     return shadow;
 }

@@ -32,15 +32,22 @@
 #define MAX_PARTICLE_COUNT    1048576
 #define MAX_FORCE_FIELD_COUNT 64
 
-#if defined(__cplusplus) || defined(HLSL_LANG)
-#define global_const static const
+// Descriptor table limits
+#define MAX_TEXTURE_2D_COUNT         128
+#define MAX_TEXTURE_3D_COUNT         8
+#define MAX_TEXTURE_CUBE_ARRAY_COUNT 8
+
+#if defined(__cplusplus)
+#define VCT_CONST constexpr
+#elif defined(HLSL_LANG)
+#define VCT_CONST static const
 #else
-#define global_const const
+#define VCT_CONST const
 #endif
 
-global_const float LUT_SIZE = 64.0;  // ltc_texture size
-global_const float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;
-global_const float LUT_BIAS = 0.5 / LUT_SIZE;
+VCT_CONST float LUT_SIZE = 64.0;  // ltc_texture size
+VCT_CONST float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;
+VCT_CONST float LUT_BIAS = 0.5 / LUT_SIZE;
 
 #if defined(HLSL_LANG)
 #define ivec2 int2

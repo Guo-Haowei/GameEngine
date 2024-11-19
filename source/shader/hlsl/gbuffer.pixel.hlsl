@@ -4,13 +4,6 @@
 #include "sampler.hlsl.h"
 #include "texture_binding.hlsl.h"
 
-// @TODO: refactor
-#ifdef HLSL_LANG_D3D12
-#define SAMPLE(TYPE, TEXTURE, SAMPLER, UV) (t_##TYPE##Array[c_##TEXTURE##Index].Sample(SAMPLER, UV))
-#else
-#define SAMPLE(TYPE, TEXTURE, SAMPLER, UV) (t_##TEXTURE.Sample(SAMPLER, UV))
-#endif
-
 struct ps_output {
     float3 base_color : SV_TARGET0;
     float4 position : SV_TARGET1;
@@ -22,7 +15,7 @@ ps_output main(vsoutput_mesh input) {
     float4 color = c_baseColor;
 
     if (c_hasBaseColorMap) {
-        color = SAMPLE(Texture2D, baseColorMap, s_linearMipWrapSampler, input.uv);
+        color = TEXTURE_2D(baseColorMap).Sample(s_linearMipWrapSampler, input.uv);
     }
 
     if (color.a <= 0.0) {
@@ -33,7 +26,7 @@ ps_output main(vsoutput_mesh input) {
     float roughness;
 
     if (c_hasMaterialMap != 0) {
-        float3 value = SAMPLE(Texture2D, materialMap, s_linearMipWrapSampler, input.uv).rgb;
+        float3 value = TEXTURE_2D(materialMap).Sample(s_linearMipWrapSampler, input.uv).rgb;
         metallic = value.b;
         roughness = value.g;
     } else {
@@ -47,7 +40,7 @@ ps_output main(vsoutput_mesh input) {
         TBN[0] = normalize(input.T);
         TBN[1] = normalize(input.B);
         TBN[2] = normalize(input.normal);
-        float3 value = SAMPLE(Texture2D, normalMap, s_linearMipWrapSampler, input.uv).rgb;
+        float3 value = TEXTURE_2D(normalMap).Sample(s_linearMipWrapSampler, input.uv).rgb;
         N = normalize(mul((2.0f * value) - 1.0f, TBN));
     } else {
         N = normalize(input.normal);

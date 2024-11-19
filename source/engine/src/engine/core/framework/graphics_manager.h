@@ -21,7 +21,6 @@ using my::rg::RenderPass;
 namespace my {
 
 // @TODO: refactor
-extern ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
@@ -94,6 +93,9 @@ struct FrameContext {
 
     std::shared_ptr<GpuConstantBuffer> pointShadowCb;
     std::array<PointShadowConstantBuffer, MAX_POINT_LIGHT_SHADOW_COUNT * 6> pointShadowCache;
+
+    std::shared_ptr<GpuConstantBuffer> perFrameCb;
+    PerFrameConstantBuffer perFrameCache;
 };
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {

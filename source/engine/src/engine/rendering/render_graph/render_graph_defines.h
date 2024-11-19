@@ -52,11 +52,12 @@ namespace my {
 
 constexpr int BLOOM_MIP_CHAIN_MAX = 7;
 
-constexpr PixelFormat GBUFFER_DEPTH_FORMAT = PixelFormat::R24G8_TYPELESS;
-constexpr PixelFormat GBUFFER_BASE_COLOR_FORMAT = PixelFormat::R11G11B10_FLOAT;
-constexpr PixelFormat GBUFFER_POSITION_FORMAT = PixelFormat::R16G16B16A16_FLOAT;
-constexpr PixelFormat GBUFFER_NORMAL_FORMAT = PixelFormat::R16G16B16A16_FLOAT;
-constexpr PixelFormat GBUFFER_MATERIAL_FORMAT = PixelFormat::R11G11B10_FLOAT;
+constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_DEPTH = PixelFormat::R24G8_TYPELESS;
+constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_BASE_COLOR = PixelFormat::R11G11B10_FLOAT;
+constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_POSITION = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_NORMAL = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_MATERIAL = PixelFormat::R11G11B10_FLOAT;
+constexpr PixelFormat RESOURCE_FORMAT_LIGHTING = PixelFormat::R11G11B10_FLOAT;
 
 enum class RenderPassName {
 #define RENDER_PASS_NAME(name) name,

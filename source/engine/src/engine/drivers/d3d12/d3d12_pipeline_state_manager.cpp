@@ -9,9 +9,6 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-// @TODO: refactor
-constexpr DXGI_FORMAT DEFAULT_DEPTH_STENCIL_FORMAT = DXGI_FORMAT_D32_FLOAT;
-
 std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const PipelineStateDesc& p_desc) {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 

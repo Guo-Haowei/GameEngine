@@ -75,31 +75,31 @@ void RenderPassCreator::AddGBufferPass() {
     int p_height = m_config.frameHeight;
 
     auto gbuffer_depth = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
-                                                                          GBUFFER_DEPTH_FORMAT,
+                                                                          RESOURCE_FORMAT_GBUFFER_DEPTH,
                                                                           AttachmentType::DEPTH_STENCIL_2D,
                                                                           p_width, p_height),
                                                   PointClampSampler());
 
     auto attachment0 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
-                                                                        GBUFFER_BASE_COLOR_FORMAT,
+                                                                        RESOURCE_FORMAT_GBUFFER_BASE_COLOR,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment1 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
-                                                                        GBUFFER_POSITION_FORMAT,
+                                                                        RESOURCE_FORMAT_GBUFFER_POSITION,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment2 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
-                                                                        GBUFFER_NORMAL_FORMAT,
+                                                                        RESOURCE_FORMAT_GBUFFER_NORMAL,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
 
     auto attachment3 = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
-                                                                        GBUFFER_MATERIAL_FORMAT,
+                                                                        RESOURCE_FORMAT_GBUFFER_MATERIAL,
                                                                         AttachmentType::COLOR_2D,
                                                                         p_width, p_height),
                                                 PointClampSampler());
@@ -285,7 +285,7 @@ void RenderPassCreator::AddLightingPass() {
     auto gbuffer_depth = manager.FindGpuTexture(RESOURCE_GBUFFER_DEPTH);
 
     auto lighting_attachment = manager.CreateGpuTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
-                                                                                PixelFormat::R11G11B10_FLOAT,
+                                                                                RESOURCE_FORMAT_LIGHTING,
                                                                                 AttachmentType::COLOR_2D,
                                                                                 m_config.frameWidth, m_config.frameHeight),
                                                         PointClampSampler());
@@ -555,6 +555,7 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
 
     creator.AddShadowPass();
     creator.AddGBufferPass();
+    creator.AddLightingPass();
 
     p_graph.Compile();
 }

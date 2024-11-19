@@ -36,7 +36,6 @@ static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t
     return p_graphics_manager.CreateConstantBuffer(buffer_desc);
 }
 
-ConstantBuffer<PerFrameConstantBuffer> g_per_frame_cache;
 ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 ConstantBuffer<EnvConstantBuffer> g_env_cache;
@@ -72,11 +71,10 @@ bool GraphicsManager::Initialize() {
         frame_context.boneCb = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
         frame_context.emitterCb = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
         frame_context.pointShadowCb = ::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
+        frame_context.perFrameCb = ::my::CreateUniformCheckSize<PerFrameConstantBuffer>(*this, 1);
     }
 
     // @TODO: refactor
-
-    CreateUniformBuffer<PerFrameConstantBuffer>(g_per_frame_cache);
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
     CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
     CreateUniformBuffer<EnvConstantBuffer>(g_env_cache);
@@ -158,9 +156,6 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
 
-    g_per_frame_cache.update();
-    // update uniform
-
     // @TODO: make it a function
     auto loaded_images = m_loadedImages.pop_all();
     while (!loaded_images.empty()) {
@@ -184,7 +179,6 @@ void GraphicsManager::Update(Scene& p_scene) {
         OPTICK_EVENT("Render");
         BeginFrame();
 
-        // update uniform after BeginFrame()
         auto& frame = GetCurrentFrame();
         UpdateConstantBuffer(frame.batchCb.get(), frame.batchCache.buffer);
         UpdateConstantBuffer(frame.materialCb.get(), frame.materialCache.buffer);
@@ -192,6 +186,8 @@ void GraphicsManager::Update(Scene& p_scene) {
         UpdateConstantBuffer(frame.passCb.get(), frame.passCache);
         UpdateConstantBuffer(frame.emitterCb.get(), frame.emitterCache);
         UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(frame.pointShadowCb.get(), frame.pointShadowCache);
+        UpdateConstantBuffer(frame.perFrameCb.get(), &frame.perFrameCache, sizeof(PerFrameConstantBuffer));
+        BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
         m_renderGraph.Execute(*this);
         Render();
@@ -293,7 +289,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
-            texture = FindGpuTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
+            texture = FindGpuTexture(RESOURCE_LIGHTING).get();
             break;
         case RenderGraphName::VXGI:
             texture = FindGpuTexture(RESOURCE_FINAL).get();
@@ -378,7 +374,7 @@ void GraphicsManager::Cleanup() {
 void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     Camera& camera = *p_scene.m_camera.get();
 
-    auto& cache = g_per_frame_cache.cache;
+    auto& cache = GetCurrentFrame().perFrameCache;
     cache.c_cameraPosition = camera.GetPosition();
 
     cache.c_enableVxgi = DVAR_GET_BOOL(gfx_enable_vxgi);
@@ -423,6 +419,26 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     }
 
     cache.c_forceFieldsCount = counter;
+
+    // @TODO: cache the slots
+    // Texture indices
+    auto find_index = [&](RenderTargetResourceName p_name) -> uint32_t {
+        std::shared_ptr<GpuTexture> resource = FindGpuTexture(p_name);
+        if (!resource) {
+            return 0;
+        }
+
+        return static_cast<uint32_t>(resource->GetResidentHandle());
+    };
+
+    cache.c_gbufferBaseColorMapIndex = find_index(RESOURCE_GBUFFER_BASE_COLOR);
+    cache.c_gbufferPositionMapIndex = find_index(RESOURCE_GBUFFER_POSITION);
+    cache.c_gbufferNormalMapIndex = find_index(RESOURCE_GBUFFER_NORMAL);
+    cache.c_gbufferMaterialMapIndex = find_index(RESOURCE_GBUFFER_MATERIAL);
+
+    cache.c_gbufferDepthIndex = find_index(RESOURCE_GBUFFER_DEPTH);
+    cache.c_pointShadowArrayIndex = find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY);
+    cache.c_shadowMapIndex = find_index(RESOURCE_SHADOW_MAP);
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
@@ -492,7 +508,7 @@ void GraphicsManager::UpdateForceFields(const Scene& p_scene) {
 void GraphicsManager::UpdateLights(const Scene& p_scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
-    auto& cache = g_per_frame_cache.cache;
+    auto& cache = GetCurrentFrame().perFrameCache;
     cache.c_lightCount = light_count;
 
     auto& point_shadow_cache = GetCurrentFrame().pointShadowCache;
