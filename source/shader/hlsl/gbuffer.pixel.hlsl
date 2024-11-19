@@ -4,6 +4,13 @@
 #include "sampler.hlsl.h"
 #include "texture_binding.hlsl.h"
 
+// @TODO: refactor
+#ifdef HLSL_LANG_D3D12
+#define SAMPLE(TYPE, TEXTURE, SAMPLER, UV) (t_##TYPE##Array[c_##TEXTURE##Index].Sample(SAMPLER, UV))
+#else
+#define SAMPLE(TYPE, TEXTURE, SAMPLER, UV) (t_##TEXTURE.Sample(SAMPLER, UV))
+#endif
+
 struct ps_output {
     float3 base_color : SV_TARGET0;
     float4 position : SV_TARGET1;
@@ -15,11 +22,7 @@ ps_output main(vsoutput_mesh input) {
     float4 color = c_baseColor;
 
     if (c_hasBaseColorMap) {
-#ifdef HLSL_LANG_D3D12
-        color = t_texture2DArray[c_baseColorMapIndex].Sample(s_linearMipWrapSampler, input.uv);
-#else
-        color = t_baseColorMap.Sample(s_linearMipWrapSampler, input.uv);
-#endif
+        color = SAMPLE(Texture2D, baseColorMap, s_linearMipWrapSampler, input.uv);
     }
 
     if (color.a <= 0.0) {
@@ -30,11 +33,7 @@ ps_output main(vsoutput_mesh input) {
     float roughness;
 
     if (c_hasMaterialMap != 0) {
-#ifdef HLSL_LANG_D3D12
-        float3 value = t_texture2DArray[c_materialMapIndex].Sample(s_linearMipWrapSampler, input.uv).rgb;
-#else
-        float3 value = t_materialMap.Sample(s_linearMipWrapSampler, input.uv).rgb;
-#endif
+        float3 value = SAMPLE(Texture2D, materialMap, s_linearMipWrapSampler, input.uv).rgb;
         metallic = value.b;
         roughness = value.g;
     } else {
@@ -45,14 +44,10 @@ ps_output main(vsoutput_mesh input) {
     float3 N;
     if (c_hasNormalMap != 0) {
         float3x3 TBN;
-        TBN[0] = input.T;
-        TBN[1] = input.B;
-        TBN[2] = input.normal;
-#ifdef HLSL_LANG_D3D12
-        float3 value = t_texture2DArray[c_normalMapIndex].Sample(s_linearMipWrapSampler, input.uv).rgb;
-#else
-        float3 value = t_normalMap.Sample(s_linearMipWrapSampler, input.uv).rgb;
-#endif
+        TBN[0] = normalize(input.T);
+        TBN[1] = normalize(input.B);
+        TBN[2] = normalize(input.normal);
+        float3 value = SAMPLE(Texture2D, normalMap, s_linearMipWrapSampler, input.uv).rgb;
         N = normalize(mul((2.0f * value) - 1.0f, TBN));
     } else {
         N = normalize(input.normal);

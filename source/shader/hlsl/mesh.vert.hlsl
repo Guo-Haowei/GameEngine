@@ -14,9 +14,8 @@ vsoutput_mesh main(vsinput_mesh input) {
         world_matrix = mul(c_worldMatrix, bone_matrix);
     }
 
-    float3x3 rotation = (float3x3)world_matrix;
-    float3 T = normalize(mul(rotation, input.tangent));
-    float3 N = normalize(mul(rotation, input.normal));
+    float3 T = normalize(mul(world_matrix, float4(input.tangent, 0.0f))).xyz;
+    float3 N = normalize(mul(world_matrix, float4(input.normal, 0.0f))).xyz;
     float3 B = cross(N, T);
 
     float4 position = float4(input.position, 1.0);

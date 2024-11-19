@@ -17,6 +17,8 @@ input_shaders = [
     'bloom_downsample.comp',
     'bloom_upsample.comp',
     'depth.pixel',
+    # 'mesh.vert',
+    # 'gbuffer.pixel',
     'particle_draw.vert',
     'particle_draw.pixel',
     'particle_initialization.comp',

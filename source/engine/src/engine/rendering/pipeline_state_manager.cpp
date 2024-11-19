@@ -115,11 +115,6 @@ bool PipelineStateManager::Initialize() {
                                                 .numRenderTargets = 0,
                                                 .dsvFormat = PixelFormat::D32_FLOAT,
                                             });
-
-    // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
-        return ok;
-    }
     ok = ok && Create(PROGRAM_LIGHTING, {
                                             .vs = "screenspace_quad.vert",
                                             .ps = "lighting.pixel",
@@ -127,6 +122,11 @@ bool PipelineStateManager::Initialize() {
                                             .depthStencilDesc = &s_depthStencilDefault,
                                             .inputLayoutDesc = &s_input_layout_position,
                                         });
+
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+        return ok;
+    }
     ok = ok && Create(PROGRAM_TONE, {
                                         .vs = "screenspace_quad.vert",
                                         .ps = "tone.pixel",

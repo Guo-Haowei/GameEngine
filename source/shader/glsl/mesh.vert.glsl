@@ -24,9 +24,8 @@ void main() {
 
     vec4 world_position = world_matrix * vec4(in_position, 1.0);
 
-    mat3 rotation = mat3(world_matrix);
-    vec3 T = normalize(rotation * in_tangent);
-    vec3 N = normalize(rotation * in_normal);
+    vec3 T = normalize(world_matrix * vec4(in_tangent, 0.0)).xyz;
+    vec3 N = normalize(world_matrix * vec4(in_normal, 0.0)).xyz;
     vec3 B = cross(N, T);
 
     gl_Position = c_projectionMatrix * (c_viewMatrix * world_position);

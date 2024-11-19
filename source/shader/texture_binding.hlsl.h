@@ -13,7 +13,7 @@
 #endif
 
 #if defined(HLSL_LANG_D3D12)
-Texture2D t_texture2DArray[128] : register(t0);
+Texture2D t_Texture2DArray[128] : register(t0);
 #else
 // dynamic srvs
 SHADER_TEXTURE(Texture2D, t_baseColorMap, 0, RESOURCE_NONE)
