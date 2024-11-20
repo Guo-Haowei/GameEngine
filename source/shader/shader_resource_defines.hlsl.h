@@ -3,7 +3,7 @@
 #define TEXTURE_BINDING_HLSL_H_INCLUDED
 #include "shader_defines.hlsl.h"
 
-#define SRV_LIST                                                         \
+#define SRV_DEFINES                                                      \
     SRV(Texture2D, BaseColorMap, 0, RESOURCE_NONE)                       \
     SRV(Texture2D, NormalMap, 1, RESOURCE_NONE)                          \
     SRV(Texture2D, MaterialMap, 2, RESOURCE_NONE)                        \
@@ -23,7 +23,7 @@ Texture2D t_texture2Ds[MAX_TEXTURE_2D_COUNT] : register(t0, space0);
 TextureCubeArray t_textureCubeArrays[MAX_TEXTURE_CUBE_ARRAY_COUNT] : register(t0, space1);
 #elif defined(HLSL_LANG_D3D11)
 #define SRV(TYPE, NAME, SLOT, BINDING) TYPE t_##NAME : register(t##SLOT);
-SRV_LIST
+SRV_DEFINES
 #undef SRV
 #elif defined(GLSL_LANG)
 // @TODO: refactor
@@ -31,11 +31,13 @@ SRV_LIST
 #define TextureCube                    samplerCube
 #define TextureCubeArray               samplerCubeArray
 #define SRV(TYPE, NAME, SLOT, BINDING) uniform TYPE t_##NAME;
-SRV_LIST
+SRV_DEFINES
 #undef SRV
 #elif defined(__cplusplus)
-#define SRV_DEFAULT(TYPE, NAME, SLOT, BINDING) \
+#define SRV(TYPE, NAME, SLOT, BINDING) \
     [[maybe_unused]] static inline constexpr int Get##NAME##Slot() { return SLOT; }
+SRV_DEFINES
+#undef SRV
 #else
 #error Platform not supported
 #endif

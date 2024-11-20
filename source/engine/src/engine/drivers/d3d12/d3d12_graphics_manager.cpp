@@ -217,6 +217,7 @@ void D3d12GraphicsManager::BeginFrame() {
     m_backbufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 
     m_graphicsCommandList->SetGraphicsRootSignature(m_rootSignature.Get());
+    m_graphicsCommandList->SetComputeRootSignature(m_rootSignature.Get());
 
     ID3D12DescriptorHeap* heap = m_srvDescHeap.GetHeap();
     m_graphicsCommandList->SetDescriptorHeaps(1, &heap);
@@ -441,12 +442,13 @@ void D3d12GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint
     m_graphicsCommandList->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
 }
 
+void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+    m_graphicsCommandList->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
+}
+
 // @TODO: remove
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
-void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
-    CRASH_NOW_MSG("Implement");
-}
 
 void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
     CRASH_NOW_MSG("Implement");

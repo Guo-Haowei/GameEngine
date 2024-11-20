@@ -18,13 +18,9 @@ struct TextureSlot {
 static constexpr TextureSlot s_textureSots[] = {
 #define SRV(TYPE, NAME, SLOT, BINDING) \
     TextureSlot{ "t_" #NAME, SLOT },
-    SRV_LIST
+    SRV_DEFINES
 #undef SRV
 };
-
-#define SRV SRV_DEFAULT
-SRV_LIST
-#undef SRV
 
 OpenGlPipelineState::~OpenGlPipelineState() {
     if (programId) {

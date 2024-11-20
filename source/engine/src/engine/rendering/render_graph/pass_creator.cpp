@@ -6,14 +6,13 @@
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
+
+// shader defines
 #include "shader_resource_defines.hlsl.h"
+#include "unordered_access_defines.hlsl.h"
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
-
-#define SRV SRV_DEFAULT
-SRV_LIST
-#undef SRV
 
 namespace my::rg {
 
@@ -431,7 +430,6 @@ static void BloomSetupFunc(const DrawPass* p_draw_pass) {
 
     gm.SetPipelineState(PSO_BLOOM_SETUP);
     auto input = gm.FindTexture(RESOURCE_LIGHTING);
-    auto output = gm.FindTexture(RESOURCE_BLOOM_0);
 
     const uint32_t width = input->desc.width;
     const uint32_t height = input->desc.height;
@@ -439,9 +437,7 @@ static void BloomSetupFunc(const DrawPass* p_draw_pass) {
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
     gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
-    gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
     gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
 }
 
@@ -512,7 +508,7 @@ void RenderPassCreator::AddBloomPass() {
         DEV_ASSERT(output);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
             .uavs = { output },
-            .uavSlots = { IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT },
+            .uavSlots = { GetUavSlotBloomOutputImage() },
             .execFunc = BloomSetupFunc,
         });
         render_pass->AddDrawPass(pass);
@@ -524,7 +520,7 @@ void RenderPassCreator::AddBloomPass() {
         DEV_ASSERT(output);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
             .uavs = { output },
-            .uavSlots = { IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT },
+            .uavSlots = { GetUavSlotBloomOutputImage() },
             .execFunc = BloomDownSampleFunc,
         });
         pass->id = i;
@@ -537,7 +533,7 @@ void RenderPassCreator::AddBloomPass() {
         DEV_ASSERT(output);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
             .uavs = { output },
-            .uavSlots = { IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT },
+            .uavSlots = { GetUavSlotBloomOutputImage() },
             .execFunc = BloomUpSampleFunc,
         });
         pass->id = i;

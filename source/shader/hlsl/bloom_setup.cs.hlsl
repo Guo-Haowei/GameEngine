@@ -2,8 +2,7 @@
 #include "cbuffer.hlsl.h"
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
-
-RWTexture2D<float3> g_output_image : register(u3);
+#include "unordered_access_defines.hlsl.h"
 
 float rgb_to_luma(float3 rgb) {
     return sqrt(dot(rgb, float3(0.299, 0.587, 0.114)));
@@ -13,7 +12,7 @@ float rgb_to_luma(float3 rgb) {
     uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;
-    g_output_image.GetDimensions(width, height);
+    u_BloomOutputImage.GetDimensions(width, height);
     float2 output_image_size = float2(width, height);
     float2 uv = float2(output_coord.x / output_image_size.x,
                        output_coord.y / output_image_size.y);
@@ -27,5 +26,5 @@ float rgb_to_luma(float3 rgb) {
     }
 
     // @TODO: fix bloom
-    g_output_image[output_coord] = color;
+    u_BloomOutputImage[output_coord] = color;
 }

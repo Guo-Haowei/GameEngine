@@ -19,10 +19,6 @@ extern OldTexture g_albedoVoxel;
 extern OldTexture g_normalVoxel;
 extern OpenGlMeshBuffers* g_box;
 
-#define SRV SRV_DEFAULT
-SRV_LIST
-#undef SRV
-
 namespace my::rg {
 
 void voxelization_pass_func(const DrawPass*) {

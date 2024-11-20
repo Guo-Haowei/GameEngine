@@ -2,14 +2,13 @@
 #include "cbuffer.hlsl.h"
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
-
-RWTexture2D<float3> g_output_image : register(u3);
+#include "unordered_access_defines.hlsl.h"
 
 [numthreads(16, 16, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     const uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;
-    g_output_image.GetDimensions(width, height);
+    u_BloomOutputImage.GetDimensions(width, height);
     float2 output_image_size = float2(width, height);
 
     float2 uv = float2(output_coord.x / output_image_size.x,
@@ -66,5 +65,5 @@ RWTexture2D<float3> g_output_image : register(u3);
     final_color += (j + k + l + m) * 0.125;
 
     final_color = max(final_color, 0.000f);
-    g_output_image[output_coord] = final_color;
+    u_BloomOutputImage[output_coord] = final_color;
 }

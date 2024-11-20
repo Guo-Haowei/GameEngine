@@ -95,7 +95,7 @@ bool GraphicsManager::Initialize() {
         texture->slot = p_slot;
     };
 #define SRV(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
-    SRV_LIST
+    SRV_DEFINES
 #undef SRV
 
     return true;

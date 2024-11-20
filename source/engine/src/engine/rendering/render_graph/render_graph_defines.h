@@ -5,7 +5,6 @@
 constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
 constexpr int IMAGE_VOXEL_NORMAL_SLOT = 1;
 constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
-constexpr int IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT = 3;
 
 #define RENDER_PASS_NAME_LIST          \
     RENDER_PASS_NAME(SHADOW)           \
