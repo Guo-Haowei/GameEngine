@@ -41,7 +41,7 @@ uint pop_alive_index() {
         } else {
             particle.lifeRemaining.x -= c_elapsedTime;
 
-            vec3 net_force = float3(0.0f, 0.0f, 0.0f);
+            float3 net_force = float3(0.0f, 0.0f, 0.0f);
             // apply gravity
 
             if (c_emitterHasGravity == 1) {

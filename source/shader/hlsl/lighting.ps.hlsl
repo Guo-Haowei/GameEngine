@@ -68,9 +68,9 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
 }
 
 // @TODO: refactor
-vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec3 p_base_color) {
-    vec3 Lo = vec3(0.0, 0.0, 0.0);
-    const vec3 H = normalize(V + L);
+float3 lighting(float3 N, float3 L, float3 V, float3 radiance, float3 F0, float roughness, float metallic, float3 p_base_color) {
+    float3 Lo = float3(0.0, 0.0, 0.0);
+    const float3 H = normalize(V + L);
     const float NdotL = max(dot(N, L), 0.0);
     const float NdotH = max(dot(N, H), 0.0);
     const float NdotV = max(dot(N, V), 0.0);
@@ -78,17 +78,17 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     // direct cook-torrance brdf
     const float NDF = distribution_ggx(NdotH, roughness);
     const float G = geometry_smith(NdotV, NdotL, roughness);
-    const vec3 F = fresnel_schlick(clamp(dot(H, V), 0.0, 1.0), F0);
+    const float3 F = fresnel_schlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
-    const vec3 nom = NDF * G * F;
+    const float3 nom = NDF * G * F;
     float denom = 4 * NdotV * NdotL;
 
-    vec3 specular = nom / max(denom, 0.001);
+    float3 specular = nom / max(denom, 0.001);
 
-    const vec3 kS = F;
-    const vec3 kD = (1.0 - metallic) * (vec3(1.0, 1.0, 1.0) - kS);
+    const float3 kS = F;
+    const float3 kD = (1.0 - metallic) * (float3(1.0, 1.0, 1.0) - kS);
 
-    vec3 direct_lighting = (kD * p_base_color / MY_PI + specular) * radiance * NdotL;
+    float3 direct_lighting = (kD * p_base_color / MY_PI + specular) * radiance * NdotL;
 
     return direct_lighting;
 }
@@ -111,8 +111,8 @@ ps_output main(vsoutput_uv input) {
         base_color = float3(0.6, 0.6, 0.6);
     }
 
-    const vec3 world_position = TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
-    const vec3 emissive_roughness_metallic = TEXTURE_2D(GbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    const float3 world_position = TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    const float3 emissive_roughness_metallic = TEXTURE_2D(GbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
 
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
@@ -126,12 +126,12 @@ ps_output main(vsoutput_uv input) {
     float3 N = TEXTURE_2D(GbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
     float3 color = float3(0.0, 0.0, 0.0);
 
-    const vec3 V = normalize(c_cameraPosition - world_position);
+    const float3 V = normalize(c_cameraPosition - world_position);
     const float NdotV = clamp(dot(N, V), 0.0, 1.0);
-    vec3 R = reflect(-V, N);
+    float3 R = reflect(-V, N);
 
-    vec3 Lo = float3(0.0, 0.0, 0.0);
-    vec3 F0 = lerp(float3(0.04, 0.04, 0.04), base_color, metallic);
+    float3 Lo = float3(0.0, 0.0, 0.0);
+    float3 F0 = lerp(float3(0.04, 0.04, 0.04), base_color, metallic);
 
     for (int light_idx = 0; light_idx < MAX_LIGHT_COUNT; ++light_idx) {
         if (light_idx >= c_lightCount) {
@@ -140,14 +140,14 @@ ps_output main(vsoutput_uv input) {
 
         Light light = c_lights[light_idx];
         int light_type = c_lights[light_idx].type;
-        vec3 direct_lighting = vec3(0.0, 0.0, 0.0);
+        float3 direct_lighting = float3(0.0, 0.0, 0.0);
         float shadow = 0.0;
-        const vec3 radiance = light.color;
+        const float3 radiance = light.color;
         switch (light.type) {
             case LIGHT_TYPE_INFINITE: {
-                vec3 L = light.position;
+                float3 L = light.position;
                 float atten = 1.0;
-                const vec3 H = normalize(V + L);
+                const float3 H = normalize(V + L);
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
@@ -156,15 +156,15 @@ ps_output main(vsoutput_uv input) {
                 }
             } break;
             case LIGHT_TYPE_POINT: {
-                vec3 delta = -world_position + light.position;
+                float3 delta = -world_position + light.position;
                 float dist = length(delta);
                 float atten = (light.atten_constant + light.atten_linear * dist +
                                light.atten_quadratic * (dist * dist));
                 atten = 1.0 / atten;
 
                 if (atten > 0.01) {
-                    vec3 L = normalize(delta);
-                    const vec3 H = normalize(V + L);
+                    float3 L = normalize(delta);
+                    const float3 H = normalize(V + L);
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                     if (light.cast_shadow == 1) {
                         shadow = point_shadow_calculation(light, world_position, c_cameraPosition);

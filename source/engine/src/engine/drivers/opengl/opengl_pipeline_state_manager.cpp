@@ -16,15 +16,15 @@ struct TextureSlot {
 };
 
 static constexpr TextureSlot s_textureSots[] = {
-#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
+#define SRV(TYPE, NAME, SLOT, BINDING) \
     TextureSlot{ "t_" #NAME, SLOT },
-    SHADER_TEXTURE_LIST
-#undef SHADER_TEXTURE
+    SRV_LIST
+#undef SRV
 };
 
-#define SHADER_TEXTURE DEFAULT_SHADER_TEXTURE
-SHADER_TEXTURE_LIST
-#undef SHADER_TEXTURE
+#define SRV DEFAULT_SHADER_TEXTURE
+SRV_LIST
+#undef SRV
 
 OpenGlPipelineState::~OpenGlPipelineState() {
     if (programId) {
@@ -205,11 +205,13 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const 
     // Setup texture locations
     auto set_location = [&](const char *p_name, int p_slot) {
         const int location = glGetUniformLocation(program_id, p_name);
+#if 0
         if (location < 0) {
             LOG_WARN("{} not found, location {}", p_name, location);
         } else {
             LOG_OK("{} found, location {}", p_name, location);
         }
+#endif
         glUniform1i(location, p_slot);
     };
     set_location("SPIRV_Cross_Combinedt_BloomInputImageSPIRV_Cross_DummySampler", GetBloomInputImageSlot());

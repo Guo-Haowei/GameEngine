@@ -49,15 +49,46 @@ VCT_CONST float LUT_SIZE = 64.0;  // ltc_texture size
 VCT_CONST float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;
 VCT_CONST float LUT_BIAS = 0.5 / LUT_SIZE;
 
-#if defined(HLSL_LANG)
-#define ivec2 int2
-#define ivec3 int3
-#define ivec4 int4
-#define vec2  float2
-#define vec3  float3
-#define vec4  float4
-#define mat3  float3x3
-#define mat4  float4x4
+#if defined(__cplusplus)
+using Vector2f = glm::vec2;
+using Vector3f = glm::vec3;
+using Vector4f = glm::vec4;
+using Vector2i = glm::ivec2;
+using Vector3i = glm::ivec3;
+using Vector4i = glm::ivec4;
+using Matrix3x3f = glm::mat3;
+using Matrix4x4f = glm::mat4;
+using uint = uint32_t;
+
+using TextureHandle = uint64_t;
+using sampler2D = uint64_t;
+using sampler3D = uint64_t;
+using samplerCube = uint64_t;
+
+#elif defined(HLSL_LANG)
+#define Vector2f   float2
+#define Vector3f   float3
+#define Vector4f   float4
+#define Vector2i   int2
+#define Vector3i   int3
+#define Vector4i   int4
+#define Matrix3x3f float3x3
+#define Matrix4x4f float4x4
+#elif defined(GLSL_LANG)
+#define Vector2f   vec2
+#define Vector3f   vec3
+#define Vector4f   vec4
+#define Vector2i   ivec2
+#define Vector3i   ivec3
+#define Vector4i   ivec4
+#define Matrix3x3f mat3x3
+#define Matrix4x4f mat4x4
+
+#define Texture2D        sampler2D
+#define TextureCube      samplerCube
+#define TextureCubeArray samplerCubeArray
+#else
+#error Unknown shading language
 #endif
 
 #endif

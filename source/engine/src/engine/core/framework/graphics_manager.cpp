@@ -95,9 +95,9 @@ bool GraphicsManager::Initialize() {
         DEV_ASSERT(p_slot >= 0);
         texture->slot = p_slot;
     };
-#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
-    SHADER_TEXTURE_LIST
-#undef SHADER_TEXTURE
+#define SRV(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
+    SRV_LIST
+#undef SRV
 
     return true;
 }

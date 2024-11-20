@@ -19,9 +19,9 @@ extern OldTexture g_albedoVoxel;
 extern OldTexture g_normalVoxel;
 extern OpenGlMeshBuffers* g_box;
 
-#define SHADER_TEXTURE DEFAULT_SHADER_TEXTURE
-SHADER_TEXTURE_LIST
-#undef SHADER_TEXTURE
+#define SRV DEFAULT_SHADER_TEXTURE
+SRV_LIST
+#undef SRV
 
 namespace my::rg {
 

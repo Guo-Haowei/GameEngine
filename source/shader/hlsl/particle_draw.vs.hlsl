@@ -4,9 +4,9 @@
 
 // @TODO: shader naming style
 struct Particle {
-    vec4 position;
-    vec4 velocity;
-    vec4 color;
+    float4 position;
+    float4 velocity;
+    float4 color;
 
     float scale;
     float lifeSpan;

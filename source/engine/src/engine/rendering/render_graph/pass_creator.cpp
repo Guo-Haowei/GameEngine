@@ -12,9 +12,9 @@
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
 
-#define SHADER_TEXTURE DEFAULT_SHADER_TEXTURE
-SHADER_TEXTURE_LIST
-#undef SHADER_TEXTURE
+#define SRV DEFAULT_SHADER_TEXTURE
+SRV_LIST
+#undef SRV
 
 namespace my::rg {
 
