@@ -107,8 +107,8 @@ bool PipelineStateManager::Initialize() {
     ok = ok && Create(
                    PSO_GBUFFER,
                    {
-                       .vs = "mesh.vert",
-                       .ps = "gbuffer.pixel",
+                       .vs = "mesh.vs",
+                       .ps = "gbuffer.ps",
                        .rasterizerDesc = &s_rasterizerFrontFace,
                        .depthStencilDesc = &s_depthStencilGbuffer,
                        .inputLayoutDesc = &s_inputLayoutMesh,
@@ -117,8 +117,8 @@ bool PipelineStateManager::Initialize() {
                        .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                    });
     ok = ok && Create(PSO_DPETH, {
-                                     .vs = "shadow.vert",
-                                     .ps = "depth.pixel",
+                                     .vs = "shadow.vs",
+                                     .ps = "depth.ps",
                                      .rasterizerDesc = &s_rasterizerBackFace,
                                      .depthStencilDesc = &s_depthStencilDefault,
                                      .inputLayoutDesc = &s_inputLayoutMesh,
@@ -127,8 +127,8 @@ bool PipelineStateManager::Initialize() {
                                  });
 
     ok = ok && Create(PSO_LIGHTING, {
-                                        .vs = "screenspace_quad.vert",
-                                        .ps = "lighting.pixel",
+                                        .vs = "screenspace_quad.vs",
+                                        .ps = "lighting.ps",
                                         .rasterizerDesc = &s_rasterizerFrontFace,
                                         .depthStencilDesc = &s_noDepthStencil,
                                         .inputLayoutDesc = &s_inputLayoutPosition,
@@ -138,8 +138,8 @@ bool PipelineStateManager::Initialize() {
                                     });
 
     ok = ok && Create(PSO_POINT_SHADOW, {
-                                            .vs = "shadowmap_point.vert",
-                                            .ps = "shadowmap_point.pixel",
+                                            .vs = "shadowmap_point.vs",
+                                            .ps = "shadowmap_point.ps",
                                             .rasterizerDesc = &s_rasterizerBackFace,
                                             .depthStencilDesc = &s_depthStencilDefault,
                                             .inputLayoutDesc = &s_inputLayoutMesh,
@@ -148,8 +148,8 @@ bool PipelineStateManager::Initialize() {
                                         });
 
     ok = ok && Create(PSO_HIGHLIGHT, {
-                                         .vs = "screenspace_quad.vert",
-                                         .ps = "highlight.pixel",
+                                         .vs = "screenspace_quad.vs",
+                                         .ps = "highlight.ps",
                                          .rasterizerDesc = &s_rasterizerFrontFace,
                                          .depthStencilDesc = &s_depthStencilHighlight,
                                          .inputLayoutDesc = &s_inputLayoutPosition,
@@ -159,8 +159,8 @@ bool PipelineStateManager::Initialize() {
                                      });
 
     ok = ok && Create(PSO_TONE, {
-                                    .vs = "screenspace_quad.vert",
-                                    .ps = "tone.pixel",
+                                    .vs = "screenspace_quad.vs",
+                                    .ps = "tone.ps",
                                     .rasterizerDesc = &s_rasterizerFrontFace,
                                     .depthStencilDesc = &s_depthStencilDefault,
                                     .inputLayoutDesc = &s_inputLayoutPosition,
@@ -175,18 +175,18 @@ bool PipelineStateManager::Initialize() {
     }
 
     // Bloom
-    ok = ok && Create(PSO_BLOOM_SETUP, { .cs = "bloom_setup.comp" });
-    ok = ok && Create(PSO_BLOOM_DOWNSAMPLE, { .cs = "bloom_downsample.comp" });
-    ok = ok && Create(PSO_BLOOM_UPSAMPLE, { .cs = "bloom_upsample.comp" });
+    ok = ok && Create(PSO_BLOOM_SETUP, { .cs = "bloom_setup.cs" });
+    ok = ok && Create(PSO_BLOOM_DOWNSAMPLE, { .cs = "bloom_downsample.cs" });
+    ok = ok && Create(PSO_BLOOM_UPSAMPLE, { .cs = "bloom_upsample.cs" });
 
     // Particle
-    ok = ok && Create(PSO_PARTICLE_INIT, { .cs = "particle_initialization.comp" });
-    ok = ok && Create(PSO_PARTICLE_KICKOFF, { .cs = "particle_kickoff.comp" });
-    ok = ok && Create(PSO_PARTICLE_EMIT, { .cs = "particle_emission.comp" });
-    ok = ok && Create(PSO_PARTICLE_SIM, { .cs = "particle_simulation.comp" });
+    ok = ok && Create(PSO_PARTICLE_INIT, { .cs = "particle_initialization.cs" });
+    ok = ok && Create(PSO_PARTICLE_KICKOFF, { .cs = "particle_kickoff.cs" });
+    ok = ok && Create(PSO_PARTICLE_EMIT, { .cs = "particle_emission.cs" });
+    ok = ok && Create(PSO_PARTICLE_SIM, { .cs = "particle_simulation.cs" });
     ok = ok && Create(PSO_PARTICLE_RENDERING, {
-                                                  .vs = "particle_draw.vert",
-                                                  .ps = "particle_draw.pixel",
+                                                  .vs = "particle_draw.vs",
+                                                  .ps = "particle_draw.ps",
                                                   .rasterizerDesc = &s_rasterizerFrontFace,
                                                   .depthStencilDesc = &s_depthStencilDefault,
                                                   .inputLayoutDesc = &s_inputLayoutMesh,
@@ -199,60 +199,60 @@ bool PipelineStateManager::Initialize() {
 
     // Voxel
     ok = ok && Create(PSO_VOXELIZATION, {
-                                            .vs = "voxelization.vert",
-                                            .ps = "voxelization.pixel",
-                                            .gs = "voxelization.geom",
+                                            .vs = "voxelization.vs",
+                                            .ps = "voxelization.ps",
+                                            .gs = "voxelization.gs",
                                             .rasterizerDesc = &s_rasterizerDoubleSided,
                                             .depthStencilDesc = &s_depthStencilNoTest,
                                         });
-    ok = ok && Create(PSO_VOXELIZATION_POST, { .cs = "post.comp" });
+    ok = ok && Create(PSO_VOXELIZATION_POST, { .cs = "post.cs" });
     ok = ok && Create(PSO_DEBUG_VOXEL, {
-                                           .vs = "visualization.vert",
-                                           .ps = "visualization.pixel",
+                                           .vs = "visualization.vs",
+                                           .ps = "visualization.ps",
                                            .rasterizerDesc = &s_rasterizerFrontFace,
                                            .depthStencilDesc = &s_depthStencilDefault,
                                        });
 
     // PBR
     ok = ok && Create(PSO_ENV_SKYBOX_TO_CUBE_MAP, {
-                                                      .vs = "cube_map.vert",
-                                                      .ps = "to_cube_map.pixel",
+                                                      .vs = "cube_map.vs",
+                                                      .ps = "to_cube_map.ps",
                                                       .rasterizerDesc = &s_rasterizerFrontFace,
                                                       .depthStencilDesc = &s_depthStencilDefault,
                                                   });
     ok = ok && Create(PSO_DIFFUSE_IRRADIANCE, {
-                                                  .vs = "cube_map.vert",
-                                                  .ps = "diffuse_irradiance.pixel",
+                                                  .vs = "cube_map.vs",
+                                                  .ps = "diffuse_irradiance.ps",
                                                   .rasterizerDesc = &s_rasterizerFrontFace,
                                                   .depthStencilDesc = &s_depthStencilDefault,
                                               });
     ok = ok && Create(PSO_PREFILTER, {
-                                         .vs = "cube_map.vert",
-                                         .ps = "prefilter.pixel",
+                                         .vs = "cube_map.vs",
+                                         .ps = "prefilter.ps",
                                          .rasterizerDesc = &s_rasterizerFrontFace,
                                          .depthStencilDesc = &s_depthStencilDefault,
                                      });
     ok = ok && Create(PSO_ENV_SKYBOX, {
-                                          .vs = "skybox.vert",
-                                          .ps = "skybox.pixel",
+                                          .vs = "skybox.vs",
+                                          .ps = "skybox.ps",
                                           .rasterizerDesc = &s_rasterizerFrontFace,
                                           .depthStencilDesc = &s_depthStencilDefault,
                                       });
     ok = ok && Create(PSO_BRDF, {
-                                    .vs = "screenspace_quad.vert",
-                                    .ps = "brdf.pixel",
+                                    .vs = "screenspace_quad.vs",
+                                    .ps = "brdf.ps",
                                     .rasterizerDesc = &s_rasterizerFrontFace,
                                     .depthStencilDesc = &s_depthStencilNoTest,
                                 });
     ok = ok && Create(PSO_IMAGE_2D, {
-                                        .vs = "debug_draw_texture.vert",
-                                        .ps = "debug_draw_texture.pixel",
+                                        .vs = "debug_draw_texture.vs",
+                                        .ps = "debug_draw_texture.ps",
                                         .rasterizerDesc = &s_rasterizerFrontFace,
                                         .depthStencilDesc = &s_depthStencilNoTest,
                                     });
     ok = ok && Create(PSO_BILLBOARD, {
-                                         .vs = "billboard.vert",
-                                         .ps = "texture.pixel",
+                                         .vs = "billboard.vs",
+                                         .ps = "texture.ps",
                                          .rasterizerDesc = &s_rasterizerDoubleSided,
                                          .depthStencilDesc = &s_depthStencilDefault,
                                      });
