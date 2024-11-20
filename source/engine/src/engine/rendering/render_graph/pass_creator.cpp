@@ -346,11 +346,11 @@ void RenderPassCreator::AddLightingPass() {
     }
 
     auto pass = m_graph.CreatePass(desc);
-    auto drawpass = manager.CreateDrawPass(DrawPassDesc{
+    auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { lighting_attachment },
         .execFunc = LightingPassFunc,
     });
-    pass->AddDrawPass(drawpass);
+    pass->AddDrawPass(draw_pass);
 }
 
 /// Emitter
@@ -411,12 +411,12 @@ void RenderPassCreator::AddEmitterPass() {
     desc.dependencies = { RenderPassName::LIGHTING };
 
     auto pass = m_graph.CreatePass(desc);
-    auto drawpass = manager.CreateDrawPass(DrawPassDesc{
+    auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
         .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
         .execFunc = EmitterPassFunc,
     });
-    pass->AddDrawPass(drawpass);
+    pass->AddDrawPass(draw_pass);
 }
 
 /// Bloom

@@ -210,8 +210,8 @@ std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
     return std::make_unique<FrameContext>();
 }
 
-void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
-    for (auto& texture : p_render_pass->GetOutputs()) {
+void GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
+    for (auto& texture : p_draw_pass->outputs) {
         if (texture->slot >= 0) {
             UnbindTexture(Dimension::TEXTURE_2D, texture->slot);
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
@@ -219,9 +219,9 @@ void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
     }
 }
 
-void GraphicsManager::EndPass(const RenderPass* p_render_pass) {
+void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     UnsetRenderTarget();
-    for (auto& texture : p_render_pass->GetOutputs()) {
+    for (auto& texture : p_draw_pass->outputs) {
         if (texture->slot >= 0) {
             BindTexture(Dimension::TEXTURE_2D, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);

@@ -124,8 +124,8 @@ public:
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
-    virtual void BeginPass(const RenderPass* p_render_pass);
-    virtual void EndPass(const RenderPass* p_render_pass);
+    virtual void BeginDrawPass(const DrawPass* p_draw_pass);
+    virtual void EndDrawPass(const DrawPass* p_draw_pass);
 
     virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
