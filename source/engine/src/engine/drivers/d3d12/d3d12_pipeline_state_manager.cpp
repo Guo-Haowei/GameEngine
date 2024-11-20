@@ -9,24 +9,46 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const PipelineStateDesc& p_desc) {
+D3d12PipelineStateManager::D3d12PipelineStateManager() {
+    m_defines.push_back({ "HLSL_LANG", "1" });
+    m_defines.push_back({ "HLSL_LANG_D3D12", "1" });
+    m_defines.push_back({ nullptr, nullptr });
+}
+
+std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) {
+    auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
+
+    auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
+
+    ComPtr<ID3DBlob> cs_blob;
+    if (!p_desc.cs.empty()) {
+        auto res = CompileShader(p_desc.cs, "cs_5_1", m_defines.data());
+        if (!res) {
+            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.cs, res.error());
+            return nullptr;
+        }
+        cs_blob = *res;
+    }
+
+    D3D12_COMPUTE_PIPELINE_STATE_DESC pso_desc = {};
+    pso_desc.pRootSignature = graphics_manager->GetRootSignature();
+    pso_desc.CS = CD3DX12_SHADER_BYTECODE(cs_blob.Get());
+
+    ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr())->GetDevice();
+    D3D_FAIL_V(device->CreateComputePipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), nullptr);
+
+    return pipeline_state;
+}
+
+std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
     ComPtr<ID3DBlob> vs_blob;
     ComPtr<ID3DBlob> ps_blob;
 
-    // @TODO: refactor
-    std::vector<D3D_SHADER_MACRO> defines;
-    for (const auto& define : p_desc.defines) {
-        defines.push_back({ define.name, define.value });
-    }
-    defines.push_back({ "HLSL_LANG", "1" });
-    defines.push_back({ "HLSL_LANG_D3D12", "1" });
-    defines.push_back({ nullptr, nullptr });
-
     if (!p_desc.vs.empty()) {
-        auto res = CompileShader(p_desc.vs, "vs_5_1", defines.data());
+        auto res = CompileShader(p_desc.vs, "vs_5_1", m_defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
             return nullptr;
@@ -34,7 +56,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
         vs_blob = *res;
     }
     if (!p_desc.ps.empty()) {
-        auto res = CompileShader(p_desc.ps, "ps_5_1", defines.data());
+        auto res = CompileShader(p_desc.ps, "ps_5_1", m_defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.ps, res.error());
             return nullptr;

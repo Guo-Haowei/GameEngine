@@ -84,16 +84,32 @@ PipelineState* PipelineStateManager::Find(PipelineStateName p_name) {
     return m_cache[p_name].get();
 }
 
-bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_info) {
-    if (p_info.cs.empty()) {
-        DEV_ASSERT(p_info.depthStencilDesc);
+bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_desc) {
+    if (p_desc.cs.empty()) {
+        DEV_ASSERT(p_desc.depthStencilDesc);
     }
 
     ERR_FAIL_COND_V_MSG(m_cache[p_name] != nullptr, false, "pipeline already exists");
 
-    auto pipeline = CreateInternal(p_info);
-    ERR_FAIL_COND_V_MSG(pipeline == nullptr, false, std::format("failed to create pipeline ''"));
+    std::shared_ptr<PipelineState> pipeline{};
+    switch (p_desc.type) {
+        case PipelineStateType::GRAPHICS:
+            DEV_ASSERT(!p_desc.vs.empty());
+            DEV_ASSERT(p_desc.rasterizerDesc);
+            DEV_ASSERT(p_desc.depthStencilDesc);
+            // DEV_ASSERT(p_desc.inputLayoutDesc);
+            pipeline = CreateGraphicsPipeline(p_desc);
+            break;
+        case PipelineStateType::COMPUTE:
+            DEV_ASSERT(!p_desc.cs.empty());
+            pipeline = CreateComputePipeline(p_desc);
+            break;
+        default:
+            CRASH_NOW();
+            break;
+    }
 
+    ERR_FAIL_COND_V_MSG(pipeline == nullptr, false, std::format("failed to create pipeline '{}'", std::to_underlying(p_name)));
     m_cache[p_name] = pipeline;
     return true;
 }
@@ -169,21 +185,21 @@ bool PipelineStateManager::Initialize() {
                                     .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                 });
 
+    // Bloom
+    ok = ok && Create(PSO_BLOOM_SETUP, { .type = PipelineStateType::COMPUTE, .cs = "bloom_setup.cs" });
+    ok = ok && Create(PSO_BLOOM_DOWNSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_downsample.cs" });
+    ok = ok && Create(PSO_BLOOM_UPSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_upsample.cs" });
+
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
     }
 
-    // Bloom
-    ok = ok && Create(PSO_BLOOM_SETUP, { .cs = "bloom_setup.cs" });
-    ok = ok && Create(PSO_BLOOM_DOWNSAMPLE, { .cs = "bloom_downsample.cs" });
-    ok = ok && Create(PSO_BLOOM_UPSAMPLE, { .cs = "bloom_upsample.cs" });
-
     // Particle
-    ok = ok && Create(PSO_PARTICLE_INIT, { .cs = "particle_initialization.cs" });
-    ok = ok && Create(PSO_PARTICLE_KICKOFF, { .cs = "particle_kickoff.cs" });
-    ok = ok && Create(PSO_PARTICLE_EMIT, { .cs = "particle_emission.cs" });
-    ok = ok && Create(PSO_PARTICLE_SIM, { .cs = "particle_simulation.cs" });
+    ok = ok && Create(PSO_PARTICLE_INIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_initialization.cs" });
+    ok = ok && Create(PSO_PARTICLE_KICKOFF, { .type = PipelineStateType::COMPUTE, .cs = "particle_kickoff.cs" });
+    ok = ok && Create(PSO_PARTICLE_EMIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_emission.cs" });
+    ok = ok && Create(PSO_PARTICLE_SIM, { .type = PipelineStateType::COMPUTE, .cs = "particle_simulation.cs" });
     ok = ok && Create(PSO_PARTICLE_RENDERING, {
                                                   .vs = "particle_draw.vs",
                                                   .ps = "particle_draw.ps",
@@ -205,7 +221,7 @@ bool PipelineStateManager::Initialize() {
                                             .rasterizerDesc = &s_rasterizerDoubleSided,
                                             .depthStencilDesc = &s_depthStencilNoTest,
                                         });
-    ok = ok && Create(PSO_VOXELIZATION_POST, { .cs = "post.cs" });
+    ok = ok && Create(PSO_VOXELIZATION_POST, { .type = PipelineStateType::COMPUTE, .cs = "post.cs" });
     ok = ok && Create(PSO_DEBUG_VOXEL, {
                                            .vs = "visualization.vs",
                                            .ps = "visualization.ps",

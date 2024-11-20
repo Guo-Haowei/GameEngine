@@ -81,7 +81,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
     return result;
 }
 
-static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
+static GLuint CreateShader(std::string_view p_file, GLenum p_type) {
     std::string file{ p_file };
     file.append(".glsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
@@ -110,9 +110,9 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::ve
             "#define GLSL_LANG 1\n"
             "";
 
-        for (const auto &define : p_defines) {
-            fullsource.append(std::format("#define {} {}\n", define.name, define.value));
-        }
+        // for (const auto &define : p_defines) {
+        //     fullsource.append(std::format("#define {} {}\n", define.name, define.value));
+        // }
     }
 
     fullsource.append(*res);
@@ -139,12 +139,20 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::ve
     return shader_id;
 }
 
-std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const PipelineStateDesc &p_desc) {
+std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) {
+    return CreatePipelineImpl(p_desc);
+}
+
+std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) {
+    return CreatePipelineImpl(p_desc);
+}
+
+std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
-    auto CreateShaderHelper = [&](std::string_view path, GLenum type) {
+    auto create_shader_helper = [&](std::string_view path, GLenum type) {
         if (!path.empty()) {
-            GLuint shader = CreateShader(path, type, p_desc.defines);
+            GLuint shader = CreateShader(path, type);
             glAttachShader(program_id, shader);
             shaders.push_back(shader);
         }
@@ -156,16 +164,18 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const 
         }
     });
 
-    if (!p_desc.cs.empty()) {
-        DEV_ASSERT(p_desc.vs.empty());
-        DEV_ASSERT(p_desc.ps.empty());
-        DEV_ASSERT(p_desc.gs.empty());
-        CreateShaderHelper(p_desc.cs, GL_COMPUTE_SHADER);
-    } else if (!p_desc.vs.empty()) {
-        DEV_ASSERT(p_desc.cs.empty());
-        CreateShaderHelper(p_desc.vs, GL_VERTEX_SHADER);
-        CreateShaderHelper(p_desc.ps, GL_FRAGMENT_SHADER);
-        CreateShaderHelper(p_desc.gs, GL_GEOMETRY_SHADER);
+    switch (p_desc.type) {
+        case PipelineStateType::GRAPHICS:
+            create_shader_helper(p_desc.vs, GL_VERTEX_SHADER);
+            create_shader_helper(p_desc.ps, GL_FRAGMENT_SHADER);
+            create_shader_helper(p_desc.gs, GL_GEOMETRY_SHADER);
+            break;
+        case PipelineStateType::COMPUTE:
+            create_shader_helper(p_desc.cs, GL_COMPUTE_SHADER);
+            break;
+        default:
+            CRASH_NOW();
+            break;
     }
 
     DEV_ASSERT(!shaders.empty());
@@ -220,6 +230,12 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const 
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
     glUseProgram(0);
+
+    // delete shaders
+    for (auto shader_id : shaders) {
+        glDeleteShader(shader_id);
+    }
+
     return program;
 }
 

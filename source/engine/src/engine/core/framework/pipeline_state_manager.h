@@ -13,10 +13,11 @@ public:
     PipelineState* Find(PipelineStateName p_name);
 
 protected:
-    virtual std::shared_ptr<PipelineState> CreateInternal(const PipelineStateDesc& p_info) = 0;
+    virtual std::shared_ptr<PipelineState> CreateGraphicsPipeline(const PipelineStateDesc& p_desc) = 0;
+    virtual std::shared_ptr<PipelineState> CreateComputePipeline(const PipelineStateDesc& p_desc) = 0;
 
 private:
-    bool Create(PipelineStateName p_name, const PipelineStateDesc& p_info);
+    bool Create(PipelineStateName p_name, const PipelineStateDesc& p_desc);
 
     std::array<std::shared_ptr<PipelineState>, PSO_MAX> m_cache;
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "rendering/pipeline_state_manager.h"
+#include "core/framework/pipeline_state_manager.h"
 
 namespace my {
 
@@ -13,7 +13,11 @@ struct OpenGlPipelineState : public PipelineState {
 
 class OpenGlPipelineStateManager : public PipelineStateManager {
 protected:
-    std::shared_ptr<PipelineState> CreateInternal(const PipelineStateDesc& p_desc) final;
+    std::shared_ptr<PipelineState> CreateGraphicsPipeline(const PipelineStateDesc& p_desc) final;
+    std::shared_ptr<PipelineState> CreateComputePipeline(const PipelineStateDesc& p_desc) final;
+
+private:
+    std::shared_ptr<PipelineState> CreatePipelineImpl(const PipelineStateDesc& p_desc);
 };
 
 }  // namespace my

@@ -2,7 +2,7 @@
 #include <d3d11.h>
 #include <wrl/client.h>
 
-#include "rendering/pipeline_state_manager.h"
+#include "core/framework/pipeline_state_manager.h"
 
 namespace my {
 
@@ -20,15 +20,18 @@ struct D3d11PipelineState : public PipelineState {
 };
 
 class D3d11PipelineStateManager : public PipelineStateManager {
+public:
+    D3d11PipelineStateManager();
+
 protected:
-    std::shared_ptr<PipelineState> CreateInternal(const PipelineStateDesc& p_desc) final;
+    std::shared_ptr<PipelineState> CreateGraphicsPipeline(const PipelineStateDesc& p_desc) final;
+    std::shared_ptr<PipelineState> CreateComputePipeline(const PipelineStateDesc& p_desc) final;
 
     std::unordered_map<const RasterizerDesc*, Microsoft::WRL::ComPtr<ID3D11RasterizerState>> m_rasterizerStates;
     std::unordered_map<const DepthStencilDesc*, Microsoft::WRL::ComPtr<ID3D11DepthStencilState>> m_depthStencilStates;
 
 private:
-    std::shared_ptr<PipelineState> CreateGraphicsPipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineStateDesc& p_desc, const std::vector<D3D_SHADER_MACRO>& p_defines);
-    std::shared_ptr<PipelineState> CreateComputePipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineStateDesc& p_desc, const std::vector<D3D_SHADER_MACRO>& p_defines);
+    std::vector<D3D_SHADER_MACRO> m_defines;
 };
 
 }  // namespace my
