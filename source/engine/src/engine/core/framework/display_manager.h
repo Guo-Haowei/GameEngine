@@ -9,6 +9,12 @@ namespace my {
 
 class DisplayManager : public Singleton<DisplayManager>, public Module {
 public:
+    struct CreateInfo {
+        int width;
+        int height;
+        std::string title;
+    };
+
     DisplayManager() : Module("DisplayManager") {}
 
     bool Initialize() final;
@@ -24,12 +30,6 @@ public:
     static std::shared_ptr<DisplayManager> Create();
 
 protected:
-    struct CreateInfo {
-        int width;
-        int height;
-        std::string title;
-    };
-
     virtual bool InitializeWindow(const CreateInfo& p_info) = 0;
     virtual void InitializeKeyMapping() = 0;
 

@@ -21,8 +21,8 @@ public:
 
     void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) override {}
     void UnsetRenderTarget() override {}
-    void BeginPass(const RenderPass* p_render_pass) override {}
-    void EndPass(const RenderPass* p_render_pass) override {}
+    void BeginDrawPass(const DrawPass* p_draw_pass) override {}
+    void EndDrawPass(const DrawPass* p_draw_pass) override {}
 
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) override {}
     void SetViewport(const Viewport& p_viewport) override {}

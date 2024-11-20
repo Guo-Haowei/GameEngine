@@ -57,12 +57,18 @@ struct ShaderMacro {
     const char* value;
 };
 
+enum class PipelineStateType {
+    GRAPHICS,
+    COMPUTE,
+};
+
 struct PipelineStateDesc {
+    PipelineStateType type{ PipelineStateType::GRAPHICS };
+
     std::string_view vs;
     std::string_view ps;
     std::string_view gs;
     std::string_view cs;
-    std::vector<ShaderMacro> defines;
 
     PrimitiveTopology primitiveTopology{ PrimitiveTopology::TRIANGLE };
     const RasterizerDesc* rasterizerDesc{ nullptr };

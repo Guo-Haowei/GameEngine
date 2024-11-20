@@ -18,14 +18,6 @@ struct ConstantBufferBase {
 #define CBUFFER(NAME, REG) \
     struct NAME : public ConstantBufferBase<NAME, REG>
 
-// @TODO: refactor
-using TextureHandle = uint64_t;
-using sampler2D = uint64_t;
-using sampler3D = uint64_t;
-using samplerCube = uint64_t;
-
-using uint = uint32_t;
-
 // @TODO: remove this constraint
 #elif defined(HLSL_LANG)
 #define CBUFFER(NAME, REG) cbuffer NAME : register(b##REG)
@@ -42,14 +34,14 @@ using uint = uint32_t;
 #endif
 
 struct Light {
-    mat4 projection_matrix;  // 64
-    mat4 view_matrix;        // 64
-    vec4 points[4];          // 64
+    Matrix4x4f projection_matrix;  // 64
+    Matrix4x4f view_matrix;        // 64
+    Vector4f points[4];            // 64
 
-    vec3 color;
+    Vector3f color;
     int type;
 
-    vec3 position;  // direction
+    Vector3f position;  // direction
     int cast_shadow;
 
     float atten_constant;
@@ -58,36 +50,36 @@ struct Light {
     float atten_quadratic;
     float max_distance;  // max distance the light affects
 
-    vec3 padding;
+    Vector3f padding;
     int shadow_map_index;
 };
 
 struct ForceField {
-    vec3 position;
+    Vector3f position;
     float strength;
 };
 
 CBUFFER(PerBatchConstantBuffer, 0) {
-    mat4 c_worldMatrix;
-    vec3 _per_batch_padding_0;
+    Matrix4x4f c_worldMatrix;
+    Vector3f _per_batch_padding_0;
     int c_hasAnimation;
-    vec4 _per_batch_padding_1;
-    vec4 _per_batch_padding_2;
-    vec4 _per_batch_padding_3;
-    mat4 _per_batch_padding_4;
-    mat4 _per_batch_padding_5;
+    Vector4f _per_batch_padding_1;
+    Vector4f _per_batch_padding_2;
+    Vector4f _per_batch_padding_3;
+    Matrix4x4f _per_batch_padding_4;
+    Matrix4x4f _per_batch_padding_5;
 };
 
 CBUFFER(PerPassConstantBuffer, 1) {
-    mat4 c_viewMatrix;
-    mat4 c_projectionMatrix;
+    Matrix4x4f c_viewMatrix;
+    Matrix4x4f c_projectionMatrix;
 
-    mat4 _per_pass_padding_0;
-    mat4 _per_pass_padding_1;
+    Matrix4x4f _per_pass_padding_0;
+    Matrix4x4f _per_pass_padding_1;
 };
 
 CBUFFER(MaterialConstantBuffer, 2) {
-    vec4 c_baseColor;
+    Vector4f c_baseColor;
 
     float c_metallic;
     float c_roughness;
@@ -99,38 +91,38 @@ CBUFFER(MaterialConstantBuffer, 2) {
     int c_hasNormalMap;
     int c_hasHeightMap;
 
-    uint c_baseColorMapIndex;
-    uint c_normalMapIndex;
-    uint c_materialMapIndex;
-    uint c_heightMapIndex;
+    uint c_BaseColorMapIndex;
+    uint c_NormalMapIndex;
+    uint c_MaterialMapIndex;
+    uint c_HeightMapIndex;
 
     TextureHandle c_baseColorMapHandle;
     TextureHandle c_normalMapHandle;
     TextureHandle c_materialMapHandle;
     TextureHandle c_heightMapHandle;
 
-    vec4 _material_padding_1;
-    vec4 _material_padding_2;
-    mat4 _material_padding_3;
-    mat4 _material_padding_4;
+    Vector4f _material_padding_1;
+    Vector4f _material_padding_2;
+    Matrix4x4f _material_padding_3;
+    Matrix4x4f _material_padding_4;
 };
 
 // @TODO: change to unordered access buffer
 CBUFFER(BoneConstantBuffer, 3) {
-    mat4 c_bones[MAX_BONE_COUNT];
+    Matrix4x4f c_bones[MAX_BONE_COUNT];
 };
 
 CBUFFER(PointShadowConstantBuffer, 4) {
-    mat4 c_pointLightMatrix;    // 64
-    vec3 c_pointLightPosition;  // 12
-    float c_pointLightFar;      // 4
+    Matrix4x4f c_pointLightMatrix;  // 64
+    Vector3f c_pointLightPosition;  // 12
+    float c_pointLightFar;          // 4
 
-    vec4 _point_shadow_padding_0;  // 16
-    vec4 _point_shadow_padding_1;  // 16
-    vec4 _point_shadow_padding_2;  // 16
+    Vector4f _point_shadow_padding_0;  // 16
+    Vector4f _point_shadow_padding_1;  // 16
+    Vector4f _point_shadow_padding_2;  // 16
 
-    mat4 _point_shadow_padding_3;  // 64
-    mat4 _point_shadow_padding_4;  // 64
+    Matrix4x4f _point_shadow_padding_3;  // 64
+    Matrix4x4f _point_shadow_padding_4;  // 64
 };
 
 CBUFFER(PerFrameConstantBuffer, 5) {
@@ -146,31 +138,31 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_enableVxgi;
     float c_texelSize;  // 16
 
-    vec3 c_cameraPosition;
+    Vector3f c_cameraPosition;
     float c_voxelSize;  // 16
 
-    vec3 c_worldCenter;
+    Vector3f c_worldCenter;
     float c_worldSizeHalf;  // 16
 
-    uint c_gbufferBaseColorMapIndex;
-    uint c_gbufferPositionMapIndex;
-    uint c_gbufferNormalMapIndex;
-    uint c_gbufferMaterialMapIndex;  // 16
+    uint c_GbufferBaseColorMapIndex;
+    uint c_GbufferPositionMapIndex;
+    uint c_GbufferNormalMapIndex;
+    uint c_GbufferMaterialMapIndex;  // 16
 
-    uint c_gbufferDepthIndex;
-    uint c_pointShadowArrayIndex;
-    uint c_shadowMapIndex;
-    uint c_textureHighlightSelectIndex;
+    uint c_GbufferDepthIndex;
+    uint c_PointShadowArrayIndex;
+    uint c_ShadowMapIndex;
+    uint c_TextureHighlightSelectIndex;
 
-    uint c_textureLightingIndex;
-    uint c_bloomInputImageIndex;
+    uint c_TextureLightingIndex;
+    uint c_BloomInputImageIndex;
     int c_forceFieldsCount;
     float _per_frame_padding_1;
 
-    vec4 _per_frame_padding_2;  // 16
+    Vector4f _per_frame_padding_2;  // 16
 
-    mat4 _per_frame_padding_3;  // 64
-    mat4 _per_frame_padding_4;  // 64
+    Matrix4x4f _per_frame_padding_3;  // 64
+    Matrix4x4f _per_frame_padding_4;  // 64
 
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
@@ -184,21 +176,21 @@ CBUFFER(EmitterConstantBuffer, 6) {
     float c_elapsedTime;
     float c_lifeSpan;
 
-    vec3 c_seeds;
+    Vector3f c_seeds;
     float c_emitterScale;
-    vec3 c_emitterPosition;
+    Vector3f c_emitterPosition;
     int c_particlesPerFrame;
-    vec3 c_emitterStartingVelocity;
+    Vector3f c_emitterStartingVelocity;
     int c_emitterMaxParticleCount;
 
-    vec3 _emitter_padding_0;
+    Vector3f _emitter_padding_0;
     int c_emitterHasGravity;
 
-    vec4 _emitter_padding_1;
-    vec4 _emitter_padding_2;
-    vec4 _emitter_padding_3;
-    mat4 _emitter_padding_4;
-    mat4 _emitter_padding_5;
+    Vector4f _emitter_padding_1;
+    Vector4f _emitter_padding_2;
+    Vector4f _emitter_padding_3;
+    Matrix4x4f _emitter_padding_4;
+    Matrix4x4f _emitter_padding_5;
 };
 
 #if defined(GLSL_LANG) || defined(__cplusplus)
@@ -228,8 +220,8 @@ CBUFFER(PerSceneConstantBuffer, 7) {
 
 // @TODO: make it more general, something like 2D draw
 CBUFFER(DebugDrawConstantBuffer, 8) {
-    vec2 c_debugDrawPos;
-    vec2 c_debugDrawSize;
+    Vector2f c_debugDrawPos;
+    Vector2f c_debugDrawSize;
 
     sampler2D c_debugDrawMap;
     int c_displayChannel;
@@ -239,19 +231,19 @@ CBUFFER(DebugDrawConstantBuffer, 8) {
 
 // @TODO: refactor this
 CBUFFER(EnvConstantBuffer, 9) {
-    mat4 c_cubeProjectionViewMatrix;
+    Matrix4x4f c_cubeProjectionViewMatrix;
 
     float c_envPassRoughness;  // for environment map
     float _env_padding_0;
     float _env_padding_1;
     float _env_padding_2;
 
-    vec4 _env_padding_3;
-    vec4 _env_padding_4;
-    vec4 _env_padding_5;
+    Vector4f _env_padding_3;
+    Vector4f _env_padding_4;
+    Vector4f _env_padding_5;
 
-    mat4 _env_padding_6;
-    mat4 _env_padding_7;
+    Matrix4x4f _env_padding_6;
+    Matrix4x4f _env_padding_7;
 };
 
 #endif

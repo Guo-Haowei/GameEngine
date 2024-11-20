@@ -224,8 +224,6 @@ void D3d12GraphicsManager::BeginFrame() {
     // @TODO: NO HARDCODE
     CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvDescHeap.GetStartGpu() };
     m_graphicsCommandList->SetGraphicsRootDescriptorTable(6, handle);
-    handle.Offset(MAX_TEXTURE_2D_COUNT * m_srvDescHeap.GetIncrementSize());
-    m_graphicsCommandList->SetGraphicsRootDescriptorTable(7, handle);
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -282,9 +280,9 @@ void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
 void D3d12GraphicsManager::UnsetRenderTarget() {
 }
 
-void D3d12GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
+void D3d12GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
-    for (auto& texture : p_render_pass->GetOutputs()) {
+    for (auto& texture : p_draw_pass->outputs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
             resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -300,10 +298,10 @@ void D3d12GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
     }
 }
 
-void D3d12GraphicsManager::EndPass(const RenderPass* p_render_pass) {
+void D3d12GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     UnsetRenderTarget();
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
-    for (auto& texture : p_render_pass->GetOutputs()) {
+    for (auto& texture : p_draw_pass->outputs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
             resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -1097,16 +1095,11 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
 
-    CD3DX12_DESCRIPTOR_RANGE texture2d_range(
-        D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
-        MAX_TEXTURE_2D_COUNT,             // number of descriptors
-        0,                                // register t0
-        0);                               // space 0
-    CD3DX12_DESCRIPTOR_RANGE texture_cube_array_range(
-        D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
-        MAX_TEXTURE_CUBE_ARRAY_COUNT,     // number of descriptors
-        0,                                // register t0
-        1);                               // space 1
+    CD3DX12_DESCRIPTOR_RANGE descriptor_table[3];
+    descriptor_table[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 128, 0, 0, 0);
+    descriptor_table[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 16, 0, 1, MAX_TEXTURE_2D_COUNT);
+
+    descriptor_table[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3);
 
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
@@ -1120,8 +1113,7 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(4);
     root_parameters[param_count++].InitAsConstantBufferView(5);
 
-    root_parameters[param_count++].InitAsDescriptorTable(1, &texture2d_range);
-    root_parameters[param_count++].InitAsDescriptorTable(1, &texture_cube_array_range);
+    root_parameters[param_count++].InitAsDescriptorTable(array_length(descriptor_table), descriptor_table);
 
     InitStaticSamplers();
 

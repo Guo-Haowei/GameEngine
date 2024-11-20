@@ -10,11 +10,11 @@
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
-#include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
+#include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
 #ifdef min
@@ -93,11 +93,10 @@ bool GraphicsManager::Initialize() {
 
         DEV_ASSERT(p_slot >= 0);
         texture->slot = p_slot;
-        // BindTexture(p_dimension, texture->GetHandle(), p_slot);
     };
-#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
-#include "texture_binding.hlsl.h"
-#undef SHADER_TEXTURE
+#define SRV(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
+    SRV_LIST
+#undef SRV
 
     return true;
 }
@@ -210,8 +209,8 @@ std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
     return std::make_unique<FrameContext>();
 }
 
-void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
-    for (auto& texture : p_render_pass->GetOutputs()) {
+void GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
+    for (auto& texture : p_draw_pass->outputs) {
         if (texture->slot >= 0) {
             UnbindTexture(Dimension::TEXTURE_2D, texture->slot);
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
@@ -219,9 +218,9 @@ void GraphicsManager::BeginPass(const RenderPass* p_render_pass) {
     }
 }
 
-void GraphicsManager::EndPass(const RenderPass* p_render_pass) {
+void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     UnsetRenderTarget();
-    for (auto& texture : p_render_pass->GetOutputs()) {
+    for (auto& texture : p_draw_pass->outputs) {
         if (texture->slot >= 0) {
             BindTexture(Dimension::TEXTURE_2D, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
@@ -346,9 +345,9 @@ static void FillMaterialConstantBuffer(const MaterialComponent* material, Materi
         return true;
     };
 
-    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_baseColorMapIndex);
-    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_normalMapIndex);
-    cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_materialMapIndex);
+    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_BaseColorMapIndex);
+    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_NormalMapIndex);
+    cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapIndex);
 }
 
 void GraphicsManager::Cleanup() {
@@ -431,17 +430,17 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
         return static_cast<uint32_t>(resource->GetResidentHandle());
     };
 
-    cache.c_gbufferBaseColorMapIndex = find_index(RESOURCE_GBUFFER_BASE_COLOR);
-    cache.c_gbufferPositionMapIndex = find_index(RESOURCE_GBUFFER_POSITION);
-    cache.c_gbufferNormalMapIndex = find_index(RESOURCE_GBUFFER_NORMAL);
-    cache.c_gbufferMaterialMapIndex = find_index(RESOURCE_GBUFFER_MATERIAL);
+    cache.c_GbufferBaseColorMapIndex = find_index(RESOURCE_GBUFFER_BASE_COLOR);
+    cache.c_GbufferPositionMapIndex = find_index(RESOURCE_GBUFFER_POSITION);
+    cache.c_GbufferNormalMapIndex = find_index(RESOURCE_GBUFFER_NORMAL);
+    cache.c_GbufferMaterialMapIndex = find_index(RESOURCE_GBUFFER_MATERIAL);
 
-    cache.c_gbufferDepthIndex = find_index(RESOURCE_GBUFFER_DEPTH);
-    cache.c_pointShadowArrayIndex = find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY);
-    cache.c_shadowMapIndex = find_index(RESOURCE_SHADOW_MAP);
+    cache.c_GbufferDepthIndex = find_index(RESOURCE_GBUFFER_DEPTH);
+    cache.c_PointShadowArrayIndex = find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY);
+    cache.c_ShadowMapIndex = find_index(RESOURCE_SHADOW_MAP);
 
-    cache.c_textureHighlightSelectIndex = find_index(RESOURCE_HIGHLIGHT_SELECT);
-    cache.c_textureLightingIndex = find_index(RESOURCE_LIGHTING);
+    cache.c_TextureHighlightSelectIndex = find_index(RESOURCE_HIGHLIGHT_SELECT);
+    cache.c_TextureLightingIndex = find_index(RESOURCE_LIGHTING);
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {

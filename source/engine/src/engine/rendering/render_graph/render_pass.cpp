@@ -13,13 +13,6 @@ namespace my::rg {
 
 void RenderPass::AddDrawPass(std::shared_ptr<DrawPass> p_draw_pass) {
     m_drawPasses.push_back(p_draw_pass);
-
-    for (auto it : p_draw_pass->desc.colorAttachments) {
-        m_outputs.emplace_back(it);
-    }
-    if (p_draw_pass->desc.depthAttachment) {
-        m_outputs.emplace_back(p_draw_pass->desc.depthAttachment);
-    }
 }
 
 void RenderPass::CreateInternal(RenderPassDesc& p_desc) {
@@ -30,21 +23,11 @@ void RenderPass::CreateInternal(RenderPassDesc& p_desc) {
 void RenderPass::Execute(GraphicsManager& p_graphics_manager) {
     RT_DEBUG("-- Executing pass '{}'", RenderPassNameToString(m_name));
 
-    p_graphics_manager.BeginPass(this);
-
     for (auto& draw_pass : m_drawPasses) {
+        p_graphics_manager.BeginDrawPass(draw_pass.get());
         draw_pass->desc.execFunc(draw_pass.get());
+        p_graphics_manager.EndDrawPass(draw_pass.get());
     }
-
-    // @TODO: fix this
-    // p_graphics_manager.UnsetRenderTarget(m_draw);
-
-    // @TODO: unbound
-    p_graphics_manager.EndPass(this);
-    // for (auto& it : m_outputs) {
-    //     if (it->slot >= 0) {
-    //     }
-    // }
 
     RT_DEBUG("-------");
 }

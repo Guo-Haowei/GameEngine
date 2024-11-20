@@ -13,23 +13,23 @@ spriv_cross_path = os.path.join(project_dir, 'bin/spirv-cross')
 output_spv = 'tmp.spv'
 
 input_shaders = [
-    'bloom_setup.comp',
-    'bloom_downsample.comp',
-    'bloom_upsample.comp',
-    'depth.pixel',
-    # 'mesh.vert',
-    # 'gbuffer.pixel',
-    'highlight.pixel',
-    'particle_draw.vert',
-    'particle_draw.pixel',
-    'particle_initialization.comp',
-    'particle_kickoff.comp',
-    'particle_emission.comp',
-    'particle_simulation.comp',
-    'shadowmap_point.vert',
-    'shadowmap_point.pixel',
-    'shadow.vert',
-    'tone.pixel',
+    'bloom_setup.cs',
+    'bloom_downsample.cs',
+    'bloom_upsample.cs',
+    'depth.ps',
+    # 'mesh.vs',
+    # 'gbuffer.ps',
+    'highlight.ps',
+    'particle_draw.vs',
+    'particle_draw.ps',
+    'particle_initialization.cs',
+    'particle_kickoff.cs',
+    'particle_emission.cs',
+    'particle_simulation.cs',
+    'shadowmap_point.vs',
+    'shadowmap_point.ps',
+    'shadow.vs',
+    'tone.ps',
 ]
 
 def insert_file_name(file_path):
@@ -53,12 +53,14 @@ def generate(hlsl_source):
         f'source/shader/hlsl/{hlsl_source}.hlsl')
     # shader model
     shader_model = ''
-    if hlsl_source.endswith('.vert'):
+    if hlsl_source.endswith('.vs'):
         shader_model = 'vs_6_0'
-    elif hlsl_source.endswith('.pixel'):
+    elif hlsl_source.endswith('.ps'):
         shader_model = 'ps_6_0'
-    elif hlsl_source.endswith('.comp'):
+    elif hlsl_source.endswith('.cs'):
         shader_model = 'cs_6_0'
+    elif hlsl_source.endswith('.gs'):
+        shader_model = 'gs_6_0'
     else:
         raise RuntimeError(f'Unknown shader type "{full_input_path}"')
 

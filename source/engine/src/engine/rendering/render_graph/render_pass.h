@@ -22,15 +22,12 @@ public:
     RenderPassName GetName() const { return m_name; }
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
-    const auto& GetOutputs() const { return m_outputs; }
-
 protected:
     void CreateInternal(RenderPassDesc& pass_desc);
 
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;
     std::vector<std::shared_ptr<DrawPass>> m_drawPasses;
-    std::vector<std::shared_ptr<GpuTexture>> m_outputs;
 
     friend class RenderGraph;
 };

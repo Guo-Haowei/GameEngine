@@ -4,6 +4,7 @@
 #include "core/framework/graphics_manager.h"
 #include "core/string/string_utils.h"
 #include "opengl_prerequisites.h"
+#include "shader_resource_defines.hlsl.h"
 
 namespace my {
 
@@ -14,12 +15,16 @@ struct TextureSlot {
     int slot;
 };
 
-static constexpr TextureSlot s_texture_slots[] = {
-#define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
-    TextureSlot{ #NAME, SLOT },
-#include "texture_binding.hlsl.h"
-#undef SHADER_TEXTURE
+static constexpr TextureSlot s_textureSots[] = {
+#define SRV(TYPE, NAME, SLOT, BINDING) \
+    TextureSlot{ "t_" #NAME, SLOT },
+    SRV_LIST
+#undef SRV
 };
+
+#define SRV DEFAULT_SHADER_TEXTURE
+SRV_LIST
+#undef SRV
 
 OpenGlPipelineState::~OpenGlPipelineState() {
     if (programId) {
@@ -76,7 +81,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
     return result;
 }
 
-static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::vector<ShaderMacro> &p_defines) {
+static GLuint CreateShader(std::string_view p_file, GLenum p_type) {
     std::string file{ p_file };
     file.append(".glsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
@@ -105,9 +110,9 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::ve
             "#define GLSL_LANG 1\n"
             "";
 
-        for (const auto &define : p_defines) {
-            fullsource.append(std::format("#define {} {}\n", define.name, define.value));
-        }
+        // for (const auto &define : p_defines) {
+        //     fullsource.append(std::format("#define {} {}\n", define.name, define.value));
+        // }
     }
 
     fullsource.append(*res);
@@ -134,12 +139,20 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type, const std::ve
     return shader_id;
 }
 
-std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const PipelineStateDesc &p_desc) {
+std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) {
+    return CreatePipelineImpl(p_desc);
+}
+
+std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) {
+    return CreatePipelineImpl(p_desc);
+}
+
+std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
-    auto CreateShaderHelper = [&](std::string_view path, GLenum type) {
+    auto create_shader_helper = [&](std::string_view path, GLenum type) {
         if (!path.empty()) {
-            GLuint shader = CreateShader(path, type, p_desc.defines);
+            GLuint shader = CreateShader(path, type);
             glAttachShader(program_id, shader);
             shaders.push_back(shader);
         }
@@ -151,16 +164,18 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const 
         }
     });
 
-    if (!p_desc.cs.empty()) {
-        DEV_ASSERT(p_desc.vs.empty());
-        DEV_ASSERT(p_desc.ps.empty());
-        DEV_ASSERT(p_desc.gs.empty());
-        CreateShaderHelper(p_desc.cs, GL_COMPUTE_SHADER);
-    } else if (!p_desc.vs.empty()) {
-        DEV_ASSERT(p_desc.cs.empty());
-        CreateShaderHelper(p_desc.vs, GL_VERTEX_SHADER);
-        CreateShaderHelper(p_desc.ps, GL_FRAGMENT_SHADER);
-        CreateShaderHelper(p_desc.gs, GL_GEOMETRY_SHADER);
+    switch (p_desc.type) {
+        case PipelineStateType::GRAPHICS:
+            create_shader_helper(p_desc.vs, GL_VERTEX_SHADER);
+            create_shader_helper(p_desc.ps, GL_FRAGMENT_SHADER);
+            create_shader_helper(p_desc.gs, GL_GEOMETRY_SHADER);
+            break;
+        case PipelineStateType::COMPUTE:
+            create_shader_helper(p_desc.cs, GL_COMPUTE_SHADER);
+            break;
+        default:
+            CRASH_NOW();
+            break;
     }
 
     DEV_ASSERT(!shaders.empty());
@@ -190,23 +205,37 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const 
 
     // set constants
     glUseProgram(program_id);
-    for (int i = 0; i < array_length(s_texture_slots); ++i) {
-        GLint location = glGetUniformLocation(program_id, s_texture_slots[i].name);
+    for (int i = 0; i < array_length(s_textureSots); ++i) {
+        const int location = glGetUniformLocation(program_id, s_textureSots[i].name);
         if (location != -1) {
-            glUniform1i(location, s_texture_slots[i].slot);
+            glUniform1i(location, s_textureSots[i].slot);
         }
     }
 
     // Setup texture locations
-    {
-        // @TODO: refactor
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImageSPIRV_Cross_DummySampler"), t_bloomInputImageSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImages_linearClampSampler"), t_bloomInputImageSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureLightings_linearClampSampler"), t_textureLightingSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureHighlightSelectSPIRV_Cross_DummySampler"), t_textureHighlightSelectSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureHighlightSelects_linearClampSampler"), t_textureHighlightSelectSlot);
-    }
+    auto set_location = [&](const char *p_name, int p_slot) {
+        const int location = glGetUniformLocation(program_id, p_name);
+#if 0
+        if (location < 0) {
+            LOG_WARN("{} not found, location {}", p_name, location);
+        } else {
+            LOG_OK("{} found, location {}", p_name, location);
+        }
+#endif
+        glUniform1i(location, p_slot);
+    };
+    set_location("SPIRV_Cross_Combinedt_BloomInputImageSPIRV_Cross_DummySampler", GetBloomInputImageSlot());
+    set_location("SPIRV_Cross_Combinedt_BloomInputImages_linearClampSampler", GetBloomInputImageSlot());
+    set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", GetTextureLightingSlot());
+    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
+    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
     glUseProgram(0);
+
+    // delete shaders
+    for (auto shader_id : shaders) {
+        glDeleteShader(shader_id);
+    }
+
     return program;
 }
 

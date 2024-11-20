@@ -16,7 +16,15 @@ struct DrawPassDesc {
 };
 
 struct DrawPass {
-    DrawPass(const DrawPassDesc& p_desc) : desc(p_desc) {}
+    DrawPass(const DrawPassDesc& p_desc) : desc(p_desc) {
+        // @TODO: better way
+        for (auto it : desc.colorAttachments) {
+            outputs.emplace_back(it);
+        }
+        if (desc.depthAttachment) {
+            outputs.emplace_back(desc.depthAttachment);
+        }
+    }
 
     std::tuple<uint32_t, uint32_t> GetBufferSize() const {
         if (desc.depthAttachment) {
@@ -28,6 +36,8 @@ struct DrawPass {
     }
 
     DrawPassDesc desc;
+
+    std::vector<std::shared_ptr<GpuTexture>> outputs;
 };
 
 }  // namespace my

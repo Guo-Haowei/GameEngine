@@ -10,9 +10,14 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateInternal(const PipelineStateDesc& p_desc) {
+D3d11PipelineStateManager::D3d11PipelineStateManager() {
+    m_defines.push_back({ "HLSL_LANG", "1" });
+    m_defines.push_back({ "HLSL_LANG_D3D11", "1" });
+    m_defines.push_back({ nullptr, nullptr });
+}
+
+std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
-    // @TODO: try not to expose device
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
 
@@ -20,29 +25,12 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateInternal(const P
         return nullptr;
     }
 
-    std::vector<D3D_SHADER_MACRO> defines;
-    for (const auto& define : p_desc.defines) {
-        defines.push_back({ define.name, define.value });
-    }
-    defines.push_back({ "HLSL_LANG", "1" });
-    defines.push_back({ "HLSL_LANG_D3D11", "1" });
-    defines.push_back({ nullptr, nullptr });
-
-    if (!p_desc.cs.empty()) {
-        return CreateComputePipeline(device, p_desc, defines);
-    }
-
-    return CreateGraphicsPipeline(device, p_desc, defines);
-}
-
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineStateDesc& p_desc, const std::vector<D3D_SHADER_MACRO>& p_defines) {
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);
 
     HRESULT hr = S_OK;
-
     ComPtr<ID3DBlob> vsblob;
     if (!p_desc.vs.empty()) {
-        auto res = CompileShader(p_desc.vs, "vs_5_0", p_defines.data());
+        auto res = CompileShader(p_desc.vs, "vs_5_0", m_defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
             return nullptr;
@@ -50,12 +38,12 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
 
         ComPtr<ID3DBlob> blob;
         blob = *res;
-        hr = p_device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->vertexShader.GetAddressOf());
+        hr = device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->vertexShader.GetAddressOf());
         D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
         vsblob = blob;
     }
     if (!p_desc.ps.empty()) {
-        auto res = CompileShader(p_desc.ps, "ps_5_0", p_defines.data());
+        auto res = CompileShader(p_desc.ps, "ps_5_0", m_defines.data());
         if (!res) {
             LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
             return nullptr;
@@ -63,7 +51,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
 
         ComPtr<ID3DBlob> blob;
         blob = *res;
-        hr = p_device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->pixelShader.GetAddressOf());
+        hr = device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->pixelShader.GetAddressOf());
         D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
     }
 
@@ -82,7 +70,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
     }
     DEV_ASSERT(elements.size());
 
-    hr = p_device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->inputLayout.GetAddressOf());
+    hr = device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->inputLayout.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create input layout");
 
     if (p_desc.rasterizerDesc) {
@@ -94,7 +82,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
             desc.FillMode = d3d::Convert(p_desc.rasterizerDesc->fillMode);
             desc.CullMode = d3d::Convert(p_desc.rasterizerDesc->cullMode);
             desc.FrontCounterClockwise = p_desc.rasterizerDesc->frontCounterClockwise;
-            hr = p_device->CreateRasterizerState(&desc, state.GetAddressOf());
+            hr = device->CreateRasterizerState(&desc, state.GetAddressOf());
             D3D_FAIL_V_MSG(hr, nullptr, "failed to create rasterizer state");
             m_rasterizerStates[p_desc.rasterizerDesc] = state;
         } else {
@@ -120,7 +108,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
             d3d::FillDepthStencilOpDesc(dss->frontFace, desc.FrontFace);
             d3d::FillDepthStencilOpDesc(dss->backFace, desc.BackFace);
 
-            D3D_FAIL_V(p_device->CreateDepthStencilState(&desc, state.GetAddressOf()), nullptr);
+            D3D_FAIL_V(device->CreateDepthStencilState(&desc, state.GetAddressOf()), nullptr);
             m_depthStencilStates[dss] = state;
         } else {
             state = it->second.Get();
@@ -132,10 +120,18 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
     return pipeline_state;
 }
 
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateComputePipeline(Microsoft::WRL::ComPtr<ID3D11Device>& p_device, const PipelineStateDesc& p_desc, const std::vector<D3D_SHADER_MACRO>& p_defines) {
+std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) {
+    auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
+    auto& device = graphics_manager->GetD3dDevice();
+    DEV_ASSERT(device);
+
+    if (!device) {
+        return nullptr;
+    }
+
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);
 
-    auto res = CompileShader(p_desc.cs, "cs_5_0", p_defines.data());
+    auto res = CompileShader(p_desc.cs, "cs_5_0", m_defines.data());
     if (!res) {
         LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_desc.cs, res.error());
         return nullptr;
@@ -143,7 +139,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateComputePipeline(
 
     ComPtr<ID3DBlob> blob;
     blob = *res;
-    HRESULT hr = p_device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->computeShader.GetAddressOf());
+    HRESULT hr = device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->computeShader.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
 
     return pipeline_state;
