@@ -154,6 +154,7 @@ void GraphicsManager::Update(Scene& p_scene) {
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
     UpdateMainPass(p_scene);
+    UpdateBloomConstants();
 
     // @TODO: make it a function
     auto loaded_images = m_loadedImages.pop_all();
@@ -675,21 +676,6 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
         [&](const AABB& aabb) {
             return camera_frustum.Intersects(aabb);
         });
-}
-
-void GraphicsManager::UpdateBloomConstants(const Scene& p_scene) {
-    unused(p_scene);
-
-    auto& frame = GetCurrentFrame();
-    if (frame.batchCache.buffer.size() < BLOOM_MIP_CHAIN_MAX) {
-        frame.batchCache.buffer.resize(BLOOM_MIP_CHAIN_MAX);
-    }
-
-    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX; ++i) {
-        auto image = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        DEV_ASSERT(image);
-        frame.batchCache.buffer[i].c_BloomInputTextureIndex = (uint)image->GetResidentHandle();
-    }
 }
 
 void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2) {

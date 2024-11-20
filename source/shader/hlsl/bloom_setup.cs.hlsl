@@ -12,7 +12,7 @@ float rgb_to_luma(float3 rgb) {
     uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;
-    u_BloomOutputImage.GetDimensions(width, height);
+    IMAGE_2D(BloomOutputImage).GetDimensions(width, height);
     float2 output_image_size = float2(width, height);
     float2 uv = float2(output_coord.x / output_image_size.x,
                        output_coord.y / output_image_size.y);
@@ -26,5 +26,6 @@ float rgb_to_luma(float3 rgb) {
     }
 
     // @TODO: fix bloom
-    u_BloomOutputImage[output_coord] = color;
+    IMAGE_2D(BloomOutputImage)
+    [output_coord] = float4(color, 1.0);
 }

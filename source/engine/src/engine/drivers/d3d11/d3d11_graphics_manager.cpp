@@ -403,15 +403,14 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
         gpu_texture->srv = srv;
     }
 
-    // @TODO: only generate uav when necessary
-    if (texture_desc.BindFlags & D3D11_BIND_UNORDERED_ACCESS) {
+    if (p_texture_desc.bindFlags & BIND_UNORDERED_ACCESS) {
         // Create UAV
-        D3D11_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-        uavDesc.Format = texture_format;
-        uavDesc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
-        uavDesc.Texture2D.MipSlice = 0;
+        D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
+        uav_desc.Format = texture_format;
+        uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE2D;
+        uav_desc.Texture2D.MipSlice = 0;
 
-        D3D_FAIL_V_MSG(m_device->CreateUnorderedAccessView(texture.Get(), &uavDesc, uav.GetAddressOf()),
+        D3D_FAIL_V_MSG(m_device->CreateUnorderedAccessView(texture.Get(), &uav_desc, uav.GetAddressOf()),
                        nullptr,
                        "Failed to create unordered access view");
 

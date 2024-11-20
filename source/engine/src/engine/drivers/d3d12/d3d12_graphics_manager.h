@@ -72,6 +72,8 @@ protected:
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) final;
 
+    void UpdateBloomConstants() final;
+
 private:
     bool CreateDevice();
     bool InitGraphicsContext();

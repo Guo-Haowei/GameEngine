@@ -84,6 +84,10 @@ DescriptorHeap::Handle DescriptorHeapSrv::AllocHandle(Dimension p_dimension) {
     }
 }
 
+DescriptorHeapSrv::Handle DescriptorHeapSrv::AllocUavHandle() {
+    return AllocHandle(m_uavArrayStart, m_uavArrayMax, m_uavCounter);
+}
+
 //------------------------------------------------------------------------------
 // CopyContext
 bool CopyContext::Initialize(D3d12GraphicsManager* p_device) {

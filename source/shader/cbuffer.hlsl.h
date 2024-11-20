@@ -70,8 +70,9 @@ CBUFFER(PerBatchConstantBuffer, 0) {
     Vector4f _per_batch_padding_2;
 
     // reuse per batch buffer for bloom
-    Vector3f _per_batch_padding_3;
+    Vector2f _per_batch_padding_3;
     uint c_BloomInputTextureIndex;
+    uint c_BloomOutputImageIndex;
 
     Matrix4x4f _per_batch_padding_4;
     Matrix4x4f _per_batch_padding_5;

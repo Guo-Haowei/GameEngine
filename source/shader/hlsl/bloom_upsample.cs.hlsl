@@ -8,7 +8,7 @@
     const uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;
-    u_BloomOutputImage.GetDimensions(width, height);
+    IMAGE_2D(BloomOutputImage).GetDimensions(width, height);
     float2 output_image_size = float2(width, height);
 
     float2 uv = float2(output_coord.x / output_image_size.x,
@@ -51,6 +51,8 @@
     upsample += (a + c + g + i);
     upsample *= 1.0 / 16.0;
 
-    float3 final_color = u_BloomOutputImage.Load(output_coord).rgb;
-    u_BloomOutputImage[output_coord] = lerp(final_color, upsample, 0.6);
+    float3 final_color = IMAGE_2D(BloomOutputImage).Load(output_coord).rgb;
+    final_color = lerp(final_color, upsample, 0.6);
+    IMAGE_2D(BloomOutputImage)
+    [output_coord] = float4(final_color, 1.0);
 }

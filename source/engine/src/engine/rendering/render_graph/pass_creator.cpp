@@ -427,6 +427,7 @@ static void BloomSetupFunc(const DrawPass* p_draw_pass) {
     unused(p_draw_pass);
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
 
     gm.SetPipelineState(PSO_BLOOM_SETUP);
     auto input = gm.FindTexture(RESOURCE_LIGHTING);
@@ -436,14 +437,17 @@ static void BloomSetupFunc(const DrawPass* p_draw_pass) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
+    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
+
     gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     gm.Dispatch(work_group_x, work_group_y, 1);
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
-    GraphicsManager& gm = GraphicsManager::GetSingleton();
     const uint32_t pass_id = p_draw_pass->id;
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
 
     gm.SetPipelineState(PSO_BLOOM_DOWNSAMPLE);
     auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
@@ -455,8 +459,7 @@ static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-    // auto& frame = gm.GetCurrentFrame();
-    // gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
+    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + 1);
 
     gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     gm.Dispatch(work_group_x, work_group_y, 1);
@@ -466,6 +469,7 @@ static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
 static void BloomUpSampleFunc(const DrawPass* p_draw_pass) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     const uint32_t pass_id = p_draw_pass->id;
+    auto& frame = gm.GetCurrentFrame();
 
     gm.SetPipelineState(PSO_BLOOM_UPSAMPLE);
     auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
@@ -475,6 +479,8 @@ static void BloomUpSampleFunc(const DrawPass* p_draw_pass) {
     const uint32_t height = output->desc.height;
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
+
+    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + BLOOM_MIP_CHAIN_MAX);
 
     gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     gm.Dispatch(work_group_x, work_group_y, 1);

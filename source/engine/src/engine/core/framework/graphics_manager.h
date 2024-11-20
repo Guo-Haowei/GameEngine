@@ -233,7 +233,7 @@ public:
     PassContext m_voxelPass;
     PassContext m_mainPass;
 
-private:
+protected:
     void Cleanup();
     void UpdateConstants(const Scene& p_scene);
     void UpdateEmitters(const Scene& p_scene);
@@ -241,7 +241,7 @@ private:
     void UpdateLights(const Scene& p_scene);
     void UpdateVoxelPass(const Scene& p_scene);
     void UpdateMainPass(const Scene& p_scene);
-    void UpdateBloomConstants(const Scene& p_scene);
+    virtual void UpdateBloomConstants() {}
 
     void FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2);
 };

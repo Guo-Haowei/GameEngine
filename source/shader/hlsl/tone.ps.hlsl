@@ -54,12 +54,10 @@ float4 main(vsoutput_uv input) : SV_TARGET {
 
     // Bloom
 
-#ifndef HLSL_LANG_D3D12
     if (c_enableBloom == 1) {
         float3 bloom = TEXTURE_2D(BloomInputTexture).Sample(s_linearClampSampler, uv).rgb;
         color += bloom;
     }
-#endif
 
     // Gamma correction
     const float v = 1.0 / 2.0;
