@@ -4,7 +4,7 @@
 #include "core/framework/graphics_manager.h"
 #include "core/string/string_utils.h"
 #include "opengl_prerequisites.h"
-#include "texture_binding.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 namespace my {
 

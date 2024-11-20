@@ -1,6 +1,6 @@
 /// File: particle_initialization.cs.hlsl
 #include "cbuffer.hlsl.h"
-#include "particle_defines.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 [numthreads(PARTICLE_LOCAL_SIZE, 1, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     const uint index = dispatch_thread_id.x;

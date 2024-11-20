@@ -1,6 +1,6 @@
 /// File: particle_simulation.cs.hlsl
 #include "cbuffer.hlsl.h"
-#include "particle_defines.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 void push_dead_index(uint index) {
     uint insert_idx;

@@ -2,7 +2,7 @@
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "sampler.hlsl.h"
-#include "texture_binding.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 #if 1
 static const float3x3 sx = float3x3(

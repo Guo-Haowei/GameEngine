@@ -7,7 +7,7 @@
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
-#include "texture_binding.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"

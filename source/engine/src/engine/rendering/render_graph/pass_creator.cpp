@@ -3,11 +3,10 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/graphics_manager.h"
 #include "core/math/geomath.h"
-#include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
-#include "texture_binding.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"

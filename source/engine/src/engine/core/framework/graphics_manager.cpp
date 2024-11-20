@@ -10,12 +10,11 @@
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
-#include "particle_defines.hlsl.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
-#include "texture_binding.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
 #ifdef min

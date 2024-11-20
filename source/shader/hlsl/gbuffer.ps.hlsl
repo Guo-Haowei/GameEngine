@@ -2,7 +2,7 @@
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "sampler.hlsl.h"
-#include "texture_binding.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 struct ps_output {
     float3 base_color : SV_TARGET0;

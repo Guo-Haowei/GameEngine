@@ -1,6 +1,6 @@
 /// File: particle_emission.cs.hlsl
 #include "cbuffer.hlsl.h"
-#include "particle_defines.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 
 float Random(float3 co, uint index) {
     return frac(sin(dot(float4(co.xyz, float(index)), float4(12.9898, 78.233, 45.5432, 22.1458))) * 43758.5453);
