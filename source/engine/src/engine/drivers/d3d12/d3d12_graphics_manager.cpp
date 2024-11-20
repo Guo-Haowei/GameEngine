@@ -282,7 +282,7 @@ void D3d12GraphicsManager::UnsetRenderTarget() {
 
 void D3d12GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
-    for (auto& texture : p_draw_pass->outputs) {
+    for (auto& texture : p_draw_pass->outSrvs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
             resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -301,7 +301,7 @@ void D3d12GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
 void D3d12GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     UnsetRenderTarget();
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
-    for (auto& texture : p_draw_pass->outputs) {
+    for (auto& texture : p_draw_pass->outSrvs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
             resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;

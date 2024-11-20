@@ -210,21 +210,31 @@ std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
 }
 
 void GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
-    for (auto& texture : p_draw_pass->outputs) {
+    for (auto& texture : p_draw_pass->outSrvs) {
         if (texture->slot >= 0) {
             UnbindTexture(Dimension::TEXTURE_2D, texture->slot);
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
+
+    for (size_t i = 0; i < p_draw_pass->desc.uavs.size(); ++i) {
+        const auto& uav = p_draw_pass->desc.uavs[i];
+        uint32_t slot = p_draw_pass->desc.uavSlots[i];
+        SetUnorderedAccessView(slot, uav.get());
+    }
 }
 
 void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     UnsetRenderTarget();
-    for (auto& texture : p_draw_pass->outputs) {
+    for (auto& texture : p_draw_pass->outSrvs) {
         if (texture->slot >= 0) {
             BindTexture(Dimension::TEXTURE_2D, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
+    }
+
+    for (uint32_t slot : p_draw_pass->desc.uavSlots) {
+        SetUnorderedAccessView(slot, nullptr);
     }
 }
 

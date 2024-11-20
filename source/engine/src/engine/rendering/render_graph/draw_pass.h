@@ -12,6 +12,8 @@ using DrawPassExecuteFunc = void (*)(const DrawPass*);
 struct DrawPassDesc {
     std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
     std::shared_ptr<GpuTexture> depthAttachment;
+    std::vector<std::shared_ptr<GpuTexture>> uavs;
+    std::vector<uint32_t> uavSlots;
     DrawPassExecuteFunc execFunc{ nullptr };
 };
 
@@ -19,10 +21,10 @@ struct DrawPass {
     DrawPass(const DrawPassDesc& p_desc) : desc(p_desc) {
         // @TODO: better way
         for (auto it : desc.colorAttachments) {
-            outputs.emplace_back(it);
+            outSrvs.emplace_back(it);
         }
         if (desc.depthAttachment) {
-            outputs.emplace_back(desc.depthAttachment);
+            outSrvs.emplace_back(desc.depthAttachment);
         }
     }
 
@@ -36,8 +38,9 @@ struct DrawPass {
     }
 
     DrawPassDesc desc;
+    uint32_t id{ 0 };
 
-    std::vector<std::shared_ptr<GpuTexture>> outputs;
+    std::vector<std::shared_ptr<GpuTexture>> outSrvs;
 };
 
 }  // namespace my

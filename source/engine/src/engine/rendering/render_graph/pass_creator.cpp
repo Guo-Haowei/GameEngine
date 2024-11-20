@@ -424,69 +424,62 @@ void RenderPassCreator::AddEmitterPass() {
 }
 
 /// Bloom
-static void BloomFunc(const DrawPass*) {
+static void BloomSetupFunc(const DrawPass* p_draw_pass) {
+    unused(p_draw_pass);
+
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
-    // HACK: skip for D3D12
-    if (gm.GetBackend() == Backend::D3D12) {
-        return;
-    }
+    gm.SetPipelineState(PSO_BLOOM_SETUP);
+    auto input = gm.FindTexture(RESOURCE_LIGHTING);
+    auto output = gm.FindTexture(RESOURCE_BLOOM_0);
 
-    // Step 1, select pixels contribute to bloom
-    {
-        gm.SetPipelineState(PSO_BLOOM_SETUP);
-        auto input = gm.FindTexture(RESOURCE_LIGHTING);
-        auto output = gm.FindTexture(RESOURCE_BLOOM_0);
+    const uint32_t width = input->desc.width;
+    const uint32_t height = input->desc.height;
+    const uint32_t work_group_x = math::CeilingDivision(width, 16);
+    const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        const uint32_t width = input->desc.width;
-        const uint32_t height = input->desc.height;
-        const uint32_t work_group_x = math::CeilingDivision(width, 16);
-        const uint32_t work_group_y = math::CeilingDivision(height, 16);
+    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
+    gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
+    gm.Dispatch(work_group_x, work_group_y, 1);
+    gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
+}
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
-        gm.Dispatch(work_group_x, work_group_y, 1);
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
-    }
+static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    const uint32_t pass_id = p_draw_pass->id;
 
-    // Step 2, down sampling
     gm.SetPipelineState(PSO_BLOOM_DOWNSAMPLE);
-    for (int i = 1; i < BLOOM_MIP_CHAIN_MAX; ++i) {
-        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+    auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
 
-        DEV_ASSERT(input && output);
+    DEV_ASSERT(input);
 
-        const uint32_t width = input->desc.width;
-        const uint32_t height = input->desc.height;
-        const uint32_t work_group_x = math::CeilingDivision(width, 16);
-        const uint32_t work_group_y = math::CeilingDivision(height, 16);
+    const uint32_t width = input->desc.width;
+    const uint32_t height = input->desc.height;
+    const uint32_t work_group_x = math::CeilingDivision(width, 16);
+    const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
-        gm.Dispatch(work_group_x, work_group_y, 1);
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
-    }
+    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
+    gm.Dispatch(work_group_x, work_group_y, 1);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
+}
 
-    // Step 3, up sampling
+static void BloomUpSampleFunc(const DrawPass* p_draw_pass) {
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    const uint32_t pass_id = p_draw_pass->id;
+
     gm.SetPipelineState(PSO_BLOOM_UPSAMPLE);
-    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+    auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
+    auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id - 1));
 
-        const uint32_t width = output->desc.width;
-        const uint32_t height = output->desc.height;
-        const uint32_t work_group_x = math::CeilingDivision(width, 16);
-        const uint32_t work_group_y = math::CeilingDivision(height, 16);
+    const uint32_t width = output->desc.width;
+    const uint32_t height = output->desc.height;
+    const uint32_t work_group_x = math::CeilingDivision(width, 16);
+    const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
-        gm.Dispatch(work_group_x, work_group_y, 1);
-        gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
-    }
+    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
+    gm.Dispatch(work_group_x, work_group_y, 1);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
 }
 
 void RenderPassCreator::AddBloomPass() {
@@ -495,7 +488,7 @@ void RenderPassCreator::AddBloomPass() {
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
     desc.dependencies = { RenderPassName::LIGHTING };
-    auto pass = m_graph.CreatePass(desc);
+    auto render_pass = m_graph.CreatePass(desc);
 
     int width = m_config.frameWidth;
     int height = m_config.frameHeight;
@@ -513,11 +506,43 @@ void RenderPassCreator::AddBloomPass() {
         auto attachment = gm.CreateTexture(texture_desc, LinearClampSampler());
     }
 
-    auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
-        .colorAttachments = {},
-        .execFunc = BloomFunc,
-    });
-    pass->AddDrawPass(draw_pass);
+    // Setup
+    {
+        auto output = gm.FindTexture(RESOURCE_BLOOM_0);
+        DEV_ASSERT(output);
+        auto pass = gm.CreateDrawPass(DrawPassDesc{
+            .uavs = { output },
+            .uavSlots = { IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT },
+            .execFunc = BloomSetupFunc,
+        });
+        render_pass->AddDrawPass(pass);
+    }
+
+    // Down Sample
+    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
+        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
+        DEV_ASSERT(output);
+        auto pass = gm.CreateDrawPass(DrawPassDesc{
+            .uavs = { output },
+            .uavSlots = { IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT },
+            .execFunc = BloomDownSampleFunc,
+        });
+        pass->id = i;
+        render_pass->AddDrawPass(pass);
+    }
+
+    // Up Sample
+    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
+        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+        DEV_ASSERT(output);
+        auto pass = gm.CreateDrawPass(DrawPassDesc{
+            .uavs = { output },
+            .uavSlots = { IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT },
+            .execFunc = BloomUpSampleFunc,
+        });
+        pass->id = i;
+        render_pass->AddDrawPass(pass);
+    }
 }
 
 /// Tone
