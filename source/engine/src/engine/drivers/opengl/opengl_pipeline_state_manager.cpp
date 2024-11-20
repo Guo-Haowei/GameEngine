@@ -22,7 +22,7 @@ static constexpr TextureSlot s_textureSots[] = {
 #undef SRV
 };
 
-#define SRV DEFAULT_SHADER_TEXTURE
+#define SRV SRV_DEFAULT
 SRV_LIST
 #undef SRV
 

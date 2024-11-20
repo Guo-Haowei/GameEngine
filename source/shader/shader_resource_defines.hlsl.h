@@ -34,8 +34,8 @@ SRV_LIST
 SRV_LIST
 #undef SRV
 #elif defined(__cplusplus)
-#define DEFAULT_SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
-    static inline constexpr int Get##NAME##Slot() { return SLOT; }
+#define SRV_DEFAULT(TYPE, NAME, SLOT, BINDING) \
+    [[maybe_unused]] static inline constexpr int Get##NAME##Slot() { return SLOT; }
 #else
 #error Platform not supported
 #endif

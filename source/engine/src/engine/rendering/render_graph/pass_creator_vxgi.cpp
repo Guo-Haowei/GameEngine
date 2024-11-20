@@ -19,7 +19,7 @@ extern OldTexture g_albedoVoxel;
 extern OldTexture g_normalVoxel;
 extern OpenGlMeshBuffers* g_box;
 
-#define SRV DEFAULT_SHADER_TEXTURE
+#define SRV SRV_DEFAULT
 SRV_LIST
 #undef SRV
 

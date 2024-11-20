@@ -11,7 +11,7 @@
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
 
-#define SRV DEFAULT_SHADER_TEXTURE
+#define SRV SRV_DEFAULT
 SRV_LIST
 #undef SRV
 
