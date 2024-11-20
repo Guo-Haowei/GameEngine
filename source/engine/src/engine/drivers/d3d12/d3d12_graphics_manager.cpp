@@ -1095,12 +1095,11 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
 
-    CD3DX12_DESCRIPTOR_RANGE descriptor_table[2];
+    CD3DX12_DESCRIPTOR_RANGE descriptor_table[3];
     descriptor_table[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 128, 0, 0, 0);
     descriptor_table[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 16, 0, 1, MAX_TEXTURE_2D_COUNT);
 
-    // handle.Offset(MAX_TEXTURE_2D_COUNT * m_srvDescHeap.GetIncrementSize());
-    // m_graphicsCommandList->SetGraphicsRootDescriptorTable(7, handle);
+    descriptor_table[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 3);
 
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
