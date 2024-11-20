@@ -220,8 +220,8 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(co
 #endif
         glUniform1i(location, p_slot);
     };
-    set_location("SPIRV_Cross_Combinedt_BloomInputImageSPIRV_Cross_DummySampler", GetBloomInputImageSlot());
-    set_location("SPIRV_Cross_Combinedt_BloomInputImages_linearClampSampler", GetBloomInputImageSlot());
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextureSPIRV_Cross_DummySampler", GetBloomInputTextureSlot());
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextures_linearClampSampler", GetBloomInputTextureSlot());
     set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", GetTextureLightingSlot());
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());

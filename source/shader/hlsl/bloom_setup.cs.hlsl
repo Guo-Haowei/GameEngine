@@ -17,7 +17,7 @@ float rgb_to_luma(float3 rgb) {
     float2 uv = float2(output_coord.x / output_image_size.x,
                        output_coord.y / output_image_size.y);
 
-    float3 color = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, uv, 0).rgb;
+    float3 color = TEXTURE_2D(TextureLighting).SampleLevel(s_linearClampSampler, uv, 0).rgb;
     float luma = rgb_to_luma(color);
 
     const float THRESHOLD = 1.3;

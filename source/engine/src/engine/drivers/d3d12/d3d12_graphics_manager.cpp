@@ -225,6 +225,7 @@ void D3d12GraphicsManager::BeginFrame() {
     // @TODO: NO HARDCODE
     CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvDescHeap.GetStartGpu() };
     m_graphicsCommandList->SetGraphicsRootDescriptorTable(6, handle);
+    m_graphicsCommandList->SetComputeRootDescriptorTable(6, handle);
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -515,6 +516,7 @@ void D3d12GraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_bu
 
     batch_address += p_offset;
     m_graphicsCommandList->SetGraphicsRootConstantBufferView(buffer->desc.slot, batch_address);
+    m_graphicsCommandList->SetComputeRootConstantBufferView(buffer->desc.slot, batch_address);
 }
 
 std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {

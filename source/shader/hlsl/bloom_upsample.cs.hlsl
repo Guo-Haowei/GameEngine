@@ -15,7 +15,7 @@
                        output_coord.y / output_image_size.y);
 
     uint input_width, input_height;
-    TEXTURE_2D(BloomInputImage).GetDimensions(input_width, input_height);
+    TEXTURE_2D(BloomInputTexture).GetDimensions(input_width, input_height);
     float x = 1.0f / input_width;
     float y = 1.0f / input_height;
     uv.x += 0.5f * x;
@@ -30,17 +30,17 @@
     // d - e - f
     // g - h - i
     // === ('e' is the current texel) ===
-    float3 a = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x - x, uv.y + y), 0).rgb;
-    float3 b = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x, uv.y + y), 0).rgb;
-    float3 c = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x + x, uv.y + y), 0).rgb;
+    float3 a = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x - x, uv.y + y), 0).rgb;
+    float3 b = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x, uv.y + y), 0).rgb;
+    float3 c = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x + x, uv.y + y), 0).rgb;
 
-    float3 d = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x - x, uv.y), 0).rgb;
-    float3 e = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x, uv.y), 0).rgb;
-    float3 f = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x + x, uv.y), 0).rgb;
+    float3 d = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x - x, uv.y), 0).rgb;
+    float3 e = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x, uv.y), 0).rgb;
+    float3 f = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x + x, uv.y), 0).rgb;
 
-    float3 g = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x - x, uv.y - y), 0).rgb;
-    float3 h = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x, uv.y - y), 0).rgb;
-    float3 i = TEXTURE_2D(BloomInputImage).SampleLevel(s_linearClampSampler, float2(uv.x + x, uv.y - y), 0).rgb;
+    float3 g = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x - x, uv.y - y), 0).rgb;
+    float3 h = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x, uv.y - y), 0).rgb;
+    float3 i = TEXTURE_2D(BloomInputTexture).SampleLevel(s_linearClampSampler, float2(uv.x + x, uv.y - y), 0).rgb;
 
     // Apply weighted distribution, by using a 3x3 tent filter:
     //  1   | 1 2 1 |

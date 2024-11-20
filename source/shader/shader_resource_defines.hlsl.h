@@ -7,7 +7,7 @@
     SRV(Texture2D, BaseColorMap, 0, RESOURCE_NONE)                       \
     SRV(Texture2D, NormalMap, 1, RESOURCE_NONE)                          \
     SRV(Texture2D, MaterialMap, 2, RESOURCE_NONE)                        \
-    SRV(Texture2D, BloomInputImage, 3, RESOURCE_NONE)                    \
+    SRV(Texture2D, BloomInputTexture, 3, RESOURCE_NONE)                  \
     SRV(Texture2D, ShadowMap, 6, RESOURCE_NONE)                          \
     SRV(TextureCubeArray, PointShadowArray, 7, RESOURCE_NONE)            \
     SRV(Texture2D, TextureHighlightSelect, 8, RESOURCE_HIGHLIGHT_SELECT) \

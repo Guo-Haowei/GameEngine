@@ -56,7 +56,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
 
 #ifndef HLSL_LANG_D3D12
     if (c_enableBloom == 1) {
-        float3 bloom = TEXTURE_2D(BloomInputImage).Sample(s_linearClampSampler, uv).rgb;
+        float3 bloom = TEXTURE_2D(BloomInputTexture).Sample(s_linearClampSampler, uv).rgb;
         color += bloom;
     }
 #endif

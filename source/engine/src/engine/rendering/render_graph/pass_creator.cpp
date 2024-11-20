@@ -436,9 +436,9 @@ static void BloomSetupFunc(const DrawPass* p_draw_pass) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
+    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
@@ -455,9 +455,12 @@ static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
+    // auto& frame = gm.GetCurrentFrame();
+    // gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
+
+    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomUpSampleFunc(const DrawPass* p_draw_pass) {
@@ -473,9 +476,9 @@ static void BloomUpSampleFunc(const DrawPass* p_draw_pass) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
+    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 void RenderPassCreator::AddBloomPass() {
@@ -570,7 +573,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         };
         bind_slot(RESOURCE_LIGHTING, GetTextureLightingSlot());
         bind_slot(RESOURCE_HIGHLIGHT_SELECT, GetTextureHighlightSelectSlot());
-        bind_slot(RESOURCE_BLOOM_0, GetBloomInputImageSlot());
+        bind_slot(RESOURCE_BLOOM_0, GetBloomInputTextureSlot());
 
         gm.SetViewport(Viewport(width, height));
         gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
@@ -578,7 +581,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         gm.SetPipelineState(PSO_TONE);
         RenderManager::GetSingleton().draw_quad();
 
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureLightingSlot());
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureHighlightSelectSlot());
     }
