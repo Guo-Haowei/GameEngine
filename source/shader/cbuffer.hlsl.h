@@ -99,10 +99,10 @@ CBUFFER(MaterialConstantBuffer, 2) {
     int c_hasNormalMap;
     int c_hasHeightMap;
 
-    uint c_baseColorMapIndex;
-    uint c_normalMapIndex;
-    uint c_materialMapIndex;
-    uint c_heightMapIndex;
+    uint c_BaseColorMapIndex;
+    uint c_NormalMapIndex;
+    uint c_MaterialMapIndex;
+    uint c_HeightMapIndex;
 
     TextureHandle c_baseColorMapHandle;
     TextureHandle c_normalMapHandle;
@@ -152,18 +152,18 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     vec3 c_worldCenter;
     float c_worldSizeHalf;  // 16
 
-    uint c_gbufferBaseColorMapIndex;
-    uint c_gbufferPositionMapIndex;
-    uint c_gbufferNormalMapIndex;
-    uint c_gbufferMaterialMapIndex;  // 16
+    uint c_GbufferBaseColorMapIndex;
+    uint c_GbufferPositionMapIndex;
+    uint c_GbufferNormalMapIndex;
+    uint c_GbufferMaterialMapIndex;  // 16
 
-    uint c_gbufferDepthIndex;
-    uint c_pointShadowArrayIndex;
-    uint c_shadowMapIndex;
-    uint c_textureHighlightSelectIndex;
+    uint c_GbufferDepthIndex;
+    uint c_PointShadowArrayIndex;
+    uint c_ShadowMapIndex;
+    uint c_TextureHighlightSelectIndex;
 
-    uint c_textureLightingIndex;
-    uint c_bloomInputImageIndex;
+    uint c_TextureLightingIndex;
+    uint c_BloomInputImageIndex;
     int c_forceFieldsCount;
     float _per_frame_padding_1;
 

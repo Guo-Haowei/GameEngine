@@ -224,8 +224,6 @@ void D3d12GraphicsManager::BeginFrame() {
     // @TODO: NO HARDCODE
     CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvDescHeap.GetStartGpu() };
     m_graphicsCommandList->SetGraphicsRootDescriptorTable(6, handle);
-    handle.Offset(MAX_TEXTURE_2D_COUNT * m_srvDescHeap.GetIncrementSize());
-    m_graphicsCommandList->SetGraphicsRootDescriptorTable(7, handle);
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -1097,16 +1095,12 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
 
-    CD3DX12_DESCRIPTOR_RANGE texture2d_range(
-        D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
-        MAX_TEXTURE_2D_COUNT,             // number of descriptors
-        0,                                // register t0
-        0);                               // space 0
-    CD3DX12_DESCRIPTOR_RANGE texture_cube_array_range(
-        D3D12_DESCRIPTOR_RANGE_TYPE_SRV,  // type
-        MAX_TEXTURE_CUBE_ARRAY_COUNT,     // number of descriptors
-        0,                                // register t0
-        1);                               // space 1
+    CD3DX12_DESCRIPTOR_RANGE descriptor_table[2];
+    descriptor_table[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 128, 0, 0, 0);
+    descriptor_table[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 16, 0, 1, MAX_TEXTURE_2D_COUNT);
+
+    // handle.Offset(MAX_TEXTURE_2D_COUNT * m_srvDescHeap.GetIncrementSize());
+    // m_graphicsCommandList->SetGraphicsRootDescriptorTable(7, handle);
 
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
@@ -1120,8 +1114,7 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(4);
     root_parameters[param_count++].InitAsConstantBufferView(5);
 
-    root_parameters[param_count++].InitAsDescriptorTable(1, &texture2d_range);
-    root_parameters[param_count++].InitAsDescriptorTable(1, &texture_cube_array_range);
+    root_parameters[param_count++].InitAsDescriptorTable(array_length(descriptor_table), descriptor_table);
 
     InitStaticSamplers();
 

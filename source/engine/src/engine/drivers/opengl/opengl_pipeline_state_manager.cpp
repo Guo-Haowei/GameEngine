@@ -4,6 +4,7 @@
 #include "core/framework/graphics_manager.h"
 #include "core/string/string_utils.h"
 #include "opengl_prerequisites.h"
+#include "texture_binding.hlsl.h"
 
 namespace my {
 
@@ -14,12 +15,16 @@ struct TextureSlot {
     int slot;
 };
 
-static constexpr TextureSlot s_texture_slots[] = {
+static constexpr TextureSlot s_textureSots[] = {
 #define SHADER_TEXTURE(TYPE, NAME, SLOT, BINDING) \
-    TextureSlot{ #NAME, SLOT },
-#include "texture_binding.hlsl.h"
+    TextureSlot{ "t_" #NAME, SLOT },
+    SHADER_TEXTURE_LIST
 #undef SHADER_TEXTURE
 };
+
+#define SHADER_TEXTURE DEFAULT_SHADER_TEXTURE
+SHADER_TEXTURE_LIST
+#undef SHADER_TEXTURE
 
 OpenGlPipelineState::~OpenGlPipelineState() {
     if (programId) {
@@ -190,22 +195,28 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const 
 
     // set constants
     glUseProgram(program_id);
-    for (int i = 0; i < array_length(s_texture_slots); ++i) {
-        GLint location = glGetUniformLocation(program_id, s_texture_slots[i].name);
+    for (int i = 0; i < array_length(s_textureSots); ++i) {
+        const int location = glGetUniformLocation(program_id, s_textureSots[i].name);
         if (location != -1) {
-            glUniform1i(location, s_texture_slots[i].slot);
+            glUniform1i(location, s_textureSots[i].slot);
         }
     }
 
     // Setup texture locations
-    {
-        // @TODO: refactor
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImageSPIRV_Cross_DummySampler"), t_bloomInputImageSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImages_linearClampSampler"), t_bloomInputImageSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureLightings_linearClampSampler"), t_textureLightingSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureHighlightSelectSPIRV_Cross_DummySampler"), t_textureHighlightSelectSlot);
-        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureHighlightSelects_linearClampSampler"), t_textureHighlightSelectSlot);
-    }
+    auto set_location = [&](const char *p_name, int p_slot) {
+        const int location = glGetUniformLocation(program_id, p_name);
+        if (location < 0) {
+            LOG_WARN("{} not found, location {}", p_name, location);
+        } else {
+            LOG_OK("{} found, location {}", p_name, location);
+        }
+        glUniform1i(location, p_slot);
+    };
+    set_location("SPIRV_Cross_Combinedt_BloomInputImageSPIRV_Cross_DummySampler", GetBloomInputImageSlot());
+    set_location("SPIRV_Cross_Combinedt_BloomInputImages_linearClampSampler", GetBloomInputImageSlot());
+    set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", GetTextureLightingSlot());
+    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
+    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
     glUseProgram(0);
     return program;
 }

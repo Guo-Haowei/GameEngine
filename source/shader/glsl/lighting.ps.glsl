@@ -20,23 +20,23 @@ void main() {
     const vec2 texcoord = pass_uv;
 
     // @TODO: check if this is necessary
-    //float depth = texture(t_gbufferDepth, texcoord).r;
+    //float depth = texture(t_GbufferDepth, texcoord).r;
 
     //if (depth > 0.9999) {
     //    discard;
     //}
     //gl_FragDepth = depth;
 
-    vec3 N = texture(t_gbufferNormalMap, texcoord).rgb;
+    vec3 N = texture(t_GbufferNormalMap, texcoord).rgb;
     // N = (2.0 * N) - vec3(1.0);
 
-    const vec3 world_position = texture(t_gbufferPositionMap, texcoord).rgb;
-    const vec3 emissive_roughness_metallic = texture(t_gbufferMaterialMap, texcoord).rgb;
+    const vec3 world_position = texture(t_GbufferPositionMap, texcoord).rgb;
+    const vec3 emissive_roughness_metallic = texture(t_GbufferMaterialMap, texcoord).rgb;
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;
 
-    vec3 base_color = texture(t_gbufferBaseColorMap, texcoord).rgb;
+    vec3 base_color = texture(t_GbufferBaseColorMap, texcoord).rgb;
     if (c_noTexture != 0) {
         base_color = vec3(0.6);
     }

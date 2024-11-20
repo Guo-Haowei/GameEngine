@@ -38,6 +38,6 @@ SBUFFER(ParticleCounter, GlobalParticleCounter, 16);
 SBUFFER(int, GlobalDeadIndices, 17);
 SBUFFER(int, GlobalAliveIndicesPreSim, 18);
 SBUFFER(int, GlobalAliveIndicesPostSim, 19);
-SBUFFER(Particle, GlobalParticleData, 20);
+SBUFFER(Particle, GlobalParticleData, 24);
 
 #endif

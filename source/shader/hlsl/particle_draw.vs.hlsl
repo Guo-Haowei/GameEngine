@@ -15,7 +15,7 @@ struct Particle {
 };
 
 // @TODO: refactor
-StructuredBuffer<Particle> GlobalParticleData : register(t20);
+StructuredBuffer<Particle> GlobalParticleData : register(t24);
 
 vsoutput_color main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
     vsoutput_color output;

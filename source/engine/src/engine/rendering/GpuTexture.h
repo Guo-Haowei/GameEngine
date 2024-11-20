@@ -39,6 +39,4 @@ protected:
     uint32_t m_type;
     uint32_t m_format;
     uint32_t mHandle = 0;
-
-    friend class GBuffer;
 };

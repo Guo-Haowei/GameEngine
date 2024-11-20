@@ -7,6 +7,7 @@
 #include "rendering/pipeline_state.h"
 #include "rendering/render_graph/pass_creator.h"
 #include "rendering/render_manager.h"
+#include "texture_binding.hlsl.h"
 
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
@@ -17,6 +18,10 @@
 extern OldTexture g_albedoVoxel;
 extern OldTexture g_normalVoxel;
 extern OpenGlMeshBuffers* g_box;
+
+#define SHADER_TEXTURE DEFAULT_SHADER_TEXTURE
+SHADER_TEXTURE_LIST
+#undef SHADER_TEXTURE
 
 namespace my::rg {
 
@@ -41,8 +46,8 @@ void voxelization_pass_func(const DrawPass*) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
-    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, t_pointShadowArraySlot, Dimension::TEXTURE_CUBE_ARRAY);
+    bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
+    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, GetPointShadowArraySlot(), Dimension::TEXTURE_CUBE_ARRAY);
 
     g_albedoVoxel.clear();
     g_normalVoxel.clear();
@@ -98,11 +103,11 @@ void voxelization_pass_func(const DrawPass*) {
     glEnable(GL_BLEND);
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, t_pointShadowArraySlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, GetPointShadowArraySlot());
 
     // @TODO: [SCRUM-28] refactor
-    gm.SetRenderTarget(nullptr);
+    gm.UnsetRenderTarget();
 }
 
 void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
@@ -328,7 +333,7 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
     }
 
     creator.AddShadowPass();
-    creator.AddGBufferPass();
+    creator.AddGbufferPass();
     creator.AddHighlightPass();
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);

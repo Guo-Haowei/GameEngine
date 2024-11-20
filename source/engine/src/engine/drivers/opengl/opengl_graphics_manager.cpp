@@ -553,10 +553,7 @@ void OpenGlGraphicsManager::SetStencilRef(uint32_t p_ref) {
 
 void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     auto draw_pass = reinterpret_cast<const OpenGlDrawPass*>(p_draw_pass);
-    if (!draw_pass || draw_pass->handle == 0) {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        return;
-    }
+    DEV_ASSERT(draw_pass);
 
     glBindFramebuffer(GL_FRAMEBUFFER, draw_pass->handle);
 

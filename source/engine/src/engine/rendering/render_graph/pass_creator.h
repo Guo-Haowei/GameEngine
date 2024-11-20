@@ -32,7 +32,7 @@ public:
     static void CreatePathTracer(RenderGraph& p_graph);
 
 private:
-    void AddGBufferPass();
+    void AddGbufferPass();
     void AddHighlightPass();
     void AddShadowPass();
     void AddLightingPass();

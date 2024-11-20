@@ -47,7 +47,7 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
 
 #if 1
     float4 uv = float4(frag_to_light, (float)p_light.shadow_map_index);
-    float closest_depth = TEXTURE_CUBE_ARRAY(pointShadowArray).SampleLevel(s_shadowSampler, uv, 0).r;
+    float closest_depth = TEXTURE_CUBE_ARRAY(PointShadowArray).SampleLevel(s_shadowSampler, uv, 0).r;
     closest_depth *= light_far;
     if (current_depth - bias > closest_depth) {
         shadow += 1.0;
@@ -106,13 +106,13 @@ ps_output main(vsoutput_uv input) {
     // output.depth = TEXTURE_2D(gbufferDepth).Sample(s_linearMipWrapSampler, texcoord).r;
     // clip(0.9999 - output.depth);
 
-    float3 base_color = TEXTURE_2D(gbufferBaseColorMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    float3 base_color = TEXTURE_2D(GbufferBaseColorMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
     if (c_noTexture != 0) {
         base_color = float3(0.6, 0.6, 0.6);
     }
 
-    const vec3 world_position = TEXTURE_2D(gbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
-    const vec3 emissive_roughness_metallic = TEXTURE_2D(gbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    const vec3 world_position = TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    const vec3 emissive_roughness_metallic = TEXTURE_2D(GbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
 
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
@@ -123,7 +123,7 @@ ps_output main(vsoutput_uv input) {
         return output;
     }
 
-    float3 N = TEXTURE_2D(gbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    float3 N = TEXTURE_2D(GbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
     float3 color = float3(0.0, 0.0, 0.0);
 
     const vec3 V = normalize(c_cameraPosition - world_position);

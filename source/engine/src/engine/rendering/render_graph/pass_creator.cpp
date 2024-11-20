@@ -7,9 +7,14 @@
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "rendering/render_manager.h"
+#include "texture_binding.hlsl.h"
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
+
+#define SHADER_TEXTURE DEFAULT_SHADER_TEXTURE
+SHADER_TEXTURE_LIST
+#undef SHADER_TEXTURE
 
 namespace my::rg {
 
@@ -49,9 +54,9 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
 
         for (const auto& subset : draw.subsets) {
             const MaterialConstantBuffer& material = gm.GetCurrentFrame().materialCache.buffer[subset.material_idx];
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, t_baseColorMapSlot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, t_normalMapSlot);
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, t_materialMapSlot);
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
 
             gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
 
@@ -68,7 +73,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     }
 }
 
-void RenderPassCreator::AddGBufferPass() {
+void RenderPassCreator::AddGbufferPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     const int w = m_config.frameWidth;
@@ -290,10 +295,10 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_GBUFFER_DEPTH, t_gbufferDepthSlot);
+    bind_slot(RESOURCE_GBUFFER_DEPTH, GetGbufferDepthSlot());
 
-    bind_slot(RESOURCE_SHADOW_MAP, t_shadowMapSlot);
-    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, t_pointShadowArraySlot, Dimension::TEXTURE_CUBE_ARRAY);
+    bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
+    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, GetPointShadowArraySlot(), Dimension::TEXTURE_CUBE_ARRAY);
 
     // @TODO: fix it
     RenderManager::GetSingleton().draw_quad();
@@ -315,9 +320,9 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     // }
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_gbufferDepthSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, t_shadowMapSlot);
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, t_pointShadowArraySlot);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetGbufferDepthSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, GetPointShadowArraySlot());
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -439,11 +444,11 @@ static void BloomFunc(const DrawPass*) {
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), t_bloomInputImageSlot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
     }
 
     // Step 2, down sampling
@@ -459,11 +464,11 @@ static void BloomFunc(const DrawPass*) {
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), t_bloomInputImageSlot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
     }
 
     // Step 3, up sampling
@@ -477,11 +482,11 @@ static void BloomFunc(const DrawPass*) {
         const uint32_t work_group_x = math::CeilingDivision(width, 16);
         const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), t_bloomInputImageSlot);
+        gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputImageSlot());
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, output.get());
         gm.Dispatch(work_group_x, work_group_y, 1);
         gm.SetUnorderedAccessView(IMAGE_BLOOM_DOWNSAMPLE_OUTPUT_SLOT, nullptr);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
     }
 }
 
@@ -543,9 +548,9 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
 
             gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
         };
-        bind_slot(RESOURCE_LIGHTING, t_textureLightingSlot);
-        bind_slot(RESOURCE_HIGHLIGHT_SELECT, t_textureHighlightSelectSlot);
-        bind_slot(RESOURCE_BLOOM_0, t_bloomInputImageSlot);
+        bind_slot(RESOURCE_LIGHTING, GetTextureLightingSlot());
+        bind_slot(RESOURCE_HIGHLIGHT_SELECT, GetTextureHighlightSelectSlot());
+        bind_slot(RESOURCE_BLOOM_0, GetBloomInputImageSlot());
 
         gm.SetViewport(Viewport(width, height));
         gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
@@ -553,9 +558,9 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
         gm.SetPipelineState(PSO_TONE);
         RenderManager::GetSingleton().draw_quad();
 
-        gm.UnbindTexture(Dimension::TEXTURE_2D, t_textureLightingSlot);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
-        gm.UnbindTexture(Dimension::TEXTURE_2D, t_textureHighlightSelectSlot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputImageSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureLightingSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureHighlightSelectSlot());
     }
 }
 
@@ -602,7 +607,7 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     RenderPassCreator creator(config, p_graph);
 
     creator.AddShadowPass();
-    creator.AddGBufferPass();
+    creator.AddGbufferPass();
     creator.AddHighlightPass();
     creator.AddLightingPass();
     creator.AddBloomPass();
@@ -625,7 +630,7 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     RenderPassCreator creator(config, p_graph);
 
     creator.AddShadowPass();
-    creator.AddGBufferPass();
+    creator.AddGbufferPass();
     creator.AddHighlightPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();

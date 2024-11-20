@@ -15,7 +15,7 @@ ps_output main(vsoutput_mesh input) {
     float4 color = c_baseColor;
 
     if (c_hasBaseColorMap) {
-        color = TEXTURE_2D(baseColorMap).Sample(s_linearMipWrapSampler, input.uv);
+        color = TEXTURE_2D(BaseColorMap).Sample(s_linearMipWrapSampler, input.uv);
     }
 
     if (color.a <= 0.0) {
@@ -26,7 +26,7 @@ ps_output main(vsoutput_mesh input) {
     float roughness;
 
     if (c_hasMaterialMap != 0) {
-        float3 value = TEXTURE_2D(materialMap).Sample(s_linearMipWrapSampler, input.uv).rgb;
+        float3 value = TEXTURE_2D(MaterialMap).Sample(s_linearMipWrapSampler, input.uv).rgb;
         metallic = value.b;
         roughness = value.g;
     } else {
@@ -40,7 +40,7 @@ ps_output main(vsoutput_mesh input) {
         TBN[0] = normalize(input.T);
         TBN[1] = normalize(input.B);
         TBN[2] = normalize(input.normal);
-        float3 value = TEXTURE_2D(normalMap).Sample(s_linearMipWrapSampler, input.uv).rgb;
+        float3 value = TEXTURE_2D(NormalMap).Sample(s_linearMipWrapSampler, input.uv).rgb;
         N = normalize(mul((2.0f * value) - 1.0f, TBN));
     } else {
         N = normalize(input.normal);

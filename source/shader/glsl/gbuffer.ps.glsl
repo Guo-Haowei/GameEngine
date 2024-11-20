@@ -19,7 +19,7 @@ void main() {
     vec4 albedo = c_baseColor;
 
     if (c_hasBaseColorMap != 0) {
-        albedo = texture(t_baseColorMap, ps_in.uv, 0);
+        albedo = texture(t_BaseColorMap, ps_in.uv, 0);
     }
     if (albedo.a < 0.001) {
         discard;
@@ -28,7 +28,7 @@ void main() {
     float metallic = c_metallic;
     float roughness = c_roughness;
     if (c_hasMaterialMap != 0) {
-        vec3 mr = texture(t_materialMap, ps_in.uv).rgb;
+        vec3 mr = texture(t_MaterialMap, ps_in.uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }
@@ -37,7 +37,7 @@ void main() {
     vec3 N;
     if (c_hasNormalMap != 0) {
         mat3 TBN = mat3(ps_in.T, ps_in.B, ps_in.N);
-        N = normalize(TBN * (2.0 * texture(t_normalMap, ps_in.uv).xyz - 1.0));
+        N = normalize(TBN * (2.0 * texture(t_NormalMap, ps_in.uv).xyz - 1.0));
     } else {
         N = normalize(ps_in.N);
     }
