@@ -249,8 +249,7 @@ std::unique_ptr<FrameContext> D3d12GraphicsManager::CreateFrameContext() {
 }
 
 void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
-    unused(p_ref);
-    // LOG_WARN("TODO: D3d12GraphicsManager::SetStencilRef");
+    m_graphicsCommandList->OMSetStencilRef(p_ref);
 }
 
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {

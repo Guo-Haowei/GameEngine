@@ -139,7 +139,7 @@ void RenderPassCreator::AddHighlightPass() {
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
     auto attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_HIGHLIGHT_SELECT,
-                                                                    PixelFormat::R8_UINT,
+                                                                    RESOURCE_FORMAT_HIGHLIGHT_SELECT,
                                                                     AttachmentType::COLOR_2D,
                                                                     w, h),
                                             PointClampSampler());
@@ -423,6 +423,11 @@ void RenderPassCreator::AddEmitterPass() {
 static void BloomFunc(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
+    // HACK: skip for D3D12
+    if (gm.GetBackend() == Backend::D3D12) {
+        return;
+    }
+
     // Step 1, select pixels contribute to bloom
     {
         gm.SetPipelineState(PSO_BLOOM_SETUP);
@@ -539,6 +544,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
             gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
         };
         bind_slot(RESOURCE_LIGHTING, t_textureLightingSlot);
+        bind_slot(RESOURCE_HIGHLIGHT_SELECT, t_textureHighlightSelectSlot);
         bind_slot(RESOURCE_BLOOM_0, t_bloomInputImageSlot);
 
         gm.SetViewport(Viewport(width, height));
@@ -549,6 +555,7 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
 
         gm.UnbindTexture(Dimension::TEXTURE_2D, t_textureLightingSlot);
         gm.UnbindTexture(Dimension::TEXTURE_2D, t_bloomInputImageSlot);
+        gm.UnbindTexture(Dimension::TEXTURE_2D, t_textureHighlightSelectSlot);
     }
 }
 
@@ -565,7 +572,7 @@ void RenderPassCreator::AddTonePass() {
     int height = m_config.frameHeight;
 
     auto attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
-                                                               PixelFormat::R11G11B10_FLOAT,
+                                                               RESOURCE_FORMAT_TONE,
                                                                AttachmentType::COLOR_2D,
                                                                width, height),
                                        PointClampSampler());
@@ -596,7 +603,10 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
 
     creator.AddShadowPass();
     creator.AddGBufferPass();
+    creator.AddHighlightPass();
     creator.AddLightingPass();
+    creator.AddBloomPass();
+    creator.AddTonePass();
 
     p_graph.Compile();
 }

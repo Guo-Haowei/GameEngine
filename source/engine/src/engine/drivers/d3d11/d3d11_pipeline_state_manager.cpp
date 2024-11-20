@@ -117,6 +117,9 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
             desc.StencilWriteMask = dss->stencilWriteMask;
             desc.StencilReadMask = dss->stencilReadMask;
 
+            d3d::FillDepthStencilOpDesc(dss->frontFace, desc.FrontFace);
+            d3d::FillDepthStencilOpDesc(dss->backFace, desc.BackFace);
+
             D3D_FAIL_V(p_device->CreateDepthStencilState(&desc, state.GetAddressOf()), nullptr);
             m_depthStencilStates[dss] = state;
         } else {

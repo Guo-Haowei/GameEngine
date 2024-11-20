@@ -5,6 +5,7 @@
 
 namespace my {
 
+// @TODO: make these class members
 // input layouts
 static const InputLayoutDesc s_inputLayoutMesh = {
     .elements = {
@@ -84,6 +85,10 @@ PipelineState* PipelineStateManager::Find(PipelineStateName p_name) {
 }
 
 bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_info) {
+    if (p_info.cs.empty()) {
+        DEV_ASSERT(p_info.depthStencilDesc);
+    }
+
     ERR_FAIL_COND_V_MSG(m_cache[p_name] != nullptr, false, "pipeline already exists");
 
     auto pipeline = CreateInternal(p_info);
@@ -109,7 +114,7 @@ bool PipelineStateManager::Initialize() {
                        .inputLayoutDesc = &s_inputLayoutMesh,
                        .numRenderTargets = 4,
                        .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
-                       .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
+                       .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                    });
     ok = ok && Create(PSO_DPETH, {
                                      .vs = "shadow.vert",
@@ -142,17 +147,15 @@ bool PipelineStateManager::Initialize() {
                                             .dsvFormat = PixelFormat::D32_FLOAT,
                                         });
 
-    // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
-        return ok;
-    }
-
     ok = ok && Create(PSO_HIGHLIGHT, {
                                          .vs = "screenspace_quad.vert",
                                          .ps = "highlight.pixel",
                                          .rasterizerDesc = &s_rasterizerFrontFace,
                                          .depthStencilDesc = &s_depthStencilHighlight,
                                          .inputLayoutDesc = &s_inputLayoutPosition,
+                                         .numRenderTargets = 1,
+                                         .rtvFormats = { RESOURCE_FORMAT_HIGHLIGHT_SELECT },
+                                         .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                      });
 
     ok = ok && Create(PSO_TONE, {
@@ -161,7 +164,15 @@ bool PipelineStateManager::Initialize() {
                                     .rasterizerDesc = &s_rasterizerFrontFace,
                                     .depthStencilDesc = &s_depthStencilDefault,
                                     .inputLayoutDesc = &s_inputLayoutPosition,
+                                    .numRenderTargets = 1,
+                                    .rtvFormats = { RESOURCE_FORMAT_TONE },
+                                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                 });
+
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+        return ok;
+    }
 
     // Bloom
     ok = ok && Create(PSO_BLOOM_SETUP, { .cs = "bloom_setup.comp" });

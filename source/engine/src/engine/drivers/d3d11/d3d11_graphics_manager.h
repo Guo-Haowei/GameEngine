@@ -85,7 +85,7 @@ protected:
     // @TODO: cache
     struct {
         ID3D11RasterizerState* rasterizer = nullptr;
-        ID3D11DepthStencilState* depth_stencil = nullptr;
+        ID3D11DepthStencilState* depthStencil = nullptr;
     } m_stateCache;
 };
 

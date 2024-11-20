@@ -19,6 +19,7 @@ input_shaders = [
     'depth.pixel',
     # 'mesh.vert',
     # 'gbuffer.pixel',
+    'highlight.pixel',
     'particle_draw.vert',
     'particle_draw.pixel',
     'particle_initialization.comp',
@@ -28,6 +29,7 @@ input_shaders = [
     'shadowmap_point.vert',
     'shadowmap_point.pixel',
     'shadow.vert',
+    'tone.pixel',
 ]
 
 def insert_file_name(file_path):
