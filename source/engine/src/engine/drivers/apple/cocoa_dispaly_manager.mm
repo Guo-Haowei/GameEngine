@@ -26,8 +26,8 @@ bool NSWindowWrapperImpl::Initialize(const DisplayManager::CreateInfo& p_info) {
                                                                   NSWindowStyleMaskResizable)
                                                          backing:NSBackingStoreBuffered
                                                            defer:NO];
-    // @TODO: set correct title
-    [window_ setTitle:@"Dummy(Metal)"];
+    NSString *title = [NSString stringWithUTF8String:p_info.title.c_str()];
+    [window_ setTitle:title];
 
     [window_ cascadeTopLeftFromPoint:NSMakePoint(20, 20)];
     [window_ setMinSize:NSMakeSize(300, 200)];

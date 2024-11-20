@@ -55,6 +55,9 @@ class DescriptorHeapSrv : public DescriptorHeap {
 public:
     Handle AllocHandle(Dimension p_dimension);
 
+    // Hack:
+    Handle AllocUavHandle();
+
 private:
     Handle AllocHandle(int p_begin, int p_max, std::atomic_int& p_counter);
 
@@ -64,8 +67,12 @@ private:
     const int m_cubeArrayStart = MAX_TEXTURE_2D_COUNT;
     const int m_cubeArrayMax = MAX_TEXTURE_CUBE_ARRAY_COUNT;
 
+    const int m_uavArrayStart = MAX_TEXTURE_2D_COUNT + MAX_TEXTURE_CUBE_ARRAY_COUNT;
+    const int m_uavArrayMax = MAX_TEXTURE_2D_COUNT + MAX_TEXTURE_CUBE_ARRAY_COUNT + 16;
+
     std::atomic_int m_2dArrayCounter = m_2dArrayStart;
     std::atomic_int m_cubeArrayCounter = m_cubeArrayStart;
+    std::atomic_int m_uavCounter = m_uavArrayStart;
 };
 
 class CopyContext {

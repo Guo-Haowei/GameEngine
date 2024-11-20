@@ -61,11 +61,19 @@ struct ForceField {
 
 CBUFFER(PerBatchConstantBuffer, 0) {
     Matrix4x4f c_worldMatrix;
+
     Vector3f _per_batch_padding_0;
     int c_hasAnimation;
+
     Vector4f _per_batch_padding_1;
+
     Vector4f _per_batch_padding_2;
-    Vector4f _per_batch_padding_3;
+
+    // reuse per batch buffer for bloom
+    Vector2f _per_batch_padding_3;
+    uint c_BloomInputTextureIndex;
+    uint c_BloomOutputImageIndex;
+
     Matrix4x4f _per_batch_padding_4;
     Matrix4x4f _per_batch_padding_5;
 };
@@ -154,10 +162,9 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     uint c_ShadowMapIndex;
     uint c_TextureHighlightSelectIndex;
 
+    Vector2f _per_frame_padding_1;
     uint c_TextureLightingIndex;
-    uint c_BloomInputImageIndex;
     int c_forceFieldsCount;
-    float _per_frame_padding_1;
 
     Vector4f _per_frame_padding_2;  // 16
 

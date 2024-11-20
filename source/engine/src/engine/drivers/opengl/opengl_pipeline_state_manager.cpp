@@ -18,13 +18,9 @@ struct TextureSlot {
 static constexpr TextureSlot s_textureSots[] = {
 #define SRV(TYPE, NAME, SLOT, BINDING) \
     TextureSlot{ "t_" #NAME, SLOT },
-    SRV_LIST
+    SRV_DEFINES
 #undef SRV
 };
-
-#define SRV DEFAULT_SHADER_TEXTURE
-SRV_LIST
-#undef SRV
 
 OpenGlPipelineState::~OpenGlPipelineState() {
     if (programId) {
@@ -224,8 +220,8 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(co
 #endif
         glUniform1i(location, p_slot);
     };
-    set_location("SPIRV_Cross_Combinedt_BloomInputImageSPIRV_Cross_DummySampler", GetBloomInputImageSlot());
-    set_location("SPIRV_Cross_Combinedt_BloomInputImages_linearClampSampler", GetBloomInputImageSlot());
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextureSPIRV_Cross_DummySampler", GetBloomInputTextureSlot());
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextures_linearClampSampler", GetBloomInputTextureSlot());
     set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", GetTextureLightingSlot());
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
