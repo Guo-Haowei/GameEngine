@@ -87,16 +87,11 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateInternal(const P
     depth_stencil_desc.DepthFunc = d3d::Convert(p_desc.depthStencilDesc->depthFunc);
     depth_stencil_desc.StencilEnable = p_desc.depthStencilDesc->stencilEnabled;
     depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+
     depth_stencil_desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     depth_stencil_desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    const D3D12_DEPTH_STENCILOP_DESC default_stencil_op = {
-        D3D12_STENCIL_OP_KEEP,
-        D3D12_STENCIL_OP_KEEP,
-        D3D12_STENCIL_OP_KEEP,
-        D3D12_COMPARISON_FUNC_ALWAYS,
-    };
-    depth_stencil_desc.FrontFace = default_stencil_op;
-    depth_stencil_desc.BackFace = default_stencil_op;
+    d3d::FillDepthStencilOpDesc(p_desc.depthStencilDesc->frontFace, depth_stencil_desc.FrontFace);
+    d3d::FillDepthStencilOpDesc(p_desc.depthStencilDesc->backFace, depth_stencil_desc.BackFace);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
     pso_desc.pRootSignature = graphics_manager->GetRootSignature();

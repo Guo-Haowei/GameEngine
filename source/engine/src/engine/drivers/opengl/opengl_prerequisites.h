@@ -20,6 +20,55 @@
 
 namespace my::gl {
 
+// @TODO: wrap all enums
+enum COMPARISON_FUNC {
+    COMPARISON_FUNC_NEVER = GL_NEVER,
+    COMPARISON_FUNC_LESS = GL_LESS,
+    COMPARISON_FUNC_EQUAL = GL_EQUAL,
+    COMPARISON_FUNC_LESS_EQUAL = GL_LEQUAL,
+    COMPARISON_FUNC_GREATER = GL_GREATER,
+    COMPARISON_FUNC_NOT_EQUAL = GL_NOTEQUAL,
+    COMPARISON_FUNC_GREATER_EQUAL = GL_GEQUAL,
+    COMPARISON_FUNC_ALWAYS = GL_ALWAYS,
+};
+
+enum STENCIL_OP {
+    STENCIL_OP_KEEP = GL_KEEP,
+    STENCIL_OP_ZERO = GL_ZERO,
+    STENCIL_OP_REPLACE = GL_REPLACE,
+    STENCIL_OP_INCR_SAT = GL_INCR_WRAP,
+    STENCIL_OP_DECR_SAT = GL_DECR_WRAP,
+    STENCIL_OP_INVERT = GL_INVERT,
+    STENCIL_OP_INCR = GL_INCR,
+    STENCIL_OP_DECR = GL_DECR,
+};
+
+static inline COMPARISON_FUNC Convert(ComparisonFunc p_func) {
+    switch (p_func) {
+#define COMPARISON_FUNC_ENUM(ENUM, VALUE) \
+    case ComparisonFunc::ENUM:            \
+        return COMPARISON_FUNC_##ENUM;
+        COMPARISON_FUNC_ENUM_LIST
+#undef COMPARISON_FUNC_ENUM
+        default:
+            CRASH_NOW();
+            return COMPARISON_FUNC_ALWAYS;
+    }
+};
+
+static inline STENCIL_OP Convert(StencilOp p_op) {
+    switch (p_op) {
+#define STENCIL_OP_ENUM(ENUM, VALUE) \
+    case StencilOp::ENUM:            \
+        return STENCIL_OP_##ENUM;
+        STENCIL_OP_ENUM_LIST
+#undef STENCIL_OP_ENUM
+        default:
+            CRASH_NOW();
+            return STENCIL_OP_KEEP;
+    }
+}
+
 inline GLuint ConvertFormat(PixelFormat p_format) {
     switch (p_format) {
         case PixelFormat::R8_UINT:
@@ -153,30 +202,6 @@ inline GLenum ConvertAddressMode(AddressMode p_mode) {
             return 0;
     }
 }
-
-static inline GLenum ConvertComparisonFunc(ComparisonFunc p_func) {
-    switch (p_func) {
-        case ComparisonFunc::NEVER:
-            return GL_NEVER;
-        case ComparisonFunc::LESS:
-            return GL_LESS;
-        case ComparisonFunc::EQUAL:
-            return GL_EQUAL;
-        case ComparisonFunc::LESS_EQUAL:
-            return GL_LEQUAL;
-        case ComparisonFunc::GREATER:
-            return GL_GREATER;
-        case ComparisonFunc::NOT_EQUAL:
-            return GL_NOTEQUAL;
-        case ComparisonFunc::GREATER_EQUAL:
-            return GL_GEQUAL;
-        case ComparisonFunc::ALWAYS:
-            return GL_ALWAYS;
-        default:
-            CRASH_NOW();
-            return GL_NEVER;
-    }
-};
 
 inline void SetSampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
     glTexParameteri(p_texture_type, GL_TEXTURE_MIN_FILTER, ConvertFilter(p_desc.minFilter));

@@ -202,6 +202,9 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateInternal(const 
         // @TODO: refactor
         glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImageSPIRV_Cross_DummySampler"), t_bloomInputImageSlot);
         glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_bloomInputImages_linearClampSampler"), t_bloomInputImageSlot);
+        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureLightings_linearClampSampler"), t_textureLightingSlot);
+        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureHighlightSelectSPIRV_Cross_DummySampler"), t_textureHighlightSelectSlot);
+        glUniform1i(glGetUniformLocation(program_id, "SPIRV_Cross_Combinedt_textureHighlightSelects_linearClampSampler"), t_textureHighlightSelectSlot);
     }
     glUseProgram(0);
     return program;

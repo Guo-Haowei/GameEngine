@@ -35,19 +35,12 @@ bool DisplayManager::Initialize() {
 
     auto backend = GraphicsManager::GetSingleton().GetBackend();
     switch (backend) {
-        case my::Backend::OPENGL:
-            // @TODO: configure version
-            info.title.append(" (OpenGL 4.6)");
-            break;
-        case my::Backend::D3D11:
-            info.title.append(" (Direct3D 11)");
-            break;
-        case my::Backend::D3D12:
-            info.title.append(" (Direct3D 12)");
-            break;
-        case my::Backend::METAL:
-            info.title.append(" (Metal)");
-            break;
+#define BACKEND_DECLARE(ENUM, STR)       \
+    case Backend::ENUM:                  \
+        info.title.append(" (" STR ")"); \
+        break;
+        BACKEND_LIST
+#undef BACKEND_DECLARE
         default:
             break;
     }

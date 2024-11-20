@@ -289,7 +289,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
-            texture = FindTexture(RESOURCE_LIGHTING).get();
+            texture = FindTexture(RESOURCE_TONE).get();
             break;
         case RenderGraphName::VXGI:
             texture = FindTexture(RESOURCE_FINAL).get();
@@ -439,6 +439,9 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     cache.c_gbufferDepthIndex = find_index(RESOURCE_GBUFFER_DEPTH);
     cache.c_pointShadowArrayIndex = find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY);
     cache.c_shadowMapIndex = find_index(RESOURCE_SHADOW_MAP);
+
+    cache.c_textureHighlightSelectIndex = find_index(RESOURCE_HIGHLIGHT_SELECT);
+    cache.c_textureLightingIndex = find_index(RESOURCE_LIGHTING);
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
@@ -471,7 +474,7 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
                 .elementCount = MAX_PARTICLE_COUNT,
             });
 
-            SetPipelineState(PROGRAM_PARTICLE_INIT);
+            SetPipelineState(PSO_PARTICLE_INIT);
 
             BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
             BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());

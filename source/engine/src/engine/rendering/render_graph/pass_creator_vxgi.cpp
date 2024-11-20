@@ -60,7 +60,7 @@ void voxelization_pass_func(const DrawPass*) {
     PassContext& pass = gm.m_voxelPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PROGRAM_VOXELIZATION);
+    gm.SetPipelineState(PSO_VOXELIZATION);
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
@@ -81,7 +81,7 @@ void voxelization_pass_func(const DrawPass*) {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     // post process
-    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_VOXELIZATION_POST);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_VOXELIZATION_POST);
 
     constexpr GLuint workGroupX = 512;
     constexpr GLuint workGroupY = 512;
@@ -112,7 +112,7 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
     auto cube_map = p_draw_pass->desc.colorAttachments[0];
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
@@ -141,7 +141,7 @@ void generate_brdf_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_BRDF);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_BRDF);
     const auto [width, height] = p_draw_pass->GetBufferSize();
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -155,7 +155,7 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DIFFUSE_IRRADIANCE);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -178,7 +178,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
         return;
     }
 
-    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_PREFILTER);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_PREFILTER);
     auto [width, height] = p_draw_pass->GetBufferSize();
 
     mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -201,22 +201,6 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
     return;
 }
 
-static void highlight_select_pass_func(const DrawPass* p_draw_pass) {
-    OPTICK_EVENT();
-
-    auto& manager = GraphicsManager::GetSingleton();
-    manager.SetRenderTarget(p_draw_pass);
-    const auto [width, height] = p_draw_pass->GetBufferSize();
-
-    glViewport(0, 0, width, height);
-
-    manager.SetPipelineState(PROGRAM_HIGHLIGHT);
-    manager.SetStencilRef(STENCIL_FLAG_SELECTED);
-    glClear(GL_COLOR_BUFFER_BIT);
-    RenderManager::GetSingleton().draw_quad();
-    manager.SetStencilRef(0);
-}
-
 void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
@@ -228,7 +212,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_DEBUG_VOXEL);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
 
     PassContext& pass = gm.m_mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
@@ -266,7 +250,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GraphicsManager::GetSingleton().SetPipelineState(PROGRAM_IMAGE_2D);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_IMAGE_2D);
 
     // @TODO: clean up
     auto final_image_handle = GraphicsManager::GetSingleton().FindTexture(RESOURCE_TONE)->GetResidentHandle();
@@ -345,27 +329,9 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
 
     creator.AddShadowPass();
     creator.AddGBufferPass();
+    creator.AddHighlightPass();
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
-    {  // highlight selected pass
-        auto attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_HIGHLIGHT_SELECT,
-                                                                        PixelFormat::R8_UINT,
-                                                                        AttachmentType::COLOR_2D,
-                                                                        w, h),
-                                                PointClampSampler());
-
-        RenderPassDesc desc;
-        desc.name = RenderPassName::HIGHLIGHT_SELECT;
-        desc.dependencies = { RenderPassName::GBUFFER };
-        auto pass = p_graph.CreatePass(desc);
-        auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-            .colorAttachments = { attachment },
-            .depthAttachment = gbuffer_depth,
-            .execFunc = highlight_select_pass_func,
-        });
-        pass->AddDrawPass(draw_pass);
-    }
-
     {  // voxel pass
         RenderPassDesc desc;
         desc.name = RenderPassName::VOXELIZATION;

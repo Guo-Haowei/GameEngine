@@ -23,7 +23,7 @@ SHADER_TEXTURE(Texture2D, t_materialMap, 2, RESOURCE_NONE)
 SHADER_TEXTURE(Texture2D, t_bloomInputImage, 3, RESOURCE_NONE)
 
 // static srvs
-SHADER_TEXTURE(Texture2D, t_selectionHighlight, 8, RESOURCE_HIGHLIGHT_SELECT)
+SHADER_TEXTURE(Texture2D, t_textureHighlightSelect, 8, RESOURCE_HIGHLIGHT_SELECT)
 SHADER_TEXTURE(Texture2D, t_gbufferDepth, 9, RESOURCE_GBUFFER_DEPTH)
 SHADER_TEXTURE(Texture2D, t_gbufferBaseColorMap, 10, RESOURCE_GBUFFER_BASE_COLOR)
 SHADER_TEXTURE(Texture2D, t_gbufferPositionMap, 11, RESOURCE_GBUFFER_POSITION)

@@ -71,8 +71,8 @@ private:
         ComparisonFunc depthFunc;
         bool enableDepthTest;
         bool enableStencilTest;
-        uint32_t stencilFunc;
-    } m_state_cache;
+        ComparisonFunc stencilFunc;
+    } m_stateCache;
 };
 
 }  // namespace my

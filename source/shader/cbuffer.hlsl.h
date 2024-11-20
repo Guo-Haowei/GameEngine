@@ -160,9 +160,13 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     uint c_gbufferDepthIndex;
     uint c_pointShadowArrayIndex;
     uint c_shadowMapIndex;
-    int c_forceFieldsCount;
+    uint c_textureHighlightSelectIndex;
 
-    vec4 _per_frame_padding_1;  // 16
+    uint c_textureLightingIndex;
+    uint c_bloomInputImageIndex;
+    int c_forceFieldsCount;
+    float _per_frame_padding_1;
+
     vec4 _per_frame_padding_2;  // 16
 
     mat4 _per_frame_padding_3;  // 64

@@ -87,10 +87,8 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     switch (GraphicsManager::GetSingleton().GetBackend()) {
         case Backend::D3D11:
         case Backend::D3D12: {
-            if (GraphicsManager::GetSingleton().GetRenderGraphName() == GraphicsManager::RenderGraphName::DUMMY) {
-                uv_min = ImVec2(0, 0);
-                uv_max = ImVec2(1, 1);
-            }
+            uv_min = ImVec2(0, 0);
+            uv_max = ImVec2(1, 1);
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
         case Backend::OPENGL: {

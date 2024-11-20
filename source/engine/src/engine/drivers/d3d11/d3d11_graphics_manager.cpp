@@ -64,7 +64,9 @@ void D3d11GraphicsManager::Present() {
 }
 
 void D3d11GraphicsManager::SetStencilRef(uint32_t p_ref) {
-    unused(p_ref);
+    if (m_stateCache.depthStencil) {
+        m_deviceContext->OMSetDepthStencilState(m_stateCache.depthStencil, p_ref);
+    }
 }
 
 void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
@@ -680,9 +682,9 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             m_stateCache.rasterizer = pipeline->rasterizerState.Get();
         }
 
-        if (pipeline->depthStencilState.Get() != m_stateCache.depth_stencil) {
+        if (pipeline->depthStencilState.Get() != m_stateCache.depthStencil) {
             m_deviceContext->OMSetDepthStencilState(pipeline->depthStencilState.Get(), 0);
-            m_stateCache.depth_stencil = pipeline->depthStencilState.Get();
+            m_stateCache.depthStencil = pipeline->depthStencilState.Get();
         }
     }
 }

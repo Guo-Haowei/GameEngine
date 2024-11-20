@@ -5,6 +5,7 @@
 
 namespace my {
 
+// @TODO: make these class members
 // input layouts
 static const InputLayoutDesc s_inputLayoutMesh = {
     .elements = {
@@ -42,34 +43,39 @@ static const RasterizerDesc s_rasterizerDoubleSided = {
 };
 
 static const DepthStencilDesc s_depthStencilDefault = {
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = true,
+    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .stencilEnabled = false,
 };
 
 static const DepthStencilDesc s_noDepthStencil = {
-    .depthFunc = ComparisonFunc::NEVER,
     .depthEnabled = false,
+    .depthFunc = ComparisonFunc::NEVER,
     .stencilEnabled = false,
 };
 
 static const DepthStencilDesc s_depthStencilHighlight = {
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = false,
+    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .stencilEnabled = true,
-    .op = DepthStencilOpDesc::EQUAL,
+    .frontFace = {
+        .stencilFunc = ComparisonFunc::EQUAL,
+    },
 };
 
 static const DepthStencilDesc s_depthStencilGbuffer = {
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = true,
+    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .stencilEnabled = true,
-    .op = DepthStencilOpDesc::Z_PASS,
+    .frontFace = {
+        .stencilPassOp = StencilOp::REPLACE,
+        .stencilFunc = ComparisonFunc::ALWAYS,
+    },
 };
 
 static const DepthStencilDesc s_depthStencilNoTest = {
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .depthEnabled = false,
+    .depthFunc = ComparisonFunc::LESS_EQUAL,
     .stencilEnabled = false,
 };
 
@@ -79,6 +85,10 @@ PipelineState* PipelineStateManager::Find(PipelineStateName p_name) {
 }
 
 bool PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_info) {
+    if (p_info.cs.empty()) {
+        DEV_ASSERT(p_info.depthStencilDesc);
+    }
+
     ERR_FAIL_COND_V_MSG(m_cache[p_name] != nullptr, false, "pipeline already exists");
 
     auto pipeline = CreateInternal(p_info);
@@ -95,7 +105,7 @@ bool PipelineStateManager::Initialize() {
     }
 
     ok = ok && Create(
-                   PROGRAM_GBUFFER,
+                   PSO_GBUFFER,
                    {
                        .vs = "mesh.vert",
                        .ps = "gbuffer.pixel",
@@ -104,140 +114,148 @@ bool PipelineStateManager::Initialize() {
                        .inputLayoutDesc = &s_inputLayoutMesh,
                        .numRenderTargets = 4,
                        .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
-                       .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
+                       .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                    });
-    ok = ok && Create(PROGRAM_DPETH, {
-                                         .vs = "shadow.vert",
-                                         .ps = "depth.pixel",
-                                         .rasterizerDesc = &s_rasterizerBackFace,
-                                         .depthStencilDesc = &s_depthStencilDefault,
-                                         .inputLayoutDesc = &s_inputLayoutMesh,
-                                         .numRenderTargets = 0,
-                                         .dsvFormat = PixelFormat::D32_FLOAT,
-                                     });
+    ok = ok && Create(PSO_DPETH, {
+                                     .vs = "shadow.vert",
+                                     .ps = "depth.pixel",
+                                     .rasterizerDesc = &s_rasterizerBackFace,
+                                     .depthStencilDesc = &s_depthStencilDefault,
+                                     .inputLayoutDesc = &s_inputLayoutMesh,
+                                     .numRenderTargets = 0,
+                                     .dsvFormat = PixelFormat::D32_FLOAT,
+                                 });
 
-    ok = ok && Create(PROGRAM_LIGHTING, {
-                                            .vs = "screenspace_quad.vert",
-                                            .ps = "lighting.pixel",
-                                            .rasterizerDesc = &s_rasterizerFrontFace,
-                                            .depthStencilDesc = &s_noDepthStencil,
-                                            .inputLayoutDesc = &s_inputLayoutPosition,
-                                            .numRenderTargets = 1,
-                                            .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
-                                            .dsvFormat = PixelFormat::UNKNOWN,
+    ok = ok && Create(PSO_LIGHTING, {
+                                        .vs = "screenspace_quad.vert",
+                                        .ps = "lighting.pixel",
+                                        .rasterizerDesc = &s_rasterizerFrontFace,
+                                        .depthStencilDesc = &s_noDepthStencil,
+                                        .inputLayoutDesc = &s_inputLayoutPosition,
+                                        .numRenderTargets = 1,
+                                        .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                        .dsvFormat = PixelFormat::UNKNOWN,
+                                    });
+
+    ok = ok && Create(PSO_POINT_SHADOW, {
+                                            .vs = "shadowmap_point.vert",
+                                            .ps = "shadowmap_point.pixel",
+                                            .rasterizerDesc = &s_rasterizerBackFace,
+                                            .depthStencilDesc = &s_depthStencilDefault,
+                                            .inputLayoutDesc = &s_inputLayoutMesh,
+                                            .numRenderTargets = 0,
+                                            .dsvFormat = PixelFormat::D32_FLOAT,
                                         });
 
-    ok = ok && Create(PROGRAM_POINT_SHADOW, {
-                                                .vs = "shadowmap_point.vert",
-                                                .ps = "shadowmap_point.pixel",
-                                                .rasterizerDesc = &s_rasterizerBackFace,
-                                                .depthStencilDesc = &s_depthStencilDefault,
-                                                .inputLayoutDesc = &s_inputLayoutMesh,
-                                                .numRenderTargets = 0,
-                                                .dsvFormat = PixelFormat::D32_FLOAT,
-                                            });
+    ok = ok && Create(PSO_HIGHLIGHT, {
+                                         .vs = "screenspace_quad.vert",
+                                         .ps = "highlight.pixel",
+                                         .rasterizerDesc = &s_rasterizerFrontFace,
+                                         .depthStencilDesc = &s_depthStencilHighlight,
+                                         .inputLayoutDesc = &s_inputLayoutPosition,
+                                         .numRenderTargets = 1,
+                                         .rtvFormats = { RESOURCE_FORMAT_HIGHLIGHT_SELECT },
+                                         .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                                     });
+
+    ok = ok && Create(PSO_TONE, {
+                                    .vs = "screenspace_quad.vert",
+                                    .ps = "tone.pixel",
+                                    .rasterizerDesc = &s_rasterizerFrontFace,
+                                    .depthStencilDesc = &s_depthStencilDefault,
+                                    .inputLayoutDesc = &s_inputLayoutPosition,
+                                    .numRenderTargets = 1,
+                                    .rtvFormats = { RESOURCE_FORMAT_TONE },
+                                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                                });
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
     }
 
-    ok = ok && Create(PROGRAM_TONE, {
-                                        .vs = "screenspace_quad.vert",
-                                        .ps = "tone.pixel",
-                                        .rasterizerDesc = &s_rasterizerFrontFace,
-                                        .depthStencilDesc = &s_depthStencilDefault,
-                                        .inputLayoutDesc = &s_inputLayoutPosition,
-                                    });
-
     // Bloom
-    ok = ok && Create(PROGRAM_BLOOM_SETUP, { .cs = "bloom_setup.comp" });
-    ok = ok && Create(PROGRAM_BLOOM_DOWNSAMPLE, { .cs = "bloom_downsample.comp" });
-    ok = ok && Create(PROGRAM_BLOOM_UPSAMPLE, { .cs = "bloom_upsample.comp" });
+    ok = ok && Create(PSO_BLOOM_SETUP, { .cs = "bloom_setup.comp" });
+    ok = ok && Create(PSO_BLOOM_DOWNSAMPLE, { .cs = "bloom_downsample.comp" });
+    ok = ok && Create(PSO_BLOOM_UPSAMPLE, { .cs = "bloom_upsample.comp" });
 
     // Particle
-    ok = ok && Create(PROGRAM_PARTICLE_INIT, { .cs = "particle_initialization.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_KICKOFF, { .cs = "particle_kickoff.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_EMIT, { .cs = "particle_emission.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_SIM, { .cs = "particle_simulation.comp" });
-    ok = ok && Create(PROGRAM_PARTICLE_RENDERING, {
-                                                      .vs = "particle_draw.vert",
-                                                      .ps = "particle_draw.pixel",
-                                                      .rasterizerDesc = &s_rasterizerFrontFace,
-                                                      .depthStencilDesc = &s_depthStencilDefault,
-                                                      .inputLayoutDesc = &s_inputLayoutMesh,
-                                                  });
+    ok = ok && Create(PSO_PARTICLE_INIT, { .cs = "particle_initialization.comp" });
+    ok = ok && Create(PSO_PARTICLE_KICKOFF, { .cs = "particle_kickoff.comp" });
+    ok = ok && Create(PSO_PARTICLE_EMIT, { .cs = "particle_emission.comp" });
+    ok = ok && Create(PSO_PARTICLE_SIM, { .cs = "particle_simulation.comp" });
+    ok = ok && Create(PSO_PARTICLE_RENDERING, {
+                                                  .vs = "particle_draw.vert",
+                                                  .ps = "particle_draw.pixel",
+                                                  .rasterizerDesc = &s_rasterizerFrontFace,
+                                                  .depthStencilDesc = &s_depthStencilDefault,
+                                                  .inputLayoutDesc = &s_inputLayoutMesh,
+                                              });
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
         return ok;
     }
-    ok = ok && Create(PROGRAM_HIGHLIGHT, {
-                                             .vs = "screenspace_quad.vert",
-                                             .ps = "highlight.pixel",
-                                             .rasterizerDesc = &s_rasterizerFrontFace,
-                                             .depthStencilDesc = &s_depthStencilHighlight,
-                                         });
 
     // Voxel
-    ok = ok && Create(PROGRAM_VOXELIZATION, {
-                                                .vs = "voxelization.vert",
-                                                .ps = "voxelization.pixel",
-                                                .gs = "voxelization.geom",
-                                                .rasterizerDesc = &s_rasterizerDoubleSided,
-                                                .depthStencilDesc = &s_depthStencilNoTest,
-                                            });
-    ok = ok && Create(PROGRAM_VOXELIZATION_POST, { .cs = "post.comp" });
-    ok = ok && Create(PROGRAM_DEBUG_VOXEL, {
-                                               .vs = "visualization.vert",
-                                               .ps = "visualization.pixel",
-                                               .rasterizerDesc = &s_rasterizerFrontFace,
-                                               .depthStencilDesc = &s_depthStencilDefault,
-                                           });
+    ok = ok && Create(PSO_VOXELIZATION, {
+                                            .vs = "voxelization.vert",
+                                            .ps = "voxelization.pixel",
+                                            .gs = "voxelization.geom",
+                                            .rasterizerDesc = &s_rasterizerDoubleSided,
+                                            .depthStencilDesc = &s_depthStencilNoTest,
+                                        });
+    ok = ok && Create(PSO_VOXELIZATION_POST, { .cs = "post.comp" });
+    ok = ok && Create(PSO_DEBUG_VOXEL, {
+                                           .vs = "visualization.vert",
+                                           .ps = "visualization.pixel",
+                                           .rasterizerDesc = &s_rasterizerFrontFace,
+                                           .depthStencilDesc = &s_depthStencilDefault,
+                                       });
 
     // PBR
-    ok = ok && Create(PROGRAM_ENV_SKYBOX_TO_CUBE_MAP, {
-                                                          .vs = "cube_map.vert",
-                                                          .ps = "to_cube_map.pixel",
-                                                          .rasterizerDesc = &s_rasterizerFrontFace,
-                                                          .depthStencilDesc = &s_depthStencilDefault,
-                                                      });
-    ok = ok && Create(PROGRAM_DIFFUSE_IRRADIANCE, {
+    ok = ok && Create(PSO_ENV_SKYBOX_TO_CUBE_MAP, {
                                                       .vs = "cube_map.vert",
-                                                      .ps = "diffuse_irradiance.pixel",
+                                                      .ps = "to_cube_map.pixel",
                                                       .rasterizerDesc = &s_rasterizerFrontFace,
                                                       .depthStencilDesc = &s_depthStencilDefault,
                                                   });
-    ok = ok && Create(PROGRAM_PREFILTER, {
-                                             .vs = "cube_map.vert",
-                                             .ps = "prefilter.pixel",
-                                             .rasterizerDesc = &s_rasterizerFrontFace,
-                                             .depthStencilDesc = &s_depthStencilDefault,
-                                         });
-    ok = ok && Create(PROGRAM_ENV_SKYBOX, {
-                                              .vs = "skybox.vert",
-                                              .ps = "skybox.pixel",
-                                              .rasterizerDesc = &s_rasterizerFrontFace,
-                                              .depthStencilDesc = &s_depthStencilDefault,
-                                          });
-    ok = ok && Create(PROGRAM_BRDF, {
-                                        .vs = "screenspace_quad.vert",
-                                        .ps = "brdf.pixel",
+    ok = ok && Create(PSO_DIFFUSE_IRRADIANCE, {
+                                                  .vs = "cube_map.vert",
+                                                  .ps = "diffuse_irradiance.pixel",
+                                                  .rasterizerDesc = &s_rasterizerFrontFace,
+                                                  .depthStencilDesc = &s_depthStencilDefault,
+                                              });
+    ok = ok && Create(PSO_PREFILTER, {
+                                         .vs = "cube_map.vert",
+                                         .ps = "prefilter.pixel",
+                                         .rasterizerDesc = &s_rasterizerFrontFace,
+                                         .depthStencilDesc = &s_depthStencilDefault,
+                                     });
+    ok = ok && Create(PSO_ENV_SKYBOX, {
+                                          .vs = "skybox.vert",
+                                          .ps = "skybox.pixel",
+                                          .rasterizerDesc = &s_rasterizerFrontFace,
+                                          .depthStencilDesc = &s_depthStencilDefault,
+                                      });
+    ok = ok && Create(PSO_BRDF, {
+                                    .vs = "screenspace_quad.vert",
+                                    .ps = "brdf.pixel",
+                                    .rasterizerDesc = &s_rasterizerFrontFace,
+                                    .depthStencilDesc = &s_depthStencilNoTest,
+                                });
+    ok = ok && Create(PSO_IMAGE_2D, {
+                                        .vs = "debug_draw_texture.vert",
+                                        .ps = "debug_draw_texture.pixel",
                                         .rasterizerDesc = &s_rasterizerFrontFace,
                                         .depthStencilDesc = &s_depthStencilNoTest,
                                     });
-    ok = ok && Create(PROGRAM_IMAGE_2D, {
-                                            .vs = "debug_draw_texture.vert",
-                                            .ps = "debug_draw_texture.pixel",
-                                            .rasterizerDesc = &s_rasterizerFrontFace,
-                                            .depthStencilDesc = &s_depthStencilNoTest,
-                                        });
-    ok = ok && Create(PROGRAM_BILLBOARD, {
-                                             .vs = "billboard.vert",
-                                             .ps = "texture.pixel",
-                                             .rasterizerDesc = &s_rasterizerDoubleSided,
-                                             .depthStencilDesc = &s_depthStencilDefault,
-                                         });
+    ok = ok && Create(PSO_BILLBOARD, {
+                                         .vs = "billboard.vert",
+                                         .ps = "texture.pixel",
+                                         .rasterizerDesc = &s_rasterizerDoubleSided,
+                                         .depthStencilDesc = &s_depthStencilDefault,
+                                     });
 
     return ok;
 }

@@ -58,6 +58,8 @@ constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_POSITION = PixelFormat::R16G16B16A
 constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_NORMAL = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_MATERIAL = PixelFormat::R11G11B10_FLOAT;
 constexpr PixelFormat RESOURCE_FORMAT_LIGHTING = PixelFormat::R11G11B10_FLOAT;
+constexpr PixelFormat RESOURCE_FORMAT_HIGHLIGHT_SELECT = PixelFormat::R8_UINT;
+constexpr PixelFormat RESOURCE_FORMAT_TONE = PixelFormat::R11G11B10_FLOAT;
 
 enum class RenderPassName {
 #define RENDER_PASS_NAME(name) name,

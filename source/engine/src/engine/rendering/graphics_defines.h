@@ -2,12 +2,20 @@
 
 namespace my {
 
+// clang-format off
+#define BACKEND_LIST                       \
+    BACKEND_DECLARE(EMPTY,  "None")        \
+    BACKEND_DECLARE(OPENGL, "OpenGL")      \
+    BACKEND_DECLARE(D3D11,  "Direct3D 11") \
+    BACKEND_DECLARE(D3D12,  "Direct3D 12") \
+    BACKEND_DECLARE(VULKAN, "Vulkan")      \
+    BACKEND_DECLARE(METAL,  "Metal")
+// clang-format on
+
 enum class Backend : uint8_t {
-    EMPTY,
-    OPENGL,
-    D3D11,
-    D3D12,
-    METAL,
+#define BACKEND_DECLARE(ENUM, STR) ENUM,
+    BACKEND_LIST
+#undef BACKEND_DECLARE
 };
 
 enum ClearFlags : uint32_t {
@@ -57,21 +65,36 @@ enum class CullMode : uint8_t {
     FRONT_AND_BACK,
 };
 
+#define COMPARISON_FUNC_ENUM_LIST          \
+    COMPARISON_FUNC_ENUM(NEVER, 1)         \
+    COMPARISON_FUNC_ENUM(LESS, 2)          \
+    COMPARISON_FUNC_ENUM(EQUAL, 3)         \
+    COMPARISON_FUNC_ENUM(LESS_EQUAL, 4)    \
+    COMPARISON_FUNC_ENUM(GREATER, 5)       \
+    COMPARISON_FUNC_ENUM(NOT_EQUAL, 6)     \
+    COMPARISON_FUNC_ENUM(GREATER_EQUAL, 7) \
+    COMPARISON_FUNC_ENUM(ALWAYS, 8)
+
 enum class ComparisonFunc : uint8_t {
-    NEVER = 0,
-    LESS,
-    EQUAL,
-    LESS_EQUAL,
-    GREATER,
-    NOT_EQUAL,
-    GREATER_EQUAL,
-    ALWAYS,
+#define COMPARISON_FUNC_ENUM(ENUM, VALUE) ENUM = VALUE,
+    COMPARISON_FUNC_ENUM_LIST
+#undef COMPARISON_FUNC_ENUM
 };
 
-enum class DepthStencilOpDesc : uint8_t {
-    ALWAYS = 0,
-    Z_PASS,
-    EQUAL,
+#define STENCIL_OP_ENUM_LIST     \
+    STENCIL_OP_ENUM(KEEP, 1)     \
+    STENCIL_OP_ENUM(ZERO, 2)     \
+    STENCIL_OP_ENUM(REPLACE, 3)  \
+    STENCIL_OP_ENUM(INCR_SAT, 4) \
+    STENCIL_OP_ENUM(DECR_SAT, 5) \
+    STENCIL_OP_ENUM(INVERT, 6)   \
+    STENCIL_OP_ENUM(INCR, 7)     \
+    STENCIL_OP_ENUM(DECR, 8)
+
+enum class StencilOp : uint8_t {
+#define STENCIL_OP_ENUM(ENUM, VALUE) ENUM = VALUE,
+    STENCIL_OP_ENUM_LIST
+#undef STENCIL_OP_ENUM
 };
 
 enum class PrimitiveTopology : uint8_t {
