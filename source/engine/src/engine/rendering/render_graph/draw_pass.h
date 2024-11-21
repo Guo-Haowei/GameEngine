@@ -6,14 +6,23 @@ namespace my {
 
 struct DrawPass;
 
+class GraphicsManager;
+
 using DrawPassExecuteFunc = void (*)(const DrawPass*);
 
-// @TODO: fix this, DrawPassDesc and DrawPass the same
+struct ResourceTransition {
+    std::shared_ptr<GpuTexture> resource;
+    int slot;
+    std::function<void(GraphicsManager*, GpuTexture*, int)> beginPassFunc;
+    std::function<void(GraphicsManager*, GpuTexture*, int)> endPassFunc;
+};
+
 struct DrawPassDesc {
     std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
     std::shared_ptr<GpuTexture> depthAttachment;
-    std::vector<std::shared_ptr<GpuTexture>> uavs;
-    std::vector<uint32_t> uavSlots;
+
+    std::vector<ResourceTransition> transitions;
+
     DrawPassExecuteFunc execFunc{ nullptr };
 };
 

@@ -86,6 +86,7 @@ private:
     void CleanupRenderTarget();
     void InitStaticSamplers();
 
+    // @TODO: get rid of magic numbers
     DescriptorHeap m_rtvDescHeap{ 64 };
     DescriptorHeap m_dsvDescHeap{ 64 };
     DescriptorHeapSrv m_srvDescHeap;

@@ -299,12 +299,6 @@ void D3d12GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
         auto barriers = CD3DX12_RESOURCE_BARRIER::Transition(d3d_texture->texture.Get(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, resource_state);
         command_list->ResourceBarrier(1, &barriers);
     }
-
-    for (size_t i = 0; i < p_draw_pass->desc.uavs.size(); ++i) {
-        const auto& uav = p_draw_pass->desc.uavs[i];
-        uint32_t slot = p_draw_pass->desc.uavSlots[i];
-        SetUnorderedAccessView(slot, uav.get());
-    }
 }
 
 void D3d12GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {

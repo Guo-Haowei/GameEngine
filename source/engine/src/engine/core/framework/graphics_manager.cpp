@@ -218,10 +218,10 @@ void GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
         }
     }
 
-    for (size_t i = 0; i < p_draw_pass->desc.uavs.size(); ++i) {
-        const auto& uav = p_draw_pass->desc.uavs[i];
-        uint32_t slot = p_draw_pass->desc.uavSlots[i];
-        SetUnorderedAccessView(slot, uav.get());
+    for (auto& transition : p_draw_pass->desc.transitions) {
+        if (transition.beginPassFunc) {
+            transition.beginPassFunc(this, transition.resource.get(), transition.slot);
+        }
     }
 }
 
@@ -234,8 +234,10 @@ void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
         }
     }
 
-    for (uint32_t slot : p_draw_pass->desc.uavSlots) {
-        SetUnorderedAccessView(slot, nullptr);
+    for (auto& transition : p_draw_pass->desc.transitions) {
+        if (transition.endPassFunc) {
+            transition.endPassFunc(this, transition.resource.get(), transition.slot);
+        }
     }
 }
 
