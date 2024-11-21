@@ -21,91 +21,6 @@ extern OpenGlMeshBuffers* g_box;
 
 namespace my::rg {
 
-void voxelization_pass_func(const DrawPass*) {
-    OPTICK_EVENT();
-    auto& gm = GraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-
-    if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
-        return;
-    }
-
-    // @TODO: refactor pass to auto bind resources,
-    // and make it a class so don't do a map search every frame
-    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
-        if (!resource) {
-            return;
-        }
-
-        gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
-    };
-
-    // bind common textures
-    bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
-    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, GetPointShadowArraySlot(), Dimension::TEXTURE_CUBE_ARRAY);
-
-    g_albedoVoxel.clear();
-    g_normalVoxel.clear();
-
-    const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
-
-    glDisable(GL_BLEND);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glViewport(0, 0, voxel_size, voxel_size);
-
-    // @TODO: fix
-    g_albedoVoxel.bindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT);
-    g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
-
-    PassContext& pass = gm.m_voxelPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
-
-    gm.SetPipelineState(PSO_VOXELIZATION);
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-        }
-
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-        gm.SetMesh(draw.mesh_data);
-
-        for (const auto& subset : draw.subsets) {
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-            gm.DrawElements(subset.index_count, subset.index_offset);
-        }
-    }
-
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-    // post process
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_VOXELIZATION_POST);
-
-    constexpr GLuint workGroupX = 512;
-    constexpr GLuint workGroupY = 512;
-    const GLuint workGroupZ = (voxel_size * voxel_size * voxel_size) / (workGroupX * workGroupY);
-
-    glDispatchCompute(workGroupX, workGroupY, workGroupZ);
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-    g_albedoVoxel.bind();
-    g_albedoVoxel.genMipMap();
-    g_normalVoxel.bind();
-    g_normalVoxel.genMipMap();
-
-    glEnable(GL_BLEND);
-
-    // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, GetPointShadowArraySlot());
-
-    // @TODO: [SCRUM-28] refactor
-    gm.UnsetRenderTarget();
-}
-
 void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
@@ -331,19 +246,7 @@ void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
     creator.AddShadowPass();
     creator.AddGbufferPass();
     creator.AddHighlightPass();
-
-    auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
-    {  // voxel pass
-        RenderPassDesc desc;
-        desc.name = RenderPassName::VOXELIZATION;
-        desc.dependencies = { RenderPassName::SHADOW };
-        auto pass = p_graph.CreatePass(desc);
-        auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-            .execFunc = voxelization_pass_func,
-        });
-        pass->AddDrawPass(draw_pass);
-    }
-
+    creator.AddVoxelizationPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();
     creator.AddBloomPass();
