@@ -13,11 +13,13 @@ enum class BufferUsage {
 };
 
 enum class Dimension : uint32_t {
+    TEXTURE_1D,
+    TEXTURE_1D_ARRAY,
     TEXTURE_2D,
-    TEXTURE_3D,
     TEXTURE_2D_ARRAY,
     TEXTURE_CUBE,
     TEXTURE_CUBE_ARRAY,
+    TEXTURE_3D,
 };
 
 enum CpuAccessFlags {

@@ -678,6 +678,38 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
         });
 }
 
+void GraphicsManager::UpdateBloomConstants() {
+    constexpr int count = BLOOM_MIP_CHAIN_MAX * 2 - 1;
+    auto& frame = GetCurrentFrame();
+    if (frame.batchCache.buffer.size() < count) {
+        frame.batchCache.buffer.resize(count);
+    }
+
+    int offset = 0;
+    {
+        auto image = FindTexture(RESOURCE_BLOOM_0).get();
+        frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle();
+    }
+
+    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
+        auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
+
+        frame.batchCache.buffer[i + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
+        frame.batchCache.buffer[i + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle();
+    }
+
+    offset += BLOOM_MIP_CHAIN_MAX - 1;
+
+    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
+        auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
+
+        frame.batchCache.buffer[i - 1 + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
+        frame.batchCache.buffer[i - 1 + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle();
+    }
+}
+
 void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2) {
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {

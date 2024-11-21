@@ -260,12 +260,12 @@ bool PipelineStateManager::Initialize() {
                                     .rasterizerDesc = &s_rasterizerFrontFace,
                                     .depthStencilDesc = &s_depthStencilNoTest,
                                 });
-    ok = ok && Create(PSO_IMAGE_2D, {
-                                        .vs = "debug_draw_texture.vs",
-                                        .ps = "debug_draw_texture.ps",
-                                        .rasterizerDesc = &s_rasterizerFrontFace,
-                                        .depthStencilDesc = &s_depthStencilNoTest,
-                                    });
+    ok = ok && Create(PSO_RW_TEXTURE_2D, {
+                                             .vs = "debug_draw_texture.vs",
+                                             .ps = "debug_draw_texture.ps",
+                                             .rasterizerDesc = &s_rasterizerFrontFace,
+                                             .depthStencilDesc = &s_depthStencilNoTest,
+                                         });
     ok = ok && Create(PSO_BILLBOARD, {
                                          .vs = "billboard.vs",
                                          .ps = "texture.ps",

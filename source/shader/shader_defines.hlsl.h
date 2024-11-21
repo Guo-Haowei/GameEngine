@@ -32,11 +32,6 @@
 #define MAX_PARTICLE_COUNT    1048576
 #define MAX_FORCE_FIELD_COUNT 64
 
-// Descriptor table limits
-#define MAX_TEXTURE_2D_COUNT         128
-#define MAX_TEXTURE_3D_COUNT         8
-#define MAX_TEXTURE_CUBE_ARRAY_COUNT 8
-
 #if defined(__cplusplus)
 #define VCT_CONST constexpr
 #elif defined(HLSL_LANG)

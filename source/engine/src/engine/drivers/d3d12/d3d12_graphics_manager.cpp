@@ -17,16 +17,14 @@ namespace my {
 struct D3d12GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
-    uint64_t GetHandle() const final { return gpuHandle; }
+    uint64_t GetHandle() const final { return srvHandle.gpuHandle.ptr; }
 
     uint64_t GetResidentHandle() const final {
-        uint64_t handle = index;
+        uint64_t handle = srvHandle.index;
         switch (desc.dimension) {
             case Dimension::TEXTURE_2D:
-                return handle;
             case Dimension::TEXTURE_CUBE_ARRAY:
-                // @TODO: refactor
-                return handle - MAX_TEXTURE_2D_COUNT;
+                return handle;
             default:
                 CRASH_NOW();
                 return 0;
@@ -36,11 +34,9 @@ struct D3d12GpuTexture : public GpuTexture {
     uint64_t GetUavHandle() const final { return uavHandle.index; }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> texture;
-    int index{ -1 };
-    size_t cpuHandle{ 0 };
-    uint64_t gpuHandle{ 0 };
 
-    DescriptorHeap::Handle uavHandle;
+    DescriptorHeapHandle srvHandle;
+    DescriptorHeapHandle uavHandle;
 };
 
 struct D3d12DrawPass : public DrawPass {
@@ -695,16 +691,19 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         CloseHandle(event);
     }
 
-    auto srv_handle = m_srvDescHeap.AllocHandle(p_texture_desc.dimension);
+    auto gpu_texture = std::make_shared<D3d12GpuTexture>(p_texture_desc);
     // Create a shader resource view for the texture
     if (p_texture_desc.bindFlags & BIND_SHADER_RESOURCE) {
         D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
         srv_desc.Format = srv_format;
+        DescriptorResourceType resource_type{};
         switch (p_texture_desc.dimension) {
             case Dimension::TEXTURE_2D:
                 srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
                 srv_desc.Texture2D.MipLevels = texture_desc.MipLevels;
                 srv_desc.Texture2D.MostDetailedMip = 0;
+
+                resource_type = DescriptorResourceType::Texture2D;
                 break;
             case Dimension::TEXTURE_CUBE_ARRAY:
                 srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
@@ -712,16 +711,19 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
                 srv_desc.TextureCubeArray.MostDetailedMip = 0;
                 srv_desc.TextureCubeArray.First2DArrayFace = 0;
                 srv_desc.TextureCubeArray.NumCubes = p_texture_desc.arraySize / 6;
+
+                resource_type = DescriptorResourceType::TextureCubeArray;
                 break;
             default:
                 CRASH_NOW();
                 break;
         }
+
+        auto srv_handle = m_srvDescHeap.AllocHandle(resource_type);
         srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         m_device->CreateShaderResourceView(texture_ptr, &srv_desc, srv_handle.cpuHandle);
+        gpu_texture->srvHandle = srv_handle;
     }
-
-    auto gpu_texture = std::make_shared<D3d12GpuTexture>(p_texture_desc);
 
     if (p_texture_desc.bindFlags & BIND_UNORDERED_ACCESS) {
         LOG_ERROR("@TODO: fix hard code");
@@ -729,14 +731,11 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         uav_desc.Format = texture_format;
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
         uav_desc.Texture2D.MipSlice = 0;
-        auto uav_handle = m_srvDescHeap.AllocUavHandle();
+        auto uav_handle = m_srvDescHeap.AllocHandle(DescriptorResourceType::RWTexture2D);
         m_device->CreateUnorderedAccessView(texture_ptr, nullptr, &uav_desc, uav_handle.cpuHandle);
         gpu_texture->uavHandle = uav_handle;
     }
 
-    gpu_texture->index = srv_handle.index;
-    gpu_texture->cpuHandle = srv_handle.cpuHandle.ptr;
-    gpu_texture->gpuHandle = srv_handle.gpuHandle.ptr;
     gpu_texture->texture = ComPtr<ID3D12Resource>(texture_ptr);
     SetDebugName(texture_ptr, RenderTargetResourceNameToString(p_texture_desc.name));
     return gpu_texture;
@@ -1002,10 +1001,10 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
 bool D3d12GraphicsManager::CreateDescriptorHeaps() {
     bool ok = true;
-    ok = ok && m_rtvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 64, m_device.Get(), false);
-    ok = ok && m_dsvDescHeap.Initialize(0, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 64, m_device.Get(), false);
+    ok = ok && m_rtvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_device.Get(), false);
+    ok = ok && m_dsvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_device.Get(), false);
     // reserve one srv for ImGui
-    ok = ok && m_srvDescHeap.Initialize(1, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 512, m_device.Get(), true);
+    ok = ok && m_srvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_device.Get(), true);
     return ok;
 }
 
@@ -1122,13 +1121,22 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 bool D3d12GraphicsManager::CreateRootSignature() {
     // Create a root signature consisting of a descriptor table with a single CBV.
 
-    CD3DX12_DESCRIPTOR_RANGE descriptor_table[3];
-    descriptor_table[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_TEXTURE_2D_COUNT,
-                             0, 0, 0);
-    descriptor_table[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, MAX_TEXTURE_CUBE_ARRAY_COUNT,
-                             0, 1, MAX_TEXTURE_2D_COUNT);
-    descriptor_table[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 8,
-                             0, 2, MAX_TEXTURE_2D_COUNT + MAX_TEXTURE_CUBE_ARRAY_COUNT);
+    CD3DX12_DESCRIPTOR_RANGE descriptor_table[std::to_underlying(DescriptorResourceType::COUNT)];
+    {
+        int counter = 0;
+#define DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, TYPE)                             \
+    do {                                                                          \
+        descriptor_table[counter].Init(D3D12_DESCRIPTOR_RANGE_TYPE_##TYPE,        \
+                                       ENUM##_MAX_COUNT, 0, SPACE, ENUM##_START); \
+        ++counter;                                                                \
+    } while (0);
+#define DESCRIPTOR_SRV(ENUM, NUM, PREV, SPACE)      DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, SRV)
+#define DESCRIPTOR_UAV(ENUM, NUM, PREV, SPACE, ...) DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, UAV)
+        DESCRIPTOR_TABLE
+#undef DESCRIPTOR_SRV
+#undef DESCRIPTOR_UAV
+#undef DESCRIPTOR_INIT
+    }
 
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
@@ -1208,38 +1216,6 @@ void D3d12GraphicsManager::CleanupRenderTarget() {
         SafeRelease(m_renderTargets[i]);
     }
     SafeRelease(m_depthStencilBuffer);
-}
-
-void D3d12GraphicsManager::UpdateBloomConstants() {
-    constexpr int count = BLOOM_MIP_CHAIN_MAX * 2 - 1;
-    auto& frame = GetCurrentFrame();
-    if (frame.batchCache.buffer.size() < count) {
-        frame.batchCache.buffer.resize(count);
-    }
-
-    int offset = 0;
-    {
-        auto image = reinterpret_cast<D3d12GpuTexture*>(FindTexture(RESOURCE_BLOOM_0).get());
-        frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle() - (128 + 8);
-    }
-
-    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
-        auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
-
-        frame.batchCache.buffer[i + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
-        frame.batchCache.buffer[i + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle() - (128 + 8);
-    }
-
-    offset += BLOOM_MIP_CHAIN_MAX - 1;
-
-    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-
-        frame.batchCache.buffer[i - 1 + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
-        frame.batchCache.buffer[i - 1 + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle() - (128 + 8);
-    }
 }
 
 }  // namespace my

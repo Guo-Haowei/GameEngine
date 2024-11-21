@@ -241,7 +241,7 @@ protected:
     void UpdateLights(const Scene& p_scene);
     void UpdateVoxelPass(const Scene& p_scene);
     void UpdateMainPass(const Scene& p_scene);
-    virtual void UpdateBloomConstants() {}
+    void UpdateBloomConstants();
 
     void FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2);
 };

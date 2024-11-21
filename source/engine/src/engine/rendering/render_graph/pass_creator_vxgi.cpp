@@ -251,7 +251,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     glViewport(0, 0, width, height);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_IMAGE_2D);
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_RW_TEXTURE_2D);
 
     // @TODO: clean up
     auto final_image_handle = GraphicsManager::GetSingleton().FindTexture(RESOURCE_TONE)->GetResidentHandle();

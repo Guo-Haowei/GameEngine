@@ -72,8 +72,6 @@ protected:
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) final;
 
-    void UpdateBloomConstants() final;
-
 private:
     bool CreateDevice();
     bool InitGraphicsContext();
@@ -88,8 +86,8 @@ private:
     void CleanupRenderTarget();
     void InitStaticSamplers();
 
-    DescriptorHeap m_rtvDescHeap;
-    DescriptorHeap m_dsvDescHeap;
+    DescriptorHeap m_rtvDescHeap{ 64 };
+    DescriptorHeap m_dsvDescHeap{ 64 };
     DescriptorHeapSrv m_srvDescHeap;
 
     Microsoft::WRL::ComPtr<ID3D12Device4> m_device;
