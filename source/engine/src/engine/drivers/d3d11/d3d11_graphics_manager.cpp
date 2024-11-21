@@ -80,9 +80,8 @@ void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p
         return;
     }
 
-    auto texture = dynamic_cast<D3d11GpuTexture*>(p_texture);
-
-    m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, texture->uav.GetAddressOf(), nullptr);
+    ID3D11UnorderedAccessView* ptr = reinterpret_cast<ID3D11UnorderedAccessView*>(p_texture->GetUavHandle());
+    m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &ptr, nullptr);
 }
 
 void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {

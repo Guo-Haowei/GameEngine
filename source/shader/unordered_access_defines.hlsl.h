@@ -2,7 +2,7 @@
 #define UNORDERED_ACCESS_DEFINES_HLSL_H_INCLUDED
 
 #define UAV_DEFINES \
-    UAV(RWTexture2D<float4>, BloomOutputImage, 3)
+    UAV(RWTexture2D<float3>, BloomOutputImage, 3)
 
 #if defined(__cplusplus)
 #define UAV(TYPE, NAME, SLOT) \

@@ -135,6 +135,7 @@ struct GpuTexture {
 
     virtual uint64_t GetResidentHandle() const = 0;
     virtual uint64_t GetHandle() const = 0;
+    virtual uint64_t GetUavHandle() const = 0;
 
     uint32_t GetHandle32() const { return static_cast<uint32_t>(GetHandle()); }
 

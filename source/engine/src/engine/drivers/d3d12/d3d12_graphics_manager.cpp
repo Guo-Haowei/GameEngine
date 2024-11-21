@@ -17,6 +17,8 @@ namespace my {
 struct D3d12GpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
+    uint64_t GetHandle() const final { return gpuHandle; }
+
     uint64_t GetResidentHandle() const final {
         uint64_t handle = index;
         switch (desc.dimension) {
@@ -30,7 +32,8 @@ struct D3d12GpuTexture : public GpuTexture {
                 return 0;
         }
     }
-    uint64_t GetHandle() const final { return gpuHandle; }
+
+    uint64_t GetUavHandle() const final { return uavHandle.index; }
 
     Microsoft::WRL::ComPtr<ID3D12Resource> texture;
     int index{ -1 };
@@ -456,9 +459,8 @@ void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_grou
 }
 
 void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
-    auto texture = reinterpret_cast<const D3d12GpuTexture*>(p_texture);
-    DEV_ASSERT(texture);
-    DEV_ASSERT(p_slot == 3);
+    unused(p_slot);
+    unused(p_texture);
 }
 
 // @TODO: remove
@@ -1218,30 +1220,25 @@ void D3d12GraphicsManager::UpdateBloomConstants() {
     int offset = 0;
     {
         auto image = reinterpret_cast<D3d12GpuTexture*>(FindTexture(RESOURCE_BLOOM_0).get());
-        frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = image->uavHandle.index - (128 + 8);
+        frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle() - (128 + 8);
     }
 
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
-        auto tmp = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto input = reinterpret_cast<D3d12GpuTexture*>(tmp.get());
-        tmp = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
-        auto output = reinterpret_cast<D3d12GpuTexture*>(tmp.get());
+        auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
 
         frame.batchCache.buffer[i + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
-        frame.batchCache.buffer[i + offset].c_BloomOutputImageIndex = output->uavHandle.index - (128 + 8);
+        frame.batchCache.buffer[i + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle() - (128 + 8);
     }
 
     offset += BLOOM_MIP_CHAIN_MAX - 1;
 
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto tmp = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto input = reinterpret_cast<D3d12GpuTexture*>(tmp.get());
-        tmp = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-        auto output = reinterpret_cast<D3d12GpuTexture*>(tmp.get());
+        auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
+        auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
         frame.batchCache.buffer[i - 1 + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
-        // @TODO: fix this shit
-        frame.batchCache.buffer[i - 1 + offset].c_BloomOutputImageIndex = output->uavHandle.index - (128 + 8);
+        frame.batchCache.buffer[i - 1 + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle() - (128 + 8);
     }
 }
 
