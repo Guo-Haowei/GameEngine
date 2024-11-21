@@ -32,6 +32,9 @@
 #define MAX_PARTICLE_COUNT    1048576
 #define MAX_FORCE_FIELD_COUNT 64
 
+// compute local sizes
+#define COMPUTE_LOCAL_SIZE_VOXEL 4
+
 #if defined(__cplusplus)
 #define VCT_CONST constexpr
 #elif defined(HLSL_LANG)
@@ -70,16 +73,18 @@ using samplerCube = uint64_t;
 #define Matrix3x3f float3x3
 #define Matrix4x4f float4x4
 #elif defined(GLSL_LANG)
-#define Vector2f   vec2
-#define Vector3f   vec3
-#define Vector4f   vec4
-#define Vector2i   ivec2
-#define Vector3i   ivec3
-#define Vector4i   ivec4
-#define Matrix3x3f mat3x3
-#define Matrix4x4f mat4x4
+#define Vector2f         vec2
+#define Vector3f         vec3
+#define Vector4f         vec4
+#define Vector2i         ivec2
+#define Vector3i         ivec3
+#define Vector4i         ivec4
+#define Matrix3x3f       mat3x3
+#define Matrix4x4f       mat4x4
 
+// @TODO: refactor
 #define Texture2D        sampler2D
+#define Texture3D        sampler3D
 #define TextureCube      samplerCube
 #define TextureCubeArray samplerCubeArray
 #else

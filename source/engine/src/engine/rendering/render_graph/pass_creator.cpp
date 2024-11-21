@@ -11,10 +11,8 @@
 #include "shader_resource_defines.hlsl.h"
 #include "unordered_access_defines.hlsl.h"
 
-// @TODO: refactor
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
-#include "drivers/opengl/opengl_graphics_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
 
 namespace my::rg {
@@ -299,26 +297,26 @@ static void VoxelizationPassFunc(const DrawPass*) {
     bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
     bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, GetPointShadowArraySlot(), Dimension::TEXTURE_CUBE_ARRAY);
 
-    // @TODO: replace with compute shader
-    {
-        float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        glClearTexImage(voxel_lighting->GetHandle32(), 0, GL_RGBA, GL_FLOAT, clearColor);
-        glClearTexImage(voxel_normal->GetHandle32(), 0, GL_RGBA, GL_FLOAT, clearColor);
-    }
-
     const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
     glDisable(GL_BLEND);
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-    glViewport(0, 0, voxel_size, voxel_size);
 
-    {
-        glBindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT, voxel_lighting->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
-        glBindImageTexture(IMAGE_VOXEL_NORMAL_SLOT, voxel_normal->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
-    }
+    gm.SetViewport(Viewport(voxel_size, voxel_size));
+
+    gm.BindUnorderedAccessView(IMAGE_VOXEL_ALBEDO_SLOT, voxel_lighting.get());
+    gm.BindUnorderedAccessView(IMAGE_VOXEL_NORMAL_SLOT, voxel_normal.get());
+
+    // post process
+    const uint32_t group_size = voxel_size / COMPUTE_LOCAL_SIZE_VOXEL;
+    gm.SetPipelineState(PSO_VOXELIZATION_PRE);
+    gm.Dispatch(group_size, group_size, group_size);
 
     PassContext& pass = gm.m_voxelPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+
+    // glSubpixelPrecisionBiasNV(1, 1);
+    // glSubpixelPrecisionBiasNV(8, 8);
 
     gm.SetPipelineState(PSO_VOXELIZATION);
     for (const auto& draw : pass.draws) {
@@ -338,24 +336,16 @@ static void VoxelizationPassFunc(const DrawPass*) {
         }
     }
 
+    // glSubpixelPrecisionBiasNV(0, 0);
+
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     // post process
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_VOXELIZATION_POST);
+    gm.SetPipelineState(PSO_VOXELIZATION_POST);
+    gm.Dispatch(group_size, group_size, group_size);
 
-    constexpr GLuint workGroupX = 512;
-    constexpr GLuint workGroupY = 512;
-    const GLuint workGroupZ = (voxel_size * voxel_size * voxel_size) / (workGroupX * workGroupY);
-
-    glDispatchCompute(workGroupX, workGroupY, workGroupZ);
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-
-    {
-        glBindTexture(GL_TEXTURE_3D, voxel_lighting->GetHandle32());
-        glGenerateMipmap(GL_TEXTURE_3D);
-        glBindTexture(GL_TEXTURE_3D, voxel_normal->GetHandle32());
-        glGenerateMipmap(GL_TEXTURE_3D);
-    }
+    gm.GenerateMipmap(voxel_lighting.get());
+    gm.GenerateMipmap(voxel_normal.get());
 
     glEnable(GL_BLEND);
 
@@ -386,17 +376,6 @@ void RenderPassCreator::AddVoxelizationPass() {
 
         desc.name = RESOURCE_VOXEL_NORMAL;
         auto voxel_normal = manager.CreateTexture(desc, sampler);
-
-        // @TODO: refactor
-        auto MakeTextureResident = [](uint32_t texture) {
-            uint64_t ret = glGetTextureHandleARB(texture);
-            glMakeTextureHandleResidentARB(ret);
-            return ret;
-        };
-        auto& cache = g_constantCache.cache;
-        cache.c_voxelMap = MakeTextureResident(voxel_lighting->GetHandle32());
-        cache.c_voxelNormalMap = MakeTextureResident(voxel_normal->GetHandle32());
-        g_constantCache.update();
     }
 
     RenderPassDesc desc;
@@ -422,7 +401,20 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
     gm.SetPipelineState(PSO_LIGHTING);
 
+    // @TODO: fix
+    auto voxel_lighting = gm.FindTexture(RESOURCE_VOXEL_LIGHTING);
+    auto voxel_normal = gm.FindTexture(RESOURCE_VOXEL_NORMAL);
+    if (voxel_lighting && voxel_normal) {
+        gm.BindTexture(Dimension::TEXTURE_3D, voxel_lighting->GetHandle(), GetVoxelLightingSlot());
+        gm.BindTexture(Dimension::TEXTURE_3D, voxel_normal->GetHandle(), GetVoxelNormalSlot());
+    }
+
     RenderManager::GetSingleton().draw_quad();
+
+    if (voxel_lighting && voxel_normal) {
+        gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelLightingSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelNormalSlot());
+    }
 
     PassContext& pass = gm.m_mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
@@ -672,10 +664,10 @@ void RenderPassCreator::AddBloomPass() {
                     .slot = GetUavSlotBloomOutputImage(),
                     .beginPassFunc = [](GraphicsManager* p_graphics_manager,
                                         GpuTexture* p_texture,
-                                        int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, p_texture); },
+                                        int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
                     .endPassFunc = [](GraphicsManager* p_graphics_manager,
                                       GpuTexture*,
-                                      int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, nullptr); },
+                                      int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
                 } },
             .execFunc = BloomSetupFunc,
         });
@@ -693,10 +685,10 @@ void RenderPassCreator::AddBloomPass() {
                     .slot = GetUavSlotBloomOutputImage(),
                     .beginPassFunc = [](GraphicsManager* p_graphics_manager,
                                         GpuTexture* p_texture,
-                                        int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, p_texture); },
+                                        int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
                     .endPassFunc = [](GraphicsManager* p_graphics_manager,
                                       GpuTexture*,
-                                      int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, nullptr); },
+                                      int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
                 } },
             .execFunc = BloomDownSampleFunc,
         });
@@ -715,10 +707,10 @@ void RenderPassCreator::AddBloomPass() {
                     .slot = GetUavSlotBloomOutputImage(),
                     .beginPassFunc = [](GraphicsManager* p_graphics_manager,
                                         GpuTexture* p_texture,
-                                        int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, p_texture); },
+                                        int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
                     .endPassFunc = [](GraphicsManager* p_graphics_manager,
                                       GpuTexture*,
-                                      int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, nullptr); },
+                                      int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
                 } },
             .execFunc = BloomUpSampleFunc,
         });
@@ -838,6 +830,7 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     creator.AddShadowPass();
     creator.AddGbufferPass();
     creator.AddHighlightPass();
+    creator.AddVoxelizationPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();
     creator.AddBloomPass();

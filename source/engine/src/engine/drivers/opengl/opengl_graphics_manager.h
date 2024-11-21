@@ -30,7 +30,8 @@ public:
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
-    void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
+    void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
+    void UnbindUnorderedAccessView(uint32_t p_slot) final;
 
     std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) final;
     std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) final;
@@ -45,6 +46,8 @@ public:
 
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;
+
+    void GenerateMipmap(const GpuTexture* p_texture) final;
 
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) final;
 

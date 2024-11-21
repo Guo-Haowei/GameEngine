@@ -448,9 +448,13 @@ void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_grou
     m_graphicsCommandList->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }
 
-void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+void D3d12GraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
     unused(p_slot);
     unused(p_texture);
+}
+
+void D3d12GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+    unused(p_slot);
 }
 
 // @TODO: remove
@@ -744,6 +748,11 @@ void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle,
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
     unused(p_slot);
+}
+
+void D3d12GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
+    unused(p_texture);
+    CRASH_NOW();
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {

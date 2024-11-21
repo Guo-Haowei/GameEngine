@@ -33,7 +33,8 @@ public:
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) override {}
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) override {}
-    void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) override {}
+    void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) override {}
+    void UnbindUnorderedAccessView(uint32_t p_slot) override {}
 
     std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) override { return nullptr; }
     std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) override { return nullptr; }
@@ -48,6 +49,8 @@ public:
 
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
+
+    void GenerateMipmap(const GpuTexture* p_texture) override {}
 
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) override { return nullptr; }
 

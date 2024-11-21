@@ -26,7 +26,7 @@ vec3 trace_cones(vec3 from, vec3 direction, float aperture) {
         vec3 coords = (conePosition - c_worldCenter) / c_worldSizeHalf;
         coords = 0.5 * coords + 0.5;
 
-        vec4 voxel = textureLod(c_voxelMap, coords, mipLevel);
+        vec4 voxel = textureLod(t_VoxelLighting, coords, mipLevel);
         acc += (1.0 - acc.a) * voxel;
 
         dist += 0.5 * diameter;

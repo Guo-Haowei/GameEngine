@@ -131,7 +131,9 @@ public:
     virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
-    virtual void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
+    virtual void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
+    virtual void UnbindUnorderedAccessView(uint32_t p_slot) = 0;
+
     void SetPipelineState(PipelineStateName p_name);
     virtual void SetStencilRef(uint32_t p_ref) = 0;
 
@@ -165,6 +167,8 @@ public:
     std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const;
     virtual void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
     virtual void UnbindTexture(Dimension p_dimension, int p_slot) = 0;
+
+    virtual void GenerateMipmap(const GpuTexture* p_texture) = 0;
 
     void RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 

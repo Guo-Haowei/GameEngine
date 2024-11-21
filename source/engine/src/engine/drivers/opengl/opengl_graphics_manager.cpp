@@ -308,10 +308,14 @@ void OpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_gro
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void OpenGlGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
-    GLuint handle = p_texture ? p_texture->GetHandle32() : 0;
+void OpenGlGraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+    DEV_ASSERT(p_texture);
+    auto internal_format = gl::ConvertInternalFormat(p_texture->desc.format);
+    glBindImageTexture(p_slot, p_texture->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, internal_format);
+}
 
-    glBindImageTexture(p_slot, handle, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+void OpenGlGraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+    glBindImageTexture(p_slot, 0, 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
 }
 
 void OpenGlGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
@@ -391,6 +395,13 @@ void OpenGlGraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
 
     glActiveTexture(GL_TEXTURE0 + p_slot);
     glBindTexture(texture_type, 0);
+}
+
+void OpenGlGraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
+    auto dimension = gl::ConvertDimension(p_texture->desc.dimension);
+    glBindTexture(dimension, p_texture->GetHandle32());
+    glGenerateMipmap(dimension);
+    glBindTexture(dimension, 0);
 }
 
 std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {

@@ -73,15 +73,16 @@ void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_grou
     m_deviceContext->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }
 
-void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
-    if (!p_texture) {
-        ID3D11UnorderedAccessView* uav = nullptr;
-        m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
-        return;
-    }
+void D3d11GraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+    DEV_ASSERT(p_texture);
 
     ID3D11UnorderedAccessView* ptr = reinterpret_cast<ID3D11UnorderedAccessView*>(p_texture->GetUavHandle());
     m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &ptr, nullptr);
+}
+
+void D3d11GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+    ID3D11UnorderedAccessView* uav = nullptr;
+    m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
 }
 
 void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
@@ -293,6 +294,11 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     ID3D11ShaderResourceView* srv = nullptr;
     m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
     m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
+}
+
+void D3d11GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
+    unused(p_texture);
+    CRASH_NOW();
 }
 
 void D3d11GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {

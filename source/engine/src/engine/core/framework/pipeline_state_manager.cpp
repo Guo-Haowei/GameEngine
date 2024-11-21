@@ -207,13 +207,15 @@ bool PipelineStateManager::Initialize() {
                                                   .depthStencilDesc = &s_depthStencilDefault,
                                                   .inputLayoutDesc = &s_inputLayoutMesh,
                                               });
+    // Voxel
+    ok = ok && Create(PSO_VOXELIZATION_PRE, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_pre.cs" });
+    ok = ok && Create(PSO_VOXELIZATION_POST, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_post.cs" });
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
         return ok;
     }
 
-    // Voxel
     ok = ok && Create(PSO_VOXELIZATION, {
                                             .vs = "voxelization.vs",
                                             .ps = "voxelization.ps",
@@ -221,7 +223,6 @@ bool PipelineStateManager::Initialize() {
                                             .rasterizerDesc = &s_rasterizerDoubleSided,
                                             .depthStencilDesc = &s_depthStencilNoTest,
                                         });
-    ok = ok && Create(PSO_VOXELIZATION_POST, { .type = PipelineStateType::COMPUTE, .cs = "post.cs" });
     ok = ok && Create(PSO_DEBUG_VOXEL, {
                                            .vs = "visualization.vs",
                                            .ps = "visualization.ps",
