@@ -58,10 +58,13 @@ void MenuBar::Update(Scene&) {
         }
         ImGui::Separator();
         if (ImGui::BeginMenu("Edit")) {
-            if (ImGui::MenuItem("Undo", "CTRL+Z")) {
+            auto& undo_stack = m_editor.GetUndoStack();
+            if (ImGui::MenuItem("Undo", "CTRL+Z", false, undo_stack.CanUndo())) {
+                undo_stack.Undo();
             }
-            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {
-            }  // Disabled item
+            if (ImGui::MenuItem("Redo", "CTRL+Y", false, undo_stack.CanRedo())) {
+                undo_stack.Redo();
+            }
             ImGui::Separator();
             if (ImGui::MenuItem("Cut", "CTRL+X")) {
             }

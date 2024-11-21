@@ -147,6 +147,10 @@ void EditorLayer::Update(float) {
 void EditorLayer::Render() {
 }
 
+void EditorLayer::BufferCommand(std::shared_ptr<ICommand>&& p_command) {
+    m_commandBuffer.emplace_back(std::move(p_command));
+}
+
 void EditorLayer::AddComponent(ComponentType p_type, ecs::Entity p_target) {
     auto command = std::make_shared<EditorCommandAddComponent>(p_type);
     command->target = p_target;
@@ -164,10 +168,6 @@ void EditorLayer::RemoveEntity(ecs::Entity p_target) {
     BufferCommand(command);
 }
 
-void EditorLayer::BufferCommand(std::shared_ptr<EditorCommand> p_command) {
-    m_commandBuffer.emplace_back(std::move(p_command));
-}
-
 static std::string GenerateName(std::string_view p_name) {
     static int s_counter = 0;
     return std::format("{}-{}", p_name, ++s_counter);
@@ -178,6 +178,10 @@ void EditorLayer::FlushCommand(Scene& scene) {
         auto task = m_commandBuffer.front();
         m_commandBuffer.pop_front();
         do {
+            if (auto undo_command = std::dynamic_pointer_cast<UndoCommand>(task); undo_command) {
+                m_undoStack.PushCommand(std::move(undo_command));
+                break;
+            }
             if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
                 ecs::Entity id;
                 switch (add_command->entityType) {
@@ -223,12 +227,7 @@ void EditorLayer::FlushCommand(Scene& scene) {
                 break;
             }
         } while (0);
-        m_commandHistory.push_back(task);
     }
-}
-
-void EditorLayer::UndoCommand(Scene&) {
-    CRASH_NOW();
 }
 
 }  // namespace my
