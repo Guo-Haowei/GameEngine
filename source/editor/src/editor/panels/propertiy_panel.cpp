@@ -134,26 +134,37 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     }
 
     DrawComponent("Transform", transform_component, [&](TransformComponent& transform) {
-        mat4 transformMatrix = transform.GetLocalMatrix();
+        const mat4 old_transform = transform.GetLocalMatrix();
         vec3 translation;
         vec3 rotation;
         vec3 scale;
 
         // @TODO: fix
         // DO NOT USE IMGUIZMO
-        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(transformMatrix), glm::value_ptr(translation),
+        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(old_transform), glm::value_ptr(translation),
                                               glm::value_ptr(rotation), glm::value_ptr(scale));
 
         bool dirty = false;
-
-        dirty |= DrawVec3ControlDisabled(disable_translation, "translation", translation);
-        dirty |= DrawVec3ControlDisabled(disable_rotation, "rotation", rotation);
-        dirty |= DrawVec3ControlDisabled(disable_scale, "scale", scale, 1.0f);
+        CommandType command_type{};
+        if (DrawVec3ControlDisabled(disable_translation, "translation", translation)) {
+            dirty = true;
+            command_type = COMMAND_TYPE_ENTITY_TRANSLATE;
+        }
+        if (DrawVec3ControlDisabled(disable_rotation, "rotation", rotation)) {
+            dirty = true;
+            command_type = COMMAND_TYPE_ENTITY_ROTATE;
+        }
+        if (DrawVec3ControlDisabled(disable_scale, "scale", scale, 1.0f)) {
+            dirty = true;
+            command_type = COMMAND_TYPE_ENTITY_SCALE;
+        }
         if (dirty) {
+            mat4 new_transform;
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
-                                                    glm::value_ptr(scale), glm::value_ptr(transformMatrix));
-            // @TODO: change position, scale and rotation instead
-            transform.SetLocalTransform(transformMatrix);
+                                                    glm::value_ptr(scale), glm::value_ptr(new_transform));
+
+            auto command = std::make_shared<EntityTransformCommand>(command_type, p_scene, id, old_transform, new_transform);
+            m_editor.BufferCommand(command);
         }
     });
 
