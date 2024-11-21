@@ -97,6 +97,50 @@ enum class StencilOp : uint8_t {
 #undef STENCIL_OP_ENUM
 };
 
+enum Blend : uint8_t {
+    BLEND_ZERO = 1,  // D3D12_BLEND_ZERO
+    BLEND_ONE,       // D3D12_BLEND_ONE
+};
+
+enum ColorWriteEnable : uint8_t {
+    COLOR_WRITE_ENABLE_NONE = BIT(0),
+    COLOR_WRITE_ENABLE_RED = BIT(1),
+    COLOR_WRITE_ENABLE_GREEN = BIT(2),
+    COLOR_WRITE_ENABLE_BLUE = BIT(3),
+    COLOR_WRITE_ENABLE_ALPHA = BIT(4),
+    COLOR_WRITE_ENABLE_ALL =
+        COLOR_WRITE_ENABLE_RED | COLOR_WRITE_ENABLE_GREEN | COLOR_WRITE_ENABLE_BLUE | COLOR_WRITE_ENABLE_ALPHA,
+};
+DEFINE_ENUM_BITWISE_OPERATIONS(ColorWriteEnable);
+
+// typedef struct D3D12_RENDER_TARGET_BLEND_DESC
+//     {
+//     BOOL BlendEnable = false;
+//     BOOL LogicOpEnable = false;
+//     D3D12_BLEND SrcBlend = D3D12_BLEND_ONE;
+//     D3D12_BLEND DestBlend = D3D12_BLEND_ZERO;
+//     D3D12_BLEND_OP BlendOp = D3D12_BLEND_OP_ADD;
+//     D3D12_BLEND SrcBlendAlpha = D3D12_BLEND_ONE;
+//     D3D12_BLEND DestBlendAlpha = D3D12_BLEND_ZERO;
+//     D3D12_BLEND_OP BlendOpAlpha = D3D12_BLEND_OP_ADD;
+//     D3D12_LOGIC_OP LogicOp = D3D12_LOGIC_OP_NOOP;
+//     UINT8 RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
+//     } 	D3D12_RENDER_TARGET_BLEND_DESC;
+
+struct RenderTargetBlendDesc {
+    bool blendEnabled{ false };
+    Blend srcBlend{ BLEND_ONE };
+    Blend destBlend{ BLEND_ZERO };
+    ColorWriteEnable colorWriteMask{ COLOR_WRITE_ENABLE_ALL };
+};
+
+struct BlendDesc {
+    bool alphaToCoverageEnable{ false };
+    bool independentBlendEnable{ false };
+    RenderTargetBlendDesc renderTargets[8]{};
+};
+
+// @TODO: refactor
 enum class PrimitiveTopology : uint8_t {
     UNDEFINED = 0,
     POINT,

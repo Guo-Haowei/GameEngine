@@ -564,6 +564,29 @@ void OpenGlGraphicsManager::SetStencilRef(uint32_t p_ref) {
     glStencilFunc(gl::Convert(m_stateCache.stencilFunc), p_ref, 0xFF);
 }
 
+void OpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
+    unused(p_factor);
+    unused(p_mask);
+
+    const auto& desc = p_desc.renderTargets[0];
+    if (desc.blendEnabled) {
+        glEnable(GL_BLEND);
+    } else {
+        glDisable(GL_BLEND);
+    }
+
+    const bool r_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_RED;
+    const bool g_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_GREEN;
+    const bool b_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_BLUE;
+    const bool a_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_ALPHA;
+
+    glColorMask(r_mask, g_mask, b_mask, a_mask);
+
+    // @TODO: do the rest
+    // glBlendEquationi
+    // glColorMaski
+}
+
 void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     auto draw_pass = reinterpret_cast<const OpenGlDrawPass*>(p_draw_pass);
     DEV_ASSERT(draw_pass);

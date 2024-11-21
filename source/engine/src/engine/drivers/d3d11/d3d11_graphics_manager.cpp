@@ -69,6 +69,13 @@ void D3d11GraphicsManager::SetStencilRef(uint32_t p_ref) {
     }
 }
 
+void D3d11GraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
+    unused(p_desc);
+    unused(p_factor);
+    unused(p_mask);
+    CRASH_NOW();
+}
+
 void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     m_deviceContext->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }

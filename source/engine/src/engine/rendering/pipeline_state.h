@@ -74,6 +74,7 @@ struct PipelineStateDesc {
     const RasterizerDesc* rasterizerDesc{ nullptr };
     const DepthStencilDesc* depthStencilDesc{ nullptr };
     const InputLayoutDesc* inputLayoutDesc{ nullptr };
+    const BlendDesc* blendDesc{ nullptr };
 
     uint32_t numRenderTargets{ 0 };
     PixelFormat rtvFormats[8];

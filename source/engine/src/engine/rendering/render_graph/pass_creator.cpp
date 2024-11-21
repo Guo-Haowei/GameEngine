@@ -13,7 +13,6 @@
 
 // @TODO: this is temporary
 #include "core/framework/scene_manager.h"
-#include "drivers/opengl/opengl_prerequisites.h"
 
 namespace my::rg {
 
@@ -299,11 +298,6 @@ static void VoxelizationPassFunc(const DrawPass*) {
 
     const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
-    glDisable(GL_BLEND);
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-    gm.SetViewport(Viewport(voxel_size, voxel_size));
-
     gm.BindUnorderedAccessView(IMAGE_VOXEL_ALBEDO_SLOT, voxel_lighting.get());
     gm.BindUnorderedAccessView(IMAGE_VOXEL_NORMAL_SLOT, voxel_normal.get());
 
@@ -318,7 +312,10 @@ static void VoxelizationPassFunc(const DrawPass*) {
     // glSubpixelPrecisionBiasNV(1, 1);
     // glSubpixelPrecisionBiasNV(8, 8);
 
+    gm.SetViewport(Viewport(voxel_size, voxel_size));
     gm.SetPipelineState(PSO_VOXELIZATION);
+    gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0);
+
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
@@ -337,8 +334,7 @@ static void VoxelizationPassFunc(const DrawPass*) {
     }
 
     // glSubpixelPrecisionBiasNV(0, 0);
-
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0);
 
     // post process
     gm.SetPipelineState(PSO_VOXELIZATION_POST);
@@ -346,8 +342,6 @@ static void VoxelizationPassFunc(const DrawPass*) {
 
     gm.GenerateMipmap(voxel_lighting.get());
     gm.GenerateMipmap(voxel_normal.get());
-
-    glEnable(GL_BLEND);
 
     // unbind stuff
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());

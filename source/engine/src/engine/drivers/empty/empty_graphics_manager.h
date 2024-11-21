@@ -18,6 +18,7 @@ public:
     void Finalize() override {}
 
     void SetStencilRef(uint32_t p_ref) override {}
+    void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) override {}
 
     void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) override {}
     void UnsetRenderTarget() override {}

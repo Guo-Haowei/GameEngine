@@ -253,6 +253,12 @@ void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
     m_graphicsCommandList->OMSetStencilRef(p_ref);
 }
 
+void D3d12GraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
+    unused(p_desc);
+    unused(p_factor);
+    unused(p_mask);
+}
+
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
     DEV_ASSERT(p_draw_pass);

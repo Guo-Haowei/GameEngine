@@ -18,6 +18,7 @@ public:
     void Finalize() final;
 
     void SetStencilRef(uint32_t p_ref) final;
+    void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) final;
 
     void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
     void UnsetRenderTarget() final;

@@ -112,14 +112,14 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateGraphicsPipeline
 
     depth_stencil_desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
     depth_stencil_desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    d3d::FillDepthStencilOpDesc(p_desc.depthStencilDesc->frontFace, depth_stencil_desc.FrontFace);
-    d3d::FillDepthStencilOpDesc(p_desc.depthStencilDesc->backFace, depth_stencil_desc.BackFace);
+    depth_stencil_desc.FrontFace = d3d::Convert(&p_desc.depthStencilDesc->frontFace);
+    depth_stencil_desc.BackFace = d3d::Convert(&p_desc.depthStencilDesc->backFace);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
     pso_desc.pRootSignature = graphics_manager->GetRootSignature();
     pso_desc.VS = CD3DX12_SHADER_BYTECODE(vs_blob.Get());
     pso_desc.PS = CD3DX12_SHADER_BYTECODE(ps_blob.Get());
-    pso_desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    pso_desc.BlendState = d3d::Convert(p_desc.blendDesc);
     pso_desc.SampleMask = UINT_MAX;
     pso_desc.RasterizerState = rasterizer_desc;
     pso_desc.DepthStencilState = depth_stencil_desc;

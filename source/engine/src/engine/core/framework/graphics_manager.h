@@ -135,7 +135,9 @@ public:
     virtual void UnbindUnorderedAccessView(uint32_t p_slot) = 0;
 
     void SetPipelineState(PipelineStateName p_name);
+
     virtual void SetStencilRef(uint32_t p_ref) = 0;
+    virtual void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) = 0;
 
     virtual std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) = 0;
     virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) = 0;
