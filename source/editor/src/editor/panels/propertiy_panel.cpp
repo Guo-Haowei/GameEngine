@@ -161,8 +161,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(new_transform));
 
-
-            auto command = std::make_shared<TransformCommand>(command_type, p_scene, id, old_transform, new_transform);
+            auto command = std::make_shared<EntityTransformCommand>(command_type, p_scene, id, old_transform, new_transform);
             m_editor.BufferCommand(command);
         }
     });

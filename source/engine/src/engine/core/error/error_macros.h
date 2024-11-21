@@ -84,6 +84,9 @@ void ReportErrorIndexImpl(std::string_view p_function,
 
 // @TODO: use same crash handler
 // @TODO: flush
+
+#define ENABLE_CHECK USE_IF(USING(DEBUG_BUILD))
+
 #define CRASH_NOW()                                                                              \
     do {                                                                                         \
         my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: Method/function failed."); \
@@ -131,5 +134,15 @@ void ReportErrorIndexImpl(std::string_view p_function,
         GENERATE_TRAP();                                                                                             \
     } else                                                                                                           \
         ((void)0)
+
+#define DEV_VERIFY_CHECK(EXPR) \
+    ((EXPR) || (my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: Condition \"" _STR(EXPR) "\" is false."), false))
+#define DEV_VERIFY_NO_CHECK(EXPR) (EXPR)
+
+#if USING(ENABLE_CHECK)
+#define DEV_VERIFY DEV_VERIFY_CHECK
+#else
+#define DEV_VERIFY DEV_VERIFY_NO_CHECK
+#endif
 
 }  // namespace my

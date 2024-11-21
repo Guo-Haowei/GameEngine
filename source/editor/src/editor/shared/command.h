@@ -29,4 +29,4 @@ protected:
     CommandFlag flags;
 };
 
-}
+}  // namespace my

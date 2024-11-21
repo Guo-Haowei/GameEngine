@@ -318,4 +318,69 @@ TEST(error_macros, DEV_ASSERT_INDEX) {
     RemoveErrorHandler(&handler);
 }
 
+TEST(error_macros, DEV_VERIFY_check_fail) {
+    ErrorHandler handler;
+    handler.data.errorFunc = assert_handler;
+
+    AddErrorHandler(&handler);
+
+    EXPECT_EXIT(
+        {
+            if (DEV_VERIFY_CHECK(1 == 2)) {
+                FAIL();
+            }
+        },
+        testing::ExitedWithCode(99), "FATAL: Condition \"1 == 2\" is false.");
+
+    RemoveErrorHandler(&handler);
+}
+
+TEST(error_macros, DEV_VERIFY_check_pass) {
+    ErrorHandler handler;
+    handler.data.errorFunc = assert_handler;
+
+    AddErrorHandler(&handler);
+
+    int a = 1;
+    if (DEV_VERIFY_CHECK(a == 1)) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
+
+    RemoveErrorHandler(&handler);
+}
+
+TEST(error_macros, DEV_VERIFY_no_check_pass) {
+    ErrorHandler handler;
+    handler.data.errorFunc = assert_handler;
+
+    AddErrorHandler(&handler);
+
+    int a = 1;
+    if (DEV_VERIFY_NO_CHECK(a == 1)) {
+        SUCCEED();
+    } else {
+        FAIL();
+    }
+
+    RemoveErrorHandler(&handler);
+}
+
+TEST(error_macros, DEV_VERIFY_no_check_fail) {
+    ErrorHandler handler;
+    handler.data.errorFunc = assert_handler;
+
+    AddErrorHandler(&handler);
+
+    int a = 1;
+    if (DEV_VERIFY_NO_CHECK(a == 2)) {
+        FAIL();
+    } else {
+        SUCCEED();
+    }
+
+    RemoveErrorHandler(&handler);
+}
+
 }  // namespace my

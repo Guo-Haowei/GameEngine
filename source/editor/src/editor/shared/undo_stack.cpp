@@ -3,7 +3,6 @@
 namespace my {
 
 void UndoStack::ClearRedoHistory() {
-
 }
 
 void UndoStack::PushCommand(std::shared_ptr<UndoCommand>&& p_command) {
@@ -13,7 +12,7 @@ void UndoStack::PushCommand(std::shared_ptr<UndoCommand>&& p_command) {
 
     if (!m_commands.empty()) {
     }
-    
+
     m_commands.push_back(std::move(p_command));
     m_currentCommandIndex = (int)m_commands.size() - 1;
 }
@@ -58,4 +57,4 @@ void UndoStack::Redo() {
     ++m_currentCommandIndex;
 }
 
-}
+}  // namespace my

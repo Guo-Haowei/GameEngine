@@ -64,10 +64,10 @@ public:
 class EntityTransformCommand : public UndoCommand {
 public:
     EntityTransformCommand(CommandType p_type,
-                     Scene& p_scene,
-                     ecs::Entity p_entity,
-                     const mat4& p_before,
-                     const mat4& p_after);
+                           Scene& p_scene,
+                           ecs::Entity p_entity,
+                           const mat4& p_before,
+                           const mat4& p_after);
 
     void Undo() override;
     void Redo() override;
