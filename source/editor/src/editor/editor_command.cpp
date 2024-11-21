@@ -29,8 +29,21 @@ void EntityTransformCommand::Redo() {
 }
 
 bool EntityTransformCommand::MergeCommand(const ICommand* p_command) {
-    unused(p_command);
-    CRASH_NOW();
+    auto command = dynamic_cast<const EntityTransformCommand*>(p_command);
+    if (!command) {
+        return false;
+    }
+
+    if (command->m_entity != m_entity) {
+        return false;
+    }
+
+    if (command->m_type != m_type) {
+        return false;
+    }
+
+    m_after = command->m_after;
+    return true;
 }
 
 }  // namespace my

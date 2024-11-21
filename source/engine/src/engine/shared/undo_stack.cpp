@@ -3,6 +3,9 @@
 namespace my {
 
 void UndoStack::ClearRedoHistory() {
+    if (DEV_VERIFY(m_currentCommandIndex < (int)m_commands.size())) {
+        m_commands.resize(m_currentCommandIndex + 1);
+    }
 }
 
 void UndoStack::PushCommand(std::shared_ptr<UndoCommand>&& p_command) {
@@ -11,6 +14,9 @@ void UndoStack::PushCommand(std::shared_ptr<UndoCommand>&& p_command) {
     p_command->Redo();
 
     if (!m_commands.empty()) {
+        if (m_commands.back()->MergeCommand(p_command.get())) {
+            return;
+        }
     }
 
     m_commands.push_back(std::move(p_command));
@@ -30,7 +36,17 @@ bool UndoStack::CanUndo() const {
 }
 
 bool UndoStack::CanRedo() const {
-    return false;
+    if (m_commands.empty()) {
+        return false;
+    }
+
+    // there's one command after current one
+    // so the difference of index and size should be at least 2
+    if ((int)m_commands.size() - m_currentCommandIndex < 2) {
+        return false;
+    }
+
+    return true;
 }
 
 void UndoStack::Undo() {
@@ -50,9 +66,9 @@ void UndoStack::Redo() {
         return;
     }
 
-    auto& command = m_commands[m_currentCommandIndex];
+    auto& command = m_commands[m_currentCommandIndex + 1];
 
-    command->Undo();
+    command->Redo();
 
     ++m_currentCommandIndex;
 }

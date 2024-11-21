@@ -4,6 +4,16 @@
 
 namespace my {
 
+enum CommandType : uint8_t {
+    COMMAND_TRANSLATE_ENTITY,
+    COMMAND_ROTATE_ENTITY,
+    COMMAND_SCALE_ENTITY,
+
+    COMMAND_ADD_ENTITY,
+    COMMAND_REMOVE_ENTITY,
+    COMMAND_ADD_COMPONENT,
+};
+
 // clang-format off
 //------------ Enum,                Name,           Separator
 #define ENTITY_TYPE_LIST                                   \
@@ -37,7 +47,7 @@ enum class ComponentType : uint8_t {
 class EditorCommandAddEntity : public ICommand {
 public:
     EditorCommandAddEntity(EntityType p_entity_type)
-        : ICommand(CommandType::ADD_ENTITY), entityType(p_entity_type) {}
+        : ICommand(COMMAND_ADD_ENTITY), entityType(p_entity_type) {}
 
     EntityType entityType;
     ecs::Entity parent;
@@ -47,7 +57,7 @@ public:
 class EditorCommandAddComponent : public ICommand {
 public:
     EditorCommandAddComponent(ComponentType p_component_type)
-        : ICommand(CommandType::ADD_COMPONENT), componentType(p_component_type) {}
+        : ICommand(COMMAND_ADD_COMPONENT), componentType(p_component_type) {}
 
     ComponentType componentType;
     ecs::Entity target;
@@ -56,7 +66,7 @@ public:
 class EditorCommandRemoveEntity : public ICommand {
 public:
     EditorCommandRemoveEntity(ecs::Entity p_target)
-        : ICommand(CommandType::REMOVE_ENTITY), target(p_target) {}
+        : ICommand(COMMAND_REMOVE_ENTITY), target(p_target) {}
 
     ecs::Entity target;
 };

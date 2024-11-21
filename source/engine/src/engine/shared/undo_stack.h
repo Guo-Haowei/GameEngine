@@ -17,7 +17,7 @@ private:
     void ClearRedoHistory();
 
     std::vector<std::shared_ptr<UndoCommand>> m_commands;
-    int m_currentCommandIndex;
+    int m_currentCommandIndex{ -1 };
 };
 
 }  // namespace my

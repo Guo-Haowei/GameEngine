@@ -5,7 +5,7 @@ namespace my {
 
 class UndoCommand : public ICommand {
 public:
-    UndoCommand(CommandType p_type) : ICommand(p_type) {}
+    UndoCommand(uint32_t p_type) : ICommand(p_type) {}
 
     virtual void Undo() = 0;
     virtual void Redo() = 0;
