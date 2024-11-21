@@ -6,10 +6,10 @@
 namespace my {
 
 //------------------------------------------------------------------------------
-// DescriptorHeap
-bool DescriptorHeap::Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_type, uint32_t p_num_descriptors, ID3D12Device* p_device, bool p_shader_visible) {
+// DescriptorHeapBase
+bool DescriptorHeapBase::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, ID3D12Device* p_device, bool p_shader_visible) {
     m_desc.Type = p_type;
-    m_desc.NumDescriptors = p_num_descriptors;
+    m_desc.NumDescriptors = GetCapacity();
     m_desc.Flags = p_shader_visible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     m_desc.NodeMask = 1;
 
@@ -32,7 +32,6 @@ bool DescriptorHeap::Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_type, 
     }
 #endif
 
-    m_counter = p_start;
     m_incrementSize = p_device->GetDescriptorHandleIncrementSize(p_type);
     m_startCpu = m_heap->GetCPUDescriptorHandleForHeapStart();
     m_startGpu = m_heap->GetGPUDescriptorHandleForHeapStart();
@@ -40,52 +39,57 @@ bool DescriptorHeap::Initialize(int p_start, D3D12_DESCRIPTOR_HEAP_TYPE p_type, 
     return true;
 }
 
-DescriptorHeap::Handle DescriptorHeap::AllocHandle() {
-    int index = m_counter.fetch_add(1);
+DescriptorHeapHandle DescriptorHeapBase::AllocHandle(const Space& p_space) {
+    int index = p_space.counter.fetch_add(1);
+    DEV_ASSERT(index >= p_space.start && index < p_space.start + p_space.max);
     CD3DX12_CPU_DESCRIPTOR_HANDLE cpu_handle(m_startCpu);
     cpu_handle.Offset(index, m_incrementSize);
     CD3DX12_GPU_DESCRIPTOR_HANDLE gpu_handle(m_startGpu);
     gpu_handle.Offset(index, m_incrementSize);
 
     return {
-        index,
+        index - p_space.start,
         cpu_handle,
         gpu_handle,
     };
 }
 
-DescriptorHeap::Handle DescriptorHeapSrv::AllocHandle(int p_begin, int p_max, std::atomic_int& p_counter) {
-    int index = p_counter.fetch_add(1);
-    DEV_ASSERT(index < p_begin + p_max);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE cpu_handle(m_startCpu);
-    cpu_handle.Offset(index, m_incrementSize);
-    CD3DX12_GPU_DESCRIPTOR_HANDLE gpu_handle(m_startGpu);
-    gpu_handle.Offset(index, m_incrementSize);
-
-    return {
-        index,
-        cpu_handle,
-        gpu_handle,
-    };
+//------------------------------------------------------------------------------
+// DescriptorHeap
+DescriptorHeap::DescriptorHeap(int p_num_descriptors) {
+    m_space.max = p_num_descriptors;
+    m_space.start = 0;
+    m_space.counter = 0;
 }
 
-DescriptorHeap::Handle DescriptorHeapSrv::AllocHandle(Dimension p_dimension) {
-    switch (p_dimension) {
-        case my::Dimension::TEXTURE_2D:
-            return AllocHandle(m_2dArrayStart, m_2dArrayMax, m_2dArrayCounter);
-        case my::Dimension::TEXTURE_CUBE_ARRAY:
-            return AllocHandle(m_cubeArrayStart, m_cubeArrayMax, m_cubeArrayCounter);
-        case my::Dimension::TEXTURE_3D:
-        case my::Dimension::TEXTURE_2D_ARRAY:
-        case my::Dimension::TEXTURE_CUBE:
-        default:
-            CRASH_NOW();
-            return DescriptorHeap::AllocHandle();
-    }
+DescriptorHeapHandle DescriptorHeap::AllocHandle() {
+    return Base::AllocHandle(m_space);
 }
 
-DescriptorHeapSrv::Handle DescriptorHeapSrv::AllocUavHandle() {
-    return AllocHandle(m_uavArrayStart, m_uavArrayMax, m_uavCounter);
+//------------------------------------------------------------------------------
+// DescriptorSrv
+DescriptorHeapSrv::DescriptorHeapSrv() {
+
+#define DESCRIPTOR_SPACE(ENUM, NUM, PREV, SPACE, ...) \
+    do {                                              \
+        m_spaces[SPACE].start = ENUM##_START;         \
+        m_spaces[SPACE].max = ENUM##_MAX_COUNT;       \
+        m_spaces[SPACE].counter = ENUM##_START;       \
+    } while (0);
+#define DESCRIPTOR_SRV DESCRIPTOR_SPACE
+#define DESCRIPTOR_UAV DESCRIPTOR_SPACE
+    DESCRIPTOR_TABLE
+#undef DESCRIPTOR_SRV
+#undef DESCRIPTOR_UAV
+#undef DESCRIPTOR_SPACE
+
+    // reserve 1 for imgui
+    m_spaces[0].counter = 1;
+}
+
+DescriptorHeapHandle DescriptorHeapSrv::AllocHandle(DescriptorResourceType p_type) {
+    DEV_ASSERT_INDEX(p_type, DescriptorResourceType::COUNT);
+    return Base::AllocHandle(m_spaces[std::to_underlying(p_type)]);
 }
 
 //------------------------------------------------------------------------------

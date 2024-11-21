@@ -19,6 +19,7 @@ struct OpenGlGpuTexture : public GpuTexture {
 
     uint64_t GetResidentHandle() const final { return residentHandle; }
     uint64_t GetHandle() const final { return handle; }
+    uint64_t GetUavHandle() const final { return handle; }
 
     uint32_t handle = 0;
     uint64_t residentHandle = 0;

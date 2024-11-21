@@ -281,24 +281,6 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
     gm.SetPipelineState(PSO_LIGHTING);
 
-    // @TODO: refactor pass to auto bind resources,
-    // and make it a class so don't do a map search every frame
-    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
-        if (!resource) {
-            return;
-        }
-
-        gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
-    };
-
-    // bind common textures
-    bind_slot(RESOURCE_GBUFFER_DEPTH, GetGbufferDepthSlot());
-
-    bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
-    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, GetPointShadowArraySlot(), Dimension::TEXTURE_CUBE_ARRAY);
-
-    // @TODO: fix it
     RenderManager::GetSingleton().draw_quad();
 
     PassContext& pass = gm.m_mainPass;
@@ -316,11 +298,6 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
     //     GraphicsManager::GetSingleton().SetPipelineState(PSO_ENV_SKYBOX);
     //     RenderManager::GetSingleton().draw_skybox();
     // }
-
-    // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetGbufferDepthSlot());
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, GetPointShadowArraySlot());
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -351,6 +328,38 @@ void RenderPassCreator::AddLightingPass() {
     auto pass = m_graph.CreatePass(desc);
     auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { lighting_attachment },
+        .transitions = {
+            ResourceTransition{
+                .resource = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
+                .slot = GetGbufferDepthSlot(),
+                .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                    GpuTexture* p_texture,
+                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_2D, p_texture->GetHandle(), p_slot); },
+                .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                  GpuTexture*,
+                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_2D, p_slot); },
+            },
+            ResourceTransition{
+                .resource = manager.FindTexture(RESOURCE_SHADOW_MAP),
+                .slot = GetShadowMapSlot(),
+                .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                    GpuTexture* p_texture,
+                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_2D, p_texture->GetHandle(), p_slot); },
+                .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                  GpuTexture*,
+                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_2D, p_slot); },
+            },
+            ResourceTransition{
+                .resource = manager.FindTexture(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
+                .slot = GetPointShadowArraySlot(),
+                .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                    GpuTexture* p_texture,
+                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_texture->GetHandle(), p_slot); },
+                .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                  GpuTexture*,
+                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_slot); },
+            },
+        },
         .execFunc = LightingPassFunc,
     });
     pass->AddDrawPass(draw_pass);
@@ -516,8 +525,17 @@ void RenderPassCreator::AddBloomPass() {
         auto output = gm.FindTexture(RESOURCE_BLOOM_0);
         DEV_ASSERT(output);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
-            .uavs = { output },
-            .uavSlots = { GetUavSlotBloomOutputImage() },
+            .transitions = {
+                ResourceTransition{
+                    .resource = output,
+                    .slot = GetUavSlotBloomOutputImage(),
+                    .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                        GpuTexture* p_texture,
+                                        int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, p_texture); },
+                    .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                      GpuTexture*,
+                                      int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, nullptr); },
+                } },
             .execFunc = BloomSetupFunc,
         });
         render_pass->AddDrawPass(pass);
@@ -528,8 +546,17 @@ void RenderPassCreator::AddBloomPass() {
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
         DEV_ASSERT(output);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
-            .uavs = { output },
-            .uavSlots = { GetUavSlotBloomOutputImage() },
+            .transitions = {
+                ResourceTransition{
+                    .resource = output,
+                    .slot = GetUavSlotBloomOutputImage(),
+                    .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                        GpuTexture* p_texture,
+                                        int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, p_texture); },
+                    .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                      GpuTexture*,
+                                      int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, nullptr); },
+                } },
             .execFunc = BloomDownSampleFunc,
         });
         pass->id = i;
@@ -541,8 +568,17 @@ void RenderPassCreator::AddBloomPass() {
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
         DEV_ASSERT(output);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
-            .uavs = { output },
-            .uavSlots = { GetUavSlotBloomOutputImage() },
+            .transitions = {
+                ResourceTransition{
+                    .resource = output,
+                    .slot = GetUavSlotBloomOutputImage(),
+                    .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                        GpuTexture* p_texture,
+                                        int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, p_texture); },
+                    .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                      GpuTexture*,
+                                      int p_slot) { p_graphics_manager->SetUnorderedAccessView(p_slot, nullptr); },
+                } },
             .execFunc = BloomUpSampleFunc,
         });
         pass->id = i;
