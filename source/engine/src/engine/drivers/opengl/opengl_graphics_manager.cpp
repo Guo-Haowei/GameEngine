@@ -8,7 +8,6 @@
 #include "drivers/opengl/opengl_prerequisites.h"
 #include "drivers/opengl/opengl_resources.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
-#include "rendering/GpuTexture.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "vsinput.glsl.h"
@@ -21,11 +20,6 @@
 using namespace my;
 using my::rg::RenderGraph;
 using my::rg::RenderPass;
-
-/// textures
-// @TODO: time to refactor this!!
-OldTexture g_albedoVoxel;
-OldTexture g_normalVoxel;
 
 // @TODO: refactor
 OpenGlMeshBuffers* g_box;
@@ -445,6 +439,14 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTextureImpl(const GpuTe
                          p_texture_desc.arraySize,
                          0, format, data_type, p_texture_desc.initialData);
         } break;
+        case GL_TEXTURE_3D: {
+            glTexStorage3D(GL_TEXTURE_3D,
+                           p_texture_desc.mipLevels,
+                           internal_format,
+                           p_texture_desc.width,
+                           p_texture_desc.height,
+                           p_texture_desc.depth);
+        } break;
         default:
             CRASH_NOW();
             break;
@@ -607,32 +609,12 @@ void OpenGlGraphicsManager::CreateGpuResources() {
     g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
     g_box = (OpenGlMeshBuffers*)CreateMesh(MakeBoxMesh());
 
-    const int voxelSize = DVAR_GET_INT(gfx_voxel_size);
-
-    /// create voxel image
-    {
-        Texture3DCreateInfo info;
-        info.wrapS = info.wrapT = info.wrapR = GL_CLAMP_TO_BORDER;
-        info.size = voxelSize;
-        info.minFilter = GL_LINEAR_MIPMAP_LINEAR;
-        info.magFilter = GL_NEAREST;
-        info.mipLevel = math::LogTwo(voxelSize);
-        info.format = GL_RGBA16F;
-
-        g_albedoVoxel.create3DEmpty(info);
-        g_normalVoxel.create3DEmpty(info);
-    }
-
     auto& cache = g_constantCache.cache;
-
     // @TODO: delete!
     unsigned int m1 = LoadMTexture(LTC1);
     unsigned int m2 = LoadMTexture(LTC2);
     cache.c_ltc1 = MakeTextureResident(m1);
     cache.c_ltc2 = MakeTextureResident(m2);
-
-    cache.c_voxelMap = MakeTextureResident(g_albedoVoxel.GetHandle());
-    cache.c_voxelNormalMap = MakeTextureResident(g_normalVoxel.GetHandle());
 
     // cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
 

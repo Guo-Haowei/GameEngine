@@ -16,9 +16,6 @@
 #include "core/framework/scene_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
-#include "rendering/GpuTexture.h"
-extern OldTexture g_albedoVoxel;
-extern OldTexture g_normalVoxel;
 
 namespace my::rg {
 
@@ -283,6 +280,10 @@ static void VoxelizationPassFunc(const DrawPass*) {
         return;
     }
 
+    auto voxel_lighting = gm.FindTexture(RESOURCE_VOXEL_LIGHTING);
+    auto voxel_normal = gm.FindTexture(RESOURCE_VOXEL_NORMAL);
+    DEV_ASSERT(voxel_lighting && voxel_normal);
+
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
@@ -298,8 +299,12 @@ static void VoxelizationPassFunc(const DrawPass*) {
     bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
     bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, GetPointShadowArraySlot(), Dimension::TEXTURE_CUBE_ARRAY);
 
-    g_albedoVoxel.clear();
-    g_normalVoxel.clear();
+    // @TODO: replace with compute shader
+    {
+        float clearColor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        glClearTexImage(voxel_lighting->GetHandle32(), 0, GL_RGBA, GL_FLOAT, clearColor);
+        glClearTexImage(voxel_normal->GetHandle32(), 0, GL_RGBA, GL_FLOAT, clearColor);
+    }
 
     const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
@@ -307,9 +312,10 @@ static void VoxelizationPassFunc(const DrawPass*) {
     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
     glViewport(0, 0, voxel_size, voxel_size);
 
-    // @TODO: fix
-    g_albedoVoxel.bindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT);
-    g_normalVoxel.bindImageTexture(IMAGE_VOXEL_NORMAL_SLOT);
+    {
+        glBindImageTexture(IMAGE_VOXEL_ALBEDO_SLOT, voxel_lighting->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
+        glBindImageTexture(IMAGE_VOXEL_NORMAL_SLOT, voxel_normal->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA16F);
+    }
 
     PassContext& pass = gm.m_voxelPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
@@ -344,10 +350,12 @@ static void VoxelizationPassFunc(const DrawPass*) {
     glDispatchCompute(workGroupX, workGroupY, workGroupZ);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-    g_albedoVoxel.bind();
-    g_albedoVoxel.genMipMap();
-    g_normalVoxel.bind();
-    g_normalVoxel.genMipMap();
+    {
+        glBindTexture(GL_TEXTURE_3D, voxel_lighting->GetHandle32());
+        glGenerateMipmap(GL_TEXTURE_3D);
+        glBindTexture(GL_TEXTURE_3D, voxel_normal->GetHandle32());
+        glGenerateMipmap(GL_TEXTURE_3D);
+    }
 
     glEnable(GL_BLEND);
 
@@ -361,6 +369,35 @@ static void VoxelizationPassFunc(const DrawPass*) {
 
 void RenderPassCreator::AddVoxelizationPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
+
+    {
+        const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
+        GpuTextureDesc desc = BuildDefaultTextureDesc(RESOURCE_VOXEL_LIGHTING,
+                                                      PixelFormat::R16G16B16A16_FLOAT,
+                                                      AttachmentType::RW_TEXTURE,
+                                                      voxel_size, voxel_size);
+        desc.dimension = Dimension::TEXTURE_3D;
+        desc.mipLevels = math::LogTwo(voxel_size);
+        desc.depth = voxel_size;
+
+        SamplerDesc sampler(FilterMode::MIPMAP_LINEAR, FilterMode::POINT, AddressMode::BORDER);
+
+        auto voxel_lighting = manager.CreateTexture(desc, sampler);
+
+        desc.name = RESOURCE_VOXEL_NORMAL;
+        auto voxel_normal = manager.CreateTexture(desc, sampler);
+
+        // @TODO: refactor
+        auto MakeTextureResident = [](uint32_t texture) {
+            uint64_t ret = glGetTextureHandleARB(texture);
+            glMakeTextureHandleResidentARB(ret);
+            return ret;
+        };
+        auto& cache = g_constantCache.cache;
+        cache.c_voxelMap = MakeTextureResident(voxel_lighting->GetHandle32());
+        cache.c_voxelNormalMap = MakeTextureResident(voxel_normal->GetHandle32());
+        g_constantCache.update();
+    }
 
     RenderPassDesc desc;
     desc.name = RenderPassName::VOXELIZATION;
@@ -842,6 +879,8 @@ GpuTextureDesc RenderPassCreator::BuildDefaultTextureDesc(RenderTargetResourceNa
             desc.dimension = Dimension::TEXTURE_CUBE_ARRAY;
             desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
             DEV_ASSERT(p_array_size / 6 > 0);
+            break;
+        case AttachmentType::RW_TEXTURE:
             break;
         default:
             CRASH_NOW();

@@ -12,11 +12,7 @@
 // @TODO: refactor
 #include "drivers/opengl/opengl_graphics_manager.h"
 #include "drivers/opengl/opengl_prerequisites.h"
-#include "rendering/GpuTexture.h"
 
-// @TODO: refactor
-extern OldTexture g_albedoVoxel;
-extern OldTexture g_normalVoxel;
 extern OpenGlMeshBuffers* g_box;
 
 namespace my::rg {
