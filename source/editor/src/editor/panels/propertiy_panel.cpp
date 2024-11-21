@@ -148,15 +148,15 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         CommandType command_type{};
         if (DrawVec3ControlDisabled(disable_translation, "translation", translation)) {
             dirty = true;
-            command_type = COMMAND_TRANSLATE_ENTITY;
+            command_type = COMMAND_TYPE_ENTITY_TRANSLATE;
         }
         if (DrawVec3ControlDisabled(disable_rotation, "rotation", rotation)) {
             dirty = true;
-            command_type = COMMAND_ROTATE_ENTITY;
+            command_type = COMMAND_TYPE_ENTITY_ROTATE;
         }
         if (DrawVec3ControlDisabled(disable_scale, "scale", scale, 1.0f)) {
             dirty = true;
-            command_type = COMMAND_SCALE_ENTITY;
+            command_type = COMMAND_TYPE_ENTITY_SCALE;
         }
         if (dirty) {
             mat4 new_transform;

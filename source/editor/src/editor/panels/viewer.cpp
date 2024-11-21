@@ -69,6 +69,13 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     const mat4 view_matrix = p_camera.GetViewMatrix();
     const mat4 proj_matrix = p_camera.GetProjectionMatrix();
 
+    // @TODO: refactor
+    if (input::IsKeyDown(KEY_LEFT_CONTROL) && input::IsKeyPressed(KEY_Z)) {
+        m_editor.GetUndoStack().Undo();
+    } else if (input::IsKeyDown(KEY_LEFT_CONTROL) && input::IsKeyPressed(KEY_Y)) {
+        m_editor.GetUndoStack().Redo();
+    }
+
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
 
@@ -137,17 +144,20 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     }
 #endif
 
-    auto draw_gizmo = [&](ImGuizmo::OPERATION operation) {
+    auto draw_gizmo = [&](ImGuizmo::OPERATION p_operation, CommandType p_type) {
         if (transform_component) {
-            mat4 local = transform_component->GetLocalMatrix();
+            const mat4 before = transform_component->GetLocalMatrix();
+            mat4 after = before;
             if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
                                      glm::value_ptr(proj_matrix),
-                                     operation,
+                                     p_operation,
                                      // ImGuizmo::LOCAL,
                                      ImGuizmo::WORLD,
-                                     glm::value_ptr(local),
+                                     glm::value_ptr(after),
                                      nullptr, nullptr, nullptr, nullptr)) {
-                transform_component->SetLocalTransform(local);
+
+                auto command = std::make_shared<EntityTransformCommand>(p_type, p_scene, id, before, after);
+                m_editor.BufferCommand(command);
             }
         }
     };
@@ -155,13 +165,13 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     // draw gizmo
     switch (m_editor.GetState()) {
         case EditorLayer::STATE_TRANSLATE:
-            draw_gizmo(ImGuizmo::TRANSLATE);
+            draw_gizmo(ImGuizmo::TRANSLATE, COMMAND_TYPE_ENTITY_TRANSLATE);
             break;
         case EditorLayer::STATE_ROTATE:
-            draw_gizmo(ImGuizmo::ROTATE);
+            draw_gizmo(ImGuizmo::ROTATE, COMMAND_TYPE_ENTITY_ROTATE);
             break;
         case EditorLayer::STATE_SCALE:
-            draw_gizmo(ImGuizmo::SCALE);
+            draw_gizmo(ImGuizmo::SCALE, COMMAND_TYPE_ENTITY_SCALE);
             break;
         default:
             break;
