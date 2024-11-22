@@ -6,7 +6,7 @@ namespace my {
 
 class NSWindowWrapperImpl {
 public:
-    bool Initialize(const DisplayManager::CreateInfo& p_info);
+    auto Initialize(const DisplayManager::CreateInfo& p_info) -> Result<void>;
 
 private:
     NSWindow* window_; // Pointer to the NSWindow
@@ -15,7 +15,7 @@ private:
     friend class CocoaDisplayManager;
 };
 
-bool NSWindowWrapperImpl::Initialize(const DisplayManager::CreateInfo& p_info) {
+auto NSWindowWrapperImpl::Initialize(const DisplayManager::CreateInfo& p_info) -> Result<void> {
             // Initialize the application
         [NSApplication sharedApplication];
         [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular]; // Ensure regular activation
@@ -48,7 +48,8 @@ bool NSWindowWrapperImpl::Initialize(const DisplayManager::CreateInfo& p_info) {
         unused(note);
         shouldClose_ = YES;
     }];
-    return true;
+
+    return Result<void>();
 }
 
 CocoaDisplayManager::CocoaDisplayManager() {
@@ -97,7 +98,7 @@ void CocoaDisplayManager::Present() {
 
 }
 
-bool CocoaDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<void> {
+auto CocoaDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<void> {
     return m_impl->Initialize(p_info);
 }
 
