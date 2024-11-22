@@ -32,7 +32,7 @@ auto FileAccess::Open(const std::string& p_path, ModeFlags p_mode_flags)
 
     ErrorCode err = file_access->OpenInternal(file_access->FixPath(p_path), p_mode_flags);
     if (err != OK) {
-        return HBN_ERROR(err, "error code: {}", ErrorToString(err));
+        return HBN_ERROR(err, "file '{}' not found", p_path);
     }
 
     return file_access;

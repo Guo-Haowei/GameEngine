@@ -103,6 +103,7 @@ public:
         // @TODO: check overflow?
         next = p_next;
         depth = next->depth + 1;
+        value = next->value;
     }
 
     T value{};

@@ -4,6 +4,33 @@
 
 namespace my {
 
+void StdLogger::Print(LogLevel p_level, std::string_view p_message) {
+    const char* tag = "";
+    switch (p_level) {
+        case my::LOG_LEVEL_OK:
+            tag = "[OK   ]";
+            break;
+        case my::LOG_LEVEL_WARN:
+            tag = "[WARN ]";
+            break;
+        case my::LOG_LEVEL_ERROR:
+            tag = "[ERROR]";
+            break;
+        case my::LOG_LEVEL_FATAL:
+            tag = "[FATAL]";
+            break;
+        default:
+            break;
+    }
+
+    // @TODO: stderr vs stdout
+    FILE* file = stdout;
+    fflush(file);
+
+    fprintf(file, "%s%.*s", tag, static_cast<int>(p_message.length()), p_message.data());
+    fflush(file);
+}
+
 void CompositeLogger::AddLogger(std::shared_ptr<ILogger> p_logger) {
     m_loggers.emplace_back(p_logger);
 }

@@ -9,8 +9,8 @@ public:
         Close();
     }
 
-    [[nodiscard]] auto OpenRead(const std::string& p_path) { return OpenMode(p_path.c_str(), false); }
-    [[nodiscard]] auto OpenWrite(const std::string& p_path) { return OpenMode(p_path.c_str(), true); }
+    [[nodiscard]] auto OpenRead(const std::string& p_path) -> Result<void> { return OpenMode(p_path.c_str(), false); }
+    [[nodiscard]] auto OpenWrite(const std::string& p_path) -> Result<void> { return OpenMode(p_path.c_str(), true); }
 
     void Close();
     bool IsWriteMode() const;

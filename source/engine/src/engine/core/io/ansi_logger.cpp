@@ -5,12 +5,6 @@
 namespace my {
 
 void AnsiLogger::Print(LogLevel p_level, std::string_view p_message) {
-    unused(p_level);
-
-    // @TODO: stderr vs stdout
-    FILE* file = stdout;
-    fflush(file);
-
     const char* color = "\033[0m";
     switch (p_level) {
         case my::LOG_LEVEL_VERBOSE:
@@ -32,6 +26,9 @@ void AnsiLogger::Print(LogLevel p_level, std::string_view p_message) {
             break;
     }
 
+    // @TODO: stderr vs stdout
+    FILE* file = stdout;
+    fflush(file);
     fprintf(file, "%s%.*s\033[0m", color, static_cast<int>(p_message.length()), p_message.data());
     fflush(file);
 }

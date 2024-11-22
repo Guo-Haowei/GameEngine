@@ -12,6 +12,11 @@ public:
     virtual void Print(LogLevel p_level, std::string_view p_message) = 0;
 };
 
+class StdLogger : public ILogger {
+public:
+    virtual void Print(LogLevel p_level, std::string_view p_message) override;
+};
+
 class CompositeLogger : public ILogger, public Singleton<CompositeLogger> {
 public:
     enum {
