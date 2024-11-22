@@ -17,6 +17,7 @@ struct D3d11PipelineState : public PipelineState {
 
     Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
+    Microsoft::WRL::ComPtr<ID3D11BlendState> blendState;
 };
 
 class D3d11PipelineStateManager : public PipelineStateManager {
@@ -24,11 +25,12 @@ public:
     D3d11PipelineStateManager();
 
 protected:
-    std::shared_ptr<PipelineState> CreateGraphicsPipeline(const PipelineStateDesc& p_desc) final;
-    std::shared_ptr<PipelineState> CreateComputePipeline(const PipelineStateDesc& p_desc) final;
+    auto CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> final;
+    auto CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> final;
 
     std::unordered_map<const RasterizerDesc*, Microsoft::WRL::ComPtr<ID3D11RasterizerState>> m_rasterizerStates;
     std::unordered_map<const DepthStencilDesc*, Microsoft::WRL::ComPtr<ID3D11DepthStencilState>> m_depthStencilStates;
+    std::unordered_map<const BlendDesc*, Microsoft::WRL::ComPtr<ID3D11BlendState>> m_blendStates;
 
 private:
     std::vector<D3D_SHADER_MACRO> m_defines;

@@ -17,8 +17,8 @@ public:
     D3d12PipelineStateManager();
 
 protected:
-    std::shared_ptr<PipelineState> CreateGraphicsPipeline(const PipelineStateDesc& p_desc) final;
-    std::shared_ptr<PipelineState> CreateComputePipeline(const PipelineStateDesc& p_desc) final;
+    auto CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> final;
+    auto CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> final;
 
 private:
     std::vector<D3D_SHADER_MACRO> m_defines;

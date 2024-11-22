@@ -8,7 +8,7 @@ class PipelineStateManager {
 public:
     virtual ~PipelineStateManager() = default;
 
-    bool Initialize();
+    auto Initialize() -> std::expected<void, Error<ErrorCode>>;
     void Finalize();
 
     PipelineState* Find(PipelineStateName p_name);
@@ -17,13 +17,13 @@ public:
     static const BlendDesc& GetBlendDescDisable();
 
 protected:
-    virtual std::shared_ptr<PipelineState> CreateGraphicsPipeline(const PipelineStateDesc& p_desc) = 0;
-    virtual std::shared_ptr<PipelineState> CreateComputePipeline(const PipelineStateDesc& p_desc) = 0;
+    virtual auto CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> = 0;
+    virtual auto CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> = 0;
 
 private:
-    bool Create(PipelineStateName p_name, const PipelineStateDesc& p_desc);
+    auto Create(PipelineStateName p_name, const PipelineStateDesc& p_desc) -> std::expected<void, Error<ErrorCode>>;
 
-    std::array<std::shared_ptr<PipelineState>, PSO_MAX> m_cache;
+    std::array<std::shared_ptr<PipelineState>, PSO_NAME_MAX> m_cache;
 };
 
 }  // namespace my

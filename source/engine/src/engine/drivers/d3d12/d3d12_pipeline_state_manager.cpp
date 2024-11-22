@@ -15,7 +15,7 @@ D3d12PipelineStateManager::D3d12PipelineStateManager() {
     m_defines.push_back({ nullptr, nullptr });
 }
 
-std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) {
+auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
@@ -40,7 +40,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateComputePipeline(
     return pipeline_state;
 }
 
-std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) {
+auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
@@ -104,16 +104,7 @@ std::shared_ptr<PipelineState> D3d12PipelineStateManager::CreateGraphicsPipeline
     rasterizer_desc.MultisampleEnable = p_desc.rasterizerDesc->multisampleEnable;
     rasterizer_desc.AntialiasedLineEnable = p_desc.rasterizerDesc->antialiasedLineEnable;
 
-    D3D12_DEPTH_STENCIL_DESC depth_stencil_desc{};
-    depth_stencil_desc.DepthEnable = p_desc.depthStencilDesc->depthEnabled;
-    depth_stencil_desc.DepthFunc = d3d::Convert(p_desc.depthStencilDesc->depthFunc);
-    depth_stencil_desc.StencilEnable = p_desc.depthStencilDesc->stencilEnabled;
-    depth_stencil_desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-
-    depth_stencil_desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
-    depth_stencil_desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-    depth_stencil_desc.FrontFace = d3d::Convert(&p_desc.depthStencilDesc->frontFace);
-    depth_stencil_desc.BackFace = d3d::Convert(&p_desc.depthStencilDesc->backFace);
+    D3D12_DEPTH_STENCIL_DESC depth_stencil_desc = d3d::Convert(p_desc.depthStencilDesc);
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
     pso_desc.pRootSignature = graphics_manager->GetRootSignature();

@@ -23,6 +23,9 @@
 #ifdef max
 #undef max
 #endif
+#ifdef GetMessage
+#undef GetMessage
+#endif
 
 namespace my {
 
@@ -81,7 +84,8 @@ bool GraphicsManager::Initialize() {
 
     DEV_ASSERT(m_pipelineStateManager);
 
-    if (!m_pipelineStateManager->Initialize()) {
+    if (auto res = m_pipelineStateManager->Initialize(); !res) {
+        LOG_ERROR("{}", res.error().GetMessage());
         return false;
     }
 

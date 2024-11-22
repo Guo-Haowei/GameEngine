@@ -109,9 +109,11 @@ int Application::Run(int p_argc, const char** p_argv) {
         if (!module->Initialize()) {
             LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
             // @TODO: refactor this part
+#if USING(PLATFORM_APPLE)
             thread::RequestShutdown();
             jobsystem::Finalize();
             thread::Finailize();
+#endif
             return 1;
         }
         LOG("module '{}' initialized\n", module->GetName());

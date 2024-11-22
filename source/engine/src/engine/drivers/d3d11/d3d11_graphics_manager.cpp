@@ -73,7 +73,6 @@ void D3d11GraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p
     unused(p_desc);
     unused(p_factor);
     unused(p_mask);
-    CRASH_NOW();
 }
 
 void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
@@ -679,24 +678,28 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     DEV_ASSERT(pipeline);
     if (pipeline->computeShader) {
         m_deviceContext->CSSetShader(pipeline->computeShader.Get(), nullptr, 0);
-    } else {
-        if (pipeline->vertexShader) {
-            m_deviceContext->VSSetShader(pipeline->vertexShader.Get(), 0, 0);
-            m_deviceContext->IASetInputLayout(pipeline->inputLayout.Get());
-        }
-        if (pipeline->pixelShader) {
-            m_deviceContext->PSSetShader(pipeline->pixelShader.Get(), 0, 0);
-        }
+        return;
+    }
 
-        if (pipeline->rasterizerState.Get() != m_stateCache.rasterizer) {
-            m_deviceContext->RSSetState(pipeline->rasterizerState.Get());
-            m_stateCache.rasterizer = pipeline->rasterizerState.Get();
-        }
-
-        if (pipeline->depthStencilState.Get() != m_stateCache.depthStencil) {
-            m_deviceContext->OMSetDepthStencilState(pipeline->depthStencilState.Get(), 0);
-            m_stateCache.depthStencil = pipeline->depthStencilState.Get();
-        }
+    if (pipeline->vertexShader) {
+        m_deviceContext->VSSetShader(pipeline->vertexShader.Get(), 0, 0);
+        m_deviceContext->IASetInputLayout(pipeline->inputLayout.Get());
+    }
+    if (pipeline->pixelShader) {
+        m_deviceContext->PSSetShader(pipeline->pixelShader.Get(), 0, 0);
+    }
+    if (pipeline->rasterizerState.Get() != m_stateCache.rasterizer) {
+        m_deviceContext->RSSetState(pipeline->rasterizerState.Get());
+        m_stateCache.rasterizer = pipeline->rasterizerState.Get();
+    }
+    if (pipeline->depthStencilState.Get() != m_stateCache.depthStencil) {
+        m_deviceContext->OMSetDepthStencilState(pipeline->depthStencilState.Get(), 0);
+        m_stateCache.depthStencil = pipeline->depthStencilState.Get();
+    }
+    if (pipeline->blendState.Get() != m_stateCache.blendState) {
+        // @TODO: remove hard code mask
+        m_deviceContext->OMSetBlendState(pipeline->blendState.Get(), nullptr, 0xFFFFFFFF);
+        m_stateCache.blendState = pipeline->blendState.Get();
     }
 }
 

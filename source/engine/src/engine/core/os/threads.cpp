@@ -76,8 +76,10 @@ bool Initialize() {
 
 void Finailize() {
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
-        auto& thread = s_threadGlob.threads[id];
-        thread.threadObject.join();
+        auto& thread = s_threadGlob.threads[id].threadObject;
+        if (thread.joinable()) {
+            thread.join();
+        }
     }
 }
 

@@ -47,6 +47,7 @@ using D3D_TEXTURE_ADDRESS_MODE = D3D_(TEXTURE_ADDRESS_MODE);
 using D3D_STENCIL_OP = D3D_(STENCIL_OP);
 using D3D_DEPTH_STENCILOP_DESC = D3D_(DEPTH_STENCILOP_DESC);
 using D3D_BLEND_DESC = D3D_(BLEND_DESC);
+using D3D_DEPTH_STENCIL_DESC = D3D_(DEPTH_STENCIL_DESC);
 
 static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
@@ -217,6 +218,25 @@ static inline D3D_BLEND_DESC Convert(const BlendDesc* p_in) {
     }
     return desc;
 }
+
+static inline D3D_DEPTH_STENCIL_DESC Convert(const DepthStencilDesc* p_in) {
+    if (!p_in) {
+        CRASH_NOW_MSG("TODO: default");
+    }
+
+    D3D_DEPTH_STENCIL_DESC desc{};
+    desc.DepthEnable = p_in->depthEnabled;
+    desc.DepthFunc = d3d::Convert(p_in->depthFunc);
+    desc.DepthWriteMask = D3D_(DEPTH_WRITE_MASK_ALL);
+    desc.StencilEnable = p_in->stencilEnabled;
+    desc.StencilWriteMask = p_in->stencilWriteMask;
+    desc.StencilReadMask = p_in->stencilReadMask;
+
+    desc.FrontFace = d3d::Convert(&p_in->frontFace);
+    desc.BackFace = d3d::Convert(&p_in->backFace);
+    return desc;
+}
+
 #if defined(INCLUDE_AS_D3D11)
 static inline D3D11_USAGE Convert(BufferUsage p_usage) {
     switch (p_usage) {

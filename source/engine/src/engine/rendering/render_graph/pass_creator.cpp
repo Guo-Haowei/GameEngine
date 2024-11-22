@@ -314,7 +314,7 @@ static void VoxelizationPassFunc(const DrawPass*) {
 
     gm.SetViewport(Viewport(voxel_size, voxel_size));
     gm.SetPipelineState(PSO_VOXELIZATION);
-    gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0);
+    gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
 
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
@@ -334,7 +334,7 @@ static void VoxelizationPassFunc(const DrawPass*) {
     }
 
     // glSubpixelPrecisionBiasNV(0, 0);
-    gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0);
+    gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
 
     // post process
     gm.SetPipelineState(PSO_VOXELIZATION_POST);

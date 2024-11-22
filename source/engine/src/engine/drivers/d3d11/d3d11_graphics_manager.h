@@ -90,6 +90,7 @@ protected:
     struct {
         ID3D11RasterizerState* rasterizer = nullptr;
         ID3D11DepthStencilState* depthStencil = nullptr;
+        ID3D11BlendState* blendState = nullptr;
     } m_stateCache;
 };
 

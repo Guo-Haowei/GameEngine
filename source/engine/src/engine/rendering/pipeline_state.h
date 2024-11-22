@@ -89,35 +89,50 @@ struct PipelineState {
     const PipelineStateDesc desc;
 };
 
+#define PSO_NAME_LIST                    \
+    PSO_NAME(PSO_DPETH)                  \
+    PSO_NAME(PSO_POINT_SHADOW)           \
+    PSO_NAME(PSO_GBUFFER)                \
+    PSO_NAME(PSO_VOXELIZATION)           \
+    PSO_NAME(PSO_VOXELIZATION_PRE)       \
+    PSO_NAME(PSO_VOXELIZATION_POST)      \
+    PSO_NAME(PSO_HIGHLIGHT)              \
+    PSO_NAME(PSO_LIGHTING)               \
+    PSO_NAME(PSO_BLOOM_SETUP)            \
+    PSO_NAME(PSO_BLOOM_DOWNSAMPLE)       \
+    PSO_NAME(PSO_BLOOM_UPSAMPLE)         \
+    PSO_NAME(PSO_TONE)                   \
+    PSO_NAME(PSO_DEBUG_VOXEL)            \
+    PSO_NAME(PSO_ENV_SKYBOX_TO_CUBE_MAP) \
+    PSO_NAME(PSO_DIFFUSE_IRRADIANCE)     \
+    PSO_NAME(PSO_PREFILTER)              \
+    PSO_NAME(PSO_ENV_SKYBOX)             \
+    PSO_NAME(PSO_BRDF)                   \
+    PSO_NAME(PSO_BILLBOARD)              \
+    PSO_NAME(PSO_RW_TEXTURE_2D)          \
+    PSO_NAME(PSO_PARTICLE_INIT)          \
+    PSO_NAME(PSO_PARTICLE_KICKOFF)       \
+    PSO_NAME(PSO_PARTICLE_EMIT)          \
+    PSO_NAME(PSO_PARTICLE_SIM)           \
+    PSO_NAME(PSO_PARTICLE_RENDERING)
+
 enum PipelineStateName {
-    PSO_DPETH,
-    PSO_POINT_SHADOW,
-    PSO_GBUFFER,
-    PSO_VOXELIZATION,
-    PSO_VOXELIZATION_PRE,
-    PSO_VOXELIZATION_POST,
-    PSO_HIGHLIGHT,
-    PSO_LIGHTING,
-    PSO_BLOOM_SETUP,
-    PSO_BLOOM_DOWNSAMPLE,
-    PSO_BLOOM_UPSAMPLE,
-    PSO_TONE,
-    PSO_DEBUG_VOXEL,
-    PSO_ENV_SKYBOX_TO_CUBE_MAP,
-    PSO_DIFFUSE_IRRADIANCE,
-    PSO_PREFILTER,
-    PSO_ENV_SKYBOX,
-    PSO_BRDF,
-    PSO_BILLBOARD,
-    PSO_RW_TEXTURE_2D,
+#define PSO_NAME(ENUM) ENUM,
+    PSO_NAME_LIST
+#undef PSO_NAME
 
-    PSO_PARTICLE_INIT,
-    PSO_PARTICLE_KICKOFF,
-    PSO_PARTICLE_EMIT,
-    PSO_PARTICLE_SIM,
-    PSO_PARTICLE_RENDERING,
-
-    PSO_MAX,
+    PSO_NAME_MAX,
 };
+
+static inline const char* EnumToString(PipelineStateName p_name) {
+    DEV_ASSERT_INDEX(p_name, PipelineStateName::PSO_NAME_MAX);
+    static const char* s_table[] = {
+#define PSO_NAME(ENUM) #ENUM,
+        PSO_NAME_LIST
+#undef PSO_NAME
+    };
+    static_assert(array_length(s_table) == std::to_underlying(PipelineStateName::PSO_NAME_MAX));
+    return s_table[p_name];
+}
 
 }  // namespace my
