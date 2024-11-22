@@ -1,6 +1,6 @@
 #include "camera_controller.h"
 
-#include "core/input/input.h"
+#include "core/framework/input_manager.h"
 
 namespace my {
 
@@ -9,11 +9,11 @@ void CameraController::Move(float p_delta_time, Camera& p_camera) {
     // @TODO: get rid off the magic numbers
     auto translate_camera = [&]() {
         float move_speed = 10 * p_delta_time;
-        float dx = (float)(input::IsKeyDown(KEY_D) - input::IsKeyDown(KEY_A));
-        float dy = (float)(input::IsKeyDown(KEY_E) - input::IsKeyDown(KEY_Q));
-        float dz = (float)(input::IsKeyDown(KEY_W) - input::IsKeyDown(KEY_S));
+        float dx = (float)(InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_D) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_A));
+        float dy = (float)(InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_E) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_Q));
+        float dz = (float)(InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_W) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_S));
 
-        float scroll = input::GetWheel().y * 3.0f;
+        float scroll = InputManager::GetSingleton().GetWheel().y * 3.0f;
         if (glm::abs(scroll) > glm::abs(dz)) {
             dz = scroll;
         }
@@ -31,8 +31,8 @@ void CameraController::Move(float p_delta_time, Camera& p_camera) {
         float rotate_x = 0.0f;
         float rotate_y = 0.0f;
 
-        if (input::IsButtonDown(MOUSE_BUTTON_MIDDLE)) {
-            vec2 movement = input::MouseMove();
+        if (InputManager::GetSingleton().IsButtonDown(MOUSE_BUTTON_MIDDLE)) {
+            vec2 movement = InputManager::GetSingleton().MouseMove();
             movement = 20 * p_delta_time * movement;
             if (glm::abs(movement.x) > glm::abs(movement.y)) {
                 rotate_y = movement.x;
@@ -42,8 +42,8 @@ void CameraController::Move(float p_delta_time, Camera& p_camera) {
         } else {
             // keyboard
             float speed = 200 * p_delta_time;
-            rotate_y = speed * (input::IsKeyDown(KEY_RIGHT) - input::IsKeyDown(KEY_LEFT));
-            rotate_x = speed * (input::IsKeyDown(KEY_UP) - input::IsKeyDown(KEY_DOWN));
+            rotate_y = speed * (InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_RIGHT) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT));
+            rotate_x = speed * (InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_UP) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_DOWN));
         }
 
         // @TODO: DPI

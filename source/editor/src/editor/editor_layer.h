@@ -9,7 +9,16 @@
 
 namespace my {
 
-class EditorLayer : public Layer {
+enum class KeyCode : uint16_t;
+
+enum {
+    SHORT_CUT_SAVE_AS = 0,
+    SHORT_CUT_SAVE,
+    SHORT_CUT_UNDO,
+    SHORT_CUT_REDO,
+};
+
+class EditorLayer : public Layer, public EventListener {
 public:
     enum State {
         STATE_TRANSLATE,
@@ -19,7 +28,9 @@ public:
 
     EditorLayer();
 
-    void Attach() override {}
+    void Attach() override;
+    void Detach() override;
+
     void Update(float dt) override;
     void Render() override;
 
@@ -31,12 +42,17 @@ public:
     uint64_t GetDisplayedImage() const { return m_displayedImage; }
     void SetDisplayedImage(uint64_t p_image) { m_displayedImage = p_image; }
 
-    void BufferCommand(std::shared_ptr<ICommand>&& p_command);
+    void BufferCommand(std::shared_ptr<EditorCommandBase>&& p_command);
     void AddComponent(ComponentType p_type, ecs::Entity p_target);
     void AddEntity(EntityType p_type, ecs::Entity p_parent);
     void RemoveEntity(ecs::Entity p_target);
 
     UndoStack& GetUndoStack() { return m_undoStack; }
+
+    void EventReceived(std::shared_ptr<IEvent> p_event) override;
+
+    const auto& GetShortcuts() const { return m_shortcuts; }
+    bool AreKeysHandled() const { return m_keysHandled; }
 
 private:
     void DockSpace(Scene& p_scene);
@@ -51,9 +67,22 @@ private:
     State m_state{ STATE_TRANSLATE };
 
     uint64_t m_displayedImage = 0;
-    std::list<std::shared_ptr<ICommand>> m_commandBuffer;
+    std::list<std::shared_ptr<EditorCommandBase>> m_commandBuffer;
     UndoStack m_undoStack;
 
+    struct ShortcutDesc {
+        const char* name{ nullptr };
+        const char* shortcut{ nullptr };
+        std::function<void()> executeFunc{ nullptr };
+        std::function<bool()> enabledFunc{ nullptr };
+
+        std::vector<KeyCode> downKeys;
+    };
+
+    std::vector<ShortcutDesc> m_shortcuts;
+    bool m_keysHandled{ false };
+
+    // @TODO: refactor
     ImageHandle* m_playButtonImage{ nullptr };
     ImageHandle* m_pauseButtonImage{ nullptr };
 };

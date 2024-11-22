@@ -3,8 +3,9 @@
 #include <imgui/imgui_internal.h>
 
 #include "core/framework/asset_manager.h"
+#include "core/framework/input_manager.h"
 #include "core/framework/scene_manager.h"
-#include "core/input/input.h"
+#include "core/string/string_utils.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"
@@ -28,6 +29,75 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     m_playButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/play.png" });
     m_pauseButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/pause.png" });
 
+    m_shortcuts.resize(4);
+    m_shortcuts[SHORT_CUT_SAVE_AS] = {
+        "Save As..",
+        "Ctrl+Shift+S",
+        [&]() {
+            this->BufferCommand(std::make_shared<SaveProjectCommand>(true));
+        },
+    };
+    m_shortcuts[SHORT_CUT_SAVE] = {
+        "Save",
+        "Ctrl+S",
+        [&]() { this->BufferCommand(std::make_shared<SaveProjectCommand>(false)); },
+    };
+    m_shortcuts[SHORT_CUT_UNDO] = {
+        "Undo",
+        "Ctrl+Z",
+        [&]() { this->BufferCommand(std::make_shared<UndoViewerCommand>()); },
+        [&]() { return this->GetUndoStack().CanUndo(); },
+    };
+    m_shortcuts[SHORT_CUT_REDO] = {
+        "Redo",
+        "Ctrl+Y",
+        [&]() { this->BufferCommand(std::make_shared<RedoViewerCommand>()); },
+        [&]() { return this->GetUndoStack().CanRedo(); },
+    };
+
+    std::map<std::string_view, KeyCode> keyMapping = {
+        { "Ctrl", KeyCode::KEY_LEFT_CONTROL },
+        { "Shift", KeyCode::KEY_LEFT_SHIFT },
+        { "A", KeyCode::KEY_A },
+        { "B", KeyCode::KEY_B },
+        { "C", KeyCode::KEY_C },
+        { "D", KeyCode::KEY_D },
+        { "E", KeyCode::KEY_E },
+        { "F", KeyCode::KEY_F },
+        { "G", KeyCode::KEY_G },
+        { "H", KeyCode::KEY_H },
+        { "I", KeyCode::KEY_I },
+        { "J", KeyCode::KEY_J },
+        { "K", KeyCode::KEY_K },
+        { "L", KeyCode::KEY_L },
+        { "M", KeyCode::KEY_M },
+        { "N", KeyCode::KEY_N },
+        { "O", KeyCode::KEY_O },
+        { "P", KeyCode::KEY_P },
+        { "Q", KeyCode::KEY_Q },
+        { "R", KeyCode::KEY_R },
+        { "S", KeyCode::KEY_S },
+        { "T", KeyCode::KEY_T },
+        { "U", KeyCode::KEY_U },
+        { "V", KeyCode::KEY_V },
+        { "W", KeyCode::KEY_W },
+        { "X", KeyCode::KEY_X },
+        { "Y", KeyCode::KEY_Y },
+        { "Z", KeyCode::KEY_Z },
+    };
+
+    for (auto& shortcut : m_shortcuts) {
+        SplitIter split(shortcut.shortcut);
+        while (split.HasNext()) {
+            std::string_view sv = split.Split('+');
+            auto it = keyMapping.find(sv);
+            if (it == keyMapping.end()) {
+                CRASH_NOW();
+            }
+            shortcut.downKeys.push_back(it->second);
+        }
+    }
+
 #if 0
     const char* light_icons[] = {
         "@res://images/arealight.png",
@@ -39,6 +109,14 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         asset_manager.LoadImageSync(FilePath{ light_icons[i] });
     }
 #endif
+}
+
+void EditorLayer::Attach() {
+    m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
+}
+
+void EditorLayer::Detach() {
+    m_app->GetInputManager()->GetEventQueue().UnregisterListener(this);
 }
 
 void EditorLayer::AddPanel(std::shared_ptr<EditorItem> p_panel) {
@@ -145,9 +223,45 @@ void EditorLayer::Update(float) {
 }
 
 void EditorLayer::Render() {
+    m_keysHandled = false;
 }
 
-void EditorLayer::BufferCommand(std::shared_ptr<ICommand>&& p_command) {
+void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
+    // LOG_VERBOSE("LEFT_SHIFT {}, LEFT_CTRL {}, S_KEY {}",
+    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT_SHIFT),
+    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT_CONTROL),
+    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_S)
+    //     );
+
+    if (KeyPressEvent* e = dynamic_cast<KeyPressEvent*>(p_event.get()); e) {
+        for (auto shortcut : m_shortcuts) {
+            // if (shortcut.shortcut == std::string("Ctrl+Shift+S")) {
+            //     if (e->pressed == KeyCode::KEY_LEFT_SHIFT) {
+            //     }
+            // }
+            const auto& keys = shortcut.downKeys;
+            auto is_key_handled = [&]() {
+                if (e->pressed != keys.back()) {
+                    return false;
+                }
+                for (size_t i = 0; i < keys.size() - 1; ++i) {
+                    if (!e->keys[std::to_underlying(keys[i])]) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            if (is_key_handled()) {
+                shortcut.executeFunc();
+                m_keysHandled = true;
+                break;
+            }
+        }
+    }
+}
+
+void EditorLayer::BufferCommand(std::shared_ptr<EditorCommandBase>&& p_command) {
+    p_command->m_editor = this;
     m_commandBuffer.emplace_back(std::move(p_command));
 }
 
@@ -157,9 +271,9 @@ void EditorLayer::AddComponent(ComponentType p_type, ecs::Entity p_target) {
     BufferCommand(command);
 }
 
-void EditorLayer::AddEntity(EntityType p_name, ecs::Entity p_parent) {
-    auto command = std::make_shared<EditorCommandAddEntity>(p_name);
-    command->parent = p_parent;
+void EditorLayer::AddEntity(EntityType p_type, ecs::Entity p_parent) {
+    auto command = std::make_shared<EditorCommandAddEntity>(p_type);
+    command->m_parent = p_parent;
     BufferCommand(command);
 }
 
@@ -168,65 +282,15 @@ void EditorLayer::RemoveEntity(ecs::Entity p_target) {
     BufferCommand(command);
 }
 
-static std::string GenerateName(std::string_view p_name) {
-    static int s_counter = 0;
-    return std::format("{}-{}", p_name, ++s_counter);
-}
-
-void EditorLayer::FlushCommand(Scene& scene) {
+void EditorLayer::FlushCommand(Scene& p_scene) {
     while (!m_commandBuffer.empty()) {
         auto task = m_commandBuffer.front();
         m_commandBuffer.pop_front();
-        do {
-            if (auto undo_command = std::dynamic_pointer_cast<UndoCommand>(task); undo_command) {
-                m_undoStack.PushCommand(std::move(undo_command));
-                break;
-            }
-            if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
-                ecs::Entity id;
-                switch (add_command->entityType) {
-#define ENTITY_TYPE(ENUM, NAME, ...)                          \
-    case EntityType::ENUM: {                                  \
-        id = scene.Create##NAME##Entity(GenerateName(#NAME)); \
-    } break;
-                    ENTITY_TYPE_LIST
-#undef ENTITY_TYPE
-                    default:
-                        LOG_FATAL("Entity type {} not supported", static_cast<int>(add_command->entityType));
-                        break;
-                }
-
-                scene.AttachComponent(id, add_command->parent.IsValid() ? add_command->parent : scene.m_root);
-                SelectEntity(id);
-                SceneManager::GetSingleton().BumpRevision();
-                break;
-            }
-            if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {
-                DEV_ASSERT(command->target.IsValid());
-                switch (command->componentType) {
-                    case ComponentType::BOX_COLLIDER: {
-                        auto& collider = scene.Create<BoxColliderComponent>(command->target);
-                        collider.box = AABB::FromCenterSize(vec3(0), vec3(1));
-                    } break;
-                    case ComponentType::MESH_COLLIDER:
-                        scene.Create<MeshColliderComponent>(command->target);
-                        break;
-                    default:
-                        CRASH_NOW();
-                        break;
-                }
-                break;
-            }
-            if (auto command = dynamic_cast<EditorCommandRemoveEntity*>(task.get()); command) {
-                auto entity = command->target;
-                DEV_ASSERT(entity.IsValid());
-                scene.RemoveEntity(entity);
-                // if (scene.contains<TransformComponent>(entity)) {
-
-                //}
-                break;
-            }
-        } while (0);
+        if (auto undo_command = std::dynamic_pointer_cast<UndoCommand>(task); undo_command) {
+            m_undoStack.PushCommand(std::move(undo_command));
+            continue;
+        }
+        task->Execute(p_scene);
     }
 }
 

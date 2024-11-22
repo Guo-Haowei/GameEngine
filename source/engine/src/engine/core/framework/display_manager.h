@@ -3,9 +3,10 @@
 
 #include "core/base/singleton.h"
 #include "core/framework/module.h"
-#include "core/input/input_code.h"
 
 namespace my {
+
+enum class KeyCode : uint16_t;
 
 class DisplayManager : public Singleton<DisplayManager>, public Module {
 public:

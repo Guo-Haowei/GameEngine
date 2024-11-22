@@ -1,18 +1,8 @@
 #include "os.h"
 
 #include "core/io/file_access_unix.h"
-#include "core/io/std_logger.h"
 
 namespace my {
-
-void OS::Initialize() {
-    FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_RESOURCE);
-    FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
-    FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
-
-    AddLogger(std::make_shared<StdLogger>());
-    AddLogger(std::make_shared<DebugConsoleLogger>());
-}
 
 void OS::Finalize() {
 }

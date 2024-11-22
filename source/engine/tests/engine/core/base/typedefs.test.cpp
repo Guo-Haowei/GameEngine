@@ -19,7 +19,7 @@ TEST(on_scope_exit, test) {
     EXPECT_EQ(counter, 2);
 }
 
-enum TestEnum {
+enum TestEnum : uint8_t {
     TEST_ENUM_0 = BIT(0),
     TEST_ENUM_1 = BIT(1),
     TEST_ENUM_2 = BIT(2),

@@ -4,7 +4,7 @@ namespace my {
 
 class IncrementCommand : public UndoCommand {
 public:
-    IncrementCommand(int& p_ref, std::string& p_message) : UndoCommand(0), m_counter(p_ref), m_message(p_message) {
+    IncrementCommand(int& p_ref, std::string& p_message) : m_counter(p_ref), m_message(p_message) {
     }
 
     void Undo() override {

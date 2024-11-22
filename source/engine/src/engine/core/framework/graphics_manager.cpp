@@ -104,11 +104,11 @@ auto GraphicsManager::Initialize() -> Result<void> {
     return Result<void>();
 }
 
-void GraphicsManager::EventReceived(std::shared_ptr<Event> event) {
-    if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(event.get()); e) {
+void GraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
+    if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get()); e) {
         OnSceneChange(*e->GetScene());
     }
-    if (ResizeEvent* e = dynamic_cast<ResizeEvent*>(event.get()); e) {
+    if (ResizeEvent* e = dynamic_cast<ResizeEvent*>(p_event.get()); e) {
         OnWindowResize(e->GetWidth(), e->GetHeight());
     }
 }

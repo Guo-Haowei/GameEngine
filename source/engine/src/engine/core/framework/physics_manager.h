@@ -14,7 +14,7 @@ namespace my {
 
 class Scene;
 
-class PhysicsManager : public Singleton<PhysicsManager>, public Module, public EventListener {
+class PhysicsManager : public Module, public EventListener {
 public:
     PhysicsManager() : Module("PhysicsManager") {}
 
@@ -23,7 +23,7 @@ public:
 
     void Update(Scene& p_scene);
 
-    void EventReceived(std::shared_ptr<Event> p_event) override;
+    void EventReceived(std::shared_ptr<IEvent> p_event) override;
 
 protected:
     void CreateWorld(const Scene& p_scene);

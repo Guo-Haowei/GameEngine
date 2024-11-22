@@ -1,16 +1,15 @@
 #pragma once
-#include "command.h"
 
 namespace my {
 
-class UndoCommand : public ICommand {
+class UndoCommand {
 public:
-    UndoCommand(uint32_t p_type) : ICommand(p_type) {}
+    UndoCommand() {}
 
     virtual void Undo() = 0;
     virtual void Redo() = 0;
 
-    virtual bool MergeCommand(const ICommand*) { return false; }
+    virtual bool MergeCommand(const UndoCommand*) { return false; }
 };
 
 }  // namespace my

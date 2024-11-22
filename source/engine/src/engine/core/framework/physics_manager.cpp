@@ -18,7 +18,7 @@ void PhysicsManager::Finalize() {
     CleanWorld();
 }
 
-void PhysicsManager::EventReceived(std::shared_ptr<Event> p_event) {
+void PhysicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get());
     if (!e) {
         return;

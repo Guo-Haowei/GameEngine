@@ -3,17 +3,12 @@
 
 namespace my {
 
-class StdLogger : public ILogger {
+class Win32Logger : public ILogger {
 public:
     void Print(LogLevel p_level, std::string_view p_message) override;
 
 private:
     std::mutex m_consoleMutex;
-};
-
-class DebugConsoleLogger : public ILogger {
-public:
-    void Print(LogLevel p_level, std::string_view p_message) override;
 };
 
 }  // namespace my

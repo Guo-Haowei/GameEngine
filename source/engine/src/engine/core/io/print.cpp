@@ -1,6 +1,6 @@
 #include "print.h"
 
-#include "core/io/std_logger.h"
+#include "core/io/print.h"
 #include "core/os/os.h"
 #include "core/os/threads.h"
 
@@ -29,7 +29,7 @@ void LogImpl(LogLevel p_level, const std::string& p_message) {
         os->Print(p_level, message_with_detail);
     } else {
         StdLogger logger;
-        logger.Print(p_level, message_with_detail);
+        logger.Print(p_level, p_message);
     }
 }
 
