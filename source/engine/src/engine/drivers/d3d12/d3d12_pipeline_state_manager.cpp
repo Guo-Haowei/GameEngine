@@ -15,7 +15,7 @@ D3d12PipelineStateManager::D3d12PipelineStateManager() {
     m_defines.push_back({ nullptr, nullptr });
 }
 
-auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
+auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
@@ -39,7 +39,7 @@ auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p
     return pipeline_state;
 }
 
-auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
+auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);

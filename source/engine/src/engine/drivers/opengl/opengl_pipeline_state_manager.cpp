@@ -28,7 +28,7 @@ OpenGlPipelineState::~OpenGlPipelineState() {
     }
 }
 
-static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<std::string, ErrorRef> {
+static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::string> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
         return HBN_ERROR(ERR_CYCLIC_LINK, "circular includes in file '{}'!", p_path.string());
@@ -77,7 +77,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
     return result;
 }
 
-static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expected<GLuint, ErrorRef> {
+static auto CreateShader(std::string_view p_file, GLenum p_type) -> Result<GLuint> {
     std::string file{ p_file };
     file.append(".glsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
@@ -135,15 +135,15 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expecte
     return shader_id;
 }
 
-auto OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
+auto OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) -> Result<std::shared_ptr<PipelineState>> {
     return CreatePipelineImpl(p_desc);
 }
 
-auto OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
+auto OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) -> Result<std::shared_ptr<PipelineState>> {
     return CreatePipelineImpl(p_desc);
 }
 
-auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
+auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) -> Result<std::shared_ptr<PipelineState>> {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
@@ -163,7 +163,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
 
     switch (p_desc.type) {
         case PipelineStateType::GRAPHICS: {
-            std::expected<GLuint, ErrorRef> result(0);
+            Result<GLuint> result(0);
             do {
                 if (!p_desc.vs.empty()) {
                     result = create_shader_helper(p_desc.vs, GL_VERTEX_SHADER);

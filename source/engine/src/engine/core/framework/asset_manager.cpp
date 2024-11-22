@@ -59,7 +59,7 @@ public:
     }
 };
 
-bool AssetManager::Initialize() {
+auto AssetManager::Initialize() -> Result<void> {
 #if USING(USING_ASSIMP)
     Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
 #endif
@@ -71,7 +71,7 @@ bool AssetManager::Initialize() {
     Loader<Image>::RegisterLoader(".jpg", LoaderSTBI8::Create);
     Loader<Image>::RegisterLoader(".hdr", LoaderSTBI32::Create);
 
-    return true;
+    return Result<void>();
 }
 
 void AssetManager::Finalize() {

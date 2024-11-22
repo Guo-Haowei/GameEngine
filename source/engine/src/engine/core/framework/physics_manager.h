@@ -18,7 +18,7 @@ class PhysicsManager : public Singleton<PhysicsManager>, public Module, public E
 public:
     PhysicsManager() : Module("PhysicsManager") {}
 
-    bool Initialize() override;
+    auto Initialize() -> Result<void> override;
     void Finalize() override;
 
     void Update(Scene& p_scene);

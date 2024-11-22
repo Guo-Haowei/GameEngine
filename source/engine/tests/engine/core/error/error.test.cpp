@@ -6,8 +6,6 @@
 
 namespace my {
 
-using Result = std::expected<void, ErrorRef>;
-
 TEST(InternalError, constructor_no_string) {
     constexpr size_t LINE_NUMBER = __LINE__;
     auto err = HBN_ERROR(OK).error();
@@ -24,22 +22,22 @@ TEST(InternalError, constructor_with_format) {
     EXPECT_EQ(err->message, "(1=2=3)");
 }
 
-static Result DoStuffImpl() {
+static Result<void> DoStuffImpl() {
     return HBN_ERROR(ERR_BUG, "???");
 }
 
-static Result DoStuffWrapper() {
+static Result<void> DoStuffWrapper() {
     auto res = DoStuffImpl();
     return HBN_ERROR(res.error());
 }
 
-static Result MyFunc() {
+static Result<void> MyFunc() {
     auto res = DoStuffWrapper();
     return HBN_ERROR(res.error());
 }
 
 TEST(InternalError, error_stack_trace) {
-    auto lambda = []() -> Result {
+    auto lambda = []() -> Result<void> {
         auto res = MyFunc();
         if (!res) {
             return HBN_ERROR(res.error());

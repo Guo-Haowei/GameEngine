@@ -12,7 +12,7 @@ class SceneManager : public Singleton<SceneManager>, public Module {
 public:
     SceneManager() : Module("SceneManager") {}
 
-    bool Initialize() override;
+    auto Initialize() -> Result<void> override;
     void Finalize() override;
     void Update(float p_elapsedTime);
 

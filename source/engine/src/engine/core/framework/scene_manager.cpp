@@ -35,7 +35,7 @@ static void CreateEmptyScene(Scene* p_scene) {
     }
 }
 
-bool SceneManager::Initialize() {
+auto SceneManager::Initialize() -> Result<void> {
     // create an empty scene
     Scene* scene = new Scene;
     CreateEmptyScene(scene);
@@ -46,7 +46,7 @@ bool SceneManager::Initialize() {
         RequestScene(path);
     }
 
-    return true;
+    return Result<void>();
 }
 
 void SceneManager::Finalize() {}

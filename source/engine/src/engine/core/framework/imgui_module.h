@@ -7,7 +7,7 @@ class ImGuiModule : public Module {
 public:
     ImGuiModule() : Module("ImGuiModule") {}
 
-    bool Initialize() override;
+    auto Initialize() -> Result<void> override;
     void Finalize() override;
 
 protected:

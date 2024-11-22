@@ -16,7 +16,7 @@ D3d11PipelineStateManager::D3d11PipelineStateManager() {
     m_defines.push_back({ nullptr, nullptr });
 }
 
-auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
+auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
@@ -120,7 +120,7 @@ auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     return pipeline_state;
 }
 
-auto D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
+auto D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);

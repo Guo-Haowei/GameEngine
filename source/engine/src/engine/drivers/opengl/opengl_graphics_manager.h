@@ -53,7 +53,7 @@ public:
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) final;
 
 protected:
-    bool InitializeImpl() final;
+    auto InitializeImpl() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;

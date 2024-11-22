@@ -80,7 +80,7 @@ D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsMan
     m_pipelineStateManager = std::make_shared<D3d12PipelineStateManager>();
 }
 
-bool D3d12GraphicsManager::InitializeImpl() {
+auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
     bool ok = true;
 
     auto [w, h] = DisplayManager::GetSingleton().GetWindowSize();
@@ -115,7 +115,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
     ok = ok && CreateRootSignature();
 
     if (!ok) {
-        return false;
+        return HBN_ERROR(ERR_CANT_CREATE);
     }
 
     // Create debug buffer.
@@ -154,7 +154,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
     ImGui_ImplDX12_NewFrame();
 
     SelectRenderGraph();
-    return ok;
+    return Result<void>();
 }
 
 void D3d12GraphicsManager::Finalize() {

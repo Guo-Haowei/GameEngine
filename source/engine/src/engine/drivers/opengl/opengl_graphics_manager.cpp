@@ -65,10 +65,10 @@ OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphics
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 
-bool OpenGlGraphicsManager::InitializeImpl() {
+auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
-        return false;
+        return HBN_ERROR(ERR_CANT_CREATE);
     }
 
     LOG_VERBOSE("[opengl] renderer: {}", (const char*)glGetString(GL_RENDERER));
@@ -95,7 +95,7 @@ bool OpenGlGraphicsManager::InitializeImpl() {
 
     m_meshes.set_description("GPU-Mesh-Allocator");
 
-    return true;
+    return Result<void>();
 }
 
 void OpenGlGraphicsManager::Finalize() {

@@ -115,6 +115,9 @@ public:
 using Error = InternalError<ErrorCode>;
 using ErrorRef = std::shared_ptr<Error>;
 
+template<typename T>
+using Result = std::expected<T, ErrorRef>;
+
 #define HBN_ERROR(...) std::unexpected(ErrorRef(new ::my::Error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)))
 
 IStringBuilder& operator<<(IStringBuilder& p_stream, const ErrorRef& p_error);

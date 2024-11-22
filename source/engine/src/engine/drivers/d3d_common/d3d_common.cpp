@@ -43,7 +43,7 @@ public:
 
 auto CompileShader(std::string_view p_path,
                    const char* p_target,
-                   const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, ErrorRef> {
+                   const D3D_SHADER_MACRO* p_defines) -> Result<ComPtr<ID3DBlob>> {
     fs::path name = fs::path("source") / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / name;
     std::string fullpath_str = fullpath.string();

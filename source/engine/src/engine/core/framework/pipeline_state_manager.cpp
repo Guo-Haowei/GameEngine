@@ -110,7 +110,7 @@ PipelineState* PipelineStateManager::Find(PipelineStateName p_name) {
     return m_cache[p_name].get();
 }
 
-auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_desc) -> std::expected<void, ErrorRef> {
+auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_desc) -> Result<void> {
     if (p_desc.cs.empty()) {
         DEV_ASSERT(p_desc.depthStencilDesc);
     }
@@ -148,11 +148,11 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
     }
 
     m_cache[p_name] = pipeline;
-    return std::expected<void, ErrorRef>();
+    return Result<void>();
 }
 
-auto PipelineStateManager::Initialize() -> std::expected<void, ErrorRef> {
-    auto ok = std::expected<void, ErrorRef>();
+auto PipelineStateManager::Initialize() -> Result<void> {
+    auto ok = Result<void>();
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::METAL) {
         return ok;
     }

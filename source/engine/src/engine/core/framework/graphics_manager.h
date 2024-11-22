@@ -114,7 +114,7 @@ public:
           m_backend(p_backend),
           m_frameCount(p_frame_count) {}
 
-    bool Initialize() final;
+    auto Initialize() -> Result<void> final;
     void Update(Scene& p_scene);
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
@@ -194,7 +194,7 @@ public:
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
 protected:
-    virtual bool InitializeImpl() = 0;
+    virtual auto InitializeImpl() -> Result<void> = 0;
     virtual std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
     virtual void Render() = 0;

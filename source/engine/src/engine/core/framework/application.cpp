@@ -12,6 +12,7 @@
 #include "core/input/input.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
+#include "core/string/string_builder.h"
 #include "core/systems/job_system.h"
 #include "imgui/imgui.h"
 #include "rendering/graphics_dvars.h"
@@ -83,42 +84,7 @@ ErrorCode Application::SetupModules() {
     return OK;
 }
 
-int Application::Run(int p_argc, const char** p_argv) {
-    ErrorCode ret = OK;
-    SaveCommandLine(p_argc, p_argv);
-    m_os = std::make_shared<OS>();
-
-    // intialize
-    OS::GetSingleton().Initialize();
-
-    // dvars
-    RegisterCommonDvars();
-    renderer::register_rendering_dvars();
-    DynamicVariableManager::deserialize();
-    DynamicVariableManager::Parse(m_commandLine);
-
-    if ((ret = SetupModules()) != OK) {
-        return ret;
-    }
-
-    thread::Initialize();
-    jobsystem::Initialize();
-
-    for (Module* module : m_modules) {
-        LOG("module '{}' being initialized...", module->GetName());
-        if (!module->Initialize()) {
-            LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
-            // @TODO: refactor this part
-#if USING(PLATFORM_APPLE)
-            thread::RequestShutdown();
-            jobsystem::Finalize();
-            thread::Finailize();
-#endif
-            return 1;
-        }
-        LOG("module '{}' initialized\n", module->GetName());
-    }
-
+void Application::MainLoop() {
     InitLayers();
     for (auto& layer : m_layers) {
         layer->Attach();
@@ -190,11 +156,50 @@ int Application::Run(int p_argc, const char** p_argv) {
     DVAR_SET_IVEC2(window_resolution, w, h);
 
     m_layers.clear();
+}
+
+int Application::Run(int p_argc, const char** p_argv) {
+    ErrorCode ret = OK;
+    SaveCommandLine(p_argc, p_argv);
+    m_os = std::make_shared<OS>();
+
+    // intialize
+    OS::GetSingleton().Initialize();
+
+    // dvars
+    RegisterCommonDvars();
+    renderer::register_rendering_dvars();
+    DynamicVariableManager::deserialize();
+    DynamicVariableManager::Parse(m_commandLine);
+
+    if ((ret = SetupModules()) != OK) {
+        return ret;
+    }
+
+    thread::Initialize();
+    jobsystem::Initialize();
+
+    bool has_error = false;
+
+    for (Module* module : m_modules) {
+        LOG("module '{}' being initialized...", module->GetName());
+        if (auto res = module->Initialize(); !res) {
+            StringStreamBuilder builder;
+            builder << res.error();
+            LOG_ERROR("Error: failed to initialize module '{}', {}", module->GetName(), builder.ToString());
+
+            has_error = true;
+            break;
+        }
+        LOG("module '{}' initialized\n", module->GetName());
+    }
+
+    if (!has_error) {
+        MainLoop();
+    }
 
     // @TODO: move it to request shutdown
     thread::RequestShutdown();
-
-    // finalize
 
     for (int index = (int)m_modules.size() - 1; index >= 0; --index) {
         Module* module = m_modules[index];

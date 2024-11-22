@@ -4,7 +4,7 @@
 
 namespace my {
 
-auto Archive::OpenMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, ErrorRef> {
+auto Archive::OpenMode(const std::string& p_path, bool p_write_mode) -> Result<void> {
     m_path = p_path;
     m_isWriteMode = p_write_mode;
     if (m_isWriteMode) {
@@ -17,7 +17,7 @@ auto Archive::OpenMode(const std::string& p_path, bool p_write_mode) -> std::exp
     }
 
     m_file = *result;
-    return std::expected<void, ErrorRef>();
+    return Result<void>();
 }
 
 void Archive::Close() {

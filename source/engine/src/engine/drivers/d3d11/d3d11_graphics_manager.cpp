@@ -22,13 +22,16 @@ D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsMan
     m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
 
-bool D3d11GraphicsManager::InitializeImpl() {
+auto D3d11GraphicsManager::InitializeImpl() -> Result<void> {
     bool ok = true;
     ok = ok && CreateDevice();
     ok = ok && CreateSwapChain();
     ok = ok && CreateRenderTarget();
     ok = ok && InitSamplers();
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get());
+    if (!ok) {
+        return HBN_ERROR(ERR_CANT_CREATE);
+    }
 
     ImGui_ImplDX11_NewFrame();
 
@@ -38,7 +41,7 @@ bool D3d11GraphicsManager::InitializeImpl() {
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_meshes.set_description("GPU-Mesh-Allocator");
-    return ok;
+    return Result<void>();
 }
 
 void D3d11GraphicsManager::Finalize() {

@@ -59,7 +59,7 @@ public:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetD3dContext() { return m_deviceContext; }
 
 protected:
-    bool InitializeImpl() final;
+    auto InitializeImpl() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;

@@ -10,8 +10,8 @@ WARNING_POP()
 
 namespace my {
 
-bool PhysicsManager::Initialize() {
-    return true;
+auto PhysicsManager::Initialize() -> Result<void> {
+    return Result<void>();
 }
 
 void PhysicsManager::Finalize() {

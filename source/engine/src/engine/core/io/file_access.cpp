@@ -27,7 +27,7 @@ auto FileAccess::CreateForPath(const std::string& p_path) -> std::shared_ptr<Fil
 }
 
 auto FileAccess::Open(const std::string& p_path, ModeFlags p_mode_flags)
-    -> std::expected<std::shared_ptr<FileAccess>, ErrorRef> {
+    -> Result<std::shared_ptr<FileAccess>> {
     auto file_access = CreateForPath(p_path);
 
     ErrorCode err = file_access->OpenInternal(file_access->FixPath(p_path), p_mode_flags);

@@ -4,7 +4,6 @@
 #include "core/debugger/profiler.h"
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
-#include "core/string/string_builder.h"
 #if USING(PLATFORM_WINDOWS)
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d12/d3d12_graphics_manager.h"
@@ -54,7 +53,7 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
-bool GraphicsManager::Initialize() {
+auto GraphicsManager::Initialize() -> Result<void> {
     m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
 
     const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
@@ -63,8 +62,8 @@ bool GraphicsManager::Initialize() {
         m_frameContexts[i] = CreateFrameContext();
     }
 
-    if (!InitializeImpl()) {
-        return false;
+    if (auto res = InitializeImpl(); !res) {
+        return HBN_ERROR(res.error());
     }
 
     for (int i = 0; i < num_frames; ++i) {
@@ -86,11 +85,7 @@ bool GraphicsManager::Initialize() {
     DEV_ASSERT(m_pipelineStateManager);
 
     if (auto res = m_pipelineStateManager->Initialize(); !res) {
-        StringStreamBuilder builder;
-        builder << res.error();
-
-        LOG_ERROR("{}", builder.ToString());
-        return false;
+        return HBN_ERROR(res.error());
     }
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot) {
@@ -106,7 +101,7 @@ bool GraphicsManager::Initialize() {
     SRV_DEFINES
 #undef SRV
 
-    return true;
+    return Result<void>();
 }
 
 void GraphicsManager::EventReceived(std::shared_ptr<Event> event) {

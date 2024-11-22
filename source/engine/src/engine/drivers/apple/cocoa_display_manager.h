@@ -20,7 +20,7 @@ public:
     void Present() final;
 
 private:
-    bool InitializeWindow(const CreateInfo& p_info) final;
+    auto InitializeWindow(const CreateInfo& p_info) -> Result<void> final;
     void InitializeKeyMapping() final;
 
     std::shared_ptr<NSWindowWrapperImpl> m_impl;

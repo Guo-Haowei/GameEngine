@@ -32,7 +32,7 @@ class AssetManager : public Singleton<AssetManager>, public Module {
 public:
     AssetManager() : Module("AssetManager") {}
 
-    bool Initialize() override;
+    auto Initialize() -> Result<void> override;
     void Finalize() override;
 
     void LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success);
