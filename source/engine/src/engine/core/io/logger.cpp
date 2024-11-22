@@ -7,18 +7,12 @@ namespace my {
 void StdLogger::Print(LogLevel p_level, std::string_view p_message) {
     const char* tag = "";
     switch (p_level) {
-        case my::LOG_LEVEL_OK:
-            tag = "[OK   ]";
-            break;
-        case my::LOG_LEVEL_WARN:
-            tag = "[WARN ]";
-            break;
-        case my::LOG_LEVEL_ERROR:
-            tag = "[ERROR]";
-            break;
-        case my::LOG_LEVEL_FATAL:
-            tag = "[FATAL]";
-            break;
+#define LOG_LEVEL_COLOR(LEVEL, TAG, ANSI, WINCOLOR) \
+    case LEVEL:                                     \
+        tag = TAG;                                  \
+        break;
+        LOG_LEVEL_COLOR_LIST
+#undef LOG_LEVEL_COLOR
         default:
             break;
     }

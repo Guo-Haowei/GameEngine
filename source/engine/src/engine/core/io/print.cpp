@@ -1,5 +1,6 @@
 #include "print.h"
 
+#include "core/io/print.h"
 #include "core/os/os.h"
 #include "core/os/threads.h"
 
@@ -10,7 +11,8 @@ void PrintImpl(LogLevel p_level, const std::string& p_message) {
     if (os) [[likely]] {
         os->Print(p_level, p_message);
     } else {
-        fprintf(stdout, "%s", p_message.c_str());
+        StdLogger logger;
+        logger.Print(p_level, p_message);
     }
 }
 
@@ -26,7 +28,8 @@ void LogImpl(LogLevel p_level, const std::string& p_message) {
     if (os) [[likely]] {
         os->Print(p_level, message_with_detail);
     } else {
-        fprintf(stdout, "%s", p_message.c_str());
+        StdLogger logger;
+        logger.Print(p_level, p_message);
     }
 }
 

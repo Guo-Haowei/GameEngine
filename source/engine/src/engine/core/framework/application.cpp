@@ -201,12 +201,14 @@ int Application::Run(int p_argc, const char** p_argv) {
         LOG_VERBOSE("module '{}' finalized", module->GetName());
     }
 
-    // LOG_ERROR("This is an error");
-    // LOG_VERBOSE("This is a verbose log");
-    // LOG("This is a log");
-    // LOG_OK("This is an ok log");
-    // LOG_WARN("This is a warning");
-    // LOG_FATAL("This is a fatal error");
+#if 0
+    LOG_ERROR("This is an error");
+    LOG_VERBOSE("This is a verbose log");
+    LOG("This is a log");
+    LOG_OK("This is an ok log");
+    LOG_WARN("This is a warning");
+    LOG_FATAL("This is a fatal error");
+#endif
 
     jobsystem::Finalize();
     thread::Finailize();

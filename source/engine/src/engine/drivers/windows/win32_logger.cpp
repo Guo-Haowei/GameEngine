@@ -6,23 +6,15 @@
 namespace my {
 
 static WORD FindColorAttribute(LogLevel p_level) {
-    WORD color = FOREGROUND_INTENSITY;
     switch (p_level) {
-        case LOG_LEVEL_OK:
-            color |= FOREGROUND_GREEN;
-            break;
-        case LOG_LEVEL_WARN:
-            color |= FOREGROUND_RED | FOREGROUND_GREEN;
-            break;
-        case LOG_LEVEL_ERROR:
-            [[fallthrough]];
-        case LOG_LEVEL_FATAL:
-            color |= FOREGROUND_RED;
-            break;
+#define LOG_LEVEL_COLOR(LEVEL, TAG, ANSI, WINCOLOR) \
+    case LEVEL:                                     \
+        return WINCOLOR;
+        LOG_LEVEL_COLOR_LIST
+#undef LOG_LEVEL_COLOR
         default:
             return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     }
-    return color;
 }
 
 void Win32Logger::Print(LogLevel p_level, std::string_view p_message) {
