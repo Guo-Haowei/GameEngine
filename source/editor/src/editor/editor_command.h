@@ -50,41 +50,93 @@ enum class ComponentType : uint8_t {
     SPHERE_COLLIDER,
 };
 
-// @TODO: make editor UndoCommand and editor Command
-// struct EditorCommandBase {
-//    EditorLayer* m_editor{ nullptr };
-//};
-// @REMOVE DO from ICommand;
+class EditorCommandBase {
+public:
+    EditorCommandBase(CommandType p_type) : m_type(p_type) {}
 
-// @TODO: make proctected
-class EditorCommandAddEntity : public ICommand {
+    virtual void Execute(Scene& p_scene) = 0;
+
+protected:
+    EditorLayer* m_editor{ nullptr };
+    const CommandType m_type;
+
+    friend class EditorLayer;
+};
+
+class EditorUndoCommandBase : public EditorCommandBase, public UndoCommand {
+public:
+    EditorUndoCommandBase(CommandType p_type) : EditorCommandBase(p_type) {}
+
+    void Execute(Scene&) final { Redo(); }
+};
+
+class EditorCommandAddEntity : public EditorCommandBase {
 public:
     EditorCommandAddEntity(EntityType p_entity_type)
-        : ICommand(COMMAND_TYPE_ENTITY_CREATE), entityType(p_entity_type) {}
+        : EditorCommandBase(COMMAND_TYPE_ENTITY_CREATE), m_entityType(p_entity_type) {}
 
-    EntityType entityType;
-    ecs::Entity parent;
-    ecs::Entity entity;
+    virtual void Execute(Scene& p_scene) override;
+
+protected:
+    EntityType m_entityType;
+    ecs::Entity m_parent;
+    ecs::Entity m_entity;
+
+    friend class EditorLayer;
 };
 
-class EditorCommandAddComponent : public ICommand {
+class EditorCommandAddComponent : public EditorCommandBase {
 public:
     EditorCommandAddComponent(ComponentType p_component_type)
-        : ICommand(COMMAND_TYPE_COMPONENT_ADD), componentType(p_component_type) {}
+        : EditorCommandBase(COMMAND_TYPE_COMPONENT_ADD), m_componentType(p_component_type) {}
 
-    ComponentType componentType;
+    virtual void Execute(Scene& p_scene) override;
+
+protected:
+    ComponentType m_componentType;
     ecs::Entity target;
+
+    friend class EditorLayer;
 };
 
-class EditorCommandRemoveEntity : public ICommand {
+class EditorCommandRemoveEntity : public EditorCommandBase {
 public:
     EditorCommandRemoveEntity(ecs::Entity p_target)
-        : ICommand(COMMAND_TYPE_ENTITY_REMOVE), target(p_target) {}
+        : EditorCommandBase(COMMAND_TYPE_ENTITY_REMOVE), m_target(p_target) {}
 
-    ecs::Entity target;
+    virtual void Execute(Scene& p_scene) override;
+
+protected:
+    ecs::Entity m_target;
+
+    friend class EditorLayer;
 };
 
-class EntityTransformCommand : public UndoCommand {
+class SaveProjectCommand : public EditorCommandBase {
+public:
+    SaveProjectCommand(bool p_open_dialog) : EditorCommandBase(COMMAND_TYPE_SAVE_PROJECT), m_openDialog(p_open_dialog) {}
+
+    virtual void Execute(Scene& p_scene) override;
+
+protected:
+    bool m_openDialog;
+};
+
+class UndoViewerCommand : public EditorCommandBase {
+public:
+    UndoViewerCommand() : EditorCommandBase(COMMAND_TYPE_UNDO_VIEWER) {}
+
+    virtual void Execute(Scene& p_scene) override;
+};
+
+class RedoViewerCommand : public EditorCommandBase {
+public:
+    RedoViewerCommand() : EditorCommandBase(COMMAND_TYPE_REDO_VIEWER) {}
+
+    virtual void Execute(Scene& p_scene) override;
+};
+
+class EntityTransformCommand : public EditorUndoCommandBase {
 public:
     EntityTransformCommand(CommandType p_type,
                            Scene& p_scene,
@@ -95,7 +147,7 @@ public:
     void Undo() override;
     void Redo() override;
 
-    bool MergeCommand(const ICommand* p_command) override;
+    bool MergeCommand(const UndoCommand* p_command) override;
 
 protected:
     Scene& m_scene;
@@ -103,36 +155,6 @@ protected:
 
     mat4 m_before;
     mat4 m_after;
-};
-
-class SaveProjectCommand : public ICommand {
-public:
-    SaveProjectCommand(bool p_open_dialog) : ICommand(COMMAND_TYPE_SAVE_PROJECT), m_openDialog(p_open_dialog) {}
-
-    virtual void Redo() override;
-
-protected:
-    bool m_openDialog;
-};
-
-class UndoViewerCommand : public ICommand {
-public:
-    UndoViewerCommand(EditorLayer& p_editor) : ICommand(COMMAND_TYPE_UNDO_VIEWER), m_editor(p_editor) {}
-
-    virtual void Redo() override;
-
-protected:
-    EditorLayer& m_editor;
-};
-
-class RedoViewerCommand : public ICommand {
-public:
-    RedoViewerCommand(EditorLayer& p_editor) : ICommand(COMMAND_TYPE_REDO_VIEWER), m_editor(p_editor) {}
-
-    virtual void Redo() override;
-
-protected:
-    EditorLayer& m_editor;
 };
 
 }  // namespace my

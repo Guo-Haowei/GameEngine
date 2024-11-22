@@ -166,10 +166,10 @@ void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
                     BufferCommand(std::make_shared<SaveProjectCommand>(false));
                     break;
                 case KeyCode::KEY_Y:
-                    BufferCommand(std::make_shared<RedoViewerCommand>(*this));
+                    BufferCommand(std::make_shared<RedoViewerCommand>());
                     break;
                 case KeyCode::KEY_Z:
-                    BufferCommand(std::make_shared<UndoViewerCommand>(*this));
+                    BufferCommand(std::make_shared<UndoViewerCommand>());
                     break;
                 default:
                     break;
@@ -178,7 +178,8 @@ void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
     }
 }
 
-void EditorLayer::BufferCommand(std::shared_ptr<ICommand>&& p_command) {
+void EditorLayer::BufferCommand(std::shared_ptr<EditorCommandBase>&& p_command) {
+    p_command->m_editor = this;
     m_commandBuffer.emplace_back(std::move(p_command));
 }
 
@@ -188,9 +189,9 @@ void EditorLayer::AddComponent(ComponentType p_type, ecs::Entity p_target) {
     BufferCommand(command);
 }
 
-void EditorLayer::AddEntity(EntityType p_name, ecs::Entity p_parent) {
-    auto command = std::make_shared<EditorCommandAddEntity>(p_name);
-    command->parent = p_parent;
+void EditorLayer::AddEntity(EntityType p_type, ecs::Entity p_parent) {
+    auto command = std::make_shared<EditorCommandAddEntity>(p_type);
+    command->m_parent = p_parent;
     BufferCommand(command);
 }
 
@@ -199,71 +200,15 @@ void EditorLayer::RemoveEntity(ecs::Entity p_target) {
     BufferCommand(command);
 }
 
-static std::string GenerateName(std::string_view p_name) {
-    static int s_counter = 0;
-    return std::format("{}-{}", p_name, ++s_counter);
-}
-
-void EditorLayer::FlushCommand(Scene& scene) {
+void EditorLayer::FlushCommand(Scene& p_scene) {
     while (!m_commandBuffer.empty()) {
         auto task = m_commandBuffer.front();
         m_commandBuffer.pop_front();
-        do {
-            if (auto undo_command = std::dynamic_pointer_cast<UndoCommand>(task); undo_command) {
-                m_undoStack.PushCommand(std::move(undo_command));
-                break;
-            }
-            if (auto add_command = dynamic_cast<EditorCommandAddEntity*>(task.get()); add_command) {
-                ecs::Entity id;
-                switch (add_command->entityType) {
-#define ENTITY_TYPE(ENUM, NAME, ...)                          \
-    case EntityType::ENUM: {                                  \
-        id = scene.Create##NAME##Entity(GenerateName(#NAME)); \
-    } break;
-                    ENTITY_TYPE_LIST
-#undef ENTITY_TYPE
-                    default:
-                        LOG_FATAL("Entity type {} not supported", static_cast<int>(add_command->entityType));
-                        break;
-                }
-
-                scene.AttachComponent(id, add_command->parent.IsValid() ? add_command->parent : scene.m_root);
-                SelectEntity(id);
-                SceneManager::GetSingleton().BumpRevision();
-                break;
-            }
-            if (auto command = dynamic_cast<EditorCommandAddComponent*>(task.get()); command) {
-                DEV_ASSERT(command->target.IsValid());
-                switch (command->componentType) {
-                    case ComponentType::BOX_COLLIDER: {
-                        auto& collider = scene.Create<BoxColliderComponent>(command->target);
-                        collider.box = AABB::FromCenterSize(vec3(0), vec3(1));
-                    } break;
-                    case ComponentType::MESH_COLLIDER:
-                        scene.Create<MeshColliderComponent>(command->target);
-                        break;
-                    default:
-                        CRASH_NOW();
-                        break;
-                }
-                break;
-            }
-            if (auto command = dynamic_cast<EditorCommandRemoveEntity*>(task.get()); command) {
-                auto entity = command->target;
-                DEV_ASSERT(entity.IsValid());
-                scene.RemoveEntity(entity);
-                break;
-            }
-            switch (task->GetType()) {
-                case COMMAND_TYPE_SAVE_PROJECT:
-                case COMMAND_TYPE_REDO_VIEWER:
-                case COMMAND_TYPE_UNDO_VIEWER:
-                    task->Redo();
-                    break;
-                default:
-                    break;
-            }
-        } while (0);
+        if (auto undo_command = std::dynamic_pointer_cast<UndoCommand>(task); undo_command) {
+            m_undoStack.PushCommand(std::move(undo_command));
+            continue;
+        }
+        task->Execute(p_scene);
     }
 }
 

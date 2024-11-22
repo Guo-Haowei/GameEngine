@@ -33,7 +33,7 @@ public:
     uint64_t GetDisplayedImage() const { return m_displayedImage; }
     void SetDisplayedImage(uint64_t p_image) { m_displayedImage = p_image; }
 
-    void BufferCommand(std::shared_ptr<ICommand>&& p_command);
+    void BufferCommand(std::shared_ptr<EditorCommandBase>&& p_command);
     void AddComponent(ComponentType p_type, ecs::Entity p_target);
     void AddEntity(EntityType p_type, ecs::Entity p_parent);
     void RemoveEntity(ecs::Entity p_target);
@@ -55,7 +55,7 @@ private:
     State m_state{ STATE_TRANSLATE };
 
     uint64_t m_displayedImage = 0;
-    std::list<std::shared_ptr<ICommand>> m_commandBuffer;
+    std::list<std::shared_ptr<EditorCommandBase>> m_commandBuffer;
     UndoStack m_undoStack;
 
     ImageHandle* m_playButtonImage{ nullptr };

@@ -21,10 +21,10 @@ void MenuBar::Update(Scene&) {
         if (ImGui::BeginMenu("Edit")) {
             auto& undo_stack = m_editor.GetUndoStack();
             if (ImGui::MenuItem("Undo", "CTRL+Z", false, undo_stack.CanUndo())) {
-                m_editor.BufferCommand(std::make_shared<UndoViewerCommand>(m_editor));
+                m_editor.BufferCommand(std::make_shared<UndoViewerCommand>());
             }
             if (ImGui::MenuItem("Redo", "CTRL+Y", false, undo_stack.CanRedo())) {
-                m_editor.BufferCommand(std::make_shared<RedoViewerCommand>(m_editor));
+                m_editor.BufferCommand(std::make_shared<RedoViewerCommand>());
             }
             ImGui::Separator();
             if (ImGui::MenuItem("Cut", "CTRL+X")) {
