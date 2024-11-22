@@ -5,6 +5,7 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/input_manager.h"
 #include "core/framework/scene_manager.h"
+#include "core/string/string_utils.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"
@@ -28,6 +29,75 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     m_playButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/play.png" });
     m_pauseButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/pause.png" });
 
+    m_shortcuts.resize(4);
+    m_shortcuts[SHORT_CUT_SAVE_AS] = {
+        "Save As..",
+        "Ctrl+Shift+S",
+        [&]() {
+            this->BufferCommand(std::make_shared<SaveProjectCommand>(true));
+        },
+    };
+    m_shortcuts[SHORT_CUT_SAVE] = {
+        "Save",
+        "Ctrl+S",
+        [&]() { this->BufferCommand(std::make_shared<SaveProjectCommand>(false)); },
+    };
+    m_shortcuts[SHORT_CUT_UNDO] = {
+        "Undo",
+        "Ctrl+Z",
+        [&]() { this->BufferCommand(std::make_shared<UndoViewerCommand>()); },
+        [&]() { return this->GetUndoStack().CanUndo(); },
+    };
+    m_shortcuts[SHORT_CUT_REDO] = {
+        "Redo",
+        "Ctrl+Y",
+        [&]() { this->BufferCommand(std::make_shared<RedoViewerCommand>()); },
+        [&]() { return this->GetUndoStack().CanRedo(); },
+    };
+
+    std::map<std::string_view, KeyCode> keyMapping = {
+        { "Ctrl", KeyCode::KEY_LEFT_CONTROL },
+        { "Shift", KeyCode::KEY_LEFT_SHIFT },
+        { "A", KeyCode::KEY_A },
+        { "B", KeyCode::KEY_B },
+        { "C", KeyCode::KEY_C },
+        { "D", KeyCode::KEY_D },
+        { "E", KeyCode::KEY_E },
+        { "F", KeyCode::KEY_F },
+        { "G", KeyCode::KEY_G },
+        { "H", KeyCode::KEY_H },
+        { "I", KeyCode::KEY_I },
+        { "J", KeyCode::KEY_J },
+        { "K", KeyCode::KEY_K },
+        { "L", KeyCode::KEY_L },
+        { "M", KeyCode::KEY_M },
+        { "N", KeyCode::KEY_N },
+        { "O", KeyCode::KEY_O },
+        { "P", KeyCode::KEY_P },
+        { "Q", KeyCode::KEY_Q },
+        { "R", KeyCode::KEY_R },
+        { "S", KeyCode::KEY_S },
+        { "T", KeyCode::KEY_T },
+        { "U", KeyCode::KEY_U },
+        { "V", KeyCode::KEY_V },
+        { "W", KeyCode::KEY_W },
+        { "X", KeyCode::KEY_X },
+        { "Y", KeyCode::KEY_Y },
+        { "Z", KeyCode::KEY_Z },
+    };
+
+    for (auto& shortcut : m_shortcuts) {
+        SplitIter split(shortcut.shortcut);
+        while (split.HasNext()) {
+            std::string_view sv = split.Split('+');
+            auto it = keyMapping.find(sv);
+            if (it == keyMapping.end()) {
+                CRASH_NOW();
+            }
+            shortcut.downKeys.push_back(it->second);
+        }
+    }
+
 #if 0
     const char* light_icons[] = {
         "@res://images/arealight.png",
@@ -39,8 +109,6 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         asset_manager.LoadImageSync(FilePath{ light_icons[i] });
     }
 #endif
-
-    m_app;
 }
 
 void EditorLayer::Attach() {
@@ -155,24 +223,38 @@ void EditorLayer::Update(float) {
 }
 
 void EditorLayer::Render() {
+    m_keysHandled = false;
 }
 
 void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
+    // LOG_VERBOSE("LEFT_SHIFT {}, LEFT_CTRL {}, S_KEY {}",
+    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT_SHIFT),
+    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT_CONTROL),
+    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_S)
+    //     );
+
     if (KeyPressEvent* e = dynamic_cast<KeyPressEvent*>(p_event.get()); e) {
-        // @TODO: key mapping
-        if (e->keys[std::to_underlying(KeyCode::KEY_LEFT_CONTROL)]) {
-            switch (e->pressed) {
-                case KeyCode::KEY_S:
-                    BufferCommand(std::make_shared<SaveProjectCommand>(false));
-                    break;
-                case KeyCode::KEY_Y:
-                    BufferCommand(std::make_shared<RedoViewerCommand>());
-                    break;
-                case KeyCode::KEY_Z:
-                    BufferCommand(std::make_shared<UndoViewerCommand>());
-                    break;
-                default:
-                    break;
+        for (auto shortcut : m_shortcuts) {
+            // if (shortcut.shortcut == std::string("Ctrl+Shift+S")) {
+            //     if (e->pressed == KeyCode::KEY_LEFT_SHIFT) {
+            //     }
+            // }
+            const auto& keys = shortcut.downKeys;
+            auto is_key_handled = [&]() {
+                if (e->pressed != keys.back()) {
+                    return false;
+                }
+                for (size_t i = 0; i < keys.size() - 1; ++i) {
+                    if (!e->keys[std::to_underlying(keys[i])]) {
+                        return false;
+                    }
+                }
+                return true;
+            };
+            if (is_key_handled()) {
+                shortcut.executeFunc();
+                m_keysHandled = true;
+                break;
             }
         }
     }

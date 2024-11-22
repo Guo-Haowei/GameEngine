@@ -7,31 +7,31 @@
 namespace my {
 
 void MenuBar::Update(Scene&) {
+    const auto& shortcuts = m_editor.GetShortcuts();
+    auto build_menu_item = [&](int p_index) {
+        const auto& it = shortcuts[p_index];
+        const bool enabled = it.enabledFunc ? it.enabledFunc() : true;
+        if (ImGui::MenuItem(it.name, it.shortcut, false, enabled)) {
+            it.executeFunc();
+        }
+    };
+
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("Save", "Ctrl+S")) {
-                m_editor.BufferCommand(std::make_shared<SaveProjectCommand>(false));
-            }
-            if (ImGui::MenuItem("Save As..")) {
-                m_editor.BufferCommand(std::make_shared<SaveProjectCommand>(true));
-            }
+            build_menu_item(SHORT_CUT_SAVE);
+            build_menu_item(SHORT_CUT_SAVE_AS);
             ImGui::EndMenu();
         }
         ImGui::Separator();
         if (ImGui::BeginMenu("Edit")) {
-            auto& undo_stack = m_editor.GetUndoStack();
-            if (ImGui::MenuItem("Undo", "CTRL+Z", false, undo_stack.CanUndo())) {
-                m_editor.BufferCommand(std::make_shared<UndoViewerCommand>());
-            }
-            if (ImGui::MenuItem("Redo", "CTRL+Y", false, undo_stack.CanRedo())) {
-                m_editor.BufferCommand(std::make_shared<RedoViewerCommand>());
-            }
+            build_menu_item(SHORT_CUT_UNDO);
+            build_menu_item(SHORT_CUT_REDO);
             ImGui::Separator();
-            if (ImGui::MenuItem("Cut", "CTRL+X")) {
+            if (ImGui::MenuItem("Cut", "Ctrl+X")) {
             }
-            if (ImGui::MenuItem("copy", "CTRL+C")) {
+            if (ImGui::MenuItem("Copy", "Ctrl+C")) {
             }
-            if (ImGui::MenuItem("Paste", "CTRL+V")) {
+            if (ImGui::MenuItem("Paste", "Ctrl+V")) {
             }
             ImGui::EndMenu();
         }

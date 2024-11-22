@@ -106,10 +106,10 @@ void Application::MainLoop() {
             continue;
         }
 
+        m_inputManager->GetEventQueue().FlushEvents();
+
         // to avoid empty renderer crash
         ImGui::NewFrame();
-
-        m_inputManager->GetEventQueue().FlushEvents();
 
         for (auto& layer : m_layers) {
             layer->Update(dt);

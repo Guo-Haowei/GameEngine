@@ -23,7 +23,12 @@ public:
 
     EventQueue& GetEventQueue() { return m_eventQueue; }
 
+    AssetManager* GetAssetManager() { return m_assetManager.get(); }
     InputManager* GetInputManager() { return m_inputManager.get(); }
+    SceneManager* GetSceneManager() { return m_sceneManager.get(); }
+    PhysicsManager* GetPhysicsManager() { return m_physicsManager.get(); }
+    DisplayManager* GetDisplayServer() { return m_displayServer.get(); }
+    GraphicsManager* GetGraphicsManager() { return m_graphicsManager.get(); }
 
 protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);

@@ -102,10 +102,10 @@ void GlfwDisplayManager::MouseButtonCallback(GLFWwindow* p_window,
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
-        if (p_action == GLFW_PRESS) {
-            InputManager::GetSingleton().SetButton(p_button, true);
-        } else if (p_action == GLFW_RELEASE) {
+        if (p_action == GLFW_RELEASE) {
             InputManager::GetSingleton().SetButton(p_button, false);
+        } else {
+            InputManager::GetSingleton().SetButton(p_button, true);
         }
     }
 }

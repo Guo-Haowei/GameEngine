@@ -201,14 +201,14 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     UpdateData();
 
-    if (m_focused) {
+    if (m_focused && !m_editor.AreKeysHandled()) {
         m_cameraController.Move(p_scene.m_elapsedTime, camera);
     }
 
     SelectEntity(p_scene, camera);
 
     // Update state
-    if (m_editor.GetSelectedEntity().IsValid()) {
+    if (m_editor.GetSelectedEntity().IsValid() && !m_editor.AreKeysHandled()) {
         if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_Z)) {
             m_editor.SetState(EditorLayer::STATE_TRANSLATE);
         } else if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_X)) {

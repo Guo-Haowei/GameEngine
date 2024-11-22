@@ -25,8 +25,10 @@ void EventQueue::RegisterListener(EventListener* p_listener) {
 }
 
 void EventQueue::UnregisterListener(EventListener* p_listener) {
-    unused(p_listener);
-    LOG_WARN("Implement EventQueue::UnregisterListener()");
+    auto it = std::find(m_listeners.begin(), m_listeners.end(), p_listener);
+    if (it != m_listeners.end()) {
+        m_listeners.erase(it);
+    }
 }
 
 }  // namespace my

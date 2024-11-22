@@ -11,20 +11,6 @@ void InputManager::Finalize() {
 }
 
 void InputManager::BeginFrame() {
-    for (size_t i = 0; i < m_keys.size(); ++i) {
-        const bool lastFrame = m_prevKeys[i];
-        const bool currentFrame = m_keys[i];
-        if (lastFrame != currentFrame) {
-            if (currentFrame) {
-                auto e = std::make_shared<KeyPressEvent>();
-                e->keys = m_keys;
-                e->pressed = static_cast<KeyCode>(i);
-                m_inputEventQueue.EnqueueEvent(e);
-            } else {
-                // @TODO: release event
-            }
-        }
-    }
 }
 
 void InputManager::EndFrame() {
@@ -85,6 +71,13 @@ void InputManager::SetKey(KeyCode p_key, bool p_pressed) {
     ERR_FAIL_INDEX(p_key, KeyCode::COUNT);
     const auto index = std::to_underlying(p_key);
     m_keys[index] = p_pressed;
+
+    if (p_pressed && !m_prevKeys[index]) {
+        auto e = std::make_shared<KeyPressEvent>();
+        e->keys = m_keys;
+        e->pressed = static_cast<KeyCode>(p_key);
+        m_inputEventQueue.EnqueueEvent(e);
+    }
 }
 
 void InputManager::SetCursor(float p_x, float p_y) {

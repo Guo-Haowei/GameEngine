@@ -167,17 +167,17 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
             InputManager::GetSingleton().SetCursor(static_cast<float>(x), static_cast<float>(y));
         } break;
         case WM_KEYDOWN: {
-            int key_code = LOWORD(p_wparam);
-            auto it = m_keyMapping.find(key_code);
+            const int key = LOWORD(p_wparam);
+            auto it = m_keyMapping.find(key);
             if (it != m_keyMapping.end()) {
                 InputManager::GetSingleton().SetKey(it->second, true);
             } else {
-                LOG_WARN("key {} not mapped", key_code);
+                LOG_WARN("key {} not mapped", key);
             }
         } break;
         case WM_KEYUP: {
-            int key_code = LOWORD(p_wparam);
-            auto it = m_keyMapping.find(key_code);
+            int key = LOWORD(p_wparam);
+            auto it = m_keyMapping.find(key);
             if (it != m_keyMapping.end()) {
                 InputManager::GetSingleton().SetKey(it->second, false);
             }
@@ -197,6 +197,17 @@ void Win32DisplayManager::InitializeKeyMapping() {
     m_keyMapping[VK_RIGHT] = KeyCode::KEY_RIGHT;
     m_keyMapping[VK_UP] = KeyCode::KEY_UP;
     m_keyMapping[VK_DOWN] = KeyCode::KEY_DOWN;
+    m_keyMapping[VK_LSHIFT] = KeyCode::KEY_LEFT_SHIFT;
+    m_keyMapping[VK_LCONTROL] = KeyCode::KEY_LEFT_CONTROL;
+    m_keyMapping[VK_RSHIFT] = KeyCode::KEY_RIGHT_SHIFT;
+    m_keyMapping[VK_RCONTROL] = KeyCode::KEY_RIGHT_CONTROL;
+    m_keyMapping[VK_SHIFT] = KeyCode::KEY_LEFT_SHIFT;
+    m_keyMapping[VK_CONTROL] = KeyCode::KEY_LEFT_CONTROL;
+
+    //    #define VK_LSHIFT
+    // #define VK_RSHIFT   0xA1
+    // #define VK_LCONTROL 0xA2
+    // #define VK_RCONTROL 0xA3
 
     for (char i = 0; i <= 9; ++i) {
         m_keyMapping['0' + i] = static_cast<KeyCode>((uint16_t)KeyCode::KEY_0 + i);

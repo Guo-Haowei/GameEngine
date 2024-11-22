@@ -14,7 +14,7 @@ namespace my {
 
 class Scene;
 
-class PhysicsManager : public Singleton<PhysicsManager>, public Module, public EventListener {
+class PhysicsManager : public Module, public EventListener {
 public:
     PhysicsManager() : Module("PhysicsManager") {}
 
