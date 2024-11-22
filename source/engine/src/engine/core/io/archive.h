@@ -74,7 +74,7 @@ public:
     bool Read(void* p_data, size_t p_size);
 
 private:
-    [[nodiscard]] auto OpenMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, Error<ErrorCode>>;
+    [[nodiscard]] auto OpenMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, ErrorRef>;
 
     Archive& WriteString(const char* p_data, size_t p_length);
 

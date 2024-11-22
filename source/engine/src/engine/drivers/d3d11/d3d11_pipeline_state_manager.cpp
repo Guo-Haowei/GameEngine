@@ -16,14 +16,12 @@ D3d11PipelineStateManager::D3d11PipelineStateManager() {
     m_defines.push_back({ nullptr, nullptr });
 }
 
-auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>>
-{
+auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
-
     if (!device) {
-        return nullptr;
+        return HBN_ERROR(ERR_INVALID_DATA);
     }
 
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);
@@ -33,8 +31,7 @@ auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     if (!p_desc.vs.empty()) {
         auto res = CompileShader(p_desc.vs, "vs_5_0", m_defines.data());
         if (!res) {
-            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
-            return nullptr;
+            return HBN_ERROR(res.error());
         }
 
         ComPtr<ID3DBlob> blob;
@@ -46,8 +43,7 @@ auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     if (!p_desc.ps.empty()) {
         auto res = CompileShader(p_desc.ps, "ps_5_0", m_defines.data());
         if (!res) {
-            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
-            return nullptr;
+            return HBN_ERROR(res.error());
         }
 
         ComPtr<ID3DBlob> blob;
@@ -124,27 +120,27 @@ auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     return pipeline_state;
 }
 
-auto D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> {
+auto D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
 
     if (!device) {
-        return nullptr;
+        return HBN_ERROR(ERR_INVALID_DATA);
     }
 
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);
 
     auto res = CompileShader(p_desc.cs, "cs_5_0", m_defines.data());
     if (!res) {
-        LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_desc.cs, res.error());
-        return nullptr;
+        return HBN_ERROR(res.error());
     }
 
     ComPtr<ID3DBlob> blob;
     blob = *res;
     HRESULT hr = device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->computeShader.GetAddressOf());
-    D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
+
+    D3D_FAIL_V_MSG(hr, HBN_ERROR(res.error()), "failed to create vertex buffer");
 
     return pipeline_state;
 }

@@ -15,7 +15,7 @@ D3d12PipelineStateManager::D3d12PipelineStateManager() {
     m_defines.push_back({ nullptr, nullptr });
 }
 
-auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> {
+auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
@@ -24,8 +24,7 @@ auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p
     if (!p_desc.cs.empty()) {
         auto res = CompileShader(p_desc.cs, "cs_5_1", m_defines.data());
         if (!res) {
-            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.cs, res.error());
-            return nullptr;
+            return HBN_ERROR(res.error());
         }
         cs_blob = *res;
     }
@@ -35,12 +34,12 @@ auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p
     pso_desc.CS = CD3DX12_SHADER_BYTECODE(cs_blob.Get());
 
     ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr())->GetDevice();
-    D3D_FAIL_V(device->CreateComputePipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), nullptr);
+    D3D_FAIL_V(device->CreateComputePipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), HBN_ERROR(ERR_CANT_CREATE));
 
     return pipeline_state;
 }
 
-auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> {
+auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
     auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
@@ -50,16 +49,14 @@ auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     if (!p_desc.vs.empty()) {
         auto res = CompileShader(p_desc.vs, "vs_5_1", m_defines.data());
         if (!res) {
-            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
-            return nullptr;
+            return HBN_ERROR(res.error());
         }
         vs_blob = *res;
     }
     if (!p_desc.ps.empty()) {
         auto res = CompileShader(p_desc.ps, "ps_5_1", m_defines.data());
         if (!res) {
-            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.ps, res.error());
-            return nullptr;
+            return HBN_ERROR(res.error());
         }
         ps_blob = *res;
     }

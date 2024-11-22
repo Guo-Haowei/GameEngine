@@ -110,12 +110,12 @@ PipelineState* PipelineStateManager::Find(PipelineStateName p_name) {
     return m_cache[p_name].get();
 }
 
-auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_desc) -> std::expected<void, Error<ErrorCode>> {
+auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateDesc& p_desc) -> std::expected<void, ErrorRef> {
     if (p_desc.cs.empty()) {
         DEV_ASSERT(p_desc.depthStencilDesc);
     }
 
-    ERR_FAIL_COND_V(m_cache[p_name] != nullptr, VCT_ERROR(ERR_ALREADY_EXISTS, "pipeline already exists"));
+    ERR_FAIL_COND_V(m_cache[p_name] != nullptr, HBN_ERROR(ERR_ALREADY_EXISTS, "pipeline already exists"));
 
     std::shared_ptr<PipelineState> pipeline{};
     switch (p_desc.type) {
@@ -126,7 +126,7 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
             DEV_ASSERT(p_desc.blendDesc);
             auto result = CreateGraphicsPipeline(p_desc);
             if (!result) {
-                return std::unexpected(result.error());
+                return HBN_ERROR(result.error());
             }
             pipeline = *result;
         } break;
@@ -134,7 +134,7 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
             DEV_ASSERT(!p_desc.cs.empty());
             auto result = CreateComputePipeline(p_desc);
             if (!result) {
-                return std::unexpected(result.error());
+                return HBN_ERROR(result.error());
             }
             pipeline = *result;
         } break;
@@ -144,15 +144,15 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
     }
 
     if (pipeline == nullptr) {
-        return VCT_ERROR(ERR_CANT_CREATE, "failed to create pipeline '{}'", EnumToString(p_name));
+        return HBN_ERROR(ERR_CANT_CREATE, "failed to create pipeline '{}'", EnumToString(p_name));
     }
 
     m_cache[p_name] = pipeline;
-    return std::expected<void, Error<ErrorCode>>();
+    return std::expected<void, ErrorRef>();
 }
 
-auto PipelineStateManager::Initialize() -> std::expected<void, Error<ErrorCode>> {
-    auto ok = std::expected<void, Error<ErrorCode>>();
+auto PipelineStateManager::Initialize() -> std::expected<void, ErrorRef> {
+    auto ok = std::expected<void, ErrorRef>();
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::METAL) {
         return ok;
     }

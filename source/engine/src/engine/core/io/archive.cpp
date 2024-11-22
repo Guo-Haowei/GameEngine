@@ -4,20 +4,20 @@
 
 namespace my {
 
-auto Archive::OpenMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, Error<ErrorCode>> {
+auto Archive::OpenMode(const std::string& p_path, bool p_write_mode) -> std::expected<void, ErrorRef> {
     m_path = p_path;
     m_isWriteMode = p_write_mode;
     if (m_isWriteMode) {
         m_path += ".tmp";
     }
 
-    auto res = FileAccess::Open(m_path, p_write_mode ? FileAccess::WRITE : FileAccess::READ);
-    if (!res) {
-        return std::unexpected(res.error());
+    auto result = FileAccess::Open(m_path, p_write_mode ? FileAccess::WRITE : FileAccess::READ);
+    if (!result) {
+        return HBN_ERROR(result.error());
     }
 
-    m_file = *res;
-    return std::expected<void, Error<ErrorCode>>();
+    m_file = *result;
+    return std::expected<void, ErrorRef>();
 }
 
 void Archive::Close() {

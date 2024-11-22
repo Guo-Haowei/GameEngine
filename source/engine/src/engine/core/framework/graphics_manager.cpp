@@ -4,6 +4,7 @@
 #include "core/debugger/profiler.h"
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
+#include "core/string/string_builder.h"
 #if USING(PLATFORM_WINDOWS)
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d12/d3d12_graphics_manager.h"
@@ -85,7 +86,10 @@ bool GraphicsManager::Initialize() {
     DEV_ASSERT(m_pipelineStateManager);
 
     if (auto res = m_pipelineStateManager->Initialize(); !res) {
-        LOG_ERROR("{}", res.error().GetMessage());
+        StringStreamBuilder builder;
+        builder << res.error();
+
+        LOG_ERROR("{}", builder.ToString());
         return false;
     }
 

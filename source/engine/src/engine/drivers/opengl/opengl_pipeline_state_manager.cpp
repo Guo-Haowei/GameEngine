@@ -28,20 +28,20 @@ OpenGlPipelineState::~OpenGlPipelineState() {
     }
 }
 
-static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<std::string, Error<ErrorCode>> {
+static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<std::string, ErrorRef> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
-        return VCT_ERROR(ERR_CYCLIC_LINK, "circular includes!");
+        return HBN_ERROR(ERR_CYCLIC_LINK, "circular includes in file '{}'!", p_path.string());
     }
 
     // @TODO [FilePath]: fix
     auto source_binary = AssetManager::GetSingleton().LoadFileSync(FilePath{ p_path.string() });
     if (!source_binary) {
-        return VCT_ERROR(ERR_FILE_CANT_READ, "failed to read file '{}'", p_path.string());
+        return HBN_ERROR(ERR_FILE_CANT_READ, "failed to read file '{}'", p_path.string());
     }
 
     if (source_binary->buffer.empty()) {
-        return VCT_ERROR(ERR_FILE_EOF, "file '{}' is empty", p_path.string());
+        return HBN_ERROR(ERR_FILE_EOF, "file '{}' is empty", p_path.string());
     }
 
     std::string source(source_binary->buffer.begin(), source_binary->buffer.end());
@@ -63,7 +63,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
 
             auto res = ProcessShader(new_path, p_depth + 1);
             if (!res) {
-                return std::unexpected(res.error());
+                return HBN_ERROR(res.error());
             }
 
             result.append(*res);
@@ -77,7 +77,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
     return result;
 }
 
-static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expected<GLuint, Error<ErrorCode>> {
+static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expected<GLuint, ErrorRef> {
     std::string file{ p_file };
     file.append(".glsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
@@ -88,11 +88,10 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expecte
         fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
     }
 
-    auto res = ProcessShader(fullpath, 0);
-    if (!res) {
-        //LOG_FATAL("Failed to create shader program '{}', reason: {}", p_file, res.error());
-        // @TODO: chain errors?
-        return std::unexpected(res.error());
+    auto result = ProcessShader(fullpath, 0);
+    if (!result) {
+        // LOG_FATAL("Failed to create shader program '{}', reason: {}", p_file, res.error());
+        return HBN_ERROR(result.error());
     }
 
     // @TODO: fix this
@@ -112,7 +111,7 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expecte
         // }
     }
 
-    fullsource.append(*res);
+    fullsource.append(*result);
     const char *sources[] = { fullsource.c_str() };
 
     GLuint shader_id = glCreateShader(p_type);
@@ -125,7 +124,7 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expecte
     if (length > 0) {
         std::vector<char> buffer(length + 1);
         glGetShaderInfoLog(shader_id, length, nullptr, buffer.data());
-        return VCT_ERROR(FAILURE, "[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
+        return HBN_ERROR(FAILURE, "[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
     }
 
     if (status == GL_FALSE) {
@@ -136,16 +135,15 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> std::expecte
     return shader_id;
 }
 
-auto OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> {
+auto OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
     return CreatePipelineImpl(p_desc);
 }
 
-auto OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>>
-{
+auto OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
     return CreatePipelineImpl(p_desc);
 }
 
-auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> {
+auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
@@ -165,7 +163,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
 
     switch (p_desc.type) {
         case PipelineStateType::GRAPHICS: {
-            std::expected<GLuint, Error<ErrorCode>> result(0);
+            std::expected<GLuint, ErrorRef> result(0);
             do {
                 if (!p_desc.vs.empty()) {
                     result = create_shader_helper(p_desc.vs, GL_VERTEX_SHADER);
@@ -181,14 +179,14 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
                 }
             } while (0);
             if (!result) {
-                return std::unexpected(result.error());
+                return HBN_ERROR(result.error());
             }
         } break;
         case PipelineStateType::COMPUTE: {
             DEV_ASSERT(!p_desc.cs.empty());
             auto result = create_shader_helper(p_desc.cs, GL_COMPUTE_SHADER);
             if (!result) {
-                return std::unexpected(result.error());
+                return HBN_ERROR(result.error());
             }
         } break;
         default:
@@ -210,7 +208,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
             LOG_WARN("[glsl] warning\ndetails:\n{}", buffer.data());
         } else {
             LOG_ERROR("[glsl] failed to link program\ndetails:\n{}", buffer.data());
-            return VCT_ERROR(ERR_CANT_CREATE);
+            return HBN_ERROR(ERR_CANT_CREATE);
         }
     }
 

@@ -6,14 +6,14 @@ namespace my {
 class EmptyPipelineStateManager : public PipelineStateManager {
 public:
 protected:
-    auto CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> override {
+    auto CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> override {
         unused(p_desc);
-        return VCT_ERROR(FAILURE);
+        return HBN_ERROR(FAILURE);
     }
 
-    auto CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, Error<ErrorCode>> override {
+    auto CreateComputePipeline(const PipelineStateDesc& p_desc) -> std::expected<std::shared_ptr<PipelineState>, ErrorRef> override {
         unused(p_desc);
-        return VCT_ERROR(FAILURE);
+        return HBN_ERROR(FAILURE);
     }
 };
 

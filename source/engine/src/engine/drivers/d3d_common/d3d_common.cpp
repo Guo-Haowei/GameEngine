@@ -43,8 +43,9 @@ public:
 
 auto CompileShader(std::string_view p_path,
                    const char* p_target,
-                   const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, std::string> {
-    fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
+                   const D3D_SHADER_MACRO* p_defines) -> std::expected<ComPtr<ID3DBlob>, ErrorRef> {
+    fs::path name = fs::path("source") / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
+    fs::path fullpath = fs::path{ ROOT_FOLDER } / name;
     std::string fullpath_str = fullpath.string();
 
     std::wstring path{ fullpath_str.begin(), fullpath_str.end() };
@@ -58,6 +59,10 @@ auto CompileShader(std::string_view p_path,
     flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
 
+    if (!fs::exists(fullpath_str)) {
+        return HBN_ERROR(ERR_FILE_NOT_FOUND, "file '{}' not found", name.string());
+    }
+
     HRESULT hr = D3DCompileFromFile(
         path.c_str(),
         p_defines,
@@ -70,11 +75,12 @@ auto CompileShader(std::string_view p_path,
         error.GetAddressOf());
 
     if (FAILED(hr)) {
+        std::string error_message = std::format("failed to compile shader '{}'", fullpath_str);
         if (error != nullptr) {
-            return std::unexpected(std::string((const char*)error->GetBufferPointer()));
-        } else {
-            return std::unexpected("Unkown error");
+            error_message.append(", details: ");
+            error_message.append((const char*)error->GetBufferPointer());
         }
+        return HBN_ERROR(ERR_CANT_CREATE, "{}", error_message);
     }
 
     return source;

@@ -121,7 +121,7 @@ enum PipelineStateName {
     PSO_NAME_LIST
 #undef PSO_NAME
 
-    PSO_NAME_MAX,
+        PSO_NAME_MAX,
 };
 
 static inline const char* EnumToString(PipelineStateName p_name) {
