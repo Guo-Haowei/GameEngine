@@ -17,4 +17,8 @@ protected:
     CompositeLogger m_logger;
 };
 
+bool IsAnsiSupported();
+
+bool EnableAnsi();
+
 }  // namespace my
