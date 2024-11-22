@@ -8,7 +8,6 @@
 #include "drivers/opengl/opengl_prerequisites.h"
 #include "drivers/opengl/opengl_resources.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
-#include "rendering/GpuTexture.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "vsinput.glsl.h"
@@ -21,11 +20,6 @@
 using namespace my;
 using my::rg::RenderGraph;
 using my::rg::RenderPass;
-
-/// textures
-// @TODO: time to refactor this!!
-OldTexture g_albedoVoxel;
-OldTexture g_normalVoxel;
 
 // @TODO: refactor
 OpenGlMeshBuffers* g_box;
@@ -71,10 +65,10 @@ OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphics
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 
-bool OpenGlGraphicsManager::InitializeImpl() {
+auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
-        return false;
+        return HBN_ERROR(ERR_CANT_CREATE);
     }
 
     LOG_VERBOSE("[opengl] renderer: {}", (const char*)glGetString(GL_RENDERER));
@@ -101,7 +95,7 @@ bool OpenGlGraphicsManager::InitializeImpl() {
 
     m_meshes.set_description("GPU-Mesh-Allocator");
 
-    return true;
+    return Result<void>();
 }
 
 void OpenGlGraphicsManager::Finalize() {
@@ -314,10 +308,14 @@ void OpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_gro
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-void OpenGlGraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
-    GLuint handle = p_texture ? p_texture->GetHandle32() : 0;
+void OpenGlGraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+    DEV_ASSERT(p_texture);
+    auto internal_format = gl::ConvertInternalFormat(p_texture->desc.format);
+    glBindImageTexture(p_slot, p_texture->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, internal_format);
+}
 
-    glBindImageTexture(p_slot, handle, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_R11F_G11F_B10F);
+void OpenGlGraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+    glBindImageTexture(p_slot, 0, 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
 }
 
 void OpenGlGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
@@ -399,6 +397,13 @@ void OpenGlGraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     glBindTexture(texture_type, 0);
 }
 
+void OpenGlGraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
+    auto dimension = gl::ConvertDimension(p_texture->desc.dimension);
+    glBindTexture(dimension, p_texture->GetHandle32());
+    glGenerateMipmap(dimension);
+    glBindTexture(dimension, 0);
+}
+
 std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
@@ -444,6 +449,14 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTextureImpl(const GpuTe
                          p_texture_desc.height,
                          p_texture_desc.arraySize,
                          0, format, data_type, p_texture_desc.initialData);
+        } break;
+        case GL_TEXTURE_3D: {
+            glTexStorage3D(GL_TEXTURE_3D,
+                           p_texture_desc.mipLevels,
+                           internal_format,
+                           p_texture_desc.width,
+                           p_texture_desc.height,
+                           p_texture_desc.depth);
         } break;
         default:
             CRASH_NOW();
@@ -551,6 +564,29 @@ void OpenGlGraphicsManager::SetStencilRef(uint32_t p_ref) {
     glStencilFunc(gl::Convert(m_stateCache.stencilFunc), p_ref, 0xFF);
 }
 
+void OpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
+    unused(p_factor);
+    unused(p_mask);
+
+    const auto& desc = p_desc.renderTargets[0];
+    if (desc.blendEnabled) {
+        glEnable(GL_BLEND);
+    } else {
+        glDisable(GL_BLEND);
+    }
+
+    const bool r_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_RED;
+    const bool g_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_GREEN;
+    const bool b_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_BLUE;
+    const bool a_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_ALPHA;
+
+    glColorMask(r_mask, g_mask, b_mask, a_mask);
+
+    // @TODO: do the rest
+    // glBlendEquationi
+    // glColorMaski
+}
+
 void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     auto draw_pass = reinterpret_cast<const OpenGlDrawPass*>(p_draw_pass);
     DEV_ASSERT(draw_pass);
@@ -607,32 +643,12 @@ void OpenGlGraphicsManager::CreateGpuResources() {
     g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
     g_box = (OpenGlMeshBuffers*)CreateMesh(MakeBoxMesh());
 
-    const int voxelSize = DVAR_GET_INT(gfx_voxel_size);
-
-    /// create voxel image
-    {
-        Texture3DCreateInfo info;
-        info.wrapS = info.wrapT = info.wrapR = GL_CLAMP_TO_BORDER;
-        info.size = voxelSize;
-        info.minFilter = GL_LINEAR_MIPMAP_LINEAR;
-        info.magFilter = GL_NEAREST;
-        info.mipLevel = math::LogTwo(voxelSize);
-        info.format = GL_RGBA16F;
-
-        g_albedoVoxel.create3DEmpty(info);
-        g_normalVoxel.create3DEmpty(info);
-    }
-
     auto& cache = g_constantCache.cache;
-
     // @TODO: delete!
     unsigned int m1 = LoadMTexture(LTC1);
     unsigned int m2 = LoadMTexture(LTC2);
     cache.c_ltc1 = MakeTextureResident(m1);
     cache.c_ltc2 = MakeTextureResident(m2);
-
-    cache.c_voxelMap = MakeTextureResident(g_albedoVoxel.GetHandle());
-    cache.c_voxelNormalMap = MakeTextureResident(g_normalVoxel.GetHandle());
 
     // cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
 

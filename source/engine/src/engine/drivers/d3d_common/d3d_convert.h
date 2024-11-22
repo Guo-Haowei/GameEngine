@@ -46,6 +46,8 @@ using D3D_FILTER = D3D_(FILTER);
 using D3D_TEXTURE_ADDRESS_MODE = D3D_(TEXTURE_ADDRESS_MODE);
 using D3D_STENCIL_OP = D3D_(STENCIL_OP);
 using D3D_DEPTH_STENCILOP_DESC = D3D_(DEPTH_STENCILOP_DESC);
+using D3D_BLEND_DESC = D3D_(BLEND_DESC);
+using D3D_DEPTH_STENCIL_DESC = D3D_(DEPTH_STENCIL_DESC);
 
 static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
@@ -190,11 +192,49 @@ static inline D3D_FILTER Convert(FilterMode p_min_filter, FilterMode p_mag_filte
     return D3D_FILTER_(MIN_MAG_MIP_POINT);
 }
 
-static inline void FillDepthStencilOpDesc(const StencilOpDesc& p_in, D3D_DEPTH_STENCILOP_DESC& p_out) {
-    p_out.StencilFunc = Convert(p_in.stencilFunc);
-    p_out.StencilFailOp = Convert(p_in.stencilFailOp);
-    p_out.StencilDepthFailOp = Convert(p_in.stencilDepthFailOp);
-    p_out.StencilPassOp = Convert(p_in.stencilPassOp);
+static inline D3D_DEPTH_STENCILOP_DESC Convert(const StencilOpDesc* p_in) {
+    if (!p_in) {
+        CRASH_NOW_MSG("TODO: default");
+    }
+
+    D3D_DEPTH_STENCILOP_DESC desc{};
+    desc.StencilFunc = Convert(p_in->stencilFunc);
+    desc.StencilFailOp = Convert(p_in->stencilFailOp);
+    desc.StencilDepthFailOp = Convert(p_in->stencilDepthFailOp);
+    desc.StencilPassOp = Convert(p_in->stencilPassOp);
+    return desc;
+}
+
+static inline D3D_BLEND_DESC Convert(const BlendDesc* p_in) {
+    if (!p_in) {
+        CRASH_NOW_MSG("TODO: default");
+    }
+
+    D3D_BLEND_DESC desc;
+    ZeroMemory(&desc, sizeof(desc));
+    for (int i = 0; i < array_length(p_in->renderTargets); ++i) {
+        desc.RenderTarget[i].BlendEnable = p_in->renderTargets[i].blendEnabled;
+        desc.RenderTarget[i].RenderTargetWriteMask = p_in->renderTargets[i].colorWriteMask;
+    }
+    return desc;
+}
+
+static inline D3D_DEPTH_STENCIL_DESC Convert(const DepthStencilDesc* p_in) {
+    if (!p_in) {
+        CRASH_NOW_MSG("TODO: default");
+    }
+
+    D3D_DEPTH_STENCIL_DESC desc{};
+    desc.DepthEnable = p_in->depthEnabled;
+    desc.DepthFunc = d3d::Convert(p_in->depthFunc);
+    desc.DepthWriteMask = D3D_(DEPTH_WRITE_MASK_ALL);
+    desc.StencilEnable = p_in->stencilEnabled;
+    desc.StencilWriteMask = p_in->stencilWriteMask;
+    desc.StencilReadMask = p_in->stencilReadMask;
+
+    desc.FrontFace = d3d::Convert(&p_in->frontFace);
+    desc.BackFace = d3d::Convert(&p_in->backFace);
+    return desc;
 }
 
 #if defined(INCLUDE_AS_D3D11)

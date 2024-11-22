@@ -14,7 +14,7 @@
 
 namespace my {
 
-bool DisplayManager::Initialize() {
+auto DisplayManager::Initialize() -> Result<void> {
     InitializeKeyMapping();
 
     const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);

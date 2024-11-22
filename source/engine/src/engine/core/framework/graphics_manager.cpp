@@ -23,6 +23,9 @@
 #ifdef max
 #undef max
 #endif
+#ifdef GetMessage
+#undef GetMessage
+#endif
 
 namespace my {
 
@@ -50,7 +53,7 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
-bool GraphicsManager::Initialize() {
+auto GraphicsManager::Initialize() -> Result<void> {
     m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
 
     const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
@@ -59,8 +62,8 @@ bool GraphicsManager::Initialize() {
         m_frameContexts[i] = CreateFrameContext();
     }
 
-    if (!InitializeImpl()) {
-        return false;
+    if (auto res = InitializeImpl(); !res) {
+        return HBN_ERROR(res.error());
     }
 
     for (int i = 0; i < num_frames; ++i) {
@@ -81,8 +84,8 @@ bool GraphicsManager::Initialize() {
 
     DEV_ASSERT(m_pipelineStateManager);
 
-    if (!m_pipelineStateManager->Initialize()) {
-        return false;
+    if (auto res = m_pipelineStateManager->Initialize(); !res) {
+        return HBN_ERROR(res.error());
     }
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot) {
@@ -98,7 +101,7 @@ bool GraphicsManager::Initialize() {
     SRV_DEFINES
 #undef SRV
 
-    return true;
+    return Result<void>();
 }
 
 void GraphicsManager::EventReceived(std::shared_ptr<Event> event) {

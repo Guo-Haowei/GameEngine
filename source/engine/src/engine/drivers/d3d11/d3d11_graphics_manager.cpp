@@ -22,13 +22,16 @@ D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsMan
     m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
 
-bool D3d11GraphicsManager::InitializeImpl() {
+auto D3d11GraphicsManager::InitializeImpl() -> Result<void> {
     bool ok = true;
     ok = ok && CreateDevice();
     ok = ok && CreateSwapChain();
     ok = ok && CreateRenderTarget();
     ok = ok && InitSamplers();
     ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get());
+    if (!ok) {
+        return HBN_ERROR(ERR_CANT_CREATE);
+    }
 
     ImGui_ImplDX11_NewFrame();
 
@@ -38,7 +41,7 @@ bool D3d11GraphicsManager::InitializeImpl() {
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_meshes.set_description("GPU-Mesh-Allocator");
-    return ok;
+    return Result<void>();
 }
 
 void D3d11GraphicsManager::Finalize() {
@@ -69,19 +72,26 @@ void D3d11GraphicsManager::SetStencilRef(uint32_t p_ref) {
     }
 }
 
+void D3d11GraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
+    unused(p_desc);
+    unused(p_factor);
+    unused(p_mask);
+}
+
 void D3d11GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     m_deviceContext->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }
 
-void D3d11GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
-    if (!p_texture) {
-        ID3D11UnorderedAccessView* uav = nullptr;
-        m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
-        return;
-    }
+void D3d11GraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+    DEV_ASSERT(p_texture);
 
     ID3D11UnorderedAccessView* ptr = reinterpret_cast<ID3D11UnorderedAccessView*>(p_texture->GetUavHandle());
     m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &ptr, nullptr);
+}
+
+void D3d11GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+    ID3D11UnorderedAccessView* uav = nullptr;
+    m_deviceContext->CSSetUnorderedAccessViews(p_slot, 1, &uav, nullptr);
 }
 
 void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
@@ -293,6 +303,11 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     ID3D11ShaderResourceView* srv = nullptr;
     m_deviceContext->PSSetShaderResources(p_slot, 1, &srv);
     m_deviceContext->CSSetShaderResources(p_slot, 1, &srv);
+}
+
+void D3d11GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
+    unused(p_texture);
+    CRASH_NOW();
 }
 
 void D3d11GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
@@ -666,24 +681,28 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     DEV_ASSERT(pipeline);
     if (pipeline->computeShader) {
         m_deviceContext->CSSetShader(pipeline->computeShader.Get(), nullptr, 0);
-    } else {
-        if (pipeline->vertexShader) {
-            m_deviceContext->VSSetShader(pipeline->vertexShader.Get(), 0, 0);
-            m_deviceContext->IASetInputLayout(pipeline->inputLayout.Get());
-        }
-        if (pipeline->pixelShader) {
-            m_deviceContext->PSSetShader(pipeline->pixelShader.Get(), 0, 0);
-        }
+        return;
+    }
 
-        if (pipeline->rasterizerState.Get() != m_stateCache.rasterizer) {
-            m_deviceContext->RSSetState(pipeline->rasterizerState.Get());
-            m_stateCache.rasterizer = pipeline->rasterizerState.Get();
-        }
-
-        if (pipeline->depthStencilState.Get() != m_stateCache.depthStencil) {
-            m_deviceContext->OMSetDepthStencilState(pipeline->depthStencilState.Get(), 0);
-            m_stateCache.depthStencil = pipeline->depthStencilState.Get();
-        }
+    if (pipeline->vertexShader) {
+        m_deviceContext->VSSetShader(pipeline->vertexShader.Get(), 0, 0);
+        m_deviceContext->IASetInputLayout(pipeline->inputLayout.Get());
+    }
+    if (pipeline->pixelShader) {
+        m_deviceContext->PSSetShader(pipeline->pixelShader.Get(), 0, 0);
+    }
+    if (pipeline->rasterizerState.Get() != m_stateCache.rasterizer) {
+        m_deviceContext->RSSetState(pipeline->rasterizerState.Get());
+        m_stateCache.rasterizer = pipeline->rasterizerState.Get();
+    }
+    if (pipeline->depthStencilState.Get() != m_stateCache.depthStencil) {
+        m_deviceContext->OMSetDepthStencilState(pipeline->depthStencilState.Get(), 0);
+        m_stateCache.depthStencil = pipeline->depthStencilState.Get();
+    }
+    if (pipeline->blendState.Get() != m_stateCache.blendState) {
+        // @TODO: remove hard code mask
+        m_deviceContext->OMSetBlendState(pipeline->blendState.Get(), nullptr, 0xFFFFFFFF);
+        m_stateCache.blendState = pipeline->blendState.Get();
     }
 }
 

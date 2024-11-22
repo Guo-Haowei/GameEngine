@@ -17,7 +17,7 @@ public:
 
     DisplayManager() : Module("DisplayManager") {}
 
-    bool Initialize() final;
+    auto Initialize() -> Result<void> final;
 
     virtual bool ShouldClose() = 0;
 
@@ -30,7 +30,7 @@ public:
     static std::shared_ptr<DisplayManager> Create();
 
 protected:
-    virtual bool InitializeWindow(const CreateInfo& p_info) = 0;
+    virtual auto InitializeWindow(const CreateInfo& p_info) -> Result<void> = 0;
     virtual void InitializeKeyMapping() = 0;
 
     struct {

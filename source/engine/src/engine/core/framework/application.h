@@ -27,6 +27,7 @@ protected:
 
 private:
     void SaveCommandLine(int p_argc, const char** p_argv);
+    void MainLoop();
 
     void RegisterModule(Module* p_module);
     [[nodiscard]] ErrorCode SetupModules();

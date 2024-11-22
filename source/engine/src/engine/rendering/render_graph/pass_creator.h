@@ -35,6 +35,7 @@ private:
     void AddGbufferPass();
     void AddHighlightPass();
     void AddShadowPass();
+    void AddVoxelizationPass();
     void AddLightingPass();
     void AddEmitterPass();
     void AddBloomPass();

@@ -34,8 +34,8 @@ public:
     static auto Create(AccessType p_access_type) -> std::shared_ptr<FileAccess>;
     static auto CreateForPath(const std::string& p_path) -> std::shared_ptr<FileAccess>;
 
-    static auto Open(const std::string& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>>;
-    static auto Open(const FilePath& p_path, ModeFlags p_mode_flags) -> std::expected<std::shared_ptr<FileAccess>, Error<ErrorCode>> {
+    static auto Open(const std::string& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>>;
+    static auto Open(const FilePath& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
         return Open(p_path.String(), p_mode_flags);
     }
 

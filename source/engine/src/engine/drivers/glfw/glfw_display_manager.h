@@ -18,7 +18,7 @@ public:
     void Present() final;
 
 private:
-    bool InitializeWindow(const CreateInfo& p_info) final;
+    auto InitializeWindow(const CreateInfo& p_info) -> Result<void> final;
     void InitializeKeyMapping() final;
 
     static void CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y);

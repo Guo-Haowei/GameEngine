@@ -15,6 +15,8 @@ DESCRIPTOR_SRV_LIST
     SRV(Texture2D, NormalMap, 1, RESOURCE_NONE)                          \
     SRV(Texture2D, MaterialMap, 2, RESOURCE_NONE)                        \
     SRV(Texture2D, BloomInputTexture, 3, RESOURCE_NONE)                  \
+    SRV(Texture3D, VoxelLighting, 4, RESOURCE_VOXEL_LIGHTING)            \
+    SRV(Texture3D, VoxelNormal, 5, RESOURCE_VOXEL_NORMAL)                \
     SRV(Texture2D, ShadowMap, 6, RESOURCE_NONE)                          \
     SRV(TextureCubeArray, PointShadowArray, 7, RESOURCE_NONE)            \
     SRV(Texture2D, TextureHighlightSelect, 8, RESOURCE_HIGHLIGHT_SELECT) \

@@ -6,7 +6,7 @@
 
 namespace my {
 
-bool ImGuiModule::Initialize() {
+auto ImGuiModule::Initialize() -> Result<void> {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
@@ -66,7 +66,7 @@ bool ImGuiModule::Initialize() {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
-    return true;
+    return Result<void>();
 }
 
 void ImGuiModule::Finalize() {

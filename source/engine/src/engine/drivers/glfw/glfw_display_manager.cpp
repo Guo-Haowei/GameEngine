@@ -11,7 +11,7 @@
 
 namespace my {
 
-bool GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) {
+auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<void> {
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
     glfwInit();
@@ -50,7 +50,7 @@ bool GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) {
     glfwSetCursorEnterCallback(m_window, ImGui_ImplGlfw_CursorEnterCallback);
     glfwSetCharCallback(m_window, ImGui_ImplGlfw_CharCallback);
 
-    return true;
+    return Result<void>();
 }
 
 void GlfwDisplayManager::Finalize() {

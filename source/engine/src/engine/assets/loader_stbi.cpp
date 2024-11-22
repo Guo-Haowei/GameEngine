@@ -29,7 +29,7 @@ bool LoaderSTBIBase::LoadImpl(Image* p_image, bool p_is_float, STBILoadFunc p_fu
 
     auto res = FileAccess::Open(m_filePath, FileAccess::READ);
     if (!res) {
-        m_error = res.error().GetMessage();
+        m_error = res.error()->message;
         return false;
     }
 

@@ -6,9 +6,7 @@ using ThreadMainFunc = std::function<void()>;
 
 enum ThreadID : uint32_t {
     THREAD_MAIN = 0,
-    THREAD_RENDER,
     THREAD_ASSET_LOADER_0,
-    // THREAD_ASSET_LOADER_1,
     THREAD_JOB_SYSTEM_WORKER_0,
     THREAD_JOB_SYSTEM_WORKER_1,
     THREAD_JOB_SYSTEM_WORKER_2,

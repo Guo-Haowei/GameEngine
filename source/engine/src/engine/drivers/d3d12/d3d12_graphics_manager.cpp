@@ -80,7 +80,7 @@ D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsMan
     m_pipelineStateManager = std::make_shared<D3d12PipelineStateManager>();
 }
 
-bool D3d12GraphicsManager::InitializeImpl() {
+auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
     bool ok = true;
 
     auto [w, h] = DisplayManager::GetSingleton().GetWindowSize();
@@ -115,7 +115,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
     ok = ok && CreateRootSignature();
 
     if (!ok) {
-        return false;
+        return HBN_ERROR(ERR_CANT_CREATE);
     }
 
     // Create debug buffer.
@@ -154,7 +154,7 @@ bool D3d12GraphicsManager::InitializeImpl() {
     ImGui_ImplDX12_NewFrame();
 
     SelectRenderGraph();
-    return ok;
+    return Result<void>();
 }
 
 void D3d12GraphicsManager::Finalize() {
@@ -251,6 +251,12 @@ std::unique_ptr<FrameContext> D3d12GraphicsManager::CreateFrameContext() {
 
 void D3d12GraphicsManager::SetStencilRef(uint32_t p_ref) {
     m_graphicsCommandList->OMSetStencilRef(p_ref);
+}
+
+void D3d12GraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
+    unused(p_desc);
+    unused(p_factor);
+    unused(p_mask);
 }
 
 void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
@@ -448,9 +454,13 @@ void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_grou
     m_graphicsCommandList->Dispatch(p_num_groups_x, p_num_groups_y, p_num_groups_z);
 }
 
-void D3d12GraphicsManager::SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+void D3d12GraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
     unused(p_slot);
     unused(p_texture);
+}
+
+void D3d12GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+    unused(p_slot);
 }
 
 // @TODO: remove
@@ -744,6 +754,11 @@ void D3d12GraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle,
 void D3d12GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     unused(p_dimension);
     unused(p_slot);
+}
+
+void D3d12GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
+    unused(p_texture);
+    CRASH_NOW();
 }
 
 std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {

@@ -19,6 +19,7 @@ public:
     void Finalize() final;
 
     void SetStencilRef(uint32_t p_ref) final;
+    void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) final;
 
     void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
     void UnsetRenderTarget() final;
@@ -32,7 +33,8 @@ public:
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
-    void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
+    void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
+    void UnbindUnorderedAccessView(uint32_t p_slot) final;
 
     std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) final;
     std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) final;
@@ -48,6 +50,8 @@ public:
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;
 
+    void GenerateMipmap(const GpuTexture* p_texture) final;
+
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc&) final;
 
     // For fast and dirty access to device and device context, try not to use it
@@ -55,7 +59,7 @@ public:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetD3dContext() { return m_deviceContext; }
 
 protected:
-    bool InitializeImpl() final;
+    auto InitializeImpl() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;
@@ -86,6 +90,7 @@ protected:
     struct {
         ID3D11RasterizerState* rasterizer = nullptr;
         ID3D11DepthStencilState* depthStencil = nullptr;
+        ID3D11BlendState* blendState = nullptr;
     } m_stateCache;
 };
 

@@ -210,8 +210,6 @@ CBUFFER(PerSceneConstantBuffer, 7) {
 
     sampler2D c_grassBaseColor;
     sampler2D c_hdrEnvMap;
-    sampler3D c_voxelMap;
-    sampler3D c_voxelNormalMap;
 
     sampler2D c_kernelNoiseMap;
     sampler2D c_toneImage;

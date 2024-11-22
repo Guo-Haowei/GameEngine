@@ -22,7 +22,6 @@ static struct {
     std::atomic_bool shutdownRequested;
     std::array<ThreadObject, THREAD_MAX> threads = {
         ThreadObject{ "main", []() {} },
-        ThreadObject{ "render thread", []() {} },
         ThreadObject{ "asset thread 1", AssetManager::WorkerMain },
         // ThreadObject{ "asset thread 2", AssetManager::worker_main },
         ThreadObject{ "js worker 0", jobsystem::WorkerMain },
@@ -76,8 +75,10 @@ bool Initialize() {
 
 void Finailize() {
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
-        auto& thread = s_threadGlob.threads[id];
-        thread.threadObject.join();
+        auto& thread = s_threadGlob.threads[id].threadObject;
+        if (thread.joinable()) {
+            thread.join();
+        }
     }
 }
 

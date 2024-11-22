@@ -7,18 +7,23 @@ namespace my {
 
 #if USING(PLATFORM_WINDOWS)
 static WORD FindColorAttribute(LogLevel p_level) {
+    WORD color = FOREGROUND_INTENSITY;
     switch (p_level) {
         case LOG_LEVEL_OK:
-            return FOREGROUND_GREEN;
+            color |= FOREGROUND_GREEN;
+            break;
         case LOG_LEVEL_WARN:
-            return FOREGROUND_RED | FOREGROUND_GREEN;
+            color |= FOREGROUND_RED | FOREGROUND_GREEN;
+            break;
         case LOG_LEVEL_ERROR:
             [[fallthrough]];
         case LOG_LEVEL_FATAL:
-            return FOREGROUND_RED;
+            color |= FOREGROUND_RED;
+            break;
         default:
             return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
     }
+    return color;
 }
 #endif
 

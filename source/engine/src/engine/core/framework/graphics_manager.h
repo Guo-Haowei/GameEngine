@@ -114,7 +114,7 @@ public:
           m_backend(p_backend),
           m_frameCount(p_frame_count) {}
 
-    bool Initialize() final;
+    auto Initialize() -> Result<void> final;
     void Update(Scene& p_scene);
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
@@ -131,9 +131,13 @@ public:
     virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
-    virtual void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
+    virtual void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
+    virtual void UnbindUnorderedAccessView(uint32_t p_slot) = 0;
+
     void SetPipelineState(PipelineStateName p_name);
+
     virtual void SetStencilRef(uint32_t p_ref) = 0;
+    virtual void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) = 0;
 
     virtual std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) = 0;
     virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) = 0;
@@ -166,6 +170,8 @@ public:
     virtual void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
     virtual void UnbindTexture(Dimension p_dimension, int p_slot) = 0;
 
+    virtual void GenerateMipmap(const GpuTexture* p_texture) = 0;
+
     void RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
 
     // @TODO: move to renderer
@@ -188,7 +194,7 @@ public:
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
 protected:
-    virtual bool InitializeImpl() = 0;
+    virtual auto InitializeImpl() -> Result<void> = 0;
     virtual std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
 
     virtual void Render() = 0;

@@ -20,7 +20,9 @@ public:
     void Present() override {}
 
 protected:
-    bool InitializeWindow(const CreateInfo&) override { return true; }
+    auto InitializeWindow(const CreateInfo&) -> Result<void> override {
+        return Result<void>();
+    }
     void InitializeKeyMapping() override {};
 };
 

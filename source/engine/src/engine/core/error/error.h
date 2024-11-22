@@ -1,5 +1,9 @@
 #pragma once
 
+namespace my {
+
+class IStringBuilder;
+
 #define ERROR_LIST                            \
     ERROR_CODE(OK)                            \
     ERROR_CODE(FAILURE)                       \
@@ -51,8 +55,6 @@
     ERROR_CODE(ERR_HELP)                      \
     ERROR_CODE(ERR_BUG)
 
-namespace my {
-
 enum ErrorCode : uint16_t {
 #define ERROR_CODE(ENUM) ENUM,
     ERROR_LIST
@@ -60,8 +62,10 @@ enum ErrorCode : uint16_t {
         ERR_COUNT,
 };
 
-struct ErrorBase {
-    ErrorBase(std::string_view p_filepath, std::string_view p_function, int p_line)
+const char* ErrorToString(ErrorCode p_error);
+
+struct InternalErrorBase {
+    InternalErrorBase(std::string_view p_filepath, std::string_view p_function, int p_line)
         : filepath(p_filepath), function(p_function), line(p_line) {}
 
     std::string_view filepath;
@@ -70,37 +74,52 @@ struct ErrorBase {
 };
 
 template<typename T>
-class Error : public ErrorBase {
+struct InternalError : public InternalErrorBase {
 public:
-    Error(std::string_view p_filepath,
-          std::string_view p_function,
-          int p_line,
-          const T& p_value)
-        : ErrorBase(p_filepath, p_function, p_line), m_value(p_value) {}
+    using Ref = std::shared_ptr<InternalError<T>>;
+
+    InternalError(std::string_view p_filepath,
+                  std::string_view p_function,
+                  int p_line,
+                  const T& p_value)
+        : InternalErrorBase(p_filepath, p_function, p_line), value(p_value) {}
 
     template<typename... Args>
-    Error(std::string_view p_filepath,
-          std::string_view p_function,
-          int p_line,
-          const T& p_value,
-          std::format_string<Args...> p_format,
-          Args&&... p_args)
-        : Error(p_filepath, p_function, p_line, p_value) {
-        m_message = std::format(p_format, std::forward<Args>(p_args)...);
+    InternalError(std::string_view p_filepath,
+                  std::string_view p_function,
+                  int p_line,
+                  const T& p_value,
+                  std::format_string<Args...> p_format,
+                  Args&&... p_args)
+        : InternalError(p_filepath, p_function, p_line, p_value) {
+        message = std::format(p_format, std::forward<Args>(p_args)...);
     }
 
-    const T& GetValue() const { return m_value; }
+    InternalError(std::string_view p_filepath,
+                  std::string_view p_function,
+                  int p_line,
+                  Ref& p_next)
+        : InternalErrorBase(p_filepath, p_function, p_line) {
+        // @TODO: check overflow?
+        next = p_next;
+        depth = next->depth + 1;
+    }
 
-    const std::string& GetMessage() const { return m_message; }
-
-private:
-    T m_value;
-    std::string m_message;
+    T value{};
+    // @TODO: union?
+    std::string message;
+    Ref next{ nullptr };
+    int depth{ 0 };
 };
 
-// @TODO: rename
-#define VCT_ERROR(...) std::unexpected(::my::Error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__))
-;
-const char* ErrorToString(ErrorCode p_error);
+using Error = InternalError<ErrorCode>;
+using ErrorRef = std::shared_ptr<Error>;
+
+template<typename T>
+using Result = std::expected<T, ErrorRef>;
+
+#define HBN_ERROR(...) std::unexpected(ErrorRef(new ::my::Error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)))
+
+IStringBuilder& operator<<(IStringBuilder& p_stream, const ErrorRef& p_error);
 
 }  // namespace my

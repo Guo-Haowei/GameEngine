@@ -16,13 +16,12 @@ D3d11PipelineStateManager::D3d11PipelineStateManager() {
     m_defines.push_back({ nullptr, nullptr });
 }
 
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) {
+auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
-
     if (!device) {
-        return nullptr;
+        return HBN_ERROR(ERR_INVALID_DATA);
     }
 
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);
@@ -32,8 +31,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
     if (!p_desc.vs.empty()) {
         auto res = CompileShader(p_desc.vs, "vs_5_0", m_defines.data());
         if (!res) {
-            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
-            return nullptr;
+            return HBN_ERROR(res.error());
         }
 
         ComPtr<ID3DBlob> blob;
@@ -45,8 +43,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
     if (!p_desc.ps.empty()) {
         auto res = CompileShader(p_desc.ps, "ps_5_0", m_defines.data());
         if (!res) {
-            LOG_FATAL("Failed to compile '{}'\n  detail: {}", p_desc.vs, res.error());
-            return nullptr;
+            return HBN_ERROR(res.error());
         }
 
         ComPtr<ID3DBlob> blob;
@@ -73,7 +70,7 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
     hr = device->CreateInputLayout(elements.data(), (UINT)elements.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), pipeline_state->inputLayout.GetAddressOf());
     D3D_FAIL_V_MSG(hr, nullptr, "failed to create input layout");
 
-    if (p_desc.rasterizerDesc) {
+    if (DEV_VERIFY(p_desc.rasterizerDesc)) {
         ComPtr<ID3D11RasterizerState> state;
 
         auto it = m_rasterizerStates.find(p_desc.rasterizerDesc);
@@ -91,56 +88,59 @@ std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateGraphicsPipeline
         DEV_ASSERT(state);
         pipeline_state->rasterizerState = state;
     }
-    if (p_desc.depthStencilDesc) {
+    if (DEV_VERIFY(p_desc.depthStencilDesc)) {
         ComPtr<ID3D11DepthStencilState> state;
 
         auto it = m_depthStencilStates.find(p_desc.depthStencilDesc);
         if (it == m_depthStencilStates.end()) {
-            const auto& dss = p_desc.depthStencilDesc;
-            D3D11_DEPTH_STENCIL_DESC desc{};
-            desc.DepthEnable = dss->depthEnabled;
-            desc.DepthFunc = d3d::Convert(dss->depthFunc);
-            desc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-            desc.StencilEnable = dss->stencilEnabled;
-            desc.StencilWriteMask = dss->stencilWriteMask;
-            desc.StencilReadMask = dss->stencilReadMask;
-
-            d3d::FillDepthStencilOpDesc(dss->frontFace, desc.FrontFace);
-            d3d::FillDepthStencilOpDesc(dss->backFace, desc.BackFace);
-
+            D3D11_DEPTH_STENCIL_DESC desc = d3d::Convert(p_desc.depthStencilDesc);
             D3D_FAIL_V(device->CreateDepthStencilState(&desc, state.GetAddressOf()), nullptr);
-            m_depthStencilStates[dss] = state;
+            m_depthStencilStates[p_desc.depthStencilDesc] = state;
         } else {
             state = it->second.Get();
         }
         DEV_ASSERT(state);
         pipeline_state->depthStencilState = state;
     }
+    if (DEV_VERIFY(p_desc.blendDesc)) {
+        ComPtr<ID3D11BlendState> state;
+
+        auto it = m_blendStates.find(p_desc.blendDesc);
+        if (it == m_blendStates.end()) {
+            D3D11_BLEND_DESC desc = d3d::Convert(p_desc.blendDesc);
+            D3D_FAIL_V(device->CreateBlendState(&desc, state.GetAddressOf()), nullptr);
+            m_blendStates[p_desc.blendDesc] = state;
+        } else {
+            state = it->second.Get();
+        }
+        DEV_ASSERT(state);
+        pipeline_state->blendState = state;
+    }
 
     return pipeline_state;
 }
 
-std::shared_ptr<PipelineState> D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) {
+auto D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
     auto graphics_manager = reinterpret_cast<D3d11GraphicsManager*>(GraphicsManager::GetSingletonPtr());
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
 
     if (!device) {
-        return nullptr;
+        return HBN_ERROR(ERR_INVALID_DATA);
     }
 
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);
 
     auto res = CompileShader(p_desc.cs, "cs_5_0", m_defines.data());
     if (!res) {
-        LOG_ERROR("Failed to compile '{}'\n  detail: {}", p_desc.cs, res.error());
-        return nullptr;
+        return HBN_ERROR(res.error());
     }
 
     ComPtr<ID3DBlob> blob;
     blob = *res;
     HRESULT hr = device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, pipeline_state->computeShader.GetAddressOf());
-    D3D_FAIL_V_MSG(hr, nullptr, "failed to create vertex buffer");
+
+    D3D_FAIL_V_MSG(hr, HBN_ERROR(res.error()), "failed to create vertex buffer");
 
     return pipeline_state;
 }

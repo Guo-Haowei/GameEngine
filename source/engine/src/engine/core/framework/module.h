@@ -9,7 +9,7 @@ public:
     Module(std::string_view name) : m_name(name) {}
     virtual ~Module() = default;
 
-    virtual bool Initialize() = 0;
+    virtual auto Initialize() -> Result<void> = 0;
     virtual void Finalize() = 0;
 
     std::string_view GetName() const { return m_name; }

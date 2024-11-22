@@ -13,11 +13,11 @@ struct OpenGlPipelineState : public PipelineState {
 
 class OpenGlPipelineStateManager : public PipelineStateManager {
 protected:
-    std::shared_ptr<PipelineState> CreateGraphicsPipeline(const PipelineStateDesc& p_desc) final;
-    std::shared_ptr<PipelineState> CreateComputePipeline(const PipelineStateDesc& p_desc) final;
+    auto CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> final;
+    auto CreateComputePipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> final;
 
 private:
-    std::shared_ptr<PipelineState> CreatePipelineImpl(const PipelineStateDesc& p_desc);
+    auto CreatePipelineImpl(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>>;
 };
 
 }  // namespace my

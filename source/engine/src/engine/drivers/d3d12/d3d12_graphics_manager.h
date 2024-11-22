@@ -18,6 +18,7 @@ public:
     void Finalize() final;
 
     void SetStencilRef(uint32_t p_ref) final;
+    void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) final;
 
     void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
     void UnsetRenderTarget() final;
@@ -33,7 +34,8 @@ public:
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
-    void SetUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
+    void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
+    void UnbindUnorderedAccessView(uint32_t p_slot) final;
 
     std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) final;
     void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) final;
@@ -49,6 +51,8 @@ public:
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) final;
     void UnbindTexture(Dimension p_dimension, int p_slot) final;
 
+    void GenerateMipmap(const GpuTexture* p_texture) final;
+
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) final;
 
     ID3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE p_type);
@@ -57,7 +61,7 @@ public:
     ID3D12RootSignature* const GetRootSignature() const { return m_rootSignature.Get(); }
 
 protected:
-    bool InitializeImpl() final;
+    auto InitializeImpl() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;

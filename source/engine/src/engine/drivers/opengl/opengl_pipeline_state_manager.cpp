@@ -28,20 +28,20 @@ OpenGlPipelineState::~OpenGlPipelineState() {
     }
 }
 
-static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<std::string, std::string> {
+static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::string> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
-        return std::unexpected("circular includes!");
+        return HBN_ERROR(ERR_CYCLIC_LINK, "circular includes in file '{}'!", p_path.string());
     }
 
     // @TODO [FilePath]: fix
     auto source_binary = AssetManager::GetSingleton().LoadFileSync(FilePath{ p_path.string() });
     if (!source_binary) {
-        return std::unexpected(std::format("failed to read file '{}'", p_path.string()));
+        return HBN_ERROR(ERR_FILE_CANT_READ, "failed to read file '{}'", p_path.string());
     }
 
     if (source_binary->buffer.empty()) {
-        return std::unexpected(std::format("file '{}' is empty", p_path.string()));
+        return HBN_ERROR(ERR_FILE_EOF, "file '{}' is empty", p_path.string());
     }
 
     std::string source(source_binary->buffer.begin(), source_binary->buffer.end());
@@ -63,7 +63,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
 
             auto res = ProcessShader(new_path, p_depth + 1);
             if (!res) {
-                return res.error();
+                return HBN_ERROR(res.error());
             }
 
             result.append(*res);
@@ -77,7 +77,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> std::expected<
     return result;
 }
 
-static GLuint CreateShader(std::string_view p_file, GLenum p_type) {
+static auto CreateShader(std::string_view p_file, GLenum p_type) -> Result<GLuint> {
     std::string file{ p_file };
     file.append(".glsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
@@ -88,10 +88,10 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type) {
         fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
     }
 
-    auto res = ProcessShader(fullpath, 0);
-    if (!res) {
-        LOG_FATAL("Failed to create shader program '{}', reason: {}", p_file, res.error());
-        return 0;
+    auto result = ProcessShader(fullpath, 0);
+    if (!result) {
+        // LOG_FATAL("Failed to create shader program '{}', reason: {}", p_file, res.error());
+        return HBN_ERROR(result.error());
     }
 
     // @TODO: fix this
@@ -111,7 +111,7 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type) {
         // }
     }
 
-    fullsource.append(*res);
+    fullsource.append(*result);
     const char *sources[] = { fullsource.c_str() };
 
     GLuint shader_id = glCreateShader(p_type);
@@ -124,7 +124,7 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type) {
     if (length > 0) {
         std::vector<char> buffer(length + 1);
         glGetShaderInfoLog(shader_id, length, nullptr, buffer.data());
-        LOG_FATAL("[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
+        return HBN_ERROR(FAILURE, "[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
     }
 
     if (status == GL_FALSE) {
@@ -135,23 +135,24 @@ static GLuint CreateShader(std::string_view p_file, GLenum p_type) {
     return shader_id;
 }
 
-std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) {
+auto OpenGlPipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc &p_desc) -> Result<std::shared_ptr<PipelineState>> {
     return CreatePipelineImpl(p_desc);
 }
 
-std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) {
+auto OpenGlPipelineStateManager::CreateComputePipeline(const PipelineStateDesc &p_desc) -> Result<std::shared_ptr<PipelineState>> {
     return CreatePipelineImpl(p_desc);
 }
 
-std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) {
+auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_desc) -> Result<std::shared_ptr<PipelineState>> {
     GLuint program_id = glCreateProgram();
     std::vector<GLuint> shaders;
     auto create_shader_helper = [&](std::string_view path, GLenum type) {
-        if (!path.empty()) {
-            GLuint shader = CreateShader(path, type);
-            glAttachShader(program_id, shader);
-            shaders.push_back(shader);
+        auto res = CreateShader(path, type);
+        if (res) {
+            glAttachShader(program_id, *res);
+            shaders.push_back(*res);
         }
+        return res;
     };
 
     ON_SCOPE_EXIT([&]() {
@@ -161,14 +162,33 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(co
     });
 
     switch (p_desc.type) {
-        case PipelineStateType::GRAPHICS:
-            create_shader_helper(p_desc.vs, GL_VERTEX_SHADER);
-            create_shader_helper(p_desc.ps, GL_FRAGMENT_SHADER);
-            create_shader_helper(p_desc.gs, GL_GEOMETRY_SHADER);
-            break;
-        case PipelineStateType::COMPUTE:
-            create_shader_helper(p_desc.cs, GL_COMPUTE_SHADER);
-            break;
+        case PipelineStateType::GRAPHICS: {
+            Result<GLuint> result(0);
+            do {
+                if (!p_desc.vs.empty()) {
+                    result = create_shader_helper(p_desc.vs, GL_VERTEX_SHADER);
+                    if (!result) { break; }
+                }
+                if (!p_desc.gs.empty()) {
+                    create_shader_helper(p_desc.gs, GL_GEOMETRY_SHADER);
+                    if (!result) { break; }
+                }
+                if (!p_desc.ps.empty()) {
+                    create_shader_helper(p_desc.ps, GL_FRAGMENT_SHADER);
+                    if (!result) { break; }
+                }
+            } while (0);
+            if (!result) {
+                return HBN_ERROR(result.error());
+            }
+        } break;
+        case PipelineStateType::COMPUTE: {
+            DEV_ASSERT(!p_desc.cs.empty());
+            auto result = create_shader_helper(p_desc.cs, GL_COMPUTE_SHADER);
+            if (!result) {
+                return HBN_ERROR(result.error());
+            }
+        } break;
         default:
             CRASH_NOW();
             break;
@@ -187,7 +207,8 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(co
         if (status == GL_TRUE) {
             LOG_WARN("[glsl] warning\ndetails:\n{}", buffer.data());
         } else {
-            LOG_FATAL("[glsl] failed to link program\ndetails:\n{}", buffer.data());
+            LOG_ERROR("[glsl] failed to link program\ndetails:\n{}", buffer.data());
+            return HBN_ERROR(ERR_CANT_CREATE);
         }
     }
 
@@ -226,11 +247,6 @@ std::shared_ptr<PipelineState> OpenGlPipelineStateManager::CreatePipelineImpl(co
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
     glUseProgram(0);
-
-    // delete shaders
-    for (auto shader_id : shaders) {
-        glDeleteShader(shader_id);
-    }
 
     return program;
 }

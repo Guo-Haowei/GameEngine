@@ -97,7 +97,7 @@ void CocoaDisplayManager::Present() {
 
 }
 
-bool CocoaDisplayManager::InitializeWindow(const CreateInfo& p_info) {
+bool CocoaDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<void> {
     return m_impl->Initialize(p_info);
 }
 

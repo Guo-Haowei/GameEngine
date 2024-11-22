@@ -76,6 +76,7 @@ enum class AttachmentType {
     DEPTH_STENCIL_2D,
     SHADOW_2D,
     SHADOW_CUBE_ARRAY,
+    RW_TEXTURE,
 };
 
 struct GpuTextureDesc {
@@ -85,6 +86,7 @@ struct GpuTextureDesc {
     Dimension dimension;
     uint32_t width;
     uint32_t height;
+    uint32_t depth;
     uint32_t mipLevels;
     uint32_t arraySize;
     PixelFormat format;
