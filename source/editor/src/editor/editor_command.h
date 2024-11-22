@@ -4,6 +4,8 @@
 
 namespace my {
 
+class EditorLayer;
+
 enum CommandType : uint8_t {
     COMMAND_TYPE_ENTITY_TRANSLATE,
     COMMAND_TYPE_ENTITY_ROTATE,
@@ -13,6 +15,10 @@ enum CommandType : uint8_t {
     COMMAND_TYPE_ENTITY_REMOVE,
 
     COMMAND_TYPE_COMPONENT_ADD,
+
+    COMMAND_TYPE_SAVE_PROJECT,
+    COMMAND_TYPE_REDO_VIEWER,
+    COMMAND_TYPE_UNDO_VIEWER,
 };
 
 // clang-format off
@@ -43,6 +49,12 @@ enum class ComponentType : uint8_t {
     MESH_COLLIDER,
     SPHERE_COLLIDER,
 };
+
+// @TODO: make editor UndoCommand and editor Command
+// struct EditorCommandBase {
+//    EditorLayer* m_editor{ nullptr };
+//};
+// @REMOVE DO from ICommand;
 
 // @TODO: make proctected
 class EditorCommandAddEntity : public ICommand {
@@ -91,6 +103,36 @@ protected:
 
     mat4 m_before;
     mat4 m_after;
+};
+
+class SaveProjectCommand : public ICommand {
+public:
+    SaveProjectCommand(bool p_open_dialog) : ICommand(COMMAND_TYPE_SAVE_PROJECT), m_openDialog(p_open_dialog) {}
+
+    virtual void Redo() override;
+
+protected:
+    bool m_openDialog;
+};
+
+class UndoViewerCommand : public ICommand {
+public:
+    UndoViewerCommand(EditorLayer& p_editor) : ICommand(COMMAND_TYPE_UNDO_VIEWER), m_editor(p_editor) {}
+
+    virtual void Redo() override;
+
+protected:
+    EditorLayer& m_editor;
+};
+
+class RedoViewerCommand : public ICommand {
+public:
+    RedoViewerCommand(EditorLayer& p_editor) : ICommand(COMMAND_TYPE_REDO_VIEWER), m_editor(p_editor) {}
+
+    virtual void Redo() override;
+
+protected:
+    EditorLayer& m_editor;
 };
 
 }  // namespace my

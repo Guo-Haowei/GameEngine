@@ -5,8 +5,8 @@
 #include "core/framework/common_dvars.h"
 #include "core/framework/display_manager.h"
 #include "core/framework/graphics_manager.h"
+#include "core/framework/input_manager.h"
 #include "core/framework/scene_manager.h"
-#include "core/input/input.h"
 #include "core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
@@ -41,9 +41,9 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
         return;
     }
 
-    if (input::IsButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    if (InputManager::GetSingleton().IsButtonPressed(MOUSE_BUTTON_RIGHT)) {
         auto [window_x, window_y] = DisplayManager::GetSingleton().GetWindowPos();
-        vec2 clicked = input::GetCursor();
+        vec2 clicked = InputManager::GetSingleton().GetCursor();
         clicked.x = (clicked.x + window_x - m_canvasMin.x) / m_canvasSize.x;
         clicked.y = (clicked.y + window_y - m_canvasMin.y) / m_canvasSize.y;
 
@@ -68,13 +68,6 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
 void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     const mat4 view_matrix = p_camera.GetViewMatrix();
     const mat4 proj_matrix = p_camera.GetProjectionMatrix();
-
-    // @TODO: refactor
-    if (input::IsKeyDown(KEY_LEFT_CONTROL) && input::IsKeyPressed(KEY_Z)) {
-        m_editor.GetUndoStack().Undo();
-    } else if (input::IsKeyDown(KEY_LEFT_CONTROL) && input::IsKeyPressed(KEY_Y)) {
-        m_editor.GetUndoStack().Redo();
-    }
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
@@ -216,11 +209,11 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     // Update state
     if (m_editor.GetSelectedEntity().IsValid()) {
-        if (input::IsKeyPressed(KEY_Z)) {
+        if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_Z)) {
             m_editor.SetState(EditorLayer::STATE_TRANSLATE);
-        } else if (input::IsKeyPressed(KEY_X)) {
+        } else if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_X)) {
             m_editor.SetState(EditorLayer::STATE_ROTATE);
-        } else if (input::IsKeyPressed(KEY_C)) {
+        } else if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_C)) {
             m_editor.SetState(EditorLayer::STATE_SCALE);
         }
     }

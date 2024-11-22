@@ -7,9 +7,9 @@
 #include "core/framework/display_manager.h"
 #include "core/framework/graphics_manager.h"
 #include "core/framework/imgui_module.h"
+#include "core/framework/input_manager.h"
 #include "core/framework/physics_manager.h"
 #include "core/framework/scene_manager.h"
-#include "core/input/input.h"
 #include "core/os/threads.h"
 #include "core/os/timer.h"
 #include "core/string/string_builder.h"
@@ -48,27 +48,14 @@ void Application::RegisterModule(Module* p_module) {
 }
 
 ErrorCode Application::SetupModules() {
-    if (!(m_assetManager = std::make_shared<AssetManager>())) {
-        return ERR_CANT_CREATE;
-    }
-    if (!(m_sceneManager = std::make_shared<SceneManager>())) {
-        return ERR_CANT_CREATE;
-    }
-    if (!(m_physicsManager = std::make_shared<PhysicsManager>())) {
-        return ERR_CANT_CREATE;
-    }
-    if (!(m_imguiModule = std::make_shared<ImGuiModule>())) {
-        return ERR_CANT_CREATE;
-    }
-    if (!(m_displayServer = DisplayManager::Create())) {
-        return ERR_CANT_CREATE;
-    }
-    if (!(m_graphicsManager = GraphicsManager::Create())) {
-        return ERR_CANT_CREATE;
-    }
-    if (!(m_renderManager = std::make_shared<RenderManager>())) {
-        return ERR_CANT_CREATE;
-    }
+    m_assetManager = std::make_shared<AssetManager>();
+    m_sceneManager = std::make_shared<SceneManager>();
+    m_physicsManager = std::make_shared<PhysicsManager>();
+    m_imguiModule = std::make_shared<ImGuiModule>();
+    m_displayServer = DisplayManager::Create();
+    m_graphicsManager = GraphicsManager::Create();
+    m_renderManager = std::make_shared<RenderManager>();
+    m_inputManager = std::make_shared<InputManager>();
 
     RegisterModule(m_assetManager.get());
     RegisterModule(m_sceneManager.get());
@@ -77,6 +64,7 @@ ErrorCode Application::SetupModules() {
     RegisterModule(m_displayServer.get());
     RegisterModule(m_graphicsManager.get());
     RegisterModule(m_renderManager.get());
+    RegisterModule(m_inputManager.get());
 
     m_eventQueue.RegisterListener(m_graphicsManager.get());
     m_eventQueue.RegisterListener(m_physicsManager.get());
@@ -87,6 +75,7 @@ ErrorCode Application::SetupModules() {
 void Application::MainLoop() {
     InitLayers();
     for (auto& layer : m_layers) {
+        layer->m_app = this;
         layer->Attach();
         LOG("[Runtime] layer '{}' attached!", layer->GetName());
     }
@@ -99,12 +88,12 @@ void Application::MainLoop() {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-    while (!DisplayManager::GetSingleton().ShouldClose()) {
+    while (!m_displayServer->ShouldClose()) {
         OPTICK_FRAME("MainThread");
 
         m_displayServer->NewFrame();
 
-        input::BeginFrame();
+        m_inputManager->BeginFrame();
 
         // @TODO: better elapsed time
         float dt = static_cast<float>(timer.GetDuration().ToSecond());
@@ -119,6 +108,9 @@ void Application::MainLoop() {
 
         // to avoid empty renderer crash
         ImGui::NewFrame();
+
+        m_inputManager->GetEventQueue().FlushEvents();
+
         for (auto& layer : m_layers) {
             layer->Update(dt);
         }
@@ -138,7 +130,7 @@ void Application::MainLoop() {
 
         m_displayServer->Present();
 
-        input::EndFrame();
+        m_inputManager->EndFrame();
     }
 
     LOG("\n********************************************************************************"
@@ -146,9 +138,13 @@ void Application::MainLoop() {
         "\n********************************************************************************");
 
     // @TODO: fix
-    auto [w, h] = DisplayManager::GetSingleton().GetWindowSize();
+    auto [w, h] = m_displayServer->GetWindowSize();
     DVAR_SET_IVEC2(window_resolution, w, h);
 
+    for (auto& layer : m_layers) {
+        layer->Detach();
+        LOG("[Runtime] layer '{}' detached!", layer->GetName());
+    }
     m_layers.clear();
 }
 
@@ -158,7 +154,7 @@ int Application::Run(int p_argc, const char** p_argv) {
     m_os = std::make_shared<OS>();
 
     // intialize
-    OS::GetSingleton().Initialize();
+    m_os->Initialize();
 
     // dvars
     RegisterCommonDvars();
@@ -215,8 +211,7 @@ int Application::Run(int p_argc, const char** p_argv) {
 
     DynamicVariableManager::Serialize();
 
-    OS::GetSingleton().Finalize();
-
+    m_os->Finalize();
     return 0;
 }
 

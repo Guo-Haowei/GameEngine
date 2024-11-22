@@ -5,24 +5,16 @@ namespace my {
 class EventListener;
 class Scene;
 
-enum class EventType {
-    WINDOW_RESIZE,
-    SCENE_CHANGED,
+class IEvent {
+public:
+    IEvent() {}
+
+    virtual ~IEvent() = default;
 };
 
-class Event {
+class SceneChangeEvent : public IEvent {
 public:
-    Event(EventType type) : m_type(type) {}
-
-    virtual ~Event() = default;
-
-protected:
-    const EventType m_type;
-};
-
-class SceneChangeEvent : public Event {
-public:
-    SceneChangeEvent(Scene* scene) : Event(EventType::SCENE_CHANGED), m_scene(scene) {}
+    SceneChangeEvent(Scene* scene) : m_scene(scene) {}
 
     const Scene* GetScene() const { return m_scene; }
 
@@ -30,9 +22,9 @@ protected:
     Scene* m_scene;
 };
 
-class ResizeEvent : public Event {
+class ResizeEvent : public IEvent {
 public:
-    ResizeEvent(int width, int height) : Event(EventType::WINDOW_RESIZE), m_width(width), m_height(height) {}
+    ResizeEvent(int width, int height) : m_width(width), m_height(height) {}
 
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }
@@ -45,39 +37,23 @@ protected:
 class EventListener {
 public:
     virtual ~EventListener() {}
-    virtual void EventReceived(std::shared_ptr<Event> event) = 0;
+    virtual void EventReceived(std::shared_ptr<IEvent> p_event) = 0;
 };
 
 class EventQueue {
 public:
-    void EnqueueEvent(std::shared_ptr<Event> event) {
-        m_events.push(event);
-    }
+    void EnqueueEvent(std::shared_ptr<IEvent> p_event);
 
-    void DispatchEvent(std::shared_ptr<Event> event) {
-        for (auto& listener : m_listeners) {
-            listener->EventReceived(event);
-        }
-    }
+    void DispatchEvent(std::shared_ptr<IEvent> p_event);
 
-    void FlushEvents() {
-        while (!m_events.empty()) {
-            auto event = m_events.front();
-            DispatchEvent(event);
-        }
-    }
+    void FlushEvents();
 
-    void RegisterListener(EventListener* listener) {
-        m_listeners.push_back(listener);
-    }
+    void RegisterListener(EventListener* p_listener);
 
-    void UnregisterListener(EventListener* listener) {
-        unused(listener);
-        CRASH_NOW_MSG("TODO");
-    }
+    void UnregisterListener(EventListener* p_listener);
 
 private:
-    std::queue<std::shared_ptr<Event>> m_events;
+    std::queue<std::shared_ptr<IEvent>> m_events;
     std::vector<EventListener*> m_listeners;
 };
 

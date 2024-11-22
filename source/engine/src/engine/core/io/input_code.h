@@ -9,7 +9,7 @@ enum MouseButton : uint8_t {
     MOUSE_BUTTON_MAX,
 };
 
-enum KeyCode : uint16_t {
+enum class KeyCode : uint16_t {
     KEY_SPACE,
     KEY_APOSTROPHE,
     KEY_COMMA,
@@ -130,7 +130,7 @@ enum KeyCode : uint16_t {
     KEY_RIGHT_ALT,
     KEY_RIGHT_SUPER,
     KEY_MENU,
-    KEY_MAX,
+    COUNT,
 };
 
 }  // namespace my

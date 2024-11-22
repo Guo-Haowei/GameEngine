@@ -13,6 +13,10 @@ public:
     ICommand(uint32_t p_type) : m_type(p_type) {}
     virtual ~ICommand() = default;
 
+    // @TODO: rename
+    // @TODO: make pure virtual
+    virtual void Redo() {}
+
     uint32_t GetType() const {
         return m_type;
     }

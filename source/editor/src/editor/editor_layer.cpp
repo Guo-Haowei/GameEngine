@@ -3,8 +3,8 @@
 #include <imgui/imgui_internal.h>
 
 #include "core/framework/asset_manager.h"
+#include "core/framework/input_manager.h"
 #include "core/framework/scene_manager.h"
-#include "core/input/input.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"
@@ -39,6 +39,16 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         asset_manager.LoadImageSync(FilePath{ light_icons[i] });
     }
 #endif
+
+    m_app;
+}
+
+void EditorLayer::Attach() {
+    m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
+}
+
+void EditorLayer::Detach() {
+    m_app->GetInputManager()->GetEventQueue().UnregisterListener(this);
 }
 
 void EditorLayer::AddPanel(std::shared_ptr<EditorItem> p_panel) {
@@ -147,6 +157,27 @@ void EditorLayer::Update(float) {
 void EditorLayer::Render() {
 }
 
+void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
+    if (KeyPressEvent* e = dynamic_cast<KeyPressEvent*>(p_event.get()); e) {
+        // @TODO: key mapping
+        if (e->keys[std::to_underlying(KeyCode::KEY_LEFT_CONTROL)]) {
+            switch (e->pressed) {
+                case KeyCode::KEY_S:
+                    BufferCommand(std::make_shared<SaveProjectCommand>(false));
+                    break;
+                case KeyCode::KEY_Y:
+                    BufferCommand(std::make_shared<RedoViewerCommand>(*this));
+                    break;
+                case KeyCode::KEY_Z:
+                    BufferCommand(std::make_shared<UndoViewerCommand>(*this));
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
 void EditorLayer::BufferCommand(std::shared_ptr<ICommand>&& p_command) {
     m_commandBuffer.emplace_back(std::move(p_command));
 }
@@ -221,10 +252,16 @@ void EditorLayer::FlushCommand(Scene& scene) {
                 auto entity = command->target;
                 DEV_ASSERT(entity.IsValid());
                 scene.RemoveEntity(entity);
-                // if (scene.contains<TransformComponent>(entity)) {
-
-                //}
                 break;
+            }
+            switch (task->GetType()) {
+                case COMMAND_TYPE_SAVE_PROJECT:
+                case COMMAND_TYPE_REDO_VIEWER:
+                case COMMAND_TYPE_UNDO_VIEWER:
+                    task->Redo();
+                    break;
+                default:
+                    break;
             }
         } while (0);
     }

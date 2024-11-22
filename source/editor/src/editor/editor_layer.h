@@ -9,7 +9,7 @@
 
 namespace my {
 
-class EditorLayer : public Layer {
+class EditorLayer : public Layer, public EventListener {
 public:
     enum State {
         STATE_TRANSLATE,
@@ -19,7 +19,9 @@ public:
 
     EditorLayer();
 
-    void Attach() override {}
+    void Attach() override;
+    void Detach() override;
+
     void Update(float dt) override;
     void Render() override;
 
@@ -37,6 +39,8 @@ public:
     void RemoveEntity(ecs::Entity p_target);
 
     UndoStack& GetUndoStack() { return m_undoStack; }
+
+    void EventReceived(std::shared_ptr<IEvent> p_event) override;
 
 private:
     void DockSpace(Scene& p_scene);

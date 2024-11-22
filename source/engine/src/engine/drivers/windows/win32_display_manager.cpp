@@ -4,7 +4,7 @@
 
 #include "core/framework/application.h"
 #include "core/framework/graphics_manager.h"
-#include "core/input/input.h"
+#include "core/framework/input_manager.h"
 
 namespace my {
 
@@ -141,36 +141,36 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
         case WM_MOUSEWHEEL: {
             const int delta = GET_WHEEL_DELTA_WPARAM(p_wparam);
             float direction = (delta > 0) ? 1.0f : -1.0f;
-            input::SetWheel(0.0f, direction);
+            InputManager::GetSingleton().SetWheel(0.0f, direction);
         } break;
         case WM_LBUTTONDOWN: {
-            input::SetButton(MOUSE_BUTTON_LEFT, true);
+            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_LEFT, true);
         } break;
         case WM_LBUTTONUP: {
-            input::SetButton(MOUSE_BUTTON_LEFT, false);
+            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_LEFT, false);
         } break;
         case WM_RBUTTONDOWN: {
-            input::SetButton(MOUSE_BUTTON_RIGHT, true);
+            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_RIGHT, true);
         } break;
         case WM_RBUTTONUP: {
-            input::SetButton(MOUSE_BUTTON_RIGHT, false);
+            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_RIGHT, false);
         } break;
         case WM_MBUTTONDOWN: {
-            input::SetButton(MOUSE_BUTTON_MIDDLE, true);
+            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_MIDDLE, true);
         } break;
         case WM_MBUTTONUP: {
-            input::SetButton(MOUSE_BUTTON_MIDDLE, false);
+            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_MIDDLE, false);
         } break;
         case WM_MOUSEMOVE: {
             int x = LOWORD(p_lparam);
             int y = HIWORD(p_lparam);
-            input::SetCursor(static_cast<float>(x), static_cast<float>(y));
+            InputManager::GetSingleton().SetCursor(static_cast<float>(x), static_cast<float>(y));
         } break;
         case WM_KEYDOWN: {
             int key_code = LOWORD(p_wparam);
             auto it = m_keyMapping.find(key_code);
             if (it != m_keyMapping.end()) {
-                input::SetKey(it->second, true);
+                InputManager::GetSingleton().SetKey(it->second, true);
             } else {
                 LOG_WARN("key {} not mapped", key_code);
             }
@@ -179,7 +179,7 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
             int key_code = LOWORD(p_wparam);
             auto it = m_keyMapping.find(key_code);
             if (it != m_keyMapping.end()) {
-                input::SetKey(it->second, false);
+                InputManager::GetSingleton().SetKey(it->second, false);
             }
         } break;
         default:
@@ -192,17 +192,17 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
 void Win32DisplayManager::InitializeKeyMapping() {
     DEV_ASSERT(m_keyMapping.empty());
 
-    m_keyMapping[VK_SPACE] = KEY_SPACE;
-    m_keyMapping[VK_LEFT] = KEY_LEFT;
-    m_keyMapping[VK_RIGHT] = KEY_RIGHT;
-    m_keyMapping[VK_UP] = KEY_UP;
-    m_keyMapping[VK_DOWN] = KEY_DOWN;
+    m_keyMapping[VK_SPACE] = KeyCode::KEY_SPACE;
+    m_keyMapping[VK_LEFT] = KeyCode::KEY_LEFT;
+    m_keyMapping[VK_RIGHT] = KeyCode::KEY_RIGHT;
+    m_keyMapping[VK_UP] = KeyCode::KEY_UP;
+    m_keyMapping[VK_DOWN] = KeyCode::KEY_DOWN;
 
     for (char i = 0; i <= 9; ++i) {
-        m_keyMapping['0' + i] = static_cast<KeyCode>(KEY_0 + i);
+        m_keyMapping['0' + i] = static_cast<KeyCode>((uint16_t)KeyCode::KEY_0 + i);
     }
     for (char i = 0; i < 26; ++i) {
-        m_keyMapping['A' + i] = static_cast<KeyCode>(KEY_A + i);
+        m_keyMapping['A' + i] = static_cast<KeyCode>((uint16_t)KeyCode::KEY_A + i);
     }
 
     // @TODO: do the rest

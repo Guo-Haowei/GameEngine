@@ -178,7 +178,7 @@ public:
     uint64_t GetFinalImage() const;
 
     // @TODO: thread safety ?
-    void EventReceived(std::shared_ptr<Event> p_event) final;
+    void EventReceived(std::shared_ptr<IEvent> p_event) final;
 
     // @TODO: move to renderer
     const rg::RenderGraph& GetActiveRenderGraph() { return m_renderGraph; }
