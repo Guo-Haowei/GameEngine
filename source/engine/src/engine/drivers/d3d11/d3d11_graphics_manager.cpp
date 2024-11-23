@@ -41,8 +41,6 @@ auto D3d11GraphicsManager::InitializeImpl() -> Result<void> {
 
     ImGui_ImplDX11_NewFrame();
 
-    SelectRenderGraph();
-
     // @TODO: refactor this
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -212,7 +210,7 @@ auto D3d11GraphicsManager::InitSamplers() -> Result<void> {
     return Result<void>();
 }
 
-std::shared_ptr<GpuConstantBuffer> D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
+auto D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> {
     D3D11_BUFFER_DESC buffer_desc{};
     buffer_desc.ByteWidth = p_desc.elementCount * p_desc.elementSize;
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -222,7 +220,8 @@ std::shared_ptr<GpuConstantBuffer> D3d11GraphicsManager::CreateConstantBuffer(co
     buffer_desc.StructureByteStride = 0;
 
     ComPtr<ID3D11Buffer> d3d_buffer;
-    D3D_FAIL_V(m_device->CreateBuffer(&buffer_desc, nullptr, d3d_buffer.GetAddressOf()), nullptr);
+    D3D_FAIL(m_device->CreateBuffer(&buffer_desc, nullptr, d3d_buffer.GetAddressOf()),
+             "failed to create ConstantBuffer");
 
     auto uniform_buffer = std::make_shared<D3d11UniformBuffer>(p_desc);
     uniform_buffer->internalBuffer = d3d_buffer;

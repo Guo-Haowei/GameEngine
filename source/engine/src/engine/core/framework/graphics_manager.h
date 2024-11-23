@@ -117,6 +117,10 @@ public:
     auto Initialize() -> Result<void> final;
     void Update(Scene& p_scene);
 
+    // resource
+    virtual auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> = 0;
+    virtual auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> = 0;
+
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
     virtual void BeginDrawPass(const DrawPass* p_draw_pass);
@@ -138,9 +142,6 @@ public:
 
     virtual void SetStencilRef(uint32_t p_ref) = 0;
     virtual void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) = 0;
-
-    virtual std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) = 0;
-    virtual auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> = 0;
 
     virtual void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
     virtual void UnbindStructuredBuffer(int p_slot) = 0;

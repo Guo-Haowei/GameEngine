@@ -66,7 +66,7 @@ SRV_DEFINES
 
 #if defined(HLSL_LANG_D3D12)
 #define SBUFFER(DATA_TYPE, NAME, REG) \
-    RWStructuredBuffer<DATA_TYPE> NAME : register(u0, space##REG);
+    RWStructuredBuffer<DATA_TYPE> NAME : register(u##REG);
 #endif
 
 #if defined(GLSL_LANG)
@@ -82,13 +82,5 @@ SRV_DEFINES
 SBUFFER_LIST
 
 #undef SBUFFER
-
-#if 0
-SBUFFER(ParticleCounter, GlobalParticleCounter, 16)
-SBUFFER(int, GlobalDeadIndices, 17)
-SBUFFER(int, GlobalAliveIndicesPreSim, 18)
-SBUFFER(int, GlobalAliveIndicesPostSim, 19)
-SBUFFER(Particle, GlobalParticleData, 24)
-#endif
 
 #endif

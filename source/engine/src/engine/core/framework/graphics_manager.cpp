@@ -50,7 +50,7 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     buffer_desc.slot = T::GetUniformBufferSlot();
     buffer_desc.elementCount = 1;
     buffer_desc.elementSize = sizeof(T);
-    p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
+    p_buffer.buffer = *GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
 auto GraphicsManager::Initialize() -> Result<void> {
@@ -66,15 +66,17 @@ auto GraphicsManager::Initialize() -> Result<void> {
         return HBN_ERROR(res.error());
     }
 
+    SelectRenderGraph();
+
     for (int i = 0; i < num_frames; ++i) {
         FrameContext& frame_context = *m_frameContexts[i].get();
-        frame_context.batchCb = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
-        frame_context.passCb = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
-        frame_context.materialCb = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
-        frame_context.boneCb = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
-        frame_context.emitterCb = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
-        frame_context.pointShadowCb = ::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
-        frame_context.perFrameCb = ::my::CreateUniformCheckSize<PerFrameConstantBuffer>(*this, 1);
+        frame_context.batchCb = *::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
+        frame_context.passCb = *::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
+        frame_context.materialCb = *::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
+        frame_context.boneCb = *::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
+        frame_context.emitterCb = *::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
+        frame_context.pointShadowCb = *::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
+        frame_context.perFrameCb = *::my::CreateUniformCheckSize<PerFrameConstantBuffer>(*this, 1);
     }
 
     // @TODO: refactor
@@ -106,6 +108,7 @@ auto GraphicsManager::Initialize() -> Result<void> {
     //     .elementCount = 1,
     // });
 
+    m_initialized = true;
     return Result<void>();
 }
 
@@ -157,7 +160,6 @@ void GraphicsManager::Update(Scene& p_scene) {
     Cleanup();
 
     UpdateConstants(p_scene);
-    UpdateEmitters(p_scene);
     UpdateForceFields(p_scene);
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
@@ -186,6 +188,8 @@ void GraphicsManager::Update(Scene& p_scene) {
     {
         OPTICK_EVENT("Render");
         BeginFrame();
+
+        UpdateEmitters(p_scene);
 
         auto& frame = GetCurrentFrame();
         UpdateConstantBuffer(frame.batchCb.get(), frame.batchCache.buffer);
@@ -465,11 +469,6 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
-    // @HACK: skip for now
-    if (GetBackend() == Backend::D3D12) {
-        return;
-    }
-
     for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
         if (!emitter.particleBuffer) {
             // create buffer

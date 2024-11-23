@@ -86,8 +86,6 @@ auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
         }
     }
 
-    SelectRenderGraph();
-
     ImGui_ImplOpenGL3_Init();
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 
@@ -340,10 +338,14 @@ void OpenGlGraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
     UnbindStructuredBuffer(p_slot);
 }
 
-std::shared_ptr<GpuConstantBuffer> OpenGlGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
+auto OpenGlGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> {
     GLuint handle = 0;
 
     glGenBuffers(1, &handle);
+    if (handle == 0) {
+        return HBN_ERROR(ERR_CANT_CREATE, "failed to generate buffer");
+    }
+
     glBindBuffer(GL_UNIFORM_BUFFER, handle);
     glBufferData(GL_UNIFORM_BUFFER, p_desc.elementCount * p_desc.elementSize, nullptr, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);

@@ -174,9 +174,6 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
 
-#if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
-
-// @TODO: refactor name
 CBUFFER(EmitterConstantBuffer, 6) {
     int c_preSimIdx;
     int c_postSimIdx;
@@ -199,6 +196,8 @@ CBUFFER(EmitterConstantBuffer, 6) {
     Matrix4x4f _emitter_padding_4;
     Matrix4x4f _emitter_padding_5;
 };
+
+#if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
 
 #if defined(GLSL_LANG) || defined(__cplusplus)
 

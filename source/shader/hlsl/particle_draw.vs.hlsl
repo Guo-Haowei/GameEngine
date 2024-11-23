@@ -2,10 +2,14 @@
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "structured_buffer.hlsl.h"
-// #include "shader_resource_defines.hlsl.h"
 
-// @TODO: refactor
-StructuredBuffer<Particle> GlobalParticleData : register(t24);
+#define SBUFFER(DATA_TYPE, NAME, REG) \
+    StructuredBuffer<DATA_TYPE> NAME : register(t##REG);
+SBUFFER_LIST
+#undef SBUFFER
+
+StructuredBuffer<float> aa : register(t20);
+RWStructuredBuffer<float> bb : register(u20);
 
 vsoutput_color main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
     vsoutput_color output;

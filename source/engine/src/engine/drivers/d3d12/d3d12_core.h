@@ -49,9 +49,10 @@ class DescriptorHeapBase {
 public:
     virtual ~DescriptorHeapBase() = default;
 
-    bool Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type,
-                    ID3D12Device* p_device,
-                    bool p_shard_visible);
+    virtual auto Initialize(int p_count,
+                            D3D12_DESCRIPTOR_HEAP_TYPE p_type,
+                            ID3D12Device* p_device,
+                            bool p_shard_visible) -> Result<void>;
 
     D3D12_CPU_DESCRIPTOR_HANDLE GetStartCpu() const { return m_startCpu; }
     D3D12_GPU_DESCRIPTOR_HANDLE GetStartGpu() const { return m_startGpu; };
@@ -68,29 +69,24 @@ protected:
 
     DescriptorHeapHandle AllocHandle(const Space& p_space);
 
-    virtual uint32_t GetCapacity() const = 0;
-
     D3D12_DESCRIPTOR_HEAP_DESC m_desc{};
     D3D12_CPU_DESCRIPTOR_HANDLE m_startCpu{};
     D3D12_GPU_DESCRIPTOR_HANDLE m_startGpu{};
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> m_heap{};
 
     uint32_t m_incrementSize{ 0 };
+    int m_capacity{ 0 };
 };
 
 class DescriptorHeap : public DescriptorHeapBase {
     using Base = DescriptorHeapBase;
 
 public:
-    DescriptorHeap(int p_num_descriptors);
+    DescriptorHeap();
 
     DescriptorHeapHandle AllocHandle();
 
 protected:
-    uint32_t GetCapacity() const override {
-        return m_space.max;
-    }
-
     Space m_space;
 };
 
@@ -98,16 +94,21 @@ class DescriptorHeapSrv : public DescriptorHeapBase {
     using Base = DescriptorHeapBase;
 
 public:
-    DescriptorHeapSrv();
+    virtual auto Initialize(int p_count,
+                            D3D12_DESCRIPTOR_HEAP_TYPE p_type,
+                            ID3D12Device* p_device,
+                            bool p_shard_visible) -> Result<void> override;
 
-    DescriptorHeapHandle AllocHandle(DescriptorResourceType p_type);
+    DescriptorHeapHandle AllocBindlessHandle(DescriptorResourceType p_type);
+    DescriptorHeapHandle AllocHandle();
 
 protected:
-    uint32_t GetCapacity() const override {
+    constexpr int GetBindlessMax() const {
         return RWTexture3D_START + RWTexture3D_MAX_COUNT;
     }
 
     Space m_spaces[std::to_underlying(DescriptorResourceType::COUNT)];
+    std::atomic_int m_backCounter;
 };
 
 // @TODO: refactor, this is duplicate
@@ -131,7 +132,7 @@ public:
         // ID3D12Resource* uploadResource = nullptr;
     };
 
-    bool Initialize(D3d12GraphicsManager* p_device);
+    auto Initialize(D3d12GraphicsManager* p_device) -> Result<void>;
 
     void Finalize();
 

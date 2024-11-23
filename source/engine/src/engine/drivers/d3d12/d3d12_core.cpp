@@ -5,38 +5,42 @@
 
 namespace my {
 
+static constexpr int DESCRIPTOR_MAX_COUNT = 512;
+
 //------------------------------------------------------------------------------
 // DescriptorHeapBase
-bool DescriptorHeapBase::Initialize(D3D12_DESCRIPTOR_HEAP_TYPE p_type, ID3D12Device* p_device, bool p_shader_visible) {
+auto DescriptorHeapBase::Initialize(int p_count, D3D12_DESCRIPTOR_HEAP_TYPE p_type, ID3D12Device* p_device, bool p_shader_visible) -> Result<void> {
     m_desc.Type = p_type;
-    m_desc.NumDescriptors = GetCapacity();
+    m_desc.NumDescriptors = DESCRIPTOR_MAX_COUNT;
     m_desc.Flags = p_shader_visible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
     m_desc.NodeMask = 1;
+    m_capacity = p_count;
 
-    D3D_FAIL_V(p_device->CreateDescriptorHeap(&m_desc, IID_PPV_ARGS(&m_heap)), false);
-
-#if USING(USE_D3D_DEBUG_NAME)
+    const char* name = "";
     switch (p_type) {
         case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
-            D3D12_SET_DEBUG_NAME(m_heap.Get(), "SRV Heap");
+            name = "CBV_SRV_UAV";
             break;
         case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
-            D3D12_SET_DEBUG_NAME(m_heap.Get(), "RTV Heap");
+            name = "RTV Heap";
             break;
         case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
-            D3D12_SET_DEBUG_NAME(m_heap.Get(), "DSV Heap");
+            name = "DSV Heap";
             break;
         default:
             CRASH_NOW();
             break;
     }
-#endif
+
+    D3D_FAIL(p_device->CreateDescriptorHeap(&m_desc, IID_PPV_ARGS(&m_heap)), "Failed to create heap {}", name);
+
+    D3D12_SET_DEBUG_NAME(m_heap.Get(), name);
 
     m_incrementSize = p_device->GetDescriptorHandleIncrementSize(p_type);
     m_startCpu = m_heap->GetCPUDescriptorHandleForHeapStart();
     m_startGpu = m_heap->GetGPUDescriptorHandleForHeapStart();
 
-    return true;
+    return Result<void>();
 }
 
 DescriptorHeapHandle DescriptorHeapBase::AllocHandle(const Space& p_space) {
@@ -56,19 +60,25 @@ DescriptorHeapHandle DescriptorHeapBase::AllocHandle(const Space& p_space) {
 
 //------------------------------------------------------------------------------
 // DescriptorHeap
-DescriptorHeap::DescriptorHeap(int p_num_descriptors) {
-    m_space.max = p_num_descriptors;
+DescriptorHeap::DescriptorHeap() {
     m_space.start = 0;
     m_space.counter = 0;
 }
 
 DescriptorHeapHandle DescriptorHeap::AllocHandle() {
+    m_space.max = m_capacity;
     return Base::AllocHandle(m_space);
 }
 
 //------------------------------------------------------------------------------
 // DescriptorSrv
-DescriptorHeapSrv::DescriptorHeapSrv() {
+auto DescriptorHeapSrv::Initialize(int p_count,
+                                   D3D12_DESCRIPTOR_HEAP_TYPE p_type,
+                                   ID3D12Device* p_device,
+                                   bool p_shard_visible) -> Result<void> {
+    m_capacity = p_count;
+
+    DEV_ASSERT(GetBindlessMax() < m_capacity);
 
 #define DESCRIPTOR_SPACE(ENUM, NUM, PREV, SPACE, ...) \
     do {                                              \
@@ -85,21 +95,42 @@ DescriptorHeapSrv::DescriptorHeapSrv() {
 
     // reserve 1 for imgui
     m_spaces[0].counter = 1;
+    m_backCounter = m_capacity - 1;
+
+    return DescriptorHeapBase::Initialize(p_count, p_type, p_device, p_shard_visible);
 }
 
-DescriptorHeapHandle DescriptorHeapSrv::AllocHandle(DescriptorResourceType p_type) {
+DescriptorHeapHandle DescriptorHeapSrv::AllocHandle() {
+    int index = m_backCounter.fetch_add(-1);
+    DEV_ASSERT(index > GetBindlessMax() && index < m_capacity);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE cpu_handle(m_startCpu);
+    cpu_handle.Offset(index, m_incrementSize);
+    CD3DX12_GPU_DESCRIPTOR_HANDLE gpu_handle(m_startGpu);
+    gpu_handle.Offset(index, m_incrementSize);
+
+    return {
+        index,
+        cpu_handle,
+        gpu_handle,
+    };
+}
+
+DescriptorHeapHandle DescriptorHeapSrv::AllocBindlessHandle(DescriptorResourceType p_type) {
     DEV_ASSERT_INDEX(p_type, DescriptorResourceType::COUNT);
     return Base::AllocHandle(m_spaces[std::to_underlying(p_type)]);
 }
 
 //------------------------------------------------------------------------------
 // CopyContext
-bool CopyContext::Initialize(D3d12GraphicsManager* p_device) {
+auto CopyContext::Initialize(D3d12GraphicsManager* p_device) -> Result<void> {
     DEV_ASSERT(p_device);
     m_device = p_device;
     m_queue = p_device->CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-    DEV_ASSERT(m_queue);
-    return true;
+
+    if (DEV_VERIFY(m_queue)) {
+        return Result<void>();
+    }
+    return HBN_ERROR(ERR_CANT_CREATE, "failed to create command queue");
 }
 
 void CopyContext::Finalize() {
