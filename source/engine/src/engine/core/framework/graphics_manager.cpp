@@ -291,7 +291,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     };
 
     if (GetBackend() == Backend::METAL) {
-        return HBN_ERROR(ERR_CANT_CREATE, "Metal not supported");
+        return HBN_ERROR(ERR_CANT_CREATE);
     }
 
     if (!method.empty()) {

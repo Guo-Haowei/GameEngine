@@ -58,7 +58,7 @@ auto DisplayManager::Initialize() -> Result<void> {
 
 std::shared_ptr<DisplayManager> DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
-    if (backend == "opengl") {
+    if (backend == "opengl" || backend == "vulkan") {
         return std::make_shared<GlfwDisplayManager>();
     }
 #if USING(PLATFORM_WINDOWS)
