@@ -60,22 +60,22 @@ SRV_DEFINES
 #endif
 
 #if defined(HLSL_LANG_D3D11)
-#define SBUFFER(DATA_TYPE, NAME, REG) \
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) \
     RWStructuredBuffer<DATA_TYPE> NAME : register(u##REG);
 #endif
 
 #if defined(HLSL_LANG_D3D12)
-#define SBUFFER(DATA_TYPE, NAME, REG) \
-    RWStructuredBuffer<DATA_TYPE> NAME : register(u##REG);
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) \
+    RWStructuredBuffer<DATA_TYPE> NAME : register(u##REG2, space##REG);
 #endif
 
 #if defined(GLSL_LANG)
-#define SBUFFER(DATA_TYPE, NAME, REG) \
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) \
     layout(std430, binding = REG) buffer NAME##_t { DATA_TYPE NAME[]; };
 #endif
 
 #if defined(__cplusplus)
-#define SBUFFER(DATA_TYPE, NAME, REG) \
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) \
     static constexpr inline int Get##NAME##Slot() { return REG; }
 #endif
 

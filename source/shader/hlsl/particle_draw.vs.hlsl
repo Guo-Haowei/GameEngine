@@ -1,15 +1,16 @@
 /// File: particle_draw.vs.hlsl
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
-#include "structured_buffer.hlsl.h"
 
-#define SBUFFER(DATA_TYPE, NAME, REG) \
+#if defined(HLSL_LANG_D3D11)
+#include "structured_buffer.hlsl.h"
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) \
     StructuredBuffer<DATA_TYPE> NAME : register(t##REG);
 SBUFFER_LIST
 #undef SBUFFER
-
-StructuredBuffer<float> aa : register(t20);
-RWStructuredBuffer<float> bb : register(u20);
+#else
+#include "shader_resource_defines.hlsl.h"
+#endif
 
 vsoutput_color main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
     vsoutput_color output;

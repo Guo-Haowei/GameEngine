@@ -485,30 +485,23 @@ void D3d12GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
 }
 
 void D3d12GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    unused(p_slot);
     auto uav = reinterpret_cast<const D3d12StructuredBuffer*>(p_buffer);
     if (DEV_VERIFY(uav)) {
-        int slot = p_slot - 16 + 8;
-        CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvDescHeap.GetStartGpu() };
-        handle.Offset(uav->handle.index, m_srvDescHeap.GetIncrementSize());
-        m_graphicsCommandList->SetComputeRootUnorderedAccessView(slot, handle.ptr);
-        m_graphicsCommandList->SetGraphicsRootUnorderedAccessView(slot, handle.ptr);
     }
 }
 
 void D3d12GraphicsManager::UnbindStructuredBuffer(int p_slot) {
     unused(p_slot);
-    CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
     unused(p_slot);
     unused(p_buffer);
-    CRASH_NOW_MSG("Implement");
 }
 
 void D3d12GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
     unused(p_slot);
-    CRASH_NOW_MSG("Implement");
 }
 
 auto D3d12GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> {
@@ -1216,6 +1209,14 @@ auto D3d12GraphicsManager::CreateRootSignature() -> Result<void> {
 #undef DESCRIPTOR_UAV
 #undef DESCRIPTOR_INIT
 
+    auto reg_sbuffer = [&](int p_space, int p_offset) {
+        // root_parameters[param_count++].InitAsUnorderedAccessView(p_space);
+        descriptor_table[descriptor_counter++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, p_offset, p_space, p_offset);
+    };
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) reg_sbuffer(REG, REG2);
+    SBUFFER_LIST
+#undef SBUFFER
+
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
     int param_count = 0;
@@ -1230,13 +1231,6 @@ auto D3d12GraphicsManager::CreateRootSignature() -> Result<void> {
     root_parameters[param_count++].InitAsConstantBufferView(6);
 
     root_parameters[param_count++].InitAsDescriptorTable(descriptor_counter, descriptor_table);
-
-    auto reg_sbuffer = [&](int p_space) {
-        root_parameters[param_count++].InitAsUnorderedAccessView(p_space);
-    };
-#define SBUFFER(DATA_TYPE, NAME, REG) reg_sbuffer(REG);
-    SBUFFER_LIST
-#undef SBUFFER
 
     InitStaticSamplers();
 

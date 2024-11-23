@@ -20,11 +20,11 @@ struct ParticleCounter {
     int emissionCount;
 };
 
-#define SBUFFER_LIST                                    \
-    SBUFFER(ParticleCounter, GlobalParticleCounter, 16) \
-    SBUFFER(int, GlobalDeadIndices, 17)                 \
-    SBUFFER(int, GlobalAliveIndicesPreSim, 18)          \
-    SBUFFER(int, GlobalAliveIndicesPostSim, 19)         \
-    SBUFFER(Particle, GlobalParticleData, 24)
+#define SBUFFER_LIST                                         \
+    SBUFFER(ParticleCounter, GlobalParticleCounter, 16, 511) \
+    SBUFFER(int, GlobalDeadIndices, 17, 510)                 \
+    SBUFFER(int, GlobalAliveIndicesPreSim, 18, 509)          \
+    SBUFFER(int, GlobalAliveIndicesPostSim, 19, 508)         \
+    SBUFFER(Particle, GlobalParticleData, 24, 507)
 
 #endif

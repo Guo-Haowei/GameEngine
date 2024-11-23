@@ -249,6 +249,9 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .depthStencilDesc = &s_depthStencilDefault,
                                            .inputLayoutDesc = &s_inputLayoutMesh,
                                            .blendDesc = &s_blendStateDefault,
+                                           .numRenderTargets = 1,
+                                           .rtvFormats = { RESOURCE_FORMAT_TONE },
+                                           .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                        });
 
     // @HACK: only support this many shaders

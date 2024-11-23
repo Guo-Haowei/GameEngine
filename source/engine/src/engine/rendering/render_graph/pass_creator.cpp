@@ -807,6 +807,7 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     creator.AddGbufferPass();
     creator.AddHighlightPass();
     creator.AddLightingPass();
+    creator.AddEmitterPass();
     creator.AddBloomPass();
     creator.AddTonePass();
 
