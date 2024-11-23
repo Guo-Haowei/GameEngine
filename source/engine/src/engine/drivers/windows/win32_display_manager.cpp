@@ -68,7 +68,11 @@ void Win32DisplayManager::Finalize() {
 }
 
 bool Win32DisplayManager::ShouldClose() {
-    return m_shouldQuit;
+    if (!m_shouldQuit) {
+        return false;
+    }
+    ::PostQuitMessage(0);
+    return true;
 }
 
 std::tuple<int, int> Win32DisplayManager::GetWindowSize() {
@@ -102,6 +106,8 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
         return true;
     }
 
+    InputManager* input_manager = m_app->GetInputManager();
+
     switch (p_msg) {
         case WM_SIZE: {
             int width = LOWORD(p_lparam);
@@ -128,7 +134,7 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
             }
             break;
         case WM_DESTROY:
-            ::PostQuitMessage(0);
+            m_shouldQuit = true;
             return 0;
         case WM_DPICHANGED:
             if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DpiEnableScaleViewports) {
@@ -141,36 +147,36 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
         case WM_MOUSEWHEEL: {
             const int delta = GET_WHEEL_DELTA_WPARAM(p_wparam);
             float direction = (delta > 0) ? 1.0f : -1.0f;
-            InputManager::GetSingleton().SetWheel(0.0f, direction);
+            input_manager->SetWheel(0.0f, direction);
         } break;
         case WM_LBUTTONDOWN: {
-            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_LEFT, true);
+            input_manager->SetButton(MOUSE_BUTTON_LEFT, true);
         } break;
         case WM_LBUTTONUP: {
-            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_LEFT, false);
+            input_manager->SetButton(MOUSE_BUTTON_LEFT, false);
         } break;
         case WM_RBUTTONDOWN: {
-            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_RIGHT, true);
+            input_manager->SetButton(MOUSE_BUTTON_RIGHT, true);
         } break;
         case WM_RBUTTONUP: {
-            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_RIGHT, false);
+            input_manager->SetButton(MOUSE_BUTTON_RIGHT, false);
         } break;
         case WM_MBUTTONDOWN: {
-            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_MIDDLE, true);
+            input_manager->SetButton(MOUSE_BUTTON_MIDDLE, true);
         } break;
         case WM_MBUTTONUP: {
-            InputManager::GetSingleton().SetButton(MOUSE_BUTTON_MIDDLE, false);
+            input_manager->SetButton(MOUSE_BUTTON_MIDDLE, false);
         } break;
         case WM_MOUSEMOVE: {
             int x = LOWORD(p_lparam);
             int y = HIWORD(p_lparam);
-            InputManager::GetSingleton().SetCursor(static_cast<float>(x), static_cast<float>(y));
+            input_manager->SetCursor(static_cast<float>(x), static_cast<float>(y));
         } break;
         case WM_KEYDOWN: {
             const int key = LOWORD(p_wparam);
             auto it = m_keyMapping.find(key);
             if (it != m_keyMapping.end()) {
-                InputManager::GetSingleton().SetKey(it->second, true);
+                input_manager->SetKey(it->second, true);
             } else {
                 LOG_WARN("key {} not mapped", key);
                 GetKeyState(VK_LSHIFT);
@@ -180,7 +186,7 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
             int key = LOWORD(p_wparam);
             auto it = m_keyMapping.find(key);
             if (it != m_keyMapping.end()) {
-                InputManager::GetSingleton().SetKey(it->second, false);
+                input_manager->SetKey(it->second, false);
             }
         } break;
         default:

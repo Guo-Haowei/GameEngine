@@ -35,8 +35,8 @@ auto DisplayManager::Initialize() -> Result<void> {
 
     auto backend = GraphicsManager::GetSingleton().GetBackend();
     switch (backend) {
-#define BACKEND_DECLARE(ENUM, STR)         \
-    case Backend::ENUM:                    \
+#define BACKEND_DECLARE(ENUM, STR)       \
+    case Backend::ENUM:                  \
         info.title.append(" [" STR "|"); \
         break;
         BACKEND_LIST

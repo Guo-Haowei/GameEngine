@@ -30,7 +30,6 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     m_playButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/play.png" });
     m_pauseButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/pause.png" });
 
-    m_shortcuts.resize(SHORT_CUT_MAX);
     m_shortcuts[SHORT_CUT_SAVE_AS] = {
         "Save As..",
         "Ctrl+Shift+S",

@@ -60,7 +60,7 @@ void EditorCommandRemoveEntity::Execute(Scene& p_scene) {
 /// OpenProjectCommand
 void OpenProjectCommand::Execute(Scene&) {
     std::string path;
-    //std::filesystem::path path{ project.empty() ? "untitled.scene" : project.c_str() };
+    // std::filesystem::path path{ project.empty() ? "untitled.scene" : project.c_str() };
     if (m_openDialog) {
 // @TODO: implement
 #if USING(PLATFORM_WINDOWS)
@@ -71,7 +71,7 @@ void OpenProjectCommand::Execute(Scene&) {
 #endif
     }
 
-    // @TODO: validate 
+    // @TODO: validate
     DVAR_SET_STRING(project, path);
 
     SceneManager::GetSingleton().RequestScene(path);

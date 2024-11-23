@@ -85,7 +85,7 @@ private:
         bool shift{};
     };
 
-    std::vector<ShortcutDesc> m_shortcuts;
+    std::array<ShortcutDesc, SHORT_CUT_MAX> m_shortcuts;
     std::vector<std::shared_ptr<IEvent>> m_unhandledEvents;
 
     // @TODO: refactor
