@@ -184,7 +184,7 @@ public:
     // @TODO: move to renderer
     const rg::RenderGraph& GetActiveRenderGraph() { return m_renderGraph; }
 
-    static std::shared_ptr<GraphicsManager> Create();
+    static auto Create() -> Result<std::shared_ptr<GraphicsManager>>;
 
     Backend GetBackend() const { return m_backend; }
     RenderGraphName GetRenderGraphName() const { return m_renderGraphName; }

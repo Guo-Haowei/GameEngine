@@ -7,6 +7,7 @@
 #if USING(PLATFORM_WINDOWS)
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d12/d3d12_graphics_manager.h"
+#include "drivers/vulkan/vulkan_graphics_manager.h"
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
@@ -116,29 +117,62 @@ void GraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     }
 }
 
-std::shared_ptr<GraphicsManager> GraphicsManager::Create() {
+auto GraphicsManager::Create() -> Result<std::shared_ptr<GraphicsManager>> {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
 
-#if USING(PLATFORM_APPLE)
-    ERR_FAIL_COND_V_MSG(backend != "metal", nullptr, "only support Metal backend on Apple");
-    return std::make_shared<EmptyGraphicsManager>("MetalGraphicsManager", Backend::METAL, 1);
-#else
-#if USING(PLATFORM_WINDOWS)
-    if (backend == "d3d11") {
-        return std::make_shared<D3d11GraphicsManager>();
-    }
-    if (backend == "d3d12") {
-        return std::make_shared<D3d12GraphicsManager>();
-    }
-#else
-#error Platform not supported
-#endif
-    if (backend == "opengl") {
-        return std::make_shared<OpenGlGraphicsManager>();
-    }
+    auto select_renderer = [&]() -> std::shared_ptr<GraphicsManager> {
+        auto create_empty_renderer = []() -> std::shared_ptr<GraphicsManager> {
+            return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsManager", Backend::EMPTY, 1);
+        };
 
-    return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsmanager", Backend::EMPTY, 1);
+        auto create_d3d11_renderer = []() -> std::shared_ptr<GraphicsManager> {
+#if USING(PLATFORM_WINDOWS)
+            return std::make_shared<D3d11GraphicsManager>();
+#else
+            return nullptr;
 #endif
+        };
+        auto create_d3d12_renderer = []() -> std::shared_ptr<GraphicsManager> {
+#if USING(PLATFORM_WINDOWS)
+            return std::make_shared<D3d12GraphicsManager>();
+#else
+            return nullptr;
+#endif
+        };
+        auto create_vulkan_renderer = []() -> std::shared_ptr<GraphicsManager> {
+#if USING(PLATFORM_WINDOWS)
+            return std::make_shared<VulkanGraphicsManager>();
+#else
+            return nullptr;
+#endif
+        };
+        auto create_opengl_renderer = []() -> std::shared_ptr<GraphicsManager> {
+#if USING(PLATFORM_WINDOWS)
+            return std::make_shared<OpenGlGraphicsManager>();
+#else
+            return nullptr;
+#endif
+        };
+        auto create_metal_renderer = []() -> std::shared_ptr<GraphicsManager> {
+#if USING(PLATFORM_APPLE)
+            return std::make_shared<MetalGraphicsManager>();
+#else
+            return nullptr;
+#endif
+        };
+
+#define BACKEND_DECLARE(ENUM, DISPLAY, DVAR) \
+    if (backend == #DVAR) { return create_##DVAR##_renderer(); }
+        BACKEND_LIST
+#undef BACKEND_DECLARE
+        return nullptr;
+    };
+
+    auto result = select_renderer();
+    if (!result) {
+        return HBN_ERROR(ERR_INVALID_PARAMETER, "backend '{}' not supported", backend);
+    }
+    return result;
 }
 
 void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
@@ -267,6 +301,10 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         } else {
             m_renderGraphName = it->second;
         }
+    }
+
+    if (GetBackend() == Backend::VULKAN) {
+        m_renderGraphName = RenderGraphName::DUMMY;
     }
 
     // force to default

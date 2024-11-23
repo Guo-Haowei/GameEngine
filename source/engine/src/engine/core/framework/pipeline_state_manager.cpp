@@ -153,8 +153,13 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
 
 auto PipelineStateManager::Initialize() -> Result<void> {
     auto ok = Result<void>();
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::METAL) {
-        return ok;
+    switch (GraphicsManager::GetSingleton().GetBackend()) {
+        case Backend::EMPTY:
+        case Backend::METAL:
+        case Backend::VULKAN:
+            return ok;
+        default:
+            break;
     }
 
 #define CREATE_PSO(...)                                       \

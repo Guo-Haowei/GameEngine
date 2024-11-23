@@ -34,11 +34,13 @@ protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);
 
 private:
+    [[nodiscard]] auto Setup() -> Result<void>;
+    [[nodiscard]] auto SetupModules() -> Result<void>;
+
     void SaveCommandLine(int p_argc, const char** p_argv);
     void MainLoop();
 
     void RegisterModule(Module* p_module);
-    [[nodiscard]] ErrorCode SetupModules();
 
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_commandLine;
