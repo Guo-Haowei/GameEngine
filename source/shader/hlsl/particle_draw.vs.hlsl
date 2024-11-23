@@ -1,18 +1,8 @@
 /// File: particle_draw.vs.hlsl
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
-
-// @TODO: shader naming style
-struct Particle {
-    float4 position;
-    float4 velocity;
-    float4 color;
-
-    float scale;
-    float lifeSpan;
-    float lifeRemaining;
-    int isActive;
-};
+#include "structured_buffer.hlsl.h"
+// #include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
 StructuredBuffer<Particle> GlobalParticleData : register(t24);

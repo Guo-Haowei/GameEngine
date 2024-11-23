@@ -1,7 +1,7 @@
 /// File: shader_resource_defines.hlsl.h
 #ifndef TEXTURE_BINDING_HLSL_H_INCLUDED
 #define TEXTURE_BINDING_HLSL_H_INCLUDED
-#include "shader_defines.hlsl.h"
+#include "structured_buffer.hlsl.h"
 
 #if defined(HLSL_LANG_D3D12)
 #include "descriptor_table_defines.hlsl.h"
@@ -59,45 +59,28 @@ SRV_DEFINES
 #define TEXTURE_CUBE_ARRAY(NAME) (t_##NAME)
 #endif
 
+#if defined(HLSL_LANG_D3D11)
+#define SBUFFER(DATA_TYPE, NAME, REG) \
+    RWStructuredBuffer<DATA_TYPE> NAME : register(u##REG);
+#endif
+
+#if defined(HLSL_LANG_D3D12)
+#define SBUFFER(DATA_TYPE, NAME, REG) \
+    RWStructuredBuffer<DATA_TYPE> NAME : register(u0, space##REG);
+#endif
+
+#if defined(GLSL_LANG)
+#define SBUFFER(DATA_TYPE, NAME, REG) \
+    layout(std430, binding = REG) buffer NAME##_t { DATA_TYPE NAME[]; };
+#endif
+
 #if defined(__cplusplus)
 #define SBUFFER(DATA_TYPE, NAME, REG) \
     static constexpr inline int Get##NAME##Slot() { return REG; }
-#elif defined(HLSL_LANG)
-#define SBUFFER(DATA_TYPE, NAME, REG) \
-    RWStructuredBuffer<DATA_TYPE> NAME : register(u##REG);
-#elif defined(GLSL_LANG)
-#define SBUFFER(DATA_TYPE, NAME, REG) \
-    layout(std430, binding = REG) buffer NAME##_t { DATA_TYPE NAME[]; };
-#else
-#error "Not supported"
 #endif
 
-// @TODO: shader naming style
-struct Particle {
-    Vector4f position;
-    Vector4f velocity;
-    Vector4f color;
-
-    float scale;
-    float lifeSpan;
-    float lifeRemaining;
-    int isActive;
-};
-
-struct ParticleCounter {
-    int aliveCount[2];
-    int deadCount;
-    int simulationCount;
-    int emissionCount;
-};
-
-#define SBUFFER_LIST                                    \
-    SBUFFER(ParticleCounter, GlobalParticleCounter, 16) \
-    SBUFFER(int, GlobalDeadIndices, 17)                 \
-    SBUFFER(int, GlobalAliveIndicesPreSim, 18)          \
-    SBUFFER(int, GlobalAliveIndicesPostSim, 19)         \
-    SBUFFER(Particle, GlobalParticleData, 24)
 SBUFFER_LIST
+
 #undef SBUFFER
 
 #if 0

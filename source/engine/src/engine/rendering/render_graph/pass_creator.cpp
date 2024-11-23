@@ -829,7 +829,7 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     creator.AddShadowPass();
     creator.AddGbufferPass();
     creator.AddHighlightPass();
-    //creator.AddVoxelizationPass();
+    // creator.AddVoxelizationPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();
     creator.AddBloomPass();
