@@ -140,7 +140,7 @@ public:
     virtual void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) = 0;
 
     virtual std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) = 0;
-    virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) = 0;
+    virtual auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> = 0;
 
     virtual void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
     virtual void UnbindStructuredBuffer(int p_slot) = 0;
@@ -238,6 +238,9 @@ public:
 
     PassContext m_voxelPass;
     PassContext m_mainPass;
+
+    // @TODO: refactor
+    std::shared_ptr<GpuStructuredBuffer> m_voxelLightingBuffers;
 
 protected:
     void Cleanup();

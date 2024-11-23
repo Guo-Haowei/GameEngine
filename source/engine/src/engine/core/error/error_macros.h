@@ -48,14 +48,12 @@ void ReportErrorIndexImpl(std::string_view p_function,
 #define ERR_FAIL_V_MSG_INTERNAL(RET, MSG, EXTRA)                                                       \
     do {                                                                                               \
         ::my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "Method/function failed." EXTRA, MSG); \
-        ::my::BreakIfDebug();                                                                          \
         return RET;                                                                                    \
     } while (0)
 
 #define ERR_FAIL_COND_V_MSG_INTERNAL(EXPR, RET, MSG, EXTRA)                                                          \
     if (!!(EXPR)) [[unlikely]] {                                                                                     \
         ::my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "Condition \"" _STR(EXPR) "\" is true." EXTRA, MSG); \
-        ::my::BreakIfDebug();                                                                                        \
         return RET;                                                                                                  \
     } else                                                                                                           \
         ((void)0)
@@ -64,7 +62,6 @@ void ReportErrorIndexImpl(std::string_view p_function,
     if (int64_t index_ = (int64_t)(INDEX), bound_ = (int64_t)(BOUND); index_ < 0 || index_ >= bound_) [[unlikely]] { \
         ::my::ReportErrorIndexImpl(__FUNCTION__, __FILE__, __LINE__, "", index_, bound_, _STR(INDEX), _STR(BOUND),   \
                                    MSG);                                                                             \
-        ::my::BreakIfDebug();                                                                                        \
         return RET;                                                                                                  \
     } else                                                                                                           \
         ((void)0)

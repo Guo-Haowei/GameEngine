@@ -355,7 +355,7 @@ std::shared_ptr<GpuConstantBuffer> OpenGlGraphicsManager::CreateConstantBuffer(c
     return buffer;
 }
 
-std::shared_ptr<GpuStructuredBuffer> OpenGlGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
+auto OpenGlGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
     GLuint handle = 0;
     glGenBuffers(1, &handle);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);

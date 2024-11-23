@@ -16,16 +16,16 @@ void main() {
     vec3 triangle_normal = abs(pass_normals[0] + pass_normals[1] + pass_normals[2]);
 
     // @TODO: there's a bug stretching voxel along x axis
-    uint dominant = triangle_normal.x > triangle_normal.y ? 0 : 1;
-    dominant = triangle_normal.z > dominant ? 2 : dominant;
+    uint maxi = triangle_normal.x > triangle_normal.y ? 0 : 1;
+    maxi = triangle_normal.z > maxi ? 2 : maxi;
 
     vec3 output_positions[3];
 
     for (uint i = 0; i < 3; ++i) {
         output_positions[i] = (pass_positions[i] - c_worldCenter) / c_worldSizeHalf;
-        if (dominant == 0) {
+        if (maxi == 0) {
             output_positions[i].xyz = output_positions[i].zyx;
-        } else if (dominant == 1) {
+        } else if (maxi == 1) {
             output_positions[i].xyz = output_positions[i].xzy;
         }
     }

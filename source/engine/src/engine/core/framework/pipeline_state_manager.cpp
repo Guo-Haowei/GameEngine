@@ -259,11 +259,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     CREATE_PSO(PSO_VOXELIZATION_PRE, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_pre.cs" });
     CREATE_PSO(PSO_VOXELIZATION_POST, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_post.cs" });
 
-    // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
-        return ok;
-    }
-
     CREATE_PSO(PSO_VOXELIZATION, {
                                      .vs = "voxelization.vs",
                                      .ps = "voxelization.ps",
@@ -272,6 +267,11 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                      .depthStencilDesc = &s_depthStencilNoTest,
                                      .blendDesc = &s_blendStateDisable,
                                  });
+
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
+        return ok;
+    }
 
     CREATE_PSO(PSO_DEBUG_VOXEL, {
                                     .vs = "visualization.vs",

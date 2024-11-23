@@ -5,8 +5,7 @@
 [numthreads(COMPUTE_LOCAL_SIZE_VOXEL, COMPUTE_LOCAL_SIZE_VOXEL, COMPUTE_LOCAL_SIZE_VOXEL)] void main(uint3 p_dispatch_thread_id : SV_DISPATCHTHREADID) {
     int3 uvw = int3(p_dispatch_thread_id);
 
-    float4 clear_color = float4(0.0, 0.0, 1.0, 0.0);
-    //float4 clear_color = float4(0.0, 0.0, 0.0, 0.0);
+    float4 clear_color = float4(0.0, 0.0, 0.0, 0.0);
 
     u_VoxelLighting[uvw] = clear_color;
     u_VoxelNormal[uvw] = clear_color;

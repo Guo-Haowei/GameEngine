@@ -463,15 +463,15 @@ void D3d12GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
     unused(p_slot);
 }
 
-// @TODO: remove
-WARNING_PUSH()
-WARNING_DISABLE(4100, "-Wunused-parameter")
-
-std::shared_ptr<GpuStructuredBuffer> D3d12GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
+auto D3d12GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
+    unused(p_desc);
     // CRASH_NOW_MSG("Implement");
     return nullptr;
 }
 
+// @TODO: remove
+WARNING_PUSH()
+WARNING_DISABLE(4100, "-Wunused-parameter")
 void D3d12GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
     CRASH_NOW_MSG("Implement");
 }

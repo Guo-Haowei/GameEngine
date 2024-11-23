@@ -101,6 +101,11 @@ auto GraphicsManager::Initialize() -> Result<void> {
     SRV_DEFINES
 #undef SRV
 
+    // m_voxelLightingBuffers = CreateStructuredBuffer({
+    //     .elementSize = sizeof(ParticleCounter),
+    //     .elementCount = 1,
+    // });
+
     return Result<void>();
 }
 
@@ -468,23 +473,23 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
     for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
         if (!emitter.particleBuffer) {
             // create buffer
-            emitter.counterBuffer = CreateStructuredBuffer({
+            emitter.counterBuffer = *CreateStructuredBuffer({
                 .elementSize = sizeof(ParticleCounter),
                 .elementCount = 1,
             });
-            emitter.deadBuffer = CreateStructuredBuffer({
+            emitter.deadBuffer = *CreateStructuredBuffer({
                 .elementSize = sizeof(int),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
-            emitter.aliveBuffer[0] = CreateStructuredBuffer({
+            emitter.aliveBuffer[0] = *CreateStructuredBuffer({
                 .elementSize = sizeof(int),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
-            emitter.aliveBuffer[1] = CreateStructuredBuffer({
+            emitter.aliveBuffer[1] = *CreateStructuredBuffer({
                 .elementSize = sizeof(int),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
-            emitter.particleBuffer = CreateStructuredBuffer({
+            emitter.particleBuffer = *CreateStructuredBuffer({
                 .elementSize = sizeof(Particle),
                 .elementCount = MAX_PARTICLE_COUNT,
             });

@@ -18,6 +18,18 @@ namespace my {
 namespace fs = std::filesystem;
 using Microsoft::WRL::ComPtr;
 
+HRESULT ReportErrorIfFailed(HRESULT p_result,
+                            std::string_view p_function,
+                            std::string_view p_file,
+                            int p_line,
+                            std::string_view p_error) {
+    if (FAILED(p_result)) {
+        ReportErrorImpl(p_function, p_file, p_line, p_error);
+        // GENERATE_TRAP();
+    }
+    return p_result;
+}
+
 class D3DIncludeHandler : public ID3DInclude {
 public:
     STDMETHOD(Open)
