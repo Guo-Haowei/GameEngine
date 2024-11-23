@@ -256,6 +256,10 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         { "experimental", RenderGraphName::EXPERIMENTAL },
     };
 
+    if (GetBackend() == Backend::METAL) {
+        return HBN_ERROR(ERR_CANT_CREATE, "Metal not supported");
+    }
+
     if (!method.empty()) {
         auto it = lookup.find(method);
         if (it == lookup.end()) {

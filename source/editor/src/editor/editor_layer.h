@@ -77,10 +77,10 @@ private:
         std::function<void()> executeFunc{ nullptr };
         std::function<bool()> enabledFunc{ nullptr };
 
-        KeyCode key;
-        bool ctrl;
-        bool alt;
-        bool shift;
+        KeyCode key{};
+        bool ctrl{};
+        bool alt{};
+        bool shift{};
     };
 
     std::vector<ShortcutDesc> m_shortcuts;

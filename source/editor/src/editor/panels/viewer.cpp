@@ -210,13 +210,19 @@ void Viewer::UpdateInternal(Scene& p_scene) {
             if (e->IsPressed()) {
                 switch (e->m_key) {
                     case KeyCode::KEY_Z: {
-                        selected && (m_editor.SetState(EditorLayer::STATE_TRANSLATE), 1);
+                        if (selected) {
+                            m_editor.SetState(EditorLayer::STATE_TRANSLATE);
+                        }
                     } break;
                     case KeyCode::KEY_X: {
-                        selected && (m_editor.SetState(EditorLayer::STATE_ROTATE), 1);
+                        if (selected) {
+                            m_editor.SetState(EditorLayer::STATE_ROTATE);
+                        }
                     } break;
                     case KeyCode::KEY_C: {
-                        selected && (m_editor.SetState(EditorLayer::STATE_SCALE), 1);
+                        if (selected) {
+                            m_editor.SetState(EditorLayer::STATE_SCALE);
+                        }
                     } break;
                     default:
                         break;

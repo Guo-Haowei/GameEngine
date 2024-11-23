@@ -54,6 +54,8 @@ class EditorCommandBase {
 public:
     EditorCommandBase(CommandType p_type) : m_type(p_type) {}
 
+    virtual ~EditorCommandBase() = default;
+
     virtual void Execute(Scene& p_scene) = 0;
 
 protected:
