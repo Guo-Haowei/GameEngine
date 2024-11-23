@@ -25,20 +25,20 @@ IStringBuilder& operator<<(IStringBuilder& p_stream, const ErrorRef& p_error) {
     }
 
     Error* back = stack.back();
-    p_stream.Append(std::format("Error \"{}\" occured, \"{}\".\n", ErrorToString(back->value), back->message));
+    p_stream.Append(std::format("Error \"{}\" occured, \"{}\".", ErrorToString(back->value), back->message));
 
     bool trace = stack.size() > 1;
     for (auto it = stack.rbegin(); it != stack.rend(); ++it) {
         const Error& error = *(*it);
 
-        auto stack_trace = std::format("    at {} ({}:{})\n",
+        auto stack_trace = std::format("\n    at {} ({}:{})",
                                        error.function,
                                        error.filepath,
                                        error.line);
         p_stream.Append(stack_trace);
 
         if (trace) {
-            p_stream.Append("  stack backtrace:\n");
+            p_stream.Append("\n  stack backtrace:");
             trace = false;
         }
     }

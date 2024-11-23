@@ -37,13 +37,13 @@ public:
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
     void UnbindUnorderedAccessView(uint32_t p_slot) final;
 
-    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) final;
+    auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> final;
     void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) final;
     void UnbindStructuredBuffer(int p_slot) final;
     void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) final;
     void UnbindStructuredBufferSRV(int p_slot) final;
 
-    std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) final;
+    auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> final;
     void UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) final;
     void BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) final;
 
@@ -77,22 +77,22 @@ protected:
     void SetPipelineStateImpl(PipelineStateName p_name) final;
 
 private:
-    bool CreateDevice();
-    bool InitGraphicsContext();
+    auto CreateDevice() -> Result<void>;
+    auto InitGraphicsContext() -> Result<void>;
     void FinalizeGraphicsContext();
     void FlushGraphicsContext();
 
-    bool EnableDebugLayer();
-    bool CreateDescriptorHeaps();
-    bool CreateRootSignature();
-    bool CreateSwapChain(uint32_t p_width, uint32_t p_height);
-    bool CreateRenderTarget(uint32_t p_width, uint32_t p_height);
+    auto EnableDebugLayer() -> Result<void>;
+    auto CreateDescriptorHeaps() -> Result<void>;
+    auto CreateRootSignature() -> Result<void>;
+    auto CreateSwapChain(uint32_t p_width, uint32_t p_height) -> Result<void>;
+    auto CreateRenderTarget(uint32_t p_width, uint32_t p_height) -> Result<void>;
     void CleanupRenderTarget();
     void InitStaticSamplers();
 
     // @TODO: get rid of magic numbers
-    DescriptorHeap m_rtvDescHeap{ 64 };
-    DescriptorHeap m_dsvDescHeap{ 64 };
+    DescriptorHeap m_rtvDescHeap;
+    DescriptorHeap m_dsvDescHeap;
     DescriptorHeapSrv m_srvDescHeap;
 
     Microsoft::WRL::ComPtr<ID3D12Device4> m_device;

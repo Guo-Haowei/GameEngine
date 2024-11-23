@@ -50,7 +50,7 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     buffer_desc.slot = T::GetUniformBufferSlot();
     buffer_desc.elementCount = 1;
     buffer_desc.elementSize = sizeof(T);
-    p_buffer.buffer = GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
+    p_buffer.buffer = *GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
 auto GraphicsManager::Initialize() -> Result<void> {
@@ -61,20 +61,22 @@ auto GraphicsManager::Initialize() -> Result<void> {
     for (int i = 0; i < num_frames; ++i) {
         m_frameContexts[i] = CreateFrameContext();
     }
-
     if (auto res = InitializeImpl(); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = SelectRenderGraph(); !res) {
         return HBN_ERROR(res.error());
     }
 
     for (int i = 0; i < num_frames; ++i) {
         FrameContext& frame_context = *m_frameContexts[i].get();
-        frame_context.batchCb = ::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
-        frame_context.passCb = ::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
-        frame_context.materialCb = ::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
-        frame_context.boneCb = ::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
-        frame_context.emitterCb = ::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
-        frame_context.pointShadowCb = ::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
-        frame_context.perFrameCb = ::my::CreateUniformCheckSize<PerFrameConstantBuffer>(*this, 1);
+        frame_context.batchCb = *::my::CreateUniformCheckSize<PerBatchConstantBuffer>(*this, 4096 * 16);
+        frame_context.passCb = *::my::CreateUniformCheckSize<PerPassConstantBuffer>(*this, 32);
+        frame_context.materialCb = *::my::CreateUniformCheckSize<MaterialConstantBuffer>(*this, 2048 * 16);
+        frame_context.boneCb = *::my::CreateUniformCheckSize<BoneConstantBuffer>(*this, 16);
+        frame_context.emitterCb = *::my::CreateUniformCheckSize<EmitterConstantBuffer>(*this, 32);
+        frame_context.pointShadowCb = *::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
+        frame_context.perFrameCb = *::my::CreateUniformCheckSize<PerFrameConstantBuffer>(*this, 1);
     }
 
     // @TODO: refactor
@@ -101,6 +103,7 @@ auto GraphicsManager::Initialize() -> Result<void> {
     SRV_DEFINES
 #undef SRV
 
+    m_initialized = true;
     return Result<void>();
 }
 
@@ -152,7 +155,6 @@ void GraphicsManager::Update(Scene& p_scene) {
     Cleanup();
 
     UpdateConstants(p_scene);
-    UpdateEmitters(p_scene);
     UpdateForceFields(p_scene);
     UpdateLights(p_scene);
     UpdateVoxelPass(p_scene);
@@ -181,6 +183,8 @@ void GraphicsManager::Update(Scene& p_scene) {
     {
         OPTICK_EVENT("Render");
         BeginFrame();
+
+        UpdateEmitters(p_scene);
 
         auto& frame = GetCurrentFrame();
         UpdateConstantBuffer(frame.batchCb.get(), frame.batchCache.buffer);
@@ -244,39 +248,42 @@ void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     }
 }
 
-void GraphicsManager::SelectRenderGraph() {
+auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     std::string method(DVAR_GET_STRING(gfx_render_graph));
-    const std::map<std::string, RenderGraphName> lookup = {
+    static const std::map<std::string, RenderGraphName> lookup = {
         { "dummy", RenderGraphName::DUMMY },
-        { "vxgi", RenderGraphName::VXGI },
+        { "default", RenderGraphName::DEFAULT },
+        { "experimental", RenderGraphName::EXPERIMENTAL },
     };
 
-    auto it = lookup.find(method);
-    if (it == lookup.end()) {
-        m_renderGraphName = RenderGraphName::DEFAULT;
-    } else {
-        m_renderGraphName = it->second;
+    if (!method.empty()) {
+        auto it = lookup.find(method);
+        if (it == lookup.end()) {
+            return HBN_ERROR(ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
+        } else {
+            m_renderGraphName = it->second;
+        }
     }
 
     // force to default
-    if (m_backend == Backend::D3D11 && m_renderGraphName == RenderGraphName::VXGI) {
+    if (m_backend != Backend::OPENGL && m_renderGraphName == RenderGraphName::EXPERIMENTAL) {
+        LOG_WARN("'experimental' not supported, fall back to 'default'");
         m_renderGraphName = RenderGraphName::DEFAULT;
-    }
-    if (m_backend == Backend::D3D12) {
-        m_renderGraphName = RenderGraphName::DUMMY;
     }
 
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
             rg::RenderPassCreator::CreateDummy(m_renderGraph);
             break;
-        case RenderGraphName::VXGI:
-            rg::RenderPassCreator::CreateVxgi(m_renderGraph);
+        case RenderGraphName::EXPERIMENTAL:
+            rg::RenderPassCreator::CreateExperimental(m_renderGraph);
             break;
         default:
             rg::RenderPassCreator::CreateDefault(m_renderGraph);
             break;
     }
+
+    return Result<void>();
 }
 
 std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -304,9 +311,9 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
-            texture = FindTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;
-        case RenderGraphName::VXGI:
+        case RenderGraphName::EXPERIMENTAL:
             texture = FindTexture(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::DEFAULT:
@@ -460,31 +467,26 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
-    // @HACK: skip for now
-    if (GetBackend() == Backend::D3D12) {
-        return;
-    }
-
     for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
         if (!emitter.particleBuffer) {
             // create buffer
-            emitter.counterBuffer = CreateStructuredBuffer({
+            emitter.counterBuffer = *CreateStructuredBuffer({
                 .elementSize = sizeof(ParticleCounter),
                 .elementCount = 1,
             });
-            emitter.deadBuffer = CreateStructuredBuffer({
+            emitter.deadBuffer = *CreateStructuredBuffer({
                 .elementSize = sizeof(int),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
-            emitter.aliveBuffer[0] = CreateStructuredBuffer({
+            emitter.aliveBuffer[0] = *CreateStructuredBuffer({
                 .elementSize = sizeof(int),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
-            emitter.aliveBuffer[1] = CreateStructuredBuffer({
+            emitter.aliveBuffer[1] = *CreateStructuredBuffer({
                 .elementSize = sizeof(int),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
-            emitter.particleBuffer = CreateStructuredBuffer({
+            emitter.particleBuffer = *CreateStructuredBuffer({
                 .elementSize = sizeof(Particle),
                 .elementCount = MAX_PARTICLE_COUNT,
             });
@@ -684,6 +686,10 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateBloomConstants() {
+    auto image = FindTexture(RESOURCE_BLOOM_0).get();
+    if (!image) {
+        return;
+    }
     constexpr int count = BLOOM_MIP_CHAIN_MAX * 2 - 1;
     auto& frame = GetCurrentFrame();
     if (frame.batchCache.buffer.size() < count) {
@@ -691,10 +697,7 @@ void GraphicsManager::UpdateBloomConstants() {
     }
 
     int offset = 0;
-    {
-        auto image = FindTexture(RESOURCE_BLOOM_0).get();
-        frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle();
-    }
+    frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle();
 
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
         auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));

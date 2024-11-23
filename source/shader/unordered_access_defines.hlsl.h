@@ -1,7 +1,9 @@
 #ifndef UNORDERED_ACCESS_DEFINES_HLSL_H_INCLUDED
 #define UNORDERED_ACCESS_DEFINES_HLSL_H_INCLUDED
 
-#define UAV_DEFINES \
+#define UAV_DEFINES                            \
+    UAV(RWTexture3D<float4>, VoxelLighting, 0) \
+    UAV(RWTexture3D<float4>, VoxelNormal, 1)   \
     UAV(RWTexture2D<float3>, BloomOutputImage, 3)
 
 #if defined(__cplusplus)

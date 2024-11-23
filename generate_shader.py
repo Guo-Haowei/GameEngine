@@ -30,6 +30,8 @@ input_shaders = [
     'shadowmap_point.ps',
     'shadow.vs',
     'tone.ps',
+    # 'voxelization_post.cs',
+    # 'voxelization_pre.cs',
 ]
 
 def insert_file_name(file_path):

@@ -17,8 +17,12 @@ auto ImGuiModule::Initialize() -> Result<void> {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    auto asset = AssetManager::GetSingleton().LoadFileSync(FilePath{ "@res://fonts/DroidSans.ttf" });
-    DEV_ASSERT(asset);
+    auto res = AssetManager::GetSingleton().LoadFileSync(FilePath{ "@res://fonts/DroidSans.ttf" });
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    auto asset = *res;
     ImFontConfig font_cfg;
     font_cfg.FontDataOwnedByAtlas = false;
     io.Fonts->AddFontFromMemoryTTF(asset->buffer.data(), (int)asset->buffer.size(), 16, &font_cfg);

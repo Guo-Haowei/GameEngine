@@ -52,7 +52,8 @@ public:
     void EventReceived(std::shared_ptr<IEvent> p_event) override;
 
     const auto& GetShortcuts() const { return m_shortcuts; }
-    bool AreKeysHandled() const { return m_keysHandled; }
+
+    auto& GetUnhandledEvents() { return m_unhandledEvents; }
 
 private:
     void DockSpace(Scene& p_scene);
@@ -76,11 +77,14 @@ private:
         std::function<void()> executeFunc{ nullptr };
         std::function<bool()> enabledFunc{ nullptr };
 
-        std::vector<KeyCode> downKeys;
+        KeyCode key;
+        bool ctrl;
+        bool alt;
+        bool shift;
     };
 
     std::vector<ShortcutDesc> m_shortcuts;
-    bool m_keysHandled{ false };
+    std::vector<std::shared_ptr<IEvent>> m_unhandledEvents;
 
     // @TODO: refactor
     ImageHandle* m_playButtonImage{ nullptr };

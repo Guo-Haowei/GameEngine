@@ -34,19 +34,22 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::st
         return HBN_ERROR(ERR_CYCLIC_LINK, "circular includes in file '{}'!", p_path.string());
     }
 
-    // @TODO [FilePath]: fix
-    auto source_binary = AssetManager::GetSingleton().LoadFileSync(FilePath{ p_path.string() });
-    if (!source_binary) {
-        return HBN_ERROR(ERR_FILE_CANT_READ, "failed to read file '{}'", p_path.string());
+    std::shared_ptr<File> source_handle;
+    {
+        auto res = AssetManager::GetSingleton().LoadFileSync(FilePath{ p_path.string() });
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        source_handle = *res;
     }
 
-    if (source_binary->buffer.empty()) {
+    if (source_handle->buffer.empty()) {
         return HBN_ERROR(ERR_FILE_EOF, "file '{}' is empty", p_path.string());
     }
 
-    std::string source(source_binary->buffer.begin(), source_binary->buffer.end());
+    std::string source(source_handle->buffer.begin(), source_handle->buffer.end());
 
-    std::string result;
+    std::string final_string;
     std::stringstream ss(source);
     for (std::string line; std::getline(ss, line);) {
         constexpr const char pattern[] = "#include";
@@ -66,15 +69,15 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::st
                 return HBN_ERROR(res.error());
             }
 
-            result.append(*res);
+            final_string.append(*res);
         } else {
-            result.append(line);
+            final_string.append(line);
         }
 
-        result.push_back('\n');
+        final_string.push_back('\n');
     }
 
-    return result;
+    return final_string;
 }
 
 static auto CreateShader(std::string_view p_file, GLenum p_type) -> Result<GLuint> {

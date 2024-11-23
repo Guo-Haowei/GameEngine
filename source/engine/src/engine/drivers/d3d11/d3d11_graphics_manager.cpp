@@ -23,19 +23,23 @@ D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsMan
 }
 
 auto D3d11GraphicsManager::InitializeImpl() -> Result<void> {
-    bool ok = true;
-    ok = ok && CreateDevice();
-    ok = ok && CreateSwapChain();
-    ok = ok && CreateRenderTarget();
-    ok = ok && InitSamplers();
-    ok = ok && ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get());
-    if (!ok) {
-        return HBN_ERROR(ERR_CANT_CREATE);
+    if (auto res = CreateDevice(); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = CreateSwapChain(); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = CreateRenderTarget(); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = InitSamplers(); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (!ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get())) {
+        return HBN_ERROR(ERR_CANT_CREATE, "ImGui_ImplDX11_Init() failed");
     }
 
     ImGui_ImplDX11_NewFrame();
-
-    SelectRenderGraph();
 
     // @TODO: refactor this
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -102,7 +106,7 @@ void D3d11GraphicsManager::OnWindowResize(int p_width, int p_height) {
     }
 }
 
-bool D3d11GraphicsManager::CreateDevice() {
+auto D3d11GraphicsManager::CreateDevice() -> Result<void> {
     D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_11_1;
     UINT create_device_flags = m_enableValidationLayer ? D3D11_CREATE_DEVICE_DEBUG : 0;
 
@@ -118,24 +122,21 @@ bool D3d11GraphicsManager::CreateDevice() {
         nullptr,
         m_deviceContext.GetAddressOf());
 
-    D3D_FAIL_V_MSG(hr, false, "Failed to create d3d11 device");
+    D3D_FAIL(hr, "Failed to create d3d11 device");
 
-    D3D_FAIL_V_MSG(m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)m_dxgiDevice.GetAddressOf()),
-                   false,
-                   "Failed to query IDXGIDevice");
+    D3D_FAIL(m_device->QueryInterface(__uuidof(IDXGIDevice), (void**)m_dxgiDevice.GetAddressOf()),
+             "Failed to query IDXGIDevice");
 
-    D3D_FAIL_V_MSG(m_dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)m_dxgiAdapter.GetAddressOf()),
-                   false,
-                   "Failed to query IDXGIAdapter");
+    D3D_FAIL(m_dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)m_dxgiAdapter.GetAddressOf()),
+             "Failed to query IDXGIAdapter");
 
-    D3D_FAIL_V_MSG(m_dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)m_dxgiFactory.GetAddressOf()),
-                   false,
-                   "Failed to query IDXGIFactory");
+    D3D_FAIL(m_dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)m_dxgiFactory.GetAddressOf()),
+             "Failed to query IDXGIFactory");
 
-    return true;
+    return Result<void>();
 }
 
-bool D3d11GraphicsManager::CreateSwapChain() {
+auto D3d11GraphicsManager::CreateSwapChain() -> Result<void> {
     auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::GetSingletonPtr());
     DEV_ASSERT(display_manager);
 
@@ -156,31 +157,33 @@ bool D3d11GraphicsManager::CreateSwapChain() {
     swap_chain_desc.Windowed = true;
     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
-    D3D_FAIL_V_MSG(m_dxgiFactory->CreateSwapChain(m_device.Get(), &swap_chain_desc, m_swapChain.GetAddressOf()),
-                   false,
-                   "Failed to create swap chain");
+    D3D_FAIL(m_dxgiFactory->CreateSwapChain(m_device.Get(), &swap_chain_desc, m_swapChain.GetAddressOf()),
+             "Failed to create SwapChain");
 
-    return true;
+    return Result<void>();
 }
 
-bool D3d11GraphicsManager::CreateRenderTarget() {
+auto D3d11GraphicsManager::CreateRenderTarget() -> Result<void> {
     ComPtr<ID3D11Texture2D> back_buffer;
-    m_swapChain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf()));
-    m_device->CreateRenderTargetView(back_buffer.Get(), nullptr, m_windowRtv.GetAddressOf());
-    return true;
+    D3D_FAIL(m_swapChain->GetBuffer(0, IID_PPV_ARGS(back_buffer.GetAddressOf())),
+             "Failed to get SwapChain buffer");
+    D3D_FAIL(m_device->CreateRenderTargetView(back_buffer.Get(), nullptr, m_windowRtv.GetAddressOf()),
+             "Failed to create RenderTarget View");
+    return Result<void>();
 }
 
-bool D3d11GraphicsManager::CreateSampler(uint32_t p_slot, D3D11_SAMPLER_DESC p_desc) {
+auto D3d11GraphicsManager::CreateSampler(uint32_t p_slot, D3D11_SAMPLER_DESC p_desc) -> Result<void> {
     ComPtr<ID3D11SamplerState> sampler_state;
-    D3D_FAIL_V(m_device->CreateSamplerState(&p_desc, sampler_state.GetAddressOf()), false);
+    D3D_FAIL(m_device->CreateSamplerState(&p_desc, sampler_state.GetAddressOf()),
+             "Failed to create sampler");
 
     m_deviceContext->CSSetSamplers(p_slot, 1, sampler_state.GetAddressOf());
     m_deviceContext->PSSetSamplers(p_slot, 1, sampler_state.GetAddressOf());
     m_samplers.emplace_back(sampler_state);
-    return true;
+    return Result<void>();
 }
 
-bool D3d11GraphicsManager::InitSamplers() {
+auto D3d11GraphicsManager::InitSamplers() -> Result<void> {
     auto FillSamplerDesc = [](const SamplerDesc& p_desc) {
         D3D11_SAMPLER_DESC sampler_desc;
 
@@ -200,14 +203,14 @@ bool D3d11GraphicsManager::InitSamplers() {
         return sampler_desc;
     };
 
-    bool ok = true;
-#define SAMPLER_STATE(REG, NAME, DESC) ok = ok && CreateSampler(REG, FillSamplerDesc(DESC))
+#define SAMPLER_STATE(REG, NAME, DESC) \
+    if (!CreateSampler(REG, FillSamplerDesc(DESC))) { return HBN_ERROR(ERR_CANT_CREATE, "Failed to create Sampler {}", #NAME); }
 #include "sampler.hlsl.h"
 #undef SAMPLER_STATE
-    return ok;
+    return Result<void>();
 }
 
-std::shared_ptr<GpuConstantBuffer> D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
+auto D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> {
     D3D11_BUFFER_DESC buffer_desc{};
     buffer_desc.ByteWidth = p_desc.elementCount * p_desc.elementSize;
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -217,7 +220,8 @@ std::shared_ptr<GpuConstantBuffer> D3d11GraphicsManager::CreateConstantBuffer(co
     buffer_desc.StructureByteStride = 0;
 
     ComPtr<ID3D11Buffer> d3d_buffer;
-    D3D_FAIL_V(m_device->CreateBuffer(&buffer_desc, nullptr, d3d_buffer.GetAddressOf()), nullptr);
+    D3D_FAIL(m_device->CreateBuffer(&buffer_desc, nullptr, d3d_buffer.GetAddressOf()),
+             "failed to create ConstantBuffer");
 
     auto uniform_buffer = std::make_shared<D3d11UniformBuffer>(p_desc);
     uniform_buffer->internalBuffer = d3d_buffer;
@@ -228,7 +232,7 @@ std::shared_ptr<GpuConstantBuffer> D3d11GraphicsManager::CreateConstantBuffer(co
     return uniform_buffer;
 }
 
-std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
+auto D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
     ComPtr<ID3D11Buffer> buffer;
     ComPtr<ID3D11UnorderedAccessView> uav;
     ComPtr<ID3D11ShaderResourceView> srv;
@@ -241,27 +245,24 @@ std::shared_ptr<GpuStructuredBuffer> D3d11GraphicsManager::CreateStructuredBuffe
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.StructureByteStride = p_desc.elementSize;
 
-    D3D_FAIL_V_MSG(m_device->CreateBuffer(&buffer_desc, nullptr, buffer.GetAddressOf()),
-                   nullptr,
-                   "Failed to create buffer (StructuredBuffer)");
+    D3D_FAIL(m_device->CreateBuffer(&buffer_desc, nullptr, buffer.GetAddressOf()),
+             "Failed to create buffer (StructuredBuffer)");
 
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
     uav_desc.Format = DXGI_FORMAT_UNKNOWN;
     uav_desc.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
     uav_desc.Buffer.FirstElement = 0;
     uav_desc.Buffer.NumElements = p_desc.elementCount;
-    D3D_FAIL_V_MSG(m_device->CreateUnorderedAccessView(buffer.Get(), &uav_desc, uav.GetAddressOf()),
-                   nullptr,
-                   "Failed to create UAV (StructuredBuffer)");
+    D3D_FAIL(m_device->CreateUnorderedAccessView(buffer.Get(), &uav_desc, uav.GetAddressOf()),
+             "Failed to create UAV (StructuredBuffer)");
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {};
     srv_desc.Format = DXGI_FORMAT_UNKNOWN;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     srv_desc.Buffer.FirstElement = 0;
     srv_desc.Buffer.NumElements = p_desc.elementCount;
-    D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(buffer.Get(), &srv_desc, srv.GetAddressOf()),
-                   nullptr,
-                   "Failed to create SRV (StructuredBuffer)");
+    D3D_FAIL(m_device->CreateShaderResourceView(buffer.Get(), &srv_desc, srv.GetAddressOf()),
+             "Failed to create SRV (StructuredBuffer)");
 
     auto structured_buffer = std::make_shared<D3d11StructuredBuffer>(p_desc);
     structured_buffer->buffer = buffer;
@@ -306,8 +307,8 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
 }
 
 void D3d11GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
-    unused(p_texture);
-    CRASH_NOW();
+    auto texture = reinterpret_cast<const D3d11GpuTexture*>(p_texture);
+    m_deviceContext->GenerateMips(texture->srv.Get());
 }
 
 void D3d11GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
@@ -365,6 +366,66 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
         gen_mip_map = false;
     }
 
+    const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
+    if (p_texture_desc.dimension == Dimension::TEXTURE_3D) {
+        D3D11_TEXTURE3D_DESC texture_desc{};
+        texture_desc.Width = p_texture_desc.width;
+        texture_desc.Height = p_texture_desc.height;
+        texture_desc.Depth = p_texture_desc.depth;
+        texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mipLevels;
+        // texture_desc.MipLevels = 0;
+        texture_desc.Format = texture_format;
+        texture_desc.Usage = D3D11_USAGE_DEFAULT;
+        texture_desc.BindFlags = d3d::ConvertBindFlags(p_texture_desc.bindFlags);
+        texture_desc.CPUAccessFlags = 0;
+        texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
+        ComPtr<ID3D11Texture3D> texture;
+        D3D_FAIL_V(m_device->CreateTexture3D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
+        texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
+
+        auto gpu_texture = std::make_shared<D3d11GpuTexture>(p_texture_desc);
+        if (p_texture_desc.bindFlags & BIND_SHADER_RESOURCE) {
+            D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+            srv_desc.Format = srv_format;
+            srv_desc.ViewDimension = ConvertDimension(p_texture_desc.dimension);
+            srv_desc.Texture3D.MipLevels = p_texture_desc.mipLevels;
+            srv_desc.Texture3D.MostDetailedMip = 0;
+
+            if (gen_mip_map) {
+                srv_desc.Texture3D.MipLevels = (UINT)-1;
+            }
+
+            D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
+                           nullptr,
+                           "Failed to create shader resource view");
+
+            if (p_texture_desc.miscFlags & RESOURCE_MISC_GENERATE_MIPS) {
+                m_deviceContext->GenerateMips(srv.Get());
+            }
+
+            gpu_texture->srv = srv;
+        }
+
+        if (p_texture_desc.bindFlags & BIND_UNORDERED_ACCESS) {
+            // Create UAV
+            D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
+            uav_desc.Format = texture_format;
+            uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+            uav_desc.Texture3D.MipSlice = 0;
+            uav_desc.Texture3D.WSize = p_texture_desc.depth;
+            uav_desc.Texture3D.FirstWSlice = 0;
+            // uav_desc.Texture3D.FirstWSlice = (UINT)-1;
+
+            D3D_FAIL_V(m_device->CreateUnorderedAccessView(texture.Get(), &uav_desc, uav.GetAddressOf()),
+                       nullptr);
+
+            gpu_texture->uav = uav;
+        }
+
+        gpu_texture->texture = texture;
+        return gpu_texture;
+    }
+
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
@@ -379,9 +440,6 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
     D3D_FAIL_V(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
-
-    const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
-
     texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
 
     if (p_texture_desc.initialData) {
@@ -397,9 +455,18 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
         srv_desc.Texture2D.MipLevels = p_texture_desc.mipLevels;
         srv_desc.Texture2D.MostDetailedMip = 0;
 
-        if (srv_desc.ViewDimension == D3D_SRV_DIMENSION_TEXTURECUBEARRAY) {
-            srv_desc.TextureCubeArray.First2DArrayFace = 0;
-            srv_desc.TextureCubeArray.NumCubes = p_texture_desc.arraySize / 6;
+        switch (srv_desc.ViewDimension) {
+            case D3D_SRV_DIMENSION_TEXTURE2D:
+                break;
+            case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
+                srv_desc.TextureCubeArray.First2DArrayFace = 0;
+                srv_desc.TextureCubeArray.NumCubes = p_texture_desc.arraySize / 6;
+                break;
+            case D3D_SRV_DIMENSION_TEXTURE3D:
+                break;
+            default:
+                CRASH_NOW();
+                break;
         }
 
         if (gen_mip_map) {
@@ -433,7 +500,6 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
 
     SetDebugName(texture.Get(), RenderTargetResourceNameToString(p_texture_desc.name));
     gpu_texture->texture = texture;
-
     return gpu_texture;
 }
 

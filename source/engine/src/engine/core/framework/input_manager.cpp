@@ -1,9 +1,10 @@
 #include "input_manager.h"
 
+#include "core/io/input_event.h"
+
 namespace my {
 
 auto InputManager::Initialize() -> Result<void> {
-    // m_inputEventQueue.RegisterListener();
     return Result<void>();
 }
 
@@ -11,6 +12,40 @@ void InputManager::Finalize() {
 }
 
 void InputManager::BeginFrame() {
+    for (int i = 0; i < std::to_underlying(KeyCode::COUNT); ++i) {
+        const auto value = m_keys[i];
+        const auto prev_value = m_prevKeys[i];
+
+        const bool alt = IsKeyDown(KeyCode::KEY_LEFT_ALT) || IsKeyDown(KeyCode::KEY_RIGHT_ALT);
+        const bool ctrl = IsKeyDown(KeyCode::KEY_LEFT_CONTROL) || IsKeyDown(KeyCode::KEY_RIGHT_CONTROL);
+        const bool shift = IsKeyDown(KeyCode::KEY_LEFT_SHIFT) || IsKeyDown(KeyCode::KEY_RIGHT_SHIFT);
+        const bool modifier_pressed = alt || ctrl || shift;
+
+        auto get_state = [&]() {
+            if (value == true && prev_value == false) {
+                return InputState::PRESSED;
+            }
+            if (value == false && prev_value != true) {
+                return InputState::RELEASED;
+            }
+            if (value == true && !modifier_pressed) {
+                return InputState::HOLD;
+            }
+            return InputState::UNKNOWN;
+        };
+
+        InputState state = get_state();
+        if (state == InputState::UNKNOWN) {
+            continue;
+        }
+        auto e = std::make_shared<InputEventKey>();
+        e->m_key = static_cast<KeyCode>(i);
+        e->m_state = state;
+        e->m_altPressed = alt;
+        e->m_ctrlPressed = ctrl;
+        e->m_shiftPressed = shift;
+        m_inputEventQueue.EnqueueEvent(e);
+    }
 }
 
 void InputManager::EndFrame() {
@@ -41,15 +76,21 @@ bool InputManager::IsButtonPressed(MouseButton p_key) {
 }
 
 bool InputManager::IsKeyDown(KeyCode p_key) {
-    return InputIsDown(m_keys, std::to_underlying(p_key));
+    return m_keys[std::to_underlying(p_key)];
 }
 
 bool InputManager::IsKeyPressed(KeyCode p_key) {
-    return InputHasChanged(m_keys, m_prevKeys, std::to_underlying(p_key));
+    unused(p_key);
+    CRASH_NOW();
+    return false;
+    // return InputHasChanged(m_keys, m_prevKeys, std::to_underlying(p_key));
 }
 
 bool InputManager::IsKeyReleased(KeyCode p_key) {
-    return InputHasChanged(m_prevKeys, m_keys, std::to_underlying(p_key));
+    unused(p_key);
+    CRASH_NOW();
+    return false;
+    // return InputHasChanged(m_prevKeys, m_keys, std::to_underlying(p_key));
 }
 
 vec2 InputManager::MouseMove() {
@@ -71,13 +112,6 @@ void InputManager::SetKey(KeyCode p_key, bool p_pressed) {
     ERR_FAIL_INDEX(p_key, KeyCode::COUNT);
     const auto index = std::to_underlying(p_key);
     m_keys[index] = p_pressed;
-
-    if (p_pressed && !m_prevKeys[index]) {
-        auto e = std::make_shared<KeyPressEvent>();
-        e->keys = m_keys;
-        e->pressed = static_cast<KeyCode>(p_key);
-        m_inputEventQueue.EnqueueEvent(e);
-    }
 }
 
 void InputManager::SetCursor(float p_x, float p_y) {

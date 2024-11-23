@@ -7,6 +7,7 @@
 #include "core/framework/graphics_manager.h"
 #include "core/framework/input_manager.h"
 #include "core/framework/scene_manager.h"
+#include "core/io/input_event.h"
 #include "core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
@@ -201,22 +202,57 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     UpdateData();
 
-    if (m_focused && !m_editor.AreKeysHandled()) {
-        m_cameraController.Move(p_scene.m_elapsedTime, camera);
+    ivec3 delta_camera(0);
+    auto& events = m_editor.GetUnhandledEvents();
+    bool selected = m_editor.GetSelectedEntity().IsValid();
+    for (auto& event : events) {
+        if (InputEventKey* e = dynamic_cast<InputEventKey*>(event.get()); e) {
+            if (e->IsPressed()) {
+                switch (e->m_key) {
+                    case KeyCode::KEY_Z: {
+                        selected && (m_editor.SetState(EditorLayer::STATE_TRANSLATE), 1);
+                    } break;
+                    case KeyCode::KEY_X: {
+                        selected && (m_editor.SetState(EditorLayer::STATE_ROTATE), 1);
+                    } break;
+                    case KeyCode::KEY_C: {
+                        selected && (m_editor.SetState(EditorLayer::STATE_SCALE), 1);
+                    } break;
+                    default:
+                        break;
+                }
+            } else if (e->IsHolding()) {
+                switch (e->m_key) {
+                    case KeyCode::KEY_D:
+                        ++delta_camera.x;
+                        break;
+                    case KeyCode::KEY_A:
+                        --delta_camera.x;
+                        break;
+                    case KeyCode::KEY_E:
+                        ++delta_camera.y;
+                        break;
+                    case KeyCode::KEY_Q:
+                        --delta_camera.y;
+                        break;
+                    case KeyCode::KEY_W:
+                        ++delta_camera.z;
+                        break;
+                    case KeyCode::KEY_S:
+                        --delta_camera.z;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
+    if (m_focused) {
+        m_cameraController.Move(p_scene.m_elapsedTime, camera, delta_camera);
     }
 
     SelectEntity(p_scene, camera);
-
-    // Update state
-    if (m_editor.GetSelectedEntity().IsValid() && !m_editor.AreKeysHandled()) {
-        if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_Z)) {
-            m_editor.SetState(EditorLayer::STATE_TRANSLATE);
-        } else if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_X)) {
-            m_editor.SetState(EditorLayer::STATE_ROTATE);
-        } else if (InputManager::GetSingleton().IsKeyPressed(KeyCode::KEY_C)) {
-            m_editor.SetState(EditorLayer::STATE_SCALE);
-        }
-    }
 
     DrawGui(p_scene, camera);
 }

@@ -7,7 +7,7 @@ TEST(file_access_unix, open_read_fail) {
 
     auto err = FileAccess::Open("file_access_unix_open_read_fail", FileAccess::READ).error();
     EXPECT_EQ(err->value, ERR_FILE_NOT_FOUND);
-    EXPECT_EQ(err->message, "error code: ERR_FILE_NOT_FOUND");
+    EXPECT_EQ(err->message, "file 'file_access_unix_open_read_fail' not found");
 }
 
 TEST(file_access_unix, open_write_fail) {

@@ -106,7 +106,7 @@ public:
     enum class RenderGraphName : uint8_t {
         DEFAULT = 0,
         DUMMY,
-        VXGI,
+        EXPERIMENTAL,
     };
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
@@ -116,6 +116,10 @@ public:
 
     auto Initialize() -> Result<void> final;
     void Update(Scene& p_scene);
+
+    // resource
+    virtual auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> = 0;
+    virtual auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> = 0;
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
@@ -138,9 +142,6 @@ public:
 
     virtual void SetStencilRef(uint32_t p_ref) = 0;
     virtual void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) = 0;
-
-    virtual std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) = 0;
-    virtual std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) = 0;
 
     virtual void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) = 0;
     virtual void UnbindStructuredBuffer(int p_slot) = 0;
@@ -188,8 +189,7 @@ public:
     Backend GetBackend() const { return m_backend; }
     RenderGraphName GetRenderGraphName() const { return m_renderGraphName; }
 
-    // @TODO: move to renderer
-    void SelectRenderGraph();
+    [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
 
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
@@ -210,7 +210,7 @@ protected:
     virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
 
     const Backend m_backend;
-    RenderGraphName m_renderGraphName;
+    RenderGraphName m_renderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
     rg::RenderGraph m_renderGraph;
@@ -238,6 +238,9 @@ public:
 
     PassContext m_voxelPass;
     PassContext m_mainPass;
+
+    // @TODO: refactor
+    std::shared_ptr<GpuStructuredBuffer> m_voxelLightingBuffers;
 
 protected:
     void Cleanup();

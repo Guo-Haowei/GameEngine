@@ -27,7 +27,7 @@ public:
 
     static void CreateDummy(RenderGraph& p_graph);
     static void CreateDefault(RenderGraph& p_graph);
-    static void CreateVxgi(RenderGraph& p_graph);
+    static void CreateExperimental(RenderGraph& p_graph);
     // @TODO: add this
     static void CreatePathTracer(RenderGraph& p_graph);
 

@@ -237,11 +237,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     CREATE_PSO(PSO_BLOOM_DOWNSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_downsample.cs" });
     CREATE_PSO(PSO_BLOOM_UPSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_upsample.cs" });
 
-    // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
-        return ok;
-    }
-
     // Particle
     CREATE_PSO(PSO_PARTICLE_INIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_initialization.cs" });
     CREATE_PSO(PSO_PARTICLE_KICKOFF, { .type = PipelineStateType::COMPUTE, .cs = "particle_kickoff.cs" });
@@ -254,7 +249,16 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .depthStencilDesc = &s_depthStencilDefault,
                                            .inputLayoutDesc = &s_inputLayoutMesh,
                                            .blendDesc = &s_blendStateDefault,
+                                           .numRenderTargets = 1,
+                                           .rtvFormats = { RESOURCE_FORMAT_TONE },
+                                           .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                        });
+
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() != Backend::OPENGL) {
+        return ok;
+    }
+
     // Voxel
     CREATE_PSO(PSO_VOXELIZATION_PRE, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_pre.cs" });
     CREATE_PSO(PSO_VOXELIZATION_POST, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_post.cs" });
@@ -267,11 +271,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                      .depthStencilDesc = &s_depthStencilNoTest,
                                      .blendDesc = &s_blendStateDisable,
                                  });
-
-    // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D11) {
-        return ok;
-    }
 
     CREATE_PSO(PSO_DEBUG_VOXEL, {
                                     .vs = "visualization.vs",

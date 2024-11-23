@@ -2,20 +2,15 @@
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 
-// @TODO: shader naming style
-struct Particle {
-    float4 position;
-    float4 velocity;
-    float4 color;
-
-    float scale;
-    float lifeSpan;
-    float lifeRemaining;
-    int isActive;
-};
-
-// @TODO: refactor
-StructuredBuffer<Particle> GlobalParticleData : register(t24);
+#if defined(HLSL_LANG_D3D11)
+#include "structured_buffer.hlsl.h"
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) \
+    StructuredBuffer<DATA_TYPE> NAME : register(t##REG);
+SBUFFER_LIST
+#undef SBUFFER
+#else
+#include "shader_resource_defines.hlsl.h"
+#endif
 
 vsoutput_color main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
     vsoutput_color output;

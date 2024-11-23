@@ -7,11 +7,14 @@
 #include "drivers/d3d_common/d3d_common.h"
 #include "drivers/windows/win32_display_manager.h"
 #include "rendering/graphics_private.h"
+#include "structured_buffer.hlsl.h"
 
 #define INCLUDE_AS_D3D12
 #include "drivers/d3d_common/d3d_convert.h"
 
 namespace my {
+
+using Microsoft::WRL::ComPtr;
 
 // @TODO: refactor
 struct D3d12GpuTexture : public GpuTexture {
@@ -58,6 +61,13 @@ struct D3d12ConstantBuffer : public GpuConstantBuffer {
     uint8_t* mappedData{ nullptr };
 };
 
+struct D3d12StructuredBuffer : public GpuStructuredBuffer {
+    using GpuStructuredBuffer::GpuStructuredBuffer;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> buffer{};
+    DescriptorHeapHandle handle;
+};
+
 struct D3d12FrameContext : FrameContext {
     ~D3d12FrameContext() {
         SafeRelease(m_commandAllocator);
@@ -74,19 +84,18 @@ struct D3d12FrameContext : FrameContext {
     uint64_t m_fenceValue = 0;
 };
 
-using Microsoft::WRL::ComPtr;
-
 D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsManager", Backend::D3D12, NUM_FRAMES_IN_FLIGHT) {
     m_pipelineStateManager = std::make_shared<D3d12PipelineStateManager>();
 }
 
 auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
-    bool ok = true;
 
     auto [w, h] = DisplayManager::GetSingleton().GetWindowSize();
     DEV_ASSERT(w > 0 && h > 0);
 
-    ok = ok && CreateDevice();
+    if (auto res = CreateDevice(); !res) {
+        return HBN_ERROR(res.error());
+    }
 
     if (m_enableValidationLayer) {
         if (EnableDebugLayer()) {
@@ -96,9 +105,15 @@ auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
         }
     }
 
-    ok = ok && CreateDescriptorHeaps();
-    ok = ok && InitGraphicsContext();
-    ok = ok && m_copyContext.Initialize(this);
+    if (auto res = CreateDescriptorHeaps(); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = InitGraphicsContext(); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = m_copyContext.Initialize(this); !res) {
+        return HBN_ERROR(res.error());
+    }
 
     for (int i = 0; i < NUM_BACK_BUFFERS; i++) {
         auto handle = m_rtvDescHeap.AllocHandle();
@@ -110,12 +125,14 @@ auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
         m_depthStencilDescriptor = handle.cpuHandle;
     }
 
-    ok = ok && CreateSwapChain(w, h);
-    ok = ok && CreateRenderTarget(w, h);
-    ok = ok && CreateRootSignature();
-
-    if (!ok) {
-        return HBN_ERROR(ERR_CANT_CREATE);
+    if (auto res = CreateSwapChain(w, h); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = CreateRenderTarget(w, h); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = CreateRootSignature(); !res) {
+        return HBN_ERROR(res.error());
     }
 
     // Create debug buffer.
@@ -144,26 +161,30 @@ auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
             IID_PPV_ARGS(&m_debugIndexData)));
     }
 
-    ImGui_ImplDX12_Init(m_device.Get(),
-                        NUM_FRAMES_IN_FLIGHT,
-                        d3d::Convert(DEFAULT_SURFACE_FORMAT),
-                        m_srvDescHeap.GetHeap(),
-                        m_srvDescHeap.GetStartCpu(),
-                        m_srvDescHeap.GetStartGpu());
+    bool ok = ImGui_ImplDX12_Init(m_device.Get(),
+                                  NUM_FRAMES_IN_FLIGHT,
+                                  d3d::Convert(DEFAULT_SURFACE_FORMAT),
+                                  m_srvDescHeap.GetHeap(),
+                                  m_srvDescHeap.GetStartCpu(),
+                                  m_srvDescHeap.GetStartGpu());
+    if (!ok) {
+        return HBN_ERROR(ERR_CANT_CREATE, "ImGui_ImplDX12_Init failed");
+    }
 
     ImGui_ImplDX12_NewFrame();
 
-    SelectRenderGraph();
     return Result<void>();
 }
 
 void D3d12GraphicsManager::Finalize() {
-    CleanupRenderTarget();
+    if (m_initialized) {
+        CleanupRenderTarget();
 
-    ImGui_ImplDX12_Shutdown();
+        ImGui_ImplDX12_Shutdown();
 
-    FinalizeGraphicsContext();
-    m_copyContext.Finalize();
+        FinalizeGraphicsContext();
+        m_copyContext.Finalize();
+    }
 }
 
 void D3d12GraphicsManager::Render() {
@@ -225,8 +246,8 @@ void D3d12GraphicsManager::BeginFrame() {
 
     // @TODO: NO HARDCODE
     CD3DX12_GPU_DESCRIPTOR_HANDLE handle{ m_srvDescHeap.GetStartGpu() };
-    m_graphicsCommandList->SetGraphicsRootDescriptorTable(6, handle);
-    m_graphicsCommandList->SetComputeRootDescriptorTable(6, handle);
+    m_graphicsCommandList->SetGraphicsRootDescriptorTable(7, handle);
+    m_graphicsCommandList->SetComputeRootDescriptorTable(7, handle);
 }
 
 void D3d12GraphicsManager::EndFrame() {
@@ -463,53 +484,86 @@ void D3d12GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
     unused(p_slot);
 }
 
-// @TODO: remove
-WARNING_PUSH()
-WARNING_DISABLE(4100, "-Wunused-parameter")
-
-std::shared_ptr<GpuStructuredBuffer> D3d12GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) {
-    // CRASH_NOW_MSG("Implement");
-    return nullptr;
-}
-
 void D3d12GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
-    CRASH_NOW_MSG("Implement");
+    unused(p_slot);
+    auto uav = reinterpret_cast<const D3d12StructuredBuffer*>(p_buffer);
+    if (DEV_VERIFY(uav)) {
+    }
 }
 
 void D3d12GraphicsManager::UnbindStructuredBuffer(int p_slot) {
-    CRASH_NOW_MSG("Implement");
+    unused(p_slot);
 }
 
 void D3d12GraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
-    CRASH_NOW_MSG("Implement");
+    unused(p_slot);
+    unused(p_buffer);
 }
 
 void D3d12GraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
-    CRASH_NOW_MSG("Implement");
+    unused(p_slot);
 }
-WARNING_POP()
 
-std::shared_ptr<GpuConstantBuffer> D3d12GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) {
+auto D3d12GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> {
     const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
     CD3DX12_HEAP_PROPERTIES heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
     CD3DX12_RESOURCE_DESC buffer_desc = CD3DX12_RESOURCE_DESC::Buffer(size_in_byte);
     ComPtr<ID3D12Resource> buffer;
-    D3D_FAIL_V(m_device->CreateCommittedResource(
-                   &heap_properties,
-                   D3D12_HEAP_FLAG_NONE,
-                   &buffer_desc,
-                   D3D12_RESOURCE_STATE_GENERIC_READ,
-                   nullptr, IID_PPV_ARGS(&buffer)),
-               nullptr);
+    D3D_FAIL(m_device->CreateCommittedResource(
+                 &heap_properties,
+                 D3D12_HEAP_FLAG_NONE,
+                 &buffer_desc,
+                 D3D12_RESOURCE_STATE_GENERIC_READ,
+                 nullptr, IID_PPV_ARGS(&buffer)),
+             "Failed to create CommittedResource");
 
     auto result = std::make_shared<D3d12ConstantBuffer>(p_desc);
     result->buffer = buffer;
 
-    D3D_FAIL_V(result->buffer->Map(0, nullptr, reinterpret_cast<void**>(&result->mappedData)), nullptr);
+    D3D_FAIL(result->buffer->Map(0, nullptr, reinterpret_cast<void**>(&result->mappedData)),
+             "Failed to Map buffer");
+
+    return result;
+}
+
+auto D3d12GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
+    CD3DX12_HEAP_PROPERTIES heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    D3D12_RESOURCE_DESC buffer_desc{};
+    buffer_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+    buffer_desc.Width = p_desc.elementCount * p_desc.elementSize;
+    buffer_desc.Height = 1;
+    buffer_desc.DepthOrArraySize = 1;
+    buffer_desc.MipLevels = 1;
+    buffer_desc.Format = DXGI_FORMAT_UNKNOWN;
+    buffer_desc.SampleDesc.Count = 1;
+    buffer_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+    buffer_desc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+
+    ComPtr<ID3D12Resource> buffer;
+    D3D_FAIL(m_device->CreateCommittedResource(
+                 &heap_properties,
+                 D3D12_HEAP_FLAG_NONE,
+                 &buffer_desc,
+                 D3D12_RESOURCE_STATE_COMMON,
+                 nullptr, IID_PPV_ARGS(&buffer)),
+             "Failed to create buffer (StructuredBuffer)");
 
     // @TODO: set debug name
+    LOG_WARN("TODO: set buffer name");
     // SetDebugName(buffer.Get(), "");
+    D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
+    uav_desc.Format = DXGI_FORMAT_UNKNOWN;  // Structured buffer doesn't have a format
+    uav_desc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+    uav_desc.Buffer.FirstElement = 0;
+    uav_desc.Buffer.NumElements = p_desc.elementCount;
+    uav_desc.Buffer.StructureByteStride = p_desc.elementSize;
 
+    auto handle = m_srvDescHeap.AllocHandle();
+    m_device->CreateUnorderedAccessView(buffer.Get(), nullptr, &uav_desc, handle.cpuHandle);
+
+    auto result = std::make_shared<D3d12StructuredBuffer>(p_desc);
+    result->buffer = buffer;
+    result->handle = handle;
     return result;
 }
 
@@ -723,7 +777,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
                 break;
         }
 
-        auto srv_handle = m_srvDescHeap.AllocHandle(resource_type);
+        auto srv_handle = m_srvDescHeap.AllocBindlessHandle(resource_type);
         srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
         m_device->CreateShaderResourceView(texture_ptr, &srv_desc, srv_handle.cpuHandle);
         gpu_texture->srvHandle = srv_handle;
@@ -735,7 +789,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         uav_desc.Format = texture_format;
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
         uav_desc.Texture2D.MipSlice = 0;
-        auto uav_handle = m_srvDescHeap.AllocHandle(DescriptorResourceType::RWTexture2D);
+        auto uav_handle = m_srvDescHeap.AllocBindlessHandle(DescriptorResourceType::RWTexture2D);
         m_device->CreateUnorderedAccessView(texture_ptr, nullptr, &uav_desc, uav_handle.cpuHandle);
         gpu_texture->uavHandle = uav_handle;
     }
@@ -836,14 +890,14 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
     return draw_pass;
 }
 
-bool D3d12GraphicsManager::CreateDevice() {
+auto D3d12GraphicsManager::CreateDevice() -> Result<void> {
     if (m_enableValidationLayer) {
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)))) {
             m_debugController->EnableDebugLayer();
         }
     }
 
-    D3D_FAIL_V(CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)), false);
+    D3D_FAIL(CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)), "failed to create factory");
 
     auto get_hardware_adapter = [](IDXGIFactory4* pFactory, IDXGIAdapter1** ppAdapter) {
         *ppAdapter = nullptr;
@@ -869,9 +923,10 @@ bool D3d12GraphicsManager::CreateDevice() {
 
     if (FAILED(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)))) {
         ComPtr<IDXGIAdapter> warpAdapter;
-        D3D_FAIL_V(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), false);
+        D3D_FAIL(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), "failed to enum warp adapter");
 
-        D3D_FAIL_V(D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)), false);
+        D3D_FAIL(D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)),
+                 "failed to create d3d device");
     }
 
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0 };
@@ -893,34 +948,37 @@ bool D3d12GraphicsManager::CreateDevice() {
             break;
     }
 
-    return true;
+    return Result<void>();
 }
 
-bool D3d12GraphicsManager::InitGraphicsContext() {
+auto D3d12GraphicsManager::InitGraphicsContext() -> Result<void> {
     m_graphicsCommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     DEV_ASSERT(m_graphicsCommandQueue);
 
     int frame_idx = 0;
     for (auto& it : m_frameContexts) {
         D3d12FrameContext& frame = reinterpret_cast<D3d12FrameContext&>(*it.get());
-        D3D_FAIL_V(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frame.m_commandAllocator)), false);
+        D3D_FAIL(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frame.m_commandAllocator)),
+                 "failed to create command allocator");
         D3D12_SET_DEBUG_NAME(frame.m_commandAllocator, std::format("GraphicsCommandAllocator {}", frame_idx++));
 
         if (m_graphicsCommandList == nullptr) {
-            D3D_FAIL_V(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, frame.m_commandAllocator, nullptr, IID_PPV_ARGS(&m_graphicsCommandList)), false);
+            D3D_FAIL(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, frame.m_commandAllocator, nullptr, IID_PPV_ARGS(&m_graphicsCommandList)),
+                     "failed to create graphics command list");
         }
     }
 
     m_graphicsCommandList->Close();
     D3D12_SET_DEBUG_NAME(m_graphicsCommandList.Get(), "GraphicsCommandList");
 
-    D3D_FAIL_V(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_graphicsQueueFence)), false);
+    D3D_FAIL(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_graphicsQueueFence)),
+             "failed to create fence");
 
     D3D12_SET_DEBUG_NAME(m_graphicsQueueFence.Get(), "GraphicsFence");
 
     m_graphicsFenceEvent = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
 
-    return true;
+    return Result<void>();
 }
 
 void D3d12GraphicsManager::FinalizeGraphicsContext() {
@@ -977,8 +1035,9 @@ ID3D12CommandQueue* D3d12GraphicsManager::CreateCommandQueue(D3D12_COMMAND_LIST_
     return queue;
 }
 
-bool D3d12GraphicsManager::EnableDebugLayer() {
-    D3D_FAIL_V(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)), false);
+auto D3d12GraphicsManager::EnableDebugLayer() -> Result<void> {
+    D3D_FAIL(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)),
+             "failed to get debug interface");
 
     m_debugController->EnableDebugLayer();
 
@@ -987,7 +1046,8 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
 
     ComPtr<ID3D12InfoQueue> info_queue;
 
-    D3D_FAIL_V(m_device->QueryInterface(IID_PPV_ARGS(&info_queue)), false);
+    D3D_FAIL(m_device->QueryInterface(IID_PPV_ARGS(&info_queue)),
+             "failed to query info queue interface");
 
     info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
     info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
@@ -1005,19 +1065,24 @@ bool D3d12GraphicsManager::EnableDebugLayer() {
     info_queue->AddRetrievalFilterEntries(&filter);
     info_queue->AddStorageFilterEntries(&filter);
 
-    return true;
+    return Result<void>();
 }
 
-bool D3d12GraphicsManager::CreateDescriptorHeaps() {
-    bool ok = true;
-    ok = ok && m_rtvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_device.Get(), false);
-    ok = ok && m_dsvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_device.Get(), false);
-    // reserve one srv for ImGui
-    ok = ok && m_srvDescHeap.Initialize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_device.Get(), true);
-    return ok;
+auto D3d12GraphicsManager::CreateDescriptorHeaps() -> Result<void> {
+    if (auto res = m_rtvDescHeap.Initialize(64, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, m_device.Get(), false); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = m_dsvDescHeap.Initialize(64, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, m_device.Get(), false); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = m_srvDescHeap.Initialize(512, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, m_device.Get(), true); !res) {
+        return HBN_ERROR(res.error());
+    }
+
+    return Result<void>();
 }
 
-bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) {
+auto D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) -> Result<void> {
     auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::GetSingletonPtr());
     DEV_ASSERT(display_manager);
 
@@ -1039,25 +1104,24 @@ bool D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) 
 
     IDXGISwapChain1* pSwapChain = nullptr;
 
-    HRESULT hr = m_factory->CreateSwapChainForHwnd(
-        m_graphicsCommandQueue.Get(),
-        display_manager->GetHwnd(),
-        &scd,
-        NULL,
-        NULL,
-        &pSwapChain);
-
-    D3D_FAIL_V_MSG(hr, false, "Failed to create swapchain");
+    D3D_FAIL(m_factory->CreateSwapChainForHwnd(
+                 m_graphicsCommandQueue.Get(),
+                 display_manager->GetHwnd(),
+                 &scd,
+                 NULL,
+                 NULL,
+                 &pSwapChain),
+             "Failed to create swapchain");
 
     m_swapChain.Attach(reinterpret_cast<IDXGISwapChain3*>(pSwapChain));
 
     m_swapChain->SetMaximumFrameLatency(NUM_BACK_BUFFERS);
     m_swapChainWaitObject = m_swapChain->GetFrameLatencyWaitableObject();
 
-    return true;
+    return Result<void>();
 }
 
-bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_height) {
+auto D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_height) -> Result<void> {
     for (int32_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
         ID3D12Resource* pBackBuffer = nullptr;
         D3D_CALL(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
@@ -1096,12 +1160,12 @@ bool D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_heigh
         D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthOptimizedClearValue,
         IID_PPV_ARGS(&m_depthStencilBuffer));
 
-    D3D_FAIL_V_MSG(hr, false, "Failed to create committed resource");
+    D3D_FAIL(hr, "Failed to create committed resource");
 
     m_depthStencilBuffer->SetName(L"Depth Stencil Buffer");
     m_device->CreateDepthStencilView(m_depthStencilBuffer, nullptr, m_depthStencilDescriptor);
 
-    return true;
+    return Result<void>();
 }
 
 void D3d12GraphicsManager::InitStaticSamplers() {
@@ -1127,25 +1191,31 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 #undef SAMPLER_STATE
 }
 
-bool D3d12GraphicsManager::CreateRootSignature() {
+auto D3d12GraphicsManager::CreateRootSignature() -> Result<void> {
     // Create a root signature consisting of a descriptor table with a single CBV.
 
-    CD3DX12_DESCRIPTOR_RANGE descriptor_table[std::to_underlying(DescriptorResourceType::COUNT)];
-    {
-        int counter = 0;
-#define DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, TYPE)                             \
-    do {                                                                          \
-        descriptor_table[counter].Init(D3D12_DESCRIPTOR_RANGE_TYPE_##TYPE,        \
-                                       ENUM##_MAX_COUNT, 0, SPACE, ENUM##_START); \
-        ++counter;                                                                \
-    } while (0);
+    int descriptor_counter = 0;
+    CD3DX12_DESCRIPTOR_RANGE descriptor_table[64];
+    auto reg_srv_uav = [&](D3D12_DESCRIPTOR_RANGE_TYPE p_type, uint32_t p_count, uint32_t p_space, uint32_t p_offset) {
+        descriptor_table[descriptor_counter++].Init(p_type, p_count, 0, p_space, p_offset);
+    };
+
+#define DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, TYPE) \
+    reg_srv_uav(D3D12_DESCRIPTOR_RANGE_TYPE_##TYPE, ENUM##_MAX_COUNT, SPACE, ENUM##_START);
 #define DESCRIPTOR_SRV(ENUM, NUM, PREV, SPACE)      DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, SRV)
 #define DESCRIPTOR_UAV(ENUM, NUM, PREV, SPACE, ...) DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, UAV)
-        DESCRIPTOR_TABLE
+    DESCRIPTOR_TABLE
 #undef DESCRIPTOR_SRV
 #undef DESCRIPTOR_UAV
 #undef DESCRIPTOR_INIT
-    }
+
+    auto reg_sbuffer = [&](int p_space, int p_offset) {
+        // root_parameters[param_count++].InitAsUnorderedAccessView(p_space);
+        descriptor_table[descriptor_counter++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, p_offset, p_space, p_offset);
+    };
+#define SBUFFER(DATA_TYPE, NAME, REG, REG2) reg_sbuffer(REG, REG2);
+    SBUFFER_LIST
+#undef SBUFFER
 
     // TODO: Order from most frequent to least frequent.
     CD3DX12_ROOT_PARAMETER root_parameters[16]{};
@@ -1158,8 +1228,9 @@ bool D3d12GraphicsManager::CreateRootSignature() {
     root_parameters[param_count++].InitAsConstantBufferView(3);
     root_parameters[param_count++].InitAsConstantBufferView(4);
     root_parameters[param_count++].InitAsConstantBufferView(5);
+    root_parameters[param_count++].InitAsConstantBufferView(6);
 
-    root_parameters[param_count++].InitAsDescriptorTable(array_length(descriptor_table), descriptor_table);
+    root_parameters[param_count++].InitAsDescriptorTable(descriptor_counter, descriptor_table);
 
     InitStaticSamplers();
 
@@ -1178,12 +1249,13 @@ bool D3d12GraphicsManager::CreateRootSignature() {
         char buffer[256]{ 0 };
         StringUtils::Sprintf(buffer, "%.*s", error->GetBufferSize(), error->GetBufferPointer());
         LOG_ERROR("Failed to create root signature, reason {}", buffer);
-        return false;
+        return HBN_ERROR(ERR_CANT_CREATE, "Failed to create root signature");
     }
 
-    D3D_FAIL_V(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)), false);
+    D3D_FAIL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)),
+             "Failed to create root signature");
 
-    return true;
+    return Result<void>();
 }
 
 void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {

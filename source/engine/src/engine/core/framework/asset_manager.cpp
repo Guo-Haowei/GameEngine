@@ -231,7 +231,7 @@ std::shared_ptr<File> AssetManager::FindFile(const FilePath& p_path) {
     return nullptr;
 }
 
-std::shared_ptr<File> AssetManager::LoadFileSync(const FilePath& p_path) {
+auto AssetManager::LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<File>> {
     auto found = m_textCache.find(p_path);
     if (found != m_textCache.end()) {
         return found->second;
@@ -239,8 +239,7 @@ std::shared_ptr<File> AssetManager::LoadFileSync(const FilePath& p_path) {
 
     auto res = FileAccess::Open(p_path, FileAccess::READ);
     if (!res) {
-        LOG_ERROR("[FileAccess] Error: failed to Open file '{}', reason: {}", p_path.String(), res.error()->message);
-        return nullptr;
+        return HBN_ERROR(res.error());
     }
 
     std::shared_ptr<FileAccess> file_access = *res;

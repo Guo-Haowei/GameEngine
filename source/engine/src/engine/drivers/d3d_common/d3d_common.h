@@ -5,12 +5,24 @@
 #include "rendering/gpu_resource.h"
 
 #define USE_D3D_DEBUG_NAME USE_IF(USING(DEBUG_BUILD))
+#define USE_D3D_ASSERT     IN_USE
 
-#define D3D_FAIL(HR)                 ERR_FAIL_COND_MSG(FAILED(HR), #HR)
+// ERR_FAIL_COND_MSG(FAILED(HR), #HR)
 #define D3D_FAIL_V(HR, RET)          ERR_FAIL_COND_V_MSG(FAILED(HR), RET, #HR)
 #define D3D_FAIL_MSG(HR, MSG)        ERR_FAIL_COND_MSG(FAILED(HR), MSG)
 #define D3D_FAIL_V_MSG(HR, RET, MSG) ERR_FAIL_COND_V_MSG(FAILED(HR), RET, MSG)
 #define D3D_CALL(HR)                 CRASH_COND_MSG(FAILED(HR), #HR)
+
+#if USING(USE_D3D_ASSERT)
+#define D3D(EXPR) ReportErrorIfFailed((EXPR), __FUNCTION__, __FILE__, __LINE__, #EXPR)
+#else
+#define D3D(EXPR) (EXPR)
+#endif
+
+#define D3D_FAIL(EXPR, ...)                                                        \
+    do {                                                                           \
+        if (FAILED(D3D(EXPR))) { return HBN_ERROR(ERR_CANT_CREATE, __VA_ARGS__); } \
+    } while (0)
 
 #if USING(USE_D3D_DEBUG_NAME)
 #define D3D11_SET_DEBUG_NAME(RES, NAME) ::my::SetDebugName(RES, NAME)
@@ -32,6 +44,12 @@ void SafeRelease(T*& ptr) {
         ptr = nullptr;
     }
 }
+
+[[nodiscard]] HRESULT ReportErrorIfFailed(HRESULT p_result,
+                                          std::string_view p_function,
+                                          std::string_view p_file,
+                                          int p_line,
+                                          std::string_view p_error);
 
 static inline D3D_SRV_DIMENSION ConvertDimension(Dimension p_dimension) {
     switch (p_dimension) {

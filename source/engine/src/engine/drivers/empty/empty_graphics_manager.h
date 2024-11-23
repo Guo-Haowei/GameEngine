@@ -37,8 +37,8 @@ public:
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) override {}
     void UnbindUnorderedAccessView(uint32_t p_slot) override {}
 
-    std::shared_ptr<GpuConstantBuffer> CreateConstantBuffer(const GpuBufferDesc& p_desc) override { return nullptr; }
-    std::shared_ptr<GpuStructuredBuffer> CreateStructuredBuffer(const GpuBufferDesc& p_desc) override { return nullptr; }
+    auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> override { return nullptr; }
+    auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> override { return nullptr; }
 
     void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) override {}
     void UnbindStructuredBuffer(int p_slot) override {}

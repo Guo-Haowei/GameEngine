@@ -121,7 +121,8 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
     auto depth_buffer = p_draw_pass->desc.depthAttachment;
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    glViewport(0, 0, width, height);
+    glEnable(GL_BLEND);
+    gm.SetViewport(Viewport(width, height));
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
@@ -133,6 +134,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
 
     const int size = DVAR_GET_INT(gfx_voxel_size);
     glDrawElementsInstanced(GL_TRIANGLES, g_box->indexCount, GL_UNSIGNED_INT, 0, size * size * size);
+    glDisable(GL_BLEND);
 }
 
 // @TODO: refactor
@@ -179,7 +181,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     }
 }
 
-void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
+void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
     // @TODO: early-z
     const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;

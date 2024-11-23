@@ -41,7 +41,7 @@ public:
     ImageHandle* LoadImageAsync(const FilePath& p_path, LoadSuccessFunc = nullptr);
     ImageHandle* FindImage(const FilePath& p_path);
 
-    std::shared_ptr<File> LoadFileSync(const FilePath& p_path);
+    auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<File>>;
     std::shared_ptr<File> FindFile(const FilePath& p_path);
 
     static void WorkerMain();

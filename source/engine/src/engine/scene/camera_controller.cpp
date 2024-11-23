@@ -4,14 +4,15 @@
 
 namespace my {
 
-void CameraController::Move(float p_delta_time, Camera& p_camera) {
+void CameraController::Move(float p_delta_time, Camera& p_camera, ivec3& p_move) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
-    auto translate_camera = [&]() {
+    const bool moved = p_move.x || p_move.y || p_move.z;
+    if (moved) {
         float move_speed = 10 * p_delta_time;
-        float dx = (float)(InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_D) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_A));
-        float dy = (float)(InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_E) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_Q));
-        float dz = (float)(InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_W) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_S));
+        float dx = (float)p_move.x;
+        float dy = (float)p_move.y;
+        float dz = (float)p_move.z;
 
         float scroll = InputManager::GetSingleton().GetWheel().y * 3.0f;
         if (glm::abs(scroll) > glm::abs(dz)) {
@@ -24,8 +25,7 @@ void CameraController::Move(float p_delta_time, Camera& p_camera) {
         if (dy) {
             p_camera.m_position += vec3(0, move_speed * dy, 0);
         }
-        return dx || dy || dz;
-    };
+    }
 
     auto rotate_camera = [&]() {
         float rotate_x = 0.0f;
@@ -60,7 +60,7 @@ void CameraController::Move(float p_delta_time, Camera& p_camera) {
         return rotate_x || rotate_y;
     };
 
-    if (translate_camera() || rotate_camera()) {
+    if (moved || rotate_camera()) {
         p_camera.SetDirty();
     }
 }

@@ -312,29 +312,32 @@ static void VoxelizationPassFunc(const DrawPass*) {
     // glSubpixelPrecisionBiasNV(1, 1);
     // glSubpixelPrecisionBiasNV(8, 8);
 
-    gm.SetViewport(Viewport(voxel_size, voxel_size));
-    gm.SetPipelineState(PSO_VOXELIZATION);
-    gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
+    // @TODO: hack
+    if (gm.GetBackend() == Backend::OPENGL) {
+        gm.SetViewport(Viewport(voxel_size, voxel_size));
+        gm.SetPipelineState(PSO_VOXELIZATION);
+        gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
 
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+        for (const auto& draw : pass.draws) {
+            const bool has_bone = draw.bone_idx >= 0;
+            if (has_bone) {
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+            }
+
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+            gm.SetMesh(draw.mesh_data);
+
+            for (const auto& subset : draw.subsets) {
+                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
+
+                gm.DrawElements(subset.index_count, subset.index_offset);
+            }
         }
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-        gm.SetMesh(draw.mesh_data);
-
-        for (const auto& subset : draw.subsets) {
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-            gm.DrawElements(subset.index_count, subset.index_offset);
-        }
+        // glSubpixelPrecisionBiasNV(0, 0);
+        gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
     }
-
-    // glSubpixelPrecisionBiasNV(0, 0);
-    gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
 
     // post process
     gm.SetPipelineState(PSO_VOXELIZATION_POST);
@@ -363,6 +366,8 @@ void RenderPassCreator::AddVoxelizationPass() {
         desc.dimension = Dimension::TEXTURE_3D;
         desc.mipLevels = math::LogTwo(voxel_size);
         desc.depth = voxel_size;
+        desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+        desc.bindFlags |= BIND_RENDER_TARGET | BIND_SHADER_RESOURCE | BIND_UNORDERED_ACCESS;
 
         SamplerDesc sampler(FilterMode::MIPMAP_LINEAR, FilterMode::POINT, AddressMode::BORDER);
 
@@ -798,12 +803,7 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     config.enableVxgi = false;
     RenderPassCreator creator(config, p_graph);
 
-    creator.AddShadowPass();
     creator.AddGbufferPass();
-    creator.AddHighlightPass();
-    creator.AddLightingPass();
-    creator.AddBloomPass();
-    creator.AddTonePass();
 
     p_graph.Compile();
 }
@@ -824,7 +824,7 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     creator.AddShadowPass();
     creator.AddGbufferPass();
     creator.AddHighlightPass();
-    creator.AddVoxelizationPass();
+    // creator.AddVoxelizationPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();
     creator.AddBloomPass();

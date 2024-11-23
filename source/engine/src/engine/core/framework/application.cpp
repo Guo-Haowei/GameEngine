@@ -176,7 +176,8 @@ int Application::Run(int p_argc, const char** p_argv) {
         if (auto res = module->Initialize(); !res) {
             StringStreamBuilder builder;
             builder << res.error();
-            LOG_ERROR("Error: failed to initialize module '{}', {}", module->GetName(), builder.ToString());
+            LOG_ERROR("{}", builder.ToString());
+            LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
 
             has_error = true;
             break;
