@@ -803,13 +803,7 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     config.enableVxgi = false;
     RenderPassCreator creator(config, p_graph);
 
-    creator.AddShadowPass();
     creator.AddGbufferPass();
-    creator.AddHighlightPass();
-    creator.AddLightingPass();
-    creator.AddEmitterPass();
-    creator.AddBloomPass();
-    creator.AddTonePass();
 
     p_graph.Compile();
 }

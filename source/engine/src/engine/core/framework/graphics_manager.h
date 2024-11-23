@@ -106,7 +106,7 @@ public:
     enum class RenderGraphName : uint8_t {
         DEFAULT = 0,
         DUMMY,
-        VXGI,
+        EXPERIMENTAL,
     };
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
@@ -189,8 +189,7 @@ public:
     Backend GetBackend() const { return m_backend; }
     RenderGraphName GetRenderGraphName() const { return m_renderGraphName; }
 
-    // @TODO: move to renderer
-    void SelectRenderGraph();
+    [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
 
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
@@ -211,7 +210,7 @@ protected:
     virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
 
     const Backend m_backend;
-    RenderGraphName m_renderGraphName;
+    RenderGraphName m_renderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
     rg::RenderGraph m_renderGraph;

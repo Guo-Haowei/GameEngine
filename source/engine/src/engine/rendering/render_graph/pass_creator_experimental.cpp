@@ -181,7 +181,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     }
 }
 
-void RenderPassCreator::CreateVxgi(RenderGraph& p_graph) {
+void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
     // @TODO: early-z
     const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;

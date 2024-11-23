@@ -61,12 +61,12 @@ auto GraphicsManager::Initialize() -> Result<void> {
     for (int i = 0; i < num_frames; ++i) {
         m_frameContexts[i] = CreateFrameContext();
     }
-
     if (auto res = InitializeImpl(); !res) {
         return HBN_ERROR(res.error());
     }
-
-    SelectRenderGraph();
+    if (auto res = SelectRenderGraph(); !res) {
+        return HBN_ERROR(res.error());
+    }
 
     for (int i = 0; i < num_frames; ++i) {
         FrameContext& frame_context = *m_frameContexts[i].get();
@@ -102,11 +102,6 @@ auto GraphicsManager::Initialize() -> Result<void> {
 #define SRV(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
     SRV_DEFINES
 #undef SRV
-
-    // m_voxelLightingBuffers = CreateStructuredBuffer({
-    //     .elementSize = sizeof(ParticleCounter),
-    //     .elementCount = 1,
-    // });
 
     m_initialized = true;
     return Result<void>();
@@ -253,39 +248,42 @@ void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     }
 }
 
-void GraphicsManager::SelectRenderGraph() {
+auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     std::string method(DVAR_GET_STRING(gfx_render_graph));
-    const std::map<std::string, RenderGraphName> lookup = {
+    static const std::map<std::string, RenderGraphName> lookup = {
         { "dummy", RenderGraphName::DUMMY },
-        { "vxgi", RenderGraphName::VXGI },
+        { "default", RenderGraphName::DEFAULT },
+        { "experimental", RenderGraphName::EXPERIMENTAL },
     };
 
-    auto it = lookup.find(method);
-    if (it == lookup.end()) {
-        m_renderGraphName = RenderGraphName::DEFAULT;
-    } else {
-        m_renderGraphName = it->second;
+    if (!method.empty()) {
+        auto it = lookup.find(method);
+        if (it == lookup.end()) {
+            return HBN_ERROR(ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
+        } else {
+            m_renderGraphName = it->second;
+        }
     }
 
     // force to default
-    if (m_backend == Backend::D3D11 && m_renderGraphName == RenderGraphName::VXGI) {
+    if (m_backend != Backend::OPENGL && m_renderGraphName == RenderGraphName::EXPERIMENTAL) {
+        LOG_WARN("'experimental' not supported, fall back to 'default'");
         m_renderGraphName = RenderGraphName::DEFAULT;
-    }
-    if (m_backend == Backend::D3D12) {
-        m_renderGraphName = RenderGraphName::DUMMY;
     }
 
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
             rg::RenderPassCreator::CreateDummy(m_renderGraph);
             break;
-        case RenderGraphName::VXGI:
-            rg::RenderPassCreator::CreateVxgi(m_renderGraph);
+        case RenderGraphName::EXPERIMENTAL:
+            rg::RenderPassCreator::CreateExperimental(m_renderGraph);
             break;
         default:
             rg::RenderPassCreator::CreateDefault(m_renderGraph);
             break;
     }
+
+    return Result<void>();
 }
 
 std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -313,9 +311,9 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_renderGraphName) {
         case RenderGraphName::DUMMY:
-            texture = FindTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;
-        case RenderGraphName::VXGI:
+        case RenderGraphName::EXPERIMENTAL:
             texture = FindTexture(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::DEFAULT:
@@ -688,6 +686,10 @@ void GraphicsManager::UpdateMainPass(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateBloomConstants() {
+    auto image = FindTexture(RESOURCE_BLOOM_0).get();
+    if (!image) {
+        return;
+    }
     constexpr int count = BLOOM_MIP_CHAIN_MAX * 2 - 1;
     auto& frame = GetCurrentFrame();
     if (frame.batchCache.buffer.size() < count) {
@@ -695,10 +697,7 @@ void GraphicsManager::UpdateBloomConstants() {
     }
 
     int offset = 0;
-    {
-        auto image = FindTexture(RESOURCE_BLOOM_0).get();
-        frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle();
-    }
+    frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle();
 
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
         auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
