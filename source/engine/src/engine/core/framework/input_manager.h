@@ -9,13 +9,6 @@
 
 namespace my {
 
-using KeyBitset = std::bitset<std::to_underlying(KeyCode::COUNT)>;
-
-struct KeyPressEvent : public IEvent {
-    KeyCode pressed;
-    KeyBitset keys;
-};
-
 class InputManager : public Singleton<InputManager>, public Module {
 public:
     InputManager() : Module("InputManager") {}
@@ -47,10 +40,12 @@ public:
     EventQueue& GetEventQueue() { return m_inputEventQueue; }
 
 protected:
+    using KeyArray = std::bitset<std::to_underlying(KeyCode::COUNT)>;
+
     EventQueue m_inputEventQueue;
 
-    KeyBitset m_keys;
-    KeyBitset m_prevKeys;
+    KeyArray m_keys;
+    KeyArray m_prevKeys;
 
     std::bitset<MOUSE_BUTTON_MAX> m_buttons = { false };
     std::bitset<MOUSE_BUTTON_MAX> m_prevButtons = { false };

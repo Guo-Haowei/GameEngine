@@ -173,6 +173,7 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
                 InputManager::GetSingleton().SetKey(it->second, true);
             } else {
                 LOG_WARN("key {} not mapped", key);
+                GetKeyState(VK_LSHIFT);
             }
         } break;
         case WM_KEYUP: {

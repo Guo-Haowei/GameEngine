@@ -2,29 +2,29 @@
 
 namespace my {
 
-// @TODO: refactor as StringUtils
-struct SplitIter {
-    const char* fast{ nullptr };
-    const char* slow{ nullptr };
-
-    SplitIter(const char* p_string) {
-        fast = p_string;
-        slow = nullptr;
+class StringSplitter {
+public:
+    explicit StringSplitter(const char* p_string) {
+        m_fast = p_string;
+        m_slow = nullptr;
     }
 
-    std::string_view Split(char c) {
-        slow = fast;
-        fast = strchr(fast, c);
-        if (fast) {
-            return std::string_view(slow, fast++);
+    [[nodiscard]] std::string_view Advance(char c) {
+        m_slow = m_fast;
+        m_fast = strchr(m_fast, c);
+        if (m_fast != nullptr) {
+            return std::string_view(m_slow, m_fast++);
         }
-
-        return slow;
+        return m_slow;
     }
 
-    bool HasNext() const {
-        return fast != nullptr;
+    bool CanAdvance() const {
+        return m_fast != nullptr && *m_fast != 0;
     }
+
+private:
+    const char* m_fast;
+    const char* m_slow;
 };
 
 class StringUtils {

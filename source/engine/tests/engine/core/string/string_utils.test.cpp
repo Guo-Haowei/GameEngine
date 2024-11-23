@@ -71,4 +71,66 @@ TEST(Strcpy, overflow) {
     EXPECT_STREQ(buffer, "abcd");
 }
 
+TEST(StringSplitter, null_string) {
+    const char* source = nullptr;
+    StringSplitter sp(source);
+    int counter = 0;
+    while (sp.CanAdvance()) {
+        [[maybe_unused]] auto sv = sp.Advance('+');
+        ++counter;
+    }
+    EXPECT_EQ(counter, 0);
+}
+
+TEST(StringSplitter, empty_string) {
+    const char* source = "";
+    StringSplitter sp(source);
+    int counter = 0;
+    while (sp.CanAdvance()) {
+        [[maybe_unused]] auto sv = sp.Advance('+');
+        ++counter;
+    }
+    EXPECT_EQ(counter, 0);
+}
+
+TEST(StringSplitter, no_pattern) {
+    const char* source = "abc_def";
+    StringSplitter sp(source);
+    while (sp.CanAdvance()) {
+        [[maybe_unused]] auto sv = sp.Advance('+');
+        EXPECT_EQ(sv, "abc_def");
+    }
+}
+
+TEST(StringSplitter, one_pattern) {
+    const char* source = "abc def";
+    StringSplitter sp(source);
+    const char* expectations[] = { "abc", "def" };
+    for (int i = 0; sp.CanAdvance(); ++i) {
+        [[maybe_unused]] auto sv = sp.Advance(' ');
+        EXPECT_EQ(sv, expectations[i]);
+    }
+}
+
+TEST(StringSplitter, empty_string_after_pattern) {
+    const char* source = "abcdef/";
+    StringSplitter sp(source);
+    const char* expectations[] = { "abcdef" };
+    for (int i = 0; sp.CanAdvance(); ++i) {
+        [[maybe_unused]] auto sv = sp.Advance('/');
+        EXPECT_EQ(sv, expectations[i]);
+    }
+}
+
+TEST(StringSplitter, multi_pattern) {
+    const char* source = "D:\\random\\path\\to\\my\\file\\";
+    StringSplitter sp(source);
+    const char* expectations[] = { "D:", "random", "path", "to", "my", "file" };
+    for (int i = 0; sp.CanAdvance(); ++i) {
+        [[maybe_unused]] auto sv = sp.Advance('\\');
+        EXPECT_EQ(sv, expectations[i]);
+        // printf("{%s}\n", expectations[i]);
+    }
+}
+
 }  // namespace my::string_utils

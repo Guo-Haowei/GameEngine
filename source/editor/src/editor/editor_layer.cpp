@@ -5,6 +5,7 @@
 #include "core/framework/asset_manager.h"
 #include "core/framework/input_manager.h"
 #include "core/framework/scene_manager.h"
+#include "core/io/input_event.h"
 #include "core/string/string_utils.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
@@ -55,9 +56,8 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         [&]() { return this->GetUndoStack().CanRedo(); },
     };
 
+    // @TODO: proper key mapping
     std::map<std::string_view, KeyCode> keyMapping = {
-        { "Ctrl", KeyCode::KEY_LEFT_CONTROL },
-        { "Shift", KeyCode::KEY_LEFT_SHIFT },
         { "A", KeyCode::KEY_A },
         { "B", KeyCode::KEY_B },
         { "C", KeyCode::KEY_C },
@@ -87,14 +87,24 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     };
 
     for (auto& shortcut : m_shortcuts) {
-        SplitIter split(shortcut.shortcut);
-        while (split.HasNext()) {
-            std::string_view sv = split.Split('+');
-            auto it = keyMapping.find(sv);
-            if (it == keyMapping.end()) {
-                CRASH_NOW();
+        StringSplitter split(shortcut.shortcut);
+        while (split.CanAdvance()) {
+            std::string_view sv = split.Advance('+');
+            if (sv == "Ctrl") {
+                shortcut.ctrl = true;
+            } else if (sv == "Shift") {
+                shortcut.shift = true;
+            } else if (sv == "Alt") {
+                shortcut.alt = true;
+            } else {
+                if (sv.length() == 1) {
+                    auto it = keyMapping.find(sv);
+                    if (it == keyMapping.end()) {
+                        CRASH_NOW();
+                    }
+                    shortcut.key = it->second;
+                }
             }
-            shortcut.downKeys.push_back(it->second);
         }
     }
 
@@ -220,42 +230,45 @@ void EditorLayer::Update(float) {
     }
     DrawToolbar();
     FlushCommand(scene);
+
+    m_unhandledEvents.clear();
 }
 
 void EditorLayer::Render() {
-    m_keysHandled = false;
 }
 
 void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
-    // LOG_VERBOSE("LEFT_SHIFT {}, LEFT_CTRL {}, S_KEY {}",
-    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT_SHIFT),
-    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT_CONTROL),
-    //             InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_S)
-    //     );
-
-    if (KeyPressEvent* e = dynamic_cast<KeyPressEvent*>(p_event.get()); e) {
+    if (InputEventKey* e = dynamic_cast<InputEventKey*>(p_event.get()); e) {
+        bool handled = false;
         for (auto shortcut : m_shortcuts) {
-            // if (shortcut.shortcut == std::string("Ctrl+Shift+S")) {
-            //     if (e->pressed == KeyCode::KEY_LEFT_SHIFT) {
-            //     }
-            // }
-            const auto& keys = shortcut.downKeys;
+            // @TODO: refactor this
             auto is_key_handled = [&]() {
-                if (e->pressed != keys.back()) {
+                if (!e->IsPressed()) {
                     return false;
                 }
-                for (size_t i = 0; i < keys.size() - 1; ++i) {
-                    if (!e->keys[std::to_underlying(keys[i])]) {
-                        return false;
-                    }
+                if (e->m_key != shortcut.key) {
+                    return false;
+                }
+                if (e->m_altPressed != shortcut.alt) {
+                    return false;
+                }
+                if (e->m_shiftPressed != shortcut.shift) {
+                    return false;
+                }
+                if (e->m_ctrlPressed != shortcut.ctrl) {
+                    return false;
                 }
                 return true;
             };
             if (is_key_handled()) {
                 shortcut.executeFunc();
-                m_keysHandled = true;
+                handled = true;
                 break;
             }
+        }
+        if (!handled) {
+            // save unhandled events
+            m_unhandledEvents.emplace_back(p_event);
         }
     }
 }
