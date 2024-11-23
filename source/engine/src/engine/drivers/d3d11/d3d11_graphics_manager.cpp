@@ -306,8 +306,8 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
 }
 
 void D3d11GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
-    unused(p_texture);
-    CRASH_NOW();
+    auto texture = reinterpret_cast<const D3d11GpuTexture*>(p_texture);
+    m_deviceContext->GenerateMips(texture->srv.Get());
 }
 
 void D3d11GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
@@ -365,6 +365,66 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
         gen_mip_map = false;
     }
 
+    const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
+    if (p_texture_desc.dimension == Dimension::TEXTURE_3D) {
+        D3D11_TEXTURE3D_DESC texture_desc{};
+        texture_desc.Width = p_texture_desc.width;
+        texture_desc.Height = p_texture_desc.height;
+        texture_desc.Depth = p_texture_desc.depth;
+        texture_desc.MipLevels = gen_mip_map ? 0 : p_texture_desc.mipLevels;
+        // texture_desc.MipLevels = 0;
+        texture_desc.Format = texture_format;
+        texture_desc.Usage = D3D11_USAGE_DEFAULT;
+        texture_desc.BindFlags = d3d::ConvertBindFlags(p_texture_desc.bindFlags);
+        texture_desc.CPUAccessFlags = 0;
+        texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
+        ComPtr<ID3D11Texture3D> texture;
+        D3D_FAIL_V(m_device->CreateTexture3D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
+        texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
+
+        auto gpu_texture = std::make_shared<D3d11GpuTexture>(p_texture_desc);
+        if (p_texture_desc.bindFlags & BIND_SHADER_RESOURCE) {
+            D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+            srv_desc.Format = srv_format;
+            srv_desc.ViewDimension = ConvertDimension(p_texture_desc.dimension);
+            srv_desc.Texture3D.MipLevels = p_texture_desc.mipLevels;
+            srv_desc.Texture3D.MostDetailedMip = 0;
+
+            if (gen_mip_map) {
+                srv_desc.Texture3D.MipLevels = (UINT)-1;
+            }
+
+            D3D_FAIL_V_MSG(m_device->CreateShaderResourceView(texture.Get(), &srv_desc, srv.GetAddressOf()),
+                           nullptr,
+                           "Failed to create shader resource view");
+
+            if (p_texture_desc.miscFlags & RESOURCE_MISC_GENERATE_MIPS) {
+                m_deviceContext->GenerateMips(srv.Get());
+            }
+
+            gpu_texture->srv = srv;
+        }
+
+        if (p_texture_desc.bindFlags & BIND_UNORDERED_ACCESS) {
+            // Create UAV
+            D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
+            uav_desc.Format = texture_format;
+            uav_desc.ViewDimension = D3D11_UAV_DIMENSION_TEXTURE3D;
+            uav_desc.Texture3D.MipSlice = 0;
+            uav_desc.Texture3D.WSize = p_texture_desc.depth;
+            uav_desc.Texture3D.FirstWSlice = 0;
+            //uav_desc.Texture3D.FirstWSlice = (UINT)-1;
+
+            D3D_FAIL_V(m_device->CreateUnorderedAccessView(texture.Get(), &uav_desc, uav.GetAddressOf()),
+                       nullptr);
+
+            gpu_texture->uav = uav;
+        }
+
+        gpu_texture->texture = texture;
+        return gpu_texture;
+    }
+
     D3D11_TEXTURE2D_DESC texture_desc{};
     texture_desc.Width = p_texture_desc.width;
     texture_desc.Height = p_texture_desc.height;
@@ -379,9 +439,6 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
     D3D_FAIL_V(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
-
-    const char* debug_name = RenderTargetResourceNameToString(p_texture_desc.name);
-
     texture->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(strlen(debug_name)), debug_name);
 
     if (p_texture_desc.initialData) {
@@ -397,9 +454,18 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
         srv_desc.Texture2D.MipLevels = p_texture_desc.mipLevels;
         srv_desc.Texture2D.MostDetailedMip = 0;
 
-        if (srv_desc.ViewDimension == D3D_SRV_DIMENSION_TEXTURECUBEARRAY) {
-            srv_desc.TextureCubeArray.First2DArrayFace = 0;
-            srv_desc.TextureCubeArray.NumCubes = p_texture_desc.arraySize / 6;
+        switch (srv_desc.ViewDimension) {
+            case D3D_SRV_DIMENSION_TEXTURE2D:
+                break;
+            case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
+                srv_desc.TextureCubeArray.First2DArrayFace = 0;
+                srv_desc.TextureCubeArray.NumCubes = p_texture_desc.arraySize / 6;
+                break;
+            case D3D_SRV_DIMENSION_TEXTURE3D:
+                break;
+            default:
+                CRASH_NOW();
+                break;
         }
 
         if (gen_mip_map) {
@@ -433,7 +499,6 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
 
     SetDebugName(texture.Get(), RenderTargetResourceNameToString(p_texture_desc.name));
     gpu_texture->texture = texture;
-
     return gpu_texture;
 }
 

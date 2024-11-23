@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include "core/framework/asset_manager.h"
+#include "core/string/string_builder.h"
 
 #if USING(USE_D3D_DEBUG_NAME)
 #pragma comment(lib, "dxguid.lib")
@@ -24,10 +25,17 @@ public:
         // @TODO: fix search
         FilePath path = FilePath{ ROOT_FOLDER } / "source/shader/" / p_file;
 
-        auto source_binary = AssetManager::GetSingleton().LoadFileSync(path);
-        if (!source_binary || source_binary->buffer.empty()) {
-            LOG_ERROR("failed to read file '{}'", path.String());
+        auto res = AssetManager::GetSingleton().LoadFileSync(path);
+        if (!res) {
+            StringStreamBuilder builder;
+            builder << res.error();
+            LOG_ERROR("{}", builder.ToString());
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+        }
+
+        auto source_binary = *res;
+        if (source_binary->buffer.empty()) {
+            LOG_ERROR("failed to read file '{}'", path.String());
         }
 
         *p_out_data = source_binary->buffer.data();
