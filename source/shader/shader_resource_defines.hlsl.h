@@ -67,8 +67,9 @@ SRV_DEFINES
     RWStructuredBuffer<DATA_TYPE> NAME : register(u##REG);
 #elif defined(GLSL_LANG)
 #define SBUFFER(DATA_TYPE, NAME, REG) \
-    layout(std430, binding = REG) buffer NAME##_t { DATA_TYPE NAME[]; }
+    layout(std430, binding = REG) buffer NAME##_t { DATA_TYPE NAME[]; };
 #else
+#error "Not supported"
 #endif
 
 // @TODO: shader naming style
@@ -90,10 +91,21 @@ struct ParticleCounter {
     int emissionCount;
 };
 
-SBUFFER(ParticleCounter, GlobalParticleCounter, 16);
-SBUFFER(int, GlobalDeadIndices, 17);
-SBUFFER(int, GlobalAliveIndicesPreSim, 18);
-SBUFFER(int, GlobalAliveIndicesPostSim, 19);
-SBUFFER(Particle, GlobalParticleData, 24);
+#define SBUFFER_LIST                                    \
+    SBUFFER(ParticleCounter, GlobalParticleCounter, 16) \
+    SBUFFER(int, GlobalDeadIndices, 17)                 \
+    SBUFFER(int, GlobalAliveIndicesPreSim, 18)          \
+    SBUFFER(int, GlobalAliveIndicesPostSim, 19)         \
+    SBUFFER(Particle, GlobalParticleData, 24)
+SBUFFER_LIST
+#undef SBUFFER
+
+#if 0
+SBUFFER(ParticleCounter, GlobalParticleCounter, 16)
+SBUFFER(int, GlobalDeadIndices, 17)
+SBUFFER(int, GlobalAliveIndicesPreSim, 18)
+SBUFFER(int, GlobalAliveIndicesPostSim, 19)
+SBUFFER(Particle, GlobalParticleData, 24)
+#endif
 
 #endif

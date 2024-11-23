@@ -268,29 +268,7 @@ void RenderPassCreator::AddShadowPass() {
     pass->AddDrawPass(draw_pass);
 }
 
-#if 0
-static void VoxelizationPassFuncNew(const DrawPass*) {
-    // 1. render the scene into a structured buffer
-    // 2. move data into 3d texture
-    // 3. generate mip maps
-    // 4. final results
-
-    if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
-        return;
-    }
-
-    OPTICK_EVENT();
-    auto& gm = GraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-}
-#endif
-
-static void VoxelizationPassFunc(const DrawPass* p_draw_pass) {
-    if (p_draw_pass) {
-        // VoxelizationPassFuncNew(p_draw_pass);
-        // return;
-    }
-
+static void VoxelizationPassFunc(const DrawPass*) {
     OPTICK_EVENT();
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -851,7 +829,7 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     creator.AddShadowPass();
     creator.AddGbufferPass();
     creator.AddHighlightPass();
-    creator.AddVoxelizationPass();
+    //creator.AddVoxelizationPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();
     creator.AddBloomPass();
