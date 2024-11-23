@@ -16,6 +16,7 @@ enum CommandType : uint8_t {
 
     COMMAND_TYPE_COMPONENT_ADD,
 
+    COMMAND_TYPE_OPEN_PROJECT,
     COMMAND_TYPE_SAVE_PROJECT,
     COMMAND_TYPE_REDO_VIEWER,
     COMMAND_TYPE_UNDO_VIEWER,
@@ -53,6 +54,8 @@ enum class ComponentType : uint8_t {
 class EditorCommandBase {
 public:
     EditorCommandBase(CommandType p_type) : m_type(p_type) {}
+
+    virtual ~EditorCommandBase() = default;
 
     virtual void Execute(Scene& p_scene) = 0;
 
@@ -110,6 +113,16 @@ protected:
     ecs::Entity m_target;
 
     friend class EditorLayer;
+};
+
+class OpenProjectCommand : public EditorCommandBase {
+public:
+    OpenProjectCommand(bool p_open_dialog) : EditorCommandBase(COMMAND_TYPE_OPEN_PROJECT), m_openDialog(p_open_dialog) {}
+
+    virtual void Execute(Scene& p_scene) override;
+
+protected:
+    bool m_openDialog;
 };
 
 class SaveProjectCommand : public EditorCommandBase {

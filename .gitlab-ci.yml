@@ -7,21 +7,28 @@ stages:
   - test
   - deploy
 
-shader_generation_job:
+shader_generation:
   stage: prepare
   script:
     - python generate_shader.py
 
-build_job:
+build_debug:
   stage: build
   script:
-    - echo "Building the project..."
-    - .\build_assimp.bat
-    - .\ci-scripts\build_job.bat
+    - echo "Building project..."
+    - .\ci-scripts\build_job.bat Debug
   artifacts:
     paths:
     - build/
-    expire_in: 1 day
+
+build_release:
+  stage: build
+  script:
+    - echo "Building the project..."
+    - .\ci-scripts\build_job.bat Release
+  artifacts:
+    paths:
+    - build/
 
 test_job:
   stage: test

@@ -14,8 +14,10 @@ enum class KeyCode : uint16_t;
 enum {
     SHORT_CUT_SAVE_AS = 0,
     SHORT_CUT_SAVE,
+    SHORT_CUT_OPEN,
     SHORT_CUT_UNDO,
     SHORT_CUT_REDO,
+    SHORT_CUT_MAX,
 };
 
 class EditorLayer : public Layer, public EventListener {
@@ -77,13 +79,13 @@ private:
         std::function<void()> executeFunc{ nullptr };
         std::function<bool()> enabledFunc{ nullptr };
 
-        KeyCode key;
-        bool ctrl;
-        bool alt;
-        bool shift;
+        KeyCode key{};
+        bool ctrl{};
+        bool alt{};
+        bool shift{};
     };
 
-    std::vector<ShortcutDesc> m_shortcuts;
+    std::array<ShortcutDesc, SHORT_CUT_MAX> m_shortcuts;
     std::vector<std::shared_ptr<IEvent>> m_unhandledEvents;
 
     // @TODO: refactor

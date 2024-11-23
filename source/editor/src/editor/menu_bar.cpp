@@ -18,6 +18,9 @@ void MenuBar::Update(Scene&) {
 
     if (ImGui::BeginMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            build_menu_item(SHORT_CUT_OPEN);
+            // Open Recent
+            ImGui::Separator();
             build_menu_item(SHORT_CUT_SAVE);
             build_menu_item(SHORT_CUT_SAVE_AS);
             ImGui::EndMenu();

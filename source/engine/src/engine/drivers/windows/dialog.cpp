@@ -6,19 +6,19 @@
 namespace my {
 
 std::string OpenFileDialog(const std::vector<const char*>& p_filters) {
-    std::string filterStr;
+    std::string filter_str;
     if (p_filters.empty()) {
-        filterStr = "*.*";
+        filter_str = "*.*";
     } else {
         for (const auto& filter : p_filters) {
-            filterStr.append(";*");
-            filterStr.append(filter);
+            filter_str.append(";*");
+            filter_str.append(filter);
         }
-        filterStr = filterStr.substr(1);
+        filter_str = filter_str.substr(1);
     }
 
     char buffer[1024] = { 0 };
-    StringUtils::Sprintf(buffer, "Supported Files(%s)\n%s", filterStr.c_str(), filterStr.c_str());
+    StringUtils::Sprintf(buffer, "Supported Files(%s)\n%s", filter_str.c_str(), filter_str.c_str());
     for (char* p = buffer; *p; ++p) {
         if (*p == '\n') {
             *p = '\0';

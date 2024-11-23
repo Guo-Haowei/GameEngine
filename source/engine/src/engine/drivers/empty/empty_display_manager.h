@@ -16,7 +16,7 @@ public:
         return std::make_tuple(0, 0);
     }
 
-    void NewFrame() override {}
+    void BeginFrame() override {}
     void Present() override {}
 
 protected:

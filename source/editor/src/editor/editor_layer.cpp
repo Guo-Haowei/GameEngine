@@ -30,7 +30,6 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     m_playButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/play.png" });
     m_pauseButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/pause.png" });
 
-    m_shortcuts.resize(4);
     m_shortcuts[SHORT_CUT_SAVE_AS] = {
         "Save As..",
         "Ctrl+Shift+S",
@@ -42,6 +41,11 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         "Save",
         "Ctrl+S",
         [&]() { this->BufferCommand(std::make_shared<SaveProjectCommand>(false)); },
+    };
+    m_shortcuts[SHORT_CUT_OPEN] = {
+        "Open",
+        "Ctrl+O",
+        [&]() { this->BufferCommand(std::make_shared<OpenProjectCommand>(true)); },
     };
     m_shortcuts[SHORT_CUT_UNDO] = {
         "Undo",

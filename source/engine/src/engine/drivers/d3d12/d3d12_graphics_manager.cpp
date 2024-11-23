@@ -891,11 +891,13 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
 }
 
 auto D3d12GraphicsManager::CreateDevice() -> Result<void> {
+#if USING(DEBUG_BUILD)
     if (m_enableValidationLayer) {
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)))) {
             m_debugController->EnableDebugLayer();
         }
     }
+#endif
 
     D3D_FAIL(CreateDXGIFactory1(IID_PPV_ARGS(&m_factory)), "failed to create factory");
 
@@ -918,14 +920,14 @@ auto D3d12GraphicsManager::CreateDevice() -> Result<void> {
         }
     };
 
-    ComPtr<IDXGIAdapter1> hardwareAdapter;
-    get_hardware_adapter(m_factory.Get(), &hardwareAdapter);
+    ComPtr<IDXGIAdapter1> hardware_adapter;
+    get_hardware_adapter(m_factory.Get(), &hardware_adapter);
 
-    if (FAILED(D3D12CreateDevice(hardwareAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)))) {
-        ComPtr<IDXGIAdapter> warpAdapter;
-        D3D_FAIL(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warpAdapter)), "failed to enum warp adapter");
+    if (FAILED(D3D12CreateDevice(hardware_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(m_device.GetAddressOf())))) {
+        ComPtr<IDXGIAdapter> warp_adapter;
+        D3D_FAIL(m_factory->EnumWarpAdapter(IID_PPV_ARGS(&warp_adapter)), "failed to enum warp adapter");
 
-        D3D_FAIL(D3D12CreateDevice(warpAdapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device)),
+        D3D_FAIL(D3D12CreateDevice(warp_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(m_device.GetAddressOf())),
                  "failed to create d3d device");
     }
 
@@ -955,7 +957,7 @@ auto D3d12GraphicsManager::InitGraphicsContext() -> Result<void> {
     m_graphicsCommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
     DEV_ASSERT(m_graphicsCommandQueue);
 
-    int frame_idx = 0;
+    [[maybe_unused]] int frame_idx = 0;
     for (auto& it : m_frameContexts) {
         D3d12FrameContext& frame = reinterpret_cast<D3d12FrameContext&>(*it.get());
         D3D_FAIL(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&frame.m_commandAllocator)),
@@ -1036,6 +1038,7 @@ ID3D12CommandQueue* D3d12GraphicsManager::CreateCommandQueue(D3D12_COMMAND_LIST_
 }
 
 auto D3d12GraphicsManager::EnableDebugLayer() -> Result<void> {
+#if USING(DEBUG_BUILD)
     D3D_FAIL(D3D12GetDebugInterface(IID_PPV_ARGS(&m_debugController)),
              "failed to get debug interface");
 
@@ -1064,7 +1067,7 @@ auto D3d12GraphicsManager::EnableDebugLayer() -> Result<void> {
     filter.DenyList.NumIDs = array_length(ignore_list);
     info_queue->AddRetrievalFilterEntries(&filter);
     info_queue->AddStorageFilterEntries(&filter);
-
+#endif
     return Result<void>();
 }
 
@@ -1123,12 +1126,12 @@ auto D3d12GraphicsManager::CreateSwapChain(uint32_t p_width, uint32_t p_height) 
 
 auto D3d12GraphicsManager::CreateRenderTarget(uint32_t p_width, uint32_t p_height) -> Result<void> {
     for (int32_t i = 0; i < NUM_FRAMES_IN_FLIGHT; i++) {
-        ID3D12Resource* pBackBuffer = nullptr;
-        D3D_CALL(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&pBackBuffer)));
-        m_device->CreateRenderTargetView(pBackBuffer, nullptr, m_renderTargetDescriptor[i]);
+        ID3D12Resource* backbuffer = nullptr;
+        D3D_CALL(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffer)));
+        m_device->CreateRenderTargetView(backbuffer, nullptr, m_renderTargetDescriptor[i]);
         std::wstring name = std::wstring(L"Render Target Buffer") + std::to_wstring(i);
-        pBackBuffer->SetName(name.c_str());
-        m_renderTargets[i] = pBackBuffer;
+        backbuffer->SetName(name.c_str());
+        m_renderTargets[i] = backbuffer;
     }
 
     D3D12_CLEAR_VALUE depthOptimizedClearValue{};

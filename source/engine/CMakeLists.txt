@@ -50,6 +50,12 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
     -DROOT_FOLDER="${PROJECT_SOURCE_DIR}/"
 )
 
+if (NOT BUILD_ASSIMP AND WIN32)
+    target_compile_definitions(${TARGET_NAME} PRIVATE
+        -D_NO_ASSIMP
+    )
+endif()
+
 set(TARGET_LIBS 
     imgui
     glfw
@@ -65,6 +71,7 @@ if(WIN32)
         d3d12.lib
         dxgi.lib
         d3dcompiler.lib
+        dxguid.lib
     )
 endif()
 
@@ -75,7 +82,7 @@ target_set_warning_level(${TARGET_NAME})
 target_precompile_headers(${TARGET_NAME} PRIVATE src/engine/pch.h)
 
 # @TODO: move to plugin
-if(WIN32)
+if(WIN32 AND BUILD_ASSIMP)
     set(LIB_ASSIMP_DEBUG_DIR ${PROJECT_SOURCE_DIR}/thirdparty/assimp/build/lib/Debug)
     target_link_libraries(${TARGET_NAME} PUBLIC debug
         ${LIB_ASSIMP_DEBUG_DIR}/assimp-vc143-mtd.lib

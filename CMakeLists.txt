@@ -7,6 +7,8 @@ if(APPLE)
     enable_language(OBJCXX)
 endif()
 
+option(BUILD_ASSIMP "Description of the option" ON)
+
 message("***********************************************************************")
 message(STATUS "CMAKE_CXX_COMPILER_ID   : ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")

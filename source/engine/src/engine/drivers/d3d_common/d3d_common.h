@@ -76,6 +76,8 @@ auto CompileShader(std::string_view p_path,
 #if USING(USE_D3D_DEBUG_NAME)
 void SetDebugName(ID3D11DeviceChild* p_resource, const std::string& p_name);
 void SetDebugName(ID3D12DeviceChild* p_resource, const std::string& p_name);
+#else
+#define SetDebugName(...)
 #endif
 
 }  // namespace my
