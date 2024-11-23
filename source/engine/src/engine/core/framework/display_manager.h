@@ -25,7 +25,7 @@ public:
     virtual std::tuple<int, int> GetWindowSize() = 0;
     virtual std::tuple<int, int> GetWindowPos() = 0;
 
-    virtual void NewFrame() = 0;
+    virtual void BeginFrame() = 0;
     virtual void Present() = 0;
 
     static std::shared_ptr<DisplayManager> Create();

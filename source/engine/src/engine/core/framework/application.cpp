@@ -91,7 +91,7 @@ void Application::MainLoop() {
     while (!m_displayServer->ShouldClose()) {
         OPTICK_FRAME("MainThread");
 
-        m_displayServer->NewFrame();
+        m_displayServer->BeginFrame();
 
         m_inputManager->BeginFrame();
 

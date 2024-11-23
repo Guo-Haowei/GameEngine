@@ -383,7 +383,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
         texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
         ComPtr<ID3D11Texture3D> texture;
         D3D_FAIL_V(m_device->CreateTexture3D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
-        SetDebugName(texture, debug_name);
+        SetDebugName(texture.Get(), debug_name);
 
         auto gpu_texture = std::make_shared<D3d11GpuTexture>(p_texture_desc);
         if (p_texture_desc.bindFlags & BIND_SHADER_RESOURCE) {
@@ -442,7 +442,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
     D3D_FAIL_V(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
-    SetDebugName(texture, debug_name);
+    SetDebugName(texture.Get(), debug_name);
 
     if (p_texture_desc.initialData) {
         uint32_t row_pitch = p_texture_desc.width * channel_count(format) * channel_size(format);

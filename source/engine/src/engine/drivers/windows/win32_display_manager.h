@@ -12,7 +12,7 @@ public:
     std::tuple<int, int> GetWindowSize() final;
     std::tuple<int, int> GetWindowPos() final;
 
-    void NewFrame() final;
+    void BeginFrame() final;
     void Present() final;
 
     LRESULT WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p_lparam);

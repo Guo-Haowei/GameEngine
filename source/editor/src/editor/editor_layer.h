@@ -14,8 +14,10 @@ enum class KeyCode : uint16_t;
 enum {
     SHORT_CUT_SAVE_AS = 0,
     SHORT_CUT_SAVE,
+    SHORT_CUT_OPEN,
     SHORT_CUT_UNDO,
     SHORT_CUT_REDO,
+    SHORT_CUT_MAX,
 };
 
 class EditorLayer : public Layer, public EventListener {

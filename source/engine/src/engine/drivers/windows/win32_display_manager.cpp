@@ -79,7 +79,7 @@ std::tuple<int, int> Win32DisplayManager::GetWindowPos() {
     return std::make_tuple(m_windowPos.x, m_windowPos.y);
 }
 
-void Win32DisplayManager::NewFrame() {
+void Win32DisplayManager::BeginFrame() {
     MSG msg{};
     while (::PeekMessage(&msg, NULL, 0U, 0U, PM_REMOVE)) {
         ::TranslateMessage(&msg);
