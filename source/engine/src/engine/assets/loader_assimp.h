@@ -1,5 +1,9 @@
 #pragma once
+#ifdef _NO_ASSIMP
+#define USING_ASSIMP NOT_IN_USE
+#else
 #define USING_ASSIMP USE_IF(USING(PLATFORM_WINDOWS))
+#endif
 
 #if USING(USING_ASSIMP)
 #include "assets/loader.h"
