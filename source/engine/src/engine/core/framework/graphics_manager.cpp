@@ -578,7 +578,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 m_shadowPasses[0].pass_idx = static_cast<int>(GetCurrentFrame().passCache.size());
                 GetCurrentFrame().passCache.emplace_back(pass_constant);
 
-                // Frustum light_frustum(light_space_matrix);
+                Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
                     p_scene,
                     m_shadowPasses[0],
@@ -586,9 +586,7 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                         return p_object.flags & ObjectComponent::CAST_SHADOW;
                     },
                     [&](const AABB& p_aabb) {
-                        unused(p_aabb);
-                        // return light_frustum.intersects(aabb);
-                        return true;
+                        return light_frustum.Intersects(p_aabb);
                     });
             } break;
             case LIGHT_TYPE_POINT: {
@@ -603,16 +601,17 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
                 if (cast_shadow && shadow_map_index != INVALID_POINT_SHADOW_HANDLE) {
                     light.shadow_map_index = shadow_map_index;
 
+                    vec3 radiance(light.max_distance);
+                    AABB aabb = AABB::FromCenterSize(light.position, radiance);
                     auto pass = std::make_unique<PassContext>();
                     FillPass(
                         p_scene,
                         *pass.get(),
-                        [](const ObjectComponent& object) {
-                            return object.flags & ObjectComponent::CAST_SHADOW;
+                        [](const ObjectComponent& p_object) {
+                            return p_object.flags & ObjectComponent::CAST_SHADOW;
                         },
-                        [&](const AABB& aabb) {
-                            unused(aabb);
-                            return true;
+                        [&](const AABB& p_aabb) {
+                            return p_aabb.Intersects(aabb);
                         });
 
                     DEV_ASSERT_INDEX(shadow_map_index, MAX_POINT_LIGHT_SHADOW_COUNT);
@@ -646,6 +645,9 @@ void GraphicsManager::UpdateLights(const Scene& p_scene) {
 }
 
 void GraphicsManager::UpdateVoxelPass(const Scene& p_scene) {
+    if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
+        return;
+    }
     FillPass(
         p_scene,
         m_voxelPass,

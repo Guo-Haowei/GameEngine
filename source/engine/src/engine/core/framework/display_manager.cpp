@@ -35,15 +35,23 @@ auto DisplayManager::Initialize() -> Result<void> {
 
     auto backend = GraphicsManager::GetSingleton().GetBackend();
     switch (backend) {
-#define BACKEND_DECLARE(ENUM, STR)       \
-    case Backend::ENUM:                  \
-        info.title.append(" (" STR ")"); \
+#define BACKEND_DECLARE(ENUM, STR)         \
+    case Backend::ENUM:                    \
+        info.title.append(" [" STR "|"); \
         break;
         BACKEND_LIST
 #undef BACKEND_DECLARE
         default:
             break;
     }
+
+    info.title.append(
+#if USING(DEBUG_BUILD)
+        "Debug]"
+#else
+        "Release]"
+#endif
+    );
 
     return InitializeWindow(info);
 }
