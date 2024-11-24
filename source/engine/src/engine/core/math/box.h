@@ -9,6 +9,8 @@ class Box {
     using self_type = Box<N>;
 
 public:
+    static constexpr float BOX_MIN_SIZE = 0.0001f;
+
     Box() { MakeInvalid(); }
 
     Box(const vec_type& p_min, const vec_type& p_max) : m_min(p_min), m_max(p_max) {}
@@ -18,7 +20,7 @@ public:
         m_max = vec_type(-std::numeric_limits<float>::infinity());
     }
 
-    bool IsValid() {
+    bool IsValid() const {
         for (int i = 0; i < N; ++i) {
             if (m_min[i] >= m_max[i]) {
                 return false;
@@ -29,19 +31,18 @@ public:
 
     void MakeValid() {
         const vec_type size = glm::abs(m_max - m_min);
-        constexpr float delta = 0.0001f;
         if (size.x == 0.0f) {
-            m_min.x -= delta;
-            m_max.x += delta;
+            m_min.x -= BOX_MIN_SIZE;
+            m_max.x += BOX_MIN_SIZE;
         }
         if (size.y == 0.0f) {
-            m_min.y -= delta;
-            m_max.y += delta;
+            m_min.y -= BOX_MIN_SIZE;
+            m_max.y += BOX_MIN_SIZE;
         }
         if constexpr (N > 2) {
             if (size.z == 0.0f) {
-                m_min.z -= delta;
-                m_max.z += delta;
+                m_min.z -= BOX_MIN_SIZE;
+                m_max.z += BOX_MIN_SIZE;
             }
         }
     }
@@ -60,6 +61,8 @@ public:
         m_min = glm::max(m_min, p_other.m_min);
         m_max = glm::min(m_max, p_other.m_max);
     }
+
+    float SurfaceArea() const;
 
     vec_type Center() const { return 0.5f * (m_min + m_max); }
     vec_type Size() const { return m_max - m_min; }

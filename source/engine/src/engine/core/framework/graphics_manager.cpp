@@ -75,43 +75,6 @@ struct Geometry {
 using GeometryList = std::vector<Geometry>;
 static_assert(sizeof(Geometry) % sizeof(Vector4f) == 0);
 
-struct Box3 {
-    static constexpr float minSpan = 0.001f;
-
-    Vector3f min;
-    Vector3f max;
-
-    Box3();
-    Box3(const Vector3f& min, const Vector3f& max);
-    Box3(const Box3& box1, const Box3& box2);
-
-    Vector3f Center() const;
-    float SurfaceArea() const;
-    bool IsValid() const;
-    void Expand(const Vector3f& point);
-    void Expand(const Box3& box);
-
-    void MakeValid();
-
-    static Box3 FromGeometry(const Geometry& geom);
-    static Box3 FromGeometries(const GeometryList& geoms);
-    static Box3 FromGeometriesCentroid(const GeometryList& geoms);
-};
-
-// @TODO: remove
-struct SceneCamera {
-    static constexpr float DEFAULT_FOV = 60.0f;
-
-    std::string name;
-    float fov;
-    Vector3f eye;
-    Vector3f lookAt;
-    Vector3f up;
-
-    SceneCamera()
-        : fov(DEFAULT_FOV), eye(Vector4f(0, 0, 0, 1)), lookAt(Vector3f(0)), up(Vector3f(0, 1, 0)) {}
-};
-
 struct SceneMat {
     std::string name;
     Vector3f albedo;
@@ -1080,53 +1043,6 @@ Vector3f Geometry::Centroid() const {
 using GeometryList = std::vector<Geometry>;
 static_assert(sizeof(Geometry) % sizeof(Vector4f) == 0);
 
-Box3::Box3()
-    : min(std::numeric_limits<float>::infinity()), max(-std::numeric_limits<float>::infinity()) {}
-
-Box3::Box3(const Vector3f& min, const Vector3f& max)
-    : min(min), max(max) {}
-
-Box3::Box3(const Box3& box1, const Box3& box2)
-    : min(glm::min(box1.min, box2.min)), max(glm::max(box1.max, box2.max)) {}
-
-Vector3f Box3::Center() const {
-    return 0.5f * (min + max);
-}
-
-void Box3::Expand(const Vector3f& p) {
-    min = glm::min(min, p);
-    max = glm::max(max, p);
-}
-
-void Box3::Expand(const Box3& box) {
-    min = glm::min(min, box.min);
-    max = glm::max(max, box.max);
-}
-
-bool Box3::IsValid() const {
-    return min.x < max.y && min.y < max.y && min.z < max.z;
-}
-
-void Box3::MakeValid() {
-    for (int i = 0; i < 3; ++i) {
-        if (min[i] == max[i]) {
-            min[i] -= Box3::minSpan;
-            max[i] += Box3::minSpan;
-        }
-    }
-}
-
-float Box3::SurfaceArea() const {
-    if (!IsValid()) {
-        return 0.0f;
-    }
-    Vector3f span = glm::abs(max - min);
-    float result = 2.0f * (span.x * span.y +
-                           span.x * span.z +
-                           span.y * span.z);
-    return result;
-}
-
 static Box3 Box3FromSphere(const Geometry& sphere) {
     assert(sphere.kind == Geometry::Kind::Sphere);
 
@@ -1144,7 +1060,7 @@ static Box3 Box3FromTriangle(const Geometry& triangle) {
     return ret;
 }
 
-Box3 Box3::FromGeometry(const Geometry& geom) {
+static Box3 Box3FromGeometry(const Geometry& geom) {
     switch (geom.kind) {
         case Geometry::Kind::Triangle:
             return Box3FromTriangle(geom);
@@ -1156,20 +1072,20 @@ Box3 Box3::FromGeometry(const Geometry& geom) {
     return Box3();
 }
 
-Box3 Box3::FromGeometries(const GeometryList& geoms) {
+static Box3 Box3FromGeometries(const GeometryList& geoms) {
     Box3 box;
     for (const Geometry& geom : geoms) {
-        box = Box3(box, Box3::FromGeometry(geom));
+        box.UnionBox(Box3FromGeometry(geom));
     }
 
     box.MakeValid();
     return box;
 }
 
-Box3 Box3::FromGeometriesCentroid(const GeometryList& geoms) {
+static Box3 Box3FromGeometriesCentroid(const GeometryList& geoms) {
     Box3 box;
     for (const Geometry& geom : geoms) {
-        box.Expand(geom.Centroid());
+        box.ExpandPoint(geom.Centroid());
     }
 
     box.MakeValid();
@@ -1218,7 +1134,7 @@ static int genIdx() {
 }
 
 static int DominantAxis(const Box3& box) {
-    const Vector3f span = box.max - box.min;
+    const Vector3f span = box.Size();
     int axis = 0;
     if (span[axis] < span.y) {
         axis = 1;
@@ -1234,8 +1150,8 @@ void Bvh::SplitByAxis(GeometryList& geoms) {
     class Sorter {
     public:
         bool operator()(const Geometry& geom1, const Geometry& geom2) {
-            Box3 aabb1 = Box3::FromGeometry(geom1);
-            Box3 aabb2 = Box3::FromGeometry(geom2);
+            Box3 aabb1 = Box3FromGeometry(geom1);
+            Box3 aabb2 = Box3FromGeometry(geom2);
             Vector3f center1 = aabb1.Center();
             Vector3f center2 = aabb2.Center();
             return center1[axis] < center2[axis];
@@ -1285,11 +1201,11 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
     if (nGeoms == 1) {
         m_geom = geometries.front();
         m_leaf = true;
-        m_box = Box3::FromGeometry(m_geom);
+        m_box = Box3FromGeometry(m_geom);
         return;
     }
 
-    m_box = Box3::FromGeometries(geometries);
+    m_box = Box3FromGeometries(geometries);
     const float boxSurfaceArea = m_box.SurfaceArea();
 
     if (nGeoms <= 4 || boxSurfaceArea == 0.0f) {
@@ -1309,12 +1225,12 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
     Box3 centroidBox;
     for (size_t i = 0; i < nGeoms; ++i) {
         centroids[i] = geometries.at(i).Centroid();
-        centroidBox.Expand(centroids[i]);
+        centroidBox.ExpandPoint(centroids[i]);
     }
 
     const int axis = DominantAxis(centroidBox);
-    const float tmin = centroidBox.min[axis];
-    const float tmax = centroidBox.max[axis];
+    const float tmin = centroidBox.GetMin()[axis];
+    const float tmax = centroidBox.GetMax()[axis];
 
     for (size_t i = 0; i < nGeoms; ++i) {
         float tmp = ((centroids.at(i)[axis] - tmin) * nBuckets) / (tmax - tmin);
@@ -1322,7 +1238,7 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
         slot = glm::clamp(slot, 0, nBuckets - 1);
         BucketInfo& bucket = buckets[slot];
         ++bucket.count;
-        bucket.box.Expand(Box3::FromGeometry(geometries.at(i)));
+        bucket.box.UnionBox(Box3FromGeometry(geometries.at(i)));
     }
 
     float costs[nBuckets - 1];
@@ -1330,11 +1246,11 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
         Box3 b0, b1;
         int count0 = 0, count1 = 0;
         for (int j = 0; j <= i; ++j) {
-            b0.Expand(buckets[j].box);
+            b0.UnionBox(buckets[j].box);
             count0 += buckets[j].count;
         }
         for (int j = i + 1; j < nBuckets; ++j) {
-            b1.Expand(buckets[j].box);
+            b1.UnionBox(buckets[j].box);
             count1 += buckets[j].count;
         }
 
@@ -1401,8 +1317,8 @@ void Bvh::CreateGpuBvh(GpuBvhList& outBvh, GeometryList& outGeometries) {
     DiscoverIdx();
 
     GpuBvh gpuBvh;
-    gpuBvh.min = m_box.min;
-    gpuBvh.max = m_box.max;
+    gpuBvh.min = m_box.GetMin();
+    gpuBvh.max = m_box.GetMax();
     gpuBvh.hitIdx = m_hitIdx;
     gpuBvh.missIdx = m_missIdx;
     gpuBvh.leaf = m_leaf;
@@ -1491,8 +1407,8 @@ void ConstructScene(const Scene& p_scene, GpuScene& outScene) {
     for (GpuBvh& bvh : outScene.bvhs) {
         for (int i = 0; i < 3; ++i) {
             if (glm::abs(bvh.max[i] - bvh.min[i]) < 0.01f) {
-                bvh.min[i] -= Box3::minSpan;
-                bvh.max[i] += Box3::minSpan;
+                bvh.min[i] -= Box3::BOX_MIN_SIZE;
+                bvh.max[i] += Box3::BOX_MIN_SIZE;
             }
         }
     }
