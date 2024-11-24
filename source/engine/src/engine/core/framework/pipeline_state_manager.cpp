@@ -115,7 +115,7 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
         DEV_ASSERT(p_desc.depthStencilDesc);
     }
 
-    ERR_FAIL_COND_V(m_cache[p_name] != nullptr, HBN_ERROR(ERR_ALREADY_EXISTS, "pipeline already exists"));
+    ERR_FAIL_COND_V(m_cache[p_name] != nullptr, HBN_ERROR(ErrorCode::ERR_ALREADY_EXISTS, "pipeline already exists"));
 
     std::shared_ptr<PipelineState> pipeline{};
     switch (p_desc.type) {
@@ -144,7 +144,7 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
     }
 
     if (pipeline == nullptr) {
-        return HBN_ERROR(ERR_CANT_CREATE, "failed to create pipeline '{}'", EnumToString(p_name));
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to create pipeline '{}'", EnumToString(p_name));
     }
 
     m_cache[p_name] = pipeline;

@@ -11,7 +11,7 @@ const char* ErrorToString(ErrorCode p_error) {
 #undef ERROR_CODE
     };
 
-    static_assert(array_length(s_errorNames) == ERR_COUNT);
+    static_assert(array_length(s_errorNames) == std::to_underlying(ErrorCode::COUNT));
 
     return s_errorNames[static_cast<int>(p_error)];
 }

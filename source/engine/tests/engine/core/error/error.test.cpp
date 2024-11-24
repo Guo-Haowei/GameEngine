@@ -6,24 +6,38 @@
 
 namespace my {
 
+using Error = InternalError<ErrorCode>;
+using ErrorRef = std::shared_ptr<Error>;
+
+template<typename T>
+using Result = std::expected<T, ErrorRef>;
+
 TEST(InternalError, constructor_no_string) {
     constexpr size_t LINE_NUMBER = __LINE__;
-    auto err = HBN_ERROR(OK).error();
+    auto err = HBN_ERROR(ErrorCode::OK).error();
     EXPECT_EQ(err->line, LINE_NUMBER + 1);
-    EXPECT_EQ(err->value, OK);
+    EXPECT_EQ(err->value, ErrorCode::OK);
     EXPECT_EQ(err->message, "");
 }
 
 TEST(InternalError, constructor_with_format) {
     constexpr size_t LINE_NUMBER = __LINE__;
-    auto err = HBN_ERROR(ERR_ALREADY_EXISTS, "({}={}={})", 1, 2, 3).error();
+    auto err = HBN_ERROR(ErrorCode::ERR_ALREADY_EXISTS, "({}={}={})", 1, 2, 3).error();
     EXPECT_EQ(err->line, LINE_NUMBER + 1);
-    EXPECT_EQ(err->value, ERR_ALREADY_EXISTS);
+    EXPECT_EQ(err->value, ErrorCode::ERR_ALREADY_EXISTS);
     EXPECT_EQ(err->message, "(1=2=3)");
 }
 
+TEST(InternalError, constructor_with_long_format) {
+    constexpr size_t LINE_NUMBER = __LINE__;
+    auto err = HBN_ERROR(ErrorCode::ERR_ALREADY_EXISTS, "({}={}={}={}={}={})", 1, -2, 3, 5.5f, 'c', "def").error();
+    EXPECT_EQ(err->line, LINE_NUMBER + 1);
+    EXPECT_EQ(err->value, ErrorCode::ERR_ALREADY_EXISTS);
+    EXPECT_EQ(err->message, "(1=-2=3=5.5=c=def)");
+}
+
 static Result<void> DoStuffImpl() {
-    return HBN_ERROR(ERR_BUG, "???");
+    return HBN_ERROR(ErrorCode::ERR_BUG, "???");
 }
 
 static Result<void> DoStuffWrapper() {

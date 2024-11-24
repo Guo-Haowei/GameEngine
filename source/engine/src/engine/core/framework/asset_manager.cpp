@@ -1,6 +1,5 @@
 #include "asset_manager.h"
 
-#include "assets/loader_assimp.h"
 #include "assets/loader_stbi.h"
 #include "assets/loader_tinygltf.h"
 #include "core/framework/graphics_manager.h"
@@ -11,6 +10,9 @@
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_manager.h"
 #include "scene/scene.h"
+
+// plugins
+#include "plugins/loader_assimp/loader_assimp.h"
 
 namespace my {
 

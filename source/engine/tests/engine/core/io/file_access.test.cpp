@@ -5,14 +5,14 @@ namespace my {
 static std::string s_buffer;
 class FileAccessFoo : public FileAccessUnix {
 public:
-    virtual std::string FixPath(std::string_view path) override {
+    std::string FixPath(std::string_view path) override {
         return std::string(path);
     }
 
-    virtual ErrorCode OpenInternal(std::string_view path, ModeFlags mode_flags) override {
+    auto OpenInternal(std::string_view path, ModeFlags mode_flags) -> Result<void> override {
         auto info = std::format("[Open]f:{},m:{},a:{};", path, (int)mode_flags, (int)GetAccessType());
         s_buffer = info;
-        return OK;
+        return Result<void>();
     }
 };
 

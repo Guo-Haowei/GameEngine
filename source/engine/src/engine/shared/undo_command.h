@@ -4,7 +4,7 @@ namespace my {
 
 class UndoCommand {
 public:
-    UndoCommand() {}
+    virtual ~UndoCommand() = default;
 
     virtual void Undo() = 0;
     virtual void Redo() = 0;

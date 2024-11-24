@@ -168,7 +168,7 @@ auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
                                   m_srvDescHeap.GetStartCpu(),
                                   m_srvDescHeap.GetStartGpu());
     if (!ok) {
-        return HBN_ERROR(ERR_CANT_CREATE, "ImGui_ImplDX12_Init failed");
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "ImGui_ImplDX12_Init failed");
     }
 
     ImGui_ImplDX12_NewFrame();
@@ -1252,7 +1252,7 @@ auto D3d12GraphicsManager::CreateRootSignature() -> Result<void> {
         char buffer[256]{ 0 };
         StringUtils::Sprintf(buffer, "%.*s", error->GetBufferSize(), error->GetBufferPointer());
         LOG_ERROR("Failed to create root signature, reason {}", buffer);
-        return HBN_ERROR(ERR_CANT_CREATE, "Failed to create root signature");
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create root signature");
     }
 
     D3D_FAIL(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)),

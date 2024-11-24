@@ -7,7 +7,7 @@
 #if USING(PLATFORM_WINDOWS)
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d12/d3d12_graphics_manager.h"
-#include "drivers/vulkan/vulkan_graphics_manager.h"
+#include "drivers/vk/vulkan_graphics_manager.h"
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
@@ -155,7 +155,7 @@ auto GraphicsManager::Create() -> Result<std::shared_ptr<GraphicsManager>> {
         };
         auto create_metal_renderer = []() -> std::shared_ptr<GraphicsManager> {
 #if USING(PLATFORM_APPLE)
-            return std::make_shared<MetalGraphicsManager>();
+            return std::make_shared<EmptyGraphicsManager>("Emtpy", Backend::EMPTY, 1);
 #else
             return nullptr;
 #endif
@@ -170,7 +170,7 @@ auto GraphicsManager::Create() -> Result<std::shared_ptr<GraphicsManager>> {
 
     auto result = select_renderer();
     if (!result) {
-        return HBN_ERROR(ERR_INVALID_PARAMETER, "backend '{}' not supported", backend);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "backend '{}' not supported", backend);
     }
     return result;
 }
@@ -297,20 +297,26 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     };
 
     if (GetBackend() == Backend::METAL) {
-        return HBN_ERROR(ERR_CANT_CREATE);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);
     }
 
     if (!method.empty()) {
         auto it = lookup.find(method);
         if (it == lookup.end()) {
-            return HBN_ERROR(ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
+            return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
         } else {
             m_renderGraphName = it->second;
         }
     }
 
-    if (GetBackend() == Backend::VULKAN) {
-        m_renderGraphName = RenderGraphName::DUMMY;
+    switch (GetBackend()) {
+        case Backend::VULKAN:
+        case Backend::EMPTY:
+        case Backend::METAL:
+            m_renderGraphName = RenderGraphName::DUMMY;
+            break;
+        default:
+            break;
     }
 
     // force to default

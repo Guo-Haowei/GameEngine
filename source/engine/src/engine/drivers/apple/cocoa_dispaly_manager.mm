@@ -90,7 +90,7 @@ std::tuple<int, int> CocoaDisplayManager::GetWindowPos() {
     return std::make_tuple(0, 0);
 }
 
-void CocoaDisplayManager::NewFrame() {
+void CocoaDisplayManager::BeginFrame() {
 
 }
 

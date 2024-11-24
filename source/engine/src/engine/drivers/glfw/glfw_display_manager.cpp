@@ -36,7 +36,7 @@ auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<vo
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             break;
         default:
-            return HBN_ERROR(ERR_INVALID_PARAMETER);
+            return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER);
     }
 
     m_window = glfwCreateWindow(p_info.width,
@@ -56,7 +56,7 @@ auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<vo
         ImGui_ImplGlfw_InitForOpenGL(m_window, false);
     } else {
         if (!glfwVulkanSupported()) {
-            return HBN_ERROR(ERR_CANT_CREATE, "Vulkan not supported");
+            return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Vulkan not supported");
         }
         ImGui_ImplGlfw_InitForVulkan(m_window, false);
     }
