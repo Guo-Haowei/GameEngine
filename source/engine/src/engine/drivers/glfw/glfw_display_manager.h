@@ -19,6 +19,8 @@ public:
     void BeginFrame() final;
     void Present() final;
 
+    GLFWwindow* GetGlfwWindow() const { return m_window; }
+
 private:
     auto InitializeWindow(const CreateInfo& p_info) -> Result<void> final;
     void InitializeKeyMapping() final;

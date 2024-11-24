@@ -95,6 +95,8 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
         case Backend::OPENGL: {
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
+        case Backend::VULKAN: {
+        } break;
         default:
             CRASH_NOW();
             break;

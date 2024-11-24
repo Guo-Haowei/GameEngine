@@ -186,6 +186,8 @@ void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
+    [[maybe_unused]] const Backend backend = GetBackend();
+
     Cleanup();
 
     UpdateConstants(p_scene);
@@ -230,7 +232,11 @@ void GraphicsManager::Update(Scene& p_scene) {
         UpdateConstantBuffer(frame.perFrameCb.get(), &frame.perFrameCache, sizeof(PerFrameConstantBuffer));
         BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
-        m_renderGraph.Execute(*this);
+        // @HACK
+        if (backend != Backend::VULKAN) {
+            m_renderGraph.Execute(*this);
+        }
+
         Render();
         EndFrame();
         Present();

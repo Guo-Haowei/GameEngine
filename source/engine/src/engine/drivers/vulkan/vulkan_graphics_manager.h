@@ -58,7 +58,7 @@ protected:
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
 
     void Render() override {}
-    void Present() override {}
+    void Present() final;
 
     void OnSceneChange(const Scene& p_scene) override {}
     void OnWindowResize(int p_width, int p_height) override {}

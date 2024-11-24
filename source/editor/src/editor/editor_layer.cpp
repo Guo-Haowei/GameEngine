@@ -207,14 +207,14 @@ void EditorLayer::DrawToolbar() {
     float size = ImGui::GetWindowHeight() - 4.0f;
     ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
 
-    if (auto image = m_playButtonImage->Get(); image) {
+    if (auto image = m_playButtonImage->Get(); image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
         if (ImGui::ImageButton((ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
             LOG_ERROR("Play not implemented");
         }
     }
     ImGui::SameLine();
-    if (auto image = m_pauseButtonImage->Get(); image) {
+    if (auto image = m_pauseButtonImage->Get(); image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
         if (ImGui::ImageButton((ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
             LOG_ERROR("Pause not implemented");
