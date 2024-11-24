@@ -28,6 +28,157 @@
 #undef GetMessage
 #endif
 
+namespace my::pt {
+
+using glm::ivec2;
+using glm::ivec3;
+using glm::ivec4;
+using glm::mat3;
+using glm::mat4;
+using glm::uvec2;
+using glm::uvec3;
+using glm::uvec4;
+using glm::vec2;
+using glm::vec3;
+using glm::vec4;
+
+struct Geometry {
+    enum class Kind {
+        Invalid,
+        Triangle,
+        Sphere,
+        Count
+    };
+
+    Vector3f A;
+    Kind kind;
+    Vector3f B;
+    float radius;
+    Vector3f C;
+    int materialId;
+    Vector2f uv1;
+    Vector2f uv2;
+    Vector3f normal1;
+    float uv3x;
+    Vector3f normal2;
+    float uv3y;
+    Vector3f normal3;
+    float hasAlbedoMap = 0.0f;
+
+    Geometry();
+    Geometry(const Vector3f& A, const Vector3f& B, const Vector3f& C, int material);
+    Geometry(const Vector3f& center, float radius, int material);
+    Vector3f Centroid() const;
+    void CalcNormal();
+};
+
+using GeometryList = std::vector<Geometry>;
+static_assert(sizeof(Geometry) % sizeof(Vector4f) == 0);
+
+struct Box3 {
+    static constexpr float minSpan = 0.001f;
+
+    Vector3f min;
+    Vector3f max;
+
+    Box3();
+    Box3(const Vector3f& min, const Vector3f& max);
+    Box3(const Box3& box1, const Box3& box2);
+
+    Vector3f Center() const;
+    float SurfaceArea() const;
+    bool IsValid() const;
+    void Expand(const Vector3f& point);
+    void Expand(const Box3& box);
+
+    void MakeValid();
+
+    static Box3 FromGeometry(const Geometry& geom);
+    static Box3 FromGeometries(const GeometryList& geoms);
+    static Box3 FromGeometriesCentroid(const GeometryList& geoms);
+};
+
+// @TODO: remove
+struct SceneCamera {
+    static constexpr float DEFAULT_FOV = 60.0f;
+
+    std::string name;
+    float fov;
+    Vector3f eye;
+    Vector3f lookAt;
+    Vector3f up;
+
+    SceneCamera()
+        : fov(DEFAULT_FOV), eye(Vector4f(0, 0, 0, 1)), lookAt(Vector3f(0)), up(Vector3f(0, 1, 0)) {}
+};
+
+struct SceneMat {
+    std::string name;
+    Vector3f albedo;
+    Vector3f emissive;
+    float reflect;
+    float roughness;
+
+    SceneMat()
+        : albedo(Vector3f(1)), emissive(Vector3f(0)), reflect(0.f), roughness(1.f) {}
+};
+
+struct SceneGeometry {
+    enum class Kind {
+        Invalid,
+        Sphere,
+        Quad,
+        Cube,
+        Mesh,
+    };
+
+    SceneGeometry()
+        : kind(Kind::Invalid), materidId(-1), translate(Vector3f(0)), euler(Vector3f(0)), scale(Vector3f(1)) {}
+
+    std::string name;
+    std::string path;
+    Kind kind;
+    int materidId;
+    Vector3f translate;
+    Vector3f euler;
+    Vector3f scale;
+};
+
+struct GpuBvh {
+    Vector3f min;
+    int missIdx;
+    Vector3f max;
+    int hitIdx;
+
+    int leaf;
+    int geomIdx;
+    int padding[2];
+
+    GpuBvh();
+};
+
+struct GpuMaterial {
+    Vector3f albedo;
+    float reflect;
+    Vector3f emissive;
+    float roughness;
+    float albedoMapLevel;
+    int padding[3];
+};
+
+struct GpuScene {
+    std::vector<GpuMaterial> materials;
+    std::vector<Geometry> geometries;
+    std::vector<GpuBvh> bvhs;
+
+    int height;
+    Box3 bbox;
+};
+
+void ConstructScene(const Scene& inScene, GpuScene& outScene);
+//////////////////////////////////
+}  // namespace my::pt
+
 namespace my {
 
 template<typename T>
@@ -110,6 +261,25 @@ auto GraphicsManager::Initialize() -> Result<void> {
 
 void GraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get()); e) {
+        // @TODO: refactor
+        if (m_renderGraphName == RenderGraphName::PATHTRACER) {
+            pt::GpuScene gpuScene;
+            pt::ConstructScene(*e->GetScene(), gpuScene);
+
+            m_geometryBuffer = *CreateStructuredBuffer({
+                .slot = GetGlobalGeometriesSlot(),
+                .elementSize = sizeof(pt::Geometry),
+                .elementCount = (uint32_t)gpuScene.geometries.size(),
+                .initialData = gpuScene.geometries.data(),
+            });
+            m_bvhBuffer = *CreateStructuredBuffer({
+                .slot = GetGlobalBvhsSlot(),
+                .elementSize = sizeof(pt::GpuBvh),
+                .elementCount = (uint32_t)gpuScene.bvhs.size(),
+                .initialData = gpuScene.bvhs.data(),
+            });
+        }
+
         OnSceneChange(*e->GetScene());
     }
     if (ResizeEvent* e = dynamic_cast<ResizeEvent*>(p_event.get()); e) {
@@ -494,6 +664,14 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     cache.c_worldSizeHalf = 0.5f * world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
+    cache.c_cameraForward = camera.GetFront();
+    cache.c_tileOffset;
+    cache.c_cameraRight = camera.GetRight();
+    // @TODO: refactor
+    static int s_frameIndex = 0;
+    cache.c_cameraUp = glm::cross(cache.c_cameraForward, cache.c_cameraRight);
+    cache.c_frameIndex = s_frameIndex++;
+    cache.c_cameraFov = camera.GetFovy().GetDegree();
 
     // Force fields
 
@@ -857,75 +1035,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
 }  // namespace my
 
-namespace my::old_pt {
-
-using glm::ivec2;
-using glm::ivec3;
-using glm::ivec4;
-using glm::mat3;
-using glm::mat4;
-using glm::uvec2;
-using glm::uvec3;
-using glm::uvec4;
-using glm::vec2;
-using glm::vec3;
-using glm::vec4;
-
-struct Geometry {
-    enum class Kind {
-        Invalid,
-        Triangle,
-        Sphere,
-        Count
-    };
-
-    Vector3f A;
-    Kind kind;
-    Vector3f B;
-    float radius;
-    Vector3f C;
-    int materialId;
-    Vector2f uv1;
-    Vector2f uv2;
-    Vector3f normal1;
-    float uv3x;
-    Vector3f normal2;
-    float uv3y;
-    Vector3f normal3;
-    float hasAlbedoMap = 0.0f;
-
-    Geometry();
-    Geometry(const Vector3f& A, const Vector3f& B, const Vector3f& C, int material);
-    Geometry(const Vector3f& center, float radius, int material);
-    Vector3f Centroid() const;
-    void CalcNormal();
-};
-
-using GeometryList = std::vector<Geometry>;
-static_assert(sizeof(Geometry) % sizeof(Vector4f) == 0);
-
-struct Box3 {
-    static constexpr float minSpan = 0.001f;
-
-    Vector3f min;
-    Vector3f max;
-
-    Box3();
-    Box3(const Vector3f& min, const Vector3f& max);
-    Box3(const Box3& box1, const Box3& box2);
-
-    Vector3f Center() const;
-    float SurfaceArea() const;
-    bool IsValid() const;
-    void Expand(const Vector3f& point);
-    void Expand(const Box3& box);
-
-    void MakeValid();
-
-    static Box3 FromGeometry(const Geometry& geom);
-    static Box3 FromGeometries(const GeometryList& geoms);
-    static Box3 FromGeometriesCentroid(const GeometryList& geoms);
-};
+namespace my::pt {
 
 Geometry::Geometry()
     : kind(Kind::Invalid), materialId(-1) {}
@@ -1063,19 +1173,6 @@ Box3 Box3::FromGeometriesCentroid(const GeometryList& geoms) {
     return box;
 }
 
-struct GpuBvh {
-    Vector3f min;
-    int missIdx;
-    Vector3f max;
-    int hitIdx;
-
-    int leaf;
-    int geomIdx;
-    int padding[2];
-
-    GpuBvh();
-};
-
 using GpuBvhList = std::vector<GpuBvh>;
 
 static_assert(sizeof(GpuBvh) % sizeof(Vector4f) == 0);
@@ -1169,79 +1266,6 @@ struct SceneStats {
 };
 
 extern SceneStats g_SceneStats;
-
-struct SceneCamera {
-    static constexpr float DEFAULT_FOV = 60.0f;
-
-    std::string name;
-    float fov;
-    Vector3f eye;
-    Vector3f lookAt;
-    Vector3f up;
-
-    SceneCamera()
-        : fov(DEFAULT_FOV), eye(Vector4f(0, 0, 0, 1)), lookAt(Vector3f(0)), up(Vector3f(0, 1, 0)) {}
-};
-
-struct SceneMat {
-    std::string name;
-    Vector3f albedo;
-    Vector3f emissive;
-    float reflect;
-    float roughness;
-
-    SceneMat()
-        : albedo(Vector3f(1)), emissive(Vector3f(0)), reflect(0.f), roughness(1.f) {}
-};
-
-struct SceneGeometry {
-    enum class Kind {
-        Invalid,
-        Sphere,
-        Quad,
-        Cube,
-        Mesh,
-    };
-
-    SceneGeometry()
-        : kind(Kind::Invalid), materidId(-1), translate(Vector3f(0)), euler(Vector3f(0)), scale(Vector3f(1)) {}
-
-    std::string name;
-    std::string path;
-    Kind kind;
-    int materidId;
-    Vector3f translate;
-    Vector3f euler;
-    Vector3f scale;
-};
-
-const char* GeomKindToString(SceneGeometry::Kind kind);
-
-struct Scene {
-    SceneCamera camera;
-    std::vector<SceneMat> materials;
-    std::vector<SceneGeometry> geometries;
-};
-
-struct GpuMaterial {
-    Vector3f albedo;
-    float reflect;
-    Vector3f emissive;
-    float roughness;
-    float albedoMapLevel;
-    int padding[3];
-};
-
-struct GpuScene {
-    std::vector<GpuMaterial> materials;
-    std::vector<Geometry> geometries;
-    std::vector<GpuBvh> bvhs;
-
-    int height;
-    Box3 bbox;
-};
-
-void ConstructScene(const Scene& inScene, GpuScene& outScene);
 
 Bvh::Bvh(GeometryList& geometries, Bvh* parent)
     : m_idx(genIdx()), m_parent(parent) {
@@ -1394,204 +1418,64 @@ void Bvh::CreateGpuBvh(GpuBvhList& outBvh, GeometryList& outGeometries) {
     }
 }
 
-static void AddMesh(const SceneGeometry& mesh, GeometryList& outGeoms, std::vector<GpuMaterial>& inoutMats) {
-    my::unused(mesh);
-    my::unused(outGeoms);
-    my::unused(inoutMats);
-#if 0
-    static int sCnt = 0;
-    ++sCnt;
-    if (sCnt > 1) {
-        throw std::runtime_error("At most one .obj per scene");
-    }
-
-    std::string path = DATA_DIR;
-    path.append(mesh.path);
-    tinyobj::ObjReaderConfig reader_config;
-    reader_config.triangulate = true;
-    string searchPath(path.c_str(), strrchr(path.c_str(), '/') + 1);
-    reader_config.mtl_search_path = searchPath;  // Path to material files
-
-    tinyobj::ObjReader reader;
-    if (!reader.ParseFromFile(path, reader_config)) {
-        if (!reader.Error().empty()) {
-            std::string err = "Failed to parse obj '" + path + "'";
-            throw std::runtime_error(err);
-        }
-    }
-
-    // if (!reader.Warning().empty()) {
-    //     printf("Warning parsing '%s', %s\n", path.c_str(), reader.Warning().c_str());
-    // }
-
-    auto& attrib = reader.GetAttrib();
-    auto& shapes = reader.GetShapes();
-    auto& materials = reader.GetMaterials();
-
-    // TODO: create textures
-    vector<string> albedoPaths;
-
-    const size_t materialOffset = inoutMats.size();
-    for (const tinyobj::material_t& mat : materials) {
-        GpuMaterial gpuMat;
-        gpuMat.albedo.x = mat.diffuse[0];
-        gpuMat.albedo.y = mat.diffuse[1];
-        gpuMat.albedo.z = mat.diffuse[2];
-        // HACK: approximate
-        gpuMat.reflect = 0.01f * mat.shininess;
-        // gpuMat.reflect = (glm::log2(mat.shininess) / glm::log2(256.f)) - 0.3f;
-        gpuMat.reflect = glm::clamp(gpuMat.reflect, 0.0f, 1.0f);
-        gpuMat.emissive = Vector3f(0.f);
-        gpuMat.roughness = 1 - gpuMat.reflect;
-        gpuMat.albedoMapLevel = 0.0f;
-        gpuMat.albedo = glm::max(gpuMat.albedo, Vector3f(0.05));
-        // printf("%s : %f\n", mat.name.c_str(), gpuMat.reflect);
-
-        const string& albedoMapName = mat.diffuse_texname;
-
-        if (!albedoMapName.empty()) {
-            bool found = false;
-            size_t idx = 0;
-            for (; idx < albedoPaths.size(); ++idx) {
-                const string& path = albedoPaths[idx];
-                if (path == albedoMapName) {
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                albedoPaths.push_back(albedoMapName);
-            }
-
-            gpuMat.albedoMapLevel = float(idx);
-        }
-
-        inoutMats.push_back(gpuMat);
-    }
-
-    for (const string& path : albedoPaths) {
-        Image image = ReadImage(searchPath + path);
-        image.debugName = path;
-        g_AlbedoMaps.images.push_back(image);
-        g_AlbedoMaps.maxWidth = glm::max(g_AlbedoMaps.maxWidth, image.width);
-        g_AlbedoMaps.maxHeight = glm::max(g_AlbedoMaps.maxHeight, image.height);
-    }
-
-    const Matrix4x4f trans = CalcTransform(mesh);
-
+static void AddObject(const MeshComponent& p_mesh, const TransformComponent& p_transform, GeometryList& outGeoms) {
     // Loop over shapes
-    for (size_t s = 0; s < shapes.size(); s++) {
-        size_t index_offset = 0;
-        for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++) {
-            size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
-            assert(fv == 3);
+    Matrix4x4f transform = p_transform.GetWorldMatrix();
 
-            Vector3f points[3];
-            Vector3f normals[3];
-            Vector2f uvs[3] = { Vector2f(0.0f), Vector2f(0.0f), Vector2f(0.0f) };
+    for (size_t index = 0; index < p_mesh.indices.size(); index += 3) {
+        const uint32_t index0 = p_mesh.indices[index];
+        const uint32_t index1 = p_mesh.indices[index + 1];
+        const uint32_t index2 = p_mesh.indices[index + 2];
 
-            Image albedo;
-            bool hasAlbedo = false;
-            bool hasNormal = false;
+        Vector3f points[3] = {
+            transform * Vector4f(p_mesh.positions[index0], 1.0f),
+            transform * Vector4f(p_mesh.positions[index1], 1.0f),
+            transform * Vector4f(p_mesh.positions[index2], 1.0f),
+        };
 
-            int matId = mesh.materidId;
-            if (materials.size()) {
-                const auto tinyobjMatId = shapes[s].mesh.material_ids[f];
-                matId = tinyobjMatId + static_cast<int>(materialOffset);
-                const tinyobj::material_t& tinyobjMat = materials.at(tinyobjMatId);
+        Vector3f normals[3] = {
+            transform * Vector4f(p_mesh.normals[index0], 0.0f),
+            transform * Vector4f(p_mesh.normals[index1], 0.0f),
+            transform * Vector4f(p_mesh.normals[index2], 0.0f),
+        };
 
-                // find which image
-                for (const auto& image : g_AlbedoMaps.images) {
-                    if (image.debugName == tinyobjMat.diffuse_texname) {
-                        albedo = image;
-                        hasAlbedo = true;
-                        break;
-                    }
-                }
-            }
-
-            for (size_t v = 0; v < fv; v++) {
-                tinyobj::index_t idx = shapes[s].mesh.indices[index_offset + v];
-                tinyobj::real_t vx = attrib.vertices[3 * size_t(idx.vertex_index) + 0];
-                tinyobj::real_t vy = attrib.vertices[3 * size_t(idx.vertex_index) + 1];
-                tinyobj::real_t vz = attrib.vertices[3 * size_t(idx.vertex_index) + 2];
-
-                {
-                    Vector4f tmp(vx, vy, vz, 1.0f);
-                    points[v] = trans * tmp;
-                }
-
-                if (idx.normal_index >= 0) {
-                    hasNormal = true;
-                    tinyobj::real_t nx = attrib.normals[3 * size_t(idx.normal_index) + 0];
-                    tinyobj::real_t ny = attrib.normals[3 * size_t(idx.normal_index) + 1];
-                    tinyobj::real_t nz = attrib.normals[3 * size_t(idx.normal_index) + 2];
-                    normals[v] = mat3(trans) * Vector3f(nx, ny, nz);
-                    normals[v] = glm::normalize(normals[v]);
-                }
-
-                if (idx.texcoord_index >= 0) {
-                    tinyobj::real_t tx = attrib.texcoords[2 * size_t(idx.texcoord_index) + 0];
-                    tinyobj::real_t ty = attrib.texcoords[2 * size_t(idx.texcoord_index) + 1];
-
-                    // TODO: fix uv
-                    // if (hasAlbedo) {
-                    //     tx = tx - glm::floor(tx);
-                    //     ty = ty - glm::floor(ty);
-                    // }
-
-                    uvs[v].x = tx;
-                    uvs[v].y = ty;
-                }
-            }
-            index_offset += fv;
-
-            // per-face material
-            Geometry geom(points[0], points[1], points[2], mesh.materidId);
-            geom.uv1 = uvs[0];
-            geom.uv2 = uvs[1];
-            geom.uv3x = uvs[2].x;
-            geom.uv3y = uvs[2].y;
-            geom.hasAlbedoMap = hasAlbedo ? 1.0f : 0.0f;
-            geom.materialId = matId;
-            if (hasNormal) {
-                geom.normal1 = normals[0];
-                geom.normal2 = normals[1];
-                geom.normal3 = normals[2];
-            }
-            outGeoms.push_back(geom);
-        }
+        // per-face material
+        Geometry geom(points[0], points[1], points[2], 0);
+        // geom.uv1 = uvs[0];
+        // geom.uv2 = uvs[1];
+        // geom.uv3x = uvs[2].x;
+        // geom.uv3y = uvs[2].y;
+        geom.normal1 = normals[0];
+        geom.normal2 = normals[1];
+        geom.normal3 = normals[2];
+        geom.kind = pt::Geometry::Kind::Triangle;
+        outGeoms.push_back(geom);
     }
-#endif
 }
 
-void ConstructScene(const Scene& inScene, GpuScene& outScene) {
+void ConstructScene(const Scene& p_scene, GpuScene& outScene) {
     /// materials
     outScene.materials.clear();
-    for (const SceneMat& mat : inScene.materials) {
-        GpuMaterial gpuMat;
-        gpuMat.albedo = mat.albedo;
-        gpuMat.emissive = mat.emissive;
-        gpuMat.reflect = mat.reflect;
-        gpuMat.roughness = mat.roughness;
-        gpuMat.albedoMapLevel = 0.0f;
-        outScene.materials.push_back(gpuMat);
-    }
+    // for (const SceneMat& mat : inScene.materials) {
+    //     GpuMaterial gpuMat;
+    //     gpuMat.albedo = mat.albedo;
+    //     gpuMat.emissive = mat.emissive;
+    //     gpuMat.reflect = mat.reflect;
+    //     gpuMat.roughness = mat.roughness;
+    //     gpuMat.albedoMapLevel = 0.0f;
+    //     outScene.materials.push_back(gpuMat);
+    // }
 
     /// objects
     outScene.geometries.clear();
     GeometryList tmpGpuObjects;
-    for (const SceneGeometry& geom : inScene.geometries) {
-        switch (geom.kind) {
-            case SceneGeometry::Kind::Mesh:
-                AddMesh(geom, tmpGpuObjects, outScene.materials);
-                break;
-            default:
-                // printf("Invalid scene object type '%s'\n", GeomKindToString(geom.kind));
-                CRASH_NOW();
-                break;
-        }
+    for (auto [entity, object] : p_scene.m_ObjectComponents) {
+        // ObjectComponent
+        auto transform = p_scene.GetComponent<TransformComponent>(entity);
+        auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
+        DEV_ASSERT(transform);
+        DEV_ASSERT(mesh);
+        AddObject(*mesh, *transform, tmpGpuObjects);
     }
 
     /// construct bvh
@@ -1611,4 +1495,4 @@ void ConstructScene(const Scene& inScene, GpuScene& outScene) {
     }
 }
 
-}  // namespace my::old_pt
+}  // namespace my::pt

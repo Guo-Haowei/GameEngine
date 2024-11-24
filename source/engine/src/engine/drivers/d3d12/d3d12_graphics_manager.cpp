@@ -527,6 +527,8 @@ auto D3d12GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> 
 }
 
 auto D3d12GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
+    DEV_ASSERT(!p_desc.initialData && "TODO: initial data");
+
     CD3DX12_HEAP_PROPERTIES heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     D3D12_RESOURCE_DESC buffer_desc{};
     buffer_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;

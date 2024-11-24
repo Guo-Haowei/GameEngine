@@ -791,7 +791,9 @@ void RenderPassCreator::AddTonePass() {
 
 static void PathTracerPassFunc(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
-    // auto& frame = gm.GetCurrentFrame();
+    if (!gm.m_geometryBuffer) {
+        return;
+    }
 
     gm.SetPipelineState(PSO_PATH_TRACER);
     auto input = gm.FindTexture(RESOURCE_PATH_TRACER);
@@ -803,7 +805,11 @@ static void PathTracerPassFunc(const DrawPass*) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
+    gm.BindStructuredBuffer(GetGlobalBvhsSlot(), gm.m_bvhBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalGeometriesSlot(), gm.m_geometryBuffer.get());
     gm.Dispatch(work_group_x, work_group_y, 1);
+    gm.UnbindStructuredBuffer(GetGlobalBvhsSlot());
+    gm.UnbindStructuredBuffer(GetGlobalGeometriesSlot());
 }
 
 void RenderPassCreator::AddPathTracerPass() {

@@ -81,11 +81,12 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     ImVec2 bottom_right(top_left.x + m_canvasSize.x, top_left.y + m_canvasSize.y);
 
     // @TODO: fix this
-    uint64_t handle = GraphicsManager::GetSingleton().GetFinalImage();
+    const auto& gm = GraphicsManager::GetSingleton();
+    uint64_t handle = gm.GetFinalImage();
 
     ImVec2 uv_min(0, 1);
     ImVec2 uv_max(1, 0);
-    switch (GraphicsManager::GetSingleton().GetBackend()) {
+    switch (gm.GetBackend()) {
         case Backend::D3D11:
         case Backend::D3D12: {
             uv_min = ImVec2(0, 0);
@@ -93,6 +94,10 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
         case Backend::OPENGL: {
+            if (gm.GetRenderGraphName() == GraphicsManager::RenderGraphName::PATHTRACER) {
+                uv_min = ImVec2(0, 0);
+                uv_max = ImVec2(1, 1);
+            }
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
         case Backend::VULKAN: {

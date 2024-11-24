@@ -233,6 +233,7 @@ auto D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> 
 }
 
 auto D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
+    DEV_ASSERT(!p_desc.initialData && "TODO: initial data");
     ComPtr<ID3D11Buffer> buffer;
     ComPtr<ID3D11UnorderedAccessView> uav;
     ComPtr<ID3D11ShaderResourceView> srv;
