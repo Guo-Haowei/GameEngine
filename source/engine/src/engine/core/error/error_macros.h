@@ -97,37 +97,37 @@ void ReportErrorIndexImpl(std::string_view p_function,
     } while (0)
 
 #define CRASH_COND(EXPR)                                                                                       \
-    if (EXPR) [[unlikely]] {                                                                                   \
+    if (auto _cond = (EXPR); _cond) [[unlikely]] {                                                             \
         my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: Condition \"" _STR(EXPR) "\" is true."); \
         GENERATE_TRAP();                                                                                       \
     } else                                                                                                     \
         (void)0
 
 #define CRASH_COND_MSG(EXPR, MSG)                                                                                   \
-    if (EXPR) [[unlikely]] {                                                                                        \
+    if (auto _cond = (EXPR); _cond) [[unlikely]] {                                                                  \
         my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: Condition \"" _STR(EXPR) "\" is true.", MSG); \
         GENERATE_TRAP();                                                                                            \
     } else                                                                                                          \
         (void)0
 
 #define DEV_ASSERT(EXPR)                                                                                    \
-    if (!(EXPR)) [[unlikely]] {                                                                             \
+    if (auto _cond = (EXPR); !_cond) [[unlikely]] {                                                         \
         my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: DEV_ASSERT failed (" _STR(EXPR) ")"); \
         GENERATE_TRAP();                                                                                    \
     } else                                                                                                  \
         ((void)0)
 
 #define DEV_ASSERT_MSG(EXPR, MSG)                                                                                \
-    if (!(EXPR)) [[unlikely]] {                                                                                  \
+    if (auto _cond = EXPR; !_cond) [[unlikely]] {                                                                \
         my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: DEV_ASSERT failed (" _STR(EXPR) ")", MSG); \
         GENERATE_TRAP();                                                                                         \
     } else                                                                                                       \
         ((void)0)
 
 #define DEV_ASSERT_INDEX(INDEX, BOUND)                                                                               \
-    if (int64_t index_ = (int64_t)(INDEX), bound_ = (int64_t)(BOUND); index_ < 0 || index_ >= bound_) [[unlikely]] { \
-        my::ReportErrorIndexImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: DEV_ASSERT_INDEX failed ", index_,        \
-                                 bound_, _STR(INDEX), _STR(BOUND), "");                                              \
+    if (int64_t _index = (int64_t)(INDEX), _bound = (int64_t)(BOUND); _index < 0 || _index >= _bound) [[unlikely]] { \
+        my::ReportErrorIndexImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: DEV_ASSERT_INDEX failed ", _index,        \
+                                 _bound, _STR(INDEX), _STR(BOUND), "");                                              \
         GENERATE_TRAP();                                                                                             \
     } else                                                                                                           \
         ((void)0)

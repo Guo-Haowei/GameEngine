@@ -162,7 +162,7 @@ void GlfwDisplayManager::ScrollCallback(GLFWwindow* p_window,
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
-        InputManager::GetSingleton().SetWheel(static_cast<float>(p_xoffset), static_cast<float>(p_yoffset));
+        InputManager::GetSingleton().SetWheel(p_xoffset, p_yoffset);
     }
 }
 

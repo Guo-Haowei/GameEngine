@@ -17,7 +17,7 @@
 namespace my {
 
 void Viewer::UpdateData() {
-    ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     int frame_width = frame_size.x;
     int frame_height = frame_size.y;
     const float ratio = (float)frame_width / frame_height;
@@ -44,7 +44,7 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
 
     if (InputManager::GetSingleton().IsButtonPressed(MOUSE_BUTTON_RIGHT)) {
         auto [window_x, window_y] = DisplayManager::GetSingleton().GetWindowPos();
-        vec2 clicked = InputManager::GetSingleton().GetCursor();
+        Vector2f clicked = InputManager::GetSingleton().GetCursor();
         clicked.x = (clicked.x + window_x - m_canvasMin.x) / m_canvasSize.x;
         clicked.y = (clicked.y + window_y - m_canvasMin.y) / m_canvasSize.y;
 
@@ -52,11 +52,11 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
             clicked *= 2.0f;
             clicked -= 1.0f;
 
-            const mat4 inversed_projection_view = glm::inverse(p_camera.GetProjectionViewMatrix());
+            const Matrix4x4f inversed_projection_view = glm::inverse(p_camera.GetProjectionViewMatrix());
 
-            const vec3 ray_start = p_camera.GetPosition();
-            const vec3 direction = glm::normalize(vec3(inversed_projection_view * vec4(clicked.x, -clicked.y, 1.0f, 1.0f)));
-            const vec3 ray_end = ray_start + direction * p_camera.GetFar();
+            const Vector3f ray_start = p_camera.GetPosition();
+            const Vector3f direction = glm::normalize(Vector3f(inversed_projection_view * Vector4f(clicked.x, -clicked.y, 1.0f, 1.0f)));
+            const Vector3f ray_end = ray_start + direction * p_camera.GetFar();
             Ray ray(ray_start, ray_end);
 
             const auto result = p_scene.Intersects(ray);
@@ -67,8 +67,8 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
 }
 
 void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
-    const mat4 view_matrix = p_camera.GetViewMatrix();
-    const mat4 proj_matrix = p_camera.GetProjectionMatrix();
+    const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
+    const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
 
     ImGuizmo::SetOrthographic(false);
     ImGuizmo::BeginFrame();
@@ -81,11 +81,12 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
     ImVec2 bottom_right(top_left.x + m_canvasSize.x, top_left.y + m_canvasSize.y);
 
     // @TODO: fix this
-    uint64_t handle = GraphicsManager::GetSingleton().GetFinalImage();
+    const auto& gm = GraphicsManager::GetSingleton();
+    uint64_t handle = gm.GetFinalImage();
 
     ImVec2 uv_min(0, 1);
     ImVec2 uv_max(1, 0);
-    switch (GraphicsManager::GetSingleton().GetBackend()) {
+    switch (gm.GetBackend()) {
         case Backend::D3D11:
         case Backend::D3D12: {
             uv_min = ImVec2(0, 0);
@@ -93,6 +94,10 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
         case Backend::OPENGL: {
+            if (gm.GetRenderGraphName() == GraphicsManager::RenderGraphName::PATHTRACER) {
+                uv_min = ImVec2(0, 0);
+                uv_max = ImVec2(1, 1);
+            }
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
         case Backend::VULKAN: {
@@ -104,7 +109,7 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
 
     bool draw_grid = DVAR_GET_BOOL(show_editor);
     if (draw_grid) {
-        mat4 identity(1);
+        Matrix4x4f identity(1);
         // draw grid
         ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
     }
@@ -124,7 +129,7 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
         if (aabb.is_valid()) {
             aabb.apply_matrix(transform_component->get_world_matrix());
 
-            const mat4 model_matrix = glm::translate(mat4(1), aabb.center()) * glm::scale(mat4(1), aabb.size());
+            const Matrix4x4f model_matrix = glm::translate(Matrix4x4f(1), aabb.center()) * glm::scale(Matrix4x4f(1), aabb.size());
             ImGuizmo::draw_box_wireframe(projection_view_matrix, model_matrix);
         }
     }
@@ -135,15 +140,15 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
         AABB aabb = mesh_component->local_bound;
         aabb.apply_matrix(transform_component->get_world_matrix());
 
-        const mat4 model_matrix = glm::translate(mat4(1), aabb.center()) * glm::scale(mat4(1), aabb.size());
+        const Matrix4x4f model_matrix = glm::translate(Matrix4x4f(1), aabb.center()) * glm::scale(Matrix4x4f(1), aabb.size());
         ImGuizmo::draw_box_wireframe(projection_view_matrix, model_matrix);
     }
 #endif
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION p_operation, CommandType p_type) {
         if (transform_component) {
-            const mat4 before = transform_component->GetLocalMatrix();
-            mat4 after = before;
+            const Matrix4x4f before = transform_component->GetLocalMatrix();
+            Matrix4x4f after = before;
             if (ImGuizmo::Manipulate(glm::value_ptr(view_matrix),
                                      glm::value_ptr(proj_matrix),
                                      p_operation,
@@ -204,13 +209,15 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     UpdateData();
 
-    ivec3 delta_camera(0);
+    Vector3i delta_camera(0);
     auto& events = m_editor.GetUnhandledEvents();
     bool selected = m_editor.GetSelectedEntity().IsValid();
+    float mouse_scroll = 0.0f;
+
     for (auto& event : events) {
         if (InputEventKey* e = dynamic_cast<InputEventKey*>(event.get()); e) {
             if (e->IsPressed()) {
-                switch (e->m_key) {
+                switch (e->GetKey()) {
                     case KeyCode::KEY_Z: {
                         if (selected) {
                             m_editor.SetState(EditorLayer::STATE_TRANSLATE);
@@ -230,7 +237,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
                         break;
                 }
             } else if (e->IsHolding()) {
-                switch (e->m_key) {
+                switch (e->GetKey()) {
                     case KeyCode::KEY_D:
                         ++delta_camera.x;
                         break;
@@ -254,10 +261,15 @@ void Viewer::UpdateInternal(Scene& p_scene) {
                 }
             }
         }
+        if (InputEventMouseWheel* e = dynamic_cast<InputEventMouseWheel*>(event.get()); e) {
+            if (!e->IsModiferPressed()) {
+                mouse_scroll = 3.0f * e->GetWheelY();
+            }
+        }
     }
 
     if (m_focused) {
-        m_cameraController.Move(p_scene.m_elapsedTime, camera, delta_camera);
+        m_cameraController.Move(p_scene.m_elapsedTime, camera, delta_camera, mouse_scroll);
     }
 
     SelectEntity(p_scene, camera);

@@ -92,7 +92,7 @@ void Scene::CreateCamera(int p_width,
     m_camera->m_fovy = p_fovy;
     m_camera->m_pitch = Degree{ -10.0f };
     m_camera->m_yaw = Degree{ -90.0f };
-    m_camera->m_position = vec3{ 0, 4, 10 };
+    m_camera->m_position = Vector3f{ 0, 4, 10 };
     m_camera->SetDirty();
 }
 
@@ -128,8 +128,8 @@ Entity Scene::CreateMaterialEntity(const std::string& p_name) {
 }
 
 Entity Scene::CreatePointLightEntity(const std::string& p_name,
-                                     const vec3& p_position,
-                                     const vec3& p_color,
+                                     const Vector3f& p_position,
+                                     const Vector3f& p_color,
                                      const float p_emissive) {
     Entity entity = CreateObjectEntity(p_name);
 
@@ -140,7 +140,7 @@ Entity Scene::CreatePointLightEntity(const std::string& p_name,
     light.m_atten.quadratic = 0.05f;
 
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.baseColor = vec4(p_color, 1.0f);
+    material.baseColor = Vector4f(p_color, 1.0f);
     material.emissive = p_emissive;
 
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
@@ -159,7 +159,7 @@ Entity Scene::CreatePointLightEntity(const std::string& p_name,
 }
 
 Entity Scene::CreateAreaLightEntity(const std::string& p_name,
-                                    const vec3& p_color,
+                                    const Vector3f& p_color,
                                     const float p_emissive) {
     Entity entity = CreateObjectEntity(p_name);
 
@@ -172,7 +172,7 @@ Entity Scene::CreateAreaLightEntity(const std::string& p_name,
 
     // material
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.baseColor = vec4(p_color, 1.0f);
+    material.baseColor = Vector4f(p_color, 1.0f);
     material.emissive = p_emissive;
 
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
@@ -188,7 +188,7 @@ Entity Scene::CreateAreaLightEntity(const std::string& p_name,
 }
 
 Entity Scene::CreateInfiniteLightEntity(const std::string& p_name,
-                                        const vec3& p_color,
+                                        const Vector3f& p_color,
                                         const float p_emissive) {
     Entity entity = CreateNameEntity(p_name);
 
@@ -201,22 +201,22 @@ Entity Scene::CreateInfiniteLightEntity(const std::string& p_name,
     light.m_atten.quadratic = 0.0f;
 
     MaterialComponent& material = Create<MaterialComponent>(entity);
-    material.baseColor = vec4(p_color, 1.0f);
+    material.baseColor = Vector4f(p_color, 1.0f);
     material.emissive = p_emissive;
     return entity;
 }
 
 Entity Scene::CreatePlaneEntity(const std::string& p_name,
-                                const vec3& p_scale,
-                                const mat4& p_transform) {
+                                const Vector3f& p_scale,
+                                const Matrix4x4f& p_transform) {
     Entity material_id = CreateMaterialEntity(p_name + ":mat");
     return CreatePlaneEntity(p_name, material_id, p_scale, p_transform);
 }
 
 Entity Scene::CreatePlaneEntity(const std::string& p_name,
                                 Entity p_material_id,
-                                const vec3& p_scale,
-                                const mat4& p_transform) {
+                                const Vector3f& p_scale,
+                                const Matrix4x4f& p_transform) {
     ecs::Entity entity = CreateObjectEntity(p_name);
     TransformComponent& trans = *GetComponent<TransformComponent>(entity);
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
@@ -233,16 +233,16 @@ Entity Scene::CreatePlaneEntity(const std::string& p_name,
 }
 
 Entity Scene::CreateCubeEntity(const std::string& p_name,
-                               const vec3& p_scale,
-                               const mat4& p_transform) {
+                               const Vector3f& p_scale,
+                               const Matrix4x4f& p_transform) {
     Entity material_id = CreateMaterialEntity(p_name + ":mat");
     return CreateCubeEntity(p_name, material_id, p_scale, p_transform);
 }
 
 Entity Scene::CreateCubeEntity(const std::string& p_name,
                                Entity p_material_id,
-                               const vec3& p_scale,
-                               const mat4& p_transform) {
+                               const Vector3f& p_scale,
+                               const Matrix4x4f& p_transform) {
     ecs::Entity entity = CreateObjectEntity(p_name);
     TransformComponent& trans = *GetComponent<TransformComponent>(entity);
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
@@ -260,7 +260,7 @@ Entity Scene::CreateCubeEntity(const std::string& p_name,
 
 Entity Scene::CreateSphereEntity(const std::string& p_name,
                                  float p_radius,
-                                 const mat4& p_transform) {
+                                 const Matrix4x4f& p_transform) {
     Entity material_id = CreateMaterialEntity(p_name + ":mat");
     return CreateSphereEntity(p_name, material_id, p_radius, p_transform);
 }
@@ -268,7 +268,7 @@ Entity Scene::CreateSphereEntity(const std::string& p_name,
 Entity Scene::CreateSphereEntity(const std::string& p_name,
                                  Entity p_material_id,
                                  float p_radius,
-                                 const mat4& p_transform) {
+                                 const Matrix4x4f& p_transform) {
     Entity entity = CreateObjectEntity(p_name);
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);
@@ -287,7 +287,7 @@ Entity Scene::CreateSphereEntity(const std::string& p_name,
 Entity Scene::CreateCylinderEntity(const std::string& p_name,
                                    float p_radius,
                                    float p_height,
-                                   const mat4& p_transform) {
+                                   const Matrix4x4f& p_transform) {
     Entity material_id = CreateMaterialEntity(p_name + ":mat");
     return CreateCylinderEntity(p_name, material_id, p_radius, p_height, p_transform);
 }
@@ -296,7 +296,7 @@ Entity Scene::CreateCylinderEntity(const std::string& p_name,
                                    Entity p_material_id,
                                    float p_radius,
                                    float p_height,
-                                   const mat4& p_transform) {
+                                   const Matrix4x4f& p_transform) {
     Entity entity = CreateObjectEntity(p_name);
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);
@@ -315,7 +315,7 @@ Entity Scene::CreateCylinderEntity(const std::string& p_name,
 Entity Scene::CreateTorusEntity(const std::string& p_name,
                                 float p_radius,
                                 float p_tube_radius,
-                                const mat4& p_transform) {
+                                const Matrix4x4f& p_transform) {
     Entity material_id = CreateMaterialEntity(p_name + ":mat");
     return CreateTorusEntity(p_name, material_id, p_radius, p_tube_radius, p_transform);
 }
@@ -324,7 +324,7 @@ Entity Scene::CreateTorusEntity(const std::string& p_name,
                                 ecs::Entity p_material_id,
                                 float p_radius,
                                 float p_tube_radius,
-                                const mat4& p_transform) {
+                                const Matrix4x4f& p_transform) {
     p_radius = 0.4f;
     p_tube_radius = 0.1f;
 
@@ -343,7 +343,7 @@ Entity Scene::CreateTorusEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::CreateEmitterEntity(const std::string& p_name, const mat4& p_transform) {
+Entity Scene::CreateEmitterEntity(const std::string& p_name, const Matrix4x4f& p_transform) {
     Entity entity = CreateTransformEntity(p_name);
     Create<ParticleEmitterComponent>(entity);
 
@@ -353,7 +353,7 @@ Entity Scene::CreateEmitterEntity(const std::string& p_name, const mat4& p_trans
     return entity;
 }
 
-Entity Scene::CreateForceFieldEntity(const std::string& p_name, const mat4& p_transform) {
+Entity Scene::CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform) {
     Entity entity = CreateTransformEntity(p_name);
     Create<ForceFieldComponent>(entity);
 
@@ -453,25 +453,25 @@ void Scene::UpdateAnimation(uint32_t p_index) {
         switch (channel.path) {
             case AnimationComponent::Channel::PATH_SCALE: {
                 DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTmes.size() * 3);
-                const vec3* data = (const vec3*)sampler.keyframeData.data();
-                const vec3& vLeft = data[key_left];
-                const vec3& vRight = data[key_right];
+                const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
+                const Vector3f& vLeft = data[key_left];
+                const Vector3f& vRight = data[key_right];
                 targetTransform->SetScale(glm::mix(vLeft, vRight, t));
                 break;
             }
             case AnimationComponent::Channel::PATH_TRANSLATION: {
                 DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTmes.size() * 3);
-                const vec3* data = (const vec3*)sampler.keyframeData.data();
-                const vec3& vLeft = data[key_left];
-                const vec3& vRight = data[key_right];
+                const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
+                const Vector3f& vLeft = data[key_left];
+                const Vector3f& vRight = data[key_right];
                 targetTransform->SetTranslation(glm::mix(vLeft, vRight, t));
                 break;
             }
             case AnimationComponent::Channel::PATH_ROTATION: {
                 DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTmes.size() * 4);
-                const vec4* data = (const vec4*)sampler.keyframeData.data();
-                const vec4& vLeft = data[key_left];
-                const vec4& vRight = data[key_right];
+                const Vector4f* data = (const Vector4f*)sampler.keyframeData.data();
+                const Vector4f& vLeft = data[key_left];
+                const Vector4f& vRight = data[key_right];
                 targetTransform->SetRotation(glm::mix(vLeft, vRight, t));
                 break;
             }
@@ -500,7 +500,7 @@ void Scene::UpdateHierarchy(uint32_t p_index) {
         return;
     }
 
-    mat4 world_matrix = self_transform->GetLocalMatrix();
+    Matrix4x4f world_matrix = self_transform->GetLocalMatrix();
     const HierarchyComponent* hierarchy = &m_HierarchyComponents[p_index];
     Entity parent = hierarchy->m_parentId;
 
@@ -538,7 +538,7 @@ void Scene::UpdateArmature(uint32_t p_index) {
     // to LH space) 	then the inverseBindMatrices are not reflected in that because they are not contained in
     // the hierarchy system. 	But this will correct them too.
 
-    const mat4 R = glm::inverse(transform->GetWorldMatrix());
+    const Matrix4x4f R = glm::inverse(transform->GetWorldMatrix());
     const size_t numBones = armature.boneCollection.size();
     if (armature.boneTransforms.size() != numBones) {
         armature.boneTransforms.resize(numBones);
@@ -549,9 +549,9 @@ void Scene::UpdateArmature(uint32_t p_index) {
         const TransformComponent* boneTransform = GetComponent<TransformComponent>(boneID);
         DEV_ASSERT(boneTransform);
 
-        const mat4& B = armature.inverseBindMatrices[idx];
-        const mat4& W = boneTransform->GetWorldMatrix();
-        const mat4 M = R * W * B;
+        const Matrix4x4f& B = armature.inverseBindMatrices[idx];
+        const Matrix4x4f& W = boneTransform->GetWorldMatrix();
+        const Matrix4x4f M = R * W * B;
         armature.boneTransforms[idx] = M;
         ++idx;
 
@@ -626,7 +626,7 @@ bool Scene::RayObjectIntersect(Entity p_object_id, Ray& p_ray) {
         return false;
     }
 
-    mat4 inversedModel = glm::inverse(transform->GetWorldMatrix());
+    Matrix4x4f inversedModel = glm::inverse(transform->GetWorldMatrix());
     Ray inversedRay = p_ray.Inverse(inversedModel);
     Ray inversedRayAABB = inversedRay;  // make a copy, we don't want dist to be modified by AABB
     // Perform aabb test
@@ -638,9 +638,9 @@ bool Scene::RayObjectIntersect(Entity p_object_id, Ray& p_ray) {
 
     // Test every single triange
     for (size_t i = 0; i < mesh->indices.size(); i += 3) {
-        const vec3& A = mesh->positions[mesh->indices[i]];
-        const vec3& B = mesh->positions[mesh->indices[i + 1]];
-        const vec3& C = mesh->positions[mesh->indices[i + 2]];
+        const Vector3f& A = mesh->positions[mesh->indices[i]];
+        const Vector3f& B = mesh->positions[mesh->indices[i + 1]];
+        const Vector3f& C = mesh->positions[mesh->indices[i + 2]];
         if (inversedRay.Intersects(A, B, C)) {
             p_ray.CopyDist(inversedRay);
             return true;
@@ -697,7 +697,7 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
         DEV_ASSERT(Contains<MeshComponent>(obj.meshId));
         const MeshComponent& mesh = *GetComponent<MeshComponent>(obj.meshId);
 
-        mat4 M = transform.GetWorldMatrix();
+        Matrix4x4f M = transform.GetWorldMatrix();
         AABB aabb = mesh.localBound;
         aabb.ApplyMatrix(M);
         m_bound.UnionBox(aabb);

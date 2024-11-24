@@ -789,9 +789,68 @@ void RenderPassCreator::AddTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
+static void PathTracerPassFunc(const DrawPass*) {
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    if (!gm.m_geometryBuffer) {
+        return;
+    }
+
+    gm.SetPipelineState(PSO_PATH_TRACER);
+    auto input = gm.FindTexture(RESOURCE_PATH_TRACER);
+
+    DEV_ASSERT(input);
+
+    const uint32_t width = input->desc.width;
+    const uint32_t height = input->desc.height;
+    const uint32_t work_group_x = math::CeilingDivision(width, 16);
+    const uint32_t work_group_y = math::CeilingDivision(height, 16);
+
+    gm.BindStructuredBuffer(GetGlobalBvhsSlot(), gm.m_bvhBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalGeometriesSlot(), gm.m_geometryBuffer.get());
+    gm.Dispatch(work_group_x, work_group_y, 1);
+    gm.UnbindStructuredBuffer(GetGlobalBvhsSlot());
+    gm.UnbindStructuredBuffer(GetGlobalGeometriesSlot());
+}
+
+void RenderPassCreator::AddPathTracerPass() {
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::PATH_TRACER;
+    desc.dependencies = {};
+    auto render_pass = m_graph.CreatePass(desc);
+
+    const int width = m_config.frameWidth;
+    const int height = m_config.frameHeight;
+
+    GpuTextureDesc texture_desc = BuildDefaultTextureDesc(RESOURCE_PATH_TRACER,
+                                                          PixelFormat::R16G16B16A16_FLOAT,
+                                                          AttachmentType::COLOR_2D,
+                                                          width, height);
+    texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
+
+    auto resource = gm.CreateTexture(texture_desc, LinearClampSampler());
+
+    auto pass = gm.CreateDrawPass(DrawPassDesc{
+        .transitions = {
+            ResourceTransition{
+                .resource = resource,
+                .slot = GetUavSlotPathTracerOutputImage(),
+                .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                    GpuTexture* p_texture,
+                                    int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
+                .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                  GpuTexture*,
+                                  int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
+            } },
+        .execFunc = PathTracerPassFunc,
+    });
+    render_pass->AddDrawPass(pass);
+}
+
 /// Create pre-defined passes
 void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
-    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
 
@@ -808,8 +867,27 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     p_graph.Compile();
 }
 
+void RenderPassCreator::CreatePathTracer(RenderGraph& p_graph) {
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    const int w = frame_size.x;
+    const int h = frame_size.y;
+
+    RenderPassCreator::Config config;
+    config.frameWidth = w;
+    config.frameHeight = h;
+    config.enableBloom = false;
+    config.enableIbl = false;
+    config.enableVxgi = false;
+    RenderPassCreator creator(config, p_graph);
+
+    creator.AddGbufferPass();
+    creator.AddPathTracerPass();
+
+    p_graph.Compile();
+}
+
 void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
-    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
 

@@ -11,9 +11,9 @@ void Camera::Update() {
         m_front.y = m_pitch.Sin();
         m_front.z = m_yaw.Sin() * m_pitch.Cos();
 
-        m_right = glm::cross(m_front, vec3(0, 1, 0));
+        m_right = glm::cross(m_front, Vector3f(0, 1, 0));
 
-        m_viewMatrix = glm::lookAt(m_position, m_position + m_front, vec3(0, 1, 0));
+        m_viewMatrix = glm::lookAt(m_position, m_position + m_front, Vector3f(0, 1, 0));
         m_projectionMatrix = BuildOpenGlPerspectiveRH(m_fovy.ToRad(), GetAspect(), m_near, m_far);
         m_projectionViewMatrix = m_projectionMatrix * m_viewMatrix;
 

@@ -43,19 +43,21 @@
 #define VCT_CONST const
 #endif
 
+#if defined(__cplusplus)
+#define BEGIN_NAME_SPACE(a) namespace a {
+#define END_NAME_SPACE(a)   }
+#else
+#define BEGIN_NAME_SPACE(a)
+#define END_NAME_SPACE(a)
+#endif
+
+BEGIN_NAME_SPACE(my)
+
 VCT_CONST float LUT_SIZE = 64.0;  // ltc_texture size
 VCT_CONST float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;
 VCT_CONST float LUT_BIAS = 0.5 / LUT_SIZE;
 
 #if defined(__cplusplus)
-using Vector2f = glm::vec2;
-using Vector3f = glm::vec3;
-using Vector4f = glm::vec4;
-using Vector2i = glm::ivec2;
-using Vector3i = glm::ivec3;
-using Vector4i = glm::ivec4;
-using Matrix3x3f = glm::mat3;
-using Matrix4x4f = glm::mat4;
 using uint = uint32_t;
 
 using TextureHandle = uint64_t;
@@ -90,5 +92,7 @@ using samplerCube = uint64_t;
 #else
 #error Unknown shading language
 #endif
+
+END_NAME_SPACE(my)
 
 #endif

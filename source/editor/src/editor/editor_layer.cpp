@@ -242,24 +242,24 @@ void EditorLayer::Render() {
 }
 
 void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
+    bool handled = false;
     if (InputEventKey* e = dynamic_cast<InputEventKey*>(p_event.get()); e) {
-        bool handled = false;
         for (auto shortcut : m_shortcuts) {
             // @TODO: refactor this
             auto is_key_handled = [&]() {
                 if (!e->IsPressed()) {
                     return false;
                 }
-                if (e->m_key != shortcut.key) {
+                if (e->GetKey() != shortcut.key) {
                     return false;
                 }
-                if (e->m_altPressed != shortcut.alt) {
+                if (e->IsAltPressed() != shortcut.alt) {
                     return false;
                 }
-                if (e->m_shiftPressed != shortcut.shift) {
+                if (e->IsShiftPressed() != shortcut.shift) {
                     return false;
                 }
-                if (e->m_ctrlPressed != shortcut.ctrl) {
+                if (e->IsCtrlPressed() != shortcut.ctrl) {
                     return false;
                 }
                 return true;
@@ -270,6 +270,9 @@ void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
                 break;
             }
         }
+    }
+
+    if (!handled) {
         if (!handled) {
             // save unhandled events
             m_unhandledEvents.emplace_back(p_event);

@@ -17,7 +17,7 @@ struct ParticleEmitterComponent {
     int particlesPerFrame{ 10 };
     float particleScale{ 1.0f };
     float particleLifeSpan{ 3.0f };
-    vec3 startingVelocity{ 0.0f };
+    Vector3f startingVelocity{ 0.0f };
 
     // Non-Serialized
     std::shared_ptr<GpuStructuredBuffer> particleBuffer{ nullptr };

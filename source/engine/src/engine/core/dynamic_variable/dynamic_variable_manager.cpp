@@ -123,38 +123,38 @@ bool DynamicVariableParser::ProcessSetCmd() {
         case VARIANT_TYPE_VEC2:
             ok = ok && TryGetFloat(fx);
             ok = ok && TryGetFloat(fy);
-            ok = ok && dvar->SetVec2(fx, fy);
+            ok = ok && dvar->SetVector2f(fx, fy);
             break;
         case VARIANT_TYPE_VEC3:
             ok = ok && TryGetFloat(fx);
             ok = ok && TryGetFloat(fy);
             ok = ok && TryGetFloat(fz);
-            ok = ok && dvar->SetVec3(fx, fy, fz);
+            ok = ok && dvar->SetVector3f(fx, fy, fz);
             break;
         case VARIANT_TYPE_VEC4:
             ok = ok && TryGetFloat(fx);
             ok = ok && TryGetFloat(fy);
             ok = ok && TryGetFloat(fz);
             ok = ok && TryGetFloat(fw);
-            ok = ok && dvar->SetVec4(fx, fy, fz, fw);
+            ok = ok && dvar->SetVector4f(fx, fy, fz, fw);
             break;
         case VARIANT_TYPE_IVEC2:
             ok = ok && TryGetInt(ix);
             ok = ok && TryGetInt(iy);
-            ok = ok && dvar->SetIvec2(ix, iy);
+            ok = ok && dvar->SetVector2i(ix, iy);
             break;
         case VARIANT_TYPE_IVEC3:
             ok = ok && TryGetInt(ix);
             ok = ok && TryGetInt(iy);
             ok = ok && TryGetInt(iz);
-            ok = ok && dvar->SetIvec3(ix, iy, iz);
+            ok = ok && dvar->SetVector3i(ix, iy, iz);
             break;
         case VARIANT_TYPE_IVEC4:
             ok = ok && TryGetInt(ix);
             ok = ok && TryGetInt(iy);
             ok = ok && TryGetInt(iz);
             ok = ok && TryGetInt(iw);
-            ok = ok && dvar->SetIvec4(ix, iy, iz, iw);
+            ok = ok && dvar->SetVector4i(ix, iy, iz, iw);
             break;
         default:
             CRASH_NOW();

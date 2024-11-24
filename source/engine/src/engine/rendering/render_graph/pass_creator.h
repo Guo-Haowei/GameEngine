@@ -28,7 +28,6 @@ public:
     static void CreateDummy(RenderGraph& p_graph);
     static void CreateDefault(RenderGraph& p_graph);
     static void CreateExperimental(RenderGraph& p_graph);
-    // @TODO: add this
     static void CreatePathTracer(RenderGraph& p_graph);
 
 private:
@@ -40,6 +39,7 @@ private:
     void AddEmitterPass();
     void AddBloomPass();
     void AddTonePass();
+    void AddPathTracerPass();
 
     static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
                                                   PixelFormat p_format,

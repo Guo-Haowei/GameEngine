@@ -107,6 +107,7 @@ public:
         DEFAULT = 0,
         DUMMY,
         EXPERIMENTAL,
+        PATHTRACER,
     };
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
@@ -240,7 +241,8 @@ public:
     PassContext m_mainPass;
 
     // @TODO: refactor
-    std::shared_ptr<GpuStructuredBuffer> m_voxelLightingBuffers;
+    std::shared_ptr<GpuStructuredBuffer> m_bvhBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_geometryBuffer;
 
 protected:
     void Cleanup();

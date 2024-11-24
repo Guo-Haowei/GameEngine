@@ -39,7 +39,7 @@ void EditorCommandAddComponent::Execute(Scene& p_scene) {
     switch (m_componentType) {
         case ComponentType::BOX_COLLIDER: {
             auto& collider = p_scene.Create<BoxColliderComponent>(target);
-            collider.box = AABB::FromCenterSize(vec3(0), vec3(1));
+            collider.box = AABB::FromCenterSize(Vector3f(0), Vector3f(1));
         } break;
         case ComponentType::MESH_COLLIDER: {
             p_scene.Create<MeshColliderComponent>(target);
@@ -119,12 +119,12 @@ void UndoViewerCommand::Execute(Scene&) {
 EntityTransformCommand::EntityTransformCommand(CommandType p_type,
                                                Scene& p_scene,
                                                ecs::Entity p_entity,
-                                               const mat4& p_before,
-                                               const mat4& p_after) : EditorUndoCommandBase(p_type),
-                                                                      m_scene(p_scene),
-                                                                      m_entity(p_entity),
-                                                                      m_before(p_before),
-                                                                      m_after(p_after) {
+                                               const Matrix4x4f& p_before,
+                                               const Matrix4x4f& p_after) : EditorUndoCommandBase(p_type),
+                                                                            m_scene(p_scene),
+                                                                            m_entity(p_entity),
+                                                                            m_before(p_before),
+                                                                            m_after(p_after) {
 }
 
 void EntityTransformCommand::Undo() {

@@ -101,52 +101,52 @@ TEST(dynamic_variable, string) {
     EXPECT_EQ(value, "bcd");
 }
 
-TEST(dynamic_variable, vec2) {
+TEST(dynamic_variable, Vector2f) {
     auto value = DVAR_GET_VEC2(test_vec2);
-    EXPECT_EQ(value, vec2(1, 2));
+    EXPECT_EQ(value, Vector2f(1, 2));
     DVAR_SET_VEC2(test_vec2, 7.0f, 8.0f);
     value = DVAR_GET_VEC2(test_vec2);
-    EXPECT_EQ(value, vec2(7, 8));
+    EXPECT_EQ(value, Vector2f(7, 8));
 }
 
-TEST(dynamic_variable, vec3) {
+TEST(dynamic_variable, Vector3f) {
     auto value = DVAR_GET_VEC3(test_vec3);
-    EXPECT_EQ(value, vec3(1, 2, 3));
+    EXPECT_EQ(value, Vector3f(1, 2, 3));
     DVAR_SET_VEC3(test_vec3, 7.0f, 8.0f, 9.0f);
     value = DVAR_GET_VEC3(test_vec3);
-    EXPECT_EQ(value, vec3(7, 8, 9));
+    EXPECT_EQ(value, Vector3f(7, 8, 9));
 }
 
-TEST(dynamic_variable, vec4) {
+TEST(dynamic_variable, Vector4f) {
     auto value = DVAR_GET_VEC4(test_vec4);
-    EXPECT_EQ(value, vec4(1, 2, 3, 4));
+    EXPECT_EQ(value, Vector4f(1, 2, 3, 4));
     DVAR_SET_VEC4(test_vec4, 7.0f, 8.0f, 9.0f, 10.0f);
     value = DVAR_GET_VEC4(test_vec4);
-    EXPECT_EQ(value, vec4(7, 8, 9, 10));
+    EXPECT_EQ(value, Vector4f(7, 8, 9, 10));
 }
 
-TEST(dynamic_variable, ivec2) {
+TEST(dynamic_variable, Vector2i) {
     auto value = DVAR_GET_IVEC2(test_ivec2);
-    EXPECT_EQ(value, ivec2(1, 2));
+    EXPECT_EQ(value, Vector2i(1, 2));
     DVAR_SET_IVEC2(test_ivec2, 7, 8);
     value = DVAR_GET_IVEC2(test_ivec2);
-    EXPECT_EQ(value, ivec2(7, 8));
+    EXPECT_EQ(value, Vector2i(7, 8));
 }
 
-TEST(dynamic_variable, ivec3) {
+TEST(dynamic_variable, Vector3i) {
     auto value = DVAR_GET_IVEC3(test_ivec3);
-    EXPECT_EQ(value, ivec3(1, 2, 3));
+    EXPECT_EQ(value, Vector3i(1, 2, 3));
     DVAR_SET_IVEC3(test_ivec3, 7, 8, 9);
     value = DVAR_GET_IVEC3(test_ivec3);
-    EXPECT_EQ(value, ivec3(7, 8, 9));
+    EXPECT_EQ(value, Vector3i(7, 8, 9));
 }
 
-TEST(dynamic_variable, ivec4) {
+TEST(dynamic_variable, Vector4i) {
     auto value = DVAR_GET_IVEC4(test_ivec4);
-    EXPECT_EQ(value, ivec4(1, 2, 3, 4));
+    EXPECT_EQ(value, Vector4i(1, 2, 3, 4));
     DVAR_SET_IVEC4(test_ivec4, 7, 8, 9, 10);
     value = DVAR_GET_IVEC4(test_ivec4);
-    EXPECT_EQ(value, ivec4(7, 8, 9, 10));
+    EXPECT_EQ(value, Vector4i(7, 8, 9, 10));
 }
 
 }  // namespace my

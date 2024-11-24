@@ -38,14 +38,14 @@ struct MeshComponent {
 
     uint32_t flags = RENDERABLE;
     std::vector<uint32_t> indices;
-    std::vector<vec3> positions;
-    std::vector<vec3> normals;
-    std::vector<vec3> tangents;
-    std::vector<vec2> texcoords_0;
-    std::vector<vec2> texcoords_1;
-    std::vector<ivec4> joints_0;
-    std::vector<vec4> weights_0;
-    std::vector<vec3> color_0;
+    std::vector<Vector3f> positions;
+    std::vector<Vector3f> normals;
+    std::vector<Vector3f> tangents;
+    std::vector<Vector2f> texcoords_0;
+    std::vector<Vector2f> texcoords_1;
+    std::vector<Vector4i> joints_0;
+    std::vector<Vector4f> weights_0;
+    std::vector<Vector3f> color_0;
 
     struct MeshSubset {
         ecs::Entity material_id;

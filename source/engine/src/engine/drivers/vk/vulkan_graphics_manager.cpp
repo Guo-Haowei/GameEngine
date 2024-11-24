@@ -463,7 +463,7 @@ void VulkanGraphicsManager::Present() {
     // Start the Dear ImGui frame
     ImGui_ImplVulkan_NewFrame();
 
-    vec4 clear_color{ 0.3f, 0.4f, 0.3f, 1.0f };
+    Vector4f clear_color{ 0.3f, 0.4f, 0.3f, 1.0f };
     // Rendering
     ImGui::Render();
     ImDrawData* main_draw_data = ImGui::GetDrawData();

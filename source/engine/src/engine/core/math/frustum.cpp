@@ -5,7 +5,7 @@
 namespace my {
 
 // https://stackoverflow.com/questions/12836967/extracting-view-frustum-planes-hartmann-gribbs-method
-Frustum::Frustum(const mat4& p_project_view_matrix) {
+Frustum::Frustum(const Matrix4x4f& p_project_view_matrix) {
     m_left.normal.x = p_project_view_matrix[0][3] + p_project_view_matrix[0][0];
     m_left.normal.y = p_project_view_matrix[1][3] + p_project_view_matrix[1][0];
     m_left.normal.z = p_project_view_matrix[2][3] + p_project_view_matrix[2][0];
@@ -38,11 +38,11 @@ Frustum::Frustum(const mat4& p_project_view_matrix) {
 }
 
 bool Frustum::Intersects(const AABB& p_box) const {
-    const vec3& box_min = p_box.GetMin();
-    const vec3& box_max = p_box.GetMax();
+    const Vector3f& box_min = p_box.GetMin();
+    const Vector3f& box_max = p_box.GetMax();
     for (int i = 0; i < 6; ++i) {
         const Plane& plane = this->operator[](i);
-        vec3 p;
+        Vector3f p;
         p.x = plane.normal.x > static_cast<float>(0) ? box_max.x : box_min.x;
         p.y = plane.normal.y > static_cast<float>(0) ? box_max.y : box_min.y;
         p.z = plane.normal.z > static_cast<float>(0) ? box_max.z : box_min.z;

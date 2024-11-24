@@ -3,8 +3,8 @@
 
 namespace my {
 
-MeshComponent MakePlaneMesh(const vec3& p_scale = vec3(0.5f));
-MeshComponent MakeCubeMesh(const vec3& p_scale = vec3(0.5f));
+MeshComponent MakePlaneMesh(const Vector3f& p_scale = Vector3f(0.5f));
+MeshComponent MakeCubeMesh(const Vector3f& p_scale = Vector3f(0.5f));
 
 MeshComponent MakeSphereMesh(float p_radius,
                              int p_rings = 60,
@@ -18,7 +18,7 @@ MeshComponent MakeTorus(float p_radius,
                         int p_tube_sectors = 60);
 
 // @TODO: refactor the following
-MeshComponent MakeGrassBillboard(const vec3& p_scale = vec3(0.5f));
+MeshComponent MakeGrassBillboard(const Vector3f& p_scale = Vector3f(0.5f));
 MeshComponent MakeBoxMesh(float p_size = 0.5f);
 MeshComponent MakeBoxWireframeMesh(float p_size = 0.5f);
 

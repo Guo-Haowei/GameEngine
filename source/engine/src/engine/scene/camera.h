@@ -34,12 +34,12 @@ public:
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }
     float GetAspect() const { return (float)m_width / m_height; }
-    const mat4& GetViewMatrix() const { return m_viewMatrix; }
-    const mat4& GetProjectionMatrix() const { return m_projectionMatrix; }
-    const mat4& GetProjectionViewMatrix() const { return m_projectionViewMatrix; }
-    const vec3& GetPosition() const { return m_position; }
-    const vec3& GetRight() const { return m_right; }
-    const vec3 GetFront() const { return m_front; }
+    const Matrix4x4f& GetViewMatrix() const { return m_viewMatrix; }
+    const Matrix4x4f& GetProjectionMatrix() const { return m_projectionMatrix; }
+    const Matrix4x4f& GetProjectionViewMatrix() const { return m_projectionViewMatrix; }
+    const Vector3f& GetPosition() const { return m_position; }
+    const Vector3f& GetRight() const { return m_right; }
+    const Vector3f GetFront() const { return m_front; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 
@@ -53,15 +53,15 @@ private:
     int m_height{ 0 };
     Degree m_pitch;  // x-axis
     Degree m_yaw;    // y-axis
-    vec3 m_position{ 0 };
+    Vector3f m_position{ 0 };
 
     // Non-serlialized
-    vec3 m_front;
-    vec3 m_right;
+    Vector3f m_front;
+    Vector3f m_right;
 
-    mat4 m_viewMatrix;
-    mat4 m_projectionMatrix;
-    mat4 m_projectionViewMatrix;
+    Matrix4x4f m_viewMatrix;
+    Matrix4x4f m_projectionMatrix;
+    Matrix4x4f m_projectionViewMatrix;
 
     friend class Scene;
     friend class CameraController;

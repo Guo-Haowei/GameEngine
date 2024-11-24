@@ -24,12 +24,12 @@ bool DrawDragFloat(const char* p_lable,
                    float p_column_width = DEFAULT_COLUMN_WIDTH);
 
 bool DrawVec3Control(const char* p_lable,
-                     glm::vec3& p_out,
+                     Vector3f& p_out,
                      float p_reset_value = 0.0f,
                      float p_column_width = DEFAULT_COLUMN_WIDTH);
 
 bool DrawColorControl(const char* p_lable,
-                      glm::vec3& p_out,
+                      Vector3f& p_out,
                       float p_reset_value = 1.0f,
                       float p_column_width = DEFAULT_COLUMN_WIDTH);
 

@@ -16,8 +16,8 @@ private:
     void SelectEntity(Scene& p_scene, const Camera& p_camera);
     void DrawGui(Scene& p_scene, Camera& p_camera);
 
-    vec2 m_canvasMin;
-    vec2 m_canvasSize;
+    Vector2f m_canvasMin;
+    Vector2f m_canvasSize;
     bool m_focused;
     // @TODO: move camera controller to somewhere else
     CameraController m_cameraController;

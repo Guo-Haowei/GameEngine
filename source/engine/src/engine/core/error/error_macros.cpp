@@ -45,7 +45,12 @@ void ReportErrorImpl(std::string_view p_function,
         extra = std::format("\nDetail: {}", p_detail);
     }
 
-    auto message = std::format("ERROR: {}{}\n    at {} ({}:{})\n", p_error, extra, p_function, p_file, p_line);
+    auto message = std::format("ERROR: {}{}\n    at {} ({}:{})\n",
+                               p_error,
+                               extra,
+                               p_function,
+                               p_file,
+                               p_line);
     if (auto os = OS::GetSingletonPtr(); os) {
         os->Print(LOG_LEVEL_ERROR, message);
     } else {

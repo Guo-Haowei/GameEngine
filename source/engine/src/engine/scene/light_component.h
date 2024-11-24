@@ -32,7 +32,7 @@ public:
     void Serialize(Archive& p_archive, uint32_t p_version);
 
     const auto& GetMatrices() const { return m_lightSpaceMatrices; }
-    const vec3& GetPosition() const { return m_position; }
+    const Vector3f& GetPosition() const { return m_position; }
 
     struct {
         float constant;
@@ -46,9 +46,9 @@ private:
 
     // Non-serialized
     float m_maxDistance;
-    vec3 m_position;
+    Vector3f m_position;
     int m_shadowMapIndex = -1;
-    std::array<mat4, 6> m_lightSpaceMatrices;
+    std::array<Matrix4x4f, 6> m_lightSpaceMatrices;
 };
 
 }  // namespace my

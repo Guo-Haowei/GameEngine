@@ -20,7 +20,7 @@ static bool TryGetFloat(const sol::table& p_table, const std::string& p_key, flo
     return true;
 }
 
-static bool TryGetVec3(const sol::table& p_table, const std::string& p_key, vec3& p_out) {
+static bool TryGetVec3(const sol::table& p_table, const std::string& p_key, Vector3f& p_out) {
     sol::optional<sol::table> vec_array = p_table[p_key];
     if (!vec_array) {
         return false;
@@ -33,7 +33,7 @@ static bool TryGetVec3(const sol::table& p_table, const std::string& p_key, vec3
         return false;
     }
 
-    p_out = vec3(*x, *y, *z);
+    p_out = Vector3f(*x, *y, *z);
     return true;
 }
 
@@ -48,22 +48,22 @@ static Entity LuaSceneCreateEntity(Scene* p_scene, const sol::table& p_component
         name = *optional_name;
     }
 
-    mat4 transform{ 1 };
-    vec3 translate{ 0 };
+    Matrix4x4f transform{ 1 };
+    Vector3f translate{ 0 };
     if (sol::optional<sol::table> table = p_components["transform"]; table) {
-        mat4 translation_matrix{ 1 };
-        mat4 rotation_matrix{ 1 };
-        mat4 scale_matrix{ 1 };
+        Matrix4x4f translation_matrix{ 1 };
+        Matrix4x4f rotation_matrix{ 1 };
+        Matrix4x4f scale_matrix{ 1 };
         if (TryGetVec3(*table, "translate", translate)) {
             translation_matrix = glm::translate(translate);
         }
-        if (vec3 rotate{ 0 }; TryGetVec3(*table, "rotate", rotate)) {
-            mat4 rotation_x = glm::rotate(glm::radians(rotate.x), vec3(1, 0, 0));
-            mat4 rotation_y = glm::rotate(glm::radians(rotate.y), vec3(0, 1, 0));
-            mat4 rotation_z = glm::rotate(glm::radians(rotate.z), vec3(0, 0, 1));
+        if (Vector3f rotate{ 0 }; TryGetVec3(*table, "rotate", rotate)) {
+            Matrix4x4f rotation_x = glm::rotate(glm::radians(rotate.x), Vector3f(1, 0, 0));
+            Matrix4x4f rotation_y = glm::rotate(glm::radians(rotate.y), Vector3f(0, 1, 0));
+            Matrix4x4f rotation_z = glm::rotate(glm::radians(rotate.z), Vector3f(0, 0, 1));
             rotation_matrix = rotation_z * rotation_y * rotation_x;
         }
-        if (vec3 scale{ 1 }; TryGetVec3(*table, "scale", scale)) {
+        if (Vector3f scale{ 1 }; TryGetVec3(*table, "scale", scale)) {
             scale_matrix = glm::scale(scale);
         }
 
@@ -94,18 +94,18 @@ static Entity LuaSceneCreateEntity(Scene* p_scene, const sol::table& p_component
     if (sol::optional<sol::table> table = p_components["material"]; table) {
         material_id = create_material();
         MaterialComponent* material = p_scene->GetComponent<MaterialComponent>(material_id);
-        vec3 color{ 1 };
+        Vector3f color{ 1 };
         bool ok = true;
         ok = ok && TryGetFloat(*table, "roughness", material->roughness);
         ok = ok && TryGetFloat(*table, "metallic", material->metallic);
         DEV_ASSERT(ok);
         if (TryGetVec3(*table, "base_color", color)) {
-            material->baseColor = vec4(color, 1.0f);
+            material->baseColor = Vector4f(color, 1.0f);
         }
     }
 
     if (sol::optional<sol::table> table = p_components["cube"]; table) {
-        vec3 size{ 0.5f };
+        Vector3f size{ 0.5f };
         TryGetVec3(*table, "size", size);
         if (!material_id.IsValid()) {
             material_id = create_material();
@@ -114,7 +114,7 @@ static Entity LuaSceneCreateEntity(Scene* p_scene, const sol::table& p_component
         id = p_scene->CreateCubeEntity(name, material_id, size, transform);
     }
     if (sol::optional<sol::table> table = p_components["plane"]; table) {
-        vec3 size{ 0.5f };
+        Vector3f size{ 0.5f };
         TryGetVec3(*table, "size", size);
         if (!material_id.IsValid()) {
             material_id = create_material();

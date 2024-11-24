@@ -233,6 +233,7 @@ auto D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> 
 }
 
 auto D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
+    DEV_ASSERT(!p_desc.initialData && "TODO: initial data");
     ComPtr<ID3D11Buffer> buffer;
     ComPtr<ID3D11UnorderedAccessView> uav;
     ComPtr<ID3D11ShaderResourceView> srv;
@@ -709,12 +710,12 @@ void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     };
 
     UINT stride[6] = {
-        sizeof(vec3),
-        sizeof(vec3),
-        sizeof(vec2),
-        sizeof(vec3),
-        sizeof(ivec4),
-        sizeof(vec4),
+        sizeof(Vector3f),
+        sizeof(Vector3f),
+        sizeof(Vector2f),
+        sizeof(Vector3f),
+        sizeof(Vector4i),
+        sizeof(Vector4f),
     };
 
     UINT offset[6] = { 0, 0, 0, 0, 0, 0 };

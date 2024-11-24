@@ -28,8 +28,8 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
     auto cube_map = p_draw_pass->desc.colorAttachments[0];
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
+    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -70,8 +70,8 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
+    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
 
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
@@ -93,8 +93,8 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PSO_PREFILTER);
     auto [width, height] = p_draw_pass->GetBufferSize();
 
-    mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(vec3(0.0f));
+    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
     constexpr int max_mip_levels = 5;
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
@@ -142,8 +142,8 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     float half_width_ndc = (float)p_width / p_screen_width;
     float half_height_ndc = (float)p_height / p_screen_height;
 
-    vec2 size = vec2(half_width_ndc, half_height_ndc);
-    vec2 pos;
+    Vector2f size = Vector2f(half_width_ndc, half_height_ndc);
+    Vector2f pos;
     pos.x = 1.0f - half_width_ndc;
     pos.y = 1.0f - half_height_ndc;
 
@@ -183,7 +183,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
 
 void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
     // @TODO: early-z
-    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
 

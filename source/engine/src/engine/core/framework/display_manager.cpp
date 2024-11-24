@@ -17,14 +17,14 @@ namespace my {
 auto DisplayManager::Initialize() -> Result<void> {
     InitializeKeyMapping();
 
-    const ivec2 resolution = DVAR_GET_IVEC2(window_resolution);
-    const ivec2 min_size = ivec2(600, 400);
-    const ivec2 size = glm::max(min_size, resolution);
+    const Vector2i resolution = DVAR_GET_IVEC2(window_resolution);
+    const Vector2i min_size = Vector2i(600, 400);
+    const Vector2i size = glm::max(min_size, resolution);
 
     // Implement GetScreenSize
 #if 0
     const GLFWvidmode* vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    const ivec2 size = glm::clamp(resolution, min_size, max_size);
+    const Vector2i size = glm::clamp(resolution, min_size, max_size);
 #endif
 
     CreateInfo info = {

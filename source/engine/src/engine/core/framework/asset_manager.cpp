@@ -52,7 +52,7 @@ public:
     }
 
     bool Load(Scene* p_scene) override {
-        ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+        Vector2i frame_size = DVAR_GET_IVEC2(resolution);
         p_scene->CreateCamera(frame_size.x, frame_size.y);
         auto root = p_scene->CreateTransformEntity("world");
         p_scene->m_replace = true;
@@ -64,8 +64,10 @@ public:
 auto AssetManager::Initialize() -> Result<void> {
 #if USING(USING_ASSIMP)
     Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
-#endif
+    Loader<Scene>::RegisterLoader(".gltf", LoaderAssimp::Create);
+#else
     Loader<Scene>::RegisterLoader(".gltf", LoaderTinyGLTF::Create);
+#endif
     Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::Create);
     Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::Create);
 

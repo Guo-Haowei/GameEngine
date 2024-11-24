@@ -3,6 +3,8 @@
 #define CBUFFER_INCLUDED
 #include "shader_defines.hlsl.h"
 
+BEGIN_NAME_SPACE(my)
+
 // constant buffer
 #if defined(__cplusplus)
 
@@ -136,6 +138,7 @@ CBUFFER(PointShadowConstantBuffer, 4) {
 CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
+    //-----------------------------------------
     int c_lightCount;
     int c_enableBloom;
     int c_debugCsm;
@@ -145,12 +148,6 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_noTexture;
     int c_enableVxgi;
     float c_texelSize;  // 16
-
-    Vector3f c_cameraPosition;
-    float c_voxelSize;  // 16
-
-    Vector3f c_worldCenter;
-    float c_worldSizeHalf;  // 16
 
     uint c_GbufferBaseColorMapIndex;
     uint c_GbufferPositionMapIndex;
@@ -162,14 +159,31 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     uint c_ShadowMapIndex;
     uint c_TextureHighlightSelectIndex;
 
-    Vector2f _per_frame_padding_1;
+    //-----------------------------------------
+
+    Vector2i c_tileOffset;
     uint c_TextureLightingIndex;
     int c_forceFieldsCount;
 
-    Vector4f _per_frame_padding_2;  // 16
+    Vector3f c_cameraPosition;
+    float c_cameraFov;
 
-    Matrix4x4f _per_frame_padding_3;  // 64
-    Matrix4x4f _per_frame_padding_4;  // 64
+    Vector3f c_worldCenter;
+    float c_worldSizeHalf;  // 16
+
+    Vector3f c_cameraForward;
+    int c_frameIndex;
+
+    //-----------------------------------------
+
+    Vector3f c_cameraRight;
+    float c_voxelSize;  // 16
+    Vector3f c_cameraUp;
+    float _per_frame_padding_2;  // 16
+
+    Vector4f _per_frame_padding_3;    // 16
+    Vector4f _per_frame_padding_4;    // 16
+    Matrix4x4f _per_frame_padding_5;  // 64
 
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
@@ -251,5 +265,7 @@ CBUFFER(EnvConstantBuffer, 9) {
 };
 
 #endif
+
+END_NAME_SPACE(my)
 
 #endif

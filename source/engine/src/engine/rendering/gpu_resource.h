@@ -98,9 +98,10 @@ struct GpuTextureDesc {
 };
 
 struct GpuBufferDesc {
-    uint32_t slot;
-    uint32_t elementSize;
-    uint32_t elementCount;
+    uint32_t slot{ 0 };
+    uint32_t elementSize{ 0 };
+    uint32_t elementCount{ 0 };
+    const void* initialData{ nullptr };
 };
 
 struct GpuConstantBuffer {

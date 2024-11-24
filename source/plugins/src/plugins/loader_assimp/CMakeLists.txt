@@ -21,9 +21,7 @@ target_set_warning_level(${TARGET_NAME})
 target_precompile_headers(${TARGET_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/source/engine/src/engine/pch.h)
 
 if (NOT BUILD_ASSIMP)
-    target_compile_definitions(${TARGET_NAME} PRIVATE
-        -D_NO_ASSIMP
-    )
+    target_compile_definitions(${TARGET_NAME} PUBLIC -D_NO_ASSIMP)
 else()
     set(LIB_ASSIMP_DEBUG_DIR ${PROJECT_SOURCE_DIR}/thirdparty/assimp/build/lib/Debug)
     target_link_libraries(${TARGET_NAME} PRIVATE debug
