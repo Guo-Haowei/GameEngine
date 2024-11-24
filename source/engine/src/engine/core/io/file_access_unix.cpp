@@ -4,8 +4,8 @@ namespace my {
 
 FileAccessUnix::~FileAccessUnix() { Close(); }
 
-ErrorCode FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) {
-    ERR_FAIL_COND_V(m_fileHandle, ERR_FILE_ALREADY_IN_USE);
+auto FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) -> Result<void> {
+    ERR_FAIL_COND_V(m_fileHandle, HBN_ERROR(ErrorCode::ERR_FILE_ALREADY_IN_USE, "file '{}' already in use", p_path));
 
     const char* mode = "";
     switch (p_mode_flags) {
@@ -16,7 +16,7 @@ ErrorCode FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode
             mode = "wb";
             break;
         default:
-            return ERR_INVALID_PARAMETER;
+            return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown mode '{}'", mode);
     }
 
     std::string path_string{ p_path };
@@ -25,13 +25,13 @@ ErrorCode FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode
     if (!m_fileHandle) {
         switch (errno) {
             case ENOENT:
-                return ERR_FILE_NOT_FOUND;
+                return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "file '{}' not found", p_path);
             default:
-                return ERR_FILE_CANT_OPEN;
+                return HBN_ERROR(ErrorCode::ERR_FILE_CANT_OPEN, "file '{}' not found", p_path);
         }
     }
 
-    return OK;
+    return Result<void>();
 }
 
 void FileAccessUnix::Close() {

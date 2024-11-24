@@ -47,7 +47,7 @@ public:
 protected:
     FileAccess() = default;
 
-    virtual ErrorCode OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) = 0;
+    virtual auto OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) -> Result<void> = 0;
     virtual void SetAccessType(AccessType p_access_type) { m_accessType = p_access_type; }
     virtual std::string FixPath(std::string_view p_path);
 

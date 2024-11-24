@@ -130,7 +130,7 @@ auto CopyContext::Initialize(D3d12GraphicsManager* p_device) -> Result<void> {
     if (DEV_VERIFY(m_queue)) {
         return Result<void>();
     }
-    return HBN_ERROR(ERR_CANT_CREATE, "failed to create command queue");
+    return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to create command queue");
 }
 
 void CopyContext::Finalize() {

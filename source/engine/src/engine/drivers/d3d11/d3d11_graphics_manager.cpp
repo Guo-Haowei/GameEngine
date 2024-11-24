@@ -36,7 +36,7 @@ auto D3d11GraphicsManager::InitializeImpl() -> Result<void> {
         return HBN_ERROR(res.error());
     }
     if (!ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get())) {
-        return HBN_ERROR(ERR_CANT_CREATE, "ImGui_ImplDX11_Init() failed");
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "ImGui_ImplDX11_Init() failed");
     }
 
     ImGui_ImplDX11_NewFrame();
@@ -204,7 +204,7 @@ auto D3d11GraphicsManager::InitSamplers() -> Result<void> {
     };
 
 #define SAMPLER_STATE(REG, NAME, DESC) \
-    if (!CreateSampler(REG, FillSamplerDesc(DESC))) { return HBN_ERROR(ERR_CANT_CREATE, "Failed to create Sampler {}", #NAME); }
+    if (!CreateSampler(REG, FillSamplerDesc(DESC))) { return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create Sampler {}", #NAME); }
 #include "sampler.hlsl.h"
 #undef SAMPLER_STATE
     return Result<void>();

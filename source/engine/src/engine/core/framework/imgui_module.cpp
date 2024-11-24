@@ -44,7 +44,7 @@ auto ImGuiModule::Initialize() -> Result<void> {
     font_cfg.FontDataOwnedByAtlas = false;
     ImFont* font = io.Fonts->AddFontFromMemoryTTF(asset->buffer.data(), (int)asset->buffer.size(), 16, &font_cfg);
     if (!font) {
-        return HBN_ERROR(ERR_CANT_CREATE, "Failed to create font '{}'", font_path);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", font_path);
     }
 
     io.IniFilename = m_iniPath.c_str();

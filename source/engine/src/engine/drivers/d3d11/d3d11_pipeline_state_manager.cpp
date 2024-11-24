@@ -21,7 +21,7 @@ auto D3d11PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     auto& device = graphics_manager->GetD3dDevice();
     DEV_ASSERT(device);
     if (!device) {
-        return HBN_ERROR(ERR_INVALID_DATA);
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA);
     }
 
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);
@@ -126,7 +126,7 @@ auto D3d11PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p
     DEV_ASSERT(device);
 
     if (!device) {
-        return HBN_ERROR(ERR_INVALID_DATA);
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA);
     }
 
     auto pipeline_state = std::make_shared<D3d11PipelineState>(p_desc);

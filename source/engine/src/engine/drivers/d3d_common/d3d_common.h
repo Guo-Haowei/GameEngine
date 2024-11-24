@@ -19,9 +19,9 @@
 #define D3D(EXPR) (EXPR)
 #endif
 
-#define D3D_FAIL(EXPR, ...)                                                        \
-    do {                                                                           \
-        if (FAILED(D3D(EXPR))) { return HBN_ERROR(ERR_CANT_CREATE, __VA_ARGS__); } \
+#define D3D_FAIL(EXPR, ...)                                                                   \
+    do {                                                                                      \
+        if (FAILED(D3D(EXPR))) { return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, __VA_ARGS__); } \
     } while (0)
 
 #if USING(USE_D3D_DEBUG_NAME)

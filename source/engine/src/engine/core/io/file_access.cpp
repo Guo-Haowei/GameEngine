@@ -26,13 +26,11 @@ auto FileAccess::CreateForPath(const std::string& p_path) -> std::shared_ptr<Fil
     return Create(ACCESS_FILESYSTEM);
 }
 
-auto FileAccess::Open(const std::string& p_path, ModeFlags p_mode_flags)
-    -> Result<std::shared_ptr<FileAccess>> {
+auto FileAccess::Open(const std::string& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
     auto file_access = CreateForPath(p_path);
 
-    ErrorCode err = file_access->OpenInternal(file_access->FixPath(p_path), p_mode_flags);
-    if (err != OK) {
-        return HBN_ERROR(err, "file '{}' not found", p_path);
+    if (auto res = file_access->OpenInternal(file_access->FixPath(p_path), p_mode_flags); !res) {
+        return HBN_ERROR(res.error());
     }
 
     return file_access;

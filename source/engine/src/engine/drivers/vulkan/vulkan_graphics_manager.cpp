@@ -337,7 +337,7 @@ auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
     auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
     DEV_ASSERT(display_manager);
     if (!display_manager) {
-        return HBN_ERROR(ERR_INVALID_DATA, "display manager is nullptr");
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "display manager is nullptr");
     }
 
     GLFWwindow* window = display_manager->GetGlfwWindow();

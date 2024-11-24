@@ -34,7 +34,7 @@ auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p
     pso_desc.CS = CD3DX12_SHADER_BYTECODE(cs_blob.Get());
 
     ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr())->GetDevice();
-    D3D_FAIL_V(device->CreateComputePipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), HBN_ERROR(ERR_CANT_CREATE));
+    D3D_FAIL_V(device->CreateComputePipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), HBN_ERROR(ErrorCode::ERR_CANT_CREATE));
 
     return pipeline_state;
 }

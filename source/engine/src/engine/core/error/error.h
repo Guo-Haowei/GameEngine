@@ -55,11 +55,11 @@ class IStringBuilder;
     ERROR_CODE(ERR_HELP)                      \
     ERROR_CODE(ERR_BUG)
 
-enum ErrorCode : uint16_t {
+enum class ErrorCode : uint16_t {
 #define ERROR_CODE(ENUM) ENUM,
     ERROR_LIST
 #undef ERROR_CODE
-        ERR_COUNT,
+        COUNT,
 };
 
 const char* ErrorToString(ErrorCode p_error);
@@ -113,22 +113,47 @@ public:
     int depth{ 0 };
 };
 
+template<typename T>
+[[nodiscard]] static inline constexpr auto _create_error_arg_1(std::string_view p_file,
+                                                               std::string_view p_function,
+                                                               int p_line,
+                                                               T p_value) {
+    return std::unexpected(std::shared_ptr<InternalError<T>>(new InternalError<T>(p_file, p_function, p_line, p_value)));
+};
+
+template<typename T>
+[[nodiscard]] static inline constexpr auto _create_error_arg_1(std::string_view p_file,
+                                                               std::string_view p_function,
+                                                               int p_line,
+                                                               std::shared_ptr<InternalError<T>>& p_error) {
+    return std::unexpected(std::shared_ptr<InternalError<T>>(new InternalError<T>(p_file, p_function, p_line, p_error)));
+};
+
+template<typename T, typename... Args>
+[[nodiscard]] static inline constexpr auto _create_error_arg_2_plus(std::string_view p_file,
+                                                                    std::string_view p_function,
+                                                                    int p_line,
+                                                                    T p_value,
+                                                                    std::format_string<Args...> p_format,
+                                                                    Args&&... p_args) {
+    return std::unexpected(std::shared_ptr<InternalError<T>>(new InternalError<T>(p_file, p_function, p_line, p_value, p_format, std::forward<Args>(p_args)...)));
+};
+
+#define HBN_ERROR_1(_1)                             ::my::_create_error_arg_1<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1)
+#define HBN_ERROR_2(_1, _2)                         ::my::_create_error_arg_2_plus<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1, _2)
+#define HBN_ERROR_3(_1, _2, _3)                     ::my::_create_error_arg_2_plus<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1, _2, _3)
+#define HBN_ERROR_4(_1, _2, _3, _4)                 ::my::_create_error_arg_2_plus<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1, _2, _3, _4)
+#define HBN_ERROR_5(_1, _2, _3, _4, _5)             ::my::_create_error_arg_2_plus<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1, _2, _3, _4, _5)
+#define HBN_ERROR_6(_1, _2, _3, _4, _5, _6)         ::my::_create_error_arg_2_plus<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1, _2, _3, _4, _5, _6)
+#define HBN_ERROR_7(_1, _2, _3, _4, _5, _6, _7)     ::my::_create_error_arg_2_plus<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1, _2, _3, _4, _5, _6, _7)
+#define HBN_ERROR_8(_1, _2, _3, _4, _5, _6, _7, _8) ::my::_create_error_arg_2_plus<ErrorCode>(__FILE__, __FUNCTION__, __LINE__, _1, _2, _3, _4, _5, _6, _7, _8)
+#define HBN_ERROR(...)                              HBN_MACRO_EXPAND(HBN_GET_MACRO_8(__VA_ARGS__, HBN_ERROR_8, HBN_ERROR_7, HBN_ERROR_6, HBN_ERROR_5, HBN_ERROR_4, HBN_ERROR_3, HBN_ERROR_2, HBN_ERROR_1)(__VA_ARGS__))
+
 using Error = InternalError<ErrorCode>;
 using ErrorRef = std::shared_ptr<Error>;
 
 template<typename T>
 using Result = std::expected<T, ErrorRef>;
-
-// @TODO: figure out how
-#if 0
-template<typename... Args>
-[[nodiscard]] inline auto _create_error(Args&&... p_args) {
-    return std::unexpected(ErrorRef(new Error(std::forward<Args>(p_args)...)));
-};
-#define HBN_ERROR(...) ::my::_create_error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
-#endif
-
-#define HBN_ERROR(...) std::unexpected(ErrorRef(new ::my::Error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)))
 
 IStringBuilder& operator<<(IStringBuilder& p_stream, const ErrorRef& p_error);
 

@@ -68,7 +68,7 @@ OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphics
 auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
-        return HBN_ERROR(ERR_CANT_CREATE);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);
     }
 
     LOG_VERBOSE("[opengl] renderer: {}", (const char*)glGetString(GL_RENDERER));
@@ -343,7 +343,7 @@ auto OpenGlGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) ->
 
     glGenBuffers(1, &handle);
     if (handle == 0) {
-        return HBN_ERROR(ERR_CANT_CREATE, "failed to generate buffer");
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to generate buffer");
     }
 
     glBindBuffer(GL_UNIFORM_BUFFER, handle);

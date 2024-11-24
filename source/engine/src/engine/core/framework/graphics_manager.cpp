@@ -170,7 +170,7 @@ auto GraphicsManager::Create() -> Result<std::shared_ptr<GraphicsManager>> {
 
     auto result = select_renderer();
     if (!result) {
-        return HBN_ERROR(ERR_INVALID_PARAMETER, "backend '{}' not supported", backend);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "backend '{}' not supported", backend);
     }
     return result;
 }
@@ -297,13 +297,13 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     };
 
     if (GetBackend() == Backend::METAL) {
-        return HBN_ERROR(ERR_CANT_CREATE);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);
     }
 
     if (!method.empty()) {
         auto it = lookup.find(method);
         if (it == lookup.end()) {
-            return HBN_ERROR(ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
+            return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
         } else {
             m_renderGraphName = it->second;
         }

@@ -31,7 +31,7 @@ OpenGlPipelineState::~OpenGlPipelineState() {
 static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::string> {
     constexpr int max_depth = 100;
     if (p_depth >= max_depth) {
-        return HBN_ERROR(ERR_CYCLIC_LINK, "circular includes in file '{}'!", p_path.string());
+        return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "circular includes in file '{}'!", p_path.string());
     }
 
     std::shared_ptr<File> source_handle;
@@ -44,7 +44,7 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::st
     }
 
     if (source_handle->buffer.empty()) {
-        return HBN_ERROR(ERR_FILE_EOF, "file '{}' is empty", p_path.string());
+        return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "file '{}' is empty", p_path.string());
     }
 
     std::string source(source_handle->buffer.begin(), source_handle->buffer.end());
@@ -127,7 +127,7 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> Result<GLuin
     if (length > 0) {
         std::vector<char> buffer(length + 1);
         glGetShaderInfoLog(shader_id, length, nullptr, buffer.data());
-        return HBN_ERROR(FAILURE, "[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
+        return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
     }
 
     if (status == GL_FALSE) {
@@ -211,7 +211,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
             LOG_WARN("[glsl] warning\ndetails:\n{}", buffer.data());
         } else {
             LOG_ERROR("[glsl] failed to link program\ndetails:\n{}", buffer.data());
-            return HBN_ERROR(ERR_CANT_CREATE);
+            return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);
         }
     }
 

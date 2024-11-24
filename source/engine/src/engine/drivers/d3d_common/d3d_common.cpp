@@ -80,7 +80,7 @@ auto CompileShader(std::string_view p_path,
 #endif
 
     if (!fs::exists(fullpath_str)) {
-        return HBN_ERROR(ERR_FILE_NOT_FOUND, "file '{}' not found", name.string());
+        return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "file '{}' not found", name.string());
     }
 
     HRESULT hr = D3DCompileFromFile(
@@ -100,7 +100,7 @@ auto CompileShader(std::string_view p_path,
             error_message.append(", details: ");
             error_message.append((const char*)error->GetBufferPointer());
         }
-        return HBN_ERROR(ERR_CANT_CREATE, "{}", error_message);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "{}", error_message);
     }
 
     return source;
