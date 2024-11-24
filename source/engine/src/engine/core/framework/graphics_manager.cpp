@@ -665,7 +665,7 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
     cache.c_cameraForward = camera.GetFront();
-    cache.c_tileOffset;
+    // cache.c_tileOffset;
     cache.c_cameraRight = camera.GetRight();
     // @TODO: refactor
     static int s_frameIndex = 0;
@@ -1041,13 +1041,15 @@ Geometry::Geometry()
     : kind(Kind::Invalid), materialId(-1) {}
 
 Geometry::Geometry(const Vector3f& A, const Vector3f& B, const Vector3f& C, int material)
-    : kind(Kind::Triangle), A(A), B(B), C(C), materialId(material) {
+    : A(A), B(B), C(C), materialId(material) {
+    kind = Kind::Triangle;
     CalcNormal();
 }
 
 Geometry::Geometry(const Vector3f& center, float radius, int material)
-    : kind(Kind::Sphere), A(center), materialId(material) {
+    : A(center), materialId(material) {
     // TODO: refactor
+    kind = Kind::Sphere;
     this->radius = glm::max(0.01f, glm::abs(radius));
 }
 
