@@ -32,7 +32,6 @@ add_library(${TARGET_NAME} STATIC ${FILTERED_SRC})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src/engine FILES ${FILTERED_SRC})
 
 target_include_directories(${TARGET_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/thirdparty/assimp/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glfw/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glm
@@ -42,6 +41,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/lua
     ${PROJECT_SOURCE_DIR}/thirdparty/
     ${PROJECT_SOURCE_DIR}/source/shader
+    ${PROJECT_SOURCE_DIR}/source/plugins/src
     ${CMAKE_CURRENT_SOURCE_DIR}/src/engine
     $ENV{VULKAN_SDK}/include
 )
@@ -51,18 +51,13 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
     -DROOT_FOLDER="${PROJECT_SOURCE_DIR}/"
 )
 
-if (NOT BUILD_ASSIMP AND WIN32)
-    target_compile_definitions(${TARGET_NAME} PRIVATE
-        -D_NO_ASSIMP
-    )
-endif()
-
 set(TARGET_LIBS 
     imgui
     glfw
     glad
     lua
     bullet
+    loader_assimp
 )
 
 if(WIN32)
@@ -82,21 +77,6 @@ target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
 target_set_warning_level(${TARGET_NAME})
 
 target_precompile_headers(${TARGET_NAME} PRIVATE src/engine/pch.h)
-
-# @TODO: move to plugin
-if(WIN32 AND BUILD_ASSIMP)
-    set(LIB_ASSIMP_DEBUG_DIR ${PROJECT_SOURCE_DIR}/thirdparty/assimp/build/lib/Debug)
-    target_link_libraries(${TARGET_NAME} PUBLIC debug
-        ${LIB_ASSIMP_DEBUG_DIR}/assimp-vc143-mtd.lib
-        ${LIB_ASSIMP_DEBUG_DIR}/IrrXMLd.lib
-        ${LIB_ASSIMP_DEBUG_DIR}/zlibstaticd.lib)
-
-    set(LIB_ASSIMP_RELEASE_DIR ${PROJECT_SOURCE_DIR}/thirdparty/assimp/build/lib/Release)
-    target_link_libraries(${TARGET_NAME} PUBLIC optimized
-        ${LIB_ASSIMP_RELEASE_DIR}/assimp-vc143-mt.lib
-        ${LIB_ASSIMP_RELEASE_DIR}/IrrXML.lib
-        ${LIB_ASSIMP_RELEASE_DIR}/zlibstatic.lib)
-endif()
 
 if(APPLE)
     target_link_libraries(${TARGET_NAME} PRIVATE

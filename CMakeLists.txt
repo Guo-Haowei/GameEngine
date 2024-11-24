@@ -9,9 +9,15 @@ endif()
 
 option(BUILD_ASSIMP "Description of the option" ON)
 
+if(NOT WIN32)
+    set(BUILD_ASSIMP OFF)
+endif()
+
 message("***********************************************************************")
 message(STATUS "CMAKE_CXX_COMPILER_ID   : ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
+
+message(STATUS "BUILD_ASSIMP            : ${BUILD_ASSIMP}")
 
 ################################################################################
 message("Configuring glfw...")
