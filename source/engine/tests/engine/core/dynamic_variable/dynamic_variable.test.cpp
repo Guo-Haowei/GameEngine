@@ -133,20 +133,20 @@ TEST(dynamic_variable, Vector2i) {
     EXPECT_EQ(value, Vector2i(7, 8));
 }
 
-TEST(dynamic_variable, ivec3) {
+TEST(dynamic_variable, Vector3i) {
     auto value = DVAR_GET_IVEC3(test_ivec3);
-    EXPECT_EQ(value, ivec3(1, 2, 3));
+    EXPECT_EQ(value, Vector3i(1, 2, 3));
     DVAR_SET_IVEC3(test_ivec3, 7, 8, 9);
     value = DVAR_GET_IVEC3(test_ivec3);
-    EXPECT_EQ(value, ivec3(7, 8, 9));
+    EXPECT_EQ(value, Vector3i(7, 8, 9));
 }
 
-TEST(dynamic_variable, ivec4) {
+TEST(dynamic_variable, Vector4i) {
     auto value = DVAR_GET_IVEC4(test_ivec4);
-    EXPECT_EQ(value, ivec4(1, 2, 3, 4));
+    EXPECT_EQ(value, Vector4i(1, 2, 3, 4));
     DVAR_SET_IVEC4(test_ivec4, 7, 8, 9, 10);
     value = DVAR_GET_IVEC4(test_ivec4);
-    EXPECT_EQ(value, ivec4(7, 8, 9, 10));
+    EXPECT_EQ(value, Vector4i(7, 8, 9, 10));
 }
 
 }  // namespace my

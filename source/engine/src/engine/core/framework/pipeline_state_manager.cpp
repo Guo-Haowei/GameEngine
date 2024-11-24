@@ -259,6 +259,11 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                        });
 
+    // @HACK: only support this many shaders
+    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+        return ok;
+    }
+
     CREATE_PSO(PSO_PATH_TRACER, { .type = PipelineStateType::COMPUTE, .cs = "path_tracer.cs" });
 
     // @HACK: only support this many shaders

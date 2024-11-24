@@ -17,20 +17,20 @@ void DynamicVariable::RegisterString(std::string_view p_key, std::string_view p_
     RegisterDvar(p_key, this);
 }
 
-void DynamicVariable::RegisterVec2(std::string_view p_key, float p_x, float p_y) {
+void DynamicVariable::RegisterVector2f(std::string_view p_key, float p_x, float p_y) {
     m_vec.x = p_x;
     m_vec.y = p_y;
     RegisterDvar(p_key, this);
 }
 
-void DynamicVariable::RegisterVec3(std::string_view p_key, float p_x, float p_y, float p_z) {
+void DynamicVariable::RegisterVector3f(std::string_view p_key, float p_x, float p_y, float p_z) {
     m_vec.x = p_x;
     m_vec.y = p_y;
     m_vec.z = p_z;
     RegisterDvar(p_key, this);
 }
 
-void DynamicVariable::RegisterVec4(std::string_view p_key, float p_x, float p_y, float p_z, float p_w) {
+void DynamicVariable::RegisterVector4f(std::string_view p_key, float p_x, float p_y, float p_z, float p_w) {
     m_vec.x = p_x;
     m_vec.y = p_y;
     m_vec.z = p_z;
@@ -38,20 +38,20 @@ void DynamicVariable::RegisterVec4(std::string_view p_key, float p_x, float p_y,
     RegisterDvar(p_key, this);
 }
 
-void DynamicVariable::RegisterIvec2(std::string_view p_key, int p_x, int p_y) {
+void DynamicVariable::RegisterVector2i(std::string_view p_key, int p_x, int p_y) {
     m_ivec.x = p_x;
     m_ivec.y = p_y;
     RegisterDvar(p_key, this);
 }
 
-void DynamicVariable::RegisterIvec3(std::string_view p_key, int p_x, int p_y, int p_z) {
+void DynamicVariable::RegisterVector3i(std::string_view p_key, int p_x, int p_y, int p_z) {
     m_ivec.x = p_x;
     m_ivec.y = p_y;
     m_ivec.z = p_z;
     RegisterDvar(p_key, this);
 }
 
-void DynamicVariable::RegisterIvec4(std::string_view p_key, int p_x, int p_y, int p_z, int p_w) {
+void DynamicVariable::RegisterVector4i(std::string_view p_key, int p_x, int p_y, int p_z, int p_w) {
     m_ivec.x = p_x;
     m_ivec.y = p_y;
     m_ivec.z = p_z;
@@ -74,32 +74,32 @@ const std::string& DynamicVariable::AsString() const {
     return m_string;
 }
 
-Vector2f DynamicVariable::AsVec2() const {
+Vector2f DynamicVariable::AsVector2f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC2);
     return Vector2f(m_vec.x, m_vec.y);
 }
 
-Vector3f DynamicVariable::AsVec3() const {
+Vector3f DynamicVariable::AsVector3f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC3);
     return Vector3f(m_vec.x, m_vec.y, m_vec.z);
 }
 
-Vector4f DynamicVariable::AsVec4() const {
+Vector4f DynamicVariable::AsVector4f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC4);
     return Vector4f(m_vec.x, m_vec.y, m_vec.z, m_vec.w);
 }
 
-Vector2i DynamicVariable::AsIvec2() const {
+Vector2i DynamicVariable::AsVector2i() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC2);
     return Vector2i(m_ivec.x, m_ivec.y);
 }
 
-Vector3i DynamicVariable::AsIvec3() const {
+Vector3i DynamicVariable::AsVector3i() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC3);
     return Vector3i(m_ivec.x, m_ivec.y, m_ivec.z);
 }
 
-Vector4i DynamicVariable::AsIvec4() const {
+Vector4i DynamicVariable::AsVector4i() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC4);
     return Vector4i(m_ivec.x, m_ivec.y, m_ivec.z, m_ivec.w);
 }
@@ -145,14 +145,14 @@ bool DynamicVariable::SetString(std::string_view p_value) {
     return true;
 }
 
-bool DynamicVariable::SetVec2(float p_x, float p_y) {
+bool DynamicVariable::SetVector2f(float p_x, float p_y) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_VEC2, false);
     m_vec.x = p_x;
     m_vec.y = p_y;
     return true;
 }
 
-bool DynamicVariable::SetVec3(float p_x, float p_y, float p_z) {
+bool DynamicVariable::SetVector3f(float p_x, float p_y, float p_z) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_VEC3, false);
     m_vec.x = p_x;
     m_vec.y = p_y;
@@ -160,7 +160,7 @@ bool DynamicVariable::SetVec3(float p_x, float p_y, float p_z) {
     return true;
 }
 
-bool DynamicVariable::SetVec4(float p_x, float p_y, float p_z, float p_w) {
+bool DynamicVariable::SetVector4f(float p_x, float p_y, float p_z, float p_w) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_VEC4, false);
     m_vec.x = p_x;
     m_vec.y = p_y;
@@ -169,14 +169,14 @@ bool DynamicVariable::SetVec4(float p_x, float p_y, float p_z, float p_w) {
     return true;
 }
 
-bool DynamicVariable::SetIvec2(int p_x, int p_y) {
+bool DynamicVariable::SetVector2i(int p_x, int p_y) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_IVEC2, false);
     m_ivec.x = p_x;
     m_ivec.y = p_y;
     return true;
 }
 
-bool DynamicVariable::SetIvec3(int p_x, int p_y, int p_z) {
+bool DynamicVariable::SetVector3i(int p_x, int p_y, int p_z) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_IVEC3, false);
     m_ivec.x = p_x;
     m_ivec.y = p_y;
@@ -184,7 +184,7 @@ bool DynamicVariable::SetIvec3(int p_x, int p_y, int p_z) {
     return true;
 }
 
-bool DynamicVariable::SetIvec4(int p_x, int p_y, int p_z, int p_w) {
+bool DynamicVariable::SetVector4i(int p_x, int p_y, int p_z, int p_w) {
     ERR_FAIL_COND_V(m_type != VARIANT_TYPE_IVEC4, false);
     m_ivec.x = p_x;
     m_ivec.y = p_y;
@@ -229,8 +229,8 @@ void DynamicVariable::PrintValueChange(std::string_view p_source) const {
         "Vector3f",
         "Vector4f",
         "Vector2i",
-        "ivec3",
-        "ivec4",
+        "Vector3i",
+        "Vector4i",
     };
 
     static_assert(array_length(s_names) == VARIANT_TYPE_MAX);
