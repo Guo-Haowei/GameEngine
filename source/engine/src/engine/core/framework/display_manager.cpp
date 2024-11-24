@@ -35,7 +35,7 @@ auto DisplayManager::Initialize() -> Result<void> {
 
     auto backend = GraphicsManager::GetSingleton().GetBackend();
     switch (backend) {
-#define BACKEND_DECLARE(ENUM, STR)       \
+#define BACKEND_DECLARE(ENUM, STR, ...)  \
     case Backend::ENUM:                  \
         info.title.append(" [" STR "|"); \
         break;
@@ -58,7 +58,7 @@ auto DisplayManager::Initialize() -> Result<void> {
 
 std::shared_ptr<DisplayManager> DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
-    if (backend == "opengl") {
+    if (backend == "opengl" || backend == "vulkan") {
         return std::make_shared<GlfwDisplayManager>();
     }
 #if USING(PLATFORM_WINDOWS)

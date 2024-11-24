@@ -47,13 +47,19 @@ void Application::RegisterModule(Module* p_module) {
     m_modules.push_back(p_module);
 }
 
-ErrorCode Application::SetupModules() {
+auto Application::SetupModules() -> Result<void> {
     m_assetManager = std::make_shared<AssetManager>();
     m_sceneManager = std::make_shared<SceneManager>();
     m_physicsManager = std::make_shared<PhysicsManager>();
     m_imguiModule = std::make_shared<ImGuiModule>();
     m_displayServer = DisplayManager::Create();
-    m_graphicsManager = GraphicsManager::Create();
+    {
+        auto res = GraphicsManager::Create();
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        m_graphicsManager = *res;
+    }
     m_renderManager = std::make_shared<RenderManager>();
     m_inputManager = std::make_shared<InputManager>();
 
@@ -69,7 +75,7 @@ ErrorCode Application::SetupModules() {
     m_eventQueue.RegisterListener(m_graphicsManager.get());
     m_eventQueue.RegisterListener(m_physicsManager.get());
 
-    return OK;
+    return Result<void>();
 }
 
 void Application::MainLoop() {
@@ -148,9 +154,7 @@ void Application::MainLoop() {
     m_layers.clear();
 }
 
-int Application::Run(int p_argc, const char** p_argv) {
-    ErrorCode ret = OK;
-    SaveCommandLine(p_argc, p_argv);
+auto Application::Setup() -> Result<void> {
     m_os = std::make_shared<OS>();
 
     // intialize
@@ -161,31 +165,34 @@ int Application::Run(int p_argc, const char** p_argv) {
     renderer::register_rendering_dvars();
     DynamicVariableManager::deserialize();
     DynamicVariableManager::Parse(m_commandLine);
-
-    if ((ret = SetupModules()) != OK) {
-        return ret;
+    if (auto res = SetupModules(); !res) {
+        return HBN_ERROR(res.error());
     }
 
     thread::Initialize();
     jobsystem::Initialize();
 
-    bool has_error = false;
-
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->GetName());
         if (auto res = module->Initialize(); !res) {
-            StringStreamBuilder builder;
-            builder << res.error();
-            LOG_ERROR("{}", builder.ToString());
-            LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
-
-            has_error = true;
-            break;
+            // LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
+            return HBN_ERROR(res.error());
         }
         LOG("module '{}' initialized\n", module->GetName());
     }
 
-    if (!has_error) {
+    return Result<void>();
+}
+
+int Application::Run(int p_argc, const char** p_argv) {
+    SaveCommandLine(p_argc, p_argv);
+
+    auto res = Setup();
+    if (!res) {
+        StringStreamBuilder builder;
+        builder << res.error();
+        LOG_ERROR("{}", builder.ToString());
+    } else {
         MainLoop();
     }
 
@@ -198,6 +205,9 @@ int Application::Run(int p_argc, const char** p_argv) {
         LOG_VERBOSE("module '{}' finalized", module->GetName());
     }
 
+    jobsystem::Finalize();
+    thread::Finailize();
+
 #if 0
     LOG_ERROR("This is an error");
     LOG_VERBOSE("This is a verbose log");
@@ -207,13 +217,11 @@ int Application::Run(int p_argc, const char** p_argv) {
     LOG_FATAL("This is a fatal error");
 #endif
 
-    jobsystem::Finalize();
-    thread::Finailize();
-
     DynamicVariableManager::Serialize();
 
     m_os->Finalize();
-    return 0;
+
+    return res ? 0 : 1;
 }
 
 }  // namespace my

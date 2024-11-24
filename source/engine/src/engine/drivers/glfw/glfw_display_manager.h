@@ -5,6 +5,8 @@ struct GLFWwindow;
 
 namespace my {
 
+enum class Backend : uint8_t;
+
 class GlfwDisplayManager : public DisplayManager {
 public:
     void Finalize() final;
@@ -17,6 +19,8 @@ public:
     void BeginFrame() final;
     void Present() final;
 
+    GLFWwindow* GetGlfwWindow() const { return m_window; }
+
 private:
     auto InitializeWindow(const CreateInfo& p_info) -> Result<void> final;
     void InitializeKeyMapping() final;
@@ -27,6 +31,7 @@ private:
     static void ScrollCallback(GLFWwindow* p_window, double p_xoffset, double p_yoffset);
 
     GLFWwindow* m_window{ nullptr };
+    Backend m_backend;
 };
 
 }  // namespace my

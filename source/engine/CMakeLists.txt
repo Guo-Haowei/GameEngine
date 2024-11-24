@@ -17,7 +17,7 @@ foreach(file ${SRC})
             list(APPEND FILTERED_SRC ${file})
         endif()
     elseif(APPLE)
-        if(file MATCHES "d3d" OR file MATCHES "windows" )
+        if(file MATCHES "d3d" OR file MATCHES "windows" OR file MATCHES "vulkan")
             # message("- ${file}")
         else()
             list(APPEND FILTERED_SRC ${file})
@@ -43,6 +43,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/
     ${PROJECT_SOURCE_DIR}/source/shader
     ${CMAKE_CURRENT_SOURCE_DIR}/src/engine
+    $ENV{VULKAN_SDK}/include
 )
 
 target_compile_definitions(${TARGET_NAME} PUBLIC
@@ -72,6 +73,7 @@ if(WIN32)
         dxgi.lib
         d3dcompiler.lib
         dxguid.lib
+        $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
     )
 endif()
 

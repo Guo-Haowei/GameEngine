@@ -6,12 +6,17 @@
 #include "core/debugger/profiler.h"
 #include "core/framework/application.h"
 #include "core/framework/common_dvars.h"
+#include "core/framework/graphics_manager.h"
 #include "core/framework/input_manager.h"
 #include "rendering/graphics_dvars.h"
 
 namespace my {
 
 auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<void> {
+    if (DEV_VERIFY(m_app->GetGraphicsManager())) {
+        m_backend = m_app->GetGraphicsManager()->GetBackend();
+    }
+
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
     glfwInit();
@@ -19,10 +24,19 @@ auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<vo
     bool frameless = false;
     glfwWindowHint(GLFW_DECORATED, !frameless);
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-    if (DVAR_GET_BOOL(gfx_gpu_validation)) {
-        glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+    switch (m_backend) {
+        case my::Backend::OPENGL:
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+            glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+            if (DVAR_GET_BOOL(gfx_gpu_validation)) {
+                glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
+            }
+            break;
+        case my::Backend::VULKAN:
+            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+            break;
+        default:
+            return HBN_ERROR(ERR_INVALID_PARAMETER);
     }
 
     m_window = glfwCreateWindow(p_info.width,
@@ -35,11 +49,17 @@ auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<vo
 
     glfwSetWindowPos(m_window, 40, 40);
 
-    glfwMakeContextCurrent(m_window);
-
     glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
 
-    ImGui_ImplGlfw_InitForOpenGL(m_window, false);
+    if (m_backend == Backend::OPENGL) {
+        glfwMakeContextCurrent(m_window);
+        ImGui_ImplGlfw_InitForOpenGL(m_window, false);
+    } else {
+        if (!glfwVulkanSupported()) {
+            return HBN_ERROR(ERR_CANT_CREATE, "Vulkan not supported");
+        }
+        ImGui_ImplGlfw_InitForVulkan(m_window, false);
+    }
 
     glfwSetCursorPosCallback(m_window, CursorPosCallback);
     glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
@@ -76,14 +96,16 @@ std::tuple<int, int> GlfwDisplayManager::GetWindowSize() { return std::tuple<int
 std::tuple<int, int> GlfwDisplayManager::GetWindowPos() { return std::tuple<int, int>(m_windowPos.x, m_windowPos.y); }
 
 void GlfwDisplayManager::Present() {
-    OPTICK_EVENT();
+    if (m_backend == Backend::OPENGL) {
+        OPTICK_EVENT();
 
-    GLFWwindow* oldContext = glfwGetCurrentContext();
-    ImGui::UpdatePlatformWindows();
-    ImGui::RenderPlatformWindowsDefault();
-    glfwMakeContextCurrent(oldContext);
+        GLFWwindow* oldContext = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(oldContext);
 
-    glfwSwapBuffers(m_window);
+        glfwSwapBuffers(m_window);
+    }
 }
 
 void GlfwDisplayManager::CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y) {

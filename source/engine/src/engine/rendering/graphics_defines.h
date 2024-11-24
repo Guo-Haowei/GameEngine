@@ -3,17 +3,17 @@
 namespace my {
 
 // clang-format off
-#define BACKEND_LIST                       \
-    BACKEND_DECLARE(EMPTY,  "None")        \
-    BACKEND_DECLARE(OPENGL, "OpenGL")      \
-    BACKEND_DECLARE(D3D11,  "Direct3D 11") \
-    BACKEND_DECLARE(D3D12,  "Direct3D 12") \
-    BACKEND_DECLARE(VULKAN, "Vulkan")      \
-    BACKEND_DECLARE(METAL,  "Metal")
+#define BACKEND_LIST                                \
+    BACKEND_DECLARE(EMPTY,  "None",         empty)  \
+    BACKEND_DECLARE(OPENGL, "OpenGL",       opengl) \
+    BACKEND_DECLARE(D3D11,  "Direct3D 11",  d3d11)  \
+    BACKEND_DECLARE(D3D12,  "Direct3D 12",  d3d12)  \
+    BACKEND_DECLARE(VULKAN, "Vulkan",       vulkan) \
+    BACKEND_DECLARE(METAL,  "Metal",        metal)
 // clang-format on
 
 enum class Backend : uint8_t {
-#define BACKEND_DECLARE(ENUM, STR) ENUM,
+#define BACKEND_DECLARE(ENUM, ...) ENUM,
     BACKEND_LIST
 #undef BACKEND_DECLARE
 };

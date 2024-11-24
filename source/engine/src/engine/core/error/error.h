@@ -119,6 +119,15 @@ using ErrorRef = std::shared_ptr<Error>;
 template<typename T>
 using Result = std::expected<T, ErrorRef>;
 
+// @TODO: figure out how
+#if 0
+template<typename... Args>
+[[nodiscard]] inline auto _create_error(Args&&... p_args) {
+    return std::unexpected(ErrorRef(new Error(std::forward<Args>(p_args)...)));
+};
+#define HBN_ERROR(...) ::my::_create_error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)
+#endif
+
 #define HBN_ERROR(...) std::unexpected(ErrorRef(new ::my::Error(__FILE__, __FUNCTION__, __LINE__, __VA_ARGS__)))
 
 IStringBuilder& operator<<(IStringBuilder& p_stream, const ErrorRef& p_error);
