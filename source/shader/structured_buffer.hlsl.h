@@ -2,6 +2,8 @@
 #define STRUCTURED_BUFFER_HLSL_H_INCLUDED
 #include "shader_defines.hlsl.h"
 
+BEGIN_NAME_SPACE(my)
+
 struct Particle {
     Vector4f position;
     Vector4f velocity;
@@ -26,5 +28,7 @@ struct ParticleCounter {
     SBUFFER(int, GlobalAliveIndicesPreSim, 18, 509)          \
     SBUFFER(int, GlobalAliveIndicesPostSim, 19, 508)         \
     SBUFFER(Particle, GlobalParticleData, 24, 507)
+
+END_NAME_SPACE(my)
 
 #endif

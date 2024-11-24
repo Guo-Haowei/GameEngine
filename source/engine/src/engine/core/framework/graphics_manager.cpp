@@ -857,7 +857,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
 }  // namespace my
 
-namespace old_pt {
+namespace my::old_pt {
 
 using glm::ivec2;
 using glm::ivec3;
@@ -1611,4 +1611,4 @@ void ConstructScene(const Scene& inScene, GpuScene& outScene) {
     }
 }
 
-}  // namespace old_pt
+}  // namespace my::old_pt

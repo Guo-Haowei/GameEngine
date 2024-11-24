@@ -3,6 +3,8 @@
 #define CBUFFER_INCLUDED
 #include "shader_defines.hlsl.h"
 
+BEGIN_NAME_SPACE(my)
+
 // constant buffer
 #if defined(__cplusplus)
 
@@ -251,5 +253,7 @@ CBUFFER(EnvConstantBuffer, 9) {
 };
 
 #endif
+
+END_NAME_SPACE(my)
 
 #endif
