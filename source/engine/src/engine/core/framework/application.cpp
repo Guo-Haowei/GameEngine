@@ -114,9 +114,11 @@ void Application::MainLoop() {
 
         m_inputManager->GetEventQueue().FlushEvents();
 
+        m_sceneManager->Update(dt);
+        auto& scene = m_sceneManager->GetScene();
+
         // to avoid empty renderer crash
         ImGui::NewFrame();
-
         for (auto& layer : m_layers) {
             layer->Update(dt);
         }
@@ -125,9 +127,6 @@ void Application::MainLoop() {
             layer->Render();
         }
         ImGui::Render();
-
-        m_sceneManager->Update(dt);
-        auto& scene = m_sceneManager->GetScene();
 
         m_physicsManager->Update(scene);
         m_graphicsManager->Update(scene);

@@ -672,6 +672,7 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
     cache.c_cameraUp = glm::cross(cache.c_cameraForward, cache.c_cameraRight);
     cache.c_frameIndex = s_frameIndex++;
     cache.c_cameraFov = camera.GetFovy().GetDegree();
+    cache.c_sceneDirty = camera.IsDirty();
 
     // Force fields
 

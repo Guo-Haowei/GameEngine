@@ -824,7 +824,7 @@ void RenderPassCreator::AddPathTracerPass() {
     const int height = m_config.frameHeight;
 
     GpuTextureDesc texture_desc = BuildDefaultTextureDesc(RESOURCE_PATH_TRACER,
-                                                          PixelFormat::R16G16B16A16_FLOAT,
+                                                          PixelFormat::R32G32B32A32_FLOAT,
                                                           AttachmentType::COLOR_2D,
                                                           width, height);
     texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;

@@ -2,7 +2,7 @@
 #include "../shader_resource_defines.hlsl.h"
 #include "../cbuffer.hlsl.h"
 
-layout(rgba16f, binding = 2) uniform image2D u_PathTracerOutputImage;
+layout(rgba32f, binding = 2) uniform image2D u_PathTracerOutputImage;
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
@@ -14,7 +14,8 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 #define TWO_PI        6.28318530718
 #endif
 #define EPSILON       1e-6
-#define MAX_BOUNCE    10
+#define MAX_BOUNCE    4
+//#define MAX_BOUNCE    10
 #define RAY_T_MIN     1e-6
 #define RAY_T_MAX     9999999.0
 #define TRIANGLE_KIND 1
@@ -29,10 +30,6 @@ struct Ray {
     vec2 hitUv;
     float hasAlbedoMap;
 };
-
-//layout(std140, binding = 3) buffer Materials {
-//    Material g_materials[];
-//};
 
 //------------------------------------------------------------------------------
 // Random function
@@ -177,7 +174,7 @@ vec3 RayColor(inout Ray ray, inout uint state) {
     vec3 radiance = vec3(0.0);
     vec3 throughput = vec3(1.0);
 
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < MAX_BOUNCE; ++i) {
         bool anyHit = HitScene(ray);
 
         if (anyHit) {
@@ -187,9 +184,10 @@ vec3 RayColor(inout Ray ray, inout uint state) {
             Material mat;
             mat.emissive = vec3(0.0f);
             mat.albedo = vec3(1.0, .5, .4);
-            mat.roughness = 0.9f;
-            //float specularChance = Random(state) > mat.reflectChance ? 0.0 : 1.0;
-            float specularChance = 0.1;
+            //mat.albedo = vec3(1.0);
+            mat.roughness = 0.8f;
+            mat.reflectChance = 1.0 - mat.roughness;
+            float specularChance = Random(state) > mat.reflectChance ? 0.0 : 1.0;
 
             vec3 diffuseDir = normalize(ray.hitNormal + RandomUnitVector(state));
             vec3 reflectDir = reflect(ray.direction, ray.hitNormal);
@@ -250,14 +248,17 @@ void main() {
     ray.direction = rayDir;
     ray.t = RAY_T_MAX;
 
-    vec4 pixel = vec4(RayColor(ray, g_seed), 1.0);
+    vec3 radiance = RayColor(ray, g_seed);
 
-    // if (dirty == 0) {
-    //     vec4 colorSoFar = imageLoad(u_PathTracerOutputImage, iPixelCoords);
-    //     pixel += colorSoFar;
-    // }
+    vec4 final_color = vec4(radiance, 1.0);
+    if (c_sceneDirty == 0) {
+        vec4 accumulated = imageLoad(u_PathTracerOutputImage, iPixelCoords);
+        float weight = accumulated.a;
+        vec3 new_color = radiance + weight * accumulated.rgb;
+        float new_weight = accumulated.a + 1.0;
+        new_color /= new_weight;
+        final_color = vec4(new_color, new_weight);
+    }
 
-    imageStore(u_PathTracerOutputImage, iPixelCoords, pixel);
+    imageStore(u_PathTracerOutputImage, iPixelCoords, final_color);
 }
-
-

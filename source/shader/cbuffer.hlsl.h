@@ -177,9 +177,9 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     //-----------------------------------------
 
     Vector3f c_cameraRight;
-    float c_voxelSize;  // 16
+    float c_voxelSize;
     Vector3f c_cameraUp;
-    float _per_frame_padding_2;  // 16
+    int c_sceneDirty;
 
     Vector4f _per_frame_padding_3;    // 16
     Vector4f _per_frame_padding_4;    // 16
