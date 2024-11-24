@@ -74,34 +74,34 @@ const std::string& DynamicVariable::AsString() const {
     return m_string;
 }
 
-vec2 DynamicVariable::AsVec2() const {
+Vector2f DynamicVariable::AsVec2() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC2);
-    return vec2(m_vec.x, m_vec.y);
+    return Vector2f(m_vec.x, m_vec.y);
 }
 
-vec3 DynamicVariable::AsVec3() const {
+Vector3f DynamicVariable::AsVec3() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC3);
-    return vec3(m_vec.x, m_vec.y, m_vec.z);
+    return Vector3f(m_vec.x, m_vec.y, m_vec.z);
 }
 
-vec4 DynamicVariable::AsVec4() const {
+Vector4f DynamicVariable::AsVec4() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC4);
-    return vec4(m_vec.x, m_vec.y, m_vec.z, m_vec.w);
+    return Vector4f(m_vec.x, m_vec.y, m_vec.z, m_vec.w);
 }
 
-ivec2 DynamicVariable::AsIvec2() const {
+Vector2i DynamicVariable::AsIvec2() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC2);
-    return ivec2(m_ivec.x, m_ivec.y);
+    return Vector2i(m_ivec.x, m_ivec.y);
 }
 
-ivec3 DynamicVariable::AsIvec3() const {
+Vector3i DynamicVariable::AsIvec3() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC3);
-    return ivec3(m_ivec.x, m_ivec.y, m_ivec.z);
+    return Vector3i(m_ivec.x, m_ivec.y, m_ivec.z);
 }
 
-ivec4 DynamicVariable::AsIvec4() const {
+Vector4i DynamicVariable::AsIvec4() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC4);
-    return ivec4(m_ivec.x, m_ivec.y, m_ivec.z, m_ivec.w);
+    return Vector4i(m_ivec.x, m_ivec.y, m_ivec.z, m_ivec.w);
 }
 
 void* DynamicVariable::AsPointer() {
@@ -225,10 +225,10 @@ void DynamicVariable::PrintValueChange(std::string_view p_source) const {
         "int",
         "float",
         "string",
-        "vec2",
-        "vec3",
-        "vec4",
-        "ivec2",
+        "Vector2f",
+        "Vector3f",
+        "Vector4f",
+        "Vector2i",
         "ivec3",
         "ivec4",
     };

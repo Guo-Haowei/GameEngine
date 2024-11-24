@@ -40,12 +40,12 @@ public:
     int AsInt() const;
     float AsFloat() const;
     const std::string& AsString() const;
-    vec2 AsVec2() const;
-    vec3 AsVec3() const;
-    vec4 AsVec4() const;
-    ivec2 AsIvec2() const;
-    ivec3 AsIvec3() const;
-    ivec4 AsIvec4() const;
+    Vector2f AsVec2() const;
+    Vector3f AsVec3() const;
+    Vector4f AsVec4() const;
+    Vector2i AsIvec2() const;
+    Vector3i AsIvec3() const;
+    Vector4i AsIvec4() const;
     void* AsPointer();
 
     bool SetInt(int p_value);

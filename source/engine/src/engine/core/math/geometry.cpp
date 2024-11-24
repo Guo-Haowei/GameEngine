@@ -22,18 +22,18 @@ namespace my {
 enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };
 // clang-format on
 
-MeshComponent MakePlaneMesh(const vec3& p_scale) {
+MeshComponent MakePlaneMesh(const Vector3f& p_scale) {
     MeshComponent mesh;
     const float x = p_scale.x;
     const float y = p_scale.y;
     mesh.positions = {
-        vec3(-x, +y, 0.0f),  // A
-        vec3(-x, -y, 0.0f),  // B
-        vec3(+x, -y, 0.0f),  // C
-        vec3(+x, +y, 0.0f),  // D
+        Vector3f(-x, +y, 0.0f),  // A
+        Vector3f(-x, -y, 0.0f),  // B
+        Vector3f(+x, -y, 0.0f),  // C
+        Vector3f(+x, +y, 0.0f),  // D
     };
 
-    const vec3 normal{ 0, 0, 1 };
+    const Vector3f normal{ 0, 0, 1 };
     mesh.normals = {
         normal,
         normal,
@@ -42,10 +42,10 @@ MeshComponent MakePlaneMesh(const vec3& p_scale) {
     };
 
     mesh.texcoords_0 = {
-        vec2(0, 1),  // top-left
-        vec2(0, 0),  // bottom-left
-        vec2(1, 0),  // bottom-right
-        vec2(1, 1),  // top-right
+        Vector2f(0, 1),  // top-left
+        Vector2f(0, 0),  // bottom-left
+        Vector2f(1, 0),  // bottom-right
+        Vector2f(1, 1),  // top-right
     };
 
     // clang-format off
@@ -69,7 +69,7 @@ MeshComponent MakePlaneMesh(const vec3& p_scale) {
     return mesh;
 }
 
-MeshComponent MakeCubeMesh(const vec3& p_scale) {
+MeshComponent MakeCubeMesh(const Vector3f& p_scale) {
     MeshComponent mesh;
     // clang-format off
     constexpr uint32_t indices[] = {
@@ -82,107 +82,107 @@ MeshComponent MakeCubeMesh(const vec3& p_scale) {
     };
     // clang-format on
 
-    const vec3& s = p_scale;
+    const Vector3f& s = p_scale;
     mesh.positions = {
         // -Z
-        vec3(-s.x, +s.y, -s.z),
-        vec3(-s.x, -s.y, -s.z),
-        vec3(+s.x, -s.y, -s.z),
-        vec3(+s.x, +s.y, -s.z),
+        Vector3f(-s.x, +s.y, -s.z),
+        Vector3f(-s.x, -s.y, -s.z),
+        Vector3f(+s.x, -s.y, -s.z),
+        Vector3f(+s.x, +s.y, -s.z),
 
         // +Z
-        vec3(-s.x, +s.y, +s.z),
-        vec3(-s.x, -s.y, +s.z),
-        vec3(+s.x, -s.y, +s.z),
-        vec3(+s.x, +s.y, +s.z),
+        Vector3f(-s.x, +s.y, +s.z),
+        Vector3f(-s.x, -s.y, +s.z),
+        Vector3f(+s.x, -s.y, +s.z),
+        Vector3f(+s.x, +s.y, +s.z),
 
         // -X
-        vec3(-s.x, -s.y, +s.z),
-        vec3(-s.x, -s.y, -s.z),
-        vec3(-s.x, +s.y, -s.z),
-        vec3(-s.x, +s.y, +s.z),
+        Vector3f(-s.x, -s.y, +s.z),
+        Vector3f(-s.x, -s.y, -s.z),
+        Vector3f(-s.x, +s.y, -s.z),
+        Vector3f(-s.x, +s.y, +s.z),
 
         // +X
-        vec3(+s.x, -s.y, +s.z),
-        vec3(+s.x, -s.y, -s.z),
-        vec3(+s.x, +s.y, -s.z),
-        vec3(+s.x, +s.y, +s.z),
+        Vector3f(+s.x, -s.y, +s.z),
+        Vector3f(+s.x, -s.y, -s.z),
+        Vector3f(+s.x, +s.y, -s.z),
+        Vector3f(+s.x, +s.y, +s.z),
 
         // -Y
-        vec3(-s.x, -s.y, +s.z),
-        vec3(-s.x, -s.y, -s.z),
-        vec3(+s.x, -s.y, -s.z),
-        vec3(+s.x, -s.y, +s.z),
+        Vector3f(-s.x, -s.y, +s.z),
+        Vector3f(-s.x, -s.y, -s.z),
+        Vector3f(+s.x, -s.y, -s.z),
+        Vector3f(+s.x, -s.y, +s.z),
 
         // +Y
-        vec3(-s.x, +s.y, +s.z),
-        vec3(-s.x, +s.y, -s.z),
-        vec3(+s.x, +s.y, -s.z),
-        vec3(+s.x, +s.y, +s.z),
+        Vector3f(-s.x, +s.y, +s.z),
+        Vector3f(-s.x, +s.y, -s.z),
+        Vector3f(+s.x, +s.y, -s.z),
+        Vector3f(+s.x, +s.y, +s.z),
     };
 
     mesh.texcoords_0 = {
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
+        Vector2f(0, 0),
+        Vector2f(0, 1),
+        Vector2f(1, 1),
+        Vector2f(1, 0),
 
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
+        Vector2f(0, 0),
+        Vector2f(0, 1),
+        Vector2f(1, 1),
+        Vector2f(1, 0),
 
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
+        Vector2f(0, 0),
+        Vector2f(0, 1),
+        Vector2f(1, 1),
+        Vector2f(1, 0),
 
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
+        Vector2f(0, 0),
+        Vector2f(0, 1),
+        Vector2f(1, 1),
+        Vector2f(1, 0),
 
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
+        Vector2f(0, 0),
+        Vector2f(0, 1),
+        Vector2f(1, 1),
+        Vector2f(1, 0),
 
-        vec2(0, 0),
-        vec2(0, 1),
-        vec2(1, 1),
-        vec2(1, 0),
+        Vector2f(0, 0),
+        Vector2f(0, 1),
+        Vector2f(1, 1),
+        Vector2f(1, 0),
     };
 
     mesh.normals = {
-        vec3(0, 0, -1),
-        vec3(0, 0, -1),
-        vec3(0, 0, -1),
-        vec3(0, 0, -1),
+        Vector3f(0, 0, -1),
+        Vector3f(0, 0, -1),
+        Vector3f(0, 0, -1),
+        Vector3f(0, 0, -1),
 
-        vec3(0, 0, 1),
-        vec3(0, 0, 1),
-        vec3(0, 0, 1),
-        vec3(0, 0, 1),
+        Vector3f(0, 0, 1),
+        Vector3f(0, 0, 1),
+        Vector3f(0, 0, 1),
+        Vector3f(0, 0, 1),
 
-        vec3(-1, 0, 0),
-        vec3(-1, 0, 0),
-        vec3(-1, 0, 0),
-        vec3(-1, 0, 0),
+        Vector3f(-1, 0, 0),
+        Vector3f(-1, 0, 0),
+        Vector3f(-1, 0, 0),
+        Vector3f(-1, 0, 0),
 
-        vec3(1, 0, 0),
-        vec3(1, 0, 0),
-        vec3(1, 0, 0),
-        vec3(1, 0, 0),
+        Vector3f(1, 0, 0),
+        Vector3f(1, 0, 0),
+        Vector3f(1, 0, 0),
+        Vector3f(1, 0, 0),
 
-        vec3(0, -1, 0),
-        vec3(0, -1, 0),
-        vec3(0, -1, 0),
-        vec3(0, -1, 0),
+        Vector3f(0, -1, 0),
+        Vector3f(0, -1, 0),
+        Vector3f(0, -1, 0),
+        Vector3f(0, -1, 0),
 
-        vec3(0, 1, 0),
-        vec3(0, 1, 0),
-        vec3(0, 1, 0),
-        vec3(0, 1, 0),
+        Vector3f(0, 1, 0),
+        Vector3f(0, 1, 0),
+        Vector3f(0, 1, 0),
+        Vector3f(0, 1, 0),
     };
 
     for (int i = 0; i < array_length(indices); i += 3) {
@@ -209,7 +209,7 @@ MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
         for (int step_y = 0; step_y <= p_rings; ++step_y) {
             const float x_seg = (float)step_x / (float)p_sectors;
             const float y_seg = (float)step_y / (float)p_rings;
-            const vec3 normal{
+            const Vector3f normal{
                 std::cos(x_seg * 2.0f * pi) * std::sin(y_seg * pi),
                 std::cos(y_seg * pi),
                 std::sin(x_seg * 2.0f * pi) * std::sin(y_seg * pi)
@@ -217,7 +217,7 @@ MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
 
             mesh.positions.emplace_back(p_radius * normal);
             mesh.normals.emplace_back(normal);
-            mesh.texcoords_0.emplace_back(vec2(x_seg, y_seg));
+            mesh.texcoords_0.emplace_back(Vector2f(x_seg, y_seg));
         }
     }
 
@@ -266,18 +266,18 @@ MeshComponent MakeCylinder(float p_radius,
         float x = p_radius * glm::cos(angle);
         float z = p_radius * glm::sin(angle);
 
-        vec3 point_1(x, heights[0], z);
-        vec3 point_2(x, heights[1], z);
+        Vector3f point_1(x, heights[0], z);
+        Vector3f point_2(x, heights[1], z);
 
-        vec3 normal = glm::normalize(vec3(x, 0.0f, z));
+        Vector3f normal = glm::normalize(Vector3f(x, 0.0f, z));
 
         mesh.positions.emplace_back(point_1);
         mesh.normals.emplace_back(normal);
-        mesh.texcoords_0.emplace_back(vec2());
+        mesh.texcoords_0.emplace_back(Vector2f());
 
         mesh.positions.emplace_back(point_2);
         mesh.normals.emplace_back(normal);
-        mesh.texcoords_0.emplace_back(vec2());
+        mesh.texcoords_0.emplace_back(Vector2f());
     }
 
     for (int index = 0; index < p_sectors; ++index) {
@@ -302,23 +302,23 @@ MeshComponent MakeCylinder(float p_radius,
     for (float height : heights) {
         uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
 
-        vec3 normal = glm::normalize(vec3(0.0f, height, 0.0f));
+        Vector3f normal = glm::normalize(Vector3f(0.0f, height, 0.0f));
 
         for (int index = 0; index <= p_sectors; ++index) {
             float angle = 2.0f * pi * index / p_sectors;
             float x = p_radius * glm::cos(angle);
             float z = p_radius * glm::sin(angle);
 
-            vec3 point(x, height, z);
+            Vector3f point(x, height, z);
 
             mesh.positions.emplace_back(point);
             mesh.normals.emplace_back(normal);
-            mesh.texcoords_0.emplace_back(vec2());
+            mesh.texcoords_0.emplace_back(Vector2f());
         }
 
-        mesh.positions.emplace_back(vec3(0.0f, height, 0.0f));
+        mesh.positions.emplace_back(Vector3f(0.0f, height, 0.0f));
         mesh.normals.emplace_back(normal);
-        mesh.texcoords_0.emplace_back(vec2());
+        mesh.texcoords_0.emplace_back(Vector2f());
 
         uint32_t center_index = static_cast<uint32_t>(mesh.positions.size()) - 1;
         for (int index = 0; index < p_sectors; ++index) {
@@ -361,9 +361,9 @@ MeshComponent MakeTorus(float p_radius,
             const float ny = p_tube_radius * glm::sin(angle_2);
             const float nz = p_tube_radius * glm::cos(angle_2) * glm::sin(angle_1);
 
-            mesh.positions.emplace_back(vec3(x, y, z));
-            mesh.normals.emplace_back(glm::normalize(vec3(nx, ny, nz)));
-            mesh.texcoords_0.emplace_back(vec2());
+            mesh.positions.emplace_back(Vector3f(x, y, z));
+            mesh.normals.emplace_back(glm::normalize(Vector3f(nx, ny, nz)));
+            mesh.texcoords_0.emplace_back(Vector2f());
         }
     }
 
@@ -401,14 +401,14 @@ MeshComponent MakeTorus(float p_radius,
 MeshComponent MakeBoxMesh(float size) {
     MeshComponent mesh;
     mesh.positions = {
-        vec3(-size, +size, +size),  // A
-        vec3(-size, -size, +size),  // B
-        vec3(+size, -size, +size),  // C
-        vec3(+size, +size, +size),  // D
-        vec3(-size, +size, -size),  // E
-        vec3(-size, -size, -size),  // F
-        vec3(+size, -size, -size),  // G
-        vec3(+size, +size, -size),  // H
+        Vector3f(-size, +size, +size),  // A
+        Vector3f(-size, -size, +size),  // B
+        Vector3f(+size, -size, +size),  // C
+        Vector3f(+size, +size, +size),  // D
+        Vector3f(-size, +size, -size),  // E
+        Vector3f(-size, -size, -size),  // F
+        Vector3f(+size, -size, -size),  // G
+        Vector3f(+size, +size, -size),  // H
     };
 
     mesh.indices = {
@@ -429,25 +429,25 @@ MeshComponent MakeBoxMesh(float size) {
     return mesh;
 }
 
-MeshComponent MakeGrassBillboard(const vec3& p_scale) {
+MeshComponent MakeGrassBillboard(const Vector3f& p_scale) {
     MeshComponent mesh;
 
     const float x = p_scale.x;
     const float y = p_scale.y;
 
-    std::array<vec4, 4> points = {
-        vec4(-x, 2 * y, 0.0f, 1.0f),  // A
-        vec4(-x, 0.0f, 0.0f, 1.0f),   // B
-        vec4(+x, 0.0f, 0.0f, 1.0f),   // C
-        vec4(+x, 2 * y, 0.0f, 1.0f),  // D
+    std::array<Vector4f, 4> points = {
+        Vector4f(-x, 2 * y, 0.0f, 1.0f),  // A
+        Vector4f(-x, 0.0f, 0.0f, 1.0f),   // B
+        Vector4f(+x, 0.0f, 0.0f, 1.0f),   // C
+        Vector4f(+x, 2 * y, 0.0f, 1.0f),  // D
     };
 
     // @TODO: correct sampler
-    std::array<vec2, 4> uvs = {
-        vec2(0, 1),  // top-left
-        vec2(0, 0),  // bottom-left
-        vec2(1, 0),  // bottom-right
-        vec2(1, 1),  // top-right
+    std::array<Vector2f, 4> uvs = {
+        Vector2f(0, 1),  // top-left
+        Vector2f(0, 0),  // bottom-left
+        Vector2f(1, 0),  // bottom-right
+        Vector2f(1, 1),  // top-right
     };
 
     uint32_t indices[] = {
@@ -457,8 +457,8 @@ MeshComponent MakeGrassBillboard(const vec3& p_scale) {
 
     float angle = 0.0f;
     for (int i = 0; i < 3; ++i, angle += glm::radians(120.0f)) {
-        mat4 rotation = glm::rotate(angle, vec3(0, 1, 0));
-        vec4 normal = rotation * vec4{ 0, 0, 1, 0 };
+        Matrix4x4f rotation = glm::rotate(angle, Vector3f(0, 1, 0));
+        Vector4f normal = rotation * Vector4f{ 0, 0, 1, 0 };
 
         uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
         for (size_t j = 0; j < points.size(); ++j) {
@@ -490,14 +490,14 @@ MeshComponent MakeSkyBoxMesh() {
     float size = 1.0f;
     MeshComponent mesh;
     mesh.positions = {
-        vec3(-size, +size, +size),  // A
-        vec3(-size, -size, +size),  // B
-        vec3(+size, -size, +size),  // C
-        vec3(+size, +size, +size),  // D
-        vec3(-size, +size, -size),  // E
-        vec3(-size, -size, -size),  // F
-        vec3(+size, -size, -size),  // G
-        vec3(+size, +size, -size),  // H
+        Vector3f(-size, +size, +size),  // A
+        Vector3f(-size, -size, +size),  // B
+        Vector3f(+size, -size, +size),  // C
+        Vector3f(+size, +size, +size),  // D
+        Vector3f(-size, +size, -size),  // E
+        Vector3f(-size, -size, -size),  // F
+        Vector3f(+size, -size, -size),  // G
+        Vector3f(+size, +size, -size),  // H
     };
 
     mesh.indices = {
@@ -540,14 +540,14 @@ MeshComponent MakeSkyBoxMesh() {
 MeshComponent MakeBoxWireframeMesh(float size) {
     MeshComponent mesh;
     mesh.positions = {
-        vec3(-size, +size, +size),  // A
-        vec3(-size, -size, +size),  // B
-        vec3(+size, -size, +size),  // C
-        vec3(+size, +size, +size),  // D
-        vec3(-size, +size, -size),  // E
-        vec3(-size, -size, -size),  // F
-        vec3(+size, -size, -size),  // G
-        vec3(+size, +size, -size),  // H
+        Vector3f(-size, +size, +size),  // A
+        Vector3f(-size, -size, +size),  // B
+        Vector3f(+size, -size, +size),  // C
+        Vector3f(+size, +size, +size),  // D
+        Vector3f(-size, +size, -size),  // E
+        Vector3f(-size, -size, -size),  // F
+        Vector3f(+size, -size, -size),  // G
+        Vector3f(+size, +size, -size),  // H
     };
 
     mesh.indices = { A, B, B, C, C, D, D, A, E, F, F, G, G, H, H, E, A, E, B, F, D, H, C, G };

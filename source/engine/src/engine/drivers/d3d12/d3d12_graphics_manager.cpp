@@ -137,7 +137,7 @@ auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
 
     // Create debug buffer.
     {
-        size_t bufferSize = sizeof(vec4) * 1000;  // hard code
+        size_t bufferSize = sizeof(Vector4f) * 1000;  // hard code
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
         D3D_CALL(m_device->CreateCommittedResource(

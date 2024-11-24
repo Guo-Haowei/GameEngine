@@ -28,13 +28,13 @@ public:
     bool IsKeyPressed(KeyCode p_key);
     bool IsKeyReleased(KeyCode p_key);
 
-    vec2 MouseMove();
+    Vector2f MouseMove();
 
     void SetKey(KeyCode p_key, bool p_pressed);
 
     void SetCursor(float p_x, float p_y);
 
-    const vec2& GetCursor() const { return m_cursor; }
+    const Vector2f& GetCursor() const { return m_cursor; }
 
     EventQueue& GetEventQueue() { return m_inputEventQueue; }
 
@@ -51,8 +51,8 @@ protected:
     std::bitset<MOUSE_BUTTON_MAX> m_buttons = { false };
     std::bitset<MOUSE_BUTTON_MAX> m_prevButtons = { false };
 
-    vec2 m_cursor{ 0, 0 };
-    vec2 m_prevCursor{ 0, 0 };
+    Vector2f m_cursor{ 0, 0 };
+    Vector2f m_prevCursor{ 0, 0 };
 
     double m_wheelX{ 0 };
     double m_wheelY{ 0 };

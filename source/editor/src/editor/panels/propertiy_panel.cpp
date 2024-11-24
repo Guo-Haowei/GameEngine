@@ -134,10 +134,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     }
 
     DrawComponent("Transform", transform_component, [&](TransformComponent& transform) {
-        const mat4 old_transform = transform.GetLocalMatrix();
-        vec3 translation;
-        vec3 rotation;
-        vec3 scale;
+        const Matrix4x4f old_transform = transform.GetLocalMatrix();
+        Vector3f translation;
+        Vector3f rotation;
+        Vector3f scale;
 
         // @TODO: fix
         // DO NOT USE IMGUIZMO
@@ -159,7 +159,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             command_type = COMMAND_TYPE_ENTITY_SCALE;
         }
         if (dirty) {
-            mat4 new_transform;
+            Matrix4x4f new_transform;
             ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
                                                     glm::value_ptr(scale), glm::value_ptr(new_transform));
 
@@ -210,9 +210,9 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Material", material_component, [](MaterialComponent& p_material) {
-        vec3 color = p_material.baseColor;
+        Vector3f color = p_material.baseColor;
         if (DrawColorControl("Color", color)) {
-            p_material.baseColor = vec4(color, p_material.baseColor.a);
+            p_material.baseColor = Vector4f(color, p_material.baseColor.a);
         }
         DrawDragFloat("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);
         DrawDragFloat("roughness", p_material.roughness, 0.01f, 0.0f, 1.0f);
@@ -249,8 +249,8 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Box Collider", box_collider, [&](BoxColliderComponent& collider) {
-        vec3 center = collider.box.Center();
-        vec3 size = collider.box.Size();
+        Vector3f center = collider.box.Center();
+        Vector3f size = collider.box.Size();
         if (DrawVec3Control("size", size)) {
             collider.box = AABB::FromCenterSize(center, size);
         }

@@ -844,7 +844,7 @@ void RenderPassCreator::AddPathTracerPass() {
 
 /// Create pre-defined passes
 void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
-    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
 
@@ -862,7 +862,7 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
 }
 
 void RenderPassCreator::CreatePathTracer(RenderGraph& p_graph) {
-    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
 
@@ -881,7 +881,7 @@ void RenderPassCreator::CreatePathTracer(RenderGraph& p_graph) {
 }
 
 void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
-    const ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
 

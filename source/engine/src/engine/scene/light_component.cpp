@@ -54,7 +54,7 @@ void LightComponent::Update(const TransformComponent& p_transform) {
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
                     const float far_plane = m_maxDistance;
                     const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-                    glm::mat4 projection;
+                    Matrix4x4f projection;
                     if (is_opengl) {
                         projection = BuildOpenGlPerspectiveRH(glm::radians(90.0f), 1.0f, near_plane, far_plane);
                     } else {

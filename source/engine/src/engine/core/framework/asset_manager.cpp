@@ -52,7 +52,7 @@ public:
     }
 
     bool Load(Scene* p_scene) override {
-        ivec2 frame_size = DVAR_GET_IVEC2(resolution);
+        Vector2i frame_size = DVAR_GET_IVEC2(resolution);
         p_scene->CreateCamera(frame_size.x, frame_size.y);
         auto root = p_scene->CreateTransformEntity("world");
         p_scene->m_replace = true;

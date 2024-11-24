@@ -133,70 +133,70 @@ public:
     ecs::Entity CreateMaterialEntity(const std::string& p_name);
 
     ecs::Entity CreatePointLightEntity(const std::string& p_name,
-                                       const vec3& p_position = vec3(0.0f, 1.0f, 0.0f),
-                                       const vec3& p_color = vec3(1.0f),
+                                       const Vector3f& p_position = Vector3f(0.0f, 1.0f, 0.0f),
+                                       const Vector3f& p_color = Vector3f(1.0f),
                                        const float p_emissive = 5.0f);
 
     ecs::Entity CreateAreaLightEntity(const std::string& p_name,
-                                      const vec3& p_color = vec3(1),
+                                      const Vector3f& p_color = Vector3f(1),
                                       const float p_emissive = 5.0f);
 
     ecs::Entity CreateInfiniteLightEntity(const std::string& p_name,
-                                          const vec3& p_color = vec3(1),
+                                          const Vector3f& p_color = Vector3f(1),
                                           const float p_emissive = 5.0f);
 
     ecs::Entity CreatePlaneEntity(const std::string& p_name,
-                                  const vec3& p_scale = vec3(0.5f),
-                                  const mat4& p_transform = mat4(1.0f));
+                                  const Vector3f& p_scale = Vector3f(0.5f),
+                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreatePlaneEntity(const std::string& p_name,
                                   ecs::Entity p_material_id,
-                                  const vec3& p_scale = vec3(0.5f),
-                                  const mat4& p_transform = mat4(1.0f));
+                                  const Vector3f& p_scale = Vector3f(0.5f),
+                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateCubeEntity(const std::string& p_name,
-                                 const vec3& p_scale = vec3(0.5f),
-                                 const mat4& p_transform = mat4(1.0f));
+                                 const Vector3f& p_scale = Vector3f(0.5f),
+                                 const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateCubeEntity(const std::string& p_name,
                                  ecs::Entity p_material_id,
-                                 const vec3& p_scale = vec3(0.5f),
-                                 const mat4& p_transform = mat4(1.0f));
+                                 const Vector3f& p_scale = Vector3f(0.5f),
+                                 const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateSphereEntity(const std::string& p_name,
                                    float p_radius = 0.5f,
-                                   const mat4& p_transform = mat4(1.0f));
+                                   const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateSphereEntity(const std::string& p_name,
                                    ecs::Entity p_material_id,
                                    float p_radius = 0.5f,
-                                   const mat4& p_transform = mat4(1.0f));
+                                   const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateCylinderEntity(const std::string& p_name,
                                      float p_radius = 0.5f,
                                      float p_height = 1.0f,
-                                     const mat4& p_transform = mat4(1.0f));
+                                     const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateCylinderEntity(const std::string& p_name,
                                      ecs::Entity p_material_id,
                                      float p_radius = 0.5f,
                                      float p_height = 1.0f,
-                                     const mat4& p_transform = mat4(1.0f));
+                                     const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateTorusEntity(const std::string& p_name,
                                   float p_radius = 0.5f,
                                   float p_tube_radius = 0.2f,
-                                  const mat4& p_transform = mat4(1.0f));
+                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateTorusEntity(const std::string& p_name,
                                   ecs::Entity p_material_id,
                                   float p_radius = 0.5f,
                                   float p_tube_radius = 0.2f,
-                                  const mat4& p_transform = mat4(1.0f));
+                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
-    ecs::Entity CreateEmitterEntity(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
+    ecs::Entity CreateEmitterEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
-    ecs::Entity CreateForceFieldEntity(const std::string& p_name, const mat4& p_transform = mat4(1.0f));
+    ecs::Entity CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     void AttachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
 

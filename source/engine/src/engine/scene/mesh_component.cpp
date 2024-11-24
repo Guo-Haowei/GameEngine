@@ -7,15 +7,15 @@ static size_t get_stride(MeshComponent::VertexAttribute::NAME p_name) {
         case MeshComponent::VertexAttribute::POSITION:
         case MeshComponent::VertexAttribute::NORMAL:
         case MeshComponent::VertexAttribute::TANGENT:
-            return sizeof(vec3);
+            return sizeof(Vector3f);
         case MeshComponent::VertexAttribute::TEXCOORD_0:
         case MeshComponent::VertexAttribute::TEXCOORD_1:
-            return sizeof(vec2);
+            return sizeof(Vector2f);
         case MeshComponent::VertexAttribute::JOINTS_0:
-            return sizeof(ivec4);
+            return sizeof(Vector4f);
         case MeshComponent::VertexAttribute::COLOR_0:
         case MeshComponent::VertexAttribute::WEIGHTS_0:
-            return sizeof(vec4);
+            return sizeof(Vector4f);
         default:
             CRASH_NOW();
             return 0;
@@ -35,7 +35,7 @@ void MeshComponent::CreateRenderData() {
 #if 0
     if (texcoords_0.empty()) {
         for (size_t i = 0; i < positions.size(); ++i) {
-            texcoords_0.emplace_back(vec2(0, 0));
+            texcoords_0.emplace_back(Vector2f(0, 0));
         }
     }
 
@@ -47,7 +47,7 @@ void MeshComponent::CreateRenderData() {
     for (MeshSubset& subset : subsets) {
         subset.local_bound.MakeInvalid();
         for (uint32_t i = 0; i < subset.index_count; ++i) {
-            const vec3& point = positions[indices[i + subset.index_offset]];
+            const Vector3f& point = positions[indices[i + subset.index_offset]];
             subset.local_bound.ExpandPoint(point);
         }
         subset.local_bound.MakeValid();

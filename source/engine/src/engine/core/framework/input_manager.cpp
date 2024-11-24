@@ -107,8 +107,8 @@ bool InputManager::IsKeyReleased(KeyCode p_key) {
     // return InputHasChanged(m_prevKeys, m_keys, std::to_underlying(p_key));
 }
 
-vec2 InputManager::MouseMove() {
-    vec2 point;
+Vector2f InputManager::MouseMove() {
+    Vector2f point;
     point = m_cursor - m_prevCursor;
     return point;
 }

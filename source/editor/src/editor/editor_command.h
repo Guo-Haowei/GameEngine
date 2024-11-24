@@ -154,8 +154,8 @@ public:
     EntityTransformCommand(CommandType p_type,
                            Scene& p_scene,
                            ecs::Entity p_entity,
-                           const mat4& p_before,
-                           const mat4& p_after);
+                           const Matrix4x4f& p_before,
+                           const Matrix4x4f& p_after);
 
     void Undo() override;
     void Redo() override;
@@ -166,8 +166,8 @@ protected:
     Scene& m_scene;
     ecs::Entity m_entity;
 
-    mat4 m_before;
-    mat4 m_after;
+    Matrix4x4f m_before;
+    Matrix4x4f m_after;
 };
 
 }  // namespace my

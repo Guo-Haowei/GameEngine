@@ -88,19 +88,19 @@ void LoaderAssimp::ProcessMesh(const aiMesh& p_mesh) {
 
     for (uint32_t i = 0; i < p_mesh.mNumVertices; ++i) {
         auto& position = p_mesh.mVertices[i];
-        mesh_component.positions.emplace_back(vec3(position.x, position.y, position.z));
+        mesh_component.positions.emplace_back(Vector3f(position.x, position.y, position.z));
         auto& normal = p_mesh.mNormals[i];
-        mesh_component.normals.emplace_back(vec3(normal.x, normal.y, normal.z));
+        mesh_component.normals.emplace_back(Vector3f(normal.x, normal.y, normal.z));
         if (p_mesh.mTangents) {
             auto& tangent = p_mesh.mTangents[i];
-            mesh_component.tangents.emplace_back(vec3(tangent.x, tangent.y, tangent.z));
+            mesh_component.tangents.emplace_back(Vector3f(tangent.x, tangent.y, tangent.z));
         }
 
         if (has_uv) {
             auto& uv = p_mesh.mTextureCoords[0][i];
-            mesh_component.texcoords_0.emplace_back(vec2(uv.x, uv.y));
+            mesh_component.texcoords_0.emplace_back(Vector2f(uv.x, uv.y));
         } else {
-            mesh_component.texcoords_1.emplace_back(vec2(0));
+            mesh_component.texcoords_1.emplace_back(Vector2f(0));
         }
     }
 
@@ -148,11 +148,11 @@ ecs::Entity LoaderAssimp::ProcessNode(const aiNode* p_node, ecs::Entity p_parent
 
     DEV_ASSERT(m_scene->Contains<TransformComponent>(entity));
 
-    const aiMatrix4x4& local = p_node->mTransformation;                     // row major matrix
-    mat4 localTransformColumnMajor(local.a1, local.b1, local.c1, local.d1,  // x0 y0 z0 w0
-                                   local.a2, local.b2, local.c2, local.d2,  // x1 y1 z1 w1
-                                   local.a3, local.b3, local.c3, local.d3,  // x2 y2 z2 w2
-                                   local.a4, local.b4, local.c4, local.d4   // x3 y3 z3 w3
+    const aiMatrix4x4& local = p_node->mTransformation;                           // row major matrix
+    Matrix4x4f localTransformColumnMajor(local.a1, local.b1, local.c1, local.d1,  // x0 y0 z0 w0
+                                         local.a2, local.b2, local.c2, local.d2,  // x1 y1 z1 w1
+                                         local.a3, local.b3, local.c3, local.d3,  // x2 y2 z2 w2
+                                         local.a4, local.b4, local.c4, local.d4   // x3 y3 z3 w3
     );
     TransformComponent& transform = *m_scene->GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(localTransformColumnMajor);

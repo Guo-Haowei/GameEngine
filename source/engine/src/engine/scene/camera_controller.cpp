@@ -4,7 +4,7 @@
 
 namespace my {
 
-void CameraController::Move(float p_delta_time, Camera& p_camera, ivec3& p_move, float p_scroll) {
+void CameraController::Move(float p_delta_time, Camera& p_camera, Vector3i& p_move, float p_scroll) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
     const bool moved = p_move.x || p_move.y || p_move.z || p_scroll != 0.0f;
@@ -18,11 +18,11 @@ void CameraController::Move(float p_delta_time, Camera& p_camera, ivec3& p_move,
             dz = p_scroll;
         }
         if (dx || dz) {
-            vec3 delta = (move_speed * dz) * p_camera.GetFront() + (move_speed * dx) * p_camera.GetRight();
+            Vector3f delta = (move_speed * dz) * p_camera.GetFront() + (move_speed * dx) * p_camera.GetRight();
             p_camera.m_position += delta;
         }
         if (dy) {
-            p_camera.m_position += vec3(0, move_speed * dy, 0);
+            p_camera.m_position += Vector3f(0, move_speed * dy, 0);
         }
     }
 
@@ -31,7 +31,7 @@ void CameraController::Move(float p_delta_time, Camera& p_camera, ivec3& p_move,
         float rotate_y = 0.0f;
 
         if (InputManager::GetSingleton().IsButtonDown(MOUSE_BUTTON_MIDDLE)) {
-            vec2 movement = InputManager::GetSingleton().MouseMove();
+            Vector2f movement = InputManager::GetSingleton().MouseMove();
             movement = 20 * p_delta_time * movement;
             if (glm::abs(movement.x) > glm::abs(movement.y)) {
                 rotate_y = movement.x;

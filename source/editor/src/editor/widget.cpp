@@ -51,7 +51,7 @@ enum {
 
 static bool DrawVec3ControlImpl(int type,
                                 const char* p_label,
-                                glm::vec3& p_out_vec3,
+                                Vector3f& p_out_vec3,
                                 float p_reset_value,
                                 float p_column_width) {
     bool is_dirty = false;
@@ -144,14 +144,14 @@ static bool DrawVec3ControlImpl(int type,
 }
 
 bool DrawVec3Control(const char* p_lable,
-                     glm::vec3& p_out_vec3,
+                     Vector3f& p_out_vec3,
                      float p_reset_value,
                      float p_column_width) {
     return DrawVec3ControlImpl(TYPE_TRANSFORM, p_lable, p_out_vec3, p_reset_value, p_column_width);
 }
 
 bool DrawColorControl(const char* p_lable,
-                      glm::vec3& p_out_vec3,
+                      Vector3f& p_out_vec3,
                       float p_reset_value,
                       float p_column_width) {
     return DrawVec3ControlImpl(TYPE_COLOR, p_lable, p_out_vec3, p_reset_value, p_column_width);

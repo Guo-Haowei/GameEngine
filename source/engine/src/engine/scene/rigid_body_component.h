@@ -15,7 +15,7 @@ struct RigidBodyComponent {
 
     union Parameter {
         struct {
-            vec3 half_size;
+            Vector3f half_size;
         } box;
         struct {
             float radius;
