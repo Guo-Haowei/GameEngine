@@ -23,11 +23,10 @@ void OS::Initialize() {
     FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_USERDATA);
     FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
-    if (EnableAnsi()) {
-        AddLogger(std::make_shared<AnsiLogger>());
-    } else {
-        AddLogger(std::make_shared<Win32Logger>());
-    }
+    AddLogger(std::make_shared<Win32Logger>());
+    // if (EnableAnsi()) {
+    //     AddLogger(std::make_shared<AnsiLogger>());
+    // }
 
     AddLogger(std::make_shared<DebugConsoleLogger>());
 }

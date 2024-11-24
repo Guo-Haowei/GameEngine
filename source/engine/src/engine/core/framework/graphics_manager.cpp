@@ -7,7 +7,7 @@
 #if USING(PLATFORM_WINDOWS)
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d12/d3d12_graphics_manager.h"
-#include "drivers/vulkan/vulkan_graphics_manager.h"
+#include "drivers/vk/vulkan_graphics_manager.h"
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"

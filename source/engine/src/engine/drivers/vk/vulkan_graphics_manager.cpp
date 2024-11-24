@@ -1,7 +1,9 @@
 #include "vulkan_graphics_manager.h"
 
 #include "core/framework/application.h"
+#include "drivers/empty/empty_pipeline_state_manager.h"
 #include "drivers/glfw/glfw_display_manager.h"
+#include "vulkan_helpers.h"
 ///////
 #include "imgui/backends/imgui_impl_glfw.h"
 #include "imgui/backends/imgui_impl_vulkan.h"
@@ -17,6 +19,8 @@ namespace my {
 #ifdef _DEBUG
 #define IMGUI_VULKAN_DEBUG_REPORT
 #endif
+
+// @TODO: move all the stuff to class
 
 // Data
 static VkAllocationCallbacks* g_Allocator = NULL;
@@ -41,65 +45,92 @@ static void check_vk_result(VkResult err) {
         abort();
 }
 
-#ifdef IMGUI_VULKAN_DEBUG_REPORT
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_report(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char* pLayerPrefix, const char* pMessage, void* pUserData) {
-    (void)flags;
-    (void)object;
-    (void)location;
-    (void)messageCode;
-    (void)pUserData;
-    (void)pLayerPrefix;  // Unused arguments
-    fprintf(stderr, "[vulkan] Debug report from ObjectType: %i\nMessage: %s\n\n", objectType, pMessage);
+static VKAPI_ATTR VkBool32 VKAPI_CALL DebugReport(VkDebugReportFlagsEXT p_flags,
+                                                  VkDebugReportObjectTypeEXT p_object_type,
+                                                  uint64_t p_object,
+                                                  size_t p_location,
+                                                  int32_t p_message_code,
+                                                  const char* p_layer_prefix,
+                                                  const char* p_message,
+                                                  void* p_user_data) {
+    unused(p_message_code);
+    unused(p_object);
+    unused(p_location);
+    unused(p_user_data);
+    unused(p_layer_prefix);
+
+    LogLevel level = LOG_LEVEL_VERBOSE;
+    if (p_flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+        level = LOG_LEVEL_ERROR;
+    } else if (p_flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
+        level = LOG_LEVEL_WARN;
+    }
+
+    LogImpl(level, "[vulkan] Debug report from ObjectType: {}\nMessage: {}\n", ToString(p_object_type), p_message);
+
     return VK_FALSE;
 }
-#endif  // IMGUI_VULKAN_DEBUG_REPORT
 
-static void SetupVulkan(const char** extensions, uint32_t extensions_count) {
-    VkResult err;
+auto VulkanGraphicsManager::CreateInstance() -> Result<void> {
+    uint32_t extensions_count = 0;
+    const char** extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
 
     // Create Vulkan Instance
-    {
-        VkInstanceCreateInfo create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        create_info.enabledExtensionCount = extensions_count;
-        create_info.ppEnabledExtensionNames = extensions;
-#ifdef IMGUI_VULKAN_DEBUG_REPORT
-        // Enabling validation layers
-        const char* layers[] = { "VK_LAYER_KHRONOS_validation" };
-        create_info.enabledLayerCount = 1;
-        create_info.ppEnabledLayerNames = layers;
+    VkInstanceCreateInfo create_info = {};
+    create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    create_info.enabledExtensionCount = extensions_count;
+    create_info.ppEnabledExtensionNames = extensions;
 
-        // Enable debug report extension (we need additional storage, so we duplicate the user array to add our new extension to it)
-        const char** extensions_ext = (const char**)malloc(sizeof(const char*) * (extensions_count + 1));
-        memcpy(extensions_ext, extensions, extensions_count * sizeof(const char*));
-        extensions_ext[extensions_count] = "VK_EXT_debug_report";
-        create_info.enabledExtensionCount = extensions_count + 1;
-        create_info.ppEnabledExtensionNames = extensions_ext;
+    if (!m_enableValidationLayer) {
+        if (auto res = VK(vkCreateInstance(&create_info, g_Allocator, &g_Instance)); res != VK_SUCCESS) {
+            return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to create instance, {}", std::to_underlying(res));
+        }
 
-        // Create Vulkan Instance
-        err = vkCreateInstance(&create_info, g_Allocator, &g_Instance);
-        check_vk_result(err);
-        free(extensions_ext);
-
-        // Get the function pointer (required for any extensions)
-        auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(g_Instance, "vkCreateDebugReportCallbackEXT");
-        IM_ASSERT(vkCreateDebugReportCallbackEXT != NULL);
-
-        // Setup the debug report callback
-        VkDebugReportCallbackCreateInfoEXT debug_report_ci = {};
-        debug_report_ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-        debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-        debug_report_ci.pfnCallback = debug_report;
-        debug_report_ci.pUserData = NULL;
-        err = vkCreateDebugReportCallbackEXT(g_Instance, &debug_report_ci, g_Allocator, &g_DebugReport);
-        check_vk_result(err);
-#else
-        // Create Vulkan Instance without any debug feature
-        err = vkCreateInstance(&create_info, g_Allocator, &g_Instance);
-        check_vk_result(err);
-        IM_UNUSED(g_DebugReport);
-#endif
+        return Result<void>();
     }
+
+    const char* layers[] = { "VK_LAYER_KHRONOS_validation" };
+    create_info.enabledLayerCount = 1;
+    create_info.ppEnabledLayerNames = layers;
+
+    std::vector<const char*> extensions_ext;
+    extensions_ext.resize(extensions_count + 1);
+
+    memcpy(extensions_ext.data(), extensions, extensions_count * sizeof(const char*));
+    extensions_ext[extensions_count] = "VK_EXT_debug_report";
+    create_info.enabledExtensionCount = extensions_count + 1;
+    create_info.ppEnabledExtensionNames = extensions_ext.data();
+
+    // Create Vulkan Instance
+    if (auto res = VK(vkCreateInstance(&create_info, g_Allocator, &g_Instance)); res != VK_SUCCESS) {
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to create instance, {}", std::to_underlying(res));
+    }
+
+    // Get the function pointer (required for any extensions)
+    auto vkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(g_Instance, "vkCreateDebugReportCallbackEXT");
+    if (vkCreateDebugReportCallbackEXT == nullptr) {
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to get 'vkCreateDebugReportCallbackEXT'");
+    }
+
+    // Setup the debug report callback
+    VkDebugReportCallbackCreateInfoEXT debug_report_ci = {};
+    debug_report_ci.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+    debug_report_ci.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+    debug_report_ci.pfnCallback = DebugReport;
+    debug_report_ci.pUserData = nullptr;
+    if (auto res = VK(vkCreateDebugReportCallbackEXT(g_Instance, &debug_report_ci, g_Allocator, &g_DebugReport)); res != VK_SUCCESS) {
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to create debug callback, {}", std::to_underlying(res));
+    }
+
+    return Result<void>();
+}
+
+#ifdef IMGUI_VULKAN_DEBUG_REPORT
+#endif  // IMGUI_VULKAN_DEBUG_REPORT
+
+static void SetupVulkan() {
+    // const char** extensions, uint32_t extensions_count
+    VkResult err;
 
     // Select GPU
     {
@@ -327,29 +358,32 @@ static void FramePresent(ImGui_ImplVulkanH_Window* wd) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VulkanGraphicsManager::VulkanGraphicsManager() : EmptyGraphicsManager("VulkanGraphicsManager", Backend::VULKAN, NUM_FRAMES_IN_FLIGHT) {}
+VulkanGraphicsManager::VulkanGraphicsManager() : GraphicsManager("VulkanGraphicsManager", Backend::VULKAN, NUM_FRAMES_IN_FLIGHT) {
+    m_pipelineStateManager = std::make_shared<EmptyPipelineStateManager>();
+}
 
 auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
-    uint32_t extensions_count = 0;
-    const char** extensions = glfwGetRequiredInstanceExtensions(&extensions_count);
-    SetupVulkan(extensions, extensions_count);
-
     auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
     DEV_ASSERT(display_manager);
     if (!display_manager) {
         return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "display manager is nullptr");
     }
+    m_window = display_manager->GetGlfwWindow();
 
-    GLFWwindow* window = display_manager->GetGlfwWindow();
+    if (auto res = CreateInstance(); !res) {
+        return HBN_ERROR(res.error());
+    }
+
+    SetupVulkan();
 
     // Create Window Surface
     VkSurfaceKHR surface;
-    VkResult err = glfwCreateWindowSurface(g_Instance, window, g_Allocator, &surface);
+    VkResult err = glfwCreateWindowSurface(g_Instance, m_window, g_Allocator, &surface);
     check_vk_result(err);
 
     // Create Framebuffers
     int w, h;
-    glfwGetFramebufferSize(window, &w, &h);
+    glfwGetFramebufferSize(m_window, &w, &h);
     ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
     SetupVulkanWindow(wd, surface, w, h);
 
@@ -403,19 +437,27 @@ auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
     return Result<void>();
 }
 
+void VulkanGraphicsManager::Finalize() {
+    VkResult err = vkDeviceWaitIdle(g_Device);
+    check_vk_result(err);
+    ImGui_ImplVulkan_Shutdown();
+
+    CleanupVulkanWindow();
+    CleanupVulkan();
+}
+
 void VulkanGraphicsManager::Present() {
     ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
     // Resize swap chain?
     if (g_SwapChainRebuild) {
-        // int width, height;
-        // glfwGetFramebufferSize(window, &width, &height);
-        // if (width > 0 && height > 0) {
-        //     ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
-        //     ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
-        //     g_MainWindowData.FrameIndex = 0;
-        //     g_SwapChainRebuild = false;
-        // }
-        CRASH_NOW();
+        int width, height;
+        glfwGetFramebufferSize(m_window, &width, &height);
+        if (width > 0 && height > 0) {
+            ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
+            ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
+            g_MainWindowData.FrameIndex = 0;
+            g_SwapChainRebuild = false;
+        }
     }
 
     // Start the Dear ImGui frame

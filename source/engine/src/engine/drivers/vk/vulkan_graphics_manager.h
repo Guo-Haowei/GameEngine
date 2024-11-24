@@ -1,19 +1,18 @@
 #pragma once
 #include "core/framework/graphics_manager.h"
 
-// @TODO: remove
-#include "drivers/empty/empty_graphics_manager.h"
+struct GLFWwindow;
 
 namespace my {
 
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
 
-class VulkanGraphicsManager : public EmptyGraphicsManager {
+class VulkanGraphicsManager : public GraphicsManager {
 public:
     VulkanGraphicsManager();
 
-    void Finalize() override {}
+    void Finalize() final;
 
     void SetStencilRef(uint32_t p_ref) override {}
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) override {}
@@ -63,6 +62,11 @@ protected:
     void OnSceneChange(const Scene& p_scene) override {}
     void OnWindowResize(int p_width, int p_height) override {}
     void SetPipelineStateImpl(PipelineStateName p_name) override {}
+
+private:
+    auto CreateInstance() -> Result<void>;
+
+    GLFWwindow* m_window{ nullptr };
 };
 
 WARNING_POP()
