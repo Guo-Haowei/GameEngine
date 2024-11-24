@@ -63,7 +63,7 @@ vec3 RandomUnitVector(inout uint state) {
 // Common Ray Trace Functions
 //------------------------------------------------------------------------------
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-bool HitTriangle(inout Ray ray, in Geometry triangle) {
+bool HitTriangle(inout Ray ray, in gpu_geometry_t triangle) {
     // P = A + u(B - A) + v(C - A) => O - A = -tD + u(B - A) + v(C - A)
     // -tD + uAB + vAC = AO
     vec3 AB = triangle.B - triangle.A;
@@ -100,7 +100,7 @@ bool HitTriangle(inout Ray ray, in Geometry triangle) {
     return true;
 }
 
-bool HitSphere(inout Ray ray, in Geometry sphere) {
+bool HitSphere(inout Ray ray, in gpu_geometry_t sphere) {
     vec3 oc = ray.origin - sphere.A;
     float a = dot(ray.direction, ray.direction);
     float half_b = dot(oc, ray.direction);
@@ -120,7 +120,7 @@ bool HitSphere(inout Ray ray, in Geometry sphere) {
 }
 
 // https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
-bool HitBvh(in Ray ray, in Bvh bvh) {
+bool HitBvh(in Ray ray, in gpu_bvh_t bvh) {
     vec3 invD = vec3(1.) / (ray.direction);
     vec3 t0s = (bvh.min - ray.origin) * invD;
     vec3 t1s = (bvh.max - ray.origin) * invD;
@@ -139,10 +139,10 @@ bool HitScene(inout Ray ray) {
 
     int bvhIdx = 0;
     while (bvhIdx != -1) {
-        Bvh bvh = GlobalBvhs[bvhIdx];
+        gpu_bvh_t bvh = GlobalBvhs[bvhIdx];
         if (HitBvh(ray, bvh)) {
             if (bvh.geomIdx != -1) {
-                Geometry geom = GlobalGeometries[bvh.geomIdx];
+                gpu_geometry_t geom = GlobalGeometries[bvh.geomIdx];
                 if (geom.kind == TRIANGLE_KIND) {
                     if (HitTriangle(ray, geom)) {
                         anyHit = true;
@@ -180,13 +180,7 @@ vec3 RayColor(inout Ray ray, inout uint state) {
         if (anyHit) {
             ray.origin = ray.origin + ray.t * ray.direction;
             ray.t = RAY_T_MAX;
-            //Material mat = g_materials[ray.materialId];
-            Material mat;
-            mat.emissive = vec3(0.0f);
-            mat.albedo = vec3(1.0, .5, .4);
-            //mat.albedo = vec3(1.0);
-            mat.roughness = 0.8f;
-            mat.reflectChance = 1.0 - mat.roughness;
+            gpu_material_t mat = GlobalMaterials[ray.materialId];
             float specularChance = Random(state) > mat.reflectChance ? 0.0 : 1.0;
 
             vec3 diffuseDir = normalize(ray.hitNormal + RandomUnitVector(state));
@@ -205,7 +199,7 @@ vec3 RayColor(inout Ray ray, inout uint state) {
         } else {
             //vec2 uv = SampleSphericalMap(normalize(ray.direction));
             //radiance += texture(envTexture, uv).rgb * throughput;
-            radiance += vec3(0.5) * throughput;
+            radiance += vec3(0.1) * throughput;
             break;
         }
     }

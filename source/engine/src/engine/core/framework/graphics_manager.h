@@ -241,8 +241,9 @@ public:
     PassContext m_mainPass;
 
     // @TODO: refactor
-    std::shared_ptr<GpuStructuredBuffer> m_bvhBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_geometryBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_pathTracerMaterialBuffer;
 
 protected:
     void Cleanup();

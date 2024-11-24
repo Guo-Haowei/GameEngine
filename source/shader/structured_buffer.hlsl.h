@@ -22,9 +22,21 @@ struct ParticleCounter {
     int emissionCount;
 };
 
-struct Geometry {
+struct gpu_geometry_t {
+
     Vector3f A;
+#if defined(__cplusplus)
+    enum class Kind : uint32_t {
+        Invalid,
+        Triangle,
+        Sphere,
+        Count
+    };
+
+    Kind kind;
+#else
     int kind;
+#endif
 
     Vector3f B;
     float radius;
@@ -42,9 +54,17 @@ struct Geometry {
 
     Vector3f normal3;
     float hasAlbedoMap;
+
+#if defined(__cplusplus)
+    gpu_geometry_t();
+    gpu_geometry_t(const Vector3f& A, const Vector3f& B, const Vector3f& C, int material);
+    gpu_geometry_t(const Vector3f& center, float radius, int material);
+    Vector3f Centroid() const;
+    void CalcNormal();
+#endif
 };
 
-struct Bvh {
+struct gpu_bvh_t {
     Vector3f min;
     int missIdx;
     Vector3f max;
@@ -52,25 +72,29 @@ struct Bvh {
 
     int leaf;
     int geomIdx;
-    int _padding0;
-    int _padding1;
+    int _padding_0;
+    int _padding_1;
+
+#if defined(__cplusplus)
+    gpu_bvh_t();
+#endif
 };
 
-struct Material {
+struct gpu_material_t {
     Vector3f albedo;
     float reflectChance;
     Vector3f emissive;
     float roughness;
     float albedoMapLevel;
-    int _padding0;
-    int _padding1;
-    int _padding2;
+    int _padding_0;
+    int _padding_1;
+    int _padding_2;
 };
 
 #if defined(__cplusplus)
-static_assert(sizeof(Material) % 4 == 0);
-static_assert(sizeof(Bvh) % 4 == 0);
-static_assert(sizeof(Geometry) % 4 == 0);
+static_assert(sizeof(gpu_material_t) % sizeof(Vector4f) == 0);
+static_assert(sizeof(gpu_bvh_t) % sizeof(Vector4f) == 0);
+static_assert(sizeof(gpu_geometry_t) % sizeof(Vector4f) == 0);
 #endif
 
 #define SBUFFER_LIST                                         \
@@ -79,8 +103,9 @@ static_assert(sizeof(Geometry) % 4 == 0);
     SBUFFER(int, GlobalAliveIndicesPreSim, 18, 509)          \
     SBUFFER(int, GlobalAliveIndicesPostSim, 19, 508)         \
     SBUFFER(Particle, GlobalParticleData, 20, 507)           \
-    SBUFFER(Geometry, GlobalGeometries, 21, 506)             \
-    SBUFFER(Bvh, GlobalBvhs, 22, 505)
+    SBUFFER(gpu_geometry_t, GlobalGeometries, 21, 506)       \
+    SBUFFER(gpu_bvh_t, GlobalBvhs, 22, 505)                  \
+    SBUFFER(gpu_material_t, GlobalMaterials, 23, 504)
 
 END_NAME_SPACE(my)
 

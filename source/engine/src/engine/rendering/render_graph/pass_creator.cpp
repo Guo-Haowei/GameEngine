@@ -791,7 +791,7 @@ void RenderPassCreator::AddTonePass() {
 
 static void PathTracerPassFunc(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
-    if (!gm.m_geometryBuffer) {
+    if (!gm.m_pathTracerGeometryBuffer) {
         return;
     }
 
@@ -805,11 +805,13 @@ static void PathTracerPassFunc(const DrawPass*) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-    gm.BindStructuredBuffer(GetGlobalBvhsSlot(), gm.m_bvhBuffer.get());
-    gm.BindStructuredBuffer(GetGlobalGeometriesSlot(), gm.m_geometryBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalBvhsSlot(), gm.m_pathTracerBvhBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalGeometriesSlot(), gm.m_pathTracerGeometryBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalMaterialsSlot(), gm.m_pathTracerMaterialBuffer.get());
     gm.Dispatch(work_group_x, work_group_y, 1);
     gm.UnbindStructuredBuffer(GetGlobalBvhsSlot());
     gm.UnbindStructuredBuffer(GetGlobalGeometriesSlot());
+    gm.UnbindStructuredBuffer(GetGlobalMaterialsSlot());
 }
 
 void RenderPassCreator::AddPathTracerPass() {
