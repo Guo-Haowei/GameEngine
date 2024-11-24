@@ -15,7 +15,7 @@ public:
     std::tuple<int, int> GetWindowSize() final;
     std::tuple<int, int> GetWindowPos() final;
 
-    void NewFrame() final;
+    void BeginFrame() final;
     void Present() final;
 
 private:

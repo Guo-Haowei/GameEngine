@@ -155,7 +155,7 @@ auto GraphicsManager::Create() -> Result<std::shared_ptr<GraphicsManager>> {
         };
         auto create_metal_renderer = []() -> std::shared_ptr<GraphicsManager> {
 #if USING(PLATFORM_APPLE)
-            return std::make_shared<MetalGraphicsManager>();
+            return std::make_shared<EmptyGraphicsManager>("Emtpy", Backend::EMPTY, 1);
 #else
             return nullptr;
 #endif
@@ -309,8 +309,14 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         }
     }
 
-    if (GetBackend() == Backend::VULKAN) {
-        m_renderGraphName = RenderGraphName::DUMMY;
+    switch (GetBackend()) {
+        case Backend::VULKAN:
+        case Backend::EMPTY:
+        case Backend::METAL:
+            m_renderGraphName = RenderGraphName::DUMMY;
+            break;
+        default:
+            break;
     }
 
     // force to default
