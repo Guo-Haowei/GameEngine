@@ -28,16 +28,17 @@ public:
     bool IsKeyPressed(KeyCode p_key);
     bool IsKeyReleased(KeyCode p_key);
 
-    const vec2& GetCursor();
-    const vec2& GetWheel();
     vec2 MouseMove();
 
     void SetKey(KeyCode p_key, bool p_pressed);
 
     void SetCursor(float p_x, float p_y);
-    void SetWheel(float p_x, float p_y);
+
+    const vec2& GetCursor() const { return m_cursor; }
 
     EventQueue& GetEventQueue() { return m_inputEventQueue; }
+
+    void SetWheel(double p_x, double p_y);
 
 protected:
     using KeyArray = std::bitset<std::to_underlying(KeyCode::COUNT)>;
@@ -53,7 +54,8 @@ protected:
     vec2 m_cursor{ 0, 0 };
     vec2 m_prevCursor{ 0, 0 };
 
-    vec2 m_wheel{ 0, 0 };
+    double m_wheelX{ 0 };
+    double m_wheelY{ 0 };
 };
 
 };  // namespace my

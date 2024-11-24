@@ -4,19 +4,18 @@
 
 namespace my {
 
-void CameraController::Move(float p_delta_time, Camera& p_camera, ivec3& p_move) {
+void CameraController::Move(float p_delta_time, Camera& p_camera, ivec3& p_move, float p_scroll) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
-    const bool moved = p_move.x || p_move.y || p_move.z;
+    const bool moved = p_move.x || p_move.y || p_move.z || p_scroll != 0.0f;
     if (moved) {
         float move_speed = 10 * p_delta_time;
         float dx = (float)p_move.x;
         float dy = (float)p_move.y;
         float dz = (float)p_move.z;
 
-        float scroll = InputManager::GetSingleton().GetWheel().y * 3.0f;
-        if (glm::abs(scroll) > glm::abs(dz)) {
-            dz = scroll;
+        if (glm::abs(p_scroll) > glm::abs(dz)) {
+            dz = p_scroll;
         }
         if (dx || dz) {
             vec3 delta = (move_speed * dz) * p_camera.GetFront() + (move_speed * dx) * p_camera.GetRight();

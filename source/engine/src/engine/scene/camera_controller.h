@@ -6,7 +6,7 @@ namespace my {
 
 class CameraController {
 public:
-    void Move(float p_detla_time, Camera& p_camera, ivec3& p_move);
+    void Move(float p_detla_time, Camera& p_camera, ivec3& p_move, float p_scroll);
 };
 
 }  // namespace my

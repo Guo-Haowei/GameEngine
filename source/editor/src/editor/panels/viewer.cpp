@@ -207,10 +207,12 @@ void Viewer::UpdateInternal(Scene& p_scene) {
     ivec3 delta_camera(0);
     auto& events = m_editor.GetUnhandledEvents();
     bool selected = m_editor.GetSelectedEntity().IsValid();
+    float mouse_scroll = 0.0f;
+
     for (auto& event : events) {
         if (InputEventKey* e = dynamic_cast<InputEventKey*>(event.get()); e) {
             if (e->IsPressed()) {
-                switch (e->m_key) {
+                switch (e->GetKey()) {
                     case KeyCode::KEY_Z: {
                         if (selected) {
                             m_editor.SetState(EditorLayer::STATE_TRANSLATE);
@@ -230,7 +232,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
                         break;
                 }
             } else if (e->IsHolding()) {
-                switch (e->m_key) {
+                switch (e->GetKey()) {
                     case KeyCode::KEY_D:
                         ++delta_camera.x;
                         break;
@@ -254,10 +256,15 @@ void Viewer::UpdateInternal(Scene& p_scene) {
                 }
             }
         }
+        if (InputEventMouseWheel* e = dynamic_cast<InputEventMouseWheel*>(event.get()); e) {
+            if (!e->IsModiferPressed()) {
+                mouse_scroll = 3.0f * e->GetWheelY();
+            }
+        }
     }
 
     if (m_focused) {
-        m_cameraController.Move(p_scene.m_elapsedTime, camera, delta_camera);
+        m_cameraController.Move(p_scene.m_elapsedTime, camera, delta_camera, mouse_scroll);
     }
 
     SelectEntity(p_scene, camera);
