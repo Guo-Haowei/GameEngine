@@ -110,6 +110,7 @@ struct PipelineState {
     PSO_NAME(PSO_BRDF)                   \
     PSO_NAME(PSO_BILLBOARD)              \
     PSO_NAME(PSO_RW_TEXTURE_2D)          \
+    PSO_NAME(PSO_PATH_TRACER)            \
     PSO_NAME(PSO_PARTICLE_INIT)          \
     PSO_NAME(PSO_PARTICLE_KICKOFF)       \
     PSO_NAME(PSO_PARTICLE_EMIT)          \

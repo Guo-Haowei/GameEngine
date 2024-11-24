@@ -64,8 +64,10 @@ public:
 auto AssetManager::Initialize() -> Result<void> {
 #if USING(USING_ASSIMP)
     Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
-#endif
+    Loader<Scene>::RegisterLoader(".gltf", LoaderAssimp::Create);
+#else
     Loader<Scene>::RegisterLoader(".gltf", LoaderTinyGLTF::Create);
+#endif
     Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::Create);
     Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::Create);
 

@@ -294,6 +294,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         { "dummy", RenderGraphName::DUMMY },
         { "default", RenderGraphName::DEFAULT },
         { "experimental", RenderGraphName::EXPERIMENTAL },
+        { "pathtracer", RenderGraphName::PATHTRACER },
     };
 
     if (GetBackend() == Backend::METAL) {
@@ -332,9 +333,15 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         case RenderGraphName::EXPERIMENTAL:
             rg::RenderPassCreator::CreateExperimental(m_renderGraph);
             break;
-        default:
+        case RenderGraphName::DEFAULT:
             rg::RenderPassCreator::CreateDefault(m_renderGraph);
             break;
+        case RenderGraphName::PATHTRACER:
+            rg::RenderPassCreator::CreatePathTracer(m_renderGraph);
+            break;
+        default:
+            DEV_ASSERT(0 && "Should not reach here");
+            return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
     }
 
     return Result<void>();
@@ -372,6 +379,10 @@ uint64_t GraphicsManager::GetFinalImage() const {
             break;
         case RenderGraphName::DEFAULT:
             texture = FindTexture(RESOURCE_TONE).get();
+            break;
+        case RenderGraphName::PATHTRACER:
+            // texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
+            texture = FindTexture(RESOURCE_PATH_TRACER).get();
             break;
         default:
             CRASH_NOW();

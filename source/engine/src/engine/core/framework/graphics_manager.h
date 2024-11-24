@@ -107,6 +107,7 @@ public:
         DEFAULT = 0,
         DUMMY,
         EXPERIMENTAL,
+        PATHTRACER,
     };
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
