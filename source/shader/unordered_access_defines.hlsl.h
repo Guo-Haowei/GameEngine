@@ -31,7 +31,7 @@ DESCRIPTOR_UAV_LIST
 #if defined(HLSL_LANG_D3D11)
 #define RW_TEXTURE_2D(a) (u_##a)
 #else
-#define RW_TEXTURE_2D(a) (u_RWTexture2Ds[c_##a##Index])
+#define RW_TEXTURE_2D(a) (u_RWTexture2Ds[c_##a##ResidentHandle.x])
 #endif
 
 #endif

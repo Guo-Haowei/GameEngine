@@ -766,32 +766,119 @@ void RenderPassCreator::AddTonePass() {
 
     RenderPassDesc desc;
     desc.name = RenderPassName::TONE;
-    desc.dependencies = { RenderPassName::BLOOM };
+
+    if (m_config.enableBloom) {
+        desc.dependencies = { RenderPassName::BLOOM };
+    }
 
     auto pass = m_graph.CreatePass(desc);
 
     int width = m_config.frameWidth;
     int height = m_config.frameHeight;
 
-    auto attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
-                                                               RESOURCE_FORMAT_TONE,
-                                                               AttachmentType::COLOR_2D,
-                                                               width, height),
-                                       PointClampSampler());
+    auto attachment = gm.FindTexture(RESOURCE_TONE);
 
-    auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
+    if (!attachment) {
+        attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
+                                                              RESOURCE_FORMAT_TONE,
+                                                              AttachmentType::COLOR_2D,
+                                                              width, height),
+                                      PointClampSampler());
+    }
 
-    auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
+    DrawPassDesc draw_pass_desc{
         .colorAttachments = { attachment },
-        .depthAttachment = gbuffer_depth,
+        .depthAttachment = nullptr,
         .execFunc = TonePassFunc,
-    });
+    };
+
+    if (m_config.enableHighlight) {
+        auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
+        draw_pass_desc.depthAttachment = gbuffer_depth;
+    }
+
+    auto draw_pass = gm.CreateDrawPass(draw_pass_desc);
+
+    pass->AddDrawPass(draw_pass);
+}
+
+static void PathTracerTonePassFunc(const DrawPass* p_draw_pass) {
+    OPTICK_EVENT();
+
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    gm.SetRenderTarget(p_draw_pass);
+
+    auto depth_buffer = p_draw_pass->desc.depthAttachment;
+    const auto [width, height] = p_draw_pass->GetBufferSize();
+
+    // draw billboards
+
+    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
+        std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
+        if (!resource) {
+            return;
+        }
+
+        gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
+    };
+    bind_slot(RESOURCE_PATH_TRACER, GetBloomInputTextureSlot());
+
+    gm.SetViewport(Viewport(width, height));
+    gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
+
+    gm.SetPipelineState(PSO_TONE);
+    RenderManager::GetSingleton().draw_quad();
+
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+}
+
+void RenderPassCreator::AddPathTracerTonePass() {
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::TONE;
+
+    desc.dependencies = { RenderPassName::PATH_TRACER };
+
+    auto pass = m_graph.CreatePass(desc);
+
+    int width = m_config.frameWidth;
+    int height = m_config.frameHeight;
+
+    auto attachment = gm.FindTexture(RESOURCE_TONE);
+
+    if (!attachment) {
+        attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
+                                                              RESOURCE_FORMAT_TONE,
+                                                              AttachmentType::COLOR_2D,
+                                                              width, height),
+                                      PointClampSampler());
+    }
+
+    DrawPassDesc draw_pass_desc{
+        .colorAttachments = { attachment },
+        .depthAttachment = nullptr,
+        .execFunc = PathTracerTonePassFunc,
+    };
+
+    if (m_config.enableHighlight) {
+        auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
+        draw_pass_desc.depthAttachment = gbuffer_depth;
+    }
+
+    auto draw_pass = gm.CreateDrawPass(draw_pass_desc);
+
     pass->AddDrawPass(draw_pass);
 }
 
 static void PathTracerPassFunc(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
-    if (!gm.m_geometryBuffer) {
+    if (gm.m_bufferUpdated && gm.m_pathTracerGeometryBuffer) {
+        LOG_FATAL("currently broken, cause SwapBuffers crash");
+        gm.m_bufferUpdated = false;
+        return;
+    }
+    if (!gm.m_pathTracerGeometryBuffer) {
         return;
     }
 
@@ -805,11 +892,13 @@ static void PathTracerPassFunc(const DrawPass*) {
     const uint32_t work_group_x = math::CeilingDivision(width, 16);
     const uint32_t work_group_y = math::CeilingDivision(height, 16);
 
-    gm.BindStructuredBuffer(GetGlobalBvhsSlot(), gm.m_bvhBuffer.get());
-    gm.BindStructuredBuffer(GetGlobalGeometriesSlot(), gm.m_geometryBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalBvhsSlot(), gm.m_pathTracerBvhBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalGeometriesSlot(), gm.m_pathTracerGeometryBuffer.get());
+    gm.BindStructuredBuffer(GetGlobalMaterialsSlot(), gm.m_pathTracerMaterialBuffer.get());
     gm.Dispatch(work_group_x, work_group_y, 1);
     gm.UnbindStructuredBuffer(GetGlobalBvhsSlot());
     gm.UnbindStructuredBuffer(GetGlobalGeometriesSlot());
+    gm.UnbindStructuredBuffer(GetGlobalMaterialsSlot());
 }
 
 void RenderPassCreator::AddPathTracerPass() {
@@ -824,7 +913,7 @@ void RenderPassCreator::AddPathTracerPass() {
     const int height = m_config.frameHeight;
 
     GpuTextureDesc texture_desc = BuildDefaultTextureDesc(RESOURCE_PATH_TRACER,
-                                                          PixelFormat::R16G16B16A16_FLOAT,
+                                                          PixelFormat::R32G32B32A32_FLOAT,
                                                           AttachmentType::COLOR_2D,
                                                           width, height);
     texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
@@ -849,7 +938,7 @@ void RenderPassCreator::AddPathTracerPass() {
 }
 
 /// Create pre-defined passes
-void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateDummy() {
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
@@ -860,14 +949,17 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     config.enableBloom = false;
     config.enableIbl = false;
     config.enableVxgi = false;
-    RenderPassCreator creator(config, p_graph);
+
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(config, *graph.get());
 
     creator.AddGbufferPass();
 
-    p_graph.Compile();
+    graph->Compile();
+    return graph;
 }
 
-void RenderPassCreator::CreatePathTracer(RenderGraph& p_graph) {
+std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer() {
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
@@ -878,15 +970,19 @@ void RenderPassCreator::CreatePathTracer(RenderGraph& p_graph) {
     config.enableBloom = false;
     config.enableIbl = false;
     config.enableVxgi = false;
-    RenderPassCreator creator(config, p_graph);
+    config.enableHighlight = false;
 
-    creator.AddGbufferPass();
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(config, *graph.get());
+
     creator.AddPathTracerPass();
+    creator.AddPathTracerTonePass();
 
-    p_graph.Compile();
+    graph->Compile();
+    return graph;
 }
 
-void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault() {
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
@@ -894,10 +990,12 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     RenderPassCreator::Config config;
     config.frameWidth = w;
     config.frameHeight = h;
-    config.enableBloom = false;
+    config.enableBloom = true;
     config.enableIbl = false;
     config.enableVxgi = false;
-    RenderPassCreator creator(config, p_graph);
+
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(config, *graph.get());
 
     creator.AddShadowPass();
     creator.AddGbufferPass();
@@ -908,7 +1006,8 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     creator.AddBloomPass();
     creator.AddTonePass();
 
-    p_graph.Compile();
+    graph->Compile();
+    return graph;
 }
 
 GpuTextureDesc RenderPassCreator::BuildDefaultTextureDesc(RenderTargetResourceName p_name,

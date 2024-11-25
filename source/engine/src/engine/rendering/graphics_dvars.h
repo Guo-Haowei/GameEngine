@@ -16,7 +16,7 @@ DVAR_BOOL(gfx_debug_shadow, DVAR_FLAG_CACHE, "Debug shadow", false);
 DVAR_BOOL(gfx_enable_vxgi, DVAR_FLAG_CACHE, "Enable VXGI", true);
 DVAR_BOOL(gfx_no_texture, DVAR_FLAG_CACHE, "No texture", false);
 DVAR_BOOL(gfx_debug_vxgi, DVAR_FLAG_CACHE, "Debug VXGI", false);
-DVAR_BOOL(gfx_enable_bloom, DVAR_FLAG_NONE, "Enable Bloom", true);
+DVAR_BOOL(gfx_enable_bloom, DVAR_FLAG_CACHE, "Enable Bloom", true);
 
 // voxel GI
 DVAR_INT(gfx_voxel_size, 0, "Voxel size", 64);

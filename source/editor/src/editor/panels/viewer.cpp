@@ -94,7 +94,7 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
         case Backend::OPENGL: {
-            if (gm.GetRenderGraphName() == GraphicsManager::RenderGraphName::PATHTRACER) {
+            if (gm.GetActiveRenderGraphName() == RenderGraphName::PATHTRACER) {
                 uv_min = ImVec2(0, 0);
                 uv_max = ImVec2(1, 1);
             }
@@ -107,8 +107,8 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
             break;
     }
 
-    bool draw_grid = DVAR_GET_BOOL(show_editor);
-    if (draw_grid) {
+    bool show_editor = DVAR_GET_BOOL(show_editor);
+    if (show_editor) {
         Matrix4x4f identity(1);
         // draw grid
         ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
@@ -178,9 +178,11 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
             break;
     }
 
-    // draw view cube
-    const float size = 120.f;
-    ImGuizmo::ViewManipulate((float*)&view_matrix[0].x, 10.0f, ImVec2(m_canvasMin.x, m_canvasMin.y), ImVec2(size, size), IM_COL32(64, 64, 64, 96));
+    if (show_editor) {
+        // draw view cube
+        const float size = 120.f;
+        ImGuizmo::ViewManipulate((float*)&view_matrix[0].x, 10.0f, ImVec2(m_canvasMin.x, m_canvasMin.y), ImVec2(size, size), IM_COL32(64, 64, 64, 96));
+    }
 }
 
 void Viewer::UpdateInternal(Scene& p_scene) {

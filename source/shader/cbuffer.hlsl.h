@@ -7,6 +7,9 @@ BEGIN_NAME_SPACE(my)
 
 // constant buffer
 #if defined(__cplusplus)
+using uint = uint32_t;
+
+using TextureHandle = uint64_t;
 
 template<typename T, int N>
 struct ConstantBufferBase {
@@ -20,13 +23,29 @@ struct ConstantBufferBase {
 #define CBUFFER(NAME, REG) \
     struct NAME : public ConstantBufferBase<NAME, REG>
 
+struct sampler_t {
+    union {
+        Vector2i handle_d3d;
+        uint64_t handle_gl;
+    };
+
+    void Set32(int p_value) { handle_d3d.x = handle_d3d.y = p_value; }
+    void Set64(uint64_t p_value) { handle_gl = p_value; }
+};
+
+static_assert(sizeof(sampler_t) == sizeof(uint64_t));
+
+using sampler2D = sampler_t;
+using sampler3D = sampler_t;
+using samplerCube = sampler_t;
+
 // @TODO: remove this constraint
 #elif defined(HLSL_LANG)
 #define CBUFFER(NAME, REG) cbuffer NAME : register(b##REG)
 
-#define TextureHandle float2
-#define sampler2D     float2
-#define samplerCube   float2
+#define TextureHandle int2
+#define sampler2D     int2
+#define samplerCube   int2
 
 #elif defined(GLSL_LANG)
 #define CBUFFER(NAME, REG) layout(std140, binding = REG) uniform NAME
@@ -72,9 +91,8 @@ CBUFFER(PerBatchConstantBuffer, 0) {
     Vector4f _per_batch_padding_2;
 
     // reuse per batch buffer for bloom
-    Vector2f _per_batch_padding_3;
-    uint c_BloomInputTextureIndex;
-    uint c_BloomOutputImageIndex;
+    sampler2D c_BloomInputTextureResidentHandle;
+    sampler2D c_BloomOutputImageResidentHandle;
 
     Matrix4x4f _per_batch_padding_4;
     Matrix4x4f _per_batch_padding_5;
@@ -101,20 +119,19 @@ CBUFFER(MaterialConstantBuffer, 2) {
     int c_hasNormalMap;
     int c_hasHeightMap;
 
-    uint c_BaseColorMapIndex;
-    uint c_NormalMapIndex;
-    uint c_MaterialMapIndex;
-    uint c_HeightMapIndex;
-
     TextureHandle c_baseColorMapHandle;
     TextureHandle c_normalMapHandle;
     TextureHandle c_materialMapHandle;
     TextureHandle c_heightMapHandle;
 
+    sampler2D c_BaseColorMapResidentHandle;
+    sampler2D c_NormalMapResidentHandle;
+    sampler2D c_MaterialMapResidentHandle;
+    sampler2D c_HeightMapResidentHandle;
+
     Vector4f _material_padding_1;
-    Vector4f _material_padding_2;
+    Matrix4x4f _material_padding_2;
     Matrix4x4f _material_padding_3;
-    Matrix4x4f _material_padding_4;
 };
 
 // @TODO: change to unordered access buffer
@@ -149,41 +166,46 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_enableVxgi;
     float c_texelSize;  // 16
 
-    uint c_GbufferBaseColorMapIndex;
-    uint c_GbufferPositionMapIndex;
-    uint c_GbufferNormalMapIndex;
-    uint c_GbufferMaterialMapIndex;  // 16
+    sampler2D c_GbufferBaseColorMapResidentHandle;
+    sampler2D c_GbufferPositionMapResidentHandle;  // 16
 
-    uint c_GbufferDepthIndex;
-    uint c_PointShadowArrayIndex;
-    uint c_ShadowMapIndex;
-    uint c_TextureHighlightSelectIndex;
+    sampler2D c_GbufferNormalMapResidentHandle;
+    sampler2D c_GbufferMaterialMapResidentHandle;  // 16
 
     //-----------------------------------------
+    sampler2D c_GbufferDepthResidentHandle;
+    sampler2D c_PointShadowArrayResidentHandle;  // 16
+
+    sampler2D c_ShadowMapResidentHandle;
+    sampler2D c_TextureHighlightSelectResidentHandle;  // 16
 
     Vector2i c_tileOffset;
-    uint c_TextureLightingIndex;
-    int c_forceFieldsCount;
+    sampler2D c_TextureLightingResidentHandle;  // 16
 
     Vector3f c_cameraPosition;
-    float c_cameraFov;
+    float c_cameraFov;  // 16
 
+    //-----------------------------------------
     Vector3f c_worldCenter;
     float c_worldSizeHalf;  // 16
 
     Vector3f c_cameraForward;
-    int c_frameIndex;
+    int c_frameIndex;  // 16
+
+    Vector3f c_cameraRight;
+    float c_voxelSize;
+
+    Vector3f c_cameraUp;
+    int c_sceneDirty;
 
     //-----------------------------------------
 
-    Vector3f c_cameraRight;
-    float c_voxelSize;  // 16
-    Vector3f c_cameraUp;
-    float _per_frame_padding_2;  // 16
+    Vector3f _per_frame_padding_2;
+    int c_forceFieldsCount;  // 16
 
-    Vector4f _per_frame_padding_3;    // 16
-    Vector4f _per_frame_padding_4;    // 16
-    Matrix4x4f _per_frame_padding_5;  // 64
+    Vector4f _per_frame_padding_3;  // 16
+    Vector4f _per_frame_padding_4;  // 16
+    Vector4f _per_frame_padding_5;  // 16
 
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };

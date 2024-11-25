@@ -3,6 +3,7 @@
 #include <imgui/imgui_internal.h>
 
 #include "core/framework/common_dvars.h"
+#include "core/framework/graphics_manager.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "scene/scene.h"
@@ -50,7 +51,7 @@ void RendererPanel::UpdateInternal(Scene&) {
         int value = DVAR_GET_INT(gfx_debug_vxgi_voxel);
         ImGui::RadioButton("lighting", &value, 0);
         ImGui::SameLine();
-        ImGui::RadioButton("Normal", &value, 1);
+        ImGui::RadioButton("normal", &value, 1);
         DVAR_SET_INT(gfx_debug_vxgi_voxel, value);
     });
 
@@ -61,6 +62,24 @@ void RendererPanel::UpdateInternal(Scene&) {
     CollapseWindow("Bloom", []() {
         ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_bloom));
         ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);
+    });
+
+    CollapseWindow("Path Tracer", []() {
+        auto& gm = GraphicsManager::GetSingleton();
+        int selected = (int)gm.GetActiveRenderGraphName();
+        const int prev_selected = selected;
+        for (int i = 0; i < std::to_underlying(RenderGraphName::COUNT); ++i) {
+            const char* name = ToString(static_cast<RenderGraphName>(i));
+            name = name ? name : "xxx";
+            ImGui::RadioButton(name, &selected, i);
+        }
+        if (prev_selected != selected) {
+            if (gm.SetActiveRenderGraph((RenderGraphName)selected)) {
+                if (selected == (int)RenderGraphName::PATHTRACER) {
+                    gm.StartPathTracer(PathTracerMethod::ACCUMULATIVE);
+                }
+            }
+        }
     });
 }
 

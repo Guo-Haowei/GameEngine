@@ -369,6 +369,18 @@ auto OpenGlGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) 
     return buffer;
 }
 
+void OpenGlGraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<const OpenGlStructuredBuffer*>(p_buffer);
+    if (DEV_VERIFY(buffer)) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
+        float* ptr = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+        DEV_ASSERT(ptr);
+        memcpy(ptr + p_desc.offset, p_desc.initialData, p_desc.elementCount * p_desc.elementSize);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+}
+
 void OpenGlGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
@@ -649,8 +661,8 @@ void OpenGlGraphicsManager::CreateGpuResources() {
     // @TODO: delete!
     unsigned int m1 = LoadMTexture(LTC1);
     unsigned int m2 = LoadMTexture(LTC2);
-    cache.c_ltc1 = MakeTextureResident(m1);
-    cache.c_ltc2 = MakeTextureResident(m2);
+    cache.c_ltc1.handle_gl = MakeTextureResident(m1);
+    cache.c_ltc2.handle_gl = MakeTextureResident(m2);
 
     // cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
 
@@ -664,12 +676,12 @@ void OpenGlGraphicsManager::CreateGpuResources() {
         }
     };
 
-    make_resident(RESOURCE_TONE, cache.c_toneImage);
-    make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_envMap);
-    make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuseIrradianceMap);
-    make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefilteredMap);
-    make_resident(RESOURCE_BRDF, cache.c_brdfMap);
-    make_resident(RESOURCE_BLOOM_0, cache.c_finalBloom);
+    make_resident(RESOURCE_TONE, cache.c_toneImage.handle_gl);
+    make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_envMap.handle_gl);
+    make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuseIrradianceMap.handle_gl);
+    make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefilteredMap.handle_gl);
+    make_resident(RESOURCE_BRDF, cache.c_brdfMap.handle_gl);
+    make_resident(RESOURCE_BLOOM_0, cache.c_finalBloom.handle_gl);
 
     g_constantCache.update();
 }

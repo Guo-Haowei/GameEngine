@@ -150,7 +150,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     g_debug_draw_cache.cache.c_debugDrawSize = size;
     g_debug_draw_cache.cache.c_debugDrawPos = pos;
     g_debug_draw_cache.cache.c_displayChannel = p_channel;
-    g_debug_draw_cache.cache.c_debugDrawMap = p_handle;
+    g_debug_draw_cache.cache.c_debugDrawMap.Set64(p_handle);
     g_debug_draw_cache.update();
     RenderManager::GetSingleton().draw_quad();
 }
@@ -181,7 +181,7 @@ void final_pass_func(const DrawPass* p_draw_pass) {
     }
 }
 
-void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
     // @TODO: early-z
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
@@ -190,7 +190,9 @@ void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
     RenderPassCreator::Config config;
     config.frameWidth = w;
     config.frameHeight = h;
-    RenderPassCreator creator(config, p_graph);
+
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(config, *graph.get());
 
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
@@ -204,7 +206,7 @@ void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
     {  // environment pass
         RenderPassDesc desc;
         desc.name = RenderPassName::ENV;
-        auto pass = p_graph.CreatePass(desc);
+        auto pass = graph->CreatePass(desc);
 
         auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_texture_desc = BuildDefaultTextureDesc(cube_map_name,
@@ -255,7 +257,7 @@ void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
         RenderPassDesc desc;
         desc.name = RenderPassName::FINAL;
         desc.dependencies = { RenderPassName::TONE };
-        auto pass = p_graph.CreatePass(desc);
+        auto pass = graph->CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .colorAttachments = { final_attachment },
             .execFunc = final_pass_func,
@@ -264,7 +266,8 @@ void RenderPassCreator::CreateExperimental(RenderGraph& p_graph) {
     }
 
     // @TODO: allow recompile
-    p_graph.Compile();
+    graph->Compile();
+    return graph;
 }
 
 }  // namespace my::rg

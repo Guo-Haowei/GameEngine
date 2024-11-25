@@ -16,6 +16,7 @@ public:
         bool enableVxgi = true;
         bool enableIbl = true;
         bool enableBloom = true;
+        bool enableHighlight = true;
 
         int frameWidth;
         int frameHeight;
@@ -25,10 +26,10 @@ public:
         : m_config(p_config),
           m_graph(p_graph) {}
 
-    static void CreateDummy(RenderGraph& p_graph);
-    static void CreateDefault(RenderGraph& p_graph);
-    static void CreateExperimental(RenderGraph& p_graph);
-    static void CreatePathTracer(RenderGraph& p_graph);
+    static std::unique_ptr<RenderGraph> CreateDummy();
+    static std::unique_ptr<RenderGraph> CreateDefault();
+    static std::unique_ptr<RenderGraph> CreateExperimental();
+    static std::unique_ptr<RenderGraph> CreatePathTracer();
 
 private:
     void AddGbufferPass();
@@ -40,6 +41,7 @@ private:
     void AddBloomPass();
     void AddTonePass();
     void AddPathTracerPass();
+    void AddPathTracerTonePass();
 
     static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
                                                   PixelFormat p_format,

@@ -13,7 +13,7 @@ in vec2 pass_uv;
 void main() {
     vec4 base_color = c_baseColor;
     if (c_hasBaseColorMap != 0) {
-        base_color = texture(t_BaseColorMap, pass_uv);
+        base_color = texture(c_BaseColorMapResidentHandle, pass_uv);
     }
     if (base_color.a < 0.001) {
         discard;
@@ -23,7 +23,7 @@ void main() {
     float roughness = c_roughness;
     if (c_hasMaterialMap != 0) {
         // g roughness, b metallic
-        vec3 mr = texture(t_MaterialMap, pass_uv).rgb;
+        vec3 mr = texture(c_MaterialMapResidentHandle, pass_uv).rgb;
         metallic = mr.b;
         roughness = mr.g;
     }
