@@ -14,8 +14,7 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 #define TWO_PI        6.28318530718
 #endif
 #define EPSILON       1e-6
-#define MAX_BOUNCE    9
-//#define MAX_BOUNCE    10
+#define MAX_BOUNCE    10
 #define RAY_T_MIN     1e-6
 #define RAY_T_MAX     9999999.0
 #define TRIANGLE_KIND 1
@@ -98,9 +97,38 @@ bool HitTriangle(inout Ray ray, in gpu_geometry_t triangle) {
 
     ray.t = t;
     ray.material_id = triangle.material_id;
-    vec3 norm = triangle.normal1 + u * (triangle.normal2 - triangle.normal1) + v * (triangle.normal3 - triangle.normal1);
-    ray.hit_normal = norm;
     ray.hit_uv = triangle.uv1 + u * (triangle.uv2 - triangle.uv1) + v * (triangle.uv3 - triangle.uv1);
+
+    gpu_material_t mat = GlobalMaterials[ray.material_id];
+    if (mat.has_normal_map == 1) {
+        // Step 1: Compute the triangle's edges
+        vec3 edge1 = AB;  // Edge from A to B
+        vec3 edge2 = AC;  // Edge from A to C
+
+        // Step 2: Compute the differences in texture coordinates
+        vec2 deltaUV1 = triangle.uv2 - triangle.uv1;  // Difference between UV_B and UV_A
+        vec2 deltaUV2 = triangle.uv3 - triangle.uv1;  // Difference between UV_C and UV_A
+
+        // Step 3: Compute the determinant of the UVs
+        float denominator = deltaUV1.x * deltaUV2.y - deltaUV1.y * deltaUV2.x;
+
+        // Step 4: Compute the tangent and bitangent
+        // Tangent (T) and bitangent (B) are calculated from the cross product
+        vec3 tangent = (deltaUV2.y * edge1 - deltaUV1.y * edge2) / denominator;
+        vec3 bitangent = (-deltaUV2.x * edge1 + deltaUV1.x * edge2) / denominator;
+        vec3 normal = normalize(cross(edge1, edge2));  // Normal vector for the triangle
+
+        tangent = normalize(tangent);      // Normalize tangent
+        bitangent = normalize(bitangent);  // Normalize bitangent
+
+        mat3 TBN = mat3(tangent, bitangent, normal);
+
+        vec3 value = texture(mat.normal_map_handle, ray.hit_uv).rgb;
+        value = (2.0f * value) - 1.0f;
+        ray.hit_normal = normalize(TBN * value);
+    } else {
+        ray.hit_normal = triangle.normal1 + u * (triangle.normal2 - triangle.normal1) + v * (triangle.normal3 - triangle.normal1);
+    }
 
     return true;
 }
@@ -181,6 +209,9 @@ vec3 RayColor(inout Ray ray, inout uint state) {
 
     for (int i = 0; i < MAX_BOUNCE; ++i) {
         bool anyHit = HitScene(ray);
+        //if (anyHit) {
+        //    return 0.5 * (ray.hit_normal + 1.0);
+        //}
 
         if (anyHit) {
             ray.origin = ray.origin + ray.t * ray.direction;
@@ -218,7 +249,7 @@ vec3 RayColor(inout Ray ray, inout uint state) {
         } else {
             //vec2 uv = SampleSphericalMap(normalize(ray.direction));
             //radiance += texture(envTexture, uv).rgb * throughput;
-            radiance += vec3(0.3) * throughput;
+            radiance += vec3(0.2) * throughput;
             // radiance += vec3(0.5, 0.7, 1.0) * throughput;
             break;
         }

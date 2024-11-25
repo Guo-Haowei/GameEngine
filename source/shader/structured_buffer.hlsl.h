@@ -103,7 +103,9 @@ struct gpu_material_t {
     int has_height_map;
 
     sampler2D base_color_map_handle;
+    sampler2D normal_map_handle;
     sampler2D material_map_handle;
+    sampler2D height_map_handle;
 };
 
 #if defined(__cplusplus)

@@ -592,17 +592,17 @@ void GraphicsManager::UpdateConstants(const Scene& p_scene) {
         return static_cast<uint32_t>(resource->GetResidentHandle());
     };
 
-    cache.c_GbufferBaseColorMapIndex = find_index(RESOURCE_GBUFFER_BASE_COLOR);
-    cache.c_GbufferPositionMapIndex = find_index(RESOURCE_GBUFFER_POSITION);
-    cache.c_GbufferNormalMapIndex = find_index(RESOURCE_GBUFFER_NORMAL);
-    cache.c_GbufferMaterialMapIndex = find_index(RESOURCE_GBUFFER_MATERIAL);
+    cache.c_GbufferBaseColorMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_BASE_COLOR));
+    cache.c_GbufferPositionMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_POSITION));
+    cache.c_GbufferNormalMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_NORMAL));
+    cache.c_GbufferMaterialMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_MATERIAL));
 
-    cache.c_GbufferDepthIndex = find_index(RESOURCE_GBUFFER_DEPTH);
-    cache.c_PointShadowArrayIndex = find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY);
-    cache.c_ShadowMapIndex = find_index(RESOURCE_SHADOW_MAP);
+    cache.c_GbufferDepthResidentHandle.Set32(find_index(RESOURCE_GBUFFER_DEPTH));
+    cache.c_PointShadowArrayResidentHandle.Set32(find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY));
+    cache.c_ShadowMapResidentHandle.Set32(find_index(RESOURCE_SHADOW_MAP));
 
-    cache.c_TextureHighlightSelectIndex = find_index(RESOURCE_HIGHLIGHT_SELECT);
-    cache.c_TextureLightingIndex = find_index(RESOURCE_LIGHTING);
+    cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_HIGHLIGHT_SELECT));
+    cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
 }
 
 void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
@@ -838,14 +838,14 @@ void GraphicsManager::UpdateBloomConstants() {
     }
 
     int offset = 0;
-    frame.batchCache.buffer[offset++].c_BloomOutputImageIndex = (uint)image->GetUavHandle();
+    frame.batchCache.buffer[offset++].c_BloomOutputImageResidentHandle.Set32((uint)image->GetUavHandle());
 
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
         auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
         auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
 
-        frame.batchCache.buffer[i + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
-        frame.batchCache.buffer[i + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle();
+        frame.batchCache.buffer[i + offset].c_BloomInputTextureResidentHandle.Set32((uint)input->GetResidentHandle());
+        frame.batchCache.buffer[i + offset].c_BloomOutputImageResidentHandle.Set32((uint)output->GetUavHandle());
     }
 
     offset += BLOOM_MIP_CHAIN_MAX - 1;
@@ -854,8 +854,8 @@ void GraphicsManager::UpdateBloomConstants() {
         auto input = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
         auto output = FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
 
-        frame.batchCache.buffer[i - 1 + offset].c_BloomInputTextureIndex = (uint)input->GetResidentHandle();
-        frame.batchCache.buffer[i - 1 + offset].c_BloomOutputImageIndex = (uint)output->GetUavHandle();
+        frame.batchCache.buffer[i - 1 + offset].c_BloomInputTextureResidentHandle.Set32((uint)input->GetResidentHandle());
+        frame.batchCache.buffer[i - 1 + offset].c_BloomOutputImageResidentHandle.Set32((uint)output->GetUavHandle());
     }
 }
 
@@ -871,7 +871,7 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
                                TextureHandle& p_out_handle,
                                sampler_t& p_out_resident_handle) {
             p_out_handle = 0;
-            p_out_resident_handle.gl_handle = 0;
+            p_out_resident_handle.Set64(0);
 
             if (!material->textures[p_idx].enabled) {
                 return false;
@@ -896,9 +896,9 @@ void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, Filter
 
             p_out_handle = texture->GetHandle();
             if (is_opengl) {
-                p_out_resident_handle.gl_handle = resident_handle;
+                p_out_resident_handle.Set64(resident_handle);
             } else {
-                p_out_resident_handle.d3d_handle = Vector2i(static_cast<uint32_t>(resident_handle));
+                p_out_resident_handle.Set32(static_cast<uint32_t>(resident_handle));
             }
             return true;
         };

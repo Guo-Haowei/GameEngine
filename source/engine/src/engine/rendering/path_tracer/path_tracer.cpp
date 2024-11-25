@@ -324,10 +324,10 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
                 if (handle) {
                     p_out_enabled = true;
                     if (is_opengl) {
-                        p_out_handle.gl_handle = handle;
+                        p_out_handle.Set64(handle);
 
                     } else {
-                        p_out_handle.d3d_handle = Vector2i(static_cast<int>(handle));
+                        p_out_handle.Set32(static_cast<int>(handle));
                     }
                     return true;
                 }
@@ -336,8 +336,8 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         };
 
         fill_texture(MaterialComponent::TEXTURE_BASE, gpu_mat.has_base_color_map, gpu_mat.base_color_map_handle);
+        fill_texture(MaterialComponent::TEXTURE_NORMAL, gpu_mat.has_normal_map, gpu_mat.normal_map_handle);
         fill_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, gpu_mat.has_material_map, gpu_mat.material_map_handle);
-        //fill_texture(MaterialComponent::TEXTURE_NORMAL, gpu_mat.has_normal_map, gpu_mat.normal_map_handle);
 
         p_out_scene.materials.push_back(gpu_mat);
         material_lut[entity] = static_cast<int>(p_out_scene.materials.size()) - 1;
