@@ -101,6 +101,7 @@ struct GpuBufferDesc {
     uint32_t slot{ 0 };
     uint32_t elementSize{ 0 };
     uint32_t elementCount{ 0 };
+    uint32_t offset{ 0 };
     const void* initialData{ nullptr };
 };
 

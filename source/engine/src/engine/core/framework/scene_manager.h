@@ -23,6 +23,8 @@ public:
 
     void EnqueueSceneLoadingTask(Scene* p_scene, bool p_replace);
 
+    Scene* GetScenePtr() const { return m_scene; }
+
     // @TODO: bad idea to make it globally accessible, fix it
     static Scene& GetScene();
 

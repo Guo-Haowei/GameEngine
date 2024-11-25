@@ -791,6 +791,11 @@ void RenderPassCreator::AddTonePass() {
 
 static void PathTracerPassFunc(const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
+    if (gm.m_bufferUpdated && gm.m_pathTracerGeometryBuffer) {
+        LOG_FATAL("currently broken, cause SwapBuffers crash");
+        gm.m_bufferUpdated = false;
+        return;
+    }
     if (!gm.m_pathTracerGeometryBuffer) {
         return;
     }

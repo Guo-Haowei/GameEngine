@@ -2,6 +2,8 @@
 
 #include "core/base/random.h"
 #include "core/debugger/profiler.h"
+#include "core/framework/application.h"
+#include "core/framework/scene_manager.h"
 #include "core/math/frustum.h"
 #include "core/math/matrix_transform.h"
 #if USING(PLATFORM_WINDOWS)
@@ -31,6 +33,17 @@
 #endif
 
 namespace my {
+
+const char* ToString(RenderGraphName p_name) {
+    ERR_FAIL_INDEX_V(p_name, RenderGraphName::COUNT, nullptr);
+    static constexpr const char* s_table[] = {
+#define RENDER_GRAPH_DECLARE(ENUM, STR) STR,
+        RENDER_GRAPH_LIST
+#undef RENDER_GRAPH_DECLARE
+    };
+
+    return s_table[std::to_underlying(p_name)];
+}
 
 template<typename T>
 static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
@@ -112,37 +125,6 @@ auto GraphicsManager::Initialize() -> Result<void> {
 
 void GraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get()); e) {
-        // @TODO: refactor
-        if (m_backend == Backend::OPENGL) {
-            GpuScene gpuScene;
-            ConstructScene(*e->GetScene(), gpuScene);
-
-            const uint32_t geometry_count = (uint32_t)gpuScene.geometries.size();
-            const uint32_t bvh_count = (uint32_t)gpuScene.bvhs.size();
-            const uint32_t material_count = (uint32_t)gpuScene.materials.size();
-
-            m_pathTracerGeometryBuffer = *CreateStructuredBuffer({
-                .slot = GetGlobalGeometriesSlot(),
-                .elementSize = sizeof(gpu_geometry_t),
-                .elementCount = geometry_count,
-                .initialData = gpuScene.geometries.data(),
-            });
-            m_pathTracerBvhBuffer = *CreateStructuredBuffer({
-                .slot = GetGlobalBvhsSlot(),
-                .elementSize = sizeof(gpu_bvh_t),
-                .elementCount = bvh_count,
-                .initialData = gpuScene.bvhs.data(),
-            });
-            m_pathTracerMaterialBuffer = *CreateStructuredBuffer({
-                .slot = GetGlobalMaterialsSlot(),
-                .elementSize = sizeof(gpu_material_t),
-                .elementCount = material_count,
-                .initialData = gpuScene.materials.data(),
-            });
-
-            LOG("Path tracer scene loaded, contains {} triangles, {} BVH", geometry_count, bvh_count);
-        }
-
         OnSceneChange(*e->GetScene());
     }
     if (ResizeEvent* e = dynamic_cast<ResizeEvent*>(p_event.get()); e) {
@@ -280,6 +262,11 @@ void GraphicsManager::Update(Scene& p_scene) {
     }
 }
 
+void GraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
+    unused(p_desc);
+    unused(p_buffer);
+}
+
 void GraphicsManager::BeginFrame() {
 }
 
@@ -327,10 +314,10 @@ void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
 auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     std::string method(DVAR_GET_STRING(gfx_render_graph));
     static const std::map<std::string, RenderGraphName> lookup = {
-        { "dummy", RenderGraphName::DUMMY },
-        { "default", RenderGraphName::DEFAULT },
-        { "experimental", RenderGraphName::EXPERIMENTAL },
-        { "pathtracer", RenderGraphName::PATHTRACER },
+#define RENDER_GRAPH_DECLARE(ENUM, STR) \
+    { STR, RenderGraphName::ENUM },
+        RENDER_GRAPH_LIST
+#undef RENDER_GRAPH_DECLARE
     };
 
     if (GetBackend() == Backend::METAL) {
@@ -388,12 +375,19 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     return Result<void>();
 }
 
-void GraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
-    ERR_FAIL_INDEX(p_name, RenderGraphName::COUNT);
+bool GraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
+    ERR_FAIL_INDEX_V(p_name, RenderGraphName::COUNT, false);
     const int index = std::to_underlying(p_name);
-    if (m_renderGraphs[index]) {
-        m_activeRenderGraphName = p_name;
+    if (!m_renderGraphs[index]) {
+        return false;
     }
+
+    if (p_name == m_activeRenderGraphName) {
+        return false;
+    }
+
+    m_activeRenderGraphName = p_name;
+    return true;
 }
 
 rg::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
@@ -401,6 +395,62 @@ rg::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
     ERR_FAIL_INDEX_V(index, RenderGraphName::COUNT, nullptr);
     DEV_ASSERT(m_renderGraphs[index] != nullptr);
     return m_renderGraphs[index].get();
+}
+
+bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
+    unused(p_method);
+
+    // @TODO: refactor
+    DEV_ASSERT(m_activeRenderGraphName == RenderGraphName::PATHTRACER);
+    DEV_ASSERT(m_backend == Backend::OPENGL);
+
+    SceneManager* scene_manager = m_app->GetSceneManager();
+    Scene* scene = scene_manager->GetScenePtr();
+    if (DEV_VERIFY(scene)) {
+        GpuScene gpu_scene;
+        ConstructScene(*scene, gpu_scene);
+
+        const uint32_t geometry_count = (uint32_t)gpu_scene.geometries.size();
+        const uint32_t bvh_count = (uint32_t)gpu_scene.bvhs.size();
+        const uint32_t material_count = (uint32_t)gpu_scene.materials.size();
+
+        {
+            GpuBufferDesc desc{
+                .slot = GetGlobalGeometriesSlot(),
+                .elementSize = sizeof(gpu_geometry_t),
+                .elementCount = geometry_count,
+                .initialData = gpu_scene.geometries.data(),
+            };
+            if (m_pathTracerGeometryBuffer) {
+                m_bufferUpdated = true;
+            }
+            m_pathTracerGeometryBuffer = *CreateStructuredBuffer(desc);
+        }
+        {
+            GpuBufferDesc desc{
+                .slot = GetGlobalGeometriesSlot(),
+                .elementSize = sizeof(gpu_bvh_t),
+                .elementCount = bvh_count,
+                .initialData = gpu_scene.bvhs.data(),
+            };
+            m_pathTracerBvhBuffer = *CreateStructuredBuffer(desc);
+        }
+        {
+            GpuBufferDesc desc{
+                .slot = GetGlobalMaterialsSlot(),
+                .elementSize = sizeof(gpu_material_t),
+                .elementCount = material_count,
+                .initialData = gpu_scene.materials.data(),
+            };
+            m_pathTracerMaterialBuffer = *CreateStructuredBuffer(desc);
+        }
+
+        LOG("Path tracer scene loaded, contains {} triangles, {} BVH", geometry_count, bvh_count);
+
+        return true;
+    }
+
+    return false;
 }
 
 std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {

@@ -42,7 +42,7 @@ struct gpu_geometry_t {
     float radius;
 
     Vector3f C;
-    int materialId;
+    int material_id;
 
     Vector2f uv1;
     Vector2f uv2;

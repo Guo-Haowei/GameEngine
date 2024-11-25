@@ -25,7 +25,7 @@ struct Ray {
     vec3 origin;
     float t;
     vec3 direction;
-    int materialId;
+    int material_id;
     vec3 hitNormal;
     vec2 hitUv;
     float hasAlbedoMap;
@@ -90,7 +90,7 @@ bool HitTriangle(inout Ray ray, in gpu_geometry_t triangle) {
         return false;
 
     ray.t = t;
-    ray.materialId = triangle.materialId;
+    ray.material_id = triangle.material_id;
     ray.hasAlbedoMap = triangle.hasAlbedoMap;
     vec3 norm = triangle.normal1 + u * (triangle.normal2 - triangle.normal1) + v * (triangle.normal3 - triangle.normal1);
     ray.hitNormal = norm;
@@ -114,7 +114,7 @@ bool HitSphere(inout Ray ray, in gpu_geometry_t sphere) {
     ray.t = t;
     vec3 p = ray.origin + t * ray.direction;
     ray.hitNormal = normalize(p - sphere.A);
-    ray.materialId = sphere.materialId;
+    ray.material_id = sphere.material_id;
 
     return true;
 }
@@ -180,7 +180,7 @@ vec3 RayColor(inout Ray ray, inout uint state) {
         if (anyHit) {
             ray.origin = ray.origin + ray.t * ray.direction;
             ray.t = RAY_T_MAX;
-            gpu_material_t mat = GlobalMaterials[ray.materialId];
+            gpu_material_t mat = GlobalMaterials[ray.material_id];
             float specularChance = Random(state) > mat.reflectChance ? 0.0 : 1.0;
 
             vec3 diffuseDir = normalize(ray.hitNormal + RandomUnitVector(state));
@@ -199,7 +199,7 @@ vec3 RayColor(inout Ray ray, inout uint state) {
         } else {
             //vec2 uv = SampleSphericalMap(normalize(ray.direction));
             //radiance += texture(envTexture, uv).rgb * throughput;
-            radiance += vec3(0.1) * throughput;
+            //radiance += vec3(0.1) * throughput;
             break;
         }
     }

@@ -65,22 +65,22 @@ void RendererPanel::UpdateInternal(Scene&) {
     });
 
     CollapseWindow("Path Tracer", []() {
-        //ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_bloom));
-        //ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);
         auto& gm = GraphicsManager::GetSingleton();
         int selected = (int)gm.GetActiveRenderGraphName();
         const int prev_selected = selected;
         for (int i = 0; i < std::to_underlying(RenderGraphName::COUNT); ++i) {
+            const char* name = ToString(static_cast<RenderGraphName>(i));
+            name = name ? name : "xxx";
+            ImGui::RadioButton(name, &selected, i);
         }
-            ImGui::RadioButton("aaa", &selected, 0);
-            ImGui::RadioButton("bbb", &selected, 1);
-            ImGui::RadioButton("ccc", &selected, 2);
-            ImGui::RadioButton("ddd", &selected, 3);
         if (prev_selected != selected) {
-            gm.SetActiveRenderGraph((RenderGraphName)selected);
+            if (gm.SetActiveRenderGraph((RenderGraphName)selected)) {
+                if (selected == (int)RenderGraphName::PATHTRACER) {
+                    gm.StartPathTracer(PathTracerMethod::ACCUMULATIVE);
+                }
+            }
         }
     });
-
 }
 
 }  // namespace my

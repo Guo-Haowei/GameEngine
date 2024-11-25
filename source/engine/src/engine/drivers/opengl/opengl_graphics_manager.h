@@ -36,6 +36,7 @@ public:
 
     auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> final;
     auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> final;
+    void UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) final;
 
     void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) final;
     void UnbindStructuredBuffer(int p_slot) final;

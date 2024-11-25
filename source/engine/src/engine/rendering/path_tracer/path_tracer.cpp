@@ -11,16 +11,16 @@ gpu_bvh_t::gpu_bvh_t()
 }
 
 gpu_geometry_t::gpu_geometry_t()
-    : kind(Kind::Invalid), materialId(-1) {}
+    : kind(Kind::Invalid), material_id(-1) {}
 
 gpu_geometry_t::gpu_geometry_t(const Vector3f& A, const Vector3f& B, const Vector3f& C, int material)
-    : A(A), B(B), C(C), materialId(material) {
+    : A(A), B(B), C(C), material_id(material) {
     kind = Kind::Triangle;
     CalcNormal();
 }
 
 gpu_geometry_t::gpu_geometry_t(const Vector3f& center, float radius, int material)
-    : A(center), materialId(material) {
+    : A(center), material_id(material) {
     // TODO: refactor
     kind = Kind::Sphere;
     this->radius = glm::max(0.01f, glm::abs(radius));
@@ -342,19 +342,19 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
             };
 
             // per-face material
-            gpu_geometry_t geom(points[0], points[1], points[2], 0);
+            gpu_geometry_t triangle(points[0], points[1], points[2], 0);
             // geom.uv1 = uvs[0];
             // geom.uv2 = uvs[1];
             // geom.uv3x = uvs[2].x;
             // geom.uv3y = uvs[2].y;
-            geom.normal1 = glm::normalize(normals[0]);
-            geom.normal2 = glm::normalize(normals[1]);
-            geom.normal3 = glm::normalize(normals[2]);
-            geom.kind = gpu_geometry_t::Kind::Triangle;
+            triangle.normal1 = glm::normalize(normals[0]);
+            triangle.normal2 = glm::normalize(normals[1]);
+            triangle.normal3 = glm::normalize(normals[2]);
+            triangle.kind = gpu_geometry_t::Kind::Triangle;
             auto it = material_lut.find(p_mesh.subsets[0].material_id);
             DEV_ASSERT(it != material_lut.end());
-            geom.materialId = it->second;
-            tmp_gpu_objects.push_back(geom);
+            triangle.material_id = it->second;
+            tmp_gpu_objects.push_back(triangle);
         }
     };
 
@@ -367,6 +367,24 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         DEV_ASSERT(transform);
         DEV_ASSERT(mesh);
         add_object(*mesh, *transform);
+    }
+    for (auto [entity, light] : p_scene.m_LightComponents) {
+        if (light.GetType() == LIGHT_TYPE_INFINITE) {
+            auto transform = p_scene.GetComponent<TransformComponent>(entity);
+            DEV_ASSERT(transform);
+            Vector3f rotation = glm::normalize(transform->GetWorldMatrix() * Vector4f(0.0, 0.0, 1.0f, 0.0f));
+            float radius = 1000.0f;
+            Vector3f center = radius * rotation * 5.0f;
+
+            auto it = material_lut.find(entity);
+            DEV_ASSERT(it != material_lut.end());
+            int material_id = it->second;
+            gpu_geometry_t sphere(center, radius, material_id);
+            // HACK: increase emissive power
+            p_out_scene.materials[material_id].emissive *= 5.0f;
+            //gpu_geometry_t sphere(center, radius, it->second);
+            tmp_gpu_objects.push_back(sphere);
+        }
     }
 
     /// construct bvh

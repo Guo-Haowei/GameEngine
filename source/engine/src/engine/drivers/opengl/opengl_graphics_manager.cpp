@@ -369,6 +369,18 @@ auto OpenGlGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) 
     return buffer;
 }
 
+void OpenGlGraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<const OpenGlStructuredBuffer*>(p_buffer);
+    if (DEV_VERIFY(buffer)) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
+        float* ptr = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+        DEV_ASSERT(ptr);
+        memcpy(ptr + p_desc.offset, p_desc.initialData, p_desc.elementCount * p_desc.elementSize);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+}
+
 void OpenGlGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);

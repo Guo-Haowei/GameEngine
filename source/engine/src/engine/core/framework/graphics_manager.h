@@ -47,6 +47,26 @@ struct PassContext {
     std::vector<BatchContext> draws;
 };
 
+#define RENDER_GRAPH_LIST                              \
+    RENDER_GRAPH_DECLARE(DEFAULT, "default")           \
+    RENDER_GRAPH_DECLARE(DUMMY, "dummy")               \
+    RENDER_GRAPH_DECLARE(EXPERIMENTAL, "experimental") \
+    RENDER_GRAPH_DECLARE(PATHTRACER, "pathtracer")
+
+enum class RenderGraphName : uint8_t {
+#define RENDER_GRAPH_DECLARE(ENUM, ...) ENUM,
+    RENDER_GRAPH_LIST
+#undef RENDER_GRAPH_DECLARE
+        COUNT,
+};
+
+const char* ToString(RenderGraphName p_name);
+
+enum class PathTracerMethod {
+    ACCUMULATIVE,
+    TILED,
+};
+
 struct FrameContext {
     template<typename BUFFER>
     struct BufferCache {
@@ -93,14 +113,6 @@ struct FrameContext {
     PerFrameConstantBuffer perFrameCache;
 };
 
-enum class RenderGraphName : uint8_t {
-    DEFAULT = 0,
-    DUMMY,
-    EXPERIMENTAL,
-    PATHTRACER,
-    COUNT,
-};
-
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
@@ -122,6 +134,7 @@ public:
     // resource
     virtual auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> = 0;
     virtual auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> = 0;
+    virtual void UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer);
 
     virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
@@ -189,9 +202,10 @@ public:
 
     [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
     RenderGraphName GetActiveRenderGraphName() const { return m_activeRenderGraphName; }
-    void SetActiveRenderGraph(RenderGraphName p_name);
+    bool SetActiveRenderGraph(RenderGraphName p_name);
     rg::RenderGraph* GetActiveRenderGraph();
     const auto& GetRenderGraphs() const { return m_renderGraphs; }
+    bool StartPathTracer(PathTracerMethod p_method);
 
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
@@ -241,10 +255,11 @@ public:
     PassContext m_voxelPass;
     PassContext m_mainPass;
 
-    // @TODO: refactor
+    // @TODO: make private
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerMaterialBuffer;
+    bool m_bufferUpdated = false;
 
 protected:
     void Cleanup();
