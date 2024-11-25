@@ -1,6 +1,6 @@
 #ifndef STRUCTURED_BUFFER_HLSL_H_INCLUDED
 #define STRUCTURED_BUFFER_HLSL_H_INCLUDED
-#include "shader_defines.hlsl.h"
+#include "cbuffer.hlsl.h"
 
 BEGIN_NAME_SPACE(my)
 
@@ -45,15 +45,25 @@ struct gpu_geometry_t {
     int material_id;
 
     Vector2f uv1;
+    float _padding_0;
+    float _padding_1;
+
     Vector2f uv2;
+    float _padding_2;
+    float _padding_3;
+
+    Vector2f uv3;
+    float _padding_4;
+    float _padding_5;
 
     Vector3f normal1;
-    float uv3x;
+    float _padding_6;
+
     Vector3f normal2;
-    float uv3y;
+    float _padding_7;
 
     Vector3f normal3;
-    float hasAlbedoMap;
+    float _padding_8;
 
 #if defined(__cplusplus)
     gpu_geometry_t();
@@ -82,13 +92,18 @@ struct gpu_bvh_t {
 
 struct gpu_material_t {
     Vector3f albedo;
-    float reflectChance;
+    float reflect_chance;
+
     Vector3f emissive;
     float roughness;
-    float albedoMapLevel;
-    int _padding_0;
-    int _padding_1;
-    int _padding_2;
+
+    int has_base_color_map;
+    int has_normal_map;
+    int has_material_map;
+    int has_height_map;
+
+    sampler2D base_color_map_handle;
+    sampler2D material_map_handle;
 };
 
 #if defined(__cplusplus)

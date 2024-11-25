@@ -7,6 +7,9 @@ BEGIN_NAME_SPACE(my)
 
 // constant buffer
 #if defined(__cplusplus)
+using uint = uint32_t;
+
+using TextureHandle = uint64_t;
 
 template<typename T, int N>
 struct ConstantBufferBase {
@@ -20,13 +23,26 @@ struct ConstantBufferBase {
 #define CBUFFER(NAME, REG) \
     struct NAME : public ConstantBufferBase<NAME, REG>
 
+struct sampler_t {
+    union {
+        Vector2i d3d_handle;
+        uint64_t gl_handle;
+    };
+};
+
+static_assert(sizeof(sampler_t) == sizeof(uint64_t));
+
+using sampler2D = sampler_t;
+using sampler3D = sampler_t;
+using samplerCube = sampler_t;
+
 // @TODO: remove this constraint
 #elif defined(HLSL_LANG)
 #define CBUFFER(NAME, REG) cbuffer NAME : register(b##REG)
 
-#define TextureHandle float2
-#define sampler2D     float2
-#define samplerCube   float2
+#define TextureHandle int2
+#define sampler2D     int2
+#define samplerCube   int2
 
 #elif defined(GLSL_LANG)
 #define CBUFFER(NAME, REG) layout(std140, binding = REG) uniform NAME
@@ -101,20 +117,19 @@ CBUFFER(MaterialConstantBuffer, 2) {
     int c_hasNormalMap;
     int c_hasHeightMap;
 
-    uint c_BaseColorMapIndex;
-    uint c_NormalMapIndex;
-    uint c_MaterialMapIndex;
-    uint c_HeightMapIndex;
-
     TextureHandle c_baseColorMapHandle;
     TextureHandle c_normalMapHandle;
     TextureHandle c_materialMapHandle;
     TextureHandle c_heightMapHandle;
 
+    sampler2D c_BaseColorMapResidentHandle;
+    sampler2D c_NormalMapResidentHandle;
+    sampler2D c_MaterialMapResidentHandle;
+    sampler2D c_HeightMapResidentHandle;
+
     Vector4f _material_padding_1;
-    Vector4f _material_padding_2;
+    Matrix4x4f _material_padding_2;
     Matrix4x4f _material_padding_3;
-    Matrix4x4f _material_padding_4;
 };
 
 // @TODO: change to unordered access buffer

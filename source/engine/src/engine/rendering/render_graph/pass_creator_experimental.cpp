@@ -150,7 +150,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     g_debug_draw_cache.cache.c_debugDrawSize = size;
     g_debug_draw_cache.cache.c_debugDrawPos = pos;
     g_debug_draw_cache.cache.c_displayChannel = p_channel;
-    g_debug_draw_cache.cache.c_debugDrawMap = p_handle;
+    g_debug_draw_cache.cache.c_debugDrawMap.gl_handle = p_handle;
     g_debug_draw_cache.update();
     RenderManager::GetSingleton().draw_quad();
 }

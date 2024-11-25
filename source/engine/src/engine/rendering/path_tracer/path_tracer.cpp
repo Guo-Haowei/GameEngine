@@ -1,5 +1,6 @@
 #include "path_tracer.h"
 
+#include "core/framework/graphics_manager.h"
 #include "scene/scene.h"
 
 namespace my {
@@ -306,15 +307,39 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
     using ecs::Entity;
     std::map<Entity, int> material_lut;
 
+    const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
+
     p_out_scene.materials.clear();
     for (auto [entity, material] : p_scene.m_MaterialComponents) {
         gpu_material_t gpu_mat;
         gpu_mat.albedo = material.baseColor;
         gpu_mat.emissive = material.emissive * gpu_mat.albedo;
         gpu_mat.roughness = material.roughness;
-        gpu_mat.reflectChance = material.metallic;
-        p_out_scene.materials.push_back(gpu_mat);
+        gpu_mat.reflect_chance = material.metallic;
 
+        auto fill_texture = [&](int p_index, int& p_out_enabled, sampler2D& p_out_handle) {
+            auto image = material.textures[p_index].image ? material.textures[p_index].image->Get() : nullptr;
+            if (image && image->gpu_texture) {
+                uint64_t handle = image->gpu_texture->GetResidentHandle();
+                if (handle) {
+                    p_out_enabled = true;
+                    if (is_opengl) {
+                        p_out_handle.gl_handle = handle;
+
+                    } else {
+                        p_out_handle.d3d_handle = Vector2i(static_cast<int>(handle));
+                    }
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        fill_texture(MaterialComponent::TEXTURE_BASE, gpu_mat.has_base_color_map, gpu_mat.base_color_map_handle);
+        fill_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, gpu_mat.has_material_map, gpu_mat.material_map_handle);
+        //fill_texture(MaterialComponent::TEXTURE_NORMAL, gpu_mat.has_normal_map, gpu_mat.normal_map_handle);
+
+        p_out_scene.materials.push_back(gpu_mat);
         material_lut[entity] = static_cast<int>(p_out_scene.materials.size()) - 1;
     }
 
@@ -341,12 +366,17 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
                 transform * Vector4f(p_mesh.normals[index2], 0.0f),
             };
 
+            Vector2f uvs[3] = {
+                p_mesh.texcoords_0[index0],
+                p_mesh.texcoords_0[index1],
+                p_mesh.texcoords_0[index2],
+            };
+
             // per-face material
             gpu_geometry_t triangle(points[0], points[1], points[2], 0);
-            // geom.uv1 = uvs[0];
-            // geom.uv2 = uvs[1];
-            // geom.uv3x = uvs[2].x;
-            // geom.uv3y = uvs[2].y;
+            triangle.uv1 = uvs[0];
+            triangle.uv2 = uvs[1];
+            triangle.uv3 = uvs[2];
             triangle.normal1 = glm::normalize(normals[0]);
             triangle.normal2 = glm::normalize(normals[1]);
             triangle.normal3 = glm::normalize(normals[2]);

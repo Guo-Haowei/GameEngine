@@ -503,48 +503,6 @@ uint64_t GraphicsManager::GetFinalImage() const {
     return 0;
 }
 
-// @TODO: remove this
-static void FillMaterialConstantBuffer(const MaterialComponent* material, MaterialConstantBuffer& cb) {
-    cb.c_baseColor = material->baseColor;
-    cb.c_metallic = material->metallic;
-    cb.c_roughness = material->roughness;
-    cb.c_emissivePower = material->emissive;
-
-    auto set_texture = [&](int p_idx,
-                           TextureHandle& p_out_handle,
-                           uint& p_out_resident_handle) {
-        p_out_handle = 0;
-        p_out_resident_handle = 0;
-
-        if (!material->textures[p_idx].enabled) {
-            return false;
-        }
-
-        ImageHandle* handle = material->textures[p_idx].image;
-        if (!handle) {
-            return false;
-        }
-
-        Image* image = handle->Get();
-        if (!image) {
-            return false;
-        }
-
-        auto texture = reinterpret_cast<GpuTexture*>(image->gpu_texture.get());
-        if (!texture) {
-            return false;
-        }
-
-        p_out_handle = texture->GetHandle();
-        p_out_resident_handle = static_cast<uint32_t>(texture->GetResidentHandle());
-        return true;
-    };
-
-    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_BaseColorMapIndex);
-    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_NormalMapIndex);
-    cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapIndex);
-}
-
 void GraphicsManager::Cleanup() {
     auto& frame_context = GetCurrentFrame();
     frame_context.batchCache.Clear();
@@ -902,6 +860,54 @@ void GraphicsManager::UpdateBloomConstants() {
 }
 
 void GraphicsManager::FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2) {
+    const bool is_opengl = m_backend == Backend::OPENGL;
+    auto FillMaterialConstantBuffer = [&](const MaterialComponent* material, MaterialConstantBuffer& cb) {
+        cb.c_baseColor = material->baseColor;
+        cb.c_metallic = material->metallic;
+        cb.c_roughness = material->roughness;
+        cb.c_emissivePower = material->emissive;
+
+        auto set_texture = [&](int p_idx,
+                               TextureHandle& p_out_handle,
+                               sampler_t& p_out_resident_handle) {
+            p_out_handle = 0;
+            p_out_resident_handle.gl_handle = 0;
+
+            if (!material->textures[p_idx].enabled) {
+                return false;
+            }
+
+            ImageHandle* handle = material->textures[p_idx].image;
+            if (!handle) {
+                return false;
+            }
+
+            Image* image = handle->Get();
+            if (!image) {
+                return false;
+            }
+
+            auto texture = reinterpret_cast<GpuTexture*>(image->gpu_texture.get());
+            if (!texture) {
+                return false;
+            }
+
+            const uint64_t resident_handle = texture->GetResidentHandle();
+
+            p_out_handle = texture->GetHandle();
+            if (is_opengl) {
+                p_out_resident_handle.gl_handle = resident_handle;
+            } else {
+                p_out_resident_handle.d3d_handle = Vector2i(static_cast<uint32_t>(resident_handle));
+            }
+            return true;
+        };
+
+        cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_BaseColorMapResidentHandle);
+        cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_NormalMapResidentHandle);
+        cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
+    };
+
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;

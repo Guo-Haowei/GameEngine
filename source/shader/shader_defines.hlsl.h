@@ -58,13 +58,6 @@ VCT_CONST float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;
 VCT_CONST float LUT_BIAS = 0.5 / LUT_SIZE;
 
 #if defined(__cplusplus)
-using uint = uint32_t;
-
-using TextureHandle = uint64_t;
-using sampler2D = uint64_t;
-using sampler3D = uint64_t;
-using samplerCube = uint64_t;
-
 #elif defined(HLSL_LANG)
 #define Vector2f   float2
 #define Vector3f   float3
