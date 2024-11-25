@@ -366,6 +366,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
 
     switch (m_backend) {
         case Backend::OPENGL:
+        case Backend::D3D11:
             m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = rg::RenderPassCreator::CreatePathTracer();
             break;
         default:
@@ -399,10 +400,13 @@ rg::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
 
 bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
     unused(p_method);
+    if (m_pathTracerGeometryBuffer) {
+        return true;
+    }
 
     // @TODO: refactor
     DEV_ASSERT(m_activeRenderGraphName == RenderGraphName::PATHTRACER);
-    DEV_ASSERT(m_backend == Backend::OPENGL);
+    DEV_ASSERT(m_backend == Backend::OPENGL || m_backend == Backend::D3D11);
 
     SceneManager* scene_manager = m_app->GetSceneManager();
     Scene* scene = scene_manager->GetScenePtr();
@@ -421,9 +425,6 @@ bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
                 .elementCount = geometry_count,
                 .initialData = gpu_scene.geometries.data(),
             };
-            if (m_pathTracerGeometryBuffer) {
-                m_bufferUpdated = true;
-            }
             m_pathTracerGeometryBuffer = *CreateStructuredBuffer(desc);
         }
         {
@@ -487,8 +488,8 @@ uint64_t GraphicsManager::GetFinalImage() const {
             texture = FindTexture(RESOURCE_TONE).get();
             break;
         case RenderGraphName::PATHTRACER:
-            // texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             texture = FindTexture(RESOURCE_PATH_TRACER).get();
+            // texture = FindTexture(RESOURCE_TONE).get();
             break;
         default:
             CRASH_NOW();

@@ -24,6 +24,7 @@ $ cmake --build . --config Debug
 
 <img src="https://github.com/Guo-Haowei/GameEngine/blob/master/resources/images/screenshots/editor.png" width="70%">
 
+<img src="https://github.com/Guo-Haowei/GameEngine/blob/master/resources/images/screenshots/path_tracer.png" width="70%">
 
 ## Graphics APIs
 

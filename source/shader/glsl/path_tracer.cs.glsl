@@ -14,7 +14,7 @@ layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 #define TWO_PI        6.28318530718
 #endif
 #define EPSILON       1e-6
-#define MAX_BOUNCE    4
+#define MAX_BOUNCE    6
 //#define MAX_BOUNCE    10
 #define RAY_T_MIN     1e-6
 #define RAY_T_MAX     9999999.0
@@ -199,7 +199,8 @@ vec3 RayColor(inout Ray ray, inout uint state) {
         } else {
             //vec2 uv = SampleSphericalMap(normalize(ray.direction));
             //radiance += texture(envTexture, uv).rgb * throughput;
-            //radiance += vec3(0.1) * throughput;
+            radiance += vec3(0.2) * throughput;
+            // radiance += vec3(0.5, 0.7, 1.0) * throughput;
             break;
         }
     }

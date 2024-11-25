@@ -16,6 +16,7 @@ public:
         bool enableVxgi = true;
         bool enableIbl = true;
         bool enableBloom = true;
+        bool enableHighlight = true;
 
         int frameWidth;
         int frameHeight;
@@ -40,6 +41,7 @@ private:
     void AddBloomPass();
     void AddTonePass();
     void AddPathTracerPass();
+    void AddPathTracerTonePass();
 
     static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
                                                   PixelFormat p_format,

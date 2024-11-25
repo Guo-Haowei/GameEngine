@@ -382,7 +382,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
             gpu_geometry_t sphere(center, radius, material_id);
             // HACK: increase emissive power
             p_out_scene.materials[material_id].emissive *= 5.0f;
-            //gpu_geometry_t sphere(center, radius, it->second);
+            // gpu_geometry_t sphere(center, radius, it->second);
             tmp_gpu_objects.push_back(sphere);
         }
     }

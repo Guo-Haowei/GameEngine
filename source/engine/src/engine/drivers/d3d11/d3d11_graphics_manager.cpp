@@ -233,7 +233,6 @@ auto D3d11GraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> 
 }
 
 auto D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
-    DEV_ASSERT(!p_desc.initialData && "TODO: initial data");
     ComPtr<ID3D11Buffer> buffer;
     ComPtr<ID3D11UnorderedAccessView> uav;
     ComPtr<ID3D11ShaderResourceView> srv;
@@ -246,7 +245,16 @@ auto D3d11GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.StructureByteStride = p_desc.elementSize;
 
-    D3D_FAIL(m_device->CreateBuffer(&buffer_desc, nullptr, buffer.GetAddressOf()),
+    D3D11_SUBRESOURCE_DATA* init_data_ref = nullptr;
+    D3D11_SUBRESOURCE_DATA init_data{};
+    if (p_desc.initialData) {
+        init_data.pSysMem = p_desc.initialData;
+        init_data.SysMemPitch = 0;
+        init_data.SysMemSlicePitch = 0;
+        init_data_ref = &init_data;
+    }
+
+    D3D_FAIL(m_device->CreateBuffer(&buffer_desc, init_data_ref, buffer.GetAddressOf()),
              "Failed to create buffer (StructuredBuffer)");
 
     D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {};
