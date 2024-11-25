@@ -113,7 +113,7 @@ auto GraphicsManager::Initialize() -> Result<void> {
 void GraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get()); e) {
         // @TODO: refactor
-        if (m_renderGraphName == RenderGraphName::PATHTRACER) {
+        if (m_backend == Backend::OPENGL) {
             GpuScene gpuScene;
             ConstructScene(*e->GetScene(), gpuScene);
 
@@ -267,7 +267,10 @@ void GraphicsManager::Update(Scene& p_scene) {
 
         // @HACK
         if (backend != Backend::VULKAN) {
-            m_renderGraph.Execute(*this);
+            auto graph = GetActiveRenderGraph();
+            if (DEV_VERIFY(graph)) {
+                graph->Execute(*this);
+            }
         }
 
         Render();
@@ -339,7 +342,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         if (it == lookup.end()) {
             return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
         } else {
-            m_renderGraphName = it->second;
+            m_activeRenderGraphName = it->second;
         }
     }
 
@@ -347,37 +350,57 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::VULKAN:
         case Backend::EMPTY:
         case Backend::METAL:
-            m_renderGraphName = RenderGraphName::DUMMY;
+            m_activeRenderGraphName = RenderGraphName::DUMMY;
             break;
         default:
             break;
     }
 
     // force to default
-    if (m_backend != Backend::OPENGL && m_renderGraphName == RenderGraphName::EXPERIMENTAL) {
+    if (m_backend != Backend::OPENGL && m_activeRenderGraphName == RenderGraphName::EXPERIMENTAL) {
         LOG_WARN("'experimental' not supported, fall back to 'default'");
-        m_renderGraphName = RenderGraphName::DEFAULT;
+        m_activeRenderGraphName = RenderGraphName::DEFAULT;
     }
 
-    switch (m_renderGraphName) {
+    switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            rg::RenderPassCreator::CreateDummy(m_renderGraph);
+            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = rg::RenderPassCreator::CreateDummy();
             break;
         case RenderGraphName::EXPERIMENTAL:
-            rg::RenderPassCreator::CreateExperimental(m_renderGraph);
+            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = rg::RenderPassCreator::CreateExperimental();
             break;
         case RenderGraphName::DEFAULT:
-            rg::RenderPassCreator::CreateDefault(m_renderGraph);
-            break;
-        case RenderGraphName::PATHTRACER:
-            rg::RenderPassCreator::CreatePathTracer(m_renderGraph);
+            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = rg::RenderPassCreator::CreateDefault();
             break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
             return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
     }
 
+    switch (m_backend) {
+        case Backend::OPENGL:
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = rg::RenderPassCreator::CreatePathTracer();
+            break;
+        default:
+            break;
+    }
+
     return Result<void>();
+}
+
+void GraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
+    ERR_FAIL_INDEX(p_name, RenderGraphName::COUNT);
+    const int index = std::to_underlying(p_name);
+    if (m_renderGraphs[index]) {
+        m_activeRenderGraphName = p_name;
+    }
+}
+
+rg::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
+    const int index = std::to_underlying(m_activeRenderGraphName);
+    ERR_FAIL_INDEX_V(index, RenderGraphName::COUNT, nullptr);
+    DEV_ASSERT(m_renderGraphs[index] != nullptr);
+    return m_renderGraphs[index].get();
 }
 
 std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
@@ -403,7 +426,7 @@ std::shared_ptr<GpuTexture> GraphicsManager::FindTexture(RenderTargetResourceNam
 
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
-    switch (m_renderGraphName) {
+    switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
             texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;

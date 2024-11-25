@@ -94,7 +94,7 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
         case Backend::OPENGL: {
-            if (gm.GetRenderGraphName() == GraphicsManager::RenderGraphName::PATHTRACER) {
+            if (gm.GetActiveRenderGraphName() == RenderGraphName::PATHTRACER) {
                 uv_min = ImVec2(0, 0);
                 uv_max = ImVec2(1, 1);
             }

@@ -851,7 +851,7 @@ void RenderPassCreator::AddPathTracerPass() {
 }
 
 /// Create pre-defined passes
-void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateDummy() {
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
@@ -862,14 +862,17 @@ void RenderPassCreator::CreateDummy(RenderGraph& p_graph) {
     config.enableBloom = false;
     config.enableIbl = false;
     config.enableVxgi = false;
-    RenderPassCreator creator(config, p_graph);
+
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(config, *graph.get());
 
     creator.AddGbufferPass();
 
-    p_graph.Compile();
+    graph->Compile();
+    return graph;
 }
 
-void RenderPassCreator::CreatePathTracer(RenderGraph& p_graph) {
+std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer() {
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
@@ -880,15 +883,17 @@ void RenderPassCreator::CreatePathTracer(RenderGraph& p_graph) {
     config.enableBloom = false;
     config.enableIbl = false;
     config.enableVxgi = false;
-    RenderPassCreator creator(config, p_graph);
 
-    creator.AddGbufferPass();
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(config, *graph.get());
+
     creator.AddPathTracerPass();
 
-    p_graph.Compile();
+    graph->Compile();
+    return graph;
 }
 
-void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault() {
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
@@ -899,7 +904,9 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     config.enableBloom = false;
     config.enableIbl = false;
     config.enableVxgi = false;
-    RenderPassCreator creator(config, p_graph);
+
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(config, *graph.get());
 
     creator.AddShadowPass();
     creator.AddGbufferPass();
@@ -910,7 +917,8 @@ void RenderPassCreator::CreateDefault(RenderGraph& p_graph) {
     creator.AddBloomPass();
     creator.AddTonePass();
 
-    p_graph.Compile();
+    graph->Compile();
+    return graph;
 }
 
 GpuTextureDesc RenderPassCreator::BuildDefaultTextureDesc(RenderTargetResourceName p_name,

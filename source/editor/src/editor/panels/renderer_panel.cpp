@@ -3,6 +3,7 @@
 #include <imgui/imgui_internal.h>
 
 #include "core/framework/common_dvars.h"
+#include "core/framework/graphics_manager.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "scene/scene.h"
@@ -50,7 +51,7 @@ void RendererPanel::UpdateInternal(Scene&) {
         int value = DVAR_GET_INT(gfx_debug_vxgi_voxel);
         ImGui::RadioButton("lighting", &value, 0);
         ImGui::SameLine();
-        ImGui::RadioButton("Normal", &value, 1);
+        ImGui::RadioButton("normal", &value, 1);
         DVAR_SET_INT(gfx_debug_vxgi_voxel, value);
     });
 
@@ -62,6 +63,24 @@ void RendererPanel::UpdateInternal(Scene&) {
         ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_bloom));
         ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);
     });
+
+    CollapseWindow("Path Tracer", []() {
+        //ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_bloom));
+        //ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);
+        auto& gm = GraphicsManager::GetSingleton();
+        int selected = (int)gm.GetActiveRenderGraphName();
+        const int prev_selected = selected;
+        for (int i = 0; i < std::to_underlying(RenderGraphName::COUNT); ++i) {
+        }
+            ImGui::RadioButton("aaa", &selected, 0);
+            ImGui::RadioButton("bbb", &selected, 1);
+            ImGui::RadioButton("ccc", &selected, 2);
+            ImGui::RadioButton("ddd", &selected, 3);
+        if (prev_selected != selected) {
+            gm.SetActiveRenderGraph((RenderGraphName)selected);
+        }
+    });
+
 }
 
 }  // namespace my

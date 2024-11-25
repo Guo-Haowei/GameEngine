@@ -93,6 +93,14 @@ struct FrameContext {
     PerFrameConstantBuffer perFrameCache;
 };
 
+enum class RenderGraphName : uint8_t {
+    DEFAULT = 0,
+    DUMMY,
+    EXPERIMENTAL,
+    PATHTRACER,
+    COUNT,
+};
+
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
@@ -102,13 +110,6 @@ public:
     static constexpr PixelFormat DEFAULT_DEPTH_STENCIL_FORMAT = PixelFormat::D32_FLOAT;
 
     using OnTextureLoadFunc = void (*)(Image* p_image);
-
-    enum class RenderGraphName : uint8_t {
-        DEFAULT = 0,
-        DUMMY,
-        EXPERIMENTAL,
-        PATHTRACER,
-    };
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
         : Module(p_name),
@@ -182,15 +183,15 @@ public:
     // @TODO: thread safety ?
     void EventReceived(std::shared_ptr<IEvent> p_event) final;
 
-    // @TODO: move to renderer
-    const rg::RenderGraph& GetActiveRenderGraph() { return m_renderGraph; }
-
     static auto Create() -> Result<std::shared_ptr<GraphicsManager>>;
 
     Backend GetBackend() const { return m_backend; }
-    RenderGraphName GetRenderGraphName() const { return m_renderGraphName; }
 
     [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
+    RenderGraphName GetActiveRenderGraphName() const { return m_activeRenderGraphName; }
+    void SetActiveRenderGraph(RenderGraphName p_name);
+    rg::RenderGraph* GetActiveRenderGraph();
+    const auto& GetRenderGraphs() const { return m_renderGraphs; }
 
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
@@ -211,10 +212,10 @@ protected:
     virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
 
     const Backend m_backend;
-    RenderGraphName m_renderGraphName{ RenderGraphName::DEFAULT };
+    RenderGraphName m_activeRenderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
-    rg::RenderGraph m_renderGraph;
+    std::array<std::unique_ptr<rg::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
 
     std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
