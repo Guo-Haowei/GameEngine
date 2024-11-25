@@ -1,5 +1,7 @@
 #include "path_tracer.h"
 
+#include <algorithm>
+
 #include "core/framework/graphics_manager.h"
 #include "scene/scene.h"
 
