@@ -65,9 +65,8 @@ protected:
 
 private:
     auto CreateInstance() -> Result<void>;
-    void CreateSwapChain(int p_width, int p_height);
-
-    GLFWwindow* m_window{ nullptr };
+    auto SelectHardware() -> Result<void>;
+    auto CreateDescriptorPool() -> Result<void>;
 };
 
 WARNING_POP()
