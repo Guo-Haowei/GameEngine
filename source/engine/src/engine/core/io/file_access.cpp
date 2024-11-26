@@ -41,6 +41,7 @@ std::string FileAccess::FixPath(std::string_view p_path) {
     switch (m_accessType) {
         case ACCESS_RESOURCE: {
             if (p_path.starts_with("@res://")) {
+                // @TODO: configure it somewhere
                 StringUtils::ReplaceFirst(fixed_path, "@res:/", ROOT_FOLDER "resources");
                 return fixed_path;
             }

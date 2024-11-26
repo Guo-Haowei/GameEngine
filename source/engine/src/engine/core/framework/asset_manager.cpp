@@ -1,5 +1,7 @@
 #include "asset_manager.h"
 
+#include <filesystem>
+
 #include "assets/loader_stbi.h"
 #include "assets/loader_tinygltf.h"
 #include "core/framework/graphics_manager.h"
@@ -15,6 +17,8 @@
 #include "plugins/loader_assimp/loader_assimp.h"
 
 namespace my {
+
+namespace fs = std::filesystem;
 
 static struct {
     // @TODO: better wake up
@@ -74,6 +78,30 @@ auto AssetManager::Initialize() -> Result<void> {
     Loader<Image>::RegisterLoader(".png", LoaderSTBI8::Create);
     Loader<Image>::RegisterLoader(".jpg", LoaderSTBI8::Create);
     Loader<Image>::RegisterLoader(".hdr", LoaderSTBI32::Create);
+
+    const fs::path assets_root = fs::path{ fs::path(ROOT_FOLDER) / "resources" / "assets" };
+    std::vector<const char*> asset_folders = {
+        "materials",
+        "meshes",
+        "animations",
+    };
+
+    for (auto folder : asset_folders) {
+        fs::path root = assets_root / folder;
+
+        for (const auto& entry : fs::directory_iterator(root)) {
+            const bool is_file = entry.is_regular_file();
+            if (!is_file) {
+                continue;
+            }
+
+            fs::path full_path = entry.path();
+            std::string extension = full_path.extension().string();
+            if (extension == ".meta") {
+                LOG_VERBOSE("file '{}' found", full_path.string());
+            }
+        }
+    }
 
     return Result<void>();
 }
