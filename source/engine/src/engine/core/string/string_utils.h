@@ -50,6 +50,27 @@ public:
         p_buffer[N - 1] = '\0';
         return result;
     }
+
+    static inline bool IsDigit(const char p_char) {
+        return p_char >= '0' && p_char <= '9';
+    }
+
+    static inline bool IsHex(char p_char) {
+        return IsDigit(p_char) || (p_char >= 'a' && p_char <= 'f') || (p_char >= 'A' && p_char <= 'F');
+    }
+
+    static char HexToInt(char p_char) {
+        if (IsDigit(p_char)) {
+            return p_char - '0';
+        }
+        if (p_char >= 'a' && p_char <= 'f') {
+            return p_char - 'a' + 10;
+        }
+        if (p_char >= 'A' && p_char <= 'F') {
+            return p_char - 'A' + 10;
+        }
+        return -1;
+    }
 };
 
 }  // namespace my

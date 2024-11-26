@@ -133,4 +133,56 @@ TEST(StringSplitter, multi_pattern) {
     }
 }
 
+TEST(StringUtils, is_digit) {
+    EXPECT_TRUE(StringUtils::IsDigit('0'));
+    EXPECT_TRUE(StringUtils::IsDigit('1'));
+    EXPECT_TRUE(StringUtils::IsDigit('2'));
+    EXPECT_TRUE(StringUtils::IsDigit('5'));
+    EXPECT_TRUE(StringUtils::IsDigit('8'));
+    EXPECT_TRUE(StringUtils::IsDigit('9'));
+    EXPECT_FALSE(StringUtils::IsDigit('9' + 1));
+    EXPECT_FALSE(StringUtils::IsDigit('A'));
+    EXPECT_FALSE(StringUtils::IsDigit('a'));
+    EXPECT_FALSE(StringUtils::IsDigit('+'));
+    EXPECT_FALSE(StringUtils::IsDigit('-'));
+}
+
+TEST(StringUtils, is_hex) {
+    EXPECT_TRUE(StringUtils::IsHex('0'));
+    EXPECT_TRUE(StringUtils::IsHex('1'));
+    EXPECT_TRUE(StringUtils::IsHex('2'));
+    EXPECT_TRUE(StringUtils::IsHex('5'));
+    EXPECT_TRUE(StringUtils::IsHex('8'));
+    EXPECT_TRUE(StringUtils::IsHex('9'));
+    EXPECT_TRUE(StringUtils::IsHex('A'));
+    EXPECT_TRUE(StringUtils::IsHex('a'));
+    EXPECT_TRUE(StringUtils::IsHex('B'));
+    EXPECT_TRUE(StringUtils::IsHex('b'));
+    EXPECT_TRUE(StringUtils::IsHex('E'));
+    EXPECT_TRUE(StringUtils::IsHex('e'));
+    EXPECT_TRUE(StringUtils::IsHex('F'));
+    EXPECT_TRUE(StringUtils::IsHex('f'));
+    EXPECT_FALSE(StringUtils::IsHex('G'));
+    EXPECT_FALSE(StringUtils::IsHex('g'));
+    EXPECT_FALSE(StringUtils::IsHex('9' + 1));
+    EXPECT_FALSE(StringUtils::IsHex('+'));
+    EXPECT_FALSE(StringUtils::IsHex('-'));
+}
+
+TEST(StringUtils, hex_to_int) {
+    EXPECT_EQ(StringUtils::HexToInt('0'), 0);
+    EXPECT_EQ(StringUtils::HexToInt('2'), 2);
+    EXPECT_EQ(StringUtils::HexToInt('5'), 5);
+    EXPECT_EQ(StringUtils::HexToInt('8'), 8);
+    EXPECT_EQ(StringUtils::HexToInt('9'), 9);
+    EXPECT_EQ(StringUtils::HexToInt('f'), 15);
+    EXPECT_EQ(StringUtils::HexToInt('F'), 15);
+    EXPECT_EQ(StringUtils::HexToInt('a'), 10);
+    EXPECT_EQ(StringUtils::HexToInt('A'), 10);
+    EXPECT_EQ(StringUtils::HexToInt('c'), 12);
+    EXPECT_EQ(StringUtils::HexToInt('E'), 14);
+    EXPECT_EQ(StringUtils::HexToInt('*'), -1);
+    EXPECT_EQ(StringUtils::HexToInt('-'), -1);
+}
+
 }  // namespace my::string_utils
