@@ -363,6 +363,8 @@ VulkanGraphicsManager::VulkanGraphicsManager() : GraphicsManager("VulkanGraphics
 }
 
 auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
+    g_SwapChainRebuild = true;
+
     auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
     DEV_ASSERT(display_manager);
     if (!display_manager) {
@@ -491,26 +493,3 @@ void VulkanGraphicsManager::Present() {
 
 }  // namespace my
 
-#if 0
-// Dear ImGui: standalone example application for Glfw + Vulkan
-// If you are new to Dear ImGui, read documentation from the docs/ folder + read the top of imgui.cpp.
-// Read online: https://github.com/ocornut/imgui/tree/master/docs
-
-// Important note to the reader who wish to integrate imgui_impl_vulkan.cpp/.h in their own engine/app.
-// - Common ImGui_ImplVulkan_XXX functions and structures are used to interface with imgui_impl_vulkan.cpp/.h.
-//   You will use those if you want to use this rendering backend in your engine/app.
-// - Helper ImGui_ImplVulkanH_XXX functions and structures are only used by this example (main.cpp) and by
-//   the backend itself (imgui_impl_vulkan.cpp), but should PROBABLY NOT be used by your own engine/app code.
-// Read comments in imgui_impl_vulkan.h.
-
-#include <stdio.h>   // printf, fprintf
-#include <stdlib.h>  // abort
-
-// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
-// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
-// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
-#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
-#pragma comment(lib, "legacy_stdio_definitions")
-#endif
-
-#endif

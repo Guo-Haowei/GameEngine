@@ -30,7 +30,7 @@ public:
     }
 
     void MakeValid() {
-        const vec_type size = glm::abs(m_max - m_min);
+        const vec_type size = m_max - m_min;
         if (size.x == 0.0f) {
             m_min.x -= BOX_MIN_SIZE;
             m_max.x += BOX_MIN_SIZE;

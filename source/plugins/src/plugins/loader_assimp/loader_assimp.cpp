@@ -13,7 +13,7 @@ bool LoaderAssimp::Load(Scene* p_data) {
     m_scene = p_data;
     Assimp::Importer importer;
 
-    unsigned int flag = aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs;
+    const uint32_t flag = aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs;
 
     const aiScene* aiscene = importer.ReadFile(m_filePath, flag);
 

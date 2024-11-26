@@ -47,17 +47,17 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         "Ctrl+O",
         [&]() { this->BufferCommand(std::make_shared<OpenProjectCommand>(true)); },
     };
+    m_shortcuts[SHORT_CUT_REDO] = {
+        "Redo",
+        "Ctrl+Shift+Z",
+        [&]() { this->BufferCommand(std::make_shared<RedoViewerCommand>()); },
+        [&]() { return this->GetUndoStack().CanRedo(); },
+    };
     m_shortcuts[SHORT_CUT_UNDO] = {
         "Undo",
         "Ctrl+Z",
         [&]() { this->BufferCommand(std::make_shared<UndoViewerCommand>()); },
         [&]() { return this->GetUndoStack().CanUndo(); },
-    };
-    m_shortcuts[SHORT_CUT_REDO] = {
-        "Redo",
-        "Ctrl+Y",
-        [&]() { this->BufferCommand(std::make_shared<RedoViewerCommand>()); },
-        [&]() { return this->GetUndoStack().CanRedo(); },
     };
 
     // @TODO: proper key mapping
