@@ -86,7 +86,7 @@ bool GlfwDisplayManager::ShouldClose() {
 
 void GlfwDisplayManager::BeginFrame() {
     glfwPollEvents();
-    //glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
+    // glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
     glfwGetWindowPos(m_window, &m_windowPos.x, &m_windowPos.y);
 
     ImGui_ImplGlfw_NewFrame();

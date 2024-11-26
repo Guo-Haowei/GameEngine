@@ -356,7 +356,7 @@ static void FramePresent(ImGui_ImplVulkanH_Window* wd) {
         return;
     }
     check_vk_result(err);
-    wd->SemaphoreIndex = (wd->SemaphoreIndex + 1) % wd->ImageCount;  // Now we can use the next set of semaphores
+    wd->SemaphoreIndex = (wd->SemaphoreIndex + 1) % wd->SemaphoreCount;  // Now we can use the next set of semaphores
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -401,43 +401,16 @@ auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
     init_info.Queue = g_Queue;
     init_info.PipelineCache = g_PipelineCache;
     init_info.DescriptorPool = g_DescriptorPool;
+    init_info.RenderPass = wd->RenderPass;
     init_info.Subpass = 0;
     init_info.MinImageCount = g_MinImageCount;
     init_info.ImageCount = wd->ImageCount;
     init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
     init_info.Allocator = g_Allocator;
     init_info.CheckVkResultFn = check_vk_result;
-    ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 
-    // Upload Fonts
-    {
-        // Use any command queue
-        VkCommandPool command_pool = wd->Frames[wd->FrameIndex].CommandPool;
-        VkCommandBuffer command_buffer = wd->Frames[wd->FrameIndex].CommandBuffer;
-
-        err = vkResetCommandPool(g_Device, command_pool, 0);
-        check_vk_result(err);
-        VkCommandBufferBeginInfo begin_info = {};
-        begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        err = vkBeginCommandBuffer(command_buffer, &begin_info);
-        check_vk_result(err);
-
-        ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-
-        VkSubmitInfo end_info = {};
-        end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        end_info.commandBufferCount = 1;
-        end_info.pCommandBuffers = &command_buffer;
-        err = vkEndCommandBuffer(command_buffer);
-        check_vk_result(err);
-        err = vkQueueSubmit(g_Queue, 1, &end_info, VK_NULL_HANDLE);
-        check_vk_result(err);
-
-        err = vkDeviceWaitIdle(g_Device);
-        check_vk_result(err);
-        ImGui_ImplVulkan_DestroyFontUploadObjects();
-    }
+    ImGui_ImplVulkan_Init(&init_info);
+    ImGui_ImplVulkan_NewFrame();
 
     CreateSwapChain(w, h);
 
@@ -456,6 +429,7 @@ void VulkanGraphicsManager::Finalize() {
 void VulkanGraphicsManager::CreateSwapChain(int p_width, int p_height) {
     DEV_ASSERT(p_width > 0);
     DEV_ASSERT(p_height > 0);
+
     ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
     ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, p_width, p_height, g_MinImageCount);
     g_MainWindowData.FrameIndex = 0;
@@ -463,11 +437,6 @@ void VulkanGraphicsManager::CreateSwapChain(int p_width, int p_height) {
 }
 
 void VulkanGraphicsManager::OnWindowResize(int p_width, int p_height) {
-    if (g_SwapChainRebuild) {
-        return;
-    }
-
-    // Resize swap chain?
     if (p_width > 0 && p_height > 0) {
         CreateSwapChain(p_width, p_height);
     }
@@ -477,7 +446,7 @@ void VulkanGraphicsManager::Present() {
     ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
 
     // Start the Dear ImGui frame
-    ImGui_ImplVulkan_NewFrame();
+    // ImGui_ImplVulkan_NewFrame();
 
     Vector4f clear_color{ 0.3f, 0.4f, 0.3f, 1.0f };
     // Rendering
@@ -506,4 +475,3 @@ void VulkanGraphicsManager::Present() {
 }
 
 }  // namespace my
-
