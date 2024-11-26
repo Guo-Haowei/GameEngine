@@ -1,5 +1,7 @@
 #include "path_tracer.h"
 
+#include <algorithm>
+
 #include "core/framework/graphics_manager.h"
 #include "scene/scene.h"
 
@@ -119,6 +121,7 @@ static int DominantAxis(const Box3& box) {
     return axis;
 }
 
+// @TODO: make it loop and also debug it visually
 Bvh::Bvh(GeometryList& geometries, Bvh* parent)
     : m_idx(genIdx()), m_parent(parent) {
     m_left = nullptr;

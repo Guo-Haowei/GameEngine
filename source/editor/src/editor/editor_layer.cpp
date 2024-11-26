@@ -47,17 +47,17 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         "Ctrl+O",
         [&]() { this->BufferCommand(std::make_shared<OpenProjectCommand>(true)); },
     };
+    m_shortcuts[SHORT_CUT_REDO] = {
+        "Redo",
+        "Ctrl+Shift+Z",
+        [&]() { this->BufferCommand(std::make_shared<RedoViewerCommand>()); },
+        [&]() { return this->GetUndoStack().CanRedo(); },
+    };
     m_shortcuts[SHORT_CUT_UNDO] = {
         "Undo",
         "Ctrl+Z",
         [&]() { this->BufferCommand(std::make_shared<UndoViewerCommand>()); },
         [&]() { return this->GetUndoStack().CanUndo(); },
-    };
-    m_shortcuts[SHORT_CUT_REDO] = {
-        "Redo",
-        "Ctrl+Y",
-        [&]() { this->BufferCommand(std::make_shared<RedoViewerCommand>()); },
-        [&]() { return this->GetUndoStack().CanRedo(); },
     };
 
     // @TODO: proper key mapping
@@ -209,14 +209,14 @@ void EditorLayer::DrawToolbar() {
 
     if (auto image = m_playButtonImage->Get(); image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
-        if (ImGui::ImageButton((ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
+        if (ImGui::ImageButton("play", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
             LOG_ERROR("Play not implemented");
         }
     }
     ImGui::SameLine();
     if (auto image = m_pauseButtonImage->Get(); image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
-        if (ImGui::ImageButton((ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
+        if (ImGui::ImageButton("pause", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
             LOG_ERROR("Pause not implemented");
         }
     }
