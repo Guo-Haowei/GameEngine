@@ -60,11 +60,12 @@ protected:
     void Present() final;
 
     void OnSceneChange(const Scene& p_scene) override {}
-    void OnWindowResize(int p_width, int p_height) override {}
+    void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) override {}
 
 private:
     auto CreateInstance() -> Result<void>;
+    void CreateSwapChain(int p_width, int p_height);
 
     GLFWwindow* m_window{ nullptr };
 };

@@ -38,11 +38,14 @@ static int g_MinImageCount = 2;
 static bool g_SwapChainRebuild = false;
 
 static void check_vk_result(VkResult err) {
-    if (err == 0)
+    if (err == 0) {
         return;
+    }
+    __debugbreak();
     fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-    if (err < 0)
+    if (err < 0) {
         abort();
+    }
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL DebugReport(VkDebugReportFlagsEXT p_flags,
@@ -436,6 +439,8 @@ auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
         ImGui_ImplVulkan_DestroyFontUploadObjects();
     }
 
+    CreateSwapChain(w, h);
+
     return Result<void>();
 }
 
@@ -448,19 +453,28 @@ void VulkanGraphicsManager::Finalize() {
     CleanupVulkan();
 }
 
+void VulkanGraphicsManager::CreateSwapChain(int p_width, int p_height) {
+    DEV_ASSERT(p_width > 0);
+    DEV_ASSERT(p_height > 0);
+    ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
+    ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, p_width, p_height, g_MinImageCount);
+    g_MainWindowData.FrameIndex = 0;
+    g_SwapChainRebuild = false;
+}
+
+void VulkanGraphicsManager::OnWindowResize(int p_width, int p_height) {
+    if (g_SwapChainRebuild) {
+        return;
+    }
+
+    // Resize swap chain?
+    if (p_width > 0 && p_height > 0) {
+        CreateSwapChain(p_width, p_height);
+    }
+}
+
 void VulkanGraphicsManager::Present() {
     ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
-    // Resize swap chain?
-    if (g_SwapChainRebuild) {
-        int width, height;
-        glfwGetFramebufferSize(m_window, &width, &height);
-        if (width > 0 && height > 0) {
-            ImGui_ImplVulkan_SetMinImageCount(g_MinImageCount);
-            ImGui_ImplVulkanH_CreateOrResizeWindow(g_Instance, g_PhysicalDevice, g_Device, &g_MainWindowData, g_QueueFamily, g_Allocator, width, height, g_MinImageCount);
-            g_MainWindowData.FrameIndex = 0;
-            g_SwapChainRebuild = false;
-        }
-    }
 
     // Start the Dear ImGui frame
     ImGui_ImplVulkan_NewFrame();
