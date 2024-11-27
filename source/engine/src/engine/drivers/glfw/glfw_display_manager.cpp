@@ -33,6 +33,8 @@ auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<vo
             }
             break;
         case my::Backend::VULKAN:
+        case my::Backend::METAL:
+        case my::Backend::EMPTY:
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             break;
         default:
@@ -51,14 +53,21 @@ auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<vo
 
     glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
 
-    if (m_backend == Backend::OPENGL) {
-        glfwMakeContextCurrent(m_window);
-        ImGui_ImplGlfw_InitForOpenGL(m_window, false);
-    } else {
-        if (!glfwVulkanSupported()) {
-            return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Vulkan not supported");
-        }
-        ImGui_ImplGlfw_InitForVulkan(m_window, false);
+    switch (m_backend) {
+        case Backend::OPENGL:
+            glfwMakeContextCurrent(m_window);
+            ImGui_ImplGlfw_InitForOpenGL(m_window, false);
+            break;
+        case Backend::VULKAN:
+            if (!glfwVulkanSupported()) {
+                return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Vulkan not supported");
+            }
+            ImGui_ImplGlfw_InitForVulkan(m_window, false);
+        case Backend::METAL:
+            //            ImGui_ImplGlfw_InitForMetal(m_window, false);
+            break;
+        default:
+            return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "backend '{}' not supported by glfw", ToString(m_backend));
     }
 
     glfwSetCursorPosCallback(m_window, CursorPosCallback);

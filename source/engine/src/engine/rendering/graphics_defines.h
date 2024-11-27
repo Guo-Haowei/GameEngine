@@ -16,7 +16,19 @@ enum class Backend : uint8_t {
 #define BACKEND_DECLARE(ENUM, ...) ENUM,
     BACKEND_LIST
 #undef BACKEND_DECLARE
+        COUNT,
 };
+
+inline const char* ToString(Backend p_backend) {
+    DEV_ASSERT_INDEX(p_backend, Backend::COUNT);
+    static const char* m_table[] = {
+#define BACKEND_DECLARE(ENUM, STR, DVAR) #DVAR,
+        BACKEND_LIST
+#undef BACKEND_DECLARE
+    };
+    static_assert(array_length(m_table) == std::to_underlying(Backend::COUNT));
+    return m_table[std::to_underlying(p_backend)];
+}
 
 enum ClearFlags : uint32_t {
     CLEAR_NONE = BIT(0),
