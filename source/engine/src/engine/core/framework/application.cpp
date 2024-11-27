@@ -106,12 +106,6 @@ void Application::MainLoop() {
         dt = glm::min(dt, 0.5f);
         timer.Start();
 
-        // HACK: skip
-        bool skip = USING(PLATFORM_APPLE);
-        if (skip) {
-            continue;
-        }
-
         m_inputManager->GetEventQueue().FlushEvents();
 
         m_sceneManager->Update(dt);

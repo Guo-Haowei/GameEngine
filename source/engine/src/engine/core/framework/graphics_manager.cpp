@@ -10,6 +10,8 @@
 #include "drivers/d3d11/d3d11_graphics_manager.h"
 #include "drivers/d3d12/d3d12_graphics_manager.h"
 #include "drivers/vk/vulkan_graphics_manager.h"
+#elif USING(PLATFORM_APPLE)
+#include "drivers/metal/metal_graphics_manager.h"
 #endif
 #include "drivers/empty/empty_graphics_manager.h"
 #include "drivers/opengl/opengl_graphics_manager.h"
@@ -170,7 +172,7 @@ auto GraphicsManager::Create() -> Result<std::shared_ptr<GraphicsManager>> {
         };
         auto create_metal_renderer = []() -> std::shared_ptr<GraphicsManager> {
 #if USING(PLATFORM_APPLE)
-            return std::make_shared<EmptyGraphicsManager>("Emtpy", Backend::EMPTY, 1);
+            return std::make_shared<MetalGraphicsManager>();
 #else
             return nullptr;
 #endif
@@ -248,7 +250,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
         // @HACK
-        if (backend != Backend::VULKAN) {
+        if (backend != Backend::VULKAN && backend != Backend::METAL) {
             auto graph = GetActiveRenderGraph();
             if (DEV_VERIFY(graph)) {
                 graph->Execute(*this);
@@ -319,10 +321,6 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         RENDER_GRAPH_LIST
 #undef RENDER_GRAPH_DECLARE
     };
-
-    if (GetBackend() == Backend::METAL) {
-        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);
-    }
 
     if (!method.empty()) {
         auto it = lookup.find(method);
