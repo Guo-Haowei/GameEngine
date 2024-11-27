@@ -100,7 +100,8 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
             }
             ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
         } break;
-        case Backend::VULKAN: {
+        case Backend::VULKAN:
+        case Backend::METAL: {
         } break;
         default:
             CRASH_NOW();

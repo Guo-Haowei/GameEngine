@@ -250,7 +250,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
         // @HACK
-        if (backend != Backend::VULKAN) {
+        if (backend != Backend::VULKAN && backend != Backend::METAL) {
             auto graph = GetActiveRenderGraph();
             if (DEV_VERIFY(graph)) {
                 graph->Execute(*this);

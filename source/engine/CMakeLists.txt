@@ -80,7 +80,12 @@ target_precompile_headers(${TARGET_NAME} PRIVATE src/engine/pch.h)
 
 if(APPLE)
     target_link_libraries(${TARGET_NAME} PRIVATE
+        "-framework Metal"
+        "-framework MetalKit"
         "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+        "-framework QuartzCore"
     )
 endif()
 

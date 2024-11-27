@@ -63,8 +63,9 @@ auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<vo
                 return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Vulkan not supported");
             }
             ImGui_ImplGlfw_InitForVulkan(m_window, false);
+            break;
         case Backend::METAL:
-            //            ImGui_ImplGlfw_InitForMetal(m_window, false);
+            ImGui_ImplGlfw_InitForOther(m_window, false);
             break;
         default:
             return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "backend '{}' not supported by glfw", ToString(m_backend));
