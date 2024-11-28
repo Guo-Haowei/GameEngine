@@ -4,6 +4,7 @@ namespace my {
 
 class IStringBuilder {
 public:
+    // @TODO: redesign the interface
     virtual void Append(char p_value) = 0;
     virtual void Append(const char* p_value) = 0;
     virtual void Append(const std::string& p_value) = 0;

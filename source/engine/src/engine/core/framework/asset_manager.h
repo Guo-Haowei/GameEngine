@@ -1,4 +1,5 @@
 #pragma once
+#include "assets/asset.h"
 #include "assets/image.h"
 #include "core/base/concurrent_queue.h"
 #include "core/base/singleton.h"
@@ -52,6 +53,8 @@ private:
     std::map<FilePath, std::unique_ptr<ImageHandle>> m_imageCache;
     std::map<FilePath, std::shared_ptr<File>> m_textCache;
     std::mutex m_imageCacheLock;
+
+    std::unordered_map<Guid, IAsset*> m_assets;
 };
 
 }  // namespace my
