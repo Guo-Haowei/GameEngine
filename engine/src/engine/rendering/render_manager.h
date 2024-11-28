@@ -40,10 +40,6 @@ private:
 
 namespace my::renderer {
 
-bool need_update_env();
-void reset_need_update_env();
-void request_env_map(const std::string& path);
-
 void register_rendering_dvars();
 
 void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc);

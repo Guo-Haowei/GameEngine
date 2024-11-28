@@ -4,6 +4,7 @@
 #include "editor/menu_bar.h"
 #include "engine/core/base/ring_buffer.h"
 #include "engine/core/framework/application.h"
+#include "engine/core/framework/layer.h"
 #include "engine/scene/scene.h"
 #include "engine/shared/undo_stack.h"
 
@@ -30,11 +31,11 @@ public:
 
     EditorLayer();
 
-    void Attach() override;
-    void Detach() override;
+    void OnAttach() override;
+    void OnDetach() override;
 
-    void Update(float dt) override;
-    void Render() override;
+    void OnUpdate(float p_time_step) override;
+    void OnImGuiRender() override;
 
     void SelectEntity(ecs::Entity p_selected);
     ecs::Entity GetSelectedEntity() const { return m_selected; }

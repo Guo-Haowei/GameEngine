@@ -16,14 +16,6 @@ bool s_need_update_env = false;
 
 namespace my::renderer {
 
-bool need_update_env() {
-    return s_need_update_env;
-}
-
-void reset_need_update_env() {
-    s_need_update_env = false;
-}
-
 void request_env_map(const std::string& path) {
     if (path == s_prev_env_map) {
         return;

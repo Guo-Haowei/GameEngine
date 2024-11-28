@@ -194,7 +194,6 @@ void Viewer::UpdateInternal(Scene& p_scene) {
         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(EditorItem::DRAG_DROP_ENV)) {
             IM_ASSERT(payload->DataSize == sizeof(const char*));
             char* dragged_data = *(char**)payload->Data;
-            renderer::request_env_map(dragged_data);
 
             // @TODO: no strdup and free
             free(dragged_data);

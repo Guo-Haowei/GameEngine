@@ -18,11 +18,11 @@ extern OpenGlMeshBuffers* g_box;
 namespace my::rg {
 
 void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
-    OPTICK_EVENT();
-
-    if (!renderer::need_update_env()) {
+    bool skip = true;
+    if (skip) {
         return;
     }
+    OPTICK_EVENT();
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
     auto cube_map = p_draw_pass->desc.colorAttachments[0];
@@ -49,7 +49,8 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
 void generate_brdf_func(const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
-    if (!renderer::need_update_env()) {
+    bool skip = true;
+    if (skip) {
         return;
     }
 
@@ -62,10 +63,11 @@ void generate_brdf_func(const DrawPass* p_draw_pass) {
 }
 
 void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
-    OPTICK_EVENT();
-    if (!renderer::need_update_env()) {
+    bool skip = true;
+    if (skip) {
         return;
     }
+    OPTICK_EVENT();
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
     const auto [width, height] = p_draw_pass->GetBufferSize();
@@ -85,10 +87,11 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
 }
 
 void prefilter_pass_func(const DrawPass* p_draw_pass) {
-    OPTICK_EVENT();
-    if (!renderer::need_update_env()) {
+    bool skip = true;
+    if (skip) {
         return;
     }
+    OPTICK_EVENT();
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_PREFILTER);
     auto [width, height] = p_draw_pass->GetBufferSize();

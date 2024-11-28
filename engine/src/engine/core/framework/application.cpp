@@ -5,6 +5,7 @@
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/display_manager.h"
+#include "engine/core/framework/layer.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/imgui_module.h"
 #include "engine/core/framework/input_manager.h"
@@ -22,6 +23,7 @@
 
 namespace my {
 
+// @TODO: refactor
 static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
 
 static void RegisterCommonDvars() {
@@ -146,7 +148,7 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
     InitLayers();
     for (auto& layer : m_layers) {
         layer->m_app = this;
-        layer->Attach();
+        layer->OnAttach();
         LOG("[Runtime] layer '{}' attached!", layer->GetName());
     }
 
@@ -159,7 +161,7 @@ void Application::Finalize() {
     DVAR_SET_IVEC2(window_resolution, w, h);
 
     for (auto& layer : m_layers) {
-        layer->Detach();
+        layer->OnDetach();
         LOG("[Runtime] layer '{}' detached!", layer->GetName());
     }
     m_layers.clear();
@@ -214,18 +216,16 @@ void Application::Run() {
         // to avoid empty renderer crash
         ImGui::NewFrame();
         for (auto& layer : m_layers) {
-            layer->Update(dt);
+            layer->OnUpdate(dt);
         }
 
         for (auto& layer : m_layers) {
-            layer->Render();
+            layer->OnImGuiRender();
         }
         ImGui::Render();
 
         m_physicsManager->Update(scene);
         m_graphicsManager->Update(scene);
-
-        renderer::reset_need_update_env();
 
         m_displayServer->Present();
 

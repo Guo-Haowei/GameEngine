@@ -1,6 +1,5 @@
 #pragma once
 #include "engine/core/framework/event_queue.h"
-#include "engine/core/framework/layer.h"
 #include "engine/core/framework/module.h"
 #include "engine/rendering/graphics_defines.h"
 
@@ -14,6 +13,8 @@ class InputManager;
 class PhysicsManager;
 class RenderManager;
 class SceneManager;
+
+class Layer;
 
 struct ApplicationSpec {
     std::string workDirectory;
@@ -56,6 +57,8 @@ private:
 
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
+
+    bool m_minimized{ false };
 
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_commandLine;

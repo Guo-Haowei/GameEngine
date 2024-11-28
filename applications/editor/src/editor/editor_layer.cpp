@@ -10,6 +10,7 @@
 #include "editor/panels/viewer.h"
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/framework/input_manager.h"
+#include "engine/core/framework/layer.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/string/string_utils.h"
@@ -125,11 +126,11 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 #endif
 }
 
-void EditorLayer::Attach() {
+void EditorLayer::OnAttach() {
     m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
 }
 
-void EditorLayer::Detach() {
+void EditorLayer::OnDetach() {
     m_app->GetInputManager()->GetEventQueue().UnregisterListener(this);
 }
 
@@ -226,7 +227,7 @@ void EditorLayer::DrawToolbar() {
     ImGui::End();
 }
 
-void EditorLayer::Update(float) {
+void EditorLayer::OnUpdate(float) {
     Scene& scene = SceneManager::GetScene();
     DockSpace(scene);
     for (auto& it : m_panels) {
@@ -238,7 +239,7 @@ void EditorLayer::Update(float) {
     m_unhandledEvents.clear();
 }
 
-void EditorLayer::Render() {
+void EditorLayer::OnImGuiRender() {
 }
 
 void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
