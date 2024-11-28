@@ -16,7 +16,7 @@ build_debug:
   stage: build
   script:
     - echo "Building project..."
-    - .\ci-scripts\build_job.bat Debug
+    - .\scripts\ci_build_job.bat Debug
   artifacts:
     paths:
     - build/
@@ -25,7 +25,7 @@ build_release:
   stage: build
   script:
     - echo "Building the project..."
-    - .\ci-scripts\build_job.bat Release
+    - .\scripts\ci_build_job.bat Release
   artifacts:
     paths:
     - build/
@@ -34,4 +34,4 @@ test_job:
   stage: test
   script:
     - echo "Running tests..."
-    - .\ci-scripts\test_job.bat
+    - .\scripts\ci_test_job.bat
