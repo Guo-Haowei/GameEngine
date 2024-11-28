@@ -18,8 +18,8 @@ class RenderManager : public Singleton<RenderManager>, public Module {
 public:
     RenderManager();
 
-    auto Initialize() -> Result<void> override;
-    void Finalize() override;
+    auto InitializeImpl() -> Result<void> override;
+    void FinalizeImpl() override;
 
     void update(Scene&) {}
 

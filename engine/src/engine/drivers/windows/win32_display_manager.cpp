@@ -4,6 +4,7 @@
 
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/graphics_manager.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/core/framework/input_manager.h"
 
 namespace my {
@@ -55,18 +56,24 @@ auto Win32DisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> 
     ::ShowWindow(m_hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(m_hwnd);
 
-    if (m_app->GetSpecification().enableImgui) {
-        ImGui_ImplWin32_Init(m_hwnd);
+    auto imgui = m_app->GetImguiManager();
+    if (imgui) {
+        imgui->SetDisplayCallbacks(
+            [this]() {
+                ImGui_ImplWin32_Init(m_hwnd);
+            },
+            []() {
+                ImGui_ImplWin32_Shutdown();
+            },
+            []() {
+                ImGui_ImplWin32_NewFrame();
+            });
     }
 
     return Result<void>();
 }
 
-void Win32DisplayManager::Finalize() {
-    if (m_app->GetSpecification().enableImgui) {
-        ImGui_ImplWin32_Shutdown();
-    }
-
+void Win32DisplayManager::FinalizeImpl() {
     ::DestroyWindow(m_hwnd);
     ::UnregisterClassW(m_wndClass.lpszClassName, m_wndClass.hInstance);
 }
@@ -96,12 +103,6 @@ void Win32DisplayManager::BeginFrame() {
             m_shouldQuit = true;
         }
     }
-
-    ImGui_ImplWin32_NewFrame();
-    // @TODO: move
-}
-
-void Win32DisplayManager::Present() {
 }
 
 LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p_lparam) {

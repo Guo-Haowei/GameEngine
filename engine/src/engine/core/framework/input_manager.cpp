@@ -4,11 +4,11 @@
 
 namespace my {
 
-auto InputManager::Initialize() -> Result<void> {
+auto InputManager::InitializeImpl() -> Result<void> {
     return Result<void>();
 }
 
-void InputManager::Finalize() {
+void InputManager::FinalizeImpl() {
 }
 
 void InputManager::BeginFrame() {

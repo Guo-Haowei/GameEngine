@@ -13,8 +13,8 @@ class InputManager : public Singleton<InputManager>, public Module {
 public:
     InputManager() : Module("InputManager") {}
 
-    auto Initialize() -> Result<void> override;
-    void Finalize() override;
+    auto InitializeImpl() -> Result<void> override;
+    void FinalizeImpl() override;
 
     void SetButton(int p_button, bool p_pressed);
 

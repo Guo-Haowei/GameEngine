@@ -24,7 +24,7 @@ class DisplayManager : public Singleton<DisplayManager>, public Module {
 public:
     DisplayManager() : Module("DisplayManager") {}
 
-    auto Initialize() -> Result<void> final;
+    auto InitializeImpl() -> Result<void> final;
 
     virtual bool ShouldClose() = 0;
 
@@ -32,7 +32,6 @@ public:
     virtual std::tuple<int, int> GetWindowPos() = 0;
 
     virtual void BeginFrame() = 0;
-    virtual void Present() = 0;
 
     static std::shared_ptr<DisplayManager> Create();
 

@@ -4,7 +4,9 @@
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/core/math/geometry.h"
+#include "engine/drivers/glfw/glfw_display_manager.h"
 #include "engine/drivers/opengl/opengl_pipeline_state_manager.h"
 #include "engine/drivers/opengl/opengl_prerequisites.h"
 #include "engine/drivers/opengl/opengl_resources.h"
@@ -13,9 +15,11 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "vsinput.glsl.h"
 
+// @NOTE: include GLFW after opengl
+#include <GLFW/glfw3.h>
+
 // @TODO: remove
 #include "engine/rendering/ltc_matrix.h"
-/////
 
 // @TODO: refactor
 using namespace my;
@@ -66,7 +70,14 @@ OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphics
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 
-auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
+auto OpenGlGraphicsManager::InitializeInternal() -> Result<void> {
+    auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
+    DEV_ASSERT(display_manager);
+    if (!display_manager) {
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "display manager is nullptr");
+    }
+    m_window = display_manager->GetGlfwWindow();
+
     if (gladLoadGL() == 0) {
         LOG_FATAL("[glad] failed to import gl functions");
         return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);
@@ -91,20 +102,23 @@ auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
 
     m_meshes.set_description("GPU-Mesh-Allocator");
 
-    if (m_app->GetSpecification().enableImgui) {
-        ImGui_ImplOpenGL3_Init();
-        ImGui_ImplOpenGL3_CreateDeviceObjects();
+    auto imgui = m_app->GetImguiManager();
+    if (imgui) {
+        imgui->SetRenderCallbacks(
+            []() {
+                ImGui_ImplOpenGL3_Init();
+                ImGui_ImplOpenGL3_CreateDeviceObjects();
+            },
+            []() {
+                ImGui_ImplOpenGL3_Shutdown();
+            });
     }
 
     return Result<void>();
 }
 
-void OpenGlGraphicsManager::Finalize() {
+void OpenGlGraphicsManager::FinalizeImpl() {
     m_pipelineStateManager->Finalize();
-
-    if (m_app->GetSpecification().enableImgui) {
-        ImGui_ImplOpenGL3_Shutdown();
-    }
 }
 
 void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
@@ -699,6 +713,16 @@ void OpenGlGraphicsManager::Render() {
 }
 
 void OpenGlGraphicsManager::Present() {
+    OPTICK_EVENT();
+
+    if (m_app->GetSpecification().enableImgui) {
+        GLFWwindow* oldContext = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(oldContext);
+    }
+
+    glfwSwapBuffers(m_window);
 }
 
 static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,

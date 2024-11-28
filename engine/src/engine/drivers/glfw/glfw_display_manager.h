@@ -9,7 +9,7 @@ enum class Backend : uint8_t;
 
 class GlfwDisplayManager : public DisplayManager {
 public:
-    void Finalize() final;
+    void FinalizeImpl() final;
 
     bool ShouldClose() final;
 
@@ -17,7 +17,6 @@ public:
     std::tuple<int, int> GetWindowPos() final;
 
     void BeginFrame() final;
-    void Present() final;
 
     GLFWwindow* GetGlfwWindow() const { return m_window; }
 

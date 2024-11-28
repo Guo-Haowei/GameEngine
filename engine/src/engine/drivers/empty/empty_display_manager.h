@@ -5,7 +5,7 @@ namespace my {
 
 class EmptyDisplayManager : public DisplayManager {
 public:
-    void Finalize() override {}
+    void FinalizeImpl() override {}
 
     bool ShouldClose() override { return true; }
 
@@ -17,7 +17,6 @@ public:
     }
 
     void BeginFrame() override {}
-    void Present() override {}
 
 protected:
     auto InitializeWindow(const WindowSpecfication&) -> Result<void> override {

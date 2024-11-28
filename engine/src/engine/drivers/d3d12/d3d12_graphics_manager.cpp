@@ -2,6 +2,8 @@
 
 #include <imgui/backends/imgui_impl_dx12.h>
 
+#include "engine/core/framework/application.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "engine/drivers/d3d_common/d3d_common.h"
@@ -88,7 +90,7 @@ D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsMan
     m_pipelineStateManager = std::make_shared<D3d12PipelineStateManager>();
 }
 
-auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
+auto D3d12GraphicsManager::InitializeInternal() -> Result<void> {
 
     auto [w, h] = DisplayManager::GetSingleton().GetWindowSize();
     DEV_ASSERT(w > 0 && h > 0);
@@ -161,26 +163,29 @@ auto D3d12GraphicsManager::InitializeImpl() -> Result<void> {
             IID_PPV_ARGS(&m_debugIndexData)));
     }
 
-    bool ok = ImGui_ImplDX12_Init(m_device.Get(),
-                                  NUM_FRAMES_IN_FLIGHT,
-                                  d3d::Convert(DEFAULT_SURFACE_FORMAT),
-                                  m_srvDescHeap.GetHeap(),
-                                  m_srvDescHeap.GetStartCpu(),
-                                  m_srvDescHeap.GetStartGpu());
-    if (!ok) {
-        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "ImGui_ImplDX12_Init failed");
+    auto imgui = m_app->GetImguiManager();
+    if (imgui) {
+        imgui->SetRenderCallbacks(
+            [this]() {
+                ImGui_ImplDX12_Init(m_device.Get(),
+                                    NUM_FRAMES_IN_FLIGHT,
+                                    d3d::Convert(DEFAULT_SURFACE_FORMAT),
+                                    m_srvDescHeap.GetHeap(),
+                                    m_srvDescHeap.GetStartCpu(),
+                                    m_srvDescHeap.GetStartGpu());
+                ImGui_ImplDX12_NewFrame();
+            },
+            []() {
+                ImGui_ImplDX12_Shutdown();
+            });
     }
-
-    ImGui_ImplDX12_NewFrame();
 
     return Result<void>();
 }
 
-void D3d12GraphicsManager::Finalize() {
+void D3d12GraphicsManager::FinalizeImpl() {
     if (m_initialized) {
         CleanupRenderTarget();
-
-        ImGui_ImplDX12_Shutdown();
 
         FinalizeGraphicsContext();
         m_copyContext.Finalize();
@@ -188,13 +193,13 @@ void D3d12GraphicsManager::Finalize() {
 }
 
 void D3d12GraphicsManager::Render() {
-    ID3D12GraphicsCommandList* cmdList = m_graphicsCommandList.Get();
+    ID3D12GraphicsCommandList* cmd_list = m_graphicsCommandList.Get();
 
     const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
     CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-    cmdList->RSSetViewports(1, &viewport);
+    cmd_list->RSSetViewports(1, &viewport);
     D3D12_RECT rect{ 0, 0, width, height };
-    cmdList->RSSetScissorRects(1, &rect);
+    cmd_list->RSSetScissorRects(1, &rect);
 
     // bind the frame buffer
     D3D12_CPU_DESCRIPTOR_HANDLE dsv_handle = m_depthStencilDescriptor;
@@ -204,25 +209,29 @@ void D3d12GraphicsManager::Render() {
     auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backbufferIndex],
                                                         D3D12_RESOURCE_STATE_PRESENT,
                                                         D3D12_RESOURCE_STATE_RENDER_TARGET);
-    cmdList->ResourceBarrier(1, &barrier);
+    cmd_list->ResourceBarrier(1, &barrier);
 
-    cmdList->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
-    cmdList->ClearRenderTargetView(rtv_handle, DEFAULT_CLEAR_COLOR, 0, nullptr);
-    cmdList->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+    cmd_list->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
+    cmd_list->ClearRenderTargetView(rtv_handle, DEFAULT_CLEAR_COLOR, 0, nullptr);
+    cmd_list->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-    ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd_list);
+    }
 
     barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_backbufferIndex],
                                                    D3D12_RESOURCE_STATE_RENDER_TARGET,
                                                    D3D12_RESOURCE_STATE_PRESENT);
-    cmdList->ResourceBarrier(1, &barrier);
+    cmd_list->ResourceBarrier(1, &barrier);
 }
 
 void D3d12GraphicsManager::Present() {
-    ImGuiIO& io = ImGui::GetIO();
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
+    if (m_app->GetSpecification().enableImgui) {
+        ImGuiIO& io = ImGui::GetIO();
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
     }
     D3D_CALL(m_swapChain->Present(1, 0));  // Present with vsync
 }

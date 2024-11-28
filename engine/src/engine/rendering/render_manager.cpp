@@ -105,14 +105,14 @@ RenderManager::RenderManager() : Module("RenderManager") {
     }
 }
 
-auto RenderManager::Initialize() -> Result<void> {
+auto RenderManager::InitializeImpl() -> Result<void> {
     m_screen_quad_buffers = GraphicsManager::GetSingleton().CreateMesh(MakePlaneMesh(Vector3f(1)));
     m_skybox_buffers = GraphicsManager::GetSingleton().CreateMesh(MakeSkyBoxMesh());
 
     return Result<void>();
 }
 
-void RenderManager::Finalize() {
+void RenderManager::FinalizeImpl() {
     m_screen_quad_buffers = nullptr;
     m_skybox_buffers = nullptr;
 

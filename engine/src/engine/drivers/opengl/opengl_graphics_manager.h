@@ -8,13 +8,15 @@ struct OpenGlMeshBuffers : public my::MeshBuffers {
     uint32_t vbos[6] = { 0 };
 };
 
+struct GLFWwindow;
+
 namespace my {
 
 class OpenGlGraphicsManager : public GraphicsManager {
 public:
     OpenGlGraphicsManager();
 
-    void Finalize() final;
+    void FinalizeImpl() final;
 
     void SetStencilRef(uint32_t p_ref) final;
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) final;
@@ -54,7 +56,7 @@ public:
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) final;
 
 protected:
-    auto InitializeImpl() -> Result<void> final;
+    auto InitializeInternal() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;
@@ -69,6 +71,8 @@ protected:
 private:
     // @TODO: rename
     RIDAllocator<OpenGlMeshBuffers> m_meshes;
+
+    GLFWwindow* m_window;
 
     struct {
         CullMode cullMode;

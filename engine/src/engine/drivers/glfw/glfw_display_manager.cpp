@@ -6,6 +6,7 @@
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/common_dvars.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/rendering/graphics_dvars.h"
 
@@ -70,32 +71,38 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
     glfwSetScrollCallback(m_window, ScrollCallback);
     glfwSetFramebufferSizeCallback(m_window, FramebufferSizeCallback);
 
-    if (m_app->GetSpecification().enableImgui) {
-        switch (m_backend) {
-            case Backend::OPENGL:
-                ImGui_ImplGlfw_InitForOpenGL(m_window, false);
-                break;
-            case Backend::VULKAN:
-                ImGui_ImplGlfw_InitForVulkan(m_window, false);
-                break;
-            default:
-                ImGui_ImplGlfw_InitForOther(m_window, false);
-                break;
-        }
+    auto imgui = m_app->GetImguiManager();
+    if (imgui) {
+        imgui->SetDisplayCallbacks(
+            [this]() {
+                switch (m_backend) {
+                    case Backend::OPENGL:
+                        ImGui_ImplGlfw_InitForOpenGL(m_window, false);
+                        break;
+                    case Backend::VULKAN:
+                        ImGui_ImplGlfw_InitForVulkan(m_window, false);
+                        break;
+                    default:
+                        ImGui_ImplGlfw_InitForOther(m_window, false);
+                        break;
+                }
 
-        glfwSetWindowFocusCallback(m_window, ImGui_ImplGlfw_WindowFocusCallback);
-        glfwSetCursorEnterCallback(m_window, ImGui_ImplGlfw_CursorEnterCallback);
-        glfwSetCharCallback(m_window, ImGui_ImplGlfw_CharCallback);
+                glfwSetWindowFocusCallback(m_window, ImGui_ImplGlfw_WindowFocusCallback);
+                glfwSetCursorEnterCallback(m_window, ImGui_ImplGlfw_CursorEnterCallback);
+                glfwSetCharCallback(m_window, ImGui_ImplGlfw_CharCallback);
+            },
+            []() {
+                ImGui_ImplGlfw_Shutdown();
+            },
+            []() {
+                ImGui_ImplGlfw_NewFrame();
+            });
     }
 
     return Result<void>();
 }
 
-void GlfwDisplayManager::Finalize() {
-    if (m_app->GetSpecification().enableImgui) {
-        ImGui_ImplGlfw_Shutdown();
-    }
-
+void GlfwDisplayManager::FinalizeImpl() {
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
@@ -108,30 +115,11 @@ void GlfwDisplayManager::BeginFrame() {
     glfwPollEvents();
     // glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
     glfwGetWindowPos(m_window, &m_windowPos.x, &m_windowPos.y);
-
-    if (m_app->GetSpecification().enableImgui) {
-        ImGui_ImplGlfw_NewFrame();
-    }
 }
 
 std::tuple<int, int> GlfwDisplayManager::GetWindowSize() { return std::tuple<int, int>(m_frameSize.x, m_frameSize.y); }
 
 std::tuple<int, int> GlfwDisplayManager::GetWindowPos() { return std::tuple<int, int>(m_windowPos.x, m_windowPos.y); }
-
-void GlfwDisplayManager::Present() {
-    if (m_backend == Backend::OPENGL) {
-        OPTICK_EVENT();
-
-        if (m_app->GetSpecification().enableImgui) {
-            GLFWwindow* oldContext = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(oldContext);
-        }
-
-        glfwSwapBuffers(m_window);
-    }
-}
 
 void GlfwDisplayManager::CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y) {
     auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));

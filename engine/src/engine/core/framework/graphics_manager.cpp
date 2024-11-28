@@ -71,7 +71,7 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     p_buffer.buffer = *GraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
-auto GraphicsManager::Initialize() -> Result<void> {
+auto GraphicsManager::InitializeImpl() -> Result<void> {
     m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
 
     const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
@@ -79,7 +79,7 @@ auto GraphicsManager::Initialize() -> Result<void> {
     for (int i = 0; i < num_frames; ++i) {
         m_frameContexts[i] = CreateFrameContext();
     }
-    if (auto res = InitializeImpl(); !res) {
+    if (auto res = InitializeInternal(); !res) {
         return HBN_ERROR(res.error());
     }
     if (auto res = SelectRenderGraph(); !res) {
