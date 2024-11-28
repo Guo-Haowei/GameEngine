@@ -5,7 +5,8 @@ import subprocess
 import sys
 
 project_dir = os.path.dirname(os.path.abspath(__file__))
-generated_dir = os.path.join(project_dir, 'source/shader/glsl_generated')
+shader_source_dir = 'engine/shader'
+generated_dir = os.path.join(project_dir, f'{shader_source_dir}/glsl_generated')
 
 dxc_path = os.path.join(project_dir, 'bin/dxc')
 spriv_cross_path = os.path.join(project_dir, 'bin/spirv-cross')
@@ -52,7 +53,7 @@ def insert_file_name(file_path):
 def generate(hlsl_source):
     full_input_path = os.path.join(
         project_dir,
-        f'source/shader/hlsl/{hlsl_source}.hlsl')
+        f'{shader_source_dir}/hlsl/{hlsl_source}.hlsl')
     # shader model
     shader_model = ''
     if hlsl_source.endswith('.vs'):
@@ -70,7 +71,7 @@ def generate(hlsl_source):
     glsl_file = f'{generated_dir}/{hlsl_source}.glsl'
 
     # generate shader
-    include_path = os.path.join(project_dir, 'source/shader/')
+    include_path = os.path.join(project_dir, shader_source_dir)
 
     spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1', '-D HLSL_LANG_D3D11=1']
     generate_files = [ { 'filename': glsl_file, 'command' : spv_command } ]
@@ -103,7 +104,7 @@ def func_generate_files():
         generate(file)
 
 def func_insert_names():
-    for root, _, files in os.walk('source/shader', topdown=False):
+    for root, _, files in os.walk(shader_source_dir, topdown=False):
         for name in files:
             file_path = os.path.join(root, name)
             _, file_ext = os.path.splitext(file_path)

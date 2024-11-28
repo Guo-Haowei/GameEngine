@@ -83,12 +83,12 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::st
 static auto CreateShader(std::string_view p_file, GLenum p_type) -> Result<GLuint> {
     std::string file{ p_file };
     file.append(".glsl");
-    fs::path fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl_generated" / file;
+    fs::path fullpath = fs::path{ ROOT_FOLDER } / "engine" / "shader" / "glsl_generated" / file;
 
     bool is_generated = true;
     if (!fs::exists(fullpath)) {
         is_generated = false;
-        fullpath = fs::path{ ROOT_FOLDER } / "source" / "shader" / "glsl" / file;
+        fullpath = fs::path{ ROOT_FOLDER } / "engine" / "shader" / "glsl" / file;
     }
 
     auto result = ProcessShader(fullpath, 0);

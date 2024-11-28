@@ -13,7 +13,7 @@ target_include_directories(${TARGET_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/assimp/include
     ${PROJECT_SOURCE_DIR}/engine/src
-    ${PROJECT_SOURCE_DIR}/source/shader
+    ${PROJECT_SOURCE_DIR}/engine/shader
 )
 
 target_set_warning_level(${TARGET_NAME})

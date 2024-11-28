@@ -35,7 +35,7 @@ public:
     STDMETHOD(Open)
     (D3D_INCLUDE_TYPE, LPCSTR p_file, LPCVOID, LPCVOID* p_out_data, UINT* p_bytes) override {
         // @TODO: fix search
-        FilePath path = FilePath{ ROOT_FOLDER } / "source/shader/" / p_file;
+        FilePath path = FilePath{ ROOT_FOLDER } / "engine/shader/" / p_file;
 
         auto res = AssetManager::GetSingleton().LoadFileSync(path);
         if (!res) {
@@ -64,7 +64,7 @@ public:
 auto CompileShader(std::string_view p_path,
                    const char* p_target,
                    const D3D_SHADER_MACRO* p_defines) -> Result<ComPtr<ID3DBlob>> {
-    fs::path name = fs::path("source") / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
+    fs::path name = fs::path("engine") / "shader" / "hlsl" / (std::string(p_path) + ".hlsl");
     fs::path fullpath = fs::path{ ROOT_FOLDER } / name;
     std::string fullpath_str = fullpath.string();
 
