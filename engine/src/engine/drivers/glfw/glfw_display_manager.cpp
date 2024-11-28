@@ -52,16 +52,13 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
     switch (m_backend) {
         case Backend::OPENGL:
             glfwMakeContextCurrent(m_window);
-            ImGui_ImplGlfw_InitForOpenGL(m_window, false);
             break;
         case Backend::VULKAN:
             if (!glfwVulkanSupported()) {
                 return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Vulkan not supported");
             }
-            ImGui_ImplGlfw_InitForVulkan(m_window, false);
             break;
         case Backend::METAL:
-            ImGui_ImplGlfw_InitForOther(m_window, false);
             break;
         default:
             return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "backend '{}' not supported by glfw", ToString(m_backend));
@@ -73,15 +70,32 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
     glfwSetScrollCallback(m_window, ScrollCallback);
     glfwSetFramebufferSizeCallback(m_window, FramebufferSizeCallback);
 
-    glfwSetWindowFocusCallback(m_window, ImGui_ImplGlfw_WindowFocusCallback);
-    glfwSetCursorEnterCallback(m_window, ImGui_ImplGlfw_CursorEnterCallback);
-    glfwSetCharCallback(m_window, ImGui_ImplGlfw_CharCallback);
+    if (m_app->GetSpecification().enableImgui) {
+        switch (m_backend) {
+            case Backend::OPENGL:
+                ImGui_ImplGlfw_InitForOpenGL(m_window, false);
+                break;
+            case Backend::VULKAN:
+                ImGui_ImplGlfw_InitForVulkan(m_window, false);
+                break;
+            default:
+                ImGui_ImplGlfw_InitForOther(m_window, false);
+                break;
+        }
+
+        glfwSetWindowFocusCallback(m_window, ImGui_ImplGlfw_WindowFocusCallback);
+        glfwSetCursorEnterCallback(m_window, ImGui_ImplGlfw_CursorEnterCallback);
+        glfwSetCharCallback(m_window, ImGui_ImplGlfw_CharCallback);
+    }
 
     return Result<void>();
 }
 
 void GlfwDisplayManager::Finalize() {
-    ImGui_ImplGlfw_Shutdown();
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplGlfw_Shutdown();
+    }
+
     glfwDestroyWindow(m_window);
     glfwTerminate();
 }
@@ -95,7 +109,9 @@ void GlfwDisplayManager::BeginFrame() {
     // glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
     glfwGetWindowPos(m_window, &m_windowPos.x, &m_windowPos.y);
 
-    ImGui_ImplGlfw_NewFrame();
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplGlfw_NewFrame();
+    }
 }
 
 std::tuple<int, int> GlfwDisplayManager::GetWindowSize() { return std::tuple<int, int>(m_frameSize.x, m_frameSize.y); }
@@ -106,17 +122,23 @@ void GlfwDisplayManager::Present() {
     if (m_backend == Backend::OPENGL) {
         OPTICK_EVENT();
 
-        GLFWwindow* oldContext = glfwGetCurrentContext();
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(oldContext);
+        if (m_app->GetSpecification().enableImgui) {
+            GLFWwindow* oldContext = glfwGetCurrentContext();
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+            glfwMakeContextCurrent(oldContext);
+        }
 
         glfwSwapBuffers(m_window);
     }
 }
 
 void GlfwDisplayManager::CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y) {
-    ImGui_ImplGlfw_CursorPosCallback(p_window, p_x, p_y);
+    auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    if (window->m_app->GetSpecification().enableImgui) {
+        ImGui_ImplGlfw_CursorPosCallback(p_window, p_x, p_y);
+    }
+
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
         InputManager::GetSingleton().SetCursor(static_cast<float>(p_x), static_cast<float>(p_y));
@@ -127,7 +149,10 @@ void GlfwDisplayManager::MouseButtonCallback(GLFWwindow* p_window,
                                              int p_button,
                                              int p_action,
                                              int p_mods) {
-    ImGui_ImplGlfw_MouseButtonCallback(p_window, p_button, p_action, p_mods);
+    auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    if (window->m_app->GetSpecification().enableImgui) {
+        ImGui_ImplGlfw_MouseButtonCallback(p_window, p_button, p_action, p_mods);
+    }
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
@@ -144,9 +169,11 @@ void GlfwDisplayManager::KeyCallback(GLFWwindow* p_window,
                                      int p_scancode,
                                      int p_action,
                                      int p_mods) {
-    ImGui_ImplGlfw_KeyCallback(p_window, p_keycode, p_scancode, p_action, p_mods);
-
     auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    if (window->m_app->GetSpecification().enableImgui) {
+        ImGui_ImplGlfw_KeyCallback(p_window, p_keycode, p_scancode, p_action, p_mods);
+    }
+
     auto& keyMapping = window->m_keyMapping;
 
     // if (!ImGui::GetIO().WantCaptureKeyboard)
@@ -165,7 +192,10 @@ void GlfwDisplayManager::KeyCallback(GLFWwindow* p_window,
 void GlfwDisplayManager::ScrollCallback(GLFWwindow* p_window,
                                         double p_xoffset,
                                         double p_yoffset) {
-    ImGui_ImplGlfw_ScrollCallback(p_window, p_xoffset, p_yoffset);
+    auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    if (window->m_app->GetSpecification().enableImgui) {
+        ImGui_ImplGlfw_ScrollCallback(p_window, p_xoffset, p_yoffset);
+    }
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     {

@@ -6,6 +6,8 @@ namespace my {
 class FileAccess {
 public:
     using CreateFunc = FileAccess* (*)(void);
+    using GetUserFolderFunc = std::function<const char*()>;
+    using GetResourceFolderFunc = std::function<const char*()>;
 
     enum AccessType {
         ACCESS_FILESYSTEM,
@@ -30,6 +32,11 @@ public:
     virtual bool WriteBuffer(const void* p_data, size_t p_size) = 0;
 
     AccessType GetAccessType() const { return m_accessType; }
+
+    static void SetFolderCallback(GetUserFolderFunc p_user_func, GetResourceFolderFunc p_resource_func) {
+        s_getUserFolderFunc = p_user_func;
+        s_getResourceFolderFunc = p_resource_func;
+    }
 
     static auto Create(AccessType p_access_type) -> std::shared_ptr<FileAccess>;
     static auto CreateForPath(std::string_view p_path) -> std::shared_ptr<FileAccess>;
@@ -60,6 +67,9 @@ private:
     static FileAccess* CreateBuiltin() {
         return new T;
     }
+
+    static GetUserFolderFunc s_getUserFolderFunc;
+    static GetResourceFolderFunc s_getResourceFolderFunc;
 };
 
 }  // namespace my

@@ -2,6 +2,7 @@
 
 #include "engine/assets/image.h"
 #include "engine/core/debugger/profiler.h"
+#include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/math/geometry.h"
 #include "engine/drivers/opengl/opengl_pipeline_state_manager.h"
@@ -86,12 +87,14 @@ auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
         }
     }
 
-    ImGui_ImplOpenGL3_Init();
-    ImGui_ImplOpenGL3_CreateDeviceObjects();
-
     CreateGpuResources();
 
     m_meshes.set_description("GPU-Mesh-Allocator");
+
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplOpenGL3_Init();
+        ImGui_ImplOpenGL3_CreateDeviceObjects();
+    }
 
     return Result<void>();
 }
@@ -99,7 +102,9 @@ auto OpenGlGraphicsManager::InitializeImpl() -> Result<void> {
 void OpenGlGraphicsManager::Finalize() {
     m_pipelineStateManager->Finalize();
 
-    ImGui_ImplOpenGL3_Shutdown();
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplOpenGL3_Shutdown();
+    }
 }
 
 void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
@@ -688,7 +693,9 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 
 void OpenGlGraphicsManager::Render() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
 }
 
 void OpenGlGraphicsManager::Present() {

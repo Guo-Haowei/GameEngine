@@ -8,7 +8,6 @@ namespace my {
 class AssetManager;
 class DisplayManager;
 class GraphicsManager;
-class ImGuiModule;
 class InputManager;
 class PhysicsManager;
 class RenderManager;
@@ -17,7 +16,7 @@ class SceneManager;
 class Layer;
 
 struct ApplicationSpec {
-    std::string workDirectory;
+    std::string_view rootDirectory;
     std::string_view name;
     int width;
     int height;
@@ -58,12 +57,17 @@ private:
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
 
+    auto InitializeImgui() -> Result<void>;
+    void FinalizeImgui();
+
     bool m_minimized{ false };
 
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_commandLine;
     std::string m_appName;
-    std::string m_workingDirectory;
+    std::string m_userFolder;
+    std::string m_resourceFolder;
+    std::string m_imguiSettingsPath;
     ApplicationSpec m_specification;
 
     EventQueue m_eventQueue;
@@ -75,7 +79,6 @@ private:
     std::shared_ptr<GraphicsManager> m_graphicsManager;
     // @TODO: remove render manager
     std::shared_ptr<RenderManager> m_renderManager;
-    std::shared_ptr<ImGuiModule> m_imguiModule;
     std::shared_ptr<InputManager> m_inputManager;
 
     std::vector<Module*> m_modules;

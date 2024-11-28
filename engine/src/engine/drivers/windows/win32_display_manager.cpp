@@ -55,13 +55,17 @@ auto Win32DisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> 
     ::ShowWindow(m_hwnd, SW_SHOWDEFAULT);
     ::UpdateWindow(m_hwnd);
 
-    ImGui_ImplWin32_Init(m_hwnd);
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplWin32_Init(m_hwnd);
+    }
 
     return Result<void>();
 }
 
 void Win32DisplayManager::Finalize() {
-    ImGui_ImplWin32_Shutdown();
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplWin32_Shutdown();
+    }
 
     ::DestroyWindow(m_hwnd);
     ::UnregisterClassW(m_wndClass.lpszClassName, m_wndClass.hInstance);
