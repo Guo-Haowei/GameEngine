@@ -1,7 +1,7 @@
 #include "log_panel.h"
 
-#include "core/io/logger.h"
-#include "core/math/color.h"
+#include "engine/core/io/logger.h"
+#include "engine/core/math/color.h"
 
 namespace my {
 

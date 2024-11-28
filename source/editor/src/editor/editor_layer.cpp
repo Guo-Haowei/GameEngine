@@ -2,11 +2,11 @@
 
 #include <imgui/imgui_internal.h>
 
-#include "core/framework/asset_manager.h"
-#include "core/framework/input_manager.h"
-#include "core/framework/scene_manager.h"
-#include "core/io/input_event.h"
-#include "core/string/string_utils.h"
+#include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/input_manager.h"
+#include "engine/core/framework/scene_manager.h"
+#include "engine/core/io/input_event.h"
+#include "engine/core/string/string_utils.h"
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"

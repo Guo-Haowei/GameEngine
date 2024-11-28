@@ -2,8 +2,8 @@
 
 #include <imgui/imgui_internal.h>
 
-#include "core/framework/common_dvars.h"
-#include "core/framework/graphics_manager.h"
+#include "engine/core/framework/common_dvars.h"
+#include "engine/core/framework/graphics_manager.h"
 #include "rendering/graphics_dvars.h"
 #include "rendering/render_graph/render_graph_defines.h"
 #include "scene/scene.h"

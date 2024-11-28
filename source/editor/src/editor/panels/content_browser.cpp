@@ -1,8 +1,8 @@
 #include "content_browser.h"
 
-#include "core/framework/asset_manager.h"
-#include "core/framework/common_dvars.h"
-#include "core/string/string_utils.h"
+#include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/common_dvars.h"
+#include "engine/core/string/string_utils.h"
 #include "editor/panels/panel_util.h"
 
 namespace my {

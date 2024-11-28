@@ -1,7 +1,7 @@
 #include "menu_bar.h"
 
-#include "core/framework/graphics_manager.h"
-#include "core/framework/input_manager.h"
+#include "engine/core/framework/graphics_manager.h"
+#include "engine/core/framework/input_manager.h"
 #include "editor/editor_layer.h"
 
 namespace my {

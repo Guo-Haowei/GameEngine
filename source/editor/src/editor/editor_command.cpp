@@ -1,10 +1,10 @@
 #include "editor_command.h"
 
-#include "core/framework/common_dvars.h"
+#include "engine/core/framework/common_dvars.h"
 #include "drivers/windows/dialog.h"
 #include "editor_layer.h"
 // @TODO: refactor
-#include "core/framework/scene_manager.h"
+#include "engine/core/framework/scene_manager.h"
 
 namespace my {
 

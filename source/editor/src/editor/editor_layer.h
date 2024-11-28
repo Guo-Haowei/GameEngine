@@ -1,6 +1,6 @@
 #pragma once
-#include "core/base/ring_buffer.h"
-#include "core/framework/application.h"
+#include "engine/core/base/ring_buffer.h"
+#include "engine/core/framework/application.h"
 #include "editor/editor_command.h"
 #include "editor/editor_window.h"
 #include "editor/menu_bar.h"
