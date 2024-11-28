@@ -1,6 +1,6 @@
 #pragma once
 #include "editor/editor_item.h"
-#include "scene/scene.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 

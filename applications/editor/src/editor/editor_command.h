@@ -1,6 +1,6 @@
 #pragma once
-#include "scene/scene.h"
-#include "shared/undo_command.h"
+#include "engine/scene/scene.h"
+#include "engine/shared/undo_command.h"
 
 namespace my {
 

@@ -4,9 +4,9 @@
 
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/graphics_manager.h"
-#include "rendering/graphics_dvars.h"
-#include "rendering/render_graph/render_graph_defines.h"
-#include "scene/scene.h"
+#include "engine/rendering/graphics_dvars.h"
+#include "engine/rendering/render_graph/render_graph_defines.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 

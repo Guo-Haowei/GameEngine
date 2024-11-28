@@ -1,5 +1,5 @@
 #pragma once
-#include "assets/image.h"
+#include "engine/assets/image.h"
 #include "editor/editor_window.h"
 
 namespace my {

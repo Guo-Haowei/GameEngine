@@ -4,8 +4,8 @@
 #include "editor/editor_command.h"
 #include "editor/editor_window.h"
 #include "editor/menu_bar.h"
-#include "scene/scene.h"
-#include "shared/undo_stack.h"
+#include "engine/scene/scene.h"
+#include "engine/shared/undo_stack.h"
 
 namespace my {
 

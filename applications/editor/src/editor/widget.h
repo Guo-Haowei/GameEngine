@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/core/math/geomath.h"
-#include "scene/scene.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 

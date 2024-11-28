@@ -1,6 +1,6 @@
 #include "panel_util.h"
 
-#include "scene/scene.h"
+#include "engine/scene/scene.h"
 
 namespace my::panel_util {
 

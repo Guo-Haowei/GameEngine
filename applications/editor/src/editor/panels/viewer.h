@@ -1,6 +1,6 @@
 #pragma once
 #include "editor/editor_window.h"
-#include "scene/camera_controller.h"
+#include "engine/scene/camera_controller.h"
 
 namespace my {
 

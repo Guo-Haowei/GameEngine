@@ -11,8 +11,8 @@
 #include "engine/core/math/ray.h"
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
-#include "rendering/graphics_dvars.h"
-#include "rendering/render_manager.h"
+#include "engine/rendering/graphics_dvars.h"
+#include "engine/rendering/render_manager.h"
 
 namespace my {
 
