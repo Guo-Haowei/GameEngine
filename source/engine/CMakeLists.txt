@@ -12,13 +12,13 @@ set(FILTERED_SRC "")
 foreach(file ${SRC})
     if(WIN32)
         if(file MATCHES "apple" OR file MATCHES "metal" )
-            # message("- ${file}")
+            # filtered
         else()
             list(APPEND FILTERED_SRC ${file})
         endif()
     elseif(APPLE)
         if(file MATCHES "d3d" OR file MATCHES "windows" OR file MATCHES "vk")
-            # message("- ${file}")
+            # filtered
         else()
             list(APPEND FILTERED_SRC ${file})
         endif()
@@ -80,7 +80,12 @@ target_precompile_headers(${TARGET_NAME} PRIVATE src/engine/pch.h)
 
 if(APPLE)
     target_link_libraries(${TARGET_NAME} PRIVATE
+        "-framework Metal"
+        "-framework MetalKit"
         "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreVideo"
+        "-framework QuartzCore"
     )
 endif()
 
