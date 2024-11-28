@@ -1,6 +1,5 @@
-#include "engine/core/framework/entry_point.h"
-
 #include "editor/editor_layer.h"
+#include "engine/core/framework/entry_point.h"
 
 class Editor : public my::Application {
 public:

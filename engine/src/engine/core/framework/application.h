@@ -2,7 +2,6 @@
 #include "engine/core/framework/event_queue.h"
 #include "engine/core/framework/layer.h"
 #include "engine/core/framework/module.h"
-#include "engine/core/os/os.h"
 
 namespace my {
 
@@ -45,8 +44,6 @@ private:
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_commandLine;
     std::string m_appName;
-
-    std::shared_ptr<OS> m_os;
 
     EventQueue m_eventQueue;
 

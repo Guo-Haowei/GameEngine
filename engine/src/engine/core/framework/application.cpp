@@ -13,7 +13,6 @@
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_builder.h"
-#include "engine/core/systems/job_system.h"
 #include "engine/rendering/graphics_dvars.h"
 #include "engine/rendering/render_manager.h"
 #include "imgui/imgui.h"
@@ -148,19 +147,11 @@ void Application::MainLoop() {
 }
 
 auto Application::Setup() -> Result<void> {
-    m_os = std::make_shared<OS>();
-
-    // intialize
-    m_os->Initialize();
-
     // dvars
     RegisterCommonDvars();
     renderer::register_rendering_dvars();
     DynamicVariableManager::deserialize();
     DynamicVariableManager::Parse(m_commandLine);
-
-    thread::Initialize();
-    jobsystem::Initialize();
 
     if (auto res = SetupModules(); !res) {
         return HBN_ERROR(res.error());
@@ -199,9 +190,6 @@ int Application::Run(int p_argc, const char** p_argv) {
         LOG_VERBOSE("module '{}' finalized", module->GetName());
     }
 
-    jobsystem::Finalize();
-    thread::Finailize();
-
 #if 0
     LOG_ERROR("This is an error");
     LOG_VERBOSE("This is a verbose log");
@@ -212,8 +200,6 @@ int Application::Run(int p_argc, const char** p_argv) {
 #endif
 
     DynamicVariableManager::Serialize();
-
-    m_os->Finalize();
 
     return res ? 0 : 1;
 }
