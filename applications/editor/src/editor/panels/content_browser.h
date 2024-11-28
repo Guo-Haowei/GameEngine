@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/assets/image.h"
 #include "editor/editor_window.h"
+#include "engine/assets/image.h"
 
 namespace my {
 

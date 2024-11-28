@@ -2,6 +2,8 @@
 
 #include <imgui/imgui_internal.h>
 
+#include "editor/editor_layer.h"
+#include "editor/utility/imguizmo.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/graphics_manager.h"
@@ -9,8 +11,6 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/math/ray.h"
-#include "editor/editor_layer.h"
-#include "editor/utility/imguizmo.h"
 #include "engine/rendering/graphics_dvars.h"
 #include "engine/rendering/render_manager.h"
 

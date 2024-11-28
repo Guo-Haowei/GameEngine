@@ -1,9 +1,9 @@
 #include "content_browser.h"
 
+#include "editor/panels/panel_util.h"
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/string/string_utils.h"
-#include "editor/panels/panel_util.h"
 
 namespace my {
 

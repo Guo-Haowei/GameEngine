@@ -2,11 +2,11 @@
 
 // @TODO: remove this
 #include "ImGuizmo/ImGuizmo.h"
-#include "engine/core/framework/scene_manager.h"
-#include "engine/core/string/string_utils.h"
 #include "editor/editor_layer.h"
 #include "editor/panels/panel_util.h"
 #include "editor/widget.h"
+#include "engine/core/framework/scene_manager.h"
+#include "engine/core/string/string_utils.h"
 
 namespace my {
 

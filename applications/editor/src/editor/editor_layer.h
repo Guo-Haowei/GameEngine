@@ -1,9 +1,9 @@
 #pragma once
-#include "engine/core/base/ring_buffer.h"
-#include "engine/core/framework/application.h"
 #include "editor/editor_command.h"
 #include "editor/editor_window.h"
 #include "editor/menu_bar.h"
+#include "engine/core/base/ring_buffer.h"
+#include "engine/core/framework/application.h"
 #include "engine/scene/scene.h"
 #include "engine/shared/undo_stack.h"
 

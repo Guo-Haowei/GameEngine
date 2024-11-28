@@ -16,4 +16,3 @@ my::Application* CreateApplication() {
 int main(int p_argc, const char** p_argv) {
     return my::Main(p_argc, p_argv);
 }
-

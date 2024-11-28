@@ -3,7 +3,10 @@ import re
 import subprocess
 import platform
 
-project_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
+project_dir = os.path.abspath(project_dir)
+print(project_dir)
+
 clang_format_path = os.path.join(project_dir, 'bin/clang-format')
 if platform.system() == 'Darwin':
     clang_format_path = 'clang-format'
