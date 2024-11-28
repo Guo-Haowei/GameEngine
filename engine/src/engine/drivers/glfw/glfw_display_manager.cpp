@@ -6,51 +6,47 @@
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/common_dvars.h"
-#include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/rendering/graphics_dvars.h"
 
 namespace my {
 
-auto GlfwDisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<void> {
-    if (DEV_VERIFY(m_app->GetGraphicsManager())) {
-        m_backend = m_app->GetGraphicsManager()->GetBackend();
-    }
+auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> Result<void> {
+    m_backend = p_spec.backend;
 
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
     glfwInit();
 
-    bool frameless = false;
-    glfwWindowHint(GLFW_DECORATED, !frameless);
+    glfwWindowHint(GLFW_DECORATED, p_spec.decorated);
+    // @TODO: resizable
+    // @TODO: fullscreen
 
     switch (m_backend) {
-        case my::Backend::OPENGL:
+        case Backend::OPENGL:
             glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
             glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
             if (DVAR_GET_BOOL(gfx_gpu_validation)) {
                 glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
             }
             break;
-        case my::Backend::VULKAN:
-        case my::Backend::METAL:
-        case my::Backend::EMPTY:
+        case Backend::VULKAN:
+        case Backend::METAL:
+        case Backend::EMPTY:
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             break;
         default:
             return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER);
     }
 
-    m_window = glfwCreateWindow(p_info.width,
-                                p_info.height,
-                                p_info.title.c_str(),
+    m_window = glfwCreateWindow(p_spec.width,
+                                p_spec.height,
+                                p_spec.title.c_str(),
                                 nullptr, nullptr);
     DEV_ASSERT(m_window);
 
     glfwSetWindowUserPointer(m_window, this);
-
-    glfwSetWindowPos(m_window, 40, 40);
-
+    glfwSetWindowPos(m_window, 30, 30);
     glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
 
     switch (m_backend) {

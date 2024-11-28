@@ -14,7 +14,7 @@ auto FileAccess::Create(AccessType p_access_type) -> std::shared_ptr<FileAccess>
     return std::shared_ptr<FileAccess>(ret);
 }
 
-auto FileAccess::CreateForPath(const std::string& p_path) -> std::shared_ptr<FileAccess> {
+auto FileAccess::CreateForPath(std::string_view p_path) -> std::shared_ptr<FileAccess> {
     if (p_path.starts_with("@res://")) {
         return Create(ACCESS_RESOURCE);
     }
@@ -26,7 +26,7 @@ auto FileAccess::CreateForPath(const std::string& p_path) -> std::shared_ptr<Fil
     return Create(ACCESS_FILESYSTEM);
 }
 
-auto FileAccess::Open(const std::string& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
+auto FileAccess::Open(std::string_view p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
     auto file_access = CreateForPath(p_path);
 
     if (auto res = file_access->OpenInternal(file_access->FixPath(p_path), p_mode_flags); !res) {

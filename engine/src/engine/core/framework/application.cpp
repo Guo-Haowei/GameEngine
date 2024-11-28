@@ -12,7 +12,6 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
-#include "engine/core/string/string_builder.h"
 #include "engine/rendering/graphics_dvars.h"
 #include "engine/rendering/render_manager.h"
 #include "imgui/imgui.h"
@@ -23,10 +22,15 @@
 
 namespace my {
 
+static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
+
 static void RegisterCommonDvars() {
 #define REGISTER_DVAR
 #include "engine/core/framework/common_dvars.h"
 #undef REGISTER_DVAR
+}
+
+Application::Application(const ApplicationSpec& p_spec) : m_specification(p_spec) {
 }
 
 void Application::AddLayer(std::shared_ptr<Layer> p_layer) {
@@ -77,7 +81,68 @@ auto Application::SetupModules() -> Result<void> {
     return Result<void>();
 }
 
-void Application::MainLoop() {
+auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
+    SaveCommandLine(p_argc, p_argv);
+    RegisterCommonDvars();
+    // @TODO: refactor this part
+    renderer::register_rendering_dvars();
+    DynamicVariableManager::Deserialize(DVAR_CACHE_FILE);
+    // parse happens after deserialization, so command line will override cache
+    DynamicVariableManager::Parse(m_commandLine);
+
+    // select window size
+    {
+        const Vector2i resolution{ DVAR_GET_IVEC2(window_resolution) };
+        const Vector2i max_size{ 3840, 2160 };  // 4K
+        const Vector2i min_size{ 480, 360 };    // 360P
+        Vector2i desired_size;
+        if (resolution.x > 0 && resolution.y > 0) {
+            desired_size = resolution;
+        } else {
+            desired_size = Vector2i(m_specification.width, m_specification.height);
+        }
+        desired_size = glm::clamp(desired_size, min_size, max_size);
+        m_specification.width = desired_size.x;
+        m_specification.height = desired_size.y;
+    }
+
+    // select backend
+    {
+        const std::string& backend = DVAR_GET_STRING(gfx_backend);
+        if (!backend.empty()) {
+            do {
+#define BACKEND_DECLARE(ENUM, STR, DVAR)         \
+    if (backend == #DVAR) {                      \
+        m_specification.backend = Backend::ENUM; \
+        break;                                   \
+    }
+                BACKEND_LIST
+#undef BACKEND_DECLARE
+                return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "Unkown backend '{}', set to 'empty'", backend);
+            } while (0);
+        }
+    }
+
+    // select work directory
+    {
+        LOG_ERROR("TODO: select correct working directory");
+        if (m_specification.workDirectory.empty()) {
+        }
+    }
+
+    if (auto res = SetupModules(); !res) {
+        return HBN_ERROR(res.error());
+    }
+
+    for (Module* module : m_modules) {
+        LOG("module '{}' being initialized...", module->GetName());
+        if (auto res = module->Initialize(); !res) {
+            // LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
+            return HBN_ERROR(res.error());
+        }
+        LOG("module '{}' initialized\n", module->GetName());
+    }
+
     InitLayers();
     for (auto& layer : m_layers) {
         layer->m_app = this;
@@ -85,6 +150,42 @@ void Application::MainLoop() {
         LOG("[Runtime] layer '{}' attached!", layer->GetName());
     }
 
+    return Result<void>();
+}
+
+void Application::Finalize() {
+    // @TODO: fix
+    auto [w, h] = m_displayServer->GetWindowSize();
+    DVAR_SET_IVEC2(window_resolution, w, h);
+
+    for (auto& layer : m_layers) {
+        layer->Detach();
+        LOG("[Runtime] layer '{}' detached!", layer->GetName());
+    }
+    m_layers.clear();
+
+    // @TODO: move it to request shutdown
+    thread::RequestShutdown();
+
+    for (int index = (int)m_modules.size() - 1; index >= 0; --index) {
+        Module* module = m_modules[index];
+        module->Finalize();
+        LOG_VERBOSE("module '{}' finalized", module->GetName());
+    }
+
+#if 0
+    LOG_ERROR("This is an error");
+    LOG_VERBOSE("This is a verbose log");
+    LOG("This is a log");
+    LOG_OK("This is an ok log");
+    LOG_WARN("This is a warning");
+    LOG_FATAL("This is a fatal error");
+#endif
+
+    DynamicVariableManager::Serialize(DVAR_CACHE_FILE);
+}
+
+void Application::Run() {
     LOG_WARN("TODO: reverse z");
 
     LOG("\n********************************************************************************"
@@ -134,74 +235,6 @@ void Application::MainLoop() {
     LOG("\n********************************************************************************"
         "\nMain Loop"
         "\n********************************************************************************");
-
-    // @TODO: fix
-    auto [w, h] = m_displayServer->GetWindowSize();
-    DVAR_SET_IVEC2(window_resolution, w, h);
-
-    for (auto& layer : m_layers) {
-        layer->Detach();
-        LOG("[Runtime] layer '{}' detached!", layer->GetName());
-    }
-    m_layers.clear();
-}
-
-auto Application::Setup() -> Result<void> {
-    // dvars
-    RegisterCommonDvars();
-    renderer::register_rendering_dvars();
-    DynamicVariableManager::deserialize();
-    DynamicVariableManager::Parse(m_commandLine);
-
-    if (auto res = SetupModules(); !res) {
-        return HBN_ERROR(res.error());
-    }
-
-    for (Module* module : m_modules) {
-        LOG("module '{}' being initialized...", module->GetName());
-        if (auto res = module->Initialize(); !res) {
-            // LOG_ERROR("Error: failed to initialize module '{}'", module->GetName());
-            return HBN_ERROR(res.error());
-        }
-        LOG("module '{}' initialized\n", module->GetName());
-    }
-
-    return Result<void>();
-}
-
-int Application::Run(int p_argc, const char** p_argv) {
-    SaveCommandLine(p_argc, p_argv);
-
-    auto res = Setup();
-    if (!res) {
-        StringStreamBuilder builder;
-        builder << res.error();
-        LOG_ERROR("{}", builder.ToString());
-    } else {
-        MainLoop();
-    }
-
-    // @TODO: move it to request shutdown
-    thread::RequestShutdown();
-
-    for (int index = (int)m_modules.size() - 1; index >= 0; --index) {
-        Module* module = m_modules[index];
-        module->Finalize();
-        LOG_VERBOSE("module '{}' finalized", module->GetName());
-    }
-
-#if 0
-    LOG_ERROR("This is an error");
-    LOG_VERBOSE("This is a verbose log");
-    LOG("This is a log");
-    LOG_OK("This is an ok log");
-    LOG_WARN("This is a warning");
-    LOG_FATAL("This is a fatal error");
-#endif
-
-    DynamicVariableManager::Serialize();
-
-    return res ? 0 : 1;
 }
 
 }  // namespace my

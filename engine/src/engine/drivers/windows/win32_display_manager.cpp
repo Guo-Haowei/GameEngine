@@ -23,10 +23,10 @@ static LRESULT WndProcWrapper(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p
     return window->WndProc(p_hwnd, p_msg, p_wparam, p_lparam);
 }
 
-auto Win32DisplayManager::InitializeWindow(const CreateInfo& p_info) -> Result<void> {
-    RECT rect = { 0, 0, p_info.width, p_info.height };
+auto Win32DisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> Result<void> {
+    RECT rect = { 0, 0, p_spec.width, p_spec.height };
     AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
-    std::wstring title(p_info.title.begin(), p_info.title.end());
+    std::wstring title(p_spec.title.begin(), p_spec.title.end());
 
     m_wndClass = { sizeof(m_wndClass),
                    CS_CLASSDC,

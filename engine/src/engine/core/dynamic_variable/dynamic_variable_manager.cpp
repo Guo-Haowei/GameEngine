@@ -6,10 +6,8 @@
 
 namespace my {
 
-static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
-
-void DynamicVariableManager::Serialize() {
-    auto res = FileAccess::Open(DVAR_CACHE_FILE, FileAccess::WRITE);
+void DynamicVariableManager::Serialize(std::string_view p_path) {
+    auto res = FileAccess::Open(p_path, FileAccess::WRITE);
     if (!res) {
         LOG_ERROR("{}", res.error()->message);
         return;
@@ -28,8 +26,8 @@ void DynamicVariableManager::Serialize() {
     writer->Close();
 }
 
-void DynamicVariableManager::deserialize() {
-    auto res = FileAccess::Open(DVAR_CACHE_FILE, FileAccess::READ);
+void DynamicVariableManager::Deserialize(std::string_view p_path) {
+    auto res = FileAccess::Open(p_path, FileAccess::READ);
     if (!res) {
         LOG_ERROR("{}", res.error()->message);
         return;

@@ -10,6 +10,7 @@ public:
     explicit FilePath(const char* p_path);
 
     const std::string& String() const { return m_path; }
+    std::string_view StringView() const { return m_path; }
     const char* ExtensionCStr() const;
 
     std::string Extension() const {

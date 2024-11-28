@@ -1,7 +1,7 @@
 #include "display_manager.h"
 
+#include "engine/core/framework/application.h"
 #include "engine/core/framework/common_dvars.h"
-#include "engine/core/framework/graphics_manager.h"
 #include "engine/drivers/empty/empty_display_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #if USING(PLATFORM_WINDOWS)
@@ -14,27 +14,13 @@ namespace my {
 auto DisplayManager::Initialize() -> Result<void> {
     InitializeKeyMapping();
 
-    const Vector2i resolution = DVAR_GET_IVEC2(window_resolution);
-    const Vector2i min_size = Vector2i(600, 400);
-    const Vector2i size = glm::max(min_size, resolution);
+    const auto& spec = m_app->GetSpecification();
 
-    // Implement GetScreenSize
-#if 0
-    const GLFWvidmode* vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-    const Vector2i size = glm::clamp(resolution, min_size, max_size);
-#endif
-
-    CreateInfo info = {
-        .width = size.x,
-        .height = size.y,
-        .title = "Editor"
-    };
-
-    auto backend = GraphicsManager::GetSingleton().GetBackend();
-    switch (backend) {
-#define BACKEND_DECLARE(ENUM, STR, ...)  \
-    case Backend::ENUM:                  \
-        info.title.append(" [" STR "|"); \
+    std::string title{ spec.name };
+    switch (spec.backend) {
+#define BACKEND_DECLARE(ENUM, STR, ...) \
+    case Backend::ENUM:                 \
+        title.append(" [" STR "|");     \
         break;
         BACKEND_LIST
 #undef BACKEND_DECLARE
@@ -42,7 +28,7 @@ auto DisplayManager::Initialize() -> Result<void> {
             break;
     }
 
-    info.title.append(
+    title.append(
 #if USING(DEBUG_BUILD)
         "Debug]"
 #else
@@ -50,11 +36,23 @@ auto DisplayManager::Initialize() -> Result<void> {
 #endif
     );
 
+    WindowSpecfication info = {
+        .title = std::move(title),
+        .width = spec.width,
+        .height = spec.height,
+        .backend = spec.backend,
+        .decorated = spec.decorated,
+        .fullscreen = spec.fullscreen,
+        .vsync = spec.vsync,
+        .enableImgui = spec.enableImgui,
+    };
+
     return InitializeWindow(info);
 }
 
 std::shared_ptr<DisplayManager> DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
+    // @TODO: cocoa display
     if (backend == "opengl" || backend == "vulkan" || backend == "metal") {
         return std::make_shared<GlfwDisplayManager>();
     }

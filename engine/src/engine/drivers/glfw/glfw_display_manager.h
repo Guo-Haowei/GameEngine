@@ -22,7 +22,7 @@ public:
     GLFWwindow* GetGlfwWindow() const { return m_window; }
 
 private:
-    auto InitializeWindow(const CreateInfo& p_info) -> Result<void> final;
+    auto InitializeWindow(const WindowSpecfication& p_spec) -> Result<void> final;
     void InitializeKeyMapping() final;
 
     static void CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y);

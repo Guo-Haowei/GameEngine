@@ -32,11 +32,11 @@ public:
     AccessType GetAccessType() const { return m_accessType; }
 
     static auto Create(AccessType p_access_type) -> std::shared_ptr<FileAccess>;
-    static auto CreateForPath(const std::string& p_path) -> std::shared_ptr<FileAccess>;
+    static auto CreateForPath(std::string_view p_path) -> std::shared_ptr<FileAccess>;
 
-    static auto Open(const std::string& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>>;
+    static auto Open(std::string_view p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>>;
     static auto Open(const FilePath& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
-        return Open(p_path.String(), p_mode_flags);
+        return Open(p_path.StringView(), p_mode_flags);
     }
 
     template<typename T>
