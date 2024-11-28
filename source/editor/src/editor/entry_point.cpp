@@ -1,4 +1,6 @@
-#include "editor_layer.h"
+#include "core/framework/entry_point.h"
+
+#include "editor/editor_layer.h"
 
 class Editor : public my::Application {
 public:
@@ -7,7 +9,11 @@ public:
     }
 };
 
-int main(int p_argc, const char** p_argv) {
-    Editor editor;
-    return editor.Run(p_argc, p_argv);
+my::Application* CreateApplication() {
+    return new Editor();
 }
+
+int main(int p_argc, const char** p_argv) {
+    return my::Main(p_argc, p_argv);
+}
+

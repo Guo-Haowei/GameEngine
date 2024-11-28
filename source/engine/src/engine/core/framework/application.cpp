@@ -158,12 +158,13 @@ auto Application::Setup() -> Result<void> {
     renderer::register_rendering_dvars();
     DynamicVariableManager::deserialize();
     DynamicVariableManager::Parse(m_commandLine);
-    if (auto res = SetupModules(); !res) {
-        return HBN_ERROR(res.error());
-    }
 
     thread::Initialize();
     jobsystem::Initialize();
+
+    if (auto res = SetupModules(); !res) {
+        return HBN_ERROR(res.error());
+    }
 
     for (Module* module : m_modules) {
         LOG("module '{}' being initialized...", module->GetName());
