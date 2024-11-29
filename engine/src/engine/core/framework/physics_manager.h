@@ -18,8 +18,8 @@ class PhysicsManager : public Module, public EventListener {
 public:
     PhysicsManager() : Module("PhysicsManager") {}
 
-    auto Initialize() -> Result<void> override;
-    void Finalize() override;
+    auto InitializeImpl() -> Result<void> override;
+    void FinalizeImpl() override;
 
     void Update(Scene& p_scene);
 

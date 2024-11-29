@@ -2,6 +2,14 @@
 
 namespace my {
 
+#if USING(PLATFORM_WINDOWS)
+#define DELIMITER_CHAR '\\'
+#define DELIMITER_STR  "\\"
+#else
+#define DELIMITER_CHAR '/'
+#define DELIMITER_STR  "/"
+#endif
+
 class StringSplitter {
 public:
     explicit StringSplitter(const char* p_string) {
@@ -51,15 +59,15 @@ public:
         return result;
     }
 
-    static inline bool IsDigit(const char p_char) {
+    static constexpr bool IsDigit(const char p_char) {
         return p_char >= '0' && p_char <= '9';
     }
 
-    static inline bool IsHex(char p_char) {
+    static constexpr bool IsHex(char p_char) {
         return IsDigit(p_char) || (p_char >= 'a' && p_char <= 'f') || (p_char >= 'A' && p_char <= 'F');
     }
 
-    static char HexToInt(char p_char) {
+    static constexpr char HexToInt(char p_char) {
         if (IsDigit(p_char)) {
             return p_char - '0';
         }
@@ -70,6 +78,25 @@ public:
             return p_char - 'A' + 10;
         }
         return -1;
+    }
+
+    static constexpr std::string_view FindLastOf(std::string_view p_string, char p_pattern) {
+        const size_t found = p_string.find_last_of(p_pattern);
+        return found == std::string_view::npos ? "" : std::string_view(p_string.data() + found, p_string.size() - found);
+    }
+
+    static constexpr std::string_view BasePath(std::string_view p_string, char p_delimiter = DELIMITER_CHAR) {
+        const size_t found = p_string.find_last_of(p_delimiter);
+        return found == std::string_view::npos ? "" : std::string_view(p_string.data(), found);
+    }
+
+    static constexpr std::string_view FileName(std::string_view p_string, char p_delimiter = DELIMITER_CHAR) {
+        auto result = FindLastOf(p_string, p_delimiter);
+        return result == "" ? p_string : std::string_view(result.data() + 1, result.size() - 1);
+    }
+
+    static constexpr std::string_view Extension(std::string_view p_string) {
+        return FindLastOf(p_string, '.');
     }
 };
 

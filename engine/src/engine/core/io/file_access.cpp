@@ -5,6 +5,8 @@
 namespace my {
 
 FileAccess::CreateFunc FileAccess::s_createFuncs[ACCESS_MAX];
+FileAccess::GetUserFolderFunc FileAccess::s_getUserFolderFunc;
+FileAccess::GetResourceFolderFunc FileAccess::s_getResourceFolderFunc;
 
 auto FileAccess::Create(AccessType p_access_type) -> std::shared_ptr<FileAccess> {
     DEV_ASSERT_INDEX(p_access_type, ACCESS_MAX);
@@ -42,13 +44,13 @@ std::string FileAccess::FixPath(std::string_view p_path) {
         case ACCESS_RESOURCE: {
             if (p_path.starts_with("@res://")) {
                 // @TODO: configure it somewhere
-                StringUtils::ReplaceFirst(fixed_path, "@res:/", ROOT_FOLDER "resources");
+                StringUtils::ReplaceFirst(fixed_path, "@res:/", s_getResourceFolderFunc());
                 return fixed_path;
             }
         } break;
         case ACCESS_USERDATA: {
             if (p_path.starts_with("@user://")) {
-                StringUtils::ReplaceFirst(fixed_path, "@user:/", ROOT_FOLDER "user");
+                StringUtils::ReplaceFirst(fixed_path, "@user:/", s_getUserFolderFunc());
                 return fixed_path;
             }
         } break;

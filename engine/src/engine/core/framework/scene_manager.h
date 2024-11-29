@@ -12,8 +12,8 @@ class SceneManager : public Singleton<SceneManager>, public Module {
 public:
     SceneManager() : Module("SceneManager") {}
 
-    auto Initialize() -> Result<void> override;
-    void Finalize() override;
+    auto InitializeImpl() -> Result<void> override;
+    void FinalizeImpl() override;
     void Update(float p_elapsedTime);
 
     void RequestScene(std::string_view p_path);

@@ -18,8 +18,8 @@ class RenderManager : public Singleton<RenderManager>, public Module {
 public:
     RenderManager();
 
-    auto Initialize() -> Result<void> override;
-    void Finalize() override;
+    auto InitializeImpl() -> Result<void> override;
+    void FinalizeImpl() override;
 
     void update(Scene&) {}
 
@@ -39,10 +39,6 @@ private:
 }  // namespace my
 
 namespace my::renderer {
-
-bool need_update_env();
-void reset_need_update_env();
-void request_env_map(const std::string& path);
 
 void register_rendering_dvars();
 

@@ -3,13 +3,16 @@
 #include <sstream>
 
 #include "engine/core/io/archive.h"
+#include "engine/core/string/string_builder.h"
 
 namespace my {
 
 void DynamicVariableManager::Serialize(std::string_view p_path) {
     auto res = FileAccess::Open(p_path, FileAccess::WRITE);
     if (!res) {
-        LOG_ERROR("{}", res.error()->message);
+        StringStreamBuilder builder;
+        builder << res.error();
+        LOG_ERROR("{}", builder.ToString());
         return;
     }
 
@@ -29,7 +32,11 @@ void DynamicVariableManager::Serialize(std::string_view p_path) {
 void DynamicVariableManager::Deserialize(std::string_view p_path) {
     auto res = FileAccess::Open(p_path, FileAccess::READ);
     if (!res) {
-        LOG_ERROR("{}", res.error()->message);
+        if (res.error()->value != ErrorCode::ERR_FILE_NOT_FOUND) {
+            StringStreamBuilder builder;
+            builder << res.error();
+            LOG_ERROR("{}", builder.ToString());
+        }
         return;
     }
 

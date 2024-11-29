@@ -1,6 +1,7 @@
 #include "vulkan_graphics_manager.h"
 
 #include "engine/core/framework/application.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/drivers/empty/empty_pipeline_state_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #include "vulkan_helpers.h"
@@ -11,7 +12,6 @@
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
 
 namespace my {
 
@@ -348,14 +348,14 @@ VulkanGraphicsManager::VulkanGraphicsManager() : GraphicsManager("VulkanGraphics
     m_pipelineStateManager = std::make_shared<EmptyPipelineStateManager>();
 }
 
-auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
+auto VulkanGraphicsManager::InitializeInternal() -> Result<void> {
     auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
     DEV_ASSERT(display_manager);
     if (!display_manager) {
         return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "display manager is nullptr");
     }
 
-    GLFWwindow* glfw_window = display_manager->GetGlfwWindow();
+    m_window = display_manager->GetGlfwWindow();
 
     if (auto res = CreateInstance(); !res) {
         return HBN_ERROR(res.error());
@@ -367,47 +367,52 @@ auto VulkanGraphicsManager::InitializeImpl() -> Result<void> {
         return HBN_ERROR(res.error());
     }
 
-    VkSurfaceKHR surface;
-    VK_CHECK_ERROR(glfwCreateWindowSurface(g_Instance, glfw_window, g_Allocator, &surface),
+    VK_CHECK_ERROR(glfwCreateWindowSurface(g_Instance, m_window, g_Allocator, &m_surface),
                    ErrorCode::ERR_CANT_CREATE);
 
-    // Create Framebuffers
-    {
-        int w, h;
-        glfwGetFramebufferSize(glfw_window, &w, &h);
-        ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
-        SetupVulkanWindow(wd, surface, w, h);
+    auto imgui = m_app->GetImguiManager();
+    if (imgui) {
+        imgui->SetRenderCallbacks(
+            [&]() {
+                int w, h;
+                glfwGetFramebufferSize(m_window, &w, &h);
+                ImGui_ImplVulkanH_Window* wd = &g_MainWindowData;
+                SetupVulkanWindow(wd, m_surface, w, h);
+                // Setup Platform/Renderer backends
+                ImGui_ImplVulkan_InitInfo init_info = {};
+                init_info.Instance = g_Instance;
+                init_info.PhysicalDevice = g_PhysicalDevice;
+                init_info.Device = g_Device;
+                init_info.QueueFamily = g_QueueFamily;
+                init_info.Queue = g_Queue;
+                init_info.PipelineCache = g_PipelineCache;
+                init_info.DescriptorPool = g_DescriptorPool;
+                init_info.RenderPass = wd->RenderPass;
+                init_info.Subpass = 0;
+                init_info.MinImageCount = g_MinImageCount;
+                init_info.ImageCount = wd->ImageCount;
+                init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+                init_info.Allocator = g_Allocator;
+                init_info.CheckVkResultFn = check_vk_result;
 
-        // Setup Platform/Renderer backends
-        ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = g_Instance;
-        init_info.PhysicalDevice = g_PhysicalDevice;
-        init_info.Device = g_Device;
-        init_info.QueueFamily = g_QueueFamily;
-        init_info.Queue = g_Queue;
-        init_info.PipelineCache = g_PipelineCache;
-        init_info.DescriptorPool = g_DescriptorPool;
-        init_info.RenderPass = wd->RenderPass;
-        init_info.Subpass = 0;
-        init_info.MinImageCount = g_MinImageCount;
-        init_info.ImageCount = wd->ImageCount;
-        init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
-        init_info.Allocator = g_Allocator;
-        init_info.CheckVkResultFn = check_vk_result;
+                ImGui_ImplVulkan_Init(&init_info);
 
-        ImGui_ImplVulkan_Init(&init_info);
+                ImGui_ImplVulkan_NewFrame();
+            },
+            []() {
+                VkResult err = vkDeviceWaitIdle(g_Device);
+                check_vk_result(err);
+                ImGui_ImplVulkan_Shutdown();
+            });
     }
-
-    ImGui_ImplVulkan_NewFrame();
 
     return Result<void>();
 }
 
-void VulkanGraphicsManager::Finalize() {
+void VulkanGraphicsManager::FinalizeImpl() {
     if (g_Device) {
         VkResult err = vkDeviceWaitIdle(g_Device);
         check_vk_result(err);
-        ImGui_ImplVulkan_Shutdown();
 
         CleanupVulkanWindow();
         CleanupVulkan();
@@ -427,13 +432,12 @@ void VulkanGraphicsManager::Present() {
 
     Vector4f clear_color{ 0.3f, 0.4f, 0.3f, 1.0f };
     // Rendering
-    ImGui::Render();
-    ImDrawData* main_draw_data = ImGui::GetDrawData();
-    const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
     wd->ClearValue.color.float32[0] = clear_color.x * clear_color.w;
     wd->ClearValue.color.float32[1] = clear_color.y * clear_color.w;
     wd->ClearValue.color.float32[2] = clear_color.z * clear_color.w;
     wd->ClearValue.color.float32[3] = clear_color.w;
+    ImDrawData* main_draw_data = ImGui::GetDrawData();
+    const bool main_is_minimized = (main_draw_data->DisplaySize.x <= 0.0f || main_draw_data->DisplaySize.y <= 0.0f);
     if (!main_is_minimized) {
         FrameRender(wd, main_draw_data);
     }

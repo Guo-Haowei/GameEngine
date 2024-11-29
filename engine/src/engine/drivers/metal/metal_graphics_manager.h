@@ -51,7 +51,7 @@ public:
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) override { return nullptr; }
 
 protected:
-    auto InitializeImpl() -> Result<void> final;
+    auto InitializeInternal() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
 
     void Render() override {}

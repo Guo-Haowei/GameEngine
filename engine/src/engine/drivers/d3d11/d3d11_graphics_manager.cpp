@@ -2,6 +2,8 @@
 
 #include <imgui/backends/imgui_impl_dx11.h>
 
+#include "engine/core/framework/application.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/drivers/d3d11/d3d11_helpers.h"
 #include "engine/drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "engine/drivers/d3d11/d3d11_resources.h"
@@ -22,7 +24,7 @@ D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsMan
     m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
 
-auto D3d11GraphicsManager::InitializeImpl() -> Result<void> {
+auto D3d11GraphicsManager::InitializeInternal() -> Result<void> {
     if (auto res = CreateDevice(); !res) {
         return HBN_ERROR(res.error());
     }
@@ -35,36 +37,48 @@ auto D3d11GraphicsManager::InitializeImpl() -> Result<void> {
     if (auto res = InitSamplers(); !res) {
         return HBN_ERROR(res.error());
     }
-    if (!ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get())) {
-        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "ImGui_ImplDX11_Init() failed");
-    }
-
-    ImGui_ImplDX11_NewFrame();
 
     // @TODO: refactor this
     m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     m_meshes.set_description("GPU-Mesh-Allocator");
+
+    auto imgui = m_app->GetImguiManager();
+    if (imgui) {
+        imgui->SetRenderCallbacks(
+            [this]() {
+                ImGui_ImplDX11_Init(m_device.Get(), m_deviceContext.Get());
+                ImGui_ImplDX11_NewFrame();
+            },
+            []() {
+                ImGui_ImplDX11_Shutdown();
+            });
+    }
+
     return Result<void>();
 }
 
-void D3d11GraphicsManager::Finalize() {
-    ImGui_ImplDX11_Shutdown();
+void D3d11GraphicsManager::FinalizeImpl() {
 }
 
 void D3d11GraphicsManager::Render() {
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
     m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+    if (m_app->GetSpecification().enableImgui) {
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+    }
 }
 
 void D3d11GraphicsManager::Present() {
-    ImGuiIO& io = ImGui::GetIO();
-    // Update and Render additional Platform Windows
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-        ImGui::UpdatePlatformWindows();
-        ImGui::RenderPlatformWindowsDefault();
+    if (m_app->GetSpecification().enableImgui) {
+        ImGuiIO& io = ImGui::GetIO();
+        // Update and Render additional Platform Windows
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
     }
 
     m_swapChain->Present(1, 0);  // Present with vsync

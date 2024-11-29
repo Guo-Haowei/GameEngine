@@ -16,7 +16,7 @@ class D3d11GraphicsManager : public GraphicsManager {
 public:
     D3d11GraphicsManager();
 
-    void Finalize() final;
+    void FinalizeImpl() final;
 
     void SetStencilRef(uint32_t p_ref) final;
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) final;
@@ -59,7 +59,7 @@ public:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetD3dContext() { return m_deviceContext; }
 
 protected:
-    auto InitializeImpl() -> Result<void> final;
+    auto InitializeInternal() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;

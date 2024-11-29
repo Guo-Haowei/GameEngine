@@ -65,7 +65,7 @@ public:
     }
 };
 
-auto AssetManager::Initialize() -> Result<void> {
+auto AssetManager::InitializeImpl() -> Result<void> {
 #if USING(USING_ASSIMP)
     Loader<Scene>::RegisterLoader(".obj", LoaderAssimp::Create);
     Loader<Scene>::RegisterLoader(".gltf", LoaderAssimp::Create);
@@ -106,7 +106,7 @@ auto AssetManager::Initialize() -> Result<void> {
     return Result<void>();
 }
 
-void AssetManager::Finalize() {
+void AssetManager::FinalizeImpl() {
     s_assetManagerGlob.wakeCondition.notify_all();
 }
 

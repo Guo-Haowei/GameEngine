@@ -5,7 +5,7 @@ namespace my {
 
 class Win32DisplayManager : public DisplayManager {
 public:
-    void Finalize() final;
+    void FinalizeImpl() final;
 
     bool ShouldClose() final;
 
@@ -13,7 +13,6 @@ public:
     std::tuple<int, int> GetWindowPos() final;
 
     void BeginFrame() final;
-    void Present() final;
 
     LRESULT WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, LPARAM p_lparam);
 

@@ -1,24 +1,33 @@
-#include "imgui_module.h"
+#include "imgui_manager.h"
 
 #include <imgui/imgui.h>
 
+#include <filesystem>
+
+#include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_manager.h"
+#include "engine/core/string/string_utils.h"
 
 namespace my {
 
-auto ImGuiModule::Initialize() -> Result<void> {
+namespace fs = std::filesystem;
+
+auto ImguiManager::InitializeImpl() -> Result<void> {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
 
-    std::filesystem::path path(ROOT_FOLDER);
-    path = path.parent_path() / "user" / "imgui.ini";
-    m_iniPath = path.string();
-    LOG_VERBOSE("Set imgui ini file to {}", m_iniPath);
-
     ImGuiIO& io = ImGui::GetIO();
 
-    constexpr const char font_path[] = "@res://fonts/DroidSans.ttf";
-    auto res = AssetManager::GetSingleton().LoadFileSync(FilePath{ font_path });
+    std::string_view engine_folder = StringUtils::BasePath(__FILE__);
+    engine_folder = StringUtils::BasePath(engine_folder);
+    engine_folder = StringUtils::BasePath(engine_folder);
+    engine_folder = StringUtils::BasePath(engine_folder);
+    engine_folder = StringUtils::BasePath(engine_folder);
+
+    fs::path font_path{ engine_folder };
+    font_path = font_path / "fonts" / "DroidSans.ttf";
+
+    auto res = AssetManager::GetSingleton().LoadFileSync(FilePath(font_path.string()));
     if (!res) {
         return HBN_ERROR(res.error());
     }
@@ -44,10 +53,13 @@ auto ImGuiModule::Initialize() -> Result<void> {
     font_cfg.FontDataOwnedByAtlas = false;
     ImFont* font = io.Fonts->AddFontFromMemoryTTF(asset->buffer.data(), (int)asset->buffer.size(), 16, &font_cfg);
     if (!font) {
-        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", font_path);
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", font_path.string());
     }
 
-    io.IniFilename = m_iniPath.c_str();
+    fs::path ini_path = fs::path{ m_app->GetUserFolder() } / "imgui.ini";
+    m_imguiSettingsPath = ini_path.string();
+    LOG_VERBOSE("imgui settings path is '{}'", m_imguiSettingsPath);
+    io.IniFilename = m_imguiSettingsPath.c_str();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
@@ -90,11 +102,31 @@ auto ImGuiModule::Initialize() -> Result<void> {
         style.WindowRounding = 0.0f;
         style.Colors[ImGuiCol_WindowBg].w = 1.0f;
     }
+
+    DEV_ASSERT(m_displayInitializeFunc);
+    m_displayInitializeFunc();
+
+    DEV_ASSERT(m_rendererInitializeFunc);
+    m_rendererInitializeFunc();
+
     return Result<void>();
 }
 
-void ImGuiModule::Finalize() {
+void ImguiManager::FinalizeImpl() {
+    DEV_ASSERT(m_rendererFinalizeFunc);
+    m_rendererFinalizeFunc();
+
+    DEV_ASSERT(m_displayFinalizeFunc);
+    m_displayFinalizeFunc();
+
     ImGui::DestroyContext();
+}
+
+void ImguiManager::BeginFrame() {
+    if (DEV_VERIFY(m_displayBeginFrameFunc)) {
+        m_displayBeginFrameFunc();
+        ImGui::NewFrame();
+    }
 }
 
 }  // namespace my

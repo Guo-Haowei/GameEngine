@@ -10,11 +10,11 @@ WARNING_POP()
 
 namespace my {
 
-auto PhysicsManager::Initialize() -> Result<void> {
+auto PhysicsManager::InitializeImpl() -> Result<void> {
     return Result<void>();
 }
 
-void PhysicsManager::Finalize() {
+void PhysicsManager::FinalizeImpl() {
     CleanWorld();
 }
 

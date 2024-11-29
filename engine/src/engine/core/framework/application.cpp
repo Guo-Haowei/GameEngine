@@ -1,20 +1,23 @@
 #include "application.h"
 
+#include <imgui/imgui.h>
+
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/dynamic_variable/dynamic_variable_manager.h"
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/imgui_module.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/core/framework/input_manager.h"
+#include "engine/core/framework/layer.h"
 #include "engine/core/framework/physics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
+#include "engine/core/string/string_utils.h"
 #include "engine/rendering/graphics_dvars.h"
 #include "engine/rendering/render_manager.h"
-#include "imgui/imgui.h"
 
 #define DEFINE_DVAR
 #include "engine/core/framework/common_dvars.h"
@@ -22,6 +25,9 @@
 
 namespace my {
 
+namespace fs = std::filesystem;
+
+// @TODO: refactor
 static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
 
 static void RegisterCommonDvars() {
@@ -31,6 +37,22 @@ static void RegisterCommonDvars() {
 }
 
 Application::Application(const ApplicationSpec& p_spec) : m_specification(p_spec) {
+    // select work directory
+    if (m_specification.rootDirectory.empty()) {
+        LOG_ERROR("root directory is not set");
+    } else {
+        LOG_OK("root directory is '{}'", m_specification.rootDirectory);
+    }
+
+    m_userFolder = std::string{ m_specification.rootDirectory };
+    m_userFolder.append(DELIMITER_STR "user");
+
+    m_resourceFolder = std::string{ m_specification.rootDirectory };
+    m_resourceFolder.append(DELIMITER_STR "resources");
+
+    FileAccess::SetFolderCallback(
+        [&]() { return m_userFolder.c_str(); },
+        [&]() { return m_resourceFolder.c_str(); });
 }
 
 void Application::AddLayer(std::shared_ptr<Layer> p_layer) {
@@ -54,7 +76,6 @@ auto Application::SetupModules() -> Result<void> {
     m_assetManager = std::make_shared<AssetManager>();
     m_sceneManager = std::make_shared<SceneManager>();
     m_physicsManager = std::make_shared<PhysicsManager>();
-    m_imguiModule = std::make_shared<ImGuiModule>();
     m_displayServer = DisplayManager::Create();
     {
         auto res = GraphicsManager::Create();
@@ -69,11 +90,15 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_assetManager.get());
     RegisterModule(m_sceneManager.get());
     RegisterModule(m_physicsManager.get());
-    RegisterModule(m_imguiModule.get());
     RegisterModule(m_displayServer.get());
     RegisterModule(m_graphicsManager.get());
     RegisterModule(m_renderManager.get());
     RegisterModule(m_inputManager.get());
+
+    if (m_specification.enableImgui) {
+        m_imguiManager = std::make_shared<ImguiManager>();
+        RegisterModule(m_imguiManager.get());
+    }
 
     m_eventQueue.RegisterListener(m_graphicsManager.get());
     m_eventQueue.RegisterListener(m_physicsManager.get());
@@ -123,13 +148,6 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
         }
     }
 
-    // select work directory
-    {
-        LOG_ERROR("TODO: select correct working directory");
-        if (m_specification.workDirectory.empty()) {
-        }
-    }
-
     if (auto res = SetupModules(); !res) {
         return HBN_ERROR(res.error());
     }
@@ -146,7 +164,7 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
     InitLayers();
     for (auto& layer : m_layers) {
         layer->m_app = this;
-        layer->Attach();
+        layer->OnAttach();
         LOG("[Runtime] layer '{}' attached!", layer->GetName());
     }
 
@@ -159,7 +177,7 @@ void Application::Finalize() {
     DVAR_SET_IVEC2(window_resolution, w, h);
 
     for (auto& layer : m_layers) {
-        layer->Detach();
+        layer->OnDetach();
         LOG("[Runtime] layer '{}' detached!", layer->GetName());
     }
     m_layers.clear();
@@ -211,23 +229,20 @@ void Application::Run() {
         m_sceneManager->Update(dt);
         auto& scene = m_sceneManager->GetScene();
 
-        // to avoid empty renderer crash
-        ImGui::NewFrame();
-        for (auto& layer : m_layers) {
-            layer->Update(dt);
-        }
+        if (m_imguiManager) {
+            m_imguiManager->BeginFrame();
+            for (auto& layer : m_layers) {
+                layer->OnUpdate(dt);
+            }
 
-        for (auto& layer : m_layers) {
-            layer->Render();
+            for (auto& layer : m_layers) {
+                layer->OnImGuiRender();
+            }
+            ImGui::Render();
         }
-        ImGui::Render();
 
         m_physicsManager->Update(scene);
         m_graphicsManager->Update(scene);
-
-        renderer::reset_need_update_env();
-
-        m_displayServer->Present();
 
         m_inputManager->EndFrame();
     }

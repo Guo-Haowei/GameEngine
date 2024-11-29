@@ -1,4 +1,6 @@
 #pragma once
+#include <vulkan/vulkan.h>
+
 #include "engine/core/framework/graphics_manager.h"
 
 struct GLFWwindow;
@@ -12,7 +14,7 @@ class VulkanGraphicsManager : public GraphicsManager {
 public:
     VulkanGraphicsManager();
 
-    void Finalize() final;
+    void FinalizeImpl() final;
 
     void SetStencilRef(uint32_t p_ref) override {}
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) override {}
@@ -53,7 +55,7 @@ public:
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) override { return nullptr; }
 
 protected:
-    auto InitializeImpl() -> Result<void> final;
+    auto InitializeInternal() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
 
     void Render() override {}
@@ -67,6 +69,9 @@ private:
     auto CreateInstance() -> Result<void>;
     auto SelectHardware() -> Result<void>;
     auto CreateDescriptorPool() -> Result<void>;
+
+    GLFWwindow* m_window;
+    VkSurfaceKHR m_surface;
 };
 
 WARNING_POP()

@@ -15,7 +15,7 @@ class D3d12GraphicsManager : public GraphicsManager {
 public:
     D3d12GraphicsManager();
 
-    void Finalize() final;
+    void FinalizeImpl() final;
 
     void SetStencilRef(uint32_t p_ref) final;
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) final;
@@ -61,7 +61,7 @@ public:
     ID3D12RootSignature* const GetRootSignature() const { return m_rootSignature.Get(); }
 
 protected:
-    auto InitializeImpl() -> Result<void> final;
+    auto InitializeInternal() -> Result<void> final;
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() final;

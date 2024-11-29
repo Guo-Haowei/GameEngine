@@ -15,7 +15,7 @@ public:
         m_pipelineStateManager = std::make_shared<EmptyPipelineStateManager>();
     }
 
-    void Finalize() override {}
+    void FinalizeImpl() override {}
 
     void SetStencilRef(uint32_t p_ref) override {}
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) override {}
@@ -56,7 +56,7 @@ public:
     std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) override { return nullptr; }
 
 protected:
-    auto InitializeImpl() -> Result<void> override { return Result<void>(); }
+    auto InitializeInternal() -> Result<void> override { return Result<void>(); }
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
 
     void Render() override {}

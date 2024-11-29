@@ -11,7 +11,7 @@
 
 namespace my {
 
-auto DisplayManager::Initialize() -> Result<void> {
+auto DisplayManager::InitializeImpl() -> Result<void> {
     InitializeKeyMapping();
 
     const auto& spec = m_app->GetSpecification();

@@ -185,4 +185,58 @@ TEST(StringUtils, hex_to_int) {
     EXPECT_EQ(StringUtils::HexToInt('-'), -1);
 }
 
+TEST(StringUtils, base_path_no_path) {
+    constexpr std::string_view path{ "abcd.txt" };
+    constexpr auto base_path = StringUtils::BasePath(path, '/');
+    EXPECT_EQ(base_path, "");
+}
+
+TEST(StringUtils, base_path_one_path) {
+    constexpr std::string_view path{ "C:/abcd.txt" };
+    constexpr auto base_path = StringUtils::BasePath(path, '/');
+    EXPECT_EQ(base_path, "C:");
+}
+
+TEST(StringUtils, base_path_multi_path) {
+    constexpr std::string_view path{ "/dev/path/abcd.txt" };
+    constexpr auto base_path = StringUtils::BasePath(path, '/');
+    EXPECT_EQ(base_path, "/dev/path");
+}
+
+TEST(StringUtils, file_name_no_path) {
+    constexpr std::string_view path{ "ddd.txt" };
+    constexpr auto name = StringUtils::FileName(path, '/');
+    EXPECT_EQ(name, "ddd.txt");
+}
+
+TEST(StringUtils, file_name_one_path) {
+    constexpr std::string_view path{ "my/.git" };
+    constexpr auto name = StringUtils::FileName(path, '/');
+    EXPECT_EQ(name, ".git");
+}
+
+TEST(StringUtils, file_name_multi_path) {
+    constexpr std::string_view path{ "/dev/path/txt" };
+    constexpr auto name = StringUtils::FileName(path, '/');
+    EXPECT_EQ(name, "txt");
+}
+
+TEST(StringUtils, extension_no_extension) {
+    constexpr std::string_view path{ "/dev/path/txt" };
+    constexpr auto name = StringUtils::Extension(path);
+    EXPECT_EQ(name, "");
+}
+
+TEST(StringUtils, extension_one_extension) {
+    constexpr std::string_view path{ "abc.txt" };
+    constexpr auto name = StringUtils::Extension(path);
+    EXPECT_EQ(name, ".txt");
+}
+
+TEST(StringUtils, extension_multi_extension) {
+    constexpr std::string_view path{ "abc.my.format.scene" };
+    constexpr auto name = StringUtils::Extension(path);
+    EXPECT_EQ(name, ".scene");
+}
+
 }  // namespace my::string_utils

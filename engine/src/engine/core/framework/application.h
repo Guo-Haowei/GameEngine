@@ -1,6 +1,5 @@
 #pragma once
 #include "engine/core/framework/event_queue.h"
-#include "engine/core/framework/layer.h"
 #include "engine/core/framework/module.h"
 #include "engine/rendering/graphics_defines.h"
 
@@ -9,14 +8,16 @@ namespace my {
 class AssetManager;
 class DisplayManager;
 class GraphicsManager;
-class ImGuiModule;
+class ImguiManager;
 class InputManager;
 class PhysicsManager;
 class RenderManager;
 class SceneManager;
 
+class Layer;
+
 struct ApplicationSpec {
-    std::string workDirectory;
+    std::string_view rootDirectory;
     std::string_view name;
     int width;
     int height;
@@ -45,8 +46,10 @@ public:
     PhysicsManager* GetPhysicsManager() { return m_physicsManager.get(); }
     DisplayManager* GetDisplayServer() { return m_displayServer.get(); }
     GraphicsManager* GetGraphicsManager() { return m_graphicsManager.get(); }
+    ImguiManager* GetImguiManager() { return m_imguiManager.get(); }
 
     const ApplicationSpec& GetSpecification() const { return m_specification; }
+    const std::string& GetUserFolder() const { return m_userFolder; }
 
 protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);
@@ -57,10 +60,13 @@ private:
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
 
+    bool m_minimized{ false };
+
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_commandLine;
     std::string m_appName;
-    std::string m_workingDirectory;
+    std::string m_userFolder;
+    std::string m_resourceFolder;
     ApplicationSpec m_specification;
 
     EventQueue m_eventQueue;
@@ -70,9 +76,9 @@ private:
     std::shared_ptr<PhysicsManager> m_physicsManager;
     std::shared_ptr<DisplayManager> m_displayServer;
     std::shared_ptr<GraphicsManager> m_graphicsManager;
+    std::shared_ptr<ImguiManager> m_imguiManager;
     // @TODO: remove render manager
     std::shared_ptr<RenderManager> m_renderManager;
-    std::shared_ptr<ImGuiModule> m_imguiModule;
     std::shared_ptr<InputManager> m_inputManager;
 
     std::vector<Module*> m_modules;

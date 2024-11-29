@@ -16,14 +16,6 @@ bool s_need_update_env = false;
 
 namespace my::renderer {
 
-bool need_update_env() {
-    return s_need_update_env;
-}
-
-void reset_need_update_env() {
-    s_need_update_env = false;
-}
-
 void request_env_map(const std::string& path) {
     if (path == s_prev_env_map) {
         return;
@@ -113,14 +105,14 @@ RenderManager::RenderManager() : Module("RenderManager") {
     }
 }
 
-auto RenderManager::Initialize() -> Result<void> {
+auto RenderManager::InitializeImpl() -> Result<void> {
     m_screen_quad_buffers = GraphicsManager::GetSingleton().CreateMesh(MakePlaneMesh(Vector3f(1)));
     m_skybox_buffers = GraphicsManager::GetSingleton().CreateMesh(MakeSkyBoxMesh());
 
     return Result<void>();
 }
 
-void RenderManager::Finalize() {
+void RenderManager::FinalizeImpl() {
     m_screen_quad_buffers = nullptr;
     m_skybox_buffers = nullptr;
 

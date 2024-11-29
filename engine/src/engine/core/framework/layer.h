@@ -7,14 +7,14 @@ class Application;
 
 class Layer : public NonCopyable {
 public:
-    Layer(const std::string& p_name = "Layer") : m_name(p_name) {}
+    Layer(std::string_view p_name) : m_name(p_name) {}
     virtual ~Layer() = default;
 
-    virtual void Attach() = 0;
-    virtual void Detach() = 0;
+    virtual void OnAttach() {}
+    virtual void OnDetach() {}
 
-    virtual void Render() = 0;
-    virtual void Update(float p_elapsedTime) = 0;
+    virtual void OnImGuiRender() {}
+    virtual void OnUpdate(float p_time_step) { unused(p_time_step); }
 
     const std::string& GetName() const { return m_name; }
 

@@ -35,7 +35,7 @@ static void CreateEmptyScene(Scene* p_scene) {
     }
 }
 
-auto SceneManager::Initialize() -> Result<void> {
+auto SceneManager::InitializeImpl() -> Result<void> {
     // create an empty scene
     Scene* scene = new Scene;
     CreateEmptyScene(scene);
@@ -49,7 +49,7 @@ auto SceneManager::Initialize() -> Result<void> {
     return Result<void>();
 }
 
-void SceneManager::Finalize() {}
+void SceneManager::FinalizeImpl() {}
 
 bool SceneManager::TrySwapScene() {
     auto queued_scene = m_loadingQueue.pop_all();
