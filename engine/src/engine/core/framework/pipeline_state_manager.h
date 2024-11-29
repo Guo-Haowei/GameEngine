@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/rendering/graphics_defines.h"
-#include "engine/rendering/pipeline_state.h"
+#include "engine/renderer/graphics_defines.h"
+#include "engine/renderer/pipeline_state.h"
 
 namespace my {
 

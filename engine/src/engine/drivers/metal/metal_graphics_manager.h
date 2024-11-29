@@ -10,8 +10,6 @@ class MetalGraphicsManager : public EmptyGraphicsManager {
 public:
     MetalGraphicsManager();
 
-    void Finalize() final;
-
     void SetStencilRef(uint32_t p_ref) override {}
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) override {}
 
@@ -52,6 +50,8 @@ public:
 
 protected:
     auto InitializeInternal() -> Result<void> final;
+    void FinalizeImpl() final;
+
     std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
 
     void Render() override {}

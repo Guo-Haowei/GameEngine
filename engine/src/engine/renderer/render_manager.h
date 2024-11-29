@@ -2,8 +2,8 @@
 #include "engine/assets/image.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/framework/module.h"
-#include "engine/rendering/gpu_resource.h"
-#include "engine/rendering/sampler.h"
+#include "engine/renderer/gpu_resource.h"
+#include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
 
 // @TODO: remove this class

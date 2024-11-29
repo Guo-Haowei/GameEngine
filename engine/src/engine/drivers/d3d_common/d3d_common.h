@@ -2,7 +2,7 @@
 #include <d3dcommon.h>
 #include <wrl/client.h>
 
-#include "engine/rendering/gpu_resource.h"
+#include "engine/renderer/gpu_resource.h"
 
 #define USE_D3D_DEBUG_NAME USE_IF(USING(DEBUG_BUILD))
 #define USE_D3D_ASSERT     IN_USE

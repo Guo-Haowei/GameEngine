@@ -8,7 +8,7 @@
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/imgui_manager.h"
 #include "engine/core/framework/input_manager.h"
-#include "engine/rendering/graphics_dvars.h"
+#include "engine/renderer/graphics_dvars.h"
 
 namespace my {
 

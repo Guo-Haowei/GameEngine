@@ -3,10 +3,11 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/frustum.h"
 #include "engine/core/math/matrix_transform.h"
-#include "engine/rendering/graphics_dvars.h"
-#include "engine/rendering/pipeline_state.h"
-#include "engine/rendering/render_graph/pass_creator.h"
-#include "engine/rendering/render_manager.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/pipeline_state.h"
+#include "engine/renderer/render_data.h"
+#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_manager.h"
 #include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
@@ -15,9 +16,9 @@
 
 extern OpenGlMeshBuffers* g_box;
 
-namespace my::rg {
+namespace my::renderer {
 
-void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
+void hdr_to_cube_map_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
     bool skip = true;
     if (skip) {
         return;
@@ -46,7 +47,7 @@ void hdr_to_cube_map_pass_func(const DrawPass* p_draw_pass) {
 }
 
 // @TODO: refactor
-void generate_brdf_func(const DrawPass* p_draw_pass) {
+void generate_brdf_func(const RenderData&, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     bool skip = true;
@@ -62,7 +63,7 @@ void generate_brdf_func(const DrawPass* p_draw_pass) {
     RenderManager::GetSingleton().draw_quad();
 }
 
-void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
+void diffuse_irradiance_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
     bool skip = true;
     if (skip) {
         return;
@@ -86,7 +87,7 @@ void diffuse_irradiance_pass_func(const DrawPass* p_draw_pass) {
     }
 }
 
-void prefilter_pass_func(const DrawPass* p_draw_pass) {
+void prefilter_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
     bool skip = true;
     if (skip) {
         return;
@@ -116,7 +117,7 @@ void prefilter_pass_func(const DrawPass* p_draw_pass) {
     return;
 }
 
-void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
+void debug_vxgi_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -130,7 +131,7 @@ void debug_vxgi_pass_func(const DrawPass* p_draw_pass) {
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
 
-    PassContext& pass = gm.m_mainPass;
+    const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     glBindVertexArray(g_box->vao);
@@ -158,7 +159,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     RenderManager::GetSingleton().draw_quad();
 }
 
-void final_pass_func(const DrawPass* p_draw_pass) {
+void final_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
@@ -273,4 +274,4 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
     return graph;
 }
 
-}  // namespace my::rg
+}  // namespace my::renderer

@@ -6,7 +6,7 @@
 
 #include <d3d11.h>
 
-#include "engine/rendering/gpu_resource.h"
+#include "engine/renderer/gpu_resource.h"
 
 namespace my::d3d {
 

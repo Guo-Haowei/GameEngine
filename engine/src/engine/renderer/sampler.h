@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/rendering/graphics_defines.h"
+#include "engine/renderer/graphics_defines.h"
 
 namespace my {
 

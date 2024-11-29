@@ -8,7 +8,7 @@ Degree& Degree::operator=(const Radians& p_rad) {
 }
 
 Radians& Radians::operator=(const Degree& p_degree) {
-    m_value = p_degree.ToRad();
+    m_value = p_degree.GetRadians();
     return *this;
 }
 

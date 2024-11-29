@@ -2,7 +2,7 @@
 
 #define RENDER_GRAPH_DEBUG_PRINT IN_USE
 
-namespace my::rg {
+namespace my::renderer {
 
 std::shared_ptr<RenderPass> RenderGraph::CreatePass(RenderPassDesc& p_desc) {
     std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPass>();
@@ -77,11 +77,11 @@ void RenderGraph::Compile() {
 #endif
 }
 
-void RenderGraph::Execute(GraphicsManager& p_graphics_manager) {
+void RenderGraph::Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager) {
     for (int index : m_sortedOrder) {
         auto& pass = m_renderPasses[index];
-        pass->Execute(p_graphics_manager);
+        pass->Execute(p_data, p_graphics_manager);
     }
 }
 
-}  // namespace my::rg
+}  // namespace my::renderer

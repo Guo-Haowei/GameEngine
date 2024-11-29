@@ -1,6 +1,6 @@
 #include "lua_scene_binding.h"
 
-#include "engine/rendering/render_manager.h"
+#include "engine/renderer/render_manager.h"
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
 #include "sol/sol.hpp"

@@ -9,9 +9,9 @@
 #include "engine/drivers/d3d11/d3d11_resources.h"
 #include "engine/drivers/d3d_common/d3d_common.h"
 #include "engine/drivers/windows/win32_display_manager.h"
-#include "engine/rendering/gpu_resource.h"
-#include "engine/rendering/graphics_private.h"
-#include "engine/rendering/render_graph/render_graph_defines.h"
+#include "engine/renderer/gpu_resource.h"
+#include "engine/renderer/graphics_private.h"
+#include "engine/renderer/render_graph/render_graph_defines.h"
 
 #define INCLUDE_AS_D3D11
 #include "engine/drivers/d3d_common/d3d_convert.h"

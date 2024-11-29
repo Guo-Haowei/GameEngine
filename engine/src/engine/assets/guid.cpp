@@ -1,13 +1,13 @@
 #include "guid.h"
 
+#if USING(PLATFORM_WINDOWS)
 #include <objbase.h>
+#endif
 
 #include "engine/core/string/string_builder.h"
 #include "engine/core/string/string_utils.h"
 
 namespace my {
-
-static_assert(sizeof(Guid) == sizeof(GUID));
 
 Guid::Guid() {
     memset(m_data, 0, sizeof(Guid));
@@ -19,10 +19,13 @@ Guid::Guid(const uint8_t* p_buffer) {
 
 Guid Guid::Create() {
     Guid result;
+#if USING(PLATFORM_WINDOWS)
+    static_assert(sizeof(Guid) == sizeof(GUID));
     GUID guid;
 
     ::CoCreateGuid(&guid);
     memcpy(&result, &guid, sizeof(Guid));
+#endif
     return result;
 }
 
@@ -32,7 +35,7 @@ Result<Guid> Guid::Parse(const char* p_start, int p_length) {
     }
 
     Guid guid;
-    size_t i = 0;
+    int i = 0;
     int buffer_index = 0;
     do {
         char c = p_start[i];

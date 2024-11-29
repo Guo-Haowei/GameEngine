@@ -3,7 +3,7 @@
 
 #include "engine/core/base/singleton.h"
 #include "engine/core/framework/module.h"
-#include "engine/rendering/graphics_defines.h"
+#include "engine/renderer/graphics_defines.h"
 
 namespace my {
 

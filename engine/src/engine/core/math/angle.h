@@ -54,11 +54,11 @@ public:
         return m_value >= p_val.m_value;
     }
     void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
-    float ToRad() const { return glm::radians(m_value); }
+    float GetRadians() const { return glm::radians(m_value); }
     float GetDegree() const { return m_value; }
-    float Sin() const { return glm::sin(ToRad()); }
-    float Cos() const { return glm::cos(ToRad()); }
-    float Tan() const { return glm::tan(ToRad()); }
+    float Sin() const { return glm::sin(GetRadians()); }
+    float Cos() const { return glm::cos(GetRadians()); }
+    float Tan() const { return glm::tan(GetRadians()); }
 
 private:
     float m_value;
@@ -94,11 +94,11 @@ public:
         return *this;
     }
     Radians& operator+=(Degree p_val) {
-        m_value += p_val.ToRad();
+        m_value += p_val.GetRadians();
         return *this;
     }
     Radians& operator-=(Degree p_val) {
-        m_value -= p_val.ToRad();
+        m_value -= p_val.GetRadians();
         return *this;
     }
     void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }

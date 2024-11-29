@@ -7,7 +7,9 @@ namespace my {
 class GraphicsManager;
 }
 
-namespace my::rg {
+namespace my::renderer {
+
+struct RenderData;
 
 class RenderGraph : public NonCopyable {
 public:
@@ -18,7 +20,7 @@ public:
 
     void Compile();
 
-    void Execute(GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
@@ -31,4 +33,4 @@ private:
     friend class RenderGraphEditorDelegate;
 };
 
-}  // namespace my::rg
+}  // namespace my::renderer

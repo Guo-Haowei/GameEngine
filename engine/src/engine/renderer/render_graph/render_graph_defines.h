@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/rendering/pixel_format.h"
+#include "engine/renderer/pixel_format.h"
 
 // @TODO: move to shader_defines
 constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;

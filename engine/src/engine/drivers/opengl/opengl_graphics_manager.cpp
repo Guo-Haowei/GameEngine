@@ -10,8 +10,8 @@
 #include "engine/drivers/opengl/opengl_pipeline_state_manager.h"
 #include "engine/drivers/opengl/opengl_prerequisites.h"
 #include "engine/drivers/opengl/opengl_resources.h"
-#include "engine/rendering/graphics_dvars.h"
-#include "engine/rendering/render_graph/render_graph_defines.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/render_graph/render_graph_defines.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "vsinput.glsl.h"
 
@@ -19,12 +19,12 @@
 #include <GLFW/glfw3.h>
 
 // @TODO: remove
-#include "engine/rendering/ltc_matrix.h"
+#include "engine/renderer/ltc_matrix.h"
 
 // @TODO: refactor
 using namespace my;
-using my::rg::RenderGraph;
-using my::rg::RenderPass;
+using my::renderer::RenderGraph;
+using my::renderer::RenderPass;
 
 // @TODO: refactor
 OpenGlMeshBuffers* g_box;

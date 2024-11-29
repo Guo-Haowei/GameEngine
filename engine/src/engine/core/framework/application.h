@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/core/framework/event_queue.h"
 #include "engine/core/framework/module.h"
-#include "engine/rendering/graphics_defines.h"
+#include "engine/renderer/graphics_defines.h"
 
 namespace my {
 
@@ -31,6 +31,7 @@ struct ApplicationSpec {
 class Application {
 public:
     Application(const ApplicationSpec& p_spec);
+    virtual ~Application() = default;
 
     auto Initialize(int p_argc, const char** p_argv) -> Result<void>;
     void Finalize();
@@ -59,8 +60,6 @@ private:
 
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
-
-    bool m_minimized{ false };
 
     std::vector<std::shared_ptr<Layer>> m_layers;
     std::vector<std::string> m_commandLine;

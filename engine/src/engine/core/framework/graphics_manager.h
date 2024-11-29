@@ -4,19 +4,19 @@
 #include "engine/core/framework/event_queue.h"
 #include "engine/core/framework/module.h"
 #include "engine/core/framework/pipeline_state_manager.h"
-#include "engine/rendering/gpu_resource.h"
-#include "engine/rendering/pipeline_state.h"
-#include "engine/rendering/render_graph/draw_pass.h"
-#include "engine/rendering/render_graph/render_graph.h"
-#include "engine/rendering/render_graph/render_pass.h"
-#include "engine/rendering/sampler.h"
+#include "engine/renderer/gpu_resource.h"
+#include "engine/renderer/pipeline_state.h"
+#include "engine/renderer/render_graph/draw_pass.h"
+#include "engine/renderer/render_graph/render_graph.h"
+#include "engine/renderer/render_graph/render_pass.h"
+#include "engine/renderer/sampler.h"
 #include "engine/scene/material_component.h"
 
 // @TODO: refactor
 #include "cbuffer.hlsl.h"
 #include "engine/scene/scene.h"
 struct MaterialConstantBuffer;
-using my::rg::RenderPass;
+using my::renderer::RenderPass;
 
 namespace my {
 
@@ -24,28 +24,6 @@ namespace my {
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 extern ConstantBuffer<EnvConstantBuffer> g_env_cache;
-
-// @TODO: refactor
-struct DrawContext {
-    uint32_t index_count;
-    uint32_t index_offset;
-    int material_idx;
-};
-
-// @TODO: refactor
-struct BatchContext {
-    int bone_idx;
-    int batch_idx;
-    const MeshBuffers* mesh_data;
-    std::vector<DrawContext> subsets;
-    uint32_t flags;
-};
-
-struct PassContext {
-    int pass_idx{ 0 };
-
-    std::vector<BatchContext> draws;
-};
 
 #define RENDER_GRAPH_LIST                              \
     RENDER_GRAPH_DECLARE(DEFAULT, "default")           \
@@ -68,49 +46,13 @@ enum class PathTracerMethod {
 };
 
 struct FrameContext {
-    template<typename BUFFER>
-    struct BufferCache {
-        std::vector<BUFFER> buffer;
-        std::unordered_map<ecs::Entity, uint32_t> lookup;
-
-        uint32_t FindOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
-            auto it = lookup.find(p_entity);
-            if (it != lookup.end()) {
-                return it->second;
-            }
-
-            uint32_t index = static_cast<uint32_t>(buffer.size());
-            lookup[p_entity] = index;
-            buffer.emplace_back(p_buffer);
-            return index;
-        }
-
-        void Clear() {
-            buffer.clear();
-            lookup.clear();
-        }
-    };
-
     std::shared_ptr<GpuConstantBuffer> batchCb;
-    BufferCache<PerBatchConstantBuffer> batchCache;
-
     std::shared_ptr<GpuConstantBuffer> materialCb;
-    BufferCache<MaterialConstantBuffer> materialCache;
-
     std::shared_ptr<GpuConstantBuffer> boneCb;
-    BufferCache<BoneConstantBuffer> boneCache;
-
     std::shared_ptr<GpuConstantBuffer> passCb;
-    std::vector<PerPassConstantBuffer> passCache;
-
     std::shared_ptr<GpuConstantBuffer> emitterCb;
-    std::vector<EmitterConstantBuffer> emitterCache;
-
     std::shared_ptr<GpuConstantBuffer> pointShadowCb;
-    std::array<PointShadowConstantBuffer, MAX_POINT_LIGHT_SHADOW_COUNT * 6> pointShadowCache;
-
     std::shared_ptr<GpuConstantBuffer> perFrameCb;
-    PerFrameConstantBuffer perFrameCache;
 };
 
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
@@ -203,7 +145,7 @@ public:
     [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
     RenderGraphName GetActiveRenderGraphName() const { return m_activeRenderGraphName; }
     bool SetActiveRenderGraph(RenderGraphName p_name);
-    rg::RenderGraph* GetActiveRenderGraph();
+    renderer::RenderGraph* GetActiveRenderGraph();
     const auto& GetRenderGraphs() const { return m_renderGraphs; }
     bool StartPathTracer(PathTracerMethod p_method);
 
@@ -229,7 +171,7 @@ protected:
     RenderGraphName m_activeRenderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
-    std::array<std::unique_ptr<rg::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
+    std::array<std::unique_ptr<renderer::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
 
     std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
@@ -245,16 +187,6 @@ protected:
     const int m_frameCount;
 
 public:
-    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
-    using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
-
-    // @TODO: save pass item somewhere and use index instead of keeping many copies
-    std::array<std::unique_ptr<PassContext>, MAX_POINT_LIGHT_SHADOW_COUNT> m_pointShadowPasses;
-    std::array<PassContext, 1> m_shadowPasses;  // @TODO: support multi ortho light
-
-    PassContext m_voxelPass;
-    PassContext m_mainPass;
-
     // @TODO: make private
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
@@ -262,16 +194,7 @@ public:
     bool m_bufferUpdated = false;
 
 protected:
-    void Cleanup();
-    void UpdateConstants(const Scene& p_scene);
     void UpdateEmitters(const Scene& p_scene);
-    void UpdateForceFields(const Scene& p_scene);
-    void UpdateLights(const Scene& p_scene);
-    void UpdateVoxelPass(const Scene& p_scene);
-    void UpdateMainPass(const Scene& p_scene);
-    void UpdateBloomConstants();
-
-    void FillPass(const Scene& p_scene, PassContext& p_pass, FilterObjectFunc1 p_filter1, FilterObjectFunc2 p_filter2);
 };
 
 }  // namespace my
