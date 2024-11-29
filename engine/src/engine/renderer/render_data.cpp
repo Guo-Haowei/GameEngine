@@ -279,13 +279,13 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
-                p_out_data.m_shadowPasses[0].pass_idx = static_cast<int>(p_out_data.passCache.size());
+                p_out_data.shadowPasses[0].pass_idx = static_cast<int>(p_out_data.passCache.size());
                 p_out_data.passCache.emplace_back(pass_constant);
 
                 Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
                     p_scene,
-                    p_out_data.m_shadowPasses[0],
+                    p_out_data.shadowPasses[0],
                     [](const ObjectComponent& p_object) {
                         return p_object.flags & ObjectComponent::CAST_SHADOW;
                     },
@@ -329,7 +329,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
                         point_shadow_cache[slot].c_pointLightFar = light_component.GetMaxDistance();
                     }
 
-                    p_out_data.m_pointShadowPasses[shadow_map_index] = std::move(pass);
+                    p_out_data.pointShadowPasses[shadow_map_index] = std::move(pass);
                 } else {
                     light.shadow_map_index = -1;
                 }
@@ -357,7 +357,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     }
     FillPass(
         p_config,
-        p_out_data.m_voxelPass,
+        p_out_data.voxelPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::RENDERABLE;
         },
@@ -379,12 +379,12 @@ static void FillMainPass(const RenderDataConfig& p_config,
     pass_constant.c_viewMatrix = camera.viewMatrix;
     pass_constant.c_projectionMatrix = camera.projectionMatrixRendering;
 
-    p_out_data.m_mainPass.pass_idx = static_cast<int>(p_out_data.passCache.size());
+    p_out_data.mainPass.pass_idx = static_cast<int>(p_out_data.passCache.size());
     p_out_data.passCache.emplace_back(pass_constant);
 
     FillPass(
         p_config.scene,
-        p_out_data.m_mainPass,
+        p_out_data.mainPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::RENDERABLE;
         },

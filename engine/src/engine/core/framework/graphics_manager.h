@@ -16,7 +16,7 @@
 #include "cbuffer.hlsl.h"
 #include "engine/scene/scene.h"
 struct MaterialConstantBuffer;
-using my::rg::RenderPass;
+using my::renderer::RenderPass;
 
 namespace my {
 
@@ -145,7 +145,7 @@ public:
     [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
     RenderGraphName GetActiveRenderGraphName() const { return m_activeRenderGraphName; }
     bool SetActiveRenderGraph(RenderGraphName p_name);
-    rg::RenderGraph* GetActiveRenderGraph();
+    renderer::RenderGraph* GetActiveRenderGraph();
     const auto& GetRenderGraphs() const { return m_renderGraphs; }
     bool StartPathTracer(PathTracerMethod p_method);
 
@@ -171,7 +171,7 @@ protected:
     RenderGraphName m_activeRenderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
-    std::array<std::unique_ptr<rg::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
+    std::array<std::unique_ptr<renderer::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
 
     std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 

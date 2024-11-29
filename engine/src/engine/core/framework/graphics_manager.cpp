@@ -352,13 +352,13 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
 
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = rg::RenderPassCreator::CreateDummy();
+            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy();
             break;
         case RenderGraphName::EXPERIMENTAL:
-            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = rg::RenderPassCreator::CreateExperimental();
+            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = renderer::RenderPassCreator::CreateExperimental();
             break;
         case RenderGraphName::DEFAULT:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = rg::RenderPassCreator::CreateDefault();
+            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault();
             break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
@@ -368,7 +368,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     switch (m_backend) {
         case Backend::OPENGL:
         case Backend::D3D11:
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = rg::RenderPassCreator::CreatePathTracer();
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderPassCreator::CreatePathTracer();
             break;
         default:
             break;
@@ -392,7 +392,7 @@ bool GraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
     return true;
 }
 
-rg::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
+renderer::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
     const int index = std::to_underlying(m_activeRenderGraphName);
     ERR_FAIL_INDEX_V(index, RenderGraphName::COUNT, nullptr);
     DEV_ASSERT(m_renderGraphs[index] != nullptr);

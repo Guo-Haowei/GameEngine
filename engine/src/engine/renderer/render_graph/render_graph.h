@@ -7,12 +7,9 @@ namespace my {
 class GraphicsManager;
 }
 
-// @TODO: refactor namespace
 namespace my::renderer {
-struct RenderData;
-}
 
-namespace my::rg {
+struct RenderData;
 
 class RenderGraph : public NonCopyable {
 public:
@@ -36,4 +33,4 @@ private:
     friend class RenderGraphEditorDelegate;
 };
 
-}  // namespace my::rg
+}  // namespace my::renderer

@@ -83,6 +83,8 @@ struct RenderData {
 
     Camera mainCamera;
 
+    // @TODO: multi camera & viewport
+
     PerFrameConstantBuffer perFrameCache;
     BufferCache<PerBatchConstantBuffer> batchCache;
     BufferCache<MaterialConstantBuffer> materialCache;
@@ -92,11 +94,11 @@ struct RenderData {
     std::vector<EmitterConstantBuffer> emitterCache;
 
     // @TODO: rename
-    std::array<std::unique_ptr<PassContext>, MAX_POINT_LIGHT_SHADOW_COUNT> m_pointShadowPasses;
-    std::array<PassContext, 1> m_shadowPasses;  // @TODO: support multi ortho light
+    std::array<std::unique_ptr<PassContext>, MAX_POINT_LIGHT_SHADOW_COUNT> pointShadowPasses;
+    std::array<PassContext, 1> shadowPasses;  // @TODO: support multi ortho light
 
-    PassContext m_voxelPass;
-    PassContext m_mainPass;
+    PassContext voxelPass;
+    PassContext mainPass;
 };
 
 void PrepareRenderData(const Camera& p_camera,

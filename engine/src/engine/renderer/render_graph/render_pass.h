@@ -6,12 +6,9 @@ namespace my {
 class GraphicsManager;
 }  // namespace my
 
-// @TODO: refactor namespace
 namespace my::renderer {
-struct RenderData;
-}
 
-namespace my::rg {
+struct RenderData;
 
 struct RenderPassDesc {
     RenderPassName name;
@@ -37,4 +34,4 @@ protected:
     friend class RenderGraph;
 };
 
-}  // namespace my::rg
+}  // namespace my::renderer

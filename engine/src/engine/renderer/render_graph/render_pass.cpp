@@ -9,7 +9,7 @@
 #define RT_DEBUG(...)
 #endif
 
-namespace my::rg {
+namespace my::renderer {
 
 void RenderPass::AddDrawPass(std::shared_ptr<DrawPass> p_draw_pass) {
     m_drawPasses.push_back(p_draw_pass);
@@ -32,4 +32,4 @@ void RenderPass::Execute(const renderer::RenderData& p_data, GraphicsManager& p_
     RT_DEBUG("-------");
 }
 
-}  // namespace my::rg
+}  // namespace my::renderer

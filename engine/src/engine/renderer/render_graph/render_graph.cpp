@@ -2,7 +2,7 @@
 
 #define RENDER_GRAPH_DEBUG_PRINT IN_USE
 
-namespace my::rg {
+namespace my::renderer {
 
 std::shared_ptr<RenderPass> RenderGraph::CreatePass(RenderPassDesc& p_desc) {
     std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPass>();
@@ -84,4 +84,4 @@ void RenderGraph::Execute(const renderer::RenderData& p_data, GraphicsManager& p
     }
 }
 
-}  // namespace my::rg
+}  // namespace my::renderer

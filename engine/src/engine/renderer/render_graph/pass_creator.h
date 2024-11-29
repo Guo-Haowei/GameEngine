@@ -3,8 +3,7 @@
 #include "engine/renderer/pixel_format.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
-// @TODO: refactor this
-namespace my::rg {
+namespace my::renderer {
 
 class RenderGraph;
 
@@ -54,4 +53,4 @@ private:
     RenderGraph& m_graph;
 };
 
-}  // namespace my::rg
+}  // namespace my::renderer

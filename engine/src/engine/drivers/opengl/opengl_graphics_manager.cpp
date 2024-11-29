@@ -23,8 +23,8 @@
 
 // @TODO: refactor
 using namespace my;
-using my::rg::RenderGraph;
-using my::rg::RenderPass;
+using my::renderer::RenderGraph;
+using my::renderer::RenderPass;
 
 // @TODO: refactor
 OpenGlMeshBuffers* g_box;
