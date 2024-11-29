@@ -2,13 +2,17 @@
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
+namespace my::renderer {
+struct RenderData;
+}
+
 namespace my {
 
 struct DrawPass;
 
 class GraphicsManager;
 
-using DrawPassExecuteFunc = void (*)(const DrawPass*);
+using DrawPassExecuteFunc = void (*)(const renderer::RenderData&, const DrawPass*);
 
 struct ResourceTransition {
     std::shared_ptr<GpuTexture> resource;

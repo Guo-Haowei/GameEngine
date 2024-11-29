@@ -1,0 +1,105 @@
+#pragma once
+#include "engine/core/math/geomath.h"
+#include "engine/core/systems/entity.h"
+#include "engine/renderer/gpu_resource.h"
+
+// include this file the last
+#include "cbuffer.hlsl.h"
+
+namespace my {
+class Scene;
+class Camera;
+}
+
+namespace my::renderer {
+
+struct RenderDataConfig {
+    RenderDataConfig(const Scene& p_scene) : scene(p_scene) {}
+
+    const Scene& scene;
+    bool isOpengl{ false };
+};
+
+struct DrawContext {
+    uint32_t index_count;
+    uint32_t index_offset;
+    int material_idx;
+};
+
+struct BatchContext {
+    int bone_idx;
+    int batch_idx;
+    const MeshBuffers* mesh_data;
+    std::vector<DrawContext> subsets;
+    uint32_t flags;
+};
+
+struct PassContext {
+    int pass_idx{ 0 };
+
+    std::vector<BatchContext> draws;
+};
+
+template<typename BUFFER>
+struct BufferCache {
+    std::vector<BUFFER> buffer;
+    std::unordered_map<ecs::Entity, uint32_t> lookup;
+
+    uint32_t FindOrAdd(ecs::Entity p_entity, const BUFFER& p_buffer) {
+        auto it = lookup.find(p_entity);
+        if (it != lookup.end()) {
+            return it->second;
+        }
+
+        uint32_t index = static_cast<uint32_t>(buffer.size());
+        lookup[p_entity] = index;
+        buffer.emplace_back(p_buffer);
+        return index;
+    }
+
+    void Clear() {
+        buffer.clear();
+        lookup.clear();
+    }
+};
+
+struct RenderData {
+    struct Camera {
+        Matrix4x4f viewMatrix;
+        Matrix4x4f projectionMatrixRendering;
+        Matrix4x4f projectionMatrixFrustum;
+        Vector3f position;
+        Vector3f up;
+        Vector3f front;
+        Vector3f right;
+        float sceenWidth;
+        float sceenHeight;
+        float aspectRatio;
+        float fovy;
+        float zNear; 
+        float zFar; 
+    };
+
+    Camera mainCamera;
+
+    PerFrameConstantBuffer perFrameCache;
+    BufferCache<PerBatchConstantBuffer> batchCache;
+    BufferCache<MaterialConstantBuffer> materialCache;
+    std::vector<PerPassConstantBuffer> passCache;
+    std::array<PointShadowConstantBuffer, MAX_POINT_LIGHT_SHADOW_COUNT * 6> pointShadowCache;
+    BufferCache<BoneConstantBuffer> boneCache;
+    std::vector<EmitterConstantBuffer> emitterCache;
+
+    // @TODO: rename
+    std::array<std::unique_ptr<PassContext>, MAX_POINT_LIGHT_SHADOW_COUNT> m_pointShadowPasses;
+    std::array<PassContext, 1> m_shadowPasses;  // @TODO: support multi ortho light
+
+    PassContext m_voxelPass;
+    PassContext m_mainPass;
+};
+
+void PrepareRenderData(const Camera& p_camera,
+                       const RenderDataConfig& p_config,
+                       RenderData& p_out_data);
+
+} // namespace my

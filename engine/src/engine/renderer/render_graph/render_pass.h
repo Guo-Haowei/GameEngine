@@ -6,6 +6,11 @@ namespace my {
 class GraphicsManager;
 }  // namespace my
 
+// @TODO: refactor namespace
+namespace my::renderer {
+struct RenderData;
+}
+
 namespace my::rg {
 
 struct RenderPassDesc {
@@ -17,7 +22,7 @@ class RenderPass {
 public:
     void AddDrawPass(std::shared_ptr<DrawPass> p_draw_pass);
 
-    void Execute(GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
 
     RenderPassName GetName() const { return m_name; }
     const char* GetNameString() const { return RenderPassNameToString(m_name); }

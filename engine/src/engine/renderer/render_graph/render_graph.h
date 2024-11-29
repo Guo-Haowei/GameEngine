@@ -7,6 +7,11 @@ namespace my {
 class GraphicsManager;
 }
 
+// @TODO: refactor namespace
+namespace my::renderer {
+struct RenderData;
+}
+
 namespace my::rg {
 
 class RenderGraph : public NonCopyable {
@@ -18,7 +23,7 @@ public:
 
     void Compile();
 
-    void Execute(GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;

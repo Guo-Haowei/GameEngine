@@ -6,6 +6,7 @@
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_manager.h"
+#include "engine/renderer/render_data.h"
 
 // shader defines
 #include "shader_resource_defines.hlsl.h"
@@ -13,11 +14,12 @@
 
 // @TODO: this is temporary
 #include "engine/core/framework/scene_manager.h"
+using namespace my::renderer;
 
 namespace my::rg {
 
 /// Gbuffer
-static void GbufferPassFunc(const DrawPass* p_draw_pass) {
+static void GbufferPassFunc(const renderer::RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -32,7 +34,7 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
 
-    PassContext& pass = gm.m_mainPass;
+    const PassContext& pass = p_data.m_mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     gm.SetPipelineState(PSO_GBUFFER);
@@ -51,7 +53,8 @@ static void GbufferPassFunc(const DrawPass* p_draw_pass) {
         gm.SetMesh(draw.mesh_data);
 
         for (const auto& subset : draw.subsets) {
-            const MaterialConstantBuffer& material = gm.GetCurrentFrame().materialCache.buffer[subset.material_idx];
+            // @TODO: fix this
+            const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
             gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
             gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
             gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
@@ -118,7 +121,7 @@ void RenderPassCreator::AddGbufferPass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void HighlightPassFunc(const DrawPass* p_draw_pass) {
+static void HighlightPassFunc(const renderer::RenderData&, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -160,7 +163,7 @@ void RenderPassCreator::AddHighlightPass() {
 }
 
 /// Shadow
-static void PointShadowPassFunc(const DrawPass* p_draw_pass) {
+static void PointShadowPassFunc(const renderer::RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -170,7 +173,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass) {
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
     for (int pass_id = 0; pass_id < MAX_POINT_LIGHT_SHADOW_COUNT; ++pass_id) {
-        auto& pass_ptr = gm.m_pointShadowPasses[pass_id];
+        auto& pass_ptr = p_data.m_pointShadowPasses[pass_id];
         if (!pass_ptr) {
             continue;
         }
@@ -201,7 +204,7 @@ static void PointShadowPassFunc(const DrawPass* p_draw_pass) {
     }
 }
 
-static void ShadowPassFunc(const DrawPass* p_draw_pass) {
+static void ShadowPassFunc(const renderer::RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -214,7 +217,7 @@ static void ShadowPassFunc(const DrawPass* p_draw_pass) {
 
     gm.SetViewport(Viewport(width, height));
 
-    PassContext& pass = gm.m_shadowPasses[0];
+    const PassContext& pass = p_data.m_shadowPasses[0];
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     gm.SetPipelineState(PSO_DPETH);
@@ -268,7 +271,7 @@ void RenderPassCreator::AddShadowPass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void VoxelizationPassFunc(const DrawPass*) {
+static void VoxelizationPassFunc(const renderer::RenderData& p_data, const DrawPass*) {
     OPTICK_EVENT();
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -306,7 +309,7 @@ static void VoxelizationPassFunc(const DrawPass*) {
     gm.SetPipelineState(PSO_VOXELIZATION_PRE);
     gm.Dispatch(group_size, group_size, group_size);
 
-    PassContext& pass = gm.m_voxelPass;
+    const PassContext& pass = p_data.m_voxelPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     // glSubpixelPrecisionBiasNV(1, 1);
@@ -388,7 +391,7 @@ void RenderPassCreator::AddVoxelizationPass() {
 }
 
 /// Lighting
-static void LightingPassFunc(const DrawPass* p_draw_pass) {
+static void LightingPassFunc(const renderer::RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -415,7 +418,7 @@ static void LightingPassFunc(const DrawPass* p_draw_pass) {
         gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelNormalSlot());
     }
 
-    PassContext& pass = gm.m_mainPass;
+    const PassContext& pass = p_data.m_mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     // if (0) {
@@ -498,7 +501,7 @@ void RenderPassCreator::AddLightingPass() {
 }
 
 /// Emitter
-static void EmitterPassFunc(const DrawPass* p_draw_pass) {
+static void EmitterPassFunc(const renderer::RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -508,7 +511,7 @@ static void EmitterPassFunc(const DrawPass* p_draw_pass) {
     gm.SetRenderTarget(p_draw_pass);
     gm.SetViewport(Viewport(width, height));
 
-    PassContext& pass = gm.m_mainPass;
+    const PassContext& pass = p_data.m_mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     const Scene& scene = SceneManager::GetScene();
@@ -564,7 +567,7 @@ void RenderPassCreator::AddEmitterPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const DrawPass* p_draw_pass) {
+static void BloomSetupFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
     unused(p_draw_pass);
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -585,7 +588,7 @@ static void BloomSetupFunc(const DrawPass* p_draw_pass) {
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
+static void BloomDownSampleFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
     const uint32_t pass_id = p_draw_pass->id;
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -607,7 +610,7 @@ static void BloomDownSampleFunc(const DrawPass* p_draw_pass) {
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const DrawPass* p_draw_pass) {
+static void BloomUpSampleFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     const uint32_t pass_id = p_draw_pass->id;
     auto& frame = gm.GetCurrentFrame();
@@ -720,7 +723,7 @@ void RenderPassCreator::AddBloomPass() {
 
 /// Tone
 /// Change to post processing?
-static void TonePassFunc(const DrawPass* p_draw_pass) {
+static void TonePassFunc(const renderer::RenderData& p_data,const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -734,8 +737,8 @@ static void TonePassFunc(const DrawPass* p_draw_pass) {
     // HACK:
     if (DVAR_GET_BOOL(gfx_debug_vxgi) && gm.GetBackend() == Backend::OPENGL) {
         // @TODO: remove
-        extern void debug_vxgi_pass_func(const DrawPass* p_draw_pass);
-        debug_vxgi_pass_func(p_draw_pass);
+        extern void debug_vxgi_pass_func(const renderer::RenderData&, const DrawPass* p_draw_pass);
+        debug_vxgi_pass_func(p_data, p_draw_pass);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
             std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
@@ -802,7 +805,7 @@ void RenderPassCreator::AddTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void PathTracerTonePassFunc(const DrawPass* p_draw_pass) {
+static void PathTracerTonePassFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -871,7 +874,7 @@ void RenderPassCreator::AddPathTracerTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void PathTracerPassFunc(const DrawPass*) {
+static void PathTracerPassFunc(const renderer::RenderData& ,const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     if (gm.m_bufferUpdated && gm.m_pathTracerGeometryBuffer) {
         LOG_FATAL("currently broken, cause SwapBuffers crash");
