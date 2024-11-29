@@ -7,10 +7,15 @@ namespace my {
 class ContentBrowser : public EditorWindow {
 public:
     ContentBrowser(EditorLayer& p_editor);
-    ~ContentBrowser();
+
+    void OnAttach() override;
+
+    void Update(Scene&) override;
 
 protected:
     void UpdateInternal(Scene& p_scene) override;
+
+    void DrawSideBar();
 
     // @TODO: use FilePath
     std::filesystem::path m_rootPath;

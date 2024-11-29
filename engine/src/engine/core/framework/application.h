@@ -51,6 +51,7 @@ public:
 
     const ApplicationSpec& GetSpecification() const { return m_specification; }
     const std::string& GetUserFolder() const { return m_userFolder; }
+    const std::string& GetResourceFolder() const { return m_resourceFolder; }
 
 protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);

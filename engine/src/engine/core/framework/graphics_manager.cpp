@@ -20,6 +20,7 @@
 #include "engine/renderer/render_graph/pass_creator.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_manager.h"
+#include "engine/renderer/renderer.h"
 #include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
@@ -204,13 +205,6 @@ void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
-    renderer::RenderData data;
-    {
-        renderer::RenderDataConfig config(p_scene);
-        config.isOpengl = m_backend == Backend::OPENGL;
-        renderer::PrepareRenderData(*p_scene.m_camera.get(), config, data);
-    }
-
     // @TODO: make it a function
     auto loaded_images = m_loadedImages.pop_all();
     while (!loaded_images.empty()) {
@@ -237,14 +231,23 @@ void GraphicsManager::Update(Scene& p_scene) {
         // @TODO: refactor
         UpdateEmitters(p_scene);
 
+        auto data = renderer::GetRenderData();
+        DEV_ASSERT(data);
+
         auto& frame = GetCurrentFrame();
-        UpdateConstantBuffer(frame.batchCb.get(), data.batchCache.buffer);
-        UpdateConstantBuffer(frame.materialCb.get(), data.materialCache.buffer);
-        UpdateConstantBuffer(frame.boneCb.get(), data.boneCache.buffer);
-        UpdateConstantBuffer(frame.passCb.get(), data.passCache);
-        UpdateConstantBuffer(frame.emitterCb.get(), data.emitterCache);
-        UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(frame.pointShadowCb.get(), data.pointShadowCache);
-        UpdateConstantBuffer(frame.perFrameCb.get(), &data.perFrameCache, sizeof(PerFrameConstantBuffer));
+        UpdateConstantBuffer(frame.batchCb.get(), data->batchCache.buffer);
+        UpdateConstantBuffer(frame.materialCb.get(), data->materialCache.buffer);
+        UpdateConstantBuffer(frame.boneCb.get(), data->boneCache.buffer);
+        UpdateConstantBuffer(frame.passCb.get(), data->passCache);
+        UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
+
+        UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(
+            frame.pointShadowCb.get(),
+            data->pointShadowCache);
+        UpdateConstantBuffer(frame.perFrameCb.get(),
+                             &data->perFrameCache,
+                             sizeof(PerFrameConstantBuffer));
+
         BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
         // @HACK
@@ -255,7 +258,7 @@ void GraphicsManager::Update(Scene& p_scene) {
             default: {
                 auto graph = GetActiveRenderGraph();
                 if (DEV_VERIFY(graph)) {
-                    graph->Execute(data, *this);
+                    graph->Execute(*data, *this);
                 }
             } break;
         }

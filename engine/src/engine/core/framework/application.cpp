@@ -17,11 +17,14 @@
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_manager.h"
+#include "engine/renderer/renderer.h"
 
 #define DEFINE_DVAR
 #include "engine/core/framework/common_dvars.h"
 #undef DEFINE_DVAR
+
+// @TODO: remove this
+#include "engine/renderer/render_manager.h"
 
 namespace my {
 
@@ -191,15 +194,6 @@ void Application::Finalize() {
         LOG_VERBOSE("module '{}' finalized", module->GetName());
     }
 
-#if 0
-    LOG_ERROR("This is an error");
-    LOG_VERBOSE("This is a verbose log");
-    LOG("This is a log");
-    LOG_OK("This is an ok log");
-    LOG_WARN("This is a warning");
-    LOG_FATAL("This is a fatal error");
-#endif
-
     DynamicVariableManager::Serialize(DVAR_CACHE_FILE);
 }
 
@@ -212,10 +206,15 @@ void Application::Run() {
 
     // @TODO: add frame count, elapsed time, etc
     Timer timer;
-    while (!m_displayServer->ShouldClose()) {
+    do {
         OPTICK_FRAME("MainThread");
 
         m_displayServer->BeginFrame();
+        if (m_displayServer->ShouldClose()) {
+            break;
+        }
+
+        renderer::BeginFrame(this);
 
         m_inputManager->BeginFrame();
 
@@ -229,6 +228,7 @@ void Application::Run() {
         m_sceneManager->Update(dt);
         auto& scene = m_sceneManager->GetScene();
 
+        // @TODO: refactor this
         if (m_imguiManager) {
             m_imguiManager->BeginFrame();
             for (auto& layer : m_layers) {
@@ -241,11 +241,13 @@ void Application::Run() {
             ImGui::Render();
         }
 
+        renderer::EndFrame();
+
         m_physicsManager->Update(scene);
         m_graphicsManager->Update(scene);
 
         m_inputManager->EndFrame();
-    }
+    } while (true);
 
     LOG("\n********************************************************************************"
         "\nMain Loop"

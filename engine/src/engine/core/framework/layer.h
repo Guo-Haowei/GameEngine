@@ -17,6 +17,7 @@ public:
     virtual void OnUpdate(float p_time_step) { unused(p_time_step); }
 
     const std::string& GetName() const { return m_name; }
+    Application* GetApplication() const { return m_app; }
 
 protected:
     std::string m_name;

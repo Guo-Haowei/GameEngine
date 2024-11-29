@@ -128,6 +128,10 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 
 void EditorLayer::OnAttach() {
     m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
+
+    for (auto& panel : m_panels) {
+        panel->OnAttach();
+    }
 }
 
 void EditorLayer::OnDetach() {

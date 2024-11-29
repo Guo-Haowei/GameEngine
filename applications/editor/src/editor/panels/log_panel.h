@@ -5,7 +5,7 @@ namespace my {
 
 class LogPanel : public EditorWindow {
 public:
-    LogPanel(EditorLayer& editor) : EditorWindow("Log", editor) {}
+    LogPanel(EditorLayer& editor) : EditorWindow("Console", editor) {}
 
 protected:
     void UpdateInternal(Scene& scene) override;
