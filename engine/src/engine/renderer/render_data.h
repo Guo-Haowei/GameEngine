@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/core/math/angle.h"
 #include "engine/core/math/geomath.h"
 #include "engine/core/systems/entity.h"
 #include "engine/renderer/gpu_resource.h"
@@ -9,7 +10,7 @@
 namespace my {
 class Scene;
 class Camera;
-}
+}  // namespace my
 
 namespace my::renderer {
 
@@ -75,9 +76,9 @@ struct RenderData {
         float sceenWidth;
         float sceenHeight;
         float aspectRatio;
-        float fovy;
-        float zNear; 
-        float zFar; 
+        float zNear;
+        float zFar;
+        Degree fovy;
     };
 
     Camera mainCamera;
@@ -102,4 +103,4 @@ void PrepareRenderData(const Camera& p_camera,
                        const RenderDataConfig& p_config,
                        RenderData& p_out_data);
 
-} // namespace my
+}  // namespace my::renderer

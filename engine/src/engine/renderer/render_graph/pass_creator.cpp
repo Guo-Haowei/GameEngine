@@ -4,9 +4,9 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/math/geomath.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_manager.h"
-#include "engine/renderer/render_data.h"
 
 // shader defines
 #include "shader_resource_defines.hlsl.h"
@@ -567,7 +567,7 @@ void RenderPassCreator::AddEmitterPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
+static void BloomSetupFunc(const renderer::RenderData&, const DrawPass* p_draw_pass) {
     unused(p_draw_pass);
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -588,7 +588,7 @@ static void BloomSetupFunc(const renderer::RenderData& ,const DrawPass* p_draw_p
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
+static void BloomDownSampleFunc(const renderer::RenderData&, const DrawPass* p_draw_pass) {
     const uint32_t pass_id = p_draw_pass->id;
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -610,7 +610,7 @@ static void BloomDownSampleFunc(const renderer::RenderData& ,const DrawPass* p_d
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
+static void BloomUpSampleFunc(const renderer::RenderData&, const DrawPass* p_draw_pass) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     const uint32_t pass_id = p_draw_pass->id;
     auto& frame = gm.GetCurrentFrame();
@@ -723,7 +723,7 @@ void RenderPassCreator::AddBloomPass() {
 
 /// Tone
 /// Change to post processing?
-static void TonePassFunc(const renderer::RenderData& p_data,const DrawPass* p_draw_pass) {
+static void TonePassFunc(const renderer::RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -805,7 +805,7 @@ void RenderPassCreator::AddTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void PathTracerTonePassFunc(const renderer::RenderData& ,const DrawPass* p_draw_pass) {
+static void PathTracerTonePassFunc(const renderer::RenderData&, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -874,7 +874,7 @@ void RenderPassCreator::AddPathTracerTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void PathTracerPassFunc(const renderer::RenderData& ,const DrawPass*) {
+static void PathTracerPassFunc(const renderer::RenderData&, const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     if (gm.m_bufferUpdated && gm.m_pathTracerGeometryBuffer) {
         LOG_FATAL("currently broken, cause SwapBuffers crash");

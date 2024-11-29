@@ -3,10 +3,10 @@
 #include "engine/core/base/random.h"
 #include "engine/core/math/frustum.h"
 #include "engine/core/math/matrix_transform.h"
-#include "engine/scene/camera.h"
-#include "engine/scene/scene.h"
 #include "engine/renderer/graphics_defines.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/scene/camera.h"
+#include "engine/scene/scene.h"
 
 // @TODO: remove
 #include "engine/core/framework/graphics_manager.h"
@@ -146,7 +146,6 @@ static void FillPass(const RenderDataConfig& p_config,
 }
 
 static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_out_data) {
-
     auto& cache = p_out_data.perFrameCache;
 
     const auto& camera = p_out_data.mainCamera;
@@ -183,16 +182,18 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_o
     cache.c_worldSizeHalf = 0.5f * world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
+
+    cache.c_cameraFovDegree = camera.fovy.GetDegree();
     cache.c_cameraForward = camera.front;
     cache.c_cameraRight = camera.right;
     cache.c_cameraUp = camera.up;
+    cache.c_cameraPosition = camera.position;
 
     // @TODO: refactor
     static int s_frameIndex = 0;
     cache.c_frameIndex = s_frameIndex++;
-    cache.c_cameraFov = camera.fovy;
     // @TODO: fix this
-    cache.c_sceneDirty = true;
+    cache.c_sceneDirty = false;
 
     // Force fields
 
@@ -290,7 +291,8 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
                     },
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
-                    }, p_out_data);
+                    },
+                    p_out_data);
             } break;
             case LIGHT_TYPE_POINT: {
                 const int shadow_map_index = light_component.GetShadowMapIndex();
@@ -461,21 +463,21 @@ void PrepareRenderData(const Camera& p_camera,
         camera.sceenWidth = static_cast<float>(p_camera.GetWidth());
         camera.sceenHeight = static_cast<float>(p_camera.GetHeight());
         camera.aspectRatio = camera.sceenWidth / camera.sceenHeight;
-        camera.fovy = p_camera.GetFovy().ToRad();
+        camera.fovy = p_camera.GetFovy();
         camera.zNear = p_camera.GetNear();
-        camera.zFar = p_camera.GetFar(); 
+        camera.zFar = p_camera.GetFar();
 
         camera.viewMatrix = p_camera.GetViewMatrix();
         camera.projectionMatrixFrustum = p_camera.GetProjectionMatrix();
         if (p_config.isOpengl) {
             camera.projectionMatrixRendering = BuildOpenGlPerspectiveRH(
-                camera.fovy,
+                camera.fovy.GetRadians(),
                 camera.aspectRatio,
                 camera.zNear,
                 camera.zFar);
         } else {
             camera.projectionMatrixRendering = BuildPerspectiveRH(
-                camera.fovy,
+                camera.fovy.GetRadians(),
                 camera.aspectRatio,
                 camera.zNear,
                 camera.zFar);

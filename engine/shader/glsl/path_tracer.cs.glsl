@@ -282,7 +282,7 @@ void main() {
         vec2 resolution = vec2(float(dims.x), float(dims.y));
         float aspectRatio = resolution.x / resolution.y;
         screen.y /= aspectRatio;
-        float halfFov = c_cameraFov;
+        float halfFov = c_cameraFovDegree;
         float camDistance = tan(halfFov * PI / 180.0);
         rayDir = vec3(screen, camDistance);
         rayDir = normalize(mat3(c_cameraRight, c_cameraUp, c_cameraForward) * rayDir);

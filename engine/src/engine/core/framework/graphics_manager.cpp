@@ -540,5 +540,4 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
     }
 }
 
-
 }  // namespace my

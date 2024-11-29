@@ -183,7 +183,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     sampler2D c_TextureLightingResidentHandle;  // 16
 
     Vector3f c_cameraPosition;
-    float c_cameraFov;  // 16
+    float c_cameraFovDegree;  // 16
 
     //-----------------------------------------
     Vector3f c_worldCenter;
