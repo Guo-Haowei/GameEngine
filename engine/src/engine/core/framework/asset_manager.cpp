@@ -4,6 +4,7 @@
 
 #include "engine/assets/loader_stbi.h"
 #include "engine/assets/loader_tinygltf.h"
+#include "engine/core/framework/application.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
@@ -79,15 +80,18 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     Loader<Image>::RegisterLoader(".jpg", LoaderSTBI8::Create);
     Loader<Image>::RegisterLoader(".hdr", LoaderSTBI32::Create);
 
-    const fs::path assets_root = fs::path{ fs::path(ROOT_FOLDER) / "resources" / "assets" };
+    fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
     std::vector<const char*> asset_folders = {
+        "animations",
         "materials",
         "meshes",
-        "animations",
     };
 
     for (auto folder : asset_folders) {
         fs::path root = assets_root / folder;
+        if (!fs::exists(root)) {
+            continue;
+        }
 
         for (const auto& entry : fs::directory_iterator(root)) {
             const bool is_file = entry.is_regular_file();

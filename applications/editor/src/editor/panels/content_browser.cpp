@@ -23,9 +23,11 @@ void ContentBrowser::OnAttach() {
     auto folder_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/folder_icon.png" })->Get();
     auto image_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/image_icon.png" })->Get();
     auto scene_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/scene_icon.png" })->Get();
+    auto meta_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/meta_icon.png" })->Get();
 
     m_iconMap["."] = { folder_icon, nullptr };
     m_iconMap[".png"] = { image_icon, nullptr };
+    m_iconMap[".meta"] = { meta_icon, nullptr };
     m_iconMap[".hdr"] = { image_icon, EditorItem::DRAG_DROP_ENV };
     m_iconMap[".gltf"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
     m_iconMap[".obj"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
@@ -33,14 +35,15 @@ void ContentBrowser::OnAttach() {
     m_iconMap[".lua"] = { scene_icon, EditorItem::DRAG_DROP_IMPORT };
 }
 
-void ContentBrowser::DrawSideBar() {
-    for (const auto& entry : fs::directory_iterator(m_rootPath)) {
+void ContentBrowser::DrawSideBarHelper(const std::filesystem::path& p_path) {
+    if (!fs::exists(p_path)) {
+        return;
+    }
+
+    for (const auto& entry : fs::directory_iterator(p_path)) {
         const bool is_file = entry.is_regular_file();
         const bool is_dir = entry.is_directory();
         if (!is_dir && !is_file) {
-            continue;
-        }
-        if (!is_dir) {
             continue;
         }
 
@@ -50,32 +53,39 @@ void ContentBrowser::DrawSideBar() {
         if (is_dir) {
             name = ICON_FA_FOLDER " ";
             name.append(full_path.stem().string());
+        } else {
+            name = ICON_FA_FILE " ";
+            name = full_path.filename().string();
         }
 
         if (ImGui::TreeNode(name.c_str())) {
+            DrawSideBarHelper(full_path);
             ImGui::TreePop();
         }
     }
 }
 
-void ContentBrowser::Update(Scene& p_scene) {
+void ContentBrowser::DrawSideBar() {
+    DrawSideBarHelper(m_rootPath);
+}
+
+void ContentBrowser::Update(Scene&) {
     if (ImGui::Begin(m_name.c_str())) {
         DrawSideBar();
     }
     ImGui::End();
 
     if (ImGui::Begin("Assets##ContentBrowser")) {
-        UpdateInternal(p_scene);
+        DrawDetailPanel();
     }
     ImGui::End();
 }
 
-void ContentBrowser::UpdateInternal(Scene&) {
+void ContentBrowser::DrawDetailPanel() {
     if (ImGui::Button("<-")) {
-        if (m_currentPath == m_rootPath) {
-            LOG_WARN("TODO: don't go outside project dir");
+        if (m_currentPath != m_rootPath) {
+            m_currentPath = m_currentPath.parent_path();
         }
-        m_currentPath = m_currentPath.parent_path();
     }
 
     // ImGui::Image((ImTextureID)handle, ImVec2(dim.x, dim.y), ImVec2(0, 1), ImVec2(1, 0));
@@ -114,11 +124,17 @@ void ContentBrowser::UpdateInternal(Scene&) {
             continue;
         }
 
-        auto texture = it->second.image->gpu_texture;
         bool clicked = false;
-        if (texture) {
-            clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)texture->GetHandle(), size);
-        } else {
+        bool has_texture = false;
+
+        if (it->second.image) {
+            auto texture = it->second.image->gpu_texture;
+            if (texture) {
+                clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)texture->GetHandle(), size);
+                has_texture = true;
+            }
+        }
+        if (!has_texture) {
             clicked = ImGui::Button(name.c_str(), size);
         }
 

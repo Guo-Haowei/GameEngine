@@ -30,9 +30,9 @@ auto ImguiManager::InitializeImpl() -> Result<void> {
         fs::path font_path{ engine_folder };
         font_path = font_path / "fonts" / "DroidSans.ttf";
 
-        // @TODO: fall back to default
         auto res = AssetManager::GetSingleton().LoadFileSync(FilePath(font_path.string()));
         if (!res) {
+            // @TODO: print error and fall back to default
             return HBN_ERROR(res.error());
         }
 

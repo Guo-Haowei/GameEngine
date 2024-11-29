@@ -13,9 +13,11 @@ public:
     void Update(Scene&) override;
 
 protected:
-    void UpdateInternal(Scene& p_scene) override;
+    void UpdateInternal(Scene&) override {}
 
+    void DrawSideBarHelper(const std::filesystem::path& p_path);
     void DrawSideBar();
+    void DrawDetailPanel();
 
     // @TODO: use FilePath
     std::filesystem::path m_rootPath;
