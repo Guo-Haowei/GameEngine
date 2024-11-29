@@ -2,6 +2,7 @@
 #include <imgui/backends/imgui_impl_metal.h>
 
 #include "engine/core/framework/application.h"
+#include "engine/core/framework/imgui_manager.h"
 #include "engine/drivers/empty/empty_pipeline_state_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 
@@ -25,7 +26,7 @@ id <MTLCommandQueue> commandQueue;
 MTLRenderPassDescriptor *renderPassDescriptor;
 CAMetalLayer *layer;
 
-auto MetalGraphicsManager::InitializeImpl() -> Result<void> {
+auto MetalGraphicsManager::InitializeInternal() -> Result<void> {
     @autoreleasepool
     {
     auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
@@ -38,8 +39,7 @@ auto MetalGraphicsManager::InitializeImpl() -> Result<void> {
     
     device = MTLCreateSystemDefaultDevice();
     commandQueue = [device newCommandQueue];
-    ImGui_ImplMetal_Init(device);
-    
+
     NSWindow *nswin = glfwGetCocoaWindow(window);
     layer = [CAMetalLayer layer];
     layer.device = device;
@@ -47,15 +47,24 @@ auto MetalGraphicsManager::InitializeImpl() -> Result<void> {
     nswin.contentView.layer = layer;
     nswin.contentView.wantsLayer = YES;
 
-    renderPassDescriptor = [MTLRenderPassDescriptor new];
-    ImGui_ImplMetal_NewFrame(renderPassDescriptor);
+    auto imgui = m_app->GetImguiManager();
+    if (imgui) {
+        imgui->SetRenderCallbacks(
+            []() {
+                ImGui_ImplMetal_Init(device);
+                renderPassDescriptor = [MTLRenderPassDescriptor new];
+                ImGui_ImplMetal_NewFrame(renderPassDescriptor);
+            },
+            []() {
+                ImGui_ImplMetal_Shutdown();
+            });
+        }
     }
 
     return Result<void>();
 }
 
-void MetalGraphicsManager::Finalize() {
-    ImGui_ImplMetal_Shutdown();
+void MetalGraphicsManager::FinalizeImpl() {
 }
 
 void MetalGraphicsManager::Present() {
