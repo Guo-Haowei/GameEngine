@@ -3,10 +3,10 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/frustum.h"
 #include "engine/core/math/matrix_transform.h"
-#include "engine/rendering/graphics_dvars.h"
-#include "engine/rendering/pipeline_state.h"
-#include "engine/rendering/render_graph/pass_creator.h"
-#include "engine/rendering/render_manager.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/pipeline_state.h"
+#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_manager.h"
 #include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor

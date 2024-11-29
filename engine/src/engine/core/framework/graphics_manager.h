@@ -4,12 +4,12 @@
 #include "engine/core/framework/event_queue.h"
 #include "engine/core/framework/module.h"
 #include "engine/core/framework/pipeline_state_manager.h"
-#include "engine/rendering/gpu_resource.h"
-#include "engine/rendering/pipeline_state.h"
-#include "engine/rendering/render_graph/draw_pass.h"
-#include "engine/rendering/render_graph/render_graph.h"
-#include "engine/rendering/render_graph/render_pass.h"
-#include "engine/rendering/sampler.h"
+#include "engine/renderer/gpu_resource.h"
+#include "engine/renderer/pipeline_state.h"
+#include "engine/renderer/render_graph/draw_pass.h"
+#include "engine/renderer/render_graph/render_graph.h"
+#include "engine/renderer/render_graph/render_pass.h"
+#include "engine/renderer/sampler.h"
 #include "engine/scene/material_component.h"
 
 // @TODO: refactor

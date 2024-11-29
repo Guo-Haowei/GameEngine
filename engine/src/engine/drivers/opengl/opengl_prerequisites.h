@@ -12,9 +12,9 @@
 #endif
 #include <glad/glad.h>
 
-#include "engine/rendering/gpu_resource.h"
-#include "engine/rendering/pipeline_state.h"
-#include "engine/rendering/sampler.h"
+#include "engine/renderer/gpu_resource.h"
+#include "engine/renderer/pipeline_state.h"
+#include "engine/renderer/sampler.h"
 
 // @TODO: make this included by cpp only
 

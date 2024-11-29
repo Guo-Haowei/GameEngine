@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/rendering/render_graph/draw_pass.h"
-#include "engine/rendering/render_graph/render_graph_defines.h"
+#include "engine/renderer/render_graph/draw_pass.h"
+#include "engine/renderer/render_graph/render_graph_defines.h"
 
 namespace my {
 class GraphicsManager;

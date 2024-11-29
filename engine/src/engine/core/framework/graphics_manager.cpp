@@ -15,14 +15,14 @@
 #endif
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
-#include "engine/rendering/graphics_dvars.h"
-#include "engine/rendering/render_graph/pass_creator.h"
-#include "engine/rendering/render_graph/render_graph_defines.h"
-#include "engine/rendering/render_manager.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/renderer/render_manager.h"
 #include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
-#include "engine/rendering/path_tracer/path_tracer.h"
+#include "engine/renderer/path_tracer/path_tracer.h"
 
 #ifdef min
 #undef min

@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/assets/asset_handle.h"
-#include "engine/rendering/gpu_resource.h"
+#include "engine/renderer/gpu_resource.h"
 
 namespace my {
 

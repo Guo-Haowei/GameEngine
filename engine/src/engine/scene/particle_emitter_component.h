@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/core/math/geomath.h"
-#include "engine/rendering/gpu_resource.h"
+#include "engine/renderer/gpu_resource.h"
 
 namespace my {
 

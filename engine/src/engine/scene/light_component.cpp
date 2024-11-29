@@ -3,7 +3,7 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/matrix_transform.h"
-#include "engine/rendering/render_manager.h"
+#include "engine/renderer/render_manager.h"
 #include "engine/scene/transform_component.h"
 
 namespace my {

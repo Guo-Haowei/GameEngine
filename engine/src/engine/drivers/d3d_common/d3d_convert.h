@@ -32,8 +32,8 @@
 #error "Unknown API"
 #endif
 
-#include "engine/rendering/pipeline_state.h"
-#include "engine/rendering/pixel_format.h"
+#include "engine/renderer/pipeline_state.h"
+#include "engine/renderer/pixel_format.h"
 
 namespace my::d3d {
 

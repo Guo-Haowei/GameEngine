@@ -16,8 +16,8 @@
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_utils.h"
-#include "engine/rendering/graphics_dvars.h"
-#include "engine/rendering/render_manager.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/render_manager.h"
 
 #define DEFINE_DVAR
 #include "engine/core/framework/common_dvars.h"

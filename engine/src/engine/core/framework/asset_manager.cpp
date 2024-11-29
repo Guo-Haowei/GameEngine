@@ -9,8 +9,8 @@
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/lua_binding/lua_scene_binding.h"
-#include "engine/rendering/graphics_dvars.h"
-#include "engine/rendering/render_manager.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/render_manager.h"
 #include "engine/scene/scene.h"
 
 // plugins

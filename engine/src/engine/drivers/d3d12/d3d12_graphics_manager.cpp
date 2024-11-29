@@ -8,7 +8,7 @@
 #include "engine/drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "engine/drivers/d3d_common/d3d_common.h"
 #include "engine/drivers/windows/win32_display_manager.h"
-#include "engine/rendering/graphics_private.h"
+#include "engine/renderer/graphics_private.h"
 #include "structured_buffer.hlsl.h"
 
 #define INCLUDE_AS_D3D12

@@ -4,7 +4,7 @@
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/math/geometry.h"
-#include "engine/rendering/render_graph/render_graph_defines.h"
+#include "engine/renderer/render_graph/render_graph_defines.h"
 
 #define DEFINE_DVAR
 #include "graphics_dvars.h"

@@ -7,7 +7,7 @@
 #if USING(PLATFORM_WINDOWS)
 #include "engine/drivers/windows/win32_display_manager.h"
 #endif
-#include "engine/rendering/graphics_dvars.h"
+#include "engine/renderer/graphics_dvars.h"
 
 namespace my {
 
