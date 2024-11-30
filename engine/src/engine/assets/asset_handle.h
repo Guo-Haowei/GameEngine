@@ -8,7 +8,7 @@ enum AssetLoadingState : uint32_t {
 };
 
 template<typename T>
-class AssetHandle {
+class OldAssetHandle {
 public:
     std::atomic<T*> data = nullptr;
     std::atomic<AssetLoadingState> state = ASSET_STATE_LOADING;

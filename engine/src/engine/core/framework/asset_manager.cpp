@@ -87,25 +87,7 @@ auto AssetManager::InitializeImpl() -> Result<void> {
         "meshes",
     };
 
-    for (auto folder : asset_folders) {
-        fs::path root = assets_root / folder;
-        if (!fs::exists(root)) {
-            continue;
-        }
-
-        for (const auto& entry : fs::directory_iterator(root)) {
-            const bool is_file = entry.is_regular_file();
-            if (!is_file) {
-                continue;
-            }
-
-            fs::path full_path = entry.path();
-            std::string extension = full_path.extension().string();
-            if (extension == ".meta") {
-                LOG_VERBOSE("file '{}' found", full_path.string());
-            }
-        }
-    }
+    // Always load assets
 
     return Result<void>();
 }
@@ -140,7 +122,7 @@ ImageHandle* AssetManager::LoadImageAsync(const FilePath& p_path, LoadSuccessFun
         return ret;
     }
 
-    auto handle = std::make_unique<AssetHandle<Image>>();
+    auto handle = std::make_unique<OldAssetHandle<Image>>();
     handle->state = ASSET_STATE_LOADING;
     ImageHandle* ret = handle.get();
     m_imageCache[p_path] = std::move(handle);
@@ -177,7 +159,7 @@ ImageHandle* AssetManager::LoadImageSync(const FilePath& p_path) {
     }
 
     // LOG_VERBOSE("image {} not found in cache, loading...", path);
-    auto handle = std::make_unique<AssetHandle<Image>>();
+    auto handle = std::make_unique<OldAssetHandle<Image>>();
     auto loader = Loader<Image>::Create(p_path);
     if (!loader) {
         LOG_ERROR("No loader found for image '{}'", p_path.String());

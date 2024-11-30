@@ -16,6 +16,6 @@ public:
     std::shared_ptr<GpuTexture> gpu_texture;
 };
 
-using ImageHandle = AssetHandle<Image>;
+using ImageHandle = OldAssetHandle<Image>;
 
 }  // namespace my
