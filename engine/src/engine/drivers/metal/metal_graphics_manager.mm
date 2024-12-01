@@ -21,7 +21,6 @@ MetalGraphicsManager::MetalGraphicsManager() : EmptyGraphicsManager("MetalGraphi
 }
 
 static GLFWwindow* window;
-id <MTLDevice> device;
 id <MTLCommandQueue> commandQueue;
 MTLRenderPassDescriptor *renderPassDescriptor;
 CAMetalLayer *layer;
@@ -29,28 +28,30 @@ CAMetalLayer *layer;
 auto MetalGraphicsManager::InitializeInternal() -> Result<void> {
     @autoreleasepool
     {
-    auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
-    DEV_ASSERT(display_manager);
-    if (!display_manager) {
-        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "display manager is nullptr");
-    }
+        auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
+        DEV_ASSERT(display_manager);
+        if (!display_manager) {
+            return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "display manager is nullptr");
+        }
     
-    window = display_manager->GetGlfwWindow();
+        window = display_manager->GetGlfwWindow();
     
-    device = MTLCreateSystemDefaultDevice();
-    commandQueue = [device newCommandQueue];
+        id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+        m_device = (__bridge void*)CFRetain((__bridge CFTypeRef)device);
 
-    NSWindow *nswin = glfwGetCocoaWindow(window);
-    layer = [CAMetalLayer layer];
-    layer.device = device;
-    layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
-    nswin.contentView.layer = layer;
-    nswin.contentView.wantsLayer = YES;
+        commandQueue = [device newCommandQueue];
 
-    auto imgui = m_app->GetImguiManager();
-    if (imgui) {
-        imgui->SetRenderCallbacks(
-            []() {
+        NSWindow *nswin = glfwGetCocoaWindow(window);
+        layer = [CAMetalLayer layer];
+        layer.device = device;
+        layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
+        nswin.contentView.layer = layer;
+        nswin.contentView.wantsLayer = YES;
+
+        auto imgui = m_app->GetImguiManager();
+        if (imgui) {
+            imgui->SetRenderCallbacks([this]() {
+                id<MTLDevice> device = (__bridge id<MTLDevice>)m_device;
                 ImGui_ImplMetal_Init(device);
                 renderPassDescriptor = [MTLRenderPassDescriptor new];
                 ImGui_ImplMetal_NewFrame(renderPassDescriptor);
@@ -65,6 +66,10 @@ auto MetalGraphicsManager::InitializeInternal() -> Result<void> {
 }
 
 void MetalGraphicsManager::FinalizeImpl() {
+    if (m_device) {
+        CFRelease(m_device);
+        m_device = nullptr;
+    }
 }
 
 void MetalGraphicsManager::Present() {

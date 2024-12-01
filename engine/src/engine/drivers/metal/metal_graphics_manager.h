@@ -60,6 +60,9 @@ protected:
     void OnSceneChange(const Scene& p_scene) override {}
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) override {}
+
+private:
+    void* m_device;
 };
 
 WARNING_POP()
