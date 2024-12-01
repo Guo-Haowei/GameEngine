@@ -5,7 +5,11 @@ file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
-add_executable(${TARGET_NAME} ${SRC})
+if(APPLE)
+    add_executable(${TARGET_NAME} MACOSX_BUNDLE ${SRC})
+else()
+    add_executable(${TARGET_NAME} ${SRC})
+endif()
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src/editor FILES ${SRC})
 
