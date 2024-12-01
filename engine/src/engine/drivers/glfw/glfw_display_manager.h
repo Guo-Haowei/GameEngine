@@ -28,7 +28,7 @@ private:
     static void MouseButtonCallback(GLFWwindow* p_window, int p_button, int p_action, int p_mods);
     static void KeyCallback(GLFWwindow* p_window, int p_keycode, int p_scancode, int p_action, int p_mods);
     static void ScrollCallback(GLFWwindow* p_window, double p_xoffset, double p_yoffset);
-    static void FramebufferSizeCallback(GLFWwindow* p_window, int p_width, int p_height);
+    static void WindowSizeCallback(GLFWwindow* p_window, int p_width, int p_height);
 
     GLFWwindow* m_window{ nullptr };
     Backend m_backend;

@@ -62,6 +62,9 @@ protected:
     void SetPipelineStateImpl(PipelineStateName p_name) override {}
 
 private:
+    void setupPipeline();
+    void setupVertexBuffer();
+
     void* m_device;
 };
 

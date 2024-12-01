@@ -25,6 +25,54 @@ id <MTLCommandQueue> commandQueue;
 MTLRenderPassDescriptor *renderPassDescriptor;
 CAMetalLayer *layer;
 
+id<MTLRenderPipelineState> pipelineState;
+id<MTLBuffer> vertexBuffer;
+
+void MetalGraphicsManager::setupPipeline() {
+    // Load the Metal shader source
+    NSError *error = nil;
+    id<MTLDevice> device = (__bridge id<MTLDevice>)m_device;
+
+    const char *path_cstring = ROOT_FOLDER "/engine/shader/metal/Shaders.metallib";
+    NSString *path = [NSString stringWithUTF8String:path_cstring];
+    NSURL *url = [NSURL URLWithString:path];
+
+    id<MTLLibrary> library = [device newLibraryWithURL:url error:&error];
+    if (!library) {
+        NSLog(@"Failed to create pipeline state: %@", error);
+        return;
+    }
+    
+    id<MTLFunction> vertexFunction = [library newFunctionWithName:@"vertex_main"];
+    id<MTLFunction> fragmentFunction = [library newFunctionWithName:@"fragment_main"];
+    
+    // Create the render pipeline descriptor
+    MTLRenderPipelineDescriptor *pipelineDescriptor = [[MTLRenderPipelineDescriptor alloc] init];
+    pipelineDescriptor.vertexFunction = vertexFunction;
+    pipelineDescriptor.fragmentFunction = fragmentFunction;
+    pipelineDescriptor.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+    
+    pipelineState = [device newRenderPipelineStateWithDescriptor:pipelineDescriptor error:&error];
+    if (!pipelineState) {
+        NSLog(@"Failed to create pipeline state: %@", error);
+    }
+}
+
+void MetalGraphicsManager::setupVertexBuffer() {
+    // Define the triangle vertices
+    static const float vertices[] = {
+        0.0f,  0.5f, 0.0f, 1.0f,  // Top vertex
+       -0.5f, -0.5f, 0.0f, 1.0f,  // Bottom-left vertex
+        0.5f, -0.5f, 0.0f, 1.0f,   // Bottom-right vertex
+    };
+    
+    id<MTLDevice> device = (__bridge id<MTLDevice>)m_device;
+    // Create the vertex buffer
+    vertexBuffer = [device newBufferWithBytes:vertices
+                                                 length:sizeof(vertices)
+                                                options:MTLResourceStorageModeShared];
+}
+
 auto MetalGraphicsManager::InitializeInternal() -> Result<void> {
     @autoreleasepool
     {
@@ -48,6 +96,9 @@ auto MetalGraphicsManager::InitializeInternal() -> Result<void> {
         nswin.contentView.layer = layer;
         nswin.contentView.wantsLayer = YES;
 
+        setupPipeline();
+        setupVertexBuffer();
+        
         auto imgui = m_app->GetImguiManager();
         if (imgui) {
             imgui->SetRenderCallbacks([this]() {
@@ -82,12 +133,26 @@ void MetalGraphicsManager::Present() {
 
         id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
         float clear_color[4] = {0.3f, 0.4f, 0.3f, 1.0f};
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(clear_color[0] * clear_color[3], clear_color[1] * clear_color[3], clear_color[2] * clear_color[3], clear_color[3]);
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(clear_color[0], clear_color[1], clear_color[2], clear_color[3]);
         renderPassDescriptor.colorAttachments[0].texture = drawable.texture;
         renderPassDescriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
         renderPassDescriptor.colorAttachments[0].storeAction = MTLStoreActionStore;
         id <MTLRenderCommandEncoder> renderEncoder = [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         [renderEncoder pushDebugGroup:@"ImGui demo"];
+        
+        // draw triange
+        // Set the viewport (typically the entire screen area)
+        MTLViewport viewport = {0.0, 0.0,
+            static_cast<double>(width),
+            static_cast<double>(height),
+            0.0, 1.0};
+        [renderEncoder setViewport:viewport];
+        MTLScissorRect scissorRect = {0, 0, (NSUInteger)width, (NSUInteger)height};
+        [renderEncoder setScissorRect:scissorRect];
+            
+        [renderEncoder setRenderPipelineState:pipelineState];
+        [renderEncoder setVertexBuffer:vertexBuffer offset:0 atIndex:0];
+        [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
 
         // Start the Dear ImGui frame
         ImGui_ImplMetal_NewFrame(renderPassDescriptor);
