@@ -20,8 +20,7 @@ void BreakIfDebug() {
 
 bool AddErrorHandler(ErrorHandler* p_handler) {
     // if the handler already exists, remove it
-    RemoveErrorHandler
-    (p_handler);
+    RemoveErrorHandler(p_handler);
 
     GlobalLock();
     s_errorHandlers.node_push_front(p_handler);
