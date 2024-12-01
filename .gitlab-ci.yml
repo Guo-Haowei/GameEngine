@@ -7,6 +7,12 @@ stages:
   - test
   - deploy
 
+check_format:
+  stage: prepare
+  scripts:
+    - python .\scripts\format_code.py
+    - python .\scripts\get_git_changed_files.py
+
 shader_generation:
   stage: prepare
   script:
