@@ -4,7 +4,7 @@
 
 #include "editor/editor_layer.h"
 #include "editor/panels/panel_util.h"
-#include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/string/string_utils.h"
 
@@ -20,10 +20,11 @@ void ContentBrowser::OnAttach() {
     m_rootPath = fs::path{ path };
     m_currentPath = m_rootPath;
 
-    auto folder_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/folder_icon.png" })->Get();
-    auto image_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/image_icon.png" })->Get();
-    auto scene_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/scene_icon.png" })->Get();
-    auto meta_icon = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/icons/meta_icon.png" })->Get();
+    auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
+    auto folder_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/folder_icon.png");
+    auto image_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/image_icon.png");
+    auto scene_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/scene_icon.png");
+    auto meta_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/meta_icon.png");
 
     m_iconMap["."] = { folder_icon, nullptr };
     m_iconMap[".png"] = { image_icon, nullptr };

@@ -1,8 +1,9 @@
 #pragma once
 #include "editor/editor_window.h"
-#include "engine/assets/image.h"
 
 namespace my {
+
+struct Image;
 
 class ContentBrowser : public EditorWindow {
 public:
@@ -24,9 +25,10 @@ protected:
     std::filesystem::path m_currentPath;
 
     struct ExtensionAction {
-        Image* image;
+        const Image* image;
         const char* action;
     };
+
     std::map<std::string, ExtensionAction> m_iconMap;
 };
 

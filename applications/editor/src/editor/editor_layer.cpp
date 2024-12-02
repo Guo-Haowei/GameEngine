@@ -8,7 +8,8 @@
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/renderer_panel.h"
 #include "editor/panels/viewer.h"
-#include "engine/core/framework/asset_manager.h"
+#include "engine/assets/asset.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/layer.h"
 #include "engine/core/framework/scene_manager.h"
@@ -26,10 +27,6 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<ContentBrowser>(*this));
 
     m_menuBar = std::make_shared<MenuBar>(*this);
-
-    auto& asset_manager = AssetManager::GetSingleton();
-    m_playButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/play.png" });
-    m_pauseButtonImage = asset_manager.LoadImageSync(FilePath{ "@res://images/icons/pause.png" });
 
     m_shortcuts[SHORT_CUT_SAVE_AS] = {
         "Save As..",
@@ -112,21 +109,13 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
             }
         }
     }
-
-#if 0
-    const char* light_icons[] = {
-        "@res://images/arealight.png",
-        "@res://images/pointlight.png",
-        "@res://images/infinitelight.png",
-    };
-
-    for (int i = 0; i < array_length(light_icons); ++i) {
-        asset_manager.LoadImageSync(FilePath{ light_icons[i] });
-    }
-#endif
 }
 
 void EditorLayer::OnAttach() {
+    auto asset_registry = m_app->GetAssetRegistry();
+    m_playButtonImage = asset_registry->GetAssetByHandle<Image>("@res://images/icons/play.png");
+    m_pauseButtonImage = asset_registry->GetAssetByHandle<Image>("@res://images/icons/pause.png");
+
     m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
 
     for (auto& panel : m_panels) {
@@ -212,14 +201,14 @@ void EditorLayer::DrawToolbar() {
     float size = ImGui::GetWindowHeight() - 4.0f;
     ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
 
-    if (auto image = m_playButtonImage->Get(); image && image->gpu_texture) {
+    if (auto image = m_playButtonImage; image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
         if (ImGui::ImageButton("play", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
             LOG_ERROR("Play not implemented");
         }
     }
     ImGui::SameLine();
-    if (auto image = m_pauseButtonImage->Get(); image && image->gpu_texture) {
+    if (auto image = m_pauseButtonImage; image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
         if (ImGui::ImageButton("pause", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
             LOG_ERROR("Pause not implemented");

@@ -1,6 +1,5 @@
 #pragma once
 #include "engine/assets/asset.h"
-#include "engine/assets/image.h"
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/framework/module.h"
@@ -8,16 +7,11 @@
 
 namespace my {
 
-// @TODO: refactor
-struct File : IAsset {
-    std::vector<char> buffer;
-};
-
 class Scene;
+struct LoadTask;
+struct AssetRegistryHandle;
 
 using LoadSuccessFunc = void (*)(void* p_asset, void* p_userdata);
-
-struct LoadTask;
 
 class AssetManager : public Singleton<AssetManager>, public Module {
 public:
@@ -28,9 +22,11 @@ public:
 
     void LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success);
 
+#if 0
     ImageHandle* LoadImageSync(const FilePath& p_path);
     ImageHandle* LoadImageAsync(const FilePath& p_path, LoadSuccessFunc = nullptr);
     ImageHandle* FindImage(const FilePath& p_path);
+#endif
 
     auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<File>>;
     std::shared_ptr<File> FindFile(const FilePath& p_path);
@@ -39,11 +35,12 @@ public:
     static void Wait();
 
 private:
-    void LoadAssetAsync(const AssetMetaData& p_meta, LoadSuccessFunc p_on_success, void* p_user_data);
+    void LoadAssetAsync(AssetRegistryHandle* p_handle,
+                        LoadSuccessFunc p_on_success = nullptr,
+                        void* p_user_data = nullptr);
 
     void EnqueueLoadTask(LoadTask& p_task);
 
-    std::map<FilePath, std::unique_ptr<ImageHandle>> m_imageCache;
     std::map<FilePath, std::shared_ptr<File>> m_textCache;
     std::mutex m_imageCacheLock;
 

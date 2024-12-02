@@ -2,6 +2,7 @@
 #include "engine/assets/guid.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/geomath.h"
+#include "engine/renderer/gpu_resource.h"
 
 namespace my {
 
@@ -28,11 +29,30 @@ struct AssetMetaData {
 };
 
 struct IAsset {
-    IAsset() {}
+    IAsset(AssetType p_type) : type(p_type) {}
     virtual ~IAsset() = default;
 
-    AssetMetaData meta;
-    std::atomic_bool loaded;
+    const AssetType type;
+};
+
+// @TODO: refactor
+struct File : IAsset {
+    File() : IAsset(AssetType::BUFFER) {}
+
+    std::vector<char> buffer;
+};
+
+struct Image : IAsset {
+    Image() : IAsset(AssetType::IMAGE) {}
+
+    PixelFormat format = PixelFormat::UNKNOWN;
+    int width = 0;
+    int height = 0;
+    int num_channels = 0;
+    std::vector<uint8_t> buffer;
+
+    // @TODO: refactor
+    std::shared_ptr<GpuTexture> gpu_texture;
 };
 
 #if 0

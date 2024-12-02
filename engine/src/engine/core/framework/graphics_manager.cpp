@@ -1,18 +1,12 @@
 #include "graphics_manager.h"
 
+#include "engine/assets/asset.h"
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/frustum.h"
 #include "engine/core/math/matrix_transform.h"
-#if USING(PLATFORM_WINDOWS)
-#include "engine/drivers/d3d11/d3d11_graphics_manager.h"
-#include "engine/drivers/d3d12/d3d12_graphics_manager.h"
-#include "engine/drivers/vk/vulkan_graphics_manager.h"
-#elif USING(PLATFORM_APPLE)
-#include "engine/drivers/metal/metal_graphics_manager.h"
-#endif
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
@@ -22,6 +16,14 @@
 #include "engine/renderer/render_manager.h"
 #include "engine/renderer/renderer.h"
 #include "shader_resource_defines.hlsl.h"
+
+#if USING(PLATFORM_WINDOWS)
+#include "engine/drivers/d3d11/d3d11_graphics_manager.h"
+#include "engine/drivers/d3d12/d3d12_graphics_manager.h"
+#include "engine/drivers/vk/vulkan_graphics_manager.h"
+#elif USING(PLATFORM_APPLE)
+#include "engine/drivers/metal/metal_graphics_manager.h"
+#endif
 
 // @TODO: refactor
 #include "engine/renderer/path_tracer/path_tracer.h"
@@ -198,8 +200,8 @@ void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
     SetPipelineStateImpl(p_name);
 }
 
-void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
-    m_loadedImages.push(ImageTask{ p_handle, p_func });
+void GraphicsManager::RequestTexture(Image* p_image) {
+    m_loadedImages.push(p_image);
 }
 
 void GraphicsManager::Update(Scene& p_scene) {
@@ -210,8 +212,7 @@ void GraphicsManager::Update(Scene& p_scene) {
     while (!loaded_images.empty()) {
         auto task = loaded_images.front();
         loaded_images.pop();
-        DEV_ASSERT(task.handle->state == ASSET_STATE_READY);
-        Image* image = task.handle->Get();
+        Image* image = task;
         DEV_ASSERT(image);
 
         GpuTextureDesc texture_desc{};
@@ -219,9 +220,6 @@ void GraphicsManager::Update(Scene& p_scene) {
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
         image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
-        if (task.func) {
-            task.func(task.handle->Get());
-        }
     }
 
     {

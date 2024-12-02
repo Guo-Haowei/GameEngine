@@ -23,17 +23,14 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
     std::vector<AssetMetaData> asset_bundle;
 
     for (const auto& meta_json : data) {
-        const auto& type_json = meta_json["type"];
+        // const auto& type_json = meta_json["type"];
         const auto& path_json = meta_json["path"];
         if (path_json.is_string()) {
-            if (type_json == "Font") {
-                AssetMetaData meta_data;
-                meta_data.type = AssetType::BUFFER;
-                meta_data.path = path_json;
-                if (!meta_data.path.empty()) {
-                    meta_data.handle = meta_data.path;
-                    asset_bundle.emplace_back(std::move(meta_data));
-                }
+            AssetMetaData meta_data;
+            meta_data.path = path_json;
+            if (!meta_data.path.empty()) {
+                meta_data.handle = meta_data.path;
+                asset_bundle.emplace_back(std::move(meta_data));
             }
         }
     }
@@ -41,21 +38,42 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
     RegisterAssets((int)asset_bundle.size(), asset_bundle.data());
 
     AssetManager* asset_manager = m_app->GetAssetManager();
-    for (auto& [key, value] : m_lookup) {
-        AssetStub* stub = &value;
-        asset_manager->LoadAssetAsync(
-            value.meta, [](void* p_asset, void* p_userdata) {
-                AssetStub* stub = reinterpret_cast<AssetStub*>(p_userdata);
-                stub->asset = reinterpret_cast<IAsset*>(p_asset);
-                stub->state = AssetStub::ASSET_STATE_READY;
-            },
-            stub);
+    for (auto& [key, stub] : m_lookup) {
+        asset_manager->LoadAssetAsync(stub);
     }
 
     return Result<void>();
 }
 
 void AssetRegistry::FinalizeImpl() {
+}
+
+const IAsset* AssetRegistry::GetAssetByHandle(const AssetHandle& p_handle) {
+    std::lock_guard gurad(m_lock);
+    auto it = m_lookup.find(p_handle);
+    if (it == m_lookup.end()) {
+        return nullptr;
+    }
+
+    return it->second->asset;
+}
+
+const IAsset* AssetRegistry::RequestAsset(const std::string& p_path) {
+    AssetMetaData meta;
+    meta.handle = p_path;
+    meta.path = p_path;
+
+    std::lock_guard gurad(m_lock);
+    auto it = m_lookup.find(meta.handle);
+    if (it != m_lookup.end()) {
+        return it->second->asset;
+    }
+
+    auto stub = new AssetRegistryHandle(std::move(meta));
+
+    m_lookup[p_path] = stub;
+    m_handles.emplace_back(std::unique_ptr<AssetRegistryHandle>(stub));
+    return stub->asset;
 }
 
 void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
@@ -71,21 +89,11 @@ void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
             return;
         }
 
-        auto& stub = m_lookup[handle];
-        stub.state = AssetStub::ASSET_STATE_LOADING;
-        stub.meta = std::move(p_metas[i]);
-        stub.asset = nullptr;
-    }
-}
+        auto stub = new AssetRegistryHandle(std::move(p_metas[i]));
 
-const IAsset* AssetRegistry::GetAssetByHandle(const AssetHandle& p_handle) {
-    std::lock_guard gurad(m_lock);
-    auto it = m_lookup.find(p_handle);
-    if (it == m_lookup.end()) {
-        return nullptr;
+        m_lookup[handle] = stub;
+        m_handles.emplace_back(std::unique_ptr<AssetRegistryHandle>(stub));
     }
-
-    return it->second.asset;
 }
 
 }  // namespace my

@@ -20,6 +20,8 @@ using my::renderer::RenderPass;
 
 namespace my {
 
+struct Image;
+
 // @TODO: refactor
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
@@ -62,8 +64,6 @@ public:
     static constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
     static constexpr PixelFormat DEFAULT_SURFACE_FORMAT = PixelFormat::R8G8B8A8_UNORM;
     static constexpr PixelFormat DEFAULT_DEPTH_STENCIL_FORMAT = PixelFormat::D32_FLOAT;
-
-    using OnTextureLoadFunc = void (*)(Image* p_image);
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
         : Module(p_name),
@@ -130,7 +130,7 @@ public:
 
     virtual void GenerateMipmap(const GpuTexture* p_texture) = 0;
 
-    void RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func = nullptr);
+    void RequestTexture(Image* p_image);
 
     // @TODO: move to renderer
     uint64_t GetFinalImage() const;
@@ -175,11 +175,7 @@ protected:
 
     std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
-    struct ImageTask {
-        ImageHandle* handle;
-        OnTextureLoadFunc func;
-    };
-    ConcurrentQueue<ImageTask> m_loadedImages;
+    ConcurrentQueue<Image*> m_loadedImages;
 
     std::shared_ptr<PipelineStateManager> m_pipelineStateManager;
     std::vector<std::unique_ptr<FrameContext>> m_frameContexts;

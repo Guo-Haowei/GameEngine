@@ -310,7 +310,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
     using ecs::Entity;
     std::map<Entity, int> material_lut;
 
-    const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
+    [[maybe_unused]] const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
 
     p_out_scene.materials.clear();
     for (auto [entity, material] : p_scene.m_MaterialComponents) {
@@ -321,6 +321,11 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         gpu_mat.reflect_chance = material.metallic;
 
         auto fill_texture = [&](int p_index, int& p_out_enabled, sampler2D& p_out_handle) {
+            unused(p_index);
+            unused(p_out_enabled);
+            unused(p_out_handle);
+            CRASH_NOW();
+#if 0
             auto image = material.textures[p_index].image ? material.textures[p_index].image->Get() : nullptr;
             if (image && image->gpu_texture) {
                 uint64_t handle = image->gpu_texture->GetResidentHandle();
@@ -335,6 +340,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
                     return true;
                 }
             }
+#endif
             return false;
         };
 
