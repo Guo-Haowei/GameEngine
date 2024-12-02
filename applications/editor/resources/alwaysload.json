@@ -1,0 +1,10 @@
+[
+  {
+    "path": "@res://fonts/DroidSans.ttf",
+    "type": "Font"
+  },
+  {
+    "path": "@res://fonts/fa-solid-900.ttf",
+    "type": "Font"
+  }
+]

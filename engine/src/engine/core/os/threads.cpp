@@ -22,8 +22,8 @@ static struct {
     std::atomic_bool shutdownRequested;
     std::array<ThreadObject, THREAD_MAX> threads = {
         ThreadObject{ "main", []() {} },
-        ThreadObject{ "asset thread 1", AssetManager::WorkerMain },
-        // ThreadObject{ "asset thread 2", AssetManager::worker_main },
+        ThreadObject{ "asset loader thread 1", AssetManager::WorkerMain },
+        ThreadObject{ "asset loader thread 2", AssetManager::WorkerMain },
         ThreadObject{ "js worker 0", jobsystem::WorkerMain },
         ThreadObject{ "js worker 1", jobsystem::WorkerMain },
         ThreadObject{ "js worker 2", jobsystem::WorkerMain },

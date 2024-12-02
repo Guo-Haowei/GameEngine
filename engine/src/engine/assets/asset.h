@@ -16,6 +16,26 @@ enum class AssetType : uint8_t {
     COUNT,
 };
 
+// @NOTE: use file path as handle for now
+// will change to guid or something
+using AssetHandle = std::string;
+
+struct AssetMetaData {
+    AssetType type;
+    AssetHandle handle;
+    std::string path;
+    // @TODO: name
+};
+
+struct IAsset {
+    IAsset() {}
+    virtual ~IAsset() = default;
+
+    AssetMetaData meta;
+    std::atomic_bool loaded;
+};
+
+#if 0
 class IAsset {
 public:
     virtual ~IAsset() = default;
@@ -51,5 +71,6 @@ public:
     Result<void> Load(const std::string& p_path) override;
     Result<void> Save(const std::string& p_path) override;
 };
+#endif
 
 }  // namespace my

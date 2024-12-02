@@ -5,6 +5,7 @@
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/dynamic_variable/dynamic_variable_manager.h"
 #include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/graphics_manager.h"
@@ -77,6 +78,7 @@ void Application::RegisterModule(Module* p_module) {
 
 auto Application::SetupModules() -> Result<void> {
     m_assetManager = std::make_shared<AssetManager>();
+    m_assetRegistry = std::make_shared<AssetRegistry>();
     m_sceneManager = std::make_shared<SceneManager>();
     m_physicsManager = std::make_shared<PhysicsManager>();
     m_displayServer = DisplayManager::Create();
@@ -91,6 +93,7 @@ auto Application::SetupModules() -> Result<void> {
     m_inputManager = std::make_shared<InputManager>();
 
     RegisterModule(m_assetManager.get());
+    RegisterModule(m_assetRegistry.get());
     RegisterModule(m_sceneManager.get());
     RegisterModule(m_physicsManager.get());
     RegisterModule(m_displayServer.get());

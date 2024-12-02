@@ -9,6 +9,7 @@
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
+#include "engine/core/string/string_utils.h"
 #include "engine/lua_binding/lua_scene_binding.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_manager.h"
@@ -21,12 +22,99 @@ namespace my {
 
 namespace fs = std::filesystem;
 
+enum class LoadTaskType {
+    UNKNOWN,
+    IMAGE,
+    BUFFER,
+    SCENE,
+};
+
+struct LoadTask {
+    LoadTaskType type;
+    FilePath assetPath;
+    LoadSuccessFunc onSuccess;
+    void* userdata;
+
+    // new stuff
+    AssetMetaData meta;
+};
+
+static std::vector<std::unique_ptr<IAsset>> m_assets;
+
+class IAssetLoader {
+    using CreateLoaderFunc = std::unique_ptr<IAssetLoader> (*)(const AssetMetaData& p_meta);
+
+public:
+    IAssetLoader(const AssetMetaData& p_meta) : m_meta(p_meta) {}
+
+    virtual ~IAssetLoader() = default;
+
+    virtual IAsset* Load() = 0;
+
+    static bool RegisterLoader(const std::string& p_extension, CreateLoaderFunc p_func) {
+        DEV_ASSERT(!p_extension.empty());
+        DEV_ASSERT(p_func);
+        auto it = s_loaderCreator.find(p_extension);
+        if (it != s_loaderCreator.end()) {
+            LOG_WARN("Already exists a loader for p_extension '{}'", p_extension);
+            it->second = p_func;
+        } else {
+            s_loaderCreator[p_extension] = p_func;
+        }
+        return true;
+    }
+
+    static std::unique_ptr<IAssetLoader> Create(const AssetMetaData& p_meta) {
+        std::string_view extension = StringUtils::Extension(p_meta.path);
+        auto it = s_loaderCreator.find(std::string(extension));
+        if (it == s_loaderCreator.end()) {
+            return nullptr;
+        }
+        return it->second(p_meta);
+    }
+
+    inline static std::map<std::string, CreateLoaderFunc> s_loaderCreator;
+
+protected:
+    const AssetMetaData& m_meta;
+};
+
+class BufferAssetLoader : public IAssetLoader {
+public:
+    using IAssetLoader::IAssetLoader;
+
+    static std::unique_ptr<IAssetLoader> CreateLoader(const AssetMetaData& p_meta) {
+        return std::make_unique<BufferAssetLoader>(p_meta);
+    }
+
+    virtual IAsset* Load() override {
+        auto res = FileAccess::Open(m_meta.path, FileAccess::READ);
+        if (!res) {
+            LOG_FATAL("TODO: handle error");
+            return nullptr;
+        }
+
+        std::shared_ptr<FileAccess> file_access = *res;
+
+        const size_t size = file_access->GetLength();
+
+        std::vector<char> buffer;
+        buffer.resize(size);
+        file_access->ReadBuffer(buffer.data(), size);
+        auto file = new File;
+        file->meta = m_meta;
+        file->buffer = std::move(buffer);
+        return file;
+    }
+};
+
 static struct {
     // @TODO: better wake up
     std::condition_variable wakeCondition;
     std::mutex wakeMutex;
     // @TODO: better thread safe queue
     ConcurrentQueue<LoadTask> jobQueue;
+    std::atomic_int runningWorkers;
 } s_assetManagerGlob;
 
 // @TODO: refactor
@@ -80,16 +168,19 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     Loader<Image>::RegisterLoader(".jpg", LoaderSTBI8::Create);
     Loader<Image>::RegisterLoader(".hdr", LoaderSTBI32::Create);
 
-    fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
-    std::vector<const char*> asset_folders = {
-        "animations",
-        "materials",
-        "meshes",
-    };
-
-    // Always load assets
+    // @TODO: refactor, reload stuff
+    IAssetLoader::RegisterLoader(".ttf", BufferAssetLoader::CreateLoader);
 
     return Result<void>();
+}
+
+void AssetManager::LoadAssetAsync(const AssetMetaData& p_meta, LoadSuccessFunc p_on_success, void* p_userdata) {
+    LoadTask task;
+    task.type = LoadTaskType::UNKNOWN;
+    task.meta = p_meta;
+    task.onSuccess = p_on_success;
+    task.userdata = p_userdata;
+    EnqueueLoadTask(task);
 }
 
 void AssetManager::FinalizeImpl() {
@@ -129,7 +220,7 @@ ImageHandle* AssetManager::LoadImageAsync(const FilePath& p_path, LoadSuccessFun
     m_imageCacheLock.unlock();
 
     LoadTask task;
-    task.type = LOAD_TASK_IMAGE;
+    task.type = LoadTaskType::IMAGE;
     if (p_on_success) {
         task.onSuccess = p_on_success;
     } else {
@@ -186,7 +277,7 @@ ImageHandle* AssetManager::LoadImageSync(const FilePath& p_path) {
 
 void AssetManager::LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
     LoadTask task;
-    task.type = LOAD_TASK_SCENE;
+    task.type = LoadTaskType::SCENE;
     task.assetPath = p_path;
     task.onSuccess = p_on_success;
     task.userdata = nullptr;
@@ -198,7 +289,7 @@ static void LoadAsset(LoadTask& p_task, T* p_asset) {
     auto loader = Loader<T>::Create(p_task.assetPath);
     const std::string& asset_path = p_task.assetPath.String();
     if (!loader) {
-        LOG_ERROR("[AssetManager] not loader found for '{}'", asset_path);
+        LOG_ERROR("[AssetManager] no loader found for '{}'", asset_path);
         return;
     }
 
@@ -224,19 +315,36 @@ void AssetManager::WorkerMain() {
             continue;
         }
 
+        s_assetManagerGlob.runningWorkers.fetch_add(1);
+
         // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
         switch (task.type) {
-            case LOAD_TASK_IMAGE: {
+            case LoadTaskType::IMAGE: {
                 LoadAsset<Image>(task, new Image);
             } break;
-            case LOAD_TASK_SCENE: {
+            case LoadTaskType::SCENE: {
                 LOG_VERBOSE("[AssetManager] start loading scene {}", task.assetPath.String());
                 LoadAsset<Scene>(task, new Scene);
+            } break;
+            case LoadTaskType::UNKNOWN: {
+                auto loader = IAssetLoader::Create(task.meta);
+                DEV_ASSERT(loader);
+                auto asset = loader->Load();
+                m_assets.emplace_back(std::unique_ptr<IAsset>(asset));
+                task.onSuccess(asset, task.userdata);
             } break;
             default:
                 CRASH_NOW();
                 break;
         }
+
+        s_assetManagerGlob.runningWorkers.fetch_sub(1);
+    }
+}
+
+void AssetManager::Wait() {
+    while (s_assetManagerGlob.runningWorkers.load() != 0) {
+        // dummy for loop
     }
 }
 

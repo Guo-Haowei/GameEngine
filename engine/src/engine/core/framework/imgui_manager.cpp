@@ -7,6 +7,7 @@
 
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/string/string_utils.h"
 
 namespace my {
@@ -26,44 +27,42 @@ auto ImguiManager::InitializeImpl() -> Result<void> {
     ImGuiIO& io = ImGui::GetIO();
     const float base_font_size = 16.0f;                         // This is the size of the default font. Change to the font size you use.
     const float icon_font_size = base_font_size * 2.0f / 3.0f;  // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
+
+    AssetManager::Wait();
     {
-        fs::path font_path{ engine_folder };
-        font_path = font_path / "fonts" / "DroidSans.ttf";
+        const std::string path = "@res://fonts/DroidSans.ttf";
+        auto font = dynamic_cast<const File*>(
+            m_app->GetAssetRegistry()->GetAssetByHandle(path));
 
-        auto res = AssetManager::GetSingleton().LoadFileSync(FilePath(font_path.string()));
-        if (!res) {
-            // @TODO: print error and fall back to default
-            return HBN_ERROR(res.error());
-        }
+        if (DEV_VERIFY(font)) {
+            ImFontConfig font_cfg;
+            font_cfg.FontDataOwnedByAtlas = false;
 
-        auto font = *res;
-        ImFontConfig font_cfg;
-        font_cfg.FontDataOwnedByAtlas = false;
-        if (!io.Fonts->AddFontFromMemoryTTF(font->buffer.data(), (int)font->buffer.size(), base_font_size, &font_cfg)) {
-            return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", font_path.string());
+            void* data = (void*)font->buffer.data();
+            if (!io.Fonts->AddFontFromMemoryTTF(data, (int)font->buffer.size(), base_font_size, &font_cfg)) {
+                return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", path);
+            }
         }
     }
 
     {
-        fs::path font_path{ engine_folder };
-        font_path = font_path / "fonts" / FONT_ICON_FILE_NAME_FAS;
+        const std::string path = "@res://fonts/" FONT_ICON_FILE_NAME_FAS;
+        auto font = dynamic_cast<const File*>(
+            m_app->GetAssetRegistry()->GetAssetByHandle(path));
 
-        auto res = AssetManager::GetSingleton().LoadFileSync(FilePath(font_path.string()));
-        if (!res) {
-            return HBN_ERROR(res.error());
-        }
-        auto font = *res;
+        if (DEV_VERIFY(font)) {
+            // merge in icons from Font Awesome
+            static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+            ImFontConfig icons_config;
+            icons_config.MergeMode = true;
+            icons_config.PixelSnapH = true;
+            icons_config.GlyphMinAdvanceX = icon_font_size;
+            icons_config.FontDataOwnedByAtlas = false;
 
-        // merge in icons from Font Awesome
-        static const ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
-        ImFontConfig icons_config;
-        icons_config.MergeMode = true;
-        icons_config.PixelSnapH = true;
-        icons_config.GlyphMinAdvanceX = icon_font_size;
-        icons_config.FontDataOwnedByAtlas = false;
-
-        if (!io.Fonts->AddFontFromMemoryTTF(font->buffer.data(), (int)font->buffer.size(), base_font_size, &icons_config, icons_ranges)) {
-            return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", font_path.string());
+            void* data = (void*)font->buffer.data();
+            if (!io.Fonts->AddFontFromMemoryTTF(data, (int)font->buffer.size(), base_font_size, &icons_config, icons_ranges)) {
+                return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "Failed to create font '{}'", path);
+            }
         }
     }
 

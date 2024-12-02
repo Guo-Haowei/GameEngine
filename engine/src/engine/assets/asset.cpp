@@ -4,6 +4,7 @@
 
 namespace my {
 
+#if 0
 Result<void> MaterialAsset::Load(const std::string& p_path) {
     unused(p_path);
 
@@ -35,5 +36,6 @@ Result<void> MaterialAsset::Save(const std::string& p_path) {
 
     return Result<void>();
 }
+#endif
 
 }  // namespace my

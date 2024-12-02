@@ -9,7 +9,7 @@
 namespace my {
 
 // @TODO: refactor
-struct File {
+struct File : IAsset {
     std::vector<char> buffer;
 };
 
@@ -17,17 +17,7 @@ class Scene;
 
 using LoadSuccessFunc = void (*)(void* p_asset, void* p_userdata);
 
-enum LoadTaskType {
-    LOAD_TASK_IMAGE,
-    LOAD_TASK_SCENE,
-};
-
-struct LoadTask {
-    LoadTaskType type;
-    FilePath assetPath;
-    LoadSuccessFunc onSuccess;
-    void* userdata;
-};
+struct LoadTask;
 
 class AssetManager : public Singleton<AssetManager>, public Module {
 public:
@@ -46,15 +36,18 @@ public:
     std::shared_ptr<File> FindFile(const FilePath& p_path);
 
     static void WorkerMain();
+    static void Wait();
 
 private:
+    void LoadAssetAsync(const AssetMetaData& p_meta, LoadSuccessFunc p_on_success, void* p_user_data);
+
     void EnqueueLoadTask(LoadTask& p_task);
 
     std::map<FilePath, std::unique_ptr<ImageHandle>> m_imageCache;
     std::map<FilePath, std::shared_ptr<File>> m_textCache;
     std::mutex m_imageCacheLock;
 
-    std::unordered_map<Guid, IAsset*> m_assets;
+    friend class AssetRegistry;
 };
 
 }  // namespace my

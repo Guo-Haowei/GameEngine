@@ -3,6 +3,8 @@
 
 namespace my {
 
+struct IAsset;
+
 class LoaderBase {
 public:
     LoaderBase(const std::string& path);
