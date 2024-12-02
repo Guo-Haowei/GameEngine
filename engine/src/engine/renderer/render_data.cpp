@@ -25,7 +25,7 @@ static void FillPass(const RenderDataConfig& p_config,
                      RenderData& p_out_render_data) {
     const Scene& scene = p_config.scene;
 
-    const bool is_opengl = p_config.isOpengl;
+    [[maybe_unused]] const bool is_opengl = p_config.isOpengl;
     auto FillMaterialConstantBuffer = [&](const MaterialComponent* material, MaterialConstantBuffer& cb) {
         cb.c_baseColor = material->baseColor;
         cb.c_metallic = material->metallic;
@@ -42,6 +42,8 @@ static void FillPass(const RenderDataConfig& p_config,
                 return false;
             }
 
+            CRASH_NOW();
+#if 0
             ImageHandle* handle = material->textures[p_idx].image;
             if (!handle) {
                 return false;
@@ -65,6 +67,7 @@ static void FillPass(const RenderDataConfig& p_config,
             } else {
                 p_out_resident_handle.Set32(static_cast<uint32_t>(resident_handle));
             }
+#endif
             return true;
         };
 

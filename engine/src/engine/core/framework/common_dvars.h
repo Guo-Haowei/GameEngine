@@ -9,9 +9,6 @@ DVAR_STRING(project, 0, "Open project at start", "");
 // IO
 DVAR_BOOL(verbose, 0, "Print verbose log", true);
 
-// cache
-DVAR_STRING(content_browser_path, DVAR_FLAG_CACHE, "", "");
-
 // gui
 DVAR_BOOL(show_editor, DVAR_FLAG_CACHE, "Show editor", true);
 

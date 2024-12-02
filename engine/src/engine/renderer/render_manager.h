@@ -1,5 +1,4 @@
 #pragma once
-#include "engine/assets/image.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/framework/module.h"
 #include "engine/renderer/gpu_resource.h"

@@ -10,6 +10,8 @@
 
 namespace my {
 
+struct Image;
+
 enum class KeyCode : uint16_t;
 
 enum {
@@ -90,8 +92,8 @@ private:
     std::vector<std::shared_ptr<IEvent>> m_unhandledEvents;
 
     // @TODO: refactor
-    ImageHandle* m_playButtonImage{ nullptr };
-    ImageHandle* m_pauseButtonImage{ nullptr };
+    const Image* m_playButtonImage{ nullptr };
+    const Image* m_pauseButtonImage{ nullptr };
 };
 
 }  // namespace my

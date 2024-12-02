@@ -26,6 +26,7 @@ void request_env_map(const std::string& path) {
     }
 
     s_prev_env_map = path;
+#if 0
     if (auto handle = AssetManager::GetSingleton().FindImage(FilePath{ path }); handle) {
         if (auto image = handle->Get(); image && image->gpu_texture) {
             g_constantCache.cache.c_hdrEnvMap.handle_gl = image->gpu_texture->GetResidentHandle();
@@ -51,6 +52,7 @@ void request_env_map(const std::string& path) {
             }
         });
     });
+#endif
 }
 
 // @TODO: fix this?

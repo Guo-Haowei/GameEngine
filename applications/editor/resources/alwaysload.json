@@ -1,0 +1,34 @@
+[
+  {
+    "path": "@res://fonts/DroidSans.ttf",
+    "type": "Font"
+  },
+  {
+    "path": "@res://fonts/fa-solid-900.ttf",
+    "type": "Font"
+  },
+  {
+    "path": "@res://images/icons/play.png",
+    "type": "Image"
+  },
+  {
+    "path": "@res://images/icons/pause.png",
+    "type": "Image"
+  },
+  {
+    "path": "@res://images/icons/folder_icon.png",
+    "type": "Image"
+  },
+  {
+    "path": "@res://images/icons/image_icon.png",
+    "type": "Image"
+  },
+  {
+    "path": "@res://images/icons/scene_icon.png",
+    "type": "Image"
+  },
+  {
+    "path": "@res://images/icons/meta_icon.png",
+    "type": "Image"
+  }
+]

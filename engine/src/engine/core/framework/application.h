@@ -6,6 +6,7 @@
 namespace my {
 
 class AssetManager;
+class AssetRegistry;
 class DisplayManager;
 class GraphicsManager;
 class ImguiManager;
@@ -41,6 +42,7 @@ public:
 
     EventQueue& GetEventQueue() { return m_eventQueue; }
 
+    AssetRegistry* GetAssetRegistry() { return m_assetRegistry.get(); }
     AssetManager* GetAssetManager() { return m_assetManager.get(); }
     InputManager* GetInputManager() { return m_inputManager.get(); }
     SceneManager* GetSceneManager() { return m_sceneManager.get(); }
@@ -51,6 +53,7 @@ public:
 
     const ApplicationSpec& GetSpecification() const { return m_specification; }
     const std::string& GetUserFolder() const { return m_userFolder; }
+    const std::string& GetResourceFolder() const { return m_resourceFolder; }
 
 protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);
@@ -70,6 +73,7 @@ private:
 
     EventQueue m_eventQueue;
 
+    std::shared_ptr<AssetRegistry> m_assetRegistry;
     std::shared_ptr<AssetManager> m_assetManager;
     std::shared_ptr<SceneManager> m_sceneManager;
     std::shared_ptr<PhysicsManager> m_physicsManager;

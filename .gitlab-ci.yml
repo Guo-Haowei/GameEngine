@@ -9,7 +9,7 @@ stages:
 
 check_format:
   stage: prepare
-  scripts:
+  script:
     - python .\scripts\format_code.py
     - python .\scripts\get_git_changed_files.py
 
