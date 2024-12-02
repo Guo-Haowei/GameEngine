@@ -7,6 +7,8 @@ CMakeFiles/
 build/
 
 # shader
+*.air
+*.metallib
 *.spv
 glsl_generated/
 

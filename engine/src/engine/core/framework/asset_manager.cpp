@@ -76,7 +76,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
     {
         // @TODO: thread safe?
         std::lock_guard lock(m_assetLock);
-        m_assets.emplace_back(std::move(std::unique_ptr<IAsset>(asset)));
+        m_assets.emplace_back(std::unique_ptr<IAsset>(asset));
         asset = m_assets.back().get();
     }
 

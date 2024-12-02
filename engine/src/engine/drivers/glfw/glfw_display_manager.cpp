@@ -48,7 +48,7 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
 
     glfwSetWindowUserPointer(m_window, this);
     glfwSetWindowPos(m_window, 30, 30);
-    glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
+    glfwGetWindowSize(m_window, &m_frameSize.x, &m_frameSize.y);
 
     switch (m_backend) {
         case Backend::OPENGL:
@@ -69,7 +69,7 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
     glfwSetMouseButtonCallback(m_window, MouseButtonCallback);
     glfwSetKeyCallback(m_window, KeyCallback);
     glfwSetScrollCallback(m_window, ScrollCallback);
-    glfwSetFramebufferSizeCallback(m_window, FramebufferSizeCallback);
+    glfwSetWindowSizeCallback(m_window, WindowSizeCallback);
 
     auto imgui = m_app->GetImguiManager();
     if (imgui) {
@@ -113,7 +113,6 @@ bool GlfwDisplayManager::ShouldClose() {
 
 void GlfwDisplayManager::BeginFrame() {
     glfwPollEvents();
-    // glfwGetFramebufferSize(m_window, &m_frameSize.x, &m_frameSize.y);
     glfwGetWindowPos(m_window, &m_windowPos.x, &m_windowPos.y);
 }
 
@@ -191,7 +190,7 @@ void GlfwDisplayManager::ScrollCallback(GLFWwindow* p_window,
     }
 }
 
-void GlfwDisplayManager::FramebufferSizeCallback(GLFWwindow* p_window, int p_width, int p_height) {
+void GlfwDisplayManager::WindowSizeCallback(GLFWwindow* p_window, int p_width, int p_height) {
     auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
 
     auto event = std::make_shared<ResizeEvent>(p_width, p_height);
