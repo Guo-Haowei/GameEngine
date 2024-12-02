@@ -4,7 +4,7 @@ PointerAlignment: Left
 # ReferenceAlignment: Left
 
 AccessModifierOffset: -4
-AllowShortBlocksOnASingleLine: true
+AllowShortBlocksOnASingleLine: false
 AlignConsecutiveMacros: true
 AlignOperands: true
 AlignTrailingComments: true

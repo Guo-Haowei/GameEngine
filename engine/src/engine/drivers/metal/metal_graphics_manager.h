@@ -76,4 +76,4 @@ private:
 
 WARNING_POP()
 
-}  // namespace my
+} // namespace my
