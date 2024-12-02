@@ -4,7 +4,7 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
-#include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/os/timer.h"
 #include "engine/renderer/graphics_dvars.h"
@@ -65,11 +65,8 @@ bool SceneManager::TrySwapScene() {
         if (m_scene && !task.replace) {
             m_scene->Merge(*task.scene);
             m_scene->Update(0.0f);
-            delete task.scene;
         } else {
-            Scene* old_scene = m_scene;
             m_scene = task.scene;
-            delete old_scene;
         }
         ++m_revision;
     }
@@ -103,14 +100,14 @@ void SceneManager::RequestScene(std::string_view p_path) {
 
     std::string ext = path.Extension();
     if (ext == ".lua" || ext == ".scene") {
-        AssetManager::GetSingleton().LoadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
+        AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, true);
         });
     } else {
-        AssetManager::GetSingleton().LoadSceneAsync(FilePath{ p_path }, [](void* p_scene, void*) {
+        AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](void* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = static_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);

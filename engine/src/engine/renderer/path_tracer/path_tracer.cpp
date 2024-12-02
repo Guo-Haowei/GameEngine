@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/scene/scene.h"
 
@@ -321,12 +322,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         gpu_mat.reflect_chance = material.metallic;
 
         auto fill_texture = [&](int p_index, int& p_out_enabled, sampler2D& p_out_handle) {
-            unused(p_index);
-            unused(p_out_enabled);
-            unused(p_out_handle);
-            CRASH_NOW();
-#if 0
-            auto image = material.textures[p_index].image ? material.textures[p_index].image->Get() : nullptr;
+            const Image* image = AssetRegistry::GetSingleton().GetAssetByHandle<Image>(material.textures[p_index].path);
             if (image && image->gpu_texture) {
                 uint64_t handle = image->gpu_texture->GetResidentHandle();
                 if (handle) {
@@ -340,7 +336,6 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
                     return true;
                 }
             }
-#endif
             return false;
         };
 

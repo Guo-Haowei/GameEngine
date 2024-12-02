@@ -1,5 +1,6 @@
 #include "loader_tinygltf.h"
 
+#include "engine/core/framework/asset_registry.h"
 #include "engine/scene/scene.h"
 
 #define TINYGLTF_IMPLEMENTATION
@@ -140,8 +141,8 @@ void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
     }
 }
 
-bool LoaderTinyGLTF::Load(Scene* p_scene) {
-    m_scene = p_scene;
+auto LoaderTinyGLTF::Load() -> Result<IAsset*> {
+    m_scene = new Scene;
 
     tinygltf::TinyGLTF loader;
     std::string err;
@@ -154,18 +155,15 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
     bool ret = loader.LoadASCIIFromFile(m_model.get(), &err, &warn, m_filePath);
 
     if (!warn.empty()) {
-        m_error = std::format("Warn: failed to import scene '{}'\n\tdetails: {}", m_filePath, warn);
-        return false;
+        return HBN_ERROR(ErrorCode::FAILURE, "Warn: failed to import scene '{}'\n\tdetails: {}", m_filePath, warn);
     }
 
     if (!err.empty()) {
-        m_error = std::format("Error: failed to import scene '{}'\n\tdetails: {}", m_filePath, err);
-        return false;
+        return HBN_ERROR(ErrorCode::FAILURE, "Error: failed to import scene '{}'\n\tdetails: {}", m_filePath, err);
     }
 
     if (!ret) {
-        m_error = std::format("Error: failed to import scene '{}'", m_filePath);
-        return false;
+        return HBN_ERROR(ErrorCode::FAILURE, "Error: failed to import scene '{}'", m_filePath);
     }
 
     ecs::Entity root = ecs::Entity::Create();
@@ -207,11 +205,9 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.RequestImage(MaterialComponent::TEXTURE_BASE, m_basePath + img.uri);
-
-            // @TODO:
-            // material.mTextures[MaterialComponent::Base].image = g_assetManager->LoadImageSync(searchName);
-            // material.textures[MaterialComponent::BASE_COLOR_MAP].uvset = baseColorTexture->second.TextureTexCoord();
+            const std::string path = m_basePath + img.uri;
+            material.textures[MaterialComponent::TEXTURE_BASE].path = path;
+            AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
         if (normalTexture != x.additionalValues.end()) {
             auto& tex = m_model->textures[normalTexture->second.TextureIndex()];
@@ -220,9 +216,9 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.RequestImage(MaterialComponent::TEXTURE_NORMAL, m_basePath + img.uri);
-            // material.mTextures[MaterialComponent::Normal].image = g_assetManager->LoadImageSync(searchName);
-            //  material.textures[MaterialComponent::NORMAL_MAP].uvset = normalTexture->second.TextureTexCoord();
+            const std::string path = m_basePath + img.uri;
+            material.textures[MaterialComponent::TEXTURE_NORMAL].path = path;
+            AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
         if (metallicRoughnessTexture != x.values.end()) {
             auto& tex = m_model->textures[metallicRoughnessTexture->second.TextureIndex()];
@@ -231,8 +227,9 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
                 img_source = tex.extensions["KHR_texture_basisu"].Get("source").Get<int>();
             }
             auto& img = m_model->images[img_source];
-            material.RequestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, m_basePath + img.uri);
-            // material.mTextures[MaterialComponent::MetallicRoughness].resource = ;
+            const std::string path = m_basePath + img.uri;
+            material.textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].path = path;
+            AssetRegistry::GetSingleton().RequestAssetAsync(path);
         }
 #if 0
 		if (emissiveTexture != x.additionalValues.end())
@@ -320,7 +317,7 @@ bool LoaderTinyGLTF::Load(Scene* p_scene) {
     // Create cameras:
 
     m_scene->m_root = root;
-    return true;
+    return m_scene;
 }
 
 void LoaderTinyGLTF::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {

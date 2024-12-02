@@ -6,7 +6,7 @@
 #endif
 
 #if USING(USING_ASSIMP)
-#include "engine/assets/loader.h"
+#include "engine/assets/asset_loader.h"
 #include "engine/scene/scene.h"
 
 struct aiMesh;
@@ -17,15 +17,15 @@ struct aiAnimation;
 
 namespace my {
 
-class LoaderAssimp : public Loader<Scene> {
+class AssimpAssetLoader : public IAssetLoader {
 public:
-    LoaderAssimp(const std::string& p_path) : Loader<Scene>{ p_path } {}
+    using IAssetLoader::IAssetLoader;
 
-    static std::shared_ptr<Loader<Scene>> Create(const std::string& p_path) {
-        return std::make_shared<LoaderAssimp>(p_path);
+    static std::unique_ptr<IAssetLoader> CreateLoader(const IAsset ::Meta& p_meta) {
+        return std::make_unique<AssimpAssetLoader>(p_meta);
     }
 
-    bool Load(Scene* p_data) override;
+    auto Load() -> Result<IAsset*> override;
 
 protected:
     void ProcessMaterial(aiMaterial& p_material);
