@@ -29,9 +29,6 @@ struct LoadTask {
     AssetRegistryHandle* handle;
 };
 
-static std::mutex m_assetLock;
-static std::vector<std::unique_ptr<IAsset>> m_assets;
-
 static struct {
     // @TODO: better wake up
     std::condition_variable wakeCondition;
@@ -107,6 +104,9 @@ void AssetManager::LoadAssetAsync(AssetRegistryHandle* p_handle, LoadSuccessFunc
 
 void AssetManager::FinalizeImpl() {
     s_assetManagerGlob.wakeCondition.notify_all();
+
+    m_assets.clear();
+    m_textCache.clear();
 }
 
 void AssetManager::EnqueueLoadTask(LoadTask& p_task) {

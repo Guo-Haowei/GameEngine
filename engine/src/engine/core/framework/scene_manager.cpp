@@ -65,11 +65,8 @@ bool SceneManager::TrySwapScene() {
         if (m_scene && !task.replace) {
             m_scene->Merge(*task.scene);
             m_scene->Update(0.0f);
-            delete task.scene;
         } else {
-            Scene* old_scene = m_scene;
             m_scene = task.scene;
-            delete old_scene;
         }
         ++m_revision;
     }

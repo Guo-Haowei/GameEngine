@@ -35,7 +35,11 @@ private:
 
     void EnqueueLoadTask(LoadTask& p_task);
 
+    // @TODO: delete
     std::map<FilePath, std::shared_ptr<File>> m_textCache;
+
+    std::mutex m_assetLock;
+    std::vector<std::unique_ptr<IAsset>> m_assets;
 
     friend class AssetRegistry;
 };
