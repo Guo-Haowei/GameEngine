@@ -8,10 +8,9 @@
 namespace my {
 
 class Scene;
+struct IAsset;
 struct LoadTask;
 struct AssetRegistryHandle;
-
-using LoadSuccessFunc = void (*)(void* p_asset, void* p_userdata);
 
 class AssetManager : public Singleton<AssetManager>, public Module {
 public:
@@ -20,8 +19,8 @@ public:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<File>>;
-    std::shared_ptr<File> FindFile(const FilePath& p_path);
+    auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<IAsset>>;
+    std::shared_ptr<IAsset> FindFile(const FilePath& p_path);
 
     static void WorkerMain();
     static void Wait();
@@ -30,13 +29,13 @@ private:
     [[nodiscard]] auto LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset*>;
 
     void LoadAssetAsync(AssetRegistryHandle* p_handle,
-                        LoadSuccessFunc p_on_success,
+                        OnAssetLoadSuccessFunc p_on_success,
                         void* p_user_data);
 
     void EnqueueLoadTask(LoadTask& p_task);
 
     // @TODO: delete
-    std::map<FilePath, std::shared_ptr<File>> m_textCache;
+    std::map<FilePath, std::shared_ptr<IAsset>> m_textCache;
 
     std::mutex m_assetLock;
     std::vector<std::unique_ptr<IAsset>> m_assets;

@@ -69,7 +69,7 @@ void AssetRegistry::GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out
 
 auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
                                      RequestMode p_mode,
-                                     LoadSuccessFunc p_on_success,
+                                     OnAssetLoadSuccessFunc p_on_success,
                                      void* p_user_data) -> Result<const IAsset*> {
     IAsset::Meta meta;
     meta.handle = p_path;

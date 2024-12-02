@@ -1,9 +1,10 @@
 #pragma once
-#include "engine/assets/asset.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 
 namespace my {
+
+struct IAsset;
 
 class IAssetLoader {
     using CreateLoaderFunc = std::unique_ptr<IAssetLoader> (*)(const IAsset::Meta& p_meta);

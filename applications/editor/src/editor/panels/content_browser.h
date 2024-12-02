@@ -3,7 +3,7 @@
 
 namespace my {
 
-struct Image;
+struct ImageAsset;
 
 class ContentBrowser : public EditorWindow {
 public:
@@ -26,7 +26,7 @@ protected:
     std::filesystem::path m_currentPath;
 
     struct ExtensionAction {
-        const Image* image;
+        const ImageAsset* image;
         const char* action;
     };
 

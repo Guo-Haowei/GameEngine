@@ -41,6 +41,6 @@ namespace my::renderer {
 
 void register_rendering_dvars();
 
-void fill_texture_and_sampler_desc(const Image* p_image, GpuTextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc);
+void fill_texture_and_sampler_desc(const ImageAsset* p_image, GpuTextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc);
 
 }  // namespace my::renderer

@@ -10,12 +10,11 @@ enum class AssetType : uint8_t {
     IMAGE,
     BUFFER,
     SCENE,
-
-    MESH,
     MATERIAL,
-    ANIMATION,
-    ARMATURE,
 
+    // MESH,
+    // ANIMATION,
+    // ARMATURE,
     COUNT,
 };
 
@@ -40,15 +39,16 @@ struct IAsset {
     Meta meta;
 };
 
-// @TODO: refactor
-struct File : IAsset {
-    File() : IAsset(AssetType::BUFFER) {}
+using OnAssetLoadSuccessFunc = void (*)(IAsset* p_asset, void* p_userdata);
+
+struct BufferAsset : IAsset {
+    BufferAsset() : IAsset(AssetType::BUFFER) {}
 
     std::vector<char> buffer;
 };
 
-struct Image : IAsset {
-    Image() : IAsset(AssetType::IMAGE) {}
+struct ImageAsset : IAsset {
+    ImageAsset() : IAsset(AssetType::IMAGE) {}
 
     PixelFormat format = PixelFormat::UNKNOWN;
     int width = 0;
@@ -61,22 +61,6 @@ struct Image : IAsset {
 };
 
 #if 0
-class IAsset {
-public:
-    virtual ~IAsset() = default;
-
-    [[nodiscard]] virtual Result<void> Load(const std::string& p_path) = 0;
-    [[nodiscard]] virtual Result<void> Save(const std::string& p_path) = 0;
-
-    AssetType GetType() const {
-        return m_type;
-    }
-
-    // protected:
-    AssetType m_type;
-    std::string m_name;
-    Guid m_guid;
-};
 
 class MaterialAsset : public IAsset {
 public:

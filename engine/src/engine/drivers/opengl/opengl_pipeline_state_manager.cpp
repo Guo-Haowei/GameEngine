@@ -34,13 +34,13 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::st
         return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "circular includes in file '{}'!", p_path.string());
     }
 
-    std::shared_ptr<File> source_handle;
+    BufferAsset *source_handle = nullptr;
     {
         auto res = AssetManager::GetSingleton().LoadFileSync(FilePath{ p_path.string() });
         if (!res) {
             return HBN_ERROR(res.error());
         }
-        source_handle = *res;
+        source_handle = dynamic_cast<BufferAsset *>(res->get());
     }
 
     if (source_handle->buffer.empty()) {

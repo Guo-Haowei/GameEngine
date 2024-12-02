@@ -22,7 +22,7 @@ namespace fs = std::filesystem;
 
 struct LoadTask {
     FilePath assetPath;
-    LoadSuccessFunc onSuccess;
+    OnAssetLoadSuccessFunc onSuccess;
     void* userdata;
 
     // new stuff
@@ -86,7 +86,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
     asset->meta = p_handle->meta;
 
     if (asset->type == AssetType::IMAGE) {
-        Image* image = dynamic_cast<Image*>(asset);
+        ImageAsset* image = dynamic_cast<ImageAsset*>(asset);
 
         // @TODO: based on render, create asset on work threads
         GraphicsManager::GetSingleton().RequestTexture(image);
@@ -95,7 +95,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
     return asset;
 }
 
-void AssetManager::LoadAssetAsync(AssetRegistryHandle* p_handle, LoadSuccessFunc p_on_success, void* p_userdata) {
+void AssetManager::LoadAssetAsync(AssetRegistryHandle* p_handle, OnAssetLoadSuccessFunc p_on_success, void* p_userdata) {
     LoadTask task;
     task.handle = p_handle;
     task.onSuccess = p_on_success;
@@ -153,7 +153,7 @@ void AssetManager::Wait() {
     }
 }
 
-std::shared_ptr<File> AssetManager::FindFile(const FilePath& p_path) {
+std::shared_ptr<IAsset> AssetManager::FindFile(const FilePath& p_path) {
     auto found = m_textCache.find(p_path);
     if (found != m_textCache.end()) {
         return found->second;
@@ -162,7 +162,7 @@ std::shared_ptr<File> AssetManager::FindFile(const FilePath& p_path) {
     return nullptr;
 }
 
-auto AssetManager::LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<File>> {
+auto AssetManager::LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<IAsset>> {
     auto found = m_textCache.find(p_path);
     if (found != m_textCache.end()) {
         return found->second;
@@ -180,7 +180,7 @@ auto AssetManager::LoadFileSync(const FilePath& p_path) -> Result<std::shared_pt
     std::vector<char> buffer;
     buffer.resize(size);
     file_access->ReadBuffer(buffer.data(), size);
-    auto text = std::make_shared<File>();
+    auto text = std::make_shared<BufferAsset>();
     text->buffer = std::move(buffer);
     m_textCache[p_path] = text;
     return text;

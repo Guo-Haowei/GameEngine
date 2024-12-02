@@ -322,7 +322,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         gpu_mat.reflect_chance = material.metallic;
 
         auto fill_texture = [&](int p_index, int& p_out_enabled, sampler2D& p_out_handle) {
-            const Image* image = AssetRegistry::GetSingleton().GetAssetByHandle<Image>(material.textures[p_index].path);
+            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(material.textures[p_index].path);
             if (image && image->gpu_texture) {
                 uint64_t handle = image->gpu_texture->GetResidentHandle();
                 if (handle) {
