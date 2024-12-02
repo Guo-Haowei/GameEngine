@@ -241,8 +241,8 @@ void AssetManager::WorkerMain() {
                 if (task.handle->meta.type == AssetType::IMAGE) {
                     Image* image = dynamic_cast<Image*>(asset);
 
+                    // @TODO: based on render, create asset on work threads
                     GraphicsManager::GetSingleton().RequestTexture(image);
-                    // image->gpu_texture = GraphicsManager::GetSingleton().CreateTexture(texture_desc, sampler_desc);
                 }
                 if (task.onSuccess) {
                     task.onSuccess(asset, task.userdata);
