@@ -12,7 +12,8 @@ if platform.system() == 'Darwin':
     clang_format_path = 'clang-format'
 
 skip_patterns = [
-    'stb_image.h'
+    'stb_image.h',
+    'imgui_impl_*'
 ]
 
 def need_format(file):
