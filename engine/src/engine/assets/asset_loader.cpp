@@ -3,9 +3,17 @@
 #include <stb/stb_image.h>
 
 #include "engine/core/string/string_utils.h"
+#include "engine/lua_binding/lua_scene_binding.h"
 #include "engine/renderer/pixel_format.h"
 
 namespace my {
+
+IAssetLoader::IAssetLoader(const AssetMetaData& p_meta) : m_meta(p_meta) {
+    m_filePath = m_meta.path;
+    std::filesystem::path system_path{ m_filePath };
+    m_fileName = system_path.filename().string();
+    m_basePath = system_path.remove_filename().string();
+}
 
 bool IAssetLoader::RegisterLoader(const std::string& p_extension, CreateLoaderFunc p_func) {
     DEV_ASSERT(!p_extension.empty());
@@ -29,11 +37,10 @@ std::unique_ptr<IAssetLoader> IAssetLoader::Create(const AssetMetaData& p_meta) 
     return it->second(p_meta);
 }
 
-IAsset* BufferAssetLoader::Load() {
+auto BufferAssetLoader::Load() -> Result<IAsset*> {
     auto res = FileAccess::Open(m_meta.path, FileAccess::READ);
     if (!res) {
-        LOG_FATAL("TODO: handle error");
-        return nullptr;
+        return HBN_ERROR(res.error());
     }
 
     std::shared_ptr<FileAccess> file_access = *res;
@@ -64,11 +71,10 @@ static PixelFormat ChannelToFormat(int p_channel, bool p_is_float) {
     }
 }
 
-IAsset* ImageAssetLoader::Load() {
+auto ImageAssetLoader::Load() -> Result<IAsset*> {
     auto res = FileAccess::Open(m_meta.path, FileAccess::READ);
     if (!res) {
-        LOG_FATAL("TODO: handle error");
-        return nullptr;
+        return HBN_ERROR(res.error());
     }
 
     const bool p_is_float = false;
@@ -92,8 +98,7 @@ IAsset* ImageAssetLoader::Load() {
                                                       req_channel);
 
     if (!pixels) {
-        LOG_FATAL("TODO: handle error");
-        return nullptr;
+        return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "failed to parse file '{}'", m_meta.path);
     }
 
     if (req_channel > num_channels) {
@@ -117,6 +122,32 @@ IAsset* ImageAssetLoader::Load() {
     p_image->num_channels = num_channels;
     p_image->buffer = std::move(buffer);
     return p_image;
+}
+
+auto SceneLoader::Load() -> Result<IAsset*> {
+    Archive archive;
+    if (auto res = archive.OpenRead(m_filePath); !res) {
+        return HBN_ERROR(res.error());
+    }
+
+    Scene* scene = new Scene;
+    scene->m_replace = true;
+    scene->Serialize(archive);
+    return scene;
+}
+
+auto LuaSceneLoader::Load() -> Result<IAsset*> {
+    Scene* scene = new Scene;
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    scene->CreateCamera(frame_size.x, frame_size.y);
+    auto root = scene->CreateTransformEntity("world");
+    scene->m_replace = true;
+    scene->m_root = root;
+    bool result = LoadLuaScene(m_filePath, scene);
+    if (!result) {
+        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", m_filePath);
+    }
+    return scene;
 }
 
 #if 0

@@ -42,7 +42,7 @@ void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 
             // request image
             if (!path.empty()) {
-                AssetRegistry::GetSingleton().RequestAsset(path);
+                AssetRegistry::GetSingleton().RequestAssetAsync(path);
             }
         }
     }

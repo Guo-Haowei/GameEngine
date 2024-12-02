@@ -1,26 +1,26 @@
-#include "loader_assimp.h"
+#include "assimp_asset_loader.h"
 
 #if USING(USING_ASSIMP)
 #include <assimp/pbrmaterial.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
-
 #include <assimp/Importer.hpp>
+
+#include "engine/core/framework/asset_registry.h"
 
 namespace my {
 
-bool LoaderAssimp::Load(Scene* p_data) {
-    m_scene = p_data;
+auto AssimpAssetLoader::Load() -> Result<IAsset*> {
+    m_scene = new Scene;
     Assimp::Importer importer;
 
     const uint32_t flag = aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs;
 
-    const aiScene* aiscene = importer.ReadFile(m_filePath, flag);
+    const aiScene* aiscene = importer.ReadFile(m_meta.path, flag);
 
     // check for errors
     if (!aiscene || aiscene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !aiscene->mRootNode) {
-        m_error = std::format("Error: failed to import scene '{}'\n\tdetails: {}", m_filePath, importer.GetErrorString());
-        return false;
+        return HBN_ERROR(ErrorCode::FAILURE, "Error: failed to import scene '{}'\n\tdetails: {}", m_filePath, importer.GetErrorString());
     }
 
     const uint32_t numMeshes = aiscene->mNumMeshes;
@@ -37,13 +37,13 @@ bool LoaderAssimp::Load(Scene* p_data) {
     }
 
     ecs::Entity root = ProcessNode(aiscene->mRootNode, ecs::Entity::INVALID);
-    m_scene->GetComponent<NameComponent>(root)->SetName(m_fileName);
+    m_scene->GetComponent<NameComponent>(root)->SetName(m_meta.path);
 
     m_scene->m_root = root;
-    return true;
+    return m_scene;
 }
 
-void LoaderAssimp::ProcessMaterial(aiMaterial& p_material) {
+void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
     auto material_id = m_scene->CreateMaterialEntity(std::string("Material::") + p_material.GetName().C_Str());
     MaterialComponent* materialComponent = m_scene->GetComponent<MaterialComponent>(material_id);
     DEV_ASSERT(materialComponent);
@@ -60,22 +60,30 @@ void LoaderAssimp::ProcessMaterial(aiMaterial& p_material) {
     if (path.empty()) {
         path = getMaterialPath(aiTextureType_DIFFUSE, 0);
     }
-    materialComponent->RequestImage(MaterialComponent::TEXTURE_BASE, path);
+    if (!path.empty()) {
+        materialComponent->textures[MaterialComponent::TEXTURE_BASE].path = path;
+        AssetRegistry::GetSingleton().RequestAssetSync(path);
+    }
 
     path = getMaterialPath(aiTextureType_NORMALS, 0);
     if (path.empty()) {
         path = getMaterialPath(aiTextureType_HEIGHT, 0);
     }
-
-    materialComponent->RequestImage(MaterialComponent::TEXTURE_NORMAL, path);
+    if (!path.empty()) {
+        materialComponent->textures[MaterialComponent::TEXTURE_NORMAL].path = path;
+        AssetRegistry::GetSingleton().RequestAssetSync(path);
+    }
 
     path = getMaterialPath(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
-    materialComponent->RequestImage(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, path);
+    if (!path.empty()) {
+        materialComponent->textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].path = path;
+        AssetRegistry::GetSingleton().RequestAssetSync(path);
+    }
 
     m_materials.emplace_back(material_id);
 }
 
-void LoaderAssimp::ProcessMesh(const aiMesh& p_mesh) {
+void AssimpAssetLoader::ProcessMesh(const aiMesh& p_mesh) {
     DEV_ASSERT(p_mesh.mNumVertices);
     const std::string mesh_name(p_mesh.mName.C_Str());
     const bool has_uv = p_mesh.mTextureCoords[0];
@@ -123,7 +131,7 @@ void LoaderAssimp::ProcessMesh(const aiMesh& p_mesh) {
     m_meshes.push_back(mesh_id);
 }
 
-ecs::Entity LoaderAssimp::ProcessNode(const aiNode* p_node, ecs::Entity p_parent) {
+ecs::Entity AssimpAssetLoader::ProcessNode(const aiNode* p_node, ecs::Entity p_parent) {
     const auto key = std::string(p_node->mName.C_Str());
 
     ecs::Entity entity;

@@ -20,8 +20,6 @@ public:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    void LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success);
-
     auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<File>>;
     std::shared_ptr<File> FindFile(const FilePath& p_path);
 
@@ -29,9 +27,11 @@ public:
     static void Wait();
 
 private:
+    [[nodiscard]] auto LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset*>;
+
     void LoadAssetAsync(AssetRegistryHandle* p_handle,
-                        LoadSuccessFunc p_on_success = nullptr,
-                        void* p_user_data = nullptr);
+                        LoadSuccessFunc p_on_success,
+                        void* p_user_data);
 
     void EnqueueLoadTask(LoadTask& p_task);
 

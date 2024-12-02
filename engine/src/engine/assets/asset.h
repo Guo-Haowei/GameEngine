@@ -9,6 +9,8 @@ namespace my {
 enum class AssetType : uint8_t {
     IMAGE,
     BUFFER,
+    SCENE,
+
     MESH,
     MATERIAL,
     ANIMATION,

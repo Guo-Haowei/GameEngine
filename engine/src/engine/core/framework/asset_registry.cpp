@@ -39,7 +39,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
 
     AssetManager* asset_manager = m_app->GetAssetManager();
     for (auto& [key, stub] : m_lookup) {
-        asset_manager->LoadAssetAsync(stub);
+        asset_manager->LoadAssetAsync(stub, nullptr, nullptr);
     }
 
     return Result<void>();
@@ -58,7 +58,10 @@ const IAsset* AssetRegistry::GetAssetByHandle(const AssetHandle& p_handle) {
     return it->second->asset;
 }
 
-const IAsset* AssetRegistry::RequestAsset(const std::string& p_path) {
+auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
+                                     RequestMode p_mode,
+                                     LoadSuccessFunc p_on_success,
+                                     void* p_user_data) -> Result<const IAsset*> {
     AssetMetaData meta;
     meta.handle = p_path;
     meta.path = p_path;
@@ -74,7 +77,21 @@ const IAsset* AssetRegistry::RequestAsset(const std::string& p_path) {
     m_lookup[p_path] = stub;
     m_handles.emplace_back(std::unique_ptr<AssetRegistryHandle>(stub));
 
-    m_app->GetAssetManager()->LoadAssetAsync(stub);
+    switch (p_mode) {
+        case AssetRegistry::LOAD_ASYNC: {
+            m_app->GetAssetManager()->LoadAssetAsync(stub, p_on_success, p_user_data);
+        } break;
+        case AssetRegistry::LOAD_SYNC: {
+            auto res = m_app->GetAssetManager()->LoadAssetSync(stub);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+        } break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+
     return stub->asset;
 }
 
