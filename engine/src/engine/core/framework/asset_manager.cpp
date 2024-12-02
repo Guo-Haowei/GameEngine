@@ -2,8 +2,10 @@
 
 #include <filesystem>
 
-#include "engine/assets/loader_stbi.h"
+#include "engine/assets/asset_loader.h"
 #include "engine/assets/loader_tinygltf.h"
+#include "engine/core/framework/application.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
@@ -20,12 +22,32 @@ namespace my {
 
 namespace fs = std::filesystem;
 
+enum class LoadTaskType {
+    UNKNOWN,
+    BUFFER,
+    SCENE,
+};
+
+struct LoadTask {
+    LoadTaskType type;
+    FilePath assetPath;
+    LoadSuccessFunc onSuccess;
+    void* userdata;
+
+    // new stuff
+    AssetRegistryHandle* handle;
+};
+
+static std::mutex m_assetLock;
+static std::vector<std::unique_ptr<IAsset>> m_assets;
+
 static struct {
     // @TODO: better wake up
     std::condition_variable wakeCondition;
     std::mutex wakeMutex;
     // @TODO: better thread safe queue
     ConcurrentQueue<LoadTask> jobQueue;
+    std::atomic_int runningWorkers;
 } s_assetManagerGlob;
 
 // @TODO: refactor
@@ -75,35 +97,24 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     Loader<Scene>::RegisterLoader(".scene", LoaderDeserialize::Create);
     Loader<Scene>::RegisterLoader(".lua", LoaderLuaScript::Create);
 
-    Loader<Image>::RegisterLoader(".png", LoaderSTBI8::Create);
-    Loader<Image>::RegisterLoader(".jpg", LoaderSTBI8::Create);
-    Loader<Image>::RegisterLoader(".hdr", LoaderSTBI32::Create);
+    // @TODO: refactor, reload stuff
+    IAssetLoader::RegisterLoader(".ttf", BufferAssetLoader::CreateLoader);
 
-    const fs::path assets_root = fs::path{ fs::path(ROOT_FOLDER) / "resources" / "assets" };
-    std::vector<const char*> asset_folders = {
-        "materials",
-        "meshes",
-        "animations",
-    };
-
-    for (auto folder : asset_folders) {
-        fs::path root = assets_root / folder;
-
-        for (const auto& entry : fs::directory_iterator(root)) {
-            const bool is_file = entry.is_regular_file();
-            if (!is_file) {
-                continue;
-            }
-
-            fs::path full_path = entry.path();
-            std::string extension = full_path.extension().string();
-            if (extension == ".meta") {
-                LOG_VERBOSE("file '{}' found", full_path.string());
-            }
-        }
-    }
+    IAssetLoader::RegisterLoader(".png", ImageAssetLoader::CreateLoader);
+    IAssetLoader::RegisterLoader(".jpg", ImageAssetLoader::CreateLoader);
+    IAssetLoader::RegisterLoader(".hdr", ImageAssetLoader::CreateLoader);
 
     return Result<void>();
+}
+
+void AssetManager::LoadAssetAsync(AssetRegistryHandle* p_handle, LoadSuccessFunc p_on_success, void* p_userdata) {
+    LoadTask task;
+    task.type = LoadTaskType::UNKNOWN;
+
+    task.handle = p_handle;
+    task.onSuccess = p_on_success;
+    task.userdata = p_userdata;
+    EnqueueLoadTask(task);
 }
 
 void AssetManager::FinalizeImpl() {
@@ -115,6 +126,7 @@ void AssetManager::EnqueueLoadTask(LoadTask& p_task) {
     s_assetManagerGlob.wakeCondition.notify_one();
 }
 
+#if 0
 ImageHandle* AssetManager::FindImage(const FilePath& p_path) {
     std::lock_guard guard(m_imageCacheLock);
 
@@ -127,6 +139,7 @@ ImageHandle* AssetManager::FindImage(const FilePath& p_path) {
 }
 
 ImageHandle* AssetManager::LoadImageAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
+    CRASH_NOW();
     m_imageCacheLock.lock();
 
     auto found = m_imageCache.find(p_path);
@@ -136,25 +149,18 @@ ImageHandle* AssetManager::LoadImageAsync(const FilePath& p_path, LoadSuccessFun
         return ret;
     }
 
-    auto handle = std::make_unique<AssetHandle<Image>>();
+    auto handle = std::make_unique<OldAssetHandle<Image>>();
     handle->state = ASSET_STATE_LOADING;
     ImageHandle* ret = handle.get();
     m_imageCache[p_path] = std::move(handle);
     m_imageCacheLock.unlock();
 
     LoadTask task;
-    task.type = LOAD_TASK_IMAGE;
+    task.type = LoadTaskType::IMAGE;
     if (p_on_success) {
         task.onSuccess = p_on_success;
     } else {
         task.onSuccess = [](void* p_asset, void* p_userdata) {
-            Image* image = reinterpret_cast<Image*>(p_asset);
-            ImageHandle* handle = reinterpret_cast<ImageHandle*>(p_userdata);
-            DEV_ASSERT(image);
-            DEV_ASSERT(handle);
-
-            handle->Set(image);
-            GraphicsManager::GetSingleton().RequestTexture(handle);
         };
     }
     task.userdata = ret;
@@ -163,44 +169,11 @@ ImageHandle* AssetManager::LoadImageAsync(const FilePath& p_path, LoadSuccessFun
     return ret;
 }
 
-ImageHandle* AssetManager::LoadImageSync(const FilePath& p_path) {
-    std::lock_guard guard(m_imageCacheLock);
-
-    auto found = m_imageCache.find(p_path);
-    if (found != m_imageCache.end()) {
-        DEV_ASSERT(found->second->state.load() == ASSET_STATE_READY);
-        return found->second.get();
-    }
-
-    // LOG_VERBOSE("image {} not found in cache, loading...", path);
-    auto handle = std::make_unique<AssetHandle<Image>>();
-    auto loader = Loader<Image>::Create(p_path);
-    if (!loader) {
-        LOG_ERROR("No loader found for image '{}'", p_path.String());
-        return nullptr;
-    }
-
-    Image* image = new Image;
-    if (!loader->Load(image)) {
-        LOG_ERROR("Failed to load image image '{}', {}", p_path.String(), loader->GetError());
-        delete image;
-        return nullptr;
-    }
-
-    GpuTextureDesc texture_desc{};
-    SamplerDesc sampler_desc{};
-    renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
-
-    image->gpu_texture = GraphicsManager::GetSingleton().CreateTexture(texture_desc, sampler_desc);
-    handle->Set(image);
-    ImageHandle* ret = handle.get();
-    m_imageCache[p_path] = std::move(handle);
-    return ret;
-}
+#endif
 
 void AssetManager::LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success) {
     LoadTask task;
-    task.type = LOAD_TASK_SCENE;
+    task.type = LoadTaskType::SCENE;
     task.assetPath = p_path;
     task.onSuccess = p_on_success;
     task.userdata = nullptr;
@@ -212,7 +185,7 @@ static void LoadAsset(LoadTask& p_task, T* p_asset) {
     auto loader = Loader<T>::Create(p_task.assetPath);
     const std::string& asset_path = p_task.assetPath.String();
     if (!loader) {
-        LOG_ERROR("[AssetManager] not loader found for '{}'", asset_path);
+        LOG_ERROR("[AssetManager] no loader found for '{}'", asset_path);
         return;
     }
 
@@ -238,19 +211,55 @@ void AssetManager::WorkerMain() {
             continue;
         }
 
+        s_assetManagerGlob.runningWorkers.fetch_add(1);
+
         // LOG_VERBOSE("[AssetManager] start loading asset '{}'", task.asset_path);
         switch (task.type) {
-            case LOAD_TASK_IMAGE: {
-                LoadAsset<Image>(task, new Image);
-            } break;
-            case LOAD_TASK_SCENE: {
+            case LoadTaskType::SCENE: {
                 LOG_VERBOSE("[AssetManager] start loading scene {}", task.assetPath.String());
                 LoadAsset<Scene>(task, new Scene);
+            } break;
+            case LoadTaskType::UNKNOWN: {
+                auto loader = IAssetLoader::Create(task.handle->meta);
+                if (!loader) {
+                    LOG_ERROR("No suitable loader found for asset '{}'", task.handle->meta.path);
+                    break;
+                }
+
+                IAsset* asset = loader->Load();
+                task.handle->asset = asset;
+                task.handle->meta.type = asset->type;
+                task.handle->state = AssetRegistryHandle::ASSET_STATE_READY;
+
+                // @TODO: thread safe?
+                {
+                    std::lock_guard lock(m_assetLock);
+                    m_assets.emplace_back(std::move(std::unique_ptr<IAsset>(asset)));
+                    asset = m_assets.back().get();
+                }
+
+                if (task.handle->meta.type == AssetType::IMAGE) {
+                    Image* image = dynamic_cast<Image*>(asset);
+
+                    // @TODO: based on render, create asset on work threads
+                    GraphicsManager::GetSingleton().RequestTexture(image);
+                }
+                if (task.onSuccess) {
+                    task.onSuccess(asset, task.userdata);
+                }
             } break;
             default:
                 CRASH_NOW();
                 break;
         }
+
+        s_assetManagerGlob.runningWorkers.fetch_sub(1);
+    }
+}
+
+void AssetManager::Wait() {
+    while (s_assetManagerGlob.runningWorkers.load() != 0) {
+        // dummy for loop
     }
 }
 

@@ -2,20 +2,24 @@
 
 namespace my::thread {
 
-using ThreadMainFunc = std::function<void()>;
+#define THREAD_LIST                                                 \
+    THREAD_DEFINE(THREAD_MAIN, []() {})                             \
+    THREAD_DEFINE(THREAD_ASSET_LOADER_1, AssetManager::WorkerMain)  \
+    THREAD_DEFINE(THREAD_ASSET_LOADER_2, AssetManager::WorkerMain)  \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_1, jobsystem::WorkerMain) \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_2, jobsystem::WorkerMain) \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_3, jobsystem::WorkerMain) \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_4, jobsystem::WorkerMain) \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_5, jobsystem::WorkerMain) \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_6, jobsystem::WorkerMain) \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_7, jobsystem::WorkerMain) \
+    THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_8, jobsystem::WorkerMain)
 
 enum ThreadID : uint32_t {
-    THREAD_MAIN = 0,
-    THREAD_ASSET_LOADER_0,
-    THREAD_JOB_SYSTEM_WORKER_0,
-    THREAD_JOB_SYSTEM_WORKER_1,
-    THREAD_JOB_SYSTEM_WORKER_2,
-    THREAD_JOB_SYSTEM_WORKER_3,
-    THREAD_JOB_SYSTEM_WORKER_4,
-    THREAD_JOB_SYSTEM_WORKER_5,
-    THREAD_JOB_SYSTEM_WORKER_6,
-    THREAD_JOB_SYSTEM_WORKER_7,
-    THREAD_MAX,
+#define THREAD_DEFINE(ENUM, ...) ENUM,
+    THREAD_LIST
+#undef THREAD_DEFINE
+        THREAD_MAX,
 };
 
 bool Initialize();

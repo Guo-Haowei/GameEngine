@@ -47,6 +47,7 @@ TEST(guid, padd_zero) {
     EXPECT_EQ(str, "00000000-0000-0000-0000000000000000");
 }
 
+#if USING(PLATFORM_WINDOWS)
 TEST(guid, generation) {
     Guid guid1 = Guid::Create();
     Guid guid2 = Guid::Create();
@@ -59,6 +60,7 @@ TEST(guid, generation) {
         ASSERT_FALSE(0 && "Guid collision?");
     }
 }
+#endif
 
 TEST(guid, parse_wrong_length) {
     const std::string source = "578F-E7F234-E948-9EBCEF5BA35E854C";
@@ -117,11 +119,13 @@ TEST(guid, hasing) {
         auto it = guids.find(guid);
         EXPECT_TRUE(it != guids.end());
     }
+#if USING(PLATFORM_WINDOWS)
     {
         Guid guid3;
         auto it = guids.find(guid3);
         EXPECT_TRUE(it == guids.end());
     }
+#endif
 }
 
 }  // namespace my

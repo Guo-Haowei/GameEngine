@@ -1,6 +1,5 @@
 #include "opengl_graphics_manager.h"
 
-#include "engine/assets/image.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_manager.h"
@@ -669,9 +668,6 @@ void OpenGlGraphicsManager::OnSceneChange(const Scene& p_scene) {
 }
 
 void OpenGlGraphicsManager::CreateGpuResources() {
-    // @TODO: appropriate sampler
-    // auto grass_image = AssetManager::GetSingleton().LoadImageSync(FilePath{ "@res://images/grass.png" })->Get();
-
     // @TODO: move to renderer
     g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
     g_box = (OpenGlMeshBuffers*)CreateMesh(MakeBoxMesh());

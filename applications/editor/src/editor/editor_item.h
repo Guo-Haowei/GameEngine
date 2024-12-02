@@ -13,6 +13,7 @@ public:
     EditorItem(EditorLayer& p_editor) : m_editor(p_editor) {}
     virtual ~EditorItem() = default;
 
+    virtual void OnAttach() {}
     virtual void Update(Scene&) = 0;
 
 protected:

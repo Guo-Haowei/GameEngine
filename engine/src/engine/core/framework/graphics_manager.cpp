@@ -1,18 +1,12 @@
 #include "graphics_manager.h"
 
+#include "engine/assets/asset.h"
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/frustum.h"
 #include "engine/core/math/matrix_transform.h"
-#if USING(PLATFORM_WINDOWS)
-#include "engine/drivers/d3d11/d3d11_graphics_manager.h"
-#include "engine/drivers/d3d12/d3d12_graphics_manager.h"
-#include "engine/drivers/vk/vulkan_graphics_manager.h"
-#elif USING(PLATFORM_APPLE)
-#include "engine/drivers/metal/metal_graphics_manager.h"
-#endif
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
@@ -20,7 +14,16 @@
 #include "engine/renderer/render_graph/pass_creator.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_manager.h"
+#include "engine/renderer/renderer.h"
 #include "shader_resource_defines.hlsl.h"
+
+#if USING(PLATFORM_WINDOWS)
+#include "engine/drivers/d3d11/d3d11_graphics_manager.h"
+#include "engine/drivers/d3d12/d3d12_graphics_manager.h"
+#include "engine/drivers/vk/vulkan_graphics_manager.h"
+#elif USING(PLATFORM_APPLE)
+#include "engine/drivers/metal/metal_graphics_manager.h"
+#endif
 
 // @TODO: refactor
 #include "engine/renderer/path_tracer/path_tracer.h"
@@ -197,27 +200,19 @@ void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
     SetPipelineStateImpl(p_name);
 }
 
-void GraphicsManager::RequestTexture(ImageHandle* p_handle, OnTextureLoadFunc p_func) {
-    m_loadedImages.push(ImageTask{ p_handle, p_func });
+void GraphicsManager::RequestTexture(Image* p_image) {
+    m_loadedImages.push(p_image);
 }
 
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
-
-    renderer::RenderData data;
-    {
-        renderer::RenderDataConfig config(p_scene);
-        config.isOpengl = m_backend == Backend::OPENGL;
-        renderer::PrepareRenderData(*p_scene.m_camera.get(), config, data);
-    }
 
     // @TODO: make it a function
     auto loaded_images = m_loadedImages.pop_all();
     while (!loaded_images.empty()) {
         auto task = loaded_images.front();
         loaded_images.pop();
-        DEV_ASSERT(task.handle->state == ASSET_STATE_READY);
-        Image* image = task.handle->Get();
+        Image* image = task;
         DEV_ASSERT(image);
 
         GpuTextureDesc texture_desc{};
@@ -225,9 +220,6 @@ void GraphicsManager::Update(Scene& p_scene) {
         renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
 
         image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
-        if (task.func) {
-            task.func(task.handle->Get());
-        }
     }
 
     {
@@ -237,14 +229,23 @@ void GraphicsManager::Update(Scene& p_scene) {
         // @TODO: refactor
         UpdateEmitters(p_scene);
 
+        auto data = renderer::GetRenderData();
+        DEV_ASSERT(data);
+
         auto& frame = GetCurrentFrame();
-        UpdateConstantBuffer(frame.batchCb.get(), data.batchCache.buffer);
-        UpdateConstantBuffer(frame.materialCb.get(), data.materialCache.buffer);
-        UpdateConstantBuffer(frame.boneCb.get(), data.boneCache.buffer);
-        UpdateConstantBuffer(frame.passCb.get(), data.passCache);
-        UpdateConstantBuffer(frame.emitterCb.get(), data.emitterCache);
-        UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(frame.pointShadowCb.get(), data.pointShadowCache);
-        UpdateConstantBuffer(frame.perFrameCb.get(), &data.perFrameCache, sizeof(PerFrameConstantBuffer));
+        UpdateConstantBuffer(frame.batchCb.get(), data->batchCache.buffer);
+        UpdateConstantBuffer(frame.materialCb.get(), data->materialCache.buffer);
+        UpdateConstantBuffer(frame.boneCb.get(), data->boneCache.buffer);
+        UpdateConstantBuffer(frame.passCb.get(), data->passCache);
+        UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
+
+        UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(
+            frame.pointShadowCb.get(),
+            data->pointShadowCache);
+        UpdateConstantBuffer(frame.perFrameCb.get(),
+                             &data->perFrameCache,
+                             sizeof(PerFrameConstantBuffer));
+
         BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
         // @HACK
@@ -255,7 +256,7 @@ void GraphicsManager::Update(Scene& p_scene) {
             default: {
                 auto graph = GetActiveRenderGraph();
                 if (DEV_VERIFY(graph)) {
-                    graph->Execute(data, *this);
+                    graph->Execute(*data, *this);
                 }
             } break;
         }

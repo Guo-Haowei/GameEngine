@@ -1,5 +1,4 @@
 #pragma once
-#include "engine/assets/image.h"
 #include "engine/core/math/geomath.h"
 
 namespace my {
@@ -18,7 +17,7 @@ struct MaterialComponent {
         std::string path;
         // Non-serialized
         bool enabled = true;
-        ImageHandle* image = nullptr;
+        // ImageHandle* image = nullptr;
     };
 
     float metallic = 0.0f;

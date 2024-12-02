@@ -1,26 +1,8 @@
-#include "loader_stbi.h"
-
-#include <stb/stb_image.h>
-
-#include "engine/core/io/file_access.h"
+#include "asset_loader.h"
 
 namespace my {
 
-static PixelFormat ChannelToFormat(int p_channel, bool p_is_float) {
-    switch (p_channel) {
-        case 1:
-            return p_is_float ? PixelFormat::R32_FLOAT : PixelFormat::R8_UINT;
-        case 2:
-            return p_is_float ? PixelFormat::R32G32_FLOAT : PixelFormat::R8G8_UINT;
-        case 3:
-            return p_is_float ? PixelFormat::R32G32B32_FLOAT : PixelFormat::R8G8B8_UINT;
-        case 4:
-            return p_is_float ? PixelFormat::R32G32B32A32_FLOAT : PixelFormat::R8G8B8A8_UINT;
-        default:
-            CRASH_NOW();
-            return PixelFormat::UNKNOWN;
-    }
-}
+#if 0
 
 bool LoaderSTBIBase::LoadImpl(Image* p_image, bool p_is_float, STBILoadFunc p_func) {
     int width = 0;
@@ -80,5 +62,6 @@ bool LoaderSTBI32::Load(Image* p_data) {
         return stbi_loadf_from_memory(p_buffer, p_len, p_x, p_y, p_comp, p_req_comp);
     });
 }
+#endif
 
 }  // namespace my
