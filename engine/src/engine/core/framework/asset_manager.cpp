@@ -45,11 +45,9 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".lua", LuaSceneLoader::CreateLoader);
 
+    IAssetLoader::RegisterLoader(".gltf", LoaderTinyGLTF::CreateLoader);
 #if USING(USING_ASSIMP)
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
-    IAssetLoader::RegisterLoader(".gltf", AssimpAssetLoader::CreateLoader);
-#else
-    IAssetLoader::RegisterLoader(".gltf", GltfAssetLoader::CreateLoader);
 #endif
 
     IAssetLoader::RegisterLoader(".ttf", BufferAssetLoader::CreateLoader);
@@ -132,7 +130,6 @@ void AssetManager::WorkerMain() {
         s_assetManagerGlob.runningWorkers.fetch_add(1);
 
         Timer timer;
-        // @TODO: return result
         auto res = AssetManager::GetSingleton().LoadAssetSync(task.handle);
 
         if (res) {

@@ -1,4 +1,4 @@
-#include "engine/assets/loader.h"
+#include "engine/assets/asset_loader.h"
 #include "engine/scene/scene.h"
 
 namespace tinygltf {
@@ -9,15 +9,15 @@ struct Mesh;
 
 namespace my {
 
-class LoaderTinyGLTF : public Loader<Scene> {
+class LoaderTinyGLTF : public IAssetLoader {
 public:
-    LoaderTinyGLTF(const std::string& p_path) : Loader<Scene>{ p_path } {}
+    using IAssetLoader::IAssetLoader;
 
-    bool Load(Scene* p_data) override;
-
-    static std::shared_ptr<Loader<Scene>> Create(const std::string& p_path) {
-        return std::make_shared<LoaderTinyGLTF>(p_path);
+    static std::unique_ptr<IAssetLoader> CreateLoader(const AssetMetaData& p_meta) {
+        return std::make_unique<LoaderTinyGLTF>(p_meta);
     }
+
+    auto Load() -> Result<IAsset*> override;
 
 protected:
     void ProcessNode(int p_node_index, ecs::Entity p_parent);

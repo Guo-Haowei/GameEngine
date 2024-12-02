@@ -6,18 +6,6 @@
 
 namespace my {
 
-void MaterialComponent::RequestImage(int p_slot, const std::string& p_path) {
-    unused(p_slot);
-    unused(p_path);
-    CRASH_NOW();
-#if 0
-    if (!p_path.empty()) {
-        textures[p_slot].path = p_path;
-        textures[p_slot].image = AssetManager::GetSingleton().LoadImageAsync(FilePath{ p_path });
-    }
-#endif
-}
-
 void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 

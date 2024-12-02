@@ -26,9 +26,6 @@ struct MaterialComponent {
     TextureMap textures[TEXTURE_MAX];
     bool useTexures;
 
-    // @TODO: remove this, this is poorly designed
-    void RequestImage(int p_slot, const std::string& p_path);
-
     void Serialize(Archive& p_archive, uint32_t p_version);
 };
 
