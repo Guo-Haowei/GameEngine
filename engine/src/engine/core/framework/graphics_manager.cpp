@@ -86,6 +86,11 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
     if (auto res = InitializeInternal(); !res) {
         return HBN_ERROR(res.error());
     }
+    
+    if (m_backend == Backend::METAL) {
+        return Result<void>();
+    }
+    
     if (auto res = SelectRenderGraph(); !res) {
         return HBN_ERROR(res.error());
     }

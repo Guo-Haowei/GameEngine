@@ -1,6 +1,8 @@
 #pragma once
 #include "engine/drivers/empty/empty_graphics_manager.h"
 
+struct GLFWwindow;
+
 namespace my {
 
 WARNING_PUSH()
@@ -52,7 +54,7 @@ protected:
     auto InitializeInternal() -> Result<void> final;
     void FinalizeImpl() final;
 
-    std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
+    std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
     void Render() override {}
     void Present() final;
@@ -65,7 +67,11 @@ private:
     void setupPipeline();
     void setupVertexBuffer();
 
+    GLFWwindow* m_window;
     void* m_device;
+    void* m_commandQueue;
+    void* m_renderPassDescriptor;
+    void* m_layer;
 };
 
 WARNING_POP()

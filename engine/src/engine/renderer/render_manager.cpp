@@ -11,7 +11,6 @@
 
 namespace {
 std::string s_prev_env_map;
-bool s_need_update_env = false;
 }  // namespace
 
 namespace my::renderer {

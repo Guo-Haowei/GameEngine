@@ -103,7 +103,7 @@ void ContentBrowser::DrawAssets() {
             path = StringUtils::FileName(path, '/');
             std::string name{ path };
 
-            bool clicked = false;
+            [[maybe_unused]] bool clicked = false;
 
             if (image->gpu_texture) {
                 clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)image->gpu_texture->GetHandle(), thumbnail_size);

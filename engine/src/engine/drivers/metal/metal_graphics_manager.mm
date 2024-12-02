@@ -20,11 +20,6 @@ MetalGraphicsManager::MetalGraphicsManager() : EmptyGraphicsManager("MetalGraphi
     m_pipelineStateManager = std::make_shared<EmptyPipelineStateManager>();
 }
 
-static GLFWwindow* window;
-id <MTLCommandQueue> commandQueue;
-MTLRenderPassDescriptor *renderPassDescriptor;
-CAMetalLayer *layer;
-
 id<MTLRenderPipelineState> pipelineState;
 id<MTLBuffer> vertexBuffer;
 
@@ -82,30 +77,35 @@ auto MetalGraphicsManager::InitializeInternal() -> Result<void> {
             return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "display manager is nullptr");
         }
     
-        window = display_manager->GetGlfwWindow();
+        m_window = display_manager->GetGlfwWindow();
     
         id<MTLDevice> device = MTLCreateSystemDefaultDevice();
         m_device = (__bridge void*)CFRetain((__bridge CFTypeRef)device);
 
-        commandQueue = [device newCommandQueue];
+        id<MTLCommandQueue> commandQueue = [device newCommandQueue];
+        m_commandQueue = (__bridge void*)CFRetain((__bridge CFTypeRef) commandQueue);
 
-        NSWindow *nswin = glfwGetCocoaWindow(window);
-        layer = [CAMetalLayer layer];
+        NSWindow *nswin = glfwGetCocoaWindow(m_window);
+        CAMetalLayer* layer = [CAMetalLayer layer];
         layer.device = device;
         layer.pixelFormat = MTLPixelFormatBGRA8Unorm;
         nswin.contentView.layer = layer;
         nswin.contentView.wantsLayer = YES;
+        m_layer = layer;
 
         setupPipeline();
         setupVertexBuffer();
+        
+        MTLRenderPassDescriptor* renderPassDescriptor = [MTLRenderPassDescriptor new];
+        m_renderPassDescriptor = renderPassDescriptor;
         
         auto imgui = m_app->GetImguiManager();
         if (imgui) {
             imgui->SetRenderCallbacks([this]() {
                 id<MTLDevice> device = (__bridge id<MTLDevice>)m_device;
                 ImGui_ImplMetal_Init(device);
-                renderPassDescriptor = [MTLRenderPassDescriptor new];
-                ImGui_ImplMetal_NewFrame(renderPassDescriptor);
+                
+                ImGui_ImplMetal_NewFrame((MTLRenderPassDescriptor*)m_renderPassDescriptor);
             },
             []() {
                 ImGui_ImplMetal_Shutdown();
@@ -126,10 +126,13 @@ void MetalGraphicsManager::FinalizeImpl() {
 void MetalGraphicsManager::Present() {
     @autoreleasepool
     {
+        id<MTLCommandQueue> commandQueue = (__bridge id<MTLCommandQueue>)m_commandQueue;
+        auto renderPassDescriptor = (MTLRenderPassDescriptor*)m_renderPassDescriptor;
+        
         int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        layer.drawableSize = CGSizeMake(width, height);
-        id<CAMetalDrawable> drawable = [layer nextDrawable];
+        glfwGetFramebufferSize(m_window, &width, &height);
+        ((CAMetalLayer*)m_layer).drawableSize = CGSizeMake(width, height);
+        id<CAMetalDrawable> drawable = [(CAMetalLayer*)m_layer nextDrawable];
 
         id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
         float clear_color[4] = {0.3f, 0.4f, 0.3f, 1.0f};
@@ -178,6 +181,62 @@ void MetalGraphicsManager::Present() {
 void MetalGraphicsManager::OnWindowResize(int p_width, int p_height) {
     unused(p_width);
     unused(p_height);
+}
+
+struct MetalGpuTexture : public GpuTexture {
+    using GpuTexture::GpuTexture;
+
+    uint64_t GetResidentHandle() const {
+        return 0;
+    }
+
+    uint64_t GetHandle() const {
+        return (uint64_t)texture;
+    }
+
+    uint64_t GetUavHandle() const {
+        return 0;
+    }
+    
+    void* texture;
+};
+
+std::shared_ptr<GpuTexture> MetalGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc&) {
+    id<MTLDevice> device = (__bridge id<MTLDevice>)m_device;
+
+    // Create a texture descriptor
+    MTLTextureDescriptor *textureDescriptor = [[MTLTextureDescriptor alloc] init];
+    DEV_ASSERT(p_texture_desc.format == PixelFormat::R8G8B8A8_UINT);
+    textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    textureDescriptor.width = p_texture_desc.width;
+    textureDescriptor.height = p_texture_desc.height;
+    textureDescriptor.usage = MTLTextureUsageShaderRead;
+    textureDescriptor.storageMode = MTLStorageModeShared;
+    
+    id<MTLTexture> texture = [device newTextureWithDescriptor:textureDescriptor];
+
+    // Create a command queue and buffer
+    id<MTLCommandQueue> commandQueue = [device newCommandQueue];
+    id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+
+    // Create a blit command encoder
+    id<MTLBlitCommandEncoder> blitEncoder = [commandBuffer blitCommandEncoder];
+    [texture replaceRegion:MTLRegionMake2D(0,
+                                           0,
+                                           p_texture_desc.width,
+                                           p_texture_desc.height)
+               mipmapLevel:0
+               withBytes:p_texture_desc.initialData
+               bytesPerRow:p_texture_desc.width * 4]; // Adjust for RGBA8 format
+
+    // End and commit the commands
+    [blitEncoder endEncoding];
+    [commandBuffer commit];
+    [commandBuffer waitUntilCompleted];
+    
+    auto result = std::make_shared<MetalGpuTexture>(p_texture_desc);
+    result->texture = (__bridge void*)CFRetain((__bridge CFTypeRef)texture);
+    return result;
 }
 
 }
