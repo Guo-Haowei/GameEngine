@@ -83,6 +83,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
     p_handle->asset = asset;
     p_handle->meta.type = asset->type;
     p_handle->state = AssetRegistryHandle::ASSET_STATE_READY;
+    asset->meta = p_handle->meta;
 
     if (asset->type == AssetType::IMAGE) {
         Image* image = dynamic_cast<Image*>(asset);

@@ -14,11 +14,11 @@ struct AssetRegistryHandle {
         ASSET_STATE_READY,
     };
 
-    AssetRegistryHandle(const AssetMetaData& p_meta) : meta(p_meta),
-                                                       asset(nullptr),
-                                                       state(ASSET_STATE_LOADING) {}
+    AssetRegistryHandle(const IAsset::Meta& p_meta) : meta(p_meta),
+                                                      asset(nullptr),
+                                                      state(ASSET_STATE_LOADING) {}
 
-    AssetMetaData meta;
+    IAsset::Meta meta;
     IAsset* asset;
     std::atomic<State> state;
 };
@@ -34,6 +34,8 @@ public:
 
     const IAsset* GetAssetByHandle(const AssetHandle& p_handle);
 
+    void GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out);
+
     template<typename T>
     const T* GetAssetByHandle(const AssetHandle& p_handle) {
         const IAsset* tmp = GetAssetByHandle(p_handle);
@@ -46,7 +48,7 @@ public:
         return nullptr;
     }
 
-    void RegisterAssets(int p_count, AssetMetaData* p_metas);
+    void RegisterAssets(int p_count, IAsset::Meta* p_metas);
 
     auto RequestAssetSync(const std::string& p_path) {
         return RequestAssetImpl(p_path, LOAD_SYNC, nullptr, nullptr);

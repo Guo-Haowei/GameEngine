@@ -21,7 +21,7 @@ class AssimpAssetLoader : public IAssetLoader {
 public:
     using IAssetLoader::IAssetLoader;
 
-    static std::unique_ptr<IAssetLoader> CreateLoader(const AssetMetaData& p_meta) {
+    static std::unique_ptr<IAssetLoader> CreateLoader(const IAsset ::Meta& p_meta) {
         return std::make_unique<AssimpAssetLoader>(p_meta);
     }
 

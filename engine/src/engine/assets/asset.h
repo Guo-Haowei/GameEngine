@@ -23,18 +23,21 @@ enum class AssetType : uint8_t {
 // will change to guid or something
 using AssetHandle = std::string;
 
-struct AssetMetaData {
-    AssetType type;
-    AssetHandle handle;
-    std::string path;
-    // @TODO: name
-};
-
 struct IAsset {
+    struct Meta {
+        AssetType type;
+        AssetHandle handle;
+        std::string path;
+        // @TODO: name
+    };
+
     IAsset(AssetType p_type) : type(p_type) {}
     virtual ~IAsset() = default;
 
     const AssetType type;
+
+    // @TODO: find a more efficient way
+    Meta meta;
 };
 
 // @TODO: refactor

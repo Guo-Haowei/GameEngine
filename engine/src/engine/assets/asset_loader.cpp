@@ -8,7 +8,7 @@
 
 namespace my {
 
-IAssetLoader::IAssetLoader(const AssetMetaData& p_meta) : m_meta(p_meta) {
+IAssetLoader::IAssetLoader(const IAsset::Meta& p_meta) : m_meta(p_meta) {
     m_filePath = m_meta.path;
     std::filesystem::path system_path{ m_filePath };
     m_fileName = system_path.filename().string();
@@ -28,7 +28,7 @@ bool IAssetLoader::RegisterLoader(const std::string& p_extension, CreateLoaderFu
     return true;
 }
 
-std::unique_ptr<IAssetLoader> IAssetLoader::Create(const AssetMetaData& p_meta) {
+std::unique_ptr<IAssetLoader> IAssetLoader::Create(const IAsset::Meta& p_meta) {
     std::string_view extension = StringUtils::Extension(p_meta.path);
     auto it = s_loaderCreator.find(std::string(extension));
     if (it == s_loaderCreator.end()) {

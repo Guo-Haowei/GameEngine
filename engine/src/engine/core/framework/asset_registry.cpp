@@ -20,13 +20,13 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
 
     DEV_ASSERT(data.is_array());
 
-    std::vector<AssetMetaData> asset_bundle;
+    std::vector<IAsset::Meta> asset_bundle;
 
     for (const auto& meta_json : data) {
         // const auto& type_json = meta_json["type"];
         const auto& path_json = meta_json["path"];
         if (path_json.is_string()) {
-            AssetMetaData meta_data;
+            IAsset::Meta meta_data;
             meta_data.path = path_json;
             if (!meta_data.path.empty()) {
                 meta_data.handle = meta_data.path;
@@ -58,11 +58,20 @@ const IAsset* AssetRegistry::GetAssetByHandle(const AssetHandle& p_handle) {
     return it->second->asset;
 }
 
+void AssetRegistry::GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out) {
+    std::lock_guard gurad(m_lock);
+    for (auto& it : m_handles) {
+        if (it->asset && it->asset->type == p_type) {
+            p_out.emplace_back(it->asset);
+        }
+    }
+}
+
 auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
                                      RequestMode p_mode,
                                      LoadSuccessFunc p_on_success,
                                      void* p_user_data) -> Result<const IAsset*> {
-    AssetMetaData meta;
+    IAsset::Meta meta;
     meta.handle = p_path;
     meta.path = p_path;
 
@@ -95,7 +104,7 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
     return stub->asset;
 }
 
-void AssetRegistry::RegisterAssets(int p_count, AssetMetaData* p_metas) {
+void AssetRegistry::RegisterAssets(int p_count, IAsset::Meta* p_metas) {
     DEV_ASSERT(p_count);
 
     std::lock_guard gurad(m_lock);

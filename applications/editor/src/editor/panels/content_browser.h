@@ -19,6 +19,7 @@ protected:
     void DrawSideBarHelper(const std::filesystem::path& p_path);
     void DrawSideBar();
     void DrawDetailPanel();
+    void DrawAssets();
 
     // @TODO: use FilePath
     std::filesystem::path m_rootPath;

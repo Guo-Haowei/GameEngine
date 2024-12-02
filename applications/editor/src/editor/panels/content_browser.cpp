@@ -77,12 +77,68 @@ void ContentBrowser::Update(Scene&) {
     ImGui::End();
 
     if (ImGui::Begin("Assets##ContentBrowser")) {
-        DrawDetailPanel();
+        DrawAssets();
     }
     ImGui::End();
 }
 
+void ContentBrowser::DrawAssets() {
+    ImVec2 window_size = ImGui::GetWindowSize();
+    constexpr float desired_icon_size = 120.f;
+    int num_col = static_cast<int>(glm::floor(window_size.x / desired_icon_size));
+    num_col = glm::max(1, num_col);
+
+    ImGui::Columns(num_col, nullptr, false);
+
+    auto registry = m_editor.GetApplication()->GetAssetRegistry();
+    std::vector<IAsset*> assets;
+    registry->GetAssetByType(AssetType::IMAGE, assets);
+
+    ImVec2 thumbnail_size{ 96.f, 96.f };
+
+    for (const auto& asset : assets) {
+        const Image* image = dynamic_cast<const Image*>(asset);
+        if (DEV_VERIFY(image)) {
+            std::string_view path{ image->meta.path };
+            path = StringUtils::FileName(path, '/');
+            std::string name{ path };
+
+            bool clicked = false;
+
+            if (image->gpu_texture) {
+                clicked = ImGui::ImageButton(name.c_str(), (ImTextureID)image->gpu_texture->GetHandle(), thumbnail_size);
+            } else {
+                clicked = ImGui::Button(name.c_str(), thumbnail_size);
+            }
+
+            if (true) {
+                std::string full_path_string = name;
+                char* dragged_data = StringUtils::Strdup(full_path_string.c_str());
+
+                // if (action)
+                {
+                    ImGuiDragDropFlags flags = ImGuiDragDropFlags_SourceNoDisableHover;
+                    if (ImGui::BeginDragDropSource(flags)) {
+                        ImGui::SetDragDropPayload("dummy", &dragged_data, sizeof(const char*));
+                        ImGui::Text("%s", name.c_str());
+                        ImGui::EndDragDropSource();
+                    }
+                }
+            }
+
+            ImGui::Text("%s", name.c_str());
+            ImGui::NextColumn();
+        }
+
+#if 0
+#endif
+    }
+
+    ImGui::Columns(1);
+}
+
 void ContentBrowser::DrawDetailPanel() {
+#if 0
     if (ImGui::Button("<-")) {
         if (m_currentPath != m_rootPath) {
             m_currentPath = m_currentPath.parent_path();
@@ -167,6 +223,7 @@ void ContentBrowser::DrawDetailPanel() {
     }
 
     ImGui::Columns(1);
+#endif
 }
 
 }  // namespace my
