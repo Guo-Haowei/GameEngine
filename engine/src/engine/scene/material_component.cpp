@@ -1,7 +1,7 @@
 #include "material_component.h"
 
 #include "engine/assets/asset.h"
-#include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 
 namespace my {
@@ -41,11 +41,9 @@ void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
             p_archive >> path;
 
             // request image
-#if 0
             if (!path.empty()) {
-                textures[i].image = AssetManager::GetSingleton().LoadImageAsync(FilePath{ path });
+                AssetRegistry::GetSingleton().RequestAsset(path);
             }
-#endif
         }
     }
 }

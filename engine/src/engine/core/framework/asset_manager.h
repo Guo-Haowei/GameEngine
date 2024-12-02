@@ -22,12 +22,6 @@ public:
 
     void LoadSceneAsync(const FilePath& p_path, LoadSuccessFunc p_on_success);
 
-#if 0
-    ImageHandle* LoadImageSync(const FilePath& p_path);
-    ImageHandle* LoadImageAsync(const FilePath& p_path, LoadSuccessFunc = nullptr);
-    ImageHandle* FindImage(const FilePath& p_path);
-#endif
-
     auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<File>>;
     std::shared_ptr<File> FindFile(const FilePath& p_path);
 
@@ -42,7 +36,6 @@ private:
     void EnqueueLoadTask(LoadTask& p_task);
 
     std::map<FilePath, std::shared_ptr<File>> m_textCache;
-    std::mutex m_imageCacheLock;
 
     friend class AssetRegistry;
 };

@@ -17,7 +17,6 @@ struct MaterialComponent {
         std::string path;
         // Non-serialized
         bool enabled = true;
-        // ImageHandle* image = nullptr;
     };
 
     float metallic = 0.0f;

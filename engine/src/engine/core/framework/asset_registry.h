@@ -43,11 +43,6 @@ public:
 
     void RegisterAssets(int p_count, AssetMetaData* p_metas);
 
-    // virtual void SearchAllAssets(bool bIncludeSubFolders) = 0;
-    // virtual bool GetAssetByObjectPath(FName ObjectPath, FAssetData& OutAssetData) const = 0;
-    // virtual bool GetAssetsByClass(FName ClassName, TArray<FAssetData>& OutAssetData) const = 0;
-    // virtual bool GetAssetsByTag(FName TagName, TArray<FAssetData>& OutAssetData) const = 0;
-
 protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;

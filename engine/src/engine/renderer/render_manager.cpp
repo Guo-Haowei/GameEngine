@@ -16,47 +16,7 @@ bool s_need_update_env = false;
 
 namespace my::renderer {
 
-void request_env_map(const std::string& path) {
-    if (path == s_prev_env_map) {
-        return;
-    }
-
-    if (!s_prev_env_map.empty()) {
-        LOG_WARN("TODO: release {}", s_prev_env_map.empty());
-    }
-
-    s_prev_env_map = path;
-#if 0
-    if (auto handle = AssetManager::GetSingleton().FindImage(FilePath{ path }); handle) {
-        if (auto image = handle->Get(); image && image->gpu_texture) {
-            g_constantCache.cache.c_hdrEnvMap.handle_gl = image->gpu_texture->GetResidentHandle();
-            g_constantCache.update();
-            s_need_update_env = true;
-            return;
-        }
-    }
-
-    AssetManager::GetSingleton().LoadImageAsync(FilePath{ path }, [](void* p_asset, void* p_userdata) {
-        Image* image = reinterpret_cast<Image*>(p_asset);
-        ImageHandle* handle = reinterpret_cast<ImageHandle*>(p_userdata);
-        DEV_ASSERT(image);
-        DEV_ASSERT(handle);
-
-        handle->Set(image);
-        GraphicsManager::GetSingleton().RequestTexture(handle, [](Image* p_image) {
-            // @TODO: better way
-            if (p_image->gpu_texture) {
-                g_constantCache.cache.c_hdrEnvMap.handle_gl = p_image->gpu_texture->GetResidentHandle();
-                g_constantCache.update();
-                s_need_update_env = true;
-            }
-        });
-    });
-#endif
-}
-
 // @TODO: fix this?
-
 void register_rendering_dvars() {
 #define REGISTER_DVAR
 #include "graphics_dvars.h"

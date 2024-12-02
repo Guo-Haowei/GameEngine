@@ -73,6 +73,8 @@ const IAsset* AssetRegistry::RequestAsset(const std::string& p_path) {
 
     m_lookup[p_path] = stub;
     m_handles.emplace_back(std::unique_ptr<AssetRegistryHandle>(stub));
+
+    m_app->GetAssetManager()->LoadAssetAsync(stub);
     return stub->asset;
 }
 

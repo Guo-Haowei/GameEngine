@@ -102,7 +102,7 @@ auto AssetManager::InitializeImpl() -> Result<void> {
 
     IAssetLoader::RegisterLoader(".png", ImageAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".jpg", ImageAssetLoader::CreateLoader);
-    IAssetLoader::RegisterLoader(".hdr", ImageAssetLoader::CreateLoader);
+    // IAssetLoader::RegisterLoader(".hdr", ImageAssetLoader::CreateLoader);
 
     return Result<void>();
 }
