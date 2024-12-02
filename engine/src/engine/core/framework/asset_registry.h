@@ -6,28 +6,35 @@
 
 namespace my {
 
+using LoadSuccessFunc = void (*)(void* p_asset, void* p_userdata);
+
 struct AssetRegistryHandle {
     enum State : uint8_t {
         ASSET_STATE_LOADING,
         ASSET_STATE_READY,
     };
 
-    AssetRegistryHandle(const AssetMetaData& p_meta) : meta(p_meta),
-                                                       asset(nullptr),
-                                                       state(ASSET_STATE_LOADING) {}
+    AssetRegistryHandle(const IAsset::Meta& p_meta) : meta(p_meta),
+                                                      asset(nullptr),
+                                                      state(ASSET_STATE_LOADING) {}
 
-    AssetMetaData meta;
+    IAsset::Meta meta;
     IAsset* asset;
     std::atomic<State> state;
 };
 
 class AssetRegistry : public Singleton<AssetRegistry>, public Module {
+    enum RequestMode {
+        LOAD_ASYNC,
+        LOAD_SYNC,
+    };
+
 public:
     AssetRegistry() : Module("AssetRegistry") {}
 
     const IAsset* GetAssetByHandle(const AssetHandle& p_handle);
 
-    const IAsset* RequestAsset(const std::string& p_path);
+    void GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out);
 
     template<typename T>
     const T* GetAssetByHandle(const AssetHandle& p_handle) {
@@ -41,16 +48,26 @@ public:
         return nullptr;
     }
 
-    void RegisterAssets(int p_count, AssetMetaData* p_metas);
+    void RegisterAssets(int p_count, IAsset::Meta* p_metas);
 
-    // virtual void SearchAllAssets(bool bIncludeSubFolders) = 0;
-    // virtual bool GetAssetByObjectPath(FName ObjectPath, FAssetData& OutAssetData) const = 0;
-    // virtual bool GetAssetsByClass(FName ClassName, TArray<FAssetData>& OutAssetData) const = 0;
-    // virtual bool GetAssetsByTag(FName TagName, TArray<FAssetData>& OutAssetData) const = 0;
+    auto RequestAssetSync(const std::string& p_path) {
+        return RequestAssetImpl(p_path, LOAD_SYNC, nullptr, nullptr);
+    }
+
+    auto RequestAssetAsync(const std::string& p_path,
+                           LoadSuccessFunc p_on_success = nullptr,
+                           void* p_user_data = nullptr) {
+        return RequestAssetImpl(p_path, LOAD_ASYNC, p_on_success, p_user_data);
+    }
 
 protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
+
+    auto RequestAssetImpl(const std::string& p_path,
+                          RequestMode p_mode,
+                          LoadSuccessFunc p_on_success,
+                          void* p_user_data) -> Result<const IAsset*>;
 
     std::unordered_map<AssetHandle, AssetRegistryHandle*> m_lookup;
     std::vector<std::unique_ptr<AssetRegistryHandle>> m_handles;

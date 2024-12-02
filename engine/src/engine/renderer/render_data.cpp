@@ -9,6 +9,7 @@
 #include "engine/scene/scene.h"
 
 // @TODO: remove
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 
 namespace my::renderer {
@@ -25,7 +26,7 @@ static void FillPass(const RenderDataConfig& p_config,
                      RenderData& p_out_render_data) {
     const Scene& scene = p_config.scene;
 
-    [[maybe_unused]] const bool is_opengl = p_config.isOpengl;
+    const bool is_opengl = p_config.isOpengl;
     auto FillMaterialConstantBuffer = [&](const MaterialComponent* material, MaterialConstantBuffer& cb) {
         cb.c_baseColor = material->baseColor;
         cb.c_metallic = material->metallic;
@@ -42,14 +43,7 @@ static void FillPass(const RenderDataConfig& p_config,
                 return false;
             }
 
-            CRASH_NOW();
-#if 0
-            ImageHandle* handle = material->textures[p_idx].image;
-            if (!handle) {
-                return false;
-            }
-
-            Image* image = handle->Get();
+            const Image* image = AssetRegistry::GetSingleton().GetAssetByHandle<Image>(material->textures[p_idx].path);
             if (!image) {
                 return false;
             }
@@ -67,7 +61,6 @@ static void FillPass(const RenderDataConfig& p_config,
             } else {
                 p_out_resident_handle.Set32(static_cast<uint32_t>(resident_handle));
             }
-#endif
             return true;
         };
 

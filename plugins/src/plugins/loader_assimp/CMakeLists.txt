@@ -1,8 +1,8 @@
 set(TARGET_NAME loader_assimp)
 
 file(GLOB_RECURSE SRC
-    "loader_assimp.h"
-    "loader_assimp.cpp"
+    "assimp_asset_loader.h"
+    "assimp_asset_loader.cpp"
 )
 
 add_library(${TARGET_NAME} STATIC ${SRC})

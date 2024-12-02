@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/assets/asset.h"
 #include "engine/core/base/noncopyable.h"
 #include "engine/core/math/ray.h"
 #include "engine/core/systems/component_manager.h"
@@ -23,11 +24,11 @@ namespace jobsystem {
 class Context;
 }
 
-class Scene : public NonCopyable {
+class Scene : public NonCopyable, public IAsset {
 public:
     static constexpr const char* EXTENSION = ".scene";
 
-    Scene() = default;
+    Scene() : IAsset(AssetType::SCENE) {}
 
 #pragma region WORLD_COMPONENTS_REGISTERY
 #define REGISTER_COMPONENT(T, VER)                                                             \

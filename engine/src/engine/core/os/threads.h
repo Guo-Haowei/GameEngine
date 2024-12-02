@@ -6,6 +6,8 @@ namespace my::thread {
     THREAD_DEFINE(THREAD_MAIN, []() {})                             \
     THREAD_DEFINE(THREAD_ASSET_LOADER_1, AssetManager::WorkerMain)  \
     THREAD_DEFINE(THREAD_ASSET_LOADER_2, AssetManager::WorkerMain)  \
+    THREAD_DEFINE(THREAD_ASSET_LOADER_3, AssetManager::WorkerMain)  \
+    THREAD_DEFINE(THREAD_ASSET_LOADER_4, AssetManager::WorkerMain)  \
     THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_1, jobsystem::WorkerMain) \
     THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_2, jobsystem::WorkerMain) \
     THREAD_DEFINE(THREAD_JOBSYSTEM_WORKER_3, jobsystem::WorkerMain) \
