@@ -60,7 +60,9 @@ void ContentBrowser::DrawSideBarHelper(const std::filesystem::path& p_path) {
         }
 
         if (ImGui::TreeNode(name.c_str())) {
-            DrawSideBarHelper(full_path);
+            if (is_dir) {
+                DrawSideBarHelper(full_path);
+            }
             ImGui::TreePop();
         }
     }
