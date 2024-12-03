@@ -32,74 +32,50 @@ public:
     Scene() : IAsset(AssetType::SCENE) {}
 
 #pragma region WORLD_COMPONENTS_REGISTERY
-#define REGISTER_COMPONENT(T, VER)                                                                     \
-public:                                                                                                \
-    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);         \
-                                                                                                       \
-private:                                                                                               \
-    template<>                                                                                         \
-    inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }    \
-    template<>                                                                                         \
-    inline ecs::Entity GetEntityByIndex<T>(size_t p_index) { return m_##T##s.m_entityArray[p_index]; } \
-                                                                                                       \
-public:                                                                                                \
-    template<>                                                                                         \
-    inline const T* GetComponent<T>(const ecs::Entity& p_entity) const {                               \
-        return m_##T##s.GetComponent(p_entity);                                                        \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline T* GetComponent<T>(const ecs::Entity& p_entity) {                                           \
-        return m_##T##s.GetComponent(p_entity);                                                        \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline bool Contains<T>(const ecs::Entity& p_entity) const {                                       \
-        return m_##T##s.Contains(p_entity);                                                            \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline size_t GetCount<T>() const {                                                                \
-        return m_##T##s.GetCount();                                                                    \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline ecs::Entity GetEntity<T>(size_t p_index) const {                                            \
-        return m_##T##s.GetEntity(p_index);                                                            \
-    }                                                                                                  \
-    template<>                                                                                         \
-    T& Create<T>(const ecs::Entity& p_entity) {                                                        \
-        return m_##T##s.Create(p_entity);                                                              \
-    }                                                                                                  \
+#define REGISTER_COMPONENT(T, VER)                                                                                 \
+public:                                                                                                            \
+    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);                     \
+                                                                                                                   \
+private:                                                                                                           \
+    template<>                                                                                                     \
+    inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }                \
+    template<>                                                                                                     \
+    inline ecs::Entity GetEntityByIndex<T>(size_t p_index) { return m_##T##s.m_entityArray[p_index]; }             \
+                                                                                                                   \
+public:                                                                                                            \
+    template<>                                                                                                     \
+    inline const T* GetComponent<T>(const ecs::Entity& p_entity) const { return m_##T##s.GetComponent(p_entity); } \
+    template<>                                                                                                     \
+    inline T* GetComponent<T>(const ecs::Entity& p_entity) { return m_##T##s.GetComponent(p_entity); }             \
+    template<>                                                                                                     \
+    inline bool Contains<T>(const ecs::Entity& p_entity) const { return m_##T##s.Contains(p_entity); }             \
+    template<>                                                                                                     \
+    inline size_t GetCount<T>() const { return m_##T##s.GetCount(); }                                              \
+    template<>                                                                                                     \
+    inline ecs::Entity GetEntity<T>(size_t p_index) const { return m_##T##s.GetEntity(p_index); }                  \
+    template<>                                                                                                     \
+    T& Create<T>(const ecs::Entity& p_entity) { return m_##T##s.Create(p_entity); }                                \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #pragma endregion WORLD_COMPONENTS_REGISTERY
     template<typename T>
-    const T* GetComponent(const ecs::Entity&) const {
-        return nullptr;
-    }
+    const T* GetComponent(const ecs::Entity&) const { return nullptr; }
     template<typename T>
-    T* GetComponent(const ecs::Entity&) {
-        return nullptr;
-    }
+    T* GetComponent(const ecs::Entity&) { return nullptr; }
     template<typename T>
-    bool Contains(const ecs::Entity&) const {
-        return false;
-    }
+    bool Contains(const ecs::Entity&) const { return false; }
     template<typename T>
-    size_t GetCount() const {
-        return 0;
-    }
+    size_t GetCount() const { return 0; }
     template<typename T>
-    ecs::Entity GetEntity(size_t) const {
-        return ecs::Entity::INVALID;
-    }
+    ecs::Entity GetEntity(size_t) const { return ecs::Entity::INVALID; }
     template<typename T>
-    T& Create(const ecs::Entity&) {
-        return *(T*)(nullptr);
-    }
+    T& Create(const ecs::Entity&) { return *(T*)(nullptr); }
 
 private:
     template<typename T>
-    inline T& GetComponentByIndex(size_t p_index) { return *(T*)0; }
+    inline T& GetComponentByIndex(size_t) { return *(T*)0; }
     template<typename T>
-    inline ecs::Entity GetEntityByIndex(size_t p_index) { return ecs::Entity::INVALID; }
+    inline ecs::Entity GetEntityByIndex(size_t) { return ecs::Entity::INVALID; }
 
     ecs::ComponentLibrary m_componentLib;
 
