@@ -232,10 +232,6 @@ public:
         return m_componentArray.back();
     }
 
-    const T& operator[](size_t p_index) const { return GetComponent(p_index); }
-
-    T& operator[](size_t p_index) { return GetComponent(p_index); }
-
     bool Serialize(Archive& p_archive, uint32_t p_version) override {
         constexpr uint64_t magic = 7165065861825654388llu;
         size_t count;

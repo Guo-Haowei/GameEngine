@@ -222,10 +222,10 @@ public:
     bool m_replace = false;
 
 private:
-    void UpdateHierarchy(uint32_t p_index);
-    void UpdateAnimation(uint32_t p_index);
-    void UpdateArmature(uint32_t p_index);
-    void UpdateLight(uint32_t p_index);
+    void UpdateHierarchy(ecs::Entity p_entity, HierarchyComponent& p_hierarchy);
+    void UpdateAnimation(ecs::Entity p_entity, AnimationComponent& p_animation);
+    void UpdateArmature(ecs::Entity p_entity, ArmatureComponent& p_armature);
+    void UpdateLight(ecs::Entity p_entity, LightComponent& p_light);
 
     void RunLightUpdateSystem(jobsystem::Context& p_context);
     void RunTransformationUpdateSystem(jobsystem::Context& p_context);
