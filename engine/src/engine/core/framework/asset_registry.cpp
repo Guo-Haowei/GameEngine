@@ -78,6 +78,12 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
     std::lock_guard gurad(m_lock);
     auto it = m_lookup.find(meta.handle);
     if (it != m_lookup.end()) {
+#if USING(DEBUG_BUILD)
+        if (it->first.path != p_path) {
+            auto error = std::format("hash collision '{}' and '{}'", p_path, it->first.path);
+            CRASH_NOW_MSG(error);
+        }
+#endif
         return it->second->asset;
     }
 
@@ -110,7 +116,7 @@ void AssetRegistry::RegisterAssets(int p_count, IAsset::Meta* p_metas) {
     std::lock_guard gurad(m_lock);
     for (int i = 0; i < p_count; ++i) {
         auto handle = p_metas[i].handle;
-        DEV_ASSERT(!handle.empty());
+        DEV_ASSERT(handle.hash);
         auto it = m_lookup.find(handle);
         if (it != m_lookup.end()) {
             CRASH_NOW();

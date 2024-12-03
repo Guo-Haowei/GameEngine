@@ -5,6 +5,7 @@
 #include "editor/editor_layer.h"
 #include "editor/panels/panel_util.h"
 #include "editor/widget.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/string/string_utils.h"
 
@@ -226,14 +227,12 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             // @TODO: safer
             auto check_box_id = std::format("Enabled##{}", i);
             ImGui::Checkbox(check_box_id.c_str(), &texture.enabled);
-            CRASH_NOW();
-#if 0
-            Image* image = texture.image ? texture.image->Get() : nullptr;
+
+            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(AssetHandle{ texture.path });
             auto gpu_texture = image ? image->gpu_texture : nullptr;
             if (gpu_texture) {
                 ImGui::Image((ImTextureID)gpu_texture->GetHandle(), ImVec2(128, 128));
             }
-#endif
         }
     });
 

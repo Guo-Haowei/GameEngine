@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/assets/guid.h"
+#include "engine/assets/asset_handle.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
@@ -17,10 +17,6 @@ enum class AssetType : uint8_t {
     // ARMATURE,
     COUNT,
 };
-
-// @NOTE: use file path as handle for now
-// will change to guid or something
-using AssetHandle = std::string;
 
 struct IAsset {
     struct Meta {
