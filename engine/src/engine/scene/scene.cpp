@@ -376,7 +376,17 @@ void Scene::AttachComponent(Entity p_child, Entity p_parent) {
     hier.m_parentId = p_parent;
 }
 
-void Scene::RemoveEntity(Entity p_entity) {
+void Scene::RemoveEntity(ecs::Entity p_entity) {
+    std::vector<ecs::Entity> children;
+    for (auto [child, hierarchy] : m_HierarchyComponents) {
+        if (hierarchy.GetParent() == p_entity) {
+            children.emplace_back(child);
+        }
+    }
+    for (auto child : children) {
+        RemoveEntity(child);
+    }
+
     LightComponent* light = GetComponent<LightComponent>(p_entity);
     if (light) {
         auto shadow_handle = light->GetShadowMapIndex();
@@ -388,6 +398,9 @@ void Scene::RemoveEntity(Entity p_entity) {
     m_HierarchyComponents.Remove(p_entity);
     m_TransformComponents.Remove(p_entity);
     m_ObjectComponents.Remove(p_entity);
+    m_ParticleEmitterComponents.Remove(p_entity);
+    m_ForceFieldComponents.Remove(p_entity);
+    m_NameComponents.Remove(p_entity);
 }
 
 void Scene::UpdateLight(ecs::Entity p_entity, LightComponent& p_light) {
@@ -506,14 +519,17 @@ void Scene::UpdateHierarchy(ecs::Entity p_entity, HierarchyComponent& p_hierarch
 
     while (parent.IsValid()) {
         TransformComponent* parent_transform = GetComponent<TransformComponent>(parent);
-        DEV_ASSERT(parent_transform);
-        world_matrix = parent_transform->GetLocalMatrix() * world_matrix;
+        if (DEV_VERIFY(parent_transform)) {
+            world_matrix = parent_transform->GetLocalMatrix() * world_matrix;
 
-        if ((hierarchy = GetComponent<HierarchyComponent>(parent)) != nullptr) {
-            parent = hierarchy->m_parentId;
-            DEV_ASSERT(parent.IsValid());
+            if ((hierarchy = GetComponent<HierarchyComponent>(parent)) != nullptr) {
+                parent = hierarchy->m_parentId;
+                DEV_ASSERT(parent.IsValid());
+            } else {
+                parent.MakeInvalid();
+            }
         } else {
-            parent.MakeInvalid();
+            break;
         }
     }
 

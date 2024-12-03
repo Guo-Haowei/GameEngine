@@ -50,10 +50,6 @@ public:                                                                         
         return m_##T##s.Contains(p_entity);                                                    \
     }                                                                                          \
     template<>                                                                                 \
-    inline size_t GetIndex<T>(const ecs::Entity& p_entity) const {                             \
-        return m_##T##s.GetIndex(p_entity);                                                    \
-    }                                                                                          \
-    template<>                                                                                 \
     inline size_t GetCount<T>() const {                                                        \
         return m_##T##s.GetCount();                                                            \
     }                                                                                          \
@@ -79,10 +75,6 @@ public:                                                                         
     template<typename T>
     bool Contains(const ecs::Entity&) const {
         return false;
-    }
-    template<typename T>
-    size_t GetIndex(const ecs::Entity&) const {
-        return ecs::Entity::INVALID_INDEX;
     }
     template<typename T>
     size_t GetCount() const {

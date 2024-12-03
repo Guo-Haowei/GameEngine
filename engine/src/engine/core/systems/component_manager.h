@@ -90,7 +90,6 @@ public:
     virtual void Merge(IComponentManager& p_other) = 0;
     virtual void Remove(const Entity& p_entity) = 0;
     virtual bool Contains(const Entity& p_entity) const = 0;
-    virtual size_t GetIndex(const Entity& p_entity) const = 0;
     virtual size_t GetCount() const = 0;
     virtual Entity GetEntity(size_t p_index) const = 0;
 
@@ -162,14 +161,17 @@ public:
             return;
         }
 
-        CRASH_NOW_MSG("TODO: fix it");
-#if 0
         size_t index = it->second;
-        m_lookup.erase(it);
         DEV_ASSERT_INDEX(index, m_entityArray.size());
+        m_lookup.erase(it);
         m_entityArray.erase(m_entityArray.begin() + index);
         m_componentArray.erase(m_componentArray.begin() + index);
-#endif
+        for (auto& iter : m_lookup) {
+            DEV_ASSERT(iter.second != index);
+            if (iter.second > index) {
+                --iter.second;
+            }
+        }
     }
 
     bool Contains(const Entity& p_entity) const override {
@@ -196,19 +198,6 @@ public:
         }
 
         return &m_componentArray[it->second];
-    }
-
-    size_t GetIndex(const Entity& p_entity) const override {
-        if (m_lookup.empty()) {
-            return Entity::INVALID_INDEX;
-        }
-
-        const auto it = m_lookup.find(p_entity);
-        if (it == m_lookup.end()) {
-            return Entity::INVALID_INDEX;
-        }
-
-        return it->second;
     }
 
     size_t GetCount() const override { return m_componentArray.size(); }
