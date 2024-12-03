@@ -10,6 +10,7 @@
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
+#include "engine/core/string/string_builder.h"
 #include "engine/renderer/render_manager.h"
 #include "engine/scene/scene.h"
 
@@ -40,13 +41,13 @@ static struct {
 
 auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
-    IAssetLoader::RegisterLoader(".lua", LuaSceneLoader::CreateLoader);
 
     IAssetLoader::RegisterLoader(".gltf", LoaderTinyGLTF::CreateLoader);
 #if USING(USING_ASSIMP)
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
 #endif
 
+    IAssetLoader::RegisterLoader(".lua", TextAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".ttf", BufferAssetLoader::CreateLoader);
 
     IAssetLoader::RegisterLoader(".png", ImageAssetLoader::CreateLoader);
@@ -140,7 +141,9 @@ void AssetManager::WorkerMain() {
             }
             LOG_VERBOSE("[AssetManager] asset '{}' loaded in {}", task.handle->meta.path, timer.GetDurationString());
         } else {
-            LOG_FATAL("error handling");
+            StringStreamBuilder builder;
+            builder << res.error();
+            LOG_ERROR("{}", builder.ToString());
         }
 
         s_assetManagerGlob.runningWorkers.fetch_sub(1);

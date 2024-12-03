@@ -14,6 +14,7 @@
 #include "engine/core/framework/layer.h"
 #include "engine/core/framework/physics_manager.h"
 #include "engine/core/framework/scene_manager.h"
+#include "engine/core/framework/script_manager.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_utils.h"
@@ -79,6 +80,7 @@ void Application::RegisterModule(Module* p_module) {
 auto Application::SetupModules() -> Result<void> {
     m_assetManager = std::make_shared<AssetManager>();
     m_assetRegistry = std::make_shared<AssetRegistry>();
+    m_scriptManager = std::make_shared<ScriptManager>();
     m_sceneManager = std::make_shared<SceneManager>();
     m_physicsManager = std::make_shared<PhysicsManager>();
     m_displayServer = DisplayManager::Create();
@@ -95,6 +97,7 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_assetManager.get());
     RegisterModule(m_assetRegistry.get());
     RegisterModule(m_sceneManager.get());
+    RegisterModule(m_scriptManager.get());
     RegisterModule(m_physicsManager.get());
     RegisterModule(m_displayServer.get());
     RegisterModule(m_graphicsManager.get());
@@ -229,7 +232,7 @@ void Application::Run() {
         m_inputManager->GetEventQueue().FlushEvents();
 
         m_sceneManager->Update(dt);
-        auto& scene = m_sceneManager->GetScene();
+        auto& scene = *m_sceneManager->GetScenePtr();
 
         // @TODO: refactor this
         if (m_imguiManager) {
@@ -245,6 +248,8 @@ void Application::Run() {
         }
 
         renderer::EndFrame();
+
+        m_scriptManager->Update(scene);
 
         m_physicsManager->Update(scene);
         m_graphicsManager->Update(scene);

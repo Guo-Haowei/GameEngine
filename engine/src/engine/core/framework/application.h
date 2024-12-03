@@ -14,6 +14,7 @@ class InputManager;
 class PhysicsManager;
 class RenderManager;
 class SceneManager;
+class ScriptManager;
 
 class Layer;
 
@@ -80,6 +81,7 @@ private:
     std::shared_ptr<DisplayManager> m_displayServer;
     std::shared_ptr<GraphicsManager> m_graphicsManager;
     std::shared_ptr<ImguiManager> m_imguiManager;
+    std::shared_ptr<ScriptManager> m_scriptManager;
     // @TODO: remove render manager
     std::shared_ptr<RenderManager> m_renderManager;
     std::shared_ptr<InputManager> m_inputManager;

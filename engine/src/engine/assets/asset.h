@@ -9,8 +9,8 @@ namespace my {
 enum class AssetType : uint8_t {
     IMAGE,
     BUFFER,
+    TEXT,
     SCENE,
-    MATERIAL,
 
     // MESH,
     // ANIMATION,
@@ -41,6 +41,12 @@ struct BufferAsset : IAsset {
     BufferAsset() : IAsset(AssetType::BUFFER) {}
 
     std::vector<char> buffer;
+};
+
+struct TextAsset : IAsset {
+    TextAsset() : IAsset(AssetType::TEXT) {}
+
+    std::string source;
 };
 
 struct ImageAsset : IAsset {

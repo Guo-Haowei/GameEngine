@@ -3,9 +3,8 @@
 #include "engine/core/base/noncopyable.h"
 #include "engine/core/math/ray.h"
 #include "engine/core/systems/component_manager.h"
+#include "engine/scene/scene_component.h"
 // @TODO: refactor all components
-#include "engine/scene/animation_component.h"
-#include "engine/scene/armature_component.h"
 #include "engine/scene/camera.h"
 #include "engine/scene/collider_component.h"
 #include "engine/scene/force_field_component.h"
@@ -13,7 +12,6 @@
 #include "engine/scene/light_component.h"
 #include "engine/scene/material_component.h"
 #include "engine/scene/mesh_component.h"
-#include "engine/scene/name_component.h"
 #include "engine/scene/object_component.h"
 #include "engine/scene/particle_emitter_component.h"
 #include "engine/scene/rigid_body_component.h"
@@ -31,7 +29,7 @@ public:
 
     Scene() : IAsset(AssetType::SCENE) {}
 
-#pragma region WORLD_COMPONENTS_REGISTERY
+#pragma region WORLD_COMPONENTS_REGISTRY
 #define REGISTER_COMPONENT(T, VER)                                                                                 \
 public:                                                                                                            \
     ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);                     \
@@ -57,7 +55,7 @@ public:                                                                         
     T& Create<T>(const ecs::Entity& p_entity) { return m_##T##s.Create(p_entity); }                                \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
-#pragma endregion WORLD_COMPONENTS_REGISTERY
+#pragma endregion WORLD_COMPONENTS_REGISTRY
     template<typename T>
     const T* GetComponent(const ecs::Entity&) const { return nullptr; }
     template<typename T>
@@ -93,6 +91,7 @@ private:
     REGISTER_COMPONENT(MeshColliderComponent, 0);
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
     REGISTER_COMPONENT(ForceFieldComponent, 0);
+    REGISTER_COMPONENT(ScriptComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);

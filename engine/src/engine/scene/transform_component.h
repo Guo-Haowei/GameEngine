@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/core/math/angle.h"
 #include "engine/core/math/geomath.h"
 
 namespace my {
@@ -35,6 +36,9 @@ public:
     void Scale(const Vector3f& p_scale);
     void Translate(const Vector3f& p_translation);
     void Rotate(const Vector3f& p_euler);
+    void RotateX(const Degree& p_degree) { Rotate(Vector3f(p_degree.GetRadians(), 0.0f, 0.0f)); }
+    void RotateY(const Degree& p_degree) { Rotate(Vector3f(0.0f, p_degree.GetRadians(), 0.0f)); }
+    void RotateZ(const Degree& p_degree) { Rotate(Vector3f(0.0f, 0.0f, p_degree.GetRadians())); }
 
     void SetLocalTransform(const Matrix4x4f& p_matrix);
     void MatrixTransform(const Matrix4x4f& p_matrix);

@@ -44,6 +44,9 @@ void EditorCommandAddComponent::Execute(Scene& p_scene) {
         case ComponentType::MESH_COLLIDER: {
             p_scene.Create<MeshColliderComponent>(target);
         } break;
+        case ComponentType::SCRIPT: {
+            p_scene.Create<ScriptComponent>(target);
+        } break;
         default: {
             CRASH_NOW();
         } break;

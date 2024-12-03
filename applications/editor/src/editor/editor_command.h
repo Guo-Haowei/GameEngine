@@ -49,6 +49,8 @@ enum class ComponentType : uint8_t {
     BOX_COLLIDER,
     MESH_COLLIDER,
     SPHERE_COLLIDER,
+    SCRIPT,
+    COUNT,
 };
 
 class EditorCommandBase {

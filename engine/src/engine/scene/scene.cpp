@@ -21,7 +21,8 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 // version 8: add particle emitter
 // version 9: add ParticleEmitterComponent.gravity
 // version 10: add ForceFieldComponent
-static constexpr uint32_t SCENE_VERSION = 10;
+// version 11: add ScriptFieldComponent
+static constexpr uint32_t SCENE_VERSION = 11;
 static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
