@@ -3,6 +3,7 @@
 #include "engine/core/base/noncopyable.h"
 #include "engine/core/math/ray.h"
 #include "engine/core/systems/component_manager.h"
+// @TODO: refactor all components
 #include "engine/scene/animation_component.h"
 #include "engine/scene/armature_component.h"
 #include "engine/scene/camera.h"
@@ -31,39 +32,41 @@ public:
     Scene() : IAsset(AssetType::SCENE) {}
 
 #pragma region WORLD_COMPONENTS_REGISTERY
-#define REGISTER_COMPONENT(T, VER)                                                             \
-public:                                                                                        \
-    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER); \
-                                                                                               \
-public:                                                                                        \
-    template<>                                                                                 \
-    inline const T* GetComponent<T>(const ecs::Entity& p_entity) const {                       \
-        return m_##T##s.GetComponent(p_entity);                                                \
-    }                                                                                          \
-    template<>                                                                                 \
-    inline T* GetComponent<T>(const ecs::Entity& p_entity) {                                   \
-        return m_##T##s.GetComponent(p_entity);                                                \
-    }                                                                                          \
-    template<>                                                                                 \
-    inline bool Contains<T>(const ecs::Entity& p_entity) const {                               \
-        return m_##T##s.Contains(p_entity);                                                    \
-    }                                                                                          \
-    template<>                                                                                 \
-    inline size_t GetIndex<T>(const ecs::Entity& p_entity) const {                             \
-        return m_##T##s.GetIndex(p_entity);                                                    \
-    }                                                                                          \
-    template<>                                                                                 \
-    inline size_t GetCount<T>() const {                                                        \
-        return m_##T##s.GetCount();                                                            \
-    }                                                                                          \
-    template<>                                                                                 \
-    inline ecs::Entity GetEntity<T>(size_t p_index) const {                                    \
-        return m_##T##s.GetEntity(p_index);                                                    \
-    }                                                                                          \
-    template<>                                                                                 \
-    T& Create<T>(const ecs::Entity& p_entity) {                                                \
-        return m_##T##s.Create(p_entity);                                                      \
-    }                                                                                          \
+#define REGISTER_COMPONENT(T, VER)                                                                     \
+public:                                                                                                \
+    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);         \
+                                                                                                       \
+private:                                                                                               \
+    template<>                                                                                         \
+    inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }    \
+    template<>                                                                                         \
+    inline ecs::Entity GetEntityByIndex<T>(size_t p_index) { return m_##T##s.m_entityArray[p_index]; } \
+                                                                                                       \
+public:                                                                                                \
+    template<>                                                                                         \
+    inline const T* GetComponent<T>(const ecs::Entity& p_entity) const {                               \
+        return m_##T##s.GetComponent(p_entity);                                                        \
+    }                                                                                                  \
+    template<>                                                                                         \
+    inline T* GetComponent<T>(const ecs::Entity& p_entity) {                                           \
+        return m_##T##s.GetComponent(p_entity);                                                        \
+    }                                                                                                  \
+    template<>                                                                                         \
+    inline bool Contains<T>(const ecs::Entity& p_entity) const {                                       \
+        return m_##T##s.Contains(p_entity);                                                            \
+    }                                                                                                  \
+    template<>                                                                                         \
+    inline size_t GetCount<T>() const {                                                                \
+        return m_##T##s.GetCount();                                                                    \
+    }                                                                                                  \
+    template<>                                                                                         \
+    inline ecs::Entity GetEntity<T>(size_t p_index) const {                                            \
+        return m_##T##s.GetEntity(p_index);                                                            \
+    }                                                                                                  \
+    template<>                                                                                         \
+    T& Create<T>(const ecs::Entity& p_entity) {                                                        \
+        return m_##T##s.Create(p_entity);                                                              \
+    }                                                                                                  \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #pragma endregion WORLD_COMPONENTS_REGISTERY
@@ -80,10 +83,6 @@ public:                                                                         
         return false;
     }
     template<typename T>
-    size_t GetIndex(const ecs::Entity&) const {
-        return ecs::Entity::INVALID_INDEX;
-    }
-    template<typename T>
     size_t GetCount() const {
         return 0;
     }
@@ -97,6 +96,11 @@ public:                                                                         
     }
 
 private:
+    template<typename T>
+    inline T& GetComponentByIndex(size_t p_index) { return *(T*)0; }
+    template<typename T>
+    inline ecs::Entity GetEntityByIndex(size_t p_index) { return ecs::Entity::INVALID; }
+
     ecs::ComponentLibrary m_componentLib;
 
     REGISTER_COMPONENT(NameComponent, 0);
@@ -221,10 +225,10 @@ public:
     bool m_replace = false;
 
 private:
-    void UpdateHierarchy(uint32_t p_index);
-    void UpdateAnimation(uint32_t p_index);
-    void UpdateArmature(uint32_t p_index);
-    void UpdateLight(uint32_t p_index);
+    void UpdateHierarchy(size_t p_index);
+    void UpdateAnimation(size_t p_index);
+    void UpdateArmature(size_t p_index);
+    void UpdateLight(size_t p_index);
 
     void RunLightUpdateSystem(jobsystem::Context& p_context);
     void RunTransformationUpdateSystem(jobsystem::Context& p_context);

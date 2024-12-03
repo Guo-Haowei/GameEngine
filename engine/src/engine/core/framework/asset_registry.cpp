@@ -69,7 +69,7 @@ void AssetRegistry::GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out
 
 auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
                                      RequestMode p_mode,
-                                     LoadSuccessFunc p_on_success,
+                                     OnAssetLoadSuccessFunc p_on_success,
                                      void* p_user_data) -> Result<const IAsset*> {
     IAsset::Meta meta;
     meta.handle = p_path;
@@ -78,6 +78,12 @@ auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
     std::lock_guard gurad(m_lock);
     auto it = m_lookup.find(meta.handle);
     if (it != m_lookup.end()) {
+#if USING(DEBUG_BUILD)
+        if (it->first.path != p_path) {
+            auto error = std::format("hash collision '{}' and '{}'", p_path, it->first.path);
+            CRASH_NOW_MSG(error);
+        }
+#endif
         return it->second->asset;
     }
 
@@ -110,7 +116,7 @@ void AssetRegistry::RegisterAssets(int p_count, IAsset::Meta* p_metas) {
     std::lock_guard gurad(m_lock);
     for (int i = 0; i < p_count; ++i) {
         auto handle = p_metas[i].handle;
-        DEV_ASSERT(!handle.empty());
+        DEV_ASSERT(handle.hash);
         auto it = m_lookup.find(handle);
         if (it != m_lookup.end()) {
             CRASH_NOW();

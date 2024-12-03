@@ -6,8 +6,6 @@
 
 namespace my {
 
-using LoadSuccessFunc = void (*)(void* p_asset, void* p_userdata);
-
 struct AssetRegistryHandle {
     enum State : uint8_t {
         ASSET_STATE_LOADING,
@@ -55,7 +53,7 @@ public:
     }
 
     auto RequestAssetAsync(const std::string& p_path,
-                           LoadSuccessFunc p_on_success = nullptr,
+                           OnAssetLoadSuccessFunc p_on_success = nullptr,
                            void* p_user_data = nullptr) {
         return RequestAssetImpl(p_path, LOAD_ASYNC, p_on_success, p_user_data);
     }
@@ -66,7 +64,7 @@ protected:
 
     auto RequestAssetImpl(const std::string& p_path,
                           RequestMode p_mode,
-                          LoadSuccessFunc p_on_success,
+                          OnAssetLoadSuccessFunc p_on_success,
                           void* p_user_data) -> Result<const IAsset*>;
 
     std::unordered_map<AssetHandle, AssetRegistryHandle*> m_lookup;

@@ -100,16 +100,16 @@ void SceneManager::RequestScene(std::string_view p_path) {
 
     std::string ext = path.Extension();
     if (ext == ".lua" || ext == ".scene") {
-        AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](void* p_scene, void*) {
+        AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](IAsset* p_scene, void*) {
             DEV_ASSERT(p_scene);
-            Scene* new_scene = static_cast<Scene*>(p_scene);
+            Scene* new_scene = dynamic_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, true);
         });
     } else {
-        AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](void* p_scene, void*) {
+        AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](IAsset* p_scene, void*) {
             DEV_ASSERT(p_scene);
-            Scene* new_scene = static_cast<Scene*>(p_scene);
+            Scene* new_scene = dynamic_cast<Scene*>(p_scene);
             new_scene->Update(0.0f);
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, false);
         });

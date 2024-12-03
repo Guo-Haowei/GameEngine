@@ -31,7 +31,7 @@ auto ImguiManager::InitializeImpl() -> Result<void> {
     AssetManager::Wait();
     {
         const std::string path = "@res://fonts/DroidSans.ttf";
-        auto font = m_app->GetAssetRegistry()->GetAssetByHandle<File>(path);
+        auto font = m_app->GetAssetRegistry()->GetAssetByHandle<BufferAsset>(path);
 
         if (DEV_VERIFY(font)) {
             ImFontConfig font_cfg;
@@ -46,7 +46,7 @@ auto ImguiManager::InitializeImpl() -> Result<void> {
 
     {
         const std::string path = "@res://fonts/" FONT_ICON_FILE_NAME_FAS;
-        auto font = m_app->GetAssetRegistry()->GetAssetByHandle<File>(path);
+        auto font = m_app->GetAssetRegistry()->GetAssetByHandle<BufferAsset>(path);
 
         if (DEV_VERIFY(font)) {
             // merge in icons from Font Awesome

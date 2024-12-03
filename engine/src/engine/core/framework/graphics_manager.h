@@ -20,7 +20,7 @@ using my::renderer::RenderPass;
 
 namespace my {
 
-struct Image;
+struct ImageAsset;
 
 // @TODO: refactor
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
@@ -130,7 +130,7 @@ public:
 
     virtual void GenerateMipmap(const GpuTexture* p_texture) = 0;
 
-    void RequestTexture(Image* p_image);
+    void RequestTexture(ImageAsset* p_image);
 
     // @TODO: move to renderer
     uint64_t GetFinalImage() const;
@@ -175,7 +175,7 @@ protected:
 
     std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
-    ConcurrentQueue<Image*> m_loadedImages;
+    ConcurrentQueue<ImageAsset*> m_loadedImages;
 
     std::shared_ptr<PipelineStateManager> m_pipelineStateManager;
     std::vector<std::unique_ptr<FrameContext>> m_frameContexts;

@@ -43,7 +43,7 @@ static void FillPass(const RenderDataConfig& p_config,
                 return false;
             }
 
-            const Image* image = AssetRegistry::GetSingleton().GetAssetByHandle<Image>(material->textures[p_idx].path);
+            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(material->textures[p_idx].path);
             if (!image) {
                 return false;
             }

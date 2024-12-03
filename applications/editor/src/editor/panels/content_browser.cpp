@@ -21,10 +21,10 @@ void ContentBrowser::OnAttach() {
     m_currentPath = m_rootPath;
 
     auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
-    auto folder_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/folder_icon.png");
-    auto image_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/image_icon.png");
-    auto scene_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/scene_icon.png");
-    auto meta_icon = asset_registry->GetAssetByHandle<Image>("@res://images/icons/meta_icon.png");
+    auto folder_icon = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/folder_icon.png" });
+    auto image_icon = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/image_icon.png" });
+    auto scene_icon = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/scene_icon.png" });
+    auto meta_icon = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/meta_icon.png" });
 
     m_iconMap["."] = { folder_icon, nullptr };
     m_iconMap[".png"] = { image_icon, nullptr };
@@ -60,7 +60,9 @@ void ContentBrowser::DrawSideBarHelper(const std::filesystem::path& p_path) {
         }
 
         if (ImGui::TreeNode(name.c_str())) {
-            DrawSideBarHelper(full_path);
+            if (is_dir) {
+                DrawSideBarHelper(full_path);
+            }
             ImGui::TreePop();
         }
     }
@@ -97,7 +99,7 @@ void ContentBrowser::DrawAssets() {
     ImVec2 thumbnail_size{ 96.f, 96.f };
 
     for (const auto& asset : assets) {
-        const Image* image = dynamic_cast<const Image*>(asset);
+        const ImageAsset* image = dynamic_cast<const ImageAsset*>(asset);
         if (DEV_VERIFY(image)) {
             std::string_view path{ image->meta.path };
             path = StringUtils::FileName(path, '/');

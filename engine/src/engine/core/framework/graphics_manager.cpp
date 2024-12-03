@@ -205,7 +205,7 @@ void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
     SetPipelineStateImpl(p_name);
 }
 
-void GraphicsManager::RequestTexture(Image* p_image) {
+void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
 }
 
@@ -217,7 +217,7 @@ void GraphicsManager::Update(Scene& p_scene) {
     while (!loaded_images.empty()) {
         auto task = loaded_images.front();
         loaded_images.pop();
-        Image* image = task;
+        ImageAsset* image = task;
         DEV_ASSERT(image);
 
         GpuTextureDesc texture_desc{};

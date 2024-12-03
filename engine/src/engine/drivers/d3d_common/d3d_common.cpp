@@ -45,7 +45,7 @@ public:
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         }
 
-        auto source_binary = *res;
+        auto source_binary = dynamic_cast<BufferAsset*>(res->get());
         if (source_binary->buffer.empty()) {
             LOG_ERROR("failed to read file '{}'", path.String());
         }

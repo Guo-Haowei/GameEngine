@@ -26,16 +26,16 @@ static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
 #if 1
-#define JS_PARALLEL_FOR(CTX, INDEX, COUNT, SUBCOUNT, BODY) \
-    CTX.Dispatch(                                          \
-        static_cast<uint32_t>(COUNT),                      \
-        SUBCOUNT,                                          \
+#define JS_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
+    CTX.Dispatch(                                         \
+        static_cast<uint32_t>(GetCount<TYPE>()),          \
+        SUBCOUNT,                                         \
         [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.jobIndex; do { BODY; } while(0); })
 #else
-#define JS_PARALLEL_FOR(CTX, INDEX, COUNT, SUBCOUNT, BODY)                    \
-    (void)(CTX);                                                              \
-    for (uint32_t INDEX = 0; INDEX < static_cast<uint32_t>(COUNT); ++INDEX) { \
-        BODY;                                                                 \
+#define JS_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)       \
+    (void)(CTX);                                                \
+    for (size_t INDEX = 0; INDEX < GetCount<TYPE>(); ++INDEX) { \
+        BODY;                                                   \
     }
 #endif
 
@@ -376,7 +376,17 @@ void Scene::AttachComponent(Entity p_child, Entity p_parent) {
     hier.m_parentId = p_parent;
 }
 
-void Scene::RemoveEntity(Entity p_entity) {
+void Scene::RemoveEntity(ecs::Entity p_entity) {
+    std::vector<ecs::Entity> children;
+    for (auto [child, hierarchy] : m_HierarchyComponents) {
+        if (hierarchy.GetParent() == p_entity) {
+            children.emplace_back(child);
+        }
+    }
+    for (auto child : children) {
+        RemoveEntity(child);
+    }
+
     LightComponent* light = GetComponent<LightComponent>(p_entity);
     if (light) {
         auto shadow_handle = light->GetShadowMapIndex();
@@ -388,17 +398,22 @@ void Scene::RemoveEntity(Entity p_entity) {
     m_HierarchyComponents.Remove(p_entity);
     m_TransformComponents.Remove(p_entity);
     m_ObjectComponents.Remove(p_entity);
+    m_ParticleEmitterComponents.Remove(p_entity);
+    m_ForceFieldComponents.Remove(p_entity);
+    m_NameComponents.Remove(p_entity);
 }
 
-void Scene::UpdateLight(uint32_t p_index) {
-    Entity id = GetEntity<LightComponent>(p_index);
-    const TransformComponent* transform = GetComponent<TransformComponent>(id);
-    DEV_ASSERT(transform);
-    m_LightComponents[p_index].Update(*transform);
+void Scene::UpdateLight(size_t p_index) {
+    auto entity = GetEntityByIndex<LightComponent>(p_index);
+    const TransformComponent* transform = GetComponent<TransformComponent>(entity);
+    if (DEV_VERIFY(transform)) {
+        GetComponentByIndex<LightComponent>(p_index).Update(*transform);
+    }
 }
 
-void Scene::UpdateAnimation(uint32_t p_index) {
-    AnimationComponent& animation = m_AnimationComponents[p_index];
+void Scene::UpdateAnimation(size_t p_index) {
+    AnimationComponent& animation = GetComponentByIndex<AnimationComponent>(p_index);
+
     if (!animation.IsPlaying()) {
         return;
     }
@@ -492,8 +507,8 @@ void Scene::UpdateAnimation(uint32_t p_index) {
     }
 }
 
-void Scene::UpdateHierarchy(uint32_t p_index) {
-    Entity self_id = GetEntity<HierarchyComponent>(p_index);
+void Scene::UpdateHierarchy(size_t p_index) {
+    Entity self_id = GetEntityByIndex<HierarchyComponent>(p_index);
     TransformComponent* self_transform = GetComponent<TransformComponent>(self_id);
 
     if (!self_transform) {
@@ -501,19 +516,22 @@ void Scene::UpdateHierarchy(uint32_t p_index) {
     }
 
     Matrix4x4f world_matrix = self_transform->GetLocalMatrix();
-    const HierarchyComponent* hierarchy = &m_HierarchyComponents[p_index];
+    const HierarchyComponent* hierarchy = &GetComponentByIndex<HierarchyComponent>(p_index);
     Entity parent = hierarchy->m_parentId;
 
     while (parent.IsValid()) {
         TransformComponent* parent_transform = GetComponent<TransformComponent>(parent);
-        DEV_ASSERT(parent_transform);
-        world_matrix = parent_transform->GetLocalMatrix() * world_matrix;
+        if (DEV_VERIFY(parent_transform)) {
+            world_matrix = parent_transform->GetLocalMatrix() * world_matrix;
 
-        if ((hierarchy = GetComponent<HierarchyComponent>(parent)) != nullptr) {
-            parent = hierarchy->m_parentId;
-            DEV_ASSERT(parent.IsValid());
+            if ((hierarchy = GetComponent<HierarchyComponent>(parent)) != nullptr) {
+                parent = hierarchy->m_parentId;
+                DEV_ASSERT(parent.IsValid());
+            } else {
+                parent.MakeInvalid();
+            }
         } else {
-            parent.MakeInvalid();
+            break;
         }
     }
 
@@ -521,10 +539,8 @@ void Scene::UpdateHierarchy(uint32_t p_index) {
     self_transform->SetDirty(false);
 }
 
-void Scene::UpdateArmature(uint32_t p_index) {
-    Entity id = m_ArmatureComponents.GetEntity(p_index);
-    ArmatureComponent& armature = m_ArmatureComponents[p_index];
-    TransformComponent* transform = GetComponent<TransformComponent>(id);
+void Scene::UpdateArmature(size_t p_index) {
+    TransformComponent* transform = GetComponent<TransformComponent>(GetEntityByIndex<ArmatureComponent>(p_index));
     DEV_ASSERT(transform);
 
     // The transform world matrices are in world space, but skinning needs them in armature-local space,
@@ -538,6 +554,7 @@ void Scene::UpdateArmature(uint32_t p_index) {
     // to LH space) 	then the inverseBindMatrices are not reflected in that because they are not contained in
     // the hierarchy system. 	But this will correct them too.
 
+    ArmatureComponent& armature = GetComponentByIndex<ArmatureComponent>(p_index);
     const Matrix4x4f R = glm::inverse(transform->GetWorldMatrix());
     const size_t numBones = armature.boneCollection.size();
     if (armature.boneTransforms.size() != numBones) {
@@ -664,23 +681,23 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<LightComponent>(), SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
+    JS_PARALLEL_FOR(LightComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<TransformComponent>(), SMALL_SUBTASK_GROUP_SIZE, m_TransformComponents[index].UpdateTransform());
+    JS_PARALLEL_FOR(TransformComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, GetComponentByIndex<TransformComponent>(index).UpdateTransform());
 }
 
 void Scene::RunAnimationUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<AnimationComponent>(), 1, UpdateAnimation(index));
+    JS_PARALLEL_FOR(AnimationComponent, p_context, index, 1, UpdateAnimation(index));
 }
 
 void Scene::RunArmatureUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<ArmatureComponent>(), 1, UpdateArmature(index));
+    JS_PARALLEL_FOR(ArmatureComponent, p_context, index, 1, UpdateArmature(index));
 }
 
 void Scene::RunHierarchyUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(p_context, index, GetCount<HierarchyComponent>(), SMALL_SUBTASK_GROUP_SIZE, UpdateHierarchy(index));
+    JS_PARALLEL_FOR(HierarchyComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateHierarchy(index));
 }
 
 void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {

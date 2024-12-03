@@ -2,6 +2,7 @@
 
 #include <stb/stb_image.h>
 
+#include "engine/assets/asset.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/lua_binding/lua_scene_binding.h"
 #include "engine/renderer/pixel_format.h"
@@ -50,7 +51,7 @@ auto BufferAssetLoader::Load() -> Result<IAsset*> {
     std::vector<char> buffer;
     buffer.resize(size);
     file_access->ReadBuffer(buffer.data(), size);
-    auto file = new File;
+    auto file = new BufferAsset;
     file->buffer = std::move(buffer);
     return file;
 }
@@ -115,7 +116,7 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
 
     PixelFormat format = ChannelToFormat(num_channels, p_is_float);
 
-    auto p_image = new Image;
+    auto p_image = new ImageAsset;
     p_image->format = format;
     p_image->width = width;
     p_image->height = height;
