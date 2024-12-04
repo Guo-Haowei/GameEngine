@@ -17,6 +17,7 @@ class SceneManager;
 class ScriptManager;
 
 class Layer;
+class Scene;
 
 struct ApplicationSpec {
     std::string_view rootDirectory;
@@ -32,6 +33,14 @@ struct ApplicationSpec {
 
 class Application {
 public:
+    enum class State : uint8_t {
+        EDITING,
+        SIM,
+        BEGIN_SIM,
+        END_SIM,
+        COUNT,
+    };
+
     Application(const ApplicationSpec& p_spec);
     virtual ~Application() = default;
 
@@ -55,6 +64,12 @@ public:
     const ApplicationSpec& GetSpecification() const { return m_specification; }
     const std::string& GetUserFolder() const { return m_userFolder; }
     const std::string& GetResourceFolder() const { return m_resourceFolder; }
+
+    Scene* GetActiveScene() const { return m_activeScene; }
+    void SetActiveScene(Scene* p_scene) { m_activeScene = p_scene; }
+
+    State GetState() const { return m_state; }
+    void SetState(State p_state);
 
 protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);
@@ -87,6 +102,9 @@ private:
     std::shared_ptr<InputManager> m_inputManager;
 
     std::vector<Module*> m_modules;
+
+    Scene* m_activeScene{ nullptr };
+    State m_state{ State::EDITING };
 };
 
 }  // namespace my

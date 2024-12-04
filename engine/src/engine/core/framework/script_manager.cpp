@@ -11,20 +11,41 @@ extern "C" {
 
 namespace my {
 
+#define LUA_GLOBAL_SCENE  "g_scene"
 #define LUA_GLOBAL_ENTITY "g_entity"
 
+#define SCRIPT_CHECK_PARAMS(EXPR, USAGE) lua_CheckParams(EXPR, USAGE)
+
+static bool lua_CheckParams(bool p_result, const char* p_usage) {
+    if (p_result == false) {
+        LOG_ERROR("script error: incorrect usage '{}'", p_usage);
+    }
+    return p_result;
+}
+
+static ecs::Entity lua_HelperGetEntity(lua_State* L) {
+    lua_getglobal(L, LUA_GLOBAL_ENTITY);
+    ecs::Entity entity{ static_cast<uint32_t>(lua_tointeger(L, -1)) };
+    lua_pop(L, 1);
+    return entity;
+}
+
+static Scene* lua_HelperGetScene(lua_State* L) {
+    lua_getglobal(L, LUA_GLOBAL_SCENE);
+    Scene* scene = (Scene*)lua_tointeger(L, -1);
+    lua_pop(L, 1);
+    return scene;
+}
+
 static int lua_SceneEntityRotateX(lua_State* L) {
-    if (lua_isnumber(L, 1)) {
-        lua_getglobal(L, LUA_GLOBAL_ENTITY);
-        if (DEV_VERIFY(lua_isinteger(L, -1))) {
-            ecs::Entity entity{ static_cast<uint32_t>(lua_tointeger(L, -1)) };
-            Scene* scene = SceneManager::GetSingleton().GetScenePtr();
-            TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
-            if (transform) {
-                double angle = lua_tonumber(L, 1);
-                Degree degree(static_cast<float>(angle));
-                transform->RotateX(degree);
-            }
+    if (SCRIPT_CHECK_PARAMS(lua_isnumber(L, 1), "EntityRotateX(float): void result")) {
+        auto entity = lua_HelperGetEntity(L);
+        auto scene = lua_HelperGetScene(L);
+
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
+        if (transform) {
+            double angle = lua_tonumber(L, 1);
+            transform->RotateX(Degree(angle));
         }
     }
 
@@ -32,17 +53,14 @@ static int lua_SceneEntityRotateX(lua_State* L) {
 }
 
 static int lua_SceneEntityRotateY(lua_State* L) {
-    if (lua_isnumber(L, 1)) {
-        lua_getglobal(L, LUA_GLOBAL_ENTITY);
-        if (DEV_VERIFY(lua_isinteger(L, -1))) {
-            ecs::Entity entity{ static_cast<uint32_t>(lua_tointeger(L, -1)) };
-            Scene* scene = SceneManager::GetSingleton().GetScenePtr();
-            TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
-            if (transform) {
-                double angle = lua_tonumber(L, 1);
-                Degree degree(static_cast<float>(angle));
-                transform->RotateY(degree * scene->m_elapsedTime);
-            }
+    if (SCRIPT_CHECK_PARAMS(lua_isnumber(L, 1), "EntityRotateY(float): void result")) {
+        auto entity = lua_HelperGetEntity(L);
+        auto scene = lua_HelperGetScene(L);
+
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
+        if (transform) {
+            double angle = lua_tonumber(L, 1);
+            transform->RotateY(Degree(angle));
         }
     }
 
@@ -50,17 +68,32 @@ static int lua_SceneEntityRotateY(lua_State* L) {
 }
 
 static int lua_SceneEntityRotateZ(lua_State* L) {
-    if (lua_isnumber(L, 1)) {
-        lua_getglobal(L, LUA_GLOBAL_ENTITY);
-        if (DEV_VERIFY(lua_isinteger(L, -1))) {
-            ecs::Entity entity{ static_cast<uint32_t>(lua_tointeger(L, -1)) };
-            Scene* scene = SceneManager::GetSingleton().GetScenePtr();
-            TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
-            if (transform) {
-                double angle = lua_tonumber(L, 1);
-                Degree degree(static_cast<float>(angle));
-                transform->RotateZ(degree);
-            }
+    if (SCRIPT_CHECK_PARAMS(lua_isnumber(L, 1), "EntityRotateZ(float): void result")) {
+        auto entity = lua_HelperGetEntity(L);
+        auto scene = lua_HelperGetScene(L);
+
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
+        if (transform) {
+            double angle = lua_tonumber(L, 1);
+            transform->RotateZ(Degree(angle));
+        }
+    }
+
+    return 0;
+}
+
+static int lua_SceneEntityRotate(lua_State* L) {
+    if (SCRIPT_CHECK_PARAMS((lua_isnumber(L, 1) && lua_isnumber(L, 2) && lua_isnumber(L, 3)),
+                            "EntityRotate(float, float, float): void result")) {
+        auto entity = lua_HelperGetEntity(L);
+        auto scene = lua_HelperGetScene(L);
+
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
+        if (transform) {
+            Degree x(lua_tonumber(L, 1));
+            Degree y(lua_tonumber(L, 2));
+            Degree z(lua_tonumber(L, 3));
+            transform->Rotate(Vector3f(x.GetRadians(), y.GetRadians(), z.GetRadians()));
         }
     }
 
@@ -73,6 +106,7 @@ static int lua_OpenSceneModule(lua_State* L) {
         { "EntityRotateX", lua_SceneEntityRotateX },
         { "EntityRotateY", lua_SceneEntityRotateY },
         { "EntityRotateZ", lua_SceneEntityRotateZ },
+        { "EntityRotate", lua_SceneEntityRotate },
         { nullptr, nullptr }
     };
     luaL_setfuncs(L, funcs, 0);
@@ -99,8 +133,9 @@ void ScriptManager::FinalizeImpl() {
 void ScriptManager::Update(Scene& p_scene) {
     // alias
     lua_State* L = m_state;
+    lua_pushinteger(L, (size_t)(&p_scene));
+    lua_setglobal(L, LUA_GLOBAL_SCENE);
     for (auto [entity, script] : p_scene.m_ScriptComponents) {
-        unused(entity);
         if (script.source) {
             lua_pushinteger(L, entity.GetId());
             lua_setglobal(L, LUA_GLOBAL_ENTITY);

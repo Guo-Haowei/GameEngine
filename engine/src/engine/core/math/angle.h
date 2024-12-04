@@ -10,6 +10,7 @@ class Degree {
 public:
     explicit constexpr Degree() : m_value(0) {}
     explicit constexpr Degree(float p_degree) : m_value(p_degree) {}
+    explicit constexpr Degree(double p_degree) : m_value(static_cast<float>(p_degree)) {}
 
     Degree& operator=(const Radians& p_rad);
 

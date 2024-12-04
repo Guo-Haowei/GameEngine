@@ -74,7 +74,7 @@ bool SceneManager::TrySwapScene() {
     return true;
 }
 
-void SceneManager::Update(float p_elapsedTime) {
+void SceneManager::Update() {
     OPTICK_EVENT();
 
     TrySwapScene();
@@ -87,8 +87,6 @@ void SceneManager::Update(float p_elapsedTime) {
         LOG("[SceneManager] Detected p_scene changed from revision {} to revision {}, took {}", m_lastRevision, m_revision, timer.GetDurationString());
         m_lastRevision = m_revision;
     }
-
-    SceneManager::GetScene().Update(p_elapsedTime);
 }
 
 void SceneManager::EnqueueSceneLoadingTask(Scene* p_scene, bool p_replace) {
@@ -114,11 +112,6 @@ void SceneManager::RequestScene(std::string_view p_path) {
             SceneManager::GetSingleton().EnqueueSceneLoadingTask(new_scene, false);
         });
     }
-}
-
-Scene& SceneManager::GetScene() {
-    assert(GetSingleton().m_scene);
-    return *GetSingleton().m_scene;
 }
 
 }  // namespace my

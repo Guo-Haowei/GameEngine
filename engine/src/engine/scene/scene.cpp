@@ -69,9 +69,22 @@ void Scene::Update(float p_elapsedTime) {
     }
 }
 
+void Scene::Copy(Scene& p_other) {
+    for (auto& entry : m_componentLib.m_entries) {
+        auto& manager = *p_other.m_componentLib.m_entries[entry.first].m_manager;
+        entry.second.m_manager->Copy(manager);
+    }
+
+    m_root = p_other.m_root;
+    m_bound = p_other.m_bound;
+    m_camera = p_other.m_camera;
+    m_elapsedTime = p_other.m_elapsedTime;
+}
+
 void Scene::Merge(Scene& p_other) {
     for (auto& entry : m_componentLib.m_entries) {
-        entry.second.m_manager->Merge(*p_other.m_componentLib.m_entries[entry.first].m_manager);
+        auto& manager = *p_other.m_componentLib.m_entries[entry.first].m_manager;
+        entry.second.m_manager->Merge(manager);
     }
     if (p_other.m_root.IsValid()) {
         AttachComponent(p_other.m_root, m_root);

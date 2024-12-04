@@ -231,39 +231,39 @@ void GraphicsManager::Update(Scene& p_scene) {
         OPTICK_EVENT("Render");
         BeginFrame();
 
-        // @TODO: refactor
+        // @TODO: remove this
         UpdateEmitters(p_scene);
 
         auto data = renderer::GetRenderData();
-        DEV_ASSERT(data);
+        if (data) {
+            auto& frame = GetCurrentFrame();
+            UpdateConstantBuffer(frame.batchCb.get(), data->batchCache.buffer);
+            UpdateConstantBuffer(frame.materialCb.get(), data->materialCache.buffer);
+            UpdateConstantBuffer(frame.boneCb.get(), data->boneCache.buffer);
+            UpdateConstantBuffer(frame.passCb.get(), data->passCache);
+            UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
 
-        auto& frame = GetCurrentFrame();
-        UpdateConstantBuffer(frame.batchCb.get(), data->batchCache.buffer);
-        UpdateConstantBuffer(frame.materialCb.get(), data->materialCache.buffer);
-        UpdateConstantBuffer(frame.boneCb.get(), data->boneCache.buffer);
-        UpdateConstantBuffer(frame.passCb.get(), data->passCache);
-        UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
+            UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(
+                frame.pointShadowCb.get(),
+                data->pointShadowCache);
+            UpdateConstantBuffer(frame.perFrameCb.get(),
+                                 &data->perFrameCache,
+                                 sizeof(PerFrameConstantBuffer));
 
-        UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(
-            frame.pointShadowCb.get(),
-            data->pointShadowCache);
-        UpdateConstantBuffer(frame.perFrameCb.get(),
-                             &data->perFrameCache,
-                             sizeof(PerFrameConstantBuffer));
+            BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
 
-        BindConstantBufferSlot<PerFrameConstantBuffer>(frame.perFrameCb.get(), 0);
-
-        // @HACK
-        switch (m_backend) {
-            case Backend::VULKAN:
-            case Backend::METAL:
-                break;
-            default: {
-                auto graph = GetActiveRenderGraph();
-                if (DEV_VERIFY(graph)) {
-                    graph->Execute(*data, *this);
-                }
-            } break;
+            // @HACK
+            switch (m_backend) {
+                case Backend::VULKAN:
+                case Backend::METAL:
+                    break;
+                default: {
+                    auto graph = GetActiveRenderGraph();
+                    if (DEV_VERIFY(graph)) {
+                        graph->Execute(*data, *this);
+                    }
+                } break;
+            }
         }
 
         Render();

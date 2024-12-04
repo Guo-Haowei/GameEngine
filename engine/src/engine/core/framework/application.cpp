@@ -220,26 +220,36 @@ void Application::Run() {
             break;
         }
 
-        renderer::BeginFrame(this);
+        renderer::BeginFrame();
 
         m_inputManager->BeginFrame();
 
         // @TODO: better elapsed time
-        float dt = static_cast<float>(timer.GetDuration().ToSecond());
-        dt = glm::min(dt, 0.5f);
+        float elapsed_time = static_cast<float>(timer.GetDuration().ToSecond());
+        elapsed_time = glm::min(elapsed_time, 0.5f);
         timer.Start();
 
         m_inputManager->GetEventQueue().FlushEvents();
 
-        m_sceneManager->Update(dt);
-        auto& scene = *m_sceneManager->GetScenePtr();
+        // 1. scene manager checks for update, and if it's necessary to swap scene
+        // 2. renderer builds render data
+        // 3. editor modifies scene
+        // 4. script manager updates logic
+        // 5. phyiscs manager updates physics
+        // 6. graphcs manager renders (optional: on another thread)
+        m_sceneManager->Update();
+
+        // layer should set active scene
+        for (auto& layer : m_layers) {
+            layer->OnUpdate(elapsed_time);
+        }
+
+        m_activeScene->Update(elapsed_time);
+        renderer::RequestScene(*m_activeScene);
 
         // @TODO: refactor this
         if (m_imguiManager) {
             m_imguiManager->BeginFrame();
-            for (auto& layer : m_layers) {
-                layer->OnUpdate(dt);
-            }
 
             for (auto& layer : m_layers) {
                 layer->OnImGuiRender();
@@ -249,10 +259,12 @@ void Application::Run() {
 
         renderer::EndFrame();
 
-        m_scriptManager->Update(scene);
+        if (m_state == State::SIM) {
+            m_scriptManager->Update(*m_activeScene);
+            m_physicsManager->Update(*m_activeScene);
+        }
 
-        m_physicsManager->Update(scene);
-        m_graphicsManager->Update(scene);
+        m_graphicsManager->Update(*m_activeScene);
 
         m_inputManager->EndFrame();
     } while (true);
@@ -260,6 +272,34 @@ void Application::Run() {
     LOG("\n********************************************************************************"
         "\nMain Loop"
         "\n********************************************************************************");
+}
+
+void Application::SetState(State p_state) {
+    switch (p_state) {
+        case State::BEGIN_SIM: {
+            if (DEV_VERIFY(m_state == State::EDITING)) {
+                m_state = p_state;
+            }
+        } break;
+        case State::END_SIM: {
+            if (DEV_VERIFY(m_state == State::SIM)) {
+                m_state = p_state;
+            }
+        } break;
+        case State::SIM: {
+            if (DEV_VERIFY(m_state == State::BEGIN_SIM)) {
+                m_state = p_state;
+            }
+        } break;
+        case State::EDITING: {
+            if (DEV_VERIFY(m_state == State::END_SIM)) {
+                m_state = p_state;
+            }
+        } break;
+        default:
+            CRASH_NOW();
+            break;
+    }
 }
 
 }  // namespace my

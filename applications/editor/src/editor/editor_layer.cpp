@@ -134,7 +134,8 @@ void EditorLayer::AddPanel(std::shared_ptr<EditorItem> p_panel) {
 void EditorLayer::SelectEntity(ecs::Entity p_selected) {
     m_selected = p_selected;
     // TODO: fix this, shouldn't fetch globally
-    SceneManager::GetScene().m_selected = m_selected;
+    // SceneManager::GetScene().m_selected = m_selected;
+    LOG_ERROR("TODO: fix select entity");
 }
 
 void EditorLayer::DockSpace(Scene& p_scene) {
@@ -190,7 +191,8 @@ void EditorLayer::DrawToolbar() {
     const auto& button_active = colors[ImGuiCol_ButtonActive];
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(button_active.x, button_active.y, button_active.z, 0.5f));
 
-    ImGui::Begin("##toolbar", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+    ImGuiWindowFlags toolbar_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
+    ImGui::Begin("##toolbar", nullptr, toolbar_flags);
 
     bool toolbar_enabled = true;
     ImVec4 tint_color = ImVec4(1, 1, 1, 1);
@@ -201,18 +203,25 @@ void EditorLayer::DrawToolbar() {
     float size = ImGui::GetWindowHeight() - 4.0f;
     ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
 
+    auto app_state = m_app->GetState();
     if (auto image = m_playButtonImage; image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
+        bool disable = app_state != Application::State::EDITING;
+        ImGui::BeginDisabled(disable);
         if (ImGui::ImageButton("play", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
-            LOG_ERROR("Play not implemented");
+            m_app->SetState(Application::State::BEGIN_SIM);
         }
+        ImGui::EndDisabled();
     }
     ImGui::SameLine();
     if (auto image = m_pauseButtonImage; image && image->gpu_texture) {
         ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
+        bool disable = app_state != Application::State::SIM;
+        ImGui::BeginDisabled(disable);
         if (ImGui::ImageButton("pause", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
-            LOG_ERROR("Pause not implemented");
+            m_app->SetState(Application::State::END_SIM);
         }
+        ImGui::EndDisabled();
     }
 
     ImGui::PopStyleVar(2);
@@ -221,18 +230,51 @@ void EditorLayer::DrawToolbar() {
 }
 
 void EditorLayer::OnUpdate(float) {
-    Scene& scene = SceneManager::GetScene();
-    DockSpace(scene);
-    for (auto& it : m_panels) {
-        it->Update(scene);
+    Scene* scene = SceneManager::GetSingleton().GetScenePtr();
+    switch (m_app->GetState()) {
+        case Application::State::EDITING: {
+            m_app->SetActiveScene(scene);
+        } break;
+        case Application::State::BEGIN_SIM: {
+            if (m_simScene) {
+                delete m_simScene;
+            }
+            m_simScene = new Scene;
+            m_simScene->Copy(*scene);
+            m_app->SetActiveScene(m_simScene);
+            m_app->SetState(Application::State::SIM);
+        } break;
+        case Application::State::END_SIM: {
+            if (DEV_VERIFY(m_simScene)) {
+                delete m_simScene;
+                m_simScene = nullptr;
+            }
+            m_app->SetActiveScene(scene);
+            m_app->SetState(Application::State::EDITING);
+        } break;
+        case Application::State::SIM: {
+            DEV_ASSERT(m_simScene);
+            m_app->SetActiveScene(m_simScene);
+        } break;
+        default:
+            CRASH_NOW();
+            break;
     }
-    DrawToolbar();
-    FlushCommand(scene);
-
-    m_unhandledEvents.clear();
 }
 
 void EditorLayer::OnImGuiRender() {
+    Scene* scene = m_app->GetActiveScene();
+    DEV_ASSERT(scene);
+
+    // @TODO: fix this
+    DockSpace(*scene);
+    for (auto& it : m_panels) {
+        it->Update(*scene);
+    }
+    DrawToolbar();
+    FlushCommand(*scene);
+
+    m_unhandledEvents.clear();
 }
 
 void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {

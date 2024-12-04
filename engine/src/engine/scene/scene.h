@@ -98,6 +98,8 @@ public:
 
     void Update(float p_delta_time);
 
+    void Copy(Scene& p_other);
+
     void Merge(Scene& p_other);
 
     void CreateCamera(int p_width,
