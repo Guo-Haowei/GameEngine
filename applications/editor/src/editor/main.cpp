@@ -4,6 +4,8 @@
 
 namespace my {
 
+extern Scene* CreateTheAviatorScene();
+
 class Editor : public Application {
 public:
     using Application::Application;
@@ -11,6 +13,8 @@ public:
     void InitLayers() override {
         AddLayer(std::make_shared<my::EditorLayer>());
     }
+
+    Scene* CreateInitialScene() override;
 };
 
 Application* CreateApplication() {
@@ -29,6 +33,14 @@ Application* CreateApplication() {
     spec.vsync = false;
     spec.enableImgui = true;
     return new Editor(spec);
+}
+
+Scene* Editor::CreateInitialScene() {
+    if constexpr (1) {
+        return CreateTheAviatorScene();
+    } else {
+        return Application::CreateInitialScene();
+    }
 }
 
 }  // namespace my

@@ -200,6 +200,74 @@ MeshComponent MakeCubeMesh(const Vector3f& p_scale) {
     return mesh;
 }
 
+MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
+    MeshComponent mesh;
+
+    const Vector3f& a = p_points[A];
+    const Vector3f& b = p_points[B];
+    const Vector3f& c = p_points[C];
+    const Vector3f& d = p_points[D];
+    const Vector3f& e = p_points[E];
+    const Vector3f& f = p_points[F];
+    const Vector3f& g = p_points[G];
+    const Vector3f& h = p_points[H];
+    // clang-format off
+    mesh.positions = {
+        // front
+        a, b, c, d,
+        // back
+        e, h, g ,f,
+        // left
+        a, e, f, b,
+        // right
+        c, g, h, d,
+        // up
+        a, d, h, e,
+        // down
+        b, f, g, c,
+    };
+    // clang-format on
+
+    mesh.indices.clear();
+    mesh.normals.clear();
+    for (int i = 0; i < 24; i += 4) {
+        const Vector3f& A = mesh.positions[i];
+        const Vector3f& B = mesh.positions[i + 1];
+        const Vector3f& C = mesh.positions[i + 2];
+        // const Vector3f& D = mesh.positions[i + 3];
+        Vector3f AB = B - A;
+        Vector3f AC = C - A;
+        Vector3f normal = glm::normalize(glm::cross(AB, AC));
+
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+
+        mesh.indices.emplace_back(i);
+        mesh.indices.emplace_back(i + 1);
+        mesh.indices.emplace_back(i + 2);
+
+        mesh.indices.emplace_back(i);
+        mesh.indices.emplace_back(i + 2);
+        mesh.indices.emplace_back(i + 3);
+
+        // TODO: fix dummy uv
+        mesh.texcoords_0.push_back({ 0, 0 });
+        mesh.texcoords_0.push_back({ 0, 0 });
+        mesh.texcoords_0.push_back({ 0, 0 });
+        mesh.texcoords_0.push_back({ 0, 0 });
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(mesh.indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.CreateRenderData();
+    return mesh;
+}
+
 MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     MeshComponent mesh;
 

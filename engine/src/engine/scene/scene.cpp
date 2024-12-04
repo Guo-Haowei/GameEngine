@@ -21,7 +21,8 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 // version 8: add particle emitter
 // version 9: add ParticleEmitterComponent.gravity
 // version 10: add ForceFieldComponent
-static constexpr uint32_t SCENE_VERSION = 10;
+// version 11: add ScriptFieldComponent
+static constexpr uint32_t SCENE_VERSION = 11;
 static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
@@ -68,12 +69,25 @@ void Scene::Update(float p_elapsedTime) {
     }
 }
 
+void Scene::Copy(Scene& p_other) {
+    for (auto& entry : m_componentLib.m_entries) {
+        auto& manager = *p_other.m_componentLib.m_entries[entry.first].m_manager;
+        entry.second.m_manager->Copy(manager);
+    }
+
+    m_root = p_other.m_root;
+    m_bound = p_other.m_bound;
+    m_camera = p_other.m_camera;
+    m_elapsedTime = p_other.m_elapsedTime;
+}
+
 void Scene::Merge(Scene& p_other) {
     for (auto& entry : m_componentLib.m_entries) {
-        entry.second.m_manager->Merge(*p_other.m_componentLib.m_entries[entry.first].m_manager);
+        auto& manager = *p_other.m_componentLib.m_entries[entry.first].m_manager;
+        entry.second.m_manager->Merge(manager);
     }
     if (p_other.m_root.IsValid()) {
-        AttachComponent(p_other.m_root, m_root);
+        AttachChild(p_other.m_root, m_root);
     }
 
     m_bound.UnionBox(p_other.m_bound);
@@ -258,10 +272,25 @@ Entity Scene::CreateCubeEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::CreateSphereEntity(const std::string& p_name,
-                                 float p_radius,
-                                 const Matrix4x4f& p_transform) {
-    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+ecs::Entity Scene::CreateMeshEntity(const std::string& p_name,
+                                    MeshComponent&& p_mesh,
+                                    ecs::Entity p_material_id) {
+    ecs::Entity entity = CreateObjectEntity(p_name);
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+
+    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    object.meshId = mesh_id;
+
+    MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
+    mesh = std::move(p_mesh);
+    mesh.subsets[0].material_id = p_material_id;
+    return entity;
+}
+
+ecs::Entity Scene::CreateSphereEntity(const std::string& p_name,
+                                      float p_radius,
+                                      const Matrix4x4f& p_transform) {
+    ecs::Entity material_id = CreateMaterialEntity(p_name + ":mat");
     return CreateSphereEntity(p_name, material_id, p_radius, p_transform);
 }
 
@@ -363,7 +392,7 @@ Entity Scene::CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f
     return entity;
 }
 
-void Scene::AttachComponent(Entity p_child, Entity p_parent) {
+void Scene::AttachChild(Entity p_child, Entity p_parent) {
     DEV_ASSERT(p_child != p_parent);
     DEV_ASSERT(p_parent.IsValid());
 

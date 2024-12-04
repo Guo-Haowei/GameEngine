@@ -501,6 +501,9 @@ void RenderPassCreator::AddLightingPass() {
 
 /// Emitter
 static void EmitterPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
+    unused(p_data);
+    unused(p_draw_pass);
+#if 0
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -546,6 +549,7 @@ static void EmitterPassFunc(const RenderData& p_data, const DrawPass* p_draw_pas
         RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
         gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
     }
+#endif
 }
 
 void RenderPassCreator::AddEmitterPass() {

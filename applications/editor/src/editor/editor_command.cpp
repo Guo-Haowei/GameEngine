@@ -28,7 +28,7 @@ void EditorCommandAddEntity::Execute(Scene& p_scene) {
             break;
     }
 
-    p_scene.AttachComponent(id, m_parent.IsValid() ? m_parent : p_scene.m_root);
+    p_scene.AttachChild(id, m_parent.IsValid() ? m_parent : p_scene.m_root);
     m_editor->SelectEntity(id);
     SceneManager::GetSingleton().BumpRevision();
 }
@@ -43,6 +43,9 @@ void EditorCommandAddComponent::Execute(Scene& p_scene) {
         } break;
         case ComponentType::MESH_COLLIDER: {
             p_scene.Create<MeshColliderComponent>(target);
+        } break;
+        case ComponentType::SCRIPT: {
+            p_scene.Create<ScriptComponent>(target);
         } break;
         default: {
             CRASH_NOW();

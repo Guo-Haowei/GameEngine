@@ -14,11 +14,13 @@
 #include "engine/core/framework/layer.h"
 #include "engine/core/framework/physics_manager.h"
 #include "engine/core/framework/scene_manager.h"
+#include "engine/core/framework/script_manager.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scene.h"
 
 #define DEFINE_DVAR
 #include "engine/core/framework/common_dvars.h"
@@ -79,6 +81,7 @@ void Application::RegisterModule(Module* p_module) {
 auto Application::SetupModules() -> Result<void> {
     m_assetManager = std::make_shared<AssetManager>();
     m_assetRegistry = std::make_shared<AssetRegistry>();
+    m_scriptManager = std::make_shared<ScriptManager>();
     m_sceneManager = std::make_shared<SceneManager>();
     m_physicsManager = std::make_shared<PhysicsManager>();
     m_displayServer = DisplayManager::Create();
@@ -95,6 +98,7 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_assetManager.get());
     RegisterModule(m_assetRegistry.get());
     RegisterModule(m_sceneManager.get());
+    RegisterModule(m_scriptManager.get());
     RegisterModule(m_physicsManager.get());
     RegisterModule(m_displayServer.get());
     RegisterModule(m_graphicsManager.get());
@@ -217,26 +221,36 @@ void Application::Run() {
             break;
         }
 
-        renderer::BeginFrame(this);
+        renderer::BeginFrame();
 
         m_inputManager->BeginFrame();
 
         // @TODO: better elapsed time
-        float dt = static_cast<float>(timer.GetDuration().ToSecond());
-        dt = glm::min(dt, 0.5f);
+        float elapsed_time = static_cast<float>(timer.GetDuration().ToSecond());
+        elapsed_time = glm::min(elapsed_time, 0.5f);
         timer.Start();
 
         m_inputManager->GetEventQueue().FlushEvents();
 
-        m_sceneManager->Update(dt);
-        auto& scene = m_sceneManager->GetScene();
+        // 1. scene manager checks for update, and if it's necessary to swap scene
+        // 2. renderer builds render data
+        // 3. editor modifies scene
+        // 4. script manager updates logic
+        // 5. phyiscs manager updates physics
+        // 6. graphcs manager renders (optional: on another thread)
+        m_sceneManager->Update();
+
+        // layer should set active scene
+        for (auto& layer : m_layers) {
+            layer->OnUpdate(elapsed_time);
+        }
+
+        m_activeScene->Update(elapsed_time);
+        renderer::RequestScene(*m_activeScene);
 
         // @TODO: refactor this
         if (m_imguiManager) {
             m_imguiManager->BeginFrame();
-            for (auto& layer : m_layers) {
-                layer->OnUpdate(dt);
-            }
 
             for (auto& layer : m_layers) {
                 layer->OnImGuiRender();
@@ -246,8 +260,12 @@ void Application::Run() {
 
         renderer::EndFrame();
 
-        m_physicsManager->Update(scene);
-        m_graphicsManager->Update(scene);
+        if (m_state == State::SIM) {
+            m_scriptManager->Update(*m_activeScene);
+            m_physicsManager->Update(*m_activeScene);
+        }
+
+        m_graphicsManager->Update(*m_activeScene);
 
         m_inputManager->EndFrame();
     } while (true);
@@ -255,6 +273,47 @@ void Application::Run() {
     LOG("\n********************************************************************************"
         "\nMain Loop"
         "\n********************************************************************************");
+}
+
+void Application::SetState(State p_state) {
+    switch (p_state) {
+        case State::BEGIN_SIM: {
+            if (DEV_VERIFY(m_state == State::EDITING)) {
+                m_state = p_state;
+            }
+        } break;
+        case State::END_SIM: {
+            if (DEV_VERIFY(m_state == State::SIM)) {
+                m_state = p_state;
+            }
+        } break;
+        case State::SIM: {
+            if (DEV_VERIFY(m_state == State::BEGIN_SIM)) {
+                m_state = p_state;
+            }
+        } break;
+        case State::EDITING: {
+            if (DEV_VERIFY(m_state == State::END_SIM)) {
+                m_state = p_state;
+            }
+        } break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+}
+
+Scene* Application::CreateInitialScene() {
+    ecs::Entity::SetSeed();
+
+    Scene* scene = new Scene;
+
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    scene->CreateCamera(frame_size.x, frame_size.y);
+
+    auto root = scene->CreateTransformEntity("world");
+    scene->m_root = root;
+    return scene;
 }
 
 }  // namespace my

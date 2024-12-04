@@ -1,15 +1,12 @@
 #include "lua_scene_binding.h"
 
 #include "engine/renderer/render_manager.h"
-WARNING_PUSH()
-WARNING_DISABLE(4100, "-Wunused-parameter")
-#include "sol/sol.hpp"
-WARNING_POP()
 
 namespace my {
 
 using ecs::Entity;
 
+#if 0
 static bool TryGetFloat(const sol::table& p_table, const std::string& p_key, float& p_out) {
     sol::optional<float> f = p_table[p_key];
     if (!f) {
@@ -193,36 +190,38 @@ struct LuaScene {
 
     Scene* scene;
 };
+#endif
 
-bool LoadLuaScene(const std::string& p_path, Scene* p_scene) {
-    sol::state lua;
-    lua.open_libraries();
+bool LoadLuaScene(const std::string&, Scene*) {
+    return false;
+    // sol::state lua;
+    // lua.open_libraries();
 
-    sol::table lib = lua.create_table();
+    // sol::table lib = lua.create_table();
 
-    lua.new_usertype<LuaScene>("LuaScene",
-                               "get_root", &LuaScene::GetRoot,
-                               "create_entity", &LuaScene::CreateEntity,
-                               "create_entity_detached", &LuaScene::CreateEntityDetached,
-                               "attach", &LuaScene::Attach,
-                               "attach_root", &LuaScene::AttachRoot);
+    // lua.new_usertype<LuaScene>("LuaScene",
+    //                            "get_root", &LuaScene::GetRoot,
+    //                            "create_entity", &LuaScene::CreateEntity,
+    //                            "create_entity_detached", &LuaScene::CreateEntityDetached,
+    //                            "attach", &LuaScene::Attach,
+    //                            "attach_root", &LuaScene::AttachRoot);
 
-    lua.set("Scene", lib);
-    lib.set_function("get", [&]() { return LuaScene{ p_scene }; });
-    lib.set_function("create_entity", LuaSceneCreateEntity);
+    // lua.set("Scene", lib);
+    // lib.set_function("get", [&]() { return LuaScene{ p_scene }; });
+    // lib.set_function("create_entity", LuaSceneCreateEntity);
 
-    // add additional package path
-    std::string package_path = lua["package"]["path"];
+    //// add additional package path
+    // std::string package_path = lua["package"]["path"];
 
-    // add search directory
-    std::filesystem::path new_search_dir{ __FILE__ };
-    new_search_dir = new_search_dir.remove_filename();
-    new_search_dir.append("?.lua;");
-    lua["package"]["path"] = new_search_dir.string() + package_path;
+    //// add search directory
+    // std::filesystem::path new_search_dir{ __FILE__ };
+    // new_search_dir = new_search_dir.remove_filename();
+    // new_search_dir.append("?.lua;");
+    // lua["package"]["path"] = new_search_dir.string() + package_path;
 
-    lua.script_file(p_path);
+    // lua.script_file(p_path);
 
-    return true;
+    // return true;
 }
 
 }  // namespace my

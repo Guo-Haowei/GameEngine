@@ -75,7 +75,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         return;
     }
 
-    panel_util::EditName(name_component);
+    panel_util::InputText(name_component->GetNameRef(), "##NameTag");
 
     ImGui::SameLine();
     ImGui::PushItemWidth(-1);
@@ -87,6 +87,9 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         if (ImGui::MenuItem("Rigid Body")) {
             LOG_ERROR("TODO: implement add component");
             ImGui::CloseCurrentPopup();
+        }
+        if (ImGui::MenuItem("Script")) {
+            m_editor.AddComponent(ComponentType::SCRIPT, id);
         }
         if (ImGui::BeginMenu("Selectable")) {
             // @TODO: check if exists, if exists, disable
@@ -112,6 +115,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     AnimationComponent* animation_component = p_scene.GetComponent<AnimationComponent>(id);
     ParticleEmitterComponent* emitter_component = p_scene.GetComponent<ParticleEmitterComponent>(id);
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
+    ScriptComponent* script_component = p_scene.GetComponent<ScriptComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -197,6 +201,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         ImGui::Text("max distance: %0.3f", p_light.GetMaxDistance());
     });
 
+    DrawComponent("Script", script_component, [](ScriptComponent& script) {
+        panel_util::InputText(script.GetScriptRef(), "##ScriptTag");
+    });
+
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
         switch (rigidbody.shape) {
             case RigidBodyComponent::SHAPE_CUBE: {
@@ -212,7 +220,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("Material", material_component, [](MaterialComponent& p_material) {
         Vector3f color = p_material.baseColor;
-        if (DrawColorControl("Color", color)) {
+        if (ImGui::ColorPicker3("Color", (float*)&color)) {
             p_material.baseColor = Vector4f(color, p_material.baseColor.a);
         }
         DrawDragFloat("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);

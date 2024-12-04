@@ -1,11 +1,7 @@
 #pragma once
 
-namespace my {
+namespace my::panel_util {
 
-class NameComponent;
-namespace panel_util {
+void InputText(std::string& p_string, const char* p_tag);
 
-void EditName(NameComponent* name_component);
-
-}
-}  // namespace my
+}  // namespace my::panel_util

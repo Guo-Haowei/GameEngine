@@ -71,6 +71,7 @@ private:
     std::vector<std::shared_ptr<EditorItem>> m_panels;
     ecs::Entity m_selected;
     State m_state{ STATE_TRANSLATE };
+    Scene* m_simScene{ nullptr };
 
     uint64_t m_displayedImage = 0;
     std::list<std::shared_ptr<EditorCommandBase>> m_commandBuffer;
@@ -91,7 +92,6 @@ private:
     std::array<ShortcutDesc, SHORT_CUT_MAX> m_shortcuts;
     std::vector<std::shared_ptr<IEvent>> m_unhandledEvents;
 
-    // @TODO: refactor
     const ImageAsset* m_playButtonImage{ nullptr };
     const ImageAsset* m_pauseButtonImage{ nullptr };
 };

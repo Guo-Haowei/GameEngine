@@ -14,7 +14,7 @@ public:
 
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
-    void Update(float p_elapsedTime);
+    void Update();
 
     void RequestScene(std::string_view p_path);
 
@@ -24,9 +24,6 @@ public:
     void EnqueueSceneLoadingTask(Scene* p_scene, bool p_replace);
 
     Scene* GetScenePtr() const { return m_scene; }
-
-    // @TODO: bad idea to make it globally accessible, fix it
-    static Scene& GetScene();
 
 private:
     bool TrySwapScene();

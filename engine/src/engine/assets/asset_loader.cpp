@@ -56,6 +56,25 @@ auto BufferAssetLoader::Load() -> Result<IAsset*> {
     return file;
 }
 
+auto TextAssetLoader::Load() -> Result<IAsset*> {
+    auto res = FileAccess::Open(m_meta.path, FileAccess::READ);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    std::shared_ptr<FileAccess> file_access = *res;
+
+    const size_t size = file_access->GetLength();
+
+    std::string buffer;
+    buffer.resize(size + 1);
+    buffer[size] = 0;
+    file_access->ReadBuffer(buffer.data(), size);
+    auto file = new TextAsset;
+    file->source = std::move(buffer);
+    return file;
+}
+
 static PixelFormat ChannelToFormat(int p_channel, bool p_is_float) {
     switch (p_channel) {
         case 1:

@@ -150,7 +150,7 @@ ecs::Entity AssimpAssetLoader::ProcessNode(const aiNode* p_node, ecs::Entity p_p
             tagComponent->SetName("SubGeometry_" + std::to_string(child.GetId()));
             ObjectComponent& objComponent = *m_scene->GetComponent<ObjectComponent>(child);
             objComponent.meshId = m_meshes[p_node->mMeshes[i]];
-            m_scene->AttachComponent(child, entity);
+            m_scene->AttachChild(child, entity);
         }
     }
 
@@ -166,7 +166,7 @@ ecs::Entity AssimpAssetLoader::ProcessNode(const aiNode* p_node, ecs::Entity p_p
     transform.MatrixTransform(localTransformColumnMajor);
 
     if (p_parent.IsValid()) {
-        m_scene->AttachComponent(entity, p_parent);
+        m_scene->AttachChild(entity, p_parent);
     }
 
     // process children

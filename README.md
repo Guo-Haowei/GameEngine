@@ -1,6 +1,8 @@
 # GameEngine
 
-A GameEngine
+Yet another game engine.
+
+## Prerequisites
 
 ## Build
 
@@ -30,8 +32,8 @@ $ cmake --build . --config Debug
 
 API           | Implementation
 --------------|----------------------
-OpenGL 4.0    | Done
+OpenGL        | Done
 Direct3D 11   | Done
-Direct3D 12   | WIP
-Vulkan        | None
-Metal         | None
+Direct3D 12   | Done
+Vulkan        | WIP
+Metal         | WIP

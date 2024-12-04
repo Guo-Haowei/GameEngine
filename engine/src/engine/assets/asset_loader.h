@@ -42,6 +42,17 @@ public:
     auto Load() -> Result<IAsset*> override;
 };
 
+class TextAssetLoader : public IAssetLoader {
+public:
+    using IAssetLoader::IAssetLoader;
+
+    static std::unique_ptr<IAssetLoader> CreateLoader(const IAsset::Meta& p_meta) {
+        return std::make_unique<TextAssetLoader>(p_meta);
+    }
+
+    auto Load() -> Result<IAsset*> override;
+};
+
 class ImageAssetLoader : public IAssetLoader {
 public:
     using IAssetLoader::IAssetLoader;

@@ -3,9 +3,8 @@
 #include "engine/core/base/noncopyable.h"
 #include "engine/core/math/ray.h"
 #include "engine/core/systems/component_manager.h"
+#include "engine/scene/scene_component.h"
 // @TODO: refactor all components
-#include "engine/scene/animation_component.h"
-#include "engine/scene/armature_component.h"
 #include "engine/scene/camera.h"
 #include "engine/scene/collider_component.h"
 #include "engine/scene/force_field_component.h"
@@ -13,7 +12,6 @@
 #include "engine/scene/light_component.h"
 #include "engine/scene/material_component.h"
 #include "engine/scene/mesh_component.h"
-#include "engine/scene/name_component.h"
 #include "engine/scene/object_component.h"
 #include "engine/scene/particle_emitter_component.h"
 #include "engine/scene/rigid_body_component.h"
@@ -31,75 +29,51 @@ public:
 
     Scene() : IAsset(AssetType::SCENE) {}
 
-#pragma region WORLD_COMPONENTS_REGISTERY
-#define REGISTER_COMPONENT(T, VER)                                                                     \
-public:                                                                                                \
-    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);         \
-                                                                                                       \
-private:                                                                                               \
-    template<>                                                                                         \
-    inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }    \
-    template<>                                                                                         \
-    inline ecs::Entity GetEntityByIndex<T>(size_t p_index) { return m_##T##s.m_entityArray[p_index]; } \
-                                                                                                       \
-public:                                                                                                \
-    template<>                                                                                         \
-    inline const T* GetComponent<T>(const ecs::Entity& p_entity) const {                               \
-        return m_##T##s.GetComponent(p_entity);                                                        \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline T* GetComponent<T>(const ecs::Entity& p_entity) {                                           \
-        return m_##T##s.GetComponent(p_entity);                                                        \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline bool Contains<T>(const ecs::Entity& p_entity) const {                                       \
-        return m_##T##s.Contains(p_entity);                                                            \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline size_t GetCount<T>() const {                                                                \
-        return m_##T##s.GetCount();                                                                    \
-    }                                                                                                  \
-    template<>                                                                                         \
-    inline ecs::Entity GetEntity<T>(size_t p_index) const {                                            \
-        return m_##T##s.GetEntity(p_index);                                                            \
-    }                                                                                                  \
-    template<>                                                                                         \
-    T& Create<T>(const ecs::Entity& p_entity) {                                                        \
-        return m_##T##s.Create(p_entity);                                                              \
-    }                                                                                                  \
+#pragma region WORLD_COMPONENTS_REGISTRY
+#define REGISTER_COMPONENT(T, VER)                                                                                 \
+public:                                                                                                            \
+    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);                     \
+                                                                                                                   \
+private:                                                                                                           \
+    template<>                                                                                                     \
+    inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }                \
+    template<>                                                                                                     \
+    inline ecs::Entity GetEntityByIndex<T>(size_t p_index) { return m_##T##s.m_entityArray[p_index]; }             \
+                                                                                                                   \
+public:                                                                                                            \
+    template<>                                                                                                     \
+    inline const T* GetComponent<T>(const ecs::Entity& p_entity) const { return m_##T##s.GetComponent(p_entity); } \
+    template<>                                                                                                     \
+    inline T* GetComponent<T>(const ecs::Entity& p_entity) { return m_##T##s.GetComponent(p_entity); }             \
+    template<>                                                                                                     \
+    inline bool Contains<T>(const ecs::Entity& p_entity) const { return m_##T##s.Contains(p_entity); }             \
+    template<>                                                                                                     \
+    inline size_t GetCount<T>() const { return m_##T##s.GetCount(); }                                              \
+    template<>                                                                                                     \
+    inline ecs::Entity GetEntity<T>(size_t p_index) const { return m_##T##s.GetEntity(p_index); }                  \
+    template<>                                                                                                     \
+    T& Create<T>(const ecs::Entity& p_entity) { return m_##T##s.Create(p_entity); }                                \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
-#pragma endregion WORLD_COMPONENTS_REGISTERY
+#pragma endregion WORLD_COMPONENTS_REGISTRY
     template<typename T>
-    const T* GetComponent(const ecs::Entity&) const {
-        return nullptr;
-    }
+    const T* GetComponent(const ecs::Entity&) const { return nullptr; }
     template<typename T>
-    T* GetComponent(const ecs::Entity&) {
-        return nullptr;
-    }
+    T* GetComponent(const ecs::Entity&) { return nullptr; }
     template<typename T>
-    bool Contains(const ecs::Entity&) const {
-        return false;
-    }
+    bool Contains(const ecs::Entity&) const { return false; }
     template<typename T>
-    size_t GetCount() const {
-        return 0;
-    }
+    size_t GetCount() const { return 0; }
     template<typename T>
-    ecs::Entity GetEntity(size_t) const {
-        return ecs::Entity::INVALID;
-    }
+    ecs::Entity GetEntity(size_t) const { return ecs::Entity::INVALID; }
     template<typename T>
-    T& Create(const ecs::Entity&) {
-        return *(T*)(nullptr);
-    }
+    T& Create(const ecs::Entity&) { return *(T*)(nullptr); }
 
 private:
     template<typename T>
-    inline T& GetComponentByIndex(size_t p_index) { return *(T*)0; }
+    inline T& GetComponentByIndex(size_t) { return *(T*)0; }
     template<typename T>
-    inline ecs::Entity GetEntityByIndex(size_t p_index) { return ecs::Entity::INVALID; }
+    inline ecs::Entity GetEntityByIndex(size_t) { return ecs::Entity::INVALID; }
 
     ecs::ComponentLibrary m_componentLib;
 
@@ -117,11 +91,14 @@ private:
     REGISTER_COMPONENT(MeshColliderComponent, 0);
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
     REGISTER_COMPONENT(ForceFieldComponent, 0);
+    REGISTER_COMPONENT(ScriptComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
 
     void Update(float p_delta_time);
+
+    void Copy(Scene& p_other);
 
     void Merge(Scene& p_other);
 
@@ -168,6 +145,10 @@ public:
                                  const Vector3f& p_scale = Vector3f(0.5f),
                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
+    ecs::Entity CreateMeshEntity(const std::string& p_name,
+                                 MeshComponent&& p_mesh,
+                                 ecs::Entity p_material_id);
+
     ecs::Entity CreateSphereEntity(const std::string& p_name,
                                    float p_radius = 0.5f,
                                    const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
@@ -203,9 +184,9 @@ public:
 
     ecs::Entity CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
-    void AttachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
+    void AttachChild(ecs::Entity p_entity, ecs::Entity p_parent);
 
-    void AttachComponent(ecs::Entity p_entity) { AttachComponent(p_entity, m_root); }
+    void AttachChild(ecs::Entity p_entity) { AttachChild(p_entity, m_root); }
 
     void RemoveEntity(ecs::Entity p_entity);
 

@@ -1,16 +1,18 @@
 #pragma once
 
 namespace my {
-class Application;
+class Scene;
 }
 
 namespace my::renderer {
 
 struct RenderData;
 
-void BeginFrame(Application* p_app);
+void BeginFrame();
 
 void EndFrame();
+
+void RequestScene(Scene& p_scene);
 
 const RenderData* GetRenderData();
 

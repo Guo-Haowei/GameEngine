@@ -14,7 +14,7 @@ public:
     virtual void OnDetach() {}
 
     virtual void OnImGuiRender() {}
-    virtual void OnUpdate(float p_time_step) { unused(p_time_step); }
+    virtual void OnUpdate(float p_time_step) = 0;
 
     const std::string& GetName() const { return m_name; }
     Application* GetApplication() const { return m_app; }

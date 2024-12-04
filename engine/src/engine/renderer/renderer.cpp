@@ -1,6 +1,5 @@
 #include "renderer.h"
 
-#include "engine/core/framework/application.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/renderer/render_data.h"
@@ -9,22 +8,22 @@ namespace my::renderer {
 
 static RenderData* g_renderData;
 
-void BeginFrame(Application* p_app) {
+void BeginFrame() {
     // @TODO: should be a better way
     if (g_renderData) {
         delete g_renderData;
-    }
-
-    Scene* scene = p_app->GetSceneManager()->GetScenePtr();
-    if (DEV_VERIFY(scene)) {
-        g_renderData = new RenderData();
-        RenderDataConfig config(*scene);
-        config.isOpengl = p_app->GetGraphicsManager()->GetBackend() == Backend::OPENGL;
-        PrepareRenderData(*scene->m_camera.get(), config, *g_renderData);
+        g_renderData = nullptr;
     }
 }
 
 void EndFrame() {
+}
+
+void RequestScene(Scene& p_scene) {
+    g_renderData = new RenderData();
+    RenderDataConfig config(p_scene);
+    config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
+    PrepareRenderData(*p_scene.m_camera.get(), config, *g_renderData);
 }
 
 const RenderData* GetRenderData() {
