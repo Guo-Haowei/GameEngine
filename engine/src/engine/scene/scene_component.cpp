@@ -80,16 +80,9 @@ void ScriptComponent::SetScript(const std::string& p_path) {
         return;
     }
 
-    AssetRegistry::GetSingleton().RequestAssetAsync(
-        p_path, [](IAsset* p_asset, void* p_userdata) {
-            auto source = dynamic_cast<TextAsset*>(p_asset);
-            if (DEV_VERIFY(source)) {
-                reinterpret_cast<ScriptComponent*>(p_userdata)->m_asset = source;
-            }
-        },
-        this);
-
     m_path = p_path;
+    m_asset = nullptr;
+    AssetRegistry::GetSingleton().RequestAssetAsync(p_path);
 }
 
 const char* ScriptComponent::GetSource() const {

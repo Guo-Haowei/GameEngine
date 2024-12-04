@@ -203,42 +203,43 @@ MeshComponent MakeCubeMesh(const Vector3f& p_scale) {
 MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
     MeshComponent mesh;
 
-    const Vector3f& vert0{ p_points[0] };
-    const Vector3f& vert1{ p_points[1] };
-    const Vector3f& vert2{ p_points[2] };
-    const Vector3f& vert3{ p_points[3] };
-    const Vector3f& vert4{ p_points[4] };
-    const Vector3f& vert5{ p_points[5] };
-    const Vector3f& vert6{ p_points[6] };
-    const Vector3f& vert7{ p_points[7] };
-
+    const Vector3f& a = p_points[A];
+    const Vector3f& b = p_points[B];
+    const Vector3f& c = p_points[C];
+    const Vector3f& d = p_points[D];
+    const Vector3f& e = p_points[E];
+    const Vector3f& f = p_points[F];
+    const Vector3f& g = p_points[G];
+    const Vector3f& h = p_points[H];
     // clang-format off
     mesh.positions = {
-        // left
-        vert0, vert3, vert1, vert0, vert2, vert3,
-        // right
-        vert4, vert6, vert5, vert5, vert6, vert7,
         // front
-        vert0, vert7, vert2, vert0, vert5, vert7,
+        a, b, c, d,
         // back
-        vert1, vert3, vert6, vert1, vert6, vert4,
+        e, h, g ,f,
+        // left
+        a, e, f, b,
+        // right
+        c, g, h, d,
         // up
-        vert1, vert4, vert0, vert0, vert4, vert5,
+        a, d, h, e,
         // down
-        vert2, vert6, vert3, vert6, vert2, vert7,
+        b, f, g, c,
     };
     // clang-format on
 
     mesh.indices.clear();
     mesh.normals.clear();
-    for (int i = 0; i < 36; i += 3) {
+    for (int i = 0; i < 24; i += 4) {
         const Vector3f& A = mesh.positions[i];
         const Vector3f& B = mesh.positions[i + 1];
         const Vector3f& C = mesh.positions[i + 2];
+        // const Vector3f& D = mesh.positions[i + 3];
         Vector3f AB = B - A;
         Vector3f AC = C - A;
-        Vector3f normal = glm::cross(AB, AC);
+        Vector3f normal = glm::normalize(glm::cross(AB, AC));
 
+        mesh.normals.emplace_back(normal);
         mesh.normals.emplace_back(normal);
         mesh.normals.emplace_back(normal);
         mesh.normals.emplace_back(normal);
@@ -247,10 +248,15 @@ MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
         mesh.indices.emplace_back(i + 1);
         mesh.indices.emplace_back(i + 2);
 
+        mesh.indices.emplace_back(i);
+        mesh.indices.emplace_back(i + 2);
+        mesh.indices.emplace_back(i + 3);
+
         // TODO: fix dummy uv
-        mesh.texcoords_0.push_back({0, 0});
-        mesh.texcoords_0.push_back({0, 0});
-        mesh.texcoords_0.push_back({0, 0});
+        mesh.texcoords_0.push_back({ 0, 0 });
+        mesh.texcoords_0.push_back({ 0, 0 });
+        mesh.texcoords_0.push_back({ 0, 0 });
+        mesh.texcoords_0.push_back({ 0, 0 });
     }
 
     MeshComponent::MeshSubset subset;

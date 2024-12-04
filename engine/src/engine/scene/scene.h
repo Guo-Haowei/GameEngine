@@ -145,6 +145,10 @@ public:
                                  const Vector3f& p_scale = Vector3f(0.5f),
                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
+    ecs::Entity CreateMeshEntity(const std::string& p_name,
+                                 MeshComponent&& p_mesh,
+                                 ecs::Entity p_material_id);
+
     ecs::Entity CreateSphereEntity(const std::string& p_name,
                                    float p_radius = 0.5f,
                                    const Matrix4x4f& p_transform = Matrix4x4f(1.0f));

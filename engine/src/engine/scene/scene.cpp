@@ -272,10 +272,25 @@ Entity Scene::CreateCubeEntity(const std::string& p_name,
     return entity;
 }
 
-Entity Scene::CreateSphereEntity(const std::string& p_name,
-                                 float p_radius,
-                                 const Matrix4x4f& p_transform) {
-    Entity material_id = CreateMaterialEntity(p_name + ":mat");
+ecs::Entity Scene::CreateMeshEntity(const std::string& p_name,
+                                    MeshComponent&& p_mesh,
+                                    ecs::Entity p_material_id) {
+    ecs::Entity entity = CreateObjectEntity(p_name);
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+
+    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    object.meshId = mesh_id;
+
+    MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
+    mesh = std::move(p_mesh);
+    mesh.subsets[0].material_id = p_material_id;
+    return entity;
+}
+
+ecs::Entity Scene::CreateSphereEntity(const std::string& p_name,
+                                      float p_radius,
+                                      const Matrix4x4f& p_transform) {
+    ecs::Entity material_id = CreateMaterialEntity(p_name + ":mat");
     return CreateSphereEntity(p_name, material_id, p_radius, p_transform);
 }
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/core/math/geomath.h"
 
 namespace my {
 
@@ -20,6 +21,10 @@ struct Color {
 
     uint32_t ToRgb() const;
     uint32_t ToRgba() const;
+
+    Vector4f ToVector4f() const {
+        return Vector4f(r, g, b, a);
+    }
 
     static Color Hex(uint32_t hex);
     static Color HexRgba(uint32_t hex);

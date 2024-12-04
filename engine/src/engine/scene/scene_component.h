@@ -100,11 +100,15 @@ public:
 
     const char* GetSource() const;
 
+    void SetAsset(const TextAsset* p_asset) {
+        m_asset = p_asset;
+    }
+
 private:
     std::string m_path;
 
     // Non-Serialized
-    TextAsset* m_asset{ nullptr };
+    const TextAsset* m_asset{ nullptr };
 };
 #pragma endregion SCRIPT_COMPONENT
 

@@ -1,5 +1,7 @@
 #include "script_manager.h"
 
+#include "engine/core/framework/application.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/lua_binding/prerequisites.h"
 #include "engine/scene/scene.h"
@@ -70,6 +72,14 @@ void ScriptManager::Update(Scene& p_scene) {
     lua[LUA_GLOBAL_SCENE] = (size_t)(&p_scene);
     for (auto [entity, script] : p_scene.m_ScriptComponents) {
         const char* source = script.GetSource();
+        if (!source) {
+            auto asset = m_app->GetAssetRegistry()->GetAssetByHandle<TextAsset>(AssetHandle{ script.GetScriptRef() });
+            if (asset) {
+                script.SetAsset(asset);
+                source = asset->source.c_str();
+            }
+        }
+
         if (source) {
             lua[LUA_GLOBAL_ENTITY] = entity.GetId();
             auto res = lua.script(source);
