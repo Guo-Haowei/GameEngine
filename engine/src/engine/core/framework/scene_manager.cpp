@@ -14,32 +14,9 @@ namespace my {
 using ecs::Entity;
 namespace fs = std::filesystem;
 
-static void CreateEmptyScene(Scene* p_scene) {
-    Entity::SetSeed();
-
-    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    p_scene->CreateCamera(frame_size.x, frame_size.y);
-
-    auto root = p_scene->CreateTransformEntity("world");
-    p_scene->m_root = root;
-    if (0) {
-        auto light = p_scene->CreateInfiniteLightEntity("infinite light", Vector3f(1));
-        auto transform = p_scene->GetComponent<TransformComponent>(light);
-        DEV_ASSERT(transform);
-        constexpr float rx = glm::radians(-80.0f);
-        constexpr float ry = glm::radians(0.0f);
-        constexpr float rz = glm::radians(0.0f);
-        transform->Rotate(Vector3f(rx, ry, rz));
-
-        p_scene->AttachComponent(light, root);
-    }
-}
-
 auto SceneManager::InitializeImpl() -> Result<void> {
-    // create an empty scene
-    Scene* scene = new Scene;
-    CreateEmptyScene(scene);
-    m_scene = scene;
+    m_scene = m_app->CreateInitialScene();
+    BumpRevision();
 
     const std::string& path = DVAR_GET_STRING(project);
     if (!path.empty()) {

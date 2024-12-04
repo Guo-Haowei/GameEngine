@@ -20,6 +20,7 @@
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scene.h"
 
 #define DEFINE_DVAR
 #include "engine/core/framework/common_dvars.h"
@@ -300,6 +301,19 @@ void Application::SetState(State p_state) {
             CRASH_NOW();
             break;
     }
+}
+
+Scene* Application::CreateInitialScene() {
+    ecs::Entity::SetSeed();
+
+    Scene* scene = new Scene;
+
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    scene->CreateCamera(frame_size.x, frame_size.y);
+
+    auto root = scene->CreateTransformEntity("world");
+    scene->m_root = root;
+    return scene;
 }
 
 }  // namespace my

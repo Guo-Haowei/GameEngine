@@ -200,6 +200,68 @@ MeshComponent MakeCubeMesh(const Vector3f& p_scale) {
     return mesh;
 }
 
+MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
+    MeshComponent mesh;
+
+    const Vector3f& vert0{ p_points[0] };
+    const Vector3f& vert1{ p_points[1] };
+    const Vector3f& vert2{ p_points[2] };
+    const Vector3f& vert3{ p_points[3] };
+    const Vector3f& vert4{ p_points[4] };
+    const Vector3f& vert5{ p_points[5] };
+    const Vector3f& vert6{ p_points[6] };
+    const Vector3f& vert7{ p_points[7] };
+
+    // clang-format off
+    mesh.positions = {
+        // left
+        vert0, vert3, vert1, vert0, vert2, vert3,
+        // right
+        vert4, vert6, vert5, vert5, vert6, vert7,
+        // front
+        vert0, vert7, vert2, vert0, vert5, vert7,
+        // back
+        vert1, vert3, vert6, vert1, vert6, vert4,
+        // up
+        vert1, vert4, vert0, vert0, vert4, vert5,
+        // down
+        vert2, vert6, vert3, vert6, vert2, vert7,
+    };
+    // clang-format on
+
+    mesh.indices.clear();
+    mesh.normals.clear();
+    for (int i = 0; i < 36; i += 3) {
+        const Vector3f& A = mesh.positions[i];
+        const Vector3f& B = mesh.positions[i + 1];
+        const Vector3f& C = mesh.positions[i + 2];
+        Vector3f AB = B - A;
+        Vector3f AC = C - A;
+        Vector3f normal = glm::cross(AB, AC);
+
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+
+        mesh.indices.emplace_back(i);
+        mesh.indices.emplace_back(i + 1);
+        mesh.indices.emplace_back(i + 2);
+
+        // TODO: fix dummy uv
+        mesh.texcoords_0.push_back({0, 0});
+        mesh.texcoords_0.push_back({0, 0});
+        mesh.texcoords_0.push_back({0, 0});
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(mesh.indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.CreateRenderData();
+    return mesh;
+}
+
 MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     MeshComponent mesh;
 

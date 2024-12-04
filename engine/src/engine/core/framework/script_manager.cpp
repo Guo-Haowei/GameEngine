@@ -69,9 +69,10 @@ void ScriptManager::Update(Scene& p_scene) {
     sol::state& lua = *m_state;
     lua[LUA_GLOBAL_SCENE] = (size_t)(&p_scene);
     for (auto [entity, script] : p_scene.m_ScriptComponents) {
-        if (script.source) {
+        const char* source = script.GetSource();
+        if (source) {
             lua[LUA_GLOBAL_ENTITY] = entity.GetId();
-            auto res = lua.script(script.source->source.c_str());
+            auto res = lua.script(source);
             if (!res.valid()) {
                 sol::error err = res;
                 LOG_ERROR("script error: {}", err.what());

@@ -67,23 +67,44 @@ void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
 #pragma endregion ARMATURE_COMPONENT
 
 #pragma region SCRIPT_COMPONENT
+std::string& ScriptComponent::GetScriptRef() {
+    return m_path;
+}
+
+void ScriptComponent::SetScript(const std::string& p_path) {
+    if (p_path.empty()) {
+        return;
+    }
+
+    if (p_path == m_path) {
+        return;
+    }
+
+    AssetRegistry::GetSingleton().RequestAssetAsync(
+        p_path, [](IAsset* p_asset, void* p_userdata) {
+            auto source = dynamic_cast<TextAsset*>(p_asset);
+            if (DEV_VERIFY(source)) {
+                reinterpret_cast<ScriptComponent*>(p_userdata)->m_asset = source;
+            }
+        },
+        this);
+
+    m_path = p_path;
+}
+
+const char* ScriptComponent::GetSource() const {
+    return m_asset ? m_asset->source.c_str() : nullptr;
+}
+
 void ScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     if (p_archive.IsWriteMode()) {
-        p_archive << path;
+        p_archive << m_path;
     } else {
+        std::string path;
         p_archive >> path;
-        if (!path.empty()) {
-            AssetRegistry::GetSingleton().RequestAssetAsync(
-                path, [](IAsset* p_asset, void* p_userdata) {
-                    auto source = dynamic_cast<TextAsset*>(p_asset);
-                    if (DEV_VERIFY(source)) {
-                        reinterpret_cast<ScriptComponent*>(p_userdata)->source = source;
-                    }
-                },
-                this);
-        }
+        SetScript(path);
     }
 }
 #pragma endregion SCRIPT_COMPONENT

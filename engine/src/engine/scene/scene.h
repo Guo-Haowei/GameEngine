@@ -180,9 +180,9 @@ public:
 
     ecs::Entity CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
-    void AttachComponent(ecs::Entity p_entity, ecs::Entity p_parent);
+    void AttachChild(ecs::Entity p_entity, ecs::Entity p_parent);
 
-    void AttachComponent(ecs::Entity p_entity) { AttachComponent(p_entity, m_root); }
+    void AttachChild(ecs::Entity p_entity) { AttachChild(p_entity, m_root); }
 
     void RemoveEntity(ecs::Entity p_entity);
 

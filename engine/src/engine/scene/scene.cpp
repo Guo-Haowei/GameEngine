@@ -87,7 +87,7 @@ void Scene::Merge(Scene& p_other) {
         entry.second.m_manager->Merge(manager);
     }
     if (p_other.m_root.IsValid()) {
-        AttachComponent(p_other.m_root, m_root);
+        AttachChild(p_other.m_root, m_root);
     }
 
     m_bound.UnionBox(p_other.m_bound);
@@ -377,7 +377,7 @@ Entity Scene::CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f
     return entity;
 }
 
-void Scene::AttachComponent(Entity p_child, Entity p_parent) {
+void Scene::AttachChild(Entity p_child, Entity p_parent) {
     DEV_ASSERT(p_child != p_parent);
     DEV_ASSERT(p_parent.IsValid());
 

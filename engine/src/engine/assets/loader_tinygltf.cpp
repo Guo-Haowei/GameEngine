@@ -71,7 +71,7 @@ void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
             ecs::Entity objectID = m_scene->CreateObjectEntity("Animated::" + node.name);
             ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(objectID);
             object.meshId = mesh_id;
-            m_scene->AttachComponent(objectID, entity);
+            m_scene->AttachChild(objectID, entity);
         } else {  // this node is a mesh instance
             entity = m_scene->CreateObjectEntity("Object::" + node.name);
             ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(entity);
@@ -133,7 +133,7 @@ void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
     transform.UpdateTransform();
 
     if (p_parent.IsValid()) {
-        m_scene->AttachComponent(entity, p_parent);
+        m_scene->AttachChild(entity, p_parent);
     }
 
     for (int child : node.children) {
@@ -593,7 +593,7 @@ void LoaderTinyGLTF::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, in
         tag = std::format("{}::animation_{}", m_fileName, ++s_counter);
     }
     auto entity = m_scene->CreateNameEntity(tag);
-    m_scene->AttachComponent(entity);
+    m_scene->AttachChild(entity);
 
     // m_scene->Component_Attach(entity, m_scene->m_root);
     AnimationComponent& animation = m_scene->Create<AnimationComponent>(entity);

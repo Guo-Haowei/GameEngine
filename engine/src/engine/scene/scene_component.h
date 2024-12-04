@@ -90,13 +90,21 @@ struct ArmatureComponent {
 #pragma endregion ARMATURE_COMPONENT
 
 #pragma region SCRIPT_COMPONENT
-struct ScriptComponent {
-    std::string path;
+class ScriptComponent {
+public:
+    void SetScript(const std::string& p_path);
 
-    // Non-Serialized
-    TextAsset* source{ nullptr };
+    std::string& GetScriptRef();
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+
+    const char* GetSource() const;
+
+private:
+    std::string m_path;
+
+    // Non-Serialized
+    TextAsset* m_asset{ nullptr };
 };
 #pragma endregion SCRIPT_COMPONENT
 

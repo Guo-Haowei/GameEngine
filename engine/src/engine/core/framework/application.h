@@ -71,6 +71,8 @@ public:
     State GetState() const { return m_state; }
     void SetState(State p_state);
 
+    virtual Scene* CreateInitialScene();
+
 protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);
 

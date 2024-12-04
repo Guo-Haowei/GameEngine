@@ -202,7 +202,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Script", script_component, [](ScriptComponent& script) {
-        panel_util::InputText(script.path, "##ScriptTag");
+        panel_util::InputText(script.GetScriptRef(), "##ScriptTag");
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
