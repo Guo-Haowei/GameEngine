@@ -192,36 +192,36 @@ struct LuaScene {
 };
 #endif
 
-bool LoadLuaScene(const std::string& , Scene* ) {
+bool LoadLuaScene(const std::string&, Scene*) {
     return false;
-    //sol::state lua;
-    //lua.open_libraries();
+    // sol::state lua;
+    // lua.open_libraries();
 
-    //sol::table lib = lua.create_table();
+    // sol::table lib = lua.create_table();
 
-    //lua.new_usertype<LuaScene>("LuaScene",
-    //                           "get_root", &LuaScene::GetRoot,
-    //                           "create_entity", &LuaScene::CreateEntity,
-    //                           "create_entity_detached", &LuaScene::CreateEntityDetached,
-    //                           "attach", &LuaScene::Attach,
-    //                           "attach_root", &LuaScene::AttachRoot);
+    // lua.new_usertype<LuaScene>("LuaScene",
+    //                            "get_root", &LuaScene::GetRoot,
+    //                            "create_entity", &LuaScene::CreateEntity,
+    //                            "create_entity_detached", &LuaScene::CreateEntityDetached,
+    //                            "attach", &LuaScene::Attach,
+    //                            "attach_root", &LuaScene::AttachRoot);
 
-    //lua.set("Scene", lib);
-    //lib.set_function("get", [&]() { return LuaScene{ p_scene }; });
-    //lib.set_function("create_entity", LuaSceneCreateEntity);
+    // lua.set("Scene", lib);
+    // lib.set_function("get", [&]() { return LuaScene{ p_scene }; });
+    // lib.set_function("create_entity", LuaSceneCreateEntity);
 
     //// add additional package path
-    //std::string package_path = lua["package"]["path"];
+    // std::string package_path = lua["package"]["path"];
 
     //// add search directory
-    //std::filesystem::path new_search_dir{ __FILE__ };
-    //new_search_dir = new_search_dir.remove_filename();
-    //new_search_dir.append("?.lua;");
-    //lua["package"]["path"] = new_search_dir.string() + package_path;
+    // std::filesystem::path new_search_dir{ __FILE__ };
+    // new_search_dir = new_search_dir.remove_filename();
+    // new_search_dir.append("?.lua;");
+    // lua["package"]["path"] = new_search_dir.string() + package_path;
 
-    //lua.script_file(p_path);
+    // lua.script_file(p_path);
 
-    //return true;
+    // return true;
 }
 
 }  // namespace my
