@@ -2,12 +2,7 @@
 
 #include "engine/core/framework/scene_manager.h"
 #include "engine/scene/scene.h"
-
-extern "C" {
-#include <lua/lauxlib.h>
-#include <lua/lua.h>
-#include <lua/lualib.h>
-}
+#include "engine/lua_binding/prerequisites.h"
 
 namespace my {
 
@@ -100,7 +95,7 @@ static int lua_SceneEntityRotate(lua_State* L) {
     return 0;
 }
 
-static int lua_OpenSceneModule(lua_State* L) {
+int lua_OpenSceneModule(lua_State* L) {
     lua_newtable(L);
     const struct luaL_Reg funcs[] = {
         { "EntityRotateX", lua_SceneEntityRotateX },
@@ -114,25 +109,34 @@ static int lua_OpenSceneModule(lua_State* L) {
 }
 
 auto ScriptManager::InitializeImpl() -> Result<void> {
-    lua_State* L = luaL_newstate();
-    DEV_ASSERT(L);
-    luaL_openlibs(L);
+    sol::state* lua = new sol::state;
+    lua->open_libraries(sol::lib::base);
 
-    luaL_requiref(L, "Scene", lua_OpenSceneModule, 1);
+    //luaL_requiref(L, "Scene", lua_OpenSceneModule, 1);
 
-    m_state = L;
+    const char* script = R"(
+    print(1111)
+    func()
+)";
+    auto res = lua->script(script);
+    if (!res.valid()) {
+        sol::error err = res;
+        LOG_ERROR("script error: {}", err.what());
+    }
+
+    m_state = lua;
     return Result<void>();
 }
 
 void ScriptManager::FinalizeImpl() {
     if (m_state) {
-        lua_close(m_state);
+        delete m_state;
     }
 }
 
 void ScriptManager::Update(Scene& p_scene) {
     // alias
-    lua_State* L = m_state;
+    lua_State* L = nullptr;
     lua_pushinteger(L, (size_t)(&p_scene));
     lua_setglobal(L, LUA_GLOBAL_SCENE);
     for (auto [entity, script] : p_scene.m_ScriptComponents) {

@@ -1,7 +1,9 @@
 #pragma once
 #include "engine/core/framework/module.h"
 
-struct lua_State;
+namespace sol {
+class state;
+}
 
 namespace my {
 
@@ -18,7 +20,7 @@ protected:
     auto InitializeImpl() -> Result<void> final;
     void FinalizeImpl() final;
 
-    lua_State* m_state;
+    sol::state* m_state;
 };
 
 }  // namespace my
