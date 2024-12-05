@@ -1,6 +1,7 @@
 #include "lua_scene_binding.h"
 
 #include "engine/renderer/render_manager.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 

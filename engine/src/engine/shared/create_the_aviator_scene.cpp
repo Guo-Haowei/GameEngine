@@ -2,6 +2,7 @@
 #include "engine/core/math/color.h"
 #include "engine/core/math/geometry.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 

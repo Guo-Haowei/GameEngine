@@ -11,6 +11,7 @@
 #include "engine/drivers/opengl/opengl_resources.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/scene/scene.h"
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "vsinput.glsl.h"
 

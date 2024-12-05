@@ -2,10 +2,10 @@
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
 #include "engine/core/framework/module.h"
-#include "engine/scene/scene.h"
 
 namespace my {
 
+class Scene;
 class Application;
 
 class SceneManager : public Singleton<SceneManager>, public Module {

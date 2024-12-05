@@ -1,8 +1,9 @@
 #pragma once
-#include "engine/scene/scene.h"
 
 namespace my {
 
+class Scene;
+
 bool LoadLuaScene(const std::string& p_path, Scene* p_scene);
 
-}
+}  // namespace my

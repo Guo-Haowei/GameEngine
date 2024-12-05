@@ -6,6 +6,7 @@
 #include "engine/core/string/string_utils.h"
 #include "engine/lua_binding/lua_scene_binding.h"
 #include "engine/renderer/pixel_format.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 

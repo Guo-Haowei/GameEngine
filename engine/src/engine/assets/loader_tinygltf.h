@@ -1,5 +1,5 @@
 #include "engine/assets/asset_loader.h"
-#include "engine/scene/scene.h"
+#include "engine/core/systems/entity.h"
 
 namespace tinygltf {
 class Model;
@@ -8,6 +8,8 @@ struct Mesh;
 }  // namespace tinygltf
 
 namespace my {
+
+class Scene;
 
 class LoaderTinyGLTF : public IAssetLoader {
 public:

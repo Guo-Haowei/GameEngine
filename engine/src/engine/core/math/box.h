@@ -1,6 +1,13 @@
 #pragma once
 #include "engine/core/math/geomath.h"
 
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+
 namespace my {
 
 template<int N>
