@@ -3,11 +3,11 @@
 
 namespace my {
 
-class CameraComponent;
+class PerspectiveCameraComponent;
 
 class CameraController {
 public:
-    void Move(float p_detla_time, CameraComponent& p_camera, Vector3i& p_move, float p_scroll);
+    void Move(float p_detla_time, PerspectiveCameraComponent& p_camera, Vector3i& p_move, float p_scroll);
 };
 
 }  // namespace my

@@ -1,9 +1,9 @@
 #pragma once
 
 namespace my {
-class CameraComponent;
+class PerspectiveCameraComponent;
 class Scene;
-}
+}  // namespace my
 
 namespace my::renderer {
 
@@ -13,7 +13,7 @@ void BeginFrame();
 
 void EndFrame();
 
-void RequestScene(const CameraComponent& p_camera, Scene& p_scene);
+void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
 
 const RenderData* GetRenderData();
 

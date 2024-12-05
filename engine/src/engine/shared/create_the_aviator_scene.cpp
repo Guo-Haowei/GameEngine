@@ -29,11 +29,28 @@ Scene* CreateTheAviatorScene() {
 
     Scene* scene = new Scene;
 
-    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    scene->CreateCamera(frame_size.x, frame_size.y);
-
     auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;
+
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    // editor camera
+    {
+        auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
+        auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
+        DEV_ASSERT(camera);
+        camera->SetPosition(Vector3f{ 0, 4, 10 });
+        camera->SetEditor();
+        scene->AttachChild(editor_camera, root);
+    }
+    // main camera
+    {
+        auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
+        auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
+        DEV_ASSERT(camera);
+        camera->SetPosition(Vector3f{ 0, 4, 26 });
+        camera->SetMain();
+        scene->AttachChild(main_camera, root);
+    }
 
     // create light
     auto light = scene->CreateInfiniteLightEntity("sun");

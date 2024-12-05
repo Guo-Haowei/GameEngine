@@ -9,7 +9,7 @@
 
 namespace my {
 class Scene;
-class CameraComponent;
+class PerspectiveCameraComponent;
 }  // namespace my
 
 namespace my::renderer {
@@ -101,7 +101,7 @@ struct RenderData {
     PassContext mainPass;
 };
 
-void PrepareRenderData(const CameraComponent& p_camera,
+void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        const RenderDataConfig& p_config,
                        RenderData& p_out_data);
 

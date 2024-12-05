@@ -6,7 +6,7 @@
 
 namespace my {
 
-void CameraController::Move(float p_delta_time, CameraComponent& p_camera, Vector3i& p_move, float p_scroll) {
+void CameraController::Move(float p_delta_time, PerspectiveCameraComponent& p_camera, Vector3i& p_move, float p_scroll) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
     const bool moved = p_move.x || p_move.y || p_move.z || p_scroll != 0.0f;

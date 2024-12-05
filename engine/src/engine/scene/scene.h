@@ -91,7 +91,7 @@ private:
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
     REGISTER_COMPONENT(ForceFieldComponent, 0);
     REGISTER_COMPONENT(ScriptComponent, 0);
-    REGISTER_COMPONENT(CameraComponent, 0);
+    REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
@@ -102,11 +102,16 @@ public:
 
     void Merge(Scene& p_other);
 
-    void CreateCamera(int p_width,
-                      int p_height,
-                      float p_near_plane = CameraComponent::DEFAULT_NEAR,
-                      float p_far_plane = CameraComponent::DEFAULT_FAR,
-                      Degree p_fovy = CameraComponent::DEFAULT_FOVY);
+    ecs::Entity GetMainCamera();
+
+    ecs::Entity GetEditorCamera();
+
+    ecs::Entity CreatePerspectiveCameraEntity(const std::string& p_name,
+                                              int p_width,
+                                              int p_height,
+                                              float p_near_plane = PerspectiveCameraComponent::DEFAULT_NEAR,
+                                              float p_far_plane = PerspectiveCameraComponent::DEFAULT_FAR,
+                                              Degree p_fovy = PerspectiveCameraComponent::DEFAULT_FOVY);
 
     ecs::Entity CreateNameEntity(const std::string& p_name);
     ecs::Entity CreateTransformEntity(const std::string& p_name);

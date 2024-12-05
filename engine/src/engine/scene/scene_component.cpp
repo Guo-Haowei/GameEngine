@@ -68,7 +68,7 @@ void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
 #pragma endregion ARMATURE_COMPONENT
 
 #pragma region CAMERA_COMPONENT
-void CameraComponent::Update() {
+void PerspectiveCameraComponent::Update() {
     if (IsDirty()) {
         m_front.x = m_yaw.Cos() * m_pitch.Cos();
         m_front.y = m_pitch.Sin();
@@ -84,7 +84,7 @@ void CameraComponent::Update() {
     }
 }
 
-void CameraComponent::SetDimension(int p_width, int p_height) {
+void PerspectiveCameraComponent::SetDimension(int p_width, int p_height) {
     if (m_width != p_width || m_height != p_height) {
         m_width = p_width;
         m_height = p_height;
@@ -92,7 +92,7 @@ void CameraComponent::SetDimension(int p_width, int p_height) {
     }
 }
 
-void CameraComponent::Serialize(Archive& p_archive, uint32_t) {
+void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.IsWriteMode()) {
         p_archive << m_flags;
         p_archive << m_near;

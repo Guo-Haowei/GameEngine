@@ -64,12 +64,9 @@ void Scene::Update(float p_elapsedTime) {
     // update bounding box
     RunObjectUpdateSystem(ctx);
 
-    CRASH_NOW();
-#if 0
-    if (m_camera) {
-        m_camera->Update();
+    for (auto [entity, camera] : m_PerspectiveCameraComponents) {
+        camera.Update();
     }
-#endif
 }
 
 void Scene::Copy(Scene& p_other) {
@@ -95,22 +92,44 @@ void Scene::Merge(Scene& p_other) {
     m_bound.UnionBox(p_other.m_bound);
 }
 
-void Scene::CreateCamera(int p_width,
-                         int p_height,
-                         float p_near_plane,
-                         float p_far_plane,
-                         Degree p_fovy) {
-    CRASH_NOW();
-    auto m_camera = std::make_shared<CameraComponent>();
-    m_camera->m_width = p_width;
-    m_camera->m_height = p_height;
-    m_camera->m_near = p_near_plane;
-    m_camera->m_far = p_far_plane;
-    m_camera->m_fovy = p_fovy;
-    m_camera->m_pitch = Degree{ -10.0f };
-    m_camera->m_yaw = Degree{ -90.0f };
-    m_camera->m_position = Vector3f{ 0, 4, 10 };
-    m_camera->SetDirty();
+ecs::Entity Scene::GetMainCamera() {
+    for (auto [entity, camera] : m_PerspectiveCameraComponents) {
+        if (camera.IsMain()) {
+            return entity;
+        }
+    }
+
+    return ecs::Entity::INVALID;
+}
+
+ecs::Entity Scene::GetEditorCamera() {
+    for (auto [entity, camera] : m_PerspectiveCameraComponents) {
+        if (camera.IsEditor()) {
+            return entity;
+        }
+    }
+
+    return ecs::Entity::INVALID;
+}
+
+ecs::Entity Scene::CreatePerspectiveCameraEntity(const std::string& p_name,
+                                                 int p_width,
+                                                 int p_height,
+                                                 float p_near_plane,
+                                                 float p_far_plane,
+                                                 Degree p_fovy) {
+    ecs::Entity entity = CreateNameEntity(p_name);
+    PerspectiveCameraComponent& camera = Create<PerspectiveCameraComponent>(entity);
+
+    camera.m_width = p_width;
+    camera.m_height = p_height;
+    camera.m_near = p_near_plane;
+    camera.m_far = p_far_plane;
+    camera.m_fovy = p_fovy;
+    camera.m_pitch = Degree{ -10.0f };
+    camera.m_yaw = Degree{ -90.0f };
+    camera.SetDirty();
+    return entity;
 }
 
 ecs::Entity Scene::CreateNameEntity(const std::string& p_name) {
@@ -629,13 +648,20 @@ bool Scene::Serialize(Archive& p_archive) {
     }
 
     m_root.Serialize(p_archive);
-    CRASH_NOW();
-#if 0
-    if (is_read_mode) {
-        m_camera = std::make_shared<CameraComponent>();
+
+    // dummy camera
+    if (version < 12) {
+        if (is_read_mode) {
+            PerspectiveCameraComponent old_camera;
+            old_camera.Serialize(p_archive, version);
+
+            auto camera_id = CreatePerspectiveCameraEntity("editor_camera", old_camera.GetWidth(), old_camera.GetHeight());
+            PerspectiveCameraComponent* new_camera = GetComponent<PerspectiveCameraComponent>(camera_id);
+            *new_camera = old_camera;
+            new_camera->SetEditor();
+            AttachChild(camera_id, m_root);
+        }
     }
-    m_camera->Serialize(p_archive, version);
-#endif
 
     constexpr uint64_t has_next_flag = 6368519827137030510;
     if (p_archive.IsWriteMode()) {

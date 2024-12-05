@@ -91,7 +91,7 @@ struct ArmatureComponent {
 #pragma endregion ARMATURE_COMPONENT
 
 #pragma region CAMERA_COMPONENT
-class CameraComponent {
+class PerspectiveCameraComponent {
 public:
     enum : uint32_t {
         NONE = BIT(0),
@@ -101,7 +101,7 @@ public:
     };
 
     static constexpr float DEFAULT_NEAR = 0.1f;
-    static constexpr float DEFAULT_FAR = 100.0f;
+    static constexpr float DEFAULT_FAR = 1000.0f;
     static constexpr Degree DEFAULT_FOVY{ 50.0f };
 
     void Update();
@@ -116,17 +116,35 @@ public:
     void SetMain(bool p_flag = true) { p_flag ? m_flags |= MAIN : m_flags &= ~MAIN; }
 
     Degree GetFovy() const { return m_fovy; }
+    void SetFovy(Degree p_degree) {
+        m_fovy = p_degree;
+        SetDirty();
+    }
+
     float GetNear() const { return m_near; }
-    void SetNear(float p_near) { m_near = p_near; }
+    void SetNear(float p_near) {
+        m_near = p_near;
+        SetDirty();
+    }
+
     float GetFar() const { return m_far; }
-    void SetFar(float p_far) { m_far = p_far; }
+    void SetFar(float p_far) {
+        m_far = p_far;
+        SetDirty();
+    }
+
+    const Vector3f& GetPosition() const { return m_position; }
+    void SetPosition(const Vector3f& p_position) {
+        m_position = p_position;
+        SetDirty();
+    }
+
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }
     float GetAspect() const { return (float)m_width / m_height; }
     const Matrix4x4f& GetViewMatrix() const { return m_viewMatrix; }
     const Matrix4x4f& GetProjectionMatrix() const { return m_projectionMatrix; }
     const Matrix4x4f& GetProjectionViewMatrix() const { return m_projectionViewMatrix; }
-    const Vector3f& GetPosition() const { return m_position; }
     const Vector3f& GetRight() const { return m_right; }
     const Vector3f GetFront() const { return m_front; }
 

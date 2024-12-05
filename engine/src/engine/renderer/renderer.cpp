@@ -19,7 +19,7 @@ void BeginFrame() {
 void EndFrame() {
 }
 
-void RequestScene(const CameraComponent& p_camera, Scene& p_scene) {
+void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
     g_renderData = new RenderData();
     RenderDataConfig config(p_scene);
     config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
