@@ -64,7 +64,7 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     shadow /= float(NUM_POINT_SHADOW_SAMPLES);
 #endif
 
-    return shadow;
+    return min(shadow, 0.8f);
 }
 
 // @TODO: refactor

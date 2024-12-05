@@ -295,8 +295,8 @@ ecs::Entity Scene::CreateCubeEntity(const std::string& p_name,
 }
 
 ecs::Entity Scene::CreateMeshEntity(const std::string& p_name,
-                                    MeshComponent&& p_mesh,
-                                    ecs::Entity p_material_id) {
+                                    ecs::Entity p_material_id,
+                                    MeshComponent&& p_mesh) {
     ecs::Entity entity = CreateObjectEntity(p_name);
     ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
 

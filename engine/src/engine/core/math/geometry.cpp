@@ -411,6 +411,113 @@ MeshComponent MakeCylinder(float p_radius,
     return mesh;
 }
 
+MeshComponent MakeConeMesh(float p_radius,
+                           float p_height,
+                           int p_sectors) {
+    MeshComponent mesh;
+
+    auto& indices = mesh.indices;
+    constexpr float pi = glm::pi<float>();
+
+    const float height_half = 0.5f * p_height;
+    const Vector3f apex{ 0.0f, height_half, 0.0f };
+
+    // cone side
+    for (int index = 0; index < p_sectors; ++index) {
+        const float angle_1 = 2.0f * pi * index / p_sectors;
+        const float x_1 = p_radius * glm::cos(angle_1);
+        const float z_1 = p_radius * glm::sin(angle_1);
+
+        const float angle_2 = 2.0f * pi * (index + 1) / p_sectors;
+        const float x_2 = p_radius * glm::cos(angle_2);
+        const float z_2 = p_radius * glm::sin(angle_2);
+
+        Vector3f point_1(x_1, -height_half, z_1);
+        Vector3f point_2(x_2, -height_half, z_2);
+
+        // Vector3f normal = glm::normalize(Vector3f(x, 0.0f, z));
+        Vector3f AB = point_1 - apex;
+        Vector3f AC = point_2 - apex;
+        Vector3f normal = -glm::normalize(glm::cross(AB, AC));
+
+        mesh.positions.emplace_back(point_1);
+        mesh.positions.emplace_back(apex);
+        mesh.positions.emplace_back(point_2);
+
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+
+        mesh.indices.emplace_back(3 * index);
+        mesh.indices.emplace_back(3 * index + 1);
+        mesh.indices.emplace_back(3 * index + 2);
+
+        // @TODO: fix dummy uv
+        mesh.texcoords_0.emplace_back(Vector2f());
+        mesh.texcoords_0.emplace_back(Vector2f());
+        mesh.texcoords_0.emplace_back(Vector2f());
+    }
+
+#if 0
+    for (int index = 0; index < p_sectors; ++index) {
+        /* a - b
+           |   |
+           c - d */
+        const uint32_t a = 2 * index;
+        const uint32_t c = 2 * index + 1;
+        const uint32_t b = 2 * index + 2;
+        const uint32_t d = 2 * index + 3;
+
+        indices.emplace_back(a);
+        indices.emplace_back(b);
+        indices.emplace_back(c);
+
+        indices.emplace_back(c);
+        indices.emplace_back(b);
+        indices.emplace_back(d);
+    }
+#endif
+
+    // cylinder circles
+    {
+        uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
+
+        Vector3f normal(0, -1, 0);
+
+        for (int index = 0; index <= p_sectors; ++index) {
+            float angle = 2.0f * pi * index / p_sectors;
+            float x = p_radius * glm::cos(angle);
+            float z = p_radius * glm::sin(angle);
+
+            Vector3f point(x, -height_half, z);
+
+            mesh.positions.emplace_back(point);
+            mesh.normals.emplace_back(normal);
+            mesh.texcoords_0.emplace_back(Vector2f());
+        }
+
+        // center
+        mesh.positions.emplace_back(Vector3f(0.0f, -height_half, 0.0f));
+        mesh.normals.emplace_back(normal);
+        mesh.texcoords_0.emplace_back(Vector2f());
+
+        uint32_t center_index = static_cast<uint32_t>(mesh.positions.size()) - 1;
+        for (int index = 0; index < p_sectors; ++index) {
+            indices.emplace_back(offset + index);
+            indices.emplace_back(offset + index + 1);
+            indices.emplace_back(center_index);
+        }
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.CreateRenderData();
+    return mesh;
+}
+
 MeshComponent MakeTorus(float p_radius,
                         float p_tube_radius,
                         int p_sectors,
