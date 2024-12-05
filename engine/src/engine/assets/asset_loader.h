@@ -55,13 +55,20 @@ public:
 
 class ImageAssetLoader : public IAssetLoader {
 public:
-    using IAssetLoader::IAssetLoader;
+    ImageAssetLoader(const IAsset::Meta& p_meta, uint32_t p_size) : IAssetLoader(p_meta), m_size(p_size) {}
 
     static std::unique_ptr<IAssetLoader> CreateLoader(const IAsset::Meta& p_meta) {
-        return std::make_unique<ImageAssetLoader>(p_meta);
+        return std::make_unique<ImageAssetLoader>(p_meta, 1);
+    }
+
+    static std::unique_ptr<IAssetLoader> CreateLoaderF(const IAsset::Meta& p_meta) {
+        return std::make_unique<ImageAssetLoader>(p_meta, 4);
     }
 
     auto Load() -> Result<IAsset*> override;
+
+protected:
+    const uint32_t m_size;
 };
 
 class SceneLoader : public IAssetLoader {

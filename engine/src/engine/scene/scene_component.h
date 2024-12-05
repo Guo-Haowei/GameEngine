@@ -5,6 +5,7 @@
 
 namespace my {
 
+struct ImageAsset;
 struct TextAsset;
 class Archive;
 
@@ -182,13 +183,13 @@ public:
 
     std::string& GetScriptRef();
 
-    void Serialize(Archive& p_archive, uint32_t p_version);
-
     const char* GetSource() const;
 
     void SetAsset(const TextAsset* p_asset) {
         m_asset = p_asset;
     }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
 
 private:
     std::string m_path;
@@ -197,6 +198,25 @@ private:
     const TextAsset* m_asset{ nullptr };
 };
 #pragma endregion SCRIPT_COMPONENT
+
+#pragma region HEMISPHERE_LIGHT_COMPONENT
+class HemisphereLightComponent {
+public:
+    void SetPath(const std::string& p_path);
+
+    std::string& GetPathRef() { return m_path; }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+
+private:
+    std::string m_path;
+
+    // Non-Serialized
+    const ImageAsset* m_asset{ nullptr };
+
+    friend class Scene;
+};
+#pragma endregion HEMISPHERE_LIGHT_COMPONENT
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

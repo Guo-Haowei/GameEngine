@@ -330,10 +330,17 @@ Scene* Application::CreateInitialScene() {
     Scene* scene = new Scene;
 
     Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    scene->CreatePerspectiveCameraEntity("default camera", frame_size.x, frame_size.y);
 
     auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;
+
+    auto camera_id = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
+    auto camera = scene->GetComponent<PerspectiveCameraComponent>(camera_id);
+    DEV_ASSERT(camera);
+    camera->SetPosition(Vector3f(0, 4, 10));
+    camera->SetEditor();
+    scene->AttachChild(camera_id, root);
+
     return scene;
 }
 

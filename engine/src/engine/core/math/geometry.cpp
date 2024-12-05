@@ -318,9 +318,10 @@ MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     return mesh;
 }
 
-MeshComponent MakeCylinder(float p_radius,
-                           float p_height,
-                           int p_sectors) {
+MeshComponent MakeCylinderMesh(float p_radius,
+                               float p_height,
+                               int p_sectors,
+                               int p_height_sector) {
     MeshComponent mesh;
 
     auto& indices = mesh.indices;
@@ -329,41 +330,55 @@ MeshComponent MakeCylinder(float p_radius,
     std::array<float, 2> heights = { 0.5f * p_height, -0.5f * p_height };
 
     // cylinder side
-    for (int index = 0; index <= p_sectors; ++index) {
-        float angle = 2.0f * pi * index / p_sectors;
-        float x = p_radius * glm::cos(angle);
-        float z = p_radius * glm::sin(angle);
+    float height_step = (float)p_height / p_height_sector;
+    for (float y = heights[1]; y < heights[0]; y += height_step) {
+        uint32_t point_offset = (uint32_t)mesh.positions.size();
+        for (int index = 0; index < p_sectors; ++index) {
+            float angle_1 = 2.0f * pi * index / p_sectors;
+            float x_1 = p_radius * glm::cos(angle_1);
+            float z_1 = p_radius * glm::sin(angle_1);
+            float angle_2 = 2.0f * pi * (index + 1) / p_sectors;
+            float x_2 = p_radius * glm::cos(angle_2);
+            float z_2 = p_radius * glm::sin(angle_2);
 
-        Vector3f point_1(x, heights[0], z);
-        Vector3f point_2(x, heights[1], z);
+            Vector3f point_1(x_1, y, z_1);
+            Vector3f point_2(x_1, y + height_step, z_1);
 
-        Vector3f normal = glm::normalize(Vector3f(x, 0.0f, z));
+            Vector3f point_3(x_2, y, z_2);
+            Vector3f point_4(x_2, y + height_step, z_2);
 
-        mesh.positions.emplace_back(point_1);
-        mesh.normals.emplace_back(normal);
-        mesh.texcoords_0.emplace_back(Vector2f());
+            Vector3f AB = point_1 - point_2;
+            Vector3f AC = point_1 - point_3;
+            Vector3f normal = glm::normalize(glm::cross(AB, AC));
 
-        mesh.positions.emplace_back(point_2);
-        mesh.normals.emplace_back(normal);
-        mesh.texcoords_0.emplace_back(Vector2f());
-    }
+            mesh.positions.emplace_back(point_1);
+            mesh.positions.emplace_back(point_2);
+            mesh.positions.emplace_back(point_3);
+            mesh.positions.emplace_back(point_4);
 
-    for (int index = 0; index < p_sectors; ++index) {
-        /* a - b
-           |   |
-           c - d */
-        const uint32_t a = 2 * index;
-        const uint32_t c = 2 * index + 1;
-        const uint32_t b = 2 * index + 2;
-        const uint32_t d = 2 * index + 3;
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
 
-        indices.emplace_back(a);
-        indices.emplace_back(b);
-        indices.emplace_back(c);
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
 
-        indices.emplace_back(c);
-        indices.emplace_back(b);
-        indices.emplace_back(d);
+            const uint32_t a = point_offset + 4 * index;
+            const uint32_t c = point_offset + 4 * index + 1;
+            const uint32_t b = point_offset + 4 * index + 2;
+            [[maybe_unused]] const uint32_t d = point_offset + 4 * index + 3;
+
+            indices.emplace_back(a);
+            indices.emplace_back(c);
+            indices.emplace_back(b);
+
+            indices.emplace_back(c);
+            indices.emplace_back(d);
+            indices.emplace_back(b);
+        }
     }
 
     // cylinder circles
@@ -518,10 +533,10 @@ MeshComponent MakeConeMesh(float p_radius,
     return mesh;
 }
 
-MeshComponent MakeTorus(float p_radius,
-                        float p_tube_radius,
-                        int p_sectors,
-                        int p_tube_sectors) {
+MeshComponent MakeTorusMesh(float p_radius,
+                            float p_tube_radius,
+                            int p_sectors,
+                            int p_tube_sectors) {
     MeshComponent mesh;
 
     constexpr float two_pi = 2.0f * glm::pi<float>();

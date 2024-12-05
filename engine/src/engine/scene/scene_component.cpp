@@ -155,4 +155,17 @@ void ScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 }
 #pragma endregion SCRIPT_COMPONENT
 
+#pragma region HEMISPHERE_LIGHT_COMPONENT
+void HemisphereLightComponent::SetPath(const std::string& p_path) {
+    unused(p_path);
+    CRASH_NOW();
+}
+
+void HemisphereLightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_archive);
+    unused(p_version);
+    CRASH_NOW();
+}
+#pragma endregion HEMISPHERE_LIGHT_COMPONENT
+
 }  // namespace my

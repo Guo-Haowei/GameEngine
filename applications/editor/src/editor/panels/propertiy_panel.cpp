@@ -117,6 +117,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
     ScriptComponent* script_component = p_scene.GetComponent<ScriptComponent>(id);
     PerspectiveCameraComponent* perspective_camera = p_scene.GetComponent<PerspectiveCameraComponent>(id);
+    HemisphereLightComponent* hemisphere_light = p_scene.GetComponent<HemisphereLightComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -202,14 +203,18 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         ImGui::Text("max distance: %0.3f", p_light.GetMaxDistance());
     });
 
-    DrawComponent("Script", script_component, [](ScriptComponent& script) {
-        panel_util::InputText(script.GetScriptRef(), "##ScriptTag");
+    DrawComponent("HemisphereLight", hemisphere_light, [](HemisphereLightComponent& p_light) {
+        panel_util::InputText(p_light.GetPathRef(), "##LightTag");
     });
 
-    DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& rigidbody) {
-        switch (rigidbody.shape) {
+    DrawComponent("Script", script_component, [](ScriptComponent& p_script) {
+        panel_util::InputText(p_script.GetScriptRef(), "##ScriptTag");
+    });
+
+    DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& p_rigid_body) {
+        switch (p_rigid_body.shape) {
             case RigidBodyComponent::SHAPE_CUBE: {
-                const auto& half = rigidbody.param.box.half_size;
+                const auto& half = p_rigid_body.param.box.half_size;
                 ImGui::Text("shape: box");
                 ImGui::Text("half size: %.2f, %.2f, %.2f", half.x, half.y, half.z);
                 break;

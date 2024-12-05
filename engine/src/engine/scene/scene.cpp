@@ -1,5 +1,6 @@
 #include "scene.h"
 
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/geometry.h"
 #include "engine/core/systems/job_system.h"
@@ -64,8 +65,17 @@ void Scene::Update(float p_elapsedTime) {
     // update bounding box
     RunObjectUpdateSystem(ctx);
 
+    // @TODO: refactor
     for (auto [entity, camera] : m_PerspectiveCameraComponents) {
         camera.Update();
+    }
+
+    for (auto [entity, light] : m_HemisphereLightComponents) {
+        if (!light.m_path.empty()) {
+            if (!light.m_asset) {
+                AssetRegistry::GetSingleton().RequestAssetAsync(light.m_path);
+            }
+        }
     }
 }
 
@@ -223,6 +233,14 @@ ecs::Entity Scene::CreateAreaLightEntity(const std::string& p_name,
     return entity;
 }
 
+ecs::Entity Scene::CreateHemisphereLightEntity(const std::string& p_name,
+                                               const std::string& p_path) {
+    ecs::Entity entity = CreateNameEntity(p_name);
+    HemisphereLightComponent& light = Create<HemisphereLightComponent>(entity);
+    light.m_path = p_path;
+    return entity;
+}
+
 ecs::Entity Scene::CreateInfiniteLightEntity(const std::string& p_name,
                                              const Vector3f& p_color,
                                              const float p_emissive) {
@@ -357,7 +375,7 @@ ecs::Entity Scene::CreateCylinderEntity(const std::string& p_name,
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
-    mesh = MakeCylinder(p_radius, p_height);
+    mesh = MakeCylinderMesh(p_radius, p_height);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
@@ -388,7 +406,7 @@ ecs::Entity Scene::CreateTorusEntity(const std::string& p_name,
     object.meshId = mesh_id;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
-    mesh = MakeTorus(p_radius, p_tube_radius);
+    mesh = MakeTorusMesh(p_radius, p_tube_radius);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;

@@ -75,11 +75,12 @@ Scene* CreateTheAviatorScene() {
 
 #pragma region SETUP_MATERIALS
     // colors
-    const Color red = Color::Hex(0xF25346);
+    // const Color red = Color::Hex(0xF25346);
+    const Color red = Color::Hex(0xCE190A);
     const Color white = Color::Hex(0XD8D0D1);
     const Color dark_brown = Color::Hex(0x23190F);
     const Color brown = Color::Hex(0x59332E);
-    const Color blue = Color::Hex(0X68C3C0);
+    const Color blue = Color::Hex(0X10A8A3);
     // Color pink = Color::Hex(0xF5986E);
 
     constexpr float default_roughness = 0.8f;
@@ -265,10 +266,7 @@ Scene* CreateTheAviatorScene() {
     }
     // ocean
     {
-        auto ocean = scene->CreateCylinderEntity("ocean",
-                                                 material_blue,
-                                                 OCEAN_RADIUS,
-                                                 320.0f);
+        auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeCylinderMesh(OCEAN_RADIUS, 320.0f, 60, 16));
         auto transform = scene->GetComponent<TransformComponent>(ocean);
         transform->RotateX(Degree(90.0f));
         transform->RotateZ(Degree(90.0f));
@@ -309,6 +307,11 @@ Scene* CreateTheAviatorScene() {
         create_cloud(cloud_index, cloud);
     }
 #pragma endregion SETUP_SKY
+
+    {
+        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/sky.hdr");
+        scene->AttachChild(sky_light, root);
+    }
 
     return scene;
 }

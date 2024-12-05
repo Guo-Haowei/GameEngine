@@ -92,6 +92,7 @@ private:
     REGISTER_COMPONENT(ForceFieldComponent, 0);
     REGISTER_COMPONENT(ScriptComponent, 0);
     REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
+    REGISTER_COMPONENT(HemisphereLightComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
@@ -127,6 +128,9 @@ public:
     ecs::Entity CreateAreaLightEntity(const std::string& p_name,
                                       const Vector3f& p_color = Vector3f(1),
                                       const float p_emissive = 5.0f);
+
+    ecs::Entity CreateHemisphereLightEntity(const std::string& p_name,
+                                            const std::string& p_path);
 
     ecs::Entity CreateInfiniteLightEntity(const std::string& p_name,
                                           const Vector3f& p_color = Vector3f(1),
