@@ -11,7 +11,7 @@ void CameraController::Move(float p_delta_time, PerspectiveCameraComponent& p_ca
     // @TODO: get rid off the magic numbers
     const bool moved = p_move.x || p_move.y || p_move.z || p_scroll != 0.0f;
     if (moved) {
-        float move_speed = 10 * p_delta_time;
+        float move_speed = 20 * p_delta_time;
         float dx = (float)p_move.x;
         float dy = (float)p_move.y;
         float dz = (float)p_move.z;
