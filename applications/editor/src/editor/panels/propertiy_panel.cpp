@@ -116,6 +116,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     ParticleEmitterComponent* emitter_component = p_scene.GetComponent<ParticleEmitterComponent>(id);
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
     ScriptComponent* script_component = p_scene.GetComponent<ScriptComponent>(id);
+    PerspectiveCameraComponent* perspective_camera = p_scene.GetComponent<PerspectiveCameraComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -244,12 +245,42 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         }
     });
 
-    DrawComponent("Object", object_component, [&](ObjectComponent& object) {
-        bool hide = !(object.flags & ObjectComponent::RENDERABLE);
-        bool cast_shadow = object.flags & ObjectComponent::CAST_SHADOW;
+    DrawComponent("PerspectiveCamera", perspective_camera, [&](PerspectiveCameraComponent& p_camera) {
+        {
+            const bool is_editor = p_camera.IsEditor();
+            bool is_main = p_camera.IsMain();
+            ImGui::BeginDisabled(is_editor);
+            if (ImGui::Checkbox("main camera", &is_main)) {
+                p_camera.SetMain(is_main);
+            }
+            ImGui::EndDisabled();
+        }
+        {
+            float near = p_camera.GetNear();
+            if (DrawDragFloat("near", near, 0.1f, 0.1f, 1.0f)) {
+                p_camera.SetNear(near);
+            }
+        }
+        {
+            float far = p_camera.GetFar();
+            if (DrawDragFloat("far", far, 1.0f, 10.0f, 10000.0f)) {
+                p_camera.SetFar(far);
+            }
+        }
+        {
+            float fovy = p_camera.GetFovy().GetDegree();
+            if (DrawDragFloat("fov", fovy, 0.1f, 30.0f, 120.0f)) {
+                p_camera.SetFovy(Degree(fovy));
+            }
+        }
+    });
+
+    DrawComponent("Object", object_component, [&](ObjectComponent& p_object) {
+        bool hide = !(p_object.flags & ObjectComponent::RENDERABLE);
+        bool cast_shadow = p_object.flags & ObjectComponent::CAST_SHADOW;
         ImGui::Checkbox("Hide", &hide);
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        object.flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
+        p_object.flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
     });
 
     DrawComponent("Mesh", mesh_component, [&](MeshComponent& mesh) {

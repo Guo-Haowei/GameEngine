@@ -7,6 +7,7 @@
 namespace my {
 
 enum class AssetType : uint8_t {
+    NONE,
     IMAGE,
     BUFFER,
     TEXT,

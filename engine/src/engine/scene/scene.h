@@ -5,7 +5,6 @@
 #include "engine/core/systems/component_manager.h"
 #include "engine/scene/scene_component.h"
 // @TODO: refactor all components
-#include "engine/scene/camera.h"
 #include "engine/scene/collider_component.h"
 #include "engine/scene/force_field_component.h"
 #include "engine/scene/hierarchy_component.h"
@@ -92,6 +91,7 @@ private:
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
     REGISTER_COMPONENT(ForceFieldComponent, 0);
     REGISTER_COMPONENT(ScriptComponent, 0);
+    REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
@@ -102,11 +102,16 @@ public:
 
     void Merge(Scene& p_other);
 
-    void CreateCamera(int p_width,
-                      int p_height,
-                      float p_near_plane = Camera::DEFAULT_NEAR,
-                      float p_far_plane = Camera::DEFAULT_FAR,
-                      Degree p_fovy = Camera::DEFAULT_FOVY);
+    ecs::Entity GetMainCamera();
+
+    ecs::Entity GetEditorCamera();
+
+    ecs::Entity CreatePerspectiveCameraEntity(const std::string& p_name,
+                                              int p_width,
+                                              int p_height,
+                                              float p_near_plane = PerspectiveCameraComponent::DEFAULT_NEAR,
+                                              float p_far_plane = PerspectiveCameraComponent::DEFAULT_FAR,
+                                              Degree p_fovy = PerspectiveCameraComponent::DEFAULT_FOVY);
 
     ecs::Entity CreateNameEntity(const std::string& p_name);
     ecs::Entity CreateTransformEntity(const std::string& p_name);
@@ -146,8 +151,8 @@ public:
                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateMeshEntity(const std::string& p_name,
-                                 MeshComponent&& p_mesh,
-                                 ecs::Entity p_material_id);
+                                 ecs::Entity p_material_id,
+                                 MeshComponent&& p_mesh);
 
     ecs::Entity CreateSphereEntity(const std::string& p_name,
                                    float p_radius = 0.5f,
@@ -202,7 +207,6 @@ public:
     ecs::Entity m_root;
     ecs::Entity m_selected;
     float m_elapsedTime = 0.0f;
-    std::shared_ptr<Camera> m_camera;
     bool m_replace = false;
 
 private:

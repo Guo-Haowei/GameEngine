@@ -3,12 +3,13 @@
 #include "engine/core/framework/module.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/sampler.h"
-#include "engine/scene/scene.h"
 
 // @TODO: remove this class
 #include "engine/core/framework/graphics_manager.h"
 
 namespace my {
+
+class Scene;
 
 using PointShadowHandle = int;
 constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;

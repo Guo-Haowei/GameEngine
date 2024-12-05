@@ -14,12 +14,13 @@
 
 // @TODO: refactor
 #include "cbuffer.hlsl.h"
-#include "engine/scene/scene.h"
 struct MaterialConstantBuffer;
 using my::renderer::RenderPass;
 
 namespace my {
 
+struct MeshComponent;
+class Scene;
 struct ImageAsset;
 
 // @TODO: refactor

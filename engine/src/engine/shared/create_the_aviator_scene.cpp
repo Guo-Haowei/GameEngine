@@ -1,9 +1,24 @@
+#include "engine/core/base/random.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/color.h"
 #include "engine/core/math/geometry.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/scene/scene.h"
 
 namespace my {
+
+static constexpr float OCEAN_RADIUS = 240.0f;
+static constexpr int CLOUD_COUNT = 20;
+
+// @TODO:
+// 1. cascaded shadow map
+// 2. alpha blending
+// 3. sky light
+// 4. collision
+// 5. fog
+// 6. custom shader
+// 7. dynamic buffer
+// 8. 2D UI
 
 Scene* CreateTheAviatorScene() {
     const std::array<Vector3f, 8> cockpit_points = {
@@ -17,23 +32,34 @@ Scene* CreateTheAviatorScene() {
         Vector3f(+4.f, +2.5f, -2.5f),  // H
     };
 
-    // colors
-    const auto red = Color::Hex(0xF25346);
-    const auto white = Color::Hex(0XD8D0D1);
-    const auto dark_brown = Color::Hex(0x23190F);
-    const auto brown = Color::Hex(0x59332E);
-    // auto pink = Color::Hex(0xF5986E);
-    // auto blue = Color::Hex(0X68C3C0);
+    const float plane_height = 20.0f + OCEAN_RADIUS;
 
     ecs::Entity::SetSeed();
 
     Scene* scene = new Scene;
 
-    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    scene->CreateCamera(frame_size.x, frame_size.y);
-
-    auto root = scene->CreateTransformEntity("world");
+    auto root = scene->CreateTransformEntity("root");
     scene->m_root = root;
+
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    // editor camera
+    {
+        auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
+        auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
+        DEV_ASSERT(camera);
+        camera->SetPosition(Vector3f(0, plane_height, 80));
+        camera->SetEditor();
+        scene->AttachChild(editor_camera, root);
+    }
+    // main camera
+    {
+        auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
+        auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
+        DEV_ASSERT(camera);
+        camera->SetPosition(Vector3f(0, plane_height, 100));
+        camera->SetMain();
+        scene->AttachChild(main_camera, root);
+    }
 
     // create light
     auto light = scene->CreateInfiniteLightEntity("sun");
@@ -47,38 +73,69 @@ Scene* CreateTheAviatorScene() {
         light_component->SetCastShadow();
     }
 
+#pragma region SETUP_MATERIALS
+    // colors
+    const Color red = Color::Hex(0xF25346);
+    const Color white = Color::Hex(0XD8D0D1);
+    const Color dark_brown = Color::Hex(0x23190F);
+    const Color brown = Color::Hex(0x59332E);
+    const Color blue = Color::Hex(0X68C3C0);
+    // Color pink = Color::Hex(0xF5986E);
+
+    constexpr float default_roughness = 0.8f;
+    constexpr float default_metallic = 0.2f;
     ecs::Entity material_red = scene->CreateMaterialEntity("material_red");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_red);
         material->baseColor = red.ToVector4f();
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
     }
     ecs::Entity material_white = scene->CreateMaterialEntity("material_white");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_white);
         material->baseColor = white.ToVector4f();
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
     }
     ecs::Entity material_dark_brown = scene->CreateMaterialEntity("material_dark_brown");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_dark_brown);
         material->baseColor = dark_brown.ToVector4f();
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
     }
     ecs::Entity material_brown = scene->CreateMaterialEntity("material_brown");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_brown);
         material->baseColor = brown.ToVector4f();
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
     }
+    ecs::Entity material_blue = scene->CreateMaterialEntity("material_blue");
+    {
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_blue);
+        material->baseColor = blue.ToVector4f();
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
+    }
+#pragma endregion SETUP_MATERIALS
 
+#pragma region SETUP_PLANE
     // create plane
     auto plane = scene->CreateTransformEntity("plane");
     {
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(plane);
+        transform->Translate(Vector3f(0.0f, plane_height, 0.0f));
+
         scene->AttachChild(plane, root);
         auto& script = scene->Create<ScriptComponent>(plane);
         script.SetScript("@res://scripts/plane.lua");
     }
     {
         auto cockpit = scene->CreateMeshEntity("cockpit",
-                                               MakeCubeMesh(cockpit_points),
-                                               material_red);
+                                               material_red,
+                                               MakeCubeMesh(cockpit_points));
         scene->AttachChild(cockpit, plane);
     }
     {
@@ -168,31 +225,90 @@ Scene* CreateTheAviatorScene() {
                                               glm::translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         scene->AttachChild(tire_4, plane);
     }
-    // @TODO: CreateConeEntity
-    auto propeller = scene->CreateCylinderEntity("propeller",
-                                                 material_brown,
-                                                 0.5f,
-                                                 0.5f,
-                                                 glm::translate(Vector3f(6.0f, 0.0f, 0.0f)));
+
+    auto propeller = scene->CreateTransformEntity("propeller");
     {
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(propeller);
+        transform->Translate(Vector3f(6.0f, 0.0f, 0.0f));
         scene->AttachChild(propeller, plane);
         auto& script = scene->Create<ScriptComponent>(propeller);
         script.SetScript("@res://scripts/propeller.lua");
     }
     {
+        auto pivot = scene->CreateMeshEntity("pivot",
+                                             material_brown,
+                                             MakeConeMesh(0.4f, 2.0f, 8));
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(pivot);
+        transform->RotateZ(Degree(90.0f));
+        scene->AttachChild(pivot, propeller);
+    }
+    {
         auto blade1 = scene->CreateCubeEntity("blade1",
                                               material_dark_brown,
                                               Vector3f(0.2f, 4.0f, 0.2f),
-                                              glm::translate(Vector3f(0.8f, 0.0f, 0.0f)));
+                                              glm::translate(Vector3f(0.4f, 0.0f, 0.0f)));
         scene->AttachChild(blade1, propeller);
     }
     {
         auto blade2 = scene->CreateCubeEntity("blade2",
                                               material_dark_brown,
                                               Vector3f(0.2f, 0.2f, 4.0f),
-                                              glm::translate(Vector3f(0.8f, 0.0f, 0.0f)));
+                                              glm::translate(Vector3f(0.4f, 0.0f, 0.0f)));
         scene->AttachChild(blade2, propeller);
     }
+
+    auto world = scene->CreateTransformEntity("world");
+    {
+        scene->AttachChild(world, root);
+        auto& script = scene->Create<ScriptComponent>(world);
+        script.SetScript("@res://scripts/world.lua");
+    }
+    // ocean
+    {
+        auto ocean = scene->CreateCylinderEntity("ocean",
+                                                 material_blue,
+                                                 OCEAN_RADIUS,
+                                                 320.0f);
+        auto transform = scene->GetComponent<TransformComponent>(ocean);
+        transform->RotateX(Degree(90.0f));
+        transform->RotateZ(Degree(90.0f));
+        scene->AttachChild(ocean, world);
+    }
+#pragma endregion SETUP_PLANE
+
+#pragma region SETUP_SKY
+    constexpr float TWO_PI = 2.0f * glm::pi<float>();
+    auto create_cloud = [&](int p_index, ecs::Entity p_parent) {
+        int block = 3 + static_cast<int>(glm::floor(Random::Float() * 3));
+        for (int block_index = 0; block_index < block; ++block_index) {
+            std::string name = std::format("block_{}_{}", p_index, block_index);
+            const float scale = 0.6f + Random::Float() * 0.4f;
+            auto cloud = scene->CreateCubeEntity(name, material_white, Vector3f(5.0f * scale));
+            auto transform = scene->GetComponent<TransformComponent>(cloud);
+            Vector3f position(block_index * 6.0f, Random::Float() * 6.0f, Random::Float() * 6.0f);
+            Vector3f rotation(0.0f, TWO_PI * Random::Float(), TWO_PI * Random::Float());
+            transform->Rotate(rotation);
+            transform->SetTranslation(position);
+
+            scene->AttachChild(cloud, p_parent);
+        }
+    };
+
+    constexpr float step_angle = TWO_PI / CLOUD_COUNT;
+    for (int cloud_index = 0; cloud_index < CLOUD_COUNT; ++cloud_index) {
+        const float angle = step_angle * cloud_index;
+        std::string name = std::format("cloud_{}", cloud_index);
+        auto cloud = scene->CreateTransformEntity(name);
+        scene->AttachChild(cloud, world);
+
+        auto transform = scene->GetComponent<TransformComponent>(cloud);
+        const float x = glm::sin(angle) * (OCEAN_RADIUS + 40.0f);
+        const float y = glm::cos(angle) * (OCEAN_RADIUS + 40.0f);
+        Matrix4x4f matrix = glm::translate(Vector3f(x, y, -50.0f)) * glm::rotate(angle, Vector3f(0, 0, -1));
+        transform->SetLocalTransform(matrix);
+        create_cloud(cloud_index, cloud);
+    }
+#pragma endregion SETUP_SKY
 
     return scene;
 }

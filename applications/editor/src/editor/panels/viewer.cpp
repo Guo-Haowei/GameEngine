@@ -37,7 +37,7 @@ void Viewer::UpdateData() {
     m_focused = ImGui::IsWindowHovered();
 }
 
-void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
+void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_camera) {
     if (!m_focused) {
         return;
     }
@@ -66,7 +66,7 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
     }
 }
 
-void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
+void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
     const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
 
@@ -187,7 +187,27 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
 }
 
 void Viewer::UpdateInternal(Scene& p_scene) {
-    Camera& camera = *p_scene.m_camera;
+    auto mode = m_editor.GetApplication()->GetState();
+    ecs::Entity camera_id;
+    switch (mode) {
+        case Application::State::EDITING:
+            camera_id = p_scene.GetEditorCamera();
+            break;
+        case Application::State::SIM:
+            camera_id = p_scene.GetMainCamera();
+            break;
+        case Application::State::BEGIN_SIM:
+            break;
+        case Application::State::END_SIM:
+            break;
+        default:
+            break;
+    }
+    PerspectiveCameraComponent* camera = nullptr;
+    if (camera_id.IsValid()) {
+        camera = p_scene.GetComponent<PerspectiveCameraComponent>(camera_id);
+    }
+    DEV_ASSERT(camera);
 
     ImGui::Dummy(ImGui::GetContentRegionAvail());
     if (ImGui::BeginDragDropTarget()) {
@@ -271,12 +291,12 @@ void Viewer::UpdateInternal(Scene& p_scene) {
     }
 
     if (m_focused) {
-        m_cameraController.Move(p_scene.m_elapsedTime, camera, delta_camera, mouse_scroll);
+        m_cameraController.Move(p_scene.m_elapsedTime, *camera, delta_camera, mouse_scroll);
     }
 
-    SelectEntity(p_scene, camera);
+    SelectEntity(p_scene, *camera);
 
-    DrawGui(p_scene, camera);
+    DrawGui(p_scene, *camera);
 }
 
 }  // namespace my

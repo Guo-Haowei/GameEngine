@@ -1,15 +1,17 @@
 #include "camera_controller.h"
 
 #include "engine/core/framework/input_manager.h"
+#include "engine/core/math/angle.h"
+#include "engine/scene/scene_component.h"
 
 namespace my {
 
-void CameraController::Move(float p_delta_time, Camera& p_camera, Vector3i& p_move, float p_scroll) {
+void CameraController::Move(float p_delta_time, PerspectiveCameraComponent& p_camera, Vector3i& p_move, float p_scroll) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
     const bool moved = p_move.x || p_move.y || p_move.z || p_scroll != 0.0f;
     if (moved) {
-        float move_speed = 10 * p_delta_time;
+        float move_speed = 20 * p_delta_time;
         float dx = (float)p_move.x;
         float dy = (float)p_move.y;
         float dz = (float)p_move.z;

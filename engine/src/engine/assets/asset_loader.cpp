@@ -6,6 +6,7 @@
 #include "engine/core/string/string_utils.h"
 #include "engine/lua_binding/lua_scene_binding.h"
 #include "engine/renderer/pixel_format.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 
@@ -157,6 +158,9 @@ auto SceneLoader::Load() -> Result<IAsset*> {
 }
 
 auto LuaSceneLoader::Load() -> Result<IAsset*> {
+    CRASH_NOW();
+    return HBN_ERROR(ErrorCode::FAILURE, "not implemented");
+#if 0
     Scene* scene = new Scene;
     Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     scene->CreateCamera(frame_size.x, frame_size.y);
@@ -168,6 +172,7 @@ auto LuaSceneLoader::Load() -> Result<IAsset*> {
         return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", m_filePath);
     }
     return scene;
+#endif
 }
 
 #if 0

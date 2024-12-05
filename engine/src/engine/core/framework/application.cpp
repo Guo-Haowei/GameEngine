@@ -246,7 +246,28 @@ void Application::Run() {
         }
 
         m_activeScene->Update(elapsed_time);
-        renderer::RequestScene(*m_activeScene);
+        ecs::Entity camera;
+        switch (m_state) {
+            case Application::State::EDITING:
+                camera = m_activeScene->GetEditorCamera();
+                break;
+            case Application::State::SIM:
+                camera = m_activeScene->GetMainCamera();
+                break;
+            case Application::State::BEGIN_SIM:
+                break;
+            case Application::State::END_SIM:
+                break;
+            default:
+                break;
+        }
+        PerspectiveCameraComponent* perspective_camera = nullptr;
+        if (camera.IsValid()) {
+            perspective_camera = m_activeScene->GetComponent<PerspectiveCameraComponent>(camera);
+        } else {
+            CRASH_NOW();
+        }
+        renderer::RequestScene(*perspective_camera, *m_activeScene);
 
         // @TODO: refactor this
         if (m_imguiManager) {
@@ -309,7 +330,7 @@ Scene* Application::CreateInitialScene() {
     Scene* scene = new Scene;
 
     Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    scene->CreateCamera(frame_size.x, frame_size.y);
+    scene->CreatePerspectiveCameraEntity("default camera", frame_size.x, frame_size.y);
 
     auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;

@@ -1,6 +1,6 @@
 #pragma once
+#include "engine/assets/asset.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/scene/scene.h"
 
 namespace my {
 

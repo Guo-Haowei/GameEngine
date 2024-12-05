@@ -11,9 +11,15 @@ MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points);
 MeshComponent MakeSphereMesh(float p_radius,
                              int p_rings = 60,
                              int p_sectors = 60);
+
 MeshComponent MakeCylinder(float p_radius,
                            float p_height,
                            int p_sectors = 60);
+
+MeshComponent MakeConeMesh(float p_radius,
+                           float p_height,
+                           int p_sectors = 60);
+
 MeshComponent MakeTorus(float p_radius,
                         float p_tube_radius,
                         int p_sectors = 60,

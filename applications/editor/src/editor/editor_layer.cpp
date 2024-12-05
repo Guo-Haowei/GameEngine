@@ -134,7 +134,7 @@ void EditorLayer::AddPanel(std::shared_ptr<EditorItem> p_panel) {
 void EditorLayer::SelectEntity(ecs::Entity p_selected) {
     m_selected = p_selected;
     // TODO: fix this, shouldn't fetch globally
-    // SceneManager::GetScene().m_selected = m_selected;
+    SceneManager::GetSingleton().GetScenePtr()->m_selected = m_selected;
     LOG_ERROR("TODO: fix select entity");
 }
 

@@ -8,6 +8,7 @@
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/os/timer.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 

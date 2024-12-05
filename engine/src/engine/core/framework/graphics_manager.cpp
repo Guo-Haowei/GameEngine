@@ -15,6 +15,7 @@
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_manager.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scene.h"
 #include "shader_resource_defines.hlsl.h"
 
 #if USING(PLATFORM_WINDOWS)
