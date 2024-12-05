@@ -13,8 +13,8 @@ protected:
 
 private:
     void UpdateData();
-    void SelectEntity(Scene& p_scene, const Camera& p_camera);
-    void DrawGui(Scene& p_scene, Camera& p_camera);
+    void SelectEntity(Scene& p_scene, const CameraComponent& p_camera);
+    void DrawGui(Scene& p_scene, CameraComponent& p_camera);
 
     Vector2f m_canvasMin;
     Vector2f m_canvasSize;

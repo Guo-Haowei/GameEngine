@@ -37,7 +37,7 @@ void Viewer::UpdateData() {
     m_focused = ImGui::IsWindowHovered();
 }
 
-void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
+void Viewer::SelectEntity(Scene& p_scene, const CameraComponent& p_camera) {
     if (!m_focused) {
         return;
     }
@@ -66,7 +66,7 @@ void Viewer::SelectEntity(Scene& p_scene, const Camera& p_camera) {
     }
 }
 
-void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
+void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
     const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
     const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
 
@@ -187,7 +187,11 @@ void Viewer::DrawGui(Scene& p_scene, Camera& p_camera) {
 }
 
 void Viewer::UpdateInternal(Scene& p_scene) {
-    Camera& camera = *p_scene.m_camera;
+    CRASH_NOW();
+#if 0
+    CameraComponent& camera = *p_scene.m_camera;
+#endif
+    CameraComponent camera;
 
     ImGui::Dummy(ImGui::GetContentRegionAvail());
     if (ImGui::BeginDragDropTarget()) {

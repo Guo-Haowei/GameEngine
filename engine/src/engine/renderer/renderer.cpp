@@ -19,11 +19,11 @@ void BeginFrame() {
 void EndFrame() {
 }
 
-void RequestScene(Scene& p_scene) {
+void RequestScene(const CameraComponent& p_camera, Scene& p_scene) {
     g_renderData = new RenderData();
     RenderDataConfig config(p_scene);
     config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-    PrepareRenderData(*p_scene.m_camera.get(), config, *g_renderData);
+    PrepareRenderData(p_camera, config, *g_renderData);
 }
 
 const RenderData* GetRenderData() {

@@ -246,7 +246,9 @@ void Application::Run() {
         }
 
         m_activeScene->Update(elapsed_time);
-        renderer::RequestScene(*m_activeScene);
+        CRASH_NOW();
+        CameraComponent camera;
+        renderer::RequestScene(camera, *m_activeScene);
 
         // @TODO: refactor this
         if (m_imguiManager) {

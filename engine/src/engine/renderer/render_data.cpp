@@ -5,7 +5,6 @@
 #include "engine/core/math/matrix_transform.h"
 #include "engine/renderer/graphics_defines.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/scene/camera.h"
 #include "engine/scene/scene.h"
 
 // @TODO: remove
@@ -450,7 +449,7 @@ static void FillEmitterBuffer(const RenderDataConfig& p_config,
     }
 }
 
-void PrepareRenderData(const Camera& p_camera,
+void PrepareRenderData(const CameraComponent& p_camera,
                        const RenderDataConfig& p_config,
                        RenderData& p_out_data) {
     // fill camera

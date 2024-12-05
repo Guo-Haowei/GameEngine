@@ -1,6 +1,7 @@
 #pragma once
 
 namespace my {
+class CameraComponent;
 class Scene;
 }
 
@@ -12,7 +13,7 @@ void BeginFrame();
 
 void EndFrame();
 
-void RequestScene(Scene& p_scene);
+void RequestScene(const CameraComponent& p_camera, Scene& p_scene);
 
 const RenderData* GetRenderData();
 

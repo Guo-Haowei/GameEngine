@@ -5,7 +5,6 @@
 #include "engine/core/systems/component_manager.h"
 #include "engine/scene/scene_component.h"
 // @TODO: refactor all components
-#include "engine/scene/camera.h"
 #include "engine/scene/collider_component.h"
 #include "engine/scene/force_field_component.h"
 #include "engine/scene/hierarchy_component.h"
@@ -92,6 +91,7 @@ private:
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
     REGISTER_COMPONENT(ForceFieldComponent, 0);
     REGISTER_COMPONENT(ScriptComponent, 0);
+    REGISTER_COMPONENT(CameraComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
@@ -104,9 +104,9 @@ public:
 
     void CreateCamera(int p_width,
                       int p_height,
-                      float p_near_plane = Camera::DEFAULT_NEAR,
-                      float p_far_plane = Camera::DEFAULT_FAR,
-                      Degree p_fovy = Camera::DEFAULT_FOVY);
+                      float p_near_plane = CameraComponent::DEFAULT_NEAR,
+                      float p_far_plane = CameraComponent::DEFAULT_FAR,
+                      Degree p_fovy = CameraComponent::DEFAULT_FOVY);
 
     ecs::Entity CreateNameEntity(const std::string& p_name);
     ecs::Entity CreateTransformEntity(const std::string& p_name);
@@ -202,7 +202,6 @@ public:
     ecs::Entity m_root;
     ecs::Entity m_selected;
     float m_elapsedTime = 0.0f;
-    std::shared_ptr<Camera> m_camera;
     bool m_replace = false;
 
 private:
