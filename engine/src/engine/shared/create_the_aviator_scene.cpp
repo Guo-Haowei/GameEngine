@@ -32,7 +32,7 @@ Scene* CreateTheAviatorScene() {
         Vector3f(+4.f, +2.5f, -2.5f),  // H
     };
 
-    const float plane_height = 20.0f + OCEAN_RADIUS;
+    const float plane_height = 20.0f;
 
     ecs::Entity::SetSeed();
 
@@ -261,8 +261,15 @@ Scene* CreateTheAviatorScene() {
     auto world = scene->CreateTransformEntity("world");
     {
         scene->AttachChild(world, root);
+        auto transform = scene->GetComponent<TransformComponent>(world);
+        transform->Translate(Vector3f(0.0f, -OCEAN_RADIUS, 0.0f));
+    }
+
+    auto earth = scene->CreateTransformEntity("earth");
+    {
         auto& script = scene->Create<ScriptComponent>(world);
         script.SetScript("@res://scripts/world.lua");
+        scene->AttachChild(earth, world);
     }
     // ocean
     {
@@ -270,7 +277,7 @@ Scene* CreateTheAviatorScene() {
         auto transform = scene->GetComponent<TransformComponent>(ocean);
         transform->RotateX(Degree(90.0f));
         transform->RotateZ(Degree(90.0f));
-        scene->AttachChild(ocean, world);
+        scene->AttachChild(ocean, earth);
     }
 #pragma endregion SETUP_PLANE
 
@@ -297,7 +304,7 @@ Scene* CreateTheAviatorScene() {
         const float angle = step_angle * cloud_index;
         std::string name = std::format("cloud_{}", cloud_index);
         auto cloud = scene->CreateTransformEntity(name);
-        scene->AttachChild(cloud, world);
+        scene->AttachChild(cloud, earth);
 
         auto transform = scene->GetComponent<TransformComponent>(cloud);
         const float x = glm::sin(angle) * (OCEAN_RADIUS + 40.0f);

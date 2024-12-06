@@ -265,6 +265,16 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                        });
 
+    CREATE_PSO(PSO_ENV_SKYBOX, {
+                                   .vs = "skybox.vs",
+                                   .ps = "skybox.ps",
+                                   .rasterizerDesc = &s_rasterizerFrontFace,
+                                   .depthStencilDesc = &s_depthStencilDefault,
+                                   .inputLayoutDesc = &s_inputLayoutMesh,
+                                   .blendDesc = &s_blendStateDefault,
+                                   .numRenderTargets = 1,
+                               });
+
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
@@ -320,14 +330,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .depthStencilDesc = &s_depthStencilDefault,
                                   .blendDesc = &s_blendStateDefault,
                               });
-    CREATE_PSO(PSO_ENV_SKYBOX, {
-                                   .vs = "skybox.vs",
-                                   .ps = "skybox.ps",
-                                   .rasterizerDesc = &s_rasterizerFrontFace,
-                                   .depthStencilDesc = &s_depthStencilDefault,
-                                   //.depthStencilDesc = &s_skyboxDepthStencil,
-                                   .blendDesc = &s_blendStateDefault,
-                               });
     CREATE_PSO(PSO_BRDF, {
                              .vs = "screenspace_quad.vs",
                              .ps = "brdf.ps",

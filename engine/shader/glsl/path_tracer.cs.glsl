@@ -247,9 +247,8 @@ vec3 RayColor(inout Ray ray, inout uint state) {
             throughput *= diffuseColor;
 
         } else {
-            //vec2 uv = SampleSphericalMap(normalize(ray.direction));
-            //radiance += texture(envTexture, uv).rgb * throughput;
-            radiance += vec3(0.2) * throughput;
+            vec2 uv = SampleSphericalMap(normalize(ray.direction));
+            radiance += texture(c_hdrEnvMap, uv).rgb * throughput;
             // radiance += vec3(0.5, 0.7, 1.0) * throughput;
             break;
         }

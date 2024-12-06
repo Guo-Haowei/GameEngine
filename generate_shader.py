@@ -29,6 +29,8 @@ input_shaders = [
     'particle_simulation.cs',
     'shadowmap_point.vs',
     'shadowmap_point.ps',
+    'skybox.vs',
+    'skybox.ps',
     'shadow.vs',
     'tone.ps',
     # 'voxelization_post.cs',
