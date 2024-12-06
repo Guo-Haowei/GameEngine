@@ -50,6 +50,12 @@ static const DepthStencilDesc s_depthStencilDefault = {
     .stencilEnabled = false,
 };
 
+static const DepthStencilDesc s_skyboxDepthStencil = {
+    .depthEnabled = false,
+    .depthFunc = ComparisonFunc::ALWAYS,
+    .stencilEnabled = false,
+};
+
 static const DepthStencilDesc s_noDepthStencil = {
     .depthEnabled = false,
     .depthFunc = ComparisonFunc::NEVER,
@@ -319,6 +325,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .ps = "skybox.ps",
                                    .rasterizerDesc = &s_rasterizerFrontFace,
                                    .depthStencilDesc = &s_depthStencilDefault,
+                                   //.depthStencilDesc = &s_skyboxDepthStencil,
                                    .blendDesc = &s_blendStateDefault,
                                });
     CREATE_PSO(PSO_BRDF, {

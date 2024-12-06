@@ -32,7 +32,7 @@ class CompositeLogger : public ILogger, public Singleton<CompositeLogger> {
 public:
     enum {
         MAX_LOGS_KEPT = 128,
-        PER_LOG_STRUCT_SIZE = 256,
+        PER_LOG_STRUCT_SIZE = 512,
     };
 
     struct Log {

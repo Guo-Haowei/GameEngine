@@ -420,17 +420,17 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
+    // @TODO: fix skybox
+    if (gm.GetBackend() == Backend::OPENGL) {
+        GraphicsManager::GetSingleton().SetPipelineState(PSO_ENV_SKYBOX);
+        RenderManager::GetSingleton().draw_skybox();
+    }
+
     // if (0) {
     //     // draw billboard grass here for now
     //     manager.SetPipelineState(PSO_BILLBOARD);
     //     manager.setMesh(&g_grass);
     //     glDrawElementsInstanced(GL_TRIANGLES, g_grass.index_count, GL_UNSIGNED_INT, 0, 64);
-    // }
-
-    // @TODO: fix skybox
-    // if (gm.GetBackend() == Backend::OPENGL) {
-    //     GraphicsManager::GetSingleton().SetPipelineState(PSO_ENV_SKYBOX);
-    //     RenderManager::GetSingleton().draw_skybox();
     // }
 }
 
@@ -462,6 +462,7 @@ void RenderPassCreator::AddLightingPass() {
     auto pass = m_graph.CreatePass(desc);
     auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { lighting_attachment },
+        .depthAttachment = gbuffer_depth,
         .transitions = {
             ResourceTransition{
                 .resource = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
@@ -651,7 +652,7 @@ void RenderPassCreator::AddBloomPass() {
         LOG_WARN("bloom size {}x{}", width, height);
 
         GpuTextureDesc texture_desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
-                                                              PixelFormat::R11G11B10_FLOAT,
+                                                              PixelFormat::R16G16B16A16_FLOAT,
                                                               AttachmentType::COLOR_2D,
                                                               width, height);
         texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;

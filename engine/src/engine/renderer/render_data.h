@@ -99,6 +99,8 @@ struct RenderData {
 
     PassContext voxelPass;
     PassContext mainPass;
+
+    bool bakeEnvMap;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

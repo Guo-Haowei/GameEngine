@@ -206,7 +206,12 @@ public:
 
     std::string& GetPathRef() { return m_path; }
 
+    const ImageAsset* GetAsset() const { return m_asset; }
+
     void Serialize(Archive& p_archive, uint32_t p_version);
+
+    // @TODO: fix
+    bool hack_generated = false;
 
 private:
     std::string m_path;

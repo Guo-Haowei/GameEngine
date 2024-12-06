@@ -465,7 +465,9 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
-    D3D_FAIL_V(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
+    if (FAILED(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()))) {
+        return nullptr;
+    }
     SetDebugName(texture.Get(), debug_name);
 
     if (p_texture_desc.initialData) {

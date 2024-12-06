@@ -224,6 +224,28 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_o
 
     cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_HIGHLIGHT_SELECT));
     cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
+
+    // check if necessary to back environment
+    {
+        p_out_data.bakeEnvMap = false;
+        for (auto [entity, hemisphere_light] : p_config.scene.m_HemisphereLightComponents) {
+            {
+                auto asset = hemisphere_light.GetAsset();
+                if (asset && asset->gpu_texture) {
+                    // @TODO: fix this
+                    g_constantCache.cache.c_hdrEnvMap.handle_gl = asset->gpu_texture->GetResidentHandle();
+                    g_constantCache.cache.c_envMap.handle_gl = asset->gpu_texture->GetResidentHandle();
+                    g_constantCache.cache.c_hdrEnvMap.handle_gl = asset->gpu_texture->GetResidentHandle();
+
+                    g_constantCache.update();
+                }
+            }
+            if (hemisphere_light.hack_generated)
+            {
+                p_out_data.bakeEnvMap = true;
+            }
+        }
+    }
 }
 
 static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_data) {

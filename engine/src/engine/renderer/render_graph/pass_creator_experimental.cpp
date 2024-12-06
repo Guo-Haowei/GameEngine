@@ -18,9 +18,8 @@ extern OpenGlMeshBuffers* g_box;
 
 namespace my::renderer {
 
-void hdr_to_cube_map_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
-    bool skip = true;
-    if (skip) {
+void hdr_to_cube_map_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
+    if (!p_data.bakeEnvMap) {
         return;
     }
     OPTICK_EVENT();
@@ -63,9 +62,8 @@ void generate_brdf_func(const RenderData&, const DrawPass* p_draw_pass) {
     RenderManager::GetSingleton().draw_quad();
 }
 
-void diffuse_irradiance_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
-    bool skip = true;
-    if (skip) {
+void diffuse_irradiance_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
+    if (!p_data.bakeEnvMap) {
         return;
     }
     OPTICK_EVENT();
@@ -87,9 +85,8 @@ void diffuse_irradiance_pass_func(const RenderData&, const DrawPass* p_draw_pass
     }
 }
 
-void prefilter_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
-    bool skip = true;
-    if (skip) {
+void prefilter_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
+    if (!p_data.bakeEnvMap) {
         return;
     }
     OPTICK_EVENT();
@@ -214,7 +211,7 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
 
         auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_texture_desc = BuildDefaultTextureDesc(cube_map_name,
-                                                             PixelFormat::R16G16B16_FLOAT,
+                                                             PixelFormat::R16G16B16A16_FLOAT,
                                                              AttachmentType::COLOR_CUBE,
                                                              size, size, 6);
             cube_texture_desc.miscFlags |= gen_mipmap ? RESOURCE_MISC_GENERATE_MIPS : RESOURCE_MISC_NONE;
