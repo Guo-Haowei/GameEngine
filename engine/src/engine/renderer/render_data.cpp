@@ -229,17 +229,10 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_o
     {
         p_out_data.bakeEnvMap = false;
         for (auto [entity, hemisphere_light] : p_config.scene.m_HemisphereLightComponents) {
-            {
-                auto asset = hemisphere_light.GetAsset();
-                if (asset && asset->gpu_texture) {
-                    // @TODO: fix this
-                    // g_constantCache.cache.c_hdrEnvMap.handle_gl = asset->gpu_texture->GetResidentHandle();
-                    // g_constantCache.cache.c_envMap.handle_gl = asset->gpu_texture->GetResidentHandle();
-                    // g_constantCache.cache.c_hdrEnvMap.handle_gl = asset->gpu_texture->GetResidentHandle();
-
-                    p_out_data.skyboxHdr = asset->gpu_texture;
-                    g_constantCache.update();
-                }
+            auto asset = hemisphere_light.GetAsset();
+            if (asset && asset->gpu_texture) {
+                cache.c_SkyboxHdrResidentHandle.Set32((uint32_t)asset->gpu_texture->GetResidentHandle());
+                p_out_data.skyboxHdr = asset->gpu_texture;
             }
             if (hemisphere_light.hack_generated) {
                 p_out_data.bakeEnvMap = true;

@@ -422,10 +422,10 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
 
     // @TODO: fix skybox
     if (p_data.skyboxHdr) {
-        gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetEnvMapHdrSlot());
+        gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         RenderManager::GetSingleton().draw_skybox();
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetEnvMapHdrSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
     }
 
     // if (0) {

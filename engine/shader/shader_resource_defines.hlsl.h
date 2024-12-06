@@ -26,7 +26,7 @@ DESCRIPTOR_SRV_LIST
     SRV(Texture2D, GbufferNormalMap, 12, RESOURCE_GBUFFER_NORMAL)        \
     SRV(Texture2D, GbufferMaterialMap, 13, RESOURCE_GBUFFER_MATERIAL)    \
     SRV(Texture2D, TextureLighting, 14, RESOURCE_LIGHTING)               \
-    SRV(Texture2D, EnvMapHdr, 15, RESOURCE_NONE)
+    SRV(Texture2D, SkyboxHdr, 15, RESOURCE_NONE)
 
 #if defined(HLSL_LANG_D3D11)
 #define SRV(TYPE, NAME, SLOT, BINDING) TYPE t_##NAME : register(t##SLOT);

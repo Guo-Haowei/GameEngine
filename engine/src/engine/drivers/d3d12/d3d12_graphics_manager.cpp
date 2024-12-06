@@ -667,7 +667,16 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
 
     if (initial_data) {
         // Create a temporary upload resource to move the data in
-        const uint32_t upload_pitch = math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+        uint32_t byte_width = 1;
+        switch (p_texture_desc.format) {
+            case PixelFormat::R32G32B32_FLOAT:
+            case PixelFormat::R32G32B32A32_FLOAT:
+                byte_width = 4;
+                break;
+            default:
+                break;
+        }
+        const uint32_t upload_pitch = byte_width * math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
         const uint32_t upload_size = p_texture_desc.height * upload_pitch;
         texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
         texture_desc.Alignment = 0;
@@ -693,8 +702,9 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         D3D12_RANGE range = { 0, upload_size };
 
         upload_buffer->Map(0, &range, &mapped);
+        const uint32_t byte_per_row = 4 * byte_width * p_texture_desc.width;
         for (uint32_t y = 0; y < p_texture_desc.height; y++) {
-            memcpy((void*)((uintptr_t)mapped + y * upload_pitch), initial_data + y * p_texture_desc.width * 4, p_texture_desc.width * 4);
+            memcpy((void*)((uintptr_t)mapped + y * upload_pitch), initial_data + y * byte_per_row, byte_per_row);
         }
         upload_buffer->Unmap(0, &range);
 
@@ -702,7 +712,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         D3D12_TEXTURE_COPY_LOCATION source_location = {};
         source_location.pResource = upload_buffer.Get();
         source_location.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        source_location.PlacedFootprint.Footprint.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        source_location.PlacedFootprint.Footprint.Format = d3d::Convert(p_texture_desc.format);
         source_location.PlacedFootprint.Footprint.Width = p_texture_desc.width;
         source_location.PlacedFootprint.Footprint.Height = p_texture_desc.height;
         source_location.PlacedFootprint.Footprint.Depth = 1;

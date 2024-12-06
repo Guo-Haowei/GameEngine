@@ -205,7 +205,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                  .blendDesc = &s_blendStateDefault,
                                  .numRenderTargets = 1,
                                  .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
-                                 .dsvFormat = PixelFormat::UNKNOWN,
+                                 .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                              });
 
     CREATE_PSO(PSO_POINT_SHADOW, {
@@ -243,12 +243,13 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                              .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                          });
 
-    // Bloom
+#pragma region PSO_BLOOM
     CREATE_PSO(PSO_BLOOM_SETUP, { .type = PipelineStateType::COMPUTE, .cs = "bloom_setup.cs" });
     CREATE_PSO(PSO_BLOOM_DOWNSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_downsample.cs" });
     CREATE_PSO(PSO_BLOOM_UPSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_upsample.cs" });
+#pragma endregion PSO_BLOOM
 
-    // Particle
+#pragma region PSO_PARTICLE
     CREATE_PSO(PSO_PARTICLE_INIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_initialization.cs" });
     CREATE_PSO(PSO_PARTICLE_KICKOFF, { .type = PipelineStateType::COMPUTE, .cs = "particle_kickoff.cs" });
     CREATE_PSO(PSO_PARTICLE_EMIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_emission.cs" });
@@ -264,6 +265,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .rtvFormats = { RESOURCE_FORMAT_TONE },
                                            .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                        });
+#pragma endregion PSO_PARTICLE
 
     CREATE_PSO(PSO_ENV_SKYBOX, {
                                    .vs = "skybox.vs",
@@ -273,6 +275,8 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .inputLayoutDesc = &s_inputLayoutMesh,
                                    .blendDesc = &s_blendStateDefault,
                                    .numRenderTargets = 1,
+                                   .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                                });
 
     // @HACK: only support this many shaders
