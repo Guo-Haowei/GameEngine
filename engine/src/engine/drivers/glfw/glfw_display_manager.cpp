@@ -144,9 +144,9 @@ void GlfwDisplayManager::MouseButtonCallback(GLFWwindow* p_window,
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
         if (p_action == GLFW_RELEASE) {
-            InputManager::GetSingleton().SetButton(p_button, false);
+            InputManager::GetSingleton().SetButton(static_cast<MouseButton>(p_button), false);
         } else {
-            InputManager::GetSingleton().SetButton(p_button, true);
+            InputManager::GetSingleton().SetButton(static_cast<MouseButton>(p_button), true);
         }
     }
 }

@@ -42,7 +42,7 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
         return;
     }
 
-    if (InputManager::GetSingleton().IsButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    if (InputManager::GetSingleton().IsButtonPressed(MouseButton::RIGHT)) {
         auto [window_x, window_y] = DisplayManager::GetSingleton().GetWindowPos();
         Vector2f clicked = InputManager::GetSingleton().GetCursor();
         clicked.x = (clicked.x + window_x - m_canvasMin.x) / m_canvasSize.x;

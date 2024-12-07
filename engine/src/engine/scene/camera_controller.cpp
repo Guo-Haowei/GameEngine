@@ -32,7 +32,7 @@ void CameraController::Move(float p_delta_time, PerspectiveCameraComponent& p_ca
         float rotate_x = 0.0f;
         float rotate_y = 0.0f;
 
-        if (InputManager::GetSingleton().IsButtonDown(MOUSE_BUTTON_MIDDLE)) {
+        if (InputManager::GetSingleton().IsButtonDown(MouseButton::MIDDLE)) {
             Vector2f movement = InputManager::GetSingleton().MouseMove();
             movement = 20 * p_delta_time * movement;
             if (glm::abs(movement.x) > glm::abs(movement.y)) {

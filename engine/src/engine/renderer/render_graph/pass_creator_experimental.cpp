@@ -18,9 +18,8 @@ extern OpenGlMeshBuffers* g_box;
 
 namespace my::renderer {
 
-void hdr_to_cube_map_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
-    bool skip = true;
-    if (skip) {
+void hdr_to_cube_map_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
+    if (!p_data.bakeEnvMap) {
         return;
     }
     OPTICK_EVENT();
@@ -29,14 +28,13 @@ void hdr_to_cube_map_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
     auto cube_map = p_draw_pass->desc.colorAttachments[0];
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
+    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[i];
+        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
         g_env_cache.update();
         RenderManager::GetSingleton().draw_skybox();
     }
@@ -63,9 +61,8 @@ void generate_brdf_func(const RenderData&, const DrawPass* p_draw_pass) {
     RenderManager::GetSingleton().draw_quad();
 }
 
-void diffuse_irradiance_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
-    bool skip = true;
-    if (skip) {
+void diffuse_irradiance_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
+    if (!p_data.bakeEnvMap) {
         return;
     }
     OPTICK_EVENT();
@@ -73,23 +70,21 @@ void diffuse_irradiance_pass_func(const RenderData&, const DrawPass* p_draw_pass
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
+    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
 
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[i];
+        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
         g_env_cache.update();
         RenderManager::GetSingleton().draw_skybox();
     }
 }
 
-void prefilter_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
-    bool skip = true;
-    if (skip) {
+void prefilter_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
+    if (!p_data.bakeEnvMap) {
         return;
     }
     OPTICK_EVENT();
@@ -97,13 +92,12 @@ void prefilter_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
     GraphicsManager::GetSingleton().SetPipelineState(PSO_PREFILTER);
     auto [width, height] = p_draw_pass->GetBufferSize();
 
-    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
+    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
     constexpr int max_mip_levels = 5;
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
-            g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[face_id];
+            g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[face_id];
             g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(max_mip_levels - 1);
             g_env_cache.update();
 
@@ -214,7 +208,7 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
 
         auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
             auto cube_texture_desc = BuildDefaultTextureDesc(cube_map_name,
-                                                             PixelFormat::R16G16B16_FLOAT,
+                                                             PixelFormat::R16G16B16A16_FLOAT,
                                                              AttachmentType::COLOR_CUBE,
                                                              size, size, 6);
             cube_texture_desc.miscFlags |= gen_mipmap ? RESOURCE_MISC_GENERATE_MIPS : RESOURCE_MISC_NONE;

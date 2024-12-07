@@ -465,7 +465,9 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = d3d::ConvertResourceMiscFlags(p_texture_desc.miscFlags);
     ComPtr<ID3D11Texture2D> texture;
-    D3D_FAIL_V(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()), nullptr);
+    if (FAILED(m_device->CreateTexture2D(&texture_desc, nullptr, texture.GetAddressOf()))) {
+        return nullptr;
+    }
     SetDebugName(texture.Get(), debug_name);
 
     if (p_texture_desc.initialData) {
@@ -483,6 +485,8 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
 
         switch (srv_desc.ViewDimension) {
             case D3D_SRV_DIMENSION_TEXTURE2D:
+                break;
+            case D3D_SRV_DIMENSION_TEXTURECUBE:
                 break;
             case D3D_SRV_DIMENSION_TEXTURECUBEARRAY:
                 srv_desc.TextureCubeArray.First2DArrayFace = 0;
@@ -539,6 +543,20 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                 ComPtr<ID3D11RenderTargetView> rtv;
                 D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()), nullptr);
                 draw_pass->rtvs.emplace_back(rtv);
+            } break;
+            case AttachmentType::COLOR_CUBE: {
+                for (uint32_t face = 0; face < color_attachment->desc.arraySize; ++face) {
+                    ComPtr<ID3D11RenderTargetView> rtv;
+                    D3D11_RENDER_TARGET_VIEW_DESC desc;
+                    desc.Format = d3d::Convert(color_attachment->desc.format);
+                    desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+                    desc.Texture2DArray.MipSlice = 0;
+                    desc.Texture2DArray.ArraySize = 1;
+                    desc.Texture2DArray.FirstArraySlice = face;
+
+                    D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), &desc, rtv.GetAddressOf()), nullptr);
+                    draw_pass->rtvs.push_back(rtv);
+                }
             } break;
             default:
                 CRASH_NOW();
@@ -621,7 +639,15 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
         rtvs.emplace_back(rtv.Get());
     }
 
-    ID3D11DepthStencilView* dsv = draw_pass->dsvs.size() ? draw_pass->dsvs[0].Get() : nullptr;
+    ID3D11DepthStencilView* dsv = draw_pass->dsvs.size() ? draw_pass->dsvs[p_index].Get() : nullptr;
+
+    if (rtvs.size()) {
+        if (p_draw_pass->desc.colorAttachments[0]->desc.type == AttachmentType::COLOR_CUBE) {
+            m_deviceContext->OMSetRenderTargets(1, rtvs.data() + p_index, dsv);
+            return;
+        }
+    }
+
     m_deviceContext->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), dsv);
 }
 

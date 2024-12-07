@@ -99,6 +99,9 @@ struct RenderData {
 
     PassContext voxelPass;
     PassContext mainPass;
+
+    bool bakeEnvMap;
+    std::shared_ptr<GpuTexture> skyboxHdr;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

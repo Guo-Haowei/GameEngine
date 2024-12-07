@@ -98,7 +98,7 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
         return HBN_ERROR(res.error());
     }
 
-    const bool p_is_float = false;
+    const bool is_float = m_size == 4;
 
     std::shared_ptr<FileAccess> file = *res;
     const size_t size = file->GetLength();
@@ -109,14 +109,25 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
     int width = 0;
     int height = 0;
     int num_channels = 0;
-    int req_channel = 4;
+    // const int req_channel = is_float ? 0 : 4;
+    const int req_channel = 4;
 
-    uint8_t* pixels = (uint8_t*)stbi_load_from_memory(file_buffer.data(),
-                                                      (uint32_t)size,
-                                                      &width,
-                                                      &height,
-                                                      &num_channels,
-                                                      req_channel);
+    uint8_t* pixels = nullptr;
+    if (is_float) {
+        pixels = (uint8_t*)stbi_loadf_from_memory(file_buffer.data(),
+                                                  (uint32_t)size,
+                                                  &width,
+                                                  &height,
+                                                  &num_channels,
+                                                  req_channel);
+    } else {
+        pixels = (uint8_t*)stbi_load_from_memory(file_buffer.data(),
+                                                 (uint32_t)size,
+                                                 &width,
+                                                 &height,
+                                                 &num_channels,
+                                                 req_channel);
+    }
 
     if (!pixels) {
         return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "failed to parse file '{}'", m_meta.path);
@@ -126,7 +137,7 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
         num_channels = req_channel;
     }
 
-    const uint32_t pixel_size = p_is_float ? sizeof(float) : sizeof(uint8_t);
+    const uint32_t pixel_size = is_float ? sizeof(float) : sizeof(uint8_t);
 
     int num_pixels = width * height * num_channels;
     std::vector<uint8_t> buffer;
@@ -134,7 +145,7 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
     memcpy(buffer.data(), pixels, pixel_size * num_pixels);
     stbi_image_free(pixels);
 
-    PixelFormat format = ChannelToFormat(num_channels, p_is_float);
+    PixelFormat format = ChannelToFormat(num_channels, is_float);
 
     auto p_image = new ImageAsset;
     p_image->format = format;
@@ -145,38 +156,7 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
     return p_image;
 }
 
-auto SceneLoader::Load() -> Result<IAsset*> {
-    Archive archive;
-    if (auto res = archive.OpenRead(m_filePath); !res) {
-        return HBN_ERROR(res.error());
-    }
-
-    Scene* scene = new Scene;
-    scene->m_replace = true;
-    scene->Serialize(archive);
-    return scene;
-}
-
-auto LuaSceneLoader::Load() -> Result<IAsset*> {
-    CRASH_NOW();
-    return HBN_ERROR(ErrorCode::FAILURE, "not implemented");
 #if 0
-    Scene* scene = new Scene;
-    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    scene->CreateCamera(frame_size.x, frame_size.y);
-    auto root = scene->CreateTransformEntity("world");
-    scene->m_replace = true;
-    scene->m_root = root;
-    bool result = LoadLuaScene(m_filePath, scene);
-    if (!result) {
-        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", m_filePath);
-    }
-    return scene;
-#endif
-}
-
-#if 0
-
 bool LoaderSTBIBase::LoadImpl(Image* p_image, bool p_is_float, STBILoadFunc p_func) {
     int width = 0;
     int height = 0;
@@ -223,18 +203,36 @@ bool LoaderSTBIBase::LoadImpl(Image* p_image, bool p_is_float, STBILoadFunc p_fu
     p_image->buffer = std::move(buffer);
     return true;
 }
-
-bool LoaderSTBI8::Load(Image* p_data) {
-    return LoadImpl(p_data, false, [](uint8_t const* p_buffer, int p_len, int* p_x, int* p_y, int* p_comp, int p_req_comp) -> void* {
-        return stbi_load_from_memory(p_buffer, p_len, p_x, p_y, p_comp, p_req_comp);
-    });
-}
-
-bool LoaderSTBI32::Load(Image* p_data) {
-    return LoadImpl(p_data, true, [](uint8_t const* p_buffer, int p_len, int* p_x, int* p_y, int* p_comp, int p_req_comp) -> void* {
-        return stbi_loadf_from_memory(p_buffer, p_len, p_x, p_y, p_comp, p_req_comp);
-    });
-}
 #endif
+
+auto SceneLoader::Load() -> Result<IAsset*> {
+    Archive archive;
+    if (auto res = archive.OpenRead(m_filePath); !res) {
+        return HBN_ERROR(res.error());
+    }
+
+    Scene* scene = new Scene;
+    scene->m_replace = true;
+    scene->Serialize(archive);
+    return scene;
+}
+
+auto LuaSceneLoader::Load() -> Result<IAsset*> {
+    CRASH_NOW();
+    return HBN_ERROR(ErrorCode::FAILURE, "not implemented");
+#if 0
+    Scene* scene = new Scene;
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    scene->CreateCamera(frame_size.x, frame_size.y);
+    auto root = scene->CreateTransformEntity("world");
+    scene->m_replace = true;
+    scene->m_root = root;
+    bool result = LoadLuaScene(m_filePath, scene);
+    if (!result) {
+        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", m_filePath);
+    }
+    return scene;
+#endif
+}
 
 }  // namespace my

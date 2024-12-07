@@ -48,6 +48,8 @@ ps_output main(vsoutput_mesh input) {
 
     ps_output output;
     output.base_color = color.rgb;
+    // output.base_color = 0.5f * N + 0.5f;
+
     output.position.xyz = input.world_position;
     output.normal.xyz = N;
 

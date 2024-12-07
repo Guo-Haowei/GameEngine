@@ -32,7 +32,7 @@ Scene* CreateTheAviatorScene() {
         Vector3f(+4.f, +2.5f, -2.5f),  // H
     };
 
-    const float plane_height = 20.0f + OCEAN_RADIUS;
+    const float plane_height = 20.0f;
 
     ecs::Entity::SetSeed();
 
@@ -75,11 +75,12 @@ Scene* CreateTheAviatorScene() {
 
 #pragma region SETUP_MATERIALS
     // colors
-    const Color red = Color::Hex(0xF25346);
+    // const Color red = Color::Hex(0xF25346);
+    const Color red = Color::Hex(0xCE190A);
     const Color white = Color::Hex(0XD8D0D1);
     const Color dark_brown = Color::Hex(0x23190F);
     const Color brown = Color::Hex(0x59332E);
-    const Color blue = Color::Hex(0X68C3C0);
+    const Color blue = Color::Hex(0X10A8A3);
     // Color pink = Color::Hex(0xF5986E);
 
     constexpr float default_roughness = 0.8f;
@@ -260,19 +261,23 @@ Scene* CreateTheAviatorScene() {
     auto world = scene->CreateTransformEntity("world");
     {
         scene->AttachChild(world, root);
+        auto transform = scene->GetComponent<TransformComponent>(world);
+        transform->Translate(Vector3f(0.0f, -OCEAN_RADIUS, 0.0f));
+    }
+
+    auto earth = scene->CreateTransformEntity("earth");
+    {
         auto& script = scene->Create<ScriptComponent>(world);
         script.SetScript("@res://scripts/world.lua");
+        scene->AttachChild(earth, world);
     }
     // ocean
     {
-        auto ocean = scene->CreateCylinderEntity("ocean",
-                                                 material_blue,
-                                                 OCEAN_RADIUS,
-                                                 320.0f);
+        auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeCylinderMesh(OCEAN_RADIUS, 320.0f, 60, 16));
         auto transform = scene->GetComponent<TransformComponent>(ocean);
         transform->RotateX(Degree(90.0f));
         transform->RotateZ(Degree(90.0f));
-        scene->AttachChild(ocean, world);
+        scene->AttachChild(ocean, earth);
     }
 #pragma endregion SETUP_PLANE
 
@@ -299,7 +304,7 @@ Scene* CreateTheAviatorScene() {
         const float angle = step_angle * cloud_index;
         std::string name = std::format("cloud_{}", cloud_index);
         auto cloud = scene->CreateTransformEntity(name);
-        scene->AttachChild(cloud, world);
+        scene->AttachChild(cloud, earth);
 
         auto transform = scene->GetComponent<TransformComponent>(cloud);
         const float x = glm::sin(angle) * (OCEAN_RADIUS + 40.0f);
@@ -309,6 +314,12 @@ Scene* CreateTheAviatorScene() {
         create_cloud(cloud_index, cloud);
     }
 #pragma endregion SETUP_SKY
+
+    {
+        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/street.hdr");
+        // auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/sky.hdr");
+        scene->AttachChild(sky_light, root);
+    }
 
     return scene;
 }

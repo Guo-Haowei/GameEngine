@@ -667,7 +667,16 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
 
     if (initial_data) {
         // Create a temporary upload resource to move the data in
-        const uint32_t upload_pitch = math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+        uint32_t byte_width = 1;
+        switch (p_texture_desc.format) {
+            case PixelFormat::R32G32B32_FLOAT:
+            case PixelFormat::R32G32B32A32_FLOAT:
+                byte_width = 4;
+                break;
+            default:
+                break;
+        }
+        const uint32_t upload_pitch = byte_width * math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
         const uint32_t upload_size = p_texture_desc.height * upload_pitch;
         texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
         texture_desc.Alignment = 0;
@@ -693,8 +702,9 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         D3D12_RANGE range = { 0, upload_size };
 
         upload_buffer->Map(0, &range, &mapped);
+        const uint32_t byte_per_row = 4 * byte_width * p_texture_desc.width;
         for (uint32_t y = 0; y < p_texture_desc.height; y++) {
-            memcpy((void*)((uintptr_t)mapped + y * upload_pitch), initial_data + y * p_texture_desc.width * 4, p_texture_desc.width * 4);
+            memcpy((void*)((uintptr_t)mapped + y * upload_pitch), initial_data + y * byte_per_row, byte_per_row);
         }
         upload_buffer->Unmap(0, &range);
 
@@ -702,7 +712,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         D3D12_TEXTURE_COPY_LOCATION source_location = {};
         source_location.pResource = upload_buffer.Get();
         source_location.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-        source_location.PlacedFootprint.Footprint.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        source_location.PlacedFootprint.Footprint.Format = d3d::Convert(p_texture_desc.format);
         source_location.PlacedFootprint.Footprint.Width = p_texture_desc.width;
         source_location.PlacedFootprint.Footprint.Height = p_texture_desc.height;
         source_location.PlacedFootprint.Footprint.Depth = 1;
@@ -775,6 +785,11 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
 
                 resource_type = DescriptorResourceType::Texture2D;
                 break;
+            case Dimension::TEXTURE_CUBE:
+                srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+                srv_desc.TextureCube.MipLevels = texture_desc.MipLevels;
+                srv_desc.TextureCube.MostDetailedMip = 0;
+                break;
             case Dimension::TEXTURE_CUBE_ARRAY:
                 srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
                 srv_desc.TextureCubeArray.MipLevels = texture_desc.MipLevels;
@@ -838,6 +853,21 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                 m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, handle.cpuHandle);
                 draw_pass->rtvs.emplace_back(handle.cpuHandle);
             } break;
+            case AttachmentType::COLOR_CUBE: {
+                for (uint32_t face = 0; face < color_attachment->desc.arraySize; ++face) {
+                    auto handle = m_rtvDescHeap.AllocHandle();
+                    D3D12_RENDER_TARGET_VIEW_DESC desc{};
+                    desc.Format = d3d::Convert(color_attachment->desc.format);
+                    desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+                    desc.Texture2DArray.MipSlice = 0;
+                    desc.Texture2DArray.ArraySize = 1;
+                    desc.Texture2DArray.FirstArraySlice = face;
+
+                    m_device->CreateRenderTargetView(texture->texture.Get(), &desc, handle.cpuHandle);
+                    draw_pass->rtvs.push_back(handle.cpuHandle);
+                }
+            } break;
+
             default:
                 CRASH_NOW();
                 break;

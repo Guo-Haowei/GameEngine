@@ -155,22 +155,22 @@ LRESULT Win32DisplayManager::WndProc(HWND p_hwnd, UINT p_msg, WPARAM p_wparam, L
             input_manager->SetWheel(0.0f, direction);
         } break;
         case WM_LBUTTONDOWN: {
-            input_manager->SetButton(MOUSE_BUTTON_LEFT, true);
+            input_manager->SetButton(MouseButton::LEFT, true);
         } break;
         case WM_LBUTTONUP: {
-            input_manager->SetButton(MOUSE_BUTTON_LEFT, false);
+            input_manager->SetButton(MouseButton::LEFT, false);
         } break;
         case WM_RBUTTONDOWN: {
-            input_manager->SetButton(MOUSE_BUTTON_RIGHT, true);
+            input_manager->SetButton(MouseButton::RIGHT, true);
         } break;
         case WM_RBUTTONUP: {
-            input_manager->SetButton(MOUSE_BUTTON_RIGHT, false);
+            input_manager->SetButton(MouseButton::RIGHT, false);
         } break;
         case WM_MBUTTONDOWN: {
-            input_manager->SetButton(MOUSE_BUTTON_MIDDLE, true);
+            input_manager->SetButton(MouseButton::MIDDLE, true);
         } break;
         case WM_MBUTTONUP: {
-            input_manager->SetButton(MOUSE_BUTTON_MIDDLE, false);
+            input_manager->SetButton(MouseButton::MIDDLE, false);
         } break;
         case WM_MOUSEMOVE: {
             int x = LOWORD(p_lparam);

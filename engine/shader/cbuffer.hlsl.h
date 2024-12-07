@@ -166,6 +166,19 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_enableVxgi;
     float c_texelSize;  // 16
 
+    //-----------------------------------------
+
+    Vector4f _per_frame_padding_3;  // 16
+    Vector4f _per_frame_padding_4;  // 16
+
+    sampler2D c_SkyboxResidentHandle;
+    sampler2D c_SkyboxHdrResidentHandle;  // 16
+
+    Vector3f _per_frame_padding_2;
+    int c_forceFieldsCount;  // 16
+
+    //-----------------------------------------
+
     sampler2D c_GbufferBaseColorMapResidentHandle;
     sampler2D c_GbufferPositionMapResidentHandle;  // 16
 
@@ -197,15 +210,6 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     Vector3f c_cameraUp;
     int c_sceneDirty;
-
-    //-----------------------------------------
-
-    Vector3f _per_frame_padding_2;
-    int c_forceFieldsCount;  // 16
-
-    Vector4f _per_frame_padding_3;  // 16
-    Vector4f _per_frame_padding_4;  // 16
-    Vector4f _per_frame_padding_5;  // 16
 
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };

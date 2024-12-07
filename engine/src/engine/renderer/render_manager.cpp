@@ -49,9 +49,10 @@ void fill_texture_and_sampler_desc(const ImageAsset* p_image, GpuTextureDesc& p_
     if (is_hdr_file) {
         p_sampler_desc.minFilter = p_sampler_desc.magFilter = FilterMode::LINEAR;
         p_sampler_desc.addressU = p_sampler_desc.addressV = AddressMode::CLAMP;
+        // p_texture_desc.bindFlags &= (~BIND_RENDER_TARGET);
+        p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
     } else {
         p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
-
         p_sampler_desc.minFilter = FilterMode::MIPMAP_LINEAR;
         p_sampler_desc.magFilter = FilterMode::LINEAR;
     }

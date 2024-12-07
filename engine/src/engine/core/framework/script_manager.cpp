@@ -32,6 +32,7 @@ auto ScriptManager::InitializeImpl() -> Result<void> {
 
     lua.open_libraries(sol::lib::base);
 
+#if USING(PLATFORM_WINDOWS)
     lua.new_usertype<Vector2f>("Vector2f",
                                sol::constructors<Vector2f(float, float)>(),
                                "x", &Vector2f::x,
@@ -41,6 +42,7 @@ auto ScriptManager::InitializeImpl() -> Result<void> {
                                "x", &Vector3f::x,
                                "y", &Vector3f::y,
                                "z", &Vector3f::z);
+#endif
 
     lua["scene_helper"] = lua.create_table();
     lua["scene_helper"]["entity_rotate_x"] = [](sol::this_state L, float p_degree) {

@@ -187,6 +187,9 @@ static inline D3D_FILTER Convert(FilterMode p_min_filter, FilterMode p_mag_filte
     if (p_min_filter == FilterMode::LINEAR && p_mag_filter == FilterMode::LINEAR) {
         return D3D_FILTER_(MIN_MAG_LINEAR_MIP_POINT);
     }
+    if (p_min_filter == FilterMode::MIPMAP_LINEAR && p_mag_filter == FilterMode::LINEAR) {
+        return D3D_FILTER_(MIN_LINEAR_MAG_POINT_MIP_LINEAR);
+    }
 
     CRASH_NOW_MSG(std::format("Unknown filter {} and {}", static_cast<int>(p_min_filter), static_cast<int>(p_mag_filter)));
     return D3D_FILTER_(MIN_MAG_MIP_POINT);
