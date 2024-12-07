@@ -289,6 +289,15 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                                .blendDesc = &s_blendStateDefault,
                                            });
 
+    CREATE_PSO(PSO_DIFFUSE_IRRADIANCE, {
+                                           .vs = "cube_map.vs",
+                                           .ps = "diffuse_irradiance.ps",
+                                           .rasterizerDesc = &s_rasterizerFrontFace,
+                                           .depthStencilDesc = &s_depthStencilDefault,
+                                           .inputLayoutDesc = &s_inputLayoutMesh,
+                                           .blendDesc = &s_blendStateDefault,
+                                       });
+
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
@@ -302,13 +311,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     }
 
 #if 0
-    CREATE_PSO(PSO_DIFFUSE_IRRADIANCE, {
-                                           .vs = "cube_map.vs",
-                                           .ps = "diffuse_irradiance.ps",
-                                           .rasterizerDesc = &s_rasterizerFrontFace,
-                                           .depthStencilDesc = &s_depthStencilDefault,
-                                           .blendDesc = &s_blendStateDefault,
-                                       });
     CREATE_PSO(PSO_PREFILTER, {
                                   .vs = "cube_map.vs",
                                   .ps = "prefilter.ps",

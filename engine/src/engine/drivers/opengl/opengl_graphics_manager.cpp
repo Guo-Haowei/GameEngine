@@ -693,10 +693,10 @@ void OpenGlGraphicsManager::CreateGpuResources() {
     };
 
     make_resident(RESOURCE_TONE, cache.c_toneImage.handle_gl);
+#if 0
     make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_envMap.handle_gl);
-    make_resident(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, cache.c_diffuseIrradianceMap.handle_gl);
-    make_resident(RESOURCE_ENV_PREFILTER_CUBE_MAP, cache.c_prefilteredMap.handle_gl);
     make_resident(RESOURCE_BRDF, cache.c_brdfMap.handle_gl);
+#endif
     make_resident(RESOURCE_BLOOM_0, cache.c_finalBloom.handle_gl);
 
     g_constantCache.update();

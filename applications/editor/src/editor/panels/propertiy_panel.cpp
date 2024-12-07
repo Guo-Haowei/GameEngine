@@ -8,6 +8,7 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/string/string_utils.h"
+#include "engine/renderer/renderer.h"
 
 namespace my {
 
@@ -205,6 +206,9 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("HemisphereLight", hemisphere_light, [](HemisphereLightComponent& p_light) {
         panel_util::InputText(p_light.GetPathRef(), "##LightTag");
+        if (ImGui::Button("Bake IBL")) {
+            renderer::RequestBakingIbl();
+        }
     });
 
     DrawComponent("Script", script_component, [](ScriptComponent& p_script) {

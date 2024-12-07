@@ -18,51 +18,8 @@ extern OpenGlMeshBuffers* g_box;
 
 namespace my::renderer {
 
-void hdr_to_cube_map_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
-    if (!p_data.bakeEnvMap) {
-        return;
-    }
-    OPTICK_EVENT();
-
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
-    auto cube_map = p_draw_pass->desc.colorAttachments[0];
-    const auto [width, height] = p_draw_pass->GetBufferSize();
-
-    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
-    for (int i = 0; i < 6; ++i) {
-        GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, width, height);
-
-        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
-        g_env_cache.update();
-        RenderManager::GetSingleton().draw_skybox();
-    }
-
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cube_map->GetHandle32());
-    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
-}
-
-// @TODO: refactor
-void generate_brdf_func(const RenderData&, const DrawPass* p_draw_pass) {
-    OPTICK_EVENT();
-
-    bool skip = true;
-    if (skip) {
-        return;
-    }
-
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_BRDF);
-    const auto [width, height] = p_draw_pass->GetBufferSize();
-    GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glViewport(0, 0, width, height);
-    RenderManager::GetSingleton().draw_quad();
-}
-
 void diffuse_irradiance_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
-    if (!p_data.bakeEnvMap) {
+    if (!p_data.bakeIbl) {
         return;
     }
     OPTICK_EVENT();
@@ -84,7 +41,7 @@ void diffuse_irradiance_pass_func(const RenderData& p_data, const DrawPass* p_dr
 }
 
 void prefilter_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
-    if (!p_data.bakeEnvMap) {
+    if (!p_data.bakeIbl) {
         return;
     }
     OPTICK_EVENT();
@@ -229,14 +186,6 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
             return draw_pass;
         };
 
-        auto brdf_image = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, 512, 512), LinearClampSampler());
-        auto brdf_subpass = manager.CreateDrawPass(DrawPassDesc{
-            .colorAttachments = { brdf_image },
-            .execFunc = generate_brdf_func,
-        });
-
-        pass->AddDrawPass(brdf_subpass);
-        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_SKYBOX_CUBE_MAP, RESOURCE_ENV_SKYBOX_DEPTH, 512, hdr_to_cube_map_pass_func, env_cube_map_sampler_mip(), true));
         pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, LinearClampSampler(), false));
         pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
     }

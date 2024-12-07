@@ -1,13 +1,14 @@
 /// File: diffuse_irradiance.ps.glsl
 #include "../cbuffer.hlsl.h"
+#include "../shader_resource_defines.hlsl.h"
 
 layout(location = 0) out vec4 out_color;
-in vec3 pass_position;
+in vec3 out_var_POSITION;
 
 const float sampleStep = 0.025;
 
 void main() {
-    vec3 N = normalize(pass_position);
+    vec3 N = normalize(out_var_POSITION);
     vec3 up = vec3(0.0, 1.0, 0.0);
     vec3 right = cross(up, N);
     up = cross(N, right);
@@ -21,7 +22,7 @@ void main() {
             float ydir = sin(theta) * sin(phi);
             float zdir = cos(theta);
             vec3 sampleVec = xdir * right + ydir * up + zdir * N;
-            irradiance += textureLod(c_envMap, sampleVec, 0.0).rgb * cos(theta) * sin(theta);
+            irradiance += textureLod(t_Skybox, sampleVec, 0.0).rgb * cos(theta) * sin(theta);
             samples += 1.0;
         }
     }
