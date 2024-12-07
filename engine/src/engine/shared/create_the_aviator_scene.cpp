@@ -315,8 +315,7 @@ Scene* CreateTheAviatorScene() {
 #pragma endregion SETUP_SKY
 
     {
-        // auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/street.hdr");
-        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/sky.hdr");
+        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/sky.hdr");
         scene->AttachChild(sky_light, root);
     }
 
