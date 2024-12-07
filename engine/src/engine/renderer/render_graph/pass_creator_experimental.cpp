@@ -28,14 +28,13 @@ void hdr_to_cube_map_pass_func(const RenderData& p_data, const DrawPass* p_draw_
     auto cube_map = p_draw_pass->desc.colorAttachments[0];
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
+    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[i];
+        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
         g_env_cache.update();
         RenderManager::GetSingleton().draw_skybox();
     }
@@ -71,15 +70,14 @@ void diffuse_irradiance_pass_func(const RenderData& p_data, const DrawPass* p_dr
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
-    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
+    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
 
     for (int i = 0; i < 6; ++i) {
         GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
 
-        g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[i];
+        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
         g_env_cache.update();
         RenderManager::GetSingleton().draw_skybox();
     }
@@ -94,13 +92,12 @@ void prefilter_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_PREFILTER);
     auto [width, height] = p_draw_pass->GetBufferSize();
 
-    Matrix4x4f projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-    auto view_matrices = BuildOpenGlCubeMapViewMatrices(Vector3f(0.0f));
+    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
     constexpr int max_mip_levels = 5;
 
     for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
-            g_env_cache.cache.c_cubeProjectionViewMatrix = projection * view_matrices[face_id];
+            g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[face_id];
             g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(max_mip_levels - 1);
             g_env_cache.update();
 

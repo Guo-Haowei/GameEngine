@@ -10,6 +10,7 @@
 // @TODO: remove
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
+#include "engine/core/framework/input_manager.h"
 
 namespace my::renderer {
 
@@ -233,8 +234,12 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_o
             if (asset && asset->gpu_texture) {
                 cache.c_SkyboxHdrResidentHandle.Set32((uint32_t)asset->gpu_texture->GetResidentHandle());
                 p_out_data.skyboxHdr = asset->gpu_texture;
+
+                // @TODO: fix this
+                g_constantCache.cache.c_hdrEnvMap.Set64(asset->gpu_texture->GetResidentHandle());
+                g_constantCache.update();
             }
-            if (hemisphere_light.hack_generated) {
+            if (InputManager::GetSingleton().IsButtonPressed(MouseButton::RIGHT)) {
                 p_out_data.bakeEnvMap = true;
             }
         }

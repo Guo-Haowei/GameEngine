@@ -29,6 +29,8 @@ input_shaders = [
     'particle_simulation.cs',
     'shadowmap_point.vs',
     'shadowmap_point.ps',
+    'cube_map.vs',
+    'to_cube_map.ps',
     'skybox.vs',
     'skybox.ps',
     'shadow.vs',

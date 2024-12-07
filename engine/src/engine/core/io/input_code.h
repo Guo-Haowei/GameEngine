@@ -2,11 +2,11 @@
 
 namespace my {
 
-enum MouseButton : uint8_t {
-    MOUSE_BUTTON_LEFT = 0,
-    MOUSE_BUTTON_RIGHT,
-    MOUSE_BUTTON_MIDDLE,
-    MOUSE_BUTTON_MAX,
+enum class MouseButton : uint8_t {
+    LEFT = 0,
+    RIGHT,
+    MIDDLE,
+    COUNT,
 };
 
 enum class KeyCode : uint16_t {

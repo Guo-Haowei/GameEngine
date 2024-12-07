@@ -113,9 +113,9 @@ Vector2f InputManager::MouseMove() {
     return point;
 }
 
-void InputManager::SetButton(int p_button, bool p_pressed) {
-    ERR_FAIL_INDEX(p_button, MOUSE_BUTTON_MAX);
-    m_buttons[p_button] = p_pressed;
+void InputManager::SetButton(MouseButton p_button, bool p_pressed) {
+    ERR_FAIL_INDEX(p_button, MouseButton::COUNT);
+    m_buttons[std::to_underlying(p_button)] = p_pressed;
 }
 
 void InputManager::SetKey(KeyCode p_key, bool p_pressed) {

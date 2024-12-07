@@ -39,6 +39,7 @@ private:
     void AddEmitterPass();
     void AddBloomPass();
     void AddTonePass();
+    void AddGenerateSkylightPass();
     void AddPathTracerPass();
     void AddPathTracerTonePass();
 

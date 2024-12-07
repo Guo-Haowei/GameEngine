@@ -785,6 +785,11 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
 
                 resource_type = DescriptorResourceType::Texture2D;
                 break;
+            case Dimension::TEXTURE_CUBE:
+                srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+                srv_desc.TextureCube.MipLevels = texture_desc.MipLevels;
+                srv_desc.TextureCube.MostDetailedMip = 0;
+                break;
             case Dimension::TEXTURE_CUBE_ARRAY:
                 srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
                 srv_desc.TextureCubeArray.MipLevels = texture_desc.MipLevels;
@@ -848,6 +853,21 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                 m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, handle.cpuHandle);
                 draw_pass->rtvs.emplace_back(handle.cpuHandle);
             } break;
+            case AttachmentType::COLOR_CUBE: {
+                for (uint32_t face = 0; face < color_attachment->desc.arraySize; ++face) {
+                    auto handle = m_rtvDescHeap.AllocHandle();
+                    D3D12_RENDER_TARGET_VIEW_DESC desc{};
+                    desc.Format = d3d::Convert(color_attachment->desc.format);
+                    desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+                    desc.Texture2DArray.MipSlice = 0;
+                    desc.Texture2DArray.ArraySize = 1;
+                    desc.Texture2DArray.FirstArraySlice = face;
+
+                    m_device->CreateRenderTargetView(texture->texture.Get(), &desc, handle.cpuHandle);
+                    draw_pass->rtvs.push_back(handle.cpuHandle);
+                }
+            } break;
+
             default:
                 CRASH_NOW();
                 break;

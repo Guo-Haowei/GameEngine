@@ -4,31 +4,10 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
-#if 0
-void main() {
-    vec3 color = texture(c_envMap, pass_position).rgb;
-    // vec3 color = texture(c_diffuseIrradianceMap, pass_position).rgb;
-    // vec3 color = textureLod(c_prefilteredMap, pass_position, 1.0).rgb;
-
-    color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0 / 2.2));
-
-    out_color = vec4(color, 1.0);
-    // out_color = vec4(1.0);
-}
-#endif
-
-float2 sample_spherical_map(float3 v) {
-    const float2 inv_atan = float2(0.1591, 0.3183);
-    float2 uv = float2(atan2(v.z, v.x), asin(v.y));
-    uv *= inv_atan;
-    uv += 0.5;
-    uv.y = 1.0 - uv.y;
-    return uv;
-}
-
 float4 main(vsoutput_position input) : SV_TARGET {
-    float2 uv = sample_spherical_map(normalize(input.world_position));
-    float3 color = TEXTURE_2D(SkyboxHdr).Sample(s_linearClampSampler, uv).rgb;
+    float3 uvw = normalize(input.world_position);
+    float3 color = TEXTURE_CUBE(Skybox).Sample(s_cubemapClampSampler, uvw).rgb;
+    // color = color / (color + float3(1.0, 1.0, 1.0));
+    // color = pow(color, float3(1.0, 1.0, 1.0) / 2.2);
     return float4(color, 1.0f);
 }

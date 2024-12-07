@@ -16,7 +16,7 @@ public:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    void SetButton(int p_button, bool p_pressed);
+    void SetButton(MouseButton p_button, bool p_pressed);
 
     void BeginFrame();
     void EndFrame();
@@ -48,8 +48,8 @@ protected:
     KeyArray m_keys;
     KeyArray m_prevKeys;
 
-    std::bitset<MOUSE_BUTTON_MAX> m_buttons = { false };
-    std::bitset<MOUSE_BUTTON_MAX> m_prevButtons = { false };
+    std::bitset<std::to_underlying(MouseButton::COUNT)> m_buttons = { false };
+    std::bitset<std::to_underlying(MouseButton::COUNT)> m_prevButtons = { false };
 
     Vector2f m_cursor{ 0, 0 };
     Vector2f m_prevCursor{ 0, 0 };

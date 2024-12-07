@@ -279,6 +279,16 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                                });
 
+#pragma region PSO_ENV
+    CREATE_PSO(PSO_ENV_SKYBOX_TO_CUBE_MAP, {
+                                               .vs = "cube_map.vs",
+                                               .ps = "to_cube_map.ps",
+                                               .rasterizerDesc = &s_rasterizerFrontFace,
+                                               .depthStencilDesc = &s_depthStencilDefault,
+                                               .inputLayoutDesc = &s_inputLayoutMesh,
+                                               .blendDesc = &s_blendStateDefault,
+                                           });
+
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
@@ -291,6 +301,32 @@ auto PipelineStateManager::Initialize() -> Result<void> {
         return ok;
     }
 
+#if 0
+    CREATE_PSO(PSO_DIFFUSE_IRRADIANCE, {
+                                           .vs = "cube_map.vs",
+                                           .ps = "diffuse_irradiance.ps",
+                                           .rasterizerDesc = &s_rasterizerFrontFace,
+                                           .depthStencilDesc = &s_depthStencilDefault,
+                                           .blendDesc = &s_blendStateDefault,
+                                       });
+    CREATE_PSO(PSO_PREFILTER, {
+                                  .vs = "cube_map.vs",
+                                  .ps = "prefilter.ps",
+                                  .rasterizerDesc = &s_rasterizerFrontFace,
+                                  .depthStencilDesc = &s_depthStencilDefault,
+                                  .blendDesc = &s_blendStateDefault,
+                              });
+#endif
+    CREATE_PSO(PSO_BRDF, {
+                             .vs = "screenspace_quad.vs",
+                             .ps = "brdf.ps",
+                             .rasterizerDesc = &s_rasterizerFrontFace,
+                             .depthStencilDesc = &s_depthStencilNoTest,
+                             .blendDesc = &s_blendStateDefault,
+                         });
+#pragma endregion PSO_ENV
+
+#pragma region PSO_VOXEL
     // Voxel
     CREATE_PSO(PSO_VOXELIZATION_PRE, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_pre.cs" });
     CREATE_PSO(PSO_VOXELIZATION_POST, { .type = PipelineStateType::COMPUTE, .cs = "voxelization_post.cs" });
@@ -311,36 +347,8 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                     .depthStencilDesc = &s_depthStencilDefault,
                                     .blendDesc = &s_blendStateDefault,
                                 });
+#pragma endregion PSO_VOXEL
 
-    // PBR
-    CREATE_PSO(PSO_ENV_SKYBOX_TO_CUBE_MAP, {
-                                               .vs = "cube_map.vs",
-                                               .ps = "to_cube_map.ps",
-                                               .rasterizerDesc = &s_rasterizerFrontFace,
-                                               .depthStencilDesc = &s_depthStencilDefault,
-                                               .blendDesc = &s_blendStateDefault,
-                                           });
-    CREATE_PSO(PSO_DIFFUSE_IRRADIANCE, {
-                                           .vs = "cube_map.vs",
-                                           .ps = "diffuse_irradiance.ps",
-                                           .rasterizerDesc = &s_rasterizerFrontFace,
-                                           .depthStencilDesc = &s_depthStencilDefault,
-                                           .blendDesc = &s_blendStateDefault,
-                                       });
-    CREATE_PSO(PSO_PREFILTER, {
-                                  .vs = "cube_map.vs",
-                                  .ps = "prefilter.ps",
-                                  .rasterizerDesc = &s_rasterizerFrontFace,
-                                  .depthStencilDesc = &s_depthStencilDefault,
-                                  .blendDesc = &s_blendStateDefault,
-                              });
-    CREATE_PSO(PSO_BRDF, {
-                             .vs = "screenspace_quad.vs",
-                             .ps = "brdf.ps",
-                             .rasterizerDesc = &s_rasterizerFrontFace,
-                             .depthStencilDesc = &s_depthStencilNoTest,
-                             .blendDesc = &s_blendStateDefault,
-                         });
     CREATE_PSO(PSO_RW_TEXTURE_2D, {
                                       .vs = "debug_draw_texture.vs",
                                       .ps = "debug_draw_texture.ps",

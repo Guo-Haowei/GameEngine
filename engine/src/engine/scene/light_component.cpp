@@ -54,16 +54,10 @@ void LightComponent::Update(const TransformComponent& p_transform) {
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
                     const float far_plane = m_maxDistance;
                     const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-                    Matrix4x4f projection;
-                    if (is_opengl) {
-                        projection = BuildOpenGlPerspectiveRH(glm::radians(90.0f), 1.0f, near_plane, far_plane);
-                    } else {
-                        projection = BuildPerspectiveLH(glm::radians(90.0f), 1.0f, near_plane, far_plane);
-                    }
-                    auto view_matrices = is_opengl ? BuildOpenGlCubeMapViewMatrices(m_position) : BuildCubeMapViewMatrices(m_position);
+                    auto matrices = is_opengl ? BuildOpenGlPointLightCubeMapViewProjectionMatrix(m_position, near_plane, far_plane) : BuildPointLightCubeMapViewProjectionMatrix(m_position, near_plane, far_plane);
 
-                    for (size_t i = 0; i < view_matrices.size(); ++i) {
-                        m_lightSpaceMatrices[i] = projection * view_matrices[i];
+                    for (size_t i = 0; i < matrices.size(); ++i) {
+                        m_lightSpaceMatrices[i] = matrices[i];
                     }
                 } break;
                 default:
