@@ -403,6 +403,11 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
     gm.SetPipelineState(PSO_LIGHTING);
 
+    auto brdf = gm.FindTexture(RESOURCE_BRDF);
+    auto diffuse_iraddiance = gm.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
+    auto prefiltered = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
+    DEV_ASSERT(brdf && diffuse_iraddiance && prefiltered);
+
     // @TODO: fix
     auto voxel_lighting = gm.FindTexture(RESOURCE_VOXEL_LIGHTING);
     auto voxel_normal = gm.FindTexture(RESOURCE_VOXEL_NORMAL);
@@ -411,7 +416,15 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
         gm.BindTexture(Dimension::TEXTURE_3D, voxel_normal->GetHandle(), GetVoxelNormalSlot());
     }
 
+    gm.BindTexture(Dimension::TEXTURE_2D, brdf->GetHandle(), GetBrdfLutSlot());
+    gm.BindTexture(Dimension::TEXTURE_CUBE, diffuse_iraddiance->GetHandle(), GetDiffuseIrradianceSlot());
+    gm.BindTexture(Dimension::TEXTURE_CUBE, prefiltered->GetHandle(), GetPrefilteredSlot());
+
     RenderManager::GetSingleton().draw_quad();
+
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBrdfLutSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetDiffuseIrradianceSlot());
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetPrefilteredSlot());
 
     if (voxel_lighting && voxel_normal) {
         gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelLightingSlot());
@@ -429,13 +442,6 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
         RenderManager::GetSingleton().draw_skybox();
         gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
     }
-
-    // if (0) {
-    //     // draw billboard grass here for now
-    //     manager.SetPipelineState(PSO_BILLBOARD);
-    //     manager.setMesh(&g_grass);
-    //     glDrawElementsInstanced(GL_TRIANGLES, g_grass.index_count, GL_UNSIGNED_INT, 0, 64);
-    // }
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -850,12 +856,12 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     {
         const int size = 512;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_SKYBOX_CUBE_MAP,
-                                                         PixelFormat::R16G16B16A16_FLOAT,
-                                                         AttachmentType::COLOR_CUBE,
-                                                         size, size, 6);
+                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            AttachmentType::COLOR_CUBE,
+                                            size, size, 6);
         auto cubemap = gm.CreateTexture(desc, SamplerDesc(FilterMode::LINEAR,
-                                                                       FilterMode::LINEAR,
-                                                                       AddressMode::CLAMP));
+                                                          FilterMode::LINEAR,
+                                                          AddressMode::CLAMP));
         DEV_ASSERT(cubemap);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
             .colorAttachments = { cubemap },
@@ -895,9 +901,9 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     {
         const int size = 32;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP,
-                                                         PixelFormat::R16G16B16A16_FLOAT,
-                                                         AttachmentType::COLOR_CUBE,
-                                                         size, size, 6);
+                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            AttachmentType::COLOR_CUBE,
+                                            size, size, 6);
         auto cubemap = gm.CreateTexture(desc, LinearClampSampler());
         DEV_ASSERT(cubemap);
 
@@ -925,6 +931,53 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                     g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
                     g_env_cache.update();
                     RenderManager::GetSingleton().draw_skybox();
+                }
+                gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+            },
+        });
+        render_pass->AddDrawPass(pass);
+    }
+    // prefilter
+    {
+        const int size = 512;
+        auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_PREFILTER_CUBE_MAP,
+                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            AttachmentType::COLOR_CUBE,
+                                            size, size, 6);
+        desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+        auto cubemap = gm.CreateTexture(desc, SamplerDesc(FilterMode::LINEAR,
+                                                          FilterMode::LINEAR,
+                                                          AddressMode::CLAMP));
+        DEV_ASSERT(cubemap);
+
+        auto pass = gm.CreateDrawPass(DrawPassDesc{
+            .colorAttachments = { cubemap },
+            .execFunc = [](const RenderData& p_data, const DrawPass* p_draw_pass) {
+                if (!p_data.bakeIbl) {
+                    return;
+                }
+                OPTICK_EVENT("bake prefiltered");
+
+                GraphicsManager& gm = GraphicsManager::GetSingleton();
+                gm.SetPipelineState(PSO_PREFILTER);
+                auto [width, height] = p_draw_pass->GetBufferSize();
+
+                auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
+                constexpr int max_mip_levels = 5;
+
+                auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+                DEV_ASSERT(skybox);
+                gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+                for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
+                    for (int face_id = 0; face_id < 6; ++face_id) {
+                        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[face_id];
+                        g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(max_mip_levels - 1);
+                        g_env_cache.update();
+
+                        gm.SetRenderTarget(p_draw_pass, face_id, mip_idx);
+                        gm.SetViewport(Viewport(width, height));
+                        RenderManager::GetSingleton().draw_skybox();
+                    }
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
             },

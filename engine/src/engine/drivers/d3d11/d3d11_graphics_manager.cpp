@@ -623,6 +623,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
 void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
     DEV_ASSERT(p_draw_pass);
+    DEV_ASSERT(p_mip_level == 0);
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
     if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {

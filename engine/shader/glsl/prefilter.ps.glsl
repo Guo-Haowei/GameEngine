@@ -1,14 +1,15 @@
 /// File: prefilter.ps.glsl
 #include "../cbuffer.hlsl.h"
+#include "../shader_resource_defines.hlsl.h"
 #include "lighting.glsl"
 
 layout(location = 0) out vec4 out_color;
-in vec3 pass_position;
+in vec3 out_var_POSITION;
 
 #define SAMPLE_COUNT 1024u
 
 void main() {
-    vec3 N = normalize(pass_position);
+    vec3 N = normalize(out_var_POSITION);
 
     // make the simplyfying assumption that V equals R equals the normal
     vec3 R = N;
@@ -39,7 +40,7 @@ void main() {
 
             float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel);
 
-            prefilteredColor += textureLod(c_envMap, L, mipLevel).rgb * NdotL;
+            prefilteredColor += textureLod(t_Skybox, L, mipLevel).rgb * NdotL;
             totalWeight += NdotL;
         }
     }
