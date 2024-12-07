@@ -6,6 +6,7 @@
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/frustum.h"
+#include "engine/core/math/geometry.h"
 #include "engine/core/math/matrix_transform.h"
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
@@ -130,6 +131,10 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 #define SRV(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
     SRV_DEFINES
 #undef SRV
+
+    // create meshes
+    m_screenQuadBuffers = CreateMesh(MakePlaneMesh(Vector3f(1)));
+    m_skyboxBuffers = CreateMesh(MakeSkyBoxMesh());
 
     m_initialized = true;
     return Result<void>();
@@ -545,6 +550,21 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
             UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
         }
     }
+}
+
+void GraphicsManager::DrawQuad() {
+    SetMesh(m_screenQuadBuffers);
+    DrawElements(m_screenQuadBuffers->indexCount);
+}
+
+void GraphicsManager::DrawQuadInstanced(uint32_t p_instance_count) {
+    SetMesh(m_screenQuadBuffers);
+    DrawElementsInstanced(p_instance_count, m_screenQuadBuffers->indexCount, 0);
+}
+
+void GraphicsManager::DrawSkybox() {
+    SetMesh(m_skyboxBuffers);
+    DrawElements(m_skyboxBuffers->indexCount);
 }
 
 }  // namespace my

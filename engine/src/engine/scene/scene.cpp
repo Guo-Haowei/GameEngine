@@ -5,6 +5,7 @@
 #include "engine/core/math/geometry.h"
 #include "engine/core/systems/job_system.h"
 #include "engine/renderer/render_manager.h"
+#include "engine/renderer/renderer.h"
 
 namespace my {
 
@@ -71,14 +72,12 @@ void Scene::Update(float p_elapsedTime) {
     }
 
     for (auto [entity, light] : m_HemisphereLightComponents) {
-        light.hack_generated = false;
-
         if (!light.m_path.empty()) {
             if (!light.m_asset) {
                 auto res = AssetRegistry::GetSingleton().RequestAssetSync(light.m_path);
                 if (res) {
                     light.m_asset = dynamic_cast<const ImageAsset*>(*res);
-                    light.hack_generated = true;
+                    // renderer::RequestBakingIbl();
                 }
             }
         }

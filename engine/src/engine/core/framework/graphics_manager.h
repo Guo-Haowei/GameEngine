@@ -152,6 +152,10 @@ public:
 
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
+    void DrawQuad();
+    void DrawQuadInstanced(uint32_t p_instance_count);
+    void DrawSkybox();
+
 protected:
     virtual auto InitializeInternal() -> Result<void> = 0;
     virtual std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
@@ -182,6 +186,9 @@ protected:
     std::vector<std::unique_ptr<FrameContext>> m_frameContexts;
     int m_frameIndex{ 0 };
     const int m_frameCount;
+
+    const MeshBuffers* m_screenQuadBuffers;
+    const MeshBuffers* m_skyboxBuffers;
 
 public:
     // @TODO: make private

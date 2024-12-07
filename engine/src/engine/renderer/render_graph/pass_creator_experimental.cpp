@@ -7,7 +7,6 @@
 #include "engine/renderer/pipeline_state.h"
 #include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/pass_creator.h"
-#include "engine/renderer/render_manager.h"
 #include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
@@ -17,56 +16,6 @@
 extern OpenGlMeshBuffers* g_box;
 
 namespace my::renderer {
-
-void diffuse_irradiance_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
-    if (!p_data.bakeIbl) {
-        return;
-    }
-    OPTICK_EVENT();
-
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
-    const auto [width, height] = p_draw_pass->GetBufferSize();
-
-    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
-
-    for (int i = 0; i < 6; ++i) {
-        GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, i);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glViewport(0, 0, width, height);
-
-        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
-        g_env_cache.update();
-        RenderManager::GetSingleton().draw_skybox();
-    }
-}
-
-void prefilter_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
-    if (!p_data.bakeIbl) {
-        return;
-    }
-    OPTICK_EVENT();
-
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_PREFILTER);
-    auto [width, height] = p_draw_pass->GetBufferSize();
-
-    auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
-    constexpr int max_mip_levels = 5;
-
-    for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
-        for (int face_id = 0; face_id < 6; ++face_id) {
-            g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[face_id];
-            g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(max_mip_levels - 1);
-            g_env_cache.update();
-
-            GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass, face_id, mip_idx);
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glViewport(0, 0, width, height);
-            RenderManager::GetSingleton().draw_skybox();
-        }
-    }
-
-    return;
-}
 
 void debug_vxgi_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
@@ -107,7 +56,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     g_debug_draw_cache.cache.c_displayChannel = p_channel;
     g_debug_draw_cache.cache.c_debugDrawMap.Set64(p_handle);
     g_debug_draw_cache.update();
-    RenderManager::GetSingleton().draw_quad();
+    GraphicsManager::GetSingleton().DrawQuad();
 }
 
 void final_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
@@ -157,39 +106,7 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
                                                                           w, h),
                                                   PointClampSampler());
 
-    // @TODO: refactor
-    {  // environment pass
-        RenderPassDesc desc;
-        desc.name = RenderPassName::ENV;
-        auto pass = graph->CreatePass(desc);
-
-        auto create_cube_map_subpass = [&](RenderTargetResourceName cube_map_name, RenderTargetResourceName depth_name, int size, DrawPassExecuteFunc p_func, const SamplerDesc& p_sampler, bool gen_mipmap) {
-            auto cube_texture_desc = BuildDefaultTextureDesc(cube_map_name,
-                                                             PixelFormat::R16G16B16A16_FLOAT,
-                                                             AttachmentType::COLOR_CUBE,
-                                                             size, size, 6);
-            cube_texture_desc.miscFlags |= gen_mipmap ? RESOURCE_MISC_GENERATE_MIPS : RESOURCE_MISC_NONE;
-            auto cube_map = manager.CreateTexture(cube_texture_desc, p_sampler);
-
-            auto depth_texture_desc = BuildDefaultTextureDesc(depth_name,
-                                                              PixelFormat::D32_FLOAT,
-                                                              AttachmentType::DEPTH_2D,
-                                                              size, size, 6);
-            depth_texture_desc.miscFlags |= gen_mipmap ? RESOURCE_MISC_GENERATE_MIPS : RESOURCE_MISC_NONE;
-            auto depth_map = manager.CreateTexture(depth_texture_desc, PointClampSampler());
-
-            auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-                .colorAttachments = { cube_map },
-                .depthAttachment = depth_map,
-                .execFunc = p_func,
-            });
-            return draw_pass;
-        };
-
-        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP, RESOURCE_ENV_DIFFUSE_IRRADIANCE_DEPTH, 32, diffuse_irradiance_pass_func, LinearClampSampler(), false));
-        pass->AddDrawPass(create_cube_map_subpass(RESOURCE_ENV_PREFILTER_CUBE_MAP, RESOURCE_ENV_PREFILTER_DEPTH, 512, prefilter_pass_func, env_cube_map_sampler_mip(), true));
-    }
-
+    creator.AddGenerateSkylightPass();
     creator.AddShadowPass();
     creator.AddGbufferPass();
     creator.AddHighlightPass();

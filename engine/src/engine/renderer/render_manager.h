@@ -26,14 +26,8 @@ public:
     PointShadowHandle allocate_point_light_shadowMap();
     void free_point_light_shadowMap(PointShadowHandle& p_handle);
 
-    void draw_quad();
-    void draw_quad_instanced(uint32_t p_instance_count);
-    void draw_skybox();
-
 private:
     std::list<PointShadowHandle> m_free_point_light_shadow;
-    const MeshBuffers* m_screen_quad_buffers;
-    const MeshBuffers* m_skybox_buffers;
 };
 
 }  // namespace my

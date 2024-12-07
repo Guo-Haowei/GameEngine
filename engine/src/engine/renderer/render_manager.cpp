@@ -69,16 +69,10 @@ RenderManager::RenderManager() : Module("RenderManager") {
 }
 
 auto RenderManager::InitializeImpl() -> Result<void> {
-    m_screen_quad_buffers = GraphicsManager::GetSingleton().CreateMesh(MakePlaneMesh(Vector3f(1)));
-    m_skybox_buffers = GraphicsManager::GetSingleton().CreateMesh(MakeSkyBoxMesh());
-
     return Result<void>();
 }
 
 void RenderManager::FinalizeImpl() {
-    m_screen_quad_buffers = nullptr;
-    m_skybox_buffers = nullptr;
-
     m_free_point_light_shadow.clear();
     return;
 }
@@ -98,21 +92,6 @@ void RenderManager::free_point_light_shadowMap(PointShadowHandle& p_handle) {
     DEV_ASSERT_INDEX(p_handle, MAX_POINT_LIGHT_SHADOW_COUNT);
     m_free_point_light_shadow.push_back(p_handle);
     p_handle = INVALID_POINT_SHADOW_HANDLE;
-}
-
-void RenderManager::draw_quad() {
-    GraphicsManager::GetSingleton().SetMesh(m_screen_quad_buffers);
-    GraphicsManager::GetSingleton().DrawElements(m_screen_quad_buffers->indexCount);
-}
-
-void RenderManager::draw_quad_instanced(uint32_t p_instance_count) {
-    GraphicsManager::GetSingleton().SetMesh(m_screen_quad_buffers);
-    GraphicsManager::GetSingleton().DrawElementsInstanced(p_instance_count, m_screen_quad_buffers->indexCount, 0);
-}
-
-void RenderManager::draw_skybox() {
-    GraphicsManager::GetSingleton().SetMesh(m_skybox_buffers);
-    GraphicsManager::GetSingleton().DrawElements(m_skybox_buffers->indexCount);
 }
 
 }  // namespace my

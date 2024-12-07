@@ -14,14 +14,14 @@ void BeginFrame() {
         delete s_renderData;
         s_renderData = nullptr;
     }
+    s_renderData = new RenderData();
+    s_renderData->bakeIbl = false;
 }
 
 void EndFrame() {
 }
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
-    s_renderData = new RenderData();
-    s_renderData->bakeIbl = false;
     RenderDataConfig config(p_scene);
     config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
     PrepareRenderData(p_camera, config, *s_renderData);

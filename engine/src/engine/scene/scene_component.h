@@ -210,9 +210,6 @@ public:
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 
-    // @TODO: fix
-    bool hack_generated = false;
-
 private:
     std::string m_path;
 

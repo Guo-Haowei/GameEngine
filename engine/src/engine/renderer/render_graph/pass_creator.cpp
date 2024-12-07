@@ -6,7 +6,6 @@
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
-#include "engine/renderer/render_manager.h"
 
 // shader defines
 #include "shader_resource_defines.hlsl.h"
@@ -132,7 +131,7 @@ static void HighlightPassFunc(const RenderData&, const DrawPass* p_draw_pass) {
     gm.SetPipelineState(PSO_HIGHLIGHT);
     gm.SetStencilRef(STENCIL_FLAG_SELECTED);
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
-    RenderManager::GetSingleton().draw_quad();
+    gm.DrawQuad();
     gm.SetStencilRef(0);
 }
 
@@ -420,7 +419,7 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     gm.BindTexture(Dimension::TEXTURE_CUBE, diffuse_iraddiance->GetHandle(), GetDiffuseIrradianceSlot());
     gm.BindTexture(Dimension::TEXTURE_CUBE, prefiltered->GetHandle(), GetPrefilteredSlot());
 
-    RenderManager::GetSingleton().draw_quad();
+    gm.DrawQuad();
 
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBrdfLutSlot());
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetDiffuseIrradianceSlot());
@@ -439,7 +438,7 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     if (skybox) {
         gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
         gm.SetPipelineState(PSO_ENV_SKYBOX);
-        RenderManager::GetSingleton().draw_skybox();
+        gm.DrawSkybox();
         gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
     }
 }
@@ -770,7 +769,7 @@ static void TonePassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) 
         gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
 
         gm.SetPipelineState(PSO_TONE);
-        RenderManager::GetSingleton().draw_quad();
+        gm.DrawQuad();
 
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureLightingSlot());
@@ -846,7 +845,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                 gm.SetRenderTarget(p_draw_pass);
                 gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
                 gm.SetViewport(Viewport(width, height));
-                RenderManager::GetSingleton().draw_quad();
+                gm.DrawQuad();
             },
         });
 
@@ -888,7 +887,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                     g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
                     g_env_cache.update();
 
-                    RenderManager::GetSingleton().draw_skybox();
+                    gm.DrawSkybox();
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
 
@@ -930,7 +929,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
 
                     g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
                     g_env_cache.update();
-                    RenderManager::GetSingleton().draw_skybox();
+                    gm.DrawSkybox();
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
             },
@@ -976,7 +975,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
 
                         gm.SetRenderTarget(p_draw_pass, face_id, mip_idx);
                         gm.SetViewport(Viewport(width, height));
-                        RenderManager::GetSingleton().draw_skybox();
+                        gm.DrawSkybox();
                     }
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
@@ -1011,7 +1010,7 @@ static void PathTracerTonePassFunc(const RenderData&, const DrawPass* p_draw_pas
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
 
     gm.SetPipelineState(PSO_TONE);
-    RenderManager::GetSingleton().draw_quad();
+    gm.DrawQuad();
 
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
