@@ -13,7 +13,6 @@
 #include "engine/scene/mesh_component.h"
 #include "engine/scene/object_component.h"
 #include "engine/scene/particle_emitter_component.h"
-#include "engine/scene/rigid_body_component.h"
 #include "engine/scene/transform_component.h"
 
 namespace my {
@@ -85,7 +84,6 @@ private:
     REGISTER_COMPONENT(LightComponent, 0);
     REGISTER_COMPONENT(ArmatureComponent, 0);
     REGISTER_COMPONENT(AnimationComponent, 0);
-    REGISTER_COMPONENT(RigidBodyComponent, 0);
     REGISTER_COMPONENT(BoxColliderComponent, 0);
     REGISTER_COMPONENT(MeshColliderComponent, 0);
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
@@ -93,6 +91,8 @@ private:
     REGISTER_COMPONENT(ScriptComponent, 0);
     REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
     REGISTER_COMPONENT(HemisphereLightComponent, 0);
+    REGISTER_COMPONENT(RigidBodyComponent, 0);
+    REGISTER_COMPONENT(SoftBodyComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);

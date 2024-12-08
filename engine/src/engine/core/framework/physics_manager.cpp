@@ -5,7 +5,12 @@
 
 WARNING_PUSH()
 WARNING_DISABLE(4127, "-Wunused-parameter")
-#include "bullet3/btBulletDynamicsCommon.h"
+WARNING_DISABLE(4100, "-Wunused-parameter")
+WARNING_DISABLE(4459, "-Wunused-parameter")  // Hide previous definition
+#include <bullet3/BulletSoftBody/btSoftBody.h>
+#include <bullet3/BulletSoftBody/btSoftBodyHelpers.h>
+#include <bullet3/BulletSoftBody/btSoftRigidDynamicsWorld.h>
+#include <bullet3/btBulletDynamicsCommon.h>
 WARNING_POP()
 
 namespace my {
@@ -59,14 +64,50 @@ void PhysicsManager::Update(Scene& p_scene) {
     }
 }
 
+btSoftBody* CreateSoftBodyFromPoints(btSoftBodyWorldInfo* softBodyWorldInfo, const std::vector<btVector3>& points) {
+    // Create a soft body
+    btSoftBody* softBody = new btSoftBody(softBodyWorldInfo);
+
+    // Add nodes (points) to the soft body
+    for (const auto& point : points) {
+        softBody->appendNode(point, 1.0f);  // Append nodes to the soft body
+    }
+
+    // Create springs between the points to form the structure of the soft body
+    for (int i = 0; i < (int)points.size(); ++i) {
+        for (int j = i + 1; j < (int)points.size(); ++j) {
+            softBody->appendLink(i, j);  // Create a spring between nodes i and j
+        }
+    }
+
+    softBody->m_nodes;
+#if 0
+    // Apply material properties (optional)
+    btSoftBody::Material* material = softBody->appendMaterial();
+    material->m_kLST = 0.1f;  // Stretching stiffness
+    material->m_kAST = 0.1f;  // Bending stiffness
+#endif
+
+    softBody->generateBendingConstraints(2);  // Define the bending constraint for the soft body
+
+    return softBody;
+}
+
 void PhysicsManager::CreateWorld(const Scene& p_scene) {
     m_collisionConfig = new btDefaultCollisionConfiguration();
     m_dispatcher = new btCollisionDispatcher(m_collisionConfig);
-    m_overlappingPairCache = new btDbvtBroadphase();
+    m_broadphase = new btDbvtBroadphase();
     m_solver = new btSequentialImpulseConstraintSolver;
-    m_dynamicWorld = new btDiscreteDynamicsWorld(m_dispatcher, m_overlappingPairCache, m_solver, m_collisionConfig);
+    m_dynamicWorld = new btSoftRigidDynamicsWorld(m_dispatcher, m_broadphase, m_solver, m_collisionConfig);
 
-    m_dynamicWorld->setGravity(btVector3(0, -10, 0));
+    btVector3 gravity = btVector3(0.0f, -9.81f, 0.0f);
+    m_dynamicWorld->setGravity(gravity);
+
+    m_softBodyWorldInfo = new btSoftBodyWorldInfo;
+    m_softBodyWorldInfo->m_broadphase = m_broadphase;
+    m_softBodyWorldInfo->m_dispatcher = m_dispatcher;
+    m_softBodyWorldInfo->m_gravity = gravity;
+    m_softBodyWorldInfo->m_sparsesdf.Initialize();
 
     for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
         const TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
@@ -115,6 +156,10 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
         body->setUserPointer((void*)((size_t)id.GetId()));
         m_dynamicWorld->addRigidBody(body);
     }
+    for (auto [id, component] : p_scene.m_SoftBodyComponents) {
+        btSoftBody* soft_body = new btSoftBody(m_softBodyWorldInfo);
+        m_dynamicWorld->addSoftBody(soft_body);
+    }
 }
 
 void PhysicsManager::CleanWorld() {
@@ -137,19 +182,18 @@ void PhysicsManager::CleanWorld() {
             delete shape;
         }
 
-        // delete dynamics world
+        delete m_softBodyWorldInfo;
+        m_softBodyWorldInfo = nullptr;
+
         delete m_dynamicWorld;
         m_dynamicWorld = nullptr;
 
-        // delete m_solver
         delete m_solver;
         m_solver = nullptr;
 
-        // delete broadphase
-        delete m_overlappingPairCache;
-        m_overlappingPairCache = nullptr;
+        delete m_broadphase;
+        m_broadphase = nullptr;
 
-        // delete m_dispatcher
         delete m_dispatcher;
         m_dispatcher = nullptr;
 

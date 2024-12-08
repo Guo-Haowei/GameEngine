@@ -24,7 +24,8 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 // version 10: add ForceFieldComponent
 // version 11: add ScriptFieldComponent
 // version 12: add CameraComponent
-static constexpr uint32_t SCENE_VERSION = 12;
+// version 13: add SoftBodyComponent
+static constexpr uint32_t SCENE_VERSION = 13;
 static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor

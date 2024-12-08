@@ -220,6 +220,38 @@ private:
 };
 #pragma endregion HEMISPHERE_LIGHT_COMPONENT
 
+#pragma region RIGID_BODY_COMPONENT
+struct RigidBodyComponent {
+    enum CollisionShape {
+        SHAPE_UNKNOWN,
+        SHAPE_SPHERE,
+        SHAPE_CUBE,
+        SHAPE_MAX,
+    };
+
+    union Parameter {
+        struct {
+            Vector3f half_size;
+        } box;
+        struct {
+            float radius;
+        } sphere;
+    };
+
+    float mass = 1.0f;
+    CollisionShape shape;
+    Parameter param;
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+};
+#pragma endregion RIGID_BODY_COMPONENT
+
+#pragma region SOFT_BODY_COMPONENT
+struct SoftBodyComponent {
+    void Serialize(Archive& p_archive, uint32_t p_version);
+};
+#pragma endregion SOFT_BODY_COMPONENT
+
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT
 

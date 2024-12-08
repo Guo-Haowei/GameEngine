@@ -1,7 +1,78 @@
+SET(BulletSoftBody_SRCS
+	BulletSoftBody/btSoftBody.cpp
+	BulletSoftBody/btSoftBodyConcaveCollisionAlgorithm.cpp
+	BulletSoftBody/btSoftBodyHelpers.cpp
+	BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.cpp
+	BulletSoftBody/btSoftRigidCollisionAlgorithm.cpp
+	BulletSoftBody/btSoftRigidDynamicsWorld.cpp
+	BulletSoftBody/btSoftMultiBodyDynamicsWorld.cpp
+	BulletSoftBody/btSoftSoftCollisionAlgorithm.cpp
+	BulletSoftBody/btDefaultSoftBodySolver.cpp
+
+	BulletSoftBody/btDeformableBackwardEulerObjective.cpp
+	BulletSoftBody/btDeformableBodySolver.cpp
+	BulletSoftBody/btDeformableMultiBodyConstraintSolver.cpp
+	BulletSoftBody/btDeformableContactProjection.cpp
+	BulletSoftBody/btDeformableMultiBodyDynamicsWorld.cpp
+	BulletSoftBody/btDeformableContactConstraint.cpp
+	BulletSoftBody/poly34.cpp
+
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableBody.cpp
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableBodyHelpers.cpp
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableBodySolver.cpp
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableContactConstraint.cpp
+)
+
+
+SET(BulletSoftBody_HDRS
+	BulletSoftBody/btSoftBody.h
+	BulletSoftBody/btSoftBodyData.h
+	BulletSoftBody/btSoftBodyConcaveCollisionAlgorithm.h
+	BulletSoftBody/btSoftBodyHelpers.h
+	BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h
+	BulletSoftBody/btSoftRigidCollisionAlgorithm.h
+	BulletSoftBody/btSoftRigidDynamicsWorld.h
+	BulletSoftBody/btSoftMultiBodyDynamicsWorld.h
+	BulletSoftBody/btSoftSoftCollisionAlgorithm.h
+	BulletSoftBody/btSparseSDF.h
+
+	BulletSoftBody/btSoftBodySolvers.h
+	BulletSoftBody/btDefaultSoftBodySolver.h
+	
+	BulletSoftBody/btCGProjection.h
+	BulletSoftBody/btConjugateGradient.h
+	BulletSoftBody/btConjugateResidual.h
+	BulletSoftBody/btDeformableGravityForce.h
+	BulletSoftBody/btDeformableMassSpringForce.h
+	BulletSoftBody/btDeformableCorotatedForce.h
+	BulletSoftBody/btDeformableNeoHookeanForce.h
+	BulletSoftBody/btDeformableLinearElasticityForce.h
+	BulletSoftBody/btDeformableLagrangianForce.h
+	BulletSoftBody/btPreconditioner.h
+
+	BulletSoftBody/btDeformableBackwardEulerObjective.h
+	BulletSoftBody/btDeformableBodySolver.h
+	BulletSoftBody/btDeformableMultiBodyConstraintSolver.h
+	BulletSoftBody/btDeformableContactProjection.h
+	BulletSoftBody/btDeformableMultiBodyDynamicsWorld.h
+	BulletSoftBody/btDeformableContactConstraint.h
+	BulletSoftBody/btKrylovSolver.h
+	BulletSoftBody/poly34.h
+
+	BulletSoftBody/btSoftBodySolverVertexBuffer.h
+
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableBody.h
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableBodyHelpers.h
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableBodySolver.h
+	BulletSoftBody/BulletReducedDeformableBody/btReducedDeformableContactConstraint.h
+)
+
 add_library(bullet STATIC
 	btBulletCollisionAll.cpp
 	btBulletDynamicsAll.cpp
 	btLinearMathAll.cpp
+	${BulletSoftBody_SRCS}
+	${BulletSoftBody_HDRS}
 )
 
 target_include_directories(bullet PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
