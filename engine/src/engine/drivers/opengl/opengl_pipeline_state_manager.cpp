@@ -174,11 +174,11 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
                     if (!result) { break; }
                 }
                 if (!p_desc.gs.empty()) {
-                    create_shader_helper(p_desc.gs, GL_GEOMETRY_SHADER);
+                    result = create_shader_helper(p_desc.gs, GL_GEOMETRY_SHADER);
                     if (!result) { break; }
                 }
                 if (!p_desc.ps.empty()) {
-                    create_shader_helper(p_desc.ps, GL_FRAGMENT_SHADER);
+                    result = create_shader_helper(p_desc.ps, GL_FRAGMENT_SHADER);
                     if (!result) { break; }
                 }
             } while (0);

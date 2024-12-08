@@ -6,28 +6,35 @@
 
 namespace my::renderer {
 
-static RenderData* g_renderData;
+static RenderData* s_renderData;
 
 void BeginFrame() {
     // @TODO: should be a better way
-    if (g_renderData) {
-        delete g_renderData;
-        g_renderData = nullptr;
+    if (s_renderData) {
+        delete s_renderData;
+        s_renderData = nullptr;
     }
+    s_renderData = new RenderData();
+    s_renderData->bakeIbl = false;
 }
 
 void EndFrame() {
 }
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
-    g_renderData = new RenderData();
     RenderDataConfig config(p_scene);
     config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-    PrepareRenderData(p_camera, config, *g_renderData);
+    PrepareRenderData(p_camera, config, *s_renderData);
+}
+
+void RequestBakingIbl() {
+    if (DEV_VERIFY(s_renderData)) {
+        s_renderData->bakeIbl = true;
+    }
 }
 
 const RenderData* GetRenderData() {
-    return g_renderData;
+    return s_renderData;
 }
 
 }  // namespace my::renderer

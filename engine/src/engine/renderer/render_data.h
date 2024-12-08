@@ -100,7 +100,7 @@ struct RenderData {
     PassContext voxelPass;
     PassContext mainPass;
 
-    bool bakeEnvMap;
+    bool bakeIbl;
     std::shared_ptr<GpuTexture> skyboxHdr;
 };
 

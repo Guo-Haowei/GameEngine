@@ -75,7 +75,6 @@ Scene* CreateTheAviatorScene() {
 
 #pragma region SETUP_MATERIALS
     // colors
-    // const Color red = Color::Hex(0xF25346);
     const Color red = Color::Hex(0xCE190A);
     const Color white = Color::Hex(0XD8D0D1);
     const Color dark_brown = Color::Hex(0x23190F);
@@ -316,8 +315,7 @@ Scene* CreateTheAviatorScene() {
 #pragma endregion SETUP_SKY
 
     {
-        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/street.hdr");
-        // auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/sky.hdr");
+        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/sky.hdr");
         scene->AttachChild(sky_light, root);
     }
 

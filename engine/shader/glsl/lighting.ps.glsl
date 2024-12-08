@@ -118,12 +118,12 @@ void main() {
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
-    vec3 irradiance = texture(c_diffuseIrradianceMap, N).rgb;
+    vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
     vec3 diffuse = irradiance * base_color.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(c_prefilteredMap, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 envBRDF = texture(c_brdfMap, vec2(NdotV, roughness)).rg;
+    vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 envBRDF = texture(t_BrdfLut, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     const float ao = 1.0;

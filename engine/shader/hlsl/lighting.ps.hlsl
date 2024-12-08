@@ -1,9 +1,16 @@
 /// File: lighting.ps.hlsl
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
-#include "pbr.hlsl"
+#include "pbr.hlsl.h"
 #include "sampler.hlsl.h"
+#include "shader_resource_defines.hlsl.h"
 #include "shadow.hlsl"
+
+float3 FresnelSchlickRoughness(float cosTheta, in float3 F0, float roughness) {
+    float3 zero = float3(0.0, 0.0, 0.0);
+    float3 tmp = float3(1.0, 1.0, 1.0) - roughness;
+    return F0 + (max(tmp, zero)) * pow(1.0 - cosTheta, 5.0);
+}
 
 // @TODO: refactor shadow
 #define NUM_POINT_SHADOW_SAMPLES 20
@@ -76,9 +83,9 @@ float3 lighting(float3 N, float3 L, float3 V, float3 radiance, float3 F0, float 
     const float NdotV = max(dot(N, V), 0.0);
 
     // direct cook-torrance brdf
-    const float NDF = distribution_ggx(NdotH, roughness);
-    const float G = geometry_smith(NdotV, NdotL, roughness);
-    const float3 F = fresnel_schlick(clamp(dot(H, V), 0.0, 1.0), F0);
+    const float NDF = DistributionGGX(NdotH, roughness);
+    const float G = GeometrySmith(NdotV, NdotL, roughness);
+    const float3 F = FresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
     const float3 nom = NDF * G * F;
     float denom = 4 * NdotV * NdotL;
@@ -124,7 +131,6 @@ ps_output main(vsoutput_uv input) {
     }
 
     float3 N = TEXTURE_2D(GbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
-    float3 color = float3(0.0, 0.0, 0.0);
 
     const float3 V = normalize(c_cameraPosition - world_position);
     const float NdotV = clamp(dot(N, V), 0.0, 1.0);
@@ -177,6 +183,28 @@ ps_output main(vsoutput_uv input) {
         Lo += (1.0 - shadow) * direct_lighting;
     }
 
-    output.color = float4(Lo, 1.0);
+    // IBL
+    float3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
+    float3 kS = F;
+    float3 kD = 1.0 - kS;
+    kD *= 1.0 - metallic;
+    float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).SampleLevel(s_cubemapClampSampler, N, 0.0f).rgb;
+    float3 diffuse = irradiance * base_color.rgb;
+
+    const float MAX_REFLECTION_LOD = 4.0;
+    float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, 0.0f).rgb;
+    // float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
+    float2 lut_uv = float2(NdotV, roughness);
+    lut_uv.y = 1.0 - lut_uv.y;
+    float2 envBRDF = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, lut_uv).rg;
+    // float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+    float3 specular = prefilteredColor;
+
+    diffuse = float3(0.0, 0.0, 0.0);
+
+    const float ao = 1.0;
+    float3 ambient = (kD * diffuse + specular) * ao;
+
+    output.color = float4(Lo + ambient, 1.0);
     return output;
 }

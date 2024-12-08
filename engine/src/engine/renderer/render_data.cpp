@@ -228,7 +228,6 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_o
 
     // check if necessary to back environment
     {
-        p_out_data.bakeEnvMap = false;
         for (auto [entity, hemisphere_light] : p_config.scene.m_HemisphereLightComponents) {
             auto asset = hemisphere_light.GetAsset();
             if (asset && asset->gpu_texture) {
@@ -238,9 +237,6 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_o
                 // @TODO: fix this
                 g_constantCache.cache.c_hdrEnvMap.Set64(asset->gpu_texture->GetResidentHandle());
                 g_constantCache.update();
-            }
-            if (InputManager::GetSingleton().IsButtonPressed(MouseButton::RIGHT)) {
-                p_out_data.bakeEnvMap = true;
             }
         }
     }

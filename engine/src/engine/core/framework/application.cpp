@@ -28,6 +28,7 @@
 
 // @TODO: remove this
 #include "engine/renderer/render_manager.h"
+#include "pbr.hlsl.h"
 
 namespace my {
 

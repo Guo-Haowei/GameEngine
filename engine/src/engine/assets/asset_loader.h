@@ -82,15 +82,4 @@ public:
     auto Load() -> Result<IAsset*> override;
 };
 
-class LuaSceneLoader : public IAssetLoader {
-public:
-    using IAssetLoader::IAssetLoader;
-
-    static std::unique_ptr<IAssetLoader> CreateLoader(const IAsset::Meta& p_meta) {
-        return std::make_unique<LuaSceneLoader>(p_meta);
-    }
-
-    auto Load() -> Result<IAsset*> override;
-};
-
 }  // namespace my

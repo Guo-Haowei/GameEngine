@@ -255,11 +255,6 @@ CBUFFER(PerSceneConstantBuffer, 7) {
     // @TODO: unordered access
     sampler2D c_ltc1;
     sampler2D c_ltc2;
-
-    sampler2D c_brdfMap;
-    samplerCube c_envMap;
-    samplerCube c_diffuseIrradianceMap;
-    samplerCube c_prefilteredMap;
 };
 
 // @TODO: make it more general, something like 2D draw

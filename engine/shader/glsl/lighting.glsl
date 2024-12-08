@@ -1,5 +1,5 @@
 /// File: lighting.glsl
-#include "pbr.glsl"
+#include "../pbr.hlsl.h"
 #include "shadow.glsl"
 
 // @TODO: refactor
@@ -11,9 +11,9 @@ vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, f
     const float NdotV = max(dot(N, V), 0.0);
 
     // direct cook-torrance brdf
-    const float NDF = distribution_ggx(NdotH, roughness);
-    const float G = geometry_smith(NdotV, NdotL, roughness);
-    const vec3 F = fresnel_schlick(clamp(dot(H, V), 0.0, 1.0), F0);
+    const float NDF = DistributionGGX(NdotH, roughness);
+    const float G = GeometrySmith(NdotV, NdotL, roughness);
+    const vec3 F = FresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
     const vec3 nom = NDF * G * F;
     float denom = 4 * NdotV * NdotL;
