@@ -1,7 +1,7 @@
 /// File: lighting.ps.hlsl
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
-#include "pbr.hlsl"
+#include "pbr.hlsl.h"
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 #include "shadow.hlsl"
@@ -83,9 +83,9 @@ float3 lighting(float3 N, float3 L, float3 V, float3 radiance, float3 F0, float 
     const float NdotV = max(dot(N, V), 0.0);
 
     // direct cook-torrance brdf
-    const float NDF = distribution_ggx(NdotH, roughness);
-    const float G = geometry_smith(NdotV, NdotL, roughness);
-    const float3 F = fresnel_schlick(clamp(dot(H, V), 0.0, 1.0), F0);
+    const float NDF = DistributionGGX(NdotH, roughness);
+    const float G = GeometrySmith(NdotV, NdotL, roughness);
+    const float3 F = FresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
     const float3 nom = NDF * G * F;
     float denom = 4 * NdotV * NdotL;
@@ -198,7 +198,7 @@ ps_output main(vsoutput_uv input) {
     lut_uv.y = 1.0 - lut_uv.y;
     float2 envBRDF = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, lut_uv).rg;
     // float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
-    float3 specular = prefilteredColor ;
+    float3 specular = prefilteredColor;
 
     diffuse = float3(0.0, 0.0, 0.0);
 

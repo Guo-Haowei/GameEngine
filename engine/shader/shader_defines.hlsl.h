@@ -3,11 +3,11 @@
 #define SHADER_DEFINES_INCLUDED
 
 #ifndef MY_PI
-#define MY_PI 3.141592653589793
+#define MY_PI 3.141592653589793f
 #endif
 
 #ifndef MY_TWO_PI
-#define MY_TWO_PI 6.283185307179586
+#define MY_TWO_PI 6.283185307179586f
 #endif
 
 #define MAX_LIGHT_COUNT              16

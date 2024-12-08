@@ -1,9 +1,9 @@
 /// File: prefilter.ps.hlsl
 #include "cbuffer.hlsl.h"
+#include "hlsl/input_output.hlsl"
+#include "pbr.hlsl.h"
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
-#include "hlsl/input_output.hlsl"
-#include "pbr.hlsl"
 
 #define SAMPLE_COUNT 1024u
 
@@ -28,7 +28,7 @@ float4 main(vsoutput_position input) : SV_TARGET {
         if (NdotL > 0.0) {
             // sample from the environment's mip level based on roughness/pdf
             float NdotH = max(dot(N, H), 0.0);
-            float D = distribution_ggx(NdotH, roughness);
+            float D = DistributionGGX(NdotH, roughness);
             float HdotV = max(dot(H, V), 0.0);
             float pdf = D * NdotH / (4.0 * HdotV) + 0.0001;
 
