@@ -4,7 +4,6 @@
 
 #include "engine/assets/asset.h"
 #include "engine/core/string/string_utils.h"
-#include "engine/lua_binding/lua_scene_binding.h"
 #include "engine/renderer/pixel_format.h"
 #include "engine/scene/scene.h"
 
@@ -216,24 +215,6 @@ auto SceneLoader::Load() -> Result<IAsset*> {
     scene->m_replace = true;
     scene->Serialize(archive);
     return scene;
-}
-
-auto LuaSceneLoader::Load() -> Result<IAsset*> {
-    CRASH_NOW();
-    return HBN_ERROR(ErrorCode::FAILURE, "not implemented");
-#if 0
-    Scene* scene = new Scene;
-    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    scene->CreateCamera(frame_size.x, frame_size.y);
-    auto root = scene->CreateTransformEntity("world");
-    scene->m_replace = true;
-    scene->m_root = root;
-    bool result = LoadLuaScene(m_filePath, scene);
-    if (!result) {
-        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", m_filePath);
-    }
-    return scene;
-#endif
 }
 
 }  // namespace my

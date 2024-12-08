@@ -6,6 +6,7 @@ namespace my {
 
 extern Scene* CreateTheAviatorScene();
 extern Scene* CreatePbrTestScene();
+extern Scene* CreatePhysicsTestScene();
 
 class Editor : public Application {
 public:
@@ -44,6 +45,8 @@ Scene* Editor::CreateInitialScene() {
         return CreateTheAviatorScene();
     } else if constexpr (a == 2) {
         return CreatePbrTestScene();
+    } else if constexpr (a == 3) {
+        return CreatePhysicsTestScene();
     }
 }
 
