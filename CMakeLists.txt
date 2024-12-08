@@ -22,12 +22,10 @@ message(STATUS "BUILD_ASSIMP            : ${BUILD_ASSIMP}")
 ################################################################################
 
 find_package(glfw3 REQUIRED)
+find_package(glad REQUIRED)
 find_package(glm REQUIRED)
-
-##############
-message("Configuring glad...")
-add_subdirectory(thirdparty/glad)
-set_target_properties(glad PROPERTIES FOLDER thirdparty)
+find_package(lua REQUIRED)
+find_package(sol2 REQUIRED)
 
 ################################################################################
 message(STATUS "Configuring Bullet3...")
@@ -41,7 +39,7 @@ if(NOT APPLE)
     set_target_properties(optick PROPERTIES FOLDER thirdparty)
 endif()
 
-include(cmake/build-lua.cmake)
+# include(cmake/build-lua.cmake)
 include(cmake/build-imgui.cmake)
 
 # gtest
