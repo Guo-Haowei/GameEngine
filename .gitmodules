@@ -1,15 +1,9 @@
-[submodule "thirdparty/glfw"]
-	path = thirdparty/glfw
-	url = https://github.com/glfw/glfw.git
 [submodule "thirdparty/glad"]
 	path = thirdparty/glad
 	url = https://github.com/Guo-Haowei/glad.git
 [submodule "thirdparty/assimp"]
 	path = thirdparty/assimp
 	url = https://github.com/assimp/assimp.git
-[submodule "thirdparty/glm"]
-	path = thirdparty/glm
-	url = https://github.com/g-truc/glm.git
 [submodule "thirdparty/lua"]
 	path = thirdparty/lua
 	url = https://github.com/lua/lua.git

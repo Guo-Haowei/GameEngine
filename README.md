@@ -10,7 +10,7 @@ Yet another game engine.
 ```shell
 $ sh build_assimp.bat
 $ mkdir build && cd build
-$ cmake ..
+$ cmake -DCMAKE_TOOLCHAIN_FILE=<path/to/vcpkg>/scripts/buildsystems/vcpkg.cmake ..
 $ cmake --build . --config Debug
 ```
 

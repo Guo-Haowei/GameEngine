@@ -32,9 +32,7 @@ add_library(${TARGET_NAME} STATIC ${FILTERED_SRC})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/engine FILES ${FILTERED_SRC})
 
 target_include_directories(${TARGET_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/thirdparty/glfw/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
-    ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/imgui
     ${PROJECT_SOURCE_DIR}/thirdparty/optick
     ${PROJECT_SOURCE_DIR}/thirdparty/sol2/include
@@ -59,6 +57,7 @@ set(TARGET_LIBS
     lua
     bullet
     loader_assimp
+    glm::glm
 )
 
 if(WIN32)

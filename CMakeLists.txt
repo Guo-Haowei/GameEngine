@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.18)
 project(GameEngine)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
@@ -20,16 +20,11 @@ message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
 message(STATUS "BUILD_ASSIMP            : ${BUILD_ASSIMP}")
 
 ################################################################################
-message("Configuring glfw...")
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-add_subdirectory(thirdparty/glfw)
-set_target_properties(glfw PROPERTIES FOLDER thirdparty)
-set_target_properties(update_mappings PROPERTIES FOLDER thirdparty)
 
-################################################################################
+find_package(glfw3 REQUIRED)
+find_package(glm REQUIRED)
+
+##############
 message("Configuring glad...")
 add_subdirectory(thirdparty/glad)
 set_target_properties(glad PROPERTIES FOLDER thirdparty)
