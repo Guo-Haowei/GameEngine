@@ -39,6 +39,8 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/engine/shader
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
+    ${TINYGLTF_INCLUDE_DIRS}
+    ${Stb_INCLUDE_DIR}
     $ENV{VULKAN_SDK}/include
 )
 

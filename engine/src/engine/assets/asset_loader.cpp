@@ -1,6 +1,6 @@
 #include "asset_loader.h"
 
-#include <stb/stb_image.h>
+#include <stb_image.h>
 
 #include "engine/assets/asset.h"
 #include "engine/core/string/string_utils.h"
