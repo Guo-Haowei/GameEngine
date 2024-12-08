@@ -54,6 +54,7 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
 namespace my {
 
 constexpr int BLOOM_MIP_CHAIN_MAX = 7;
+constexpr int IBL_MIP_CHAIN_MAX = 5;
 
 constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_DEPTH = PixelFormat::R24G8_TYPELESS;
 constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_BASE_COLOR = PixelFormat::R16G16B16A16_FLOAT;

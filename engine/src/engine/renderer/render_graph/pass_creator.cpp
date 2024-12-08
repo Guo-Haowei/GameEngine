@@ -11,9 +11,6 @@
 #include "shader_resource_defines.hlsl.h"
 #include "unordered_access_defines.hlsl.h"
 
-// @TODO: this is temporary
-#include "engine/core/framework/scene_manager.h"
-
 namespace my::renderer {
 
 /// Gbuffer
@@ -943,7 +940,12 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                                             PixelFormat::R16G16B16A16_FLOAT,
                                             AttachmentType::COLOR_CUBE,
                                             size, size, 6);
-        desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+        if (gm.GetBackend() == Backend::OPENGL) {
+            // @HACK
+            desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+        }
+        desc.mipLevels = IBL_MIP_CHAIN_MAX;
+
         auto cubemap = gm.CreateTexture(desc, SamplerDesc(FilterMode::LINEAR,
                                                           FilterMode::LINEAR,
                                                           AddressMode::CLAMP));
@@ -962,15 +964,14 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                 auto [width, height] = p_draw_pass->GetBufferSize();
 
                 auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
-                constexpr int max_mip_levels = 5;
 
                 auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
                 DEV_ASSERT(skybox);
                 gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
-                for (int mip_idx = 0; mip_idx < max_mip_levels; ++mip_idx, width /= 2, height /= 2) {
+                for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
                     for (int face_id = 0; face_id < 6; ++face_id) {
                         g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[face_id];
-                        g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(max_mip_levels - 1);
+                        g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(IBL_MIP_CHAIN_MAX - 1);
                         g_env_cache.update();
 
                         gm.SetRenderTarget(p_draw_pass, face_id, mip_idx);

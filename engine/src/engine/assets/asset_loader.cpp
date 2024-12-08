@@ -110,6 +110,7 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
     int height = 0;
     int num_channels = 0;
     // const int req_channel = is_float ? 0 : 4;
+    // @TODO: fix this
     const int req_channel = 4;
 
     uint8_t* pixels = nullptr;

@@ -545,17 +545,20 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                 draw_pass->rtvs.emplace_back(rtv);
             } break;
             case AttachmentType::COLOR_CUBE: {
-                for (uint32_t face = 0; face < color_attachment->desc.arraySize; ++face) {
-                    ComPtr<ID3D11RenderTargetView> rtv;
-                    D3D11_RENDER_TARGET_VIEW_DESC desc;
-                    desc.Format = d3d::Convert(color_attachment->desc.format);
-                    desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
-                    desc.Texture2DArray.MipSlice = 0;
-                    desc.Texture2DArray.ArraySize = 1;
-                    desc.Texture2DArray.FirstArraySlice = face;
+                int mips = color_attachment->desc.mipLevels;
+                for (int mip_idx = 0; mip_idx < mips; ++mip_idx) {
+                    for (uint32_t face = 0; face < color_attachment->desc.arraySize; ++face) {
+                        ComPtr<ID3D11RenderTargetView> rtv;
+                        D3D11_RENDER_TARGET_VIEW_DESC desc;
+                        desc.Format = d3d::Convert(color_attachment->desc.format);
+                        desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+                        desc.Texture2DArray.MipSlice = mip_idx;
+                        desc.Texture2DArray.ArraySize = 1;
+                        desc.Texture2DArray.FirstArraySlice = face;
 
-                    D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), &desc, rtv.GetAddressOf()), nullptr);
-                    draw_pass->rtvs.push_back(rtv);
+                        D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), &desc, rtv.GetAddressOf()), nullptr);
+                        draw_pass->rtvs.push_back(rtv);
+                    }
                 }
             } break;
             default:
@@ -623,7 +626,6 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
 void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
     unused(p_mip_level);
     DEV_ASSERT(p_draw_pass);
-    DEV_ASSERT(p_mip_level == 0);
 
     auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
     if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
@@ -644,7 +646,8 @@ void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
 
     if (rtvs.size()) {
         if (p_draw_pass->desc.colorAttachments[0]->desc.type == AttachmentType::COLOR_CUBE) {
-            m_deviceContext->OMSetRenderTargets(1, rtvs.data() + p_index, dsv);
+            int offset = p_index + 6 * p_mip_level;
+            m_deviceContext->OMSetRenderTargets(1, rtvs.data() + offset, dsv);
             return;
         }
     }

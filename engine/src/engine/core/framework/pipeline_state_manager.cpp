@@ -303,8 +303,19 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .ps = "prefilter.ps",
                                   .rasterizerDesc = &s_rasterizerFrontFace,
                                   .depthStencilDesc = &s_depthStencilDefault,
+                                  .inputLayoutDesc = &s_inputLayoutMesh,
                                   .blendDesc = &s_blendStateDefault,
                               });
+
+    CREATE_PSO(PSO_BRDF, {
+                             .vs = "screenspace_quad.vs",
+                             .ps = "brdf.ps",
+                             .rasterizerDesc = &s_rasterizerFrontFace,
+                             .depthStencilDesc = &s_depthStencilNoTest,
+                             .inputLayoutDesc = &s_inputLayoutMesh,
+                             .blendDesc = &s_blendStateDefault,
+                         });
+#pragma endregion PSO_ENV
 
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
@@ -317,15 +328,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     if (GraphicsManager::GetSingleton().GetBackend() != Backend::OPENGL) {
         return ok;
     }
-
-    CREATE_PSO(PSO_BRDF, {
-                             .vs = "screenspace_quad.vs",
-                             .ps = "brdf.ps",
-                             .rasterizerDesc = &s_rasterizerFrontFace,
-                             .depthStencilDesc = &s_depthStencilNoTest,
-                             .blendDesc = &s_blendStateDefault,
-                         });
-#pragma endregion PSO_ENV
 
 #pragma region PSO_VOXEL
     // Voxel
