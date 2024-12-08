@@ -248,6 +248,9 @@ struct RigidBodyComponent {
 
 #pragma region SOFT_BODY_COMPONENT
 struct SoftBodyComponent {
+    mutable std::vector<Vector3f> points;
+    mutable std::vector<Vector3f> normals;
+
     void Serialize(Archive& p_archive, uint32_t p_version);
 };
 #pragma endregion SOFT_BODY_COMPONENT

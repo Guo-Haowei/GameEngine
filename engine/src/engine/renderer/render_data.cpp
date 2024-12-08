@@ -17,8 +17,6 @@ namespace my::renderer {
 using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
 using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
-// @TODO: refactor
-
 static void FillPass(const RenderDataConfig& p_config,
                      PassContext& p_pass,
                      FilterObjectFunc1 p_filter1,
@@ -498,6 +496,21 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
         camera.front = p_camera.GetFront();
         camera.right = p_camera.GetRight();
         camera.up = glm::cross(camera.front, camera.right);
+    }
+
+    // @TODO: update soft body
+    for (auto [entity, body] : p_config.scene.m_SoftBodyComponents) {
+        const ObjectComponent* object = p_config.scene.GetComponent<ObjectComponent>(entity);
+        DEV_ASSERT(object);
+        const MeshComponent* mesh = p_config.scene.GetComponent<MeshComponent>(object->meshId);
+        DEV_ASSERT(mesh);
+        if (!body.points.empty()) {
+            p_out_data.updateBuffer.emplace_back(RenderData::UpdateBuffer{
+                .positions = std::move(body.points),
+                .normals = std::move(body.normals),
+                .id = mesh->gpuResource,
+            });
+        }
     }
 
     FillConstantBuffer(p_config, p_out_data);

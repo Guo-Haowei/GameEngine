@@ -62,7 +62,8 @@ protected:
     void Render() final;
     void Present() final;
 
-    void OnSceneChange(const Scene& p_scene) final;
+    void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
+
     void OnWindowResize(int, int) final {}
     void SetPipelineStateImpl(PipelineStateName p_name) final;
 

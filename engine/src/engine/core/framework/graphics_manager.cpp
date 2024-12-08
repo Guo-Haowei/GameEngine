@@ -215,6 +215,13 @@ void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
 }
 
+void GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+    unused(p_mesh);
+    unused(p_positions);
+    unused(p_normals);
+    CRASH_NOW();
+}
+
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
@@ -237,10 +244,15 @@ void GraphicsManager::Update(Scene& p_scene) {
         OPTICK_EVENT("Render");
         BeginFrame();
 
+        auto data = renderer::GetRenderData();
+
+        for (const auto& update_buffer : data->updateBuffer) {
+            UpdateMesh((MeshBuffers*)update_buffer.id, update_buffer.positions, update_buffer.normals);
+        }
+
         // @TODO: remove this
         UpdateEmitters(p_scene);
 
-        auto data = renderer::GetRenderData();
         if (data) {
             auto& frame = GetCurrentFrame();
             UpdateConstantBuffer(frame.batchCb.get(), data->batchCache.buffer);
@@ -565,6 +577,20 @@ void GraphicsManager::DrawQuadInstanced(uint32_t p_instance_count) {
 void GraphicsManager::DrawSkybox() {
     SetMesh(m_skyboxBuffers);
     DrawElements(m_skyboxBuffers->indexCount);
+}
+
+void GraphicsManager::OnSceneChange(const Scene& p_scene) {
+    for (auto [entity, mesh] : p_scene.m_MeshComponents) {
+        if (mesh.gpuResource != nullptr) {
+            const NameComponent& name = *p_scene.GetComponent<NameComponent>(entity);
+            LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.GetName());
+            continue;
+        }
+
+        CreateMesh(mesh);
+    }
+
+    g_constantCache.update();
 }
 
 }  // namespace my

@@ -32,7 +32,8 @@ OpenGlMeshBuffers* g_grass;
 
 template<typename T>
 static void BufferStorage(GLuint buffer, const std::vector<T>& data) {
-    glNamedBufferStorage(buffer, sizeof(T) * data.size(), data.data(), 0);
+    // @TODO: fix
+    glNamedBufferStorage(buffer, sizeof(T) * data.size(), data.data(), GL_DYNAMIC_STORAGE_BIT);
 }
 
 static inline void BindToSlot(GLuint buffer, int slot, int size) {
@@ -655,49 +656,17 @@ void OpenGlGraphicsManager::UnsetRenderTarget() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-// @TODO: refactor this, instead off iterate through all the meshes, find a better way
-void OpenGlGraphicsManager::OnSceneChange(const Scene& p_scene) {
-    for (auto [entity, mesh] : p_scene.m_MeshComponents) {
-        if (mesh.gpuResource != nullptr) {
-            continue;
-        }
-
-        CreateMesh(mesh);
-    }
-
-    g_constantCache.update();
-}
-
 void OpenGlGraphicsManager::CreateGpuResources() {
     // @TODO: move to renderer
     g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
     g_box = (OpenGlMeshBuffers*)CreateMesh(MakeBoxMesh());
 
     auto& cache = g_constantCache.cache;
-    // @TODO: delete!
+    // @TODO: refactor!
     unsigned int m1 = LoadMTexture(LTC1);
     unsigned int m2 = LoadMTexture(LTC2);
     cache.c_ltc1.handle_gl = MakeTextureResident(m1);
     cache.c_ltc2.handle_gl = MakeTextureResident(m2);
-
-    // cache.c_grassBaseColor = grass_image->gpu_texture->GetResidentHandle();
-
-    // @TODO: refactor
-    auto make_resident = [&](RenderTargetResourceName p_name, uint64_t& p_out_id) {
-        std::shared_ptr<GpuTexture> resource = FindTexture(p_name);
-        if (resource) {
-            p_out_id = resource->GetResidentHandle();
-        } else {
-            p_out_id = 0;
-        }
-    };
-
-    make_resident(RESOURCE_TONE, cache.c_toneImage.handle_gl);
-#if 0
-    make_resident(RESOURCE_ENV_SKYBOX_CUBE_MAP, cache.c_envMap.handle_gl);
-    make_resident(RESOURCE_BRDF, cache.c_brdfMap.handle_gl);
-#endif
-    make_resident(RESOURCE_BLOOM_0, cache.c_finalBloom.handle_gl);
 
     g_constantCache.update();
 }
@@ -720,6 +689,23 @@ void OpenGlGraphicsManager::Present() {
     }
 
     glfwSwapBuffers(m_window);
+}
+
+void OpenGlGraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+    if (auto mesh = dynamic_cast<OpenGlMeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
+        {
+            const uint32_t size = sizeof(Vector3f) * (uint32_t)p_positions.size();
+            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[0]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, size, p_positions.data());
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+        if constexpr (0) {
+            const uint32_t size = sizeof(Vector3f) * (uint32_t)p_normals.size();
+            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[1]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, size, p_normals.data());
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+    }
 }
 
 static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,

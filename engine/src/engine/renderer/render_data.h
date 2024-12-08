@@ -102,6 +102,14 @@ struct RenderData {
 
     bool bakeIbl;
     std::shared_ptr<GpuTexture> skyboxHdr;
+
+    struct UpdateBuffer {
+        std::vector<Vector3f> positions;
+        std::vector<Vector3f> normals;
+        void* id;
+    };
+
+    std::vector<UpdateBuffer> updateBuffer;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

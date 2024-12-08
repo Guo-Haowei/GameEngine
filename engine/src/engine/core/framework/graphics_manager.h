@@ -133,6 +133,8 @@ public:
 
     void RequestTexture(ImageAsset* p_image);
 
+    virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
+
     // @TODO: move to renderer
     uint64_t GetFinalImage() const;
 
@@ -168,7 +170,7 @@ protected:
     virtual void MoveToNextFrame();
     virtual std::unique_ptr<FrameContext> CreateFrameContext();
 
-    virtual void OnSceneChange(const Scene& p_scene) = 0;
+    void OnSceneChange(const Scene& p_scene);
     virtual void OnWindowResize(int p_width, int p_height) = 0;
     virtual void SetPipelineStateImpl(PipelineStateName p_name) = 0;
 

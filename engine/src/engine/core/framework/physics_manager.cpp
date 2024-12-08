@@ -36,61 +36,58 @@ void PhysicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
 
 void PhysicsManager::Update(Scene& p_scene) {
     float delta_time = p_scene.m_elapsedTime;
+    // delta_time *= 0.1f;
 
     if (HasWorld()) {
         m_dynamicWorld->stepSimulation(delta_time, 10);
 
         for (int j = m_dynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--) {
             btCollisionObject* collision_object = m_dynamicWorld->getCollisionObjectArray()[j];
-            btRigidBody* rigid_body = btRigidBody::upcast(collision_object);
-            btTransform transform;
+            if (btRigidBody* body = btRigidBody::upcast(collision_object); body) {
+                btTransform transform;
 
-            if (rigid_body && rigid_body->getMotionState()) {
-                rigid_body->getMotionState()->getWorldTransform(transform);
-            } else {
-                transform = collision_object->getWorldTransform();
+                if (body && body->getMotionState()) {
+                    body->getMotionState()->getWorldTransform(transform);
+                } else {
+                    transform = collision_object->getWorldTransform();
+                }
+
+                uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
+                ecs::Entity id{ handle };
+                if (id.IsValid()) {
+                    TransformComponent& transform_component = *p_scene.GetComponent<TransformComponent>(id);
+                    const btVector3& origin = transform.getOrigin();
+                    const btQuaternion rotation = transform.getRotation();
+                    transform_component.SetTranslation(Vector3f(origin.getX(), origin.getY(), origin.getZ()));
+                    transform_component.SetRotation(Vector4f(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()));
+                }
+                continue;
             }
+            if (btSoftBody* body = btSoftBody::upcast(collision_object); body) {
+                if (body) {
+                    uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
+                    ecs::Entity id{ handle };
+                    if (id.IsValid()) {
+                        const SoftBodyComponent* soft_body = p_scene.GetComponent<SoftBodyComponent>(id);
 
-            uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
-            ecs::Entity id{ handle };
-            if (id.IsValid()) {
-                TransformComponent& transform_component = *p_scene.GetComponent<TransformComponent>(id);
-                const btVector3& origin = transform.getOrigin();
-                const btQuaternion rotation = transform.getRotation();
-                transform_component.SetTranslation(Vector3f(origin.getX(), origin.getY(), origin.getZ()));
-                transform_component.SetRotation(Vector4f(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()));
+                        soft_body->points.clear();
+                        soft_body->points.reserve(body->m_nodes.size());
+                        soft_body->normals.clear();
+                        soft_body->normals.reserve(body->m_nodes.size());
+
+                        for (int idx = 0; idx < body->m_nodes.size(); ++idx) {
+                            const auto& point = body->m_nodes[idx];
+                            soft_body->points.push_back(Vector3f(point.m_x.getX(), point.m_x.getY(), point.m_x.getZ()));
+                            soft_body->normals.push_back(Vector3f(point.m_n.getX(), point.m_n.getY(), point.m_n.getZ()));
+                        }
+
+                        DEV_ASSERT(soft_body);
+                    }
+                }
+                continue;
             }
         }
     }
-}
-
-btSoftBody* CreateSoftBodyFromPoints(btSoftBodyWorldInfo* softBodyWorldInfo, const std::vector<btVector3>& points) {
-    // Create a soft body
-    btSoftBody* softBody = new btSoftBody(softBodyWorldInfo);
-
-    // Add nodes (points) to the soft body
-    for (const auto& point : points) {
-        softBody->appendNode(point, 1.0f);  // Append nodes to the soft body
-    }
-
-    // Create springs between the points to form the structure of the soft body
-    for (int i = 0; i < (int)points.size(); ++i) {
-        for (int j = i + 1; j < (int)points.size(); ++j) {
-            softBody->appendLink(i, j);  // Create a spring between nodes i and j
-        }
-    }
-
-    softBody->m_nodes;
-#if 0
-    // Apply material properties (optional)
-    btSoftBody::Material* material = softBody->appendMaterial();
-    material->m_kLST = 0.1f;  // Stretching stiffness
-    material->m_kAST = 0.1f;  // Bending stiffness
-#endif
-
-    softBody->generateBendingConstraints(2);  // Define the bending constraint for the soft body
-
-    return softBody;
 }
 
 void PhysicsManager::CreateWorld(const Scene& p_scene) {
@@ -104,9 +101,9 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
     m_dynamicWorld->setGravity(gravity);
 
     m_softBodyWorldInfo = new btSoftBodyWorldInfo;
-    m_softBodyWorldInfo->m_broadphase = m_broadphase;
-    m_softBodyWorldInfo->m_dispatcher = m_dispatcher;
-    m_softBodyWorldInfo->m_gravity = gravity;
+    m_softBodyWorldInfo->m_broadphase = m_dynamicWorld->getBroadphase();
+    m_softBodyWorldInfo->m_dispatcher = m_dynamicWorld->getDispatcher();
+    m_softBodyWorldInfo->m_gravity = m_dynamicWorld->getGravity();
     m_softBodyWorldInfo->m_sparsesdf.Initialize();
 
     for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
@@ -150,15 +147,64 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
         }
 
         // using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-        btDefaultMotionState* myMotionState = new btDefaultMotionState(transform);
-        btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, shape, localInertia);
-        btRigidBody* body = new btRigidBody(rbInfo);
-        body->setUserPointer((void*)((size_t)id.GetId()));
+        btDefaultMotionState* motion_state = new btDefaultMotionState(transform);
+        btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, localInertia);
+        btRigidBody* body = new btRigidBody(info);
+        body->setUserPointer((void*)(size_t)id.GetId());
         m_dynamicWorld->addRigidBody(body);
     }
+
     for (auto [id, component] : p_scene.m_SoftBodyComponents) {
-        btSoftBody* soft_body = new btSoftBody(m_softBodyWorldInfo);
-        m_dynamicWorld->addSoftBody(soft_body);
+        const TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
+        DEV_ASSERT(transform_component);
+        if (!transform_component) {
+            continue;
+        }
+
+        const ObjectComponent* object = p_scene.GetComponent<ObjectComponent>(id);
+        if (DEV_VERIFY(object && object->meshId.IsValid())) {
+            const MeshComponent* mesh = p_scene.GetComponent<MeshComponent>(object->meshId);
+
+            std::vector<btScalar> points;
+            std::vector<int> indices;
+
+            for (const Vector3f& position : mesh->positions) {
+                Vector4f point = transform_component->GetWorldMatrix() * Vector4f(position, 1.0f);
+                points.push_back(point.x);
+                points.push_back(point.y);
+                points.push_back(point.z);
+                points.push_back(1.0f);
+            }
+
+            for (int idx = 0; idx < (int)mesh->indices.size(); idx += 3) {
+                uint32_t index_0 = mesh->indices[idx];
+                uint32_t index_1 = mesh->indices[idx + 1];
+                uint32_t index_2 = mesh->indices[idx + 2];
+                indices.push_back(index_0);
+                indices.push_back(index_1);
+                indices.push_back(index_2);
+            }
+
+            btSoftBody* soft_body = btSoftBodyHelpers::CreateFromTriMesh(*m_softBodyWorldInfo,
+                                                                         points.data(),
+                                                                         indices.data(),
+                                                                         (int)indices.size() / 3);
+
+            // auto flags = soft_body->getCollisionFlags();
+            // soft_body->setCollisionFlags(flags | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+            btSoftBody::Material* material = soft_body->appendMaterial();
+            material->m_kLST = 0.1f;  // Stretching stiffness
+            material->m_kAST = 0.1f;  // Bending stiffness
+
+            soft_body->generateBendingConstraints(2, material);
+            soft_body->setTotalMass(1.0f, true);
+            soft_body->randomizeConstraints();
+
+            soft_body->setUserPointer((void*)(size_t)id.GetId());
+
+            m_dynamicWorld->addSoftBody(soft_body);
+        }
     }
 }
 

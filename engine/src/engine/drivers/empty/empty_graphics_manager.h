@@ -62,7 +62,6 @@ protected:
     void Render() override {}
     void Present() override {}
 
-    void OnSceneChange(const Scene& p_scene) override {}
     void OnWindowResize(int p_width, int p_height) override {}
     void SetPipelineStateImpl(PipelineStateName p_name) override {}
 };
