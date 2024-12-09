@@ -78,8 +78,8 @@ static void FillPass(const RenderDataConfig& p_config,
 
         const TransformComponent& transform = *scene.GetComponent<TransformComponent>(entity);
         DEV_ASSERT(scene.Contains<MeshComponent>(obj.meshId));
-        const MeshComponent& mesh = *scene.GetComponent<MeshComponent>(obj.meshId);
 
+        const MeshComponent& mesh = *scene.GetComponent<MeshComponent>(obj.meshId);
         const Matrix4x4f& world_matrix = transform.GetWorldMatrix();
         AABB aabb = mesh.localBound;
         aabb.ApplyMatrix(world_matrix);
@@ -110,11 +110,17 @@ static void FillPass(const RenderDataConfig& p_config,
         } else {
             draw.bone_idx = -1;
         }
-        if (!mesh.gpuResource) {
-            continue;
+
+        const ClothComponent* cloth = scene.GetComponent<ClothComponent>(entity);
+        if (cloth && cloth->gpuResource) {
+            draw.mesh_data = (MeshBuffers*)cloth->gpuResource;
+        } else {
+            draw.mesh_data = (MeshBuffers*)mesh.gpuResource;
         }
 
-        draw.mesh_data = (MeshBuffers*)mesh.gpuResource;
+        if (!draw.mesh_data) {
+            continue;
+        }
 
         for (const auto& subset : mesh.subsets) {
             aabb = subset.local_bound;
@@ -128,6 +134,15 @@ static void FillPass(const RenderDataConfig& p_config,
             FillMaterialConstantBuffer(material, material_buffer);
 
             DrawContext sub_mesh;
+
+            if (cloth) {
+                sub_mesh.index_count = draw.mesh_data->indexCount;
+                sub_mesh.index_offset = 0;
+                sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
+                draw.subsets.emplace_back(std::move(sub_mesh));
+                break;
+            }
+
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
             sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
@@ -499,17 +514,13 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     }
 
     // @TODO: update soft body
-    for (auto [entity, body] : p_config.scene.m_ClothComponents) {
-        const ObjectComponent* object = p_config.scene.GetComponent<ObjectComponent>(entity);
-        DEV_ASSERT(object);
-        const MeshComponent* mesh = p_config.scene.GetComponent<MeshComponent>(object->meshId);
-        DEV_ASSERT(mesh);
-        if (!body.points.empty()) {
+    for (auto [entity, cloth] : p_config.scene.m_ClothComponents) {
+        if (!cloth.points.empty()) {
             p_out_data.updateBuffer.emplace_back(RenderData::UpdateBuffer{
-                .faces = std::move(body.faces),
-                .positions = std::move(body.points),
-                .normals = std::move(body.normals),
-                .id = mesh->gpuResource,
+                .faces = std::move(cloth.faces),
+                .positions = std::move(cloth.points),
+                .normals = std::move(cloth.normals),
+                .id = cloth.gpuResource,
             });
         }
     }

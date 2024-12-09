@@ -279,12 +279,12 @@ void Application::Run() {
             ImGui::Render();
         }
 
-        renderer::EndFrame();
-
         if (m_state == State::SIM) {
             m_scriptManager->Update(*m_activeScene);
             m_physicsManager->Update(*m_activeScene);
         }
+
+        renderer::EndFrame();
 
         m_graphicsManager->Update(*m_activeScene);
 

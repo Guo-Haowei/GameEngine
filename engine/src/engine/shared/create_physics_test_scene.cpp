@@ -24,7 +24,7 @@ Scene* CreatePhysicsTestScene() {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0, 4, 10));
+        camera->SetPosition(Vector3f(0, 5, 12));
         camera->SetEditor();
         scene->AttachChild(editor_camera, root);
     }
@@ -33,7 +33,7 @@ Scene* CreatePhysicsTestScene() {
         auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0, 8, 20));
+        camera->SetPosition(Vector3f(0, 5, 12));
         camera->SetMain();
         scene->AttachChild(main_camera, root);
     }
@@ -59,13 +59,14 @@ Scene* CreatePhysicsTestScene() {
     }
 
     {
-        const int h = 3;
-        Vector3f p0(4, h, 0);
-        Vector3f p1(-4, h, 0);
-        Vector3f p2(-4, h, -8);
-        Vector3f p3(4, h, -8);
+        constexpr float h = 2.0f;
+        Vector3f p0(-4.0f, h, +4.0f);  // top left
+        Vector3f p1(+4.0f, h, +4.0f);  // top right
+        Vector3f p2(+4.0f, h, -4.0f);  // bottom right
+        Vector3f p3(-4.0f, h, -4.0f);  // bottom left
 
-        auto cloth = scene->CreateClothEntity("cloth", material_id, p0, p1, p2, p3, Vector2i(4), 3);
+        Matrix4x4f transform = glm::translate(Vector3f(0, 4, 0));
+        auto cloth = scene->CreateClothEntity("cloth", material_id, p0, p1, p2, p3, Vector2i(30), 15, transform);
         scene->AttachChild(cloth, root);
     }
 
@@ -73,7 +74,7 @@ Scene* CreatePhysicsTestScene() {
         int x = (t - 1) % 7;
         int y = (t - 1) / 7;
 
-        Vector3f translate(x - 3, 5 - y, 0);
+        Vector3f translate(x - 3, 6 - y, 0);
         Vector3f scale(0.25f);
 
         ecs::Entity id;

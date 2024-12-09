@@ -256,7 +256,7 @@ struct ClothComponent {
     uint32_t fixedFlags;
 
     // Non-Serialized
-    mutable void* gpuResource = nullptr;
+    mutable const void* gpuResource = nullptr;
     void* physicsObject = nullptr;
 
     mutable std::vector<Vector3f> points;

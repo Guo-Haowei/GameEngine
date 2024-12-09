@@ -428,9 +428,12 @@ ecs::Entity Scene::CreateClothEntity(const std::string& p_name,
                                      const Vector2i& p_res,
                                      int p_fixed_flags,
                                      const Matrix4x4f& p_transform) {
+    // @TODO: fix
+    unused(p_transform);
+
     ecs::Entity entity = CreateObjectEntity(p_name);
-    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
-    transform.MatrixTransform(p_transform);
+    //TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    //transform.MatrixTransform(p_transform);
 
     ClothComponent& cloth = Create<ClothComponent>(entity);
     cloth.point_0 = p_point_0;
