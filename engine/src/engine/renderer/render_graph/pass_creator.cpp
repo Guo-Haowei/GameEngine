@@ -32,7 +32,6 @@ static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pas
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PSO_GBUFFER);
     for (const auto& draw : pass.draws) {
         const bool has_bone = draw.bone_idx >= 0;
         if (has_bone) {
@@ -46,6 +45,8 @@ static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pas
         gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
+        // @TODO: sort
+        gm.SetPipelineState(draw.mesh_data->doubleSided ? PSO_GBUFFER_DOUBLE_SIDED : PSO_GBUFFER);
 
         for (const auto& subset : draw.subsets) {
             // @TODO: fix this

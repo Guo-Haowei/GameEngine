@@ -89,6 +89,8 @@ public:
 
     virtual const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) = 0;
     virtual void SetMesh(const MeshBuffers* p_mesh) = 0;
+    virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
+
     virtual void DrawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
     virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
@@ -132,8 +134,6 @@ public:
     virtual void GenerateMipmap(const GpuTexture* p_texture) = 0;
 
     void RequestTexture(ImageAsset* p_image);
-
-    virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<uint32_t>& p_faces, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
 
     // @TODO: move to renderer
     uint64_t GetFinalImage() const;

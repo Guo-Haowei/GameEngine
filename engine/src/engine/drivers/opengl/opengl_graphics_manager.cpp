@@ -31,9 +31,8 @@ OpenGlMeshBuffers* g_box;
 OpenGlMeshBuffers* g_grass;
 
 template<typename T>
-static void BufferStorage(GLuint buffer, const std::vector<T>& data) {
-    // @TODO: fix
-    glNamedBufferStorage(buffer, sizeof(T) * data.size(), data.data(), GL_DYNAMIC_STORAGE_BIT);
+static void BufferStorage(GLuint p_buffer, const std::vector<T>& p_data, bool p_is_dynamic) {
+    glNamedBufferStorage(p_buffer, sizeof(T) * p_data.size(), p_data.data(), p_is_dynamic ? GL_DYNAMIC_STORAGE_BIT : 0);
 }
 
 static inline void BindToSlot(GLuint buffer, int slot, int size) {
@@ -245,6 +244,8 @@ void OpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
 const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     RID rid = m_meshes.make_rid();
     OpenGlMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+    mesh_buffers->doubleSided = p_mesh.flags & MeshComponent::DOUBLE_SIDED;
+
     p_mesh.gpuResource = mesh_buffers;
 
     auto create_mesh_data = [](const MeshComponent& p_mesh, OpenGlMeshBuffers& p_out_mesh) {
@@ -267,37 +268,38 @@ const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh
         glBindVertexArray(p_out_mesh.vao);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_out_mesh.ebo);
 
+        const bool is_dynamic = p_mesh.flags & MeshComponent::DYNAMIC;
+
         slot = get_position_slot();
-        // @TODO: refactor these
         BindToSlot(p_out_mesh.vbos[slot], slot, 3);
-        BufferStorage(p_out_mesh.vbos[slot], p_mesh.positions);
+        BufferStorage(p_out_mesh.vbos[slot], p_mesh.positions, is_dynamic);
 
         if (has_normals) {
             slot = get_normal_slot();
             BindToSlot(p_out_mesh.vbos[slot], slot, 3);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.normals);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.normals, is_dynamic);
         }
         if (has_uvs) {
             slot = get_uv_slot();
             BindToSlot(p_out_mesh.vbos[slot], slot, 2);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.texcoords_0);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.texcoords_0, false);
         }
         if (has_tangents) {
             slot = get_tangent_slot();
             BindToSlot(p_out_mesh.vbos[slot], slot, 3);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.tangents);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.tangents, false);
         }
         if (has_joints) {
             slot = get_bone_id_slot();
             BindToSlot(p_out_mesh.vbos[slot], slot, 4);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.joints_0);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.joints_0, false);
             DEV_ASSERT(!p_mesh.weights_0.empty());
             slot = get_bone_weight_slot();
             BindToSlot(p_out_mesh.vbos[slot], slot, 4);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.weights_0);
+            BufferStorage(p_out_mesh.vbos[slot], p_mesh.weights_0, false);
         }
 
-        BufferStorage(p_out_mesh.ebo, p_mesh.indices);
+        BufferStorage(p_out_mesh.ebo, p_mesh.indices, false);
         p_out_mesh.indexCount = static_cast<uint32_t>(p_mesh.indices.size());
 
         glBindVertexArray(0);
@@ -310,6 +312,23 @@ const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh
 void OpenGlGraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     auto mesh = reinterpret_cast<const OpenGlMeshBuffers*>(p_mesh);
     glBindVertexArray(mesh->vao);
+}
+
+void OpenGlGraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+    if (auto mesh = dynamic_cast<OpenGlMeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
+        {
+            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
+            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[0]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_positions.data());
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+        if constexpr (1) {
+            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_normals.size();
+            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[1]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_normals.data());
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+        }
+    }
 }
 
 void OpenGlGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
@@ -689,30 +708,6 @@ void OpenGlGraphicsManager::Present() {
     }
 
     glfwSwapBuffers(m_window);
-}
-
-void OpenGlGraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<uint32_t>& p_faces, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    if (auto mesh = dynamic_cast<OpenGlMeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
-        p_mesh->indexCount = (uint32_t)p_faces.size();
-        //{
-        //    const uint32_t size = sizeof(uint32_t) * p_mesh->indexCount;
-        //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
-        //    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, p_faces.data());
-        //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-        //}
-        {
-            const uint32_t size = sizeof(Vector3f) * (uint32_t)p_positions.size();
-            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[0]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, size, p_positions.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
-        if constexpr (0) {
-            const uint32_t size = sizeof(Vector3f) * (uint32_t)p_normals.size();
-            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[1]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, size, p_normals.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
-    }
 }
 
 static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,

@@ -29,6 +29,8 @@ public:
 
     const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
     void SetMesh(const MeshBuffers* p_mesh) final;
+    void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
+
     void DrawElements(uint32_t p_count, uint32_t offset) final;
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
@@ -61,8 +63,6 @@ protected:
 
     void Render() final;
     void Present() final;
-
-    void UpdateMesh(MeshBuffers* p_mesh, const std::vector<uint32_t>& p_faces, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
 
     void OnWindowResize(int, int) final {}
     void SetPipelineStateImpl(PipelineStateName p_name) final;

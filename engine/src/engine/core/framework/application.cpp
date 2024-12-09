@@ -112,7 +112,6 @@ auto Application::SetupModules() -> Result<void> {
     }
 
     m_eventQueue.RegisterListener(m_graphicsManager.get());
-    m_eventQueue.RegisterListener(m_physicsManager.get());
 
     return Result<void>();
 }
@@ -280,12 +279,12 @@ void Application::Run() {
             ImGui::Render();
         }
 
-        renderer::EndFrame();
-
         if (m_state == State::SIM) {
             m_scriptManager->Update(*m_activeScene);
             m_physicsManager->Update(*m_activeScene);
         }
+
+        renderer::EndFrame();
 
         m_graphicsManager->Update(*m_activeScene);
 

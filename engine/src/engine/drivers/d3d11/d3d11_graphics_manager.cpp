@@ -698,17 +698,17 @@ void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
 
 const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     auto create_mesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
-        auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data) -> ID3D11Buffer* {
+        auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data, bool p_is_dynamic) -> ID3D11Buffer* {
             if (!p_data) {
                 return nullptr;
             }
             ID3D11Buffer* buffer = nullptr;
             // vertex buffer
             D3D11_BUFFER_DESC bufferDesc{};
-            bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+            bufferDesc.Usage = p_is_dynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
             bufferDesc.ByteWidth = (UINT)p_size_in_byte;
             bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-            bufferDesc.CPUAccessFlags = 0;
+            bufferDesc.CPUAccessFlags = p_is_dynamic ? D3D11_CPU_ACCESS_WRITE : 0;
             bufferDesc.MiscFlags = 0;
 
             D3D11_SUBRESOURCE_DATA data{};
@@ -719,12 +719,12 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
             return buffer;
         };
 
-        out_mesh.vertex_buffer[0] = create_vertex_buffer(VectorSizeInByte(mesh.positions), mesh.positions.data());
-        out_mesh.vertex_buffer[1] = create_vertex_buffer(VectorSizeInByte(mesh.normals), mesh.normals.data());
-        out_mesh.vertex_buffer[2] = create_vertex_buffer(VectorSizeInByte(mesh.texcoords_0), mesh.texcoords_0.data());
-        out_mesh.vertex_buffer[3] = create_vertex_buffer(VectorSizeInByte(mesh.tangents), mesh.tangents.data());
-        out_mesh.vertex_buffer[4] = create_vertex_buffer(VectorSizeInByte(mesh.joints_0), mesh.joints_0.data());
-        out_mesh.vertex_buffer[5] = create_vertex_buffer(VectorSizeInByte(mesh.weights_0), mesh.weights_0.data());
+        out_mesh.vertex_buffer[0] = create_vertex_buffer(VectorSizeInByte(mesh.positions), mesh.positions.data(), mesh.flags & MeshComponent::DYNAMIC);
+        out_mesh.vertex_buffer[1] = create_vertex_buffer(VectorSizeInByte(mesh.normals), mesh.normals.data(), mesh.flags & MeshComponent::DYNAMIC);
+        out_mesh.vertex_buffer[2] = create_vertex_buffer(VectorSizeInByte(mesh.texcoords_0), mesh.texcoords_0.data(), false);
+        out_mesh.vertex_buffer[3] = create_vertex_buffer(VectorSizeInByte(mesh.tangents), mesh.tangents.data(), false);
+        out_mesh.vertex_buffer[4] = create_vertex_buffer(VectorSizeInByte(mesh.joints_0), mesh.joints_0.data(), false);
+        out_mesh.vertex_buffer[5] = create_vertex_buffer(VectorSizeInByte(mesh.weights_0), mesh.weights_0.data(), false);
         {
             // index buffer
             out_mesh.indexCount = static_cast<uint32_t>(mesh.indices.size());
@@ -744,6 +744,8 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
 
     RID rid = m_meshes.make_rid();
     D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+    mesh_buffers->doubleSided = p_mesh.flags & MeshComponent::DOUBLE_SIDED;
+
     p_mesh.gpuResource = mesh_buffers;
     create_mesh_data(m_device.Get(), p_mesh, *mesh_buffers);
     return mesh_buffers;
@@ -776,6 +778,29 @@ void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     // @TODO: fix
     m_deviceContext->IASetVertexBuffers(0, 6, buffers, stride, offset);
     m_deviceContext->IASetIndexBuffer(mesh->index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+}
+
+void D3d11GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+    if (auto mesh = dynamic_cast<D3d11MeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
+        {
+            D3D11_MAPPED_SUBRESOURCE mapped;
+            HRESULT hr = m_deviceContext->Map(mesh->vertex_buffer[0].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+            DEV_ASSERT(SUCCEEDED(hr));
+
+            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
+            memcpy(mapped.pData, p_positions.data(), size_in_byte);
+            m_deviceContext->Unmap(mesh->vertex_buffer[0].Get(), 0);
+        }
+        {
+            D3D11_MAPPED_SUBRESOURCE mapped;
+            HRESULT hr = m_deviceContext->Map(mesh->vertex_buffer[1].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+            DEV_ASSERT(SUCCEEDED(hr));
+
+            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_normals.size();
+            memcpy(mapped.pData, p_normals.data(), size_in_byte);
+            m_deviceContext->Unmap(mesh->vertex_buffer[1].Get(), 0);
+        }
+    }
 }
 
 void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {

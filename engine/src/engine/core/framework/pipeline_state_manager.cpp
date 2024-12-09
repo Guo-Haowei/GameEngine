@@ -179,6 +179,18 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
+    CREATE_PSO(PSO_GBUFFER_DOUBLE_SIDED,
+               {
+                   .vs = "mesh.vs",
+                   .ps = "gbuffer.ps",
+                   .rasterizerDesc = &s_rasterizerDoubleSided,
+                   .depthStencilDesc = &s_depthStencilGbuffer,
+                   .inputLayoutDesc = &s_inputLayoutMesh,
+                   .blendDesc = &s_blendStateDefault,
+                   .numRenderTargets = 4,
+                   .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
+                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+               });
     CREATE_PSO(PSO_DPETH, {
                               .vs = "shadow.vs",
                               .ps = "depth.ps",

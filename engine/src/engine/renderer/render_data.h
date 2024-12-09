@@ -104,10 +104,9 @@ struct RenderData {
     std::shared_ptr<GpuTexture> skyboxHdr;
 
     struct UpdateBuffer {
-        std::vector<uint32_t> faces;
         std::vector<Vector3f> positions;
         std::vector<Vector3f> normals;
-        void* id;
+        const void* id;
     };
 
     std::vector<UpdateBuffer> updateBuffer;

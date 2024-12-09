@@ -247,10 +247,30 @@ struct RigidBodyComponent {
 #pragma endregion RIGID_BODY_COMPONENT
 
 #pragma region SOFT_BODY_COMPONENT
-struct SoftBodyComponent {
+enum ClothFixFlag : uint16_t {
+    CLOTH_FIX_0 = BIT(1),
+    CLOTH_FIX_1 = BIT(2),
+    CLOTH_FIX_2 = BIT(3),
+    CLOTH_FIX_3 = BIT(4),
+
+    CLOTH_FIX_ALL = CLOTH_FIX_0 | CLOTH_FIX_1 | CLOTH_FIX_2 | CLOTH_FIX_3,
+};
+DEFINE_ENUM_BITWISE_OPERATIONS(ClothFixFlag);
+
+struct ClothComponent {
+    Vector3f point_0;
+    Vector3f point_1;
+    Vector3f point_2;
+    Vector3f point_3;
+    Vector2i res;
+    ClothFixFlag fixedFlags;
+
+    // Non-Serialized
+    mutable const void* gpuResource = nullptr;
+    void* physicsObject = nullptr;
+
     mutable std::vector<Vector3f> points;
     mutable std::vector<Vector3f> normals;
-    mutable std::vector<uint32_t> faces;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

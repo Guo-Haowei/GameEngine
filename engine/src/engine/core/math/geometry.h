@@ -4,6 +4,12 @@
 namespace my {
 
 MeshComponent MakePlaneMesh(const Vector3f& p_scale = Vector3f(0.5f));
+
+MeshComponent MakePlaneMesh(const Vector3f& p_point_0,
+                            const Vector3f& p_point_1,
+                            const Vector3f& p_point_2,
+                            const Vector3f& p_point_3);
+
 MeshComponent MakeCubeMesh(const Vector3f& p_scale = Vector3f(0.5f));
 
 MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points);
