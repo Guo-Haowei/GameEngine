@@ -499,7 +499,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     }
 
     // @TODO: update soft body
-    for (auto [entity, body] : p_config.scene.m_SoftBodyComponents) {
+    for (auto [entity, body] : p_config.scene.m_ClothComponents) {
         const ObjectComponent* object = p_config.scene.GetComponent<ObjectComponent>(entity);
         DEV_ASSERT(object);
         const MeshComponent* mesh = p_config.scene.GetComponent<MeshComponent>(object->meshId);

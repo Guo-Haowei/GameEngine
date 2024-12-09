@@ -1,6 +1,5 @@
 #pragma once
 #include "engine/core/base/singleton.h"
-#include "engine/core/framework/event_queue.h"
 #include "engine/core/framework/module.h"
 
 class btDefaultCollisionConfiguration;
@@ -15,29 +14,28 @@ namespace my {
 
 class Scene;
 
-class PhysicsManager : public Module, public EventListener {
+struct PhysicsWorldContext {
+    // @TODO: free properly
+    btDefaultCollisionConfiguration* collisionConfig = nullptr;
+    btCollisionDispatcher* dispatcher = nullptr;
+    btBroadphaseInterface* broadphase = nullptr;
+    btSequentialImpulseConstraintSolver* solver = nullptr;
+    btSoftRigidDynamicsWorld* dynamicWorld = nullptr;
+    btSoftBodyWorldInfo* softBodyWorldInfo = nullptr;
+};
+
+class PhysicsManager : public Module {
 public:
     PhysicsManager() : Module("PhysicsManager") {}
 
+    void Update(Scene& p_scene);
+
+protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    void Update(Scene& p_scene);
-
-    void EventReceived(std::shared_ptr<IEvent> p_event) override;
-
-protected:
     void CreateWorld(const Scene& p_scene);
     void CleanWorld();
-    bool HasWorld() const { return m_collisionConfig != nullptr; }
-
-    btDefaultCollisionConfiguration* m_collisionConfig = nullptr;
-    btCollisionDispatcher* m_dispatcher = nullptr;
-    btBroadphaseInterface* m_broadphase = nullptr;
-    btSequentialImpulseConstraintSolver* m_solver = nullptr;
-    btSoftRigidDynamicsWorld* m_dynamicWorld = nullptr;
-    btSoftBodyWorldInfo* m_softBodyWorldInfo = nullptr;
-    std::vector<btCollisionShape*> m_collisionShapes;
 };
 
 }  // namespace my

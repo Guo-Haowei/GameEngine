@@ -23,17 +23,28 @@ enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };
 // clang-format on
 
 MeshComponent MakePlaneMesh(const Vector3f& p_scale) {
-    MeshComponent mesh;
     const float x = p_scale.x;
     const float y = p_scale.y;
+    Vector3f a(-x, +y, 0.0f);  // A
+    Vector3f b(-x, -y, 0.0f);  // B
+    Vector3f c(+x, -y, 0.0f);  // C
+    Vector3f d(+x, +y, 0.0f);  // D
+    return MakePlaneMesh(a, b, c, d);
+}
+
+MeshComponent MakePlaneMesh(const Vector3f& p_point_0,
+                            const Vector3f& p_point_1,
+                            const Vector3f& p_point_2,
+                            const Vector3f& p_point_3) {
+    MeshComponent mesh;
     mesh.positions = {
-        Vector3f(-x, +y, 0.0f),  // A
-        Vector3f(-x, -y, 0.0f),  // B
-        Vector3f(+x, -y, 0.0f),  // C
-        Vector3f(+x, +y, 0.0f),  // D
+        p_point_0,
+        p_point_1,
+        p_point_2,
+        p_point_3,
     };
 
-    const Vector3f normal{ 0, 0, 1 };
+    const Vector3f normal = glm::normalize(glm::cross(p_point_0 - p_point_1, p_point_0 - p_point_2));
     mesh.normals = {
         normal,
         normal,

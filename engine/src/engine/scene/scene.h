@@ -21,6 +21,8 @@ namespace jobsystem {
 class Context;
 }
 
+struct PhysicsWorldContext;
+
 class Scene : public NonCopyable, public IAsset {
 public:
     static constexpr const char* EXTENSION = ".scene";
@@ -92,7 +94,7 @@ private:
     REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
     REGISTER_COMPONENT(HemisphereLightComponent, 0);
     REGISTER_COMPONENT(RigidBodyComponent, 0);
-    REGISTER_COMPONENT(SoftBodyComponent, 0);
+    REGISTER_COMPONENT(ClothComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
@@ -189,6 +191,16 @@ public:
                                   float p_tube_radius = 0.2f,
                                   const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
+    ecs::Entity CreateClothEntity(const std::string& p_name,
+                                  ecs::Entity p_material_id,
+                                  const Vector3f& p_point_0,
+                                  const Vector3f& p_point_1,
+                                  const Vector3f& p_point_2,
+                                  const Vector3f& p_point_3,
+                                  const Vector2i& p_res,
+                                  int p_fixed_flags,
+                                  const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
+
     ecs::Entity CreateEmitterEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
@@ -207,11 +219,13 @@ public:
     bool RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray);
 
     const AABB& GetBound() const { return m_bound; }
+
     // @TODO: refactor
     ecs::Entity m_root;
     ecs::Entity m_selected;
     float m_elapsedTime = 0.0f;
     bool m_replace = false;
+    mutable PhysicsWorldContext* m_physicsWorld = nullptr;
 
 private:
     void UpdateHierarchy(size_t p_index);

@@ -10,62 +10,6 @@ namespace my {
     * refactor mesh
 */
 
-static MeshComponent MakeClothMesh() {
-    MeshComponent mesh;
-
-    int patch = 10;
-
-    for (int i = 0; i < patch; ++i) {
-        for (int j = 0; j < patch; ++j) {
-            Vector3f A(i, 0.0f, j);
-            Vector3f B(i + 1, 0.0f, j);
-            Vector3f C(i + 1, 0.0f, j + 1);
-            Vector3f D(i, 0.0f, j + 1);
-
-            const int offset = (int)mesh.positions.size();
-
-            mesh.positions.emplace_back(A);
-            mesh.positions.emplace_back(B);
-            mesh.positions.emplace_back(C);
-            mesh.positions.emplace_back(D);
-
-            Vector3f AB = B - A;
-            Vector3f AC = C - A;
-            Vector3f N = glm::normalize(glm::cross(AB, AC));
-
-            mesh.normals.emplace_back(N);
-            mesh.normals.emplace_back(N);
-            mesh.normals.emplace_back(N);
-            mesh.normals.emplace_back(N);
-
-            mesh.texcoords_0.emplace_back(Vector2f());
-            mesh.texcoords_0.emplace_back(Vector2f());
-            mesh.texcoords_0.emplace_back(Vector2f());
-            mesh.texcoords_0.emplace_back(Vector2f());
-
-            mesh.indices.push_back(offset + 0);
-            mesh.indices.push_back(offset + 1);
-            mesh.indices.push_back(offset + 2);
-
-            mesh.indices.push_back(offset + 0);
-            mesh.indices.push_back(offset + 2);
-            mesh.indices.push_back(offset + 3);
-        }
-    }
-
-    MeshComponent::MeshSubset subset;
-    subset.index_count = static_cast<uint32_t>(mesh.indices.size());
-    subset.index_offset = 0;
-    mesh.subsets.emplace_back(subset);
-
-    mesh.CreateRenderData();
-
-    for (int i = 0; i < (int)mesh.indices.size(); ++i) {
-        mesh.indices[i] = i;
-    }
-    return mesh;
-}
-
 Scene* CreatePhysicsTestScene() {
     ecs::Entity::SetSeed();
 
@@ -115,12 +59,14 @@ Scene* CreatePhysicsTestScene() {
     }
 
     {
-        auto cloth = scene->CreateMeshEntity("cloth1", material_id, MakeClothMesh());
-        // TransformComponent* transform = scene->GetComponent<TransformComponent>(cloth);
-        // transform->SetTranslation(Vector3f(0, 10, 0));
+        const int h = 3;
+        Vector3f p0(4, h, 0);
+        Vector3f p1(-4, h, 0);
+        Vector3f p2(-4, h, -8);
+        Vector3f p3(4, h, -8);
+
+        auto cloth = scene->CreateClothEntity("cloth", material_id, p0, p1, p2, p3, Vector2i(4), 3);
         scene->AttachChild(cloth, root);
-        auto& soft_body = scene->Create<SoftBodyComponent>(cloth);
-        (void)soft_body;
     }
 
     for (int t = 1; t <= 21; ++t) {

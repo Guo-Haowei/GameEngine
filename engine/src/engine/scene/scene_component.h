@@ -247,7 +247,18 @@ struct RigidBodyComponent {
 #pragma endregion RIGID_BODY_COMPONENT
 
 #pragma region SOFT_BODY_COMPONENT
-struct SoftBodyComponent {
+struct ClothComponent {
+    Vector3f point_0;
+    Vector3f point_1;
+    Vector3f point_2;
+    Vector3f point_3;
+    Vector2i res;
+    uint32_t fixedFlags;
+
+    // Non-Serialized
+    mutable void* gpuResource = nullptr;
+    void* physicsObject = nullptr;
+
     mutable std::vector<Vector3f> points;
     mutable std::vector<Vector3f> normals;
     mutable std::vector<uint32_t> faces;

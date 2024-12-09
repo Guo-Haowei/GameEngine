@@ -183,7 +183,7 @@ void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t) {
 #pragma endregion RIGID_BODY_COMPONENT
 
 #pragma region SOFT_BODY_COMPONENT
-void SoftBodyComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     CRASH_NOW();

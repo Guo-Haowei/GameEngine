@@ -112,7 +112,6 @@ auto Application::SetupModules() -> Result<void> {
     }
 
     m_eventQueue.RegisterListener(m_graphicsManager.get());
-    m_eventQueue.RegisterListener(m_physicsManager.get());
 
     return Result<void>();
 }

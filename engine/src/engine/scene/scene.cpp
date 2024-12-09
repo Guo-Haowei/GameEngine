@@ -400,6 +400,7 @@ ecs::Entity Scene::CreateTorusEntity(const std::string& p_name,
                                      float p_radius,
                                      float p_tube_radius,
                                      const Matrix4x4f& p_transform) {
+    // @TODO: fix this
     p_radius = 0.4f;
     p_tube_radius = 0.1f;
 
@@ -413,6 +414,41 @@ ecs::Entity Scene::CreateTorusEntity(const std::string& p_name,
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = MakeTorusMesh(p_radius, p_tube_radius);
+    mesh.subsets[0].material_id = p_material_id;
+
+    return entity;
+}
+
+ecs::Entity Scene::CreateClothEntity(const std::string& p_name,
+                                     ecs::Entity p_material_id,
+                                     const Vector3f& p_point_0,
+                                     const Vector3f& p_point_1,
+                                     const Vector3f& p_point_2,
+                                     const Vector3f& p_point_3,
+                                     const Vector2i& p_res,
+                                     int p_fixed_flags,
+                                     const Matrix4x4f& p_transform) {
+    ecs::Entity entity = CreateObjectEntity(p_name);
+    TransformComponent& transform = *GetComponent<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
+
+    ClothComponent& cloth = Create<ClothComponent>(entity);
+    cloth.point_0 = p_point_0;
+    cloth.point_1 = p_point_1;
+    cloth.point_2 = p_point_2;
+    cloth.point_3 = p_point_3;
+    cloth.res = p_res;
+    cloth.fixedFlags = p_fixed_flags;
+
+    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    ecs::Entity mesh_id = CreateMeshEntity(p_name + ":mesh");
+    object.meshId = mesh_id;
+
+    MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
+    mesh = MakePlaneMesh(p_point_0,
+                         p_point_1,
+                         p_point_2,
+                         p_point_3);
     mesh.subsets[0].material_id = p_material_id;
 
     return entity;
