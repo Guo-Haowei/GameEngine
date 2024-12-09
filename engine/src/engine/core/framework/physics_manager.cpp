@@ -108,6 +108,9 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
     context.softBodyWorldInfo->m_gravity = context.dynamicWorld->getGravity();
     context.softBodyWorldInfo->m_sparsesdf.Initialize();
 
+    btContactSolverInfo& solverInfo = context.dynamicWorld->getSolverInfo();
+    solverInfo.m_friction = 0.5f;  // Set appropriate friction
+
     for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
         const TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
         DEV_ASSERT(transform_component);
@@ -146,12 +149,15 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
             shape->calculateLocalInertia(mass, local_inertia);
         }
 
-
         // using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
         btDefaultMotionState* motion_state = new btDefaultMotionState(transform);
         btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
         btRigidBody* body = new btRigidBody(info);
         body->setUserPointer((void*)(size_t)id.GetId());
+
+        // int flags = body->getCollisionFlags();
+        // flags |= btCollisionObject::CO_COLLISION_OBJECT | btCollisionObject::CO_RIGID_BODY | btCollisionObject::CO_SOFT_BODY;
+        // body->setCollisionFlags(flags);
 
         body->setContactProcessingThreshold(0.5f);
 
@@ -190,6 +196,9 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
 
             cloth->m_cfg.piterations = 5;
             cloth->m_cfg.kDP = 0.005f;
+
+            cloth->setCollisionFlags(btCollisionObject::CO_COLLISION_OBJECT | btCollisionObject::CO_RIGID_BODY | btCollisionObject::CO_SOFT_BODY);
+            cloth->setFriction(0.5f);
 
             MeshComponent mesh;
             {

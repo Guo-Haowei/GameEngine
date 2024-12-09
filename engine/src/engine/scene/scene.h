@@ -198,7 +198,7 @@ public:
                                   const Vector3f& p_point_2,
                                   const Vector3f& p_point_3,
                                   const Vector2i& p_res,
-                                  int p_fixed_flags,
+                                  ClothFixFlag p_flags,
                                   const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateEmitterEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
