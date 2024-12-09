@@ -5,8 +5,8 @@
 
 WARNING_PUSH()
 WARNING_DISABLE(4127, "-Wunused-parameter")
-WARNING_DISABLE(4100, "-Wunused-parameter")
-WARNING_DISABLE(4459, "-Wunused-parameter")  // Hide previous definition
+WARNING_DISABLE(4100, "-Wall")
+WARNING_DISABLE(4459, "-Wpedantic")  // Hide previous definition
 #include <BulletSoftBody/btSoftBody.h>
 #include <BulletSoftBody/btSoftBodyHelpers.h>
 #include <BulletSoftBody/btSoftRigidDynamicsWorld.h>
