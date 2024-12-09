@@ -93,6 +93,7 @@ struct PipelineState {
     PSO_NAME(PSO_DPETH)                  \
     PSO_NAME(PSO_POINT_SHADOW)           \
     PSO_NAME(PSO_GBUFFER)                \
+    PSO_NAME(PSO_GBUFFER_DOUBLE_SIDED)   \
     PSO_NAME(PSO_VOXELIZATION)           \
     PSO_NAME(PSO_VOXELIZATION_PRE)       \
     PSO_NAME(PSO_VOXELIZATION_POST)      \

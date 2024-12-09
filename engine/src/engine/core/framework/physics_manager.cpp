@@ -62,16 +62,21 @@ void PhysicsManager::Update(Scene& p_scene) {
             uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
             ecs::Entity id{ handle };
             if (id.IsValid()) {
-                const ClothComponent* soft_body = p_scene.GetComponent<ClothComponent>(id);
-                soft_body->points.clear();
-                soft_body->normals.clear();
+                // hack: wind
+                for (int node_idx = 0; node_idx < body->m_nodes.size(); ++node_idx) {
+                    body->m_nodes[node_idx].m_f = btVector3(0.0f, 0.2f, 0.1f);
+                }
+
+                const ClothComponent* cloth = p_scene.GetComponent<ClothComponent>(id);
+                cloth->points.clear();
+                cloth->normals.clear();
 
                 for (int face_idx = 0; face_idx < body->m_faces.size(); ++face_idx) {
                     const btSoftBody::Face& face = body->m_faces[face_idx];
                     for (int node_idx = 0; node_idx < 3; ++node_idx) {
                         const btSoftBody::Node& node = *face.m_n[node_idx];
-                        soft_body->points.push_back(Vector3f(node.m_x.getX(), node.m_x.getY(), node.m_x.getZ()));
-                        soft_body->normals.push_back(Vector3f(node.m_n.getX(), node.m_n.getY(), node.m_n.getZ()));
+                        cloth->points.push_back(Vector3f(node.m_x.getX(), node.m_x.getY(), node.m_x.getZ()));
+                        cloth->normals.push_back(Vector3f(node.m_n.getX(), node.m_n.getY(), node.m_n.getZ()));
                     }
                 }
             }
@@ -150,10 +155,6 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
         btRigidBody* body = new btRigidBody(info);
         body->setUserPointer((void*)(size_t)id.GetId());
 
-        // int flags = body->getCollisionFlags();
-        // flags |= btCollisionObject::CO_COLLISION_OBJECT | btCollisionObject::CO_RIGID_BODY | btCollisionObject::CO_SOFT_BODY;
-        // body->setCollisionFlags(flags);
-
         body->setContactProcessingThreshold(0.5f);
 
         context.dynamicWorld->addRigidBody(body);
@@ -221,7 +222,7 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
                 mesh.subsets.emplace_back(subset);
 
                 mesh.CreateRenderData();
-                mesh.flags |= MeshComponent::DYNAMIC;
+                mesh.flags |= MeshComponent::DYNAMIC | MeshComponent::DOUBLE_SIDED;
 
                 component.gpuResource = GraphicsManager::GetSingleton().CreateMesh(mesh);
             }

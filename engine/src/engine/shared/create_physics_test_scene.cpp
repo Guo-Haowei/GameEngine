@@ -7,7 +7,6 @@ namespace my {
 /*
 @TODO
     * draw array vs draw elements
-    * dynamic buffer
     * refactor mesh
 */
 
@@ -60,17 +59,18 @@ Scene* CreatePhysicsTestScene() {
     }
 
     {
+        constexpr float s = 3.5f;
         constexpr float h = 2.0f;
-        Vector3f p0(-4.0f, h, +4.0f);  // top left
-        Vector3f p1(+4.0f, h, +4.0f);  // top right
-        Vector3f p2(+4.0f, h, -4.0f);  // bottom right
-        Vector3f p3(-4.0f, h, -4.0f);  // bottom left
+        Vector3f p0(-s, h, +s);  // top left
+        Vector3f p1(+s, h, +s);  // top right
+        Vector3f p2(+s, h, -s);  // bottom right
+        Vector3f p3(-s, h, -s);  // bottom left
 
         auto cloth = scene->CreateClothEntity("cloth",
                                               material_id,
                                               p0, p1, p2, p3,
                                               Vector2i(30),
-                                              CLOTH_FIX_2 | CLOTH_FIX_1);
+                                              CLOTH_FIX_ALL);
 
         scene->AttachChild(cloth, root);
     }
@@ -100,7 +100,7 @@ Scene* CreatePhysicsTestScene() {
     }
 
     {
-        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/circus.hdr");
+        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/sky.hdr");
         scene->AttachChild(sky_light, root);
     }
 
