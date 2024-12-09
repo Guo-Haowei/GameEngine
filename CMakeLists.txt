@@ -24,15 +24,11 @@ message(STATUS "BUILD_ASSIMP            : ${BUILD_ASSIMP}")
 find_package(glfw3 REQUIRED)
 find_package(glad REQUIRED)
 find_package(glm REQUIRED)
+find_package(Bullet REQUIRED)
 find_package(lua REQUIRED)
 find_package(sol2 REQUIRED)
 find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
 find_package(Stb REQUIRED)
-
-################################################################################
-message(STATUS "Configuring Bullet3...")
-add_subdirectory(thirdparty/bullet3)
-set_target_properties(bullet PROPERTIES FOLDER thirdparty)
 
 ################################################################################
 if(NOT APPLE)

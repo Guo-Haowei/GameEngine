@@ -7,10 +7,10 @@ WARNING_PUSH()
 WARNING_DISABLE(4127, "-Wunused-parameter")
 WARNING_DISABLE(4100, "-Wunused-parameter")
 WARNING_DISABLE(4459, "-Wunused-parameter")  // Hide previous definition
-#include <bullet3/BulletSoftBody/btSoftBody.h>
-#include <bullet3/BulletSoftBody/btSoftBodyHelpers.h>
-#include <bullet3/BulletSoftBody/btSoftRigidDynamicsWorld.h>
-#include <bullet3/btBulletDynamicsCommon.h>
+#include <BulletSoftBody/btSoftBody.h>
+#include <BulletSoftBody/btSoftBodyHelpers.h>
+#include <BulletSoftBody/btSoftRigidDynamicsWorld.h>
+#include <btBulletDynamicsCommon.h>
 WARNING_POP()
 
 namespace my {
