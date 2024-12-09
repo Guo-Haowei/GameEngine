@@ -133,7 +133,7 @@ public:
 
     void RequestTexture(ImageAsset* p_image);
 
-    virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
+    virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<uint32_t>& p_faces, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
 
     // @TODO: move to renderer
     uint64_t GetFinalImage() const;

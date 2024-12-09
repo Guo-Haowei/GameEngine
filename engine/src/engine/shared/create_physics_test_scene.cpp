@@ -3,6 +3,13 @@
 
 namespace my {
 
+/*
+@TODO
+    * draw array vs draw elements
+    * dynamic buffer
+    * refactor mesh
+*/
+
 static MeshComponent MakeClothMesh() {
     MeshComponent mesh;
 
@@ -52,6 +59,10 @@ static MeshComponent MakeClothMesh() {
     mesh.subsets.emplace_back(subset);
 
     mesh.CreateRenderData();
+
+    for (int i = 0; i < (int)mesh.indices.size(); ++i) {
+        mesh.indices[i] = i;
+    }
     return mesh;
 }
 
@@ -105,8 +116,8 @@ Scene* CreatePhysicsTestScene() {
 
     {
         auto cloth = scene->CreateMeshEntity("cloth1", material_id, MakeClothMesh());
-        TransformComponent* transform = scene->GetComponent<TransformComponent>(cloth);
-        transform->SetTranslation(Vector3f(0, 10, 0));
+        // TransformComponent* transform = scene->GetComponent<TransformComponent>(cloth);
+        // transform->SetTranslation(Vector3f(0, 10, 0));
         scene->AttachChild(cloth, root);
         auto& soft_body = scene->Create<SoftBodyComponent>(cloth);
         (void)soft_body;

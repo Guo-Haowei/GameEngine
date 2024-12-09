@@ -506,6 +506,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
         DEV_ASSERT(mesh);
         if (!body.points.empty()) {
             p_out_data.updateBuffer.emplace_back(RenderData::UpdateBuffer{
+                .faces = std::move(body.faces),
                 .positions = std::move(body.points),
                 .normals = std::move(body.normals),
                 .id = mesh->gpuResource,

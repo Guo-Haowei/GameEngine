@@ -691,8 +691,15 @@ void OpenGlGraphicsManager::Present() {
     glfwSwapBuffers(m_window);
 }
 
-void OpenGlGraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+void OpenGlGraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<uint32_t>& p_faces, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
     if (auto mesh = dynamic_cast<OpenGlMeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
+        p_mesh->indexCount = (uint32_t)p_faces.size();
+        //{
+        //    const uint32_t size = sizeof(uint32_t) * p_mesh->indexCount;
+        //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ebo);
+        //    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, p_faces.data());
+        //    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        //}
         {
             const uint32_t size = sizeof(Vector3f) * (uint32_t)p_positions.size();
             glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[0]);
