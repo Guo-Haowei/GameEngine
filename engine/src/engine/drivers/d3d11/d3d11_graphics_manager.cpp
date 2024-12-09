@@ -786,18 +786,6 @@ void D3d11GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint
     m_deviceContext->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
 }
 
-void D3d11GraphicsManager::OnSceneChange(const Scene& p_scene) {
-    for (auto [entity, mesh] : p_scene.m_MeshComponents) {
-        if (mesh.gpuResource != nullptr) {
-            const NameComponent& name = *p_scene.GetComponent<NameComponent>(entity);
-            LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.GetName());
-            continue;
-        }
-
-        CreateMesh(mesh);
-    }
-}
-
 void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<D3d11PipelineState*>(m_pipelineStateManager->Find(p_name));
     DEV_ASSERT(pipeline);

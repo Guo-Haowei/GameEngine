@@ -65,7 +65,6 @@ protected:
     void Render() final;
     void Present() final;
 
-    void OnSceneChange(const Scene& p_scene) final;
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) final;
 

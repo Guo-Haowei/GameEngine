@@ -11,14 +11,13 @@ static constexpr float OCEAN_RADIUS = 240.0f;
 static constexpr int CLOUD_COUNT = 20;
 
 // @TODO:
-// 1. cascaded shadow map
-// 2. alpha blending
-// 3. sky light
-// 4. collision
-// 5. fog
-// 6. custom shader
-// 7. dynamic buffer
-// 8. 2D UI
+// * cascaded shadow map
+// * alpha blending
+// * collision
+// * fog
+// * custom shader
+// * dynamic buffer
+// * 2D UI
 
 Scene* CreateTheAviatorScene() {
     const std::array<Vector3f, 8> cockpit_points = {

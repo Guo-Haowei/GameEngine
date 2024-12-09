@@ -32,18 +32,16 @@ add_library(${TARGET_NAME} STATIC ${FILTERED_SRC})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/engine FILES ${FILTERED_SRC})
 
 target_include_directories(${TARGET_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/thirdparty/glfw/include
-    ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
-    ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/imgui
     ${PROJECT_SOURCE_DIR}/thirdparty/optick
-    ${PROJECT_SOURCE_DIR}/thirdparty/sol2/include
     ${PROJECT_SOURCE_DIR}/thirdparty/json/include
-    ${PROJECT_SOURCE_DIR}/thirdparty/lua
     ${PROJECT_SOURCE_DIR}/thirdparty/
     ${PROJECT_SOURCE_DIR}/engine/shader
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
+    ${BULLET_INCLUDE_DIR}
+    ${TINYGLTF_INCLUDE_DIRS}
+    ${Stb_INCLUDE_DIR}
     $ENV{VULKAN_SDK}/include
 )
 
@@ -55,10 +53,11 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
 set(TARGET_LIBS 
     imgui
     glfw
-    glad
+    glad::glad
     lua
-    bullet
+    ${BULLET_LIBRARIES}
     loader_assimp
+    glm::glm
 )
 
 if(WIN32)

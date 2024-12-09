@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.18)
 project(GameEngine)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
@@ -20,24 +20,15 @@ message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
 message(STATUS "BUILD_ASSIMP            : ${BUILD_ASSIMP}")
 
 ################################################################################
-message("Configuring glfw...")
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-add_subdirectory(thirdparty/glfw)
-set_target_properties(glfw PROPERTIES FOLDER thirdparty)
-set_target_properties(update_mappings PROPERTIES FOLDER thirdparty)
 
-################################################################################
-message("Configuring glad...")
-add_subdirectory(thirdparty/glad)
-set_target_properties(glad PROPERTIES FOLDER thirdparty)
-
-################################################################################
-message(STATUS "Configuring Bullet3...")
-add_subdirectory(thirdparty/bullet3)
-set_target_properties(bullet PROPERTIES FOLDER thirdparty)
+find_package(glfw3 REQUIRED)
+find_package(glad REQUIRED)
+find_package(glm REQUIRED)
+find_package(Bullet REQUIRED)
+find_package(lua REQUIRED)
+find_package(sol2 REQUIRED)
+find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
+find_package(Stb REQUIRED)
 
 ################################################################################
 if(NOT APPLE)
@@ -46,7 +37,7 @@ if(NOT APPLE)
     set_target_properties(optick PROPERTIES FOLDER thirdparty)
 endif()
 
-include(cmake/build-lua.cmake)
+# include(cmake/build-lua.cmake)
 include(cmake/build-imgui.cmake)
 
 # gtest

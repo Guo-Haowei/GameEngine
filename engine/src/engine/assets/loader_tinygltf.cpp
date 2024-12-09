@@ -11,7 +11,7 @@
 WARNING_PUSH()
 WARNING_DISABLE(4018, "-Wconversion")
 WARNING_DISABLE(4267, "-Wconversion")
-#include "tinygltf/tiny_gltf.h"
+#include <tiny_gltf.h>
 WARNING_POP()
 
 namespace tinygltf {
@@ -28,13 +28,14 @@ static bool DummyLoadImage(Image*,
     return true;
 }
 
-static bool DummyWriteImage(const std::string*,
-                            const std::string*,
-                            const Image*,
-                            bool,
-                            const URICallbacks*,
-                            std::string*,
-                            void*) {
+static bool DummyWriteImage(const std::string* /* basepath */,
+                            const std::string* /* filename */,
+                            const Image* /* image */,
+                            bool /* embedImages */,
+                            const FsCallbacks* /* fs_cb */,
+                            const URICallbacks* /* uri_cb */,
+                            std::string* /* out_uri */,
+                            void* /* user_pointer */) {
     return true;
 }
 

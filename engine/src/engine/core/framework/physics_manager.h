@@ -7,8 +7,9 @@ class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
 class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
-class btDiscreteDynamicsWorld;
+class btSoftRigidDynamicsWorld;
 class btCollisionShape;
+struct btSoftBodyWorldInfo;
 
 namespace my {
 
@@ -32,9 +33,10 @@ protected:
 
     btDefaultCollisionConfiguration* m_collisionConfig = nullptr;
     btCollisionDispatcher* m_dispatcher = nullptr;
-    btBroadphaseInterface* m_overlappingPairCache = nullptr;
+    btBroadphaseInterface* m_broadphase = nullptr;
     btSequentialImpulseConstraintSolver* m_solver = nullptr;
-    btDiscreteDynamicsWorld* m_dynamicWorld = nullptr;
+    btSoftRigidDynamicsWorld* m_dynamicWorld = nullptr;
+    btSoftBodyWorldInfo* m_softBodyWorldInfo = nullptr;
     std::vector<btCollisionShape*> m_collisionShapes;
 };
 

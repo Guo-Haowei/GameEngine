@@ -1303,18 +1303,6 @@ auto D3d12GraphicsManager::CreateRootSignature() -> Result<void> {
     return Result<void>();
 }
 
-void D3d12GraphicsManager::OnSceneChange(const Scene& p_scene) {
-    for (auto [entity, mesh] : p_scene.m_MeshComponents) {
-        if (mesh.gpuResource != nullptr) {
-            const NameComponent& name = *p_scene.GetComponent<NameComponent>(entity);
-            LOG_WARN("[begin_scene] mesh '{}' () already has gpu resource", name.GetName());
-            continue;
-        }
-
-        CreateMesh(mesh);
-    }
-}
-
 void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
     if (m_swapChain) {
         CleanupRenderTarget();

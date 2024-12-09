@@ -10,7 +10,7 @@ add_library(${TARGET_NAME} STATIC ${SRC})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/ FILES ${SRC})
 
 target_include_directories(${TARGET_NAME} PRIVATE
-    ${PROJECT_SOURCE_DIR}/thirdparty/glm
+    ${VCPKG_INSTALLED_DIR}/x64-windows/include
     ${PROJECT_SOURCE_DIR}/thirdparty/assimp/include
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/engine/shader

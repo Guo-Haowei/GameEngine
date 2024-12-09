@@ -50,12 +50,6 @@ static const DepthStencilDesc s_depthStencilDefault = {
     .stencilEnabled = false,
 };
 
-static const DepthStencilDesc s_skyboxDepthStencil = {
-    .depthEnabled = false,
-    .depthFunc = ComparisonFunc::ALWAYS,
-    .stencilEnabled = false,
-};
-
 static const DepthStencilDesc s_noDepthStencil = {
     .depthEnabled = false,
     .depthFunc = ComparisonFunc::NEVER,

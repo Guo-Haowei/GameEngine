@@ -15,7 +15,7 @@ if not exist "%build_folder%" (
 
 cd %build_folder%
 
-cmake -DBUILD_ASSIMP=OFF .. || goto error
+cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake -DBUILD_ASSIMP=OFF .. || goto error
 cmake --build . --config %1 || goto error
 
 endlocal

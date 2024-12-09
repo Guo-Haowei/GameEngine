@@ -168,4 +168,31 @@ void HemisphereLightComponent::Serialize(Archive& p_archive, uint32_t p_version)
 }
 #pragma endregion HEMISPHERE_LIGHT_COMPONENT
 
+#pragma region RIGID_BODY_COMPONENT
+void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << shape;
+        p_archive << param;
+        p_archive << mass;
+    } else {
+        p_archive >> shape;
+        p_archive >> param;
+        p_archive >> mass;
+    }
+}
+#pragma endregion RIGID_BODY_COMPONENT
+
+#pragma region SOFT_BODY_COMPONENT
+void SoftBodyComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+
+    CRASH_NOW();
+
+    if (p_archive.IsWriteMode()) {
+
+    } else {
+    }
+}
+#pragma endregion SOFT_BODY_COMPONENT
+
 }  // namespace my

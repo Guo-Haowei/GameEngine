@@ -1,18 +1,6 @@
-[submodule "thirdparty/glfw"]
-	path = thirdparty/glfw
-	url = https://github.com/glfw/glfw.git
-[submodule "thirdparty/glad"]
-	path = thirdparty/glad
-	url = https://github.com/Guo-Haowei/glad.git
 [submodule "thirdparty/assimp"]
 	path = thirdparty/assimp
 	url = https://github.com/assimp/assimp.git
-[submodule "thirdparty/glm"]
-	path = thirdparty/glm
-	url = https://github.com/g-truc/glm.git
-[submodule "thirdparty/lua"]
-	path = thirdparty/lua
-	url = https://github.com/lua/lua.git
 [submodule "thirdparty/imgui"]
 	path = thirdparty/imgui
 	url = https://github.com/ocornut/imgui.git
@@ -22,12 +10,6 @@
 [submodule "thirdparty/googletest"]
 	path = thirdparty/googletest
 	url = https://github.com/google/googletest.git
-[submodule "thirdparty/tinygltf"]
-	path = thirdparty/tinygltf
-	url = https://github.com/syoyo/tinygltf.git
-[submodule "thirdparty/sol2"]
-	path = thirdparty/sol2
-	url = https://github.com/ThePhD/sol2.git
 [submodule "thirdparty/json"]
 	path = thirdparty/json
 	url = https://github.com/nlohmann/json.git
