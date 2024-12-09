@@ -271,7 +271,6 @@ struct ClothComponent {
 
     mutable std::vector<Vector3f> points;
     mutable std::vector<Vector3f> normals;
-    mutable std::vector<uint32_t> faces;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

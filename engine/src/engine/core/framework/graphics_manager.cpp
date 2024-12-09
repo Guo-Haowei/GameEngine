@@ -215,9 +215,8 @@ void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
 }
 
-void GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<uint32_t>& p_faces, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+void GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
     unused(p_mesh);
-    unused(p_faces);
     unused(p_positions);
     unused(p_normals);
     CRASH_NOW();
@@ -248,7 +247,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         auto data = renderer::GetRenderData();
 
         for (const auto& update_buffer : data->updateBuffer) {
-            UpdateMesh((MeshBuffers*)update_buffer.id, update_buffer.faces, update_buffer.positions, update_buffer.normals);
+            UpdateMesh((MeshBuffers*)update_buffer.id, update_buffer.positions, update_buffer.normals);
         }
 
         // @TODO: remove this

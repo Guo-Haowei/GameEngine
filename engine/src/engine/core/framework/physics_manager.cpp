@@ -63,16 +63,11 @@ void PhysicsManager::Update(Scene& p_scene) {
             ecs::Entity id{ handle };
             if (id.IsValid()) {
                 const ClothComponent* soft_body = p_scene.GetComponent<ClothComponent>(id);
-
-                soft_body->faces.clear();
                 soft_body->points.clear();
                 soft_body->normals.clear();
 
                 for (int face_idx = 0; face_idx < body->m_faces.size(); ++face_idx) {
                     const btSoftBody::Face& face = body->m_faces[face_idx];
-                    soft_body->faces.push_back(3 * face_idx);
-                    soft_body->faces.push_back(3 * face_idx + 1);
-                    soft_body->faces.push_back(3 * face_idx + 2);
                     for (int node_idx = 0; node_idx < 3; ++node_idx) {
                         const btSoftBody::Node& node = *face.m_n[node_idx];
                         soft_body->points.push_back(Vector3f(node.m_x.getX(), node.m_x.getY(), node.m_x.getZ()));
@@ -226,6 +221,7 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
                 mesh.subsets.emplace_back(subset);
 
                 mesh.CreateRenderData();
+                mesh.flags |= MeshComponent::DYNAMIC;
 
                 component.gpuResource = GraphicsManager::GetSingleton().CreateMesh(mesh);
             }

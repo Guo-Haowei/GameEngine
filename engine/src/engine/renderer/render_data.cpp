@@ -517,7 +517,6 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     for (auto [entity, cloth] : p_config.scene.m_ClothComponents) {
         if (!cloth.points.empty()) {
             p_out_data.updateBuffer.emplace_back(RenderData::UpdateBuffer{
-                .faces = std::move(cloth.faces),
                 .positions = std::move(cloth.points),
                 .normals = std::move(cloth.normals),
                 .id = cloth.gpuResource,

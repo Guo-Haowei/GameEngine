@@ -70,7 +70,7 @@ Scene* CreatePhysicsTestScene() {
                                               material_id,
                                               p0, p1, p2, p3,
                                               Vector2i(30),
-                                              CLOTH_FIX_2 | CLOTH_FIX_3);
+                                              CLOTH_FIX_2 | CLOTH_FIX_1);
 
         scene->AttachChild(cloth, root);
     }
