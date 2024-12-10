@@ -99,7 +99,7 @@ public:
         NONE = BIT(0),
         DIRTY = BIT(1),
         EDITOR = BIT(2),
-        MAIN = BIT(3),
+        PRIMARY = BIT(3),
     };
 
     static constexpr float DEFAULT_NEAR = 0.1f;
@@ -112,10 +112,10 @@ public:
 
     bool IsDirty() const { return m_flags & DIRTY; }
     void SetDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
-    bool IsEditor() const { return m_flags & EDITOR; }
-    void SetEditor(bool p_flag = true) { p_flag ? m_flags |= EDITOR : m_flags &= ~EDITOR; }
-    bool IsMain() const { return m_flags & MAIN; }
-    void SetMain(bool p_flag = true) { p_flag ? m_flags |= MAIN : m_flags &= ~MAIN; }
+    bool IsEditorCamera() const { return m_flags & EDITOR; }
+    void SetEditorCamera(bool p_flag = true) { p_flag ? m_flags |= EDITOR : m_flags &= ~EDITOR; }
+    bool IsPrimary() const { return m_flags & PRIMARY; }
+    void SetPrimary(bool p_flag = true) { p_flag ? m_flags |= PRIMARY : m_flags &= ~PRIMARY; }
 
     Degree GetFovy() const { return m_fovy; }
     void SetFovy(Degree p_degree) {
@@ -202,8 +202,20 @@ private:
 
 #pragma region NATIVE_SCRIPT_COMPONENT
 struct NativeScriptComponent {
+    NativeScriptComponent() = default;
+
+    NativeScriptComponent(const NativeScriptComponent& p_rhs) {
+        *this = p_rhs;
+    }
+
+    NativeScriptComponent& operator=(const NativeScriptComponent& p_rhs) {
+        instantiateFunc = p_rhs.instantiateFunc;
+        destroyFunc = p_rhs.destroyFunc;
+        return *this;
+    }
+
     using InstantiateFunc = ScriptableEntity* (*)(void);
-    using DestroyFunc = void (*)(void);
+    using DestroyFunc = void (*)(NativeScriptComponent*);
 
     ScriptableEntity* instance{ nullptr };
     InstantiateFunc instantiateFunc{ nullptr };
@@ -211,7 +223,7 @@ struct NativeScriptComponent {
 
     template<typename T>
     void Bind() {
-        instantiateFunc = []() {
+        instantiateFunc = []() -> ScriptableEntity* {
             return new T();
         };
         destroyFunc = [](NativeScriptComponent* p_script) {
@@ -219,6 +231,8 @@ struct NativeScriptComponent {
             p_script->instance = nullptr;
         };
     }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
 };
 #pragma endregion NATIVE_SCRIPT_COMPONENT
 

@@ -6,6 +6,7 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/lua_binding/prerequisites.h"
 #include "engine/scene/scene.h"
+#include "engine/scene/scriptable_entity.h"
 
 namespace my {
 
@@ -114,6 +115,18 @@ void ScriptManager::Update(Scene& p_scene) {
                 LOG_ERROR("script error: {}", err.what());
             }
         }
+    }
+
+    for (auto [entity, script] : p_scene.m_NativeScriptComponents) {
+        if (!script.instance) {
+            script.instance = script.instantiateFunc();
+            script.instance->m_id = entity;
+            script.instance->m_scene = &p_scene;
+
+            script.instance->OnCreate();
+        }
+
+        script.instance->OnUpdate(p_scene.m_timestep);
     }
 }
 

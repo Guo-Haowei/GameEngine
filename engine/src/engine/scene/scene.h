@@ -224,7 +224,7 @@ public:
     // @TODO: refactor
     ecs::Entity m_root;
     ecs::Entity m_selected;
-    float m_elapsedTime = 0.0f;
+    float m_timestep = 0.0f;
     bool m_replace = false;
     mutable PhysicsWorldContext* m_physicsWorld = nullptr;
 

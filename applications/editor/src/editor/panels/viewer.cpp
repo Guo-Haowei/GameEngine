@@ -187,7 +187,7 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
 }
 
 void Viewer::UpdateInternal(Scene& p_scene) {
-    auto mode = m_editor.GetApplication()->GetState();
+    const auto mode = m_editor.GetApplication()->GetState();
     ecs::Entity camera_id;
     switch (mode) {
         case Application::State::EDITING:
@@ -290,8 +290,8 @@ void Viewer::UpdateInternal(Scene& p_scene) {
         }
     }
 
-    if (m_focused) {
-        m_cameraController.Move(p_scene.m_elapsedTime, *camera, delta_camera, mouse_scroll);
+    if (m_focused && mode == Application::State::EDITING) {
+        m_cameraController.Move(p_scene.m_timestep, *camera, delta_camera, mouse_scroll);
     }
 
     SelectEntity(p_scene, *camera);

@@ -7,6 +7,11 @@ class ScriptableEntity {
 public:
     virtual ~ScriptableEntity() = default;
 
+    template<typename T>
+    T* GetComponent() {
+        return m_scene->GetComponent<T>(m_id);
+    }
+
 protected:
     virtual void OnCreate() {}
     virtual void OnDestroy() {}
@@ -15,7 +20,7 @@ protected:
     ecs::Entity m_id;
     Scene* m_scene;
 
-    friend class Scene;
+    friend class ScriptManager;
 };
 
 }  // namespace my

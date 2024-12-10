@@ -6,7 +6,6 @@
 #include "engine/core/systems/job_system.h"
 #include "engine/renderer/render_manager.h"
 #include "engine/renderer/renderer.h"
-#include "engine/scene/scriptable_entity.h"
 
 namespace my {
 
@@ -45,22 +44,9 @@ static constexpr uint32_t SCENE_MAGIC = 'xScn';
 #endif
 
 void Scene::Update(float p_time_step) {
-    m_elapsedTime = p_time_step;
+    m_timestep = p_time_step;
 
     Context ctx;
-
-    for (auto [entity, script] : m_NativeScriptComponents) {
-        if (!script.instance) {
-            script.instance = script.instantiateFunc();
-            script.instance->m_id = entity;
-            script.instance->m_scene = this;
-
-            script.instance->OnCreate();
-        }
-
-        script.instance->OnUpdate(p_time_step);
-    }
-
     // animation
     RunLightUpdateSystem(ctx);
     RunAnimationUpdateSystem(ctx);
@@ -106,7 +92,7 @@ void Scene::Copy(Scene& p_other) {
 
     m_root = p_other.m_root;
     m_bound = p_other.m_bound;
-    m_elapsedTime = p_other.m_elapsedTime;
+    m_timestep = p_other.m_timestep;
 }
 
 void Scene::Merge(Scene& p_other) {
@@ -123,7 +109,7 @@ void Scene::Merge(Scene& p_other) {
 
 ecs::Entity Scene::GetMainCamera() {
     for (auto [entity, camera] : m_PerspectiveCameraComponents) {
-        if (camera.IsMain()) {
+        if (camera.IsPrimary()) {
             return entity;
         }
     }
@@ -133,7 +119,7 @@ ecs::Entity Scene::GetMainCamera() {
 
 ecs::Entity Scene::GetEditorCamera() {
     for (auto [entity, camera] : m_PerspectiveCameraComponents) {
-        if (camera.IsEditor()) {
+        if (camera.IsEditorCamera()) {
             return entity;
         }
     }
@@ -629,8 +615,7 @@ void Scene::UpdateAnimation(size_t p_index) {
     }
 
     if (animation.IsPlaying()) {
-        // @TODO: set elapsed time
-        animation.timer += m_elapsedTime * animation.speed;
+        animation.timer += m_timestep * animation.speed;
     }
 }
 
@@ -734,7 +719,7 @@ bool Scene::Serialize(Archive& p_archive) {
             auto camera_id = CreatePerspectiveCameraEntity("editor_camera", old_camera.GetWidth(), old_camera.GetHeight());
             PerspectiveCameraComponent* new_camera = GetComponent<PerspectiveCameraComponent>(camera_id);
             *new_camera = old_camera;
-            new_camera->SetEditor();
+            new_camera->SetEditorCamera();
             AttachChild(camera_id, m_root);
         }
     }
@@ -862,7 +847,7 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
     unused(p_context);
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
-        emitter.Update(m_elapsedTime);
+        emitter.Update(m_timestep);
     }
 }
 

@@ -256,11 +256,11 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("PerspectiveCamera", perspective_camera, [&](PerspectiveCameraComponent& p_camera) {
         {
-            const bool is_editor = p_camera.IsEditor();
-            bool is_main = p_camera.IsMain();
+            const bool is_editor = p_camera.IsEditorCamera();
+            bool is_main = p_camera.IsPrimary();
             ImGui::BeginDisabled(is_editor);
             if (ImGui::Checkbox("main camera", &is_main)) {
-                p_camera.SetMain(is_main);
+                p_camera.SetPrimary(is_main);
             }
             ImGui::EndDisabled();
         }

@@ -155,6 +155,14 @@ void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 }
 #pragma endregion LUA_SCRIPT_COMPONENT
 
+#pragma region NATIVE_SCRIPT_COMPONENT
+void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_archive);
+    unused(p_version);
+    CRASH_NOW();
+}
+#pragma endregion NATIVE_SCRIPT_COMPONENT
+
 #pragma region HEMISPHERE_LIGHT_COMPONENT
 void HemisphereLightComponent::SetPath(const std::string& p_path) {
     unused(p_path);

@@ -25,7 +25,7 @@ Scene* CreatePhysicsTestScene() {
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 5, 12));
-        camera->SetEditor();
+        camera->SetEditorCamera();
         scene->AttachChild(editor_camera, root);
     }
     // main camera
@@ -34,7 +34,7 @@ Scene* CreatePhysicsTestScene() {
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 5, 12));
-        camera->SetMain();
+        camera->SetPrimary();
         scene->AttachChild(main_camera, root);
     }
     // add a light

@@ -1,9 +1,11 @@
 #include "engine/core/base/random.h"
+#include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/color.h"
 #include "engine/core/math/geometry.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
+#include "engine/scene/scriptable_entity.h"
 
 namespace my {
 
@@ -30,7 +32,7 @@ Scene* CreateTheAviatorScene() {
         Vector3f(+4.f, +2.5f, -2.5f),  // H
     };
 
-    const float plane_height = 20.0f;
+    const float plane_height = 30.0f;
 
     ecs::Entity::SetSeed();
 
@@ -46,17 +48,36 @@ Scene* CreateTheAviatorScene() {
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, plane_height, 80));
-        camera->SetEditor();
+        camera->SetEditorCamera();
         scene->AttachChild(editor_camera, root);
     }
     // main camera
     {
         auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
+        scene->AttachChild(main_camera, root);
+
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, plane_height, 100));
-        camera->SetMain();
-        scene->AttachChild(main_camera, root);
+        camera->SetPrimary();
+
+        class CameraController : public ScriptableEntity {
+        protected:
+            void OnUpdate(float p_timestep) override {
+                PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
+                if (camera) {
+                    const Vector2f mouse_move = InputManager::GetSingleton().MouseMove();
+                    if (glm::abs(mouse_move.x) > 2.0f) {
+                        float angle = camera->GetFovy().GetDegree();
+                        angle += mouse_move.x * p_timestep * 2.0f;
+                        angle = glm::clamp(angle, 35.0f, 70.0f);
+                        camera->SetFovy(Degree(angle));
+                    }
+                }
+            }
+        };
+
+        scene->Create<NativeScriptComponent>(main_camera).Bind<CameraController>();
     }
 
     // create light
@@ -268,6 +289,7 @@ Scene* CreateTheAviatorScene() {
         script.SetScript("@res://scripts/world.lua");
         scene->AttachChild(earth, world);
     }
+
     // ocean
     {
         auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeCylinderMesh(OCEAN_RADIUS, 320.0f, 60, 16));
@@ -283,6 +305,19 @@ Scene* CreateTheAviatorScene() {
         transform->RotateX(Degree(90.0f));
         transform->RotateZ(Degree(90.0f));
         scene->AttachChild(ocean, earth);
+
+        class OceanScript : public ScriptableEntity {
+        protected:
+            void OnUpdate(float p_timestep) override {
+                unused(p_timestep);
+
+                ObjectComponent* object = GetComponent<ObjectComponent>();
+                DEV_ASSERT(object);
+                MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(object->meshId);
+                DEV_ASSERT(mesh);
+            }
+        };
+        scene->Create<NativeScriptComponent>(ocean).Bind<OceanScript>();
     }
 #pragma endregion SETUP_PLANE
 

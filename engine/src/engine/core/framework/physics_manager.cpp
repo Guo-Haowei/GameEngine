@@ -24,7 +24,7 @@ void PhysicsManager::FinalizeImpl() {
 }
 
 void PhysicsManager::Update(Scene& p_scene) {
-    float delta_time = p_scene.m_elapsedTime;
+    float delta_time = p_scene.m_timestep;
     // delta_time *= 0.1f;
 
     if (!p_scene.m_physicsWorld) {

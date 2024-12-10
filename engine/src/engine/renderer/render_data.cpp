@@ -464,7 +464,7 @@ static void FillEmitterBuffer(const RenderDataConfig& p_config,
         const TransformComponent* transform = p_scene.GetComponent<TransformComponent>(id);
         buffer.c_preSimIdx = pre_sim_idx;
         buffer.c_postSimIdx = post_sim_idx;
-        buffer.c_elapsedTime = p_scene.m_elapsedTime;
+        buffer.c_elapsedTime = p_scene.m_timestep;
         buffer.c_lifeSpan = emitter.particleLifeSpan;
         buffer.c_seeds = Vector3f(Random::Float(), Random::Float(), Random::Float());
         buffer.c_emitterScale = emitter.particleScale;
