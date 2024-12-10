@@ -116,7 +116,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     AnimationComponent* animation_component = p_scene.GetComponent<AnimationComponent>(id);
     ParticleEmitterComponent* emitter_component = p_scene.GetComponent<ParticleEmitterComponent>(id);
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
-    ScriptComponent* script_component = p_scene.GetComponent<ScriptComponent>(id);
+    LuaScriptComponent* script_component = p_scene.GetComponent<LuaScriptComponent>(id);
     PerspectiveCameraComponent* perspective_camera = p_scene.GetComponent<PerspectiveCameraComponent>(id);
     HemisphereLightComponent* hemisphere_light = p_scene.GetComponent<HemisphereLightComponent>(id);
 
@@ -211,7 +211,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         }
     });
 
-    DrawComponent("Script", script_component, [](ScriptComponent& p_script) {
+    DrawComponent("Script", script_component, [](LuaScriptComponent& p_script) {
         panel_util::InputText(p_script.GetScriptRef(), "##ScriptTag");
     });
 
@@ -256,11 +256,11 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("PerspectiveCamera", perspective_camera, [&](PerspectiveCameraComponent& p_camera) {
         {
-            const bool is_editor = p_camera.IsEditor();
-            bool is_main = p_camera.IsMain();
+            const bool is_editor = p_camera.IsEditorCamera();
+            bool is_main = p_camera.IsPrimary();
             ImGui::BeginDisabled(is_editor);
             if (ImGui::Checkbox("main camera", &is_main)) {
-                p_camera.SetMain(is_main);
+                p_camera.SetPrimary(is_main);
             }
             ImGui::EndDisabled();
         }

@@ -55,8 +55,8 @@ public:
         return m_value >= p_val.m_value;
     }
     void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
-    float GetRadians() const { return glm::radians(m_value); }
-    float GetDegree() const { return m_value; }
+    constexpr float GetRadians() const { return glm::radians(m_value); }
+    constexpr float GetDegree() const { return m_value; }
     float Sin() const { return glm::sin(GetRadians()); }
     float Cos() const { return glm::cos(GetRadians()); }
     float Tan() const { return glm::tan(GetRadians()); }

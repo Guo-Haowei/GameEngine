@@ -111,9 +111,9 @@ static void FillPass(const RenderDataConfig& p_config,
             draw.bone_idx = -1;
         }
 
-        const ClothComponent* cloth = scene.GetComponent<ClothComponent>(entity);
-        if (cloth && cloth->gpuResource) {
-            draw.mesh_data = (MeshBuffers*)cloth->gpuResource;
+        const MeshComponent* cloth_mesh = scene.GetComponent<MeshComponent>(entity);
+        if (cloth_mesh && cloth_mesh->gpuResource) {
+            draw.mesh_data = (MeshBuffers*)cloth_mesh->gpuResource;
         } else {
             draw.mesh_data = (MeshBuffers*)mesh.gpuResource;
         }
@@ -135,7 +135,7 @@ static void FillPass(const RenderDataConfig& p_config,
 
             DrawContext sub_mesh;
 
-            if (cloth) {
+            if (cloth_mesh) {
                 sub_mesh.index_count = draw.mesh_data->indexCount;
                 sub_mesh.index_offset = 0;
                 sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
@@ -337,9 +337,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
                         p_scene,
                         *pass.get(),
                         [](const ObjectComponent& p_object) {
-                            unused(p_object);
-                            return true;
-                            // return p_object.flags & ObjectComponent::CAST_SHADOW;
+                            return p_object.flags & ObjectComponent::CAST_SHADOW;
                         },
                         [&](const AABB& p_aabb) {
                             return p_aabb.Intersects(aabb);
@@ -466,7 +464,7 @@ static void FillEmitterBuffer(const RenderDataConfig& p_config,
         const TransformComponent* transform = p_scene.GetComponent<TransformComponent>(id);
         buffer.c_preSimIdx = pre_sim_idx;
         buffer.c_postSimIdx = post_sim_idx;
-        buffer.c_elapsedTime = p_scene.m_elapsedTime;
+        buffer.c_elapsedTime = p_scene.m_timestep;
         buffer.c_lifeSpan = emitter.particleLifeSpan;
         buffer.c_seeds = Vector3f(Random::Float(), Random::Float(), Random::Float());
         buffer.c_emitterScale = emitter.particleScale;
@@ -516,12 +514,15 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     }
 
     // @TODO: update soft body
-    for (auto [entity, cloth] : p_config.scene.m_ClothComponents) {
-        if (!cloth.points.empty()) {
+    for (auto [entity, mesh] : p_config.scene.m_MeshComponents) {
+        if (!(mesh.flags & MeshComponent::DYNAMIC)) {
+            continue;
+        }
+        if (!mesh.updatePositions.empty()) {
             p_out_data.updateBuffer.emplace_back(RenderData::UpdateBuffer{
-                .positions = std::move(cloth.points),
-                .normals = std::move(cloth.normals),
-                .id = cloth.gpuResource,
+                .positions = std::move(mesh.updatePositions),
+                .normals = std::move(mesh.updateNormals),
+                .id = mesh.gpuResource,
             });
         }
     }

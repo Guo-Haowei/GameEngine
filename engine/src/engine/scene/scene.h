@@ -90,7 +90,8 @@ private:
     REGISTER_COMPONENT(MeshColliderComponent, 0);
     REGISTER_COMPONENT(ParticleEmitterComponent, 0);
     REGISTER_COMPONENT(ForceFieldComponent, 0);
-    REGISTER_COMPONENT(ScriptComponent, 0);
+    REGISTER_COMPONENT(LuaScriptComponent, 0);
+    REGISTER_COMPONENT(NativeScriptComponent, 0);
     REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
     REGISTER_COMPONENT(HemisphereLightComponent, 0);
     REGISTER_COMPONENT(RigidBodyComponent, 0);
@@ -223,7 +224,7 @@ public:
     // @TODO: refactor
     ecs::Entity m_root;
     ecs::Entity m_selected;
-    float m_elapsedTime = 0.0f;
+    float m_timestep = 0.0f;
     bool m_replace = false;
     mutable PhysicsWorldContext* m_physicsWorld = nullptr;
 

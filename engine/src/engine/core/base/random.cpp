@@ -13,4 +13,9 @@ float Random::Float() {
     return s_distribution(s_randomEngine);
 }
 
+float Random::Float(float p_min, float p_max) {
+    DEV_ASSERT(p_max >= p_min);
+    return p_min + (p_max - p_min) * Float();
+}
+
 }  // namespace my

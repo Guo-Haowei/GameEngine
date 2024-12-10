@@ -211,7 +211,7 @@ void Application::Run() {
         "\nMain Loop"
         "\n********************************************************************************");
 
-    // @TODO: add frame count, elapsed time, etc
+    // @TODO: add frame count, timestep time, etc
     Timer timer;
     do {
         OPTICK_FRAME("MainThread");
@@ -226,8 +226,8 @@ void Application::Run() {
         m_inputManager->BeginFrame();
 
         // @TODO: better elapsed time
-        float elapsed_time = static_cast<float>(timer.GetDuration().ToSecond());
-        elapsed_time = glm::min(elapsed_time, 0.5f);
+        float timestep = static_cast<float>(timer.GetDuration().ToSecond());
+        timestep = glm::min(timestep, 0.5f);
         timer.Start();
 
         m_inputManager->GetEventQueue().FlushEvents();
@@ -242,10 +242,10 @@ void Application::Run() {
 
         // layer should set active scene
         for (auto& layer : m_layers) {
-            layer->OnUpdate(elapsed_time);
+            layer->OnUpdate(timestep);
         }
 
-        m_activeScene->Update(elapsed_time);
+        m_activeScene->Update(timestep);
         ecs::Entity camera;
         switch (m_state) {
             case Application::State::EDITING:
@@ -338,7 +338,7 @@ Scene* Application::CreateInitialScene() {
     auto camera = scene->GetComponent<PerspectiveCameraComponent>(camera_id);
     DEV_ASSERT(camera);
     camera->SetPosition(Vector3f(0, 4, 10));
-    camera->SetEditor();
+    camera->SetEditorCamera();
     scene->AttachChild(camera_id, root);
 
     return scene;

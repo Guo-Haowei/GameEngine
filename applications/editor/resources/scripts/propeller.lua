@@ -1,5 +1,5 @@
 local function on_update()
-    scene_helper.entity_rotate_x(-3)
+    scene_helper.entity_rotate_x(-6)
 end
 
 local function on_collide()

@@ -8,6 +8,7 @@ namespace my {
 struct ImageAsset;
 struct TextAsset;
 class Archive;
+class ScriptableEntity;
 
 #pragma region NAME_COMPONENT
 class NameComponent {
@@ -98,7 +99,7 @@ public:
         NONE = BIT(0),
         DIRTY = BIT(1),
         EDITOR = BIT(2),
-        MAIN = BIT(3),
+        PRIMARY = BIT(3),
     };
 
     static constexpr float DEFAULT_NEAR = 0.1f;
@@ -111,10 +112,10 @@ public:
 
     bool IsDirty() const { return m_flags & DIRTY; }
     void SetDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
-    bool IsEditor() const { return m_flags & EDITOR; }
-    void SetEditor(bool p_flag = true) { p_flag ? m_flags |= EDITOR : m_flags &= ~EDITOR; }
-    bool IsMain() const { return m_flags & MAIN; }
-    void SetMain(bool p_flag = true) { p_flag ? m_flags |= MAIN : m_flags &= ~MAIN; }
+    bool IsEditorCamera() const { return m_flags & EDITOR; }
+    void SetEditorCamera(bool p_flag = true) { p_flag ? m_flags |= EDITOR : m_flags &= ~EDITOR; }
+    bool IsPrimary() const { return m_flags & PRIMARY; }
+    void SetPrimary(bool p_flag = true) { p_flag ? m_flags |= PRIMARY : m_flags &= ~PRIMARY; }
 
     Degree GetFovy() const { return m_fovy; }
     void SetFovy(Degree p_degree) {
@@ -176,8 +177,8 @@ private:
 };
 #pragma endregion CAMERA_COMPONENT
 
-#pragma region SCRIPT_COMPONENT
-class ScriptComponent {
+#pragma region LUA_SCRIPT_COMPONENT
+class LuaScriptComponent {
 public:
     void SetScript(const std::string& p_path);
 
@@ -197,7 +198,43 @@ private:
     // Non-Serialized
     const TextAsset* m_asset{ nullptr };
 };
-#pragma endregion SCRIPT_COMPONENT
+#pragma endregion LUA_SCRIPT_COMPONENT
+
+#pragma region NATIVE_SCRIPT_COMPONENT
+struct NativeScriptComponent {
+    NativeScriptComponent() = default;
+
+    NativeScriptComponent(const NativeScriptComponent& p_rhs) {
+        *this = p_rhs;
+    }
+
+    NativeScriptComponent& operator=(const NativeScriptComponent& p_rhs) {
+        instantiateFunc = p_rhs.instantiateFunc;
+        destroyFunc = p_rhs.destroyFunc;
+        return *this;
+    }
+
+    using InstantiateFunc = ScriptableEntity* (*)(void);
+    using DestroyFunc = void (*)(NativeScriptComponent*);
+
+    ScriptableEntity* instance{ nullptr };
+    InstantiateFunc instantiateFunc{ nullptr };
+    DestroyFunc destroyFunc{ nullptr };
+
+    template<typename T>
+    void Bind() {
+        instantiateFunc = []() -> ScriptableEntity* {
+            return new T();
+        };
+        destroyFunc = [](NativeScriptComponent* p_script) {
+            delete p_script->instance;
+            p_script->instance = nullptr;
+        };
+    }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+};
+#pragma endregion NATIVE_SCRIPT_COMPONENT
 
 #pragma region HEMISPHERE_LIGHT_COMPONENT
 class HemisphereLightComponent {
@@ -256,7 +293,6 @@ enum ClothFixFlag : uint16_t {
     CLOTH_FIX_ALL = CLOTH_FIX_0 | CLOTH_FIX_1 | CLOTH_FIX_2 | CLOTH_FIX_3,
 };
 DEFINE_ENUM_BITWISE_OPERATIONS(ClothFixFlag);
-
 struct ClothComponent {
     Vector3f point_0;
     Vector3f point_1;
@@ -264,13 +300,6 @@ struct ClothComponent {
     Vector3f point_3;
     Vector2i res;
     ClothFixFlag fixedFlags;
-
-    // Non-Serialized
-    mutable const void* gpuResource = nullptr;
-    void* physicsObject = nullptr;
-
-    mutable std::vector<Vector3f> points;
-    mutable std::vector<Vector3f> normals;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

@@ -7,6 +7,7 @@ namespace my {
 
 class Archive;
 class Scene;
+struct MeshBuffers;
 
 struct MeshComponent {
     enum : uint32_t {
@@ -58,8 +59,11 @@ struct MeshComponent {
     ecs::Entity armatureId;
 
     // Non-serialized
-    mutable void* gpuResource = nullptr;
+    mutable const MeshBuffers* gpuResource = nullptr;
     AABB localBound;
+
+    mutable std::vector<Vector3f> updatePositions;
+    mutable std::vector<Vector3f> updateNormals;
 
     VertexAttribute attributes[VertexAttribute::COUNT];
     size_t vertexBufferSize = 0;  // combine vertex buffer

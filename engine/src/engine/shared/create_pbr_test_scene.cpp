@@ -18,7 +18,7 @@ Scene* CreatePbrTestScene() {
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 4, 10));
-        camera->SetEditor();
+        camera->SetEditorCamera();
         scene->AttachChild(editor_camera, root);
     }
     // main camera
@@ -27,7 +27,7 @@ Scene* CreatePbrTestScene() {
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 4, 10));
-        camera->SetMain();
+        camera->SetPrimary();
         scene->AttachChild(main_camera, root);
     }
 

@@ -6,9 +6,7 @@
 
 namespace my {
 
-void ParticleEmitterComponent::Update(float p_elapsedTime) {
-    unused(p_elapsedTime);
-
+void ParticleEmitterComponent::Update(float) {
     aliveBufferIndex = 1 - aliveBufferIndex;
 }
 

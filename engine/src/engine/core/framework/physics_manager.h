@@ -34,7 +34,7 @@ protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    void CreateWorld(const Scene& p_scene);
+    void CreateWorld(Scene& p_scene);
     void CleanWorld();
 };
 

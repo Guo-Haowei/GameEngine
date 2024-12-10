@@ -7,7 +7,7 @@ namespace my {
 class Archive;
 
 struct ParticleEmitterComponent {
-    void Update(float p_elapsedTime);
+    void Update(float p_timestep);
     void Serialize(Archive& p_archive, uint32_t p_version);
     uint32_t GetPreIndex() const { return aliveBufferIndex; }
     uint32_t GetPostIndex() const { return 1 - aliveBufferIndex; }

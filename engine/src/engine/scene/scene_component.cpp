@@ -119,12 +119,12 @@ void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 #pragma endregion CAMERA_COMPONENT
 
-#pragma region SCRIPT_COMPONENT
-std::string& ScriptComponent::GetScriptRef() {
+#pragma region LUA_SCRIPT_COMPONENT
+std::string& LuaScriptComponent::GetScriptRef() {
     return m_path;
 }
 
-void ScriptComponent::SetScript(const std::string& p_path) {
+void LuaScriptComponent::SetScript(const std::string& p_path) {
     if (p_path.empty()) {
         return;
     }
@@ -138,11 +138,11 @@ void ScriptComponent::SetScript(const std::string& p_path) {
     AssetRegistry::GetSingleton().RequestAssetAsync(p_path);
 }
 
-const char* ScriptComponent::GetSource() const {
+const char* LuaScriptComponent::GetSource() const {
     return m_asset ? m_asset->source.c_str() : nullptr;
 }
 
-void ScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     if (p_archive.IsWriteMode()) {
@@ -153,7 +153,15 @@ void ScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
         SetScript(path);
     }
 }
-#pragma endregion SCRIPT_COMPONENT
+#pragma endregion LUA_SCRIPT_COMPONENT
+
+#pragma region NATIVE_SCRIPT_COMPONENT
+void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_archive);
+    unused(p_version);
+    CRASH_NOW();
+}
+#pragma endregion NATIVE_SCRIPT_COMPONENT
 
 #pragma region HEMISPHERE_LIGHT_COMPONENT
 void HemisphereLightComponent::SetPath(const std::string& p_path) {
