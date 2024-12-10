@@ -68,16 +68,20 @@ void PhysicsManager::Update(Scene& p_scene) {
                     body->m_nodes[node_idx].m_f = btVector3(0.0f, 0.2f, 0.1f);
                 }
 
-                const ClothComponent* cloth = p_scene.GetComponent<ClothComponent>(id);
-                cloth->points.clear();
-                cloth->normals.clear();
+                MeshComponent* mesh = p_scene.GetComponent<MeshComponent>(id);
+                DEV_ASSERT(mesh);
+
+                auto& positions = mesh->updatePositions;
+                auto& normals = mesh->updateNormals;
+                positions.clear();
+                normals.clear();
 
                 for (int face_idx = 0; face_idx < body->m_faces.size(); ++face_idx) {
                     const btSoftBody::Face& face = body->m_faces[face_idx];
                     for (int node_idx = 0; node_idx < 3; ++node_idx) {
                         const btSoftBody::Node& node = *face.m_n[node_idx];
-                        cloth->points.push_back(Vector3f(node.m_x.getX(), node.m_x.getY(), node.m_x.getZ()));
-                        cloth->normals.push_back(Vector3f(node.m_n.getX(), node.m_n.getY(), node.m_n.getZ()));
+                        positions.push_back(Vector3f(node.m_x.getX(), node.m_x.getY(), node.m_x.getZ()));
+                        normals.push_back(Vector3f(node.m_n.getX(), node.m_n.getY(), node.m_n.getZ()));
                     }
                 }
             }
@@ -88,7 +92,7 @@ void PhysicsManager::Update(Scene& p_scene) {
     }
 }
 
-void PhysicsManager::CreateWorld(const Scene& p_scene) {
+void PhysicsManager::CreateWorld(Scene& p_scene) {
     DEV_ASSERT(!p_scene.m_physicsWorld);
 
     p_scene.m_physicsWorld = new PhysicsWorldContext;
@@ -197,7 +201,7 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
             cloth->setCollisionFlags(btCollisionObject::CO_COLLISION_OBJECT | btCollisionObject::CO_RIGID_BODY | btCollisionObject::CO_SOFT_BODY);
             cloth->setFriction(0.5f);
 
-            MeshComponent mesh;
+            MeshComponent& mesh = p_scene.Create<MeshComponent>(id);
             {
                 auto& indices = mesh.indices;
                 auto& positions = mesh.positions;
@@ -224,8 +228,7 @@ void PhysicsManager::CreateWorld(const Scene& p_scene) {
 
                 mesh.CreateRenderData();
                 mesh.flags |= MeshComponent::DYNAMIC | MeshComponent::DOUBLE_SIDED;
-
-                component.gpuResource = GraphicsManager::GetSingleton().CreateMesh(mesh);
+                mesh.gpuResource = GraphicsManager::GetSingleton().CreateMesh(mesh);
             }
 
             context.dynamicWorld->addSoftBody(cloth);

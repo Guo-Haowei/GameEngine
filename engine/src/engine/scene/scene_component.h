@@ -293,7 +293,6 @@ enum ClothFixFlag : uint16_t {
     CLOTH_FIX_ALL = CLOTH_FIX_0 | CLOTH_FIX_1 | CLOTH_FIX_2 | CLOTH_FIX_3,
 };
 DEFINE_ENUM_BITWISE_OPERATIONS(ClothFixFlag);
-
 struct ClothComponent {
     Vector3f point_0;
     Vector3f point_1;
@@ -301,13 +300,6 @@ struct ClothComponent {
     Vector3f point_3;
     Vector2i res;
     ClothFixFlag fixedFlags;
-
-    // Non-Serialized
-    mutable const void* gpuResource = nullptr;
-    void* physicsObject = nullptr;
-
-    mutable std::vector<Vector3f> points;
-    mutable std::vector<Vector3f> normals;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

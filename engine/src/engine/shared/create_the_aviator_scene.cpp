@@ -7,6 +7,27 @@
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
 
+namespace std {
+
+template<>
+struct hash<my::Vector3f> {
+    std::size_t operator()(const my::Vector3f& p_vec) const {
+        std::hash<uint8_t> byte_hash;
+        size_t result = 0;
+
+        const uint8_t* byte_ptr = reinterpret_cast<const uint8_t*>(&p_vec);
+
+        // Hash each byte of the memory block
+        for (size_t i = 0; i < sizeof(p_vec); ++i) {
+            result ^= byte_hash(byte_ptr[i]) + 0x9e3779b9 + (result << 6) + (result >> 2);
+        }
+
+        return result;
+    }
+};
+
+}  // namespace std
+
 namespace my {
 
 static constexpr float OCEAN_RADIUS = 240.0f;
@@ -19,6 +40,87 @@ static constexpr int CLOUD_COUNT = 20;
 // * fog
 // * dynamic buffer
 // * 2D UI
+
+static MeshComponent MakeOceanMesh(float p_radius,
+                                   float p_height,
+                                   int p_sectors,
+                                   int p_height_sector) {
+    MeshComponent mesh;
+
+    auto& indices = mesh.indices;
+    constexpr float pi = glm::pi<float>();
+
+    std::array<float, 2> heights = { 0.5f * p_height, -0.5f * p_height };
+
+    // cylinder side
+    float height_step = (float)p_height / p_height_sector;
+    for (float y = heights[1]; y < heights[0]; y += height_step) {
+        for (int index = 0; index < p_sectors; ++index) {
+            uint32_t point_offset = (uint32_t)mesh.positions.size();
+
+            float angle_1 = 2.0f * pi * index / p_sectors;
+            float x_1 = p_radius * glm::cos(angle_1);
+            float z_1 = p_radius * glm::sin(angle_1);
+            float angle_2 = 2.0f * pi * ((index + 1) == p_sectors ? 0 : (index + 1)) / p_sectors;
+            float x_2 = p_radius * glm::cos(angle_2);
+            float z_2 = p_radius * glm::sin(angle_2);
+
+            Vector3f point_1(x_1, y, z_1);
+            Vector3f point_2(x_1, y + height_step, z_1);
+
+            Vector3f point_3(x_2, y, z_2);
+            Vector3f point_4(x_2, y + height_step, z_2);
+
+            Vector3f AB = point_1 - point_2;
+            Vector3f AC = point_1 - point_3;
+            Vector3f normal = glm::normalize(glm::cross(AB, AC));
+
+            mesh.positions.emplace_back(point_1);
+            mesh.positions.emplace_back(point_2);
+            mesh.positions.emplace_back(point_3);
+
+            mesh.positions.emplace_back(point_2);
+            mesh.positions.emplace_back(point_4);
+            mesh.positions.emplace_back(point_3);
+
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
+            mesh.normals.emplace_back(normal);
+
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
+            mesh.texcoords_0.emplace_back(Vector2f());
+
+            const uint32_t a = point_offset + 0;
+            const uint32_t b = point_offset + 1;
+            const uint32_t c = point_offset + 2;
+            const uint32_t d = point_offset + 3;
+            const uint32_t e = point_offset + 4;
+            const uint32_t f = point_offset + 5;
+
+            indices.emplace_back(a);
+            indices.emplace_back(b);
+            indices.emplace_back(c);
+            indices.emplace_back(d);
+            indices.emplace_back(e);
+            indices.emplace_back(f);
+        }
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.CreateRenderData();
+    return mesh;
+}
 
 Scene* CreateTheAviatorScene() {
     const std::array<Vector3f, 8> cockpit_points = {
@@ -292,7 +394,7 @@ Scene* CreateTheAviatorScene() {
 
     // ocean
     {
-        auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeCylinderMesh(OCEAN_RADIUS, 320.0f, 60, 16));
+        auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
         ObjectComponent* object = scene->GetComponent<ObjectComponent>(ocean);
         DEV_ASSERT(object);
 
@@ -307,15 +409,74 @@ Scene* CreateTheAviatorScene() {
         scene->AttachChild(ocean, earth);
 
         class OceanScript : public ScriptableEntity {
-        protected:
-            void OnUpdate(float p_timestep) override {
-                unused(p_timestep);
+            struct Wave {
+                float angle;
+                float amp;
+                float speed;
+            };
 
-                ObjectComponent* object = GetComponent<ObjectComponent>();
+            void OnCreate() override {
+                const ObjectComponent* object = GetComponent<ObjectComponent>();
                 DEV_ASSERT(object);
-                MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(object->meshId);
+                const MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(object->meshId);
                 DEV_ASSERT(mesh);
+
+                std::unordered_map<Vector3f, Wave> cache;
+
+                for (const Vector3f& position : mesh->positions) {
+
+                    auto it = cache.find(position);
+                    if (it != cache.end()) {
+                        m_waves.push_back(it->second);
+                        continue;
+                    }
+
+                    Wave wave;
+                    wave.angle = Random::Float() * 2.0f * glm::pi<float>();
+                    wave.amp = 3.5f + Random::Float() * 3.5f;
+                    wave.speed = 6.f * (Random::Float() * 1.0f);
+                    m_waves.emplace_back(wave);
+                    cache[position] = wave;
+                }
             }
+
+            void OnUpdate(float p_timestep) override {
+                const ObjectComponent* object = GetComponent<ObjectComponent>();
+                DEV_ASSERT(object);
+                const MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(object->meshId);
+                DEV_ASSERT(mesh);
+
+                auto& positions = mesh->updatePositions;
+                auto& normals = mesh->updateNormals;
+                positions.clear();
+                normals.clear();
+                positions.reserve(mesh->positions.size());
+                normals.reserve(mesh->normals.size());
+
+                for (size_t idx = 0; idx < mesh->positions.size(); idx += 3) {
+                    Vector3f points[3];
+                    for (int i = 0; i < 3; ++i) {
+                        Wave& wave = m_waves[idx + i];
+                        const Vector3f& position = mesh->positions[idx + i];
+                        Vector3f new_position = position;
+                        new_position.x += glm::cos(wave.angle) * wave.amp;
+                        new_position.z += glm::sin(wave.angle) * wave.amp;
+                        positions.emplace_back(new_position);
+                        wave.angle += p_timestep * wave.speed;
+
+                        points[i] = new_position;
+                    }
+
+                    Vector3f AB = points[0] - points[1];
+                    Vector3f AC = points[0] - points[2];
+                    Vector3f normal = glm::normalize(glm::cross(AB, AC));
+                    normals.emplace_back(normal);
+                    normals.emplace_back(normal);
+                    normals.emplace_back(normal);
+                }
+            }
+
+            std::vector<Wave> m_waves;
         };
         scene->Create<NativeScriptComponent>(ocean).Bind<OceanScript>();
     }
