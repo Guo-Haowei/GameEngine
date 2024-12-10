@@ -1,4 +1,5 @@
 #include "engine/core/base/random.h"
+#include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/color.h"
@@ -32,6 +33,17 @@ namespace my {
 
 static constexpr float OCEAN_RADIUS = 240.0f;
 static constexpr int CLOUD_COUNT = 20;
+static constexpr float WORLD_SPEED = 0.3f;
+static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED;
+static constexpr float MIN_HEIGHT = 15.f;
+static constexpr float MAX_HEIGHT = 45.f;
+
+static const Color RED_COLOR = Color::Hex(0xCE190A);
+static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
+static const Color BROWN_COLOR = Color::Hex(0x59332E);
+static const Color DRAK_BROWN_COLOR = Color::Hex(0x23190F);
+static const Color BLUE_COLOR = Color::Hex(0X10A8A3);
+// static const Color PINK_COLOR = Color::Hex(0xF5986E);
 
 // @TODO:
 // * cascaded shadow map
@@ -149,7 +161,7 @@ Scene* CreateTheAviatorScene() {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0, plane_height, 80));
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
         camera->SetEditorCamera();
         scene->AttachChild(editor_camera, root);
     }
@@ -160,7 +172,7 @@ Scene* CreateTheAviatorScene() {
 
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0, plane_height, 100));
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 100.0f));
         camera->SetPrimary();
 
         class CameraController : public ScriptableEntity {
@@ -195,48 +207,41 @@ Scene* CreateTheAviatorScene() {
     }
 
 #pragma region SETUP_MATERIALS
-    // colors
-    const Color red = Color::Hex(0xCE190A);
-    const Color white = Color::Hex(0XD8D0D1);
-    const Color dark_brown = Color::Hex(0x23190F);
-    const Color brown = Color::Hex(0x59332E);
-    const Color blue = Color::Hex(0X10A8A3);
-    // Color pink = Color::Hex(0xF5986E);
 
     constexpr float default_roughness = 0.8f;
     constexpr float default_metallic = 0.2f;
     ecs::Entity material_red = scene->CreateMaterialEntity("material_red");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_red);
-        material->baseColor = red.ToVector4f();
+        material->baseColor = RED_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
     ecs::Entity material_white = scene->CreateMaterialEntity("material_white");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_white);
-        material->baseColor = white.ToVector4f();
+        material->baseColor = WHITE_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
     ecs::Entity material_dark_brown = scene->CreateMaterialEntity("material_dark_brown");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_dark_brown);
-        material->baseColor = dark_brown.ToVector4f();
+        material->baseColor = DRAK_BROWN_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
     ecs::Entity material_brown = scene->CreateMaterialEntity("material_brown");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_brown);
-        material->baseColor = brown.ToVector4f();
+        material->baseColor = BROWN_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
     ecs::Entity material_blue = scene->CreateMaterialEntity("material_blue");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_blue);
-        material->baseColor = blue.ToVector4f();
+        material->baseColor = BLUE_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
@@ -387,9 +392,101 @@ Scene* CreateTheAviatorScene() {
 
     auto earth = scene->CreateTransformEntity("earth");
     {
-        auto& script = scene->Create<LuaScriptComponent>(world);
-        script.SetScript("@res://scripts/world.lua");
         scene->AttachChild(earth, world);
+
+        class EarthScript : public ScriptableEntity {
+            void OnUpdate(float p_timestep) {
+                auto transform = GetComponent<TransformComponent>();
+                transform->Rotate(Vector3f(0.0f, 0.0f, p_timestep * WORLD_SPEED));
+            }
+        };
+        scene->Create<NativeScriptComponent>(earth).Bind<EarthScript>();
+    }
+
+    // generator
+    {
+        auto generator = scene->CreateTransformEntity("generator");
+        scene->AttachChild(generator, earth);
+
+        class GeneratorScript : public ScriptableEntity {
+        protected:
+            void OnCreate() override {
+                CreateObstacleResource();
+
+                m_obstaclePool.resize(OBSTACLE_POOL_SIZE);
+                int counter = 0;
+                for (auto& obstacle : m_obstaclePool) {
+                    obstacle.lifeRemains = 0.0f;
+                    obstacle.id = m_scene->CreateObjectEntity(std::format("battery_{}", ++counter));
+                    ObjectComponent* object = m_scene->GetComponent<ObjectComponent>(obstacle.id);
+                    object->meshId = m_obstacleMesh;
+
+                    m_scene->AttachChild(obstacle.id, m_id);
+                    m_obstacleDeadList.push_back(&obstacle);
+                }
+            }
+
+            void OnUpdate(float p_timestep) override {
+                m_time += p_timestep;
+
+                // spawn object
+                if (m_time - m_lastSpawnTime > 1.0f) {
+                    if (!m_obstacleDeadList.empty()) {
+                        auto* obstacle = m_obstacleDeadList.front();
+                        m_obstacleDeadList.pop_front();
+                        obstacle->lifeRemains = ENTITY_LIFE_TIME;
+
+                        TransformComponent* transform = m_scene->GetComponent<TransformComponent>(obstacle->id);
+                        float angle = m_time * WORLD_SPEED;
+                        angle += Degree(90.0f).GetRadians();
+                        const float distance = OCEAN_RADIUS + Random::Float(MIN_HEIGHT, MAX_HEIGHT);
+                        transform->Translate(distance * Vector3f(glm::sin(angle), glm::cos(angle), 0.0f));
+                        m_lastSpawnTime = m_time;
+                        m_obstacleAliveList.emplace_back(obstacle);
+                    }
+                }
+
+                for (auto obstacle : m_obstacleAliveList) {
+                    obstacle->lifeRemains -= p_timestep;
+                    if (obstacle->lifeRemains <= 0.0f) {
+                        m_obstacleDeadList.emplace_back(obstacle);
+                    }
+                }
+            }
+
+            void CreateObstacleResource() {
+                m_obstacleMesh = m_scene->CreateMeshEntity("obstacle_mesh");
+                MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(m_obstacleMesh);
+                *mesh = MakeSphereMesh(3.0f, 6, 6);
+                mesh->gpuResource = GraphicsManager::GetSingleton().CreateMesh(*mesh);
+                DEV_ASSERT(!mesh->subsets.empty());
+                m_obstacleMaterial = m_scene->CreateMaterialEntity("obstacle_material");
+                MaterialComponent* material = m_scene->GetComponent<MaterialComponent>(m_obstacleMaterial);
+                material->baseColor = Vector4f(RED_COLOR.r, RED_COLOR.g, RED_COLOR.b, 1.0f);
+                mesh->subsets[0].material_id = m_obstacleMaterial;
+            }
+
+        private:
+            ecs::Entity m_obstacleMesh;
+            ecs::Entity m_obstacleMaterial;
+            ecs::Entity m_tetrahedronMesh;
+            float m_time{ 0.0f };
+            float m_lastSpawnTime{ 0.0f };
+
+            struct Obstacle {
+                ecs::Entity id;
+                float lifeRemains;
+            };
+
+            enum : uint32_t {
+                OBSTACLE_POOL_SIZE = 32,
+            };
+            std::vector<Obstacle> m_obstaclePool;
+            std::list<Obstacle*> m_obstacleDeadList;
+            std::list<Obstacle*> m_obstacleAliveList;
+        };
+
+        scene->Create<NativeScriptComponent>(generator).Bind<GeneratorScript>();
     }
 
     // ocean
@@ -491,7 +588,7 @@ Scene* CreateTheAviatorScene() {
             const float scale = 0.6f + Random::Float() * 0.4f;
             auto cloud = scene->CreateCubeEntity(name, material_white, Vector3f(5.0f * scale));
             auto transform = scene->GetComponent<TransformComponent>(cloud);
-            Vector3f position(block_index * 6.0f, Random::Float() * 6.0f, Random::Float() * 6.0f);
+            Vector3f position(block_index * 8.0f, Random::Float() * 6.0f, Random::Float() * 6.0f);
             Vector3f rotation(0.0f, TWO_PI * Random::Float(), TWO_PI * Random::Float());
             transform->Rotate(rotation);
             transform->SetTranslation(position);
