@@ -40,6 +40,7 @@ static constexpr float MIN_HEIGHT = 15.f;
 static constexpr float MAX_HEIGHT = 45.f;
 static constexpr float AMP_WIDTH = 30.0f;
 static constexpr float AMP_HEIGHT = 32.0f;
+static constexpr float OBSTACLE_RADIUS = 4.0f;
 
 static const Color RED_COLOR = Color::Hex(0xCE190A);
 static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
@@ -178,7 +179,7 @@ Scene* CreateTheAviatorScene() {
 
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 100.0f));
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
         camera->SetPrimary();
 
         class CameraController : public ScriptableEntity {
@@ -190,7 +191,7 @@ Scene* CreateTheAviatorScene() {
                     if (glm::abs(mouse_move.x) > 2.0f) {
                         float angle = camera->GetFovy().GetDegree();
                         angle += mouse_move.x * p_timestep * 2.0f;
-                        angle = glm::clamp(angle, 35.0f, 70.0f);
+                        angle = glm::clamp(angle, 35.0f, 80.0f);
                         camera->SetFovy(Degree(angle));
                     }
                 }
@@ -260,6 +261,10 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(plane);
         transform->Translate(Vector3f(0.0f, plane_height, 0.0f));
 
+        scene->Create<RigidBodyComponent>(plane)
+            .InitGhost()
+            .InitSphere(1000.0f);
+
         scene->AttachChild(plane, root);
 
         class PlaneScript : public ScriptableEntity {
@@ -267,6 +272,10 @@ Scene* CreateTheAviatorScene() {
             }
 
             void OnUpdate(float p_timestep) override {
+                if (p_timestep > 0.0f) {
+                    return;
+                }
+
                 const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
                 Vector2f mouse = InputManager::GetSingleton().GetCursor();
                 mouse.x /= (float)width;
@@ -466,6 +475,10 @@ Scene* CreateTheAviatorScene() {
 
                     m_scene->AttachChild(obstacle.id, m_id);
                     m_obstacleDeadList.push_back(&obstacle);
+
+                    m_scene->Create<RigidBodyComponent>(obstacle.id)
+                        .InitGhost()
+                        .InitSphere(OBSTACLE_RADIUS);
                 }
             }
 
@@ -509,7 +522,7 @@ Scene* CreateTheAviatorScene() {
             void CreateObstacleResource() {
                 m_obstacleMesh = m_scene->CreateMeshEntity("obstacle_mesh");
                 MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(m_obstacleMesh);
-                *mesh = MakeSphereMesh(3.0f, 6, 6);
+                *mesh = MakeSphereMesh(OBSTACLE_RADIUS, 6, 6);
                 mesh->gpuResource = GraphicsManager::GetSingleton().CreateMesh(*mesh);
                 DEV_ASSERT(!mesh->subsets.empty());
                 m_obstacleMaterial = m_scene->CreateMaterialEntity("obstacle_material");

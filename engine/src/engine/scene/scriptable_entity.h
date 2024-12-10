@@ -12,6 +12,8 @@ public:
         return m_scene->GetComponent<T>(m_id);
     }
 
+    virtual void OnCollision(ecs::Entity) {}
+
 protected:
     virtual void OnCreate() {}
     virtual void OnDestroy() {}

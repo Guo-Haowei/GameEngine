@@ -259,11 +259,16 @@ private:
 
 #pragma region RIGID_BODY_COMPONENT
 struct RigidBodyComponent {
-    enum CollisionShape {
+    enum CollisionShape : uint8_t {
         SHAPE_UNKNOWN,
         SHAPE_SPHERE,
         SHAPE_CUBE,
         SHAPE_MAX,
+    };
+
+    enum ObjectType : uint8_t {
+        DYNAMIC,
+        GHOST,
     };
 
     union Parameter {
@@ -275,9 +280,28 @@ struct RigidBodyComponent {
         } sphere;
     };
 
-    float mass = 1.0f;
-    CollisionShape shape;
+    CollisionShape shape{ SHAPE_UNKNOWN };
+    ObjectType objectType{ DYNAMIC };
+    float mass{ 1.0f };
     Parameter param;
+
+    RigidBodyComponent& InitCube(const Vector3f& p_half_size) {
+        shape = SHAPE_CUBE;
+        param.box.half_size = p_half_size;
+        return *this;
+    }
+
+    RigidBodyComponent& InitSphere(float p_radius) {
+        shape = SHAPE_SPHERE;
+        param.sphere.radius = p_radius;
+        return *this;
+    }
+
+    RigidBodyComponent& InitGhost() {
+        objectType = GHOST;
+        mass = 0.0f;
+        return *this;
+    }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

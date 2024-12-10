@@ -36,24 +36,29 @@ public:
         m_value -= p_val.m_value;
         return *this;
     }
-    bool operator==(Degree p_val) const {
+
+    constexpr bool operator==(Degree p_val) const {
         return m_value == p_val.m_value;
     }
-    bool operator!=(Degree p_val) const {
+    constexpr bool operator!=(Degree p_val) const {
         return m_value != p_val.m_value;
     }
-    bool operator<(Degree p_val) const {
+    constexpr bool operator<(Degree p_val) const {
         return m_value < p_val.m_value;
     }
-    bool operator>(Degree p_val) const {
+    constexpr bool operator>(Degree p_val) const {
         return m_value > p_val.m_value;
     }
-    bool operator<=(Degree p_val) const {
+    constexpr bool operator<=(Degree p_val) const {
         return m_value <= p_val.m_value;
     }
-    bool operator>=(Degree p_val) const {
+    constexpr bool operator>=(Degree p_val) const {
         return m_value >= p_val.m_value;
     }
+    constexpr Degree operator-() {
+        return Degree(-m_value);
+    }
+
     void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
     constexpr float GetRadians() const { return glm::radians(m_value); }
     constexpr float GetDegree() const { return m_value; }

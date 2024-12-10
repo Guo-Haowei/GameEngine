@@ -49,13 +49,28 @@ Scene* CreatePhysicsTestScene() {
     ecs::Entity material_id = scene->CreateMaterialEntity("material");
 
     {
-        Vector3f scale(5.0f, 0.1f, 5.0f);
-        auto ground = scene->CreateCubeEntity("Ground", material_id, scale);
+        Vector3f ground_scale(5.0f, 0.1f, 5.0f);
+        auto ground = scene->CreateCubeEntity("ground_left", material_id, ground_scale);
         scene->AttachChild(ground, root);
-        auto& rigid_body = scene->Create<RigidBodyComponent>(ground);
-        rigid_body.shape = RigidBodyComponent::SHAPE_CUBE;
-        rigid_body.param.box.half_size = scale;
-        rigid_body.mass = 0.0f;
+        scene->Create<RigidBodyComponent>(ground)
+            .InitCube(ground_scale)
+            .InitGhost();
+
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(ground);
+        transform->SetTranslation(Vector3f(-3.0f, 0.0f, 0.0f));
+        transform->RotateZ(-Degree(45.0f));
+    }
+    {
+        Vector3f ground_scale(5.0f, 0.1f, 5.0f);
+        auto ground = scene->CreateCubeEntity("ground_right", material_id, ground_scale);
+        scene->AttachChild(ground, root);
+        scene->Create<RigidBodyComponent>(ground)
+            .InitCube(ground_scale)
+            .InitGhost();
+
+        TransformComponent* transform = scene->GetComponent<TransformComponent>(ground);
+        transform->SetTranslation(Vector3f(3.0f, 0.0f, 0.0f));
+        transform->RotateZ(Degree(45.0f));
     }
 
     {
@@ -87,14 +102,11 @@ Scene* CreatePhysicsTestScene() {
         ecs::Entity id;
         if (t % 2) {
             id = scene->CreateCubeEntity(std::format("Cube_{}", t), material_id, scale, glm::translate(translate));
-            auto& rigid_body = scene->Create<RigidBodyComponent>(id);
-            rigid_body.shape = RigidBodyComponent::SHAPE_CUBE;
-            rigid_body.param.box.half_size = scale;
+            scene->Create<RigidBodyComponent>(id).InitCube(scale);
         } else {
-            id = scene->CreateSphereEntity(std::format("Sphere_{}", t), material_id, 0.25f, glm::translate(translate));
-            auto& rigid_body = scene->Create<RigidBodyComponent>(id);
-            rigid_body.shape = RigidBodyComponent::SHAPE_SPHERE;
-            rigid_body.param.sphere.radius = 0.25f;
+            const float radius = 0.25f;
+            id = scene->CreateSphereEntity(std::format("Sphere_{}", t), material_id, radius, glm::translate(translate));
+            scene->Create<RigidBodyComponent>(id).InitSphere(radius);
         }
         scene->AttachChild(id, root);
     }
