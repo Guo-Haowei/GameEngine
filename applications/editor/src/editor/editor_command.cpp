@@ -45,7 +45,7 @@ void EditorCommandAddComponent::Execute(Scene& p_scene) {
             p_scene.Create<MeshColliderComponent>(target);
         } break;
         case ComponentType::SCRIPT: {
-            p_scene.Create<ScriptComponent>(target);
+            p_scene.Create<LuaScriptComponent>(target);
         } break;
         default: {
             CRASH_NOW();

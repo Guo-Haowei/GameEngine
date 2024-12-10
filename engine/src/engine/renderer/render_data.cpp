@@ -337,9 +337,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
                         p_scene,
                         *pass.get(),
                         [](const ObjectComponent& p_object) {
-                            unused(p_object);
-                            return true;
-                            // return p_object.flags & ObjectComponent::CAST_SHADOW;
+                            return p_object.flags & ObjectComponent::CAST_SHADOW;
                         },
                         [&](const AABB& p_aabb) {
                             return p_aabb.Intersects(aabb);

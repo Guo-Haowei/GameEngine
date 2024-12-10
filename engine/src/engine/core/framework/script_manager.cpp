@@ -96,7 +96,7 @@ void ScriptManager::Update(Scene& p_scene) {
     // alias
     sol::state& lua = *m_state;
     lua[LUA_GLOBAL_SCENE] = (size_t)(&p_scene);
-    for (auto [entity, script] : p_scene.m_ScriptComponents) {
+    for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
         const char* source = script.GetSource();
         if (!source) {
             auto asset = m_app->GetAssetRegistry()->GetAssetByHandle<TextAsset>(AssetHandle{ script.GetScriptRef() });

@@ -8,6 +8,7 @@ namespace my {
 struct ImageAsset;
 struct TextAsset;
 class Archive;
+class ScriptableEntity;
 
 #pragma region NAME_COMPONENT
 class NameComponent {
@@ -176,8 +177,8 @@ private:
 };
 #pragma endregion CAMERA_COMPONENT
 
-#pragma region SCRIPT_COMPONENT
-class ScriptComponent {
+#pragma region LUA_SCRIPT_COMPONENT
+class LuaScriptComponent {
 public:
     void SetScript(const std::string& p_path);
 
@@ -197,7 +198,29 @@ private:
     // Non-Serialized
     const TextAsset* m_asset{ nullptr };
 };
-#pragma endregion SCRIPT_COMPONENT
+#pragma endregion LUA_SCRIPT_COMPONENT
+
+#pragma region NATIVE_SCRIPT_COMPONENT
+struct NativeScriptComponent {
+    using InstantiateFunc = ScriptableEntity* (*)(void);
+    using DestroyFunc = void (*)(void);
+
+    ScriptableEntity* instance{ nullptr };
+    InstantiateFunc instantiateFunc{ nullptr };
+    DestroyFunc destroyFunc{ nullptr };
+
+    template<typename T>
+    void Bind() {
+        instantiateFunc = []() {
+            return new T();
+        };
+        destroyFunc = [](NativeScriptComponent* p_script) {
+            delete p_script->instance;
+            p_script->instance = nullptr;
+        };
+    }
+};
+#pragma endregion NATIVE_SCRIPT_COMPONENT
 
 #pragma region HEMISPHERE_LIGHT_COMPONENT
 class HemisphereLightComponent {

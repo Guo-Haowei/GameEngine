@@ -6,6 +6,7 @@
 #include "engine/core/systems/job_system.h"
 #include "engine/renderer/render_manager.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scriptable_entity.h"
 
 namespace my {
 
@@ -43,10 +44,22 @@ static constexpr uint32_t SCENE_MAGIC = 'xScn';
     }
 #endif
 
-void Scene::Update(float p_elapsedTime) {
-    m_elapsedTime = p_elapsedTime;
+void Scene::Update(float p_time_step) {
+    m_elapsedTime = p_time_step;
 
     Context ctx;
+
+    for (auto [entity, script] : m_NativeScriptComponents) {
+        if (!script.instance) {
+            script.instance = script.instantiateFunc();
+            script.instance->m_id = entity;
+            script.instance->m_scene = this;
+
+            script.instance->OnCreate();
+        }
+
+        script.instance->OnUpdate(p_time_step);
+    }
 
     // animation
     RunLightUpdateSystem(ctx);

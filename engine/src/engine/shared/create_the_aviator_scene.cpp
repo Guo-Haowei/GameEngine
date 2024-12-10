@@ -15,7 +15,6 @@ static constexpr int CLOUD_COUNT = 20;
 // * alpha blending
 // * collision
 // * fog
-// * custom shader
 // * dynamic buffer
 // * 2D UI
 
@@ -128,7 +127,7 @@ Scene* CreateTheAviatorScene() {
         transform->Translate(Vector3f(0.0f, plane_height, 0.0f));
 
         scene->AttachChild(plane, root);
-        auto& script = scene->Create<ScriptComponent>(plane);
+        auto& script = scene->Create<LuaScriptComponent>(plane);
         script.SetScript("@res://scripts/plane.lua");
     }
     {
@@ -230,7 +229,7 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(propeller);
         transform->Translate(Vector3f(6.0f, 0.0f, 0.0f));
         scene->AttachChild(propeller, plane);
-        auto& script = scene->Create<ScriptComponent>(propeller);
+        auto& script = scene->Create<LuaScriptComponent>(propeller);
         script.SetScript("@res://scripts/propeller.lua");
     }
     {
@@ -265,14 +264,22 @@ Scene* CreateTheAviatorScene() {
 
     auto earth = scene->CreateTransformEntity("earth");
     {
-        auto& script = scene->Create<ScriptComponent>(world);
+        auto& script = scene->Create<LuaScriptComponent>(world);
         script.SetScript("@res://scripts/world.lua");
         scene->AttachChild(earth, world);
     }
     // ocean
     {
         auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeCylinderMesh(OCEAN_RADIUS, 320.0f, 60, 16));
+        ObjectComponent* object = scene->GetComponent<ObjectComponent>(ocean);
+        DEV_ASSERT(object);
+
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(object->meshId);
+        DEV_ASSERT(mesh);
+        mesh->flags |= MeshComponent::DYNAMIC;
+
         auto transform = scene->GetComponent<TransformComponent>(ocean);
+        DEV_ASSERT(transform);
         transform->RotateX(Degree(90.0f));
         transform->RotateZ(Degree(90.0f));
         scene->AttachChild(ocean, earth);

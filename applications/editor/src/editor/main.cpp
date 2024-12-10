@@ -38,7 +38,7 @@ Application* CreateApplication() {
 }
 
 Scene* Editor::CreateInitialScene() {
-    constexpr int a = 3;
+    constexpr int a = 1;
     if constexpr (a == 0) {
         return Application::CreateInitialScene();
     } else if constexpr (a == 1) {
