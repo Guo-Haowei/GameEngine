@@ -227,7 +227,7 @@ struct NativeScriptComponent {
             return new T();
         };
         destroyFunc = [](NativeScriptComponent* p_script) {
-            delete p_script->instance;
+            delete (T*)p_script->instance;
             p_script->instance = nullptr;
         };
     }

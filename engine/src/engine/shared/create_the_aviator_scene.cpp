@@ -38,8 +38,6 @@ static constexpr float WORLD_SPEED = 0.3f;
 static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
 static constexpr float MIN_HEIGHT = 15.f;
 static constexpr float MAX_HEIGHT = 45.f;
-static constexpr float PLANE_MIN_SPEED = 0.48f;
-static constexpr float PLANE_MAX_SPEED = 0.64f;
 static constexpr float AMP_WIDTH = 30.0f;
 static constexpr float AMP_HEIGHT = 32.0f;
 
