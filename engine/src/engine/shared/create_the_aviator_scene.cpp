@@ -1,4 +1,5 @@
 #include "engine/core/base/random.h"
+#include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
@@ -34,9 +35,13 @@ namespace my {
 static constexpr float OCEAN_RADIUS = 240.0f;
 static constexpr int CLOUD_COUNT = 20;
 static constexpr float WORLD_SPEED = 0.3f;
-static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED;
+static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
 static constexpr float MIN_HEIGHT = 15.f;
 static constexpr float MAX_HEIGHT = 45.f;
+static constexpr float PLANE_MIN_SPEED = 0.48f;
+static constexpr float PLANE_MAX_SPEED = 0.64f;
+static constexpr float AMP_WIDTH = 30.0f;
+static constexpr float AMP_HEIGHT = 32.0f;
 
 static const Color RED_COLOR = Color::Hex(0xCE190A);
 static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
@@ -48,10 +53,13 @@ static const Color BLUE_COLOR = Color::Hex(0X10A8A3);
 // @TODO:
 // * cascaded shadow map
 // * alpha blending
-// * collision
 // * fog
-// * dynamic buffer
 // * 2D UI
+
+static float Normalize(float p_value, float p_low, float p_high, float p_clamp_low, float p_clamp_high) {
+    const float bounded_value = glm::clamp(p_value, p_low, p_high);
+    return (bounded_value - p_low) / (p_high - p_low) * (p_clamp_high - p_clamp_low) + p_clamp_low;
+}
 
 static MeshComponent MakeOceanMesh(float p_radius,
                                    float p_height,
@@ -255,8 +263,45 @@ Scene* CreateTheAviatorScene() {
         transform->Translate(Vector3f(0.0f, plane_height, 0.0f));
 
         scene->AttachChild(plane, root);
-        auto& script = scene->Create<LuaScriptComponent>(plane);
-        script.SetScript("@res://scripts/plane.lua");
+
+        class PlaneScript : public ScriptableEntity {
+            void OnCreate() override {
+            }
+
+            void OnUpdate(float p_timestep) override {
+                const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
+                Vector2f mouse = InputManager::GetSingleton().GetCursor();
+                mouse.x /= (float)width;
+                mouse.y /= (float)height;
+                mouse = 2.0f * mouse - 1.0f;
+                mouse.y = -mouse.y;
+
+                TransformComponent* transform = GetComponent<TransformComponent>();
+
+                Vector3f translate = transform->GetTranslation();
+
+                // float speed = Normalize(mouse.x, -0.5f, 0.5f, PLANE_MIN_SPEED, PLANE_MAX_SPEED);
+                float target_x = Normalize(mouse.x, -1.0f, 1.0f, -AMP_WIDTH, -0.7f * AMP_WIDTH);
+                float target_y = Normalize(mouse.y, -0.75f, 0.75f, translate.y - AMP_HEIGHT, translate.y + AMP_HEIGHT);
+
+                const float speed = 3.0f;
+                Vector2f delta(target_x - translate.x, target_y - translate.y);
+                delta *= p_timestep * speed;
+
+                translate.x += delta.x;
+                translate.y += delta.y;
+                translate.y = glm::clamp(translate.y, MIN_HEIGHT, MAX_HEIGHT);
+
+                transform->SetTranslation(translate);
+
+                float rotate_z_angle = 0.3f * delta.y;
+                rotate_z_angle = glm::clamp(rotate_z_angle, glm::radians(-60.0f), glm::radians(60.0f));
+                Quaternion q(Vector3f(0.0f, 0.0f, rotate_z_angle));
+                transform->SetRotation(Vector4f(q.x, q.y, q.z, q.w));
+            }
+        };
+
+        scene->Create<NativeScriptComponent>(plane).Bind<PlaneScript>();
     }
     {
         auto cockpit = scene->CreateMeshEntity("cockpit",
@@ -440,18 +485,27 @@ Scene* CreateTheAviatorScene() {
                         float angle = m_time * WORLD_SPEED;
                         angle += Degree(90.0f).GetRadians();
                         const float distance = OCEAN_RADIUS + Random::Float(MIN_HEIGHT, MAX_HEIGHT);
-                        transform->Translate(distance * Vector3f(glm::sin(angle), glm::cos(angle), 0.0f));
+                        transform->SetTranslation(distance * Vector3f(glm::sin(angle), glm::cos(angle), 0.0f));
                         m_lastSpawnTime = m_time;
                         m_obstacleAliveList.emplace_back(obstacle);
                     }
                 }
 
-                for (auto obstacle : m_obstacleAliveList) {
+                std::list<Obstacle*> tmp;
+                for (int i = (int)m_obstacleAliveList.size() - 1; i >= 0; --i) {
+                    Obstacle* obstacle = m_obstacleAliveList.back();
+                    m_obstacleAliveList.pop_back();
                     obstacle->lifeRemains -= p_timestep;
                     if (obstacle->lifeRemains <= 0.0f) {
+                        TransformComponent* transform = m_scene->GetComponent<TransformComponent>(obstacle->id);
+                        // HACK: move the dead component away
+                        transform->Translate(Vector3f(0.0f, -1000.0f, 0.0f));
                         m_obstacleDeadList.emplace_back(obstacle);
+                    } else {
+                        tmp.emplace_back(obstacle);
                     }
                 }
+                m_obstacleAliveList = std::move(tmp);
             }
 
             void CreateObstacleResource() {
