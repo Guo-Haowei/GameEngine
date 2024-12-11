@@ -566,8 +566,7 @@ Scene* CreateTheAviatorScene() {
             };
 
             enum : uint32_t {
-                OBSTACLE_POOL_SIZE = 4,
-                // OBSTACLE_POOL_SIZE = 32,
+                OBSTACLE_POOL_SIZE = 32,
             };
             std::vector<Obstacle> m_obstaclePool;
             std::list<Obstacle*> m_obstacleDeadList;

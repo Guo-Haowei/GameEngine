@@ -25,6 +25,56 @@ static btTransform ConvertTransform(const TransformComponent& p_transform) {
     return transform;
 }
 
+struct CustomContactResultCallback : btCollisionWorld::ContactResultCallback {
+    CustomContactResultCallback(Scene& p_scene) : m_scene(p_scene) {
+    }
+
+    btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* p_wrap_1, int, int, const btCollisionObjectWrapper* p_wrap_2, int, int) override {
+        const btCollisionObject* object_1 = p_wrap_1->getCollisionObject();
+        const btCollisionObject* object_2 = p_wrap_2->getCollisionObject();
+
+        ecs::Entity entity_1{ (uint32_t)(uintptr_t)object_1->getUserPointer() };
+        ecs::Entity entity_2{ (uint32_t)(uintptr_t)object_2->getUserPointer() };
+
+        NativeScriptComponent* script_1 = m_scene.GetComponent<NativeScriptComponent>(entity_1);
+        NativeScriptComponent* script_2 = m_scene.GetComponent<NativeScriptComponent>(entity_2);
+
+#if 0
+        if (script_1 || script_2) {
+            NameComponent* name_1 = m_scene.GetComponent<NameComponent>(entity_1);
+            NameComponent* name_2 = m_scene.GetComponent<NameComponent>(entity_2);
+            struct A {
+                const btCollisionObject* object;
+                std::string name;
+            };
+            std::array<A, 2> objects = { A{ object_1, name_1->GetName() }, A{ object_2, name_2->GetName() } };
+            for (const auto& a : objects) {
+                const btCollisionObject* obj = a.object;
+                auto shape = obj->getCollisionShape();
+                btScalar scale;
+                btVector3 origin;
+                shape->getBoundingSphere(origin, scale);
+                origin += obj->getWorldTransform().getOrigin();
+                LOG_VERBOSE("{} bounding object radius {}, origin {} {} {}", a.name, scale, origin.getX(), origin.getY(), origin.getZ());
+            }
+            LOG_OK("(((****");
+        }
+#endif
+
+        if (script_1 && script_1->instance) {
+            script_1->instance->OnCollision(entity_2);
+        }
+
+        if (script_2 && script_2->instance) {
+            script_2->instance->OnCollision(entity_1);
+        }
+
+        return 0.0f;
+    }
+
+    Scene& m_scene;
+};
+
 class CustomCollisionDispatcher : public btCollisionDispatcher {
 public:
     CustomCollisionDispatcher(btCollisionConfiguration* p_config, Scene& p_scene) : btCollisionDispatcher(p_config), m_scene(p_scene) {
@@ -33,6 +83,7 @@ public:
     void dispatchAllCollisionPairs(btOverlappingPairCache* pairCache, const btDispatcherInfo& dispatchInfo, btDispatcher* dispatcher) override {
         btCollisionDispatcher::dispatchAllCollisionPairs(pairCache, dispatchInfo, dispatcher);
 
+#if 0
         for (int i = 0; i < getNumManifolds(); ++i) {
             btPersistentManifold* manifold = getManifoldByIndexInternal(i);
             const btCollisionObject* object_1 = manifold->getBody0();
@@ -72,6 +123,7 @@ public:
                 script_2->instance->OnCollision(entity_1);
             }
         }
+#endif
     }
 
     Scene& m_scene;
@@ -199,19 +251,28 @@ void PhysicsManager::UpdateCollision(Scene& p_scene) {
 
     context.dynamicWorld->performDiscreteCollisionDetection();
 
-    for (int j = context.dynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--) {
-        btCollisionObject* collision_object = context.dynamicWorld->getCollisionObjectArray()[j];
-        uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
-        ecs::Entity id{ handle };
-        if (!id.IsValid()) {
-            continue;
-        }
+    for (int i = 0; i < context.dynamicWorld->getNumCollisionObjects() - 1; ++i) {
+        for (int j = i + 1; j < context.dynamicWorld->getNumCollisionObjects(); ++j) {
+            btCollisionObject* object_1 = context.dynamicWorld->getCollisionObjectArray()[i];
+            btCollisionObject* object_2 = context.dynamicWorld->getCollisionObjectArray()[j];
 
-        // RigidBodyComponent* rigid_body = p_scene.GetComponent<RigidBodyComponent>(id);
-        // if (rigid_body && (rigid_body->collisionFlags & CollisionFlags::CHECK))
-        //{
-        //    context.dynamicWorld->contactTest(collision_object, callback);
-        //}
+            ecs::Entity entity_1{ (uint32_t)(uintptr_t)object_1->getUserPointer() };
+            ecs::Entity entity_2{ (uint32_t)(uintptr_t)object_2->getUserPointer() };
+
+            if (!entity_1.IsValid() || !entity_2.IsValid()) {
+                continue;
+            }
+
+            NativeScriptComponent* script_1 = p_scene.GetComponent<NativeScriptComponent>(entity_1);
+            NativeScriptComponent* script_2 = p_scene.GetComponent<NativeScriptComponent>(entity_2);
+
+            if (!script_1 && !script_2) {
+                continue;
+            }
+
+            CustomContactResultCallback callback(p_scene);
+            context.dynamicWorld->contactPairTest(object_1, object_2, callback);
+        }
     }
 }
 
