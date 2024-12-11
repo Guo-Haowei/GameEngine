@@ -257,8 +257,23 @@ private:
 };
 #pragma endregion HEMISPHERE_LIGHT_COMPONENT
 
-#pragma region RIGID_BODY_COMPONENT
-struct RigidBodyComponent {
+#pragma region COLLISION_OBJECT_COMPONENT
+enum CollisionFlags : uint32_t {
+    NONE = BIT(0),
+    CHECK = BIT(1),
+};
+DEFINE_ENUM_BITWISE_OPERATIONS(CollisionFlags);
+
+struct CollisionObjectBase {
+    CollisionFlags collisionFlags{ CollisionFlags::NONE };
+
+    // Non-Serialized
+    void* physicsObject{ nullptr };
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+};
+
+struct RigidBodyComponent : CollisionObjectBase {
     enum CollisionShape : uint8_t {
         SHAPE_UNKNOWN,
         SHAPE_SPHERE,
@@ -285,30 +300,16 @@ struct RigidBodyComponent {
     float mass{ 1.0f };
     Parameter param;
 
-    RigidBodyComponent& InitCube(const Vector3f& p_half_size) {
-        shape = SHAPE_CUBE;
-        param.box.half_size = p_half_size;
-        return *this;
-    }
+    RigidBodyComponent& InitCube(const Vector3f& p_half_size);
 
-    RigidBodyComponent& InitSphere(float p_radius) {
-        shape = SHAPE_SPHERE;
-        param.sphere.radius = p_radius;
-        return *this;
-    }
+    RigidBodyComponent& InitSphere(float p_radius);
 
-    RigidBodyComponent& InitGhost() {
-        objectType = GHOST;
-        mass = 0.0f;
-        return *this;
-    }
+    RigidBodyComponent& InitGhost();
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };
-#pragma endregion RIGID_BODY_COMPONENT
 
-#pragma region SOFT_BODY_COMPONENT
-enum ClothFixFlag : uint16_t {
+enum ClothFixFlag : uint32_t {
     CLOTH_FIX_0 = BIT(1),
     CLOTH_FIX_1 = BIT(2),
     CLOTH_FIX_2 = BIT(3),
@@ -317,7 +318,8 @@ enum ClothFixFlag : uint16_t {
     CLOTH_FIX_ALL = CLOTH_FIX_0 | CLOTH_FIX_1 | CLOTH_FIX_2 | CLOTH_FIX_3,
 };
 DEFINE_ENUM_BITWISE_OPERATIONS(ClothFixFlag);
-struct ClothComponent {
+
+struct ClothComponent : CollisionObjectBase {
     Vector3f point_0;
     Vector3f point_1;
     Vector3f point_2;
@@ -325,9 +327,12 @@ struct ClothComponent {
     Vector2i res;
     ClothFixFlag fixedFlags;
 
+    // Non-Serialized
+    void* physicsObject{ nullptr };
+
     void Serialize(Archive& p_archive, uint32_t p_version);
 };
-#pragma endregion SOFT_BODY_COMPONENT
+#pragma endregion COLLISION_OBJECT_COMPONENT
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

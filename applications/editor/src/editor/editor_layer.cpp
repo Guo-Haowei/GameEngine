@@ -241,6 +241,7 @@ void EditorLayer::OnUpdate(float) {
             }
             m_simScene = new Scene;
             m_simScene->Copy(*scene);
+            m_simScene->Update(0.0f);
             m_app->SetActiveScene(m_simScene);
             m_app->SetState(Application::State::SIM);
         } break;

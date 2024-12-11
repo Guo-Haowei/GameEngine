@@ -14,6 +14,7 @@ Scene* CreatePhysicsTestScene() {
     ecs::Entity::SetSeed();
 
     Scene* scene = new Scene;
+    scene->m_physicsMode = PhysicsMode::SIMULATION;
 
     auto root = scene->CreateTransformEntity("root");
     scene->m_root = root;
@@ -91,8 +92,8 @@ Scene* CreatePhysicsTestScene() {
     }
 
     for (int t = 1; t <= 21; ++t) {
-        int x = (t - 1) % 7;
-        int y = (t - 1) / 7;
+        const int x = (t - 1) % 7;
+        const int y = (t - 1) / 7;
 
         Vector3f translate(x - 3, 7 - y, 0);
         translate.x += 0.1f * (Random::Float() - 0.5f);

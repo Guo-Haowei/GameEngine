@@ -24,7 +24,7 @@ struct PhysicsWorldContext {
     btSoftRigidDynamicsWorld* dynamicWorld = nullptr;
     btSoftBodyWorldInfo* softBodyWorldInfo = nullptr;
 
-    std::vector<btCollisionObject*> kinematicObjects;
+    std::vector<btCollisionObject*> ghostObjects;
 };
 
 class PhysicsManager : public Module {
@@ -36,6 +36,9 @@ public:
 protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
+
+    void UpdateCollision(Scene& p_scene);
+    void UpdateSimulation(Scene& p_scene);
 
     void CreateWorld(Scene& p_scene);
     void CleanWorld();

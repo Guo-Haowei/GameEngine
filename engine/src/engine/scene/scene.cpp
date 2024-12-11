@@ -78,7 +78,6 @@ void Scene::Update(float p_time_step) {
                 auto res = AssetRegistry::GetSingleton().RequestAssetSync(light.m_path);
                 if (res) {
                     light.m_asset = dynamic_cast<const ImageAsset*>(*res);
-                    // renderer::RequestBakingIbl();
                 }
             }
         }
@@ -94,6 +93,7 @@ void Scene::Copy(Scene& p_other) {
     m_root = p_other.m_root;
     m_bound = p_other.m_bound;
     m_timestep = p_other.m_timestep;
+    m_physicsMode = p_other.m_physicsMode;
 }
 
 void Scene::Merge(Scene& p_other) {

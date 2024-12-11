@@ -4,9 +4,15 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
-#include "engine/lua_binding/prerequisites.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
+
+WARNING_PUSH()
+WARNING_DISABLE(4100, "-Wunused-parameter")
+#define SOL_PRINT_ERRORS  0
+#define SOL_NO_EXCEPTIONS 1
+#include "sol/sol.hpp"
+WARNING_POP()
 
 namespace my {
 

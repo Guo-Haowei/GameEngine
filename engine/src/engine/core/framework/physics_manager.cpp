@@ -32,29 +32,44 @@ public:
 
     void dispatchAllCollisionPairs(btOverlappingPairCache* pairCache, const btDispatcherInfo& dispatchInfo, btDispatcher* dispatcher) override {
         btCollisionDispatcher::dispatchAllCollisionPairs(pairCache, dispatchInfo, dispatcher);
+
         for (int i = 0; i < getNumManifolds(); ++i) {
             btPersistentManifold* manifold = getManifoldByIndexInternal(i);
-            const btCollisionObject* obj_1 = manifold->getBody0();
-            const btCollisionObject* obj_2 = manifold->getBody0();
+            const btCollisionObject* object_1 = manifold->getBody0();
+            const btCollisionObject* object_2 = manifold->getBody1();
 
-            ecs::Entity id_1{ (uint32_t)(uintptr_t)obj_1->getUserPointer() };
-            ecs::Entity id_2{ (uint32_t)(uintptr_t)obj_2->getUserPointer() };
+            ecs::Entity entity_1{ (uint32_t)(uintptr_t)object_1->getUserPointer() };
+            ecs::Entity entity_2{ (uint32_t)(uintptr_t)object_2->getUserPointer() };
 
-            if (const btGhostObject* o = btGhostObject::upcast(obj_1); o) {
-                //__debugbreak();
+            NativeScriptComponent* script_1 = m_scene.GetComponent<NativeScriptComponent>(entity_1);
+            NativeScriptComponent* script_2 = m_scene.GetComponent<NativeScriptComponent>(entity_2);
+
+            if (script_1 || script_2) {
+                NameComponent* name_1 = m_scene.GetComponent<NameComponent>(entity_1);
+                NameComponent* name_2 = m_scene.GetComponent<NameComponent>(entity_2);
+                struct A {
+                    const btCollisionObject* object;
+                    std::string name;
+                };
+                std::array<A, 2> objects = { A{ object_1, name_1->GetName() }, A{ object_2, name_2->GetName() } };
+                for (const auto& a : objects) {
+                    const btCollisionObject* obj = a.object;
+                    auto shape = obj->getCollisionShape();
+                    btScalar scale;
+                    btVector3 origin;
+                    shape->getBoundingSphere(origin, scale);
+                    origin += obj->getWorldTransform().getOrigin();
+                    auto speed = obj->getInterpolationLinearVelocity();
+                    LOG_VERBOSE("{} bounding object radius {}, origin {} {} {}, speed {} {} {}", a.name, scale, origin.getX(), origin.getY(), origin.getZ(), speed.getX(), speed.getY(), speed.getZ());
+                }
+                LOG_OK("(((****");
             }
-            if (const btGhostObject* o = btGhostObject::upcast(obj_2); o) {
-                //__debugbreak();
-            }
 
-            NativeScriptComponent* script_1 = m_scene.GetComponent<NativeScriptComponent>(id_1);
-            NativeScriptComponent* script_2 = m_scene.GetComponent<NativeScriptComponent>(id_2);
-
-            if (script_1) {
-                script_1->instance->OnCollision(id_2);
+            if (script_1 && script_1->instance) {
+                script_1->instance->OnCollision(entity_2);
             }
-            if (script_2) {
-                script_2->instance->OnCollision(id_1);
+            if (script_2 && script_2->instance) {
+                script_2->instance->OnCollision(entity_1);
             }
         }
     }
@@ -71,17 +86,12 @@ void PhysicsManager::FinalizeImpl() {
     LOG_WARN("PhysicsManager:: unload world properly");
 }
 
-void PhysicsManager::Update(Scene& p_scene) {
-    float delta_time = p_scene.m_timestep;
-
-    if (!p_scene.m_physicsWorld) {
-        // @TODO: bench mark
-        CreateWorld(p_scene);
-    }
+void PhysicsManager::UpdateSimulation(Scene& p_scene) {
+    const float delta_time = p_scene.m_timestep;
 
     PhysicsWorldContext& context = *p_scene.m_physicsWorld;
 
-    for (auto object : context.kinematicObjects) {
+    for (auto object : context.ghostObjects) {
         uint32_t handle = (uint32_t)(uintptr_t)object->getUserPointer();
         ecs::Entity id{ handle };
         DEV_ASSERT(id.IsValid());
@@ -117,6 +127,7 @@ void PhysicsManager::Update(Scene& p_scene) {
                 TransformComponent& transform_component = *p_scene.GetComponent<TransformComponent>(id);
                 const btVector3& origin = transform.getOrigin();
                 const btQuaternion rotation = transform.getRotation();
+                // @TODO: this is wrong, setting local matrix with global matrix
                 transform_component.SetTranslation(Vector3f(origin.getX(), origin.getY(), origin.getZ()));
                 transform_component.SetRotation(Vector4f(rotation.getX(), rotation.getY(), rotation.getZ(), rotation.getW()));
             }
@@ -154,35 +165,109 @@ void PhysicsManager::Update(Scene& p_scene) {
     }
 }
 
-void PhysicsManager::CreateWorld(Scene& p_scene) {
-    DEV_ASSERT(!p_scene.m_physicsWorld);
-
-    p_scene.m_physicsWorld = new PhysicsWorldContext;
+void PhysicsManager::UpdateCollision(Scene& p_scene) {
     PhysicsWorldContext& context = *p_scene.m_physicsWorld;
 
-    context.collisionConfig = new btDefaultCollisionConfiguration();
-#if 0
-    context.dispatcher = new btCollisionDispatcher(context.collisionConfig);
-#else
-    context.dispatcher = new CustomCollisionDispatcher(context.collisionConfig, p_scene);
-#endif
-    context.broadphase = new btDbvtBroadphase();
-    context.solver = new btSequentialImpulseConstraintSolver;
-    context.dynamicWorld = new btSoftRigidDynamicsWorld(context.dispatcher, context.broadphase, context.solver, context.collisionConfig);
+    // set positions
+    for (int j = context.dynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--) {
+        btCollisionObject* collision_object = context.dynamicWorld->getCollisionObjectArray()[j];
+        uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
+        ecs::Entity id{ handle };
+        if (auto body = p_scene.GetComponent<RigidBodyComponent>(id); body && body->objectType == RigidBodyComponent::GHOST) {
+            continue;
+        }
 
-    btVector3 gravity = btVector3(0.0f, -9.81f, 0.0f);
-    context.dynamicWorld->setGravity(gravity);
+        TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
+        if (!transform_component) {
+            continue;
+        }
 
-    context.softBodyWorldInfo = new btSoftBodyWorldInfo;
-    context.softBodyWorldInfo->m_broadphase = context.dynamicWorld->getBroadphase();
-    context.softBodyWorldInfo->m_dispatcher = context.dynamicWorld->getDispatcher();
-    context.softBodyWorldInfo->m_gravity = context.dynamicWorld->getGravity();
-    context.softBodyWorldInfo->m_sparsesdf.Initialize();
+        if (btRigidBody* body = btRigidBody::upcast(collision_object); body) {
+            btTransform transform = ConvertTransform(*transform_component);
+            body->setWorldTransform(transform);
+            body->getMotionState()->setWorldTransform(transform);
 
-    btContactSolverInfo& solverInfo = context.dynamicWorld->getSolverInfo();
-    solverInfo.m_friction = 0.5f;  // Set appropriate friction
+            continue;
+        }
 
-    for (auto [id, rigid_body] : p_scene.m_RigidBodyComponents) {
+        if (btSoftBody* body = btSoftBody::upcast(collision_object); body) {
+            continue;
+        }
+
+        CRASH_NOW();
+    }
+
+    context.dynamicWorld->performDiscreteCollisionDetection();
+
+    for (int j = context.dynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--) {
+        btCollisionObject* collision_object = context.dynamicWorld->getCollisionObjectArray()[j];
+        uint32_t handle = (uint32_t)(uintptr_t)collision_object->getUserPointer();
+        ecs::Entity id{ handle };
+        if (!id.IsValid()) {
+            continue;
+        }
+
+        // RigidBodyComponent* rigid_body = p_scene.GetComponent<RigidBodyComponent>(id);
+        // if (rigid_body && (rigid_body->collisionFlags & CollisionFlags::CHECK))
+        //{
+        //    context.dynamicWorld->contactTest(collision_object, callback);
+        //}
+    }
+}
+
+void PhysicsManager::Update(Scene& p_scene) {
+    CreateWorld(p_scene);
+
+    switch (p_scene.m_physicsMode) {
+        case PhysicsMode::SIMULATION:
+            UpdateSimulation(p_scene);
+            break;
+        case PhysicsMode::COLLISION_DETECTION:
+            UpdateCollision(p_scene);
+            break;
+        default:
+            break;
+    }
+}
+
+void PhysicsManager::CreateWorld(Scene& p_scene) {
+    if (p_scene.m_physicsMode == PhysicsMode::NONE) {
+        return;
+    }
+
+    // @TODO: bench mark
+
+    if (!p_scene.m_physicsWorld) {
+        p_scene.m_physicsWorld = new PhysicsWorldContext;
+        PhysicsWorldContext& context = *p_scene.m_physicsWorld;
+
+        context.collisionConfig = new btDefaultCollisionConfiguration();
+        context.dispatcher = new CustomCollisionDispatcher(context.collisionConfig, p_scene);
+        context.broadphase = new btDbvtBroadphase();
+        context.solver = new btSequentialImpulseConstraintSolver;
+        context.dynamicWorld = new btSoftRigidDynamicsWorld(context.dispatcher, context.broadphase, context.solver, context.collisionConfig);
+
+        btVector3 gravity = btVector3(0, 0, 0);
+        // btVector3 gravity = btVector3(0.0f, -9.81f, 0.0f);
+        context.dynamicWorld->setGravity(gravity);
+
+        context.softBodyWorldInfo = new btSoftBodyWorldInfo;
+        context.softBodyWorldInfo->m_broadphase = context.dynamicWorld->getBroadphase();
+        context.softBodyWorldInfo->m_dispatcher = context.dynamicWorld->getDispatcher();
+        context.softBodyWorldInfo->m_gravity = context.dynamicWorld->getGravity();
+        context.softBodyWorldInfo->m_sparsesdf.Initialize();
+
+        btContactSolverInfo& solverInfo = context.dynamicWorld->getSolverInfo();
+        solverInfo.m_friction = 0.5f;  // Set appropriate friction
+    }
+
+    PhysicsWorldContext& context = *p_scene.m_physicsWorld;
+
+    for (auto [id, component] : p_scene.m_RigidBodyComponents) {
+        if (component.physicsObject) {
+            continue;
+        }
+
         const TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
         DEV_ASSERT(transform_component);
         if (!transform_component) {
@@ -190,14 +275,14 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
         }
 
         btCollisionShape* shape = nullptr;
-        switch (rigid_body.shape) {
+        switch (component.shape) {
             case RigidBodyComponent::SHAPE_CUBE: {
-                const Vector3f& half = rigid_body.param.box.half_size;
+                const Vector3f& half = component.param.box.half_size;
                 shape = new btBoxShape(btVector3(half.x, half.y, half.z));
                 break;
             }
             case RigidBodyComponent::SHAPE_SPHERE: {
-                shape = new btSphereShape(rigid_body.param.sphere.radius);
+                shape = new btSphereShape(component.param.sphere.radius);
                 break;
             }
             default:
@@ -205,7 +290,7 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
                 break;
         }
 
-        btScalar mass(rigid_body.mass);
+        btScalar mass(component.mass);
         bool is_dynamic = (mass != 0.f);  // rigidbody is dynamic if and only if mass is non zero, otherwise static
 
         btVector3 local_inertia(0, 0, 0);
@@ -214,26 +299,31 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
         }
 
         btTransform transform = ConvertTransform(*transform_component);
-        if (rigid_body.objectType == RigidBodyComponent::GHOST) {
+        if (component.objectType == RigidBodyComponent::GHOST) {
             btGhostObject* object = new btGhostObject();
             object->setCollisionShape(shape);
             object->setWorldTransform(transform);
-            // int flags = object->getCollisionFlags();
-            // flags |= btCollisionObject::CO_GHOST_OBJECT;
-            // object->setCollisionFlags(flags);
             object->setUserPointer((void*)(size_t)id.GetId());
-            context.kinematicObjects.push_back(object);
+            context.ghostObjects.push_back(object);
             context.dynamicWorld->addCollisionObject(object);
+
+            component.physicsObject = object;
         } else {
             btDefaultMotionState* motion_state = new btDefaultMotionState(transform);
             btRigidBody::btRigidBodyConstructionInfo info(mass, motion_state, shape, local_inertia);
             btRigidBody* object = new btRigidBody(info);
             object->setUserPointer((void*)(size_t)id.GetId());
             context.dynamicWorld->addRigidBody(object);
+
+            component.physicsObject = object;
         }
     }
 
     for (auto [id, component] : p_scene.m_ClothComponents) {
+        if (component.physicsObject) {
+            continue;
+        }
+
         const TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
         DEV_ASSERT(transform_component);
         if (!transform_component) {
@@ -257,7 +347,7 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
                                                                component.fixedFlags,
                                                                true);
 
-            cloth->getCollisionShape()->setMargin(0.001f);
+            cloth->getCollisionShape()->setMargin(0.01f);
             cloth->setUserPointer((void*)(size_t)id.GetId());
 
             cloth->generateBendingConstraints(2, cloth->appendMaterial());
@@ -300,6 +390,7 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
             }
 
             context.dynamicWorld->addSoftBody(cloth);
+            component.physicsObject = cloth;
         }
     }
 }
