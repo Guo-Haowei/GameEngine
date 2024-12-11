@@ -25,7 +25,8 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 // version 11: add ScriptFieldComponent
 // version 12: add CameraComponent
 // version 13: add SoftBodyComponent
-static constexpr uint32_t SCENE_VERSION = 13;
+// version 14: modify RigidBodyComponent
+static constexpr uint32_t SCENE_VERSION = 14;
 static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
@@ -77,7 +78,6 @@ void Scene::Update(float p_time_step) {
                 auto res = AssetRegistry::GetSingleton().RequestAssetSync(light.m_path);
                 if (res) {
                     light.m_asset = dynamic_cast<const ImageAsset*>(*res);
-                    // renderer::RequestBakingIbl();
                 }
             }
         }
@@ -93,6 +93,7 @@ void Scene::Copy(Scene& p_other) {
     m_root = p_other.m_root;
     m_bound = p_other.m_bound;
     m_timestep = p_other.m_timestep;
+    m_physicsMode = p_other.m_physicsMode;
 }
 
 void Scene::Merge(Scene& p_other) {

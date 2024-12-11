@@ -38,10 +38,9 @@ static constexpr float WORLD_SPEED = 0.3f;
 static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
 static constexpr float MIN_HEIGHT = 15.f;
 static constexpr float MAX_HEIGHT = 45.f;
-static constexpr float PLANE_MIN_SPEED = 0.48f;
-static constexpr float PLANE_MAX_SPEED = 0.64f;
 static constexpr float AMP_WIDTH = 30.0f;
 static constexpr float AMP_HEIGHT = 32.0f;
+static constexpr float OBSTACLE_RADIUS = 4.0f;
 
 static const Color RED_COLOR = Color::Hex(0xCE190A);
 static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
@@ -159,6 +158,7 @@ Scene* CreateTheAviatorScene() {
     ecs::Entity::SetSeed();
 
     Scene* scene = new Scene;
+    scene->m_physicsMode = PhysicsMode::COLLISION_DETECTION;
 
     auto root = scene->CreateTransformEntity("root");
     scene->m_root = root;
@@ -180,11 +180,16 @@ Scene* CreateTheAviatorScene() {
 
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 100.0f));
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
         camera->SetPrimary();
 
         class CameraController : public ScriptableEntity {
         protected:
+            void OnCollision(ecs::Entity p_other_id) override {
+                unused(p_other_id);
+                __debugbreak();
+            }
+
             void OnUpdate(float p_timestep) override {
                 PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
                 if (camera) {
@@ -192,7 +197,7 @@ Scene* CreateTheAviatorScene() {
                     if (glm::abs(mouse_move.x) > 2.0f) {
                         float angle = camera->GetFovy().GetDegree();
                         angle += mouse_move.x * p_timestep * 2.0f;
-                        angle = glm::clamp(angle, 35.0f, 70.0f);
+                        angle = glm::clamp(angle, 35.0f, 80.0f);
                         camera->SetFovy(Degree(angle));
                     }
                 }
@@ -262,13 +267,26 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(plane);
         transform->Translate(Vector3f(0.0f, plane_height, 0.0f));
 
+        auto& rigid_body = scene->Create<RigidBodyComponent>(plane)
+                               .InitSphere(4.0f);
+        rigid_body.mass = 1.0f;
+
         scene->AttachChild(plane, root);
 
         class PlaneScript : public ScriptableEntity {
+            void OnCollision(ecs::Entity p_other_id) override {
+                NameComponent* name = m_scene->GetComponent<NameComponent>(p_other_id);
+                LOG_ERROR("collide with {}", name->GetName());
+            }
+
             void OnCreate() override {
             }
 
             void OnUpdate(float p_timestep) override {
+                if (InputManager::GetSingleton().IsButtonDown(MouseButton::RIGHT)) {
+                    __debugbreak();
+                }
+
                 const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
                 Vector2f mouse = InputManager::GetSingleton().GetCursor();
                 mouse.x /= (float)width;
@@ -280,9 +298,8 @@ Scene* CreateTheAviatorScene() {
 
                 Vector3f translate = transform->GetTranslation();
 
-                // float speed = Normalize(mouse.x, -0.5f, 0.5f, PLANE_MIN_SPEED, PLANE_MAX_SPEED);
-                float target_x = Normalize(mouse.x, -1.0f, 1.0f, -AMP_WIDTH, -0.7f * AMP_WIDTH);
-                float target_y = Normalize(mouse.y, -0.75f, 0.75f, translate.y - AMP_HEIGHT, translate.y + AMP_HEIGHT);
+                const float target_x = Normalize(mouse.x, -1.0f, 1.0f, -AMP_WIDTH, -0.7f * AMP_WIDTH);
+                const float target_y = Normalize(mouse.y, -0.75f, 0.75f, translate.y - AMP_HEIGHT, translate.y + AMP_HEIGHT);
 
                 const float speed = 3.0f;
                 Vector2f delta(target_x - translate.x, target_y - translate.y);
@@ -427,6 +444,7 @@ Scene* CreateTheAviatorScene() {
                                               glm::translate(Vector3f(0.4f, 0.0f, 0.0f)));
         scene->AttachChild(blade2, propeller);
     }
+#pragma endregion SETUP_PLANE
 
     auto world = scene->CreateTransformEntity("world");
     {
@@ -440,7 +458,12 @@ Scene* CreateTheAviatorScene() {
         scene->AttachChild(earth, world);
 
         class EarthScript : public ScriptableEntity {
-            void OnUpdate(float p_timestep) {
+            void OnCollision(ecs::Entity p_other_id) override {
+                unused(p_other_id);
+                __debugbreak();
+            }
+
+            void OnUpdate(float p_timestep) override {
                 auto transform = GetComponent<TransformComponent>();
                 transform->Rotate(Vector3f(0.0f, 0.0f, p_timestep * WORLD_SPEED));
             }
@@ -455,6 +478,11 @@ Scene* CreateTheAviatorScene() {
 
         class GeneratorScript : public ScriptableEntity {
         protected:
+            void OnCollision(ecs::Entity p_other_id) override {
+                unused(p_other_id);
+                __debugbreak();
+            }
+
             void OnCreate() override {
                 CreateObstacleResource();
 
@@ -468,6 +496,11 @@ Scene* CreateTheAviatorScene() {
 
                     m_scene->AttachChild(obstacle.id, m_id);
                     m_obstacleDeadList.push_back(&obstacle);
+
+                    auto& rigid_body = m_scene->Create<RigidBodyComponent>(obstacle.id)
+                                           .InitSphere(0.5f * OBSTACLE_RADIUS);
+
+                    rigid_body.mass = 1.0f;
                 }
             }
 
@@ -511,7 +544,7 @@ Scene* CreateTheAviatorScene() {
             void CreateObstacleResource() {
                 m_obstacleMesh = m_scene->CreateMeshEntity("obstacle_mesh");
                 MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(m_obstacleMesh);
-                *mesh = MakeSphereMesh(3.0f, 6, 6);
+                *mesh = MakeSphereMesh(OBSTACLE_RADIUS, 6, 6);
                 mesh->gpuResource = GraphicsManager::GetSingleton().CreateMesh(*mesh);
                 DEV_ASSERT(!mesh->subsets.empty());
                 m_obstacleMaterial = m_scene->CreateMaterialEntity("obstacle_material");
@@ -543,6 +576,7 @@ Scene* CreateTheAviatorScene() {
         scene->Create<NativeScriptComponent>(generator).Bind<GeneratorScript>();
     }
 
+#pragma region SETUP_OCEAN
     // ocean
     {
         auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
@@ -565,6 +599,11 @@ Scene* CreateTheAviatorScene() {
                 float amp;
                 float speed;
             };
+
+            void OnCollision(ecs::Entity p_other_id) override {
+                unused(p_other_id);
+                __debugbreak();
+            }
 
             void OnCreate() override {
                 const ObjectComponent* object = GetComponent<ObjectComponent>();
@@ -631,7 +670,7 @@ Scene* CreateTheAviatorScene() {
         };
         scene->Create<NativeScriptComponent>(ocean).Bind<OceanScript>();
     }
-#pragma endregion SETUP_PLANE
+#pragma endregion SETUP_OCEAN
 
 #pragma region SETUP_SKY
     constexpr float TWO_PI = 2.0f * glm::pi<float>();

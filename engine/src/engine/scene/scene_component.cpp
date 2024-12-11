@@ -177,13 +177,45 @@ void HemisphereLightComponent::Serialize(Archive& p_archive, uint32_t p_version)
 #pragma endregion HEMISPHERE_LIGHT_COMPONENT
 
 #pragma region RIGID_BODY_COMPONENT
-void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t) {
+void CollisionObjectBase::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+
+    if (p_archive.IsWriteMode()) {
+        p_archive << collisionFlags;
+    } else {
+        p_archive >> collisionFlags;
+    }
+}
+
+RigidBodyComponent& RigidBodyComponent::InitCube(const Vector3f& p_half_size) {
+    shape = SHAPE_CUBE;
+    param.box.half_size = p_half_size;
+    return *this;
+}
+
+RigidBodyComponent& RigidBodyComponent::InitSphere(float p_radius) {
+    shape = SHAPE_SPHERE;
+    param.sphere.radius = p_radius;
+    return *this;
+}
+
+RigidBodyComponent& RigidBodyComponent::InitGhost() {
+    objectType = GHOST;
+    mass = 1.0f;
+    return *this;
+}
+
+void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    CollisionObjectBase::Serialize(p_archive, p_version);
+
     if (p_archive.IsWriteMode()) {
         p_archive << shape;
+        p_archive << objectType;
         p_archive << param;
         p_archive << mass;
     } else {
         p_archive >> shape;
+        p_archive >> objectType;
         p_archive >> param;
         p_archive >> mass;
     }
@@ -192,12 +224,10 @@ void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t) {
 
 #pragma region SOFT_BODY_COMPONENT
 void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_version);
+    CollisionObjectBase::Serialize(p_archive, p_version);
 
     CRASH_NOW();
-
     if (p_archive.IsWriteMode()) {
-
     } else {
     }
 }

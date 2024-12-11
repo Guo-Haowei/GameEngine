@@ -8,6 +8,7 @@ class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
 class btSoftRigidDynamicsWorld;
 class btCollisionShape;
+class btCollisionObject;
 struct btSoftBodyWorldInfo;
 
 namespace my {
@@ -22,6 +23,8 @@ struct PhysicsWorldContext {
     btSequentialImpulseConstraintSolver* solver = nullptr;
     btSoftRigidDynamicsWorld* dynamicWorld = nullptr;
     btSoftBodyWorldInfo* softBodyWorldInfo = nullptr;
+
+    std::vector<btCollisionObject*> ghostObjects;
 };
 
 class PhysicsManager : public Module {
@@ -33,6 +36,9 @@ public:
 protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
+
+    void UpdateCollision(Scene& p_scene);
+    void UpdateSimulation(Scene& p_scene);
 
     void CreateWorld(Scene& p_scene);
     void CleanWorld();

@@ -23,6 +23,13 @@ class Context;
 
 struct PhysicsWorldContext;
 
+enum class PhysicsMode : uint8_t {
+    NONE = 0,
+    COLLISION_DETECTION,
+    SIMULATION,
+    COUNT,
+};
+
 class Scene : public NonCopyable, public IAsset {
 public:
     static constexpr const char* EXTENSION = ".scene";
@@ -226,6 +233,8 @@ public:
     ecs::Entity m_selected;
     float m_timestep = 0.0f;
     bool m_replace = false;
+
+    PhysicsMode m_physicsMode{ PhysicsMode::NONE };
     mutable PhysicsWorldContext* m_physicsWorld = nullptr;
 
 private:
