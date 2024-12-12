@@ -163,7 +163,7 @@ Scene* CreateTheAviatorScene() {
     auto root = scene->CreateTransformEntity("root");
     scene->m_root = root;
 
-    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
@@ -187,7 +187,6 @@ Scene* CreateTheAviatorScene() {
         protected:
             void OnCollision(ecs::Entity p_other_id) override {
                 unused(p_other_id);
-                __debugbreak();
             }
 
             void OnUpdate(float p_timestep) override {
@@ -283,10 +282,6 @@ Scene* CreateTheAviatorScene() {
             }
 
             void OnUpdate(float p_timestep) override {
-                if (InputManager::GetSingleton().IsButtonDown(MouseButton::RIGHT)) {
-                    __debugbreak();
-                }
-
                 const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
                 Vector2f mouse = InputManager::GetSingleton().GetCursor();
                 mouse.x /= (float)width;
@@ -460,7 +455,6 @@ Scene* CreateTheAviatorScene() {
         class EarthScript : public ScriptableEntity {
             void OnCollision(ecs::Entity p_other_id) override {
                 unused(p_other_id);
-                __debugbreak();
             }
 
             void OnUpdate(float p_timestep) override {
@@ -480,7 +474,6 @@ Scene* CreateTheAviatorScene() {
         protected:
             void OnCollision(ecs::Entity p_other_id) override {
                 unused(p_other_id);
-                __debugbreak();
             }
 
             void OnCreate() override {
@@ -602,7 +595,6 @@ Scene* CreateTheAviatorScene() {
 
             void OnCollision(ecs::Entity p_other_id) override {
                 unused(p_other_id);
-                __debugbreak();
             }
 
             void OnCreate() override {
