@@ -1,8 +1,6 @@
-#include "vector.h"
+#include "vector.test.h"
 
 namespace my::math::detail {
-
-#define CHECK_VEC4(VEC, a,b,c,d) { EXPECT_EQ((VEC).x, a); EXPECT_EQ((VEC).y, b); EXPECT_EQ((VEC).z, c); EXPECT_EQ((VEC).w, d); }
 
 TEST(Swizzle4, vector4_swizzle4_read) {
     {

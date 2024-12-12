@@ -11,11 +11,15 @@ namespace my::math::detail {
 template<typename T>
 concept Arithmetic = std::is_arithmetic_v<T>;
 
+struct VectorBaseClass {};
+
 template<typename T, int N>
     requires Arithmetic<T> && (N >= 2 && N <= 4)
-struct VectorBase {
+struct VectorBase : VectorBaseClass {
+    using Self = VectorBase<T, N>;
+
     constexpr T* Data() { return reinterpret_cast<T*>(this); }
-    constexpr const T* Data() const { return reinterpret_cast<T*>(this); }
+    constexpr const T* Data() const { return reinterpret_cast<const T*>(this); }
 
     constexpr void Set(T p_value) {
         T* data = Data();
@@ -39,6 +43,14 @@ struct VectorBase {
         if constexpr (N >= 4) {
             data[3] = p_data[3];
         }
+    }
+
+    constexpr T& operator[](int p_index) {
+        return Data()[p_index];
+    }
+
+    constexpr const T& operator[](int p_index) const {
+        return Data()[p_index];
     }
 };
 
@@ -278,6 +290,62 @@ const Vector4<T> Vector4<T>::UnitZ(static_cast<T>(0), static_cast<T>(0), static_
 template<typename T>
     requires Arithmetic<T>
 const Vector4<T> Vector4<T>::UnitW(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
+
+}  // namespace my::math::detail
+
+namespace my::math::detail {
+
+template<typename T, typename U>
+    requires std::is_base_of_v<VectorBaseClass, T> && Arithmetic<U>
+constexpr T operator+(const U& p_scalar, const T& p_vec) {
+    constexpr int dim = sizeof(p_vec) / sizeof(p_vec.x);
+    T result;
+    result.x = p_vec.x + p_scalar;
+    result.y = p_vec.y + p_scalar;
+    if constexpr (dim >= 3) {
+        result.z = p_vec.z + p_scalar;
+    }
+    if constexpr (dim >= 4) {
+        result.w = p_vec.w + p_scalar;
+    }
+    return result;
+}
+
+template<typename T, typename U>
+    requires std::is_base_of_v<VectorBaseClass, T> && Arithmetic<U>
+constexpr T operator+(const T& p_vec, const U& p_scalar) {
+    return p_scalar + p_vec;
+}
+
+template<typename T, typename U>
+    requires std::is_base_of_v<VectorBaseClass, T> && Arithmetic<U>
+constexpr T& operator+=(T& p_vec, const U& p_scalar) {
+    p_vec += T(p_scalar);
+    return p_vec;
+}
+
+template<typename T>
+    requires std::is_base_of_v<VectorBaseClass, T>
+constexpr T operator+(const T& p_lhs, const T& p_rhs) {
+    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
+    T result;
+    result.x = p_lhs.x + p_rhs.x;
+    result.y = p_lhs.y + p_rhs.y;
+    if constexpr (dim >= 3) {
+        result.z = p_lhs.z + p_rhs.z;
+    }
+    if constexpr (dim >= 4) {
+        result.w = p_lhs.w + p_rhs.w;
+    }
+    return result;
+}
+
+template<typename T>
+    requires std::is_base_of_v<VectorBaseClass, T>
+constexpr T& operator+=(T& p_lhs, const T& p_rhs) {
+    p_lhs = p_lhs + p_rhs;
+    return p_lhs;
+}
 
 using Vector2i = Vector2<int>;
 using Vector3i = Vector3<int>;
