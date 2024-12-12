@@ -9,7 +9,7 @@
 float3 FresnelSchlickRoughness(float cosTheta, in float3 F0, float roughness) {
     float3 zero = float3(0.0, 0.0, 0.0);
     float3 tmp = float3(1.0, 1.0, 1.0) - roughness;
-    return F0 + (max(tmp, zero)) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(tmp, zero))*pow(1.0 - cosTheta, 5.0);
 }
 
 // @TODO: refactor shadow

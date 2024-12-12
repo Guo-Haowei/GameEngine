@@ -14,6 +14,11 @@ target_include_directories(${TARGET_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}/thirdparty/googletest/googletest/include
 )
 
+set_target_properties(${TARGET_NAME}
+    PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
 target_link_libraries(${TARGET_NAME} PRIVATE gtest_main engine)
 
 target_precompile_headers(${TARGET_NAME} PRIVATE pch.h)
