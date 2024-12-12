@@ -87,7 +87,7 @@ void final_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
 
 std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
     // @TODO: early-z
-    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
     const int w = frame_size.x;
     const int h = frame_size.y;
 

@@ -1,17 +1,17 @@
 #pragma once
 #include "swizzle.h"
 
-namespace my::math::detail {
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-#pragma clang diagnostic ignored "-Wnested-anon-types"
-#pragma clang diagnostic ignored "-Wpadded"
+namespace my {
 
 template<typename T>
 concept Arithmetic = std::is_arithmetic_v<T>;
 
 struct VectorBaseClass {};
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
+#pragma clang diagnostic ignored "-Wnested-anon-types"
+#pragma clang diagnostic ignored "-Wpadded"
 
 template<typename T, int N>
     requires Arithmetic<T> && (N >= 2 && N <= 4)
@@ -291,9 +291,40 @@ template<typename T>
     requires Arithmetic<T>
 const Vector4<T> Vector4<T>::UnitW(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 
-}  // namespace my::math::detail
+template<typename T>
+    requires std::is_base_of_v<VectorBaseClass, T>
+constexpr bool operator==(const T& p_lhs, const T& p_rhs) {
+    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
+    for (int i = 0; i < dim; ++i) {
+        if (p_lhs[i] != p_rhs[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 
-namespace my::math::detail {
+template<typename T>
+    requires std::is_base_of_v<VectorBaseClass, T>
+constexpr T operator+(const T& p_lhs, const T& p_rhs) {
+    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
+    T result;
+    result.x = p_lhs.x + p_rhs.x;
+    result.y = p_lhs.y + p_rhs.y;
+    if constexpr (dim >= 3) {
+        result.z = p_lhs.z + p_rhs.z;
+    }
+    if constexpr (dim >= 4) {
+        result.w = p_lhs.w + p_rhs.w;
+    }
+    return result;
+}
+
+template<typename T>
+    requires std::is_base_of_v<VectorBaseClass, T>
+constexpr T& operator+=(T& p_lhs, const T& p_rhs) {
+    p_lhs = p_lhs + p_rhs;
+    return p_lhs;
+}
 
 template<typename T, typename U>
     requires std::is_base_of_v<VectorBaseClass, T> && Arithmetic<U>
@@ -324,37 +355,68 @@ constexpr T& operator+=(T& p_vec, const U& p_scalar) {
     return p_vec;
 }
 
+using NewVector2i = Vector2<int>;
+using NewVector3i = Vector3<int>;
+using NewVector4i = Vector4<int>;
+using NewVector2u = Vector2<uint32_t>;
+using NewVector3u = Vector3<uint32_t>;
+using NewVector4u = Vector4<uint32_t>;
+using NewVector2f = Vector2<float>;
+using NewVector3f = Vector3<float>;
+using NewVector4f = Vector4<float>;
+
+static_assert(sizeof(NewVector2f) == 8);
+static_assert(sizeof(NewVector3f) == 12);
+static_assert(sizeof(NewVector4f) == 16);
+static_assert(sizeof(NewVector2i) == 8);
+static_assert(sizeof(NewVector3i) == 12);
+static_assert(sizeof(NewVector4i) == 16);
+static_assert(sizeof(NewVector2u) == 8);
+static_assert(sizeof(NewVector3u) == 12);
+static_assert(sizeof(NewVector4u) == 16);
+
+}  // namespace my
+
+namespace my::math {
+
+template<typename T>
+    requires Arithmetic<T>
+constexpr T Min(const T& p_lhs, const T& p_rhs) {
+    return p_lhs < p_rhs ? p_lhs : p_rhs;
+}
+
+template<typename T>
+    requires Arithmetic<T>
+constexpr T Max(const T& p_lhs, const T& p_rhs) {
+    return p_lhs > p_rhs ? p_lhs : p_rhs;
+}
+
 template<typename T>
     requires std::is_base_of_v<VectorBaseClass, T>
-constexpr T operator+(const T& p_lhs, const T& p_rhs) {
+constexpr T Min(const T& p_lhs, const T& p_rhs) {
     constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
     T result;
-    result.x = p_lhs.x + p_rhs.x;
-    result.y = p_lhs.y + p_rhs.y;
-    if constexpr (dim >= 3) {
-        result.z = p_lhs.z + p_rhs.z;
-    }
-    if constexpr (dim >= 4) {
-        result.w = p_lhs.w + p_rhs.w;
+    for (int i = 0; i < dim; ++i) {
+        result[i] = Min(p_lhs[i], p_rhs[i]);
     }
     return result;
 }
 
 template<typename T>
     requires std::is_base_of_v<VectorBaseClass, T>
-constexpr T& operator+=(T& p_lhs, const T& p_rhs) {
-    p_lhs = p_lhs + p_rhs;
-    return p_lhs;
+constexpr T Max(const T& p_lhs, const T& p_rhs) {
+    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
+    T result;
+    for (int i = 0; i < dim; ++i) {
+        result[i] = Max(p_lhs[i], p_rhs[i]);
+    }
+    return result;
 }
 
-using Vector2i = Vector2<int>;
-using Vector3i = Vector3<int>;
-using Vector4i = Vector4<int>;
-using Vector2u = Vector2<uint32_t>;
-using Vector3u = Vector3<uint32_t>;
-using Vector4u = Vector4<uint32_t>;
-using Vector2f = Vector2<float>;
-using Vector3f = Vector3<float>;
-using Vector4f = Vector4<float>;
+template<typename T>
+    requires std::is_base_of_v<VectorBaseClass, T> || Arithmetic<T>
+constexpr T Clamp(const T& p_value, const T& p_min, const T& p_max) {
+    return Max(p_min, Min(p_value, p_max));
+}
 
-}  // namespace my::math::detail
+}  // namespace my::math

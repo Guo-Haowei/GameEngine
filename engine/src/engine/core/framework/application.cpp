@@ -127,16 +127,16 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
 
     // select window size
     {
-        const Vector2i resolution{ DVAR_GET_IVEC2(window_resolution) };
-        const Vector2i max_size{ 3840, 2160 };  // 4K
-        const Vector2i min_size{ 480, 360 };    // 360P
-        Vector2i desired_size;
+        const NewVector2i resolution{ DVAR_GET_IVEC2(window_resolution) };
+        const NewVector2i max_size{ 3840, 2160 };  // 4K
+        const NewVector2i min_size{ 480, 360 };    // 360P
+        NewVector2i desired_size;
         if (resolution.x > 0 && resolution.y > 0) {
             desired_size = resolution;
         } else {
-            desired_size = Vector2i(m_specification.width, m_specification.height);
+            desired_size = NewVector2i(m_specification.width, m_specification.height);
         }
-        desired_size = glm::clamp(desired_size, min_size, max_size);
+        desired_size = math::Clamp(desired_size, min_size, max_size);
         m_specification.width = desired_size.x;
         m_specification.height = desired_size.y;
     }
@@ -329,7 +329,7 @@ Scene* Application::CreateInitialScene() {
 
     Scene* scene = new Scene;
 
-    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
 
     auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;

@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/core/math/geomath.h"
+#include "engine/core/math/vector.h"
 
 enum DvarFlags {
     DVAR_FLAG_NONE = BIT(0),
@@ -40,12 +41,12 @@ public:
     int AsInt() const;
     float AsFloat() const;
     const std::string& AsString() const;
-    Vector2f AsVector2f() const;
-    Vector3f AsVector3f() const;
-    Vector4f AsVector4f() const;
-    Vector2i AsVector2i() const;
-    Vector3i AsVector3i() const;
-    Vector4i AsVector4i() const;
+    NewVector2f AsVector2f() const;
+    NewVector3f AsVector3f() const;
+    NewVector4f AsVector4f() const;
+    NewVector2i AsVector2i() const;
+    NewVector3i AsVector3i() const;
+    NewVector4i AsVector4i() const;
     void* AsPointer();
 
     bool SetInt(int p_value);
@@ -77,19 +78,11 @@ private:
     const char* m_desc;
     uint32_t m_flags;
 
-    struct vector4f_t {
-        float x, y, z, w;
-    };
-
-    struct vector4i_t {
-        int x, y, z, w;
-    };
-
     union {
         int m_int;
         float m_float;
-        vector4f_t m_vec;
-        vector4i_t m_ivec;
+        NewVector4f m_vec;
+        NewVector4i m_ivec;
     };
     std::string m_string;
     std::string m_name;

@@ -1,4 +1,3 @@
-#include "vector.h"
 #include "vector.test.h"
 
 namespace my::math::detail {
