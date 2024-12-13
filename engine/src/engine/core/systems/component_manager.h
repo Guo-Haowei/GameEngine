@@ -8,6 +8,10 @@ class Scene;
 
 namespace my::ecs {
 
+template<typename T>
+class View;
+
+// @TODO: remove this iterator, use view iterator instead
 #define COMPONENT_MANAGER_ITERATOR_COMMON                                              \
 public:                                                                                \
     self_type operator++(int) {                                                        \
@@ -181,7 +185,12 @@ public:
         return m_lookup.find(p_entity) != m_lookup.end();
     }
 
-    inline T& GetComponent(size_t p_index) {
+    inline T& GetComponentByIndex(size_t p_index) {
+        DEV_ASSERT(p_index < m_componentArray.size());
+        return m_componentArray[p_index];
+    }
+
+    inline const T& GetComponentByIndex(size_t p_index) const {
         DEV_ASSERT(p_index < m_componentArray.size());
         return m_componentArray[p_index];
     }
@@ -257,12 +266,14 @@ public:
         return true;
     }
 
-private:
+    // @TODO: change it to private
+public:
     std::vector<T> m_componentArray;
     std::vector<Entity> m_entityArray;
     std::unordered_map<Entity, size_t> m_lookup;
 
     friend class ::my::Scene;
+    friend class View<T>;
 };
 
 class ComponentLibrary {

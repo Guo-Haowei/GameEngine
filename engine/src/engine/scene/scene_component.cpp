@@ -156,6 +156,22 @@ void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 #pragma endregion LUA_SCRIPT_COMPONENT
 
 #pragma region NATIVE_SCRIPT_COMPONENT
+NativeScriptComponent::~NativeScriptComponent() {
+    // DON'T DELETE instance, because it could be copied from other script
+    // Memory leak!!!
+}
+
+NativeScriptComponent::NativeScriptComponent(const NativeScriptComponent& p_rhs) {
+    *this = p_rhs;
+}
+
+NativeScriptComponent& NativeScriptComponent::operator=(const NativeScriptComponent& p_rhs) {
+    instantiateFunc = p_rhs.instantiateFunc;
+    destroyFunc = p_rhs.destroyFunc;
+    instance = p_rhs.instance;
+    return *this;
+}
+
 void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_archive);
     unused(p_version);
@@ -181,9 +197,11 @@ void CollisionObjectBase::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     if (p_archive.IsWriteMode()) {
-        p_archive << collisionFlags;
+        p_archive << collisionType;
+        p_archive << collisionMask;
     } else {
-        p_archive >> collisionFlags;
+        p_archive >> collisionType;
+        p_archive >> collisionMask;
     }
 }
 

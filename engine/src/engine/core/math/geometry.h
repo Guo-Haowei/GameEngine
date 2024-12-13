@@ -14,6 +14,8 @@ MeshComponent MakeCubeMesh(const Vector3f& p_scale = Vector3f(0.5f));
 
 MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points);
 
+MeshComponent MakeTetrahedronMesh(float p_size = 0.5f);
+
 MeshComponent MakeSphereMesh(float p_radius,
                              int p_rings = 60,
                              int p_sectors = 60);

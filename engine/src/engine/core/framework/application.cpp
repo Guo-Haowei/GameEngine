@@ -280,8 +280,8 @@ void Application::Run() {
         }
 
         if (m_state == State::SIM) {
-            m_physicsManager->Update(*m_activeScene);
             m_scriptManager->Update(*m_activeScene);
+            m_physicsManager->Update(*m_activeScene);
         }
 
         renderer::EndFrame();

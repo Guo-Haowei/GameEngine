@@ -3,6 +3,7 @@
 #include "engine/core/base/noncopyable.h"
 #include "engine/core/math/ray.h"
 #include "engine/core/systems/component_manager.h"
+#include "engine/core/systems/view.h"
 #include "engine/scene/scene_component.h"
 // @TODO: refactor all components
 #include "engine/scene/collider_component.h"
@@ -36,18 +37,16 @@ public:
 
     Scene() : IAsset(AssetType::SCENE) {}
 
+private:
+    ecs::ComponentLibrary m_componentLib;
+
 #pragma region WORLD_COMPONENTS_REGISTRY
 #define REGISTER_COMPONENT(T, VER)                                                                                 \
-public:                                                                                                            \
     ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);                     \
-                                                                                                                   \
-private:                                                                                                           \
     template<>                                                                                                     \
     inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }                \
     template<>                                                                                                     \
     inline ecs::Entity GetEntityByIndex<T>(size_t p_index) { return m_##T##s.m_entityArray[p_index]; }             \
-                                                                                                                   \
-public:                                                                                                            \
     template<>                                                                                                     \
     inline const T* GetComponent<T>(const ecs::Entity& p_entity) const { return m_##T##s.GetComponent(p_entity); } \
     template<>                                                                                                     \
@@ -60,9 +59,15 @@ public:                                                                         
     inline ecs::Entity GetEntity<T>(size_t p_index) const { return m_##T##s.GetEntity(p_index); }                  \
     template<>                                                                                                     \
     T& Create<T>(const ecs::Entity& p_entity) { return m_##T##s.Create(p_entity); }                                \
+    template<>                                                                                                     \
+    inline ecs::View<T> View() { return ecs::View<T>(m_##T##s); }                                                  \
+    template<>                                                                                                     \
+    inline ecs::View<const T> View() const { return ecs::View<const T>(m_##T##s); }                                \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #pragma endregion WORLD_COMPONENTS_REGISTRY
+
+public:
     template<typename T>
     const T* GetComponent(const ecs::Entity&) const { return nullptr; }
     template<typename T>
@@ -76,13 +81,27 @@ public:                                                                         
     template<typename T>
     T& Create(const ecs::Entity&) { return *(T*)(nullptr); }
 
-private:
     template<typename T>
     inline T& GetComponentByIndex(size_t) { return *(T*)0; }
     template<typename T>
     inline ecs::Entity GetEntityByIndex(size_t) { return ecs::Entity::INVALID; }
 
-    ecs::ComponentLibrary m_componentLib;
+    template<typename T>
+    inline ecs::View<T> View() {
+        static_assert(0, "this code should never instantiate");
+        struct Dummy {};
+        ecs::ComponentManager<Dummy> dummyManager;
+        return ecs::View(dummyManager);
+    }
+
+    template<typename T>
+        requires std::is_const_v<std::remove_reference_t<T>>
+    inline ecs::View<T> View() const {
+        static_assert(0, "this code should never instantiate");
+        struct Dummy {};
+        ecs::ComponentManager<Dummy> dummyManager;
+        return ecs::View(dummyManager);
+    }
 
     REGISTER_COMPONENT(NameComponent, 0);
     REGISTER_COMPONENT(TransformComponent, 0);

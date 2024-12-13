@@ -279,6 +279,58 @@ MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
     return mesh;
 }
 
+MeshComponent MakeTetrahedronMesh(float p_size) {
+    // Vertex data for a tetrahedron (4 vertices, each with x, y, z coordinates)
+    constexpr float h = 2.0f / 2.449f;
+    Vector3f vertices[] = {
+        p_size * Vector3f(+0, +h, +1),  // top front
+        p_size * Vector3f(+0, +h, -1),  // top back
+        p_size * Vector3f(-1, -h, +0),  // bottom left vertex
+        p_size * Vector3f(+1, -h, +0),  // bottom right vertex
+    };
+
+    static const uint32_t indices[] = {
+        0, 2, 3,  // face 1
+        0, 3, 1,  // face 2
+        0, 1, 2,  // face 3
+        1, 3, 2,  // face 4
+    };
+
+    MeshComponent mesh;
+
+    for (int i = 0; i < array_length(indices); i += 3) {
+        Vector3f A = vertices[indices[i]];
+        Vector3f B = vertices[indices[i + 1]];
+        Vector3f C = vertices[indices[i + 2]];
+
+        Vector3f normal = glm::normalize(glm::cross(A - B, A - C));
+
+        mesh.positions.emplace_back(A);
+        mesh.positions.emplace_back(B);
+        mesh.positions.emplace_back(C);
+
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+        mesh.normals.emplace_back(normal);
+
+        mesh.indices.emplace_back(i);
+        mesh.indices.emplace_back(i + 1);
+        mesh.indices.emplace_back(i + 2);
+
+        mesh.texcoords_0.emplace_back(Vector2f());
+        mesh.texcoords_0.emplace_back(Vector2f());
+        mesh.texcoords_0.emplace_back(Vector2f());
+    }
+
+    MeshComponent::MeshSubset subset;
+    subset.index_count = static_cast<uint32_t>(mesh.indices.size());
+    subset.index_offset = 0;
+    mesh.subsets.emplace_back(subset);
+
+    mesh.CreateRenderData();
+    return mesh;
+}
+
 MeshComponent MakeSphereMesh(float p_radius, int p_rings, int p_sectors) {
     MeshComponent mesh;
 

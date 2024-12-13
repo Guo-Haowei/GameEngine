@@ -123,16 +123,26 @@ void ScriptManager::Update(Scene& p_scene) {
         }
     }
 
-    for (auto [entity, script] : p_scene.m_NativeScriptComponents) {
+    for (auto [entity, script] : p_scene.View<NativeScriptComponent>()) {
+        // @HACK: if OnCreate() creates new NativeScriptComponents
+        // the component array will be resized and invalidated
+        // so save the instance pointer before hand
+        // what really should do is to improve ComponentManager container to not resize,
+        // but append
+        // @TODO: [SCRUM-134] better ECS
+        ScriptableEntity* instance = nullptr;
         if (!script.instance) {
-            script.instance = script.instantiateFunc();
-            script.instance->m_id = entity;
-            script.instance->m_scene = &p_scene;
+            instance = script.instantiateFunc();
+            script.instance = instance;
 
-            script.instance->OnCreate();
+            instance->m_id = entity;
+            instance->m_scene = &p_scene;
+            instance->OnCreate();
+        } else {
+            instance = script.instance;
         }
 
-        script.instance->OnUpdate(p_scene.m_timestep);
+        instance->OnUpdate(p_scene.m_timestep);
     }
 }
 
