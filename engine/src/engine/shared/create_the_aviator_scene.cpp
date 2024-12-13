@@ -185,10 +185,6 @@ Scene* CreateTheAviatorScene() {
 
         class CameraController : public ScriptableEntity {
         protected:
-            void OnCollision(ecs::Entity p_other_id) override {
-                unused(p_other_id);
-            }
-
             void OnUpdate(float p_timestep) override {
                 PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
                 if (camera) {
@@ -453,10 +449,6 @@ Scene* CreateTheAviatorScene() {
         scene->AttachChild(earth, world);
 
         class EarthScript : public ScriptableEntity {
-            void OnCollision(ecs::Entity p_other_id) override {
-                unused(p_other_id);
-            }
-
             void OnUpdate(float p_timestep) override {
                 auto transform = GetComponent<TransformComponent>();
                 transform->Rotate(Vector3f(0.0f, 0.0f, p_timestep * WORLD_SPEED));
@@ -472,10 +464,6 @@ Scene* CreateTheAviatorScene() {
 
         class GeneratorScript : public ScriptableEntity {
         protected:
-            void OnCollision(ecs::Entity p_other_id) override {
-                unused(p_other_id);
-            }
-
             void OnCreate() override {
                 CreateObstacleResource();
 
@@ -592,10 +580,6 @@ Scene* CreateTheAviatorScene() {
                 float amp;
                 float speed;
             };
-
-            void OnCollision(ecs::Entity p_other_id) override {
-                unused(p_other_id);
-            }
 
             void OnCreate() override {
                 const ObjectComponent* object = GetComponent<ObjectComponent>();
