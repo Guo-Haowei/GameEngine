@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/core/math/aabb.h"
 #include "engine/core/math/geomath.h"
 #include "shader_defines.hlsl.h"
 
@@ -13,6 +14,7 @@ public:
         NONE = BIT(0),
         DIRTY = BIT(1),
         CAST_SHADOW = BIT(2),
+        SHADOW_REGION = BIT(3),
     };
 
     bool IsDirty() const { return m_flags & DIRTY; }
@@ -20,6 +22,9 @@ public:
 
     bool CastShadow() const { return m_flags & CAST_SHADOW; }
     void SetCastShadow(bool p_cast = true) { p_cast ? m_flags |= CAST_SHADOW : m_flags &= ~CAST_SHADOW; }
+
+    bool HasShadowRegion() const { return m_flags & SHADOW_REGION; }
+    void SetShadowRegion(bool p_region = true) { p_region ? m_flags |= SHADOW_REGION : m_flags &= ~SHADOW_REGION; }
 
     int GetType() const { return m_type; }
     void SetType(int p_type) { m_type = p_type; }
@@ -39,6 +44,8 @@ public:
         float linear;
         float quadratic;
     } m_atten;
+
+    AABB m_shadowRegion;
 
 private:
     uint32_t m_flags = DIRTY;

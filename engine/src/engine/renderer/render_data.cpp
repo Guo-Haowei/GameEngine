@@ -288,9 +288,10 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
 
                 // @TODO: add option to specify extent
                 // @would be nice if can add debug draw
-                const AABB& world_bound = p_scene.GetBound();
-                const Vector3f center = world_bound.Center();
-                const Vector3f extents = world_bound.Size();
+                const AABB& world_bound = (light_component.HasShadowRegion()) ? light_component.m_shadowRegion : p_scene.GetBound();
+                Vector3f center = world_bound.Center();
+                Vector3f extents = world_bound.Size();
+
                 const float size = 0.7f * glm::max(extents.x, glm::max(extents.y, extents.z));
 
                 light.view_matrix = glm::lookAt(center + light_dir * size, center, Vector3f(0, 1, 0));

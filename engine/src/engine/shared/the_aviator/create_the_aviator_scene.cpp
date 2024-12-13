@@ -146,6 +146,8 @@ Scene* CreateTheAviatorScene() {
         transform->RotateZ(Degree(-30.f));
         LightComponent* light_component = scene->GetComponent<LightComponent>(light);
         light_component->SetCastShadow();
+        light_component->SetShadowRegion();
+        light_component->m_shadowRegion = AABB::FromCenterSize(Vector3f(0, 20, -40), Vector3f(90));
     }
 
 #pragma region SETUP_MATERIALS
