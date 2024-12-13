@@ -263,15 +263,20 @@ void PhysicsManager::UpdateCollision(Scene& p_scene) {
                 continue;
             }
 
-            NativeScriptComponent* script_1 = p_scene.GetComponent<NativeScriptComponent>(entity_1);
-            NativeScriptComponent* script_2 = p_scene.GetComponent<NativeScriptComponent>(entity_2);
+            const RigidBodyComponent* rigid_body_1 = p_scene.GetComponent<RigidBodyComponent>(entity_1);
+            const RigidBodyComponent* rigid_body_2 = p_scene.GetComponent<RigidBodyComponent>(entity_2);
 
-            if (!script_1 && !script_2) {
+            if (!rigid_body_1 || !rigid_body_2) {
                 continue;
             }
 
-            CustomContactResultCallback callback(p_scene);
-            context.dynamicWorld->contactPairTest(object_1, object_2, callback);
+            const bool check = (rigid_body_1->collisionType & rigid_body_2->collisionMask) ||
+                               (rigid_body_2->collisionType & rigid_body_1->collisionMask);
+
+            if (check) {
+                CustomContactResultCallback callback(p_scene);
+                context.dynamicWorld->contactPairTest(object_1, object_2, callback);
+            }
         }
     }
 }

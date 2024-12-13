@@ -181,9 +181,11 @@ void CollisionObjectBase::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
     if (p_archive.IsWriteMode()) {
-        p_archive << collisionFlags;
+        p_archive << collisionType;
+        p_archive << collisionMask;
     } else {
-        p_archive >> collisionFlags;
+        p_archive >> collisionType;
+        p_archive >> collisionMask;
     }
 }
 

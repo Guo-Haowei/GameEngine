@@ -258,14 +258,23 @@ private:
 #pragma endregion HEMISPHERE_LIGHT_COMPONENT
 
 #pragma region COLLISION_OBJECT_COMPONENT
-enum CollisionFlags : uint32_t {
-    NONE = BIT(0),
-    CHECK = BIT(1),
-};
-DEFINE_ENUM_BITWISE_OPERATIONS(CollisionFlags);
 
+/*
+    enum Type : uint32_t {
+        PLAYER = BIT(1),
+        FRIENDLY = BIT(2),
+        HOSTILE = BIT(4),
+    };
+
+    player.collisionType = PLAYER;
+    player.collisionMask = HOSTILE;
+
+    hostile.collisionType = HOSTILE;
+    hostile.collisionMask = PLAYER | FRIENDLY;
+*/
 struct CollisionObjectBase {
-    CollisionFlags collisionFlags{ CollisionFlags::NONE };
+    uint32_t collisionType = 0;
+    uint32_t collisionMask = 0;
 
     // Non-Serialized
     void* physicsObject{ nullptr };
