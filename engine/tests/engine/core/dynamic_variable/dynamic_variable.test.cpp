@@ -1,5 +1,6 @@
 #include "engine/core/dynamic_variable/dynamic_variable.h"
 
+#include "../math/vector.test.h"
 #include "engine/core/io/archive.h"
 
 namespace my {
