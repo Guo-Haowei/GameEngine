@@ -40,7 +40,7 @@ static constexpr float MIN_HEIGHT = 15.f;
 static constexpr float MAX_HEIGHT = 45.f;
 static constexpr float AMP_WIDTH = 30.0f;
 static constexpr float AMP_HEIGHT = 32.0f;
-static constexpr float OBSTACLE_RADIUS = 4.0f;
+static constexpr float ROCK_RADIUS = 4.0f;
 
 static const Color RED_COLOR = Color::Hex(0xCE190A);
 static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
@@ -465,21 +465,21 @@ Scene* CreateTheAviatorScene() {
         class GeneratorScript : public ScriptableEntity {
         protected:
             void OnCreate() override {
-                CreateObstacleResource();
+                CreateRockResource();
 
-                m_obstaclePool.resize(OBSTACLE_POOL_SIZE);
+                m_rockPool.resize(ROCK_POOL_SIZE);
                 int counter = 0;
-                for (auto& obstacle : m_obstaclePool) {
-                    obstacle.lifeRemains = 0.0f;
-                    obstacle.id = m_scene->CreateObjectEntity(std::format("battery_{}", ++counter));
-                    ObjectComponent* object = m_scene->GetComponent<ObjectComponent>(obstacle.id);
-                    object->meshId = m_obstacleMesh;
+                for (auto& rock : m_rockPool) {
+                    rock.lifeRemains = 0.0f;
+                    rock.id = m_scene->CreateObjectEntity(std::format("rock_{}", ++counter));
+                    ObjectComponent* object = m_scene->GetComponent<ObjectComponent>(rock.id);
+                    object->meshId = m_rockMesh;
 
-                    m_scene->AttachChild(obstacle.id, m_id);
-                    m_obstacleDeadList.push_back(&obstacle);
+                    m_scene->AttachChild(rock.id, m_id);
+                    m_rockDeadList.push_back(&rock);
 
-                    auto& rigid_body = m_scene->Create<RigidBodyComponent>(obstacle.id)
-                                           .InitSphere(0.5f * OBSTACLE_RADIUS);
+                    auto& rigid_body = m_scene->Create<RigidBodyComponent>(rock.id)
+                                           .InitSphere(0.5f * ROCK_RADIUS);
 
                     rigid_body.mass = 1.0f;
                 }
@@ -490,68 +490,68 @@ Scene* CreateTheAviatorScene() {
 
                 // spawn object
                 if (m_time - m_lastSpawnTime > 1.0f) {
-                    if (!m_obstacleDeadList.empty()) {
-                        auto* obstacle = m_obstacleDeadList.front();
-                        m_obstacleDeadList.pop_front();
-                        obstacle->lifeRemains = ENTITY_LIFE_TIME;
+                    if (!m_rockDeadList.empty()) {
+                        auto* rock = m_rockDeadList.front();
+                        m_rockDeadList.pop_front();
+                        rock->lifeRemains = ENTITY_LIFE_TIME;
 
-                        TransformComponent* transform = m_scene->GetComponent<TransformComponent>(obstacle->id);
+                        TransformComponent* transform = m_scene->GetComponent<TransformComponent>(rock->id);
                         float angle = m_time * WORLD_SPEED;
                         angle += Degree(90.0f).GetRadians();
                         const float distance = OCEAN_RADIUS + Random::Float(MIN_HEIGHT, MAX_HEIGHT);
                         transform->SetTranslation(distance * Vector3f(glm::sin(angle), glm::cos(angle), 0.0f));
                         m_lastSpawnTime = m_time;
-                        m_obstacleAliveList.emplace_back(obstacle);
+                        m_rockAliveList.emplace_back(rock);
                     }
                 }
 
-                std::list<Obstacle*> tmp;
-                for (int i = (int)m_obstacleAliveList.size() - 1; i >= 0; --i) {
-                    Obstacle* obstacle = m_obstacleAliveList.back();
-                    m_obstacleAliveList.pop_back();
-                    obstacle->lifeRemains -= p_timestep;
-                    if (obstacle->lifeRemains <= 0.0f) {
-                        TransformComponent* transform = m_scene->GetComponent<TransformComponent>(obstacle->id);
+                std::list<Rock*> tmp;
+                for (int i = (int)m_rockAliveList.size() - 1; i >= 0; --i) {
+                    Rock* rock = m_rockAliveList.back();
+                    m_rockAliveList.pop_back();
+                    rock->lifeRemains -= p_timestep;
+                    if (rock->lifeRemains <= 0.0f) {
+                        TransformComponent* transform = m_scene->GetComponent<TransformComponent>(rock->id);
                         // HACK: move the dead component away
                         transform->Translate(Vector3f(0.0f, -1000.0f, 0.0f));
-                        m_obstacleDeadList.emplace_back(obstacle);
+                        m_rockDeadList.emplace_back(rock);
                     } else {
-                        tmp.emplace_back(obstacle);
+                        tmp.emplace_back(rock);
                     }
                 }
-                m_obstacleAliveList = std::move(tmp);
+                m_rockAliveList = std::move(tmp);
             }
 
-            void CreateObstacleResource() {
-                m_obstacleMesh = m_scene->CreateMeshEntity("obstacle_mesh");
-                MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(m_obstacleMesh);
-                *mesh = MakeSphereMesh(OBSTACLE_RADIUS, 6, 6);
+            void CreateRockResource() {
+                m_rockMesh = m_scene->CreateMeshEntity("rock_mesh");
+                MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(m_rockMesh);
+                *mesh = MakeSphereMesh(ROCK_RADIUS, 6, 6);
                 mesh->gpuResource = GraphicsManager::GetSingleton().CreateMesh(*mesh);
                 DEV_ASSERT(!mesh->subsets.empty());
-                m_obstacleMaterial = m_scene->CreateMaterialEntity("obstacle_material");
-                MaterialComponent* material = m_scene->GetComponent<MaterialComponent>(m_obstacleMaterial);
+                m_rockMaterial = m_scene->CreateMaterialEntity("rock_material");
+                MaterialComponent* material = m_scene->GetComponent<MaterialComponent>(m_rockMaterial);
                 material->baseColor = Vector4f(RED_COLOR.r, RED_COLOR.g, RED_COLOR.b, 1.0f);
-                mesh->subsets[0].material_id = m_obstacleMaterial;
+                mesh->subsets[0].material_id = m_rockMaterial;
             }
 
         private:
-            ecs::Entity m_obstacleMesh;
-            ecs::Entity m_obstacleMaterial;
+            ecs::Entity m_rockMesh;
+            ecs::Entity m_rockMaterial;
             ecs::Entity m_tetrahedronMesh;
             float m_time{ 0.0f };
             float m_lastSpawnTime{ 0.0f };
 
-            struct Obstacle {
+            struct Rock {
                 ecs::Entity id;
                 float lifeRemains;
             };
 
             enum : uint32_t {
-                OBSTACLE_POOL_SIZE = 32,
+                ROCK_POOL_SIZE = 32,
             };
-            std::vector<Obstacle> m_obstaclePool;
-            std::list<Obstacle*> m_obstacleDeadList;
-            std::list<Obstacle*> m_obstacleAliveList;
+            std::vector<Rock> m_rockPool;
+            std::list<Rock*> m_rockDeadList;
+            std::list<Rock*> m_rockAliveList;
         };
 
         scene->Create<NativeScriptComponent>(generator).Bind<GeneratorScript>();

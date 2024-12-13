@@ -8,10 +8,10 @@ concept Arithmetic = std::is_arithmetic_v<T>;
 
 struct VectorBaseClass {};
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-anonymous-struct"
-#pragma clang diagnostic ignored "-Wnested-anon-types"
-#pragma clang diagnostic ignored "-Wpadded"
+WARNING_PUSH()
+WARNING_DISABLE(4201, "-Wgnu-anonymous-struct")
+WARNING_DISABLE(4201, "-Wnested-anon-types")
+WARNING_DISABLE(4201, "-Wpadded")
 
 template<typename T, int N>
     requires Arithmetic<T> && (N >= 2 && N <= 4)
@@ -242,6 +242,8 @@ struct Vector4 : VectorBase<T, 4> {
     static const Self UnitZ;
     static const Self UnitW;
 };
+
+WARNING_POP()
 
 template<typename T>
     requires Arithmetic<T>
