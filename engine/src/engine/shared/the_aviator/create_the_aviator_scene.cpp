@@ -8,6 +8,8 @@ namespace my {
 // * alpha blending
 // * fog
 // * 2D UI
+// * draw elements and draw array
+// * motion blur
 
 static MeshComponent MakeOceanMesh(float p_radius,
                                    float p_height,
@@ -194,6 +196,7 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(plane);
         transform->Translate(Vector3f(0.0f, plane_height, 0.0f));
 
+        // @TODO: fix collision boundary, probably want to visualize it
         auto& rigid_body = scene->Create<RigidBodyComponent>(plane)
                                .InitSphere(4.0f);
 
@@ -309,6 +312,7 @@ Scene* CreateTheAviatorScene() {
         auto pivot = scene->CreateMeshEntity("pivot",
                                              material_brown,
                                              MakeConeMesh(0.4f, 2.0f, 8));
+
         TransformComponent* transform = scene->GetComponent<TransformComponent>(pivot);
         transform->RotateZ(Degree(90.0f));
         scene->AttachChild(pivot, propeller);

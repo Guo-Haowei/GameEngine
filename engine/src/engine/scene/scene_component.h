@@ -202,18 +202,6 @@ private:
 
 #pragma region NATIVE_SCRIPT_COMPONENT
 struct NativeScriptComponent {
-    NativeScriptComponent() = default;
-
-    NativeScriptComponent(const NativeScriptComponent& p_rhs) {
-        *this = p_rhs;
-    }
-
-    NativeScriptComponent& operator=(const NativeScriptComponent& p_rhs) {
-        instantiateFunc = p_rhs.instantiateFunc;
-        destroyFunc = p_rhs.destroyFunc;
-        return *this;
-    }
-
     using InstantiateFunc = ScriptableEntity* (*)(void);
     using DestroyFunc = void (*)(NativeScriptComponent*);
 
@@ -221,8 +209,16 @@ struct NativeScriptComponent {
     InstantiateFunc instantiateFunc{ nullptr };
     DestroyFunc destroyFunc{ nullptr };
 
+    NativeScriptComponent() = default;
+
+    ~NativeScriptComponent();
+
+    NativeScriptComponent(const NativeScriptComponent& p_rhs);
+
+    NativeScriptComponent& operator=(const NativeScriptComponent& p_rhs);
+
     template<typename T>
-    void Bind() {
+    NativeScriptComponent& Bind() {
         instantiateFunc = []() -> ScriptableEntity* {
             return new T();
         };
@@ -230,6 +226,8 @@ struct NativeScriptComponent {
             delete (T*)p_script->instance;
             p_script->instance = nullptr;
         };
+
+        return *this;
     }
 
     void Serialize(Archive& p_archive, uint32_t p_version);

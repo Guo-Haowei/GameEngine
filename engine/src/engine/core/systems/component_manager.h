@@ -257,7 +257,8 @@ public:
         return true;
     }
 
-private:
+    // @TODO: change it to private
+public:
     std::vector<T> m_componentArray;
     std::vector<Entity> m_entityArray;
     std::unordered_map<Entity, size_t> m_lookup;

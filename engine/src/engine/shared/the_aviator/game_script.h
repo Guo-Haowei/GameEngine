@@ -53,11 +53,6 @@ enum : uint32_t {
     COLLISION_BIT_BATTERY = BIT(3),
 };
 
-static float Normalize(float p_value, float p_low, float p_high, float p_clamp_low, float p_clamp_high) {
-    const float bounded_value = glm::clamp(p_value, p_low, p_high);
-    return (bounded_value - p_low) / (p_high - p_low) * (p_clamp_high - p_clamp_low) + p_clamp_low;
-}
-
 class CameraController : public ScriptableEntity {
 protected:
     void OnUpdate(float p_timestep) override {
@@ -75,44 +70,26 @@ protected:
 };
 
 class PlaneScript : public ScriptableEntity {
-    void OnCollision(ecs::Entity p_other_id) override {
-        NameComponent* name = m_scene->GetComponent<NameComponent>(p_other_id);
-        LOG_ERROR("collide with {}", name->GetName());
-    }
+    void OnCollision(ecs::Entity p_other_id) override;
 
-    void OnCreate() override {
-    }
+    void OnCreate() override;
 
-    void OnUpdate(float p_timestep) override {
-        const auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
-        Vector2f mouse = InputManager::GetSingleton().GetCursor();
-        mouse.x /= (float)width;
-        mouse.y /= (float)height;
-        mouse = 2.0f * mouse - 1.0f;
-        mouse.y = -mouse.y;
+    void OnUpdate(float p_timestep) override;
 
-        TransformComponent* transform = GetComponent<TransformComponent>();
+    Vector2f m_collisionSpeed{ 0.0f };
+    Vector2f m_collisionDisplacement{ 0.0f };
+};
 
-        Vector3f translate = transform->GetTranslation();
+class RockScript : public ScriptableEntity {
+    void OnCollision(ecs::Entity p_other_id) override;
 
-        const float target_x = Normalize(mouse.x, -1.0f, 1.0f, -AMP_WIDTH, -0.7f * AMP_WIDTH);
-        const float target_y = Normalize(mouse.y, -0.75f, 0.75f, translate.y - AMP_HEIGHT, translate.y + AMP_HEIGHT);
+    void OnUpdate(float p_timestep) override;
+};
 
-        const float speed = 3.0f;
-        Vector2f delta(target_x - translate.x, target_y - translate.y);
-        delta *= p_timestep * speed;
+class BatteryScript : public ScriptableEntity {
+    void OnCollision(ecs::Entity p_other_id) override;
 
-        translate.x += delta.x;
-        translate.y += delta.y;
-        translate.y = glm::clamp(translate.y, MIN_HEIGHT, MAX_HEIGHT);
-
-        transform->SetTranslation(translate);
-
-        float rotate_z_angle = 0.3f * delta.y;
-        rotate_z_angle = glm::clamp(rotate_z_angle, glm::radians(-60.0f), glm::radians(60.0f));
-        Quaternion q(Vector3f(0.0f, 0.0f, rotate_z_angle));
-        transform->SetRotation(Vector4f(q.x, q.y, q.z, q.w));
-    }
+    void OnUpdate(float p_timestep) override;
 };
 
 struct GameObject {
@@ -165,7 +142,7 @@ class GeneratorScript : public ScriptableEntity {
     };
 
     static constexpr float ROCK_SIZE = 4.0f;
-    static constexpr float BATTERY_SIZE = 3.0f;
+    static constexpr float BATTERY_SIZE = 2.0f;
     static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
 
     void OnCreate() override;

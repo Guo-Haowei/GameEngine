@@ -123,7 +123,16 @@ void ScriptManager::Update(Scene& p_scene) {
         }
     }
 
-    for (auto [entity, script] : p_scene.m_NativeScriptComponents) {
+    // @TODO: generalize it
+    std::vector<std::pair<ecs::Entity, int>> view;
+
+    auto& scripts = p_scene.m_NativeScriptComponents.m_componentArray;
+    for (int i = 0; i < (int)scripts.size(); ++i) {
+        view.push_back({ p_scene.m_NativeScriptComponents.m_entityArray[i], i });
+    }
+
+    for (auto [entity, index] : view) {
+        NativeScriptComponent& script = p_scene.m_NativeScriptComponents.m_componentArray[index];
         if (!script.instance) {
             script.instance = script.instantiateFunc();
             script.instance->m_id = entity;
@@ -132,8 +141,22 @@ void ScriptManager::Update(Scene& p_scene) {
             script.instance->OnCreate();
         }
 
+        // THIS IS A BIT HACKY
+        script = p_scene.m_NativeScriptComponents.m_componentArray[index];
         script.instance->OnUpdate(p_scene.m_timestep);
     }
+
+    // for (auto [entity, script] : p_scene.m_NativeScriptComponents) {
+    //     if (!script.instance) {
+    //         script.instance = script.instantiateFunc();
+    //         script.instance->m_id = entity;
+    //         script.instance->m_scene = &p_scene;
+
+    //        script.instance->OnCreate();
+    //    }
+
+    //    script.instance->OnUpdate(p_scene.m_timestep);
+    //}
 }
 
 }  // namespace my
