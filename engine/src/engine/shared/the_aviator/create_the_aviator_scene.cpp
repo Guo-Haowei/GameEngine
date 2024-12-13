@@ -1,5 +1,5 @@
 //  @TODO: refactor
-#include "game_script.cpp"
+#include "game_script.h"
 
 namespace my {
 
