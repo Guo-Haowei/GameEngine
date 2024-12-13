@@ -55,7 +55,7 @@ void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
         DEV_ASSERT(node.mesh < (int)m_scene->GetCount<MeshComponent>());
         if (node.skin >= 0) {  // this node is an armature
             entity = m_scene->GetEntity<ArmatureComponent>(node.skin);
-            MeshComponent& mesh = m_scene->m_MeshComponents.GetComponent(node.mesh);
+            MeshComponent& mesh = m_scene->m_MeshComponents.GetComponentByIndex(node.mesh);
             ecs::Entity mesh_id = m_scene->GetEntity<MeshComponent>(node.mesh);
             DEV_ASSERT(!mesh.joints_0.empty());
             if (mesh.armatureId.IsValid()) {
@@ -63,7 +63,7 @@ void LoaderTinyGLTF::ProcessNode(int p_node_index, ecs::Entity p_parent) {
                 LOG_WARN("Re-use mesh for different skin!");
                 mesh_id = entity;
                 MeshComponent& newMesh = m_scene->Create<MeshComponent>(mesh_id);
-                newMesh = m_scene->m_MeshComponents.GetComponent(node.mesh);
+                newMesh = m_scene->m_MeshComponents.GetComponentByIndex(node.mesh);
                 mesh = newMesh;
             }
             mesh.armatureId = entity;
@@ -296,7 +296,7 @@ auto LoaderTinyGLTF::Load() -> Result<IAsset*> {
     int armatureIndex = 0;
     for (const auto& skin : m_model->skins) {
         //        ecs::Entity armature_id = m_scene->GetEntity<ArmatureComponent>(armatureIndex);
-        ArmatureComponent& armature = m_scene->m_ArmatureComponents.GetComponent(armatureIndex++);
+        ArmatureComponent& armature = m_scene->m_ArmatureComponents.GetComponentByIndex(armatureIndex++);
 
         const size_t jointCount = skin.joints.size();
         armature.boneCollection.resize(jointCount);

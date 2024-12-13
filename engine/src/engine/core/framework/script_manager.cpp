@@ -123,10 +123,7 @@ void ScriptManager::Update(Scene& p_scene) {
         }
     }
 
-    // @TODO: generalize it
-    ecs::View<NativeScriptComponent> view = p_scene.View<NativeScriptComponent>();
-
-    for (auto [entity, script] : view) {
+    for (auto [entity, script] : p_scene.View<NativeScriptComponent>()) {
         // @HACK: if OnCreate() creates new NativeScriptComponents
         // the component array will be resized and invalidated
         // so save the instance pointer before hand

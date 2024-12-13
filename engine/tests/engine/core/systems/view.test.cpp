@@ -2,32 +2,37 @@
 
 namespace my::ecs {
 
-TEST(View, iterator) {
-
+TEST(view, iterator) {
+    Entity::SetSeed();
     Scene scene;
     for (int i = 0; i < 4; ++i) {
         scene.CreateNameEntity(std::format("entity_{}", i));
     }
 
-    auto view = scene.View<NameComponent>();
+    const char* names[] = {
+        "entity_00",
+        "entity_11",
+        "entity_22",
+        "entity_33",
+    };
 
     {
-        const char* names[] = {
-            "entity_00",
-            "entity_11",
-            "entity_22",
-            "entity_33",
-        };
-
+        Scene& p_scene = scene;
+        auto view = p_scene.View<NameComponent>();
         int i = 0;
-        for (const auto [id, name] : view) {
-            name.GetNameRef().push_back('0' + i);
+        for (auto [id, name] : view) {
+            name.GetNameRef().push_back(static_cast<char>('0' + i));
             ++i;
         }
+    }
 
-        i = 0;
-        for (const auto [id, name] : view) {
-            EXPECT_EQ(name.GetName(), names[i++]);
+    {
+        const Scene& p_scene = scene;
+        auto view = p_scene.View<const NameComponent>();
+        int i = 0;
+        for (auto [id, name] : view) {
+            EXPECT_EQ(name.GetName(), names[i]);
+            ++i;
         }
     }
 }

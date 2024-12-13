@@ -146,7 +146,7 @@ void GeneratorScript::OnUpdate(float p_timestep) {
             rock->lifeRemains = ENTITY_LIFE_TIME;
             TransformComponent* transform = m_scene->GetComponent<TransformComponent>(rock->id);
             float angle = m_time * WORLD_SPEED;
-            angle += Degree(90.0f).GetRadians();
+            angle += Degree(60.0f).GetRadians();
             const float distance = OCEAN_RADIUS + Random::Float(MIN_HEIGHT, MAX_HEIGHT);
             transform->SetTranslation(distance * Vector3f(glm::sin(angle), glm::cos(angle), 0.0f));
             m_lastSpawnTime = m_time;
@@ -155,7 +155,7 @@ void GeneratorScript::OnUpdate(float p_timestep) {
             battery->lifeRemains = ENTITY_LIFE_TIME;
             TransformComponent* transform = m_scene->GetComponent<TransformComponent>(battery->id);
             float angle = m_time * WORLD_SPEED;
-            angle += Degree(80.0f).GetRadians();
+            angle += Degree(50.0f).GetRadians();
             const float distance = OCEAN_RADIUS + Random::Float(MIN_HEIGHT, MAX_HEIGHT);
             transform->SetTranslation(distance * Vector3f(glm::sin(angle), glm::cos(angle), 0.0f));
             m_lastSpawnTime = m_time;

@@ -92,6 +92,7 @@ class BatteryScript : public ScriptableEntity {
     void OnUpdate(float p_timestep) override;
 };
 
+// @TODO: refactor?
 struct GameObject {
     float lifeRemains;
 };
@@ -135,6 +136,7 @@ struct ObjectPool {
     }
 };
 
+// @TODO: this should probably be a game object or layer
 class GeneratorScript : public ScriptableEntity {
     enum : uint32_t {
         ROCK_POOL_SIZE = 16,

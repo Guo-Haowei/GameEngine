@@ -60,7 +60,9 @@ private:
     template<>                                                                                                     \
     T& Create<T>(const ecs::Entity& p_entity) { return m_##T##s.Create(p_entity); }                                \
     template<>                                                                                                     \
-    inline ecs::View<T> View() { return ecs::View(m_##T##s); }                                                     \
+    inline ecs::View<T> View() { return ecs::View<T>(m_##T##s); }                                                  \
+    template<>                                                                                                     \
+    inline ecs::View<const T> View() const { return ecs::View<const T>(m_##T##s); }                                \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #pragma endregion WORLD_COMPONENTS_REGISTRY
@@ -86,6 +88,15 @@ public:
 
     template<typename T>
     inline ecs::View<T> View() {
+        static_assert(0, "this code should never instantiate");
+        struct Dummy {};
+        ecs::ComponentManager<Dummy> dummyManager;
+        return ecs::View(dummyManager);
+    }
+
+    template<typename T>
+        requires std::is_const_v<std::remove_reference_t<T>>
+    inline ecs::View<T> View() const {
         static_assert(0, "this code should never instantiate");
         struct Dummy {};
         ecs::ComponentManager<Dummy> dummyManager;

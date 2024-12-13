@@ -9,13 +9,16 @@ namespace my::ecs {
 
 using ViewContainer = std::vector<std::pair<Entity, int>>;
 
-template<typename T, typename U>
+template<typename T>
 class ViewIterator {
-    using Self = ViewIterator<T, U>;
+    using ComponentManagerType = typename std::conditional<std::is_const<T>::value,
+                                                           const ComponentManager<typename std::remove_const<T>::type>,
+                                                           ComponentManager<T>>::type;
+    using Self = ViewIterator<T>;
 
 public:
     ViewIterator(ViewContainer& p_container,
-                 ecs::ComponentManager<T>& p_manager,
+                 ComponentManagerType& p_manager,
                  size_t p_index) : m_container(p_container),
                                    m_manager(p_manager),
                                    m_index(p_index) {}
@@ -45,26 +48,29 @@ public:
     bool operator==(const Self& p_rhs) const { return m_index == p_rhs.m_index; }
     bool operator!=(const Self& p_rhs) const { return m_index != p_rhs.m_index; }
 
-    auto operator*() -> std::pair<Entity, U&> const {
+    auto operator*() -> std::pair<Entity, T&> {
         Entity entity = m_container[m_index].first;
         int index = m_container[m_index].second;
-        U& component = m_manager.GetComponent(index);
-        return std::pair<Entity, U&>(entity, component);
+        T& component = m_manager.GetComponentByIndex(index);
+        return std::pair<Entity, T&>(entity, component);
     }
 
 private:
     ViewContainer& m_container;
-    ecs::ComponentManager<T>& m_manager;
+    ComponentManagerType& m_manager;
 
     size_t m_index{ 0 };
 };
 
 template<typename T>
 class View {
-    using iter = ViewIterator<T, T>;
-    using const_iter = ViewIterator<T, const T>;
+    using ComponentManagerType = typename std::conditional<std::is_const<T>::value,
+                                                           const ComponentManager<typename std::remove_const<T>::type>,
+                                                           ComponentManager<T>>::type;
 
-    View(ecs::ComponentManager<T>& p_manager) : m_manager(p_manager), m_size(p_manager.GetCount()) {
+    using iter = ViewIterator<T>;
+
+    View(ComponentManagerType& p_manager) : m_manager(p_manager), m_size(p_manager.GetCount()) {
         const int size = (int)p_manager.GetCount();
         for (int i = 0; i < size; ++i) {
             m_container.emplace_back(std::make_pair(m_manager.m_entityArray[i], i));
@@ -76,12 +82,10 @@ public:
 
     iter begin() { return iter(m_container, m_manager, 0); }
     iter end() { return iter(m_container, m_manager, m_size); }
-    const_iter begin() const { return const_iter(m_container, m_manager, 0); }
-    const_iter end() const { return const_iter(m_container, m_manager, m_size); }
 
 private:
     ViewContainer m_container;
-    ecs::ComponentManager<T>& m_manager;
+    ComponentManagerType& m_manager;
     size_t m_size;
 
     friend class Scene;

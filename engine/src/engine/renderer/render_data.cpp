@@ -266,7 +266,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
     auto& point_shadow_cache = p_out_data.pointShadowCache;
 
     int idx = 0;
-    for (auto [light_entity, light_component] : p_scene.m_LightComponents) {
+    for (auto [light_entity, light_component] : p_scene.View<const LightComponent>()) {
         const TransformComponent* light_transform = p_scene.GetComponent<TransformComponent>(light_entity);
         const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(light_entity);
 
@@ -286,6 +286,8 @@ static void FillLightBuffer(const RenderDataConfig& p_config, RenderData& p_out_
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
+                // @TODO: add option to specify extent
+                // @would be nice if can add debug draw
                 const AABB& world_bound = p_scene.GetBound();
                 const Vector3f center = world_bound.Center();
                 const Vector3f extents = world_bound.Size();
@@ -514,7 +516,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     }
 
     // @TODO: update soft body
-    for (auto [entity, mesh] : p_config.scene.m_MeshComponents) {
+    for (auto [entity, mesh] : p_config.scene.View<const MeshComponent>()) {
         if (!(mesh.flags & MeshComponent::DYNAMIC)) {
             continue;
         }

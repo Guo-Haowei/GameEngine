@@ -185,7 +185,12 @@ public:
         return m_lookup.find(p_entity) != m_lookup.end();
     }
 
-    inline T& GetComponent(size_t p_index) {
+    inline T& GetComponentByIndex(size_t p_index) {
+        DEV_ASSERT(p_index < m_componentArray.size());
+        return m_componentArray[p_index];
+    }
+
+    inline const T& GetComponentByIndex(size_t p_index) const {
         DEV_ASSERT(p_index < m_componentArray.size());
         return m_componentArray[p_index];
     }
