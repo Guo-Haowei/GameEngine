@@ -76,7 +76,6 @@ public:
 protected:
     void AddLayer(std::shared_ptr<Layer> p_layer);
 
-private:
     [[nodiscard]] auto SetupModules() -> Result<void>;
 
     void SaveCommandLine(int p_argc, const char** p_argv);

@@ -3,6 +3,21 @@
 
 namespace my {
 
+extern Scene* CreateTheAviatorScene();
+
+class Game : public Application {
+public:
+    Game(const ApplicationSpec& p_spec) : Application(p_spec) {
+        m_state = Application::State::SIM;
+    }
+
+    Scene* CreateInitialScene() override {
+        Scene* scene = CreateTheAviatorScene();
+        m_activeScene = scene;
+        return scene;
+    }
+};
+
 Application* CreateApplication() {
     std::string_view root = StringUtils::BasePath(__FILE__);
     root = StringUtils::BasePath(root);
@@ -17,7 +32,7 @@ Application* CreateApplication() {
     spec.fullscreen = false;
     spec.vsync = false;
     spec.enableImgui = false;
-    return new Application(spec);
+    return new Game(spec);
 }
 
 }  // namespace my

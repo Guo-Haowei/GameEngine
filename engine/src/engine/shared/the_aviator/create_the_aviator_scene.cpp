@@ -133,7 +133,7 @@ Scene* CreateTheAviatorScene() {
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
         camera->SetPrimary();
-        scene->Create<NativeScriptComponent>(main_camera).Bind<CameraController>();
+        scene->Create<NativeScriptComponent>(main_camera).Bind<CameraScript>();
     }
 
     // create light
@@ -329,27 +329,6 @@ Scene* CreateTheAviatorScene() {
             transform->SetScale(Vector3f(1, s, 1));
             scene->AttachChild(hair, plane);
 
-            class HairScript : public ScriptableEntity {
-                void OnCreate() {
-                    TransformComponent& transform = *GetComponent<TransformComponent>();
-                    Vector3f scale = transform.GetScale();
-                    m_scaleY = scale.y;
-                }
-
-                void OnUpdate(float p_timestep) override {
-                    TransformComponent& transform = *GetComponent<TransformComponent>();
-                    m_scaleY += p_timestep;
-                    if (m_scaleY > 0.95f) {
-                        m_scaleY = 0.5f;
-                    }
-                    Vector3f scale = transform.GetScale();
-                    scale.y = m_scaleY;
-                    transform.SetScale(scale);
-                }
-
-                float m_scaleY;
-            };
-
             scene->Create<NativeScriptComponent>(hair).Bind<HairScript>();
         }
     }
@@ -359,8 +338,7 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(propeller);
         transform->Translate(Vector3f(6.0f, 0.0f, 0.0f));
         scene->AttachChild(propeller, plane);
-        auto& script = scene->Create<LuaScriptComponent>(propeller);
-        script.SetScript("@res://scripts/propeller.lua");
+        scene->Create<NativeScriptComponent>(propeller).Bind<PropellerScript>();
     }
     {
         auto pivot = scene->CreateMeshEntity("pivot",
