@@ -68,6 +68,8 @@ class View {
                                                            const ComponentManager<typename std::remove_const<T>::type>,
                                                            ComponentManager<T>>::type;
 
+public:
+
     using iter = ViewIterator<T>;
 
     View(ComponentManagerType& p_manager) : m_manager(p_manager), m_size(p_manager.GetCount()) {
@@ -77,7 +79,6 @@ class View {
         }
     }
 
-public:
     View(const View<T>&) = default;
 
     iter begin() { return iter(m_container, m_manager, 0); }
@@ -87,8 +88,6 @@ private:
     ViewContainer m_container;
     ComponentManagerType& m_manager;
     size_t m_size;
-
-    friend class Scene;
 };
 
 }  // namespace my::ecs
