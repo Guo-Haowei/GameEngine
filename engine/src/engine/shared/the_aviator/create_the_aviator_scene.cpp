@@ -120,7 +120,7 @@ Scene* CreateTheAviatorScene() {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 50.0f));
         camera->SetEditorCamera();
         scene->AttachChild(editor_camera, root);
     }
@@ -187,6 +187,13 @@ Scene* CreateTheAviatorScene() {
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
+    ecs::Entity material_pink = scene->CreateMaterialEntity("material_pink");
+    {
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_pink);
+        material->baseColor = PINK_COLOR.ToVector4f();
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
+    }
 #pragma endregion SETUP_MATERIALS
 
 #pragma region SETUP_PLANE
@@ -237,7 +244,7 @@ Scene* CreateTheAviatorScene() {
         auto wind_shield = scene->CreateCubeEntity("wind_shield",
                                                    material_white,
                                                    Vector3f(0.15f, 0.75f, 1.0f),
-                                                   glm::translate(Vector3f(0.5f, 2.7f, 0.0f)));
+                                                   glm::translate(Vector3f(1.8f, 2.7f, 0.0f)));
         scene->AttachChild(wind_shield, plane);
     }
     {
@@ -253,20 +260,6 @@ Scene* CreateTheAviatorScene() {
                                                           Vector3f(1.5f, 0.75f, 0.5f),
                                                           glm::translate(Vector3f(2.5f, -2.0f, -2.5f)));
         scene->AttachChild(wheel_protection_2, plane);
-    }
-    {
-        auto tire_1 = scene->CreateCubeEntity("tire_1",
-                                              material_dark_brown,
-                                              Vector3f(1.2f, 1.2f, 0.2f),
-                                              glm::translate(Vector3f(2.5f, -2.8f, 2.5f)));
-        scene->AttachChild(tire_1, plane);
-    }
-    {
-        auto tire_2 = scene->CreateCubeEntity("tire_2",
-                                              material_dark_brown,
-                                              Vector3f(1.2f, 1.2f, 0.2f),
-                                              glm::translate(Vector3f(2.5f, -2.8f, -2.5f)));
-        scene->AttachChild(tire_2, plane);
     }
     {
         auto wheel_axis = scene->CreateCubeEntity("wheel_axis",
@@ -286,18 +279,77 @@ Scene* CreateTheAviatorScene() {
         scene->AttachChild(suspension, plane);
     }
     {
+        auto tire_1 = scene->CreateCubeEntity("tire_1",
+                                              material_dark_brown,
+                                              Vector3f(1.2f, 1.2f, 0.2f),
+                                              glm::translate(Vector3f(2.5f, -2.8f, 2.5f)));
+        scene->AttachChild(tire_1, plane);
+        auto tire_2 = scene->CreateCubeEntity("tire_2",
+                                              material_dark_brown,
+                                              Vector3f(1.2f, 1.2f, 0.2f),
+                                              glm::translate(Vector3f(2.5f, -2.8f, -2.5f)));
+        scene->AttachChild(tire_2, plane);
         auto tire_3 = scene->CreateCubeEntity("tire_3",
                                               material_brown,
                                               Vector3f(0.4f, 0.4f, 0.15f),
                                               glm::translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         scene->AttachChild(tire_3, plane);
-    }
-    {
         auto tire_4 = scene->CreateCubeEntity("tire_4",
                                               material_dark_brown,
                                               Vector3f(0.6f, 0.6f, 0.1f),
                                               glm::translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         scene->AttachChild(tire_4, plane);
+        auto body = scene->CreateCubeEntity("body",
+                                            material_brown,
+                                            Vector3f(1.5f) * 0.7f,
+                                            glm::translate(Vector3f(.2f, 1.5f, 0.0f)));
+        scene->AttachChild(body, plane);
+        auto face = scene->CreateCubeEntity("face",
+                                            material_pink,
+                                            Vector3f(1.0f) * 0.7f,
+                                            glm::translate(Vector3f(.0f, 2.7f, 0.0f)));
+
+        scene->AttachChild(face, plane);
+        auto hair_side = scene->CreateCubeEntity("hair_side",
+                                                 material_dark_brown,
+                                                 Vector3f(1.2f, 0.6f, 1.2f) * 0.7f,
+                                                 glm::translate(Vector3f(-.3f, 3.2f, 0.0f)));
+        scene->AttachChild(hair_side, plane);
+
+        for (int i = 0; i < 12; ++i) {
+            const int col = i % 3;
+            const int row = i / 3;
+            Vector3f translation(-0.9f + row * 0.4f, 3.5f, -0.4f + col * 0.4f);
+            float scale_y = col == 1 ? 0.7f : 0.6f;
+            auto hair = scene->CreateCubeEntity(std::format("hair_{}", i), material_dark_brown, Vector3f(0.27f, scale_y, 0.27f), glm::translate(translation));
+            TransformComponent* transform = scene->GetComponent<TransformComponent>(hair);
+            float s = 0.5f + (3 - row) * 0.15f;
+            transform->SetScale(Vector3f(1, s, 1));
+            scene->AttachChild(hair, plane);
+
+            class HairScript : public ScriptableEntity {
+                void OnCreate() {
+                    TransformComponent& transform = *GetComponent<TransformComponent>();
+                    Vector3f scale = transform.GetScale();
+                    m_scaleY = scale.y;
+                }
+
+                void OnUpdate(float p_timestep) override {
+                    TransformComponent& transform = *GetComponent<TransformComponent>();
+                    m_scaleY += p_timestep;
+                    if (m_scaleY > 0.95f) {
+                        m_scaleY = 0.5f;
+                    }
+                    Vector3f scale = transform.GetScale();
+                    scale.y = m_scaleY;
+                    transform.SetScale(scale);
+                }
+
+                float m_scaleY;
+            };
+
+            scene->Create<NativeScriptComponent>(hair).Bind<HairScript>();
+        }
     }
 
     auto propeller = scene->CreateTransformEntity("propeller");

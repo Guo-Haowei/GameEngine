@@ -45,7 +45,7 @@ static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
 static const Color BROWN_COLOR = Color::Hex(0x59332E);
 static const Color DRAK_BROWN_COLOR = Color::Hex(0x23190F);
 static const Color BLUE_COLOR = Color::Hex(0X10A8A3);
-// static const Color PINK_COLOR = Color::Hex(0xF5986E);
+static const Color PINK_COLOR = Color::Hex(0xF5986E);
 
 enum : uint32_t {
     COLLISION_BIT_PLAYER = BIT(1),

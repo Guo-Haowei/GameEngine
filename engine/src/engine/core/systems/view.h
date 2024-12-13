@@ -69,7 +69,6 @@ class View {
                                                            ComponentManager<T>>::type;
 
 public:
-
     using iter = ViewIterator<T>;
 
     View(ComponentManagerType& p_manager) : m_manager(p_manager), m_size(p_manager.GetCount()) {
