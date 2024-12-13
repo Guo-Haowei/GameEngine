@@ -124,39 +124,29 @@ void ScriptManager::Update(Scene& p_scene) {
     }
 
     // @TODO: generalize it
-    std::vector<std::pair<ecs::Entity, int>> view;
+    ecs::View<NativeScriptComponent> view = p_scene.View<NativeScriptComponent>();
 
-    auto& scripts = p_scene.m_NativeScriptComponents.m_componentArray;
-    for (int i = 0; i < (int)scripts.size(); ++i) {
-        view.push_back({ p_scene.m_NativeScriptComponents.m_entityArray[i], i });
-    }
-
-    for (auto [entity, index] : view) {
-        NativeScriptComponent& script = p_scene.m_NativeScriptComponents.m_componentArray[index];
+    for (auto [entity, script] : view) {
+        // @HACK: if OnCreate() creates new NativeScriptComponents
+        // the component array will be resized and invalidated
+        // so save the instance pointer before hand
+        // what really should do is to improve ComponentManager container to not resize,
+        // but append
+        // @TODO: [SCRUM-134] better ECS
+        ScriptableEntity* instance = nullptr;
         if (!script.instance) {
-            script.instance = script.instantiateFunc();
-            script.instance->m_id = entity;
-            script.instance->m_scene = &p_scene;
+            instance = script.instantiateFunc();
+            script.instance = instance;
 
-            script.instance->OnCreate();
+            instance->m_id = entity;
+            instance->m_scene = &p_scene;
+            instance->OnCreate();
+        } else {
+            instance = script.instance;
         }
 
-        // THIS IS A BIT HACKY
-        script = p_scene.m_NativeScriptComponents.m_componentArray[index];
-        script.instance->OnUpdate(p_scene.m_timestep);
+        instance->OnUpdate(p_scene.m_timestep);
     }
-
-    // for (auto [entity, script] : p_scene.m_NativeScriptComponents) {
-    //     if (!script.instance) {
-    //         script.instance = script.instantiateFunc();
-    //         script.instance->m_id = entity;
-    //         script.instance->m_scene = &p_scene;
-
-    //        script.instance->OnCreate();
-    //    }
-
-    //    script.instance->OnUpdate(p_scene.m_timestep);
-    //}
 }
 
 }  // namespace my

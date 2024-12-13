@@ -8,6 +8,10 @@ class Scene;
 
 namespace my::ecs {
 
+template<typename T>
+class View;
+
+// @TODO: remove this iterator, use view iterator instead
 #define COMPONENT_MANAGER_ITERATOR_COMMON                                              \
 public:                                                                                \
     self_type operator++(int) {                                                        \
@@ -264,6 +268,7 @@ public:
     std::unordered_map<Entity, size_t> m_lookup;
 
     friend class ::my::Scene;
+    friend class View<T>;
 };
 
 class ComponentLibrary {
