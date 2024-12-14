@@ -421,6 +421,25 @@ static void FillMainPass(const RenderDataConfig& p_config,
         p_out_data);
 }
 
+static void FillEnvConstants(const RenderDataConfig& p_config,
+                             RenderData& p_out_data) {
+    // @TODO: return if necessary
+
+    constexpr int count = IBL_MIP_CHAIN_MAX * 6;
+    if (p_out_data.batchCache.buffer.size() < count) {
+        p_out_data.batchCache.buffer.resize(count);
+    }
+
+    auto matrices = p_config.isOpengl ? BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0)) : BuildCubeMapViewProjectionMatrix(Vector3f(0));
+    for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx) {
+        for (int face_id = 0; face_id < 6; ++face_id) {
+            auto& batch = p_out_data.batchCache.buffer[mip_idx * 6 + face_id];
+            batch.c_cubeProjectionViewMatrix = matrices[face_id];
+            batch.c_envPassRoughness = (float)mip_idx / (float)(IBL_MIP_CHAIN_MAX - 1);
+        }
+    }
+}
+
 static void FillBloomConstants(const RenderDataConfig& p_config,
                                RenderData& p_out_data) {
     unused(p_config);
@@ -535,6 +554,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     FillVoxelPass(p_config, p_out_data);
     FillMainPass(p_config, p_out_data);
     FillBloomConstants(p_config, p_out_data);
+    FillEnvConstants(p_config, p_out_data);
     FillEmitterBuffer(p_config, p_out_data);
 }
 

@@ -191,16 +191,12 @@ ps_output main(vsoutput_uv input) {
     float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).SampleLevel(s_cubemapClampSampler, N, 0.0f).rgb;
     float3 diffuse = irradiance * base_color.rgb;
 
-    const float MAX_REFLECTION_LOD = 4.0;
-    float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, 0.0f).rgb;
-    // float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
+    const float MAX_REFLECTION_LOD = 4.0f;
+    float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
     float2 lut_uv = float2(NdotV, roughness);
-    lut_uv.y = 1.0 - lut_uv.y;
-    float2 envBRDF = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, lut_uv).rg;
-    // float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
-    float3 specular = prefilteredColor;
-
-    diffuse = float3(0.0, 0.0, 0.0);
+    // lut_uv.y = 1.0 - lut_uv.y;
+    float2 envBRDF = TEXTURE_2D(BrdfLut).SampleLevel(s_linearClampSampler, lut_uv, 0.0f).rg;
+    float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     const float ao = 1.0;
     float3 ambient = (kD * diffuse + specular) * ao;

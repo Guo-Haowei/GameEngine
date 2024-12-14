@@ -874,17 +874,14 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                 auto cube_map = p_draw_pass->desc.colorAttachments[0];
                 const auto [width, height] = p_draw_pass->GetBufferSize();
 
-                auto matrices = gm.GetBackend() == Backend::OPENGL ? BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0)) : BuildCubeMapViewProjectionMatrix(Vector3f(0));
-
+                auto& frame = gm.GetCurrentFrame();
                 gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
                 for (int i = 0; i < 6; ++i) {
                     gm.SetRenderTarget(p_draw_pass, i);
 
                     gm.SetViewport(Viewport(width, height));
 
-                    g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
-                    g_env_cache.update();
-
+                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
                     gm.DrawSkybox();
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
@@ -917,16 +914,15 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                 gm.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
                 const auto [width, height] = p_draw_pass->GetBufferSize();
 
-                auto matrices = gm.GetBackend() == Backend::OPENGL ? BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0)) : BuildCubeMapViewProjectionMatrix(Vector3f(0));
                 auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
                 DEV_ASSERT(skybox);
                 gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+                auto& frame = gm.GetCurrentFrame();
                 for (int i = 0; i < 6; ++i) {
                     gm.SetRenderTarget(p_draw_pass, i);
                     gm.SetViewport(Viewport(width, height));
 
-                    g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[i];
-                    g_env_cache.update();
+                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
                     gm.DrawSkybox();
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
@@ -964,16 +960,14 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                 gm.SetPipelineState(PSO_PREFILTER);
                 auto [width, height] = p_draw_pass->GetBufferSize();
 
-                auto matrices = BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0.0f));
-
                 auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
                 DEV_ASSERT(skybox);
                 gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+                auto& frame = gm.GetCurrentFrame();
                 for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
                     for (int face_id = 0; face_id < 6; ++face_id) {
-                        g_env_cache.cache.c_cubeProjectionViewMatrix = matrices[face_id];
-                        g_env_cache.cache.c_envPassRoughness = (float)mip_idx / (float)(IBL_MIP_CHAIN_MAX - 1);
-                        g_env_cache.update();
+                        const int index = mip_idx * 6 + face_id;
+                        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), index);
 
                         gm.SetRenderTarget(p_draw_pass, face_id, mip_idx);
                         gm.SetViewport(Viewport(width, height));

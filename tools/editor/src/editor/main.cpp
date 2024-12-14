@@ -18,7 +18,7 @@ enum {
     CREATE_PBR_SCENE,
 };
 
-constexpr int DEFAULT_SCENE = CREATE_THE_AVIATOR_SCENE;
+constexpr int DEFAULT_SCENE = CREATE_PBR_SCENE;
 
 class Editor : public Application {
 public:
