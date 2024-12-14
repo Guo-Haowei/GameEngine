@@ -1,5 +1,6 @@
 #include "pass_creator.h"
 
+#include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/math/matrix_transform.h"
@@ -400,7 +401,7 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
     gm.SetPipelineState(PSO_LIGHTING);
 
-    auto brdf = gm.FindTexture(RESOURCE_BRDF);
+    const auto brdf = gm.m_brdfImage->gpu_texture;
     auto diffuse_iraddiance = gm.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
     auto prefiltered = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
     DEV_ASSERT(brdf && diffuse_iraddiance && prefiltered);
@@ -815,30 +816,6 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     // @TODO: rename to skylight
     auto render_pass = m_graph.CreatePass(render_pass_desc);
 
-    // brdf lut
-    {
-        const int size = 512;
-        auto brdf_image = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, size, size), LinearClampSampler());
-        auto brdf_subpass = gm.CreateDrawPass(DrawPassDesc{
-            .colorAttachments = { brdf_image },
-            .execFunc = [](const RenderData& p_data, const DrawPass* p_draw_pass) {
-                if (!p_data.bakeIbl) {
-                    return;
-                }
-
-                OPTICK_EVENT("update brdf lut");
-                GraphicsManager& gm = GraphicsManager::GetSingleton();
-                gm.SetPipelineState(PSO_BRDF);
-                const auto [width, height] = p_draw_pass->GetBufferSize();
-                gm.SetRenderTarget(p_draw_pass);
-                gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
-                gm.SetViewport(Viewport(width, height));
-                gm.DrawQuad();
-            },
-        });
-
-        render_pass->AddDrawPass(brdf_subpass);
-    }
     // hdr -> cubemap
     {
         const int size = 512;

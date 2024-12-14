@@ -312,15 +312,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .inputLayoutDesc = &s_inputLayoutMesh,
                                   .blendDesc = &s_blendStateDefault,
                               });
-
-    CREATE_PSO(PSO_BRDF, {
-                             .vs = "screenspace_quad.vs",
-                             .ps = "brdf.ps",
-                             .rasterizerDesc = &s_rasterizerFrontFace,
-                             .depthStencilDesc = &s_depthStencilNoTest,
-                             .inputLayoutDesc = &s_inputLayoutMesh,
-                             .blendDesc = &s_blendStateDefault,
-                         });
 #pragma endregion PSO_ENV
 
     // @HACK: only support this many shaders

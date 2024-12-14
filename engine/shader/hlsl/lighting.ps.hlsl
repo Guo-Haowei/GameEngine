@@ -177,14 +177,14 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     float3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
     float3 kS = F;
     float3 kD = 1.0 - kS;
-    kD *= 1.0 - metallic;
+    // kD *= 1.0 - metallic;
     float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).SampleLevel(s_cubemapClampSampler, N, 0.0f).rgb;
     float3 diffuse = irradiance * base_color.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0f;
     float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
     float2 lut_uv = float2(NdotV, roughness);
-    // lut_uv.y = 1.0 - lut_uv.y;
+    lut_uv.y = 1.0 - lut_uv.y;
     float2 envBRDF = TEXTURE_2D(BrdfLut).SampleLevel(s_linearClampSampler, lut_uv, 0.0f).rg;
     float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 

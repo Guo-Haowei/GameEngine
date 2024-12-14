@@ -28,8 +28,7 @@ void LogImpl(LogLevel p_level, const std::string& p_message) {
     if (os) [[likely]] {
         os->Print(p_level, message_with_detail);
     } else {
-        StdLogger logger;
-        logger.Print(p_level, p_message);
+        printf("%s\n", p_message.c_str());
     }
 }
 

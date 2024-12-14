@@ -4,6 +4,7 @@
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/frustum.h"
 #include "engine/core/math/geometry.h"
@@ -133,6 +134,8 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
     // create meshes
     m_screenQuadBuffers = CreateMesh(MakePlaneMesh(Vector3f(1)));
     m_skyboxBuffers = CreateMesh(MakeSkyBoxMesh());
+
+    m_brdfImage = m_app->GetAssetRegistry()->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
 
     m_initialized = true;
     return Result<void>();

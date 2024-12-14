@@ -7,8 +7,6 @@ BEGIN_NAME_SPACE(my)
 
 // constant buffer
 #if defined(__cplusplus)
-using uint = uint32_t;
-
 using TextureHandle = uint64_t;
 
 template<typename T, int N>

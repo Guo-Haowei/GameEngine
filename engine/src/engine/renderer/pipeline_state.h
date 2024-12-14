@@ -108,7 +108,6 @@ struct PipelineState {
     PSO_NAME(PSO_DIFFUSE_IRRADIANCE)     \
     PSO_NAME(PSO_PREFILTER)              \
     PSO_NAME(PSO_ENV_SKYBOX)             \
-    PSO_NAME(PSO_BRDF)                   \
     PSO_NAME(PSO_BILLBOARD)              \
     PSO_NAME(PSO_RW_TEXTURE_2D)          \
     PSO_NAME(PSO_PATH_TRACER)            \

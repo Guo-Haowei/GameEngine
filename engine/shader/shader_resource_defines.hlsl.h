@@ -28,7 +28,7 @@ DESCRIPTOR_SRV_LIST
     SRV(Texture2D, TextureLighting, 14, RESOURCE_LIGHTING)                            \
     SRV(Texture2D, SkyboxHdr, 15, RESOURCE_NONE)                                      \
     SRV(TextureCube, Skybox, 16, RESOURCE_ENV_SKYBOX_CUBE_MAP)                        \
-    SRV(Texture2D, BrdfLut, 17, RESOURCE_BRDF)                                        \
+    SRV(Texture2D, BrdfLut, 17, RESOURCE_NONE)                                        \
     SRV(TextureCube, DiffuseIrradiance, 18, RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP) \
     SRV(TextureCube, Prefiltered, 19, RESOURCE_ENV_PREFILTER_CUBE_MAP)
 

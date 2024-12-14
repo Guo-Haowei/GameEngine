@@ -1,5 +1,9 @@
 [
   {
+    "path": "@res://images/brdf.hdr",
+    "type": "Image"
+  },
+  {
     "path": "@res://fonts/DroidSans.ttf",
     "type": "Font"
   },

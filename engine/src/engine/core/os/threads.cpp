@@ -82,6 +82,8 @@ bool ShutdownRequested() {
 
 void RequestShutdown() {
     s_threadGlob.shutdownRequested = true;
+    AssetManager::RequestShutdown();
+    // wake up
 }
 
 bool IsMainThread() {

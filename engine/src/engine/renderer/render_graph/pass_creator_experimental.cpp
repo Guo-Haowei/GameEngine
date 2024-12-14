@@ -74,11 +74,6 @@ void final_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
     auto final_image_handle = GraphicsManager::GetSingleton().FindTexture(RESOURCE_TONE)->GetResidentHandle();
     debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
 
-    // if (0) {
-    //     auto handle = GraphicsManager::singleton().findRenderTarget(RESOURCE_BRDF)->texture->get_resident_handle();
-    //     debug_draw_quad(handle, DISPLAY_CHANNEL_RGB, width, height, 512, 512);
-    // }
-
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
         auto shadow_map_handle = GraphicsManager::GetSingleton().FindTexture(RESOURCE_SHADOW_MAP)->GetResidentHandle();
         debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);

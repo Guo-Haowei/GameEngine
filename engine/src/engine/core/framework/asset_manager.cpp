@@ -109,7 +109,7 @@ void AssetManager::LoadAssetAsync(AssetRegistryHandle* p_handle, OnAssetLoadSucc
 }
 
 void AssetManager::FinalizeImpl() {
-    s_assetManagerGlob.wakeCondition.notify_all();
+    RequestShutdown();
 
     m_assets.clear();
     m_textCache.clear();
@@ -158,6 +158,10 @@ void AssetManager::Wait() {
     while (s_assetManagerGlob.runningWorkers.load() != 0) {
         // dummy for loop
     }
+}
+
+void AssetManager::RequestShutdown() {
+    s_assetManagerGlob.wakeCondition.notify_all();
 }
 
 std::shared_ptr<IAsset> AssetManager::FindFile(const FilePath& p_path) {
