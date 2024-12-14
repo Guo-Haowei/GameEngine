@@ -39,15 +39,15 @@ static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pas
             gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
         }
 
-        if (draw.flags) {
-            gm.SetStencilRef(draw.flags);
-        }
-
         gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
         gm.SetMesh(draw.mesh_data);
         // @TODO: sort
         gm.SetPipelineState(draw.mesh_data->doubleSided ? PSO_GBUFFER_DOUBLE_SIDED : PSO_GBUFFER);
+
+        if (draw.flags) {
+            gm.SetStencilRef(draw.flags);
+        }
 
         for (const auto& subset : draw.subsets) {
             // @TODO: fix this

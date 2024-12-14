@@ -38,8 +38,8 @@ enum ClearFlags : uint32_t {
 };
 DEFINE_ENUM_BITWISE_OPERATIONS(ClearFlags);
 
-enum StencilFlags {
-    STENCIL_FLAG_SELECTED = BIT(1),
+enum StencilFlags : uint8_t {
+    STENCIL_FLAG_SELECTED = BIT(8),
 };
 
 enum class FilterMode {
