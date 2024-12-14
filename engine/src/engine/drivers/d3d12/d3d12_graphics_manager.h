@@ -30,6 +30,8 @@ public:
 
     const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
     void SetMesh(const MeshBuffers* p_mesh) final;
+    void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
+
     void DrawElements(uint32_t p_count, uint32_t p_offset) final;
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
@@ -80,6 +82,8 @@ private:
     auto InitGraphicsContext() -> Result<void>;
     void FinalizeGraphicsContext();
     void FlushGraphicsContext();
+
+    ID3D12Resource* UploadBuffer(uint32_t p_byte_size, const void* p_init_data, ID3D12Resource* p_out_buffer);
 
     auto EnableDebugLayer() -> Result<void>;
     auto CreateDescriptorHeaps() -> Result<void>;
