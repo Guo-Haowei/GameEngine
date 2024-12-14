@@ -15,7 +15,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src/editor FILES ${SRC})
 
 target_include_directories(${TARGET_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}/engine/src
-    ${PROJECT_SOURCE_DIR}/applications/editor/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_link_libraries(${TARGET_NAME} PRIVATE engine)

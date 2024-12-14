@@ -61,4 +61,5 @@ endfunction()
 
 add_subdirectory(engine)
 add_subdirectory(plugins)
+add_subdirectory(tools)
 add_subdirectory(applications)
