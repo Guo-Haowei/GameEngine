@@ -12,6 +12,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/ FILES ${SRC})
 # @TODO: fix this
 target_include_directories(${TARGET_NAME} PRIVATE
     ${VCPKG_INSTALLED_DIR}/x64-windows/include
+    ${VCPKG_INSTALLED_DIR}/arm64-osx/include
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/engine/shader
 )

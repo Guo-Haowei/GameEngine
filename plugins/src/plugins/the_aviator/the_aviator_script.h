@@ -159,7 +159,7 @@ class OceanScript : public ScriptableEntity {
 };
 
 class HairScript : public ScriptableEntity {
-    void OnCreate() {
+    void OnCreate() override {
         TransformComponent& transform = *GetComponent<TransformComponent>();
         Vector3f scale = transform.GetScale();
         m_scaleY = scale.y;
