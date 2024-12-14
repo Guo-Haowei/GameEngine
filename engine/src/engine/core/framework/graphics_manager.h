@@ -141,7 +141,7 @@ public:
     // @TODO: thread safety ?
     void EventReceived(std::shared_ptr<IEvent> p_event) final;
 
-    static auto Create() -> Result<std::shared_ptr<GraphicsManager>>;
+    static auto Create() -> Result<GraphicsManager*>;
 
     Backend GetBackend() const { return m_backend; }
 

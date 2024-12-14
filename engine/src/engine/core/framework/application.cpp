@@ -62,8 +62,26 @@ Application::Application(const ApplicationSpec& p_spec) : m_specification(p_spec
         [&]() { return m_resourceFolder.c_str(); });
 }
 
-void Application::AddLayer(std::shared_ptr<Layer> p_layer) {
+void Application::AttachLayer(Layer* p_layer) {
+    DEV_ASSERT(p_layer);
+
+    p_layer->m_app = this;
+    p_layer->OnAttach();
     m_layers.emplace_back(p_layer);
+}
+
+void Application::DetachLayer(Layer* p_layer) {
+    DEV_ASSERT(p_layer);
+
+    auto it = std::find(m_layers.begin(), m_layers.end(), p_layer);
+    if (it == m_layers.end()) {
+        LOG_WARN("Layer '{}' not found");
+        return;
+    }
+
+    m_layers.erase(it);
+    p_layer->OnDetach();
+    p_layer->m_app = nullptr;
 }
 
 void Application::SaveCommandLine(int p_argc, const char** p_argv) {
@@ -80,11 +98,11 @@ void Application::RegisterModule(Module* p_module) {
 }
 
 auto Application::SetupModules() -> Result<void> {
-    m_assetManager = std::make_shared<AssetManager>();
-    m_assetRegistry = std::make_shared<AssetRegistry>();
-    m_scriptManager = std::make_shared<ScriptManager>();
-    m_sceneManager = std::make_shared<SceneManager>();
-    m_physicsManager = std::make_shared<PhysicsManager>();
+    m_assetManager = new AssetManager();
+    m_assetRegistry = new AssetRegistry();
+    m_scriptManager = new ScriptManager();
+    m_sceneManager = new SceneManager();
+    m_physicsManager = new PhysicsManager();
     m_displayServer = DisplayManager::Create();
     {
         auto res = GraphicsManager::Create();
@@ -93,25 +111,25 @@ auto Application::SetupModules() -> Result<void> {
         }
         m_graphicsManager = *res;
     }
-    m_renderManager = std::make_shared<RenderManager>();
-    m_inputManager = std::make_shared<InputManager>();
+    m_renderManager = new RenderManager();
+    m_inputManager = new InputManager();
 
-    RegisterModule(m_assetManager.get());
-    RegisterModule(m_assetRegistry.get());
-    RegisterModule(m_sceneManager.get());
-    RegisterModule(m_scriptManager.get());
-    RegisterModule(m_physicsManager.get());
-    RegisterModule(m_displayServer.get());
-    RegisterModule(m_graphicsManager.get());
-    RegisterModule(m_renderManager.get());
-    RegisterModule(m_inputManager.get());
+    RegisterModule(m_assetManager);
+    RegisterModule(m_assetRegistry);
+    RegisterModule(m_sceneManager);
+    RegisterModule(m_scriptManager);
+    RegisterModule(m_physicsManager);
+    RegisterModule(m_displayServer);
+    RegisterModule(m_graphicsManager);
+    RegisterModule(m_renderManager);
+    RegisterModule(m_inputManager);
 
     if (m_specification.enableImgui) {
-        m_imguiManager = std::make_shared<ImguiManager>();
-        RegisterModule(m_imguiManager.get());
+        m_imguiManager = new ImguiManager;
+        RegisterModule(m_imguiManager);
     }
 
-    m_eventQueue.RegisterListener(m_graphicsManager.get());
+    m_eventQueue.RegisterListener(m_graphicsManager);
 
     return Result<void>();
 }
@@ -241,8 +259,9 @@ void Application::Run() {
         m_sceneManager->Update();
 
         // layer should set active scene
-        for (auto& layer : m_layers) {
-            layer->OnUpdate(timestep);
+        // update layers from back to front
+        for (int i = (int)m_layers.size() - 1; i >= 0; --i) {
+            m_layers[i]->OnUpdate(timestep);
         }
 
         m_activeScene->Update(timestep);
@@ -273,9 +292,10 @@ void Application::Run() {
         if (m_imguiManager) {
             m_imguiManager->BeginFrame();
 
-            for (auto& layer : m_layers) {
-                layer->OnImGuiRender();
+            for (int i = (int)m_layers.size() - 1; i >= 0; --i) {
+                m_layers[i]->OnImGuiRender();
             }
+
             ImGui::Render();
         }
 
@@ -294,6 +314,18 @@ void Application::Run() {
     LOG("\n********************************************************************************"
         "\nMain Loop"
         "\n********************************************************************************");
+}
+
+void Application::AttachGameLayer() {
+    if (m_gameLayer) {
+        AttachLayer(m_gameLayer.get());
+    }
+}
+
+void Application::DetachGameLayer() {
+    if (m_gameLayer) {
+        DetachLayer(m_gameLayer.get());
+    }
 }
 
 void Application::SetState(State p_state) {

@@ -4,14 +4,16 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/layer.h"
 #include "engine/core/string/string_utils.h"
+#include "plugins/the_aviator/the_aviator_layer.h"
 
 namespace my {
 
 extern Scene* CreateTheAviatorScene();
 
-class GameLayer : public Layer {
+// @TODO: stop using ImGui for rendering final image
+class RenderLayer : public Layer {
 public:
-    GameLayer() : Layer("GameLayer") {}
+    RenderLayer() : Layer("RenderLayer") {}
 
     void OnAttach() override {
     }
@@ -62,7 +64,7 @@ public:
 
         {
             ImGui::Begin("Canvas");
-            auto texture = GraphicsManager::GetSingleton().FindTexture(RESOURCE_FINAL).get();
+            auto texture = GraphicsManager::GetSingleton().FindTexture(RESOURCE_TONE);
             if (texture) {
                 auto handle = texture->GetHandle();
 
@@ -70,7 +72,14 @@ public:
                 size.x = (float)texture->desc.width;
                 size.y = (float)texture->desc.height;
 
-                ImGui::Image((ImTextureID)handle, size, ImVec2(0, 1), ImVec2(1, 0));
+                switch (GraphicsManager::GetSingleton().GetBackend()) {
+                    case Backend::OPENGL:
+                        ImGui::Image((ImTextureID)handle, size, ImVec2(0, 1), ImVec2(1, 0));
+                        break;
+                    default:
+                        ImGui::Image((ImTextureID)handle, size);
+                        break;
+                }
             }
             ImGui::End();
         }
@@ -84,7 +93,11 @@ public:
     Game(const ApplicationSpec& p_spec) : Application(p_spec) {
         m_state = Application::State::SIM;
 
-        AddLayer(std::make_shared<GameLayer>());
+        m_renderLayer = std::make_unique<RenderLayer>();
+        m_layers.emplace_back(m_renderLayer.get());
+
+        m_gameLayer = std::make_unique<TheAviatorLayer>();
+        m_layers.emplace_back(m_gameLayer.get());
     }
 
     Scene* CreateInitialScene() override {
@@ -92,6 +105,8 @@ public:
         m_activeScene = scene;
         return scene;
     }
+
+    std::unique_ptr<Layer> m_renderLayer;
 };
 
 Application* CreateApplication() {
@@ -107,7 +122,7 @@ Application* CreateApplication() {
     spec.decorated = true;
     spec.fullscreen = false;
     spec.vsync = false;
-    //spec.enableImgui = false;
+    // spec.enableImgui = false;
     spec.enableImgui = true;
     return new Game(spec);
 }

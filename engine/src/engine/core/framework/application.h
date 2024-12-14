@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/core/base/noncopyable.h"
 #include "engine/core/framework/event_queue.h"
 #include "engine/core/framework/module.h"
 #include "engine/renderer/graphics_defines.h"
@@ -31,7 +32,7 @@ struct ApplicationSpec {
     bool enableImgui;
 };
 
-class Application {
+class Application : public NonCopyable {
 public:
     enum class State : uint8_t {
         EDITING,
@@ -50,16 +51,21 @@ public:
 
     virtual void InitLayers() {}
 
+    void AttachLayer(Layer* p_layer);
+    void DetachLayer(Layer* p_layer);
+    void AttachGameLayer();
+    void DetachGameLayer();
+
     EventQueue& GetEventQueue() { return m_eventQueue; }
 
-    AssetRegistry* GetAssetRegistry() { return m_assetRegistry.get(); }
-    AssetManager* GetAssetManager() { return m_assetManager.get(); }
-    InputManager* GetInputManager() { return m_inputManager.get(); }
-    SceneManager* GetSceneManager() { return m_sceneManager.get(); }
-    PhysicsManager* GetPhysicsManager() { return m_physicsManager.get(); }
-    DisplayManager* GetDisplayServer() { return m_displayServer.get(); }
-    GraphicsManager* GetGraphicsManager() { return m_graphicsManager.get(); }
-    ImguiManager* GetImguiManager() { return m_imguiManager.get(); }
+    AssetRegistry* GetAssetRegistry() { return m_assetRegistry; }
+    AssetManager* GetAssetManager() { return m_assetManager; }
+    InputManager* GetInputManager() { return m_inputManager; }
+    SceneManager* GetSceneManager() { return m_sceneManager; }
+    PhysicsManager* GetPhysicsManager() { return m_physicsManager; }
+    DisplayManager* GetDisplayServer() { return m_displayServer; }
+    GraphicsManager* GetGraphicsManager() { return m_graphicsManager; }
+    ImguiManager* GetImguiManager() { return m_imguiManager; }
 
     const ApplicationSpec& GetSpecification() const { return m_specification; }
     const std::string& GetUserFolder() const { return m_userFolder; }
@@ -74,14 +80,14 @@ public:
     virtual Scene* CreateInitialScene();
 
 protected:
-    void AddLayer(std::shared_ptr<Layer> p_layer);
-
     [[nodiscard]] auto SetupModules() -> Result<void>;
 
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
 
-    std::vector<std::shared_ptr<Layer>> m_layers;
+    std::unique_ptr<Layer> m_gameLayer;
+    std::vector<Layer*> m_layers;
+
     std::vector<std::string> m_commandLine;
     std::string m_appName;
     std::string m_userFolder;
@@ -90,17 +96,17 @@ protected:
 
     EventQueue m_eventQueue;
 
-    std::shared_ptr<AssetRegistry> m_assetRegistry;
-    std::shared_ptr<AssetManager> m_assetManager;
-    std::shared_ptr<SceneManager> m_sceneManager;
-    std::shared_ptr<PhysicsManager> m_physicsManager;
-    std::shared_ptr<DisplayManager> m_displayServer;
-    std::shared_ptr<GraphicsManager> m_graphicsManager;
-    std::shared_ptr<ImguiManager> m_imguiManager;
-    std::shared_ptr<ScriptManager> m_scriptManager;
+    AssetRegistry* m_assetRegistry;
+    AssetManager* m_assetManager;
+    SceneManager* m_sceneManager;
+    PhysicsManager* m_physicsManager;
+    DisplayManager* m_displayServer;
+    GraphicsManager* m_graphicsManager;
+    ImguiManager* m_imguiManager;
+    ScriptManager* m_scriptManager;
     // @TODO: remove render manager
-    std::shared_ptr<RenderManager> m_renderManager;
-    std::shared_ptr<InputManager> m_inputManager;
+    RenderManager* m_renderManager;
+    InputManager* m_inputManager;
 
     std::vector<Module*> m_modules;
 

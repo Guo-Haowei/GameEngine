@@ -1,6 +1,6 @@
 //  @TODO: refactor
 #include "engine/scene/camera_controller.h"
-#include "game_script.h"
+#include "the_aviator_script.h"
 
 namespace my {
 
@@ -388,14 +388,6 @@ Scene* CreateTheAviatorScene() {
     {
         scene->AttachChild(earth, world);
         scene->Create<NativeScriptComponent>(earth).Bind<EarthScript>();
-    }
-
-    // generator
-    {
-        auto generator = scene->CreateTransformEntity("generator");
-        scene->AttachChild(generator, earth);
-
-        scene->Create<NativeScriptComponent>(generator).Bind<GeneratorScript>();
     }
 
 #pragma region SETUP_OCEAN

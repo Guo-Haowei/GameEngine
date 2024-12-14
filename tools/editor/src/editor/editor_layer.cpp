@@ -244,6 +244,8 @@ void EditorLayer::OnUpdate(float) {
             m_simScene->Update(0.0f);
             m_app->SetActiveScene(m_simScene);
             m_app->SetState(Application::State::SIM);
+
+            m_app->AttachGameLayer();
         } break;
         case Application::State::END_SIM: {
             if (DEV_VERIFY(m_simScene)) {
@@ -252,6 +254,8 @@ void EditorLayer::OnUpdate(float) {
             }
             m_app->SetActiveScene(scene);
             m_app->SetState(Application::State::EDITING);
+
+            m_app->DetachGameLayer();
         } break;
         case Application::State::SIM: {
             DEV_ASSERT(m_simScene);

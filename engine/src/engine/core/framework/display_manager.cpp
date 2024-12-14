@@ -50,17 +50,17 @@ auto DisplayManager::InitializeImpl() -> Result<void> {
     return InitializeWindow(info);
 }
 
-std::shared_ptr<DisplayManager> DisplayManager::Create() {
+DisplayManager* DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
     // @TODO: cocoa display
     if (backend == "opengl" || backend == "vulkan" || backend == "metal") {
-        return std::make_shared<GlfwDisplayManager>();
+        return new GlfwDisplayManager();
     }
 
 #if USING(PLATFORM_WINDOWS)
-    return std::make_shared<Win32DisplayManager>();
+    return new Win32DisplayManager();
 #else
-    return std::make_shared<EmptyDisplayManager>();
+    return new EmptyDisplayManager();
 #endif
 }
 

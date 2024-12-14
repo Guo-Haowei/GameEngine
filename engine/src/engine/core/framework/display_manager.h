@@ -33,7 +33,7 @@ public:
 
     virtual void BeginFrame() = 0;
 
-    static std::shared_ptr<DisplayManager> Create();
+    static DisplayManager* Create();
 
 protected:
     virtual auto InitializeWindow(const WindowSpecfication& p_spec) -> Result<void> = 0;
