@@ -1,7 +1,7 @@
 #include "assimp_asset_loader.h"
 
 #if USING(USING_ASSIMP)
-#include <assimp/pbrmaterial.h>
+#include <assimp/GltfMaterial.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
@@ -48,7 +48,7 @@ void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
     MaterialComponent* materialComponent = m_scene->GetComponent<MaterialComponent>(material_id);
     DEV_ASSERT(materialComponent);
 
-    auto getMaterialPath = [&](aiTextureType p_type, uint32_t p_index) -> std::string {
+    auto get_material_path = [&](aiTextureType p_type, uint32_t p_index) -> std::string {
         aiString path;
         if (p_material.GetTexture(p_type, p_index, &path) == AI_SUCCESS) {
             return m_basePath + path.C_Str();
@@ -56,25 +56,22 @@ void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
         return "";
     };
 
-    std::string path = getMaterialPath(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE);
-    if (path.empty()) {
-        path = getMaterialPath(aiTextureType_DIFFUSE, 0);
-    }
+    std::string path = get_material_path(aiTextureType_DIFFUSE, 0);
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_BASE].path = path;
         AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
 
-    path = getMaterialPath(aiTextureType_NORMALS, 0);
+    path = get_material_path(aiTextureType_NORMALS, 0);
     if (path.empty()) {
-        path = getMaterialPath(aiTextureType_HEIGHT, 0);
+        path = get_material_path(aiTextureType_HEIGHT, 0);
     }
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_NORMAL].path = path;
         AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
 
-    path = getMaterialPath(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
+    path = get_material_path(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].path = path;
         AssetRegistry::GetSingleton().RequestAssetSync(path);

@@ -1,3 +1,4 @@
+#pragma once
 #include "engine/assets/asset_loader.h"
 #include "engine/core/systems/entity.h"
 
@@ -11,12 +12,12 @@ namespace my {
 
 class Scene;
 
-class LoaderTinyGLTF : public IAssetLoader {
+class GltfLoader : public IAssetLoader {
 public:
     using IAssetLoader::IAssetLoader;
 
     static std::unique_ptr<IAssetLoader> CreateLoader(const IAsset::Meta& p_meta) {
-        return std::make_unique<LoaderTinyGLTF>(p_meta);
+        return std::make_unique<GltfLoader>(p_meta);
     }
 
     auto Load() -> Result<IAsset*> override;

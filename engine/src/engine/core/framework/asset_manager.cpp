@@ -3,7 +3,7 @@
 #include <filesystem>
 
 #include "engine/assets/asset_loader.h"
-#include "engine/assets/loader_tinygltf.h"
+#include "engine/assets/gltf_loader.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
@@ -42,7 +42,11 @@ static struct {
 auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
 
-    IAssetLoader::RegisterLoader(".gltf", LoaderTinyGLTF::CreateLoader);
+#if 1
+    IAssetLoader::RegisterLoader(".gltf", GltfLoader::CreateLoader);
+#else
+    IAssetLoader::RegisterLoader(".gltf", AssimpAssetLoader::CreateLoader);
+#endif
 #if USING(USING_ASSIMP)
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
 #endif
