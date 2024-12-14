@@ -1,4 +1,4 @@
-set(TARGET_NAME TheAviator)
+set(TARGET_NAME the_aviator)
 
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
