@@ -313,8 +313,8 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
         context.solver = new btSequentialImpulseConstraintSolver;
         context.dynamicWorld = new btSoftRigidDynamicsWorld(context.dispatcher, context.broadphase, context.solver, context.collisionConfig);
 
-        btVector3 gravity = btVector3(0, 0, 0);
-        // btVector3 gravity = btVector3(0.0f, -9.81f, 0.0f);
+        // btVector3 gravity = btVector3(0, 0, 0);
+        btVector3 gravity = btVector3(0.0f, -9.81f, 0.0f);
         context.dynamicWorld->setGravity(gravity);
 
         context.softBodyWorldInfo = new btSoftBodyWorldInfo;

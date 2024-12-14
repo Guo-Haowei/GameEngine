@@ -48,11 +48,22 @@ void InputManager::BeginFrame() {
         m_inputEventQueue.EnqueueEvent(e);
     }
 
-    // Send mouse events
+    // Send mouse wheel events
     if (m_wheelX != 0 || m_wheelY != 0) {
-        auto e = std::make_shared<InputEventMouseWheel>();
-        e->m_x = static_cast<float>(m_wheelX);
-        e->m_y = static_cast<float>(m_wheelY);
+        auto e = std::make_shared<InputEventMouseWheel>(m_buttons,
+                                                        m_prevButtons,
+                                                        Vector2f(static_cast<float>(m_wheelX), static_cast<float>(m_wheelY)));
+        e->m_altPressed = alt;
+        e->m_ctrlPressed = ctrl;
+        e->m_shiftPressed = shift;
+        m_inputEventQueue.EnqueueEvent(e);
+    }
+
+    // Send mouse moved event
+    if (m_mouseMoved) {
+        auto e = std::make_shared<InputEventMouseMove>(m_buttons, m_prevButtons);
+        e->m_pos = m_cursor;
+        e->m_prevPos = m_prevCursor;
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
@@ -67,26 +78,8 @@ void InputManager::EndFrame() {
 
     m_wheelX = 0;
     m_wheelY = 0;
-}
 
-template<size_t N>
-static inline bool InputIsDown(const std::bitset<N>& p_array, int p_index) {
-    DEV_ASSERT_INDEX(p_index, N);
-    return p_array[p_index];
-}
-
-template<size_t N>
-static inline bool InputHasChanged(const std::bitset<N>& p_current, const std::bitset<N>& p_prev, int p_index) {
-    DEV_ASSERT_INDEX(p_index, N);
-    return p_current[p_index] == true && p_prev[p_index] == false;
-}
-
-bool InputManager::IsButtonDown(MouseButton p_key) {
-    return InputIsDown(m_buttons, std::to_underlying(p_key));
-}
-
-bool InputManager::IsButtonPressed(MouseButton p_key) {
-    return InputHasChanged(m_buttons, m_prevButtons, std::to_underlying(p_key));
+    m_mouseMoved = false;
 }
 
 bool InputManager::IsKeyDown(KeyCode p_key) {
@@ -127,11 +120,17 @@ void InputManager::SetKey(KeyCode p_key, bool p_pressed) {
 void InputManager::SetCursor(float p_x, float p_y) {
     m_cursor.x = p_x;
     m_cursor.y = p_y;
+
+    m_mouseMoved = true;
 }
 
 void InputManager::SetWheel(double p_x, double p_y) {
     m_wheelX = p_x;
     m_wheelY = p_y;
+}
+
+Vector2f InputManager::GetWheel() const {
+    return Vector2f(m_wheelX, m_wheelY);
 }
 
 }  // namespace my

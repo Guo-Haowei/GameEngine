@@ -1,4 +1,5 @@
 //  @TODO: refactor
+#include "engine/scene/camera_controller.h"
 #include "game_script.h"
 
 namespace my {
@@ -133,7 +134,18 @@ Scene* CreateTheAviatorScene() {
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
         camera->SetPrimary();
+        class InGameDebugCameraController : public EditorCameraController {
+        public:
+            InGameDebugCameraController() {
+                SetScrollSpeed(10.0f);
+                SetMoveSpeed(30.0f);
+            }
+        };
+#if 1
+        scene->Create<NativeScriptComponent>(main_camera).Bind<InGameDebugCameraController>();
+#else
         scene->Create<NativeScriptComponent>(main_camera).Bind<CameraScript>();
+#endif
     }
 
     // create light

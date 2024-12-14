@@ -173,7 +173,7 @@ private:
     Matrix4x4f m_projectionViewMatrix;
 
     friend class Scene;
-    friend class CameraController;
+    friend class EditorCameraController;
 };
 #pragma endregion CAMERA_COMPONENT
 

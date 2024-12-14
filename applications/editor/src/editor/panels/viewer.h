@@ -20,7 +20,7 @@ private:
     Vector2f m_canvasSize;
     bool m_focused;
     // @TODO: move camera controller to somewhere else
-    CameraController m_cameraController;
+    EditorCameraController m_cameraController;
 };
 
 }  // namespace my

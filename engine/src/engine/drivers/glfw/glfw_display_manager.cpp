@@ -122,13 +122,15 @@ std::tuple<int, int> GlfwDisplayManager::GetWindowPos() { return std::tuple<int,
 
 void GlfwDisplayManager::CursorPosCallback(GLFWwindow* p_window, double p_x, double p_y) {
     auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    auto input_manager = window->m_app->GetInputManager();
+
     if (window->m_app->GetSpecification().enableImgui) {
         ImGui_ImplGlfw_CursorPosCallback(p_window, p_x, p_y);
     }
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
-        InputManager::GetSingleton().SetCursor(static_cast<float>(p_x), static_cast<float>(p_y));
+        input_manager->SetCursor(static_cast<float>(p_x), static_cast<float>(p_y));
     }
 }
 
@@ -137,6 +139,8 @@ void GlfwDisplayManager::MouseButtonCallback(GLFWwindow* p_window,
                                              int p_action,
                                              int p_mods) {
     auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    auto input_manager = window->m_app->GetInputManager();
+
     if (window->m_app->GetSpecification().enableImgui) {
         ImGui_ImplGlfw_MouseButtonCallback(p_window, p_button, p_action, p_mods);
     }
@@ -144,9 +148,9 @@ void GlfwDisplayManager::MouseButtonCallback(GLFWwindow* p_window,
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
         if (p_action == GLFW_RELEASE) {
-            InputManager::GetSingleton().SetButton(static_cast<MouseButton>(p_button), false);
+            input_manager->SetButton(static_cast<MouseButton>(p_button), false);
         } else {
-            InputManager::GetSingleton().SetButton(static_cast<MouseButton>(p_button), true);
+            input_manager->SetButton(static_cast<MouseButton>(p_button), true);
         }
     }
 }
@@ -157,6 +161,8 @@ void GlfwDisplayManager::KeyCallback(GLFWwindow* p_window,
                                      int p_action,
                                      int p_mods) {
     auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    auto input_manager = window->m_app->GetInputManager();
+
     if (window->m_app->GetSpecification().enableImgui) {
         ImGui_ImplGlfw_KeyCallback(p_window, p_keycode, p_scancode, p_action, p_mods);
     }
@@ -169,9 +175,9 @@ void GlfwDisplayManager::KeyCallback(GLFWwindow* p_window,
         KeyCode key = keyMapping[p_keycode];
 
         if (p_action == GLFW_PRESS) {
-            InputManager::GetSingleton().SetKey(key, true);
+            input_manager->SetKey(key, true);
         } else if (p_action == GLFW_RELEASE) {
-            InputManager::GetSingleton().SetKey(key, false);
+            input_manager->SetKey(key, false);
         }
     }
 }
@@ -180,13 +186,15 @@ void GlfwDisplayManager::ScrollCallback(GLFWwindow* p_window,
                                         double p_xoffset,
                                         double p_yoffset) {
     auto window = reinterpret_cast<GlfwDisplayManager*>(glfwGetWindowUserPointer(p_window));
+    auto input_manager = window->m_app->GetInputManager();
+
     if (window->m_app->GetSpecification().enableImgui) {
         ImGui_ImplGlfw_ScrollCallback(p_window, p_xoffset, p_yoffset);
     }
 
     // if (!ImGui::GetIO().WantCaptureMouse)
     {
-        InputManager::GetSingleton().SetWheel(p_xoffset, p_yoffset);
+        input_manager->SetWheel(p_xoffset, p_yoffset);
     }
 }
 

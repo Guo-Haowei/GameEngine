@@ -1,15 +1,15 @@
 #pragma once
-#include <bitset>
-
 #include "engine/core/base/singleton.h"
 #include "engine/core/framework/event_queue.h"
 #include "engine/core/framework/module.h"
-#include "engine/core/io/input_code.h"
+#include "engine/core/io/input_event.h"
 #include "engine/core/math/geomath.h"
 
 namespace my {
 
-class InputManager : public Singleton<InputManager>, public Module {
+class InputManager : public Singleton<InputManager>,
+                     public Module,
+                     public MouseButtonBase {
 public:
     InputManager() : Module("InputManager") {}
 
@@ -20,9 +20,6 @@ public:
 
     void BeginFrame();
     void EndFrame();
-
-    bool IsButtonDown(MouseButton p_key);
-    bool IsButtonPressed(MouseButton p_key);
 
     bool IsKeyDown(KeyCode p_key);
     bool IsKeyPressed(KeyCode p_key);
@@ -39,23 +36,21 @@ public:
     EventQueue& GetEventQueue() { return m_inputEventQueue; }
 
     void SetWheel(double p_x, double p_y);
+    Vector2f GetWheel() const;
 
 protected:
-    using KeyArray = std::bitset<std::to_underlying(KeyCode::COUNT)>;
-
     EventQueue m_inputEventQueue;
 
     KeyArray m_keys;
     KeyArray m_prevKeys;
-
-    std::bitset<std::to_underlying(MouseButton::COUNT)> m_buttons = { false };
-    std::bitset<std::to_underlying(MouseButton::COUNT)> m_prevButtons = { false };
 
     Vector2f m_cursor{ 0, 0 };
     Vector2f m_prevCursor{ 0, 0 };
 
     double m_wheelX{ 0 };
     double m_wheelY{ 0 };
+
+    bool m_mouseMoved{ false };
 };
 
 };  // namespace my
