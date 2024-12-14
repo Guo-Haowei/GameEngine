@@ -13,7 +13,7 @@ public:
     using Application::Application;
 
     void InitLayers() override {
-        AddLayer(std::make_shared<my::EditorLayer>());
+        AddLayer(std::make_shared<EditorLayer>());
     }
 
     Scene* CreateInitialScene() override;

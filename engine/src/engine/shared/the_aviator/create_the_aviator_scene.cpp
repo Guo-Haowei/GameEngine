@@ -141,7 +141,7 @@ Scene* CreateTheAviatorScene() {
                 SetMoveSpeed(30.0f);
             }
         };
-#if 1
+#if 0
         scene->Create<NativeScriptComponent>(main_camera).Bind<InGameDebugCameraController>();
 #else
         scene->Create<NativeScriptComponent>(main_camera).Bind<CameraScript>();

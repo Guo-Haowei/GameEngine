@@ -36,7 +36,7 @@ public:
     void OnAttach() override;
     void OnDetach() override;
 
-    void OnUpdate(float p_time_step) override;
+    void OnUpdate(float p_timestep) override;
     void OnImGuiRender() override;
 
     void SelectEntity(ecs::Entity p_selected);
