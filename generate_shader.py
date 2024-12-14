@@ -77,7 +77,7 @@ def generate(hlsl_source):
     # generate shader
     include_path = os.path.join(project_dir, shader_source_dir)
 
-    spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1', '-D HLSL_LANG_D3D11=1']
+    spv_command = [dxc_path, full_input_path, '-T', shader_model, '-E', 'main', '-Fo', output_spv, '-spirv', '-I', include_path, '-D HLSL_LANG=1', '-D HLSL_LANG_D3D11=1', '-D HLSL_2_GLSL']
     generate_files = [ { 'filename': glsl_file, 'command' : spv_command } ]
 
     for generate_file in generate_files:

@@ -472,16 +472,6 @@ void RenderPassCreator::AddLightingPass() {
         .depthAttachment = gbuffer_depth,
         .transitions = {
             ResourceTransition{
-                .resource = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
-                .slot = GetGbufferDepthSlot(),
-                .beginPassFunc = [](GraphicsManager* p_graphics_manager,
-                                    GpuTexture* p_texture,
-                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_2D, p_texture->GetHandle(), p_slot); },
-                .endPassFunc = [](GraphicsManager* p_graphics_manager,
-                                  GpuTexture*,
-                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_2D, p_slot); },
-            },
-            ResourceTransition{
                 .resource = manager.FindTexture(RESOURCE_SHADOW_MAP),
                 .slot = GetShadowMapSlot(),
                 .beginPassFunc = [](GraphicsManager* p_graphics_manager,

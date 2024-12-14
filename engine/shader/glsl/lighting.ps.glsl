@@ -18,20 +18,17 @@ vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
 
 void main() {
     const vec2 texcoord = pass_uv;
-
-    // @TODO: check if this is necessary
-    float depth = texture(t_GbufferDepth, texcoord).r;
-
-    if (depth > 0.999999) {
+    const vec4 emissive_roughness_metallic = texture(t_GbufferMaterialMap, texcoord);
+    if (emissive_roughness_metallic.a <= 0.0f) {
         discard;
     }
-    gl_FragDepth = depth;
+
+    //gl_FragDepth = depth;
 
     vec3 N = texture(t_GbufferNormalMap, texcoord).rgb;
     // N = (2.0 * N) - vec3(1.0);
 
     const vec3 world_position = texture(t_GbufferPositionMap, texcoord).rgb;
-    const vec3 emissive_roughness_metallic = texture(t_GbufferMaterialMap, texcoord).rgb;
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;

@@ -13,12 +13,12 @@ extern Scene* CreatePhysicsTestScene();
 
 enum {
     CREATE_EMPTY_SCENE = 0,
-    CREATE_THE_AVIATOR_SCENE,
-    CREATE_PHYSICS_SCENE,
-    CREATE_PBR_SCENE,
-};
+    CREATE_THE_AVIATOR_SCENE = 1,
+    CREATE_PHYSICS_SCENE = 2,
+    CREATE_PBR_SCENE = 3,
 
-constexpr int DEFAULT_SCENE = CREATE_PBR_SCENE;
+    DEFAULT_SCENE = 1,
+};
 
 class Editor : public Application {
 public:

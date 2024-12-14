@@ -55,11 +55,11 @@ TEST(vector, constructor_cast) {
         CHECK_VEC2(vec, 1, 2);
     }
     {
-        int a = 5;
-        int b = 2;
-        int c = 3;
-        Vector3f vec(a, b, c);
-        CHECK_VEC3(vec, 1, 2, 3);
+        float a = 1.4f;
+        float b = 2.2f;
+        float c = -3.3f;
+        Vector3i vec(a, b, c);
+        CHECK_VEC3(vec, 1, 2, -3);
     }
     {
         int a = 5;
@@ -67,7 +67,7 @@ TEST(vector, constructor_cast) {
         int c = 3;
         int d = 7;
         Vector4f vec(a, b, c, d);
-        CHECK_VEC3(vec, 5, 2, 3, 7);
+        CHECK_VEC4(vec, 5, 2, 3, 7);
     }
 }
 
