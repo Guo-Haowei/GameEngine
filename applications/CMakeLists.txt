@@ -1,2 +1,1 @@
-add_subdirectory(editor)
-add_subdirectory(TheAviator)
+add_subdirectory(the_aviator)

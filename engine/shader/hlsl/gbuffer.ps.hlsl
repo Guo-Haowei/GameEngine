@@ -8,7 +8,7 @@ struct ps_output {
     float3 base_color : SV_TARGET0;
     float4 position : SV_TARGET1;
     float4 normal : SV_TARGET2;
-    float3 out_emissive_roughness_metallic : SV_TARGET3;
+    float4 out_emissive_roughness_metallic : SV_TARGET3;
 };
 
 ps_output main(vsoutput_mesh input) {
@@ -57,5 +57,6 @@ ps_output main(vsoutput_mesh input) {
     output.out_emissive_roughness_metallic.r = c_emissivePower;
     output.out_emissive_roughness_metallic.g = roughness;
     output.out_emissive_roughness_metallic.b = metallic;
+    output.out_emissive_roughness_metallic.a = 1.0f;
     return output;
 }

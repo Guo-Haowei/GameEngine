@@ -3,6 +3,8 @@ project(GameEngine)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
 
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 if(APPLE)
     enable_language(OBJCXX)
 endif()
@@ -61,4 +63,5 @@ endfunction()
 
 add_subdirectory(engine)
 add_subdirectory(plugins)
+add_subdirectory(tools)
 add_subdirectory(applications)

@@ -1,5 +1,6 @@
 //  @TODO: refactor
-#include "game_script.h"
+#include "engine/scene/camera_controller.h"
+#include "the_aviator_script.h"
 
 namespace my {
 
@@ -120,7 +121,7 @@ Scene* CreateTheAviatorScene() {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 50.0f));
         camera->SetEditorCamera();
         scene->AttachChild(editor_camera, root);
     }
@@ -133,7 +134,18 @@ Scene* CreateTheAviatorScene() {
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
         camera->SetPrimary();
-        scene->Create<NativeScriptComponent>(main_camera).Bind<CameraController>();
+        class InGameDebugCameraController : public EditorCameraController {
+        public:
+            InGameDebugCameraController() {
+                SetScrollSpeed(10.0f);
+                SetMoveSpeed(30.0f);
+            }
+        };
+#if 0
+        scene->Create<NativeScriptComponent>(main_camera).Bind<InGameDebugCameraController>();
+#else
+        scene->Create<NativeScriptComponent>(main_camera).Bind<CameraScript>();
+#endif
     }
 
     // create light
@@ -146,6 +158,8 @@ Scene* CreateTheAviatorScene() {
         transform->RotateZ(Degree(-30.f));
         LightComponent* light_component = scene->GetComponent<LightComponent>(light);
         light_component->SetCastShadow();
+        light_component->SetShadowRegion();
+        light_component->m_shadowRegion = AABB::FromCenterSize(Vector3f(0, 20, -40), Vector3f(90));
     }
 
 #pragma region SETUP_MATERIALS
@@ -184,6 +198,13 @@ Scene* CreateTheAviatorScene() {
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_blue);
         material->baseColor = BLUE_COLOR.ToVector4f();
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
+    }
+    ecs::Entity material_pink = scene->CreateMaterialEntity("material_pink");
+    {
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_pink);
+        material->baseColor = PINK_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
@@ -237,7 +258,7 @@ Scene* CreateTheAviatorScene() {
         auto wind_shield = scene->CreateCubeEntity("wind_shield",
                                                    material_white,
                                                    Vector3f(0.15f, 0.75f, 1.0f),
-                                                   glm::translate(Vector3f(0.5f, 2.7f, 0.0f)));
+                                                   glm::translate(Vector3f(1.8f, 2.7f, 0.0f)));
         scene->AttachChild(wind_shield, plane);
     }
     {
@@ -253,20 +274,6 @@ Scene* CreateTheAviatorScene() {
                                                           Vector3f(1.5f, 0.75f, 0.5f),
                                                           glm::translate(Vector3f(2.5f, -2.0f, -2.5f)));
         scene->AttachChild(wheel_protection_2, plane);
-    }
-    {
-        auto tire_1 = scene->CreateCubeEntity("tire_1",
-                                              material_dark_brown,
-                                              Vector3f(1.2f, 1.2f, 0.2f),
-                                              glm::translate(Vector3f(2.5f, -2.8f, 2.5f)));
-        scene->AttachChild(tire_1, plane);
-    }
-    {
-        auto tire_2 = scene->CreateCubeEntity("tire_2",
-                                              material_dark_brown,
-                                              Vector3f(1.2f, 1.2f, 0.2f),
-                                              glm::translate(Vector3f(2.5f, -2.8f, -2.5f)));
-        scene->AttachChild(tire_2, plane);
     }
     {
         auto wheel_axis = scene->CreateCubeEntity("wheel_axis",
@@ -286,18 +293,56 @@ Scene* CreateTheAviatorScene() {
         scene->AttachChild(suspension, plane);
     }
     {
+        auto tire_1 = scene->CreateCubeEntity("tire_1",
+                                              material_dark_brown,
+                                              Vector3f(1.2f, 1.2f, 0.2f),
+                                              glm::translate(Vector3f(2.5f, -2.8f, 2.5f)));
+        scene->AttachChild(tire_1, plane);
+        auto tire_2 = scene->CreateCubeEntity("tire_2",
+                                              material_dark_brown,
+                                              Vector3f(1.2f, 1.2f, 0.2f),
+                                              glm::translate(Vector3f(2.5f, -2.8f, -2.5f)));
+        scene->AttachChild(tire_2, plane);
         auto tire_3 = scene->CreateCubeEntity("tire_3",
                                               material_brown,
                                               Vector3f(0.4f, 0.4f, 0.15f),
                                               glm::translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         scene->AttachChild(tire_3, plane);
-    }
-    {
         auto tire_4 = scene->CreateCubeEntity("tire_4",
                                               material_dark_brown,
                                               Vector3f(0.6f, 0.6f, 0.1f),
                                               glm::translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         scene->AttachChild(tire_4, plane);
+        auto body = scene->CreateCubeEntity("body",
+                                            material_brown,
+                                            Vector3f(1.5f) * 0.7f,
+                                            glm::translate(Vector3f(.2f, 1.5f, 0.0f)));
+        scene->AttachChild(body, plane);
+        auto face = scene->CreateCubeEntity("face",
+                                            material_pink,
+                                            Vector3f(1.0f) * 0.7f,
+                                            glm::translate(Vector3f(.0f, 2.7f, 0.0f)));
+
+        scene->AttachChild(face, plane);
+        auto hair_side = scene->CreateCubeEntity("hair_side",
+                                                 material_dark_brown,
+                                                 Vector3f(1.2f, 0.6f, 1.2f) * 0.7f,
+                                                 glm::translate(Vector3f(-.3f, 3.2f, 0.0f)));
+        scene->AttachChild(hair_side, plane);
+
+        for (int i = 0; i < 12; ++i) {
+            const int col = i % 3;
+            const int row = i / 3;
+            Vector3f translation(-0.9f + row * 0.4f, 3.5f, -0.4f + col * 0.4f);
+            float scale_y = col == 1 ? 0.7f : 0.6f;
+            auto hair = scene->CreateCubeEntity(std::format("hair_{}", i), material_dark_brown, Vector3f(0.27f, scale_y, 0.27f), glm::translate(translation));
+            TransformComponent* transform = scene->GetComponent<TransformComponent>(hair);
+            float s = 0.5f + (3 - row) * 0.15f;
+            transform->SetScale(Vector3f(1, s, 1));
+            scene->AttachChild(hair, plane);
+
+            scene->Create<NativeScriptComponent>(hair).Bind<HairScript>();
+        }
     }
 
     auto propeller = scene->CreateTransformEntity("propeller");
@@ -305,8 +350,7 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(propeller);
         transform->Translate(Vector3f(6.0f, 0.0f, 0.0f));
         scene->AttachChild(propeller, plane);
-        auto& script = scene->Create<LuaScriptComponent>(propeller);
-        script.SetScript("@res://scripts/propeller.lua");
+        scene->Create<NativeScriptComponent>(propeller).Bind<PropellerScript>();
     }
     {
         auto pivot = scene->CreateMeshEntity("pivot",
@@ -344,14 +388,6 @@ Scene* CreateTheAviatorScene() {
     {
         scene->AttachChild(earth, world);
         scene->Create<NativeScriptComponent>(earth).Bind<EarthScript>();
-    }
-
-    // generator
-    {
-        auto generator = scene->CreateTransformEntity("generator");
-        scene->AttachChild(generator, earth);
-
-        scene->Create<NativeScriptComponent>(generator).Bind<GeneratorScript>();
     }
 
 #pragma region SETUP_OCEAN
@@ -410,7 +446,8 @@ Scene* CreateTheAviatorScene() {
 #pragma endregion SETUP_SKY
 
     {
-        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/sky.hdr");
+        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/circus.hdr");
+        //auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/sky.hdr");
         scene->AttachChild(sky_light, root);
     }
 

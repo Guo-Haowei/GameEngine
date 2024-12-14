@@ -6,28 +6,13 @@
 #include "engine/core/systems/job_system.h"
 #include "engine/renderer/render_manager.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scene_version.h"
 
 namespace my {
 
 using jobsystem::Context;
 
 static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
-// SCENE_VERSION history
-// version 2: don't serialize scene.m_bound
-// version 3: light component atten
-// version 4: light component flags
-// version 5: add validation
-// version 6: add collider component
-// version 7: add enabled to material
-// version 8: add particle emitter
-// version 9: add ParticleEmitterComponent.gravity
-// version 10: add ForceFieldComponent
-// version 11: add ScriptFieldComponent
-// version 12: add CameraComponent
-// version 13: add SoftBodyComponent
-// version 14: modify RigidBodyComponent
-static constexpr uint32_t SCENE_VERSION = 14;
-static constexpr uint32_t SCENE_MAGIC = 'xScn';
 
 // @TODO: refactor
 #if 1
@@ -744,6 +729,10 @@ bool Scene::Serialize(Archive& p_archive) {
 
             std::string key;
             p_archive >> key;
+            // HACK: fix
+            if (key == "World::ScriptComponent") {
+                key = "World::LuaScriptComponent";
+            }
             auto it = m_componentLib.m_entries.find(key);
             if (it == m_componentLib.m_entries.end()) {
                 LOG_ERROR("scene corrupted");

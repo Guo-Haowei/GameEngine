@@ -1,4 +1,4 @@
-set(TARGET_NAME TheAviator)
+set(TARGET_NAME the_aviator)
 
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
@@ -13,7 +13,10 @@ target_include_directories(${TARGET_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}/engine/src
 )
 
-target_link_libraries(${TARGET_NAME} PRIVATE engine)
+target_link_libraries(${TARGET_NAME} PRIVATE
+    engine
+    the_aviator_lib
+)
 
 set_target_properties(${TARGET_NAME}
     PROPERTIES

@@ -6,25 +6,61 @@
 
 namespace my {
 
-void CameraController::Move(float p_delta_time, PerspectiveCameraComponent& p_camera, Vector3i& p_move, float p_scroll) {
+void EditorCameraController::OnCreate() {
+}
+
+void EditorCameraController::OnUpdate(float p_timestep) {
+    PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
+
+    if (DEV_VERIFY(camera)) {
+        InputManager& input_manager = InputManager::GetSingleton();
+        const int dx = input_manager.IsKeyDown(KeyCode::KEY_D) -
+                       input_manager.IsKeyDown(KeyCode::KEY_A);
+        const int dy = input_manager.IsKeyDown(KeyCode::KEY_E) -
+                       input_manager.IsKeyDown(KeyCode::KEY_Q);
+        const int dz = input_manager.IsKeyDown(KeyCode::KEY_W) -
+                       input_manager.IsKeyDown(KeyCode::KEY_S);
+
+        Vector3i delta(dx, dy, dz);
+        Vector2f rotation(0);
+        if (input_manager.IsButtonDown(MouseButton::MIDDLE)) {
+            rotation = input_manager.MouseMove();
+        }
+
+        Context context{
+            .timestep = p_timestep,
+            .scroll = input_manager.GetWheel().y,
+            .camera = camera,
+            .move = delta,
+            .rotation = rotation,
+        };
+
+        Move(context);
+    }
+}
+
+void EditorCameraController::Move(const Context& p_context) {
     // @TODO: smooth movement
     // @TODO: get rid off the magic numbers
-    const bool moved = p_move.x || p_move.y || p_move.z || p_scroll != 0.0f;
+    const bool moved = p_context.move.x || p_context.move.y || p_context.move.z || p_context.scroll != 0.0f;
+    const float timestep = p_context.timestep;
+    auto& camera = p_context.camera;
     if (moved) {
-        float move_speed = 20 * p_delta_time;
-        float dx = (float)p_move.x;
-        float dy = (float)p_move.y;
-        float dz = (float)p_move.z;
+        const float move_speed = m_moveSpeed * timestep;
+        const float dx = (float)p_context.move.x;
+        const float dy = (float)p_context.move.y;
 
-        if (glm::abs(p_scroll) > glm::abs(dz)) {
-            dz = p_scroll;
+        float dz = (float)p_context.move.z;
+        const float scroll = m_scrollSpeed * p_context.scroll;
+        if (glm::abs(scroll) > glm::abs(dz)) {
+            dz = scroll;
         }
         if (dx || dz) {
-            Vector3f delta = (move_speed * dz) * p_camera.GetFront() + (move_speed * dx) * p_camera.GetRight();
-            p_camera.m_position += delta;
+            Vector3f delta = (move_speed * dz) * camera->GetFront() + (move_speed * dx) * camera->GetRight();
+            camera->m_position += delta;
         }
         if (dy) {
-            p_camera.m_position += Vector3f(0, move_speed * dy, 0);
+            camera->m_position += Vector3f(0, move_speed * dy, 0);
         }
     }
 
@@ -32,37 +68,29 @@ void CameraController::Move(float p_delta_time, PerspectiveCameraComponent& p_ca
         float rotate_x = 0.0f;
         float rotate_y = 0.0f;
 
-        if (InputManager::GetSingleton().IsButtonDown(MouseButton::MIDDLE)) {
-            Vector2f movement = InputManager::GetSingleton().MouseMove();
-            movement = 20 * p_delta_time * movement;
-            if (glm::abs(movement.x) > glm::abs(movement.y)) {
-                rotate_y = movement.x;
-            } else {
-                rotate_x = movement.y;
-            }
+        Vector2f movement = p_context.rotation;
+        movement = m_rotateSpeed * timestep * movement;
+        if (glm::abs(movement.x) > glm::abs(movement.y)) {
+            rotate_y = movement.x;
         } else {
-            // keyboard
-            float speed = 200 * p_delta_time;
-            rotate_y = speed * (InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_RIGHT) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_LEFT));
-            rotate_x = speed * (InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_UP) - InputManager::GetSingleton().IsKeyDown(KeyCode::KEY_DOWN));
+            rotate_x = movement.y;
         }
 
         // @TODO: DPI
-
         if (rotate_y) {
-            p_camera.m_yaw += Degree(rotate_y);
+            camera->m_yaw += Degree(rotate_y);
         }
 
         if (rotate_x) {
-            p_camera.m_pitch += Degree(rotate_x);
-            p_camera.m_pitch.Clamp(-85.0f, 85.0f);
+            camera->m_pitch += Degree(rotate_x);
+            camera->m_pitch.Clamp(-85.0f, 85.0f);
         }
 
-        return rotate_x || rotate_y;
+        return rotate_x != 0.0f || rotate_y != 0.0f;
     };
 
     if (moved || rotate_camera()) {
-        p_camera.SetDirty();
+        camera->SetDirty();
     }
 }
 

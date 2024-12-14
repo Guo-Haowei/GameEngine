@@ -117,34 +117,6 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
 
     ecs::Entity id = m_editor.GetSelectedEntity();
     TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
-#if 0
-    if (transform_component) {
-        AABB aabb;
-        if (const ObjectComponent* object = scene.get_component<ObjectComponent>(id); object) {
-            MeshComponent* mesh = scene.get_component<MeshComponent>(object->mesh_id);
-            transform_component = scene.get_component<TransformComponent>(id);
-            DEV_ASSERT(transform_component);
-            aabb = mesh->local_bound;
-        }
-
-        if (aabb.is_valid()) {
-            aabb.apply_matrix(transform_component->get_world_matrix());
-
-            const Matrix4x4f model_matrix = glm::translate(Matrix4x4f(1), aabb.center()) * glm::scale(Matrix4x4f(1), aabb.size());
-            ImGuizmo::draw_box_wireframe(projection_view_matrix, model_matrix);
-        }
-    }
-    ObjectComponent* object_component = scene.get_component<ObjectComponent>(id);
-    if (object_component && transform_component) {
-        auto mesh_component = scene.get_component<MeshComponent>(object_component->mesh_id);
-        DEV_ASSERT(mesh_component);
-        AABB aabb = mesh_component->local_bound;
-        aabb.apply_matrix(transform_component->get_world_matrix());
-
-        const Matrix4x4f model_matrix = glm::translate(Matrix4x4f(1), aabb.center()) * glm::scale(Matrix4x4f(1), aabb.size());
-        ImGuizmo::draw_box_wireframe(projection_view_matrix, model_matrix);
-    }
-#endif
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION p_operation, CommandType p_type) {
         if (transform_component) {
@@ -235,6 +207,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
     auto& events = m_editor.GetUnhandledEvents();
     bool selected = m_editor.GetSelectedEntity().IsValid();
     float mouse_scroll = 0.0f;
+    Vector2f mouse_move(0);
 
     for (auto& event : events) {
         if (InputEventKey* e = dynamic_cast<InputEventKey*>(event.get()); e) {
@@ -288,10 +261,22 @@ void Viewer::UpdateInternal(Scene& p_scene) {
                 mouse_scroll = 3.0f * e->GetWheelY();
             }
         }
+        if (InputEventMouseMove* e = dynamic_cast<InputEventMouseMove*>(event.get()); e) {
+            if (!e->IsModiferPressed() && e->IsButtonDown(MouseButton::MIDDLE)) {
+                mouse_move = e->GetDelta();
+            }
+        }
     }
 
     if (m_focused && mode == Application::State::EDITING) {
-        m_cameraController.Move(p_scene.m_timestep, *camera, delta_camera, mouse_scroll);
+        EditorCameraController::Context context{
+            .timestep = p_scene.m_timestep,
+            .scroll = mouse_scroll,
+            .camera = camera,
+            .move = delta_camera,
+            .rotation = mouse_move,
+        };
+        m_cameraController.Move(context);
     }
 
     SelectEntity(p_scene, *camera);

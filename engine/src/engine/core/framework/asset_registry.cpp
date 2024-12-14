@@ -15,33 +15,34 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
     fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
     fs::path always_load = assets_root / "alwaysload.json";
     std::ifstream file(always_load);
-    using json = nlohmann::json;
-    json data = json::parse(file);
+    if (file) {
+        using json = nlohmann::json;
+        json data = json::parse(file);
 
-    DEV_ASSERT(data.is_array());
+        DEV_ASSERT(data.is_array());
 
-    std::vector<IAsset::Meta> asset_bundle;
+        std::vector<IAsset::Meta> asset_bundle;
 
-    for (const auto& meta_json : data) {
-        // const auto& type_json = meta_json["type"];
-        const auto& path_json = meta_json["path"];
-        if (path_json.is_string()) {
-            IAsset::Meta meta_data;
-            meta_data.path = path_json;
-            if (!meta_data.path.empty()) {
-                meta_data.handle = meta_data.path;
-                asset_bundle.emplace_back(std::move(meta_data));
+        for (const auto& meta_json : data) {
+            // const auto& type_json = meta_json["type"];
+            const auto& path_json = meta_json["path"];
+            if (path_json.is_string()) {
+                IAsset::Meta meta_data;
+                meta_data.path = path_json;
+                if (!meta_data.path.empty()) {
+                    meta_data.handle = meta_data.path;
+                    asset_bundle.emplace_back(std::move(meta_data));
+                }
             }
         }
+
+        RegisterAssets((int)asset_bundle.size(), asset_bundle.data());
+
+        AssetManager* asset_manager = m_app->GetAssetManager();
+        for (auto& [key, stub] : m_lookup) {
+            asset_manager->LoadAssetAsync(stub, nullptr, nullptr);
+        }
     }
-
-    RegisterAssets((int)asset_bundle.size(), asset_bundle.data());
-
-    AssetManager* asset_manager = m_app->GetAssetManager();
-    for (auto& [key, stub] : m_lookup) {
-        asset_manager->LoadAssetAsync(stub, nullptr, nullptr);
-    }
-
     return Result<void>();
 }
 

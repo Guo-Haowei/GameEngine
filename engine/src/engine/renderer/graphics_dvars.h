@@ -8,7 +8,7 @@ DVAR_STRING(gfx_backend, 0, "Renderer backend", "metal");
 #else
 DVAR_STRING(gfx_backend, 0, "Renderer backend", "opengl");
 #endif
-DVAR_STRING(gfx_render_graph, 0, "Renderer graph", "experimental");
+DVAR_STRING(gfx_render_graph, 0, "Renderer graph", "default");
 DVAR_BOOL(gfx_gpu_validation, 0, "Enable GPU validation", true);
 
 // Switches
@@ -25,7 +25,7 @@ DVAR_INT(gfx_debug_vxgi_voxel, DVAR_FLAG_CACHE, "", 0);
 
 // shadow
 DVAR_INT(gfx_point_shadow_res, 0, "Point shadow resolution", 1024);
-DVAR_INT(gfx_shadow_res, 0, "Shadow resolution", 1024 * 4);
+DVAR_INT(gfx_shadow_res, 0, "Shadow resolution", 1024);
 
 // Bloom
 DVAR_FLOAT(gfx_bloom_threshold, DVAR_FLAG_NONE, "", 1.3f);

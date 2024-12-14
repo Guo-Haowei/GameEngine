@@ -8,6 +8,7 @@
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
+#include "the_aviator_defines.h"
 
 namespace std {
 
@@ -32,28 +33,15 @@ struct hash<my::Vector3f> {
 
 namespace my {
 
-static constexpr float OCEAN_RADIUS = 240.0f;
-static constexpr int CLOUD_COUNT = 20;
-static constexpr float WORLD_SPEED = 0.3f;
-static constexpr float MIN_HEIGHT = 15.f;
-static constexpr float MAX_HEIGHT = 45.f;
-static constexpr float AMP_WIDTH = 30.0f;
-static constexpr float AMP_HEIGHT = 32.0f;
-
 static const Color RED_COLOR = Color::Hex(0xCE190A);
 static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
 static const Color BROWN_COLOR = Color::Hex(0x59332E);
 static const Color DRAK_BROWN_COLOR = Color::Hex(0x23190F);
 static const Color BLUE_COLOR = Color::Hex(0X10A8A3);
-// static const Color PINK_COLOR = Color::Hex(0xF5986E);
+static const Color PINK_COLOR = Color::Hex(0xF5986E);
 
-enum : uint32_t {
-    COLLISION_BIT_PLAYER = BIT(1),
-    COLLISION_BIT_ROCK = BIT(2),
-    COLLISION_BIT_BATTERY = BIT(3),
-};
-
-class CameraController : public ScriptableEntity {
+// @TODO: extract common script
+class CameraScript : public ScriptableEntity {
 protected:
     void OnUpdate(float p_timestep) override {
         PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
@@ -90,85 +78,6 @@ class BatteryScript : public ScriptableEntity {
     void OnCollision(ecs::Entity p_other_id) override;
 
     void OnUpdate(float p_timestep) override;
-};
-
-// @TODO: refactor?
-struct GameObject {
-    float lifeRemains;
-};
-
-template<typename T, int N>
-    requires std::is_base_of_v<GameObject, T>
-struct ObjectPool {
-    std::array<T, N> pool;
-    std::list<T*> deadList;
-    std::list<T*> aliveList;
-
-    void Free(T* p_object) {
-        deadList.push_back(p_object);
-    }
-
-    T* Alloc() {
-        if (deadList.empty()) {
-            return nullptr;
-        }
-
-        T* result = deadList.front();
-        deadList.pop_front();
-        aliveList.push_back(result);
-        return result;
-    }
-
-    void Update(float p_timestep, std::function<void(T*)> p_on_destroy) {
-        std::list<T*> tmp;
-        for (int i = (int)aliveList.size() - 1; i >= 0; --i) {
-            T* object = aliveList.back();
-            aliveList.pop_back();
-            object->lifeRemains -= p_timestep;
-            if (object->lifeRemains <= 0.0f) {
-                p_on_destroy(object);
-                deadList.push_back(object);
-            } else {
-                tmp.emplace_back(object);
-            }
-        }
-        aliveList = std::move(tmp);
-    }
-};
-
-// @TODO: this should probably be a game object or layer
-class GeneratorScript : public ScriptableEntity {
-    enum : uint32_t {
-        ROCK_POOL_SIZE = 16,
-        BATTERY_POOL_SIZE = 32,
-    };
-
-    static constexpr float ROCK_SIZE = 4.0f;
-    static constexpr float BATTERY_SIZE = 2.0f;
-    static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
-
-    void OnCreate() override;
-    void OnUpdate(float p_timestep) override;
-
-    void CreateRockResource();
-    void CreateBatteryResource();
-
-    ecs::Entity m_rockMesh;
-    ecs::Entity m_batteryMesh;
-
-    float m_time{ 0.0f };
-    float m_lastSpawnTime{ 0.0f };
-
-    struct Rock : GameObject {
-        ecs::Entity id;
-    };
-
-    struct Battery : GameObject {
-        ecs::Entity id;
-    };
-
-    ObjectPool<Rock, ROCK_POOL_SIZE> m_rockPool;
-    ObjectPool<Battery, BATTERY_POOL_SIZE> m_batteryPool;
 };
 
 class EarthScript : public ScriptableEntity {
@@ -247,6 +156,34 @@ class OceanScript : public ScriptableEntity {
     }
 
     std::vector<Wave> m_waves;
+};
+
+class HairScript : public ScriptableEntity {
+    void OnCreate() {
+        TransformComponent& transform = *GetComponent<TransformComponent>();
+        Vector3f scale = transform.GetScale();
+        m_scaleY = scale.y;
+    }
+
+    void OnUpdate(float p_timestep) override {
+        TransformComponent& transform = *GetComponent<TransformComponent>();
+        m_scaleY += p_timestep;
+        if (m_scaleY > 0.95f) {
+            m_scaleY = 0.5f;
+        }
+        Vector3f scale = transform.GetScale();
+        scale.y = m_scaleY;
+        transform.SetScale(scale);
+    }
+
+    float m_scaleY;
+};
+
+class PropellerScript : public ScriptableEntity {
+    void OnUpdate(float p_timestep) {
+        TransformComponent& transform = *GetComponent<TransformComponent>();
+        transform.RotateX(Degree(p_timestep * 500.0f));
+    }
 };
 
 }  // namespace my

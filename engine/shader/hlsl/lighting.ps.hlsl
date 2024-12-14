@@ -100,18 +100,10 @@ float3 lighting(float3 N, float3 L, float3 V, float3 radiance, float3 F0, float 
     return direct_lighting;
 }
 
-struct ps_output {
-    float4 color : SV_TARGET;
-    float depth : SV_DEPTH;
-};
-
-ps_output main(vsoutput_uv input) {
-    ps_output output;
-
-    float2 texcoord = input.uv;
-
-    output.depth = TEXTURE_2D(GbufferDepth).Sample(s_linearMipWrapSampler, texcoord).r;
-    clip(0.9999 - output.depth);
+float4 main(vsoutput_uv input) : SV_TARGET {
+    const float2 texcoord = input.uv;
+    const float4 emissive_roughness_metallic = TEXTURE_2D(GbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord);
+    clip(emissive_roughness_metallic.a - 0.01f);
 
     float3 base_color = TEXTURE_2D(GbufferBaseColorMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
     if (c_noTexture != 0) {
@@ -119,15 +111,13 @@ ps_output main(vsoutput_uv input) {
     }
 
     const float3 world_position = TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
-    const float3 emissive_roughness_metallic = TEXTURE_2D(GbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
 
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;
 
     if (emissive > 0.0) {
-        output.color = float4(emissive * base_color, 1.0);
-        return output;
+        return float4(emissive * base_color, 1.0);
     }
 
     float3 N = TEXTURE_2D(GbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
@@ -191,20 +181,15 @@ ps_output main(vsoutput_uv input) {
     float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).SampleLevel(s_cubemapClampSampler, N, 0.0f).rgb;
     float3 diffuse = irradiance * base_color.rgb;
 
-    const float MAX_REFLECTION_LOD = 4.0;
-    float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, 0.0f).rgb;
-    // float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
+    const float MAX_REFLECTION_LOD = 4.0f;
+    float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
     float2 lut_uv = float2(NdotV, roughness);
-    lut_uv.y = 1.0 - lut_uv.y;
-    float2 envBRDF = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, lut_uv).rg;
-    // float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
-    float3 specular = prefilteredColor;
-
-    diffuse = float3(0.0, 0.0, 0.0);
+    // lut_uv.y = 1.0 - lut_uv.y;
+    float2 envBRDF = TEXTURE_2D(BrdfLut).SampleLevel(s_linearClampSampler, lut_uv, 0.0f).rg;
+    float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
     const float ao = 1.0;
     float3 ambient = (kD * diffuse + specular) * ao;
 
-    output.color = float4(Lo + ambient, 1.0);
-    return output;
+    return float4(Lo + ambient, 1.0);
 }

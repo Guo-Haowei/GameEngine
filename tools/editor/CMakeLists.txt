@@ -15,17 +15,20 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src/editor FILES ${SRC})
 
 target_include_directories(${TARGET_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}/engine/src
-    ${PROJECT_SOURCE_DIR}/applications/editor/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(${TARGET_NAME} PRIVATE engine)
+target_link_libraries(${TARGET_NAME} PRIVATE
+    engine
+    the_aviator_lib
+)
 
 set_target_properties(${TARGET_NAME}
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
-set_target_properties(${TARGET_NAME} PROPERTIES FOLDER applications)
+set_target_properties(${TARGET_NAME} PROPERTIES FOLDER tools)
 
 target_precompile_headers(${TARGET_NAME} PRIVATE src/editor/pch.h)
 target_set_warning_level(${TARGET_NAME})

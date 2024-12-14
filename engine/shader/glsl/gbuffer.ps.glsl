@@ -2,7 +2,7 @@
 layout(location = 0) out vec3 out_base_color;
 layout(location = 1) out vec3 out_position;
 layout(location = 2) out vec3 out_normal;
-layout(location = 3) out vec3 out_emissive_roughness_metallic;
+layout(location = 3) out vec4 out_emissive_roughness_metallic;
 
 in struct PS_INPUT {
     vec3 position;
@@ -49,4 +49,5 @@ void main() {
     out_emissive_roughness_metallic.r = c_emissivePower;
     out_emissive_roughness_metallic.g = roughness;
     out_emissive_roughness_metallic.b = metallic;
+    out_emissive_roughness_metallic.a = 1.0f;
 }

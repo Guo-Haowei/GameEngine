@@ -1,4 +1,5 @@
 #pragma once
+#include <bitset>
 
 namespace my {
 
@@ -132,5 +133,8 @@ enum class KeyCode : uint16_t {
     KEY_MENU,
     COUNT,
 };
+
+using MouseButtonArray = std::bitset<std::to_underlying(MouseButton::COUNT)>;
+using KeyArray = std::bitset<std::to_underlying(KeyCode::COUNT)>;
 
 }  // namespace my

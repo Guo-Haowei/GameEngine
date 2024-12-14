@@ -83,7 +83,8 @@ struct ForceField {
 CBUFFER(PerBatchConstantBuffer, 0) {
     Matrix4x4f c_worldMatrix;
 
-    Vector3f _per_batch_padding_0;
+    Vector2f _per_batch_padding_0;
+    float c_envPassRoughness;  // for environment map
     int c_hasAnimation;
 
     Vector4f _per_batch_padding_1;
@@ -94,7 +95,7 @@ CBUFFER(PerBatchConstantBuffer, 0) {
     sampler2D c_BloomInputTextureResidentHandle;
     sampler2D c_BloomOutputImageResidentHandle;
 
-    Matrix4x4f _per_batch_padding_4;
+    Matrix4x4f c_cubeProjectionViewMatrix;
     Matrix4x4f _per_batch_padding_5;
 };
 
@@ -174,7 +175,9 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     sampler2D c_SkyboxResidentHandle;
     sampler2D c_SkyboxHdrResidentHandle;  // 16
 
-    Vector3f _per_frame_padding_2;
+    uint c_DiffuseIrradianceResidentHandle;
+    uint c_PrefilteredResidentHandle;
+    uint c_BrdfLutResidentHandle;
     int c_forceFieldsCount;  // 16
 
     //-----------------------------------------
@@ -239,8 +242,6 @@ CBUFFER(EmitterConstantBuffer, 6) {
 
 #if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
 
-#if defined(GLSL_LANG) || defined(__cplusplus)
-
 // @TODO: merge it with per frame
 CBUFFER(PerSceneConstantBuffer, 7) {
     // @TODO: remove the following
@@ -265,24 +266,6 @@ CBUFFER(DebugDrawConstantBuffer, 8) {
     sampler2D c_debugDrawMap;
     int c_displayChannel;
     int _debug_draw_padding_0;
-};
-#endif
-
-// @TODO: refactor this
-CBUFFER(EnvConstantBuffer, 9) {
-    Matrix4x4f c_cubeProjectionViewMatrix;
-
-    float c_envPassRoughness;  // for environment map
-    float _env_padding_0;
-    float _env_padding_1;
-    float _env_padding_2;
-
-    Vector4f _env_padding_3;
-    Vector4f _env_padding_4;
-    Vector4f _env_padding_5;
-
-    Matrix4x4f _env_padding_6;
-    Matrix4x4f _env_padding_7;
 };
 
 #endif

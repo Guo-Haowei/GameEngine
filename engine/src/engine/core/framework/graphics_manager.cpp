@@ -65,7 +65,6 @@ static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t
 
 ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
-ConstantBuffer<EnvConstantBuffer> g_env_cache;
 
 // @TODO: refactor this
 template<typename T>
@@ -111,7 +110,6 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
     // @TODO: refactor
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
     CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
-    CreateUniformBuffer<EnvConstantBuffer>(g_env_cache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
@@ -149,45 +147,45 @@ void GraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     }
 }
 
-auto GraphicsManager::Create() -> Result<std::shared_ptr<GraphicsManager>> {
+auto GraphicsManager::Create() -> Result<GraphicsManager*> {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
 
-    auto select_renderer = [&]() -> std::shared_ptr<GraphicsManager> {
-        auto create_empty_renderer = []() -> std::shared_ptr<GraphicsManager> {
-            return std::make_shared<EmptyGraphicsManager>("EmptyGraphicsManager", Backend::EMPTY, 1);
+    auto select_renderer = [&]() -> GraphicsManager* {
+        auto create_empty_renderer = []() -> GraphicsManager* {
+            return new EmptyGraphicsManager("EmptyGraphicsManager", Backend::EMPTY, 1);
         };
 
-        auto create_d3d11_renderer = []() -> std::shared_ptr<GraphicsManager> {
+        auto create_d3d11_renderer = []() -> GraphicsManager* {
 #if USING(PLATFORM_WINDOWS)
-            return std::make_shared<D3d11GraphicsManager>();
+            return new D3d11GraphicsManager();
 #else
             return nullptr;
 #endif
         };
-        auto create_d3d12_renderer = []() -> std::shared_ptr<GraphicsManager> {
+        auto create_d3d12_renderer = []() -> GraphicsManager* {
 #if USING(PLATFORM_WINDOWS)
-            return std::make_shared<D3d12GraphicsManager>();
+            return new D3d12GraphicsManager();
 #else
             return nullptr;
 #endif
         };
-        auto create_vulkan_renderer = []() -> std::shared_ptr<GraphicsManager> {
+        auto create_vulkan_renderer = []() -> GraphicsManager* {
 #if USING(PLATFORM_WINDOWS)
-            return std::make_shared<VulkanGraphicsManager>();
+            return new VulkanGraphicsManager();
 #else
             return nullptr;
 #endif
         };
-        auto create_opengl_renderer = []() -> std::shared_ptr<GraphicsManager> {
+        auto create_opengl_renderer = []() -> GraphicsManager* {
 #if USING(PLATFORM_WINDOWS)
-            return std::make_shared<OpenGlGraphicsManager>();
+            return new OpenGlGraphicsManager();
 #else
             return nullptr;
 #endif
         };
-        auto create_metal_renderer = []() -> std::shared_ptr<GraphicsManager> {
+        auto create_metal_renderer = []() -> GraphicsManager* {
 #if USING(PLATFORM_APPLE)
-            return std::make_shared<MetalGraphicsManager>();
+            return new MetalGraphicsManager();
 #else
             return nullptr;
 #endif

@@ -133,6 +133,12 @@ struct Vector2 : VectorBase<T, 2> {
                                       y(p_y) {
     }
 
+    template<typename U>
+        requires Arithmetic<U> && (!std::is_same<T, U>::value)
+    constexpr Vector2(U p_x, U p_y) : x(static_cast<T>(p_x)),
+                                      y(static_cast<T>(p_y)) {
+    }
+
     template<int N, int A, int B>
     constexpr Vector2(const Swizzle2<T, N, A, B, -1, -1>& p_swizzle) : x(p_swizzle.d[A]),
                                                                        y(p_swizzle.d[B]) {
@@ -171,6 +177,13 @@ struct Vector3 : VectorBase<T, 3> {
     constexpr Vector3(T p_x, T p_y, T p_z) : x(p_x),
                                              y(p_y),
                                              z(p_z) {
+    }
+
+    template<typename U>
+        requires Arithmetic<U> && (!std::is_same<T, U>::value)
+    constexpr Vector3(U p_x, U p_y, U p_z) : x(static_cast<T>(p_x)),
+                                             y(static_cast<T>(p_y)),
+                                             z(static_cast<T>(p_z)) {
     }
 
     constexpr Vector3(Vector2<T> p_vec, T p_z) : x(p_vec.x),
@@ -222,10 +235,30 @@ struct Vector4 : VectorBase<T, 4> {
                                                     w(p_w) {
     }
 
+    template<typename U>
+        requires Arithmetic<U> && (!std::is_same<T, U>::value)
+    constexpr Vector4(U p_x, U p_y, U p_z, U p_w) : x(static_cast<T>(p_x)),
+                                                    y(static_cast<T>(p_y)),
+                                                    z(static_cast<T>(p_z)),
+                                                    w(static_cast<T>(p_w)) {
+    }
+
     constexpr Vector4(Vector3<T> p_vec, T p_w) : x(p_vec.x),
                                                  y(p_vec.y),
                                                  z(p_vec.z),
                                                  w(p_w) {
+    }
+
+    constexpr Vector4(Vector2<T> p_vec1, Vector2<T> p_vec2) : x(p_vec1.x),
+                                                              y(p_vec1.y),
+                                                              z(p_vec2.x),
+                                                              w(p_vec2.y) {
+    }
+
+    constexpr Vector4(Vector2<T> p_vec, T p_z, T p_w) : x(p_vec.x),
+                                                        y(p_vec.y),
+                                                        z(p_z),
+                                                        w(p_w) {
     }
 
     template<int N, int A, int B, int C, int D>

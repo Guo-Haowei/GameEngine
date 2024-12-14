@@ -2,21 +2,42 @@
 #include "engine/core/framework/entry_point.h"
 #include "engine/core/string/string_utils.h"
 
+// @TODO: fix
+#include "plugins/the_aviator/the_aviator_layer.h"
+
 namespace my {
 
 extern Scene* CreateTheAviatorScene();
 extern Scene* CreatePbrTestScene();
 extern Scene* CreatePhysicsTestScene();
 
+enum {
+    CREATE_EMPTY_SCENE = 0,
+    CREATE_THE_AVIATOR_SCENE = 1,
+    CREATE_PHYSICS_SCENE = 2,
+    CREATE_PBR_SCENE = 3,
+
+    DEFAULT_SCENE = 1,
+};
+
 class Editor : public Application {
 public:
     using Application::Application;
 
     void InitLayers() override {
-        AddLayer(std::make_shared<my::EditorLayer>());
+        m_editorLayer = std::make_unique<EditorLayer>();
+        AttachLayer(m_editorLayer.get());
+
+        // Only creates game layer, don't attach yet
+        if constexpr (DEFAULT_SCENE == CREATE_THE_AVIATOR_SCENE) {
+            m_gameLayer = std::make_unique<TheAviatorLayer>();
+        }
     }
 
     Scene* CreateInitialScene() override;
+
+private:
+    std::unique_ptr<EditorLayer> m_editorLayer;
 };
 
 Application* CreateApplication() {
@@ -38,14 +59,13 @@ Application* CreateApplication() {
 }
 
 Scene* Editor::CreateInitialScene() {
-    constexpr int a = 1;
-    if constexpr (a == 0) {
+    if constexpr (DEFAULT_SCENE == CREATE_EMPTY_SCENE) {
         return Application::CreateInitialScene();
-    } else if constexpr (a == 1) {
+    } else if constexpr (DEFAULT_SCENE == CREATE_THE_AVIATOR_SCENE) {
         return CreateTheAviatorScene();
-    } else if constexpr (a == 2) {
+    } else if constexpr (DEFAULT_SCENE == CREATE_PBR_SCENE) {
         return CreatePbrTestScene();
-    } else if constexpr (a == 3) {
+    } else if constexpr (DEFAULT_SCENE == CREATE_PHYSICS_SCENE) {
         return CreatePhysicsTestScene();
     }
 }
