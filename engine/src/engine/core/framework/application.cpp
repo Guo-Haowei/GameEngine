@@ -15,6 +15,7 @@
 #include "engine/core/framework/physics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/framework/script_manager.h"
+#include "engine/core/math/vector_math.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_utils.h"

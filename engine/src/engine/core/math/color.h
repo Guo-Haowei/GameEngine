@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/core/math/geomath.h"
+#include "engine/core/math/vector.h"
 
 namespace my {
 
@@ -12,12 +13,13 @@ enum ColorCode : uint32_t {
     COLOR_WHITE = 0xE0E0E0,
 };
 
-struct Color {
-    float r, g, b, a;
+class Color : public Vector4<float> {
+    using Base = Vector4<float>;
 
-    constexpr Color() : r(0.0f), g(0.0f), b(0.0f), a(1.0f) {}
-    constexpr Color(float p_red, float p_green, float p_blue, float p_alpha) : r(p_red), g(p_green), b(p_blue), a(p_alpha) {}
-    constexpr Color(float p_red, float p_green, float p_blue) : Color(p_red, p_green, p_blue, 1.0f) {}
+public:
+    constexpr Color() : Base(0, 0, 0, 1) {}
+    constexpr Color(float p_r, float p_g, float p_b, float p_a) : Base(p_r, p_g, p_b, p_a) {}
+    constexpr Color(float p_r, float p_g, float p_b) : Base(p_r, p_g, p_b, 1.0f) {}
 
     uint32_t ToRgb() const;
     uint32_t ToRgba() const;

@@ -1,5 +1,7 @@
 #include "dynamic_variable.h"
 
+#include "engine/core/math/vector_math.h"
+
 namespace my {
 
 void DynamicVariable::RegisterInt(std::string_view p_key, int p_value) {

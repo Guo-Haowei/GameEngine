@@ -254,4 +254,25 @@ TEST(vector_math, div_assign) {
     }
 }
 
+TEST(vector_math, lerp) {
+    {
+        const Vector2f a(4.0f, 1.0f);
+        const Vector2f b(2.0f, 3.0f);
+        auto vec = Lerp(a, b, 0.0f);
+        CHECK_VEC2(vec, 4, 1);
+        vec = Lerp(a, b, 1.0f);
+        CHECK_VEC2(vec, 2, 3);
+        vec = Lerp(a, b, 0.1f);
+        CHECK_VEC2(vec, 3.8f, 1.2f);
+        CHECK_VEC2(a, 4, 1);
+        CHECK_VEC2(b, 2, 3);
+    }
+    {
+        const Vector4f a(4.0f, 20.0f, 12.0f, 4.0f);
+        const Vector4f b(2.0f, 4.0f, 6.0f, 8.0f);
+        auto vec = Lerp(a, b, .5f);
+        CHECK_VEC4(vec, 3, 12, 9, 6);
+    }
+}
+
 }  // namespace my::math::detail
