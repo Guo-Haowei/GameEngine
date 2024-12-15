@@ -5,19 +5,14 @@
             "cStandard": "c11",
             "cppStandard": "c++23",
             "includePath": [
-                "${workspaceRoot}/thirdparty/assimp/include",
                 "${workspaceRoot}/thirdparty/googletest/googletest/include",
-                "${workspaceRoot}/thirdparty/glad/include",
-                "${workspaceRoot}/thirdparty/glfw/include",
-                "${workspaceRoot}/thirdparty/glm/",
                 "${workspaceRoot}/thirdparty/imgui/",
                 "${workspaceRoot}/thirdparty/optick/",
-                "${workspaceRoot}/thirdparty/sol2/include",
-                "${workspaceRoot}/thirdparty/lua",
                 "${workspaceRoot}/thirdparty/",
                 "${workspaceRoot}/engine/src/",
+                "${workspaceRoot}/tools/editor/src/",
                 "${workspaceRoot}/engine/shader/",
-                "${workspaceRoot}/applications/editor/src/"
+                "${env:VCPKG_INSTALLED_DIR}/x64-windows/include",
             ],
             "forcedInclude": [
                 "${workspaceRoot}/engine/src/engine/pch.h",

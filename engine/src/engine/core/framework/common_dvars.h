@@ -4,10 +4,10 @@
 DVAR_IVEC2(window_resolution, DVAR_FLAG_CACHE, "Request window resolution", 0, 0);
 
 // project
-DVAR_STRING(project, 0, "Open project at start", "");
+DVAR_STRING(project, DVAR_FLAG_NONE, "Open project at start", "");
 
 // IO
-DVAR_BOOL(verbose, 0, "Print verbose log", true);
+DVAR_BOOL(verbose, DVAR_FLAG_NONE, "Print verbose log", true);
 
 // gui
 DVAR_BOOL(show_editor, DVAR_FLAG_CACHE, "Show editor", true);

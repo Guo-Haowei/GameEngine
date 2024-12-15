@@ -1,5 +1,6 @@
 #include "hierarchy_panel.h"
 
+#include <IconsFontAwesome/IconsFontAwesome6.h>
 #include <imgui/imgui_internal.h>
 
 #include "editor/editor_layer.h"
@@ -38,7 +39,7 @@ private:
     EditorLayer& m_editorLayer;
 };
 
-static bool tree_node_helper(const Scene& p_scene,
+static bool TreeNodeHelper(const Scene& p_scene,
                              Entity p_id,
                              ImGuiTreeNodeFlags p_flags,
                              std::function<void()> p_on_left_click,
@@ -49,8 +50,13 @@ static bool tree_node_helper(const Scene& p_scene,
     if (name.empty()) {
         name = "Untitled";
     }
+    
+    const char* icon = ICON_FA_FOLDER;
+    if (p_flags & ImGuiTreeNodeFlags_Leaf) {
+        icon = ICON_FA_CUBE;
+    }
     auto node_name = std::format("##{}", p_id.GetId());
-    auto tag = std::format("{}{}", name, node_name);
+    auto tag = std::format("{} {}{}", icon, name, node_name);
 
     p_flags |= ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
@@ -79,18 +85,13 @@ static bool tree_node_helper(const Scene& p_scene,
 void HierarchyCreator::DrawNode(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
     DEV_ASSERT(p_hier);
     Entity id = p_hier->entity;
-    const NameComponent* name_component = p_scene.GetComponent<NameComponent>(id);
-    const char* name = name_component ? name_component->GetName().c_str() : "Untitled";
     const ObjectComponent* object_component = p_scene.GetComponent<ObjectComponent>(id);
     const MeshComponent* mesh_component = object_component ? p_scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
-
-    auto node_name = std::format("##{}", id.GetId());
-    auto tag = std::format("{}{}", name, node_name);
 
     p_flags |= (p_hier->children.empty() && !mesh_component) ? ImGuiTreeNodeFlags_Leaf : 0;
     p_flags |= m_editorLayer.GetSelectedEntity() == id ? ImGuiTreeNodeFlags_Selected : 0;
 
-    const bool expanded = tree_node_helper(
+    const bool expanded = TreeNodeHelper(
         p_scene, id, p_flags,
         [&]() {
             m_editorLayer.SelectEntity(id);
@@ -109,7 +110,7 @@ void HierarchyCreator::DrawNode(const Scene& p_scene, HierarchyNode* p_hier, ImG
                 const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
                 if (material) {
                     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
-                    tree_node_helper(
+                    TreeNodeHelper(
                         p_scene, subset.material_id, flags,
                         [&]() {
                             m_editorLayer.SelectEntity(subset.material_id);
@@ -120,7 +121,7 @@ void HierarchyCreator::DrawNode(const Scene& p_scene, HierarchyNode* p_hier, ImG
             Entity armature_id = mesh_component->armatureId;
             if (armature_id.IsValid()) {
                 ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Leaf;
-                tree_node_helper(
+                TreeNodeHelper(
                     p_scene, armature_id, flags, [&]() {
                         m_editorLayer.SelectEntity(armature_id);
                     },

@@ -3,6 +3,7 @@
 #include <imgui/imgui_internal.h>
 
 #include "editor/editor_layer.h"
+#include "engine/core/math/vector_math.h"
 #include "editor/utility/imguizmo.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/display_manager.h"
@@ -11,6 +12,7 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/math/ray.h"
+#include "engine/renderer/renderer.h"
 #include "engine/renderer/graphics_dvars.h"
 
 namespace my {
@@ -65,6 +67,29 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
     }
 }
 
+static void DrawGrid(const float p_grid_size) {
+    std::vector<Point> points;
+
+    for (float f = -p_grid_size; f <= p_grid_size; f += 1.f) {
+        for (int dir = 0; dir < 2; dir++) {
+            Vector3f p0(dir ? -p_grid_size : f, 0.f, dir ? f : -p_grid_size);
+            Vector3f p1(dir ? p_grid_size : f, 0.f, dir ? f : p_grid_size);
+
+            auto color = Color::Hex(0x808080);
+            color = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? Color::Hex(0x909090) : color;
+            color = (fabsf(f) < FLT_EPSILON) ? Color::Hex(0x404040) : color;
+            if (f == 0.0f) {
+                color = Color::Hex(dir == 1 ? 0x303090 : 0x903030);
+            }
+
+            points.emplace_back(Point{ p0, color });
+            points.emplace_back(Point{ p1, color });
+        }
+    }
+
+    renderer::AddLineList(points);
+}
+
 void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
     const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
@@ -111,7 +136,8 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     if (show_editor) {
         Matrix4x4f identity(1);
         // draw grid
-        ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
+        // ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
+        DrawGrid(10.0f);
     }
 
     ecs::Entity id = m_editor.GetSelectedEntity();

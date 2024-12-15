@@ -1,5 +1,6 @@
 #include <imgui/imgui_internal.h>
 
+#include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/entry_point.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/layer.h"
@@ -124,6 +125,9 @@ Application* CreateApplication() {
     spec.vsync = false;
     // spec.enableImgui = false;
     spec.enableImgui = true;
+
+    DVAR_window_resolution.SetVector2i(800, 600);
+    DVAR_window_resolution.SetFlag(DVAR_FLAG_OVERRIDEN);
     return new Game(spec);
 }
 

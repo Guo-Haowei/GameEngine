@@ -56,7 +56,6 @@ set(TARGET_LIBS
     glad::glad
     lua
     ${BULLET_LIBRARIES}
-    loader_assimp
     glm::glm
 )
 
@@ -68,6 +67,7 @@ if(WIN32)
         dxgi.lib
         d3dcompiler.lib
         dxguid.lib
+        loader_assimp
         $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
     )
 endif()

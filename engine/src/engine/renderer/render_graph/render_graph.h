@@ -9,7 +9,7 @@ class GraphicsManager;
 
 namespace my::renderer {
 
-struct RenderData;
+struct DrawData;
 
 class RenderGraph : public NonCopyable {
 public:
@@ -20,7 +20,7 @@ public:
 
     void Compile();
 
-    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::DrawData& p_data, GraphicsManager& p_graphics_manager);
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;

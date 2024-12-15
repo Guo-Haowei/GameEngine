@@ -4,7 +4,7 @@
 
 namespace my {
 
-constexpr float DEFAULT_COLUMN_WIDTH = 90.0f;
+constexpr float DEFAULT_COLUMN_WIDTH = 80.0f;
 
 void PushDisabled();
 void PopDisabled();

@@ -1,16 +1,21 @@
 #include "engine/core/base/rid_owner.h"
 #include "engine/core/framework/graphics_manager.h"
 
-// @TODO: fix
-struct OpenGlMeshBuffers : public my::MeshBuffers {
-    uint32_t vao = 0;
-    uint32_t ebo = 0;
-    uint32_t vbos[6] = { 0 };
-};
-
 struct GLFWwindow;
 
 namespace my {
+
+// @TODO: fix
+struct OpenGlMeshBuffers : MeshBuffers {
+    uint32_t vao{ 0 };
+    uint32_t ebo{ 0 };
+    uint32_t vbos[6]{ 0 };
+};
+
+struct OpenGlLineBuffers : LineBuffers {
+    uint32_t vao{ 0 };
+    uint32_t vbo{ 0 };
+};
 
 class OpenGlGraphicsManager : public GraphicsManager {
 public:
@@ -31,8 +36,14 @@ public:
     void SetMesh(const MeshBuffers* p_mesh) final;
     void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
 
-    void DrawElements(uint32_t p_count, uint32_t offset) final;
+    LineBuffers* CreateLine(const std::vector<Point>& p_points) final;
+    void SetLine(const LineBuffers* p_buffer) final;
+    void UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) final;
+
+    void DrawElements(uint32_t p_count, uint32_t p_offset) final;
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
+
+    void DrawArrays(uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;

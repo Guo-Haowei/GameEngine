@@ -9,6 +9,7 @@
 #include "engine/renderer/render_graph/draw_pass.h"
 #include "engine/renderer/render_graph/render_graph.h"
 #include "engine/renderer/render_graph/render_pass.h"
+#include "engine/renderer/renderer.h"
 #include "engine/renderer/sampler.h"
 #include "engine/scene/material_component.h"
 
@@ -90,8 +91,14 @@ public:
     virtual void SetMesh(const MeshBuffers* p_mesh) = 0;
     virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
 
+    virtual LineBuffers* CreateLine(const std::vector<Point>& p_points);
+    virtual void SetLine(const LineBuffers* p_buffer);
+    virtual void UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points);
+
     virtual void DrawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
     virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
+
+    virtual void DrawArrays(uint32_t p_count, uint32_t p_offset = 0);
 
     virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
     virtual void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
@@ -198,7 +205,10 @@ public:
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerMaterialBuffer;
     bool m_bufferUpdated = false;
 
-    const ImageAsset* m_brdfImage = nullptr;
+    const ImageAsset* m_brdfImage{ nullptr };
+
+    // @TODO: refactor
+    LineBuffers* m_lines{ nullptr };
 
 protected:
     void UpdateEmitters(const Scene& p_scene);

@@ -185,11 +185,14 @@ struct MetalGpuTexture : public GpuTexture {
 };
 
 std::shared_ptr<GpuTexture> MetalGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc&) {
+    if (p_texture_desc.format != PixelFormat::R8G8B8A8_UINT) {
+        //        DEV_ASSERT(p_texture_desc.format == PixelFormat::R8G8B8A8_UINT);
+        return nullptr;
+    }
     id<MTLDevice> device = (__bridge id<MTLDevice>)m_device;
 
     // Create a texture descriptor
     MTLTextureDescriptor* textureDescriptor = [[MTLTextureDescriptor alloc] init];
-    DEV_ASSERT(p_texture_desc.format == PixelFormat::R8G8B8A8_UINT);
     textureDescriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
     textureDescriptor.width = p_texture_desc.width;
     textureDescriptor.height = p_texture_desc.height;
