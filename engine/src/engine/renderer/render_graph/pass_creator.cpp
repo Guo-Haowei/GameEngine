@@ -15,6 +15,42 @@
 namespace my::renderer {
 
 /// Gbuffer
+static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches) {
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+
+    for (const auto& draw : p_batches) {
+        const bool has_bone = draw.bone_idx >= 0;
+        if (has_bone) {
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+        }
+
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+        gm.SetMesh(draw.mesh_data);
+
+        if (draw.flags) {
+            gm.SetStencilRef(draw.flags);
+        }
+
+        for (const auto& subset : draw.subsets) {
+            // @TODO: fix this
+            const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
+
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
+
+            gm.DrawElements(subset.index_count, subset.index_offset);
+        }
+
+        if (draw.flags) {
+            gm.SetStencilRef(0);
+        }
+    }
+}
+
 static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
@@ -33,48 +69,10 @@ static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pas
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
-        for (const auto& draw : p_batches) {
-            const bool has_bone = draw.bone_idx >= 0;
-            if (has_bone) {
-                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-            }
-
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-            gm.SetMesh(draw.mesh_data);
-
-            if (draw.flags) {
-                gm.SetStencilRef(draw.flags);
-            }
-
-            for (const auto& subset : draw.subsets) {
-                // @TODO: fix this
-                const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
-                gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
-                gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
-                gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
-
-                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-                // @TODO: set material
-
-                gm.DrawElements(subset.index_count, subset.index_offset);
-
-                // @TODO: unbind
-            }
-
-            if (draw.flags) {
-                gm.SetStencilRef(0);
-            }
-        }
-    };
-
     gm.SetPipelineState(PSO_GBUFFER);
-    draw_batches(pass.opaque);
-    draw_batches(pass.transparent);
+    DrawBatchesGeometry(p_data, pass.opaque);
     gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
-    draw_batches(pass.doubleSided);
+    DrawBatchesGeometry(p_data, pass.doubleSided);
 }
 
 void RenderPassCreator::AddGbufferPass() {
@@ -455,7 +453,7 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    // @TODO: fix skybox
+    // DrawBatches
     auto skybox = p_data.skyboxHdr;
     if (skybox) {
         gm.BindTexture(Dimension::TEXTURE_2D, skybox->GetHandle(), GetSkyboxHdrSlot());
@@ -463,6 +461,10 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
         gm.DrawSkybox();
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
     }
+
+    // draw transparent objects
+    gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
+    DrawBatchesGeometry(p_data, pass.transparent);
 }
 
 void RenderPassCreator::AddLightingPass() {

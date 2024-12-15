@@ -1,8 +1,5 @@
-/// File: gbuffer.ps.glsl
-layout(location = 0) out vec3 out_base_color;
-layout(location = 1) out vec3 out_position;
-layout(location = 2) out vec3 out_normal;
-layout(location = 3) out vec4 out_emissive_roughness_metallic;
+/// File: forward.ps.glsl
+layout(location = 0) out vec4 out_color;
 
 in struct PS_INPUT {
     vec3 position;
@@ -13,15 +10,16 @@ in struct PS_INPUT {
 } ps_in;
 
 #include "../cbuffer.hlsl.h"
+#include "lighting.glsl"
 
 void main() {
-    vec4 albedo = c_baseColor;
+    vec3 base_color = c_baseColor.rgb;
+    out_color.a = c_baseColor.a;
 
     if (c_hasBaseColorMap != 0) {
-        albedo = texture(c_BaseColorMapResidentHandle, ps_in.uv, 0);
-    }
-    if (albedo.a < 0.001) {
-        discard;
+        vec4 tmp = texture(c_BaseColorMapResidentHandle, ps_in.uv, 0);
+        base_color = tmp.rgb;
+        out_color.a = tmp.a;
     }
 
     float metallic = c_metallic;
@@ -41,12 +39,8 @@ void main() {
         N = normalize(ps_in.N);
     }
 
-    out_base_color.rgb = albedo.rgb;
-    out_position = ps_in.position;
-    out_normal = N;
+    const float emissive = c_emissivePower;
+    const vec3 world_position = ps_in.position;
 
-    out_emissive_roughness_metallic.r = c_emissivePower;
-    out_emissive_roughness_metallic.g = roughness;
-    out_emissive_roughness_metallic.b = metallic;
-    out_emissive_roughness_metallic.a = 1.0f;
+    out_color.rgb = compute_lighting(base_color, world_position, N, metallic, roughness, emissive);
 }

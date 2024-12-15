@@ -94,7 +94,7 @@ struct ArmatureComponent {
 
 #pragma region OBJECT_COMPONENT
 struct ObjectComponent {
-    enum Flags: uint32_t {
+    enum Flags : uint32_t {
         NONE = BIT(0),
         RENDERABLE = BIT(1),
         CAST_SHADOW = BIT(2),

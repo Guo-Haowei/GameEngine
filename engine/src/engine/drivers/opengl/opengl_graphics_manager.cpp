@@ -200,6 +200,9 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
             }
         }
     }
+    if (auto blend_desc = pipeline->desc.blendDesc; blend_desc) {
+        SetBlendState(*blend_desc, nullptr, 0);
+    }
 
     glUseProgram(pipeline->programId);
 }
@@ -625,6 +628,7 @@ void OpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* 
         glEnable(GL_BLEND);
     } else {
         glDisable(GL_BLEND);
+        return;
     }
 
     const bool r_mask = desc.colorWriteMask & COLOR_WRITE_ENABLE_RED;
@@ -634,9 +638,12 @@ void OpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* 
 
     glColorMask(r_mask, g_mask, b_mask, a_mask);
 
-    // @TODO: do the rest
-    // glBlendEquationi
-    // glColorMaski
+    auto src_blend = gl::Convert(desc.blendSrc);
+    auto dest_blend = gl::Convert(desc.blendDest);
+    auto func = gl::Convert(desc.blendOp);
+
+    glBlendEquation(func);
+    glBlendFunc(src_blend, dest_blend);
 }
 
 void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {

@@ -128,6 +128,7 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> Result<GLuin
         std::vector<char> buffer(length + 1);
         glGetShaderInfoLog(shader_id, length, nullptr, buffer.data());
         LOG_ERROR("[glsl] failed to compile shader_id '{}'\ndetails:\n{}", p_file, buffer.data());
+        glDeleteShader(shader_id);
         return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "[glsl] failed to compile shader_id '{}'", p_file);
     }
 

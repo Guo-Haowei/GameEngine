@@ -1,20 +1,10 @@
 /// File: lighting.ps.glsl
 #include "../cbuffer.hlsl.h"
 
-#define ENABLE_VXGI 1
-
 layout(location = 0) out vec3 out_color;
 layout(location = 0) in vec2 pass_uv;
 
 #include "lighting.glsl"
-
-#if ENABLE_VXGI
-#include "vxgi.glsl"
-#endif
-
-vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
-    return F0 + (max(vec3(1.0 - roughness) - F0, vec3(0.0))) * pow(1.0 - cosTheta, 5.0);
-}
 
 void main() {
     const vec2 texcoord = pass_uv;
@@ -43,6 +33,9 @@ void main() {
         return;
     }
 
+    /// <summary>
+    /// ///////////
+    /// </summary>
     const vec3 V = normalize(c_cameraPosition - world_position);
     const float NdotV = clamp(dot(N, V), 0.0, 1.0);
     vec3 R = reflect(-V, N);
