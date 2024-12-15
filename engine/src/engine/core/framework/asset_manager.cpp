@@ -11,7 +11,6 @@
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_builder.h"
-#include "engine/renderer/render_manager.h"
 #include "engine/scene/scene.h"
 
 // plugins

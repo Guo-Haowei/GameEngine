@@ -27,9 +27,6 @@
 #include "engine/core/framework/common_dvars.h"
 #undef DEFINE_DVAR
 
-// @TODO: remove this
-#include "engine/renderer/render_manager.h"
-
 namespace my {
 
 namespace fs = std::filesystem;
@@ -111,7 +108,6 @@ auto Application::SetupModules() -> Result<void> {
         }
         m_graphicsManager = *res;
     }
-    m_renderManager = new RenderManager();
     m_inputManager = new InputManager();
 
     RegisterModule(m_assetManager);
@@ -121,7 +117,6 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_physicsManager);
     RegisterModule(m_displayServer);
     RegisterModule(m_graphicsManager);
-    RegisterModule(m_renderManager);
     RegisterModule(m_inputManager);
 
     if (m_specification.enableImgui) {
@@ -138,7 +133,7 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
     SaveCommandLine(p_argc, p_argv);
     RegisterCommonDvars();
     // @TODO: refactor this part
-    renderer::register_rendering_dvars();
+    renderer::RegisterDvars();
     DynamicVariableManager::Deserialize(DVAR_CACHE_FILE);
     // parse happens after deserialization, so command line will override cache
     DynamicVariableManager::Parse(m_commandLine);

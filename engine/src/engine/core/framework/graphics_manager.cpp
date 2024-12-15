@@ -15,7 +15,6 @@
 #include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/pass_creator.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
-#include "engine/renderer/render_manager.h"
 #include "engine/renderer/renderer.h"
 #include "engine/scene/scene.h"
 #include "shader_resource_defines.hlsl.h"
@@ -223,6 +222,43 @@ void GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f
     CRASH_NOW();
 }
 
+// @TODO: refactor this
+static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc& p_texture_desc, SamplerDesc& p_sampler_desc) {
+    DEV_ASSERT(p_image);
+    bool is_hdr_file = false;
+
+    switch (p_image->format) {
+        case PixelFormat::R32_FLOAT:
+        case PixelFormat::R32G32_FLOAT:
+        case PixelFormat::R32G32B32_FLOAT:
+        case PixelFormat::R32G32B32A32_FLOAT: {
+            is_hdr_file = true;
+        } break;
+        default: {
+        } break;
+    }
+
+    p_texture_desc.format = p_image->format;
+    p_texture_desc.dimension = Dimension::TEXTURE_2D;
+    p_texture_desc.width = p_image->width;
+    p_texture_desc.height = p_image->height;
+    p_texture_desc.arraySize = 1;
+    p_texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
+    p_texture_desc.initialData = p_image->buffer.data();
+    p_texture_desc.mipLevels = 1;
+
+    if (is_hdr_file) {
+        p_sampler_desc.minFilter = p_sampler_desc.magFilter = FilterMode::LINEAR;
+        p_sampler_desc.addressU = p_sampler_desc.addressV = AddressMode::CLAMP;
+        // p_texture_desc.bindFlags &= (~BIND_RENDER_TARGET);
+        p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+    } else {
+        p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+        p_sampler_desc.minFilter = FilterMode::MIPMAP_LINEAR;
+        p_sampler_desc.magFilter = FilterMode::LINEAR;
+    }
+}
+
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
@@ -236,7 +272,7 @@ void GraphicsManager::Update(Scene& p_scene) {
 
         GpuTextureDesc texture_desc{};
         SamplerDesc sampler_desc{};
-        renderer::fill_texture_and_sampler_desc(image, texture_desc, sampler_desc);
+        FillTextureAndSamplerDesc(image, texture_desc, sampler_desc);
 
         image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
     }

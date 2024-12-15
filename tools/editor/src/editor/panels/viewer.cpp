@@ -12,7 +12,6 @@
 #include "engine/core/io/input_event.h"
 #include "engine/core/math/ray.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_manager.h"
 
 namespace my {
 

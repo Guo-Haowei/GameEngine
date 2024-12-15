@@ -4,7 +4,6 @@
 #include "engine/core/io/archive.h"
 #include "engine/core/math/geometry.h"
 #include "engine/core/systems/job_system.h"
-#include "engine/renderer/render_manager.h"
 #include "engine/renderer/renderer.h"
 #include "engine/scene/scene_version.h"
 
@@ -487,8 +486,8 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
     LightComponent* light = GetComponent<LightComponent>(p_entity);
     if (light) {
         auto shadow_handle = light->GetShadowMapIndex();
-        if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
-            RenderManager::GetSingleton().free_point_light_shadowMap(shadow_handle);
+        if (shadow_handle != renderer::INVALID_POINT_SHADOW_HANDLE) {
+            renderer::FreePointLightShadowMap(shadow_handle);
         }
         m_LightComponents.Remove(p_entity);
     }
@@ -727,7 +726,7 @@ bool Scene::Serialize(Archive& p_archive) {
 
             std::string key;
             p_archive >> key;
-            // HACK: fix
+            // @HACK: fix this hard code
             if (key == "World::ScriptComponent") {
                 key = "World::LuaScriptComponent";
             }
