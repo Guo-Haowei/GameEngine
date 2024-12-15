@@ -458,7 +458,6 @@ const MeshBuffers* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
 
     mesh_buffers->indexCount = static_cast<uint32_t>(p_mesh.indices.size());
     mesh_buffers->indexBuffer = UploadBuffer(static_cast<uint32_t>(VectorSizeInByte(p_mesh.indices)), p_mesh.indices.data(), nullptr);
-    mesh_buffers->doubleSided = p_mesh.flags & MeshComponent::DOUBLE_SIDED;
 
     p_mesh.gpuResource = mesh_buffers;
     return mesh_buffers;

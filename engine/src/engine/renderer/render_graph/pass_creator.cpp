@@ -33,42 +33,48 @@ static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pas
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
+        for (const auto& draw : p_batches) {
+            const bool has_bone = draw.bone_idx >= 0;
+            if (has_bone) {
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+            }
+
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+            gm.SetMesh(draw.mesh_data);
+
+            if (draw.flags) {
+                gm.SetStencilRef(draw.flags);
+            }
+
+            for (const auto& subset : draw.subsets) {
+                // @TODO: fix this
+                const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
+                gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
+                gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
+                gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
+
+                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
+
+                // @TODO: set material
+
+                gm.DrawElements(subset.index_count, subset.index_offset);
+
+                // @TODO: unbind
+            }
+
+            if (draw.flags) {
+                gm.SetStencilRef(0);
+            }
         }
+    };
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-        gm.SetMesh(draw.mesh_data);
-        // @TODO: sort
-        gm.SetPipelineState(draw.mesh_data->doubleSided ? PSO_GBUFFER_DOUBLE_SIDED : PSO_GBUFFER);
-
-        if (draw.flags) {
-            gm.SetStencilRef(draw.flags);
-        }
-
-        for (const auto& subset : draw.subsets) {
-            // @TODO: fix this
-            const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
-
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-            // @TODO: set material
-
-            gm.DrawElements(subset.index_count, subset.index_offset);
-
-            // @TODO: unbind
-        }
-
-        if (draw.flags) {
-            gm.SetStencilRef(0);
-        }
-    }
+    gm.SetPipelineState(PSO_GBUFFER);
+    draw_batches(pass.opaque);
+    draw_batches(pass.transparent);
+    gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
+    draw_batches(pass.doubleSided);
 }
 
 void RenderPassCreator::AddGbufferPass() {
@@ -169,6 +175,20 @@ static void PointShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw
     // prepare render data
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
+    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
+        for (const auto& draw : p_batches) {
+            const bool has_bone = draw.bone_idx >= 0;
+            if (has_bone) {
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+            }
+
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+            gm.SetMesh(draw.mesh_data);
+            gm.DrawElements(draw.mesh_data->indexCount);
+        }
+    };
+
     for (int pass_id = 0; pass_id < MAX_POINT_LIGHT_SHADOW_COUNT; ++pass_id) {
         auto& pass_ptr = p_data.pointShadowPasses[pass_id];
         if (!pass_ptr) {
@@ -186,17 +206,10 @@ static void PointShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw
             gm.SetViewport(Viewport(width, height));
 
             gm.SetPipelineState(PSO_POINT_SHADOW);
-            for (const auto& draw : pass.draws) {
-                const bool has_bone = draw.bone_idx >= 0;
-                if (has_bone) {
-                    gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-                }
-
-                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-                gm.SetMesh(draw.mesh_data);
-                gm.DrawElements(draw.mesh_data->indexCount);
-            }
+            draw_batches(pass.opaque);
+            draw_batches(pass.transparent);
+            // @TODO: double side
+            draw_batches(pass.doubleSided);
         }
     }
 }
@@ -217,18 +230,23 @@ static void ShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass
     const PassContext& pass = p_data.shadowPasses[0];
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PSO_DPETH);
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
+        for (const auto& draw : p_batches) {
+            const bool has_bone = draw.bone_idx >= 0;
+            if (has_bone) {
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+            }
+
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+            gm.SetMesh(draw.mesh_data);
+            gm.DrawElements(draw.mesh_data->indexCount);
         }
-
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-        gm.SetMesh(draw.mesh_data);
-        gm.DrawElements(draw.mesh_data->indexCount);
-    }
+    };
+    gm.SetPipelineState(PSO_DPETH);
+    draw_batches(pass.opaque);
+    draw_batches(pass.transparent);
+    draw_batches(pass.doubleSided);
 }
 
 void RenderPassCreator::AddShadowPass() {
@@ -315,26 +333,31 @@ static void VoxelizationPassFunc(const RenderData& p_data, const DrawPass*) {
 
     // @TODO: hack
     if (gm.GetBackend() == Backend::OPENGL) {
+        auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
+            for (const auto& draw : p_batches) {
+                const bool has_bone = draw.bone_idx >= 0;
+                if (has_bone) {
+                    gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+                }
+
+                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+                gm.SetMesh(draw.mesh_data);
+
+                for (const auto& subset : draw.subsets) {
+                    gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
+
+                    gm.DrawElements(subset.index_count, subset.index_offset);
+                }
+            }
+        };
+
         gm.SetViewport(Viewport(voxel_size, voxel_size));
         gm.SetPipelineState(PSO_VOXELIZATION);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
-
-        for (const auto& draw : pass.draws) {
-            const bool has_bone = draw.bone_idx >= 0;
-            if (has_bone) {
-                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-            }
-
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-            gm.SetMesh(draw.mesh_data);
-
-            for (const auto& subset : draw.subsets) {
-                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-                gm.DrawElements(subset.index_count, subset.index_offset);
-            }
-        }
+        draw_batches(pass.opaque);
+        draw_batches(pass.transparent);
+        draw_batches(pass.doubleSided);
 
         // glSubpixelPrecisionBiasNV(0, 0);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);

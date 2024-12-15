@@ -244,7 +244,6 @@ void OpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
 const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     RID rid = m_meshes.make_rid();
     OpenGlMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-    mesh_buffers->doubleSided = p_mesh.flags & MeshComponent::DOUBLE_SIDED;
 
     p_mesh.gpuResource = mesh_buffers;
 

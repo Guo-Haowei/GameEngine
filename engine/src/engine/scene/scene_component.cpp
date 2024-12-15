@@ -67,6 +67,18 @@ void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 #pragma endregion ARMATURE_COMPONENT
 
+#pragma region OBJECT_COMPONENT
+void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << flags;
+        p_archive << meshId;
+    } else {
+        p_archive >> flags;
+        p_archive >> meshId;
+    }
+}
+#pragma endregion OBJECT_COMPONENT
+
 #pragma region CAMERA_COMPONENT
 void PerspectiveCameraComponent::Update() {
     if (IsDirty()) {

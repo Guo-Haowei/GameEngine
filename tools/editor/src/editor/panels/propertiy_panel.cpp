@@ -284,7 +284,8 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         bool cast_shadow = p_object.flags & ObjectComponent::CAST_SHADOW;
         ImGui::Checkbox("Hide", &hide);
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        p_object.flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
+        p_object.flags = (hide ? ObjectComponent::NONE : ObjectComponent::RENDERABLE);
+        p_object.flags |= (cast_shadow ? ObjectComponent::CAST_SHADOW : ObjectComponent::NONE);
     });
 
     DrawComponent("Mesh", mesh_component, [&](MeshComponent& mesh) {

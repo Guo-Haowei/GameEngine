@@ -12,7 +12,6 @@
 #include "engine/scene/light_component.h"
 #include "engine/scene/material_component.h"
 #include "engine/scene/mesh_component.h"
-#include "engine/scene/object_component.h"
 #include "engine/scene/particle_emitter_component.h"
 #include "engine/scene/transform_component.h"
 

@@ -6,7 +6,6 @@ namespace my {
 
 // @TODO:
 // * cascaded shadow map
-// * alpha blending
 // * fog
 // * 2D UI
 // * draw elements and draw array
@@ -395,6 +394,8 @@ Scene* CreateTheAviatorScene() {
     {
         auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
         ObjectComponent* object = scene->GetComponent<ObjectComponent>(ocean);
+        object->flags |= ObjectComponent::IS_TRANSPARENT;
+
         DEV_ASSERT(object);
 
         MeshComponent* mesh = scene->GetComponent<MeshComponent>(object->meshId);

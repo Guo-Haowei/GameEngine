@@ -38,7 +38,9 @@ struct BatchContext {
 struct PassContext {
     int pass_idx{ 0 };
 
-    std::vector<BatchContext> draws;
+    std::vector<BatchContext> opaque;
+    std::vector<BatchContext> transparent;
+    std::vector<BatchContext> doubleSided;
 };
 
 template<typename BUFFER>
