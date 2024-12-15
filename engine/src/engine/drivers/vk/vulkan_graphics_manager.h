@@ -27,8 +27,8 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) override {}
     void SetViewport(const Viewport& p_viewport) override {}
 
-    const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) override { return nullptr; }
-    void SetMesh(const MeshBuffers* p_mesh) override {}
+    const GpuMesh* CreateMesh(const MeshComponent& p_mesh) override { return nullptr; }
+    void SetMesh(const GpuMesh* p_mesh) override {}
     void DrawElements(uint32_t p_count, uint32_t p_offset) override {}
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) override {}
 

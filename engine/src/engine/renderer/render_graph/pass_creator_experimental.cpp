@@ -36,8 +36,9 @@ void debug_vxgi_pass_func(const DrawData& p_data, const DrawPass* p_draw_pass) {
 
     glBindVertexArray(g_box->vao);
 
-    const int size = DVAR_GET_INT(gfx_voxel_size);
-    glDrawElementsInstanced(GL_TRIANGLES, g_box->indexCount, GL_UNSIGNED_INT, 0, size * size * size);
+    CRASH_NOW();
+    // const int size = DVAR_GET_INT(gfx_voxel_size);
+    //  glDrawElementsInstanced(GL_TRIANGLES, g_box->indexCount, GL_UNSIGNED_INT, 0, size * size * size);
     glDisable(GL_BLEND);
 }
 

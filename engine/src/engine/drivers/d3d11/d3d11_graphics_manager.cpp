@@ -696,7 +696,7 @@ void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
     m_deviceContext->RSSetViewports(1, &vp);
 }
 
-const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
+const GpuMesh* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     auto create_mesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
         auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data, bool p_is_dynamic) -> ID3D11Buffer* {
             if (!p_data) {
@@ -725,21 +725,22 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
         out_mesh.vertex_buffer[3] = create_vertex_buffer(VectorSizeInByte(mesh.tangents), mesh.tangents.data(), false);
         out_mesh.vertex_buffer[4] = create_vertex_buffer(VectorSizeInByte(mesh.joints_0), mesh.joints_0.data(), false);
         out_mesh.vertex_buffer[5] = create_vertex_buffer(VectorSizeInByte(mesh.weights_0), mesh.weights_0.data(), false);
-        {
-            // index buffer
-            out_mesh.indexCount = static_cast<uint32_t>(mesh.indices.size());
-            D3D11_BUFFER_DESC bufferDesc{};
-            bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-            bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.indexCount);
-            bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-            bufferDesc.CPUAccessFlags = 0;
-            bufferDesc.MiscFlags = 0;
+        CRASH_NOW();
+        //{
+        //    // index buffer
+        //    out_mesh.indexCount = static_cast<uint32_t>(mesh.indices.size());
+        //    D3D11_BUFFER_DESC bufferDesc{};
+        //    bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
+        //    bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.indexCount);
+        //    bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+        //    bufferDesc.CPUAccessFlags = 0;
+        //    bufferDesc.MiscFlags = 0;
 
-            D3D11_SUBRESOURCE_DATA data{};
-            data.pSysMem = mesh.indices.data();
-            D3D_FAIL_MSG(p_device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
-                         "Failed to create index buffer");
-        }
+        //    D3D11_SUBRESOURCE_DATA data{};
+        //    data.pSysMem = mesh.indices.data();
+        //    D3D_FAIL_MSG(p_device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
+        //                 "Failed to create index buffer");
+        //}
     };
 
     RID rid = m_meshes.make_rid();
@@ -750,7 +751,7 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
     return mesh_buffers;
 }
 
-void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
+void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
     // @TODO: refactor
@@ -779,7 +780,7 @@ void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
     m_deviceContext->IASetIndexBuffer(mesh->index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 }
 
-void D3d11GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+void D3d11GraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
     if (auto mesh = dynamic_cast<D3d11MeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
         {
             D3D11_MAPPED_SUBRESOURCE mapped;

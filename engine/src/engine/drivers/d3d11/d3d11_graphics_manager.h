@@ -7,7 +7,7 @@
 
 namespace my {
 
-struct D3d11MeshBuffers : public MeshBuffers {
+struct D3d11MeshBuffers : public GpuMesh {
     Microsoft::WRL::ComPtr<ID3D11Buffer> vertex_buffer[6]{};
     Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer;
 };
@@ -27,9 +27,9 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
-    const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
-    void SetMesh(const MeshBuffers* p_mesh) final;
-    void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
+    const GpuMesh* CreateMesh(const MeshComponent& p_mesh) final;
+    void SetMesh(const GpuMesh* p_mesh) final;
+    void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
 
     void DrawElements(uint32_t p_count, uint32_t p_offset) final;
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;

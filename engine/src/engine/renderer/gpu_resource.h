@@ -97,12 +97,31 @@ struct GpuTextureDesc {
     RenderTargetResourceName name;
 };
 
+enum class GpuBufferType : uint8_t {
+    UNKNOWN,
+    VERTEX,
+    INDEX,
+    CONSTANT,
+    STRUCTURED,
+};
+
 struct GpuBufferDesc {
+    GpuBufferType type{ GpuBufferType::UNKNOWN };
     uint32_t slot{ 0 };
     uint32_t elementSize{ 0 };
     uint32_t elementCount{ 0 };
     uint32_t offset{ 0 };
     const void* initialData{ nullptr };
+};
+
+// @TODO: generalize buffers
+struct GpuBuffer {
+    const GpuBufferDesc desc;
+    size_t handle{ 0 };
+
+    GpuBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
+
+    virtual ~GpuBuffer() = default;
 };
 
 struct GpuConstantBuffer {
@@ -121,17 +140,36 @@ struct GpuConstantBuffer {
 };
 
 struct GpuStructuredBuffer {
+    const GpuBufferDesc desc;
+
     GpuStructuredBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
 
     virtual ~GpuStructuredBuffer() = default;
-
-    const GpuBufferDesc desc;
 };
 
-struct MeshBuffers {
-    virtual ~MeshBuffers() = default;
+inline constexpr int MESH_MAX_VERTEX_BUFFER_COUNT = 6;
 
-    uint32_t indexCount = 0;
+struct GpuMeshDesc {
+    struct VertexLayout {
+        uint32_t slot{ 0 };
+        uint32_t strideInByte{ 0 };
+        uint32_t offsetInByte{ 0 };
+    };
+
+    uint32_t indexCount{ 0 };
+    uint32_t enabledVertexCount{ 0 };
+    VertexLayout vertexLayout[MESH_MAX_VERTEX_BUFFER_COUNT];
+};
+
+struct GpuMesh {
+    GpuMeshDesc desc;
+    std::shared_ptr<GpuBuffer> indexBuffer;
+    std::shared_ptr<GpuBuffer> vertexBuffers[MESH_MAX_VERTEX_BUFFER_COUNT];
+
+    GpuMesh() = default;
+    GpuMesh(const GpuMeshDesc& p_desc) : desc(p_desc) {}
+
+    virtual ~GpuMesh() = default;
 };
 
 // @TODO: refactor Line and Mesh

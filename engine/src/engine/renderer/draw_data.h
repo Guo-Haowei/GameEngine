@@ -31,7 +31,7 @@ struct DrawContext {
 struct BatchContext {
     int bone_idx;
     int batch_idx;
-    const MeshBuffers* mesh_data;
+    const GpuMesh* mesh_data;
     std::vector<DrawContext> subsets;
     uint32_t flags;
 };

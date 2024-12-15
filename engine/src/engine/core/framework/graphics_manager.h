@@ -87,9 +87,9 @@ public:
     virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
-    virtual const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) = 0;
-    virtual void SetMesh(const MeshBuffers* p_mesh) = 0;
-    virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
+    virtual const GpuMesh* CreateMesh(const MeshComponent& p_mesh) = 0;
+    virtual void SetMesh(const GpuMesh* p_mesh) = 0;
+    virtual void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
 
     virtual LineBuffers* CreateLine(const std::vector<Point>& p_points);
     virtual void SetLine(const LineBuffers* p_buffer);
@@ -195,8 +195,8 @@ protected:
     int m_frameIndex{ 0 };
     const int m_frameCount;
 
-    const MeshBuffers* m_screenQuadBuffers;
-    const MeshBuffers* m_skyboxBuffers;
+    const GpuMesh* m_screenQuadBuffers;
+    const GpuMesh* m_skyboxBuffers;
 
 public:
     // @TODO: make private

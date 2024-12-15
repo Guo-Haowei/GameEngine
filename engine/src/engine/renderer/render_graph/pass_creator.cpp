@@ -183,7 +183,7 @@ static void PointShadowPassFunc(const DrawData& p_data, const DrawPass* p_draw_p
             gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
             gm.SetMesh(draw.mesh_data);
-            gm.DrawElements(draw.mesh_data->indexCount);
+            gm.DrawElements(draw.mesh_data->indexBuffer->desc.elementCount);
         }
     };
 
@@ -238,7 +238,7 @@ static void ShadowPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) 
             gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
             gm.SetMesh(draw.mesh_data);
-            gm.DrawElements(draw.mesh_data->indexCount);
+            gm.DrawElements(draw.mesh_data->indexBuffer->desc.elementCount);
         }
     };
     gm.SetPipelineState(PSO_DPETH);

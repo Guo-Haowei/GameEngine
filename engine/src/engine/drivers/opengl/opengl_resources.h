@@ -8,12 +8,20 @@
 
 namespace my {
 
+struct OpenGlBuffer : GpuBuffer {
+    using GpuBuffer::GpuBuffer;
+
+    uint32_t type;
+
+    ~OpenGlBuffer() { Clear(); }
+
+    void Clear();
+};
+
 struct OpenGlGpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
-    ~OpenGlGpuTexture() {
-        Clear();
-    }
+    ~OpenGlGpuTexture() { Clear(); }
 
     void Clear();
 
@@ -26,9 +34,7 @@ struct OpenGlGpuTexture : public GpuTexture {
 };
 
 struct OpenGlDrawPass : public DrawPass {
-    ~OpenGlDrawPass() {
-        Clear();
-    }
+    ~OpenGlDrawPass() { Clear(); }
 
     void Clear();
 
@@ -38,9 +44,7 @@ struct OpenGlDrawPass : public DrawPass {
 struct OpenGlUniformBuffer : public GpuConstantBuffer {
     using GpuConstantBuffer::GpuConstantBuffer;
 
-    ~OpenGlUniformBuffer() {
-        Clear();
-    }
+    ~OpenGlUniformBuffer() { Clear(); }
 
     void Clear();
 
@@ -50,9 +54,7 @@ struct OpenGlUniformBuffer : public GpuConstantBuffer {
 struct OpenGlStructuredBuffer : public GpuStructuredBuffer {
     using GpuStructuredBuffer::GpuStructuredBuffer;
 
-    ~OpenGlStructuredBuffer() {
-        Clear();
-    }
+    ~OpenGlStructuredBuffer() { Clear(); }
 
     void Clear();
 
