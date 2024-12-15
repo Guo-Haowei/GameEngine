@@ -3,7 +3,7 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/matrix_transform.h"
-#include "engine/renderer/render_manager.h"
+#include "engine/renderer/renderer.h"
 #include "engine/scene/scene_version.h"
 #include "engine/scene/transform_component.h"
 
@@ -39,12 +39,12 @@ void LightComponent::Update(const TransformComponent& p_transform) {
         // update shadow map
         if (CastShadow()) {
             // @TODO: get rid of the
-            if (m_shadowMapIndex == INVALID_POINT_SHADOW_HANDLE) {
-                m_shadowMapIndex = RenderManager::GetSingleton().allocate_point_light_shadowMap();
+            if (m_shadowMapIndex == renderer::INVALID_POINT_SHADOW_HANDLE) {
+                m_shadowMapIndex = renderer::AllocatePointLightShadowMap();
             }
         } else {
-            if (m_shadowMapIndex != INVALID_POINT_SHADOW_HANDLE) {
-                RenderManager::GetSingleton().free_point_light_shadowMap(m_shadowMapIndex);
+            if (m_shadowMapIndex != renderer::INVALID_POINT_SHADOW_HANDLE) {
+                renderer::FreePointLightShadowMap(m_shadowMapIndex);
             }
         }
 

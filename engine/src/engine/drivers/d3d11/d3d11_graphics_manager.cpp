@@ -744,7 +744,6 @@ const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh)
 
     RID rid = m_meshes.make_rid();
     D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-    mesh_buffers->doubleSided = p_mesh.flags & MeshComponent::DOUBLE_SIDED;
 
     p_mesh.gpuResource = mesh_buffers;
     create_mesh_data(m_device.Get(), p_mesh, *mesh_buffers);

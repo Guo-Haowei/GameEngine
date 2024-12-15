@@ -21,7 +21,7 @@
 namespace my::gl {
 
 // @TODO: wrap all enums
-enum COMPARISON_FUNC {
+enum COMPARISON_FUNC : uint32_t {
     COMPARISON_FUNC_NEVER = GL_NEVER,
     COMPARISON_FUNC_LESS = GL_LESS,
     COMPARISON_FUNC_EQUAL = GL_EQUAL,
@@ -32,7 +32,7 @@ enum COMPARISON_FUNC {
     COMPARISON_FUNC_ALWAYS = GL_ALWAYS,
 };
 
-enum STENCIL_OP {
+enum STENCIL_OP : uint32_t {
     STENCIL_OP_KEEP = GL_KEEP,
     STENCIL_OP_ZERO = GL_ZERO,
     STENCIL_OP_REPLACE = GL_REPLACE,
@@ -42,6 +42,44 @@ enum STENCIL_OP {
     STENCIL_OP_INCR = GL_INCR,
     STENCIL_OP_DECR = GL_DECR,
 };
+
+enum BLEND : uint32_t {
+    BLEND_ZERO = GL_ZERO,
+    BLEND_ONE = GL_ONE,
+    BLEND_SRC_ALPHA = GL_SRC_ALPHA,
+    BLEND_INV_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA,
+};
+
+enum BLEND_OP {
+    BLEND_OP_ADD = GL_FUNC_ADD,
+    BLEND_OP_SUB = GL_FUNC_SUBTRACT,
+};
+
+static inline BLEND Convert(Blend p_blend) {
+    switch (p_blend) {
+        case Blend::BLEND_ZERO:
+            return gl::BLEND_ZERO;
+        case Blend::BLEND_ONE:
+            return gl::BLEND_ONE;
+        case Blend::BLEND_SRC_ALPHA:
+            return gl::BLEND_SRC_ALPHA;
+        case Blend::BLEND_INV_SRC_ALPHA:
+            return gl::BLEND_INV_SRC_ALPHA;
+        default:
+            CRASH_NOW();
+            return gl::BLEND_SRC_ALPHA;
+    }
+}
+
+static inline BLEND_OP Convert(BlendOp p_op) {
+    switch (p_op) {
+        case BlendOp::BLEND_OP_SUB:
+            return gl::BLEND_OP_SUB;
+        case BlendOp::BLEND_OP_ADD:
+        default:
+            return gl::BLEND_OP_ADD;
+    }
+}
 
 static inline COMPARISON_FUNC Convert(ComparisonFunc p_func) {
     switch (p_func) {

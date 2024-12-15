@@ -198,6 +198,8 @@ public:
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerMaterialBuffer;
     bool m_bufferUpdated = false;
 
+    const ImageAsset* m_brdfImage = nullptr;
+
 protected:
     void UpdateEmitters(const Scene& p_scene);
 };

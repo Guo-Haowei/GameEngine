@@ -3,7 +3,7 @@
 #include <filesystem>
 
 #include "engine/assets/asset_loader.h"
-#include "engine/assets/loader_tinygltf.h"
+#include "engine/assets/gltf_loader.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
@@ -11,7 +11,6 @@
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_builder.h"
-#include "engine/renderer/render_manager.h"
 #include "engine/scene/scene.h"
 
 // plugins
@@ -42,7 +41,11 @@ static struct {
 auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
 
-    IAssetLoader::RegisterLoader(".gltf", LoaderTinyGLTF::CreateLoader);
+#if 1
+    IAssetLoader::RegisterLoader(".gltf", GltfLoader::CreateLoader);
+#else
+    IAssetLoader::RegisterLoader(".gltf", AssimpAssetLoader::CreateLoader);
+#endif
 #if USING(USING_ASSIMP)
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
 #endif
@@ -105,7 +108,7 @@ void AssetManager::LoadAssetAsync(AssetRegistryHandle* p_handle, OnAssetLoadSucc
 }
 
 void AssetManager::FinalizeImpl() {
-    s_assetManagerGlob.wakeCondition.notify_all();
+    RequestShutdown();
 
     m_assets.clear();
     m_textCache.clear();
@@ -154,6 +157,10 @@ void AssetManager::Wait() {
     while (s_assetManagerGlob.runningWorkers.load() != 0) {
         // dummy for loop
     }
+}
+
+void AssetManager::RequestShutdown() {
+    s_assetManagerGlob.wakeCondition.notify_all();
 }
 
 std::shared_ptr<IAsset> AssetManager::FindFile(const FilePath& p_path) {

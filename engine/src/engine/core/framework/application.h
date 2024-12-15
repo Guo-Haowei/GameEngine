@@ -13,7 +13,6 @@ class GraphicsManager;
 class ImguiManager;
 class InputManager;
 class PhysicsManager;
-class RenderManager;
 class SceneManager;
 class ScriptManager;
 
@@ -104,8 +103,6 @@ protected:
     GraphicsManager* m_graphicsManager;
     ImguiManager* m_imguiManager;
     ScriptManager* m_scriptManager;
-    // @TODO: remove render manager
-    RenderManager* m_renderManager;
     InputManager* m_inputManager;
 
     std::vector<Module*> m_modules;

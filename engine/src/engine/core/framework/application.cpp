@@ -15,6 +15,7 @@
 #include "engine/core/framework/physics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/framework/script_manager.h"
+#include "engine/core/math/vector_math.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_utils.h"
@@ -25,10 +26,6 @@
 #define DEFINE_DVAR
 #include "engine/core/framework/common_dvars.h"
 #undef DEFINE_DVAR
-
-// @TODO: remove this
-#include "engine/renderer/render_manager.h"
-#include "pbr.hlsl.h"
 
 namespace my {
 
@@ -111,7 +108,6 @@ auto Application::SetupModules() -> Result<void> {
         }
         m_graphicsManager = *res;
     }
-    m_renderManager = new RenderManager();
     m_inputManager = new InputManager();
 
     RegisterModule(m_assetManager);
@@ -121,7 +117,6 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_physicsManager);
     RegisterModule(m_displayServer);
     RegisterModule(m_graphicsManager);
-    RegisterModule(m_renderManager);
     RegisterModule(m_inputManager);
 
     if (m_specification.enableImgui) {
@@ -138,7 +133,7 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
     SaveCommandLine(p_argc, p_argv);
     RegisterCommonDvars();
     // @TODO: refactor this part
-    renderer::register_rendering_dvars();
+    renderer::RegisterDvars();
     DynamicVariableManager::Deserialize(DVAR_CACHE_FILE);
     // parse happens after deserialization, so command line will override cache
     DynamicVariableManager::Parse(m_commandLine);

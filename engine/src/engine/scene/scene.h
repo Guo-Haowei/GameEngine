@@ -12,7 +12,6 @@
 #include "engine/scene/light_component.h"
 #include "engine/scene/material_component.h"
 #include "engine/scene/mesh_component.h"
-#include "engine/scene/object_component.h"
 #include "engine/scene/particle_emitter_component.h"
 #include "engine/scene/transform_component.h"
 
@@ -119,9 +118,9 @@ public:
     REGISTER_COMPONENT(LuaScriptComponent, 0);
     REGISTER_COMPONENT(NativeScriptComponent, 0);
     REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
-    REGISTER_COMPONENT(HemisphereLightComponent, 0);
     REGISTER_COMPONENT(RigidBodyComponent, 0);
     REGISTER_COMPONENT(ClothComponent, 0);
+    REGISTER_COMPONENT(EnvironmentComponent, 0);
 
 public:
     bool Serialize(Archive& p_archive);
@@ -158,12 +157,11 @@ public:
                                       const Vector3f& p_color = Vector3f(1),
                                       const float p_emissive = 5.0f);
 
-    ecs::Entity CreateHemisphereLightEntity(const std::string& p_name,
-                                            const std::string& p_path);
-
     ecs::Entity CreateInfiniteLightEntity(const std::string& p_name,
                                           const Vector3f& p_color = Vector3f(1),
                                           const float p_emissive = 5.0f);
+
+    ecs::Entity CreateEnvironmentEntity(const std::string& p_name);
 
     ecs::Entity CreatePlaneEntity(const std::string& p_name,
                                   const Vector3f& p_scale = Vector3f(0.5f),

@@ -92,6 +92,23 @@ struct ArmatureComponent {
 };
 #pragma endregion ARMATURE_COMPONENT
 
+#pragma region OBJECT_COMPONENT
+struct ObjectComponent {
+    enum Flags : uint32_t {
+        NONE = BIT(0),
+        RENDERABLE = BIT(1),
+        CAST_SHADOW = BIT(2),
+        IS_TRANSPARENT = BIT(3),
+    };
+
+    Flags flags = static_cast<Flags>(RENDERABLE | CAST_SHADOW);
+    ecs::Entity meshId;
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+};
+DEFINE_ENUM_BITWISE_OPERATIONS(ObjectComponent::Flags);
+#pragma endregion OBJECT_COMPONENT
+
 #pragma region CAMERA_COMPONENT
 class PerspectiveCameraComponent {
 public:
@@ -234,27 +251,6 @@ struct NativeScriptComponent {
 };
 #pragma endregion NATIVE_SCRIPT_COMPONENT
 
-#pragma region HEMISPHERE_LIGHT_COMPONENT
-class HemisphereLightComponent {
-public:
-    void SetPath(const std::string& p_path);
-
-    std::string& GetPathRef() { return m_path; }
-
-    const ImageAsset* GetAsset() const { return m_asset; }
-
-    void Serialize(Archive& p_archive, uint32_t p_version);
-
-private:
-    std::string m_path;
-
-    // Non-Serialized
-    const ImageAsset* m_asset{ nullptr };
-
-    friend class Scene;
-};
-#pragma endregion HEMISPHERE_LIGHT_COMPONENT
-
 #pragma region COLLISION_OBJECT_COMPONENT
 
 /*
@@ -340,6 +336,28 @@ struct ClothComponent : CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
 };
 #pragma endregion COLLISION_OBJECT_COMPONENT
+
+#pragma region ENVIRONMENT_COMPONENT
+struct EnvironmentComponent {
+    enum Type {
+        HDR_TEXTURE,
+        PROCEDURE,
+    };
+
+    struct Sky {
+        Type type;
+        std::string texturePath;
+        // Non-Serialized
+        mutable const ImageAsset* textureAsset;
+    } sky;
+
+    struct Ambient {
+        Vector4f color;
+    } ambient;
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+};
+#pragma endregion ENVIRONMENT_COMPONENT
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

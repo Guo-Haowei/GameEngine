@@ -94,6 +94,7 @@ struct PipelineState {
     PSO_NAME(PSO_POINT_SHADOW)           \
     PSO_NAME(PSO_GBUFFER)                \
     PSO_NAME(PSO_GBUFFER_DOUBLE_SIDED)   \
+    PSO_NAME(PSO_FORWARD_TRANSPARENT)    \
     PSO_NAME(PSO_VOXELIZATION)           \
     PSO_NAME(PSO_VOXELIZATION_PRE)       \
     PSO_NAME(PSO_VOXELIZATION_POST)      \
@@ -108,7 +109,6 @@ struct PipelineState {
     PSO_NAME(PSO_DIFFUSE_IRRADIANCE)     \
     PSO_NAME(PSO_PREFILTER)              \
     PSO_NAME(PSO_ENV_SKYBOX)             \
-    PSO_NAME(PSO_BRDF)                   \
     PSO_NAME(PSO_BILLBOARD)              \
     PSO_NAME(PSO_RW_TEXTURE_2D)          \
     PSO_NAME(PSO_PATH_TRACER)            \

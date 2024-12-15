@@ -6,7 +6,6 @@ namespace my {
 
 // @TODO:
 // * cascaded shadow map
-// * alpha blending
 // * fog
 // * 2D UI
 // * draw elements and draw array
@@ -166,42 +165,51 @@ Scene* CreateTheAviatorScene() {
 
     constexpr float default_roughness = 0.8f;
     constexpr float default_metallic = 0.2f;
-    ecs::Entity material_red = scene->CreateMaterialEntity("material_red");
+    auto material_red = scene->CreateMaterialEntity("material_red");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_red);
         material->baseColor = RED_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
-    ecs::Entity material_white = scene->CreateMaterialEntity("material_white");
+    auto material_white = scene->CreateMaterialEntity("material_white");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_white);
         material->baseColor = WHITE_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
-    ecs::Entity material_dark_brown = scene->CreateMaterialEntity("material_dark_brown");
+    auto material_white_transparent = scene->CreateMaterialEntity("material_white_transparent");
+    {
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_white_transparent);
+        material->baseColor = WHITE_COLOR.ToVector4f();
+        material->baseColor.a = 0.5f;
+        material->roughness = default_roughness;
+        material->metallic = default_metallic;
+    }
+    auto material_dark_brown = scene->CreateMaterialEntity("material_dark_brown");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_dark_brown);
         material->baseColor = DRAK_BROWN_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
-    ecs::Entity material_brown = scene->CreateMaterialEntity("material_brown");
+    auto material_brown = scene->CreateMaterialEntity("material_brown");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_brown);
         material->baseColor = BROWN_COLOR.ToVector4f();
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
-    ecs::Entity material_blue = scene->CreateMaterialEntity("material_blue");
+    auto material_blue_transparent = scene->CreateMaterialEntity("material_blue_transparent");
     {
-        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_blue);
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_blue_transparent);
         material->baseColor = BLUE_COLOR.ToVector4f();
+        material->baseColor.a = 0.8f;
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
-    ecs::Entity material_pink = scene->CreateMaterialEntity("material_pink");
+    auto material_pink = scene->CreateMaterialEntity("material_pink");
     {
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_pink);
         material->baseColor = PINK_COLOR.ToVector4f();
@@ -256,9 +264,11 @@ Scene* CreateTheAviatorScene() {
     }
     {
         auto wind_shield = scene->CreateCubeEntity("wind_shield",
-                                                   material_white,
+                                                   material_white_transparent,
                                                    Vector3f(0.15f, 0.75f, 1.0f),
                                                    glm::translate(Vector3f(1.8f, 2.7f, 0.0f)));
+        ObjectComponent* obj = scene->GetComponent<ObjectComponent>(wind_shield);
+        obj->flags |= ObjectComponent::IS_TRANSPARENT;
         scene->AttachChild(wind_shield, plane);
     }
     {
@@ -393,8 +403,10 @@ Scene* CreateTheAviatorScene() {
 #pragma region SETUP_OCEAN
     // ocean
     {
-        auto ocean = scene->CreateMeshEntity("ocean", material_blue, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
+        auto ocean = scene->CreateMeshEntity("ocean", material_blue_transparent, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
         ObjectComponent* object = scene->GetComponent<ObjectComponent>(ocean);
+        object->flags |= ObjectComponent::IS_TRANSPARENT;
+
         DEV_ASSERT(object);
 
         MeshComponent* mesh = scene->GetComponent<MeshComponent>(object->meshId);
@@ -446,9 +458,12 @@ Scene* CreateTheAviatorScene() {
 #pragma endregion SETUP_SKY
 
     {
-        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/circus.hdr");
-        //auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/sky.hdr");
-        scene->AttachChild(sky_light, root);
+        auto id = scene->CreateEnvironmentEntity("environment");
+        scene->AttachChild(id, root);
+
+        auto* env = scene->GetComponent<EnvironmentComponent>(id);
+        env->ambient.color = Color::Hex(0xf7d9aa).ToVector4f();
+        env->sky.texturePath = "@res://images/ibl/aviator_sky.hdr";
     }
 
     return scene;

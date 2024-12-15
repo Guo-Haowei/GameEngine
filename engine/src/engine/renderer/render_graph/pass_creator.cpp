@@ -1,5 +1,6 @@
 #include "pass_creator.h"
 
+#include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/math/matrix_transform.h"
@@ -14,6 +15,42 @@
 namespace my::renderer {
 
 /// Gbuffer
+static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches) {
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+
+    for (const auto& draw : p_batches) {
+        const bool has_bone = draw.bone_idx >= 0;
+        if (has_bone) {
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+        }
+
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+        gm.SetMesh(draw.mesh_data);
+
+        if (draw.flags) {
+            gm.SetStencilRef(draw.flags);
+        }
+
+        for (const auto& subset : draw.subsets) {
+            // @TODO: fix this
+            const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
+
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
+
+            gm.DrawElements(subset.index_count, subset.index_offset);
+        }
+
+        if (draw.flags) {
+            gm.SetStencilRef(0);
+        }
+    }
+}
+
 static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
@@ -32,42 +69,10 @@ static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pas
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-        }
-
-        if (draw.flags) {
-            gm.SetStencilRef(draw.flags);
-        }
-
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-        gm.SetMesh(draw.mesh_data);
-        // @TODO: sort
-        gm.SetPipelineState(draw.mesh_data->doubleSided ? PSO_GBUFFER_DOUBLE_SIDED : PSO_GBUFFER);
-
-        for (const auto& subset : draw.subsets) {
-            // @TODO: fix this
-            const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
-
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-            // @TODO: set material
-
-            gm.DrawElements(subset.index_count, subset.index_offset);
-
-            // @TODO: unbind
-        }
-
-        if (draw.flags) {
-            gm.SetStencilRef(0);
-        }
-    }
+    gm.SetPipelineState(PSO_GBUFFER);
+    DrawBatchesGeometry(p_data, pass.opaque);
+    gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
+    DrawBatchesGeometry(p_data, pass.doubleSided);
 }
 
 void RenderPassCreator::AddGbufferPass() {
@@ -168,6 +173,20 @@ static void PointShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw
     // prepare render data
     const auto [width, height] = p_draw_pass->GetBufferSize();
 
+    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
+        for (const auto& draw : p_batches) {
+            const bool has_bone = draw.bone_idx >= 0;
+            if (has_bone) {
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+            }
+
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+            gm.SetMesh(draw.mesh_data);
+            gm.DrawElements(draw.mesh_data->indexCount);
+        }
+    };
+
     for (int pass_id = 0; pass_id < MAX_POINT_LIGHT_SHADOW_COUNT; ++pass_id) {
         auto& pass_ptr = p_data.pointShadowPasses[pass_id];
         if (!pass_ptr) {
@@ -185,17 +204,10 @@ static void PointShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw
             gm.SetViewport(Viewport(width, height));
 
             gm.SetPipelineState(PSO_POINT_SHADOW);
-            for (const auto& draw : pass.draws) {
-                const bool has_bone = draw.bone_idx >= 0;
-                if (has_bone) {
-                    gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-                }
-
-                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-                gm.SetMesh(draw.mesh_data);
-                gm.DrawElements(draw.mesh_data->indexCount);
-            }
+            draw_batches(pass.opaque);
+            draw_batches(pass.transparent);
+            // @TODO: double side
+            draw_batches(pass.doubleSided);
         }
     }
 }
@@ -216,18 +228,23 @@ static void ShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass
     const PassContext& pass = p_data.shadowPasses[0];
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PSO_DPETH);
-    for (const auto& draw : pass.draws) {
-        const bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
+        for (const auto& draw : p_batches) {
+            const bool has_bone = draw.bone_idx >= 0;
+            if (has_bone) {
+                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+            }
+
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+            gm.SetMesh(draw.mesh_data);
+            gm.DrawElements(draw.mesh_data->indexCount);
         }
-
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-        gm.SetMesh(draw.mesh_data);
-        gm.DrawElements(draw.mesh_data->indexCount);
-    }
+    };
+    gm.SetPipelineState(PSO_DPETH);
+    draw_batches(pass.opaque);
+    draw_batches(pass.transparent);
+    draw_batches(pass.doubleSided);
 }
 
 void RenderPassCreator::AddShadowPass() {
@@ -314,26 +331,31 @@ static void VoxelizationPassFunc(const RenderData& p_data, const DrawPass*) {
 
     // @TODO: hack
     if (gm.GetBackend() == Backend::OPENGL) {
+        auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
+            for (const auto& draw : p_batches) {
+                const bool has_bone = draw.bone_idx >= 0;
+                if (has_bone) {
+                    gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+                }
+
+                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+                gm.SetMesh(draw.mesh_data);
+
+                for (const auto& subset : draw.subsets) {
+                    gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
+
+                    gm.DrawElements(subset.index_count, subset.index_offset);
+                }
+            }
+        };
+
         gm.SetViewport(Viewport(voxel_size, voxel_size));
         gm.SetPipelineState(PSO_VOXELIZATION);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
-
-        for (const auto& draw : pass.draws) {
-            const bool has_bone = draw.bone_idx >= 0;
-            if (has_bone) {
-                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-            }
-
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-            gm.SetMesh(draw.mesh_data);
-
-            for (const auto& subset : draw.subsets) {
-                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-                gm.DrawElements(subset.index_count, subset.index_offset);
-            }
-        }
+        draw_batches(pass.opaque);
+        draw_batches(pass.transparent);
+        draw_batches(pass.doubleSided);
 
         // glSubpixelPrecisionBiasNV(0, 0);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
@@ -400,7 +422,7 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
     gm.SetPipelineState(PSO_LIGHTING);
 
-    auto brdf = gm.FindTexture(RESOURCE_BRDF);
+    const auto brdf = gm.m_brdfImage->gpu_texture;
     auto diffuse_iraddiance = gm.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
     auto prefiltered = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
     DEV_ASSERT(brdf && diffuse_iraddiance && prefiltered);
@@ -431,14 +453,18 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    // @TODO: fix skybox
-    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+    // DrawBatches
+    auto skybox = p_data.skyboxHdr;
     if (skybox) {
-        gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+        gm.BindTexture(Dimension::TEXTURE_2D, skybox->GetHandle(), GetSkyboxHdrSlot());
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.DrawSkybox();
-        gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
     }
+
+    // draw transparent objects
+    gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
+    DrawBatchesGeometry(p_data, pass.transparent);
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -815,30 +841,6 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     // @TODO: rename to skylight
     auto render_pass = m_graph.CreatePass(render_pass_desc);
 
-    // brdf lut
-    {
-        const int size = 512;
-        auto brdf_image = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_BRDF, PixelFormat::R16G16_FLOAT, AttachmentType::COLOR_2D, size, size), LinearClampSampler());
-        auto brdf_subpass = gm.CreateDrawPass(DrawPassDesc{
-            .colorAttachments = { brdf_image },
-            .execFunc = [](const RenderData& p_data, const DrawPass* p_draw_pass) {
-                if (!p_data.bakeIbl) {
-                    return;
-                }
-
-                OPTICK_EVENT("update brdf lut");
-                GraphicsManager& gm = GraphicsManager::GetSingleton();
-                gm.SetPipelineState(PSO_BRDF);
-                const auto [width, height] = p_draw_pass->GetBufferSize();
-                gm.SetRenderTarget(p_draw_pass);
-                gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
-                gm.SetViewport(Viewport(width, height));
-                gm.DrawQuad();
-            },
-        });
-
-        render_pass->AddDrawPass(brdf_subpass);
-    }
     // hdr -> cubemap
     {
         const int size = 512;

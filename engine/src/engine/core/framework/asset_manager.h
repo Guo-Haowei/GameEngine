@@ -24,6 +24,7 @@ public:
 
     static void WorkerMain();
     static void Wait();
+    static void RequestShutdown();
 
 private:
     [[nodiscard]] auto LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset*>;

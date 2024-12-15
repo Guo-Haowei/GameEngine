@@ -131,7 +131,6 @@ struct GpuStructuredBuffer {
 struct MeshBuffers {
     virtual ~MeshBuffers() = default;
 
-    bool doubleSided = false;
     uint32_t indexCount = 0;
 };
 

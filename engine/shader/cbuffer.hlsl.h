@@ -7,8 +7,6 @@ BEGIN_NAME_SPACE(my)
 
 // constant buffer
 #if defined(__cplusplus)
-using uint = uint32_t;
-
 using TextureHandle = uint64_t;
 
 template<typename T, int N>
@@ -169,7 +167,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     //-----------------------------------------
 
-    Vector4f _per_frame_padding_3;  // 16
+    Vector4f c_ambientColor;        // 16
     Vector4f _per_frame_padding_4;  // 16
 
     sampler2D c_SkyboxResidentHandle;

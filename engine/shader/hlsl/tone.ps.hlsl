@@ -47,7 +47,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
 
     float g = sqrt(pow(gx, 2.0) + pow(gy, 2.0));
     if (g > 0.0) {
-        return float4(0.98, 0.64, 0.0, 0.0);
+        return float4(0.98, 0.64, 0.0, 1.0);
     }
 
     float3 color = TEXTURE_2D(TextureLighting).Sample(s_linearClampSampler, uv).rgb;

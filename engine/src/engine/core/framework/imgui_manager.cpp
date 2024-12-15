@@ -28,6 +28,7 @@ auto ImguiManager::InitializeImpl() -> Result<void> {
     const float base_font_size = 16.0f;                         // This is the size of the default font. Change to the font size you use.
     const float icon_font_size = base_font_size * 2.0f / 3.0f;  // FontAwesome fonts need to have their sizes reduced by 2.0f/3.0f in order to align correctly
 
+    // dummy wait here
     AssetManager::Wait();
     {
         const std::string path = "@res://fonts/DroidSans.ttf";

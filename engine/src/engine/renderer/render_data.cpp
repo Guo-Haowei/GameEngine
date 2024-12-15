@@ -72,6 +72,8 @@ static void FillPass(const RenderDataConfig& p_config,
             continue;
         }
 
+        const bool is_transparent = obj.flags & ObjectComponent::IS_TRANSPARENT;
+
         if (!p_filter1(obj)) {
             continue;
         }
@@ -80,6 +82,8 @@ static void FillPass(const RenderDataConfig& p_config,
         DEV_ASSERT(scene.Contains<MeshComponent>(obj.meshId));
 
         const MeshComponent& mesh = *scene.GetComponent<MeshComponent>(obj.meshId);
+        bool double_sided = mesh.flags & MeshComponent::DOUBLE_SIDED;
+
         const Matrix4x4f& world_matrix = transform.GetWorldMatrix();
         AABB aabb = mesh.localBound;
         aabb.ApplyMatrix(world_matrix);
@@ -111,6 +115,7 @@ static void FillPass(const RenderDataConfig& p_config,
             draw.bone_idx = -1;
         }
 
+        // HACK
         const MeshComponent* cloth_mesh = scene.GetComponent<MeshComponent>(entity);
         if (cloth_mesh && cloth_mesh->gpuResource) {
             draw.mesh_data = (MeshBuffers*)cloth_mesh->gpuResource;
@@ -135,11 +140,13 @@ static void FillPass(const RenderDataConfig& p_config,
 
             DrawContext sub_mesh;
 
+            // THIS IS HACKY
             if (cloth_mesh) {
                 sub_mesh.index_count = draw.mesh_data->indexCount;
                 sub_mesh.index_offset = 0;
                 sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
                 draw.subsets.emplace_back(std::move(sub_mesh));
+                double_sided = true;
                 break;
             }
 
@@ -150,7 +157,13 @@ static void FillPass(const RenderDataConfig& p_config,
             draw.subsets.emplace_back(std::move(sub_mesh));
         }
 
-        p_pass.draws.emplace_back(std::move(draw));
+        if (is_transparent) {
+            p_pass.transparent.emplace_back(std::move(draw));
+        } else if (double_sided) {
+            p_pass.doubleSided.emplace_back(std::move(draw));
+        } else {
+            p_pass.opaque.emplace_back(std::move(draw));
+        }
     }
 }
 
@@ -239,18 +252,19 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, RenderData& p_o
     cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_HIGHLIGHT_SELECT));
     cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
 
-    // check if necessary to back environment
-    {
-        for (auto [entity, hemisphere_light] : p_config.scene.m_HemisphereLightComponents) {
-            auto asset = hemisphere_light.GetAsset();
-            if (asset && asset->gpu_texture) {
-                cache.c_SkyboxHdrResidentHandle.Set32((uint32_t)asset->gpu_texture->GetResidentHandle());
-                p_out_data.skyboxHdr = asset->gpu_texture;
+    for (auto [entity, environment] : p_config.scene.View<const EnvironmentComponent>()) {
+        cache.c_ambientColor = environment.ambient.color;
+        if (!environment.sky.texturePath.empty()) {
+            environment.sky.textureAsset = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(environment.sky.texturePath);
+        }
 
-                // @TODO: fix this
-                g_constantCache.cache.c_hdrEnvMap.Set64(asset->gpu_texture->GetResidentHandle());
-                g_constantCache.update();
-            }
+        if (auto asset = environment.sky.textureAsset; asset && asset->gpu_texture) {
+            cache.c_SkyboxHdrResidentHandle.Set32((uint32_t)asset->gpu_texture->GetResidentHandle());
+            p_out_data.skyboxHdr = asset->gpu_texture;
+
+            // @TODO: fix this
+            g_constantCache.cache.c_hdrEnvMap.Set64(asset->gpu_texture->GetResidentHandle());
+            g_constantCache.update();
         }
     }
 }

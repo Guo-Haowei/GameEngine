@@ -12,7 +12,7 @@ void PopDisabled() {
     ImGui::PopStyleVar();
 }
 
-bool DrawDragInt(const char* p_lable,
+bool DrawDragInt(const char* p_label,
                  int& p_out,
                  float p_speed,
                  int p_min,
@@ -20,15 +20,15 @@ bool DrawDragInt(const char* p_lable,
                  float p_column_width) {
     ImGui::Columns(2);
     ImGui::SetColumnWidth(0, p_column_width);
-    ImGui::Text("%s", p_lable);
+    ImGui::Text("%s", p_label);
     ImGui::NextColumn();
-    auto tag = std::format("##{}", p_lable);
+    auto tag = std::format("##{}", p_label);
     bool is_dirty = ImGui::DragInt(tag.c_str(), &p_out, p_speed, p_min, p_max);
     ImGui::Columns(1);
     return is_dirty;
 }
 
-bool DrawDragFloat(const char* p_lable,
+bool DrawDragFloat(const char* p_label,
                    float& p_out,
                    float p_speed,
                    float p_min,
@@ -36,9 +36,9 @@ bool DrawDragFloat(const char* p_lable,
                    float p_column_width) {
     ImGui::Columns(2);
     ImGui::SetColumnWidth(0, p_column_width);
-    ImGui::Text("%s", p_lable);
+    ImGui::Text("%s", p_label);
     ImGui::NextColumn();
-    auto tag = std::format("##{}", p_lable);
+    auto tag = std::format("##{}", p_label);
     bool is_dirty = ImGui::DragFloat(tag.c_str(), &p_out, p_speed, p_min, p_max);
     ImGui::Columns(1);
     return is_dirty;
@@ -143,18 +143,51 @@ static bool DrawVec3ControlImpl(int type,
     return is_dirty;
 }
 
-bool DrawVec3Control(const char* p_lable,
+bool DrawVec3Control(const char* p_label,
                      Vector3f& p_out_vec3,
                      float p_reset_value,
                      float p_column_width) {
-    return DrawVec3ControlImpl(TYPE_TRANSFORM, p_lable, p_out_vec3, p_reset_value, p_column_width);
+    return DrawVec3ControlImpl(TYPE_TRANSFORM, p_label, p_out_vec3, p_reset_value, p_column_width);
 }
 
-bool DrawColorControl(const char* p_lable,
+bool DrawColorControl(const char* p_label,
                       Vector3f& p_out_vec3,
                       float p_reset_value,
                       float p_column_width) {
-    return DrawVec3ControlImpl(TYPE_COLOR, p_lable, p_out_vec3, p_reset_value, p_column_width);
+    return DrawVec3ControlImpl(TYPE_COLOR, p_label, p_out_vec3, p_reset_value, p_column_width);
+}
+
+bool DrawInputText(const char* p_label,
+                   std::string& p_string,
+                   float p_column_width) {
+
+    ImGui::Columns(2);
+    ImGui::SetColumnWidth(0, p_column_width);
+    ImGui::Text("%s", p_label);
+    ImGui::NextColumn();
+
+    char buffer[256];
+    strncpy(buffer, p_string.c_str(), sizeof(buffer));
+    auto tag = std::format("##{}", p_label);
+    const bool dirty = ImGui::InputText(tag.c_str(), buffer, sizeof(buffer), ImGuiInputTextFlags_EnterReturnsTrue);
+    if (dirty) {
+        p_string = buffer;
+    }
+
+    ImGui::Columns(1);
+    return dirty;
+}
+
+bool DrawColorPicker3(const char* p_label,
+                      float* p_out,
+                      float p_column_width) {
+    ImGui::Columns(2);
+    ImGui::SetColumnWidth(0, p_column_width);
+    ImGui::Text("%s", p_label);
+    ImGui::NextColumn();
+    const bool dirty = ImGui::ColorPicker3(p_label, p_out);
+    ImGui::Columns(1);
+    return dirty;
 }
 
 }  // namespace my

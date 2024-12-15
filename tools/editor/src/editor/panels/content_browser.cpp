@@ -3,7 +3,6 @@
 #include <IconsFontAwesome/IconsFontAwesome6.h>
 
 #include "editor/editor_layer.h"
-#include "editor/panels/panel_util.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/string/string_utils.h"

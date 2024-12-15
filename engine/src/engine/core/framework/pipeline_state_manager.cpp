@@ -84,6 +84,16 @@ static const DepthStencilDesc s_depthStencilNoTest = {
 /// Blend states
 static const BlendDesc s_blendStateDefault = {};
 
+static const BlendDesc s_transparent = {
+    .renderTargets = {
+        {
+            .blendEnabled = true,
+            .blendSrc = Blend::BLEND_SRC_ALPHA,
+            .blendDest = Blend::BLEND_INV_SRC_ALPHA,
+            .blendOp = BlendOp::BLEND_OP_ADD,
+        } }
+};
+
 static const BlendDesc s_blendStateDisable = {
     .renderTargets = {
         { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
@@ -179,6 +189,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
+
     CREATE_PSO(PSO_GBUFFER_DOUBLE_SIDED,
                {
                    .vs = "mesh.vs",
@@ -191,6 +202,20 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
+
+    CREATE_PSO(PSO_FORWARD_TRANSPARENT,
+               {
+                   .vs = "mesh.vs",
+                   .ps = "forward.ps",
+                   .rasterizerDesc = &s_rasterizerDoubleSided,
+                   .depthStencilDesc = &s_depthStencilGbuffer,
+                   .inputLayoutDesc = &s_inputLayoutMesh,
+                   .blendDesc = &s_transparent,
+                   .numRenderTargets = 1,
+                   .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+               });
+
     CREATE_PSO(PSO_DPETH, {
                               .vs = "shadow.vs",
                               .ps = "depth.ps",
@@ -312,15 +337,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .inputLayoutDesc = &s_inputLayoutMesh,
                                   .blendDesc = &s_blendStateDefault,
                               });
-
-    CREATE_PSO(PSO_BRDF, {
-                             .vs = "screenspace_quad.vs",
-                             .ps = "brdf.ps",
-                             .rasterizerDesc = &s_rasterizerFrontFace,
-                             .depthStencilDesc = &s_depthStencilNoTest,
-                             .inputLayoutDesc = &s_inputLayoutMesh,
-                             .blendDesc = &s_blendStateDefault,
-                         });
 #pragma endregion PSO_ENV
 
     // @HACK: only support this many shaders

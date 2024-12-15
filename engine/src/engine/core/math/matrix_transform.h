@@ -27,13 +27,13 @@ inline Matrix4x4f BuildPerspectiveRH(float p_fovy, float p_aspect, float p_near,
 
 inline Matrix4x4f BuildOpenGlPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
     const float tan_half_fovy = glm::tan(0.5f * p_fovy);
-    Matrix4x4f Result(0.0f);
-    Result[0][0] = 1.0f / (p_aspect * tan_half_fovy);
-    Result[1][1] = 1.0f / tan_half_fovy;
-    Result[2][2] = -(p_far + p_near) / (p_far - p_near);
-    Result[2][3] = -1.0f;
-    Result[3][2] = -(2.0f * p_far * p_near) / (p_far - p_near);
-    return Result;
+    Matrix4x4f result(0.0f);
+    result[0][0] = 1.0f / (p_aspect * tan_half_fovy);
+    result[1][1] = 1.0f / tan_half_fovy;
+    result[2][2] = -(p_far + p_near) / (p_far - p_near);
+    result[2][3] = -1.0f;
+    result[3][2] = -(2.0f * p_far * p_near) / (p_far - p_near);
+    return result;
 }
 
 inline Matrix4x4f BuildOrthoRH(const float p_left,

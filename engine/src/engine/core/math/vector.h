@@ -8,6 +8,14 @@ concept Arithmetic = std::is_arithmetic_v<T>;
 
 struct VectorBaseClass {};
 
+template<typename T>
+concept VectorN = std::is_base_of_v<VectorBaseClass, T>;
+
+template<typename T>
+concept VectorNf =
+    std::is_base_of_v<VectorBaseClass, T> &&
+    std::is_floating_point_v<decltype(std::declval<T>().x)>;
+
 WARNING_PUSH()
 WARNING_DISABLE(4201, "-Wgnu-anonymous-struct")
 WARNING_DISABLE(4201, "-Wnested-anon-types")
@@ -20,18 +28,6 @@ struct VectorBase : VectorBaseClass {
 
     constexpr T* Data() { return reinterpret_cast<T*>(this); }
     constexpr const T* Data() const { return reinterpret_cast<const T*>(this); }
-
-    constexpr void Set(T p_value) {
-        T* data = Data();
-        data[0] = p_value;
-        data[1] = p_value;
-        if constexpr (N >= 3) {
-            data[2] = p_value;
-        }
-        if constexpr (N >= 4) {
-            data[3] = p_value;
-        }
-    }
 
     constexpr void Set(T* p_data) {
         T* data = Data();
@@ -121,12 +117,10 @@ struct Vector2 : VectorBase<T, 2> {
     };
     // clang-format on
 
-    constexpr Vector2() {
-        Base::Set(static_cast<T>(0));
+    explicit constexpr Vector2() : x(0), y(0) {
     }
 
-    constexpr Vector2(T p_value) {
-        Base::Set(p_value);
+    explicit constexpr Vector2(T p_v) : x(p_v), y(p_v) {
     }
 
     constexpr Vector2(T p_x, T p_y) : x(p_x),
@@ -135,8 +129,8 @@ struct Vector2 : VectorBase<T, 2> {
 
     template<typename U>
         requires Arithmetic<U> && (!std::is_same<T, U>::value)
-    constexpr Vector2(U p_x, U p_y) : x(static_cast<T>(p_x)),
-                                      y(static_cast<T>(p_y)) {
+    explicit constexpr Vector2(U p_x, U p_y) : x(static_cast<T>(p_x)),
+                                               y(static_cast<T>(p_y)) {
     }
 
     template<int N, int A, int B>
@@ -166,29 +160,31 @@ struct Vector3 : VectorBase<T, 3> {
     };
     // clang-format on
 
-    constexpr Vector3() {
-        Base::Set(static_cast<T>(0));
+    explicit constexpr Vector3() : x(0),
+                                   y(0),
+                                   z(0) {
     }
 
-    constexpr Vector3(T p_value) {
-        Base::Set(p_value);
+    explicit constexpr Vector3(T p_v) : x(p_v),
+                                        y(p_v),
+                                        z(p_v) {
     }
 
-    constexpr Vector3(T p_x, T p_y, T p_z) : x(p_x),
-                                             y(p_y),
-                                             z(p_z) {
+    explicit constexpr Vector3(T p_x, T p_y, T p_z) : x(p_x),
+                                                      y(p_y),
+                                                      z(p_z) {
     }
 
     template<typename U>
         requires Arithmetic<U> && (!std::is_same<T, U>::value)
-    constexpr Vector3(U p_x, U p_y, U p_z) : x(static_cast<T>(p_x)),
-                                             y(static_cast<T>(p_y)),
-                                             z(static_cast<T>(p_z)) {
+    explicit constexpr Vector3(U p_x, U p_y, U p_z) : x(static_cast<T>(p_x)),
+                                                      y(static_cast<T>(p_y)),
+                                                      z(static_cast<T>(p_z)) {
     }
 
-    constexpr Vector3(Vector2<T> p_vec, T p_z) : x(p_vec.x),
-                                                 y(p_vec.y),
-                                                 z(p_z) {
+    explicit constexpr Vector3(Vector2<T> p_vec, T p_z) : x(p_vec.x),
+                                                          y(p_vec.y),
+                                                          z(p_z) {
     }
 
     template<int N, int A, int B, int C>
@@ -221,44 +217,42 @@ struct Vector4 : VectorBase<T, 4> {
     };
     // clang-format on
 
-    constexpr Vector4() {
-        Base::Set(static_cast<T>(0));
+    explicit constexpr Vector4() : x(0), y(0), z(0), w(0) {
     }
 
-    constexpr Vector4(T p_value) {
-        Base::Set(p_value);
+    explicit constexpr Vector4(T p_v) : x(p_v), y(p_v), z(p_v), w(p_v) {
     }
 
-    constexpr Vector4(T p_x, T p_y, T p_z, T p_w) : x(p_x),
-                                                    y(p_y),
-                                                    z(p_z),
-                                                    w(p_w) {
+    explicit constexpr Vector4(T p_x, T p_y, T p_z, T p_w) : x(p_x),
+                                                             y(p_y),
+                                                             z(p_z),
+                                                             w(p_w) {
     }
 
     template<typename U>
         requires Arithmetic<U> && (!std::is_same<T, U>::value)
-    constexpr Vector4(U p_x, U p_y, U p_z, U p_w) : x(static_cast<T>(p_x)),
-                                                    y(static_cast<T>(p_y)),
-                                                    z(static_cast<T>(p_z)),
-                                                    w(static_cast<T>(p_w)) {
+    explicit constexpr Vector4(U p_x, U p_y, U p_z, U p_w) : x(static_cast<T>(p_x)),
+                                                             y(static_cast<T>(p_y)),
+                                                             z(static_cast<T>(p_z)),
+                                                             w(static_cast<T>(p_w)) {
     }
 
-    constexpr Vector4(Vector3<T> p_vec, T p_w) : x(p_vec.x),
-                                                 y(p_vec.y),
-                                                 z(p_vec.z),
-                                                 w(p_w) {
+    explicit constexpr Vector4(Vector3<T> p_vec, T p_w) : x(p_vec.x),
+                                                          y(p_vec.y),
+                                                          z(p_vec.z),
+                                                          w(p_w) {
     }
 
-    constexpr Vector4(Vector2<T> p_vec1, Vector2<T> p_vec2) : x(p_vec1.x),
-                                                              y(p_vec1.y),
-                                                              z(p_vec2.x),
-                                                              w(p_vec2.y) {
+    explicit constexpr Vector4(Vector2<T> p_vec1, Vector2<T> p_vec2) : x(p_vec1.x),
+                                                                       y(p_vec1.y),
+                                                                       z(p_vec2.x),
+                                                                       w(p_vec2.y) {
     }
 
-    constexpr Vector4(Vector2<T> p_vec, T p_z, T p_w) : x(p_vec.x),
-                                                        y(p_vec.y),
-                                                        z(p_z),
-                                                        w(p_w) {
+    explicit constexpr Vector4(Vector2<T> p_vec, T p_z, T p_w) : x(p_vec.x),
+                                                                 y(p_vec.y),
+                                                                 z(p_z),
+                                                                 w(p_w) {
     }
 
     template<int N, int A, int B, int C, int D>
@@ -347,47 +341,3 @@ static_assert(sizeof(NewVector3u) == 12);
 static_assert(sizeof(NewVector4u) == 16);
 
 }  // namespace my
-
-namespace my::math {
-
-template<typename T>
-    requires Arithmetic<T>
-constexpr T Min(const T& p_lhs, const T& p_rhs) {
-    return p_lhs < p_rhs ? p_lhs : p_rhs;
-}
-
-template<typename T>
-    requires Arithmetic<T>
-constexpr T Max(const T& p_lhs, const T& p_rhs) {
-    return p_lhs > p_rhs ? p_lhs : p_rhs;
-}
-
-template<typename T>
-    requires std::is_base_of_v<VectorBaseClass, T>
-constexpr T Min(const T& p_lhs, const T& p_rhs) {
-    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
-    T result;
-    for (int i = 0; i < dim; ++i) {
-        result[i] = Min(p_lhs[i], p_rhs[i]);
-    }
-    return result;
-}
-
-template<typename T>
-    requires std::is_base_of_v<VectorBaseClass, T>
-constexpr T Max(const T& p_lhs, const T& p_rhs) {
-    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
-    T result;
-    for (int i = 0; i < dim; ++i) {
-        result[i] = Max(p_lhs[i], p_rhs[i]);
-    }
-    return result;
-}
-
-template<typename T>
-    requires std::is_base_of_v<VectorBaseClass, T> || Arithmetic<T>
-constexpr T Clamp(const T& p_value, const T& p_min, const T& p_max) {
-    return Max(p_min, Min(p_value, p_max));
-}
-
-}  // namespace my::math

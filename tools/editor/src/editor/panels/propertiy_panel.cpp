@@ -3,7 +3,6 @@
 // @TODO: remove this
 #include "ImGuizmo/ImGuizmo.h"
 #include "editor/editor_layer.h"
-#include "editor/panels/panel_util.h"
 #include "editor/widget.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/scene_manager.h"
@@ -76,7 +75,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         return;
     }
 
-    panel_util::InputText(name_component->GetNameRef(), "##NameTag");
+    DrawInputText("Name", name_component->GetNameRef());
 
     ImGui::SameLine();
     ImGui::PushItemWidth(-1);
@@ -118,7 +117,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
     LuaScriptComponent* script_component = p_scene.GetComponent<LuaScriptComponent>(id);
     PerspectiveCameraComponent* perspective_camera = p_scene.GetComponent<PerspectiveCameraComponent>(id);
-    HemisphereLightComponent* hemisphere_light = p_scene.GetComponent<HemisphereLightComponent>(id);
+    EnvironmentComponent* environment_component = p_scene.GetComponent<EnvironmentComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -204,15 +203,13 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         ImGui::Text("max distance: %0.3f", p_light.GetMaxDistance());
     });
 
-    DrawComponent("HemisphereLight", hemisphere_light, [](HemisphereLightComponent& p_light) {
-        panel_util::InputText(p_light.GetPathRef(), "##LightTag");
-        if (ImGui::Button("Bake IBL")) {
-            renderer::RequestBakingIbl();
-        }
+    DrawComponent("Environment", environment_component, [](EnvironmentComponent& p_environment) {
+        DrawInputText("texture", p_environment.sky.texturePath);
+        DrawColorPicker3("ambient", &p_environment.ambient.color.x);
     });
 
     DrawComponent("Script", script_component, [](LuaScriptComponent& p_script) {
-        panel_util::InputText(p_script.GetScriptRef(), "##ScriptTag");
+        DrawInputText("script", p_script.GetScriptRef());
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& p_rigid_body) {
@@ -229,10 +226,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Material", material_component, [](MaterialComponent& p_material) {
-        Vector3f color = p_material.baseColor;
-        if (ImGui::ColorPicker3("Color", (float*)&color)) {
-            p_material.baseColor = Vector4f(color, p_material.baseColor.a);
-        }
+        DrawColorPicker3("base color", &p_material.baseColor.x);
         DrawDragFloat("metallic", p_material.metallic, 0.01f, 0.0f, 1.0f);
         DrawDragFloat("roughness", p_material.roughness, 0.01f, 0.0f, 1.0f);
         DrawDragFloat("emissive:", p_material.emissive, 0.1f, 0.0f, 100.0f);
@@ -289,7 +283,8 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         bool cast_shadow = p_object.flags & ObjectComponent::CAST_SHADOW;
         ImGui::Checkbox("Hide", &hide);
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        p_object.flags = (hide ? 0 : ObjectComponent::RENDERABLE) | (cast_shadow ? ObjectComponent::CAST_SHADOW : 0);
+        p_object.flags = (hide ? ObjectComponent::NONE : ObjectComponent::RENDERABLE);
+        p_object.flags |= (cast_shadow ? ObjectComponent::CAST_SHADOW : ObjectComponent::NONE);
     });
 
     DrawComponent("Mesh", mesh_component, [&](MeshComponent& mesh) {

@@ -73,5 +73,5 @@ float shadowTest(Light light, Vector3f worldPos, float NdotL) {
 
     const float samples = float(4);
     shadow /= samples;
-    return min(shadow, 0.8);
+    return shadow;
 }
