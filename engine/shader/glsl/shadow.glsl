@@ -33,7 +33,7 @@ float point_shadow_calculation(Light p_light, vec3 p_frag_pos, vec3 p_eye) {
     }
     shadow /= float(NUM_POINT_SHADOW_SAMPLES);
 
-    return min(shadow, 0.8);
+    return shadow;
 }
 
 #endif

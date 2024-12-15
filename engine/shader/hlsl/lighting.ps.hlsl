@@ -71,7 +71,7 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
     shadow /= float(NUM_POINT_SHADOW_SAMPLES);
 #endif
 
-    return min(shadow, 0.8f);
+    return shadow;
 }
 
 // @TODO: refactor
@@ -180,6 +180,8 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     // kD *= 1.0 - metallic;
     float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).SampleLevel(s_cubemapClampSampler, N, 0.0f).rgb;
     float3 diffuse = irradiance * base_color.rgb;
+    // HACK
+    diffuse = base_color.rgb * c_ambientColor.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0f;
     float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;

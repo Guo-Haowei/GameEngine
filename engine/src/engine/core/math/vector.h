@@ -341,4 +341,3 @@ static_assert(sizeof(NewVector3u) == 12);
 static_assert(sizeof(NewVector4u) == 16);
 
 }  // namespace my
-

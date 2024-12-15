@@ -446,9 +446,12 @@ Scene* CreateTheAviatorScene() {
 #pragma endregion SETUP_SKY
 
     {
-        // auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/aviator_sky.hdr");
-        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/sky.hdr");
-        scene->AttachChild(sky_light, root);
+        auto id = scene->CreateEnvironmentEntity("default_env");
+        scene->AttachChild(id, root);
+
+        auto* env = scene->GetComponent<EnvironmentComponent>(id);
+        env->ambient.color = Color::Hex(0xf7d9aa).ToVector4f();
+        env->sky.texturePath = "@res://images/ibl/aviator_sky.hdr";
     }
 
     return scene;

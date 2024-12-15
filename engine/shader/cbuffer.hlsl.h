@@ -167,7 +167,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     //-----------------------------------------
 
-    Vector4f _per_frame_padding_3;  // 16
+    Vector4f c_ambientColor;        // 16
     Vector4f _per_frame_padding_4;  // 16
 
     sampler2D c_SkyboxResidentHandle;

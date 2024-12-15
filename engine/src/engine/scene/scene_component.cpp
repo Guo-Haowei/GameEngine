@@ -179,19 +179,6 @@ void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 }
 #pragma endregion NATIVE_SCRIPT_COMPONENT
 
-#pragma region HEMISPHERE_LIGHT_COMPONENT
-void HemisphereLightComponent::SetPath(const std::string& p_path) {
-    unused(p_path);
-    CRASH_NOW();
-}
-
-void HemisphereLightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_archive);
-    unused(p_version);
-    CRASH_NOW();
-}
-#pragma endregion HEMISPHERE_LIGHT_COMPONENT
-
 #pragma region RIGID_BODY_COMPONENT
 void CollisionObjectBase::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
@@ -250,5 +237,13 @@ void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     }
 }
 #pragma endregion SOFT_BODY_COMPONENT
+
+#pragma region ENVIRONMENT_COMPONENT
+void EnvironmentComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_archive);
+    unused(p_version);
+    CRASH_NOW();
+}
+#pragma endregion ENVIRONMENT_COMPONENT
 
 }  // namespace my

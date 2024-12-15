@@ -234,27 +234,6 @@ struct NativeScriptComponent {
 };
 #pragma endregion NATIVE_SCRIPT_COMPONENT
 
-#pragma region HEMISPHERE_LIGHT_COMPONENT
-class HemisphereLightComponent {
-public:
-    void SetPath(const std::string& p_path);
-
-    std::string& GetPathRef() { return m_path; }
-
-    const ImageAsset* GetAsset() const { return m_asset; }
-
-    void Serialize(Archive& p_archive, uint32_t p_version);
-
-private:
-    std::string m_path;
-
-    // Non-Serialized
-    const ImageAsset* m_asset{ nullptr };
-
-    friend class Scene;
-};
-#pragma endregion HEMISPHERE_LIGHT_COMPONENT
-
 #pragma region COLLISION_OBJECT_COMPONENT
 
 /*
@@ -340,6 +319,28 @@ struct ClothComponent : CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
 };
 #pragma endregion COLLISION_OBJECT_COMPONENT
+
+#pragma region ENVIRONMENT_COMPONENT
+struct EnvironmentComponent {
+    enum Type {
+        HDR_TEXTURE,
+        PROCEDURE,
+    };
+
+    struct Sky {
+        Type type;
+        std::string texturePath;
+        // Non-Serialized
+        mutable const ImageAsset* textureAsset;
+    } sky;
+
+    struct Ambient {
+        Vector4f color;
+    } ambient;
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+};
+#pragma endregion ENVIRONMENT_COMPONENT
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

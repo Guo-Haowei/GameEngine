@@ -433,12 +433,12 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     // @TODO: fix skybox
-    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+    auto skybox = p_data.skyboxHdr;
     if (skybox) {
-        gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+        gm.BindTexture(Dimension::TEXTURE_2D, skybox->GetHandle(), GetSkyboxHdrSlot());
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.DrawSkybox();
-        gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
     }
 }
 

@@ -57,10 +57,10 @@ Scene* CreatePbrTestScene() {
         }
     }
 
-    {
-        auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/circus.hdr");
-        scene->AttachChild(sky_light, root);
-    }
+    //{
+    //    auto sky_light = scene->CreateHemisphereLightEntity("sky_light", "@res://images/ibl/circus.hdr");
+    //    scene->AttachChild(sky_light, root);
+    //}
 
     return scene;
 }

@@ -59,13 +59,8 @@ void WriteAviatorSkyImage(const char* p_file) {
         const int index = args.jobIndex;
         const int y = index / width;
         float v = 1.0f - (y + 0.5f) / (float)(height);
-        v *= 2.0f;
         Color color;
-        if (v >= 1.0f) {
-            color = math::Lerp(top, bottom, v - 1.0f);
-        } else {
-            color = Color::Hex(0x684132);
-        }
+        color = math::Lerp(top, bottom, v);
         image_data[channels * index + 0] = color.r;
         image_data[channels * index + 1] = color.g;
         image_data[channels * index + 2] = color.b;

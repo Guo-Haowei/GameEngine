@@ -117,6 +117,7 @@ void main() {
     kD *= 1.0 - metallic;
     vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
     vec3 diffuse = irradiance * base_color.rgb;
+    diffuse = base_color.rgb * c_ambientColor.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
