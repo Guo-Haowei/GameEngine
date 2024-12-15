@@ -24,6 +24,13 @@ static const InputLayoutDesc s_inputLayoutPosition = {
     }
 };
 
+static const InputLayoutDesc s_inputLayoutPositionColor = {
+    .elements = {
+        { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, PixelFormat::R32G32B32A32_FLOAT, 1, 0, InputClassification::PER_VERTEX_DATA, 0 },
+    }
+};
+
 /// rasterizer states
 static const RasterizerDesc s_rasterizerFrontFace = {
     .fillMode = FillMode::SOLID,
@@ -176,6 +183,19 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     do {                                                      \
         if (auto res = Create(__VA_ARGS__); !res) return res; \
     } while (0)
+
+    CREATE_PSO(PSO_DEBUG_DRAW,
+               {
+                   .vs = "debug_draw.vs",
+                   .ps = "debug_draw.ps",
+                   .rasterizerDesc = &s_rasterizerFrontFace,
+                   .depthStencilDesc = &s_depthStencilDefault,
+                   .inputLayoutDesc = &s_inputLayoutPositionColor,
+                   .blendDesc = &s_transparent,
+                   .numRenderTargets = 1,
+                   .rtvFormats = { RESOURCE_FORMAT_TONE },
+                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
+               });
 
     CREATE_PSO(PSO_GBUFFER,
                {

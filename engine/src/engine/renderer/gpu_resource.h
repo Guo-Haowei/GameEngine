@@ -134,6 +134,14 @@ struct MeshBuffers {
     uint32_t indexCount = 0;
 };
 
+// @TODO: refactor Line and Mesh
+struct LineBuffers {
+    virtual ~LineBuffers() = default;
+
+    uint32_t capacity = 0;
+    uint32_t indexCount = 0;
+};
+
 struct GpuTexture {
     GpuTexture(const GpuTextureDesc& p_desc) : desc(p_desc), slot(-1) {}
 

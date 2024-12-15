@@ -77,7 +77,7 @@ void RenderGraph::Compile() {
 #endif
 }
 
-void RenderGraph::Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager) {
+void RenderGraph::Execute(const renderer::DrawData& p_data, GraphicsManager& p_graphics_manager) {
     for (int index : m_sortedOrder) {
         auto& pass = m_renderPasses[index];
         pass->Execute(p_data, p_graphics_manager);

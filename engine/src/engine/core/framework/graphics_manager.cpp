@@ -12,7 +12,7 @@
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_data.h"
+#include "engine/renderer/draw_data.h"
 #include "engine/renderer/render_graph/pass_creator.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer.h"
@@ -136,6 +136,10 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 
     m_brdfImage = m_app->GetAssetRegistry()->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
 
+    std::vector<Point> points;
+    points.resize(4096);
+    m_lines = CreateLine(points);
+
     m_initialized = true;
     return Result<void>();
 }
@@ -219,6 +223,28 @@ void GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f
     unused(p_mesh);
     unused(p_positions);
     unused(p_normals);
+    CRASH_NOW();
+}
+
+LineBuffers* GraphicsManager::CreateLine(const std::vector<Point>& p_points) {
+    unused(p_points);
+    CRASH_NOW();
+    return nullptr;
+}
+
+void GraphicsManager::SetLine(const LineBuffers* p_buffer) {
+    unused(p_buffer);
+}
+
+void GraphicsManager::UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) {
+    unused(p_buffer);
+    unused(p_points);
+    CRASH_NOW();
+}
+
+void GraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
+    unused(p_count);
+    unused(p_offset);
     CRASH_NOW();
 }
 

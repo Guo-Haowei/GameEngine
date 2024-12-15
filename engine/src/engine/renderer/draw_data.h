@@ -3,6 +3,7 @@
 #include "engine/core/math/geomath.h"
 #include "engine/core/systems/entity.h"
 #include "engine/renderer/gpu_resource.h"
+#include "engine/renderer/renderer.h"
 
 // include this file the last
 #include "cbuffer.hlsl.h"
@@ -66,7 +67,7 @@ struct BufferCache {
     }
 };
 
-struct RenderData {
+struct DrawData {
     struct Camera {
         Matrix4x4f viewMatrix;
         Matrix4x4f projectionMatrixRendering;
@@ -112,10 +113,13 @@ struct RenderData {
     };
 
     std::vector<UpdateBuffer> updateBuffer;
+
+    // 3D lines
+    std::vector<Point> points3D;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        const RenderDataConfig& p_config,
-                       RenderData& p_out_data);
+                       DrawData& p_out_data);
 
 }  // namespace my::renderer

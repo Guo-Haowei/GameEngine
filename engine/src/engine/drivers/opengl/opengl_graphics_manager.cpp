@@ -244,6 +244,49 @@ void OpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
                p_viewport.height);
 }
 
+LineBuffers* OpenGlGraphicsManager::CreateLine(const std::vector<Point>& p_points) {
+    // @TODO: fix
+    OpenGlLineBuffers* buffers = new OpenGlLineBuffers;
+    glGenVertexArrays(1, &buffers->vao);
+    glGenBuffers(1, &buffers->vbo);
+
+    auto vao = buffers->vao;
+    auto vbo = buffers->vbo;
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
+
+    BufferStorage(vbo, p_points, true);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    buffers->capacity = (uint32_t)p_points.size();
+    return buffers;
+}
+
+void OpenGlGraphicsManager::SetLine(const LineBuffers* p_buffer) {
+    auto buffer = reinterpret_cast<const OpenGlLineBuffers*>(p_buffer);
+    glBindVertexArray(buffer->vao);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
+}
+
+void OpenGlGraphicsManager::UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) {
+    auto buffer = reinterpret_cast<OpenGlLineBuffers*>(p_buffer);
+    {
+        const uint32_t size_in_byte = sizeof(Point) * (uint32_t)p_points.size();
+        glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_points.data());
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+}
+
 const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     RID rid = m_meshes.make_rid();
     OpenGlMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
@@ -339,6 +382,10 @@ void OpenGlGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
 
 void OpenGlGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
     glDrawElementsInstanced(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)), p_instance_count);
+}
+
+void OpenGlGraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
+    glDrawArrays(GL_LINES, p_offset, p_count);
 }
 
 void OpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {

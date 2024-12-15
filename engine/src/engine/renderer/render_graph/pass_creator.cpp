@@ -5,7 +5,7 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/math/matrix_transform.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_data.h"
+#include "engine/renderer/draw_data.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
 // shader defines
@@ -15,7 +15,7 @@
 namespace my::renderer {
 
 /// Gbuffer
-static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches) {
+static void DrawBatchesGeometry(const DrawData& p_data, const std::vector<BatchContext>& p_batches) {
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -51,7 +51,7 @@ static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<Batc
     }
 }
 
-static void GbufferPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
+static void GbufferPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -122,7 +122,7 @@ void RenderPassCreator::AddGbufferPass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void HighlightPassFunc(const RenderData&, const DrawPass* p_draw_pass) {
+static void HighlightPassFunc(const DrawData&, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -164,7 +164,7 @@ void RenderPassCreator::AddHighlightPass() {
 }
 
 /// Shadow
-static void PointShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
+static void PointShadowPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -212,7 +212,7 @@ static void PointShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw
     }
 }
 
-static void ShadowPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
+static void ShadowPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -285,7 +285,7 @@ void RenderPassCreator::AddShadowPass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void VoxelizationPassFunc(const RenderData& p_data, const DrawPass*) {
+static void VoxelizationPassFunc(const DrawData& p_data, const DrawPass*) {
     OPTICK_EVENT();
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -410,7 +410,7 @@ void RenderPassCreator::AddVoxelizationPass() {
 }
 
 /// Lighting
-static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
+static void LightingPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -465,6 +465,11 @@ static void LightingPassFunc(const RenderData& p_data, const DrawPass* p_draw_pa
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
     DrawBatchesGeometry(p_data, pass.transparent);
+
+    // draw debug data
+    gm.SetPipelineState(PSO_DEBUG_DRAW);
+    gm.UpdateLine(gm.m_lines, p_data.points3D);
+    gm.DrawArrays((uint32_t)p_data.points3D.size());
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -524,7 +529,7 @@ void RenderPassCreator::AddLightingPass() {
 }
 
 /// Emitter
-static void EmitterPassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
+static void EmitterPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
     unused(p_data);
     unused(p_draw_pass);
 #if 0
@@ -594,7 +599,7 @@ void RenderPassCreator::AddEmitterPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const RenderData&, const DrawPass* p_draw_pass) {
+static void BloomSetupFunc(const DrawData&, const DrawPass* p_draw_pass) {
     unused(p_draw_pass);
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -615,7 +620,7 @@ static void BloomSetupFunc(const RenderData&, const DrawPass* p_draw_pass) {
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const RenderData&, const DrawPass* p_draw_pass) {
+static void BloomDownSampleFunc(const DrawData&, const DrawPass* p_draw_pass) {
     const uint32_t pass_id = p_draw_pass->id;
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -637,7 +642,7 @@ static void BloomDownSampleFunc(const RenderData&, const DrawPass* p_draw_pass) 
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const RenderData&, const DrawPass* p_draw_pass) {
+static void BloomUpSampleFunc(const DrawData&, const DrawPass* p_draw_pass) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     const uint32_t pass_id = p_draw_pass->id;
     auto& frame = gm.GetCurrentFrame();
@@ -750,7 +755,7 @@ void RenderPassCreator::AddBloomPass() {
 
 /// Tone
 /// Change to post processing?
-static void TonePassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) {
+static void TonePassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -761,10 +766,10 @@ static void TonePassFunc(const RenderData& p_data, const DrawPass* p_draw_pass) 
 
     // draw billboards
 
-    // HACK:
+    // @HACK:
     if (DVAR_GET_BOOL(gfx_debug_vxgi) && gm.GetBackend() == Backend::OPENGL) {
         // @TODO: remove
-        extern void debug_vxgi_pass_func(const RenderData&, const DrawPass* p_draw_pass);
+        extern void debug_vxgi_pass_func(const DrawData&, const DrawPass* p_draw_pass);
         debug_vxgi_pass_func(p_data, p_draw_pass);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
@@ -818,7 +823,6 @@ void RenderPassCreator::AddTonePass() {
 
     DrawPassDesc draw_pass_desc{
         .colorAttachments = { attachment },
-        .depthAttachment = nullptr,
         .execFunc = TonePassFunc,
     };
 
@@ -854,7 +858,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
         DEV_ASSERT(cubemap);
         auto pass = gm.CreateDrawPass(DrawPassDesc{
             .colorAttachments = { cubemap },
-            .execFunc = [](const RenderData& p_data, const DrawPass* p_draw_pass) {
+            .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
                 if (!p_data.bakeIbl) {
                     return;
                 }
@@ -895,7 +899,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
 
         auto pass = gm.CreateDrawPass(DrawPassDesc{
             .colorAttachments = { cubemap },
-            .execFunc = [](const RenderData& p_data, const DrawPass* p_draw_pass) {
+            .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
                 if (!p_data.bakeIbl) {
                     return;
                 }
@@ -942,7 +946,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
 
         auto pass = gm.CreateDrawPass(DrawPassDesc{
             .colorAttachments = { cubemap },
-            .execFunc = [](const RenderData& p_data, const DrawPass* p_draw_pass) {
+            .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
                 if (!p_data.bakeIbl) {
                     return;
                 }
@@ -973,7 +977,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     }
 }
 
-static void PathTracerTonePassFunc(const RenderData&, const DrawPass* p_draw_pass) {
+static void PathTracerTonePassFunc(const DrawData&, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -1042,7 +1046,7 @@ void RenderPassCreator::AddPathTracerTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
-static void PathTracerPassFunc(const RenderData&, const DrawPass*) {
+static void PathTracerPassFunc(const DrawData&, const DrawPass*) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     if (gm.m_bufferUpdated && gm.m_pathTracerGeometryBuffer) {
         LOG_FATAL("currently broken, cause SwapBuffers crash");

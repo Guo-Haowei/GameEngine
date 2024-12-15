@@ -5,7 +5,7 @@
 #include "engine/core/math/matrix_transform.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/pipeline_state.h"
-#include "engine/renderer/render_data.h"
+#include "engine/renderer/draw_data.h"
 #include "engine/renderer/render_graph/pass_creator.h"
 #include "shader_resource_defines.hlsl.h"
 
@@ -13,11 +13,11 @@
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_prerequisites.h"
 
-extern OpenGlMeshBuffers* g_box;
+extern my::OpenGlMeshBuffers* g_box;
 
 namespace my::renderer {
 
-void debug_vxgi_pass_func(const RenderData& p_data, const DrawPass* p_draw_pass) {
+void debug_vxgi_pass_func(const DrawData& p_data, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -59,7 +59,7 @@ static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width
     GraphicsManager::GetSingleton().DrawQuad();
 }
 
-void final_pass_func(const RenderData&, const DrawPass* p_draw_pass) {
+void final_pass_func(const DrawData&, const DrawPass* p_draw_pass) {
     OPTICK_EVENT();
 
     GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
