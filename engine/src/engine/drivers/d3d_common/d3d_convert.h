@@ -18,6 +18,7 @@
 #define D3D_FILTER_(a)               D3D11_FILTER_##a
 #define D3D_TEXTURE_ADDRESS_MODE_(a) D3D11_TEXTURE_ADDRESS_##a
 #define D3D_STENCIL_OP_(a)           D3D11_STENCIL_OP_##a
+#define D3D_BLEND_(a)                D3D11_BLEND_##a
 #elif defined(INCLUDE_AS_D3D12)
 #include <d3d12.h>
 #define D3D_(a)                      D3D12_##a
@@ -28,6 +29,7 @@
 #define D3D_FILTER_(a)               D3D12_FILTER_##a
 #define D3D_TEXTURE_ADDRESS_MODE_(a) D3D12_TEXTURE_ADDRESS_MODE_##a
 #define D3D_STENCIL_OP_(a)           D3D12_STENCIL_OP_##a
+#define D3D_BLEND_(a)                D3D12_BLEND_##a
 #else
 #error "Unknown API"
 #endif
@@ -48,6 +50,8 @@ using D3D_STENCIL_OP = D3D_(STENCIL_OP);
 using D3D_DEPTH_STENCILOP_DESC = D3D_(DEPTH_STENCILOP_DESC);
 using D3D_BLEND_DESC = D3D_(BLEND_DESC);
 using D3D_DEPTH_STENCIL_DESC = D3D_(DEPTH_STENCIL_DESC);
+using D3D_BLEND = D3D_(BLEND);
+using D3D_BLEND_OP = D3D_(BLEND_OP);
 
 static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
@@ -163,6 +167,34 @@ static inline D3D_TEXTURE_ADDRESS_MODE Convert(AddressMode p_mode) {
     }
 }
 
+static inline D3D_BLEND Convert(Blend p_blend) {
+    switch (p_blend) {
+        case Blend::BLEND_ZERO:
+            return D3D_BLEND_(ZERO);
+        case Blend::BLEND_ONE:
+            return D3D_BLEND_(ONE);
+        case Blend::BLEND_SRC_ALPHA:
+            return D3D_BLEND_(SRC_ALPHA);
+        case Blend::BLEND_INV_SRC_ALPHA:
+            return D3D_BLEND_(INV_SRC_ALPHA);
+        default:
+            CRASH_NOW();
+            return D3D_BLEND_(ZERO);
+    }
+}
+
+static inline D3D_BLEND_OP Convert(BlendOp p_blend_op) {
+    switch (p_blend_op) {
+        case BlendOp::BLEND_OP_ADD:
+            return D3D_BLEND_(OP_ADD);
+        case BlendOp::BLEND_OP_SUB:
+            return D3D_BLEND_(OP_SUBTRACT);
+        default:
+            CRASH_NOW();
+            return D3D_BLEND_(OP_ADD);
+    }
+}
+
 static inline D3D_STENCIL_OP Convert(StencilOp p_op) {
     switch (p_op) {
 #define STENCIL_OP_ENUM(ENUM, VALUE) \
@@ -216,8 +248,13 @@ static inline D3D_BLEND_DESC Convert(const BlendDesc* p_in) {
     D3D_BLEND_DESC desc;
     ZeroMemory(&desc, sizeof(desc));
     for (int i = 0; i < array_length(p_in->renderTargets); ++i) {
-        desc.RenderTarget[i].BlendEnable = p_in->renderTargets[i].blendEnabled;
-        desc.RenderTarget[i].RenderTargetWriteMask = p_in->renderTargets[i].colorWriteMask;
+        auto& out = desc.RenderTarget[i];
+        const auto& in = p_in->renderTargets[i];
+        out.BlendEnable = in.blendEnabled;
+        out.SrcBlend = out.SrcBlendAlpha = Convert(in.blendSrc);
+        out.DestBlend = out.DestBlendAlpha = Convert(in.blendDest);
+        out.BlendOp = out.BlendOpAlpha = Convert(in.blendOp);
+        out.RenderTargetWriteMask = in.colorWriteMask;
     }
     return desc;
 }
@@ -293,5 +330,6 @@ static inline DEPTH_WRITE_MASK Convert(DepthWriteMask depth_write_mask) {
 #undef D3D_FILTER_
 #undef D3D_TEXTURE_ADDRESS_MODE_
 #undef D3D_STENCIL_OP_
+#undef D3D_BLEND_
 
 }  // namespace my::d3d

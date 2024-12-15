@@ -181,9 +181,9 @@ Scene* CreateTheAviatorScene() {
     }
     auto material_white_transparent = scene->CreateMaterialEntity("material_white_transparent");
     {
-        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_white);
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_white_transparent);
         material->baseColor = WHITE_COLOR.ToVector4f();
-        material->baseColor.a = 0.3f;
+        material->baseColor.a = 0.5f;
         material->roughness = default_roughness;
         material->metallic = default_metallic;
     }
@@ -458,7 +458,7 @@ Scene* CreateTheAviatorScene() {
 #pragma endregion SETUP_SKY
 
     {
-        auto id = scene->CreateEnvironmentEntity("default_env");
+        auto id = scene->CreateEnvironmentEntity("environment");
         scene->AttachChild(id, root);
 
         auto* env = scene->GetComponent<EnvironmentComponent>(id);

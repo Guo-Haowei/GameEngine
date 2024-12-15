@@ -204,8 +204,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Environment", environment_component, [](EnvironmentComponent& p_environment) {
-        DrawInputText("light texture", p_environment.sky.texturePath);
-
+        DrawInputText("texture", p_environment.sky.texturePath);
         DrawColorPicker3("ambient", &p_environment.ambient.color.x);
     });
 
