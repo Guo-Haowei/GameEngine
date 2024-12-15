@@ -3,6 +3,7 @@
 #include <imgui/imgui_internal.h>
 
 #include "editor/editor_layer.h"
+#include "engine/core/math/vector_math.h"
 #include "editor/utility/imguizmo.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/display_manager.h"
@@ -135,7 +136,8 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     if (show_editor) {
         Matrix4x4f identity(1);
         // draw grid
-        ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
+        // ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
+        DrawGrid(10.0f);
     }
 
     ecs::Entity id = m_editor.GetSelectedEntity();

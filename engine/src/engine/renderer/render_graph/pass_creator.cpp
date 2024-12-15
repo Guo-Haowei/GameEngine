@@ -4,8 +4,8 @@
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/math/matrix_transform.h"
-#include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/draw_data.h"
+#include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
 // shader defines
@@ -469,6 +469,7 @@ static void LightingPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass
     // draw debug data
     gm.SetPipelineState(PSO_DEBUG_DRAW);
     gm.UpdateLine(gm.m_lines, p_data.points3D);
+    gm.SetLine(gm.m_lines);
     gm.DrawArrays((uint32_t)p_data.points3D.size());
 }
 

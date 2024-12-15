@@ -272,6 +272,8 @@ LineBuffers* OpenGlGraphicsManager::CreateLine(const std::vector<Point>& p_point
 }
 
 void OpenGlGraphicsManager::SetLine(const LineBuffers* p_buffer) {
+    // HACK:
+    glLineWidth(4.0f);
     auto buffer = reinterpret_cast<const OpenGlLineBuffers*>(p_buffer);
     glBindVertexArray(buffer->vao);
     glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
