@@ -50,10 +50,30 @@ enum BLEND : uint32_t {
     BLEND_INV_SRC_ALPHA = GL_ONE_MINUS_SRC_ALPHA,
 };
 
-enum BLEND_OP {
+enum BLEND_OP : uint32_t {
     BLEND_OP_ADD = GL_FUNC_ADD,
     BLEND_OP_SUB = GL_FUNC_SUBTRACT,
 };
+
+enum TOPOLOGY : uint32_t {
+    TOPOLOGY_POINT = GL_POINT,
+    TOPOLOGY_LINE = GL_LINES,
+    TOPOLOGY_TRIANGLE = GL_TRIANGLES,
+};
+
+static inline TOPOLOGY Convert(PrimitiveTopology p_topology) {
+    switch (p_topology) {
+        case PrimitiveTopology::POINT:
+            return TOPOLOGY_POINT;
+        case PrimitiveTopology::LINE:
+            return TOPOLOGY_LINE;
+        case PrimitiveTopology::TRIANGLE:
+            return TOPOLOGY_TRIANGLE;
+        default:
+            CRASH_NOW();
+            return TOPOLOGY_TRIANGLE;
+    }
+}
 
 static inline BLEND Convert(Blend p_blend) {
     switch (p_blend) {

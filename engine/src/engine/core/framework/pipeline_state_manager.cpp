@@ -188,6 +188,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                {
                    .vs = "debug_draw.vs",
                    .ps = "debug_draw.ps",
+                   .primitiveTopology = PrimitiveTopology::LINE,
                    .rasterizerDesc = &s_rasterizerFrontFace,
                    .depthStencilDesc = &s_depthStencilDefault,
                    .inputLayoutDesc = &s_inputLayoutPositionColor,

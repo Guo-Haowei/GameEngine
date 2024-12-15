@@ -204,6 +204,8 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
         SetBlendState(*blend_desc, nullptr, 0);
     }
 
+    m_stateCache.topology = gl::Convert(pipeline->desc.primitiveTopology);
+
     glUseProgram(pipeline->programId);
 }
 
@@ -379,15 +381,15 @@ void OpenGlGraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Ve
 }
 
 void OpenGlGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
-    glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
+    glDrawElements(m_stateCache.topology, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
 void OpenGlGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
-    glDrawElementsInstanced(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)), p_instance_count);
+    glDrawElementsInstanced(m_stateCache.topology, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)), p_instance_count);
 }
 
 void OpenGlGraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
-    glDrawArrays(GL_LINES, p_offset, p_count);
+    glDrawArrays(m_stateCache.topology, p_offset, p_count);
 }
 
 void OpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {

@@ -93,6 +93,7 @@ private:
         bool enableDepthTest;
         bool enableStencilTest;
         ComparisonFunc stencilFunc;
+        uint32_t topology;
     } m_stateCache;
 };
 
