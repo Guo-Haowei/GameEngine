@@ -112,55 +112,74 @@ bool DynamicVariableParser::ProcessSetCmd() {
     int ix = 0, iy = 0, iz = 0, iw = 0;
     float fx = 0, fy = 0, fz = 0, fw = 0;
     size_t arg_start_index = m_cursor;
+    const bool overriden = dvar->GetFlags() & DVAR_FLAG_OVERRIDEN;
     switch (type) {
-        case VARIANT_TYPE_INT:
+        case VARIANT_TYPE_INT: {
             ok = ok && TryGetInt(ix);
-            ok = ok && dvar->SetInt(ix);
-            break;
-        case VARIANT_TYPE_FLOAT:
+            if (!overriden) {
+                ok = ok && dvar->SetInt(ix);
+            }
+        } break;
+        case VARIANT_TYPE_FLOAT: {
             ok = ok && TryGetFloat(fx);
-            ok = ok && dvar->SetFloat(fx);
-            break;
-        case VARIANT_TYPE_STRING:
+            if (!overriden) {
+                ok = ok && dvar->SetFloat(fx);
+            }
+        } break;
+        case VARIANT_TYPE_STRING: {
             ok = ok && TryGetString(str);
-            ok = ok && dvar->SetString(str);
-            break;
-        case VARIANT_TYPE_VEC2:
+            if (!overriden) {
+                ok = ok && dvar->SetString(str);
+            }
+        } break;
+        case VARIANT_TYPE_VEC2: {
             ok = ok && TryGetFloat(fx);
             ok = ok && TryGetFloat(fy);
-            ok = ok && dvar->SetVector2f(fx, fy);
-            break;
-        case VARIANT_TYPE_VEC3:
+            if (!overriden) {
+                ok = ok && dvar->SetVector2f(fx, fy);
+            }
+        } break;
+        case VARIANT_TYPE_VEC3: {
             ok = ok && TryGetFloat(fx);
             ok = ok && TryGetFloat(fy);
             ok = ok && TryGetFloat(fz);
-            ok = ok && dvar->SetVector3f(fx, fy, fz);
-            break;
-        case VARIANT_TYPE_VEC4:
+            if (!overriden) {
+                ok = ok && dvar->SetVector3f(fx, fy, fz);
+            }
+        } break;
+        case VARIANT_TYPE_VEC4: {
             ok = ok && TryGetFloat(fx);
             ok = ok && TryGetFloat(fy);
             ok = ok && TryGetFloat(fz);
             ok = ok && TryGetFloat(fw);
-            ok = ok && dvar->SetVector4f(fx, fy, fz, fw);
-            break;
-        case VARIANT_TYPE_IVEC2:
+            if (!overriden) {
+                ok = ok && dvar->SetVector4f(fx, fy, fz, fw);
+            }
+        } break;
+        case VARIANT_TYPE_IVEC2: {
             ok = ok && TryGetInt(ix);
             ok = ok && TryGetInt(iy);
-            ok = ok && dvar->SetVector2i(ix, iy);
-            break;
-        case VARIANT_TYPE_IVEC3:
+            if (!overriden) {
+                ok = ok && dvar->SetVector2i(ix, iy);
+            }
+        } break;
+        case VARIANT_TYPE_IVEC3: {
             ok = ok && TryGetInt(ix);
             ok = ok && TryGetInt(iy);
             ok = ok && TryGetInt(iz);
-            ok = ok && dvar->SetVector3i(ix, iy, iz);
-            break;
-        case VARIANT_TYPE_IVEC4:
+            if (!overriden) {
+                ok = ok && dvar->SetVector3i(ix, iy, iz);
+            }
+        } break;
+        case VARIANT_TYPE_IVEC4: {
             ok = ok && TryGetInt(ix);
             ok = ok && TryGetInt(iy);
             ok = ok && TryGetInt(iz);
             ok = ok && TryGetInt(iw);
-            ok = ok && dvar->SetVector4i(ix, iy, iz, iw);
-            break;
+            if (!overriden) {
+                ok = ok && dvar->SetVector4i(ix, iy, iz, iw);
+            }
+        } break;
         default:
             CRASH_NOW();
             break;

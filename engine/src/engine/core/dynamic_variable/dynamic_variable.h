@@ -2,10 +2,12 @@
 #include "engine/core/math/geomath.h"
 #include "engine/core/math/vector.h"
 
-enum DvarFlags {
+enum DvarFlags : uint32_t {
     DVAR_FLAG_NONE = BIT(0),
     DVAR_FLAG_CACHE = BIT(1),
+    DVAR_FLAG_OVERRIDEN = BIT(2),
 };
+DEFINE_ENUM_BITWISE_OPERATIONS(DvarFlags);
 
 namespace my {
 
@@ -25,8 +27,7 @@ enum VariantType {
 
 class DynamicVariable {
 public:
-    DynamicVariable(VariantType p_type, uint32_t p_flags, const char* p_desc)
-        : m_type(p_type), m_desc(p_desc), m_flags(p_flags), m_int(0) {}
+    explicit DynamicVariable(VariantType p_type, DvarFlags p_flags, const char* p_desc);
 
     void RegisterInt(std::string_view p_key, int p_value);
     void RegisterFloat(std::string_view p_key, float p_value);
@@ -60,8 +61,8 @@ public:
     bool SetVector3i(int p_x, int p_y, int p_z);
     bool SetVector4i(int p_x, int p_y, int p_z, int p_w);
 
-    void SetFlag(uint32_t p_flag) { m_flags |= p_flag; }
-    void UnsetFlag(uint32_t p_flag) { m_flags &= ~p_flag; }
+    void SetFlag(DvarFlags p_flag) { m_flags |= p_flag; }
+    void UnsetFlag(DvarFlags p_flag) { m_flags &= ~p_flag; }
 
     std::string ValueToString() const;
     void PrintValueChange(std::string_view p_source) const;
@@ -76,7 +77,7 @@ public:
 private:
     const VariantType m_type;
     const char* m_desc;
-    uint32_t m_flags;
+    DvarFlags m_flags;
 
     union {
         int m_int;

@@ -4,60 +4,82 @@
 
 namespace my {
 
+DynamicVariable::DynamicVariable(VariantType p_type, DvarFlags p_flags, const char* p_desc)
+    : m_type(p_type), m_desc(p_desc), m_flags(p_flags), m_int(0) {
+}
+
 void DynamicVariable::RegisterInt(std::string_view p_key, int p_value) {
-    m_int = p_value;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        SetInt(p_value);
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterFloat(std::string_view p_key, float p_value) {
-    m_float = p_value;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        SetFloat(p_value);
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterString(std::string_view p_key, std::string_view p_value) {
-    m_string = p_value;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        SetString(p_value);
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterVector2f(std::string_view p_key, float p_x, float p_y) {
-    m_vec.x = p_x;
-    m_vec.y = p_y;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        m_vec.x = p_x;
+        m_vec.y = p_y;
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterVector3f(std::string_view p_key, float p_x, float p_y, float p_z) {
-    m_vec.x = p_x;
-    m_vec.y = p_y;
-    m_vec.z = p_z;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        m_vec.x = p_x;
+        m_vec.y = p_y;
+        m_vec.z = p_z;
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterVector4f(std::string_view p_key, float p_x, float p_y, float p_z, float p_w) {
-    m_vec.x = p_x;
-    m_vec.y = p_y;
-    m_vec.z = p_z;
-    m_vec.w = p_w;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        m_vec.x = p_x;
+        m_vec.y = p_y;
+        m_vec.z = p_z;
+        m_vec.w = p_w;
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterVector2i(std::string_view p_key, int p_x, int p_y) {
-    m_ivec.x = p_x;
-    m_ivec.y = p_y;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        m_ivec.x = p_x;
+        m_ivec.y = p_y;
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterVector3i(std::string_view p_key, int p_x, int p_y, int p_z) {
-    m_ivec.x = p_x;
-    m_ivec.y = p_y;
-    m_ivec.z = p_z;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        m_ivec.x = p_x;
+        m_ivec.y = p_y;
+        m_ivec.z = p_z;
+    }
     RegisterDvar(p_key, this);
 }
 
 void DynamicVariable::RegisterVector4i(std::string_view p_key, int p_x, int p_y, int p_z, int p_w) {
-    m_ivec.x = p_x;
-    m_ivec.y = p_y;
-    m_ivec.z = p_z;
-    m_ivec.w = p_w;
+    if (!(m_flags & DVAR_FLAG_OVERRIDEN)) {
+        m_ivec.x = p_x;
+        m_ivec.y = p_y;
+        m_ivec.z = p_z;
+        m_ivec.w = p_w;
+    }
     RegisterDvar(p_key, this);
 }
 
