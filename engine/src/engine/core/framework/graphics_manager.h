@@ -87,12 +87,14 @@ public:
     virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
-    virtual const GpuMesh* CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                          uint32_t p_count,
-                                          const GpuBufferDesc* p_vb_descs,
-                                          const GpuBufferDesc* p_ib_desc);
+    auto CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>>;
 
-    virtual const GpuMesh* CreateMesh(const MeshComponent& p_mesh);
+    virtual auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                uint32_t p_count,
+                                const GpuBufferDesc* p_vb_descs,
+                                const GpuBufferDesc* p_ib_desc)
+        -> Result<std::shared_ptr<GpuMesh>> = 0;
+
     virtual void SetMesh(const GpuMesh* p_mesh) = 0;
     virtual void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
 
@@ -200,11 +202,13 @@ protected:
     int m_frameIndex{ 0 };
     const int m_frameCount;
 
-    const GpuMesh* m_screenQuadBuffers;
-    const GpuMesh* m_skyboxBuffers;
+    std::shared_ptr<GpuMesh> m_screenQuadBuffers;
+    std::shared_ptr<GpuMesh> m_skyboxBuffers;
 
 public:
     // @TODO: make private
+    std::shared_ptr<GpuMesh> m_boxBuffers;
+
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerMaterialBuffer;

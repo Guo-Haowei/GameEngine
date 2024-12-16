@@ -131,8 +131,9 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 #undef SRV
 
     // create meshes
-    m_screenQuadBuffers = CreateMesh(MakePlaneMesh(Vector3f(1)));
-    m_skyboxBuffers = CreateMesh(MakeSkyBoxMesh());
+    m_screenQuadBuffers = *CreateMesh(MakePlaneMesh(Vector3f(1)));
+    m_skyboxBuffers = *CreateMesh(MakeSkyBoxMesh());
+    m_boxBuffers = *CreateMesh(MakeBoxMesh());
 
     m_brdfImage = m_app->GetAssetRegistry()->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
 
@@ -220,19 +221,7 @@ void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
 }
 
-const GpuMesh* GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                               uint32_t p_count,
-                                               const GpuBufferDesc* p_vb_descs,
-                                               const GpuBufferDesc* p_ib_desc) {
-    unused(p_desc);
-    unused(p_count);
-    unused(p_vb_descs);
-    unused(p_ib_desc);
-    CRASH_NOW();
-    return nullptr;
-}
-
-const GpuMesh* GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
+auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>> {
     constexpr uint32_t count = 6;
     std::array<VertexAttributeName, count> attribs = {
         VertexAttributeName::POSITION,
@@ -283,7 +272,11 @@ const GpuMesh* GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
                               count,
                               vb_descs.data(),
                               &ib_desc);
-    p_mesh.gpuResource = ret;
+    if (!ret) {
+        return HBN_ERROR(ret.error());
+    }
+
+    p_mesh.gpuResource = *ret;
     return ret;
 }
 
@@ -696,17 +689,17 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
 }
 
 void GraphicsManager::DrawQuad() {
-    SetMesh(m_screenQuadBuffers);
+    SetMesh(m_screenQuadBuffers.get());
     DrawElements(m_screenQuadBuffers->indexBuffer->desc.elementCount);
 }
 
 void GraphicsManager::DrawQuadInstanced(uint32_t p_instance_count) {
-    SetMesh(m_screenQuadBuffers);
+    SetMesh(m_screenQuadBuffers.get());
     DrawElementsInstanced(p_instance_count, m_screenQuadBuffers->indexBuffer->desc.elementCount, 0);
 }
 
 void GraphicsManager::DrawSkybox() {
-    SetMesh(m_skyboxBuffers);
+    SetMesh(m_skyboxBuffers.get());
     DrawElements(m_skyboxBuffers->indexBuffer->desc.elementCount);
 }
 

@@ -26,10 +26,6 @@ using namespace my;
 using my::renderer::RenderGraph;
 using my::renderer::RenderPass;
 
-// @TODO: refactor
-OpenGlMeshBuffers* g_box;
-OpenGlMeshBuffers* g_grass;
-
 template<typename T>
 static void BufferStorage(GLuint p_buffer, const std::vector<T>& p_data, bool p_is_dynamic) {
     glNamedBufferStorage(p_buffer, sizeof(T) * p_data.size(), p_data.data(), p_is_dynamic ? GL_DYNAMIC_STORAGE_BIT : 0);
@@ -332,15 +328,12 @@ auto OpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::sh
     return buffer;
 }
 
-const GpuMesh* OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                                     uint32_t p_count,
-                                                     const GpuBufferDesc* p_vb_descs,
-                                                     const GpuBufferDesc* p_ib_desc) {
+auto OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                           uint32_t p_count,
+                                           const GpuBufferDesc* p_vb_descs,
+                                           const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
 
-    RID rid = m_meshes.make_rid();
-    OpenGlMeshBuffers* ret = m_meshes.get_or_null(rid);
-
-    ret->desc = p_desc;
+    auto ret = std::make_shared<OpenGlMeshBuffers>(p_desc);
 
     // create VAO
     glGenVertexArrays(1, &ret->vao);
@@ -756,9 +749,6 @@ void OpenGlGraphicsManager::UnsetRenderTarget() {
 
 void OpenGlGraphicsManager::CreateGpuResources() {
     // @TODO: move to renderer
-    g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
-    g_box = (OpenGlMeshBuffers*)CreateMesh(MakeBoxMesh());
-
     auto& cache = g_constantCache.cache;
     // @TODO: refactor!
     unsigned int m1 = LoadMTexture(LTC1);

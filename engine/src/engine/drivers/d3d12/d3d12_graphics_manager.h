@@ -12,6 +12,8 @@ struct D3d12Buffer : GpuBuffer {
 };
 
 struct D3d12MeshBuffers : GpuMesh {
+    using GpuMesh::GpuMesh;
+
     D3D12_VERTEX_BUFFER_VIEW vbvs[MESH_MAX_VERTEX_BUFFER_COUNT];
     D3D12_INDEX_BUFFER_VIEW ibv;
 };
@@ -35,10 +37,10 @@ public:
 
     auto CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer>;
 
-    const GpuMesh* CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                  uint32_t p_count,
-                                  const GpuBufferDesc* p_vb_descs,
-                                  const GpuBufferDesc* p_ib_desc) final;
+    auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                        uint32_t p_count,
+                        const GpuBufferDesc* p_vb_descs,
+                        const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> final;
 
     void SetMesh(const GpuMesh* p_mesh) final;
     void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;

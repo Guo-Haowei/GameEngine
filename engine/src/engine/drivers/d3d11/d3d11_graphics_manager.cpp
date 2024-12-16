@@ -732,13 +732,11 @@ auto D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::sha
     return ret;
 }
 
-const GpuMesh* D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                                    uint32_t p_count,
-                                                    const GpuBufferDesc* p_vb_descs,
-                                                    const GpuBufferDesc* p_ib_desc) {
-    RID rid = m_meshes.make_rid();
-    D3d11MeshBuffers* ret = m_meshes.get_or_null(rid);
-    ret->desc = p_desc;
+auto D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                          uint32_t p_count,
+                                          const GpuBufferDesc* p_vb_descs,
+                                          const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
+    auto ret = std::make_shared<D3d11MeshBuffers>(p_desc);
 
     for (uint32_t index = 0; index < p_count; ++index) {
         if (p_vb_descs[index].elementCount) {

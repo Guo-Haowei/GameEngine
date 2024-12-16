@@ -679,6 +679,7 @@ MeshComponent MakeBoxMesh(float size) {
         B, G, C,  // BGC
     };
 
+    mesh.CreateRenderData();
     return mesh;
 }
 

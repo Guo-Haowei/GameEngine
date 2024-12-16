@@ -59,7 +59,7 @@ struct MeshComponent {
     ecs::Entity armatureId;
 
     // Non-serialized
-    mutable const GpuMesh* gpuResource = nullptr;
+    mutable std::shared_ptr<GpuMesh> gpuResource;
     AABB localBound;
 
     mutable std::vector<Vector3f> updatePositions;

@@ -7,13 +7,14 @@
 
 namespace my {
 
-struct D3d11MeshBuffers : public GpuMesh {
-};
-
-struct D3d11Buffer : public GpuBuffer {
+struct D3d11Buffer : GpuBuffer {
     using GpuBuffer::GpuBuffer;
 
     Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+};
+
+struct D3d11MeshBuffers : GpuMesh {
+    using GpuMesh::GpuMesh;
 };
 
 class D3d11GraphicsManager : public GraphicsManager {
@@ -33,10 +34,10 @@ public:
 
     auto CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer>;
 
-    virtual const GpuMesh* CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                          uint32_t p_count,
-                                          const GpuBufferDesc* p_vb_descs,
-                                          const GpuBufferDesc* p_ib_desc) final;
+    auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                        uint32_t p_count,
+                        const GpuBufferDesc* p_vb_descs,
+                        const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> final;
 
     void SetMesh(const GpuMesh* p_mesh) final;
     void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;

@@ -7,6 +7,8 @@ namespace my {
 
 // @TODO: fix
 struct OpenGlMeshBuffers : GpuMesh {
+    using GpuMesh::GpuMesh;
+
     uint32_t vao{ 0 };
 };
 
@@ -30,10 +32,10 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
-    const GpuMesh* CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                  uint32_t p_count,
-                                  const GpuBufferDesc* p_vb_descs,
-                                  const GpuBufferDesc* p_ib_desc) final;
+    auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                        uint32_t p_count,
+                        const GpuBufferDesc* p_vb_descs,
+                        const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> final;
 
     void SetMesh(const GpuMesh* p_mesh) final;
     void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
