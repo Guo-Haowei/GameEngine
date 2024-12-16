@@ -221,6 +221,12 @@ void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
 }
 
+void GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+    unused(p_desc);
+    unused(p_buffer);
+    CRASH_NOW();
+}
+
 auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>> {
     constexpr uint32_t count = 6;
     std::array<VertexAttributeName, count> attribs = {
@@ -242,6 +248,8 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
     };
 
     std::array<GpuBufferDesc, 6> vb_descs;
+    
+    const bool is_dynamic = p_mesh.flags & MeshComponent::DYNAMIC;
 
     GpuMeshDesc desc;
     desc.enabledVertexCount = 6;
@@ -259,6 +267,7 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
         buffer_desc.elementCount = in.elementCount;
         buffer_desc.elementSize = in.strideInByte;
         buffer_desc.initialData = data[index];
+        buffer_desc.dynamic = is_dynamic;
     }
 
     GpuBufferDesc ib_desc{
@@ -278,13 +287,6 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
 
     p_mesh.gpuResource = *ret;
     return ret;
-}
-
-void GraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    unused(p_mesh);
-    unused(p_positions);
-    unused(p_normals);
-    CRASH_NOW();
 }
 
 LineBuffers* GraphicsManager::CreateLine(const std::vector<Point>& p_points) {
@@ -346,6 +348,17 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
     }
 }
 
+template<typename T>
+static GpuBufferDesc CreateDesc(const std::vector<T>& p_data) {
+    GpuBufferDesc desc{
+        .elementSize = sizeof(T),
+        .elementCount = static_cast<uint32_t>(p_data.size()),
+        .offset = 0,
+        .initialData = p_data.data(),
+    };
+    return desc;
+}
+
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
@@ -371,7 +384,9 @@ void GraphicsManager::Update(Scene& p_scene) {
         auto data = renderer::GetRenderData();
 
         for (const auto& update_buffer : data->updateBuffer) {
-            UpdateMesh((GpuMesh*)update_buffer.id, update_buffer.positions, update_buffer.normals);
+            GpuMesh* mesh = (GpuMesh*)update_buffer.id;
+            UpdateBuffer(CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
+            UpdateBuffer(CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
         }
 
         // @TODO: remove this

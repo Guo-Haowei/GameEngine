@@ -107,6 +107,8 @@ enum class GpuBufferType : uint8_t {
 
 struct GpuBufferDesc {
     GpuBufferType type{ GpuBufferType::UNKNOWN };
+    // @TODO: need better flags than this
+    bool dynamic{ false };
     uint32_t slot{ 0 };
     uint32_t elementSize{ 0 };
     uint32_t elementCount{ 0 };
@@ -117,11 +119,13 @@ struct GpuBufferDesc {
 // @TODO: generalize buffers
 struct GpuBuffer {
     const GpuBufferDesc desc;
-    size_t handle{ 0 };
 
     GpuBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
 
     virtual ~GpuBuffer() = default;
+
+    virtual uint64_t GetHandle() const = 0;
+    uint32_t GetHandle32() const { return static_cast<uint32_t>(GetHandle()); }
 };
 
 struct GpuConstantBuffer {

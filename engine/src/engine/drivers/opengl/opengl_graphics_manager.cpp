@@ -307,12 +307,10 @@ BUFFER_TYPE Convert(GpuBufferType p_type) {
     }
 };
 
-auto OpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer> {
+auto OpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
     auto type = Convert(p_desc.type);
 
-    // @TODO: fix this
-    // CPU_ACCESS_BIT?
-    const bool is_dynamic = false;
+    const bool is_dynamic = p_desc.dynamic;
 
     GLuint handle = 0;
     glGenBuffers(1, &handle);
@@ -325,6 +323,7 @@ auto OpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::sh
     auto buffer = std::make_shared<OpenGlBuffer>(p_desc);
     buffer->handle = handle;
     buffer->type = type;
+    glBindBuffer(type, 0);
     return buffer;
 }
 
@@ -338,13 +337,16 @@ auto OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
     // create VAO
     glGenVertexArrays(1, &ret->vao);
 
-    ret->indexBuffer = CreateBuffer(*p_ib_desc);
-    DEV_ASSERT(ret->indexBuffer);
-    if (!ret->indexBuffer) {
-        return nullptr;
+    // create EBO
+    {
+        auto res = CreateBuffer(*p_ib_desc);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        ret->indexBuffer = *res;
     }
 
-    GLuint ebo = (uint32_t)ret->indexBuffer->handle;
+    const uint32_t ebo = ret->indexBuffer->GetHandle32();
     DEV_ASSERT(ret->vao && ebo);
 
     glBindVertexArray(ret->vao);
@@ -352,9 +354,13 @@ auto OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
 
     for (uint32_t index = 0; index < p_count; ++index) {
         if (p_vb_descs[index].elementCount) {
-            ret->vertexBuffers[index] = CreateBuffer(p_vb_descs[index]);
+            auto res = CreateBuffer(p_vb_descs[index]);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+            ret->vertexBuffers[index] = *res;
 
-            const GLuint vbo = (GLuint)ret->vertexBuffers[index]->handle;
+            const uint32_t vbo = ret->vertexBuffers[index]->GetHandle32();
             glBindBuffer(GL_ARRAY_BUFFER, vbo);
             const uint32_t stride_in_byte = ret->desc.vertexLayout[index].strideInByte;
             glVertexAttribPointer(index,
@@ -368,6 +374,8 @@ auto OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
     }
 
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     return ret;
 }
 
@@ -376,23 +384,12 @@ void OpenGlGraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     glBindVertexArray(mesh->vao);
 }
 
-void OpenGlGraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    // @TODO: update buffer
-    if (auto mesh = dynamic_cast<OpenGlMeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
-        CRASH_NOW();
-        {
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
-            // glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[0]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_positions.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
-        if constexpr (1) {
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_normals.size();
-            // glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[1]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_normals.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
-    }
+void OpenGlGraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+    const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
+    const uint32_t vbo = p_buffer->GetHandle32();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_desc.initialData);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void OpenGlGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {

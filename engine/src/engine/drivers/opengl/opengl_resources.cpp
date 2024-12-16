@@ -6,8 +6,7 @@ namespace my {
 
 void OpenGlBuffer::Clear() {
     if (handle) {
-        uint32_t handle32 = static_cast<uint32_t>(handle);
-        glDeleteBuffers(1, &handle32);
+        glDeleteBuffers(1, &handle);
         handle = 0;
     }
 }

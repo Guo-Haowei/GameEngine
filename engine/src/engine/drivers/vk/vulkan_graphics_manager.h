@@ -34,6 +34,10 @@ public:
         return nullptr;
     }
 
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> override {
+        return nullptr;
+    }
+
     void SetMesh(const GpuMesh* p_mesh) override {}
     void DrawElements(uint32_t p_count, uint32_t p_offset) override {}
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) override {}

@@ -11,11 +11,14 @@ namespace my {
 struct OpenGlBuffer : GpuBuffer {
     using GpuBuffer::GpuBuffer;
 
-    uint32_t type;
+    uint32_t type{ 0 };
+    uint32_t handle{ 0 };
 
     ~OpenGlBuffer() { Clear(); }
 
     void Clear();
+
+    uint64_t GetHandle() const final { return handle; }
 };
 
 struct OpenGlGpuTexture : public GpuTexture {

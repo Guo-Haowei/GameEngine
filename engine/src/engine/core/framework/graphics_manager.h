@@ -87,6 +87,9 @@ public:
     virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
+    virtual auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> = 0;
+    virtual void UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer);
+
     auto CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>>;
 
     virtual auto CreateMeshImpl(const GpuMeshDesc& p_desc,
@@ -96,7 +99,6 @@ public:
         -> Result<std::shared_ptr<GpuMesh>> = 0;
 
     virtual void SetMesh(const GpuMesh* p_mesh) = 0;
-    virtual void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
 
     virtual LineBuffers* CreateLine(const std::vector<Point>& p_points);
     virtual void SetLine(const LineBuffers* p_buffer);

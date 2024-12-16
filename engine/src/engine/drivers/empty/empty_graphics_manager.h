@@ -28,6 +28,10 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) override {}
     void SetViewport(const Viewport& p_viewport) override {}
 
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> override {
+        return nullptr;
+    }
+
     auto CreateMeshImpl(const GpuMeshDesc& p_desc,
                         uint32_t p_count,
                         const GpuBufferDesc* p_vb_descs,

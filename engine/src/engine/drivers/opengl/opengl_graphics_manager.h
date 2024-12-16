@@ -32,13 +32,16 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> final;
+    void UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) final;
+
     auto CreateMeshImpl(const GpuMeshDesc& p_desc,
                         uint32_t p_count,
                         const GpuBufferDesc* p_vb_descs,
                         const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> final;
 
+
     void SetMesh(const GpuMesh* p_mesh) final;
-    void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
 
     LineBuffers* CreateLine(const std::vector<Point>& p_points) final;
     void SetLine(const LineBuffers* p_buffer) final;
@@ -52,8 +55,6 @@ public:
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
     void UnbindUnorderedAccessView(uint32_t p_slot) final;
-
-    auto CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer>;
 
     auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> final;
     auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> final;

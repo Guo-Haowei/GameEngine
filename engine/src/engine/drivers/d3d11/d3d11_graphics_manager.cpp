@@ -696,8 +696,8 @@ void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
     m_deviceContext->RSSetViewports(1, &vp);
 }
 
-auto D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer> {
-    bool p_is_dynamic = false;
+auto D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
+    const bool is_dynamic = p_desc.dynamic;
     ComPtr<ID3D11Buffer> buffer;
 
     uint32_t flags = 0;
@@ -714,21 +714,20 @@ auto D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::sha
     }
 
     D3D11_BUFFER_DESC bufferDesc{};
-    bufferDesc.Usage = p_is_dynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
+    bufferDesc.Usage = is_dynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
     bufferDesc.ByteWidth = p_desc.elementCount * p_desc.elementSize;
     bufferDesc.BindFlags = flags;
-    bufferDesc.CPUAccessFlags = p_is_dynamic ? D3D11_CPU_ACCESS_WRITE : 0;
+    bufferDesc.CPUAccessFlags = is_dynamic ? D3D11_CPU_ACCESS_WRITE : 0;
     bufferDesc.MiscFlags = 0;
 
     D3D11_SUBRESOURCE_DATA data{};
     data.pSysMem = p_desc.initialData;
     D3D_FAIL_V_MSG(m_device->CreateBuffer(&bufferDesc, &data, buffer.GetAddressOf()),
-                   nullptr,
+                   HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to create buffer"),
                    "Failed to Create vertex buffer");
 
     auto ret = std::make_shared<D3d11Buffer>(p_desc);
     ret->buffer = buffer;
-    ret->handle = (size_t)buffer.Get();
     return ret;
 }
 
@@ -740,18 +739,20 @@ auto D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
 
     for (uint32_t index = 0; index < p_count; ++index) {
         if (p_vb_descs[index].elementCount) {
-            ret->vertexBuffers[index] = CreateBuffer(p_vb_descs[index]);
+            auto res = CreateBuffer(p_vb_descs[index]);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+            ret->vertexBuffers[index] = *res;
         }
     }
 
-    // create index buffer
-    DEV_ASSERT(p_ib_desc);
-    ret->indexBuffer = CreateBuffer(*p_ib_desc);
-    DEV_ASSERT(ret->indexBuffer);
-    if (!ret->indexBuffer) {
-        return nullptr;
+    auto res = CreateBuffer(*p_ib_desc);
+    if (!res) {
+        return HBN_ERROR(res.error());
     }
 
+    ret->indexBuffer = *res;
     return ret;
 }
 
@@ -768,43 +769,24 @@ void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
         if (vertex == nullptr) {
             break;
         }
-        buffers[counter] = (ID3D11Buffer*)vertex->handle;
+        buffers[counter] = (ID3D11Buffer*)vertex->GetHandle();
         strides[counter] = p_mesh->desc.vertexLayout[counter].strideInByte;
         offsets[counter] = p_mesh->desc.vertexLayout[counter].offsetInByte;
     }
 
-    ID3D11Buffer* index_buffer = (ID3D11Buffer*)mesh->indexBuffer->handle;
+    ID3D11Buffer* index_buffer = (ID3D11Buffer*)mesh->indexBuffer->GetHandle();
     m_deviceContext->IASetVertexBuffers(0, counter, buffers, strides, offsets);
     m_deviceContext->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 }
 
-void D3d11GraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    unused(p_mesh);
-    unused(p_positions);
-    unused(p_normals);
-#if 0
-    if (auto mesh = dynamic_cast<D3d11MeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
-        CRASH_NOW();
-        {
-            D3D11_MAPPED_SUBRESOURCE mapped;
-            HRESULT hr = m_deviceContext->Map(mesh->vertex_buffer[0].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-            DEV_ASSERT(SUCCEEDED(hr));
+void D3d11GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<D3d11Buffer*>(p_buffer);
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    HRESULT hr = m_deviceContext->Map(buffer->buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+    DEV_ASSERT(SUCCEEDED(hr));
 
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
-            memcpy(mapped.pData, p_positions.data(), size_in_byte);
-            m_deviceContext->Unmap(mesh->vertex_buffer[0].Get(), 0);
-        }
-        {
-            D3D11_MAPPED_SUBRESOURCE mapped;
-            HRESULT hr = m_deviceContext->Map(mesh->vertex_buffer[1].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-            DEV_ASSERT(SUCCEEDED(hr));
-
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_normals.size();
-            memcpy(mapped.pData, p_normals.data(), size_in_byte);
-            m_deviceContext->Unmap(mesh->vertex_buffer[1].Get(), 0);
-        }
-    }
-#endif
+    memcpy(mapped.pData, p_desc.initialData, p_desc.elementSize * p_desc.elementCount);
+    m_deviceContext->Unmap(buffer->buffer.Get(), 0);
 }
 
 void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {

@@ -430,12 +430,14 @@ ID3D12Resource* D3d12GraphicsManager::UploadBuffer(uint32_t p_byte_size, const v
     return p_out_buffer;
 };
 
-auto D3d12GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer> {
+auto D3d12GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
     auto ret = std::make_shared<D3d12Buffer>(p_desc);
 
     const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
     ret->buffer = UploadBuffer(size_in_byte, p_desc.initialData, nullptr);
-    DEV_ASSERT(ret->buffer);
+    if (ret->buffer == nullptr) {
+        return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);
+    }
 
     return ret;
 }
@@ -447,24 +449,35 @@ auto D3d12GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
     auto ret = std::make_shared<D3d12MeshBuffers>(p_desc);
     const auto& ib_desc = *p_ib_desc;
 
-    ret->indexBuffer = CreateBuffer(*p_ib_desc);
+    for (uint32_t index = 0; index < p_count; ++index) {
+        const auto& vb_desc = p_vb_descs[index];
+        if (vb_desc.elementCount == 0) {
+            break;
+        }
+
+        auto res = CreateBuffer(p_vb_descs[index]);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+
+        ret->vertexBuffers[index] = *res;
+        ret->vbvs[index] = {
+            .BufferLocation = ((ID3D12Resource*)(ret->vertexBuffers[index]->GetHandle()))->GetGPUVirtualAddress(),
+            .SizeInBytes = vb_desc.elementCount * vb_desc.elementSize,
+            .StrideInBytes = vb_desc.elementSize,
+        };
+    }
+
+    auto res = CreateBuffer(*p_ib_desc);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+    ret->indexBuffer = *res;
     ret->ibv = {
-        .BufferLocation = reinterpret_cast<const D3d12Buffer*>(ret->indexBuffer.get())->buffer->GetGPUVirtualAddress(),
+        .BufferLocation = ((ID3D12Resource*)(ret->indexBuffer->GetHandle()))->GetGPUVirtualAddress(),
         .SizeInBytes = ib_desc.elementCount * ib_desc.elementSize,
         .Format = DXGI_FORMAT_R32_UINT,
     };
-
-    for (uint32_t index = 0; index < p_count; ++index) {
-        const auto& vb_desc = p_vb_descs[index];
-        if (vb_desc.elementCount) {
-            ret->vertexBuffers[index] = CreateBuffer(p_vb_descs[index]);
-            ret->vbvs[index] = {
-                .BufferLocation = reinterpret_cast<const D3d12Buffer*>(ret->vertexBuffers[index].get())->buffer->GetGPUVirtualAddress(),
-                .SizeInBytes = vb_desc.elementCount * vb_desc.elementSize,
-                .StrideInBytes = vb_desc.elementSize,
-            };
-        }
-    }
 
     return ret;
 }
@@ -483,23 +496,10 @@ void D3d12GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     m_graphicsCommandList->IASetIndexBuffer(&mesh->ibv);
 }
 
-void D3d12GraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    unused(p_mesh);
-    unused(p_positions);
-    unused(p_normals);
-    CRASH_NOW();
-#if 0
-    if (auto mesh = dynamic_cast<D3d12MeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
-        {
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
-            UploadBuffer(size_in_byte, p_positions.data(), mesh->vertexBuffers[0].Get());
-        }
-        {
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_normals.size();
-            UploadBuffer(size_in_byte, p_normals.data(), mesh->vertexBuffers[1].Get());
-        }
-    }
-#endif
+void D3d12GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<D3d12Buffer*>(p_buffer);
+    const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
+    UploadBuffer(size_in_byte, p_desc.initialData, buffer->buffer.Get());
 }
 
 void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
