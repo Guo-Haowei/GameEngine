@@ -325,8 +325,6 @@ void OpenGlGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uin
 }
 
 void OpenGlGraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
-    // @TODO: get rid of this hack
-    glLineWidth(4.0f);
     glDrawArrays(m_stateCache.topology, p_offset, p_count);
 }
 

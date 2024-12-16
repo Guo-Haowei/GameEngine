@@ -43,20 +43,6 @@ void BeginFrame() {
 }
 
 static void BakeLineSegments() {
-    auto& context = s_glob.renderData->lineContext;
-
-    const size_t point_count = context.lines.size();
-    DEV_ASSERT(context.positions.empty() && context.colors.empty());
-    context.positions.reserve(point_count * 2);
-    context.colors.reserve(point_count * 2);
-
-    for (size_t i = 0; i < point_count; ++i) {
-        const auto& line = context.lines[i];
-        context.positions.push_back(line.a);
-        context.positions.push_back(line.b);
-        context.colors.push_back(line.color);
-        context.colors.push_back(line.color);
-    }
 }
 
 void EndFrame() {
@@ -91,6 +77,25 @@ void AddLine(const Vector3f& p_a,
 
     if (DEV_VERIFY(s_glob.renderData)) {
         s_glob.renderData->lineContext.lines.push_back({ p_a, p_b, p_thickness, p_color });
+    }
+}
+
+void AddLineList(const std::vector<Vector3f>& p_points,
+                 const Color& p_color,
+                 const Matrix4x4f* p_transform,
+                 float p_thickness) {
+    ASSERT_CAN_RECORD();
+
+    if (DEV_VERIFY(s_glob.renderData)) {
+        for (size_t i = 0; i < p_points.size(); i += 2) {
+            Vector4f a(p_points[i], 1.0f);
+            Vector4f b(p_points[i + 1], 1.0f);
+            if (p_transform) {
+                a = *p_transform * a;
+                b = *p_transform * b;
+            }
+            s_glob.renderData->lineContext.lines.push_back({ a, b, p_thickness, p_color });
+        }
     }
 }
 

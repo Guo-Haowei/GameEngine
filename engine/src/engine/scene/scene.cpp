@@ -14,18 +14,22 @@ using jobsystem::Context;
 static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 
 // @TODO: refactor
-#if 1
-#define JS_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
-    CTX.Dispatch(                                         \
-        static_cast<uint32_t>(GetCount<TYPE>()),          \
-        SUBCOUNT,                                         \
+#define JS_FORCE_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
+    CTX.Dispatch(                                               \
+        static_cast<uint32_t>(GetCount<TYPE>()),                \
+        SUBCOUNT,                                               \
         [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.jobIndex; do { BODY; } while(0); })
-#else
-#define JS_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)       \
+
+#define JS_NO_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)       \
     (void)(CTX);                                                \
     for (size_t INDEX = 0; INDEX < GetCount<TYPE>(); ++INDEX) { \
         BODY;                                                   \
     }
+
+#if 1
+#define JS_PARALLEL_FOR JS_FORCE_PARALLEL_FOR
+#else
+#define JS_PARALLEL_FOR JS_NO_PARALLEL_FOR
 #endif
 
 void Scene::Update(float p_time_step) {
@@ -55,17 +59,6 @@ void Scene::Update(float p_time_step) {
     for (auto [entity, camera] : m_PerspectiveCameraComponents) {
         camera.Update();
     }
-
-    // for (auto [entity, light] : m_HemisphereLightComponents) {
-    //     if (!light.m_path.empty()) {
-    //         if (!light.m_asset) {
-    //             auto res = AssetRegistry::GetSingleton().RequestAssetSync(light.m_path);
-    //             if (res) {
-    //                 light.m_asset = dynamic_cast<const ImageAsset*>(*res);
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 void Scene::Copy(Scene& p_other) {
@@ -790,7 +783,7 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(LightComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
+    JS_NO_PARALLEL_FOR(LightComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {

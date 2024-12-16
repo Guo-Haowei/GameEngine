@@ -114,18 +114,17 @@ struct DrawData {
 
     std::vector<UpdateBuffer> updateBuffer;
 
-    // 3D lines
     struct LineSegment {
         Vector3f a;
         Vector3f b;
         float thickness;
         Color color;
     };
-
     struct LineContext {
         std::vector<LineSegment> lines;
         std::vector<Vector3f> positions;
         std::vector<Color> colors;
+        uint32_t drawCount;
     } lineContext;
 };
 

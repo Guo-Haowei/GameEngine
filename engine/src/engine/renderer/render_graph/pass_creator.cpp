@@ -466,18 +466,6 @@ static void LightingPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
     DrawBatchesGeometry(p_data, pass.transparent);
-
-    // draw debug data
-    if (gm.m_lineBuffers && !p_data.lineContext.positions.empty()) {
-        const auto& context = p_data.lineContext;
-        gm.SetPipelineState(PSO_DEBUG_DRAW);
-        gm.UpdateBuffer(renderer::CreateDesc(context.positions),
-                        gm.m_lineBuffers->vertexBuffers[0].get());
-        gm.UpdateBuffer(renderer::CreateDesc(context.colors),
-                        gm.m_lineBuffers->vertexBuffers[6].get());
-        gm.SetMesh(gm.m_lineBuffers.get());
-        gm.DrawArrays((uint32_t)context.lines.size() * 2);
-    }
 }
 
 void RenderPassCreator::AddLightingPass() {
@@ -801,7 +789,24 @@ static void TonePassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureLightingSlot());
         gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureHighlightSelectSlot());
+
     }
+
+#if 0
+    if (gm.m_lineBuffers && !p_data.lineContext.positions.empty()) {
+        const PassContext& pass = p_data.mainPass;
+        gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
+        gm.SetPipelineState(PSO_DEBUG_DRAW);
+
+        const auto& context = p_data.lineContext;
+        gm.UpdateBuffer(renderer::CreateDesc(context.positions),
+                        gm.m_lineBuffers->vertexBuffers[0].get());
+        gm.UpdateBuffer(renderer::CreateDesc(context.colors),
+                        gm.m_lineBuffers->vertexBuffers[6].get());
+        gm.SetMesh(gm.m_lineBuffers.get());
+        gm.DrawArrays(context.drawCount);
+    }
+#endif
 }
 
 void RenderPassCreator::AddTonePass() {
