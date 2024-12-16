@@ -332,61 +332,23 @@ auto OpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::sh
     return buffer;
 }
 
-const GpuMesh* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
-    struct Attrib {
-        VertexAttributeName name;
-        const void* data;
-    };
-    std::array<Attrib, 6> attribs = {
-        Attrib{ VertexAttributeName::POSITION, p_mesh.positions.data() },
-        Attrib{ VertexAttributeName::NORMAL, p_mesh.normals.data() },
-        Attrib{ VertexAttributeName::TEXCOORD_0, p_mesh.texcoords_0.data() },
-        Attrib{ VertexAttributeName::TANGENT, p_mesh.tangents.data() },
-        Attrib{ VertexAttributeName::JOINTS_0, p_mesh.joints_0.data() },
-        Attrib{ VertexAttributeName::WEIGHTS_0, p_mesh.weights_0.data() },
-    };
-    std::array<GpuBufferDesc, 6> buffer_descs;
-
-    GpuMeshDesc desc;
-    desc.enabledVertexCount = 6;
-    desc.indexCount = static_cast<uint32_t>(p_mesh.indices.size());
-    for (int index = 0; index < attribs.size(); ++index) {
-        const auto& in = p_mesh.attributes[std::to_underlying(attribs[index].name)];
-        auto& layout = desc.vertexLayout[index];
-        layout.slot = index;
-        layout.offsetInByte = in.offsetInByte;
-        layout.strideInByte = in.strideInByte;
-
-        auto& buffer_desc = buffer_descs[index];
-        buffer_desc.slot = index;
-        buffer_desc.type = GpuBufferType::VERTEX;
-        buffer_desc.elementCount = in.elementCount;
-        buffer_desc.elementSize = in.strideInByte;
-        buffer_desc.initialData = attribs[index].data;
-    }
+const GpuMesh* OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                                     uint32_t p_count,
+                                                     const GpuBufferDesc* p_vb_descs,
+                                                     const GpuBufferDesc* p_ib_desc) {
 
     RID rid = m_meshes.make_rid();
     OpenGlMeshBuffers* ret = m_meshes.get_or_null(rid);
-    p_mesh.gpuResource = ret;
 
-    ret->desc = desc;
+    ret->desc = p_desc;
 
     // create VAO
     glGenVertexArrays(1, &ret->vao);
 
-    // create index buffer
-    {
-        GpuBufferDesc buffer_desc{
-            .type = GpuBufferType::INDEX,
-            .elementSize = sizeof(uint32_t),
-            .elementCount = (uint32_t)p_mesh.indices.size(),
-            .initialData = p_mesh.indices.data(),
-        };
-        ret->indexBuffer = CreateBuffer(buffer_desc);
-        DEV_ASSERT(ret->indexBuffer);
-        if (!ret->indexBuffer) {
-            return nullptr;
-        }
+    ret->indexBuffer = CreateBuffer(*p_ib_desc);
+    DEV_ASSERT(ret->indexBuffer);
+    if (!ret->indexBuffer) {
+        return nullptr;
     }
 
     GLuint ebo = (uint32_t)ret->indexBuffer->handle;
@@ -395,27 +357,24 @@ const GpuMesh* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
     glBindVertexArray(ret->vao);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
-    // create vertex buffers
-    for (int index = 0; index < attribs.size(); ++index) {
-        auto& buffer_desc = buffer_descs[index];
-        if (buffer_desc.elementCount) {
-            const uint32_t stride_in_byte = desc.vertexLayout[index].strideInByte;
-            const int slot = index;
-            auto buffer = CreateBuffer(buffer_desc);
-            DEV_ASSERT(buffer);
-            ret->vertexBuffers[index] = buffer;
+    for (uint32_t index = 0; index < p_count; ++index) {
+        if (p_vb_descs[index].elementCount) {
+            ret->vertexBuffers[index] = CreateBuffer(p_vb_descs[index]);
 
-            glBindBuffer(GL_ARRAY_BUFFER, (uint32_t)buffer->handle);
-            glVertexAttribPointer(slot,
+            const GLuint vbo = (GLuint)ret->vertexBuffers[index]->handle;
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            const uint32_t stride_in_byte = ret->desc.vertexLayout[index].strideInByte;
+            glVertexAttribPointer(index,
                                   stride_in_byte / sizeof(float),
                                   GL_FLOAT,
                                   GL_FALSE,
                                   stride_in_byte,
                                   0);
-            glEnableVertexAttribArray(slot);
+            glEnableVertexAttribArray(index);
         }
     }
 
+    glBindVertexArray(0);
     return ret;
 }
 

@@ -139,7 +139,7 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
     std::vector<Point> points;
     points.resize(4096);
 
-    //m_lines = CreateLine(points);
+    // m_lines = CreateLine(points);
 
     m_initialized = true;
     return Result<void>();
@@ -218,6 +218,73 @@ void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
 
 void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
+}
+
+const GpuMesh* GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                               uint32_t p_count,
+                                               const GpuBufferDesc* p_vb_descs,
+                                               const GpuBufferDesc* p_ib_desc) {
+    unused(p_desc);
+    unused(p_count);
+    unused(p_vb_descs);
+    unused(p_ib_desc);
+    CRASH_NOW();
+    return nullptr;
+}
+
+const GpuMesh* GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
+    constexpr uint32_t count = 6;
+    std::array<VertexAttributeName, count> attribs = {
+        VertexAttributeName::POSITION,
+        VertexAttributeName::NORMAL,
+        VertexAttributeName::TEXCOORD_0,
+        VertexAttributeName::TANGENT,
+        VertexAttributeName::JOINTS_0,
+        VertexAttributeName::WEIGHTS_0,
+    };
+
+    std::array<const void*, count> data = {
+        p_mesh.positions.data(),
+        p_mesh.normals.data(),
+        p_mesh.texcoords_0.data(),
+        p_mesh.tangents.data(),
+        p_mesh.joints_0.data(),
+        p_mesh.weights_0.data(),
+    };
+
+    std::array<GpuBufferDesc, 6> vb_descs;
+
+    GpuMeshDesc desc;
+    desc.enabledVertexCount = 6;
+    desc.indexCount = static_cast<uint32_t>(p_mesh.indices.size());
+    for (int index = 0; index < attribs.size(); ++index) {
+        const auto& in = p_mesh.attributes[std::to_underlying(attribs[index])];
+        auto& layout = desc.vertexLayout[index];
+        layout.slot = index;
+        layout.offsetInByte = in.offsetInByte;
+        layout.strideInByte = in.strideInByte;
+
+        auto& buffer_desc = vb_descs[index];
+        buffer_desc.slot = index;
+        buffer_desc.type = GpuBufferType::VERTEX;
+        buffer_desc.elementCount = in.elementCount;
+        buffer_desc.elementSize = in.strideInByte;
+        buffer_desc.initialData = data[index];
+    }
+
+    GpuBufferDesc ib_desc{
+        .type = GpuBufferType::INDEX,
+        .elementSize = sizeof(uint32_t),
+        .elementCount = (uint32_t)p_mesh.indices.size(),
+        .initialData = p_mesh.indices.data(),
+    };
+
+    auto ret = CreateMeshImpl(desc,
+                              count,
+                              vb_descs.data(),
+                              &ib_desc);
+    p_mesh.gpuResource = ret;
+    return ret;
 }
 
 void GraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {

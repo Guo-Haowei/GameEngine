@@ -732,65 +732,26 @@ auto D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::sha
     return ret;
 }
 
-const GpuMesh* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
-    struct Attrib {
-        VertexAttributeName name;
-        const void* data;
-    };
-    std::array<Attrib, 6> attribs = {
-        Attrib{ VertexAttributeName::POSITION, p_mesh.positions.data() },
-        Attrib{ VertexAttributeName::NORMAL, p_mesh.normals.data() },
-        Attrib{ VertexAttributeName::TEXCOORD_0, p_mesh.texcoords_0.data() },
-        Attrib{ VertexAttributeName::TANGENT, p_mesh.tangents.data() },
-        Attrib{ VertexAttributeName::JOINTS_0, p_mesh.joints_0.data() },
-        Attrib{ VertexAttributeName::WEIGHTS_0, p_mesh.weights_0.data() },
-    };
-    std::array<GpuBufferDesc, 6> buffer_descs;
-
-    GpuMeshDesc desc;
-    desc.enabledVertexCount = 6;
-    desc.indexCount = static_cast<uint32_t>(p_mesh.indices.size());
-    for (int index = 0; index < attribs.size(); ++index) {
-        const auto& in = p_mesh.attributes[std::to_underlying(attribs[index].name)];
-        auto& layout = desc.vertexLayout[index];
-        layout.slot = index;
-        layout.offsetInByte = in.offsetInByte;
-        layout.strideInByte = in.strideInByte;
-
-        auto& buffer_desc = buffer_descs[index];
-        buffer_desc.slot = index;
-        buffer_desc.type = GpuBufferType::VERTEX;
-        buffer_desc.elementCount = in.elementCount;
-        buffer_desc.elementSize = in.strideInByte;
-        buffer_desc.initialData = attribs[index].data;
-    }
-
-    ////////////////////////////////////////
+const GpuMesh* D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                                    uint32_t p_count,
+                                                    const GpuBufferDesc* p_vb_descs,
+                                                    const GpuBufferDesc* p_ib_desc) {
     RID rid = m_meshes.make_rid();
     D3d11MeshBuffers* ret = m_meshes.get_or_null(rid);
-    ret->desc = desc;
+    ret->desc = p_desc;
 
-    p_mesh.gpuResource = ret;
-
-    for (int i = 0; i < 6; ++i) {
-        if (buffer_descs[i].elementCount) {
-            ret->vertexBuffers[i] = CreateBuffer(buffer_descs[i]);
+    for (uint32_t index = 0; index < p_count; ++index) {
+        if (p_vb_descs[index].elementCount) {
+            ret->vertexBuffers[index] = CreateBuffer(p_vb_descs[index]);
         }
     }
 
     // create index buffer
-    {
-        GpuBufferDesc buffer_desc{
-            .type = GpuBufferType::INDEX,
-            .elementSize = sizeof(uint32_t),
-            .elementCount = (uint32_t)p_mesh.indices.size(),
-            .initialData = p_mesh.indices.data(),
-        };
-        ret->indexBuffer = CreateBuffer(buffer_desc);
-        DEV_ASSERT(ret->indexBuffer);
-        if (!ret->indexBuffer) {
-            return nullptr;
-        }
+    DEV_ASSERT(p_ib_desc);
+    ret->indexBuffer = CreateBuffer(*p_ib_desc);
+    DEV_ASSERT(ret->indexBuffer);
+    if (!ret->indexBuffer) {
+        return nullptr;
     }
 
     return ret;
@@ -799,7 +760,6 @@ const GpuMesh* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
 void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
-    // @TODO: refactor
     ID3D11Buffer* buffers[6]{ 0 };
     uint32_t strides[6]{ 0 };
     uint32_t offsets[6]{ 0 };

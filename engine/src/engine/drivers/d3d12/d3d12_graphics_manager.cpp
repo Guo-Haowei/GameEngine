@@ -430,54 +430,68 @@ ID3D12Resource* D3d12GraphicsManager::UploadBuffer(uint32_t p_byte_size, const v
     return p_out_buffer;
 };
 
-const GpuMesh* D3d12GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
+auto D3d12GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer> {
+    auto ret = std::make_shared<D3d12Buffer>(p_desc);
+
+    const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
+    ret->buffer = UploadBuffer(size_in_byte, p_desc.initialData, nullptr);
+    DEV_ASSERT(ret->buffer);
+
+    return ret;
+}
+
+const GpuMesh* D3d12GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                                    uint32_t p_count,
+                                                    const GpuBufferDesc* p_vb_descs,
+                                                    const GpuBufferDesc* p_ib_desc) {
 
     RID rid = m_meshes.make_rid();
-    D3d12MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
+    D3d12MeshBuffers* ret = m_meshes.get_or_null(rid);
+    const auto& ib_desc = *p_ib_desc;
+    ret->desc = p_desc;
 
-#define INIT_BUFFER(INDEX, BUFFER)                                                               \
-    do {                                                                                         \
-        const uint32_t size_in_byte = static_cast<uint32_t>(VectorSizeInByte(BUFFER));           \
-        mesh_buffers->vertexBuffers[INDEX] = UploadBuffer(size_in_byte, BUFFER.data(), nullptr); \
-        if (!mesh_buffers->vertexBuffers[INDEX]) {                                               \
-            break;                                                                               \
-        };                                                                                       \
-        mesh_buffers->vbvs[INDEX] = {                                                            \
-            .BufferLocation = mesh_buffers->vertexBuffers[INDEX]->GetGPUVirtualAddress(),        \
-            .SizeInBytes = size_in_byte,                                                         \
-            .StrideInBytes = sizeof(BUFFER[0]),                                                  \
-        };                                                                                       \
-    } while (0)
-    INIT_BUFFER(0, p_mesh.positions);
-    INIT_BUFFER(1, p_mesh.normals);
-    INIT_BUFFER(2, p_mesh.texcoords_0);
-    INIT_BUFFER(3, p_mesh.tangents);
-    INIT_BUFFER(4, p_mesh.joints_0);
-    INIT_BUFFER(5, p_mesh.weights_0);
-#undef INIT_BUFFER
+    ret->indexBuffer = CreateBuffer(*p_ib_desc);
+    ret->ibv = {
+        .BufferLocation = reinterpret_cast<const D3d12Buffer*>(ret->indexBuffer.get())->buffer->GetGPUVirtualAddress(),
+        .SizeInBytes = ib_desc.elementCount * ib_desc.elementSize,
+        .Format = DXGI_FORMAT_R32_UINT,
+    };
 
-    CRASH_NOW();
-    // mesh_buffers->indexCount = static_cast<uint32_t>(p_mesh.indices.size());
-    mesh_buffers->indexBuffer = UploadBuffer(static_cast<uint32_t>(VectorSizeInByte(p_mesh.indices)), p_mesh.indices.data(), nullptr);
+    for (uint32_t index = 0; index < p_count; ++index) {
+        const auto& vb_desc = p_vb_descs[index];
+        if (vb_desc.elementCount) {
+            ret->vertexBuffers[index] = CreateBuffer(p_vb_descs[index]);
+            ret->vbvs[index] = {
+                .BufferLocation = reinterpret_cast<const D3d12Buffer*>(ret->vertexBuffers[index].get())->buffer->GetGPUVirtualAddress(),
+                .SizeInBytes = vb_desc.elementCount * vb_desc.elementSize,
+                .StrideInBytes = vb_desc.elementSize,
+            };
+        }
+    }
 
-    p_mesh.gpuResource = mesh_buffers;
-    return mesh_buffers;
+    return ret;
 }
 
 void D3d12GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d12MeshBuffers*>(p_mesh);
 
-    D3D12_INDEX_BUFFER_VIEW ibv;
-    ibv.BufferLocation = mesh->indexBuffer->GetGPUVirtualAddress();
-    ibv.Format = DXGI_FORMAT_R32_UINT;
-    CRASH_NOW();
-    // ibv.SizeInBytes = mesh->indexCount * sizeof(uint32_t);
+    int i = 0;
+    for (; i < array_length(p_mesh->vertexBuffers); ++i) {
+        if (p_mesh->vertexBuffers[i] == nullptr) {
+            break;
+        }
+    }
 
-    m_graphicsCommandList->IASetVertexBuffers(0, array_length(mesh->vbvs), mesh->vbvs);
-    m_graphicsCommandList->IASetIndexBuffer(&ibv);
+    m_graphicsCommandList->IASetVertexBuffers(0, i, mesh->vbvs);
+    m_graphicsCommandList->IASetIndexBuffer(&mesh->ibv);
 }
 
 void D3d12GraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
+    unused(p_mesh);
+    unused(p_positions);
+    unused(p_normals);
+    CRASH_NOW();
+#if 0
     if (auto mesh = dynamic_cast<D3d12MeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
         {
             const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
@@ -488,6 +502,7 @@ void D3d12GraphicsManager::UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3
             UploadBuffer(size_in_byte, p_normals.data(), mesh->vertexBuffers[1].Get());
         }
     }
+#endif
 }
 
 void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {

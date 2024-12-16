@@ -26,7 +26,7 @@ struct vsoutput_position {
 
 struct vsinput_color {
     float3 position : POSITION;
-    float4 color: COLOR;
+    float4 color : COLOR;
 };
 
 struct vsoutput_color {

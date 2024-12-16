@@ -5,10 +5,15 @@
 
 namespace my {
 
-struct D3d12MeshBuffers : public GpuMesh {
-    Microsoft::WRL::ComPtr<ID3D12Resource> vertexBuffers[6]{};
-    D3D12_VERTEX_BUFFER_VIEW vbvs[6]{};
-    Microsoft::WRL::ComPtr<ID3D12Resource> indexBuffer;
+struct D3d12Buffer : GpuBuffer {
+    using GpuBuffer::GpuBuffer;
+
+    Microsoft::WRL::ComPtr<ID3D12Resource> buffer;
+};
+
+struct D3d12MeshBuffers : GpuMesh {
+    D3D12_VERTEX_BUFFER_VIEW vbvs[MESH_MAX_VERTEX_BUFFER_COUNT];
+    D3D12_INDEX_BUFFER_VIEW ibv;
 };
 
 class D3d12GraphicsManager : public GraphicsManager {
@@ -28,7 +33,13 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
-    const GpuMesh* CreateMesh(const MeshComponent& p_mesh) final;
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer>;
+
+    const GpuMesh* CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                  uint32_t p_count,
+                                  const GpuBufferDesc* p_vb_descs,
+                                  const GpuBufferDesc* p_ib_desc) final;
+
     void SetMesh(const GpuMesh* p_mesh) final;
     void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
 

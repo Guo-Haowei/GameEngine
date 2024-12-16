@@ -9,7 +9,7 @@ class Archive;
 class Scene;
 struct GpuMesh;
 
-enum class VertexAttributeName {
+enum class VertexAttributeName : uint8_t {
     POSITION = 0,
     NORMAL,
     TEXCOORD_0,

@@ -30,7 +30,11 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
-    const GpuMesh* CreateMesh(const MeshComponent& p_mesh) final;
+    const GpuMesh* CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                  uint32_t p_count,
+                                  const GpuBufferDesc* p_vb_descs,
+                                  const GpuBufferDesc* p_ib_desc) final;
+
     void SetMesh(const GpuMesh* p_mesh) final;
     void UpdateMesh(GpuMesh* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
 
