@@ -16,6 +16,7 @@
 #include "engine/renderer/render_graph/pass_creator.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer.h"
+#include "engine/renderer/renderer_misc.h"
 #include "engine/scene/scene.h"
 #include "shader_resource_defines.hlsl.h"
 
@@ -137,10 +138,21 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 
     m_brdfImage = m_app->GetAssetRegistry()->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
 
-    std::vector<Point> points;
-    points.resize(4096);
+    // @TODO: refactor
+    {
+        constexpr int max_count = 4096 * 16;
+        MeshComponent mesh;
+        mesh.flags |= MeshComponent::DYNAMIC;
+        mesh.positions.resize(max_count);
+        mesh.color_0.resize(max_count);
+        mesh.CreateRenderData();
 
-    // m_lines = CreateLine(points);
+        auto res = CreateMesh(mesh);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        m_lineBuffers = *res;
+    }
 
     m_initialized = true;
     return Result<void>();
@@ -228,7 +240,7 @@ void GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buf
 }
 
 auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>> {
-    constexpr uint32_t count = 6;
+    constexpr uint32_t count = std::to_underlying(VertexAttributeName::COUNT);
     std::array<VertexAttributeName, count> attribs = {
         VertexAttributeName::POSITION,
         VertexAttributeName::NORMAL,
@@ -236,6 +248,8 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
         VertexAttributeName::TANGENT,
         VertexAttributeName::JOINTS_0,
         VertexAttributeName::WEIGHTS_0,
+        VertexAttributeName::COLOR_0,
+        VertexAttributeName::TEXCOORD_1,
     };
 
     std::array<const void*, count> data = {
@@ -245,15 +259,18 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
         p_mesh.tangents.data(),
         p_mesh.joints_0.data(),
         p_mesh.weights_0.data(),
+        p_mesh.color_0.data(),
+        p_mesh.texcoords_1.data(),
     };
 
-    std::array<GpuBufferDesc, 6> vb_descs;
+    std::array<GpuBufferDesc, count> vb_descs;
 
     const bool is_dynamic = p_mesh.flags & MeshComponent::DYNAMIC;
 
     GpuMeshDesc desc;
-    desc.enabledVertexCount = 6;
-    desc.indexCount = static_cast<uint32_t>(p_mesh.indices.size());
+    desc.enabledVertexCount = count;
+    desc.drawCount = static_cast<uint32_t>(p_mesh.indices.empty() ? p_mesh.positions.size() : p_mesh.indices.size());
+
     for (int index = 0; index < attribs.size(); ++index) {
         const auto& in = p_mesh.attributes[std::to_underlying(attribs[index])];
         auto& layout = desc.vertexLayout[index];
@@ -268,51 +285,27 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
         buffer_desc.elementSize = in.strideInByte;
         buffer_desc.initialData = data[index];
         buffer_desc.dynamic = is_dynamic;
-
-        if (in.elementCount) {
-            desc.enabledVertexCount = index;
-        }
     }
 
-    GpuBufferDesc ib_desc{
-        .type = GpuBufferType::INDEX,
-        .elementSize = sizeof(uint32_t),
-        .elementCount = (uint32_t)p_mesh.indices.size(),
-        .initialData = p_mesh.indices.data(),
-    };
+    GpuBufferDesc ib_desc;
+    GpuBufferDesc* ib_desc_ptr = nullptr;
+    if (!p_mesh.indices.empty()) {
+        ib_desc = GpuBufferDesc{
+            .type = GpuBufferType::INDEX,
+            .elementSize = sizeof(uint32_t),
+            .elementCount = (uint32_t)p_mesh.indices.size(),
+            .initialData = p_mesh.indices.data(),
+        };
+        ib_desc_ptr = &ib_desc;
+    }
 
-    auto ret = CreateMeshImpl(desc,
-                              6,
-                              vb_descs.data(),
-                              &ib_desc);
+    auto ret = CreateMeshImpl(desc, count, vb_descs.data(), ib_desc_ptr);
     if (!ret) {
         return HBN_ERROR(ret.error());
     }
 
     p_mesh.gpuResource = *ret;
     return ret;
-}
-
-LineBuffers* GraphicsManager::CreateLine(const std::vector<Point>& p_points) {
-    unused(p_points);
-    CRASH_NOW();
-    return nullptr;
-}
-
-void GraphicsManager::SetLine(const LineBuffers* p_buffer) {
-    unused(p_buffer);
-}
-
-void GraphicsManager::UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) {
-    unused(p_buffer);
-    unused(p_points);
-    CRASH_NOW();
-}
-
-void GraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
-    unused(p_count);
-    unused(p_offset);
-    CRASH_NOW();
 }
 
 // @TODO: refactor this
@@ -352,17 +345,6 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
     }
 }
 
-template<typename T>
-static GpuBufferDesc CreateDesc(const std::vector<T>& p_data) {
-    GpuBufferDesc desc{
-        .elementSize = sizeof(T),
-        .elementCount = static_cast<uint32_t>(p_data.size()),
-        .offset = 0,
-        .initialData = p_data.data(),
-    };
-    return desc;
-}
-
 void GraphicsManager::Update(Scene& p_scene) {
     OPTICK_EVENT();
 
@@ -389,8 +371,8 @@ void GraphicsManager::Update(Scene& p_scene) {
 
         for (const auto& update_buffer : data->updateBuffer) {
             GpuMesh* mesh = (GpuMesh*)update_buffer.id;
-            UpdateBuffer(CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
-            UpdateBuffer(CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
+            UpdateBuffer(renderer::CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
+            UpdateBuffer(renderer::CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
         }
 
         // @TODO: remove this
@@ -709,17 +691,17 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
 
 void GraphicsManager::DrawQuad() {
     SetMesh(m_screenQuadBuffers.get());
-    DrawElements(m_screenQuadBuffers->indexBuffer->desc.elementCount);
+    DrawElements(m_screenQuadBuffers->desc.drawCount);
 }
 
 void GraphicsManager::DrawQuadInstanced(uint32_t p_instance_count) {
     SetMesh(m_screenQuadBuffers.get());
-    DrawElementsInstanced(p_instance_count, m_screenQuadBuffers->indexBuffer->desc.elementCount, 0);
+    DrawElementsInstanced(p_instance_count, m_screenQuadBuffers->desc.drawCount, 0);
 }
 
 void GraphicsManager::DrawSkybox() {
     SetMesh(m_skyboxBuffers.get());
-    DrawElements(m_skyboxBuffers->indexBuffer->desc.elementCount);
+    DrawElements(m_skyboxBuffers->desc.drawCount);
 }
 
 void GraphicsManager::OnSceneChange(const Scene& p_scene) {

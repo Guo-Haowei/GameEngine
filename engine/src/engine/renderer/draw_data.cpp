@@ -142,7 +142,7 @@ static void FillPass(const RenderDataConfig& p_config,
 
             // THIS IS HACKY
             if (cloth_mesh) {
-                sub_mesh.index_count = draw.mesh_data->indexBuffer->desc.elementCount;
+                sub_mesh.index_count = draw.mesh_data->desc.drawCount;
                 sub_mesh.index_offset = 0;
                 sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
                 draw.subsets.emplace_back(std::move(sub_mesh));

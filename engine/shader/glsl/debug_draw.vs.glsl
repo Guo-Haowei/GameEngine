@@ -1,8 +1,6 @@
 /// File: debug_draw.vs.glsl
 #include "../cbuffer.hlsl.h"
-
-layout(location = 0) in vec3 in_position;
-layout(location = 1) in vec4 in_color;
+#include "../vsinput.glsl.h"
 
 layout(location = 0) out vec4 pass_color;
 

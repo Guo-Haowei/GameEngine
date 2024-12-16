@@ -9,7 +9,20 @@
 
 namespace my::renderer {
 
-static DrawData* s_renderData;
+#define ASSERT_CAN_RECORD() DEV_ASSERT(s_glob.state == RenderState::RECORDING)
+
+enum class RenderState {
+    UNINITIALIZED = 0,
+    RECORDING,
+    SUBMITTING,
+};
+
+static struct {
+    DrawData* renderData;
+    RenderState state;
+} s_glob;
+
+// @TODO: fix this
 std::list<PointShadowHandle> s_freePointLightShadows = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
 void RegisterDvars() {
@@ -19,47 +32,65 @@ void RegisterDvars() {
 
 void BeginFrame() {
     // @TODO: should be a better way
-    if (s_renderData) {
-        delete s_renderData;
-        s_renderData = nullptr;
+    if (s_glob.renderData) {
+        delete s_glob.renderData;
+        s_glob.renderData = nullptr;
     }
-    s_renderData = new DrawData();
-    s_renderData->bakeIbl = false;
+    s_glob.renderData = new DrawData();
+    s_glob.renderData->bakeIbl = false;
+
+    s_glob.state = RenderState::RECORDING;
+}
+
+static void BakeLineSegments() {
+    auto& context = s_glob.renderData->lineContext;
+
+    const size_t point_count = context.lines.size();
+    DEV_ASSERT(context.positions.empty() && context.colors.empty());
+    context.positions.reserve(point_count * 2);
+    context.colors.reserve(point_count * 2);
+
+    for (size_t i = 0; i < point_count; ++i) {
+        const auto& line = context.lines[i];
+        context.positions.push_back(line.a);
+        context.positions.push_back(line.b);
+        context.colors.push_back(line.color);
+        context.colors.push_back(line.color);
+    }
 }
 
 void EndFrame() {
+    BakeLineSegments();
+
+    s_glob.state = RenderState::SUBMITTING;
 }
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
+    ASSERT_CAN_RECORD();
+
     RenderDataConfig config(p_scene);
     config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-    PrepareRenderData(p_camera, config, *s_renderData);
+    PrepareRenderData(p_camera, config, *s_glob.renderData);
 }
 
 void RequestBakingIbl() {
-    if (DEV_VERIFY(s_renderData)) {
-        s_renderData->bakeIbl = true;
+    if (DEV_VERIFY(s_glob.renderData)) {
+        s_glob.renderData->bakeIbl = true;
     }
 }
 
 const DrawData* GetRenderData() {
-    return s_renderData;
+    return s_glob.renderData;
 }
 
-void AddLine(const Vector3f& p_a, const Vector3f& p_b, const Color& p_color) {
-    if (DEV_VERIFY(s_renderData)) {
-        const Point a = { p_a, p_color };
-        const Point b = { p_b, p_color };
-        s_renderData->points3D.emplace_back(a);
-        s_renderData->points3D.emplace_back(b);
-    }
-}
+void AddLine(const Vector3f& p_a,
+             const Vector3f& p_b,
+             const Color& p_color,
+             float p_thickness) {
+    ASSERT_CAN_RECORD();
 
-void AddLineList(const std::vector<Point>& p_points) {
-    if (DEV_VERIFY(s_renderData)) {
-        auto& a = s_renderData->points3D;
-        const auto& b = p_points;
-        a.insert(a.end(), b.begin(), b.end());
+    if (DEV_VERIFY(s_glob.renderData)) {
+        s_glob.renderData->lineContext.lines.push_back({ p_a, p_b, p_thickness, p_color });
     }
 }
 

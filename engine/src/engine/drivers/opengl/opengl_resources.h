@@ -5,13 +5,14 @@
 
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/render_graph/draw_pass.h"
+#include "opengl_helpers_forward.h"
 
 namespace my {
 
 struct OpenGlBuffer : GpuBuffer {
     using GpuBuffer::GpuBuffer;
 
-    uint32_t type{ 0 };
+    gl::BUFFER_TYPE type;
     uint32_t handle{ 0 };
 
     ~OpenGlBuffer() { Clear(); }

@@ -447,8 +447,6 @@ auto D3d12GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
                                           const GpuBufferDesc* p_vb_descs,
                                           const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
     auto ret = std::make_shared<D3d12MeshBuffers>(p_desc);
-    const auto& ib_desc = *p_ib_desc;
-
     for (uint32_t index = 0; index < p_count; ++index) {
         const auto& vb_desc = p_vb_descs[index];
         if (vb_desc.elementCount == 0) {
@@ -469,16 +467,18 @@ auto D3d12GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
         };
     }
 
-    auto res = CreateBuffer(*p_ib_desc);
-    if (!res) {
-        return HBN_ERROR(res.error());
+    if (p_ib_desc) {
+        auto res = CreateBuffer(*p_ib_desc);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        ret->indexBuffer = *res;
+        ret->ibv = {
+            .BufferLocation = ((ID3D12Resource*)(ret->indexBuffer->GetHandle()))->GetGPUVirtualAddress(),
+            .SizeInBytes = p_ib_desc->elementCount * p_ib_desc->elementSize,
+            .Format = DXGI_FORMAT_R32_UINT,
+        };
     }
-    ret->indexBuffer = *res;
-    ret->ibv = {
-        .BufferLocation = ((ID3D12Resource*)(ret->indexBuffer->GetHandle()))->GetGPUVirtualAddress(),
-        .SizeInBytes = ib_desc.elementCount * ib_desc.elementSize,
-        .Format = DXGI_FORMAT_R32_UINT,
-    };
 
     return ret;
 }
@@ -486,8 +486,10 @@ auto D3d12GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
 void D3d12GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d12MeshBuffers*>(p_mesh);
 
-    m_graphicsCommandList->IASetVertexBuffers(0, 6, mesh->vbvs);
-    m_graphicsCommandList->IASetIndexBuffer(&mesh->ibv);
+    m_graphicsCommandList->IASetVertexBuffers(0, MESH_MAX_VERTEX_BUFFER_COUNT, mesh->vbvs);
+    if (mesh->indexBuffer) {
+        m_graphicsCommandList->IASetIndexBuffer(&mesh->ibv);
+    }
 }
 
 void D3d12GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
@@ -502,6 +504,14 @@ void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
 
 void D3d12GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
     m_graphicsCommandList->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
+}
+
+void D3d12GraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
+    m_graphicsCommandList->DrawInstanced(p_count, 1, p_offset, 0);
+}
+
+void D3d12GraphicsManager::DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    m_graphicsCommandList->DrawInstanced(p_count, p_instance_count, p_offset, 0);
 }
 
 void D3d12GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
@@ -1338,11 +1348,12 @@ void D3d12GraphicsManager::OnWindowResize(int p_width, int p_height) {
 }
 
 void D3d12GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
-    // @TODO: refactor topology
-    m_graphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
     auto pipeline = reinterpret_cast<D3d12PipelineState*>(m_pipelineStateManager->Find(p_name));
     DEV_ASSERT(pipeline);
+
+    auto primitive_topology = d3d::Convert(pipeline->desc.primitiveTopology);
+    m_graphicsCommandList->IASetPrimitiveTopology(primitive_topology);
+
     m_graphicsCommandList->SetPipelineState(pipeline->pso.Get());
 }
 

@@ -11,6 +11,7 @@ struct vsinput_mesh {
     float3 tangent : TANGENT;
     int4 boneIndex : BONEINDEX;
     float4 boneWeight : BONEWEIGHT;
+    float4 color : COLOR;
 };
 
 // Output

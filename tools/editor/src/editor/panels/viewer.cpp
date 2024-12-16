@@ -67,9 +67,7 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
     }
 }
 
-static void DrawGrid(const float p_grid_size) {
-    std::vector<Point> points;
-
+void DrawGrid(const float p_grid_size) {
     for (float f = -p_grid_size; f <= p_grid_size; f += 1.f) {
         for (int dir = 0; dir < 2; dir++) {
             Vector3f p0(dir ? -p_grid_size : f, 0.f, dir ? f : -p_grid_size);
@@ -82,12 +80,13 @@ static void DrawGrid(const float p_grid_size) {
                 color = Color::Hex(dir == 1 ? 0x303090 : 0x903030);
             }
 
-            points.emplace_back(Point{ p0, color });
-            points.emplace_back(Point{ p1, color });
+            float thickness = 1.f;
+            thickness = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? 1.5f : thickness;
+            thickness = (fabsf(f) < FLT_EPSILON) ? 2.3f : thickness;
+
+            renderer::AddLine(p0, p1, color, thickness);
         }
     }
-
-    renderer::AddLineList(points);
 }
 
 void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
@@ -136,7 +135,6 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     if (show_editor) {
         Matrix4x4f identity(1);
         // draw grid
-        // ImGuizmo::draw_grid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
         DrawGrid(10.0f);
     }
 

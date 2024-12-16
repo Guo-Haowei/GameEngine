@@ -95,19 +95,14 @@ public:
     virtual auto CreateMeshImpl(const GpuMeshDesc& p_desc,
                                 uint32_t p_count,
                                 const GpuBufferDesc* p_vb_descs,
-                                const GpuBufferDesc* p_ib_desc)
-        -> Result<std::shared_ptr<GpuMesh>> = 0;
+                                const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> = 0;
 
     virtual void SetMesh(const GpuMesh* p_mesh) = 0;
 
-    virtual LineBuffers* CreateLine(const std::vector<Point>& p_points);
-    virtual void SetLine(const LineBuffers* p_buffer);
-    virtual void UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points);
-
     virtual void DrawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
     virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
-
-    virtual void DrawArrays(uint32_t p_count, uint32_t p_offset = 0);
+    virtual void DrawArrays(uint32_t p_count, uint32_t p_offset = 0) = 0;
+    virtual void DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
     virtual void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
@@ -210,6 +205,7 @@ protected:
 public:
     // @TODO: make private
     std::shared_ptr<GpuMesh> m_boxBuffers;
+    std::shared_ptr<GpuMesh> m_lineBuffers;
 
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
@@ -217,9 +213,6 @@ public:
     bool m_bufferUpdated = false;
 
     const ImageAsset* m_brdfImage{ nullptr };
-
-    // @TODO: refactor
-    LineBuffers* m_lines{ nullptr };
 
 protected:
     void UpdateEmitters(const Scene& p_scene);

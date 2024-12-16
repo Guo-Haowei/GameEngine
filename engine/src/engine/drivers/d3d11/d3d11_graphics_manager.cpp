@@ -39,9 +39,6 @@ auto D3d11GraphicsManager::InitializeInternal() -> Result<void> {
         return HBN_ERROR(res.error());
     }
 
-    // @TODO: refactor this
-    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
     m_meshes.set_description("GPU-Mesh-Allocator");
 
     auto imgui = m_app->GetImguiManager();
@@ -748,23 +745,25 @@ auto D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
         ret->vertexBuffers[index] = *res;
     }
 
-    auto res = CreateBuffer(*p_ib_desc);
-    if (!res) {
-        return HBN_ERROR(res.error());
-    }
+    if (p_ib_desc) {
+        auto res = CreateBuffer(*p_ib_desc);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
 
-    ret->indexBuffer = *res;
+        ret->indexBuffer = *res;
+    }
     return ret;
 }
 
 void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
-    ID3D11Buffer* buffers[6]{ nullptr };
-    uint32_t strides[6]{ 0 };
-    uint32_t offsets[6]{ 0 };
+    std::array<ID3D11Buffer*, MESH_MAX_VERTEX_BUFFER_COUNT> buffers{ nullptr };
+    std::array<uint32_t, MESH_MAX_VERTEX_BUFFER_COUNT> strides{ 0 };
+    std::array<uint32_t, MESH_MAX_VERTEX_BUFFER_COUNT> offsets{ 0 };
 
-    for (int index = 0; index < array_length(mesh->vertexBuffers); ++index) {
+    for (int index = 0; index < mesh->vertexBuffers.size(); ++index) {
         const auto& vertex = mesh->vertexBuffers[index];
         if (vertex == nullptr) {
             continue;
@@ -774,9 +773,12 @@ void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
         offsets[index] = p_mesh->desc.vertexLayout[index].offsetInByte;
     }
 
-    ID3D11Buffer* index_buffer = (ID3D11Buffer*)mesh->indexBuffer->GetHandle();
-    m_deviceContext->IASetVertexBuffers(0, 6, buffers, strides, offsets);
-    m_deviceContext->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
+    m_deviceContext->IASetVertexBuffers(0, MESH_MAX_VERTEX_BUFFER_COUNT, buffers.data(), strides.data(), offsets.data());
+
+    if (mesh->indexBuffer) {
+        ID3D11Buffer* index_buffer = (ID3D11Buffer*)mesh->indexBuffer->GetHandle();
+        m_deviceContext->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
+    }
 }
 
 void D3d11GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
@@ -795,6 +797,14 @@ void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
 
 void D3d11GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
     m_deviceContext->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
+}
+
+void D3d11GraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
+    m_deviceContext->Draw(p_count, p_offset);
+}
+
+void D3d11GraphicsManager::DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    m_deviceContext->DrawInstanced(p_count, p_instance_count, p_offset, 0);
 }
 
 void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
@@ -825,6 +835,9 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
         m_deviceContext->OMSetBlendState(pipeline->blendState.Get(), nullptr, 0xFFFFFFFF);
         m_stateCache.blendState = pipeline->blendState.Get();
     }
+
+    auto topology = d3d::Convert(pipeline->desc.primitiveTopology);
+    m_deviceContext->IASetPrimitiveTopology(topology);
 }
 
 }  // namespace my

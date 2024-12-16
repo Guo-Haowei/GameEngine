@@ -151,7 +151,7 @@ struct GpuStructuredBuffer {
     virtual ~GpuStructuredBuffer() = default;
 };
 
-inline constexpr int MESH_MAX_VERTEX_BUFFER_COUNT = 6;
+inline constexpr int MESH_MAX_VERTEX_BUFFER_COUNT = 8;
 
 struct GpuMeshDesc {
     struct VertexLayout {
@@ -160,7 +160,7 @@ struct GpuMeshDesc {
         uint32_t offsetInByte{ 0 };
     };
 
-    uint32_t indexCount{ 0 };
+    uint32_t drawCount{ 0 };
     uint32_t enabledVertexCount{ 0 };
     VertexLayout vertexLayout[MESH_MAX_VERTEX_BUFFER_COUNT];
 };
@@ -168,20 +168,12 @@ struct GpuMeshDesc {
 struct GpuMesh {
     const GpuMeshDesc desc;
     std::shared_ptr<GpuBuffer> indexBuffer;
-    std::shared_ptr<GpuBuffer> vertexBuffers[MESH_MAX_VERTEX_BUFFER_COUNT];
+    std::array<std::shared_ptr<GpuBuffer>, MESH_MAX_VERTEX_BUFFER_COUNT> vertexBuffers;
 
     GpuMesh() = default;
     GpuMesh(const GpuMeshDesc& p_desc) : desc(p_desc) {}
 
     virtual ~GpuMesh() = default;
-};
-
-// @TODO: refactor Line and Mesh
-struct LineBuffers {
-    virtual ~LineBuffers() = default;
-
-    uint32_t capacity = 0;
-    uint32_t indexCount = 0;
 };
 
 struct GpuTexture {

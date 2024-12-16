@@ -115,7 +115,18 @@ struct DrawData {
     std::vector<UpdateBuffer> updateBuffer;
 
     // 3D lines
-    std::vector<Point> points3D;
+    struct LineSegment {
+        Vector3f a;
+        Vector3f b;
+        float thickness;
+        Color color;
+    };
+
+    struct LineContext {
+        std::vector<LineSegment> lines;
+        std::vector<Vector3f> positions;
+        std::vector<Color> colors;
+    } lineContext;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

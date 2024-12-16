@@ -1,5 +1,6 @@
 #include "engine/core/base/rid_owner.h"
 #include "engine/core/framework/graphics_manager.h"
+#include "opengl_helpers_forward.h"
 
 struct GLFWwindow;
 
@@ -10,11 +11,6 @@ struct OpenGlMeshBuffers : GpuMesh {
     using GpuMesh::GpuMesh;
 
     uint32_t vao{ 0 };
-};
-
-struct OpenGlLineBuffers : LineBuffers {
-    uint32_t vao{ 0 };
-    uint32_t vbo{ 0 };
 };
 
 class OpenGlGraphicsManager : public GraphicsManager {
@@ -42,14 +38,10 @@ public:
 
     void SetMesh(const GpuMesh* p_mesh) final;
 
-    LineBuffers* CreateLine(const std::vector<Point>& p_points) final;
-    void SetLine(const LineBuffers* p_buffer) final;
-    void UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) final;
-
     void DrawElements(uint32_t p_count, uint32_t p_offset) final;
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
-
     void DrawArrays(uint32_t p_count, uint32_t p_offset) final;
+    void DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
@@ -99,7 +91,7 @@ private:
         bool enableDepthTest;
         bool enableStencilTest;
         ComparisonFunc stencilFunc;
-        uint32_t topology;
+        gl::TOPOLOGY topology;
     } m_stateCache;
 };
 

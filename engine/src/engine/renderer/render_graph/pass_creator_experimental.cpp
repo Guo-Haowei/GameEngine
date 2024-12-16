@@ -36,7 +36,7 @@ void debug_vxgi_pass_func(const DrawData& p_data, const DrawPass* p_draw_pass) {
 
     gm.SetMesh(gm.m_boxBuffers.get());
     const uint32_t size = DVAR_GET_INT(gfx_voxel_size);
-    gm.DrawElementsInstanced(size * size * size, gm.m_boxBuffers->indexBuffer->desc.elementCount);
+    gm.DrawElementsInstanced(size * size * size, gm.m_boxBuffers->desc.drawCount);
 
     glDisable(GL_BLEND);
 }

@@ -3,7 +3,7 @@
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/string/string_utils.h"
-#include "opengl_prerequisites.h"
+#include "opengl_helpers.h"
 #include "shader_resource_defines.hlsl.h"
 
 namespace my {

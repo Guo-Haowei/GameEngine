@@ -1,6 +1,6 @@
 #include "opengl_resources.h"
 
-#include "opengl_prerequisites.h"
+#include "opengl_helpers.h"
 
 namespace my {
 

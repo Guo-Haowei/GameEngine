@@ -76,20 +76,6 @@ auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     }
     DEV_ASSERT(elements.size());
 
-    // @TODO: make it a Convert
-    D3D12_PRIMITIVE_TOPOLOGY_TYPE topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
-    switch (p_desc.primitiveTopology) {
-        case PrimitiveTopology::LINE:
-            topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-            break;
-        case PrimitiveTopology::TRIANGLE:
-            topology = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-            break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-
     D3D12_RASTERIZER_DESC rasterizer_desc{};
     rasterizer_desc.FillMode = d3d::Convert(p_desc.rasterizerDesc->fillMode);
     rasterizer_desc.CullMode = d3d::Convert(p_desc.rasterizerDesc->cullMode);
@@ -112,7 +98,7 @@ auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     pso_desc.RasterizerState = rasterizer_desc;
     pso_desc.DepthStencilState = depth_stencil_desc;
     pso_desc.InputLayout = { elements.data(), (uint32_t)elements.size() };
-    pso_desc.PrimitiveTopologyType = topology;
+    pso_desc.PrimitiveTopologyType = d3d::ConvertToType(p_desc.primitiveTopology);
     pso_desc.SampleDesc.Count = 1;
 
     pso_desc.NumRenderTargets = p_desc.numRenderTargets;

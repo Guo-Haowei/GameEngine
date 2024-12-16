@@ -5,11 +5,6 @@ namespace my {
 class PerspectiveCameraComponent;
 class Scene;
 
-struct Point {
-    Vector3f position;
-    Color color;
-};
-
 }  // namespace my
 
 namespace my::renderer {
@@ -25,9 +20,10 @@ void BeginFrame();
 
 void EndFrame();
 
-void AddLine(const Vector3f& p_a, const Vector3f& p_b, const Color& p_color);
-
-void AddLineList(const std::vector<Point>& p_points);
+void AddLine(const Vector3f& p_a,
+             const Vector3f& p_b,
+             const Color& p_color,
+             float p_thickness = 1.0f);
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
 

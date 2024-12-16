@@ -6,8 +6,8 @@
 #include "engine/core/framework/imgui_manager.h"
 #include "engine/core/math/geometry.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
+#include "engine/drivers/opengl/opengl_helpers.h"
 #include "engine/drivers/opengl/opengl_pipeline_state_manager.h"
-#include "engine/drivers/opengl/opengl_prerequisites.h"
 #include "engine/drivers/opengl/opengl_resources.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
@@ -242,73 +242,8 @@ void OpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
                p_viewport.height);
 }
 
-LineBuffers* OpenGlGraphicsManager::CreateLine(const std::vector<Point>& p_points) {
-    // @TODO: fix
-    OpenGlLineBuffers* buffers = new OpenGlLineBuffers;
-    glGenVertexArrays(1, &buffers->vao);
-    glGenBuffers(1, &buffers->vbo);
-
-    auto vao = buffers->vao;
-    auto vbo = buffers->vbo;
-
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
-
-    BufferStorage(vbo, p_points, true);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    buffers->capacity = (uint32_t)p_points.size();
-    return buffers;
-}
-
-void OpenGlGraphicsManager::SetLine(const LineBuffers* p_buffer) {
-    // HACK:
-    glLineWidth(4.0f);
-    auto buffer = reinterpret_cast<const OpenGlLineBuffers*>(p_buffer);
-    glBindVertexArray(buffer->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-}
-
-void OpenGlGraphicsManager::UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) {
-    auto buffer = reinterpret_cast<OpenGlLineBuffers*>(p_buffer);
-    {
-        const uint32_t size_in_byte = sizeof(Point) * (uint32_t)p_points.size();
-        glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_points.data());
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-    }
-}
-
-// @TODO: refactor
-enum BUFFER_TYPE {
-    ARRAY_BUFFER = GL_ARRAY_BUFFER,
-    INDEX_BUFFER = GL_ELEMENT_ARRAY_BUFFER,
-};
-
-BUFFER_TYPE Convert(GpuBufferType p_type) {
-    switch (p_type) {
-        case GpuBufferType::VERTEX:
-            return ARRAY_BUFFER;
-        case GpuBufferType::INDEX:
-            return INDEX_BUFFER;
-        case GpuBufferType::CONSTANT:
-        case GpuBufferType::STRUCTURED:
-        default:
-            CRASH_NOW();
-            return ARRAY_BUFFER;
-    }
-};
-
 auto OpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
-    auto type = Convert(p_desc.type);
+    auto type = gl::Convert(p_desc.type);
 
     const bool is_dynamic = p_desc.dynamic;
 
@@ -339,17 +274,16 @@ auto OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
     ret->vao = vao;
 
     // create EBO
-    {
+    if (p_ib_desc) {
         auto res = CreateBuffer(*p_ib_desc);
         if (!res) {
             return HBN_ERROR(res.error());
         }
         ret->indexBuffer = *res;
-    }
 
-    const uint32_t ebo = ret->indexBuffer->GetHandle32();
-    DEV_ASSERT(ret->vao && ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        const uint32_t ebo = ret->indexBuffer->GetHandle32();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    }
 
     for (uint32_t slot = 0; slot < p_count; ++slot) {
         if (p_vb_descs[slot].elementCount == 0) {
@@ -402,7 +336,13 @@ void OpenGlGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uin
 }
 
 void OpenGlGraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
+    // @TODO: get rid of this hack
+    glLineWidth(4.0f);
     glDrawArrays(m_stateCache.topology, p_offset, p_count);
+}
+
+void OpenGlGraphicsManager::DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    glDrawArraysInstanced(m_stateCache.topology, p_offset, p_count, p_instance_count);
 }
 
 void OpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
