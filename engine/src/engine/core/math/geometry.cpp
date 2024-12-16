@@ -651,20 +651,22 @@ MeshComponent MakeTorusMesh(float p_radius,
     return mesh;
 }
 
-MeshComponent MakeBoxMesh(float size) {
-    MeshComponent mesh;
-    mesh.positions = {
-        Vector3f(-size, +size, +size),  // A
-        Vector3f(-size, -size, +size),  // B
-        Vector3f(+size, -size, +size),  // C
-        Vector3f(+size, +size, +size),  // D
-        Vector3f(-size, +size, -size),  // E
-        Vector3f(-size, -size, -size),  // F
-        Vector3f(+size, -size, -size),  // G
-        Vector3f(+size, +size, -size),  // H
+void BoxWireFrameHelper(const Vector3f& p_min,
+                        const Vector3f& p_max,
+                        std::vector<Vector3f>& p_out_positions,
+                        std::vector<uint32_t>& p_out_indices) {
+    p_out_positions = {
+        Vector3f(p_min.x, p_max.y, p_max.z),  // A
+        Vector3f(p_min.x, p_min.y, p_max.z),  // B
+        Vector3f(p_max.x, p_min.y, p_max.z),  // C
+        Vector3f(p_max.x, p_max.y, p_max.z),  // D
+        Vector3f(p_min.x, p_max.y, p_min.z),  // E
+        Vector3f(p_min.x, p_min.y, p_min.z),  // F
+        Vector3f(p_max.x, p_min.y, p_min.z),  // G
+        Vector3f(p_max.x, p_max.y, p_min.z),  // H
     };
 
-    mesh.indices = {
+    p_out_indices = {
         A, B, D,  // ABD
         D, B, C,  // DBC
         E, H, F,  // EHF
@@ -678,7 +680,13 @@ MeshComponent MakeBoxMesh(float size) {
         B, F, G,  // BFG
         B, G, C,  // BGC
     };
+}
 
+MeshComponent MakeBoxMesh(float size) {
+    MeshComponent mesh;
+    Vector3f min(-size);
+    Vector3f max(+size);
+    BoxWireFrameHelper(min, max, mesh.positions, mesh.indices);
     mesh.CreateRenderData();
     return mesh;
 }

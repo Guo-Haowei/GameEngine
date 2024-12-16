@@ -114,18 +114,11 @@ struct DrawData {
 
     std::vector<UpdateBuffer> updateBuffer;
 
-    struct LineSegment {
-        Vector3f a;
-        Vector3f b;
-        float thickness;
-        Color color;
-    };
-    struct LineContext {
-        std::vector<LineSegment> lines;
+    struct DebugDrawContext {
         std::vector<Vector3f> positions;
         std::vector<Color> colors;
         uint32_t drawCount;
-    } lineContext;
+    } debugDrawContext;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

@@ -184,11 +184,12 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .ps = "debug_draw.ps",
                    //.primitiveTopology = PrimitiveTopology::LINE,
                    .rasterizerDesc = &s_rasterizerDoubleSided,
-                   .depthStencilDesc = &s_noDepthStencil,
+                   .depthStencilDesc = &s_depthStencilDefault,
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
                    .rtvFormats = { RESOURCE_FORMAT_TONE },
+                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
     CREATE_PSO(PSO_GBUFFER,

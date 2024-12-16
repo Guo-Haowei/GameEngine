@@ -20,7 +20,7 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
         SUBCOUNT,                                               \
         [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.jobIndex; do { BODY; } while(0); })
 
-#define JS_NO_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)       \
+#define JS_NO_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)    \
     (void)(CTX);                                                \
     for (size_t INDEX = 0; INDEX < GetCount<TYPE>(); ++INDEX) { \
         BODY;                                                   \

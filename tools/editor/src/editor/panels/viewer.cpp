@@ -67,54 +67,6 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
     }
 }
 
-static void DrawCone();
-
-static void DrawGrid(const float p_grid_size) {
-    for (float f = -p_grid_size; f <= p_grid_size; f += 1.f) {
-        for (int dir = 0; dir < 2; dir++) {
-            Vector3f p0(dir ? -p_grid_size : f, 0.f, dir ? f : -p_grid_size);
-            Vector3f p1(dir ? p_grid_size : f, 0.f, dir ? f : p_grid_size);
-
-            auto color = Color::Hex(0x808080);
-            color = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? Color::Hex(0x909090) : color;
-            color = (fabsf(f) < FLT_EPSILON) ? Color::Hex(0x404040) : color;
-            if (f == 0.0f) {
-                color = Color::Hex(dir == 1 ? 0x303090 : 0x903030);
-            }
-
-            float thickness = 1.f;
-            thickness = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? 1.5f : thickness;
-            thickness = (fabsf(f) < FLT_EPSILON) ? 2.3f : thickness;
-
-            renderer::AddLine(p0, p1, color, thickness);
-        }
-    }
-}
-
-static void DrawCone(const Matrix4x4f* p_matrix) {
-    // clang-format off
-    enum { A = 0, B = 1, C = 2, D = 3, E = 4 };
-    // clang-format on
-
-    constexpr float size = 0.5f;
-    constexpr std::array<Vector3f, 5> points = {
-        Vector3f(-size, +size, -size),  // A
-        Vector3f(-size, -size, -size),  // B
-        Vector3f(+size, -size, -size),  // C
-        Vector3f(+size, +size, -size),  // D
-        Vector3f(0.0f, 0.0f, +size),    // E
-    };
-
-    constexpr std::array<uint32_t, 16> indices = { A, B, B, C, C, D, D, A, E, A, E, B, E, C, E, D };
-    std::vector<Vector3f> lines;
-    for (size_t index = 0; index < indices.size(); index += 2) {
-        lines.push_back(Vector3f(points[indices[index]]));
-        lines.push_back(Vector3f(points[indices[index + 1]]));
-    }
-
-    renderer::AddLineList(lines, Color::Hex(0xFFFFFF), p_matrix, 2.0f);
-}
-
 void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
     const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
@@ -159,7 +111,8 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
 
     bool show_editor = DVAR_GET_BOOL(show_editor);
     if (show_editor) {
-        DrawGrid(10.0f);
+        Matrix4x4f identity(1.0f);
+        ImGuizmo::DrawGrid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
     }
 
     ecs::Entity id = m_editor.GetSelectedEntity();
@@ -168,9 +121,12 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
         LightComponent* light = p_scene.GetComponent<LightComponent>(id);
         if (light && light->GetType() == LIGHT_TYPE_INFINITE) {
             const auto& matrix = transform_component->GetWorldMatrix();
-            DrawCone(&matrix);
+            ImGuizmo::DrawCone(p_camera.GetProjectionViewMatrix(), matrix);
         }
     }
+
+    renderer::AddDebugCube(AABB(Vector3f(-1), Vector3f(+2)),
+                           Color(0.5f, 0.3f, 0.6f, 0.5f));
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION p_operation, CommandType p_type) {
         if (transform_component) {

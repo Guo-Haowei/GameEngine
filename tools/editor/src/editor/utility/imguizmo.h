@@ -104,9 +104,9 @@ IMGUI_API void SetOrthographic(bool isOrthographic);
 IMGUI_API void DrawCubes(const float* view, const float* projection, const float* matrices, int matrixCount);
 // @TODO: fix interfaces
 
-IMGUI_API void draw_grid(const glm::mat4& projection_view_matrix, const glm::mat4& matrix, const float gridSize);
-IMGUI_API void draw_box_wireframe(const glm::mat4& projection_view_matrix, const glm::mat4& matrix);
-IMGUI_API void draw_cone_wireframe(const glm::mat4& projection_view_matrix, const glm::mat4& matrix);
+IMGUI_API void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix, const float p_grid_size);
+IMGUI_API void DrawBox(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix);
+IMGUI_API void DrawCone(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix);
 
 // call it when you want a gizmo
 // Needs view and projection matrices.

@@ -2469,7 +2469,7 @@ void DrawCubes(const float* view, const float* projection, const float* matrices
     _freea(faces);
 }
 
-static bool clip_line(vec_t& a, vec_t& b, vec_t frustum[6]) {
+static bool ClipLine(vec_t& a, vec_t& b, vec_t frustum[6]) {
     for (int i = 0; i < 6; i++) {
         float dist_a = DistanceToPlane(a, frustum[i]);
         float dist_b = DistanceToPlane(b, frustum[i]);
@@ -2493,43 +2493,46 @@ static bool clip_line(vec_t& a, vec_t& b, vec_t frustum[6]) {
     return true;
 }
 
-void draw_grid(const glm::mat4& projection_view_matrix, const glm::mat4& matrix, const float gridSize) {
-    matrix_t viewProjection = *(matrix_t*)glm::value_ptr(projection_view_matrix);
+void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix, const float p_grid_size) {
+    matrix_t view_projection = *(matrix_t*)glm::value_ptr(p_projection_view_matrix);
 
     vec_t frustum[6];
-    ComputeFrustumPlanes(frustum, viewProjection.m16);
-    matrix_t res = viewProjection;
+    ComputeFrustumPlanes(frustum, view_projection.m16);
+    matrix_t res = view_projection;
 
-    for (float f = -gridSize; f <= gridSize; f += 1.f) {
+    for (float f = -p_grid_size; f <= p_grid_size; f += 1.f) {
         for (int dir = 0; dir < 2; dir++) {
-            glm::vec4 p0 = matrix * glm::vec4(dir ? -gridSize : f, 0.f, dir ? f : -gridSize, 0.0f);
-            glm::vec4 p1 = matrix * glm::vec4(dir ? gridSize : f, 0.f, dir ? f : gridSize, 0.0f);
-            vec_t ptA = makeVect(p0.x, p0.y, p0.z);
-            vec_t ptB = makeVect(p1.x, p1.y, p1.z);
+            glm::vec4 point_0 = p_matrix * glm::vec4(dir ? -p_grid_size : f, 0.f, dir ? f : -p_grid_size, 0.0f);
+            glm::vec4 point_1 = p_matrix * glm::vec4(dir ? p_grid_size : f, 0.f, dir ? f : p_grid_size, 0.0f);
+            vec_t point_a = makeVect(point_0.x, point_0.y, point_0.z);
+            vec_t point_b = makeVect(point_1.x, point_1.y, point_1.z);
 
-            if (clip_line(ptA, ptB, frustum)) {
-                ImU32 col = IM_COL32(0x80, 0x80, 0x80, 0xFF);
-                col = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? IM_COL32(0x90, 0x90, 0x90, 0xFF) : col;
-                col = (fabsf(f) < FLT_EPSILON) ? IM_COL32(0x40, 0x40, 0x40, 0xFF) : col;
-                if (f == 0.0f) {
-                    if (dir == 1) {
-                        col = IM_COL32(0x90, 0x30, 0x30, 0xFF);
-                    } else {
-                        col = IM_COL32(0x30, 0x30, 0x90, 0xFF);
-                    }
-                }
-
-                float thickness = 1.f;
-                thickness = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? 1.5f : thickness;
-                thickness = (fabsf(f) < FLT_EPSILON) ? 2.3f : thickness;
-
-                gContext.mDrawList->AddLine(worldToPos(ptA, res), worldToPos(ptB, res), col, thickness);
+            if (!ClipLine(point_a, point_b, frustum)) {
+                continue;
             }
+
+            ImU32 color = IM_COL32(0x80, 0x80, 0x80, 0xFF);
+            color = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? IM_COL32(0x90, 0x90, 0x90, 0xFF) : color;
+            color = (fabsf(f) < FLT_EPSILON) ? IM_COL32(0x40, 0x40, 0x40, 0xFF) : color;
+            if (f == 0.0f) {
+                if (dir == 1) {
+                    color = IM_COL32(0x90, 0x30, 0x30, 0xFF);
+                } else {
+                    color = IM_COL32(0x30, 0x30, 0x90, 0xFF);
+                }
+            }
+
+            float thickness = 1.f;
+            thickness = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? 1.5f : thickness;
+            thickness = (fabsf(f) < FLT_EPSILON) ? 2.3f : thickness;
+
+            gContext.mDrawList->AddLine(worldToPos(point_a, res), worldToPos(point_b, res), color, thickness);
         }
     }
 }
 
-void draw_cone_wireframe(const glm::mat4& projection_view_matrix, const glm::mat4& matrix) {
+// @TODO: cone angle
+void DrawCone(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix) {
     // clang-format off
     enum { A = 0, B = 1, C = 2, D = 3, E = 4 };
     // clang-format on
@@ -2544,18 +2547,18 @@ void draw_cone_wireframe(const glm::mat4& projection_view_matrix, const glm::mat
     };
 
     constexpr std::array<uint32_t, 16> indices = { A, B, B, C, C, D, D, A, E, A, E, B, E, C, E, D };
-    matrix_t viewProjection = *(matrix_t*)(glm::value_ptr(projection_view_matrix));
+    matrix_t viewProjection = *(matrix_t*)(glm::value_ptr(p_projection_view_matrix));
     vec_t frustum[6];
     ComputeFrustumPlanes(frustum, viewProjection.m16);
 
     matrix_t res = viewProjection;
     for (size_t index = 0; index < indices.size(); index += 2) {
-        glm::vec4 p0 = matrix * points[indices[index]];
-        glm::vec4 p1 = matrix * points[indices[index + 1]];
+        glm::vec4 p0 = p_matrix * points[indices[index]];
+        glm::vec4 p1 = p_matrix * points[indices[index + 1]];
         vec_t ptA = makeVect(p0.x, p0.y, p0.z);
         vec_t ptB = makeVect(p1.x, p1.y, p1.z);
 
-        if (clip_line(ptA, ptB, frustum)) {
+        if (ClipLine(ptA, ptB, frustum)) {
             ImU32 col = IM_COL32(0xFF, 0xFF, 0xFF, 0xFF);
             float thickness = 2.f;
             gContext.mDrawList->AddLine(worldToPos(ptA, res), worldToPos(ptB, res), col, thickness);
@@ -2563,7 +2566,7 @@ void draw_cone_wireframe(const glm::mat4& projection_view_matrix, const glm::mat
     }
 }
 
-void draw_box_wireframe(const glm::mat4& projection_view_matrix, const glm::mat4& matrix) {
+void DrawBox(const glm::mat4& projection_view_matrix, const glm::mat4& p_matrix) {
     // clang-format off
     enum { A = 0, B = 1, C = 2, D = 3, E = 4, F = 5, G = 6, H = 7 };
     // clang-format on
@@ -2589,12 +2592,12 @@ void draw_box_wireframe(const glm::mat4& projection_view_matrix, const glm::mat4
     matrix_t res = viewProjection;
 
     for (size_t index = 0; index < indices.size(); index += 2) {
-        glm::vec4 p0 = matrix * points[indices[index]];
-        glm::vec4 p1 = matrix * points[indices[index + 1]];
+        glm::vec4 p0 = p_matrix * points[indices[index]];
+        glm::vec4 p1 = p_matrix * points[indices[index + 1]];
         vec_t ptA = makeVect(p0.x, p0.y, p0.z);
         vec_t ptB = makeVect(p1.x, p1.y, p1.z);
 
-        if (clip_line(ptA, ptB, frustum)) {
+        if (ClipLine(ptA, ptB, frustum)) {
             ImU32 col = IM_COL32(0xFF, 0xFF, 0xFF, 0xFF);
             float thickness = 3.f;
             gContext.mDrawList->AddLine(worldToPos(ptA, res), worldToPos(ptB, res), col, thickness);

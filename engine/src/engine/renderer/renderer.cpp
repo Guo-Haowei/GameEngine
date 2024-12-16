@@ -2,6 +2,7 @@
 
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
+#include "engine/core/math/geometry.h"
 #include "engine/renderer/draw_data.h"
 
 #define DEFINE_DVAR
@@ -42,11 +43,13 @@ void BeginFrame() {
     s_glob.state = RenderState::RECORDING;
 }
 
-static void BakeLineSegments() {
+static void PrepareDebugDraws() {
+    auto& context = s_glob.renderData->debugDrawContext;
+    context.drawCount = (uint32_t)context.positions.size();
 }
 
 void EndFrame() {
-    BakeLineSegments();
+    PrepareDebugDraws();
 
     s_glob.state = RenderState::SUBMITTING;
 }
@@ -60,6 +63,8 @@ void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
 }
 
 void RequestBakingIbl() {
+    ASSERT_CAN_RECORD();
+
     if (DEV_VERIFY(s_glob.renderData)) {
         s_glob.renderData->bakeIbl = true;
     }
@@ -69,33 +74,27 @@ const DrawData* GetRenderData() {
     return s_glob.renderData;
 }
 
-void AddLine(const Vector3f& p_a,
-             const Vector3f& p_b,
-             const Color& p_color,
-             float p_thickness) {
+void AddDebugCube(const AABB& p_aabb,
+                  const Color& p_color,
+                  const Matrix4x4f* p_transform) {
     ASSERT_CAN_RECORD();
 
-    if (DEV_VERIFY(s_glob.renderData)) {
-        s_glob.renderData->lineContext.lines.push_back({ p_a, p_b, p_thickness, p_color });
-    }
-}
+    const Vector3f& min = p_aabb.GetMin();
+    const Vector3f& max = p_aabb.GetMax();
 
-void AddLineList(const std::vector<Vector3f>& p_points,
-                 const Color& p_color,
-                 const Matrix4x4f* p_transform,
-                 float p_thickness) {
-    ASSERT_CAN_RECORD();
+    std::vector<Vector3f> positions;
+    std::vector<uint32_t> indices;
+    BoxWireFrameHelper(min, max, positions, indices);
 
-    if (DEV_VERIFY(s_glob.renderData)) {
-        for (size_t i = 0; i < p_points.size(); i += 2) {
-            Vector4f a(p_points[i], 1.0f);
-            Vector4f b(p_points[i + 1], 1.0f);
-            if (p_transform) {
-                a = *p_transform * a;
-                b = *p_transform * b;
-            }
-            s_glob.renderData->lineContext.lines.push_back({ a, b, p_thickness, p_color });
+    auto& context = s_glob.renderData->debugDrawContext;
+    for (const auto& i : indices) {
+        const Vector3f& pos = positions[i];
+        if (p_transform) {
+            context.positions.emplace_back(Vector3f(*p_transform * Vector4f(pos, 1.0f)));
+        } else {
+            context.positions.emplace_back(Vector3f(pos));
         }
+        context.colors.emplace_back(p_color);
     }
 }
 
