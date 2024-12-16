@@ -26,17 +26,6 @@ using namespace my;
 using my::renderer::RenderGraph;
 using my::renderer::RenderPass;
 
-template<typename T>
-static void BufferStorage(GLuint p_buffer, const std::vector<T>& p_data, bool p_is_dynamic) {
-    glNamedBufferStorage(p_buffer, sizeof(T) * p_data.size(), p_data.data(), p_is_dynamic ? GL_DYNAMIC_STORAGE_BIT : 0);
-}
-
-static inline void BindToSlot(GLuint buffer, int slot, int size) {
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glVertexAttribPointer(slot, size, GL_FLOAT, GL_FALSE, size * sizeof(float), 0);
-    glEnableVertexAttribArray(slot);
-}
-
 static unsigned int LoadMTexture(const float* matrixTable) {
     unsigned int texture = 0;
     glGenTextures(1, &texture);

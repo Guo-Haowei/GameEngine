@@ -133,8 +133,6 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
 
     bool show_editor = DVAR_GET_BOOL(show_editor);
     if (show_editor) {
-        Matrix4x4f identity(1);
-        // draw grid
         DrawGrid(10.0f);
     }
 
