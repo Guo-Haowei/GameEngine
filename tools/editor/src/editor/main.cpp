@@ -17,7 +17,7 @@ enum {
     CREATE_PHYSICS_SCENE = 2,
     CREATE_PBR_SCENE = 3,
 
-    DEFAULT_SCENE = 2,
+    DEFAULT_SCENE = 1,
 };
 
 class Editor : public Application {

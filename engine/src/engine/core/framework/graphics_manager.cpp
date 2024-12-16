@@ -248,7 +248,7 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
     };
 
     std::array<GpuBufferDesc, 6> vb_descs;
-    
+
     const bool is_dynamic = p_mesh.flags & MeshComponent::DYNAMIC;
 
     GpuMeshDesc desc;

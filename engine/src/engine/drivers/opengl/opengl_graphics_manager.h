@@ -40,7 +40,6 @@ public:
                         const GpuBufferDesc* p_vb_descs,
                         const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> final;
 
-
     void SetMesh(const GpuMesh* p_mesh) final;
 
     LineBuffers* CreateLine(const std::vector<Point>& p_points) final;
