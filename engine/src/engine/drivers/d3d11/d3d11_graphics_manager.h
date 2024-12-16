@@ -8,8 +8,12 @@
 namespace my {
 
 struct D3d11MeshBuffers : public GpuMesh {
-    Microsoft::WRL::ComPtr<ID3D11Buffer> vertex_buffer[6]{};
-    Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer;
+};
+
+struct D3d11Buffer : public GpuBuffer {
+    using GpuBuffer::GpuBuffer;
+
+    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
 };
 
 class D3d11GraphicsManager : public GraphicsManager {
@@ -26,6 +30,8 @@ public:
 
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
+
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> std::shared_ptr<GpuBuffer>;
 
     const GpuMesh* CreateMesh(const MeshComponent& p_mesh) final;
     void SetMesh(const GpuMesh* p_mesh) final;

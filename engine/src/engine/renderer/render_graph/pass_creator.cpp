@@ -467,10 +467,12 @@ static void LightingPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass
     DrawBatchesGeometry(p_data, pass.transparent);
 
     // draw debug data
-    gm.SetPipelineState(PSO_DEBUG_DRAW);
-    gm.UpdateLine(gm.m_lines, p_data.points3D);
-    gm.SetLine(gm.m_lines);
-    gm.DrawArrays((uint32_t)p_data.points3D.size());
+    if (gm.m_lines) {
+        gm.SetPipelineState(PSO_DEBUG_DRAW);
+        gm.UpdateLine(gm.m_lines, p_data.points3D);
+        gm.SetLine(gm.m_lines);
+        gm.DrawArrays((uint32_t)p_data.points3D.size());
+    }
 }
 
 void RenderPassCreator::AddLightingPass() {

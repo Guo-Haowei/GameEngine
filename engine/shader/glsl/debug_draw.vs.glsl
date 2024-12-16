@@ -1,4 +1,4 @@
-/// File: gui.vs.glsl
+/// File: debug_draw.vs.glsl
 #include "../cbuffer.hlsl.h"
 
 layout(location = 0) in vec3 in_position;

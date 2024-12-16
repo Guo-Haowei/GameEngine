@@ -138,7 +138,8 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 
     std::vector<Point> points;
     points.resize(4096);
-    m_lines = CreateLine(points);
+
+    //m_lines = CreateLine(points);
 
     m_initialized = true;
     return Result<void>();
