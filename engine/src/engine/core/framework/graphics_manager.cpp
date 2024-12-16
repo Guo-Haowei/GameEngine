@@ -16,6 +16,7 @@
 #include "engine/renderer/render_graph/pass_creator.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer.h"
+#include "engine/renderer/renderer_misc.h"
 #include "engine/scene/scene.h"
 #include "shader_resource_defines.hlsl.h"
 
@@ -131,14 +132,27 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 #undef SRV
 
     // create meshes
-    m_screenQuadBuffers = CreateMesh(MakePlaneMesh(Vector3f(1)));
-    m_skyboxBuffers = CreateMesh(MakeSkyBoxMesh());
+    m_screenQuadBuffers = *CreateMesh(MakePlaneMesh(Vector3f(1)));
+    m_skyboxBuffers = *CreateMesh(MakeSkyBoxMesh());
+    m_boxBuffers = *CreateMesh(MakeBoxMesh());
 
     m_brdfImage = m_app->GetAssetRegistry()->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
 
-    std::vector<Point> points;
-    points.resize(4096);
-    m_lines = CreateLine(points);
+    // @TODO: refactor
+    {
+        constexpr int max_count = 4096 * 16;
+        MeshComponent mesh;
+        mesh.flags |= MeshComponent::DYNAMIC;
+        mesh.positions.resize(max_count);
+        mesh.color_0.resize(max_count);
+        mesh.CreateRenderData();
+
+        auto res = CreateMesh(mesh);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        m_lineBuffers = *res;
+    }
 
     m_initialized = true;
     return Result<void>();
@@ -219,33 +233,79 @@ void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
 }
 
-void GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    unused(p_mesh);
-    unused(p_positions);
-    unused(p_normals);
-    CRASH_NOW();
-}
-
-LineBuffers* GraphicsManager::CreateLine(const std::vector<Point>& p_points) {
-    unused(p_points);
-    CRASH_NOW();
-    return nullptr;
-}
-
-void GraphicsManager::SetLine(const LineBuffers* p_buffer) {
+void GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+    unused(p_desc);
     unused(p_buffer);
-}
-
-void GraphicsManager::UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) {
-    unused(p_buffer);
-    unused(p_points);
     CRASH_NOW();
 }
 
-void GraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
-    unused(p_count);
-    unused(p_offset);
-    CRASH_NOW();
+auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>> {
+    constexpr uint32_t count = std::to_underlying(VertexAttributeName::COUNT);
+    std::array<VertexAttributeName, count> attribs = {
+        VertexAttributeName::POSITION,
+        VertexAttributeName::NORMAL,
+        VertexAttributeName::TEXCOORD_0,
+        VertexAttributeName::TANGENT,
+        VertexAttributeName::JOINTS_0,
+        VertexAttributeName::WEIGHTS_0,
+        VertexAttributeName::COLOR_0,
+        VertexAttributeName::TEXCOORD_1,
+    };
+
+    std::array<const void*, count> data = {
+        p_mesh.positions.data(),
+        p_mesh.normals.data(),
+        p_mesh.texcoords_0.data(),
+        p_mesh.tangents.data(),
+        p_mesh.joints_0.data(),
+        p_mesh.weights_0.data(),
+        p_mesh.color_0.data(),
+        p_mesh.texcoords_1.data(),
+    };
+
+    std::array<GpuBufferDesc, count> vb_descs;
+
+    const bool is_dynamic = p_mesh.flags & MeshComponent::DYNAMIC;
+
+    GpuMeshDesc desc;
+    desc.enabledVertexCount = count;
+    desc.drawCount = static_cast<uint32_t>(p_mesh.indices.empty() ? p_mesh.positions.size() : p_mesh.indices.size());
+
+    for (int index = 0; index < attribs.size(); ++index) {
+        const auto& in = p_mesh.attributes[std::to_underlying(attribs[index])];
+        auto& layout = desc.vertexLayout[index];
+        layout.slot = index;
+        layout.offsetInByte = in.offsetInByte;
+        layout.strideInByte = in.strideInByte;
+
+        auto& buffer_desc = vb_descs[index];
+        buffer_desc.slot = index;
+        buffer_desc.type = GpuBufferType::VERTEX;
+        buffer_desc.elementCount = in.elementCount;
+        buffer_desc.elementSize = in.strideInByte;
+        buffer_desc.initialData = data[index];
+        buffer_desc.dynamic = is_dynamic;
+    }
+
+    GpuBufferDesc ib_desc;
+    GpuBufferDesc* ib_desc_ptr = nullptr;
+    if (!p_mesh.indices.empty()) {
+        ib_desc = GpuBufferDesc{
+            .type = GpuBufferType::INDEX,
+            .elementSize = sizeof(uint32_t),
+            .elementCount = (uint32_t)p_mesh.indices.size(),
+            .initialData = p_mesh.indices.data(),
+        };
+        ib_desc_ptr = &ib_desc;
+    }
+
+    auto ret = CreateMeshImpl(desc, count, vb_descs.data(), ib_desc_ptr);
+    if (!ret) {
+        return HBN_ERROR(ret.error());
+    }
+
+    p_mesh.gpuResource = *ret;
+    return ret;
 }
 
 // @TODO: refactor this
@@ -310,7 +370,9 @@ void GraphicsManager::Update(Scene& p_scene) {
         auto data = renderer::GetRenderData();
 
         for (const auto& update_buffer : data->updateBuffer) {
-            UpdateMesh((MeshBuffers*)update_buffer.id, update_buffer.positions, update_buffer.normals);
+            GpuMesh* mesh = (GpuMesh*)update_buffer.id;
+            UpdateBuffer(renderer::CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
+            UpdateBuffer(renderer::CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
         }
 
         // @TODO: remove this
@@ -628,18 +690,18 @@ void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
 }
 
 void GraphicsManager::DrawQuad() {
-    SetMesh(m_screenQuadBuffers);
-    DrawElements(m_screenQuadBuffers->indexCount);
+    SetMesh(m_screenQuadBuffers.get());
+    DrawElements(m_screenQuadBuffers->desc.drawCount);
 }
 
 void GraphicsManager::DrawQuadInstanced(uint32_t p_instance_count) {
-    SetMesh(m_screenQuadBuffers);
-    DrawElementsInstanced(p_instance_count, m_screenQuadBuffers->indexCount, 0);
+    SetMesh(m_screenQuadBuffers.get());
+    DrawElementsInstanced(p_instance_count, m_screenQuadBuffers->desc.drawCount, 0);
 }
 
 void GraphicsManager::DrawSkybox() {
-    SetMesh(m_skyboxBuffers);
-    DrawElements(m_skyboxBuffers->indexCount);
+    SetMesh(m_skyboxBuffers.get());
+    DrawElements(m_skyboxBuffers->desc.drawCount);
 }
 
 void GraphicsManager::OnSceneChange(const Scene& p_scene) {

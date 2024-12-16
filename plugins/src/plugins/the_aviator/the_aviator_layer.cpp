@@ -111,7 +111,7 @@ ecs::Entity TheAviatorLayer::CreateRockResource() {
     ecs::Entity mesh_id = m_scene->CreateMeshEntity("rock_mesh");
     MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(mesh_id);
     *mesh = MakeSphereMesh(ROCK_SIZE, 6, 6);
-    mesh->gpuResource = GraphicsManager::GetSingleton().CreateMesh(*mesh);
+    mesh->gpuResource = *GraphicsManager::GetSingleton().CreateMesh(*mesh);
     DEV_ASSERT(!mesh->subsets.empty());
 
     ecs::Entity material_id = m_scene->CreateMaterialEntity("rock_material");
@@ -126,7 +126,7 @@ ecs::Entity TheAviatorLayer::CreateBatteryResource() {
     ecs::Entity mesh_id = m_scene->CreateMeshEntity("battery_mesh");
     MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(mesh_id);
     *mesh = MakeTetrahedronMesh(BATTERY_SIZE);
-    mesh->gpuResource = GraphicsManager::GetSingleton().CreateMesh(*mesh);
+    mesh->gpuResource = *GraphicsManager::GetSingleton().CreateMesh(*mesh);
     DEV_ASSERT(!mesh->subsets.empty());
 
     ecs::Entity material_id = m_scene->CreateMaterialEntity("battery_material");

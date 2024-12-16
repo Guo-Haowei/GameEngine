@@ -73,7 +73,7 @@ enum RenderTargetResourceName : uint8_t {
     RENDER_TARGET_RESOURCE_NAME_LIST
 #undef RENDER_TARGET_RESOURCE_NAME
 
-        COUNT,
+        ATTRIB_MAX,
 
     RESOURCE_BLOOM_MIN = RESOURCE_BLOOM_0,
     RESOURCE_BLOOM_MAX = RESOURCE_BLOOM_6,
@@ -93,9 +93,9 @@ static inline const char* RenderPassNameToString(RenderPassName p_name) {
 }
 
 static inline const char* RenderTargetResourceNameToString(RenderTargetResourceName p_name) {
-    DEV_ASSERT_INDEX(p_name, RenderTargetResourceName::COUNT);
+    DEV_ASSERT_INDEX(p_name, RenderTargetResourceName::ATTRIB_MAX);
 
-    static const char* s_names[static_cast<int>(RenderTargetResourceName::COUNT)] = {
+    static const char* s_names[static_cast<int>(RenderTargetResourceName::ATTRIB_MAX)] = {
 #define RENDER_TARGET_RESOURCE_NAME(name) #name,
         RENDER_TARGET_RESOURCE_NAME_LIST
 #undef RENDER_TARGET_RESOURCE_NAME

@@ -28,10 +28,23 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) override {}
     void SetViewport(const Viewport& p_viewport) override {}
 
-    const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) override { return nullptr; }
-    void SetMesh(const MeshBuffers* p_mesh) override {}
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> override {
+        return nullptr;
+    }
+
+    auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                        uint32_t p_count,
+                        const GpuBufferDesc* p_vb_descs,
+                        const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> override {
+        return nullptr;
+    }
+
+    void SetMesh(const GpuMesh* p_mesh) override {}
+
     void DrawElements(uint32_t p_count, uint32_t p_offset) override {}
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) override {}
+    void DrawArrays(uint32_t p_count, uint32_t p_offset) override {}
+    void DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) override {}
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) override {}
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) override {}

@@ -40,8 +40,10 @@ Scene* CreatePhysicsTestScene() {
     }
     // add a light
     {
-        auto point_light = scene->CreatePointLightEntity("point_light", Vector3f(0, 5, 3));
-        scene->AttachChild(point_light, root);
+        auto id = scene->CreatePointLightEntity("point_light", Vector3f(0, 5, 3));
+        scene->AttachChild(id, root);
+        LightComponent* light = scene->GetComponent<LightComponent>(id);
+        light->SetCastShadow();
     }
 
     auto world = scene->CreateTransformEntity("world");

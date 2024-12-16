@@ -5,7 +5,7 @@
 #include "shader_resource_defines.hlsl.h"
 
 struct ps_output {
-    float3 base_color : SV_TARGET0;
+    float4 base_color : SV_TARGET0;
     float4 position : SV_TARGET1;
     float4 normal : SV_TARGET2;
     float4 out_emissive_roughness_metallic : SV_TARGET3;
@@ -47,7 +47,7 @@ ps_output main(vsoutput_mesh input) {
     }
 
     ps_output output;
-    output.base_color = color.rgb;
+    output.base_color = color;
     // output.base_color = 0.5f * N + 0.5f;
 
     output.position.xyz = input.world_position;

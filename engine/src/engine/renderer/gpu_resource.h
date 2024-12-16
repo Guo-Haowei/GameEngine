@@ -97,12 +97,35 @@ struct GpuTextureDesc {
     RenderTargetResourceName name;
 };
 
+enum class GpuBufferType : uint8_t {
+    UNKNOWN,
+    VERTEX,
+    INDEX,
+    CONSTANT,
+    STRUCTURED,
+};
+
 struct GpuBufferDesc {
+    GpuBufferType type{ GpuBufferType::UNKNOWN };
+    // @TODO: need better flags than this
+    bool dynamic{ false };
     uint32_t slot{ 0 };
     uint32_t elementSize{ 0 };
     uint32_t elementCount{ 0 };
     uint32_t offset{ 0 };
     const void* initialData{ nullptr };
+};
+
+// @TODO: generalize buffers
+struct GpuBuffer {
+    const GpuBufferDesc desc;
+
+    GpuBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
+
+    virtual ~GpuBuffer() = default;
+
+    virtual uint64_t GetHandle() const = 0;
+    uint32_t GetHandle32() const { return static_cast<uint32_t>(GetHandle()); }
 };
 
 struct GpuConstantBuffer {
@@ -121,25 +144,36 @@ struct GpuConstantBuffer {
 };
 
 struct GpuStructuredBuffer {
+    const GpuBufferDesc desc;
+
     GpuStructuredBuffer(const GpuBufferDesc& p_desc) : desc(p_desc) {}
 
     virtual ~GpuStructuredBuffer() = default;
-
-    const GpuBufferDesc desc;
 };
 
-struct MeshBuffers {
-    virtual ~MeshBuffers() = default;
+inline constexpr int MESH_MAX_VERTEX_BUFFER_COUNT = 8;
 
-    uint32_t indexCount = 0;
+struct GpuMeshDesc {
+    struct VertexLayout {
+        uint32_t slot{ 0 };
+        uint32_t strideInByte{ 0 };
+        uint32_t offsetInByte{ 0 };
+    };
+
+    uint32_t drawCount{ 0 };
+    uint32_t enabledVertexCount{ 0 };
+    VertexLayout vertexLayout[MESH_MAX_VERTEX_BUFFER_COUNT];
 };
 
-// @TODO: refactor Line and Mesh
-struct LineBuffers {
-    virtual ~LineBuffers() = default;
+struct GpuMesh {
+    const GpuMeshDesc desc;
+    std::shared_ptr<GpuBuffer> indexBuffer;
+    std::array<std::shared_ptr<GpuBuffer>, MESH_MAX_VERTEX_BUFFER_COUNT> vertexBuffers;
 
-    uint32_t capacity = 0;
-    uint32_t indexCount = 0;
+    GpuMesh() = default;
+    GpuMesh(const GpuMeshDesc& p_desc) : desc(p_desc) {}
+
+    virtual ~GpuMesh() = default;
 };
 
 struct GpuTexture {

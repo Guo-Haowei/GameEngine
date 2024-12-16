@@ -7,7 +7,19 @@ namespace my {
 
 class Archive;
 class Scene;
-struct MeshBuffers;
+struct GpuMesh;
+
+enum class VertexAttributeName : uint8_t {
+    POSITION = 0,
+    NORMAL,
+    TEXCOORD_0,
+    TEXCOORD_1,
+    TANGENT,
+    JOINTS_0,
+    WEIGHTS_0,
+    COLOR_0,
+    COUNT,
+};
 
 struct MeshComponent {
     enum : uint32_t {
@@ -18,23 +30,11 @@ struct MeshComponent {
     };
 
     struct VertexAttribute {
-        enum NAME {
-            POSITION = 0,
-            NORMAL,
-            TEXCOORD_0,
-            TEXCOORD_1,
-            TANGENT,
-            JOINTS_0,
-            WEIGHTS_0,
-            COLOR_0,
-            COUNT,
-        } name;
+        VertexAttributeName attribName;
+        uint32_t offsetInByte{ 0 };
+        uint32_t strideInByte{ 0 };
 
-        uint32_t offset_in_byte = 0;
-        uint32_t size_in_byte = 0;
-        uint32_t stride = 0;
-
-        bool IsValid() const { return size_in_byte != 0; }
+        uint32_t elementCount{ 0 };
     };
 
     uint32_t flags = RENDERABLE;
@@ -46,7 +46,7 @@ struct MeshComponent {
     std::vector<Vector2f> texcoords_1;
     std::vector<Vector4i> joints_0;
     std::vector<Vector4f> weights_0;
-    std::vector<Vector3f> color_0;
+    std::vector<Vector4f> color_0;
 
     struct MeshSubset {
         ecs::Entity material_id;
@@ -59,17 +59,15 @@ struct MeshComponent {
     ecs::Entity armatureId;
 
     // Non-serialized
-    mutable const MeshBuffers* gpuResource = nullptr;
+    mutable std::shared_ptr<GpuMesh> gpuResource;
     AABB localBound;
 
     mutable std::vector<Vector3f> updatePositions;
     mutable std::vector<Vector3f> updateNormals;
 
-    VertexAttribute attributes[VertexAttribute::COUNT];
-    size_t vertexBufferSize = 0;  // combine vertex buffer
+    VertexAttribute attributes[std::to_underlying(VertexAttributeName::COUNT)];
 
     void CreateRenderData();
-    std::vector<char> GenerateCombinedBuffer() const;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 };

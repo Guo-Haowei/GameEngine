@@ -6,8 +6,8 @@
 #include "engine/core/framework/imgui_manager.h"
 #include "engine/core/math/geometry.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
+#include "engine/drivers/opengl/opengl_helpers.h"
 #include "engine/drivers/opengl/opengl_pipeline_state_manager.h"
-#include "engine/drivers/opengl/opengl_prerequisites.h"
 #include "engine/drivers/opengl/opengl_resources.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
@@ -25,10 +25,6 @@
 using namespace my;
 using my::renderer::RenderGraph;
 using my::renderer::RenderPass;
-
-// @TODO: refactor
-OpenGlMeshBuffers* g_box;
-OpenGlMeshBuffers* g_grass;
 
 template<typename T>
 static void BufferStorage(GLuint p_buffer, const std::vector<T>& p_data, bool p_is_dynamic) {
@@ -204,6 +200,8 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
         SetBlendState(*blend_desc, nullptr, 0);
     }
 
+    m_stateCache.topology = gl::Convert(pipeline->desc.primitiveTopology);
+
     glUseProgram(pipeline->programId);
 }
 
@@ -244,150 +242,107 @@ void OpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
                p_viewport.height);
 }
 
-LineBuffers* OpenGlGraphicsManager::CreateLine(const std::vector<Point>& p_points) {
-    // @TODO: fix
-    OpenGlLineBuffers* buffers = new OpenGlLineBuffers;
-    glGenVertexArrays(1, &buffers->vao);
-    glGenBuffers(1, &buffers->vbo);
+auto OpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
+    auto type = gl::Convert(p_desc.type);
 
-    auto vao = buffers->vao;
-    auto vbo = buffers->vbo;
+    const bool is_dynamic = p_desc.dynamic;
 
+    GLuint handle = 0;
+    glGenBuffers(1, &handle);
+    glBindBuffer(type, handle);
+    glNamedBufferStorage(handle,
+                         p_desc.elementCount * p_desc.elementSize,
+                         p_desc.initialData,
+                         is_dynamic ? GL_DYNAMIC_STORAGE_BIT : 0);
+
+    auto buffer = std::make_shared<OpenGlBuffer>(p_desc);
+    buffer->handle = handle;
+    buffer->type = type;
+    return buffer;
+}
+
+auto OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                           uint32_t p_count,
+                                           const GpuBufferDesc* p_vb_descs,
+                                           const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
+    // create VAO
+    uint32_t vao;
+    glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
+    auto ret = std::make_shared<OpenGlMeshBuffers>(p_desc);
+    ret->vao = vao;
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)0);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Point), (GLvoid*)(3 * sizeof(GLfloat)));
+    // create EBO
+    if (p_ib_desc) {
+        auto res = CreateBuffer(*p_ib_desc);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        ret->indexBuffer = *res;
 
-    BufferStorage(vbo, p_points, true);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    buffers->capacity = (uint32_t)p_points.size();
-    return buffers;
-}
-
-void OpenGlGraphicsManager::SetLine(const LineBuffers* p_buffer) {
-    // HACK:
-    glLineWidth(4.0f);
-    auto buffer = reinterpret_cast<const OpenGlLineBuffers*>(p_buffer);
-    glBindVertexArray(buffer->vao);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-}
-
-void OpenGlGraphicsManager::UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) {
-    auto buffer = reinterpret_cast<OpenGlLineBuffers*>(p_buffer);
-    {
-        const uint32_t size_in_byte = sizeof(Point) * (uint32_t)p_points.size();
-        glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_points.data());
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        const uint32_t ebo = ret->indexBuffer->GetHandle32();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     }
+
+    for (uint32_t slot = 0; slot < p_count; ++slot) {
+        if (p_vb_descs[slot].elementCount == 0) {
+            continue;
+        }
+
+        auto res = CreateBuffer(p_vb_descs[slot]);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        ret->vertexBuffers[slot] = *res;
+
+        const uint32_t vbo = ret->vertexBuffers[slot]->GetHandle32();
+        const uint32_t stride_in_byte = ret->desc.vertexLayout[slot].strideInByte;
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glVertexAttribPointer(slot,
+                              stride_in_byte / sizeof(float),
+                              GL_FLOAT,
+                              GL_FALSE,
+                              stride_in_byte,
+                              0);
+        glEnableVertexAttribArray(slot);
+    }
+
+    glBindVertexArray(0);
+    return ret;
 }
 
-const MeshBuffers* OpenGlGraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
-    RID rid = m_meshes.make_rid();
-    OpenGlMeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-
-    p_mesh.gpuResource = mesh_buffers;
-
-    auto create_mesh_data = [](const MeshComponent& p_mesh, OpenGlMeshBuffers& p_out_mesh) {
-        const bool has_normals = !p_mesh.normals.empty();
-        const bool has_uvs = !p_mesh.texcoords_0.empty();
-        const bool has_tangents = !p_mesh.tangents.empty();
-        const bool has_joints = !p_mesh.joints_0.empty();
-        const bool has_weights = !p_mesh.weights_0.empty();
-
-        int vbo_count = 1 + has_normals + has_uvs + has_tangents + has_joints + has_weights;
-        DEV_ASSERT(vbo_count <= array_length(p_out_mesh.vbos));
-
-        glGenVertexArrays(1, &p_out_mesh.vao);
-
-        // @TODO: fix this hack
-        glGenBuffers(1, &p_out_mesh.ebo);
-        glGenBuffers(6, p_out_mesh.vbos);
-
-        int slot = -1;
-        glBindVertexArray(p_out_mesh.vao);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, p_out_mesh.ebo);
-
-        const bool is_dynamic = p_mesh.flags & MeshComponent::DYNAMIC;
-
-        slot = get_position_slot();
-        BindToSlot(p_out_mesh.vbos[slot], slot, 3);
-        BufferStorage(p_out_mesh.vbos[slot], p_mesh.positions, is_dynamic);
-
-        if (has_normals) {
-            slot = get_normal_slot();
-            BindToSlot(p_out_mesh.vbos[slot], slot, 3);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.normals, is_dynamic);
-        }
-        if (has_uvs) {
-            slot = get_uv_slot();
-            BindToSlot(p_out_mesh.vbos[slot], slot, 2);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.texcoords_0, false);
-        }
-        if (has_tangents) {
-            slot = get_tangent_slot();
-            BindToSlot(p_out_mesh.vbos[slot], slot, 3);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.tangents, false);
-        }
-        if (has_joints) {
-            slot = get_bone_id_slot();
-            BindToSlot(p_out_mesh.vbos[slot], slot, 4);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.joints_0, false);
-            DEV_ASSERT(!p_mesh.weights_0.empty());
-            slot = get_bone_weight_slot();
-            BindToSlot(p_out_mesh.vbos[slot], slot, 4);
-            BufferStorage(p_out_mesh.vbos[slot], p_mesh.weights_0, false);
-        }
-
-        BufferStorage(p_out_mesh.ebo, p_mesh.indices, false);
-        p_out_mesh.indexCount = static_cast<uint32_t>(p_mesh.indices.size());
-
-        glBindVertexArray(0);
-    };
-
-    create_mesh_data(p_mesh, *mesh_buffers);
-    return mesh_buffers;
-}
-
-void OpenGlGraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
+void OpenGlGraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const OpenGlMeshBuffers*>(p_mesh);
+    DEV_ASSERT(mesh && mesh->vao);
     glBindVertexArray(mesh->vao);
 }
 
-void OpenGlGraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    if (auto mesh = dynamic_cast<OpenGlMeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
-        {
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
-            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[0]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_positions.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
-        if constexpr (1) {
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_normals.size();
-            glBindBuffer(GL_ARRAY_BUFFER, mesh->vbos[1]);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_normals.data());
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-        }
-    }
+void OpenGlGraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+    const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
+    const uint32_t vbo = p_buffer->GetHandle32();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_desc.initialData);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void OpenGlGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
-    glDrawElements(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
+    glDrawElements(m_stateCache.topology, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
 void OpenGlGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
-    glDrawElementsInstanced(GL_TRIANGLES, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)), p_instance_count);
+    glDrawElementsInstanced(m_stateCache.topology, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)), p_instance_count);
 }
 
 void OpenGlGraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
-    glDrawArrays(GL_LINES, p_offset, p_count);
+    // @TODO: get rid of this hack
+    glLineWidth(4.0f);
+    glDrawArrays(m_stateCache.topology, p_offset, p_count);
+}
+
+void OpenGlGraphicsManager::DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    glDrawArraysInstanced(m_stateCache.topology, p_offset, p_count, p_instance_count);
 }
 
 void OpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
@@ -732,9 +687,6 @@ void OpenGlGraphicsManager::UnsetRenderTarget() {
 
 void OpenGlGraphicsManager::CreateGpuResources() {
     // @TODO: move to renderer
-    g_grass = (OpenGlMeshBuffers*)CreateMesh(MakeGrassBillboard());
-    g_box = (OpenGlMeshBuffers*)CreateMesh(MakeBoxMesh());
-
     auto& cache = g_constantCache.cache;
     // @TODO: refactor!
     unsigned int m1 = LoadMTexture(LTC1);

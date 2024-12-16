@@ -5,15 +5,27 @@
 
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/render_graph/draw_pass.h"
+#include "opengl_helpers_forward.h"
 
 namespace my {
+
+struct OpenGlBuffer : GpuBuffer {
+    using GpuBuffer::GpuBuffer;
+
+    gl::BUFFER_TYPE type;
+    uint32_t handle{ 0 };
+
+    ~OpenGlBuffer() { Clear(); }
+
+    void Clear();
+
+    uint64_t GetHandle() const final { return handle; }
+};
 
 struct OpenGlGpuTexture : public GpuTexture {
     using GpuTexture::GpuTexture;
 
-    ~OpenGlGpuTexture() {
-        Clear();
-    }
+    ~OpenGlGpuTexture() { Clear(); }
 
     void Clear();
 
@@ -26,9 +38,7 @@ struct OpenGlGpuTexture : public GpuTexture {
 };
 
 struct OpenGlDrawPass : public DrawPass {
-    ~OpenGlDrawPass() {
-        Clear();
-    }
+    ~OpenGlDrawPass() { Clear(); }
 
     void Clear();
 
@@ -38,9 +48,7 @@ struct OpenGlDrawPass : public DrawPass {
 struct OpenGlUniformBuffer : public GpuConstantBuffer {
     using GpuConstantBuffer::GpuConstantBuffer;
 
-    ~OpenGlUniformBuffer() {
-        Clear();
-    }
+    ~OpenGlUniformBuffer() { Clear(); }
 
     void Clear();
 
@@ -50,9 +58,7 @@ struct OpenGlUniformBuffer : public GpuConstantBuffer {
 struct OpenGlStructuredBuffer : public GpuStructuredBuffer {
     using GpuStructuredBuffer::GpuStructuredBuffer;
 
-    ~OpenGlStructuredBuffer() {
-        Clear();
-    }
+    ~OpenGlStructuredBuffer() { Clear(); }
 
     void Clear();
 

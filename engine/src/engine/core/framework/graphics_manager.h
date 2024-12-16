@@ -87,18 +87,22 @@ public:
     virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
-    virtual const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) = 0;
-    virtual void SetMesh(const MeshBuffers* p_mesh) = 0;
-    virtual void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals);
+    virtual auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> = 0;
+    virtual void UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer);
 
-    virtual LineBuffers* CreateLine(const std::vector<Point>& p_points);
-    virtual void SetLine(const LineBuffers* p_buffer);
-    virtual void UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points);
+    auto CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>>;
+
+    virtual auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                uint32_t p_count,
+                                const GpuBufferDesc* p_vb_descs,
+                                const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> = 0;
+
+    virtual void SetMesh(const GpuMesh* p_mesh) = 0;
 
     virtual void DrawElements(uint32_t p_count, uint32_t p_offset = 0) = 0;
     virtual void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
-
-    virtual void DrawArrays(uint32_t p_count, uint32_t p_offset = 0);
+    virtual void DrawArrays(uint32_t p_count, uint32_t p_offset = 0) = 0;
+    virtual void DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset = 0) = 0;
 
     virtual void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) = 0;
     virtual void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) = 0;
@@ -195,20 +199,20 @@ protected:
     int m_frameIndex{ 0 };
     const int m_frameCount;
 
-    const MeshBuffers* m_screenQuadBuffers;
-    const MeshBuffers* m_skyboxBuffers;
+    std::shared_ptr<GpuMesh> m_screenQuadBuffers;
+    std::shared_ptr<GpuMesh> m_skyboxBuffers;
 
 public:
     // @TODO: make private
+    std::shared_ptr<GpuMesh> m_boxBuffers;
+    std::shared_ptr<GpuMesh> m_lineBuffers;
+
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerMaterialBuffer;
     bool m_bufferUpdated = false;
 
     const ImageAsset* m_brdfImage{ nullptr };
-
-    // @TODO: refactor
-    LineBuffers* m_lines{ nullptr };
 
 protected:
     void UpdateEmitters(const Scene& p_scene);

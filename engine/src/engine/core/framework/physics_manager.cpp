@@ -452,7 +452,7 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
 
                 mesh.CreateRenderData();
                 mesh.flags |= MeshComponent::DYNAMIC | MeshComponent::DOUBLE_SIDED;
-                mesh.gpuResource = GraphicsManager::GetSingleton().CreateMesh(mesh);
+                mesh.gpuResource = *GraphicsManager::GetSingleton().CreateMesh(mesh);
             }
 
             context.dynamicWorld->addSoftBody(cloth);

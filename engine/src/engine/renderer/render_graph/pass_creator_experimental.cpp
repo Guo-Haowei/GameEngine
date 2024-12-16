@@ -34,10 +34,10 @@ void debug_vxgi_pass_func(const DrawData& p_data, const DrawPass* p_draw_pass) {
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    glBindVertexArray(g_box->vao);
+    gm.SetMesh(gm.m_boxBuffers.get());
+    const uint32_t size = DVAR_GET_INT(gfx_voxel_size);
+    gm.DrawElementsInstanced(size * size * size, gm.m_boxBuffers->desc.drawCount);
 
-    const int size = DVAR_GET_INT(gfx_voxel_size);
-    glDrawElementsInstanced(GL_TRIANGLES, g_box->indexCount, GL_UNSIGNED_INT, 0, size * size * size);
     glDisable(GL_BLEND);
 }
 

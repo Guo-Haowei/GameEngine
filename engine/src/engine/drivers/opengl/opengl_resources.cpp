@@ -1,8 +1,15 @@
 #include "opengl_resources.h"
 
-#include "opengl_prerequisites.h"
+#include "opengl_helpers.h"
 
 namespace my {
+
+void OpenGlBuffer::Clear() {
+    if (handle) {
+        glDeleteBuffers(1, &handle);
+        handle = 0;
+    }
+}
 
 void OpenGlGpuTexture::Clear() {
     if (handle) {
@@ -11,6 +18,7 @@ void OpenGlGpuTexture::Clear() {
         residentHandle = 0;
     }
 }
+
 void OpenGlDrawPass::Clear() {
     if (handle) {
         glDeleteFramebuffers(1, &handle);

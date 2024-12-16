@@ -15,19 +15,13 @@ static const InputLayoutDesc s_inputLayoutMesh = {
         { "TANGENT", 0, PixelFormat::R32G32B32_FLOAT, 3, 0, InputClassification::PER_VERTEX_DATA, 0 },
         { "BONEINDEX", 0, PixelFormat::R32G32B32A32_SINT, 4, 0, InputClassification::PER_VERTEX_DATA, 0 },
         { "BONEWEIGHT", 0, PixelFormat::R32G32B32A32_FLOAT, 5, 0, InputClassification::PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, PixelFormat::R32G32B32A32_FLOAT, 6, 0, InputClassification::PER_VERTEX_DATA, 0 },
     }
 };
 
 static const InputLayoutDesc s_inputLayoutPosition = {
     .elements = {
         { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
-    }
-};
-
-static const InputLayoutDesc s_inputLayoutPositionColor = {
-    .elements = {
-        { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, PixelFormat::R32G32B32A32_FLOAT, 1, 0, InputClassification::PER_VERTEX_DATA, 0 },
     }
 };
 
@@ -188,9 +182,10 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                {
                    .vs = "debug_draw.vs",
                    .ps = "debug_draw.ps",
+                   .primitiveTopology = PrimitiveTopology::LINE,
                    .rasterizerDesc = &s_rasterizerFrontFace,
                    .depthStencilDesc = &s_depthStencilDefault,
-                   .inputLayoutDesc = &s_inputLayoutPositionColor,
+                   .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
                    .rtvFormats = { RESOURCE_FORMAT_TONE },

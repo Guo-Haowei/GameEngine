@@ -39,20 +39,6 @@
 
 namespace my::d3d {
 
-using D3D_INPUT_CLASSIFICATION = D3D_(INPUT_CLASSIFICATION);
-using D3D_FILL_MODE = D3D_(FILL_MODE);
-using D3D_CULL_MODE = D3D_(CULL_MODE);
-using D3D_DEPTH_WRITE_MASK = D3D_(DEPTH_WRITE_MASK);
-using D3D_COMPARISON_FUNC = D3D_(COMPARISON_FUNC);
-using D3D_FILTER = D3D_(FILTER);
-using D3D_TEXTURE_ADDRESS_MODE = D3D_(TEXTURE_ADDRESS_MODE);
-using D3D_STENCIL_OP = D3D_(STENCIL_OP);
-using D3D_DEPTH_STENCILOP_DESC = D3D_(DEPTH_STENCILOP_DESC);
-using D3D_BLEND_DESC = D3D_(BLEND_DESC);
-using D3D_DEPTH_STENCIL_DESC = D3D_(DEPTH_STENCIL_DESC);
-using D3D_BLEND = D3D_(BLEND);
-using D3D_BLEND_OP = D3D_(BLEND_OP);
-
 static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     switch (p_format) {
         // @TODO: use macro
@@ -108,7 +94,7 @@ static inline DXGI_FORMAT Convert(PixelFormat p_format) {
     }
 }
 
-static inline D3D_INPUT_CLASSIFICATION Convert(InputClassification p_input_classification) {
+static inline D3D_(INPUT_CLASSIFICATION) Convert(InputClassification p_input_classification) {
     switch (p_input_classification) {
         case InputClassification::PER_VERTEX_DATA:
             return D3D_INPUT_CLASSIFICATION_(PER_VERTEX_DATA);
@@ -118,7 +104,7 @@ static inline D3D_INPUT_CLASSIFICATION Convert(InputClassification p_input_class
     return D3D_INPUT_CLASSIFICATION_(PER_VERTEX_DATA);
 }
 
-static inline D3D_FILL_MODE Convert(FillMode p_fill_mode) {
+static inline D3D_(FILL_MODE) Convert(FillMode p_fill_mode) {
     switch (p_fill_mode) {
         case FillMode::SOLID:
             return D3D_FILL_MODE_(SOLID);
@@ -128,7 +114,7 @@ static inline D3D_FILL_MODE Convert(FillMode p_fill_mode) {
     return D3D_FILL_MODE_(SOLID);
 }
 
-static inline D3D_CULL_MODE Convert(CullMode p_cull_mode) {
+static inline D3D_(CULL_MODE) Convert(CullMode p_cull_mode) {
     switch (p_cull_mode) {
         case CullMode::NONE:
             return D3D_CULL_MODE_(NONE);
@@ -140,7 +126,7 @@ static inline D3D_CULL_MODE Convert(CullMode p_cull_mode) {
     return D3D_CULL_MODE_(NONE);
 }
 
-static inline D3D_COMPARISON_FUNC Convert(ComparisonFunc p_func) {
+static inline D3D_(COMPARISON_FUNC) Convert(ComparisonFunc p_func) {
     switch (p_func) {
 #define COMPARISON_FUNC_ENUM(ENUM, VALUE) \
     case ComparisonFunc::ENUM:            \
@@ -153,7 +139,7 @@ static inline D3D_COMPARISON_FUNC Convert(ComparisonFunc p_func) {
     }
 }
 
-static inline D3D_TEXTURE_ADDRESS_MODE Convert(AddressMode p_mode) {
+static inline D3D_(TEXTURE_ADDRESS_MODE) Convert(AddressMode p_mode) {
     switch (p_mode) {
         case AddressMode::WRAP:
             return D3D_TEXTURE_ADDRESS_MODE_(WRAP);
@@ -167,7 +153,7 @@ static inline D3D_TEXTURE_ADDRESS_MODE Convert(AddressMode p_mode) {
     }
 }
 
-static inline D3D_BLEND Convert(Blend p_blend) {
+static inline D3D_(BLEND) Convert(Blend p_blend) {
     switch (p_blend) {
         case Blend::BLEND_ZERO:
             return D3D_BLEND_(ZERO);
@@ -183,7 +169,7 @@ static inline D3D_BLEND Convert(Blend p_blend) {
     }
 }
 
-static inline D3D_BLEND_OP Convert(BlendOp p_blend_op) {
+static inline D3D_(BLEND_OP) Convert(BlendOp p_blend_op) {
     switch (p_blend_op) {
         case BlendOp::BLEND_OP_ADD:
             return D3D_BLEND_(OP_ADD);
@@ -195,7 +181,7 @@ static inline D3D_BLEND_OP Convert(BlendOp p_blend_op) {
     }
 }
 
-static inline D3D_STENCIL_OP Convert(StencilOp p_op) {
+static inline D3D_(STENCIL_OP) Convert(StencilOp p_op) {
     switch (p_op) {
 #define STENCIL_OP_ENUM(ENUM, VALUE) \
     case StencilOp::ENUM:            \
@@ -208,8 +194,8 @@ static inline D3D_STENCIL_OP Convert(StencilOp p_op) {
     }
 }
 
-static inline D3D_FILTER Convert(FilterMode p_min_filter, FilterMode p_mag_filter) {
-    // @TODO: refactor this
+// @TODO: refactor this
+static inline D3D_(FILTER) Convert(FilterMode p_min_filter, FilterMode p_mag_filter) {
     if (p_min_filter == FilterMode::MIPMAP_LINEAR && p_mag_filter == FilterMode::MIPMAP_LINEAR) {
         return D3D_FILTER_(MIN_MAG_MIP_LINEAR);
     }
@@ -227,12 +213,13 @@ static inline D3D_FILTER Convert(FilterMode p_min_filter, FilterMode p_mag_filte
     return D3D_FILTER_(MIN_MAG_MIP_POINT);
 }
 
-static inline D3D_DEPTH_STENCILOP_DESC Convert(const StencilOpDesc* p_in) {
+static inline auto Convert(const StencilOpDesc* p_in) {
     if (!p_in) {
         CRASH_NOW_MSG("TODO: default");
     }
 
-    D3D_DEPTH_STENCILOP_DESC desc{};
+    D3D_(DEPTH_STENCILOP_DESC)
+    desc{};
     desc.StencilFunc = Convert(p_in->stencilFunc);
     desc.StencilFailOp = Convert(p_in->stencilFailOp);
     desc.StencilDepthFailOp = Convert(p_in->stencilDepthFailOp);
@@ -240,12 +227,13 @@ static inline D3D_DEPTH_STENCILOP_DESC Convert(const StencilOpDesc* p_in) {
     return desc;
 }
 
-static inline D3D_BLEND_DESC Convert(const BlendDesc* p_in) {
+static inline auto Convert(const BlendDesc* p_in) {
     if (!p_in) {
         CRASH_NOW_MSG("TODO: default");
     }
 
-    D3D_BLEND_DESC desc;
+    D3D_(BLEND_DESC)
+    desc;
     ZeroMemory(&desc, sizeof(desc));
     for (int i = 0; i < array_length(p_in->renderTargets); ++i) {
         auto& out = desc.RenderTarget[i];
@@ -259,12 +247,13 @@ static inline D3D_BLEND_DESC Convert(const BlendDesc* p_in) {
     return desc;
 }
 
-static inline D3D_DEPTH_STENCIL_DESC Convert(const DepthStencilDesc* p_in) {
+static inline auto Convert(const DepthStencilDesc* p_in) {
     if (!p_in) {
         CRASH_NOW_MSG("TODO: default");
     }
 
-    D3D_DEPTH_STENCIL_DESC desc{};
+    D3D_(DEPTH_STENCIL_DESC)
+    desc{};
     desc.DepthEnable = p_in->depthEnabled;
     desc.DepthFunc = d3d::Convert(p_in->depthFunc);
     desc.DepthWriteMask = D3D_(DEPTH_WRITE_MASK_ALL);
@@ -310,15 +299,33 @@ static inline D3D12_STATIC_BORDER_COLOR Convert(StaticBorderColor p_color) {
 }
 #endif
 
-#if 0
-static inline DEPTH_WRITE_MASK Convert(DepthWriteMask depth_write_mask) {
-    switch (depth_write_mask) {
-        case DepthWriteMask::ZERO:
-            return D3D(DEPTH_WRITE_MASK_ZERO);
-        case DepthWriteMask::ALL:
-            return D3D(DEPTH_WRITE_MASK_ALL);
+static inline D3D_PRIMITIVE_TOPOLOGY Convert(PrimitiveTopology p_topology) {
+    switch (p_topology) {
+        case PrimitiveTopology::POINT:
+            return D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+        case PrimitiveTopology::LINE:
+            return D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+        case PrimitiveTopology::TRIANGLE:
+            return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        default:
+            CRASH_NOW();
+            return D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     }
-    return D3D(DEPTH_WRITE_MASK_ZERO);
+}
+
+#if defined(INCLUDE_AS_D3D12)
+static inline D3D12_PRIMITIVE_TOPOLOGY_TYPE ConvertToType(PrimitiveTopology p_topology) {
+    switch (p_topology) {
+        case PrimitiveTopology::POINT:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+        case PrimitiveTopology::LINE:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+        case PrimitiveTopology::TRIANGLE:
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+        default:
+            CRASH_NOW();
+            return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+    }
 }
 #endif
 

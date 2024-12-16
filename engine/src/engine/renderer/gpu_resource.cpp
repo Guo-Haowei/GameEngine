@@ -4,6 +4,7 @@
 
 namespace my {
 
+// @TODO: remove this code
 void GpuConstantBuffer::update(const void* p_data, size_t p_size) {
     auto& gm = GraphicsManager::GetSingleton();
     switch (gm.GetBackend()) {

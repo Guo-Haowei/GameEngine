@@ -1,20 +1,16 @@
 #include "engine/core/base/rid_owner.h"
 #include "engine/core/framework/graphics_manager.h"
+#include "opengl_helpers_forward.h"
 
 struct GLFWwindow;
 
 namespace my {
 
 // @TODO: fix
-struct OpenGlMeshBuffers : MeshBuffers {
-    uint32_t vao{ 0 };
-    uint32_t ebo{ 0 };
-    uint32_t vbos[6]{ 0 };
-};
+struct OpenGlMeshBuffers : GpuMesh {
+    using GpuMesh::GpuMesh;
 
-struct OpenGlLineBuffers : LineBuffers {
     uint32_t vao{ 0 };
-    uint32_t vbo{ 0 };
 };
 
 class OpenGlGraphicsManager : public GraphicsManager {
@@ -32,18 +28,20 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
-    const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
-    void SetMesh(const MeshBuffers* p_mesh) final;
-    void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> final;
+    void UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) final;
 
-    LineBuffers* CreateLine(const std::vector<Point>& p_points) final;
-    void SetLine(const LineBuffers* p_buffer) final;
-    void UpdateLine(LineBuffers* p_buffer, const std::vector<Point>& p_points) final;
+    auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                        uint32_t p_count,
+                        const GpuBufferDesc* p_vb_descs,
+                        const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> final;
+
+    void SetMesh(const GpuMesh* p_mesh) final;
 
     void DrawElements(uint32_t p_count, uint32_t p_offset) final;
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
-
     void DrawArrays(uint32_t p_count, uint32_t p_offset) final;
+    void DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
@@ -93,6 +91,7 @@ private:
         bool enableDepthTest;
         bool enableStencilTest;
         ComparisonFunc stencilFunc;
+        gl::TOPOLOGY topology;
     } m_stateCache;
 };
 

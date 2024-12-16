@@ -7,6 +7,7 @@
 #include "engine/renderer/draw_data.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/renderer/renderer_misc.h"
 
 // shader defines
 #include "shader_resource_defines.hlsl.h"
@@ -183,7 +184,7 @@ static void PointShadowPassFunc(const DrawData& p_data, const DrawPass* p_draw_p
             gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
             gm.SetMesh(draw.mesh_data);
-            gm.DrawElements(draw.mesh_data->indexCount);
+            gm.DrawElements(draw.mesh_data->desc.drawCount);
         }
     };
 
@@ -238,7 +239,7 @@ static void ShadowPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) 
             gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
             gm.SetMesh(draw.mesh_data);
-            gm.DrawElements(draw.mesh_data->indexCount);
+            gm.DrawElements(draw.mesh_data->desc.drawCount);
         }
     };
     gm.SetPipelineState(PSO_DPETH);
@@ -467,10 +468,16 @@ static void LightingPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass
     DrawBatchesGeometry(p_data, pass.transparent);
 
     // draw debug data
-    gm.SetPipelineState(PSO_DEBUG_DRAW);
-    gm.UpdateLine(gm.m_lines, p_data.points3D);
-    gm.SetLine(gm.m_lines);
-    gm.DrawArrays((uint32_t)p_data.points3D.size());
+    if (gm.m_lineBuffers && !p_data.lineContext.positions.empty()) {
+        const auto& context = p_data.lineContext;
+        gm.SetPipelineState(PSO_DEBUG_DRAW);
+        gm.UpdateBuffer(renderer::CreateDesc(context.positions),
+                        gm.m_lineBuffers->vertexBuffers[0].get());
+        gm.UpdateBuffer(renderer::CreateDesc(context.colors),
+                        gm.m_lineBuffers->vertexBuffers[6].get());
+        gm.SetMesh(gm.m_lineBuffers.get());
+        gm.DrawArrays((uint32_t)context.lines.size() * 2);
+    }
 }
 
 void RenderPassCreator::AddLightingPass() {

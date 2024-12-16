@@ -1,5 +1,5 @@
 /// File: gbuffer.ps.glsl
-layout(location = 0) out vec3 out_base_color;
+layout(location = 0) out vec4 out_base_color;
 layout(location = 1) out vec3 out_position;
 layout(location = 2) out vec3 out_normal;
 layout(location = 3) out vec4 out_emissive_roughness_metallic;
@@ -41,7 +41,7 @@ void main() {
         N = normalize(ps_in.N);
     }
 
-    out_base_color.rgb = albedo.rgb;
+    out_base_color = albedo;
     out_position = ps_in.position;
     out_normal = N;
 

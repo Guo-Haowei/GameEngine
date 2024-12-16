@@ -11,6 +11,7 @@ struct vsinput_mesh {
     float3 tangent : TANGENT;
     int4 boneIndex : BONEINDEX;
     float4 boneWeight : BONEWEIGHT;
+    float4 color : COLOR;
 };
 
 // Output
@@ -22,6 +23,11 @@ struct vsoutput_uv {
 struct vsoutput_position {
     float4 position : SV_POSITION;
     float3 world_position : POSITION;
+};
+
+struct vsinput_color {
+    float3 position : POSITION;
+    float4 color : COLOR;
 };
 
 struct vsoutput_color {

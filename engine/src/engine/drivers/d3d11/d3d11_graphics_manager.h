@@ -7,9 +7,18 @@
 
 namespace my {
 
-struct D3d11MeshBuffers : public MeshBuffers {
-    Microsoft::WRL::ComPtr<ID3D11Buffer> vertex_buffer[6]{};
-    Microsoft::WRL::ComPtr<ID3D11Buffer> index_buffer;
+struct D3d11Buffer : GpuBuffer {
+    using GpuBuffer::GpuBuffer;
+
+    Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+
+    uint64_t GetHandle() const final {
+        return (size_t)buffer.Get();
+    }
+};
+
+struct D3d11MeshBuffers : GpuMesh {
+    using GpuMesh::GpuMesh;
 };
 
 class D3d11GraphicsManager : public GraphicsManager {
@@ -27,12 +36,20 @@ public:
     void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
-    const MeshBuffers* CreateMesh(const MeshComponent& p_mesh) final;
-    void SetMesh(const MeshBuffers* p_mesh) final;
-    void UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) final;
+    auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> final;
+
+    auto CreateMeshImpl(const GpuMeshDesc& p_desc,
+                        uint32_t p_count,
+                        const GpuBufferDesc* p_vb_descs,
+                        const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> final;
+
+    void SetMesh(const GpuMesh* p_mesh) final;
+    void UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) final;
 
     void DrawElements(uint32_t p_count, uint32_t p_offset) final;
     void DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
+    void DrawArrays(uint32_t p_count, uint32_t p_offset) final;
+    void DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
     void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
     void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;

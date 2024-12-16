@@ -39,9 +39,6 @@ auto D3d11GraphicsManager::InitializeInternal() -> Result<void> {
         return HBN_ERROR(res.error());
     }
 
-    // @TODO: refactor this
-    m_deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
     m_meshes.set_description("GPU-Mesh-Allocator");
 
     auto imgui = m_app->GetImguiManager();
@@ -696,110 +693,102 @@ void D3d11GraphicsManager::SetViewport(const Viewport& p_viewport) {
     m_deviceContext->RSSetViewports(1, &vp);
 }
 
-const MeshBuffers* D3d11GraphicsManager::CreateMesh(const MeshComponent& p_mesh) {
-    auto create_mesh_data = [](ID3D11Device* p_device, const MeshComponent& mesh, D3d11MeshBuffers& out_mesh) {
-        auto create_vertex_buffer = [&](size_t p_size_in_byte, const void* p_data, bool p_is_dynamic) -> ID3D11Buffer* {
-            if (!p_data) {
-                return nullptr;
-            }
-            ID3D11Buffer* buffer = nullptr;
-            // vertex buffer
-            D3D11_BUFFER_DESC bufferDesc{};
-            bufferDesc.Usage = p_is_dynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
-            bufferDesc.ByteWidth = (UINT)p_size_in_byte;
-            bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-            bufferDesc.CPUAccessFlags = p_is_dynamic ? D3D11_CPU_ACCESS_WRITE : 0;
-            bufferDesc.MiscFlags = 0;
+auto D3d11GraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
+    const bool is_dynamic = p_desc.dynamic;
+    ComPtr<ID3D11Buffer> buffer;
 
-            D3D11_SUBRESOURCE_DATA data{};
-            data.pSysMem = p_data;
-            D3D_FAIL_V_MSG(p_device->CreateBuffer(&bufferDesc, &data, &buffer),
-                           nullptr,
-                           "Failed to Create vertex buffer");
-            return buffer;
-        };
+    uint32_t flags = 0;
+    switch (p_desc.type) {
+        case GpuBufferType::VERTEX:
+            flags |= D3D11_BIND_VERTEX_BUFFER;
+            break;
+        case GpuBufferType::INDEX:
+            flags |= D3D11_BIND_INDEX_BUFFER;
+            break;
+        default:
+            CRASH_NOW();
+            break;
+    }
 
-        out_mesh.vertex_buffer[0] = create_vertex_buffer(VectorSizeInByte(mesh.positions), mesh.positions.data(), mesh.flags & MeshComponent::DYNAMIC);
-        out_mesh.vertex_buffer[1] = create_vertex_buffer(VectorSizeInByte(mesh.normals), mesh.normals.data(), mesh.flags & MeshComponent::DYNAMIC);
-        out_mesh.vertex_buffer[2] = create_vertex_buffer(VectorSizeInByte(mesh.texcoords_0), mesh.texcoords_0.data(), false);
-        out_mesh.vertex_buffer[3] = create_vertex_buffer(VectorSizeInByte(mesh.tangents), mesh.tangents.data(), false);
-        out_mesh.vertex_buffer[4] = create_vertex_buffer(VectorSizeInByte(mesh.joints_0), mesh.joints_0.data(), false);
-        out_mesh.vertex_buffer[5] = create_vertex_buffer(VectorSizeInByte(mesh.weights_0), mesh.weights_0.data(), false);
-        {
-            // index buffer
-            out_mesh.indexCount = static_cast<uint32_t>(mesh.indices.size());
-            D3D11_BUFFER_DESC bufferDesc{};
-            bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
-            bufferDesc.ByteWidth = static_cast<uint32_t>(sizeof(uint32_t) * out_mesh.indexCount);
-            bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-            bufferDesc.CPUAccessFlags = 0;
-            bufferDesc.MiscFlags = 0;
+    D3D11_BUFFER_DESC bufferDesc{};
+    bufferDesc.Usage = is_dynamic ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_IMMUTABLE;
+    bufferDesc.ByteWidth = p_desc.elementCount * p_desc.elementSize;
+    bufferDesc.BindFlags = flags;
+    bufferDesc.CPUAccessFlags = is_dynamic ? D3D11_CPU_ACCESS_WRITE : 0;
+    bufferDesc.MiscFlags = 0;
 
-            D3D11_SUBRESOURCE_DATA data{};
-            data.pSysMem = mesh.indices.data();
-            D3D_FAIL_MSG(p_device->CreateBuffer(&bufferDesc, &data, out_mesh.index_buffer.GetAddressOf()),
-                         "Failed to create index buffer");
-        }
-    };
+    D3D11_SUBRESOURCE_DATA data{};
+    data.pSysMem = p_desc.initialData;
+    D3D_FAIL_V_MSG(m_device->CreateBuffer(&bufferDesc, &data, buffer.GetAddressOf()),
+                   HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "failed to create buffer"),
+                   "Failed to Create vertex buffer");
 
-    RID rid = m_meshes.make_rid();
-    D3d11MeshBuffers* mesh_buffers = m_meshes.get_or_null(rid);
-
-    p_mesh.gpuResource = mesh_buffers;
-    create_mesh_data(m_device.Get(), p_mesh, *mesh_buffers);
-    return mesh_buffers;
+    auto ret = std::make_shared<D3d11Buffer>(p_desc);
+    ret->buffer = buffer;
+    return ret;
 }
 
-void D3d11GraphicsManager::SetMesh(const MeshBuffers* p_mesh) {
+auto D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                          uint32_t p_count,
+                                          const GpuBufferDesc* p_vb_descs,
+                                          const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
+    auto ret = std::make_shared<D3d11MeshBuffers>(p_desc);
+
+    for (uint32_t index = 0; index < p_count; ++index) {
+        if (!p_vb_descs[index].elementCount) {
+            continue;
+        }
+        auto res = CreateBuffer(p_vb_descs[index]);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        ret->vertexBuffers[index] = *res;
+    }
+
+    if (p_ib_desc) {
+        auto res = CreateBuffer(*p_ib_desc);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+
+        ret->indexBuffer = *res;
+    }
+    return ret;
+}
+
+void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
-    // @TODO: refactor
-    ID3D11Buffer* buffers[6] = {
-        mesh->vertex_buffer[0].Get(),
-        mesh->vertex_buffer[1].Get(),
-        mesh->vertex_buffer[2].Get(),
-        mesh->vertex_buffer[3].Get(),
-        mesh->vertex_buffer[4].Get(),
-        mesh->vertex_buffer[5].Get(),
-    };
+    std::array<ID3D11Buffer*, MESH_MAX_VERTEX_BUFFER_COUNT> buffers{ nullptr };
+    std::array<uint32_t, MESH_MAX_VERTEX_BUFFER_COUNT> strides{ 0 };
+    std::array<uint32_t, MESH_MAX_VERTEX_BUFFER_COUNT> offsets{ 0 };
 
-    UINT stride[6] = {
-        sizeof(Vector3f),
-        sizeof(Vector3f),
-        sizeof(Vector2f),
-        sizeof(Vector3f),
-        sizeof(Vector4i),
-        sizeof(Vector4f),
-    };
+    for (int index = 0; index < mesh->vertexBuffers.size(); ++index) {
+        const auto& vertex = mesh->vertexBuffers[index];
+        if (vertex == nullptr) {
+            continue;
+        }
+        buffers[index] = (ID3D11Buffer*)vertex->GetHandle();
+        strides[index] = p_mesh->desc.vertexLayout[index].strideInByte;
+        offsets[index] = p_mesh->desc.vertexLayout[index].offsetInByte;
+    }
 
-    UINT offset[6] = { 0, 0, 0, 0, 0, 0 };
+    m_deviceContext->IASetVertexBuffers(0, MESH_MAX_VERTEX_BUFFER_COUNT, buffers.data(), strides.data(), offsets.data());
 
-    // @TODO: fix
-    m_deviceContext->IASetVertexBuffers(0, 6, buffers, stride, offset);
-    m_deviceContext->IASetIndexBuffer(mesh->index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+    if (mesh->indexBuffer) {
+        ID3D11Buffer* index_buffer = (ID3D11Buffer*)mesh->indexBuffer->GetHandle();
+        m_deviceContext->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
+    }
 }
 
-void D3d11GraphicsManager::UpdateMesh(MeshBuffers* p_mesh, const std::vector<Vector3f>& p_positions, const std::vector<Vector3f>& p_normals) {
-    if (auto mesh = dynamic_cast<D3d11MeshBuffers*>(p_mesh); DEV_VERIFY(mesh)) {
-        {
-            D3D11_MAPPED_SUBRESOURCE mapped;
-            HRESULT hr = m_deviceContext->Map(mesh->vertex_buffer[0].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-            DEV_ASSERT(SUCCEEDED(hr));
+void D3d11GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<D3d11Buffer*>(p_buffer);
+    D3D11_MAPPED_SUBRESOURCE mapped;
+    HRESULT hr = m_deviceContext->Map(buffer->buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+    DEV_ASSERT(SUCCEEDED(hr));
 
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_positions.size();
-            memcpy(mapped.pData, p_positions.data(), size_in_byte);
-            m_deviceContext->Unmap(mesh->vertex_buffer[0].Get(), 0);
-        }
-        {
-            D3D11_MAPPED_SUBRESOURCE mapped;
-            HRESULT hr = m_deviceContext->Map(mesh->vertex_buffer[1].Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-            DEV_ASSERT(SUCCEEDED(hr));
-
-            const uint32_t size_in_byte = sizeof(Vector3f) * (uint32_t)p_normals.size();
-            memcpy(mapped.pData, p_normals.data(), size_in_byte);
-            m_deviceContext->Unmap(mesh->vertex_buffer[1].Get(), 0);
-        }
-    }
+    memcpy(mapped.pData, p_desc.initialData, p_desc.elementSize * p_desc.elementCount);
+    m_deviceContext->Unmap(buffer->buffer.Get(), 0);
 }
 
 void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
@@ -808,6 +797,14 @@ void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
 
 void D3d11GraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
     m_deviceContext->DrawIndexedInstanced(p_count, p_instance_count, p_offset, 0, 0);
+}
+
+void D3d11GraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
+    m_deviceContext->Draw(p_count, p_offset);
+}
+
+void D3d11GraphicsManager::DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+    m_deviceContext->DrawInstanced(p_count, p_instance_count, p_offset, 0);
 }
 
 void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
@@ -838,6 +835,9 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
         m_deviceContext->OMSetBlendState(pipeline->blendState.Get(), nullptr, 0xFFFFFFFF);
         m_stateCache.blendState = pipeline->blendState.Get();
     }
+
+    auto topology = d3d::Convert(pipeline->desc.primitiveTopology);
+    m_deviceContext->IASetPrimitiveTopology(topology);
 }
 
 }  // namespace my
