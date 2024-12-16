@@ -268,6 +268,10 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
         buffer_desc.elementSize = in.strideInByte;
         buffer_desc.initialData = data[index];
         buffer_desc.dynamic = is_dynamic;
+
+        if (in.elementCount) {
+            desc.enabledVertexCount = index;
+        }
     }
 
     GpuBufferDesc ib_desc{
@@ -278,7 +282,7 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
     };
 
     auto ret = CreateMeshImpl(desc,
-                              count,
+                              6,
                               vb_descs.data(),
                               &ib_desc);
     if (!ret) {

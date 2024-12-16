@@ -353,7 +353,7 @@ auto OpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
 
     for (uint32_t slot = 0; slot < p_count; ++slot) {
         if (p_vb_descs[slot].elementCount == 0) {
-            break;
+            continue;
         }
 
         auto res = CreateBuffer(p_vb_descs[slot]);

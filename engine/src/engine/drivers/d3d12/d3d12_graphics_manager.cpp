@@ -452,7 +452,8 @@ auto D3d12GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
     for (uint32_t index = 0; index < p_count; ++index) {
         const auto& vb_desc = p_vb_descs[index];
         if (vb_desc.elementCount == 0) {
-            break;
+            ret->vbvs[index] = { 0, 0, 0 };
+            continue;
         }
 
         auto res = CreateBuffer(p_vb_descs[index]);
@@ -485,14 +486,7 @@ auto D3d12GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
 void D3d12GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d12MeshBuffers*>(p_mesh);
 
-    int i = 0;
-    for (; i < array_length(p_mesh->vertexBuffers); ++i) {
-        if (p_mesh->vertexBuffers[i] == nullptr) {
-            break;
-        }
-    }
-
-    m_graphicsCommandList->IASetVertexBuffers(0, i, mesh->vbvs);
+    m_graphicsCommandList->IASetVertexBuffers(0, 6, mesh->vbvs);
     m_graphicsCommandList->IASetIndexBuffer(&mesh->ibv);
 }
 

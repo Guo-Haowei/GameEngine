@@ -738,13 +738,14 @@ auto D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
     auto ret = std::make_shared<D3d11MeshBuffers>(p_desc);
 
     for (uint32_t index = 0; index < p_count; ++index) {
-        if (p_vb_descs[index].elementCount) {
-            auto res = CreateBuffer(p_vb_descs[index]);
-            if (!res) {
-                return HBN_ERROR(res.error());
-            }
-            ret->vertexBuffers[index] = *res;
+        if (!p_vb_descs[index].elementCount) {
+            continue;
         }
+        auto res = CreateBuffer(p_vb_descs[index]);
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        ret->vertexBuffers[index] = *res;
     }
 
     auto res = CreateBuffer(*p_ib_desc);
@@ -759,23 +760,22 @@ auto D3d11GraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
 void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const D3d11MeshBuffers*>(p_mesh);
 
-    ID3D11Buffer* buffers[6]{ 0 };
+    ID3D11Buffer* buffers[6]{ nullptr };
     uint32_t strides[6]{ 0 };
     uint32_t offsets[6]{ 0 };
 
-    int counter = 0;
-    for (counter = 0; counter < array_length(mesh->vertexBuffers); ++counter) {
-        const auto& vertex = mesh->vertexBuffers[counter];
+    for (int index = 0; index < array_length(mesh->vertexBuffers); ++index) {
+        const auto& vertex = mesh->vertexBuffers[index];
         if (vertex == nullptr) {
-            break;
+            continue;
         }
-        buffers[counter] = (ID3D11Buffer*)vertex->GetHandle();
-        strides[counter] = p_mesh->desc.vertexLayout[counter].strideInByte;
-        offsets[counter] = p_mesh->desc.vertexLayout[counter].offsetInByte;
+        buffers[index] = (ID3D11Buffer*)vertex->GetHandle();
+        strides[index] = p_mesh->desc.vertexLayout[index].strideInByte;
+        offsets[index] = p_mesh->desc.vertexLayout[index].offsetInByte;
     }
 
     ID3D11Buffer* index_buffer = (ID3D11Buffer*)mesh->indexBuffer->GetHandle();
-    m_deviceContext->IASetVertexBuffers(0, counter, buffers, strides, offsets);
+    m_deviceContext->IASetVertexBuffers(0, 6, buffers, strides, offsets);
     m_deviceContext->IASetIndexBuffer(index_buffer, DXGI_FORMAT_R32_UINT, 0);
 }
 
