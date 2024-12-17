@@ -1,4 +1,6 @@
 #pragma once
+#include <yaml-cpp/yaml.h>
+
 #include "component_manager.h"
 
 namespace my::ecs {
@@ -165,6 +167,17 @@ bool ComponentManager<T>::Serialize(Archive& p_archive, uint32_t p_version) {
         }
     }
 
+    return true;
+}
+
+template<Serializable T>
+bool ComponentManager<T>::Dump(YAML::Node& p_node, Archive& p_archive, uint32_t p_version) const {
+    for (size_t i = 0; i < m_componentArray.size(); ++i) {
+        YAML::Node node(YAML::NodeType::Map);
+        node["id"] = m_entityArray[i];
+        // @TODO: serialize component
+        p_node.push_back(node);
+    }
     return true;
 }
 

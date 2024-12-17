@@ -12,7 +12,9 @@ namespace my {
 
 #define SCENE_DBG_LOG(...) LOG_VERBOSE(__VA_ARGS__)
 
+#pragma region VERSION_HISTORY
 // SCENE_VERSION history
+// version 1: initial version
 // version 2: don't serialize scene.m_bound
 // version 3: light component atten
 // version 4: light component flags
@@ -28,6 +30,7 @@ namespace my {
 // version 14: modify RigidBodyComponent
 // version 15: add predefined shadow region to lights
 // version 16: change scene binary representation
+#pragma endregion VERSION_HISTORY
 static constexpr uint32_t SCENE_VERSION = 16;
 static constexpr uint32_t SCENE_MAGIC_SIZE = 8;
 static constexpr char SCENE_MAGIC[SCENE_MAGIC_SIZE] = "xScene";
@@ -39,29 +42,26 @@ static constexpr uint64_t has_next_flag = 6368519827137030510;
 Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     unused(p_scene);
 
-    YAML::Node node;
-    node["name"] = "John Doe";
-    node["age"] = 30;
-    node["is_student"] = false;
+    YAML::Node scene;
+    scene["version"] = SCENE_VERSION;
+    scene["seed"] = ecs::Entity::GetSeed();
+    scene["root"] = p_scene.m_root.GetId();
 
-    // Add a list (sequence) to the node
-    YAML::Node hobbies = YAML::Node(YAML::NodeType::Sequence);
-    hobbies.push_back("Reading");
-    hobbies.push_back("Gaming");
-    hobbies.push_back("Traveling");
-    node["hobbies"] = hobbies;
-
-    // Open a file to save the YAML data
-    std::ofstream fout(p_path);
-
-    // Check if the file is open
-    if (fout.is_open()) {
-        fout << node;
-        fout.close();
-        return Result<void>();
+    Archive archive;
+    for (const auto& it : p_scene.GetLibraryEntries()) {
+        YAML::Node component = YAML::Node(YAML::NodeType::Sequence);
+        scene[it.first] = component;
+        it.second.m_manager->Dump(component, archive, SCENE_VERSION);
     }
 
-    return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE);
+    std::ofstream fout(p_path);
+    if (!fout.is_open()) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE);
+    }
+
+    fout << scene;
+    fout.close();
+    return Result<void>();
 }
 
 Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {

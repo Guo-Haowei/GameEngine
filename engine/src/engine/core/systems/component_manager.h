@@ -1,13 +1,18 @@
 #pragma once
 #include "entity.h"
 
+namespace YAML {
+class Node;
+}
+
 namespace my {
 class Scene;
 class Archive;
 
 template<typename T>
-concept Serializable = requires(T& t, Archive& p_archive, uint32_t p_version) {
+concept Serializable = requires(T& t, YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
     { t.Serialize(p_archive, p_version) } -> std::same_as<void>;
+    //{ t.Serialize(p_node, p_archive, p_version) } -> std::same_as<void>;
 };
 
 }  // namespace my
@@ -104,6 +109,7 @@ public:
     virtual Entity GetEntity(size_t p_index) const = 0;
 
     virtual bool Serialize(Archive& p_archive, uint32_t p_version) = 0;
+    virtual bool Dump(YAML::Node& p_node, Archive& p_archive, uint32_t p_version) const = 0;
 };
 
 template<Serializable T>
@@ -148,6 +154,7 @@ public:
     T& Create(const Entity& p_entity);
 
     bool Serialize(Archive& p_archive, uint32_t p_version) override;
+    bool Dump(YAML::Node& p_node, Archive& p_archive, uint32_t p_version) const override;
 
 private:
     std::vector<T> m_componentArray;
