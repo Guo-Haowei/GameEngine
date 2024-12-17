@@ -7,71 +7,78 @@ namespace my::ecs {
 // so when removing a component, we don't need to remove it from the array,
 // but we can invalidate it, and when creating View, View can skip it
 
-using ViewContainer = std::vector<std::pair<Entity, int>>;
+template<Serializable T>
+class View {
+    template<typename U>
+        requires std::is_same_v<T, std::remove_const_t<U>>
+    class Iterator;
 
-template<typename T>
-class ViewIterator {
-    using ComponentManagerType = typename std::conditional<std::is_const<T>::value,
-                                                           const ComponentManager<typename std::remove_const<T>::type>,
-                                                           ComponentManager<T>>::type;
-    using Self = ViewIterator<T>;
+    using ViewContainer = std::vector<std::pair<Entity, int>>;
+    using iter = Iterator<T>;
+    using const_iter = Iterator<const T>;
 
 public:
-    ViewIterator(ViewContainer& p_container,
-                 ComponentManagerType& p_manager,
+#pragma region ITERATOR
+    template<typename U>
+        requires std::is_same_v<T, std::remove_const_t<U>>
+    class Iterator {
+        using Self = Iterator<U>;
+
+    public:
+        Iterator(const ViewContainer& p_container,
+                 const ComponentManager<T>& p_manager,
                  size_t p_index) : m_container(p_container),
                                    m_manager(p_manager),
                                    m_index(p_index) {}
 
-    Self operator++(int) {
-        Self tmp = *this;
-        ++m_index;
-        return tmp;
-    }
+        Self operator++(int) const {
+            Self tmp = *this;
+            ++m_index;
+            return tmp;
+        }
 
-    Self operator--(int) {
-        Self tmp = *this;
-        --m_index;
-        return tmp;
-    }
+        Self operator--(int) const {
+            Self tmp = *this;
+            --m_index;
+            return tmp;
+        }
 
-    Self& operator++() {
-        ++m_index;
-        return *this;
-    }
+        Self& operator++() {
+            ++m_index;
+            return *this;
+        }
 
-    Self& operator--() {
-        --m_index;
-        return *this;
-    }
+        Self& operator--() {
+            --m_index;
+            return *this;
+        }
 
-    bool operator==(const Self& p_rhs) const { return m_index == p_rhs.m_index; }
-    bool operator!=(const Self& p_rhs) const { return m_index != p_rhs.m_index; }
+        bool operator==(const Self& p_rhs) const { return m_index == p_rhs.m_index; }
+        bool operator!=(const Self& p_rhs) const { return m_index != p_rhs.m_index; }
 
-    auto operator*() -> std::pair<Entity, T&> {
-        Entity entity = m_container[m_index].first;
-        int index = m_container[m_index].second;
-        T& component = m_manager.GetComponentByIndex(index);
-        return std::pair<Entity, T&>(entity, component);
-    }
+        auto operator*() -> std::pair<Entity, U&> {
+            Entity entity = m_container[m_index].first;
+            int index = m_container[m_index].second;
+            U& component = ((ComponentManager<T>&)m_manager).GetComponentByIndex(index);
+            return std::pair<Entity, U&>(entity, component);
+        }
 
-private:
-    ViewContainer& m_container;
-    ComponentManagerType& m_manager;
+        auto operator*() const -> std::pair<Entity, U&> {
+            Entity entity = m_container[m_index].first;
+            int index = m_container[m_index].second;
+            U& component = m_manager.GetComponentByIndex(index);
+            return std::pair<Entity, U&>(entity, component);
+        }
 
-    size_t m_index{ 0 };
-};
+    private:
+        const ViewContainer& m_container;
+        const ComponentManager<T>& m_manager;
 
-template<typename T>
-class View {
-    using ComponentManagerType = typename std::conditional<std::is_const<T>::value,
-                                                           const ComponentManager<typename std::remove_const<T>::type>,
-                                                           ComponentManager<T>>::type;
+        size_t m_index{ 0 };
+    };
+#pragma endregion ITERATOR
 
-public:
-    using iter = ViewIterator<T>;
-
-    View(ComponentManagerType& p_manager) : m_manager(p_manager), m_size(p_manager.GetCount()) {
+    View(const ComponentManager<T>& p_manager) : m_manager(p_manager), m_size(p_manager.GetCount()) {
         const int size = (int)p_manager.GetCount();
         for (int i = 0; i < size; ++i) {
             m_container.emplace_back(std::make_pair(m_manager.m_entityArray[i], i));
@@ -83,9 +90,12 @@ public:
     iter begin() { return iter(m_container, m_manager, 0); }
     iter end() { return iter(m_container, m_manager, m_size); }
 
+    const_iter begin() const { return const_iter(m_container, m_manager, 0); }
+    const_iter end() const { return const_iter(m_container, m_manager, m_size); }
+
 private:
     ViewContainer m_container;
-    ComponentManagerType& m_manager;
+    const ComponentManager<T>& m_manager;
     size_t m_size;
 };
 

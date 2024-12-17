@@ -61,7 +61,7 @@ private:
     template<>                                                                                                     \
     inline ecs::View<T> View() { return ecs::View<T>(m_##T##s); }                                                  \
     template<>                                                                                                     \
-    inline ecs::View<const T> View() const { return ecs::View<const T>(m_##T##s); }                                \
+    inline const ecs::View<T> View() const { return ecs::View<T>(m_##T##s); }                                      \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
 
 #define REGISTER_COMPONENT(T, VER) REGISTER_COMPONENT_NAME(T, "World::" #T, VER)
@@ -69,22 +69,22 @@ private:
 #pragma endregion WORLD_COMPONENTS_REGISTRY
 
 public:
-    template<typename T>
+    template<Serializable T>
     const T* GetComponent(const ecs::Entity&) const { return nullptr; }
-    template<typename T>
+    template<Serializable T>
     T* GetComponent(const ecs::Entity&) { return nullptr; }
-    template<typename T>
+    template<Serializable T>
     bool Contains(const ecs::Entity&) const { return false; }
-    template<typename T>
+    template<Serializable T>
     size_t GetCount() const { return 0; }
-    template<typename T>
+    template<Serializable T>
     ecs::Entity GetEntity(size_t) const { return ecs::Entity::INVALID; }
-    template<typename T>
+    template<Serializable T>
     T& Create(const ecs::Entity&) { return *(T*)(nullptr); }
 
-    template<typename T>
+    template<Serializable T>
     inline T& GetComponentByIndex(size_t) { return *(T*)0; }
-    template<typename T>
+    template<Serializable T>
     inline ecs::Entity GetEntityByIndex(size_t) { return ecs::Entity::INVALID; }
 
     template<typename T>
@@ -96,8 +96,7 @@ public:
     }
 
     template<typename T>
-        requires std::is_const_v<std::remove_reference_t<T>>
-    inline ecs::View<T> View() const {
+    inline const ecs::View<T> View() const {
         static_assert(0, "this code should never instantiate");
         struct Dummy {};
         ecs::ComponentManager<Dummy> dummyManager;

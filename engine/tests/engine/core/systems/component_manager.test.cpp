@@ -2,7 +2,7 @@
 
 namespace my::ecs {
 
-template<typename T>
+template<Serializable T>
 struct dummy2 {
     using iter = ComponentManagerIterator<T>;
     using const_iter = ComponentManagerConstIterator<T>;
@@ -17,11 +17,26 @@ public:
     std::vector<T> m_componentArray;
 };
 
-TEST(component_manager, iterator) {
-    struct A {
-        int a;
-    };
+template<Serializable T>
+struct DummyTest {
+};
 
+struct A {
+    void Serialize(Archive&, uint32_t) {}
+    int a;
+};
+
+TEST(serializable, test_serializable) {
+    struct B {};
+
+    [[maybe_unused]] DummyTest<A> a;
+#if 0
+    // this won't compile
+    [[maybe_unused]] DummyTest<B> b;
+#endif
+}
+
+TEST(component_manager, iterator) {
     std::vector<Entity> entities = {
         Entity{ 1 }, Entity{ 2 },
         Entity{ 3 }, Entity{ 4 }
