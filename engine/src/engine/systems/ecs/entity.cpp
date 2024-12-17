@@ -1,18 +1,8 @@
 #include "entity.h"
 
-#include "engine/core/io/archive.h"
-
 namespace my::ecs {
 
 const Entity Entity::INVALID{};
-
-void Entity::Serialize(Archive& p_archive) {
-    if (p_archive.IsWriteMode()) {
-        p_archive << m_id;
-    } else {
-        p_archive >> m_id;
-    }
-}
 
 Entity Entity::Create() {
     CRASH_COND_MSG(s_id.load() == MAX_ID, "max number of entity allocated, did you forget to call setSeed()?");

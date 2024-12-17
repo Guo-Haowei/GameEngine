@@ -1,4 +1,4 @@
-#include "engine/core/systems/component_manager.h"
+#include "engine/systems/ecs/component_manager.h"
 
 namespace my::ecs {
 

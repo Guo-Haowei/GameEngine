@@ -3,16 +3,18 @@
 
 namespace YAML {
 class Node;
-}
+class Emitter;
+}  // namespace YAML
 
 namespace my {
 class Scene;
 class Archive;
 
 template<typename T>
-concept Serializable = requires(T& t, YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+concept Serializable = requires(T& t, YAML::Emitter& p_emitter, const YAML::Node& p_cnode, Archive& p_archive, uint32_t p_version) {
     { t.Serialize(p_archive, p_version) } -> std::same_as<void>;
-    //{ t.Serialize(p_node, p_archive, p_version) } -> std::same_as<void>;
+    { t.Dump(p_emitter, p_archive, p_version) } -> std::same_as<bool>;
+    { t.Undump(p_cnode, p_archive, p_version) } -> std::same_as<bool>;
 };
 
 }  // namespace my
@@ -108,8 +110,9 @@ public:
     virtual size_t GetCount() const = 0;
     virtual Entity GetEntity(size_t p_index) const = 0;
 
+    virtual const std::vector<Entity>& GetEntityArray() const = 0;
+
     virtual bool Serialize(Archive& p_archive, uint32_t p_version) = 0;
-    virtual bool Dump(YAML::Node& p_node, Archive& p_archive, uint32_t p_version) const = 0;
 };
 
 template<Serializable T>
@@ -153,8 +156,11 @@ public:
 
     T& Create(const Entity& p_entity);
 
+    const std::vector<Entity>& GetEntityArray() const override {
+        return m_entityArray;
+    }
+
     bool Serialize(Archive& p_archive, uint32_t p_version) override;
-    bool Dump(YAML::Node& p_node, Archive& p_archive, uint32_t p_version) const override;
 
 private:
     std::vector<T> m_componentArray;

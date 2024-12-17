@@ -28,8 +28,6 @@ public:
 
     constexpr uint32_t GetId() const { return m_id; }
 
-    void Serialize(Archive& p_archive);
-
     static Entity Create();
     static uint32_t GetSeed();
     static void SetSeed(uint32_t p_seed = INVALID_ID + 1);

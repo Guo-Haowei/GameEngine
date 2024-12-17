@@ -145,7 +145,7 @@ bool ComponentManager<T>::Serialize(Archive& p_archive, uint32_t p_version) {
             component.Serialize(p_archive, p_version);
         }
         for (auto& entity : m_entityArray) {
-            entity.Serialize(p_archive);
+            p_archive << entity;
         }
     } else {
         uint64_t read_magic;
@@ -162,22 +162,11 @@ bool ComponentManager<T>::Serialize(Archive& p_archive, uint32_t p_version) {
             m_componentArray[i].Serialize(p_archive, p_version);
         }
         for (size_t i = 0; i < count; ++i) {
-            m_entityArray[i].Serialize(p_archive);
+            p_archive >> m_entityArray[i];
             m_lookup[m_entityArray[i]] = i;
         }
     }
 
-    return true;
-}
-
-template<Serializable T>
-bool ComponentManager<T>::Dump(YAML::Node& p_node, Archive& p_archive, uint32_t p_version) const {
-    for (size_t i = 0; i < m_componentArray.size(); ++i) {
-        YAML::Node node(YAML::NodeType::Map);
-        node["id"] = m_entityArray[i];
-        // @TODO: serialize component
-        p_node.push_back(node);
-    }
     return true;
 }
 

@@ -35,34 +35,7 @@ static constexpr uint32_t SCENE_VERSION = 16;
 static constexpr uint32_t SCENE_MAGIC_SIZE = 8;
 static constexpr char SCENE_MAGIC[SCENE_MAGIC_SIZE] = "xScene";
 static constexpr char SCENE_GUARD_MESSAGE[] = "Should see this message";
-
-// @TODO: refactor
-static constexpr uint64_t has_next_flag = 6368519827137030510;
-
-Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
-    unused(p_scene);
-
-    YAML::Node scene;
-    scene["version"] = SCENE_VERSION;
-    scene["seed"] = ecs::Entity::GetSeed();
-    scene["root"] = p_scene.m_root.GetId();
-
-    Archive archive;
-    for (const auto& it : p_scene.GetLibraryEntries()) {
-        YAML::Node component = YAML::Node(YAML::NodeType::Sequence);
-        scene[it.first] = component;
-        it.second.m_manager->Dump(component, archive, SCENE_VERSION);
-    }
-
-    std::ofstream fout(p_path);
-    if (!fout.is_open()) {
-        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE);
-    }
-
-    fout << scene;
-    fout.close();
-    return Result<void>();
-}
+static constexpr uint64_t HAS_NEXT_FLAG = 6368519827137030510;
 
 Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     Archive archive;
@@ -78,7 +51,7 @@ Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     archive << SCENE_GUARD_MESSAGE;
 
     for (const auto& it : p_scene.GetLibraryEntries()) {
-        archive << has_next_flag;
+        archive << HAS_NEXT_FLAG;
         archive << it.first;  // write name
         it.second.m_manager->Serialize(archive, SCENE_VERSION);
     }
@@ -123,7 +96,7 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
     for (;;) {
         uint64_t has_next = 0;
         archive >> has_next;
-        if (has_next != has_next_flag) {
+        if (has_next != HAS_NEXT_FLAG) {
             return Result<void>();
         }
 
@@ -140,6 +113,75 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
             return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "failed to serialize '{}'", key);
         }
     }
+}
+
+template<Serializable T>
+static void EmitComponent(YAML::Emitter& p_out,
+                          const char* p_name,
+                          ecs::Entity p_entity,
+                          const Scene& p_scene,
+                          Archive& p_archive) {
+    const T* component = p_scene.GetComponent<T>(p_entity);
+    if (component) {
+        p_out << YAML::Key << p_name << YAML::Value;
+        p_out << YAML::BeginMap;
+        component->Dump(p_out, p_archive, SCENE_VERSION);
+        p_out << YAML::EndMap;
+    }
+}
+
+Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
+    unused(p_scene);
+
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << "version" << YAML::Value << SCENE_VERSION;
+    out << YAML::Key << "seed" << YAML::Value << ecs::Entity::GetSeed();
+    out << YAML::Key << "root" << YAML::Value << p_scene.m_root.GetId();
+
+    std::unordered_set<uint32_t> entity_set;
+
+    Archive archive;
+    for (const auto& it : p_scene.GetLibraryEntries()) {
+        auto& manager = it.second.m_manager;
+        for (auto entity : manager->GetEntityArray()) {
+            entity_set.insert(entity.GetId());
+        }
+    }
+
+    std::vector<uint32_t> entity_array(entity_set.begin(), entity_set.end());
+    std::sort(entity_array.begin(), entity_array.end());
+
+    out << YAML::Key << "entities" << YAML::Value;
+    out << YAML::BeginSeq;
+
+    for (auto id : entity_array) {
+        ecs::Entity entity{ id };
+
+        out << YAML::BeginMap;
+        out << YAML::Key << "id" << YAML::Value << id;
+
+        out.SetSeqFormat(YAML::Flow);
+        EmitComponent<NameComponent>(out, "name_component", entity, p_scene, archive);
+        EmitComponent<HierarchyComponent>(out, "hierarchy_component", entity, p_scene, archive);
+        EmitComponent<TransformComponent>(out, "transform_component", entity, p_scene, archive);
+        out.SetSeqFormat(YAML::Block);
+
+        out << YAML::EndMap;
+    }
+
+    out << YAML::EndSeq;
+    out << YAML::EndMap;
+
+    auto res = FileAccess::Open(p_path, FileAccess::WRITE);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    auto file_access = *res;
+    const char* result = out.c_str();
+    file_access->WriteBuffer(result, strlen(result));
+    return Result<void>();
 }
 
 }  // namespace my

@@ -28,9 +28,6 @@
 #include "engine/core/framework/common_dvars.h"
 #undef DEFINE_DVAR
 
-// @TODO: refactor
-#include "engine/scene/scene_serialization.h"
-
 namespace my {
 
 namespace fs = std::filesystem;
@@ -99,6 +96,7 @@ void Application::RegisterModule(Module* p_module) {
 }
 
 auto Application::SetupModules() -> Result<void> {
+    // @TODO: configure so it's easier for user to override
     m_assetManager = new AssetManager();
     m_assetRegistry = new AssetRegistry();
     m_scriptManager = new ScriptManager();
@@ -371,11 +369,6 @@ Scene* Application::CreateInitialScene() {
     camera->SetPosition(Vector3f(0, 4, 10));
     camera->SetEditorCamera();
     scene->AttachChild(camera_id, root);
-
-    auto res = SaveSceneText("tmp.yaml", *scene);
-    if (!res) {
-        CRASH_NOW();
-    }
 
     return scene;
 }

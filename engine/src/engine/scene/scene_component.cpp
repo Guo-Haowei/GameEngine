@@ -1,22 +1,70 @@
 #include "scene_component.h"
 
+#include <yaml-cpp/yaml.h>
+
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/matrix_transform.h"
 
 namespace my {
 
-#pragma region NAME_COMPONENT
-#pragma endregion NAME_COMPONENT
+#pragma region TRANSFORM_COMPONENT
+Matrix4x4f TransformComponent::GetLocalMatrix() const {
+    Matrix4x4f rotationMatrix = glm::toMat4(Quaternion(m_rotation.w, m_rotation.x, m_rotation.y, m_rotation.z));
+    Matrix4x4f translationMatrix = glm::translate(m_translation);
+    Matrix4x4f scaleMatrix = glm::scale(m_scale);
+    return translationMatrix * rotationMatrix * scaleMatrix;
+}
 
-#pragma region ANIMATION_COMPONENT
-#pragma endregion ANIMATION_COMPONENT
+void TransformComponent::UpdateTransform() {
+    if (IsDirty()) {
+        SetDirty(false);
+        m_worldMatrix = GetLocalMatrix();
+    }
+}
 
-#pragma region ARMATURE_COMPONENT
-#pragma endregion ARMATURE_COMPONENT
+void TransformComponent::Scale(const Vector3f& p_scale) {
+    SetDirty();
+    m_scale.x *= p_scale.x;
+    m_scale.y *= p_scale.y;
+    m_scale.z *= p_scale.z;
+}
 
-#pragma region OBJECT_COMPONENT
-#pragma endregion OBJECT_COMPONENT
+void TransformComponent::Translate(const Vector3f& p_translation) {
+    SetDirty();
+    m_translation.x += p_translation.x;
+    m_translation.y += p_translation.y;
+    m_translation.z += p_translation.z;
+}
+
+void TransformComponent::Rotate(const Vector3f& p_euler) {
+    SetDirty();
+    glm::quat quaternion(m_rotation.w, m_rotation.x, m_rotation.y, m_rotation.z);
+    quaternion = glm::quat(p_euler) * quaternion;
+
+    m_rotation.x = quaternion.x;
+    m_rotation.y = quaternion.y;
+    m_rotation.z = quaternion.z;
+    m_rotation.w = quaternion.w;
+}
+
+void TransformComponent::SetLocalTransform(const Matrix4x4f& p_matrix) {
+    SetDirty();
+    Decompose(p_matrix, m_scale, m_rotation, m_translation);
+}
+
+void TransformComponent::MatrixTransform(const Matrix4x4f& p_matrix) {
+    SetDirty();
+    Decompose(p_matrix * GetLocalMatrix(), m_scale, m_rotation, m_translation);
+}
+
+void TransformComponent::UpdateTransformParented(const TransformComponent& p_parent) {
+    CRASH_NOW();
+    Matrix4x4f worldMatrix = GetLocalMatrix();
+    const Matrix4x4f& worldMatrixParent = p_parent.m_worldMatrix;
+    m_worldMatrix = worldMatrixParent * worldMatrix;
+}
+#pragma endregion TRANSFORM_COMPONENT
 
 #pragma region CAMERA_COMPONENT
 void PerspectiveCameraComponent::Update() {
@@ -111,5 +159,19 @@ RigidBodyComponent& RigidBodyComponent::InitGhost() {
 
 #pragma region ENVIRONMENT_COMPONENT
 #pragma endregion ENVIRONMENT_COMPONENT
+
+#pragma region FORCE_FIELD_COMPONENT
+void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+
+    if (p_archive.IsWriteMode()) {
+        p_archive << strength;
+        p_archive << radius;
+    } else {
+        p_archive >> strength;
+        p_archive >> radius;
+    }
+}
+#pragma endregion FORCE_FIELD_COMPONENT
 
 }  // namespace my

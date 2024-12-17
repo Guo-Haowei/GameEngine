@@ -1,9 +1,9 @@
 #pragma once
 #include "engine/core/math/angle.h"
 #include "engine/core/math/geomath.h"
-#include "engine/core/systems/entity.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/renderer.h"
+#include "engine/systems/ecs/entity.h"
 
 // include this file the last
 #include "cbuffer.hlsl.h"

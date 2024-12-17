@@ -4,7 +4,7 @@
 #include "engine/core/io/archive.h"
 #include "engine/core/math/matrix_transform.h"
 #include "engine/renderer/renderer.h"
-#include "engine/scene/transform_component.h"
+#include "engine/scene/scene_component.h"
 
 namespace my {
 

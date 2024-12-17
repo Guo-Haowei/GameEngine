@@ -3,9 +3,9 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/geometry.h"
-#include "engine/core/systems/component_manager.inl"
-#include "engine/core/systems/job_system.h"
 #include "engine/renderer/renderer.h"
+#include "engine/systems/ecs/component_manager.inl"
+#include "engine/systems/job_system/job_system.h"
 
 namespace my::ecs {
 

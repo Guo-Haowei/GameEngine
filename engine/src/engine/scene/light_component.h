@@ -3,6 +3,11 @@
 #include "engine/core/math/geomath.h"
 #include "shader_defines.hlsl.h"
 
+namespace YAML {
+class Node;
+class Emitter;
+}  // namespace YAML
+
 namespace my {
 
 class Archive;
@@ -35,6 +40,11 @@ public:
     void Update(const TransformComponent& p_transform);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    WARNING_PUSH()
+    WARNING_DISABLE(4100, "-Wunused-parameter")
+    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    WARNING_POP()
 
     const auto& GetMatrices() const { return m_lightSpaceMatrices; }
     const Vector3f& GetPosition() const { return m_position; }
