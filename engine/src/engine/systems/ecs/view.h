@@ -9,15 +9,16 @@ namespace my::ecs {
 
 template<Serializable T>
 class View {
+    using ViewContainer = std::vector<std::pair<Entity, int>>;
+
+public:
     template<typename U>
         requires std::is_same_v<T, std::remove_const_t<U>>
     class Iterator;
 
-    using ViewContainer = std::vector<std::pair<Entity, int>>;
     using iter = Iterator<T>;
     using const_iter = Iterator<const T>;
 
-public:
 #pragma region ITERATOR
     template<typename U>
         requires std::is_same_v<T, std::remove_const_t<U>>
