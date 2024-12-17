@@ -115,8 +115,43 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
     }
 }
 
+template<typename T>
+static void DumyAny(YAML::Emitter& p_out, const T& p_value, Archive&) {
+    p_out << p_value;
+}
+
+template<>
+static void DumyAny(YAML::Emitter& p_out, const ecs::Entity& p_value, Archive&) {
+    p_out << p_value.GetId();
+}
+
+template<>
+static void DumyAny(YAML::Emitter& p_out, const Vector3f& p_value, Archive&) {
+    p_out << YAML::BeginSeq;
+    p_out << p_value.x;
+    p_out << p_value.y;
+    p_out << p_value.z;
+    p_out << YAML::EndSeq;
+}
+
+template<>
+static void DumyAny(YAML::Emitter& p_out, const Vector4f& p_value, Archive&) {
+    p_out << YAML::BeginSeq;
+    p_out << p_value.x;
+    p_out << p_value.y;
+    p_out << p_value.z;
+    p_out << p_value.w;
+    p_out << YAML::EndSeq;
+}
+
+template<typename T>
+static void DumyKeyValuePair(YAML::Emitter& p_out, const char* p_key, const T& p_value, Archive& p_archive) {
+    p_out << YAML::Key << p_key << YAML::Value;
+    DumyAny(p_out, p_value, p_archive);
+}
+
 template<Serializable T>
-static void EmitComponent(YAML::Emitter& p_out,
+static void DumpComponent(YAML::Emitter& p_out,
                           const char* p_name,
                           ecs::Entity p_entity,
                           const Scene& p_scene,
@@ -131,12 +166,6 @@ static void EmitComponent(YAML::Emitter& p_out,
 }
 
 Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
-    YAML::Emitter out;
-    out << YAML::BeginMap;
-    out << YAML::Key << "version" << YAML::Value << SCENE_VERSION;
-    out << YAML::Key << "seed" << YAML::Value << ecs::Entity::GetSeed();
-    out << YAML::Key << "root" << YAML::Value << p_scene.m_root.GetId();
-
     std::unordered_set<uint32_t> entity_set;
 
     Archive archive;
@@ -150,6 +179,11 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     std::vector<uint32_t> entity_array(entity_set.begin(), entity_set.end());
     std::sort(entity_array.begin(), entity_array.end());
 
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << "version" << YAML::Value << SCENE_VERSION;
+    out << YAML::Key << "seed" << YAML::Value << ecs::Entity::GetSeed();
+    out << YAML::Key << "root" << YAML::Value << p_scene.m_root.GetId();
     out << YAML::Key << "entities" << YAML::Value;
     out << YAML::BeginSeq;
 
@@ -160,9 +194,9 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
         out << YAML::Key << "id" << YAML::Value << id;
 
         out.SetSeqFormat(YAML::Flow);
-        EmitComponent<NameComponent>(out, "name_component", entity, p_scene, archive);
-        EmitComponent<HierarchyComponent>(out, "hierarchy_component", entity, p_scene, archive);
-        EmitComponent<TransformComponent>(out, "transform_component", entity, p_scene, archive);
+#define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, archive);
+        REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
         out.SetSeqFormat(YAML::Block);
 
         out << YAML::EndMap;
@@ -185,22 +219,6 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
 #pragma region SCENE_COMPONENT_SERIALIZATION
-static void EmitVector3f(YAML::Emitter& p_out, const Vector3f& p_vec) {
-    p_out << YAML::BeginSeq;
-    p_out << p_vec.x;
-    p_out << p_vec.y;
-    p_out << p_vec.z;
-    p_out << YAML::EndSeq;
-}
-
-static void EmitVector4f(YAML::Emitter& p_out, const Vector4f& p_vec) {
-    p_out << YAML::BeginSeq;
-    p_out << p_vec.x;
-    p_out << p_vec.y;
-    p_out << p_vec.z;
-    p_out << YAML::EndSeq;
-}
-
 void NameComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.IsWriteMode()) {
         p_archive << m_name;
@@ -210,7 +228,7 @@ void NameComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 bool NameComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
-    p_out << YAML::Key << "name" << YAML::Value << m_name;
+    DumyKeyValuePair(p_out, "name", m_name, p_archive);
     return true;
 }
 
@@ -229,7 +247,7 @@ void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 bool HierarchyComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
-    p_out << YAML::Key << "parent_id" << YAML::Value << m_parentId.GetId();
+    DumyKeyValuePair(p_out, "parent_id", m_parentId, p_archive);
     return true;
 }
 
@@ -293,13 +311,10 @@ bool AnimationComponent::Undump(const YAML::Node& p_node, Archive& p_archive, ui
 }
 
 bool TransformComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
-    p_out << YAML::Key << "flags" << YAML::Value << m_flags;
-    p_out << YAML::Key << "translation" << YAML::Value;
-    EmitVector3f(p_out, m_translation);
-    p_out << YAML::Key << "rotation" << YAML::Value;
-    EmitVector4f(p_out, m_rotation);
-    p_out << YAML::Key << "scale" << YAML::Value;
-    EmitVector3f(p_out, m_scale);
+    DumyKeyValuePair(p_out, "flags", m_flags, p_archive);
+    DumyKeyValuePair(p_out, "translation", m_translation, p_archive);
+    DumyKeyValuePair(p_out, "rotation", m_rotation, p_archive);
+    DumyKeyValuePair(p_out, "scale", m_scale, p_archive);
     return true;
 }
 
@@ -344,6 +359,12 @@ bool ArmatureComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uin
     return true;
 }
 
+bool ObjectComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+    DumyKeyValuePair(p_out, "flags", flags, p_archive);
+    DumyKeyValuePair(p_out, "mesh_id", meshId, p_archive);
+    return true;
+}
+
 void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.IsWriteMode()) {
         p_archive << flags;
@@ -352,6 +373,15 @@ void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
         p_archive >> flags;
         p_archive >> meshId;
     }
+}
+
+bool ObjectComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    CRASH_NOW();
+    return true;
+}
+
+bool PerspectiveCameraComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+    return true;
 }
 
 void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -380,12 +410,8 @@ void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
-bool PerspectiveCameraComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
-
-    return true;
-}
-
 bool PerspectiveCameraComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    CRASH_NOW();
     SetDirty();
     return true;
 }
