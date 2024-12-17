@@ -40,8 +40,8 @@ private:
     ecs::ComponentLibrary m_componentLib;
 
 #pragma region WORLD_COMPONENTS_REGISTRY
-#define REGISTER_COMPONENT(T, VER)                                                                                 \
-    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);                     \
+#define REGISTER_COMPONENT_NAME(T, NAME, VER)                                                                      \
+    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>(NAME, VER);                             \
     template<>                                                                                                     \
     inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }                \
     template<>                                                                                                     \
@@ -63,6 +63,8 @@ private:
     template<>                                                                                                     \
     inline ecs::View<const T> View() const { return ecs::View<const T>(m_##T##s); }                                \
     enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
+
+#define REGISTER_COMPONENT(T, VER) REGISTER_COMPONENT_NAME(T, "World::" #T, VER)
 
 #pragma endregion WORLD_COMPONENTS_REGISTRY
 
@@ -121,6 +123,8 @@ public:
     REGISTER_COMPONENT(RigidBodyComponent, 0);
     REGISTER_COMPONENT(ClothComponent, 0);
     REGISTER_COMPONENT(EnvironmentComponent, 0);
+
+    // @NOTE: do not delete stale components, still need them for serialization
 
 public:
     bool Serialize(Archive& p_archive);

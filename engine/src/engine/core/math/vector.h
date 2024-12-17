@@ -9,10 +9,10 @@ concept Arithmetic = std::is_arithmetic_v<T>;
 struct VectorBaseClass {};
 
 template<typename T>
-concept VectorN = std::is_base_of_v<VectorBaseClass, T>;
+concept VectorType = std::is_base_of_v<VectorBaseClass, T>;
 
 template<typename T>
-concept VectorNf =
+concept FVectorType =
     std::is_base_of_v<VectorBaseClass, T> &&
     std::is_floating_point_v<decltype(std::declval<T>().x)>;
 
@@ -21,8 +21,8 @@ WARNING_DISABLE(4201, "-Wgnu-anonymous-struct")
 WARNING_DISABLE(4201, "-Wnested-anon-types")
 WARNING_DISABLE(4201, "-Wpadded")
 
-template<typename T, int N>
-    requires Arithmetic<T> && (N >= 2 && N <= 4)
+template<Arithmetic T, int N>
+    requires(N >= 2 && N <= 4)
 struct VectorBase : VectorBaseClass {
     using Self = VectorBase<T, N>;
 
@@ -50,18 +50,15 @@ struct VectorBase : VectorBaseClass {
     }
 };
 
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 struct Vector2;
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 struct Vector3;
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 struct Vector4;
 
-template<typename T, int N, int A, int B, int C, int D>
-    requires Arithmetic<T> && (A <= N) && (B <= N)
+template<Arithmetic T, int N, int A, int B, int C, int D>
+    requires(A <= N) && (B <= N)
 struct Swizzle2 {
     T d[N];
 
@@ -74,8 +71,8 @@ struct Swizzle2 {
     }
 };
 
-template<typename T, int N, int A, int B, int C, int D>
-    requires Arithmetic<T> && (A <= N) && (B <= N) && (C <= N)
+template<Arithmetic T, int N, int A, int B, int C, int D>
+    requires(A <= N) && (B <= N) && (C <= N)
 struct Swizzle3 {
     T d[N];
 
@@ -88,8 +85,8 @@ struct Swizzle3 {
     }
 };
 
-template<typename T, int N, int A, int B, int C, int D>
-    requires Arithmetic<T> && (A <= N) && (B <= N) && (C <= N) && (D <= N)
+template<Arithmetic T, int N, int A, int B, int C, int D>
+    requires(A <= N) && (B <= N) && (C <= N) && (D <= N)
 struct Swizzle4 {
     T d[N];
 
@@ -102,8 +99,7 @@ struct Swizzle4 {
     }
 };
 
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 struct Vector2 : VectorBase<T, 2> {
     using Base = VectorBase<T, 2>;
     using Self = Vector2<T>;
@@ -127,8 +123,8 @@ struct Vector2 : VectorBase<T, 2> {
                                       y(p_y) {
     }
 
-    template<typename U>
-        requires Arithmetic<U> && (!std::is_same<T, U>::value)
+    template<Arithmetic U>
+        requires(!std::is_same<T, U>::value)
     explicit constexpr Vector2(U p_x, U p_y) : x(static_cast<T>(p_x)),
                                                y(static_cast<T>(p_y)) {
     }
@@ -144,8 +140,7 @@ struct Vector2 : VectorBase<T, 2> {
     static const Self UnitY;
 };
 
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 struct Vector3 : VectorBase<T, 3> {
     using Base = VectorBase<T, 3>;
     using Self = Vector3<T>;
@@ -200,8 +195,7 @@ struct Vector3 : VectorBase<T, 3> {
     static const Self UnitZ;
 };
 
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 struct Vector4 : VectorBase<T, 4> {
     using Base = VectorBase<T, 4>;
     using Self = Vector4<T>;
@@ -272,52 +266,37 @@ struct Vector4 : VectorBase<T, 4> {
 
 WARNING_POP()
 
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector2<T> Vector2<T>::Zero(static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector2<T> Vector2<T>::One(static_cast<T>(1));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector2<T> Vector2<T>::UnitX(static_cast<T>(1), static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector2<T> Vector2<T>::UnitY(static_cast<T>(0), static_cast<T>(1));
 
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector3<T> Vector3<T>::Zero(static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector3<T> Vector3<T>::One(static_cast<T>(1));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector3<T> Vector3<T>::UnitX(static_cast<T>(1), static_cast<T>(0), static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector3<T> Vector3<T>::UnitY(static_cast<T>(0), static_cast<T>(1), static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector3<T> Vector3<T>::UnitZ(static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector4<T> Vector4<T>::Zero(static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector4<T> Vector4<T>::One(static_cast<T>(1));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector4<T> Vector4<T>::UnitX(static_cast<T>(1), static_cast<T>(0), static_cast<T>(0), static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector4<T> Vector4<T>::UnitY(static_cast<T>(0), static_cast<T>(1), static_cast<T>(0), static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector4<T> Vector4<T>::UnitZ(static_cast<T>(0), static_cast<T>(0), static_cast<T>(1), static_cast<T>(0));
-template<typename T>
-    requires Arithmetic<T>
+template<Arithmetic T>
 const Vector4<T> Vector4<T>::UnitW(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 
 using NewVector2i = Vector2<int>;

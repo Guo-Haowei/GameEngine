@@ -719,10 +719,7 @@ bool Scene::Serialize(Archive& p_archive) {
 
             std::string key;
             p_archive >> key;
-            // @HACK: fix this hard code
-            if (key == "World::ScriptComponent") {
-                key = "World::LuaScriptComponent";
-            }
+
             auto it = m_componentLib.m_entries.find(key);
             if (it == m_componentLib.m_entries.end()) {
                 LOG_ERROR("scene corrupted");
