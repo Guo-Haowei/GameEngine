@@ -3,7 +3,7 @@
 
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
-#include "engine/core/systems/job_system.h"
+#include "engine/systems/job_system/job_system.h"
 #include "engine/core/math/geomath.h"
 #include "engine/core/framework/engine.h"
 #include "engine/core/math/color.h"

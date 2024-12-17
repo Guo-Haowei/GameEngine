@@ -1,10 +1,10 @@
 #pragma once
+#include "engine/core/math/aabb.h"
 #include "engine/core/math/color.h"
 
 namespace my {
 class PerspectiveCameraComponent;
 class Scene;
-
 }  // namespace my
 
 namespace my::renderer {
@@ -20,10 +20,9 @@ void BeginFrame();
 
 void EndFrame();
 
-void AddLine(const Vector3f& p_a,
-             const Vector3f& p_b,
-             const Color& p_color,
-             float p_thickness = 1.0f);
+void AddDebugCube(const AABB& p_aabb,
+                  const Color& p_color,
+                  const Matrix4x4f* p_transform = nullptr);
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
 

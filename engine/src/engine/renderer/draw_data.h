@@ -1,9 +1,9 @@
 #pragma once
 #include "engine/core/math/angle.h"
 #include "engine/core/math/geomath.h"
-#include "engine/core/systems/entity.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/renderer.h"
+#include "engine/systems/ecs/entity.h"
 
 // include this file the last
 #include "cbuffer.hlsl.h"
@@ -114,19 +114,11 @@ struct DrawData {
 
     std::vector<UpdateBuffer> updateBuffer;
 
-    // 3D lines
-    struct LineSegment {
-        Vector3f a;
-        Vector3f b;
-        float thickness;
-        Color color;
-    };
-
-    struct LineContext {
-        std::vector<LineSegment> lines;
+    struct DebugDrawContext {
         std::vector<Vector3f> positions;
         std::vector<Color> colors;
-    } lineContext;
+        uint32_t drawCount;
+    } debugDrawContext;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

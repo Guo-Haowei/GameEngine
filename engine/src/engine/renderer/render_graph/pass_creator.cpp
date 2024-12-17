@@ -467,16 +467,17 @@ static void LightingPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
     DrawBatchesGeometry(p_data, pass.transparent);
 
-    // draw debug data
-    if (gm.m_lineBuffers && !p_data.lineContext.positions.empty()) {
-        const auto& context = p_data.lineContext;
+    auto& draw_context = p_data.debugDrawContext;
+    if (gm.m_lineBuffers && draw_context.drawCount) {
+        gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
         gm.SetPipelineState(PSO_DEBUG_DRAW);
-        gm.UpdateBuffer(renderer::CreateDesc(context.positions),
+
+        gm.UpdateBuffer(renderer::CreateDesc(draw_context.positions),
                         gm.m_lineBuffers->vertexBuffers[0].get());
-        gm.UpdateBuffer(renderer::CreateDesc(context.colors),
+        gm.UpdateBuffer(renderer::CreateDesc(draw_context.colors),
                         gm.m_lineBuffers->vertexBuffers[6].get());
         gm.SetMesh(gm.m_lineBuffers.get());
-        gm.DrawArrays((uint32_t)context.lines.size() * 2);
+        gm.DrawArrays(draw_context.drawCount);
     }
 }
 

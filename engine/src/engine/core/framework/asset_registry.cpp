@@ -1,7 +1,8 @@
 #include "asset_registry.h"
 
+#include <yaml-cpp/yaml.h>
+
 #include <fstream>
-#include <nlohmann/json.hpp>
 
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_manager.h"
@@ -11,28 +12,33 @@ namespace my {
 namespace fs = std::filesystem;
 
 auto AssetRegistry::InitializeImpl() -> Result<void> {
+    // @TODO: refactor
     // Always load assets
-    fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
-    fs::path always_load = assets_root / "alwaysload.json";
-    std::ifstream file(always_load);
-    if (file) {
-        using json = nlohmann::json;
-        json data = json::parse(file);
 
-        DEV_ASSERT(data.is_array());
+    fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
+    fs::path always_load_path = assets_root / "alwaysload.yaml";
+    std::ifstream file(always_load_path);
+    if (file) {
+        YAML::Node node = YAML::Load(file);
+
+        const auto& files = node["files"];
+        if (!files.IsSequence()) {
+            return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "failed to parse {}, error: 'files' not found", always_load_path.string());
+        }
 
         std::vector<IAsset::Meta> asset_bundle;
 
-        for (const auto& meta_json : data) {
-            // const auto& type_json = meta_json["type"];
-            const auto& path_json = meta_json["path"];
-            if (path_json.is_string()) {
-                IAsset::Meta meta_data;
-                meta_data.path = path_json;
-                if (!meta_data.path.empty()) {
-                    meta_data.handle = meta_data.path;
-                    asset_bundle.emplace_back(std::move(meta_data));
-                }
+        for (const auto& item : files) {
+            const auto& path = item["path"];
+            if (!path.IsScalar()) {
+                CRASH_NOW();
+            }
+
+            IAsset::Meta meta_data;
+            meta_data.path = path.as<std::string>();
+            if (!meta_data.path.empty()) {
+                meta_data.handle = meta_data.path;
+                asset_bundle.emplace_back(std::move(meta_data));
             }
         }
 

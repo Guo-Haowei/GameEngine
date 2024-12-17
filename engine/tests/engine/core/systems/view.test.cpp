@@ -2,9 +2,15 @@
 
 namespace my::ecs {
 
+template<typename T>
+static inline void CheckConst(T&&) {
+    static_assert(std::is_const_v<std::remove_reference_t<T>>);
+}
+
 TEST(view, iterator) {
     Entity::SetSeed();
     Scene scene;
+    const Scene& const_scene = scene;
     for (int i = 0; i < 4; ++i) {
         scene.CreateNameEntity(std::format("entity_{}", i));
     }
@@ -16,24 +22,17 @@ TEST(view, iterator) {
         "entity_33",
     };
 
-    {
-        Scene& p_scene = scene;
-        auto view = p_scene.View<NameComponent>();
-        int i = 0;
-        for (auto [id, name] : view) {
-            name.GetNameRef().push_back(static_cast<char>('0' + i));
-            ++i;
-        }
+    int i = 0;
+    for (auto [id, name] : scene.View<NameComponent>()) {
+        name.GetNameRef().push_back(static_cast<char>('0' + i));
+        ++i;
     }
 
-    {
-        const Scene& p_scene = scene;
-        auto view = p_scene.View<const NameComponent>();
-        int i = 0;
-        for (auto [id, name] : view) {
-            EXPECT_EQ(name.GetName(), names[i]);
-            ++i;
-        }
+    i = 0;
+    for (auto [id, name] : const_scene.View<NameComponent>()) {
+        CheckConst(name);
+        EXPECT_EQ(name.GetName(), names[i]);
+        ++i;
     }
 }
 

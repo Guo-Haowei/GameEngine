@@ -2,9 +2,9 @@ set(TARGET_NAME engine)
 
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.inl"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.mm"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.lua"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.natvis"
 )
 set(FILTERED_SRC "")
@@ -57,6 +57,7 @@ set(TARGET_LIBS
     lua
     ${BULLET_LIBRARIES}
     glm::glm
+    yaml-cpp::yaml-cpp
 )
 
 if(WIN32)

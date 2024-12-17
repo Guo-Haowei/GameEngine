@@ -1,5 +1,7 @@
 #include "mesh_component.h"
 
+#include "engine/core/io/archive.h"
+
 namespace my {
 
 template<typename T>

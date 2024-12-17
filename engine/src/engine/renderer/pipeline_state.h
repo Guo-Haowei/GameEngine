@@ -19,16 +19,16 @@ struct InputLayoutDesc {
 };
 
 struct RasterizerDesc {
-    FillMode fillMode = FillMode::SOLID;
-    CullMode cullMode = CullMode::BACK;
-    bool frontCounterClockwise = false;
-    int depthBias = 0;
-    float depthBiasClamp = 0.0f;
-    float slopeScaledDepthBias = 0.0f;
-    bool depthClipEnable = false;
-    bool scissorEnable = false;
-    bool multisampleEnable = false;
-    bool antialiasedLineEnable = false;
+    FillMode fillMode{ FillMode::SOLID };
+    CullMode cullMode{ CullMode::BACK };
+    bool frontCounterClockwise{ false };
+    int depthBias{ 0 };
+    float depthBiasClamp{ 0.0f };
+    float slopeScaledDepthBias{ 0.0f };
+    bool depthClipEnable{ false };
+    bool scissorEnable{ false };
+    bool multisampleEnable{ false };
+    bool antialiasedLineEnable{ false };
 };
 
 constexpr uint8_t DEFAULT_STENCIL_READ_MASK = 0xff;

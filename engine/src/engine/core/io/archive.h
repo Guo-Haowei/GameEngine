@@ -15,6 +15,21 @@ public:
     void Close();
     bool IsWriteMode() const;
 
+    template<int N>
+    Archive& operator<<(const char (&p_value)[N]) {
+        return WriteString(p_value, N - 1);
+    }
+
+    template<int N>
+    Archive& operator>>(char (&p_value)[N]) {
+        size_t string_length = 0;
+        Read(string_length);
+        // @TODO: proper error checking
+        DEV_ASSERT(string_length < N);
+        Read(p_value, string_length);
+        return *this;
+    }
+
     Archive& operator<<(const char* p_value) {
         return WriteString(p_value, strlen(p_value));
     }
@@ -31,6 +46,7 @@ public:
         return *this;
     }
 
+    // @TODO: use concept
     template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
     Archive& operator<<(const std::vector<T>& p_value) {
         uint64_t size = p_value.size();

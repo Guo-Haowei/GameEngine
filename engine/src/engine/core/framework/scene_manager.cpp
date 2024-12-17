@@ -10,6 +10,9 @@
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 
+// @TODO: refactor
+#include "engine/scene/scene_serialization.h"
+
 namespace my {
 
 using ecs::Entity;
@@ -18,6 +21,12 @@ namespace fs = std::filesystem;
 auto SceneManager::InitializeImpl() -> Result<void> {
     m_scene = m_app->CreateInitialScene();
     BumpRevision();
+
+    LOG_ERROR("TODO: remove this code");
+    auto res = SaveSceneText("tmp.yaml", *m_scene);
+    if (!res) {
+        CRASH_NOW();
+    }
 
     const std::string& path = DVAR_GET_STRING(project);
     if (!path.empty()) {

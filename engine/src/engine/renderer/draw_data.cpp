@@ -252,7 +252,8 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_HIGHLIGHT_SELECT));
     cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
 
-    for (auto [entity, environment] : p_config.scene.View<const EnvironmentComponent>()) {
+    // @TODO: fix
+    for (auto const [entity, environment] : p_config.scene.View<EnvironmentComponent>()) {
         cache.c_ambientColor = environment.ambient.color;
         if (!environment.sky.texturePath.empty()) {
             environment.sky.textureAsset = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(environment.sky.texturePath);
@@ -280,7 +281,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
     auto& point_shadow_cache = p_out_data.pointShadowCache;
 
     int idx = 0;
-    for (auto [light_entity, light_component] : p_scene.View<const LightComponent>()) {
+    for (auto [light_entity, light_component] : p_config.scene.View<LightComponent>()) {
         const TransformComponent* light_transform = p_scene.GetComponent<TransformComponent>(light_entity);
         const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(light_entity);
 
@@ -550,10 +551,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     }
 
     // @TODO: update soft body
-    for (auto [entity, mesh] : p_config.scene.View<const MeshComponent>()) {
-        if (!(mesh.flags & MeshComponent::DYNAMIC)) {
-            continue;
-        }
+    for (auto [entity, mesh] : p_config.scene.View<MeshComponent>()) {
         if (!mesh.updatePositions.empty()) {
             p_out_data.updateBuffer.emplace_back(DrawData::UpdateBuffer{
                 .positions = std::move(mesh.updatePositions),

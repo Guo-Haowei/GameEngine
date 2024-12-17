@@ -15,6 +15,7 @@
 #include "engine/core/framework/physics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/framework/script_manager.h"
+#include "engine/core/io/file_access.h"
 #include "engine/core/math/vector_math.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
@@ -95,6 +96,7 @@ void Application::RegisterModule(Module* p_module) {
 }
 
 auto Application::SetupModules() -> Result<void> {
+    // @TODO: configure so it's easier for user to override
     m_assetManager = new AssetManager();
     m_assetRegistry = new AssetRegistry();
     m_scriptManager = new ScriptManager();

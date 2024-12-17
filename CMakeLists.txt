@@ -23,6 +23,7 @@ find_package(lua REQUIRED)
 find_package(sol2 REQUIRED)
 find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
 find_package(Stb REQUIRED)
+find_package(yaml-cpp CONFIG REQUIRED)
 
 ################################################################################
 if(NOT APPLE)

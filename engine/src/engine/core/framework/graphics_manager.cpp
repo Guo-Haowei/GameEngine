@@ -271,7 +271,7 @@ auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::sha
     desc.enabledVertexCount = count;
     desc.drawCount = static_cast<uint32_t>(p_mesh.indices.empty() ? p_mesh.positions.size() : p_mesh.indices.size());
 
-    for (int index = 0; index < attribs.size(); ++index) {
+    for (int index = 0; index < (int)attribs.size(); ++index) {
         const auto& in = p_mesh.attributes[std::to_underlying(attribs[index])];
         auto& layout = desc.vertexLayout[index];
         layout.slot = index;

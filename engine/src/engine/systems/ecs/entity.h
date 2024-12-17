@@ -1,5 +1,8 @@
 #pragma once
-#include "engine/core/io/archive.h"
+
+namespace my {
+class Archive;
+}
 
 namespace my::ecs {
 
@@ -24,8 +27,6 @@ public:
     void MakeInvalid() { m_id = INVALID_ID; }
 
     constexpr uint32_t GetId() const { return m_id; }
-
-    void Serialize(Archive& p_archive);
 
     static Entity Create();
     static uint32_t GetSeed();

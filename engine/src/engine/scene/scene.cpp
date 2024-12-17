@@ -3,9 +3,18 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/geometry.h"
-#include "engine/core/systems/job_system.h"
 #include "engine/renderer/renderer.h"
-#include "engine/scene/scene_version.h"
+#include "engine/systems/ecs/component_manager.inl"
+#include "engine/systems/job_system/job_system.h"
+
+namespace my::ecs {
+
+// instantiate ComponentManagers
+#define REGISTER_COMPONENT(TYPE, ...) template class ComponentManager<TYPE>;
+REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
+
+}  // namespace my::ecs
 
 namespace my {
 
@@ -14,18 +23,22 @@ using jobsystem::Context;
 static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 
 // @TODO: refactor
-#if 1
-#define JS_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
-    CTX.Dispatch(                                         \
-        static_cast<uint32_t>(GetCount<TYPE>()),          \
-        SUBCOUNT,                                         \
+#define JS_FORCE_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
+    CTX.Dispatch(                                               \
+        static_cast<uint32_t>(GetCount<TYPE>()),                \
+        SUBCOUNT,                                               \
         [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.jobIndex; do { BODY; } while(0); })
-#else
-#define JS_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)       \
+
+#define JS_NO_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)    \
     (void)(CTX);                                                \
     for (size_t INDEX = 0; INDEX < GetCount<TYPE>(); ++INDEX) { \
         BODY;                                                   \
     }
+
+#if 1
+#define JS_PARALLEL_FOR JS_FORCE_PARALLEL_FOR
+#else
+#define JS_PARALLEL_FOR JS_NO_PARALLEL_FOR
 #endif
 
 void Scene::Update(float p_time_step) {
@@ -55,17 +68,6 @@ void Scene::Update(float p_time_step) {
     for (auto [entity, camera] : m_PerspectiveCameraComponents) {
         camera.Update();
     }
-
-    // for (auto [entity, light] : m_HemisphereLightComponents) {
-    //     if (!light.m_path.empty()) {
-    //         if (!light.m_asset) {
-    //             auto res = AssetRegistry::GetSingleton().RequestAssetSync(light.m_path);
-    //             if (res) {
-    //                 light.m_asset = dynamic_cast<const ImageAsset*>(*res);
-    //             }
-    //         }
-    //     }
-    // }
 }
 
 void Scene::Copy(Scene& p_other) {
@@ -671,77 +673,6 @@ void Scene::UpdateArmature(size_t p_index) {
     }
 };
 
-bool Scene::Serialize(Archive& p_archive) {
-    uint32_t version = UINT_MAX;
-    bool is_read_mode = !p_archive.IsWriteMode();
-    if (is_read_mode) {
-        uint32_t magic;
-        uint32_t seed = ecs::Entity::MAX_ID;
-
-        p_archive >> magic;
-        ERR_FAIL_COND_V_MSG(magic != SCENE_MAGIC, false, "file corrupted");
-        p_archive >> version;
-        ERR_FAIL_COND_V_MSG(version > SCENE_MAGIC, false, std::format("file version {} is greater than max version {}", version, SCENE_VERSION));
-        p_archive >> seed;
-        ecs::Entity::SetSeed(seed);
-
-    } else {
-        p_archive << SCENE_MAGIC;
-        p_archive << SCENE_VERSION;
-        p_archive << ecs::Entity::GetSeed();
-    }
-
-    m_root.Serialize(p_archive);
-
-    // dummy camera
-    if (version < 12) {
-        if (is_read_mode) {
-            PerspectiveCameraComponent old_camera;
-            old_camera.Serialize(p_archive, version);
-
-            auto camera_id = CreatePerspectiveCameraEntity("editor_camera", old_camera.GetWidth(), old_camera.GetHeight());
-            PerspectiveCameraComponent* new_camera = GetComponent<PerspectiveCameraComponent>(camera_id);
-            *new_camera = old_camera;
-            new_camera->SetEditorCamera();
-            AttachChild(camera_id, m_root);
-        }
-    }
-
-    constexpr uint64_t has_next_flag = 6368519827137030510;
-    if (p_archive.IsWriteMode()) {
-        for (const auto& it : m_componentLib.m_entries) {
-            p_archive << has_next_flag;
-            p_archive << it.first;  // write name
-            it.second.m_manager->Serialize(p_archive, version);
-        }
-        p_archive << uint64_t(0);
-        return true;
-    } else {
-        for (;;) {
-            uint64_t has_next = 0;
-            p_archive >> has_next;
-            if (has_next != has_next_flag) {
-                return true;
-            }
-
-            std::string key;
-            p_archive >> key;
-            // @HACK: fix this hard code
-            if (key == "World::ScriptComponent") {
-                key = "World::LuaScriptComponent";
-            }
-            auto it = m_componentLib.m_entries.find(key);
-            if (it == m_componentLib.m_entries.end()) {
-                LOG_ERROR("scene corrupted");
-                return false;
-            }
-            if (!it->second.m_manager->Serialize(p_archive, version)) {
-                return false;
-            }
-        }
-    }
-}
-
 bool Scene::RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray) {
     ObjectComponent* object = GetComponent<ObjectComponent>(p_object_id);
     MeshComponent* mesh = GetComponent<MeshComponent>(object->meshId);
@@ -790,7 +721,7 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
-    JS_PARALLEL_FOR(LightComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
+    JS_NO_PARALLEL_FOR(LightComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {

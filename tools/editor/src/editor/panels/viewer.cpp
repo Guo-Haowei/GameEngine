@@ -67,28 +67,6 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
     }
 }
 
-void DrawGrid(const float p_grid_size) {
-    for (float f = -p_grid_size; f <= p_grid_size; f += 1.f) {
-        for (int dir = 0; dir < 2; dir++) {
-            Vector3f p0(dir ? -p_grid_size : f, 0.f, dir ? f : -p_grid_size);
-            Vector3f p1(dir ? p_grid_size : f, 0.f, dir ? f : p_grid_size);
-
-            auto color = Color::Hex(0x808080);
-            color = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? Color::Hex(0x909090) : color;
-            color = (fabsf(f) < FLT_EPSILON) ? Color::Hex(0x404040) : color;
-            if (f == 0.0f) {
-                color = Color::Hex(dir == 1 ? 0x303090 : 0x903030);
-            }
-
-            float thickness = 1.f;
-            thickness = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? 1.5f : thickness;
-            thickness = (fabsf(f) < FLT_EPSILON) ? 2.3f : thickness;
-
-            renderer::AddLine(p0, p1, color, thickness);
-        }
-    }
-}
-
 void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
     const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
@@ -133,13 +111,22 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
 
     bool show_editor = DVAR_GET_BOOL(show_editor);
     if (show_editor) {
-        Matrix4x4f identity(1);
-        // draw grid
-        DrawGrid(10.0f);
+        Matrix4x4f identity(1.0f);
+        ImGuizmo::DrawGrid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
     }
 
     ecs::Entity id = m_editor.GetSelectedEntity();
     TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
+    if (transform_component) {
+        LightComponent* light = p_scene.GetComponent<LightComponent>(id);
+        if (light && light->GetType() == LIGHT_TYPE_INFINITE) {
+            const auto& matrix = transform_component->GetWorldMatrix();
+            ImGuizmo::DrawCone(p_camera.GetProjectionViewMatrix(), matrix);
+        }
+    }
+
+    //renderer::AddDebugCube(AABB(Vector3f(-1), Vector3f(+2)),
+    //                       Color(0.5f, 0.3f, 0.6f, 0.5f));
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION p_operation, CommandType p_type) {
         if (transform_component) {

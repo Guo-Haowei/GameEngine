@@ -2,7 +2,7 @@
 #include "engine/core/framework/layer.h"
 #include "engine/core/math/geomath.h"
 #include "the_aviator_defines.h"
-#include "engine/core/systems/entity.h"
+#include "engine/systems/ecs/entity.h"
 
 namespace my {
 

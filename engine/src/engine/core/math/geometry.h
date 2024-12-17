@@ -3,6 +3,11 @@
 
 namespace my {
 
+void BoxWireFrameHelper(const Vector3f& p_min,
+                        const Vector3f& p_max,
+                        std::vector<Vector3f>& p_out_positions,
+                        std::vector<uint32_t>& p_out_indices);
+
 MeshComponent MakePlaneMesh(const Vector3f& p_scale = Vector3f(0.5f));
 
 MeshComponent MakePlaneMesh(const Vector3f& p_point_0,

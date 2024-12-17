@@ -3,6 +3,7 @@
 #include "editor_layer.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/drivers/windows/dialog.h"
+#include "engine/scene/scene_serialization.h"
 // @TODO: refactor
 #include "engine/core/framework/scene_manager.h"
 
@@ -98,14 +99,11 @@ void SaveProjectCommand::Execute(Scene& p_scene) {
 
     DVAR_SET_STRING(project, path.string());
 
-    Archive archive;
-    if (!archive.OpenWrite(path.string())) {
-        return;
+    if (auto res = SaveSceneBinary(path.string(), p_scene); !res) {
+        CRASH_NOW();
     }
 
-    if (p_scene.Serialize(archive)) {
-        LOG_OK("scene saved to '{}'", path.string());
-    }
+    LOG_OK("scene saved to '{}'", path.string());
 }
 
 /// RedoViewerCommand

@@ -2,25 +2,44 @@
 #include "engine/assets/asset.h"
 #include "engine/core/base/noncopyable.h"
 #include "engine/core/math/ray.h"
-#include "engine/core/systems/component_manager.h"
-#include "engine/core/systems/view.h"
 #include "engine/scene/scene_component.h"
+#include "engine/systems/ecs/component_manager.h"
+#include "engine/systems/ecs/view.h"
 // @TODO: refactor all components
 #include "engine/scene/collider_component.h"
-#include "engine/scene/force_field_component.h"
-#include "engine/scene/hierarchy_component.h"
 #include "engine/scene/light_component.h"
 #include "engine/scene/material_component.h"
 #include "engine/scene/mesh_component.h"
 #include "engine/scene/particle_emitter_component.h"
-#include "engine/scene/transform_component.h"
 
-namespace my {
-
-namespace jobsystem {
+namespace my::jobsystem {
 class Context;
 }
 
+namespace my {
+
+#define REGISTER_COMPONENT_LIST                                                            \
+    REGISTER_COMPONENT(NameComponent, "World::NameComponent", 0)                           \
+    REGISTER_COMPONENT(TransformComponent, "World::TransformComponent", 0)                 \
+    REGISTER_COMPONENT(HierarchyComponent, "World::HierarchyComponent", 0)                 \
+    REGISTER_COMPONENT(MaterialComponent, "World::MaterialComponent", 0)                   \
+    REGISTER_COMPONENT(MeshComponent, "World::MeshComponent", 0)                           \
+    REGISTER_COMPONENT(ObjectComponent, "World::ObjectComponent", 0)                       \
+    REGISTER_COMPONENT(LightComponent, "World::LightComponent", 0)                         \
+    REGISTER_COMPONENT(ArmatureComponent, "World::ArmatureComponent", 0)                   \
+    REGISTER_COMPONENT(AnimationComponent, "World::AnimationComponent", 0)                 \
+    REGISTER_COMPONENT(BoxColliderComponent, "World::BoxColliderComponent", 0)             \
+    REGISTER_COMPONENT(MeshColliderComponent, "World::MeshColliderComponent", 0)           \
+    REGISTER_COMPONENT(ParticleEmitterComponent, "World::ParticleEmitterComponent", 0)     \
+    REGISTER_COMPONENT(ForceFieldComponent, "World::ForceFieldComponent", 0)               \
+    REGISTER_COMPONENT(LuaScriptComponent, "World::LuaScriptComponent", 0)                 \
+    REGISTER_COMPONENT(NativeScriptComponent, "World::NativeScriptComponent", 0)           \
+    REGISTER_COMPONENT(PerspectiveCameraComponent, "World::PerspectiveCameraComponent", 0) \
+    REGISTER_COMPONENT(RigidBodyComponent, "World::RigidBodyComponent", 0)                 \
+    REGISTER_COMPONENT(ClothComponent, "World::ClothComponent", 0)                         \
+    REGISTER_COMPONENT(EnvironmentComponent, "World::EnvironmentComponent", 0)
+
+// @TODO: refactor
 struct PhysicsWorldContext;
 
 enum class PhysicsMode : uint8_t {
@@ -31,17 +50,51 @@ enum class PhysicsMode : uint8_t {
 };
 
 class Scene : public NonCopyable, public IAsset {
+    ecs::ComponentLibrary m_componentLib;
+
 public:
     static constexpr const char* EXTENSION = ".scene";
 
     Scene() : IAsset(AssetType::SCENE) {}
 
-private:
-    ecs::ComponentLibrary m_componentLib;
+public:
+    template<Serializable T>
+    const T* GetComponent(const ecs::Entity&) const { return nullptr; }
+    template<Serializable T>
+    T* GetComponent(const ecs::Entity&) { return nullptr; }
+    template<Serializable T>
+    bool Contains(const ecs::Entity&) const { return false; }
+    template<Serializable T>
+    size_t GetCount() const { return 0; }
+    template<Serializable T>
+    ecs::Entity GetEntity(size_t) const { return ecs::Entity::INVALID; }
+    template<Serializable T>
+    T& Create(const ecs::Entity&) { return *(T*)(nullptr); }
+
+    template<Serializable T>
+    inline T& GetComponentByIndex(size_t) { return *(T*)0; }
+    template<Serializable T>
+    inline ecs::Entity GetEntityByIndex(size_t) { return ecs::Entity::INVALID; }
+
+    template<typename T>
+    inline ecs::View<T> View() {
+        static_assert(0, "this code should never instantiate");
+        struct Dummy {};
+        ecs::ComponentManager<Dummy> dummyManager;
+        return ecs::View(dummyManager);
+    }
+
+    template<typename T>
+    inline const ecs::View<T> View() const {
+        static_assert(0, "this code should never instantiate");
+        struct Dummy {};
+        ecs::ComponentManager<Dummy> dummyManager;
+        return ecs::View(dummyManager);
+    }
 
 #pragma region WORLD_COMPONENTS_REGISTRY
-#define REGISTER_COMPONENT(T, VER)                                                                                 \
-    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>("World::" #T, VER);                     \
+#define REGISTER_COMPONENT(T, NAME, VER)                                                                           \
+    ecs::ComponentManager<T>& m_##T##s = m_componentLib.RegisterManager<T>(NAME, VER);                             \
     template<>                                                                                                     \
     inline T& GetComponentByIndex<T>(size_t p_index) { return m_##T##s.m_componentArray[p_index]; }                \
     template<>                                                                                                     \
@@ -61,70 +114,14 @@ private:
     template<>                                                                                                     \
     inline ecs::View<T> View() { return ecs::View<T>(m_##T##s); }                                                  \
     template<>                                                                                                     \
-    inline ecs::View<const T> View() const { return ecs::View<const T>(m_##T##s); }                                \
-    enum { __DUMMY_ENUM_TO_FORCE_SEMI_COLON_##T }
+    inline const ecs::View<T> View() const { return ecs::View<T>(m_##T##s); }
 
 #pragma endregion WORLD_COMPONENTS_REGISTRY
 
-public:
-    template<typename T>
-    const T* GetComponent(const ecs::Entity&) const { return nullptr; }
-    template<typename T>
-    T* GetComponent(const ecs::Entity&) { return nullptr; }
-    template<typename T>
-    bool Contains(const ecs::Entity&) const { return false; }
-    template<typename T>
-    size_t GetCount() const { return 0; }
-    template<typename T>
-    ecs::Entity GetEntity(size_t) const { return ecs::Entity::INVALID; }
-    template<typename T>
-    T& Create(const ecs::Entity&) { return *(T*)(nullptr); }
-
-    template<typename T>
-    inline T& GetComponentByIndex(size_t) { return *(T*)0; }
-    template<typename T>
-    inline ecs::Entity GetEntityByIndex(size_t) { return ecs::Entity::INVALID; }
-
-    template<typename T>
-    inline ecs::View<T> View() {
-        static_assert(0, "this code should never instantiate");
-        struct Dummy {};
-        ecs::ComponentManager<Dummy> dummyManager;
-        return ecs::View(dummyManager);
-    }
-
-    template<typename T>
-        requires std::is_const_v<std::remove_reference_t<T>>
-    inline ecs::View<T> View() const {
-        static_assert(0, "this code should never instantiate");
-        struct Dummy {};
-        ecs::ComponentManager<Dummy> dummyManager;
-        return ecs::View(dummyManager);
-    }
-
-    REGISTER_COMPONENT(NameComponent, 0);
-    REGISTER_COMPONENT(TransformComponent, 0);
-    REGISTER_COMPONENT(HierarchyComponent, 0);
-    REGISTER_COMPONENT(MaterialComponent, 0);
-    REGISTER_COMPONENT(MeshComponent, 0);
-    REGISTER_COMPONENT(ObjectComponent, 0);
-    REGISTER_COMPONENT(LightComponent, 0);
-    REGISTER_COMPONENT(ArmatureComponent, 0);
-    REGISTER_COMPONENT(AnimationComponent, 0);
-    REGISTER_COMPONENT(BoxColliderComponent, 0);
-    REGISTER_COMPONENT(MeshColliderComponent, 0);
-    REGISTER_COMPONENT(ParticleEmitterComponent, 0);
-    REGISTER_COMPONENT(ForceFieldComponent, 0);
-    REGISTER_COMPONENT(LuaScriptComponent, 0);
-    REGISTER_COMPONENT(NativeScriptComponent, 0);
-    REGISTER_COMPONENT(PerspectiveCameraComponent, 0);
-    REGISTER_COMPONENT(RigidBodyComponent, 0);
-    REGISTER_COMPONENT(ClothComponent, 0);
-    REGISTER_COMPONENT(EnvironmentComponent, 0);
+    REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
 
 public:
-    bool Serialize(Archive& p_archive);
-
     void Update(float p_delta_time);
 
     void Copy(Scene& p_other);
@@ -253,6 +250,8 @@ public:
 
     PhysicsMode m_physicsMode{ PhysicsMode::NONE };
     mutable PhysicsWorldContext* m_physicsWorld = nullptr;
+
+    const auto& GetLibraryEntries() const { return m_componentLib.m_entries; }
 
 private:
     void UpdateHierarchy(size_t p_index);
