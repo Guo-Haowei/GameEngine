@@ -1,6 +1,5 @@
 #pragma once
 #include "engine/assets/asset_handle.h"
-#include "engine/core/io/archive.h"
 #include "engine/core/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 

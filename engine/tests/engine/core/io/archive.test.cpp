@@ -4,6 +4,7 @@
 
 namespace my {
 
+// @TODO: allow archive to implement string stream
 TEST(archive, open_read) {
     FileAccess::MakeDefault<FileAccessUnix>(FileAccess::ACCESS_FILESYSTEM);
 
@@ -26,11 +27,11 @@ TEST(archive, open_write) {
 
 TEST(archive, write_and_read) {
     const char* test_file = "archive_test_write_and_read";
-    const char* test_cstring = "add3to2";
     const std::string test_string = "add3to2";
     const int test_int = 12345;
     const char test_byte = 0x11;
     const double test_double = 3.1415926;
+    const char test_cstring[8] = "abcdefg";
 
     Archive writer;
 
@@ -65,9 +66,9 @@ TEST(archive, write_and_read) {
     reader >> actual_double;
     EXPECT_EQ(actual_double, test_double);
 
-    std::string actual_c_string;
+    char actual_c_string[sizeof(test_cstring)]{ 0 };
     reader >> actual_c_string;
-    EXPECT_EQ(actual_c_string, std::string(test_cstring));
+    EXPECT_STREQ(actual_c_string, test_cstring);
 
     reader.Close();
 

@@ -4,9 +4,13 @@
 
 #include <fstream>
 
+#include "engine/core/io/archive.h"
+#include "engine/core/string/string_utils.h"
 #include "engine/scene/scene.h"
 
 namespace my {
+
+#define SCENE_DBG_LOG(...) LOG_VERBOSE(__VA_ARGS__)
 
 // SCENE_VERSION history
 // version 2: don't serialize scene.m_bound
@@ -23,8 +27,11 @@ namespace my {
 // version 13: add SoftBodyComponent
 // version 14: modify RigidBodyComponent
 // version 15: add predefined shadow region to lights
-inline constexpr uint32_t SCENE_VERSION = 15;
-inline constexpr uint32_t SCENE_MAGIC = 'xScn';
+// version 16: change scene binary representation
+static constexpr uint32_t SCENE_VERSION = 16;
+static constexpr uint32_t SCENE_MAGIC_SIZE = 8;
+static constexpr char SCENE_MAGIC[SCENE_MAGIC_SIZE] = "xScene";
+static constexpr char SCENE_GUARD_MESSAGE[] = "Should see this message";
 
 // @TODO: refactor
 static constexpr uint64_t has_next_flag = 6368519827137030510;
@@ -68,6 +75,8 @@ Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     archive << ecs::Entity::GetSeed();
     archive << p_scene.m_root;
 
+    archive << SCENE_GUARD_MESSAGE;
+
     for (const auto& it : p_scene.GetLibraryEntries()) {
         archive << has_next_flag;
         archive << it.first;  // write name
@@ -84,11 +93,12 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
     }
 
     uint32_t version = UINT_MAX;
-    uint32_t magic = 0;
+
     uint32_t seed = ecs::Entity::MAX_ID;
 
+    char magic[SCENE_MAGIC_SIZE]{ 0 };
     archive >> magic;
-    if (magic != SCENE_MAGIC) {
+    if (!StringUtils::StringEqual(magic, SCENE_MAGIC)) {
         return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "magic is not 'xScn'");
     }
 
@@ -97,22 +107,17 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
         return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "file version {} is greater than max version {}", version, SCENE_VERSION);
     }
 
+    LOG_OK("loading scene '{}', version: {}", p_path, version);
+
     archive >> seed;
     ecs::Entity::SetSeed(seed);
 
     archive >> p_scene.m_root;
 
-    // dummy camera
-    if (version < 12) {
-        CRASH_NOW();
-        PerspectiveCameraComponent old_camera;
-        old_camera.Serialize(archive, version);
-
-        auto camera_id = p_scene.CreatePerspectiveCameraEntity("editor_camera", old_camera.GetWidth(), old_camera.GetHeight());
-        PerspectiveCameraComponent* new_camera = p_scene.GetComponent<PerspectiveCameraComponent>(camera_id);
-        *new_camera = old_camera;
-        new_camera->SetEditorCamera();
-        p_scene.AttachChild(camera_id, p_scene.m_root);
+    char guard_message[sizeof(SCENE_GUARD_MESSAGE)]{ 0 };
+    archive >> guard_message;
+    if (!StringUtils::StringEqual(guard_message, SCENE_GUARD_MESSAGE)) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT);
     }
 
     for (;;) {
@@ -125,7 +130,7 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
         std::string key;
         archive >> key;
 
-        LOG_VERBOSE("Loading {}", key);
+        SCENE_DBG_LOG("Loading Component {}", key);
 
         auto it = p_scene.GetLibraryEntries().find(key);
         if (it == p_scene.GetLibraryEntries().end()) {

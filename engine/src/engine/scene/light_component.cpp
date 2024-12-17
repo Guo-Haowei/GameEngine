@@ -82,7 +82,7 @@ void LightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
         p_archive >> m_flags;
         p_archive >> m_type;
         p_archive >> m_atten;
-        if (p_version > 15) {
+        if (p_version > 14) {
             p_archive >> m_shadowRegion;
         } else {
             m_flags &= ~(SHADOW_REGION);

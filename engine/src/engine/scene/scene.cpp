@@ -3,8 +3,18 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/math/geometry.h"
+#include "engine/core/systems/component_manager.inl"
 #include "engine/core/systems/job_system.h"
 #include "engine/renderer/renderer.h"
+
+namespace my::ecs {
+
+// instantiate ComponentManagers
+#define REGISTER_COMPONENT(TYPE, ...) template class ComponentManager<TYPE>;
+REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
+
+}  // namespace my::ecs
 
 namespace my {
 

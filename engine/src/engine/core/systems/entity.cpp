@@ -1,5 +1,7 @@
 #include "entity.h"
 
+#include "engine/core/io/archive.h"
+
 namespace my::ecs {
 
 const Entity Entity::INVALID{};

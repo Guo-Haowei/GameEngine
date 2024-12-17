@@ -1,5 +1,8 @@
 #pragma once
-#include "engine/core/io/archive.h"
+
+namespace my {
+class Archive;
+}
 
 namespace my::ecs {
 

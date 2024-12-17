@@ -99,20 +99,11 @@ void SaveProjectCommand::Execute(Scene& p_scene) {
 
     DVAR_SET_STRING(project, path.string());
 
-    CRASH_NOW();
-    if (auto res = SaveSceneText(path.string(), p_scene); !res) {
+    if (auto res = SaveSceneBinary(path.string(), p_scene); !res) {
+        CRASH_NOW();
     }
 
-#if 0
-    Archive archive;
-    if (!archive.OpenWrite(path.string())) {
-        return;
-    }
-
-    if (p_scene.Serialize(archive)) {
-        LOG_OK("scene saved to '{}'", path.string());
-    }
-#endif
+    LOG_OK("scene saved to '{}'", path.string());
 }
 
 /// RedoViewerCommand
