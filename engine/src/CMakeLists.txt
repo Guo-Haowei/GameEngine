@@ -57,6 +57,7 @@ set(TARGET_LIBS
     lua
     ${BULLET_LIBRARIES}
     glm::glm
+    yaml-cpp::yaml-cpp
 )
 
 if(WIN32)
