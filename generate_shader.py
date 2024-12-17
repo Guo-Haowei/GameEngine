@@ -18,6 +18,8 @@ input_shaders = [
     'bloom_downsample.cs',
     'bloom_upsample.cs',
     'depth.ps',
+    # 'debug_draw.vs',
+    # 'debug_draw.ps',
     # 'mesh.vs',
     # 'gbuffer.ps',
     'highlight.ps',
