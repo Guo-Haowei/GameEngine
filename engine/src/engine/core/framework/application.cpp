@@ -27,6 +27,9 @@
 #include "engine/core/framework/common_dvars.h"
 #undef DEFINE_DVAR
 
+// @TODO: refactor
+#include "engine/scene/scene_serialization.h"
+
 namespace my {
 
 namespace fs = std::filesystem;
@@ -367,6 +370,11 @@ Scene* Application::CreateInitialScene() {
     camera->SetPosition(Vector3f(0, 4, 10));
     camera->SetEditorCamera();
     scene->AttachChild(camera_id, root);
+
+    auto res = SaveSceneText("tmp.yaml", *scene);
+    if (!res) {
+        CRASH_NOW();
+    }
 
     return scene;
 }

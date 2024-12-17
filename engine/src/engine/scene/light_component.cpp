@@ -4,7 +4,6 @@
 #include "engine/core/io/archive.h"
 #include "engine/core/math/matrix_transform.h"
 #include "engine/renderer/renderer.h"
-#include "engine/scene/scene_version.h"
 #include "engine/scene/transform_component.h"
 
 namespace my {
@@ -83,7 +82,7 @@ void LightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
         p_archive >> m_flags;
         p_archive >> m_type;
         p_archive >> m_atten;
-        if (p_version >= SCENE_VERSION) {
+        if (p_version > 15) {
             p_archive >> m_shadowRegion;
         } else {
             m_flags &= ~(SHADOW_REGION);

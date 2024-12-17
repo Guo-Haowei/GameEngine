@@ -5,7 +5,6 @@
 #include "engine/core/math/geometry.h"
 #include "engine/core/systems/job_system.h"
 #include "engine/renderer/renderer.h"
-#include "engine/scene/scene_version.h"
 
 namespace my {
 
@@ -663,74 +662,6 @@ void Scene::UpdateArmature(size_t p_index) {
         // @TODO: armature animation
     }
 };
-
-bool Scene::Serialize(Archive& p_archive) {
-    uint32_t version = UINT_MAX;
-    bool is_read_mode = !p_archive.IsWriteMode();
-    if (is_read_mode) {
-        uint32_t magic;
-        uint32_t seed = ecs::Entity::MAX_ID;
-
-        p_archive >> magic;
-        ERR_FAIL_COND_V_MSG(magic != SCENE_MAGIC, false, "file corrupted");
-        p_archive >> version;
-        ERR_FAIL_COND_V_MSG(version > SCENE_MAGIC, false, std::format("file version {} is greater than max version {}", version, SCENE_VERSION));
-        p_archive >> seed;
-        ecs::Entity::SetSeed(seed);
-
-    } else {
-        p_archive << SCENE_MAGIC;
-        p_archive << SCENE_VERSION;
-        p_archive << ecs::Entity::GetSeed();
-    }
-
-    m_root.Serialize(p_archive);
-
-    // dummy camera
-    if (version < 12) {
-        if (is_read_mode) {
-            PerspectiveCameraComponent old_camera;
-            old_camera.Serialize(p_archive, version);
-
-            auto camera_id = CreatePerspectiveCameraEntity("editor_camera", old_camera.GetWidth(), old_camera.GetHeight());
-            PerspectiveCameraComponent* new_camera = GetComponent<PerspectiveCameraComponent>(camera_id);
-            *new_camera = old_camera;
-            new_camera->SetEditorCamera();
-            AttachChild(camera_id, m_root);
-        }
-    }
-
-    constexpr uint64_t has_next_flag = 6368519827137030510;
-    if (p_archive.IsWriteMode()) {
-        for (const auto& it : m_componentLib.m_entries) {
-            p_archive << has_next_flag;
-            p_archive << it.first;  // write name
-            it.second.m_manager->Serialize(p_archive, version);
-        }
-        p_archive << uint64_t(0);
-        return true;
-    } else {
-        for (;;) {
-            uint64_t has_next = 0;
-            p_archive >> has_next;
-            if (has_next != has_next_flag) {
-                return true;
-            }
-
-            std::string key;
-            p_archive >> key;
-
-            auto it = m_componentLib.m_entries.find(key);
-            if (it == m_componentLib.m_entries.end()) {
-                LOG_ERROR("scene corrupted");
-                return false;
-            }
-            if (!it->second.m_manager->Serialize(p_archive, version)) {
-                return false;
-            }
-        }
-    }
-}
 
 bool Scene::RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray) {
     ObjectComponent* object = GetComponent<ObjectComponent>(p_object_id);

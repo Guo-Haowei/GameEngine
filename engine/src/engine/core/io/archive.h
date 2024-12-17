@@ -31,6 +31,7 @@ public:
         return *this;
     }
 
+    // @TODO: use concept
     template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
     Archive& operator<<(const std::vector<T>& p_value) {
         uint64_t size = p_value.size();

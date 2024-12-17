@@ -126,8 +126,6 @@ public:
     // @NOTE: do not delete stale components, still need them for serialization
 
 public:
-    bool Serialize(Archive& p_archive);
-
     void Update(float p_delta_time);
 
     void Copy(Scene& p_other);
@@ -256,6 +254,8 @@ public:
 
     PhysicsMode m_physicsMode{ PhysicsMode::NONE };
     mutable PhysicsWorldContext* m_physicsWorld = nullptr;
+
+    const auto& GetLibraryEntries() const { return m_componentLib.m_entries; }
 
 private:
     void UpdateHierarchy(size_t p_index);
