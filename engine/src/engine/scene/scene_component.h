@@ -29,7 +29,7 @@ public:
     std::string& GetNameRef() { return m_name; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const;
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
 
 private:
@@ -43,7 +43,7 @@ public:
     ecs::Entity GetParent() const { return m_parentId; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const;
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
 
 private:
@@ -94,7 +94,7 @@ public:
     void UpdateTransformParented(const TransformComponent& p_parent);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const;
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
 
 private:
@@ -151,7 +151,7 @@ struct AnimationComponent {
     std::vector<Sampler> samplers;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const;
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
 };
 #pragma endregion ANIMATION_COMPONENT
@@ -170,7 +170,7 @@ struct ArmatureComponent {
     std::vector<Matrix4x4f> boneTransforms;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const;
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
 };
 #pragma endregion ARMATURE_COMPONENT
@@ -190,7 +190,7 @@ struct ObjectComponent {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 };
@@ -256,7 +256,7 @@ public:
     const Vector3f GetFront() const { return m_front; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const;
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
 
 private:
@@ -300,7 +300,7 @@ public:
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 
@@ -345,7 +345,7 @@ struct NativeScriptComponent {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 };
@@ -376,7 +376,7 @@ struct CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 };
@@ -417,7 +417,7 @@ struct RigidBodyComponent : CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 };
@@ -446,7 +446,7 @@ struct ClothComponent : CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 };
@@ -473,7 +473,7 @@ struct EnvironmentComponent {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 };
@@ -487,7 +487,7 @@ struct ForceFieldComponent {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_emitter, Archive& p_archive, uint32_t p_version) const { return true; }
+    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
     bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
     WARNING_POP()
 };

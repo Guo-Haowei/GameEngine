@@ -131,8 +131,6 @@ static void EmitComponent(YAML::Emitter& p_out,
 }
 
 Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
-    unused(p_scene);
-
     YAML::Emitter out;
     out << YAML::BeginMap;
     out << YAML::Key << "version" << YAML::Value << SCENE_VERSION;
@@ -183,5 +181,268 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     file_access->WriteBuffer(result, strlen(result));
     return Result<void>();
 }
+
+WARNING_PUSH()
+WARNING_DISABLE(4100, "-Wunused-parameter")
+#pragma region SCENE_COMPONENT_SERIALIZATION
+static void EmitVector3f(YAML::Emitter& p_out, const Vector3f& p_vec) {
+    p_out << YAML::BeginSeq;
+    p_out << p_vec.x;
+    p_out << p_vec.y;
+    p_out << p_vec.z;
+    p_out << YAML::EndSeq;
+}
+
+static void EmitVector4f(YAML::Emitter& p_out, const Vector4f& p_vec) {
+    p_out << YAML::BeginSeq;
+    p_out << p_vec.x;
+    p_out << p_vec.y;
+    p_out << p_vec.z;
+    p_out << YAML::EndSeq;
+}
+
+void NameComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << m_name;
+    } else {
+        p_archive >> m_name;
+    }
+}
+
+bool NameComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+    p_out << YAML::Key << "name" << YAML::Value << m_name;
+    return true;
+}
+
+bool NameComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    const auto& name = p_node["name"];
+    m_name = name.as<std::string>();
+    return true;
+}
+
+void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << m_parentId;
+    } else {
+        p_archive >> m_parentId;
+    }
+}
+
+bool HierarchyComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+    p_out << YAML::Key << "parent_id" << YAML::Value << m_parentId.GetId();
+    return true;
+}
+
+bool HierarchyComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    auto id = p_node["parent_id"].as<uint32_t>();
+    m_parentId = ecs::Entity{ id };
+    return true;
+}
+
+bool AnimationComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+    // p_node["channels"] = channels;
+    CRASH_NOW();
+    return true;
+}
+
+void AnimationComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << flags;
+        p_archive << start;
+        p_archive << end;
+        p_archive << timer;
+        p_archive << amount;
+        p_archive << speed;
+        p_archive << channels;
+
+        uint64_t num_samplers = samplers.size();
+        p_archive << num_samplers;
+        for (uint64_t i = 0; i < num_samplers; ++i) {
+            p_archive << samplers[i].keyframeTmes;
+            p_archive << samplers[i].keyframeData;
+        }
+    } else {
+        p_archive >> flags;
+        p_archive >> start;
+        p_archive >> end;
+        p_archive >> timer;
+        p_archive >> amount;
+        p_archive >> speed;
+        p_archive >> channels;
+
+        uint64_t num_samplers = 0;
+        p_archive >> num_samplers;
+        samplers.resize(num_samplers);
+        for (uint64_t i = 0; i < num_samplers; ++i) {
+            p_archive >> samplers[i].keyframeTmes;
+            p_archive >> samplers[i].keyframeData;
+        }
+    }
+}
+
+bool AnimationComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    flags = p_node["flags"].as<uint32_t>();
+    start = p_node["start"].as<float>();
+    end = p_node["end"].as<float>();
+    timer = p_node["timer"].as<float>();
+    amount = p_node["amount"].as<float>();
+    speed = p_node["speed"].as<float>();
+    // channels = p_node["channels"].as<std::vector<float>>();
+    CRASH_NOW();
+    return true;
+}
+
+bool TransformComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+    p_out << YAML::Key << "flags" << YAML::Value << m_flags;
+    p_out << YAML::Key << "translation" << YAML::Value;
+    EmitVector3f(p_out, m_translation);
+    p_out << YAML::Key << "rotation" << YAML::Value;
+    EmitVector4f(p_out, m_rotation);
+    p_out << YAML::Key << "scale" << YAML::Value;
+    EmitVector3f(p_out, m_scale);
+    return true;
+}
+
+void TransformComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << m_flags;
+        p_archive << m_scale;
+        p_archive << m_translation;
+        p_archive << m_rotation;
+    } else {
+        p_archive >> m_flags;
+        p_archive >> m_scale;
+        p_archive >> m_translation;
+        p_archive >> m_rotation;
+        SetDirty();
+    }
+}
+
+bool TransformComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    CRASH_NOW();
+    SetDirty();
+    return true;
+}
+
+void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << flags;
+        p_archive << boneCollection;
+        p_archive << inverseBindMatrices;
+    } else {
+        p_archive >> flags;
+        p_archive >> boneCollection;
+        p_archive >> inverseBindMatrices;
+    }
+}
+
+bool ArmatureComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+    return true;
+}
+
+bool ArmatureComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    return true;
+}
+
+void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << flags;
+        p_archive << meshId;
+    } else {
+        p_archive >> flags;
+        p_archive >> meshId;
+    }
+}
+
+void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << m_flags;
+        p_archive << m_near;
+        p_archive << m_far;
+        p_archive << m_fovy;
+        p_archive << m_width;
+        p_archive << m_height;
+        p_archive << m_pitch;
+        p_archive << m_yaw;
+        p_archive << m_position;
+    } else {
+        p_archive >> m_flags;
+        p_archive >> m_near;
+        p_archive >> m_far;
+        p_archive >> m_fovy;
+        p_archive >> m_width;
+        p_archive >> m_height;
+        p_archive >> m_pitch;
+        p_archive >> m_yaw;
+        p_archive >> m_position;
+
+        SetDirty();
+    }
+}
+
+bool PerspectiveCameraComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+
+    return true;
+}
+
+bool PerspectiveCameraComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+    SetDirty();
+    return true;
+}
+
+void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << m_path;
+    } else {
+        std::string path;
+        p_archive >> path;
+        SetScript(path);
+    }
+}
+
+void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    CRASH_NOW();
+}
+
+void CollisionObjectBase::Serialize(Archive& p_archive, uint32_t p_version) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << collisionType;
+        p_archive << collisionMask;
+    } else {
+        p_archive >> collisionType;
+        p_archive >> collisionMask;
+    }
+}
+
+void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    CollisionObjectBase::Serialize(p_archive, p_version);
+
+    if (p_archive.IsWriteMode()) {
+        p_archive << shape;
+        p_archive << objectType;
+        p_archive << param;
+        p_archive << mass;
+    } else {
+        p_archive >> shape;
+        p_archive >> objectType;
+        p_archive >> param;
+        p_archive >> mass;
+    }
+}
+
+void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    CollisionObjectBase::Serialize(p_archive, p_version);
+
+    CRASH_NOW();
+    if (p_archive.IsWriteMode()) {
+    } else {
+    }
+}
+
+void EnvironmentComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    CRASH_NOW();
+}
+#pragma endregion SCENE_COMPONENT_SERIALIZATION
+WARNING_POP()
 
 }  // namespace my

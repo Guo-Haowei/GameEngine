@@ -22,6 +22,7 @@ auto SceneManager::InitializeImpl() -> Result<void> {
     m_scene = m_app->CreateInitialScene();
     BumpRevision();
 
+    LOG_ERROR("TODO: remove this code");
     auto res = SaveSceneText("tmp.yaml", *m_scene);
     if (!res) {
         CRASH_NOW();
