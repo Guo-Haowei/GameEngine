@@ -15,44 +15,52 @@ public:
     void Close();
     bool IsWriteMode() const;
 
-    template<int N>
-    Archive& operator<<(const char (&p_value)[N]) {
-        return WriteString(p_value, N - 1);
+    bool Write(const void* p_data, size_t p_size);
+    bool Read(void* p_data, size_t p_size);
+
+    template<typename T>
+    bool Write(const T& p_value) {
+        return m_file->Write(p_value) == sizeof(T);
     }
 
-    template<int N>
-    Archive& operator>>(char (&p_value)[N]) {
-        size_t string_length = 0;
-        Read(string_length);
-        // @TODO: proper error checking
-        DEV_ASSERT(string_length < N);
-        Read(p_value, string_length);
-        return *this;
+    template<typename T>
+    bool Read(T& p_value) {
+        return m_file->Read(p_value) == sizeof(T);
     }
 
-    Archive& operator<<(const char* p_value) {
-        return WriteString(p_value, strlen(p_value));
-    }
-
-    Archive& operator<<(const std::string& p_value) {
+    template<>
+    bool Write(const std::string& p_value) {
         return WriteString(p_value.data(), p_value.length());
     }
 
-    Archive& operator>>(std::string& p_value) {
-        size_t string_length = 0;
-        Read(string_length);
-        p_value.resize(string_length);
-        Read(p_value.data(), string_length);
-        return *this;
+    template<>
+    bool Read(std::string& p_value) {
+        uint64_t length = 0;
+        if (!Read(length)) {
+            return false;
+        }
+        p_value.resize(length);
+        return Read(p_value.data(), length);
     }
 
-    // @TODO: use concept
-    template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
-    Archive& operator<<(const std::vector<T>& p_value) {
-        uint64_t size = p_value.size();
-        Write(size);
-        Write(p_value.data(), sizeof(T) * size);
-        return *this;
+    template<typename T>
+        requires TriviallyCopyable<T>
+    bool Write(const std::vector<T>& p_value) {
+        const uint64_t size = p_value.size();
+        bool ok = Write(size);
+        ok = ok && Write(p_value.data(), sizeof(T) * size);
+        return ok;
+    }
+
+    template<typename T>
+        requires TriviallyCopyable<T>
+    bool Read(std::vector<T>& p_value) {
+        uint64_t size = 0;
+        if (!Read(size)) {
+            return false;
+        }
+        p_value.resize(size);
+        return Read(p_value.data(), sizeof(T) * size);
     }
 
     template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
@@ -64,35 +72,24 @@ public:
         return *this;
     }
 
-    template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
+    template<typename T>
     Archive& operator<<(const T& p_value) {
-        Write(&p_value, sizeof(T));
+        Write(p_value);
         return *this;
     }
 
-    template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
+    template<typename T>
     Archive& operator>>(T& p_value) {
-        Read(&p_value, sizeof(T));
+        Read(p_value);
         return *this;
     }
 
-    template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
-    bool Write(const T& p_value) {
-        return Write(&p_value, sizeof(p_value));
-    }
-
-    template<typename T, class = typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
-    bool Read(T& p_value) {
-        return Read(&p_value, sizeof(p_value));
-    }
-
-    bool Write(const void* p_data, size_t p_size);
-    bool Read(void* p_data, size_t p_size);
+    std::shared_ptr<FileAccess>& GetFileAccess() { return m_file; }
 
 private:
     [[nodiscard]] auto OpenMode(const std::string& p_path, bool p_write_mode) -> Result<void>;
 
-    Archive& WriteString(const char* p_data, size_t p_length);
+    bool WriteString(const char* p_data, size_t p_length);
 
     bool m_isWriteMode{ false };
     std::shared_ptr<FileAccess> m_file{};

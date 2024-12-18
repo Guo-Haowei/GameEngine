@@ -46,18 +46,19 @@ bool Archive::IsWriteMode() const {
 
 bool Archive::Write(const void* p_data, size_t p_size) {
     DEV_ASSERT(m_file && m_isWriteMode);
-    return m_file->WriteBuffer(p_data, p_size);
+    return m_file->WriteBuffer(p_data, p_size) == p_size;
 }
 
 bool Archive::Read(void* p_data, size_t p_size) {
     DEV_ASSERT(m_file && !m_isWriteMode);
-    return m_file->ReadBuffer(p_data, p_size);
+    return m_file->ReadBuffer(p_data, p_size) == p_size;
 }
 
-Archive& Archive::WriteString(const char* p_data, size_t p_length) {
-    Write(p_length);
-    Write(p_data, p_length);
-    return *this;
+bool Archive::WriteString(const char* p_data, size_t p_length) {
+    bool ok = true;
+    ok = ok && Write(p_length);
+    ok = ok && Write(p_data, p_length);
+    return ok;
 }
 
 }  // namespace my

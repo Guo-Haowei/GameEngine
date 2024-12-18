@@ -3,6 +3,10 @@
 
 namespace my {
 
+// @TODO: refactor concepts
+template<typename T>
+concept TriviallyCopyable = std::is_trivially_copyable_v<T> && (!std::is_pointer_v<T>);
+
 class FileAccess {
 public:
     using CreateFunc = FileAccess* (*)(void);
@@ -32,6 +36,26 @@ public:
     virtual size_t WriteBuffer(const void* p_data, size_t p_size) = 0;
     virtual long Tell() = 0;
 
+    template<TriviallyCopyable T>
+    size_t Read(T& p_data) {
+        return ReadBuffer(&p_data, sizeof(T));
+    }
+
+    template<TriviallyCopyable T>
+    size_t Write(const T& p_data) {
+        return WriteBuffer(&p_data, sizeof(T));
+    }
+
+    template<int N>
+    size_t Read(char (&p_data)[N]) {
+        return ReadBuffer(p_data, N);
+    }
+
+    template<int N>
+    size_t Write(const char (&p_data)[N]) {
+        return WriteBuffer(p_data, N);
+    }
+
     AccessType GetAccessType() const { return m_accessType; }
 
     static void SetFolderCallback(GetUserFolderFunc p_user_func, GetResourceFolderFunc p_resource_func) {
@@ -50,19 +74,6 @@ public:
     template<typename T>
     static void MakeDefault(AccessType p_access_type) {
         s_createFuncs[p_access_type] = CreateBuiltin<T>;
-    }
-
-    // @TODO: refactor
-    template<typename T>
-        requires std::is_trivial_v<T> && (!std::is_pointer_v<T>)
-    size_t Read(T& p_data) {
-        return ReadBuffer(&p_data, sizeof(T));
-    }
-
-    template<typename T>
-        requires std::is_trivial_v<T> && (!std::is_pointer_v<T>)
-    size_t Write(const T& p_data) {
-        return WriteBuffer(&p_data, sizeof(T));
     }
 
 protected:

@@ -34,8 +34,7 @@ namespace my {
 // version 16: change scene binary representation
 #pragma endregion VERSION_HISTORY
 static constexpr uint32_t SCENE_VERSION = 16;
-static constexpr uint32_t SCENE_MAGIC_SIZE = 8;
-static constexpr char SCENE_MAGIC[SCENE_MAGIC_SIZE] = "xScene";
+static constexpr char SCENE_MAGIC[] = "xBScene";
 static constexpr char SCENE_GUARD_MESSAGE[] = "Should see this message";
 static constexpr uint64_t HAS_NEXT_FLAG = 6368519827137030510;
 static constexpr uint64_t BIN_GUARD_MAGIC = 0xDEADBEEFBADDCAFE;
@@ -68,24 +67,23 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
         return HBN_ERROR(res.error());
     }
 
-    uint32_t version = UINT_MAX;
+    char magic[sizeof(SCENE_MAGIC)]{ 0 };
+    if (!archive.Read(magic) || !StringUtils::StringEqual(magic, SCENE_MAGIC)) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "file corrupted, magic is not '{}'", SCENE_MAGIC);
+    }
+
+    uint32_t version;
+    if (!archive.Read(version) || version > SCENE_VERSION) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "incorrect scene version {}, current version is {}", version, SCENE_VERSION);
+    }
+
+    SCENE_DBG_LOG("loading scene '{}', version: {}", p_path, version);
 
     uint32_t seed = ecs::Entity::MAX_ID;
-
-    char magic[SCENE_MAGIC_SIZE]{ 0 };
-    archive >> magic;
-    if (!StringUtils::StringEqual(magic, SCENE_MAGIC)) {
-        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "magic is not 'xScn'");
+    if (!archive.Read(seed)) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "failed to read seed");
     }
 
-    archive >> version;
-    if (version > SCENE_VERSION) {
-        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "file version {} is greater than max version {}", version, SCENE_VERSION);
-    }
-
-    LOG_OK("loading scene '{}', version: {}", p_path, version);
-
-    archive >> seed;
     ecs::Entity::SetSeed(seed);
 
     archive >> p_scene.m_root;
@@ -329,12 +327,10 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     std::sort(entity_array.begin(), entity_array.end());
 
     auto binary_path = std::format("{}{}", p_path, ".bin");
-    auto res = FileAccess::Open(binary_path, FileAccess::WRITE);
-    if (!res) {
+    Archive archive;
+    if (auto res = archive.OpenRead(binary_path); !res) {
         return HBN_ERROR(res.error());
     }
-
-    auto binary_file = *res;
 
     YAML::Emitter out;
     out << YAML::BeginMap;
@@ -346,9 +342,14 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     out << DUMP_KEY("entities");
     out << YAML::BeginSeq;
 
-    binary_file->Write(SCENE_MAGIC);
-    binary_file->Write(SCENE_VERSION);
-    binary_file->Write(SCENE_GUARD_MESSAGE);
+    bool ok = true;
+    ok = ok && archive.Write(SCENE_MAGIC);
+    ok = ok && archive.Write(SCENE_VERSION);
+    ok = ok && archive.Write(SCENE_GUARD_MESSAGE);
+    if (!ok) {
+        CRASH_NOW();
+        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE);
+    }
 
     for (auto id : entity_array) {
         ecs::Entity entity{ id };
@@ -357,7 +358,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
         out << DUMP_KEY("id") << id;
 
         out.SetSeqFormat(YAML::Flow);
-#define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, binary_file.get());
+#define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, archive.GetFileAccess().get());
         REGISTER_COMPONENT_LIST
 #undef REGISTER_COMPONENT
         out.SetSeqFormat(YAML::Block);
@@ -368,8 +369,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     out << YAML::EndSeq;
     out << YAML::EndMap;
 
-    // @TODO: use same extension,
-    res = FileAccess::Open(p_path, FileAccess::WRITE);
+    auto res = FileAccess::Open(p_path, FileAccess::WRITE);
     if (!res) {
         return HBN_ERROR(res.error());
     }
