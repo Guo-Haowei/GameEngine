@@ -37,7 +37,7 @@ static constexpr uint32_t SCENE_VERSION = 16;
 static constexpr char SCENE_MAGIC[] = "xBScene";
 static constexpr char SCENE_GUARD_MESSAGE[] = "Should see this message";
 static constexpr uint64_t HAS_NEXT_FLAG = 6368519827137030510;
-static constexpr uint64_t BIN_GUARD_MAGIC = 0xDEADBEEFBADDCAFE;
+static constexpr char BIN_GUARD_MAGIC[] = "SEETHIS";
 
 Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     Archive archive;
@@ -122,7 +122,7 @@ void DumpAny(YAML::Emitter& p_out, const T& p_value) {
 }
 
 template<typename T>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, T& p_value, FileAccess*) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, T& p_value) {
     p_value = p_node.as<T>();
     return true;
 }
@@ -146,7 +146,7 @@ void DumpAny(YAML::Emitter& p_out, const T& p_value) {
 }
 
 template<EnumType T>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, T& p_value, FileAccess*) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, T& p_value) {
     static_assert(sizeof(T) <= sizeof(uint32_t));
     p_value = static_cast<T>(p_node.as<uint32_t>());
     return true;
@@ -167,11 +167,11 @@ template<EnumType T>
 
 #define UNDUMP_BEGIN(NODE, BINARY) \
     auto& _node_ = NODE;           \
-    auto& _binary_ = BINARY;       \
+    ((void)(BINARY));              \
     bool _ok_ = true
 #define UNDUMP_END() return _ok_
 
-#define UNDUMP_KEY_VALUE(KEY, VALUE) _ok_ = _ok_ && UndumpKeyValuePair(_node_, KEY, VALUE, _binary_)
+#define UNDUMP_KEY_VALUE(KEY, VALUE) _ok_ = _ok_ && UndumpKeyValuePair(_node_, KEY, VALUE)
 
 template<>
 void DumpAny(YAML::Emitter& p_out, const ecs::Entity& p_value) {
@@ -179,7 +179,7 @@ void DumpAny(YAML::Emitter& p_out, const ecs::Entity& p_value) {
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, ecs::Entity& p_value, FileAccess*) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, ecs::Entity& p_value) {
     p_value = ecs::Entity(p_node.as<uint32_t>());
     return true;
 }
@@ -190,7 +190,7 @@ void DumpAny(YAML::Emitter& p_out, const Degree& p_value) {
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Degree& p_value, FileAccess*) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Degree& p_value) {
     p_value = Degree(p_node.as<float>());
     return true;
 }
@@ -206,8 +206,8 @@ void DumpAny(YAML::Emitter& p_out, const Vector3f& p_value) {
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector3f& p_value, FileAccess*) {
-    if (!p_node.IsSequence() && p_node.size() != 3) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector3f& p_value) {
+    if (!p_node || !(p_node.IsSequence() && p_node.size() == 3)) {
         return false;
     }
 
@@ -229,8 +229,8 @@ void DumpAny(YAML::Emitter& p_out, const Vector4f& p_value) {
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector4f& p_value, FileAccess*) {
-    if (!p_node.IsSequence() && p_node.size() != 4) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector4f& p_value) {
+    if (!p_node || !(p_node.IsSequence() && p_node.size() == 4)) {
         return false;
     }
 
@@ -252,32 +252,32 @@ void DumpAny(YAML::Emitter& p_out, const AABB& p_value) {
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, AABB& p_value, FileAccess*) {
-    unused(p_node);
-    unused(p_value);
-    CRASH_NOW();
-    // if (!p_node.IsSequence() && p_node.size() != 4) {
-    //     return false;
-    // }
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, AABB& p_value) {
+    if (!p_node || !p_node.IsMap()) {
+        return false;
+    }
 
-    // p_value.x = p_node[0].as<float>();
-    // p_value.y = p_node[1].as<float>();
-    // p_value.z = p_node[2].as<float>();
-    // p_value.w = p_node[3].as<float>();
+    Vector3f min, max;
+    bool ok = UndumpAny(p_node["min"], min);
+    ok = ok && UndumpAny(p_node["max"], max);
+    if (!ok) {
+        return false;
+    }
+
+    p_value = AABB(min, max);
     return true;
 }
 
 // @TODO: proper error handling
-// @TODO: file wrapper
 template<typename T>
 void DumpVectorBinary(YAML::Emitter& p_out, const std::vector<T>& p_value, FileAccess* p_binary) {
     const size_t size_in_byte = sizeof(T) * p_value.size();
     DEV_ASSERT(size_in_byte);
-    const auto offset = p_binary->Tell();
-    DEV_ASSERT(offset >= 0);
     const size_t size = p_value.size();
     p_binary->Write(BIN_GUARD_MAGIC);
     p_binary->Write(size);
+    const auto offset = p_binary->Tell();
+    DEV_ASSERT(offset > 0);
     p_binary->WriteBuffer(p_value.data(), size_in_byte);
 
     p_out << YAML::BeginMap;
@@ -287,15 +287,51 @@ void DumpVectorBinary(YAML::Emitter& p_out, const std::vector<T>& p_value, FileA
 }
 
 template<typename T>
+bool UndumpVectorBinary(const YAML::Node& p_node, std::vector<T>& p_value, FileAccess* p_binary) {
+    constexpr size_t internal_offset = sizeof(BIN_GUARD_MAGIC) + sizeof(size_t);
+    // can have undefind value
+    if (!p_node) {
+        return true;
+    }
+    ERR_FAIL_COND_V(!p_node.IsMap(), false);
+    size_t offset = 0;
+    size_t length = 0;
+    ERR_FAIL_COND_V(!UndumpAny(p_node["offset"], offset), false);
+    ERR_FAIL_COND_V(!UndumpAny(p_node["length"], length), false);
+    ERR_FAIL_COND_V(length == 0, false);
+    ERR_FAIL_COND_V(length % sizeof(T) != 0, false);
+    ERR_FAIL_COND_V(offset < internal_offset, false);
+
+    const int seek = p_binary->Seek((long)(offset - internal_offset));
+    ERR_FAIL_COND_V(seek != 0, false);
+
+    char magic[sizeof(BIN_GUARD_MAGIC)];
+    // @TODO: small string optimization for StringEqual
+    if (!p_binary->Read(magic) || !StringUtils::StringEqual(magic, BIN_GUARD_MAGIC)) {
+        return false;
+    }
+    size_t read_length = 0;
+    if (!p_binary->Read(read_length) || read_length == length) {
+        return false;
+    }
+    p_value.resize(length / sizeof(T));
+    p_binary->ReadBuffer(p_value.data(), length);
+    return true;
+}
+
+template<typename T>
 void DumpKeyValuePair(YAML::Emitter& p_out, const char* p_key, const T& p_value) {
     p_out << YAML::Key << p_key << YAML::Value;
     DumpAny(p_out, p_value);
 }
 
 template<typename T>
-[[nodiscard]] bool UndumpKeyValuePair(const YAML::Node& p_node, const char* p_key, T& p_value, FileAccess* p_bin) {
+[[nodiscard]] bool UndumpKeyValuePair(const YAML::Node& p_node, const char* p_key, T& p_value) {
     const auto& node = p_node[p_key];
-    return UndumpAny(node, p_value, p_bin);
+    if (node) {
+        return UndumpAny(node, p_value);
+    }
+    return false;
 }
 
 template<Serializable T>
@@ -313,6 +349,93 @@ static void DumpComponent(YAML::Emitter& p_out,
     }
 }
 
+template<Serializable T>
+static Result<void> LoadComponent(const YAML::Node& p_node,
+                                  const char* p_key,
+                                  ecs::Entity p_id,
+                                  uint32_t p_version,
+                                  Scene& p_scene,
+                                  FileAccess* p_binary) {
+    const auto& node = p_node[p_key];
+    if (!node.IsDefined()) {
+        return Result<void>();
+    }
+
+    if (!node.IsMap()) {
+        return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "entity {} has invalid '{}'", p_id.GetId(), p_key);
+    }
+
+    // @TODO: reserve
+    T& component = p_scene.Create<T>(p_id);
+    if (!component.Undump(node, p_binary, p_version)) {
+        return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "entity {} has invalid '{}'", p_id.GetId(), p_key);
+    }
+
+    return Result<void>();
+}
+
+Result<void> LoadSceneText(const std::string& p_path, Scene& p_scene) {
+    unused(p_scene);
+
+    auto res = FileAccess::Open(p_path, FileAccess::READ);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    auto file = *res;
+    const size_t size = file->GetLength();
+
+    std::string buffer;
+    buffer.resize(size);
+    if (auto read = file->ReadBuffer(buffer.data(), size); read != size) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_READ, "failed to read {} bytes from '{}'", size, p_path);
+    }
+
+    file->Close();
+    const auto node = YAML::Load(buffer);
+
+    YAML::Emitter out;
+    auto version = node["version"].as<uint32_t>();
+    if (version > SCENE_VERSION) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "incorrect version {}", version);
+    }
+    auto seed = node["seed"].as<uint32_t>();
+    ecs::Entity::SetSeed(seed);
+
+    ecs::Entity root(node["root"].as<uint32_t>());
+    p_scene.m_root = root;
+
+    auto binary_file = node["binary"].as<std::string>();
+    res = FileAccess::Open(binary_file, FileAccess::READ);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    file = *res;
+    const auto& entities = node["entities"];
+    if (!entities.IsSequence()) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "invalid format");
+    }
+
+    for (const auto& entity : entities) {
+        if (!entity.IsMap()) {
+            return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "invalid format");
+        }
+
+        ecs::Entity id(entity["id"].as<uint32_t>());
+
+#define REGISTER_COMPONENT(a, ...)                                                  \
+    do {                                                                            \
+        auto res2 = LoadComponent<a>(entity, #a, id, version, p_scene, file.get()); \
+        if (!res2) { return HBN_ERROR(res2.error()); }                              \
+    } while (0);
+        REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
+    }
+
+    return Result<void>();
+}
+
 Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     std::unordered_set<uint32_t> entity_set;
 
@@ -328,7 +451,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
 
     auto binary_path = std::format("{}{}", p_path, ".bin");
     Archive archive;
-    if (auto res = archive.OpenRead(binary_path); !res) {
+    if (auto res = archive.OpenWrite(binary_path); !res) {
         return HBN_ERROR(res.error());
     }
 
@@ -347,8 +470,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     ok = ok && archive.Write(SCENE_VERSION);
     ok = ok && archive.Write(SCENE_GUARD_MESSAGE);
     if (!ok) {
-        CRASH_NOW();
-        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE);
+        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE, "failed to save file '{}'", p_path);
     }
 
     for (auto id : entity_array) {
@@ -608,10 +730,45 @@ bool MeshComponent::Dump(YAML::Emitter& p_out, FileAccess* p_binary, uint32_t p_
 }
 
 bool MeshComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, uint32_t p_version) {
-    unused(p_node);
-    unused(p_binary);
     unused(p_version);
-    CRASH_NOW();
+
+    UNDUMP_BEGIN(p_node, p_binary);
+    UNDUMP_KEY_VALUE("flags", flags);
+    UNDUMP_KEY_VALUE("armature_id", armatureId);
+
+    const auto& node = p_node["subsets"];
+    if (!(node && node.IsSequence())) {
+        return false;
+    }
+
+    const size_t subset_count = node.size();
+    subsets.resize(subset_count);
+
+    for (size_t i = 0; i < subset_count; ++i) {
+        const auto& subset = node[i];
+        DEV_ASSERT(subset && subset.IsMap());
+        bool ok = UndumpKeyValuePair(subset, "material_id", subsets[i].material_id);
+        ok = ok && UndumpKeyValuePair(subset, "index_count", subsets[i].index_count);
+        ok = ok && UndumpKeyValuePair(subset, "index_offset", subsets[i].index_offset);
+        ok = ok && UndumpKeyValuePair(subset, "local_bound", subsets[i].local_bound);
+        if (!ok) {
+            return false;
+        }
+    }
+
+#define UNDUMP_VEC_HELPER(a) ERR_FAIL_COND_V(!UndumpVectorBinary(p_node[#a], a, p_binary), false);
+    UNDUMP_VEC_HELPER(indices);
+    UNDUMP_VEC_HELPER(positions);
+    UNDUMP_VEC_HELPER(normals);
+    UNDUMP_VEC_HELPER(tangents);
+    UNDUMP_VEC_HELPER(texcoords_0);
+    UNDUMP_VEC_HELPER(texcoords_1);
+    UNDUMP_VEC_HELPER(joints_0);
+    UNDUMP_VEC_HELPER(weights_0);
+    UNDUMP_VEC_HELPER(color_0);
+#undef UNDUMP_VEC_HELPER
+
+    CreateRenderData();
     return true;
 }
 
@@ -654,7 +811,8 @@ bool MaterialComponent::Dump(YAML::Emitter& p_out, FileAccess* p_binary, uint32_
     DUMP_KEY_VALUE("emssive", emissive);
     DUMP_KEY_VALUE("baseColor", baseColor);
 
-    p_out << YAML::Key << "textures" << YAML::Value;
+    // @TODO: textures can be undefined
+    p_out << DUMP_KEY("textures");
     p_out << YAML::BeginSeq;
     for (int i = 0; i < TEXTURE_MAX; ++i) {
         p_out << YAML::BeginMap << YAML::Value;
@@ -676,7 +834,18 @@ bool MaterialComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, u
     UNDUMP_KEY_VALUE("emssive", emissive);
     UNDUMP_KEY_VALUE("baseColor", baseColor);
 
-    CRASH_NOW();
+    const auto& node = p_node["textures"];
+    if (node.IsDefined()) {
+        if (node.IsSequence() && node.size() == TEXTURE_MAX) {
+            for (size_t i = 0; i < node.size(); ++i) {
+                const auto& map = node[i];
+                textures[i].enabled = map["enabled"].as<bool>();
+                textures[i].path = map["path"].as<std::string>();
+            }
+        } else {
+            return false;
+        }
+    }
 
     UNDUMP_END();
 }
@@ -709,11 +878,11 @@ bool LightComponent::Dump(YAML::Emitter& p_out, FileAccess* p_binary, uint32_t p
     DUMP_BEGIN(p_out, p_binary);
     DUMP_KEY_VALUE("flags", m_flags);
     DUMP_KEY_VALUE("type", m_type);
-    DUMP_KEY_VALUE("shadow_region", m_shadowRegion);
+    LOG_WARN("TODO: shadow region");
 
     p_out << DUMP_KEY("atten");
     p_out << YAML::BeginMap;
-    DUMP_KEY_VALUE("contant", m_atten.constant);
+    DUMP_KEY_VALUE("constant", m_atten.constant);
     DUMP_KEY_VALUE("linear", m_atten.linear);
     DUMP_KEY_VALUE("quadratic", m_atten.quadratic);
     p_out << YAML::EndMap;
@@ -721,12 +890,27 @@ bool LightComponent::Dump(YAML::Emitter& p_out, FileAccess* p_binary, uint32_t p
     DUMP_END();
 }
 
-WARNING_PUSH()
-WARNING_DISABLE(4100, "-Wunused-parameter")
-bool LightComponent::Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) {
-    CRASH_NOW();
+bool LightComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, uint32_t p_version) {
+    unused(p_version);
+    unused(p_binary);
+
+    m_flags = p_node["flags"].as<uint32_t>();
+    m_type = p_node["type"].as<int>();
+    LOG_WARN("TODO: shadow region");
+
+    const auto& atten = p_node["atten"];
+    if (atten.IsDefined() && atten.IsMap()) {
+        // @TODO: fix typo
+        m_atten.constant = atten["contant"].as<float>();
+        m_atten.linear = atten["linear"].as<float>();
+        m_atten.quadratic = atten["quadratic"].as<float>();
+    }
+
     return true;
 }
+
+WARNING_PUSH()
+WARNING_DISABLE(4100, "-Wunused-parameter")
 
 void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.IsWriteMode()) {

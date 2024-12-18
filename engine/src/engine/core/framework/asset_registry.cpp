@@ -12,9 +12,9 @@ namespace my {
 namespace fs = std::filesystem;
 
 auto AssetRegistry::InitializeImpl() -> Result<void> {
+
     // @TODO: refactor
     // Always load assets
-
     fs::path assets_root = fs::path{ m_app->GetResourceFolder() };
     fs::path always_load_path = assets_root / "alwaysload.yaml";
     std::ifstream file(always_load_path);

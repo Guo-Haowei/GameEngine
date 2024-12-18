@@ -158,9 +158,22 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
     return p_image;
 }
 
+// @TODO: merge
 auto SceneLoader::Load() -> Result<IAsset*> {
     Scene* scene = new Scene;
     auto res = LoadSceneBinary(m_filePath, *scene);
+    if (!res) {
+        delete scene;
+        return HBN_ERROR(res.error());
+    }
+
+    scene->m_replace = true;
+    return scene;
+}
+
+auto TextSceneLoader::Load() -> Result<IAsset*> {
+    Scene* scene = new Scene;
+    auto res = LoadSceneText(m_filePath, *scene);
     if (!res) {
         delete scene;
         return HBN_ERROR(res.error());

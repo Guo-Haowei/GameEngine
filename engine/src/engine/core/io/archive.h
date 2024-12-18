@@ -20,12 +20,14 @@ public:
 
     template<typename T>
     bool Write(const T& p_value) {
-        return m_file->Write(p_value) == sizeof(T);
+        const size_t written = m_file->Write(p_value);
+        return written == sizeof(T);
     }
 
     template<typename T>
     bool Read(T& p_value) {
-        return m_file->Read(p_value) == sizeof(T);
+        const size_t read = m_file->Read(p_value);
+        return read == sizeof(T);
     }
 
     template<>

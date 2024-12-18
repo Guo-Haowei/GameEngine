@@ -13,14 +13,14 @@ public:
     using GetUserFolderFunc = std::function<const char*()>;
     using GetResourceFolderFunc = std::function<const char*()>;
 
-    enum AccessType {
+    enum AccessType : uint8_t {
         ACCESS_FILESYSTEM,
         ACCESS_RESOURCE,
         ACCESS_USERDATA,
         ACCESS_MAX,
     };
 
-    enum ModeFlags {
+    enum ModeFlags : uint8_t {
         NONE = 0,
         READ = 1,
         WRITE = 2,
@@ -34,7 +34,9 @@ public:
 
     virtual size_t ReadBuffer(void* p_data, size_t p_size) const = 0;
     virtual size_t WriteBuffer(const void* p_data, size_t p_size) = 0;
+    // @TODO: refactor the error codes
     virtual long Tell() = 0;
+    virtual int Seek(long p_offset) = 0;
 
     template<TriviallyCopyable T>
     size_t Read(T& p_data) {
@@ -57,6 +59,7 @@ public:
     }
 
     AccessType GetAccessType() const { return m_accessType; }
+    ModeFlags GetOpenMode() const { return m_openMode; }
 
     static void SetFolderCallback(GetUserFolderFunc p_user_func, GetResourceFolderFunc p_resource_func) {
         s_getUserFolderFunc = p_user_func;
@@ -84,6 +87,7 @@ protected:
     virtual std::string FixPath(std::string_view p_path);
 
     AccessType m_accessType = ACCESS_MAX;
+    ModeFlags m_openMode = NONE;
 
     static CreateFunc s_createFuncs[ACCESS_MAX];
 
