@@ -10,8 +10,9 @@ public:
     void Close() override;
     bool IsOpen() const override;
     size_t GetLength() const override;
-    bool ReadBuffer(void* p_data, size_t p_size) const override;
-    bool WriteBuffer(const void* p_data, size_t p_size) override;
+    size_t ReadBuffer(void* p_data, size_t p_size) const override;
+    size_t WriteBuffer(const void* p_data, size_t p_size) override;
+    long Tell() override;
 
 protected:
     auto OpenInternal(std::string_view p_path, ModeFlags p_mode_flags) -> Result<void> override;

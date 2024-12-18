@@ -52,24 +52,20 @@ size_t FileAccessUnix::GetLength() const {
     return length;
 }
 
-bool FileAccessUnix::ReadBuffer(void* p_data, size_t p_size) const {
-    DEV_ASSERT(IsOpen());
+size_t FileAccessUnix::ReadBuffer(void* p_data, size_t p_size) const {
+    ERR_FAIL_COND_V(!IsOpen(), 0);
 
-    if (fread(p_data, 1, p_size, m_fileHandle) != p_size) {
-        return false;
-    }
-
-    return true;
+    return fread(p_data, 1, p_size, m_fileHandle);
 }
 
-bool FileAccessUnix::WriteBuffer(const void* p_data, size_t p_size) {
-    DEV_ASSERT(IsOpen());
+size_t FileAccessUnix::WriteBuffer(const void* p_data, size_t p_size) {
+    ERR_FAIL_COND_V(!IsOpen(), 0);
 
-    if (fwrite(p_data, 1, p_size, m_fileHandle) != p_size) {
-        return false;
-    }
+    return fwrite(p_data, 1, p_size, m_fileHandle);
+}
 
-    return true;
+long FileAccessUnix::Tell() {
+    return ftell(m_fileHandle);
 }
 
 }  // namespace my

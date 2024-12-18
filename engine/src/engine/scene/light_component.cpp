@@ -8,7 +8,6 @@
 
 namespace my {
 
-// @TODO: move this to elsewhere logic should not be in component
 void LightComponent::Update(const TransformComponent& p_transform) {
     m_position = p_transform.GetTranslation();
 
@@ -68,28 +67,6 @@ void LightComponent::Update(const TransformComponent& p_transform) {
 
         // @TODO: query if transformation is dirty, so don't update shadow map unless necessary
         SetDirty(false);
-    }
-}
-
-void LightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_version);
-
-    if (p_archive.IsWriteMode()) {
-        p_archive << m_flags;
-        p_archive << m_type;
-        p_archive << m_atten;
-        p_archive << m_shadowRegion;
-    } else {
-        p_archive >> m_flags;
-        p_archive >> m_type;
-        p_archive >> m_atten;
-        if (p_version > 14) {
-            p_archive >> m_shadowRegion;
-        } else {
-            m_flags &= ~(SHADOW_REGION);
-        }
-
-        m_flags |= DIRTY;
     }
 }
 

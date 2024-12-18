@@ -28,8 +28,9 @@ public:
     virtual bool IsOpen() const = 0;
     virtual size_t GetLength() const = 0;
 
-    virtual bool ReadBuffer(void* p_data, size_t p_size) const = 0;
-    virtual bool WriteBuffer(const void* p_data, size_t p_size) = 0;
+    virtual size_t ReadBuffer(void* p_data, size_t p_size) const = 0;
+    virtual size_t WriteBuffer(const void* p_data, size_t p_size) = 0;
+    virtual long Tell() = 0;
 
     AccessType GetAccessType() const { return m_accessType; }
 
@@ -49,6 +50,19 @@ public:
     template<typename T>
     static void MakeDefault(AccessType p_access_type) {
         s_createFuncs[p_access_type] = CreateBuiltin<T>;
+    }
+
+    // @TODO: refactor
+    template<typename T>
+        requires std::is_trivial_v<T> && (!std::is_pointer_v<T>)
+    size_t Read(T& p_data) {
+        return ReadBuffer(&p_data, sizeof(T));
+    }
+
+    template<typename T>
+        requires std::is_trivial_v<T> && (!std::is_pointer_v<T>)
+    size_t Write(const T& p_data) {
+        return WriteBuffer(&p_data, sizeof(T));
     }
 
 protected:
