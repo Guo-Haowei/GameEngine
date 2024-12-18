@@ -23,7 +23,7 @@ auto SceneManager::InitializeImpl() -> Result<void> {
     BumpRevision();
 
     LOG_ERROR("TODO: remove this code");
-    auto res = SaveSceneText("tmp.yaml", *m_scene);
+    auto res = SaveSceneText("@res://scenes/test_scene", *m_scene);
     if (!res) {
         CRASH_NOW();
     }

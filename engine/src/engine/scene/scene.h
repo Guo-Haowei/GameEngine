@@ -6,10 +6,7 @@
 #include "engine/systems/ecs/component_manager.h"
 #include "engine/systems/ecs/view.h"
 // @TODO: refactor all components
-#include "engine/scene/collider_component.h"
 #include "engine/scene/light_component.h"
-#include "engine/scene/material_component.h"
-#include "engine/scene/mesh_component.h"
 #include "engine/scene/particle_emitter_component.h"
 
 namespace my::jobsystem {

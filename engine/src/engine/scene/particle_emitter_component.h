@@ -10,14 +10,15 @@ class Emitter;
 namespace my {
 
 class Archive;
+class FileAccess;
 
 struct ParticleEmitterComponent {
     void Update(float p_timestep);
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
     uint32_t GetPreIndex() const { return aliveBufferIndex; }
     uint32_t GetPostIndex() const { return 1 - aliveBufferIndex; }

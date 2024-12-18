@@ -8,6 +8,7 @@
 
 namespace my {
 
+// @TODO: move this to elsewhere logic should not be in component
 void LightComponent::Update(const TransformComponent& p_transform) {
     m_position = p_transform.GetTranslation();
 

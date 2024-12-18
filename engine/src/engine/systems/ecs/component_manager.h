@@ -9,12 +9,13 @@ class Emitter;
 namespace my {
 class Scene;
 class Archive;
+class FileAccess;
 
 template<typename T>
-concept Serializable = requires(T& t, YAML::Emitter& p_out, const YAML::Node& p_cnode, Archive& p_archive, uint32_t p_version) {
+concept Serializable = requires(T& t, YAML::Emitter& p_out, const YAML::Node& p_cnode, Archive& p_archive, FileAccess* p_file, uint32_t p_version) {
     { t.Serialize(p_archive, p_version) } -> std::same_as<void>;
-    { t.Dump(p_out, p_archive, p_version) } -> std::same_as<bool>;
-    { t.Undump(p_cnode, p_archive, p_version) } -> std::same_as<bool>;
+    { t.Dump(p_out, p_file, p_version) } -> std::same_as<bool>;
+    { t.Undump(p_cnode, p_file, p_version) } -> std::same_as<bool>;
 };
 
 }  // namespace my

@@ -4,7 +4,9 @@
 
 #include <fstream>
 
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
+#include "engine/core/io/file_access.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/scene/scene.h"
 
@@ -116,40 +118,87 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
 }
 
 template<typename T>
-void DumyAny(YAML::Emitter& p_out, const T& p_value, Archive&) {
+void DumpAny(YAML::Emitter& p_out, const T& p_value, FileAccess*) {
     p_out << p_value;
 }
 
 template<typename T>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, T& p_value, Archive&) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, T& p_value, FileAccess*) {
     p_value = p_node.as<T>();
     return true;
 }
 
+template<typename T>
+concept EnumType = std::is_enum_v<T>;
+
+template<typename T>
+concept ContainerType = requires(T t) {
+    typename T::iterator;
+    { t.begin() } -> std::same_as<typename T::iterator>;
+    { t.end() } -> std::same_as<typename T::iterator>;
+};
+
+static_assert(ContainerType<std::vector<int>>);
+static_assert(ContainerType<int> == false);
+
+template<EnumType T>
+void DumpAny(YAML::Emitter& p_out, const T& p_value, FileAccess*) {
+    p_out << std::to_underlying(p_value);
+}
+
+template<EnumType T>
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, T& p_value, FileAccess*) {
+    static_assert(sizeof(T) <= sizeof(uint32_t));
+    p_value = static_cast<T>(p_node.as<uint32_t>());
+    return true;
+}
+//
+// template<ContainerType T>
+// void DumpAny(YAML::Emitter& p_output, const T& p_array, Archive&) {
+//}
+
+#define DUMP_BEGIN(EMITTER, BINARTY) \
+    auto& _out_ = EMITTER;           \
+    auto& _binary_ = BINARTY;        \
+    constexpr bool _true_ = true
+#define DUMP_END() return _true_
+
+#define DUMP_KEY_VALUE(KEY, VALUE) DumpKeyValuePair(_out_, KEY, VALUE, _binary_)
+#define DUMP_KEY(KEY)              YAML::Key << (KEY) << YAML::Value
+
+#define UNDUMP_BEGIN(NODE, BINARY) \
+    auto& _node_ = NODE;           \
+    auto& _binary_ = BINARY;       \
+    bool _ok_ = true
+#define UNDUMP_END() return _ok_
+
+#define UNDUMP_KEY_VALUE(KEY, VALUE) _ok_ = _ok_ && UndumpKeyValuePair(_node_, KEY, VALUE, _binary_)
+
 template<>
-void DumyAny(YAML::Emitter& p_out, const ecs::Entity& p_value, Archive&) {
+void DumpAny(YAML::Emitter& p_out, const ecs::Entity& p_value, FileAccess*) {
     p_out << p_value.GetId();
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, ecs::Entity& p_value, Archive&) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, ecs::Entity& p_value, FileAccess*) {
     p_value = ecs::Entity(p_node.as<uint32_t>());
     return true;
 }
 
 template<>
-void DumyAny(YAML::Emitter& p_out, const Degree& p_value, Archive&) {
+void DumpAny(YAML::Emitter& p_out, const Degree& p_value, FileAccess*) {
     p_out << p_value.GetDegree();
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Degree& p_value, Archive&) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Degree& p_value, FileAccess*) {
     p_value = Degree(p_node.as<float>());
     return true;
 }
 
 template<>
-void DumyAny(YAML::Emitter& p_out, const Vector3f& p_value, Archive&) {
+void DumpAny(YAML::Emitter& p_out, const Vector3f& p_value, FileAccess*) {
+    p_out.SetSeqFormat(YAML::Flow);
     p_out << YAML::BeginSeq;
     p_out << p_value.x;
     p_out << p_value.y;
@@ -158,7 +207,7 @@ void DumyAny(YAML::Emitter& p_out, const Vector3f& p_value, Archive&) {
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector3f& p_value, Archive&) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector3f& p_value, FileAccess*) {
     if (!p_node.IsSequence() && p_node.size() != 3) {
         return false;
     }
@@ -170,7 +219,8 @@ template<>
 }
 
 template<>
-void DumyAny(YAML::Emitter& p_out, const Vector4f& p_value, Archive&) {
+void DumpAny(YAML::Emitter& p_out, const Vector4f& p_value, FileAccess*) {
+    p_out.SetSeqFormat(YAML::Flow);
     p_out << YAML::BeginSeq;
     p_out << p_value.x;
     p_out << p_value.y;
@@ -180,7 +230,7 @@ void DumyAny(YAML::Emitter& p_out, const Vector4f& p_value, Archive&) {
 }
 
 template<>
-[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector4f& p_value, Archive&) {
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, Vector4f& p_value, FileAccess*) {
     if (!p_node.IsSequence() && p_node.size() != 4) {
         return false;
     }
@@ -192,16 +242,51 @@ template<>
     return true;
 }
 
-template<typename T>
-void DumyKeyValuePair(YAML::Emitter& p_out, const char* p_key, const T& p_value, Archive& p_archive) {
-    p_out << YAML::Key << p_key << YAML::Value;
-    DumyAny(p_out, p_value, p_archive);
+template<>
+void DumpAny(YAML::Emitter& p_out, const AABB& p_value, FileAccess* p_bin) {
+    p_out << YAML::BeginMap;
+    p_out << DUMP_KEY("min");
+    DumpAny<Vector3f>(p_out, p_value.GetMin(), p_bin);
+    p_out << DUMP_KEY("max");
+    DumpAny<Vector3f>(p_out, p_value.GetMax(), p_bin);
+    p_out << YAML::EndMap;
+}
+
+template<>
+[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, AABB& p_value, FileAccess*) {
+    unused(p_node);
+    unused(p_value);
+    CRASH_NOW();
+    // if (!p_node.IsSequence() && p_node.size() != 4) {
+    //     return false;
+    // }
+
+    // p_value.x = p_node[0].as<float>();
+    // p_value.y = p_node[1].as<float>();
+    // p_value.z = p_node[2].as<float>();
+    // p_value.w = p_node[3].as<float>();
+    return true;
 }
 
 template<typename T>
-[[nodiscard]] bool UndumpKeyValuePair(const YAML::Node& p_node, const char* p_key, T& p_value, Archive& p_archive) {
+void DumpVectorBinary(YAML::Emitter& p_out, const std::vector<T>& p_value, FileAccess*) {
+    const size_t size_in_byte = sizeof(T) * p_value.size();
+    p_out << YAML::BeginMap;
+    p_out << DUMP_KEY("offset") << 0;
+    p_out << DUMP_KEY("length") << size_in_byte;
+    p_out << YAML::EndMap;
+}
+
+template<typename T>
+void DumpKeyValuePair(YAML::Emitter& p_out, const char* p_key, const T& p_value, FileAccess* p_bin) {
+    p_out << YAML::Key << p_key << YAML::Value;
+    DumpAny(p_out, p_value, p_bin);
+}
+
+template<typename T>
+[[nodiscard]] bool UndumpKeyValuePair(const YAML::Node& p_node, const char* p_key, T& p_value, FileAccess* p_bin) {
     const auto& node = p_node[p_key];
-    return UndumpAny(node, p_value, p_archive);
+    return UndumpAny(node, p_value, p_bin);
 }
 
 template<Serializable T>
@@ -209,12 +294,12 @@ static void DumpComponent(YAML::Emitter& p_out,
                           const char* p_name,
                           ecs::Entity p_entity,
                           const Scene& p_scene,
-                          Archive& p_archive) {
+                          FileAccess* p_bin) {
     const T* component = p_scene.GetComponent<T>(p_entity);
     if (component) {
-        p_out << YAML::Key << p_name << YAML::Value;
+        p_out << DUMP_KEY(p_name);
         p_out << YAML::BeginMap;
-        component->Dump(p_out, p_archive, SCENE_VERSION);
+        component->Dump(p_out, p_bin, SCENE_VERSION);
         p_out << YAML::EndMap;
     }
 }
@@ -222,7 +307,6 @@ static void DumpComponent(YAML::Emitter& p_out,
 Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     std::unordered_set<uint32_t> entity_set;
 
-    Archive archive;
     for (const auto& it : p_scene.GetLibraryEntries()) {
         auto& manager = it.second.m_manager;
         for (auto entity : manager->GetEntityArray()) {
@@ -233,22 +317,32 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     std::vector<uint32_t> entity_array(entity_set.begin(), entity_set.end());
     std::sort(entity_array.begin(), entity_array.end());
 
+    auto binary_path = std::format("{}{}", p_path, ".bin");
+    auto res = FileAccess::Open(binary_path, FileAccess::WRITE);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    auto binary_file = *res;
+
     YAML::Emitter out;
     out << YAML::BeginMap;
-    out << YAML::Key << "version" << YAML::Value << SCENE_VERSION;
-    out << YAML::Key << "seed" << YAML::Value << ecs::Entity::GetSeed();
-    out << YAML::Key << "root" << YAML::Value << p_scene.m_root.GetId();
-    out << YAML::Key << "entities" << YAML::Value;
+    out << DUMP_KEY("version") << SCENE_VERSION;
+    out << DUMP_KEY("seed") << ecs::Entity::GetSeed();
+    out << DUMP_KEY("root") << p_scene.m_root.GetId();
+    out << DUMP_KEY("binary") << binary_path;
+
+    out << DUMP_KEY("entities");
     out << YAML::BeginSeq;
 
     for (auto id : entity_array) {
         ecs::Entity entity{ id };
 
         out << YAML::BeginMap;
-        out << YAML::Key << "id" << YAML::Value << id;
+        out << DUMP_KEY("id") << id;
 
         out.SetSeqFormat(YAML::Flow);
-#define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, archive);
+#define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, binary_file.get());
         REGISTER_COMPONENT_LIST
 #undef REGISTER_COMPONENT
         out.SetSeqFormat(YAML::Block);
@@ -259,32 +353,17 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     out << YAML::EndSeq;
     out << YAML::EndMap;
 
-    auto res = FileAccess::Open(p_path, FileAccess::WRITE);
+    // @TODO: use same extension,
+    res = FileAccess::Open(p_path + ".yscene", FileAccess::WRITE);
     if (!res) {
         return HBN_ERROR(res.error());
     }
 
-    auto file_access = *res;
+    auto yaml_file = *res;
     const char* result = out.c_str();
-    file_access->WriteBuffer(result, strlen(result));
+    yaml_file->WriteBuffer(result, strlen(result));
     return Result<void>();
 }
-
-#define DUMP_BEGIN(EMITTER, ARCHIVE) \
-    auto& _out_ = p_out;             \
-    auto& _archive_ = p_archive;     \
-    constexpr bool _true_ = true
-#define DUMP_END() return _true_
-
-#define DUMP_KEY_VALUE(KEY, VALUE) DumyKeyValuePair(_out_, KEY, VALUE, _archive_)
-
-#define UNDUMP_BEGIN(EMITTER, ARCHIVE) \
-    auto& _node_ = p_node;             \
-    auto& _archive_ = p_archive;       \
-    bool _ok_ = true
-#define UNDUMP_END() return _ok_
-
-#define UNDUMP_KEY_VALUE(KEY, VALUE) _ok_ = _ok_ && UndumpKeyValuePair(_node_, KEY, VALUE, _archive_)
 
 #pragma region SCENE_COMPONENT_SERIALIZATION
 void NameComponent::Serialize(Archive& p_archive, uint32_t p_version) {
@@ -297,7 +376,7 @@ void NameComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     }
 }
 
-bool NameComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+bool NameComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
     unused(p_version);
 
     DUMP_BEGIN(p_out, p_archive);
@@ -305,10 +384,10 @@ bool NameComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_ve
     DUMP_END();
 }
 
-bool NameComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+bool NameComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, uint32_t p_version) {
     unused(p_version);
 
-    UNDUMP_BEGIN(p_node, p_archive);
+    UNDUMP_BEGIN(p_node, p_binary);
     UNDUMP_KEY_VALUE("name", m_name);
     UNDUMP_END();
 }
@@ -321,7 +400,7 @@ void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
-bool HierarchyComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+bool HierarchyComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
     unused(p_version);
 
     DUMP_BEGIN(p_out, p_archive);
@@ -329,7 +408,7 @@ bool HierarchyComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t
     DUMP_END();
 }
 
-bool HierarchyComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+bool HierarchyComponent::Undump(const YAML::Node& p_node, FileAccess* p_archive, uint32_t p_version) {
     unused(p_version);
 
     UNDUMP_BEGIN(p_node, p_archive);
@@ -372,8 +451,9 @@ void AnimationComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
-bool AnimationComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+bool AnimationComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
     unused(p_version);
+    CRASH_NOW();
 
     DUMP_BEGIN(p_out, p_archive);
     DUMP_KEY_VALUE("flags", flags);
@@ -382,13 +462,13 @@ bool AnimationComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t
     DUMP_KEY_VALUE("timer", timer);
     DUMP_KEY_VALUE("amount", amount);
     DUMP_KEY_VALUE("speed", speed);
-    CRASH_NOW();
 
     DUMP_END();
 }
 
-bool AnimationComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+bool AnimationComponent::Undump(const YAML::Node& p_node, FileAccess* p_archive, uint32_t p_version) {
     unused(p_version);
+    CRASH_NOW();
 
     UNDUMP_BEGIN(p_node, p_archive);
     UNDUMP_KEY_VALUE("flags", flags);
@@ -415,7 +495,7 @@ void TransformComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
-bool TransformComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+bool TransformComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
     unused(p_version);
 
     DUMP_BEGIN(p_out, p_archive);
@@ -426,7 +506,7 @@ bool TransformComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t
     DUMP_END();
 }
 
-bool TransformComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+bool TransformComponent::Undump(const YAML::Node& p_node, FileAccess* p_archive, uint32_t p_version) {
     unused(p_version);
 
     UNDUMP_BEGIN(p_node, p_archive);
@@ -438,8 +518,152 @@ bool TransformComponent::Undump(const YAML::Node& p_node, Archive& p_archive, ui
     UNDUMP_END();
 }
 
+void MeshComponent::Serialize(Archive& p_archive, uint32_t) {
+    if (p_archive.IsWriteMode()) {
+        p_archive << flags;
+        p_archive << indices;
+        p_archive << positions;
+        p_archive << normals;
+        p_archive << tangents;
+        p_archive << texcoords_0;
+        p_archive << texcoords_1;
+        p_archive << joints_0;
+        p_archive << weights_0;
+        p_archive << color_0;
+        p_archive << subsets;
+        p_archive << armatureId;
+    } else {
+        p_archive >> flags;
+        p_archive >> indices;
+        p_archive >> positions;
+        p_archive >> normals;
+        p_archive >> tangents;
+        p_archive >> texcoords_0;
+        p_archive >> texcoords_1;
+        p_archive >> joints_0;
+        p_archive >> weights_0;
+        p_archive >> color_0;
+        p_archive >> subsets;
+        p_archive >> armatureId;
+
+        CreateRenderData();
+    }
+}
+
+bool MeshComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
+    unused(p_version);
+
+    DUMP_BEGIN(p_out, p_archive);
+    DUMP_KEY_VALUE("flags", flags);
+    DUMP_KEY_VALUE("armature_id", armatureId);
+
+    p_out << DUMP_KEY("subsets");
+    p_out.SetSeqFormat(YAML::Block);
+    p_out << YAML::BeginSeq;
+    for (const auto& subset : subsets) {
+        p_out << YAML::BeginMap;
+        DUMP_KEY_VALUE("material_id", subset.material_id);
+        DUMP_KEY_VALUE("index_count", subset.index_count);
+        DUMP_KEY_VALUE("index_offset", subset.index_offset);
+        DUMP_KEY_VALUE("local_bound", subset.local_bound);
+        p_out << YAML::EndMap;
+    }
+    p_out << YAML::EndSeq;
+    p_out.SetSeqFormat(YAML::Flow);
+
+#define DUMP_VEC_HELPER(a)                         \
+    do {                                           \
+        if (!a.empty()) {                          \
+            p_out << DUMP_KEY(#a);                 \
+            DumpVectorBinary(p_out, a, p_archive); \
+        }                                          \
+    } while (0)
+    DUMP_VEC_HELPER(indices);
+    DUMP_VEC_HELPER(positions);
+    DUMP_VEC_HELPER(normals);
+    DUMP_VEC_HELPER(tangents);
+    DUMP_VEC_HELPER(texcoords_0);
+    DUMP_VEC_HELPER(texcoords_1);
+    DUMP_VEC_HELPER(joints_0);
+    DUMP_VEC_HELPER(weights_0);
+    DUMP_VEC_HELPER(color_0);
+#undef DUMP_VEC_HELPER
+
+    DUMP_END();
+}
+
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
+bool MeshComponent::Undump(const YAML::Node& p_node, FileAccess* p_archive, uint32_t p_version) {
+    CRASH_NOW();
+    return true;
+}
+
+void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+
+    if (p_archive.IsWriteMode()) {
+        p_archive << metallic;
+        p_archive << roughness;
+        p_archive << emissive;
+        p_archive << baseColor;
+        for (int i = 0; i < TEXTURE_MAX; ++i) {
+            p_archive << textures[i].enabled;
+            p_archive << textures[i].path;
+        }
+    } else {
+        p_archive >> metallic;
+        p_archive >> roughness;
+        p_archive >> emissive;
+        p_archive >> baseColor;
+        for (int i = 0; i < TEXTURE_MAX; ++i) {
+            p_archive >> textures[i].enabled;
+            std::string& path = textures[i].path;
+            p_archive >> path;
+
+            // request image
+            if (!path.empty()) {
+                AssetRegistry::GetSingleton().RequestAssetAsync(path);
+            }
+        }
+    }
+}
+
+bool MaterialComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
+    unused(p_version);
+
+    DUMP_BEGIN(p_out, p_archive);
+    DUMP_KEY_VALUE("metallic", metallic);
+    DUMP_KEY_VALUE("roughness", roughness);
+    DUMP_KEY_VALUE("emssive", emissive);
+    DUMP_KEY_VALUE("baseColor", baseColor);
+
+    p_out << YAML::Key << "textures" << YAML::Value;
+    p_out << YAML::BeginSeq;
+    for (int i = 0; i < TEXTURE_MAX; ++i) {
+        p_out << YAML::BeginMap << YAML::Value;
+        DUMP_KEY_VALUE("enabled", textures[i].enabled);
+        DUMP_KEY_VALUE("path", textures[i].path);
+        p_out << YAML::EndMap;
+    }
+    p_out << YAML::EndSeq;
+
+    DUMP_END();
+}
+
+bool MaterialComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, uint32_t p_version) {
+    unused(p_version);
+
+    UNDUMP_BEGIN(p_node, p_binary);
+    UNDUMP_KEY_VALUE("metallic", metallic);
+    UNDUMP_KEY_VALUE("roughness", roughness);
+    UNDUMP_KEY_VALUE("emssive", emissive);
+    UNDUMP_KEY_VALUE("baseColor", baseColor);
+
+    CRASH_NOW();
+
+    UNDUMP_END();
+}
 
 void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
     if (p_archive.IsWriteMode()) {
@@ -453,22 +677,12 @@ void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
-bool ArmatureComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+bool ArmatureComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
+    CRASH_NOW();
     return true;
 }
 
-bool ArmatureComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
-    return true;
-}
-
-bool ObjectComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
-    DUMP_BEGIN(p_out, p_archive);
-    DUMP_KEY_VALUE("flags", flags);
-    DUMP_KEY_VALUE("mesh_id", meshId);
-    DUMP_END();
-}
-
-bool ObjectComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
+bool ArmatureComponent::Undump(const YAML::Node& p_node, FileAccess* p_archive, uint32_t p_version) {
     CRASH_NOW();
     return true;
 }
@@ -481,6 +695,20 @@ void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
         p_archive >> flags;
         p_archive >> meshId;
     }
+}
+
+bool ObjectComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
+    DUMP_BEGIN(p_out, p_archive);
+    DUMP_KEY_VALUE("flags", flags);
+    DUMP_KEY_VALUE("mesh_id", meshId);
+    DUMP_END();
+}
+
+bool ObjectComponent::Undump(const YAML::Node& p_node, FileAccess* p_archive, uint32_t p_version) {
+    UNDUMP_BEGIN(p_node, p_archive);
+    UNDUMP_KEY_VALUE("flags", flags);
+    UNDUMP_KEY_VALUE("mesh_id", meshId);
+    UNDUMP_END();
 }
 
 void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -509,7 +737,7 @@ void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
-bool PerspectiveCameraComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const {
+bool PerspectiveCameraComponent::Dump(YAML::Emitter& p_out, FileAccess* p_archive, uint32_t p_version) const {
     DUMP_BEGIN(p_out, p_archive);
     DUMP_KEY_VALUE("flags", m_flags);
     DUMP_KEY_VALUE("near", m_near);
@@ -523,8 +751,8 @@ bool PerspectiveCameraComponent::Dump(YAML::Emitter& p_out, Archive& p_archive, 
     DUMP_END();
 }
 
-bool PerspectiveCameraComponent::Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) {
-    UNDUMP_BEGIN(p_out, p_archive);
+bool PerspectiveCameraComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, uint32_t p_version) {
+    UNDUMP_BEGIN(p_node, p_binary);
     UNDUMP_KEY_VALUE("flags", m_flags);
     UNDUMP_KEY_VALUE("near", m_near);
     UNDUMP_KEY_VALUE("far", m_far);

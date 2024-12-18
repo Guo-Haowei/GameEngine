@@ -11,7 +11,6 @@
 #include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/sampler.h"
-#include "engine/scene/material_component.h"
 
 // @TODO: refactor
 #include "cbuffer.hlsl.h"
