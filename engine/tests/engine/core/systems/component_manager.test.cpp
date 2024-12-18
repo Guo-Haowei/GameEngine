@@ -22,8 +22,11 @@ struct DummyTest {
 };
 
 struct A {
-    void Serialize(Archive&, uint32_t) {}
     int a;
+
+    void Serialize(Archive&, uint32_t) {}
+    bool Dump(YAML::Emitter&, Archive&, uint32_t) const {}
+    bool Undump(const YAML::Node&, Archive&, uint32_t) {}
 };
 
 TEST(serializable, test_serializable) {
