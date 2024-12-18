@@ -10,9 +10,6 @@
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 
-// @TODO: refactor
-#include "engine/scene/scene_serialization.h"
-
 namespace my {
 
 using ecs::Entity;
@@ -21,12 +18,6 @@ namespace fs = std::filesystem;
 auto SceneManager::InitializeImpl() -> Result<void> {
     m_scene = m_app->CreateInitialScene();
     BumpRevision();
-
-    LOG_ERROR("TODO: remove this code");
-    auto res = SaveSceneText("tmp.yaml", *m_scene);
-    if (!res) {
-        CRASH_NOW();
-    }
 
     const std::string& path = DVAR_GET_STRING(project);
     if (!path.empty()) {
@@ -84,7 +75,7 @@ void SceneManager::RequestScene(std::string_view p_path) {
     FilePath path{ p_path };
 
     std::string ext = path.Extension();
-    if (ext == ".lua" || ext == ".scene") {
+    if (ext == ".yaml" || ext == ".scene") {
         AssetRegistry::GetSingleton().RequestAssetAsync(path.String(), [](IAsset* p_scene, void*) {
             DEV_ASSERT(p_scene);
             Scene* new_scene = dynamic_cast<Scene*>(p_scene);

@@ -151,7 +151,7 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
         if (!res) {
             return HBN_ERROR(res.error());
         }
-        m_lineBuffers = *res;
+        m_debugBuffers = *res;
     }
 
     m_initialized = true;

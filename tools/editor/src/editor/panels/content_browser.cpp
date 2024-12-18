@@ -111,23 +111,27 @@ void ContentBrowser::DrawSideBar() {
 
 void ContentBrowser::Update(Scene&) {
     if (ImGui::Begin(m_name.c_str())) {
-        DrawSideBar();
-    }
-    ImGui::End();
-
-    if (ImGui::Begin("Assets##ContentBrowser")) {
-        DrawAssets();
+        int flags = ImGuiTableFlags_Resizable;
+        flags |= ImGuiTableFlags_NoBordersInBody;
+        if (ImGui::BeginTable("Outter", 2, flags)) {
+            ImGui::TableNextColumn();
+            DrawSideBar();
+            ImGui::TableNextColumn();
+            DrawAssets();
+            ImGui::EndTable();
+        }
     }
     ImGui::End();
 }
 
 void ContentBrowser::DrawAssets() {
-    ImVec2 window_size = ImGui::GetWindowSize();
+    ImVec2 window_size = ImGui::GetContentRegionAvail();
     constexpr float desired_icon_size = 120.f;
     int num_col = static_cast<int>(glm::floor(window_size.x / desired_icon_size));
     num_col = glm::max(1, num_col);
 
-    ImGui::Columns(num_col, nullptr, false);
+    ImGui::BeginTable("Inner", num_col);
+    ImGui::TableNextColumn();
 
     auto registry = m_editor.GetApplication()->GetAssetRegistry();
     ImVec2 thumbnail_size{ 96.f, 96.f };
@@ -167,7 +171,7 @@ void ContentBrowser::DrawAssets() {
                 }
 
                 ImGui::Text("%s", name.c_str());
-                ImGui::NextColumn();
+                ImGui::TableNextColumn();
             }
         }
     };
@@ -193,7 +197,7 @@ void ContentBrowser::DrawAssets() {
                 }
 
                 ImGui::Text("%s", name.c_str());
-                ImGui::NextColumn();
+                ImGui::TableNextColumn();
             }
         }
     };
@@ -210,7 +214,7 @@ void ContentBrowser::DrawAssets() {
             break;
     }
 
-    ImGui::Columns(1);
+    ImGui::EndTable();
 }
 
 void ContentBrowser::DrawDetailPanel() {

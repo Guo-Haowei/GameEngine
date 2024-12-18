@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/core/math/aabb.h"
 #include "engine/core/math/angle.h"
 #include "engine/core/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
@@ -10,9 +11,12 @@ class Emitter;
 
 namespace my {
 
+struct GpuMesh;
 struct ImageAsset;
 struct TextAsset;
 class Archive;
+class FileAccess;
+class Scene;
 class ScriptableEntity;
 
 #pragma region NAME_COMPONENT
@@ -29,8 +33,8 @@ public:
     std::string& GetNameRef() { return m_name; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 
 private:
     std::string m_name;
@@ -43,8 +47,8 @@ public:
     ecs::Entity GetParent() const { return m_parentId; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 
 private:
     ecs::Entity m_parentId;
@@ -94,8 +98,8 @@ public:
     void UpdateTransformParented(const TransformComponent& p_parent);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 
 private:
     uint32_t m_flags = DIRTY;
@@ -108,6 +112,101 @@ private:
     Matrix4x4f m_worldMatrix{ 1 };
 };
 #pragma endregion TRANSFORM_COMPONENT
+
+#pragma region MESH_COMPONENT
+enum class VertexAttributeName : uint8_t {
+    POSITION = 0,
+    NORMAL,
+    TEXCOORD_0,
+    TEXCOORD_1,
+    TANGENT,
+    JOINTS_0,
+    WEIGHTS_0,
+    COLOR_0,
+    COUNT,
+};
+
+struct MeshComponent {
+    enum : uint32_t {
+        NONE = BIT(0),
+        RENDERABLE = BIT(1),
+        DOUBLE_SIDED = BIT(2),
+        DYNAMIC = BIT(3),
+    };
+
+    struct VertexAttribute {
+        VertexAttributeName attribName;
+        uint32_t offsetInByte{ 0 };
+        uint32_t strideInByte{ 0 };
+
+        uint32_t elementCount{ 0 };
+    };
+
+    uint32_t flags = RENDERABLE;
+    std::vector<uint32_t> indices;
+    std::vector<Vector3f> positions;
+    std::vector<Vector3f> normals;
+    std::vector<Vector3f> tangents;
+    std::vector<Vector2f> texcoords_0;
+    std::vector<Vector2f> texcoords_1;
+    std::vector<Vector4i> joints_0;
+    std::vector<Vector4f> weights_0;
+    std::vector<Vector4f> color_0;
+
+    struct MeshSubset {
+        ecs::Entity material_id;
+        uint32_t index_offset = 0;
+        uint32_t index_count = 0;
+        AABB local_bound;
+    };
+    std::vector<MeshSubset> subsets;
+
+    ecs::Entity armatureId;
+
+    // Non-serialized
+    mutable std::shared_ptr<GpuMesh> gpuResource;
+    AABB localBound;
+
+    mutable std::vector<Vector3f> updatePositions;
+    mutable std::vector<Vector3f> updateNormals;
+
+    VertexAttribute attributes[std::to_underlying(VertexAttributeName::COUNT)];
+
+    void CreateRenderData();
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+};
+#pragma endregion MESH_COMPONENT
+
+#pragma region MATERIAL_COMPONENT
+struct MaterialComponent {
+    enum {
+        TEXTURE_BASE,
+        TEXTURE_NORMAL,
+        TEXTURE_METALLIC_ROUGHNESS,
+        TEXTURE_MAX,
+    };
+
+    struct TextureMap {
+        std::string path;
+        // Non-serialized
+        bool enabled = true;
+    };
+
+    float metallic = 0.0f;
+    float roughness = 1.0f;
+    float emissive = 0.0f;
+    Vector4f baseColor = Vector4f(1);
+    TextureMap textures[TEXTURE_MAX];
+    bool useTexures;
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+};
+#pragma endregion MATERIAL_COMPONENT
 
 #pragma region ANIMATION_COMPONENT
 struct AnimationComponent {
@@ -151,8 +250,8 @@ struct AnimationComponent {
     std::vector<Sampler> samplers;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 };
 #pragma endregion ANIMATION_COMPONENT
 
@@ -170,8 +269,8 @@ struct ArmatureComponent {
     std::vector<Matrix4x4f> boneTransforms;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 };
 #pragma endregion ARMATURE_COMPONENT
 
@@ -188,11 +287,8 @@ struct ObjectComponent {
     ecs::Entity meshId;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
-    WARNING_POP()
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 };
 DEFINE_ENUM_BITWISE_OPERATIONS(ObjectComponent::Flags);
 #pragma endregion OBJECT_COMPONENT
@@ -256,8 +352,8 @@ public:
     const Vector3f GetFront() const { return m_front; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version);
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 
 private:
     uint32_t m_flags = DIRTY;
@@ -300,8 +396,8 @@ public:
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
 
 private:
@@ -345,8 +441,8 @@ struct NativeScriptComponent {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
 };
 #pragma endregion NATIVE_SCRIPT_COMPONENT
@@ -376,8 +472,8 @@ struct CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
 };
 
@@ -417,8 +513,8 @@ struct RigidBodyComponent : CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
 };
 
@@ -446,8 +542,8 @@ struct ClothComponent : CollisionObjectBase {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
 };
 #pragma endregion COLLISION_OBJECT_COMPONENT
@@ -473,8 +569,8 @@ struct EnvironmentComponent {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
 };
 #pragma endregion ENVIRONMENT_COMPONENT
@@ -487,11 +583,34 @@ struct ForceFieldComponent {
     void Serialize(Archive& p_archive, uint32_t p_version);
     WARNING_PUSH()
     WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, Archive& p_archive, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, Archive& p_archive, uint32_t p_version) { return true; }
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
     WARNING_POP()
 };
 #pragma endregion FORCE_FIELD_COMPONENT
+
+/// @TODO: remove these
+struct BoxColliderComponent {
+    AABB box;
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    WARNING_PUSH()
+    WARNING_DISABLE(4100, "-Wunused-parameter")
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
+    WARNING_POP()
+};
+
+struct MeshColliderComponent {
+    ecs::Entity objectId;
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    WARNING_PUSH()
+    WARNING_DISABLE(4100, "-Wunused-parameter")
+    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
+    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
+    WARNING_POP()
+};
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

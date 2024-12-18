@@ -70,26 +70,4 @@ void LightComponent::Update(const TransformComponent& p_transform) {
     }
 }
 
-void LightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_version);
-
-    if (p_archive.IsWriteMode()) {
-        p_archive << m_flags;
-        p_archive << m_type;
-        p_archive << m_atten;
-        p_archive << m_shadowRegion;
-    } else {
-        p_archive >> m_flags;
-        p_archive >> m_type;
-        p_archive >> m_atten;
-        if (p_version > 14) {
-            p_archive >> m_shadowRegion;
-        } else {
-            m_flags &= ~(SHADOW_REGION);
-        }
-
-        m_flags |= DIRTY;
-    }
-}
-
 }  // namespace my

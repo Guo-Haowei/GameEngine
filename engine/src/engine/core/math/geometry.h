@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/scene/mesh_component.h"
+#include "engine/scene/scene_component.h"
 
 namespace my {
 

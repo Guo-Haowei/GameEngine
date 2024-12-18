@@ -40,6 +40,7 @@ static struct {
 
 auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
+    IAssetLoader::RegisterLoader(".yaml", TextSceneLoader::CreateLoader);
 
 #if 1
     IAssetLoader::RegisterLoader(".gltf", GltfLoader::CreateLoader);
@@ -67,8 +68,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
 
     auto loader = IAssetLoader::Create(p_handle->meta);
     if (!loader) {
-        LOG_ERROR("No suitable loader found for asset '{}'", p_handle->meta.path);
-        return nullptr;
+        return HBN_ERROR(ErrorCode::ERR_CANT_OPEN, "No suitable loader found for asset '{}'", p_handle->meta.path);
     }
 
     auto res = loader->Load();

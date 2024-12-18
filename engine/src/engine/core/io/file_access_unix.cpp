@@ -21,6 +21,7 @@ auto FileAccessUnix::OpenInternal(std::string_view p_path, ModeFlags p_mode_flag
 
     std::string path_string{ p_path };
     m_fileHandle = fopen(path_string.c_str(), mode);
+    m_openMode = p_mode_flags;
 
     if (!m_fileHandle) {
         switch (errno) {
@@ -52,24 +53,33 @@ size_t FileAccessUnix::GetLength() const {
     return length;
 }
 
-bool FileAccessUnix::ReadBuffer(void* p_data, size_t p_size) const {
-    DEV_ASSERT(IsOpen());
+size_t FileAccessUnix::ReadBuffer(void* p_data, size_t p_size) const {
+    DEV_ASSERT(m_openMode == READ);
 
-    if (fread(p_data, 1, p_size, m_fileHandle) != p_size) {
-        return false;
-    }
-
-    return true;
+    ERR_FAIL_COND_V(!IsOpen(), 0);
+    return fread(p_data, 1, p_size, m_fileHandle);
 }
 
-bool FileAccessUnix::WriteBuffer(const void* p_data, size_t p_size) {
-    DEV_ASSERT(IsOpen());
+size_t FileAccessUnix::WriteBuffer(const void* p_data, size_t p_size) {
+    DEV_ASSERT(m_openMode == WRITE);
 
-    if (fwrite(p_data, 1, p_size, m_fileHandle) != p_size) {
-        return false;
+    ERR_FAIL_COND_V(!IsOpen(), 0);
+    return fwrite(p_data, 1, p_size, m_fileHandle);
+}
+
+long FileAccessUnix::Tell() {
+    ERR_FAIL_COND_V(!IsOpen(), -1);
+    return ftell(m_fileHandle);
+}
+int FileAccessUnix::Seek(long p_offset) {
+    // @TODO: refactor error code
+    ERR_FAIL_COND_V(!IsOpen(), -1);
+
+    const int res = fseek(m_fileHandle, p_offset, SEEK_SET);
+    if (res != 0) {
+        LOG_ERROR("seek failed");
     }
-
-    return true;
+    return res;
 }
 
 }  // namespace my

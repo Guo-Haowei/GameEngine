@@ -2,6 +2,7 @@
 
 #include "editor_layer.h"
 #include "engine/core/framework/common_dvars.h"
+#include "engine/core/string/string_utils.h"
 #include "engine/drivers/windows/dialog.h"
 #include "engine/scene/scene_serialization.h"
 // @TODO: refactor
@@ -97,10 +98,18 @@ void SaveProjectCommand::Execute(Scene& p_scene) {
 #endif
     }
 
-    DVAR_SET_STRING(project, path.string());
+    auto path_string = path.string();
+    DVAR_SET_STRING(project, path_string);
 
-    if (auto res = SaveSceneBinary(path.string(), p_scene); !res) {
-        CRASH_NOW();
+    const auto extension = StringUtils::Extension(path_string);
+    if (extension == ".scene") {
+        if (auto res = SaveSceneBinary(path_string, p_scene); !res) {
+            CRASH_NOW();
+        }
+    } else if (extension == ".yaml") {
+        if (auto res = SaveSceneText(path_string, p_scene); !res) {
+            CRASH_NOW();
+        }
     }
 
     LOG_OK("scene saved to '{}'", path.string());

@@ -11,7 +11,6 @@
 #include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/sampler.h"
-#include "engine/scene/material_component.h"
 
 // @TODO: refactor
 #include "cbuffer.hlsl.h"
@@ -205,7 +204,7 @@ protected:
 public:
     // @TODO: make private
     std::shared_ptr<GpuMesh> m_boxBuffers;
-    std::shared_ptr<GpuMesh> m_lineBuffers;
+    std::shared_ptr<GpuMesh> m_debugBuffers;
 
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
