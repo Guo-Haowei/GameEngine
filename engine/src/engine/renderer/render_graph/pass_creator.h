@@ -42,6 +42,7 @@ private:
     void AddGenerateSkylightPass();
     void AddPathTracerPass();
     void AddPathTracerTonePass();
+    void AddDebugImagePass();
 
     static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
                                                   PixelFormat p_format,

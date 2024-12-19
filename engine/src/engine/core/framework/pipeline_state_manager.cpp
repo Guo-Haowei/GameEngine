@@ -354,6 +354,17 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                               });
 #pragma endregion PSO_ENV
 
+    CREATE_PSO(PSO_RW_TEXTURE_2D, {
+                                      .vs = "debug_draw_texture.vs",
+                                      .ps = "debug_draw_texture.ps",
+                                      .rasterizerDesc = &s_rasterizerFrontFace,
+                                      .depthStencilDesc = &s_depthStencilNoTest,
+                                      .inputLayoutDesc = &s_inputLayoutPosition,
+                                      .blendDesc = &s_blendStateDefault,
+                                      .numRenderTargets = 1,
+                                      .rtvFormats = { RESOURCE_FORMAT_TONE },
+                                  });
+
     // @HACK: only support this many shaders
     if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
@@ -389,13 +400,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                 });
 #pragma endregion PSO_VOXEL
 
-    CREATE_PSO(PSO_RW_TEXTURE_2D, {
-                                      .vs = "debug_draw_texture.vs",
-                                      .ps = "debug_draw_texture.ps",
-                                      .rasterizerDesc = &s_rasterizerFrontFace,
-                                      .depthStencilDesc = &s_depthStencilNoTest,
-                                      .blendDesc = &s_blendStateDefault,
-                                  });
     CREATE_PSO(PSO_BILLBOARD, {
                                   .vs = "billboard.vs",
                                   .ps = "texture.ps",

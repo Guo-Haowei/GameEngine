@@ -52,14 +52,14 @@ static void PrepareDebugDraws() {
 static void PrepareImageDraws() {
     auto& buffer = s_glob.renderData->batchCache.buffer;
     auto& context = s_glob.renderData->drawImageContext;
-    const int size = context.size();
+    const int size = (int)context.size();
     if (buffer.size() < size) {
         buffer.resize(size);
     }
 
-    const auto resolution = DVAR_GET_VEC2(resolution);
+    const auto resolution = DVAR_GET_IVEC2(resolution);
     for (int i = 0; i < size; ++i) {
-        auto half_ndc = context[i].size / resolution;
+        auto half_ndc = context[i].size / NewVector2f(resolution);
         auto pos = 1.0f - half_ndc;
 
         buffer[i].c_debugDrawPos.x = pos.x;
@@ -72,6 +72,7 @@ static void PrepareImageDraws() {
 
 void EndFrame() {
     PrepareDebugDraws();
+    PrepareImageDraws();
 
     s_glob.state = RenderState::SUBMITTING;
 }

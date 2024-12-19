@@ -630,14 +630,11 @@ uint64_t GraphicsManager::GetFinalImage() const {
             texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;
         case RenderGraphName::EXPERIMENTAL:
-            texture = FindTexture(RESOURCE_FINAL).get();
-            break;
         case RenderGraphName::DEFAULT:
             texture = FindTexture(RESOURCE_TONE).get();
             break;
         case RenderGraphName::PATHTRACER:
             texture = FindTexture(RESOURCE_PATH_TRACER).get();
-            // texture = FindTexture(RESOURCE_TONE).get();
             break;
         default:
             CRASH_NOW();

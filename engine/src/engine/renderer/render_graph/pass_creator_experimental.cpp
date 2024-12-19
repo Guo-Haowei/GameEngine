@@ -10,10 +10,7 @@
 #include "shader_resource_defines.hlsl.h"
 
 // @TODO: refactor
-#include "engine/drivers/opengl/opengl_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_prerequisites.h"
-
-extern my::OpenGlMeshBuffers* g_box;
 
 namespace my::renderer {
 
@@ -54,14 +51,6 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
     auto graph = std::make_unique<RenderGraph>();
     RenderPassCreator creator(config, *graph.get());
 
-    GraphicsManager& manager = GraphicsManager::GetSingleton();
-
-    auto final_attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
-                                                                          PixelFormat::R8G8B8A8_UINT,
-                                                                          AttachmentType::COLOR_2D,
-                                                                          w, h),
-                                                  PointClampSampler());
-
     creator.AddGenerateSkylightPass();
     creator.AddShadowPass();
     creator.AddGbufferPass();
@@ -71,36 +60,7 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
     creator.AddEmitterPass();
     creator.AddBloomPass();
     creator.AddTonePass();
-
-    {
-        // final pass
-        RenderPassDesc desc;
-        desc.name = RenderPassName::FINAL;
-        desc.dependencies = { RenderPassName::TONE };
-        auto pass = graph->CreatePass(desc);
-        auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
-            .colorAttachments = { final_attachment },
-            .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
-                OPTICK_EVENT();
-
-                auto& gm = GraphicsManager::GetSingleton();
-                auto& frame = gm.GetCurrentFrame();
-                const uint32_t width = p_draw_pass->desc.depthAttachment->desc.width;
-                const uint32_t height = p_draw_pass->desc.depthAttachment->desc.height;
-
-                gm.SetRenderTarget(p_draw_pass);
-                gm.SetViewport(Viewport(width, height));
-                gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
-                gm.SetPipelineState(PSO_RW_TEXTURE_2D);
-
-                for (int i = 0; i < (int)p_data.drawImageContext.size(); ++i) {
-                    const auto& data = p_data.drawImageContext[i];
-                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
-                    gm.DrawQuad();
-                }
-            } });
-        pass->AddDrawPass(draw_pass);
-    }
+    creator.AddDebugImagePass();
 
     // @TODO: allow recompile
     graph->Compile();

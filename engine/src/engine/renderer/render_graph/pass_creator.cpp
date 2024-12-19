@@ -816,8 +816,8 @@ void RenderPassCreator::AddTonePass() {
 
     auto pass = m_graph.CreatePass(desc);
 
-    int width = m_config.frameWidth;
-    int height = m_config.frameHeight;
+    const int width = m_config.frameWidth;
+    const int height = m_config.frameHeight;
 
     auto attachment = gm.FindTexture(RESOURCE_TONE);
 
@@ -841,6 +841,41 @@ void RenderPassCreator::AddTonePass() {
 
     auto draw_pass = gm.CreateDrawPass(draw_pass_desc);
 
+    pass->AddDrawPass(draw_pass);
+}
+
+void RenderPassCreator::AddDebugImagePass() {
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
+
+    auto final_attachment = manager.FindTexture(RESOURCE_TONE);
+
+    // final pass
+    RenderPassDesc desc;
+    desc.name = RenderPassName::FINAL;
+    desc.dependencies = { RenderPassName::TONE };
+    auto pass = m_graph.CreatePass(desc);
+    auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
+        .colorAttachments = { final_attachment },
+        .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
+            OPTICK_EVENT();
+
+            auto& gm = GraphicsManager::GetSingleton();
+            auto& frame = gm.GetCurrentFrame();
+            const uint32_t width = p_draw_pass->desc.colorAttachments[0]->desc.width;
+            const uint32_t height = p_draw_pass->desc.colorAttachments[0]->desc.height;
+
+            gm.SetRenderTarget(p_draw_pass);
+            gm.SetViewport(Viewport(width, height));
+            gm.SetPipelineState(PSO_RW_TEXTURE_2D);
+
+            for (int i = 0; i < (int)p_data.drawImageContext.size(); ++i) {
+                const auto& data = p_data.drawImageContext[i];
+                gm.BindTexture(Dimension::TEXTURE_2D, data.handle, GetBaseColorMapSlot());
+                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+                gm.DrawQuad();
+                gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+            }
+        } });
     pass->AddDrawPass(draw_pass);
 }
 
@@ -1189,6 +1224,7 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault() {
     creator.AddEmitterPass();
     creator.AddBloomPass();
     creator.AddTonePass();
+    creator.AddDebugImagePass();
 
     graph->Compile();
     return graph;

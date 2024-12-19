@@ -3,6 +3,7 @@ layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out vec4 out_color;
 
 #include "../cbuffer.hlsl.h"
+#include "../shader_resource_defines.hlsl.h"
 
 void main() {
     vec4 color = texture(t_BaseColorMap, pass_uv);

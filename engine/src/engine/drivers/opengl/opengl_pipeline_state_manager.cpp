@@ -253,6 +253,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
     set_location("SPIRV_Cross_Combinedt_SkyboxHdrs_linearClampSampler", GetSkyboxHdrSlot());
     set_location("SPIRV_Cross_Combinedt_Skyboxs_cubemapClampSampler", GetSkyboxSlot());
+    set_location("SPIRV_Cross_Combinedt_BaseColorMaps_linearClampSampler", GetBaseColorMapSlot());
     glUseProgram(0);
 
     return program;
