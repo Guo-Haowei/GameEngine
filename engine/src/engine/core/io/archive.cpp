@@ -44,6 +44,11 @@ bool Archive::IsWriteMode() const {
     return m_isWriteMode;
 }
 
+bool Archive::IsReadMode() const {
+    DEV_ASSERT(m_file);
+    return !m_isWriteMode;
+}
+
 bool Archive::Write(const void* p_data, size_t p_size) {
     DEV_ASSERT(m_file && m_isWriteMode);
     return m_file->WriteBuffer(p_data, p_size) == p_size;

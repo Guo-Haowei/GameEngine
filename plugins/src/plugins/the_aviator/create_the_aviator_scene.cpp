@@ -271,7 +271,7 @@ Scene* CreateTheAviatorScene() {
                                                    Vector3f(0.15f, 0.75f, 1.0f),
                                                    glm::translate(Vector3f(1.8f, 2.7f, 0.0f)));
         ObjectComponent* obj = scene->GetComponent<ObjectComponent>(wind_shield);
-        obj->flags |= ObjectComponent::IS_TRANSPARENT;
+        obj->flags |= ObjectComponent::FLAG_TRANSPARENT;
         scene->AttachChild(wind_shield, plane);
     }
     {
@@ -408,7 +408,7 @@ Scene* CreateTheAviatorScene() {
     {
         auto ocean = scene->CreateMeshEntity("ocean", material_blue_transparent, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
         ObjectComponent* object = scene->GetComponent<ObjectComponent>(ocean);
-        object->flags |= ObjectComponent::IS_TRANSPARENT;
+        object->flags |= ObjectComponent::FLAG_TRANSPARENT;
 
         DEV_ASSERT(object);
 
@@ -468,13 +468,6 @@ Scene* CreateTheAviatorScene() {
         env->ambient.color = Color::Hex(0xf7d9aa).ToVector4f();
         env->sky.texturePath = "@res://images/ibl/aviator_sky.hdr";
     }
-
-#if 0
-    auto res = SaveSceneText("D:/workspace/GameEngine/tools/editor/resources/scenes/the_aviator.yaml", *scene);
-    if (!res) {
-        CRASH_NOW();
-    }
-#endif
 
     return scene;
 }

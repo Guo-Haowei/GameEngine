@@ -72,7 +72,7 @@ static void FillPass(const RenderDataConfig& p_config,
             continue;
         }
 
-        const bool is_transparent = obj.flags & ObjectComponent::IS_TRANSPARENT;
+        const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
 
         if (!p_filter1(obj)) {
             continue;
@@ -329,7 +329,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
                     p_scene,
                     p_out_data.shadowPasses[0],
                     [](const ObjectComponent& p_object) {
-                        return p_object.flags & ObjectComponent::CAST_SHADOW;
+                        return p_object.flags & ObjectComponent::FLAG_CAST_SHADOW;
                     },
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
@@ -355,7 +355,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
                         p_scene,
                         *pass.get(),
                         [](const ObjectComponent& p_object) {
-                            return p_object.flags & ObjectComponent::CAST_SHADOW;
+                            return p_object.flags & ObjectComponent::FLAG_CAST_SHADOW;
                         },
                         [&](const AABB& p_aabb) {
                             return p_aabb.Intersects(aabb);
@@ -401,7 +401,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
         p_config,
         p_out_data.voxelPass,
         [](const ObjectComponent& object) {
-            return object.flags & ObjectComponent::RENDERABLE;
+            return object.flags & ObjectComponent::FLAG_RENDERABLE;
         },
         [&](const AABB& aabb) {
             unused(aabb);
@@ -428,7 +428,7 @@ static void FillMainPass(const RenderDataConfig& p_config,
         p_config.scene,
         p_out_data.mainPass,
         [](const ObjectComponent& object) {
-            return object.flags & ObjectComponent::RENDERABLE;
+            return object.flags & ObjectComponent::FLAG_RENDERABLE;
         },
         [&](const AABB& aabb) {
             return camera_frustum.Intersects(aabb);

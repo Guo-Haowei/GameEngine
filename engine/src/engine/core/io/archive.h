@@ -14,6 +14,7 @@ public:
 
     void Close();
     bool IsWriteMode() const;
+    bool IsReadMode() const;
 
     bool Write(const void* p_data, size_t p_size);
     bool Read(void* p_data, size_t p_size);

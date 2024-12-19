@@ -188,7 +188,7 @@ ecs::Entity Scene::CreatePointLightEntity(const std::string& p_name,
 
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
-    object.flags = ObjectComponent::RENDERABLE;
+    object.flags = ObjectComponent::FLAG_RENDERABLE;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = MakeSphereMesh(0.1f, 40, 40);
@@ -217,7 +217,7 @@ ecs::Entity Scene::CreateAreaLightEntity(const std::string& p_name,
 
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
-    object.flags = ObjectComponent::RENDERABLE;
+    object.flags = ObjectComponent::FLAG_RENDERABLE;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = MakePlaneMesh();

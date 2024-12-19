@@ -19,6 +19,19 @@ class FileAccess;
 class Scene;
 class ScriptableEntity;
 
+struct ComponentFlagBase {
+    enum : uint32_t {
+        FLAG_NONE = BIT(0),
+        FLAG_DIRTY = BIT(31),
+    };
+
+    uint32_t flags = FLAG_DIRTY;
+
+    bool IsDirty() const { return flags & FLAG_DIRTY; }
+    void SetDirty(bool p_dirty = true) { p_dirty ? flags |= FLAG_DIRTY : flags &= ~FLAG_DIRTY; }
+    void OnDeserialized() { flags |= FLAG_DIRTY; }
+};
+
 #pragma region NAME_COMPONENT
 class NameComponent {
 public:
@@ -60,16 +73,8 @@ private:
 #pragma endregion HIERARCHY_COMPONENT
 
 #pragma region TRANSFORM_COMPONENT
-class TransformComponent {
+class TransformComponent : public ComponentFlagBase {
 public:
-    enum : uint32_t {
-        NONE = 0,
-        DIRTY = 1 << 0,
-    };
-
-    bool IsDirty() const { return m_flags & DIRTY; }
-    void SetDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
-
     const Vector3f& GetTranslation() const { return m_translation; }
     void SetTranslation(const Vector3f& p_translation) { m_translation = p_translation; }
     void IncreaseTranslation(const Vector3f& p_delta) { m_translation += p_delta; }
@@ -100,13 +105,9 @@ public:
     void UpdateTransformParented(const TransformComponent& p_parent);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    void OnDeserialized();
-
     static void RegisterClass();
 
 private:
-    uint32_t m_flags = DIRTY;
-
     Vector3f m_scale{ 1 };              // local scale
     Vector3f m_translation{ 0 };        // local translation
     Vector4f m_rotation{ 0, 0, 0, 1 };  // local rotation
@@ -284,16 +285,18 @@ struct ArmatureComponent {
 #pragma endregion ARMATURE_COMPONENT
 
 #pragma region OBJECT_COMPONENT
-struct ObjectComponent {
-    enum Flags : uint32_t {
-        NONE = BIT(0),
-        RENDERABLE = BIT(1),
-        CAST_SHADOW = BIT(2),
-        IS_TRANSPARENT = BIT(3),
+struct ObjectComponent : public ComponentFlagBase {
+    enum : uint32_t {
+        FLAG_RENDERABLE = BIT(1),
+        FLAG_CAST_SHADOW = BIT(2),
+        FLAG_TRANSPARENT = BIT(3),
     };
 
-    uint32_t flags = RENDERABLE | CAST_SHADOW;
     ecs::Entity meshId;
+
+    ObjectComponent() {
+        flags |= FLAG_RENDERABLE | FLAG_CAST_SHADOW;
+    }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
     void OnDeserialized() {}
@@ -303,11 +306,9 @@ struct ObjectComponent {
 #pragma endregion OBJECT_COMPONENT
 
 #pragma region CAMERA_COMPONENT
-class PerspectiveCameraComponent {
+class PerspectiveCameraComponent : public ComponentFlagBase {
 public:
     enum : uint32_t {
-        NONE = BIT(0),
-        DIRTY = BIT(1),
         EDITOR = BIT(2),
         PRIMARY = BIT(3),
     };
@@ -320,12 +321,10 @@ public:
 
     void SetDimension(int p_width, int p_height);
 
-    bool IsDirty() const { return m_flags & DIRTY; }
-    void SetDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
-    bool IsEditorCamera() const { return m_flags & EDITOR; }
-    void SetEditorCamera(bool p_flag = true) { p_flag ? m_flags |= EDITOR : m_flags &= ~EDITOR; }
-    bool IsPrimary() const { return m_flags & PRIMARY; }
-    void SetPrimary(bool p_flag = true) { p_flag ? m_flags |= PRIMARY : m_flags &= ~PRIMARY; }
+    bool IsEditorCamera() const { return flags & EDITOR; }
+    void SetEditorCamera(bool p_flag = true) { p_flag ? flags |= EDITOR : flags &= ~EDITOR; }
+    bool IsPrimary() const { return flags & PRIMARY; }
+    void SetPrimary(bool p_flag = true) { p_flag ? flags |= PRIMARY : flags &= ~PRIMARY; }
 
     Degree GetFovy() const { return m_fovy; }
     void SetFovy(Degree p_degree) {
@@ -361,13 +360,10 @@ public:
     const Vector3f GetFront() const { return m_front; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    void OnDeserialized();
 
     static void RegisterClass();
 
 private:
-    uint32_t m_flags = DIRTY;
-
     Degree m_fovy{ DEFAULT_FOVY };
     float m_near{ DEFAULT_NEAR };
     float m_far{ DEFAULT_FAR };
@@ -404,7 +400,7 @@ public:
     }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    void OnDeserialized() {}
+    void OnDeserialized();
 
     static void RegisterClass();
 
@@ -549,7 +545,7 @@ struct ClothComponent : CollisionObjectBase {
 
 #pragma region ENVIRONMENT_COMPONENT
 struct EnvironmentComponent {
-    enum Type {
+    enum Type : uint32_t {
         HDR_TEXTURE,
         PROCEDURE,
     };
@@ -559,6 +555,8 @@ struct EnvironmentComponent {
         std::string texturePath;
         // Non-Serialized
         mutable const ImageAsset* textureAsset;
+
+        static void RegisterClass();
     } sky;
 
     struct Ambient {
