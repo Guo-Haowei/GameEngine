@@ -14,6 +14,7 @@ public:
 
     void Close();
     bool IsWriteMode() const;
+    bool IsReadMode() const;
 
     bool Write(const void* p_data, size_t p_size);
     bool Read(void* p_data, size_t p_size);
@@ -87,6 +88,15 @@ public:
     }
 
     std::shared_ptr<FileAccess>& GetFileAccess() { return m_file; }
+
+    template<typename T>
+    void ArchiveValue(T& p_value) {
+        if (m_isWriteMode) {
+            Write(p_value);
+        } else {
+            Read(p_value);
+        }
+    }
 
 private:
     [[nodiscard]] auto OpenMode(const std::string& p_path, bool p_write_mode) -> Result<void>;

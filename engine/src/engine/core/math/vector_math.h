@@ -3,10 +3,9 @@
 
 namespace my {
 
-template<VectorType T>
-constexpr bool operator==(const T& p_lhs, const T& p_rhs) {
-    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
-    for (int i = 0; i < dim; ++i) {
+template<Arithmetic T, int N>
+constexpr bool operator==(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+    for (int i = 0; i < N; ++i) {
         if (p_lhs[i] != p_rhs[i]) {
             return false;
         }
@@ -42,140 +41,140 @@ constexpr bool operator==(const T& p_lhs, const T& p_rhs) {
     } while (0)
 
 #pragma region VECTOR_MATH_ADD
-template<VectorType T>
-constexpr T operator+(const T& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N>
+constexpr Vector<T, N> operator+(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_VEC(result, +, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator+(const T& p_lhs, const U& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator+(const Vector<T, N>& p_lhs, const U& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_SCALAR(result, +, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator+(const U& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator+(const U& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_SCALAR_VEC(result, +, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T>
-constexpr T& operator+=(T& p_lhs, const T& p_rhs) {
+template<Arithmetic T, int N>
+constexpr Vector<T, N>& operator+=(Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     VECTOR_OPERATOR_VEC_VEC(p_lhs, +, p_lhs, p_rhs);
     return p_lhs;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T& operator+=(T& p_lhs, const U& p_rhs) {
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N>& operator+=(Vector<T, N>& p_lhs, const U& p_rhs) {
     VECTOR_OPERATOR_VEC_SCALAR(p_lhs, +, p_lhs, p_rhs);
     return p_lhs;
 }
 #pragma endregion VECTOR_MATH_ADD
 
 #pragma region VECTOR_MATH_SUB
-template<VectorType T>
-constexpr T operator-(const T& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N>
+constexpr Vector<T, N> operator-(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_VEC(result, -, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator-(const T& p_lhs, const U& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator-(const Vector<T, N>& p_lhs, const U& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_SCALAR(result, -, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator-(const U& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator-(const U& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_SCALAR_VEC(result, -, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T>
-constexpr T& operator-=(T& p_lhs, const T& p_rhs) {
+template<Arithmetic T, int N>
+constexpr Vector<T, N>& operator-=(Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     VECTOR_OPERATOR_VEC_VEC(p_lhs, -, p_lhs, p_rhs);
     return p_lhs;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T& operator-=(T& p_lhs, const U& p_rhs) {
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N>& operator-=(Vector<T, N>& p_lhs, const U& p_rhs) {
     VECTOR_OPERATOR_VEC_SCALAR(p_lhs, -, p_lhs, p_rhs);
     return p_lhs;
 }
 #pragma endregion VECTOR_MATH_SUB
 
 #pragma region VECTOR_MATH_MUL
-template<VectorType T>
-constexpr T operator*(const T& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N>
+constexpr Vector<T, N> operator*(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_VEC(result, *, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator*(const T& p_lhs, const U& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator*(const Vector<T, N>& p_lhs, const U& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_SCALAR(result, *, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator*(const U& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator*(const U& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_SCALAR_VEC(result, *, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T>
-constexpr T& operator*=(T& p_lhs, const T& p_rhs) {
+template<Arithmetic T, int N>
+constexpr Vector<T, N>& operator*=(Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     VECTOR_OPERATOR_VEC_VEC(p_lhs, *, p_lhs, p_rhs);
     return p_lhs;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T& operator*=(T& p_lhs, const U& p_rhs) {
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N>& operator*=(Vector<T, N>& p_lhs, const U& p_rhs) {
     VECTOR_OPERATOR_VEC_SCALAR(p_lhs, *, p_lhs, p_rhs);
     return p_lhs;
 }
 #pragma endregion VECTOR_MATH_MUL
 
 #pragma region VECTOR_MATH_DIV
-template<VectorType T>
-constexpr T operator/(const T& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N>
+constexpr Vector<T, N> operator/(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_VEC(result, /, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator/(const T& p_lhs, const U& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator/(const Vector<T, N>& p_lhs, const U& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_VEC_SCALAR(result, /, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T operator/(const U& p_lhs, const T& p_rhs) {
-    T result;
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N> operator/(const U& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> result;
     VECTOR_OPERATOR_SCALAR_VEC(result, /, p_lhs, p_rhs);
     return result;
 }
 
-template<VectorType T>
-constexpr T& operator/=(T& p_lhs, const T& p_rhs) {
+template<Arithmetic T, int N>
+constexpr Vector<T, N>& operator/=(Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     VECTOR_OPERATOR_VEC_VEC(p_lhs, /, p_lhs, p_rhs);
     return p_lhs;
 }
 
-template<VectorType T, Arithmetic U>
-constexpr T& operator/=(T& p_lhs, const U& p_rhs) {
+template<Arithmetic T, int N, Arithmetic U>
+constexpr Vector<T, N>& operator/=(Vector<T, N>& p_lhs, const U& p_rhs) {
     VECTOR_OPERATOR_VEC_SCALAR(p_lhs, /, p_lhs, p_rhs);
     return p_lhs;
 }
@@ -195,34 +194,34 @@ constexpr T Max(const T& p_lhs, const T& p_rhs) {
     return p_lhs > p_rhs ? p_lhs : p_rhs;
 }
 
-template<VectorType T>
-constexpr T Min(const T& p_lhs, const T& p_rhs) {
+template<Arithmetic T, int N>
+constexpr Vector<T, N> Min(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
-    T result;
+    Vector<T, N> result;
     for (int i = 0; i < dim; ++i) {
         result[i] = Min(p_lhs[i], p_rhs[i]);
     }
     return result;
 }
 
-template<VectorType T>
-constexpr T Max(const T& p_lhs, const T& p_rhs) {
+template<Arithmetic T, int N>
+constexpr Vector<T, N> Max(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
-    T result;
+    Vector<T, N> result;
     for (int i = 0; i < dim; ++i) {
         result[i] = Max(p_lhs[i], p_rhs[i]);
     }
     return result;
 }
 
-template<VectorType T>
-constexpr T Clamp(const T& p_value, const T& p_min, const T& p_max) {
+template<Arithmetic T, int N>
+constexpr Vector<T, N> Clamp(const Vector<T, N>& p_value, const Vector<T, N>& p_min, const Vector<T, N>& p_max) {
     return Max(p_min, Min(p_value, p_max));
 }
 
-template<FVectorType T>
-constexpr T Lerp(const T& p_x, const T& p_y, float p_s) {
-    return p_x * (1.0f - p_s) + p_s * p_y;
+template<Arithmetic T, int N>
+constexpr Vector<T, N> Lerp(const Vector<T, N>& p_x, const Vector<T, N>& p_y, float p_s) {
+    return (static_cast<T>(1) - p_s) * p_x + p_s * p_y;
 }
 
 }  // namespace my::math

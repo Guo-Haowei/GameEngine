@@ -2,6 +2,9 @@
 #include "engine/scene/camera_controller.h"
 #include "the_aviator_script.h"
 
+// @TODO: remove
+#include "engine/scene/scene_serialization.h"
+
 namespace my {
 
 // @TODO:
@@ -268,7 +271,7 @@ Scene* CreateTheAviatorScene() {
                                                    Vector3f(0.15f, 0.75f, 1.0f),
                                                    glm::translate(Vector3f(1.8f, 2.7f, 0.0f)));
         ObjectComponent* obj = scene->GetComponent<ObjectComponent>(wind_shield);
-        obj->flags |= ObjectComponent::IS_TRANSPARENT;
+        obj->flags |= ObjectComponent::FLAG_TRANSPARENT;
         scene->AttachChild(wind_shield, plane);
     }
     {
@@ -405,7 +408,7 @@ Scene* CreateTheAviatorScene() {
     {
         auto ocean = scene->CreateMeshEntity("ocean", material_blue_transparent, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
         ObjectComponent* object = scene->GetComponent<ObjectComponent>(ocean);
-        object->flags |= ObjectComponent::IS_TRANSPARENT;
+        object->flags |= ObjectComponent::FLAG_TRANSPARENT;
 
         DEV_ASSERT(object);
 

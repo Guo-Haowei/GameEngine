@@ -75,7 +75,7 @@ TEST(vector, access_operator) {
     Vector4f vec = Vector4f::UnitY;
     vec[2] = 1;
 
-    Vector2 a = vec.yz;
+    Vector2f a = vec.yz;
     CHECK_VEC2(a, 1, 1);
 }
 

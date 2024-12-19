@@ -22,15 +22,15 @@
 
 namespace my::math::detail {
 
-using Vector2i = Vector2<int>;
-using Vector3i = Vector3<int>;
-using Vector4i = Vector4<int>;
-using Vector2u = Vector2<uint32_t>;
-using Vector3u = Vector3<uint32_t>;
-using Vector4u = Vector4<uint32_t>;
-using Vector2f = Vector2<float>;
-using Vector3f = Vector3<float>;
-using Vector4f = Vector4<float>;
+using Vector2i = Vector<int, 2>;
+using Vector3i = Vector<int, 3>;
+using Vector4i = Vector<int, 4>;
+using Vector2u = Vector<uint32_t, 2>;
+using Vector3u = Vector<uint32_t, 3>;
+using Vector4u = Vector<uint32_t, 4>;
+using Vector2f = Vector<float, 2>;
+using Vector3f = Vector<float, 3>;
+using Vector4f = Vector<float, 4>;
 
 static_assert(sizeof(Vector2f) == 8);
 static_assert(sizeof(Vector3f) == 12);

@@ -160,6 +160,7 @@ bool ComponentManager<T>::Serialize(Archive& p_archive, uint32_t p_version) {
         m_entityArray.resize(count);
         for (size_t i = 0; i < count; ++i) {
             m_componentArray[i].Serialize(p_archive, p_version);
+            m_componentArray[i].OnDeserialized();
         }
         for (size_t i = 0; i < count; ++i) {
             p_archive >> m_entityArray[i];

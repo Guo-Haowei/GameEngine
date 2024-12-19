@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/core/base/noncopyable.h"
 #include "engine/core/framework/event_queue.h"
+#include "engine/core/framework/layer.h"
 #include "engine/core/framework/module.h"
 #include "engine/renderer/graphics_defines.h"
 
@@ -16,7 +17,6 @@ class PhysicsManager;
 class SceneManager;
 class ScriptManager;
 
-class Layer;
 class Scene;
 
 struct ApplicationSpec {

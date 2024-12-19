@@ -131,7 +131,12 @@ auto Application::SetupModules() -> Result<void> {
     return Result<void>();
 }
 
+extern void RegisterClasses();
+
 auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
+    // @TODO: fix
+    RegisterClasses();
+
     SaveCommandLine(p_argc, p_argv);
     RegisterCommonDvars();
     // @TODO: refactor this part

@@ -46,16 +46,19 @@ public:
     void Update(const TransformComponent& p_transform);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+    void OnDeserialized();
+
+    static void RegisterClass();
 
     const auto& GetMatrices() const { return m_lightSpaceMatrices; }
     const Vector3f& GetPosition() const { return m_position; }
 
-    struct {
+    struct Attenuation {
         float constant;
         float linear;
         float quadratic;
+
+        static void RegisterClass();
     } m_atten;
 
     AABB m_shadowRegion;

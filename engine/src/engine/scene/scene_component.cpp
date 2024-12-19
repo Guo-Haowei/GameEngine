@@ -200,38 +200,4 @@ RigidBodyComponent& RigidBodyComponent::InitGhost() {
 #pragma region ENVIRONMENT_COMPONENT
 #pragma endregion ENVIRONMENT_COMPONENT
 
-#pragma region FORCE_FIELD_COMPONENT
-void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_version);
-
-    if (p_archive.IsWriteMode()) {
-        p_archive << strength;
-        p_archive << radius;
-    } else {
-        p_archive >> strength;
-        p_archive >> radius;
-    }
-}
-#pragma endregion FORCE_FIELD_COMPONENT
-
-void BoxColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_version);
-
-    if (p_archive.IsWriteMode()) {
-        p_archive << box;
-    } else {
-        p_archive >> box;
-    }
-}
-
-void MeshColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_version);
-
-    if (p_archive.IsWriteMode()) {
-        p_archive << objectId;
-    } else {
-        p_archive >> objectId;
-    }
-}
-
 }  // namespace my
