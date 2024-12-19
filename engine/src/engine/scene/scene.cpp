@@ -530,8 +530,8 @@ void Scene::UpdateAnimation(size_t p_index) {
         float time_left = std::numeric_limits<float>::min();
         float time_right = std::numeric_limits<float>::max();
 
-        for (int k = 0; k < (int)sampler.keyframeTmes.size(); ++k) {
-            const float time = sampler.keyframeTmes[k];
+        for (int k = 0; k < (int)sampler.keyframeTimes.size(); ++k) {
+            const float time = sampler.keyframeTimes[k];
             if (time < time_first) {
                 time_first = time;
             }
@@ -552,8 +552,8 @@ void Scene::UpdateAnimation(size_t p_index) {
             continue;
         }
 
-        const float left = sampler.keyframeTmes[key_left];
-        const float right = sampler.keyframeTmes[key_right];
+        const float left = sampler.keyframeTimes[key_left];
+        const float right = sampler.keyframeTimes[key_right];
 
         float t = 0;
         if (key_left != key_right) {
@@ -565,7 +565,7 @@ void Scene::UpdateAnimation(size_t p_index) {
         DEV_ASSERT(targetTransform);
         switch (channel.path) {
             case AnimationComponent::Channel::PATH_SCALE: {
-                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTmes.size() * 3);
+                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTimes.size() * 3);
                 const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
                 const Vector3f& vLeft = data[key_left];
                 const Vector3f& vRight = data[key_right];
@@ -573,7 +573,7 @@ void Scene::UpdateAnimation(size_t p_index) {
                 break;
             }
             case AnimationComponent::Channel::PATH_TRANSLATION: {
-                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTmes.size() * 3);
+                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTimes.size() * 3);
                 const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
                 const Vector3f& vLeft = data[key_left];
                 const Vector3f& vRight = data[key_right];
@@ -581,7 +581,7 @@ void Scene::UpdateAnimation(size_t p_index) {
                 break;
             }
             case AnimationComponent::Channel::PATH_ROTATION: {
-                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTmes.size() * 4);
+                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTimes.size() * 4);
                 const Vector4f* data = (const Vector4f*)sampler.keyframeData.data();
                 const Vector4f& vLeft = data[key_left];
                 const Vector4f& vRight = data[key_right];

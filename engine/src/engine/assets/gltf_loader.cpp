@@ -618,7 +618,7 @@ void GltfLoader::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int) {
             int stride = accessor.ByteStride(bufferView);
             size_t count = accessor.count;
 
-            sampler.keyframeTmes.resize(count);
+            sampler.keyframeTimes.resize(count);
 
             const unsigned char* data = buffer.data.data() + accessor.byteOffset + bufferView.byteOffset;
 
@@ -626,7 +626,7 @@ void GltfLoader::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int) {
 
             for (size_t j = 0; j < count; ++j) {
                 float time = ((float*)data)[j];
-                sampler.keyframeTmes[j] = time;
+                sampler.keyframeTimes[j] = time;
                 animation.start = glm::min(animation.start, time);
                 animation.end = glm::max(animation.end, time);
             }

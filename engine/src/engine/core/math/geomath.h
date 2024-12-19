@@ -31,11 +31,6 @@ using Matrix4x4f = glm::mat4;
 using Quaternion = glm::quat;
 
 template<typename T>
-constexpr inline T Lerp(const T& p_a, const T& p_b, const T& p_f) {
-    return p_a + p_f * (p_b - p_a);
-}
-
-template<typename T>
 constexpr inline float Saturate(T p_x) { return glm::min(T(1), glm::max(T(0), p_x)); }
 
 static inline void Decompose(const Matrix4x4f& p_matrix, Vector3f& p_scale, Vector4f& p_rotation, Vector3f& p_translation) {

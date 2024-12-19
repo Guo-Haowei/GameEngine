@@ -11,7 +11,7 @@ struct OuterClass {
 
         static void RegisterClass() {
             using serialize::FieldFlag;
-            REGISTER_FIELD(InnerClass, "name", name, FieldFlag::NONE);
+            REGISTER_FIELD(InnerClass, "name", name);
         }
     };
 
@@ -24,11 +24,11 @@ struct OuterClass {
     static void RegisterClass() {
         using serialize::FieldFlag;
 
-        REGISTER_FIELD(OuterClass, "int", v1, FieldFlag::NONE);
-        REGISTER_FIELD(OuterClass, "float", v2, FieldFlag::NONE);
-        REGISTER_FIELD(OuterClass, "string", v3, FieldFlag::NONE);
-        REGISTER_FIELD(OuterClass, "vector<int>", v4, FieldFlag::NONE);
-        REGISTER_FIELD(OuterClass, "InnerClass", v5, FieldFlag::NONE);
+        REGISTER_FIELD(OuterClass, "int", v1);
+        REGISTER_FIELD(OuterClass, "float", v2);
+        REGISTER_FIELD(OuterClass, "string", v3);
+        REGISTER_FIELD(OuterClass, "vector<int>", v4);
+        REGISTER_FIELD(OuterClass, "InnerClass", v5);
     }
 };
 

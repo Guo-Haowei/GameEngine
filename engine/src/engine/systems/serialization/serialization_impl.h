@@ -73,33 +73,62 @@ class FieldMeta : public FieldMetaBase {
 template<typename T>
 class MetaDataTable {
 public:
-    static const auto& GetFields() {
-        return GetFieldsInternal();
+    static void BeginRegistry() {
+        auto& context = GetContextInternal();
+        if (!context.initialized && !context.fields.empty()) {
+            CRASH_NOW_MSG("Did you call BeginRegistry() without calling EndRegistry()?");
+        }
+
+        if (context.initialized) {
+            LOG_WARN("Meta table already registered! Clearing...");
+            context.fields.clear();
+        }
+    }
+
+    static void EndRegistry() {
+        auto& context = GetContextInternal();
+        context.initialized = true;
+        if (context.fields.empty()) {
+            LOG_WARN("No fields registered!");
+        }
     }
 
     template<typename U>
-    static void RegisterField(const U&, const char* p_name, const char* p_type, size_t p_offset, FieldFlag p_flag) {
-        auto& fields = GetFieldsInternal();
+    static void RegisterField(const U&, const char* p_name, const char* p_type, size_t p_offset, FieldFlag p_flag = FieldFlag::NONE) {
+        auto& context = GetContextInternal();
+        DEV_ASSERT(context.initialized == false);
 #if USING(DEBUG_BUILD)
-        for (const auto& field : fields) {
-            DEV_ASSERT_MSG(field->name != p_name, std::format("field '{}' already registered", p_name));
+        for (const auto& field : context.fields) {
+            DEV_ASSERT_MSG(field->name != p_name, std::format("field '{}' already registered, did you call it twice or accidentally registered the same fields?", p_name));
         }
 #endif
         auto field = new FieldMeta<U>(p_name, p_type, p_offset, p_flag);
-        fields.emplace_back(field);
+        context.fields.emplace_back(field);
+    }
+
+    static const auto& GetFields() {
+        auto& context = GetContextInternal();
+        DEV_ASSERT_MSG(context.initialized, "call RegisterClass() before calling GetFields()");
+        return context.fields;
     }
 
 private:
-    static auto& GetFieldsInternal() {
-        static std::vector<std::unique_ptr<FieldMetaBase>> s_fields;
-        return s_fields;
+    static auto& GetContextInternal() {
+        static struct Context {
+            bool initialized{ false };
+            std::vector<std::unique_ptr<FieldMetaBase>> fields{};
+        } s_context;
+        return s_context;
     }
 };
 
-#define REGISTER_FIELD(TYPE, NAME, FIELD, FLAGS) \
-    ::my::serialize::MetaDataTable<TYPE>::RegisterField(((const TYPE*)0)->FIELD, NAME, typeid(FIELD).name(), offsetof(TYPE, FIELD), FLAGS)
+#define BEGIN_REGISTRY(TYPE) ::my::serialize::MetaDataTable<TYPE>::BeginRegistry()
+#define END_REGISTRY(TYPE)   ::my::serialize::MetaDataTable<TYPE>::EndRegistry()
 
-#define REGISTER_FIELD_2(TYPE, FIELD, FLAGS) \
-    ::my::serialize::MetaDataTable<TYPE>::RegisterField(((const TYPE*)0)->FIELD, #FIELD, typeid(FIELD).name(), offsetof(TYPE, FIELD), FLAGS)
+#define REGISTER_FIELD(TYPE, NAME, FIELD, ...) \
+    ::my::serialize::MetaDataTable<TYPE>::RegisterField(((const TYPE*)0)->FIELD, NAME, typeid(FIELD).name(), offsetof(TYPE, FIELD), ##__VA_ARGS__)
+
+#define REGISTER_FIELD_2(TYPE, FIELD, ...) \
+    ::my::serialize::MetaDataTable<TYPE>::RegisterField(((const TYPE*)0)->FIELD, #FIELD, typeid(FIELD).name(), offsetof(TYPE, FIELD), ##__VA_ARGS__)
 
 }  // namespace my::serialize

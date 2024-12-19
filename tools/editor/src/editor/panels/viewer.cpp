@@ -125,8 +125,10 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
         }
     }
 
+#if 0
     renderer::AddDebugCube(AABB(Vector3f(-1), Vector3f(1)),
                            Color(0.5f, 0.3f, 0.6f, 0.5f));
+#endif
 
     auto draw_gizmo = [&](ImGuizmo::OPERATION p_operation, CommandType p_type) {
         if (transform_component) {

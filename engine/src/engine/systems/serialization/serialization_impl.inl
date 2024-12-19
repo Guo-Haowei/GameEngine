@@ -39,6 +39,30 @@ Result<void> SerializeYaml(YAML::Emitter& p_out, const std::string& p_object, Se
 
 Result<void> DeserializeYaml(const YAML::Node& p_node, std::string& p_object, SerializeYamlContext&);
 
+inline Result<void> SerializeYaml(YAML::Emitter& p_out, const Matrix4x4f& p_object, SerializeYamlContext&) {
+    p_out.SetSeqFormat(YAML::Flow);
+    p_out << YAML::BeginSeq;
+    const float* ptr = &p_object[0].x;
+    for (int i = 0; i < 16; ++i) {
+        p_out << ptr[i];
+    }
+    p_out << YAML::EndSeq;
+    p_out.SetSeqFormat(YAML::Block);
+    return Result<void>();
+}
+
+inline Result<void> DeserializeYaml(const YAML::Node& p_node, Matrix4x4f& p_object, SerializeYamlContext&) {
+    if (!p_node || !p_node.IsSequence() || p_node.size() != 16) {
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "not a Matrix4x4f");
+    }
+
+    float* ptr = &p_object[0].x;
+    for (int i = 0; i < 16; ++i) {
+        ptr[i] = p_node[i].as<float>();
+    }
+    return Result<void>();
+}
+
 template<IsArithmetic T>
 Result<void> SerializeYaml(YAML::Emitter& p_out, const T& p_object, SerializeYamlContext&) {
     p_out << p_object;
@@ -76,6 +100,37 @@ Result<void> DeserializeYaml(const YAML::Node& p_node, T& p_object, SerializeYam
     }
 
     p_object = static_cast<T>(p_node.as<uint64_t>());
+    return Result<void>();
+}
+
+template<typename T, int N>
+Result<void> SerializeYaml(YAML::Emitter& p_out, const std::array<T, N>& p_object, SerializeYamlContext& p_context) {
+    p_out << YAML::BeginSeq;
+    for (int i = 0; i < N; ++i) {
+        if (auto res = SerializeYaml(p_out, p_object[i], p_context); !res) {
+            return HBN_ERROR(res.error());
+        }
+    }
+    p_out << YAML::EndSeq;
+    return Result<void>();
+}
+
+template<typename T, int N>
+Result<void> DeserializeYaml(const YAML::Node& p_node, std::array<T, N>& p_object, SerializeYamlContext& p_context) {
+    if (!p_node) {
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "Not defined");
+    }
+
+    if (!p_node.IsSequence() || p_node.size() != N) {
+        return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "Expect sequence of {}", N);
+    }
+
+    for (int i = 0; i < N; ++i) {
+        if (auto res = DeserializeYaml(p_node[i], p_object[i], p_context); !res) {
+            return HBN_ERROR(res.error());
+        }
+    }
+
     return Result<void>();
 }
 
@@ -119,7 +174,6 @@ Result<void> DeserializeYaml(const YAML::Node& p_node, glm::vec<N, T, glm::defau
 template<HasMetaTable T>
 Result<void> SerializeYaml(YAML::Emitter& p_out, const T& p_object, SerializeYamlContext& p_context) {
     const auto& meta = MetaDataTable<T>::GetFields();
-    DEV_ASSERT_MSG(!meta.empty(), "Did you forget to call RegisterClasses()?");
 
     p_out << YAML::BeginMap;
 
@@ -138,7 +192,6 @@ Result<void> SerializeYaml(YAML::Emitter& p_out, const T& p_object, SerializeYam
 template<HasMetaTable T>
 Result<void> DeserializeYaml(const YAML::Node& p_node, T& p_object, SerializeYamlContext& p_context) {
     const auto& meta = MetaDataTable<T>::GetFields();
-    DEV_ASSERT_MSG(!meta.empty(), "Did you forget to call RegisterClass()?");
 
     for (const auto& field : meta) {
         SerializeYamlContext context = p_context;
@@ -213,7 +266,9 @@ template<IsVector T>
 Result<void> SerializaYamlVec(YAML::Emitter& p_out, const T& p_object, SerializeYamlContext& p_context) {
     DEV_ASSERT(!(p_context.flags & FieldFlag::BINARY));
     const size_t count = p_object.size();
-    p_out.SetSeqFormat(YAML::Flow);
+    if (count < 4) {
+        p_out.SetSeqFormat(YAML::Flow);
+    }
     p_out << YAML::BeginSeq;
     for (size_t i = 0; i < count; ++i) {
         if (auto res = SerializeYaml(p_out, p_object[i], p_context); !res) {

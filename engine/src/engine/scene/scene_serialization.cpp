@@ -14,7 +14,7 @@ namespace my {
 #define SCENE_DBG_LOG(...) LOG_VERBOSE(__VA_ARGS__)
 
 #pragma region VERSION_HISTORY
-// SCENE_VERSION history
+// LATEST_SCENE_VERSION history
 // version 1: initial version
 // version 2: don't serialize scene.m_bound
 // version 3: light component atten
@@ -31,8 +31,9 @@ namespace my {
 // version 14: modify RigidBodyComponent
 // version 15: add predefined shadow region to lights
 // version 16: change scene binary representation
+// version 17: remove armature.flags
 #pragma endregion VERSION_HISTORY
-static constexpr uint32_t SCENE_VERSION = 16;
+static constexpr uint32_t LATEST_SCENE_VERSION = 17;
 static constexpr char SCENE_MAGIC[] = "xBScene";
 static constexpr char SCENE_GUARD_MESSAGE[] = "Should see this message";
 static constexpr uint64_t HAS_NEXT_FLAG = 6368519827137030510;
@@ -44,7 +45,7 @@ Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     }
 
     archive << SCENE_MAGIC;
-    archive << SCENE_VERSION;
+    archive << LATEST_SCENE_VERSION;
     archive << ecs::Entity::GetSeed();
     archive << p_scene.m_root;
 
@@ -53,7 +54,7 @@ Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     for (const auto& it : p_scene.GetLibraryEntries()) {
         archive << HAS_NEXT_FLAG;
         archive << it.first;  // write name
-        it.second.m_manager->Serialize(archive, SCENE_VERSION);
+        it.second.m_manager->Serialize(archive, LATEST_SCENE_VERSION);
     }
     archive << uint64_t(0);
     return Result<void>();
@@ -71,8 +72,8 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
     }
 
     uint32_t version;
-    if (!archive.Read(version) || version > SCENE_VERSION) {
-        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "incorrect scene version {}, current version is {}", version, SCENE_VERSION);
+    if (!archive.Read(version) || version > LATEST_SCENE_VERSION) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "incorrect scene version {}, current version is {}", version, LATEST_SCENE_VERSION);
     }
 
     SCENE_DBG_LOG("loading scene '{}', version: {}", p_path, version);
@@ -140,6 +141,9 @@ void RegisterClasses() {
         REGISTER_COMPONENT_LIST
 #undef REGISTER_COMPONENT
         MeshComponent::MeshSubset::RegisterClass();
+        MaterialComponent::TextureMap::RegisterClass();
+        AnimationComponent::Sampler::RegisterClass();
+        AnimationComponent::Channel::RegisterClass();
         LightComponent::Attenuation::RegisterClass();
         EnvironmentComponent::Ambient::RegisterClass();
         EnvironmentComponent::Sky::RegisterClass();
@@ -168,7 +172,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
 
     YAML::Emitter out;
     out << YAML::BeginMap;
-    out << DUMP_KEY("version") << SCENE_VERSION;
+    out << DUMP_KEY("version") << LATEST_SCENE_VERSION;
     out << DUMP_KEY("seed") << ecs::Entity::GetSeed();
     out << DUMP_KEY("root") << p_scene.m_root.GetId();
     out << DUMP_KEY("binary") << binary_path;
@@ -178,7 +182,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
 
     bool ok = true;
     ok = ok && archive.Write(SCENE_MAGIC);
-    ok = ok && archive.Write(SCENE_VERSION);
+    ok = ok && archive.Write(LATEST_SCENE_VERSION);
     ok = ok && archive.Write(SCENE_GUARD_MESSAGE);
     if (!ok) {
         return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE, "failed to save file '{}'", p_path);
@@ -269,7 +273,7 @@ Result<void> LoadSceneText(const std::string& p_path, Scene& p_scene) {
 
     YAML::Emitter out;
     auto version = node["version"].as<uint32_t>();
-    if (version > SCENE_VERSION) {
+    if (version > LATEST_SCENE_VERSION) {
         return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "incorrect version {}", version);
     }
     auto seed = node["seed"].as<uint32_t>();
@@ -319,7 +323,9 @@ void NameComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 }
 
 void NameComponent::RegisterClass() {
-    REGISTER_FIELD(NameComponent, "name", m_name, FieldFlag::NONE);
+    BEGIN_REGISTRY(NameComponent);
+    REGISTER_FIELD(NameComponent, "name", m_name);
+    END_REGISTRY(NameComponent);
 }
 
 void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -327,45 +333,83 @@ void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void HierarchyComponent::RegisterClass() {
-    REGISTER_FIELD(HierarchyComponent, "parent_id", m_parentId, FieldFlag::NONE);
+    BEGIN_REGISTRY(HierarchyComponent);
+    REGISTER_FIELD(HierarchyComponent, "parent_id", m_parentId);
+    END_REGISTRY(HierarchyComponent);
 }
 
 void AnimationComponent::Serialize(Archive& p_archive, uint32_t) {
-    if (p_archive.IsWriteMode()) {
-        p_archive << flags;
-        p_archive << start;
-        p_archive << end;
-        p_archive << timer;
-        p_archive << amount;
-        p_archive << speed;
-        p_archive << channels;
+    p_archive.ArchiveValue(flags);
+    p_archive.ArchiveValue(start);
+    p_archive.ArchiveValue(end);
+    p_archive.ArchiveValue(timer);
+    p_archive.ArchiveValue(amount);
+    p_archive.ArchiveValue(speed);
+    p_archive.ArchiveValue(channels);
 
+    if (p_archive.IsWriteMode()) {
         uint64_t num_samplers = samplers.size();
         p_archive << num_samplers;
         for (uint64_t i = 0; i < num_samplers; ++i) {
-            p_archive << samplers[i].keyframeTmes;
+            p_archive << samplers[i].keyframeTimes;
             p_archive << samplers[i].keyframeData;
         }
     } else {
-        p_archive >> flags;
-        p_archive >> start;
-        p_archive >> end;
-        p_archive >> timer;
-        p_archive >> amount;
-        p_archive >> speed;
-        p_archive >> channels;
-
         uint64_t num_samplers = 0;
         p_archive >> num_samplers;
         samplers.resize(num_samplers);
         for (uint64_t i = 0; i < num_samplers; ++i) {
-            p_archive >> samplers[i].keyframeTmes;
+            p_archive >> samplers[i].keyframeTimes;
             p_archive >> samplers[i].keyframeData;
         }
     }
 }
 
+void AnimationComponent::Sampler::RegisterClass() {
+    BEGIN_REGISTRY(AnimationComponent::Sampler);
+    REGISTER_FIELD(AnimationComponent::Sampler, "key_frames.data", keyframeData);
+    REGISTER_FIELD(AnimationComponent::Sampler, "key_frames.times", keyframeTimes);
+    END_REGISTRY(AnimationComponent::Sampler);
+}
+
+void AnimationComponent::Channel::RegisterClass() {
+    BEGIN_REGISTRY(AnimationComponent::Channel);
+    REGISTER_FIELD_2(AnimationComponent::Channel, path);
+    REGISTER_FIELD(AnimationComponent::Channel, "target_id", targetId);
+    REGISTER_FIELD(AnimationComponent::Channel, "sampler_idx", samplerIndex);
+    END_REGISTRY(AnimationComponent::Channel);
+}
+
 void AnimationComponent::RegisterClass() {
+    BEGIN_REGISTRY(AnimationComponent);
+    REGISTER_FIELD_2(AnimationComponent, flags);
+    REGISTER_FIELD_2(AnimationComponent, start);
+    REGISTER_FIELD_2(AnimationComponent, end);
+    REGISTER_FIELD_2(AnimationComponent, timer);
+    REGISTER_FIELD_2(AnimationComponent, amount);
+    REGISTER_FIELD_2(AnimationComponent, speed);
+    REGISTER_FIELD_2(AnimationComponent, channels);
+    REGISTER_FIELD_2(AnimationComponent, samplers);
+    END_REGISTRY(AnimationComponent);
+}
+
+void ArmatureComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    if (p_version > 16 && p_version <= LATEST_SCENE_VERSION) {
+        p_archive.ArchiveValue(boneCollection);
+        p_archive.ArchiveValue(inverseBindMatrices);
+    } else {
+        uint32_t dummy_flag;
+        p_archive.ArchiveValue(dummy_flag);
+        p_archive.ArchiveValue(boneCollection);
+        p_archive.ArchiveValue(inverseBindMatrices);
+    }
+}
+
+void ArmatureComponent::RegisterClass() {
+    BEGIN_REGISTRY(ArmatureComponent);
+    REGISTER_FIELD(ArmatureComponent, "bone_collection", boneCollection, FieldFlag::BINARY);
+    REGISTER_FIELD(ArmatureComponent, "inverse_matrices", inverseBindMatrices, FieldFlag::BINARY);
+    END_REGISTRY(ArmatureComponent);
 }
 
 void TransformComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -376,10 +420,12 @@ void TransformComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void TransformComponent::RegisterClass() {
-    REGISTER_FIELD(TransformComponent, "flags", flags, FieldFlag::NONE);
-    REGISTER_FIELD(TransformComponent, "translation", m_translation, FieldFlag::NONE);
-    REGISTER_FIELD(TransformComponent, "rotation", m_rotation, FieldFlag::NONE);
-    REGISTER_FIELD(TransformComponent, "scale", m_scale, FieldFlag::NONE);
+    BEGIN_REGISTRY(TransformComponent);
+    REGISTER_FIELD(TransformComponent, "flags", flags);
+    REGISTER_FIELD(TransformComponent, "translation", m_translation);
+    REGISTER_FIELD(TransformComponent, "rotation", m_rotation);
+    REGISTER_FIELD(TransformComponent, "scale", m_scale);
+    END_REGISTRY(TransformComponent);
 }
 
 void MeshComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -402,20 +448,19 @@ void MeshComponent::OnDeserialized() {
 }
 
 void MeshComponent::MeshSubset::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD_2(MeshComponent::MeshSubset, material_id, FieldFlag::NONE);
-    REGISTER_FIELD_2(MeshComponent::MeshSubset, index_count, FieldFlag::NONE);
-    REGISTER_FIELD_2(MeshComponent::MeshSubset, index_offset, FieldFlag::NONE);
-    REGISTER_FIELD_2(MeshComponent::MeshSubset, local_bound, FieldFlag::NONE);
+    BEGIN_REGISTRY(MeshComponent::MeshSubset);
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, material_id);
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, index_count);
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, index_offset);
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, local_bound);
+    END_REGISTRY(MeshComponent::MeshSubset);
 }
 
 void MeshComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD_2(MeshComponent, flags, FieldFlag::NONE);
-    REGISTER_FIELD_2(MeshComponent, subsets, FieldFlag::NONE);
-    REGISTER_FIELD(MeshComponent, "armature_id", armatureId, FieldFlag::NONE);
+    BEGIN_REGISTRY(MeshComponent);
+    REGISTER_FIELD_2(MeshComponent, flags);
+    REGISTER_FIELD_2(MeshComponent, subsets);
+    REGISTER_FIELD(MeshComponent, "armature_id", armatureId);
 
     REGISTER_FIELD_2(MeshComponent, indices, FieldFlag::BINARY);
     REGISTER_FIELD_2(MeshComponent, positions, FieldFlag::BINARY);
@@ -426,6 +471,7 @@ void MeshComponent::RegisterClass() {
     REGISTER_FIELD_2(MeshComponent, joints_0, FieldFlag::BINARY);
     REGISTER_FIELD_2(MeshComponent, weights_0, FieldFlag::BINARY);
     REGISTER_FIELD_2(MeshComponent, color_0, FieldFlag::BINARY);
+    END_REGISTRY(MeshComponent);
 }
 
 void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
@@ -460,12 +506,21 @@ void MaterialComponent::OnDeserialized() {
     }
 }
 
+void MaterialComponent::TextureMap::RegisterClass() {
+    BEGIN_REGISTRY(MaterialComponent::TextureMap);
+    REGISTER_FIELD_2(MaterialComponent::TextureMap, path);
+    REGISTER_FIELD_2(MaterialComponent::TextureMap, enabled);
+    END_REGISTRY(MaterialComponent::TextureMap);
+}
+
 void MaterialComponent::RegisterClass() {
-    using serialize::FieldFlag;
-    REGISTER_FIELD(MaterialComponent, "base_color", baseColor, FieldFlag::NONE);
-    REGISTER_FIELD_2(MaterialComponent, roughness, FieldFlag::NONE);
-    REGISTER_FIELD_2(MaterialComponent, metallic, FieldFlag::NONE);
-    REGISTER_FIELD_2(MaterialComponent, emissive, FieldFlag::NONE);
+    BEGIN_REGISTRY(MaterialComponent);
+    REGISTER_FIELD(MaterialComponent, "base_color", baseColor);
+    REGISTER_FIELD_2(MaterialComponent, roughness);
+    REGISTER_FIELD_2(MaterialComponent, metallic);
+    REGISTER_FIELD_2(MaterialComponent, emissive);
+    REGISTER_FIELD_2(MaterialComponent, textures);
+    END_REGISTRY(MaterialComponent);
 }
 
 void LightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
@@ -483,28 +538,20 @@ void LightComponent::OnDeserialized() {
 }
 
 void LightComponent::Attenuation::RegisterClass() {
-    using serialize::FieldFlag;
-    REGISTER_FIELD(LightComponent::Attenuation, "constant", constant, FieldFlag::NONE);
-    REGISTER_FIELD(LightComponent::Attenuation, "linear", linear, FieldFlag::NONE);
-    REGISTER_FIELD(LightComponent::Attenuation, "quadratic", quadratic, FieldFlag::NONE);
+    BEGIN_REGISTRY(LightComponent::Attenuation);
+    REGISTER_FIELD(LightComponent::Attenuation, "constant", constant);
+    REGISTER_FIELD(LightComponent::Attenuation, "linear", linear);
+    REGISTER_FIELD(LightComponent::Attenuation, "quadratic", quadratic);
+    END_REGISTRY(LightComponent::Attenuation);
 }
 
 void LightComponent::RegisterClass() {
-    using serialize::FieldFlag;
-    REGISTER_FIELD(LightComponent, "flags", m_flags, FieldFlag::NONE);
-    REGISTER_FIELD(LightComponent, "type", m_type, FieldFlag::NONE);
+    BEGIN_REGISTRY(LightComponent);
+    REGISTER_FIELD(LightComponent, "flags", m_flags);
+    REGISTER_FIELD(LightComponent, "type", m_type);
     REGISTER_FIELD(LightComponent, "shadow_region", m_shadowRegion, FieldFlag::NUALLABLE);
     REGISTER_FIELD(LightComponent, "attenuation", m_atten, FieldFlag::NUALLABLE);
-}
-
-void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
-    p_archive.ArchiveValue(flags);
-    p_archive.ArchiveValue(boneCollection);
-    p_archive.ArchiveValue(inverseBindMatrices);
-}
-
-void ArmatureComponent::RegisterClass() {
-    using serialize::FieldFlag;
+    END_REGISTRY(LightComponent);
 }
 
 void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -513,10 +560,10 @@ void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void ObjectComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD(ObjectComponent, "flags", flags, FieldFlag::NONE);
-    REGISTER_FIELD(ObjectComponent, "mesh_id", meshId, FieldFlag::NONE);
+    BEGIN_REGISTRY(ObjectComponent);
+    REGISTER_FIELD(ObjectComponent, "flags", flags);
+    REGISTER_FIELD(ObjectComponent, "mesh_id", meshId);
+    END_REGISTRY(ObjectComponent);
 }
 
 void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -532,17 +579,17 @@ void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void PerspectiveCameraComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD(PerspectiveCameraComponent, "flags", flags, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "fovy", m_fovy, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "near", m_near, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "far", m_far, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "width", m_width, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "height", m_height, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "pitch", m_pitch, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "yaw", m_yaw, FieldFlag::NONE);
-    REGISTER_FIELD(PerspectiveCameraComponent, "position", m_position, FieldFlag::NONE);
+    BEGIN_REGISTRY(PerspectiveCameraComponent);
+    REGISTER_FIELD(PerspectiveCameraComponent, "flags", flags);
+    REGISTER_FIELD(PerspectiveCameraComponent, "fovy", m_fovy);
+    REGISTER_FIELD(PerspectiveCameraComponent, "near", m_near);
+    REGISTER_FIELD(PerspectiveCameraComponent, "far", m_far);
+    REGISTER_FIELD(PerspectiveCameraComponent, "width", m_width);
+    REGISTER_FIELD(PerspectiveCameraComponent, "height", m_height);
+    REGISTER_FIELD(PerspectiveCameraComponent, "pitch", m_pitch);
+    REGISTER_FIELD(PerspectiveCameraComponent, "yaw", m_yaw);
+    REGISTER_FIELD(PerspectiveCameraComponent, "position", m_position);
+    END_REGISTRY(PerspectiveCameraComponent);
 }
 
 void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -554,9 +601,9 @@ void LuaScriptComponent::OnDeserialized() {
 }
 
 void LuaScriptComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD(LuaScriptComponent, "path", m_path, FieldFlag::NONE);
+    BEGIN_REGISTRY(LuaScriptComponent);
+    REGISTER_FIELD(LuaScriptComponent, "path", m_path);
+    END_REGISTRY(LuaScriptComponent);
 }
 
 void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -564,9 +611,9 @@ void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void NativeScriptComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD(NativeScriptComponent, "script_name", scriptName, FieldFlag::NONE);
+    BEGIN_REGISTRY(NativeScriptComponent);
+    REGISTER_FIELD(NativeScriptComponent, "script_name", scriptName);
+    END_REGISTRY(NativeScriptComponent);
 }
 
 void CollisionObjectBase::Serialize(Archive& p_archive, uint32_t) {
@@ -584,21 +631,21 @@ void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 }
 
 void RigidBodyComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
     // @TODO: fix this part
-    // REGISTER_FIELD(RigidBodyComponent, "shape", shape, FieldFlag::NONE);
-    // REGISTER_FIELD(RigidBodyComponent, "type", objectType, FieldFlag::NONE);
-    // REGISTER_FIELD(RigidBodyComponent, "param", param, FieldFlag::NONE);
-    REGISTER_FIELD(RigidBodyComponent, "mass", mass, FieldFlag::NONE);
+    // REGISTER_FIELD(RigidBodyComponent, "shape", shape);
+    // REGISTER_FIELD(RigidBodyComponent, "type", objectType);
+    // REGISTER_FIELD(RigidBodyComponent, "param", param);
+    BEGIN_REGISTRY(RigidBodyComponent);
+    REGISTER_FIELD(RigidBodyComponent, "mass", mass);
+    END_REGISTRY(RigidBodyComponent);
 }
 
 // @TODO: refactor these components
 void ParticleEmitterComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD(ParticleEmitterComponent, "scale", particleScale, FieldFlag::NONE);
-    REGISTER_FIELD(ParticleEmitterComponent, "lifespan", particleLifeSpan, FieldFlag::NONE);
+    BEGIN_REGISTRY(ParticleEmitterComponent);
+    REGISTER_FIELD(ParticleEmitterComponent, "scale", particleScale);
+    REGISTER_FIELD(ParticleEmitterComponent, "lifespan", particleLifeSpan);
+    END_REGISTRY(ParticleEmitterComponent);
 }
 
 void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -607,10 +654,10 @@ void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void ForceFieldComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD_2(ForceFieldComponent, strength, FieldFlag::NONE);
-    REGISTER_FIELD_2(ForceFieldComponent, radius, FieldFlag::NONE);
+    BEGIN_REGISTRY(ForceFieldComponent);
+    REGISTER_FIELD_2(ForceFieldComponent, strength);
+    REGISTER_FIELD_2(ForceFieldComponent, radius);
+    END_REGISTRY(ForceFieldComponent);
 }
 
 void BoxColliderComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -618,9 +665,9 @@ void BoxColliderComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void BoxColliderComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD_2(BoxColliderComponent, box, FieldFlag::NONE);
+    BEGIN_REGISTRY(BoxColliderComponent);
+    REGISTER_FIELD_2(BoxColliderComponent, box);
+    END_REGISTRY(BoxColliderComponent);
 }
 
 void MeshColliderComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -628,9 +675,9 @@ void MeshColliderComponent::Serialize(Archive& p_archive, uint32_t) {
 }
 
 void MeshColliderComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD(MeshColliderComponent, "object_id", objectId, FieldFlag::NONE);
+    BEGIN_REGISTRY(MeshColliderComponent);
+    REGISTER_FIELD(MeshColliderComponent, "object_id", objectId);
+    END_REGISTRY(MeshColliderComponent);
 }
 
 void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
@@ -640,12 +687,12 @@ void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 }
 
 void ClothComponent::RegisterClass() {
-    using serialize::FieldFlag;
-
-    REGISTER_FIELD_2(ClothComponent, point_0, FieldFlag::NONE);
-    REGISTER_FIELD_2(ClothComponent, point_1, FieldFlag::NONE);
-    REGISTER_FIELD_2(ClothComponent, point_2, FieldFlag::NONE);
-    REGISTER_FIELD_2(ClothComponent, point_3, FieldFlag::NONE);
+    BEGIN_REGISTRY(ClothComponent);
+    REGISTER_FIELD_2(ClothComponent, point_0);
+    REGISTER_FIELD_2(ClothComponent, point_1);
+    REGISTER_FIELD_2(ClothComponent, point_2);
+    REGISTER_FIELD_2(ClothComponent, point_3);
+    END_REGISTRY(ClothComponent);
 }
 
 void EnvironmentComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -653,17 +700,23 @@ void EnvironmentComponent::Serialize(Archive& p_archive, uint32_t) {
     CRASH_NOW();
 }
 void EnvironmentComponent::Sky::RegisterClass() {
-    REGISTER_FIELD(EnvironmentComponent::Sky, "type", type, FieldFlag::NONE);
-    REGISTER_FIELD(EnvironmentComponent::Sky, "texture", texturePath, FieldFlag::NONE);
+    BEGIN_REGISTRY(EnvironmentComponent::Sky);
+    REGISTER_FIELD(EnvironmentComponent::Sky, "type", type);
+    REGISTER_FIELD(EnvironmentComponent::Sky, "texture", texturePath);
+    END_REGISTRY(EnvironmentComponent::Sky);
 }
 
 void EnvironmentComponent::Ambient::RegisterClass() {
-    REGISTER_FIELD_2(EnvironmentComponent::Ambient, color, FieldFlag::NONE);
+    BEGIN_REGISTRY(EnvironmentComponent::Ambient);
+    REGISTER_FIELD_2(EnvironmentComponent::Ambient, color);
+    END_REGISTRY(EnvironmentComponent::Ambient);
 }
 
 void EnvironmentComponent::RegisterClass() {
-    REGISTER_FIELD_2(EnvironmentComponent, sky, FieldFlag::NONE);
-    REGISTER_FIELD_2(EnvironmentComponent, ambient, FieldFlag::NONE);
+    BEGIN_REGISTRY(EnvironmentComponent);
+    REGISTER_FIELD_2(EnvironmentComponent, sky);
+    REGISTER_FIELD_2(EnvironmentComponent, ambient);
+    END_REGISTRY(EnvironmentComponent);
 }
 #pragma endregion SCENE_COMPONENT_SERIALIZATION
 

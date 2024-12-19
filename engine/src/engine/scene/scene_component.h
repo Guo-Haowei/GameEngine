@@ -198,16 +198,16 @@ struct MaterialComponent {
 
     struct TextureMap {
         std::string path;
-        // Non-serialized
         bool enabled = true;
+
+        static void RegisterClass();
     };
 
     float metallic = 0.0f;
     float roughness = 1.0f;
     float emissive = 0.0f;
     Vector4f baseColor = Vector4f(1);
-    TextureMap textures[TEXTURE_MAX];
-    bool useTexures;
+    std::array<TextureMap, TEXTURE_MAX> textures;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
     void OnDeserialized();
@@ -236,10 +236,15 @@ struct AnimationComponent {
         Path path = PATH_UNKNOWN;
         ecs::Entity targetId;
         int samplerIndex = -1;
+
+        static void RegisterClass();
     };
+
     struct Sampler {
-        std::vector<float> keyframeTmes;
+        std::vector<float> keyframeTimes;
         std::vector<float> keyframeData;
+
+        static void RegisterClass();
     };
 
     bool IsPlaying() const { return flags & PLAYING; }
@@ -266,11 +271,6 @@ struct AnimationComponent {
 
 #pragma region ARMATURE_COMPONENT
 struct ArmatureComponent {
-    enum FLAGS {
-        NONE = 0,
-    };
-    uint32_t flags = NONE;
-
     std::vector<ecs::Entity> boneCollection;
     std::vector<Matrix4x4f> inverseBindMatrices;
 
