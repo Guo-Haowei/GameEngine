@@ -2,6 +2,9 @@
 #include "engine/scene/camera_controller.h"
 #include "the_aviator_script.h"
 
+// @TODO: remove
+#include "engine/scene/scene_serialization.h"
+
 namespace my {
 
 // @TODO:
@@ -464,6 +467,11 @@ Scene* CreateTheAviatorScene() {
         auto* env = scene->GetComponent<EnvironmentComponent>(id);
         env->ambient.color = Color::Hex(0xf7d9aa).ToVector4f();
         env->sky.texturePath = "@res://images/ibl/aviator_sky.hdr";
+    }
+
+    auto res = SaveSceneText("D:/workspace/GameEngine/tools/editor/resources/scenes/the_aviator.yaml", *scene);
+    if (!res) {
+        CRASH_NOW();
     }
 
     return scene;

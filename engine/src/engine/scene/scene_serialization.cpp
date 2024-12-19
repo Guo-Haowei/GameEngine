@@ -1,7 +1,5 @@
 #include "scene_serialization.h"
 
-#include <yaml-cpp/yaml.h>
-
 #include <fstream>
 
 #include "engine/core/framework/asset_registry.h"
@@ -9,6 +7,7 @@
 #include "engine/core/io/file_access.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/scene/scene.h"
+#include "engine/systems/serialization/serialization.inl"
 
 namespace my {
 
@@ -335,17 +334,18 @@ template<typename T>
 }
 
 template<Serializable T>
-static void DumpComponent(YAML::Emitter& p_out,
-                          const char* p_name,
-                          ecs::Entity p_entity,
-                          const Scene& p_scene,
-                          FileAccess* p_bin) {
+void DumpComponent(YAML::Emitter& p_out,
+                   const char* p_name,
+                   ecs::Entity p_entity,
+                   const Scene& p_scene,
+                   FileAccess* p_bianary) {
+
     const T* component = p_scene.GetComponent<T>(p_entity);
     if (component) {
         p_out << DUMP_KEY(p_name);
-        p_out << YAML::BeginMap;
-        component->Dump(p_out, p_bin, SCENE_VERSION);
-        p_out << YAML::EndMap;
+        serialize::SerializeYamlContext context;
+        context.file = p_bianary;
+        serialize::SerializeYaml(p_out, *component, context);
     }
 }
 
@@ -422,21 +422,26 @@ Result<void> LoadSceneText(const std::string& p_path, Scene& p_scene) {
             return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "invalid format");
         }
 
-        ecs::Entity id(entity["id"].as<uint32_t>());
+        // ecs::Entity id(entity["id"].as<uint32_t>());
 
-#define REGISTER_COMPONENT(a, ...)                                                  \
-    do {                                                                            \
-        auto res2 = LoadComponent<a>(entity, #a, id, version, p_scene, file.get()); \
-        if (!res2) { return HBN_ERROR(res2.error()); }                              \
-    } while (0);
-        REGISTER_COMPONENT_LIST
-#undef REGISTER_COMPONENT
+        //#define REGISTER_COMPONENT(a, ...)                                                  \
+//    do {                                                                            \
+//        auto res2 = LoadComponent<a>(entity, #a, id, version, p_scene, file.get()); \
+//        if (!res2) { return HBN_ERROR(res2.error()); }                              \
+//    } while (0);
+        //        REGISTER_COMPONENT_LIST
+        // #undef REGISTER_COMPONENT
     }
 
     return Result<void>();
 }
 
 Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
+    // @TODO: remove this
+    NameComponent::RegisterClass();
+    HierarchyComponent::RegisterClass();
+    TransformComponent::RegisterClass();
+
     std::unordered_set<uint32_t> entity_set;
 
     for (const auto& it : p_scene.GetLibraryEntries()) {
@@ -480,9 +485,15 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
         out << DUMP_KEY("id") << id;
 
         out.SetSeqFormat(YAML::Flow);
-#define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, archive.GetFileAccess().get());
-        REGISTER_COMPONENT_LIST
-#undef REGISTER_COMPONENT
+
+        DumpComponent<NameComponent>(out, "NameComponent", entity, p_scene, archive.GetFileAccess().get());
+        DumpComponent<HierarchyComponent>(out, "HierarchyComponent", entity, p_scene, archive.GetFileAccess().get());
+        DumpComponent<TransformComponent>(out, "TransformComponent", entity, p_scene, archive.GetFileAccess().get());
+
+        // #define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, archive.GetFileAccess().get());
+        //         REGISTER_COMPONENT_LIST
+        // #undef REGISTER_COMPONENT
+
         out.SetSeqFormat(YAML::Block);
 
         out << YAML::EndMap;
@@ -535,22 +546,6 @@ void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
     } else {
         p_archive >> m_parentId;
     }
-}
-
-bool HierarchyComponent::Dump(YAML::Emitter& p_out, FileAccess* p_binary, uint32_t p_version) const {
-    unused(p_version);
-
-    DUMP_BEGIN(p_out, p_binary);
-    DUMP_KEY_VALUE("parent_id", m_parentId);
-    DUMP_END();
-}
-
-bool HierarchyComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, uint32_t p_version) {
-    unused(p_version);
-
-    UNDUMP_BEGIN(p_node, p_binary);
-    UNDUMP_KEY_VALUE("parent_id", m_parentId);
-    UNDUMP_END();
 }
 
 void AnimationComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -630,29 +625,6 @@ void TransformComponent::Serialize(Archive& p_archive, uint32_t) {
         p_archive >> m_rotation;
         SetDirty();
     }
-}
-
-bool TransformComponent::Dump(YAML::Emitter& p_out, FileAccess* p_binary, uint32_t p_version) const {
-    unused(p_version);
-
-    DUMP_BEGIN(p_out, p_binary);
-    DUMP_KEY_VALUE("flags", m_flags);
-    DUMP_KEY_VALUE("translation", m_translation);
-    DUMP_KEY_VALUE("rotation", m_rotation);
-    DUMP_KEY_VALUE("scale", m_scale);
-    DUMP_END();
-}
-
-bool TransformComponent::Undump(const YAML::Node& p_node, FileAccess* p_binary, uint32_t p_version) {
-    unused(p_version);
-
-    UNDUMP_BEGIN(p_node, p_binary);
-    UNDUMP_KEY_VALUE("flags", m_flags);
-    UNDUMP_KEY_VALUE("translation", m_translation);
-    UNDUMP_KEY_VALUE("rotation", m_rotation);
-    UNDUMP_KEY_VALUE("scale", m_scale);
-    SetDirty();
-    UNDUMP_END();
 }
 
 void MeshComponent::Serialize(Archive& p_archive, uint32_t) {

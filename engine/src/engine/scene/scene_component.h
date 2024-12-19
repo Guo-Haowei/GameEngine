@@ -3,6 +3,7 @@
 #include "engine/core/math/angle.h"
 #include "engine/core/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
+#include "engine/systems/serialization/serialization.h"
 
 namespace YAML {
 class Node;
@@ -36,6 +37,12 @@ public:
     bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
     bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 
+    static void RegisterClass() {
+        using serialize::FieldFlag;
+
+        REGISTER_FIELD(NameComponent, "name", m_name, FieldFlag::NONE);
+    }
+
 private:
     std::string m_name;
 };
@@ -47,8 +54,12 @@ public:
     ecs::Entity GetParent() const { return m_parentId; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass() {
+        using serialize::FieldFlag;
+
+        REGISTER_FIELD(HierarchyComponent, "parent_id", m_parentId, FieldFlag::NONE);
+    }
 
 private:
     ecs::Entity m_parentId;
@@ -98,8 +109,15 @@ public:
     void UpdateTransformParented(const TransformComponent& p_parent);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass() {
+        using serialize::FieldFlag;
+
+        REGISTER_FIELD(TransformComponent, "flags", m_flags, FieldFlag::NONE);
+        REGISTER_FIELD(TransformComponent, "translation", m_translation, FieldFlag::NONE);
+        REGISTER_FIELD(TransformComponent, "rotation", m_rotation, FieldFlag::NONE);
+        REGISTER_FIELD(TransformComponent, "scale", m_scale, FieldFlag::NONE);
+    }
 
 private:
     uint32_t m_flags = DIRTY;
