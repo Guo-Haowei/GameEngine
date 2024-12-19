@@ -65,7 +65,6 @@ static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t
 }
 
 ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
-ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
 // @TODO: refactor this
 template<typename T>
@@ -110,7 +109,6 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 
     // @TODO: refactor
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
-    CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
 
     DEV_ASSERT(m_pipelineStateManager);
 

@@ -5,7 +5,7 @@ layout(location = 0) out vec4 out_color;
 #include "../cbuffer.hlsl.h"
 
 void main() {
-    vec4 color = texture(c_debugDrawMap, pass_uv);
+    vec4 color = texture(t_BaseColorMap, pass_uv);
 
     switch (c_displayChannel) {
         case DISPLAY_CHANNEL_RGB:

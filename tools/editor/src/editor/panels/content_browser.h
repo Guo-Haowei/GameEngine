@@ -11,10 +11,8 @@ public:
 
     void OnAttach() override;
 
-    void Update(Scene&) override;
-
 protected:
-    void UpdateInternal(Scene&) override {}
+    void UpdateInternal(Scene&) override;
 
     void DrawSideBarHelper(const std::filesystem::path& p_path);
     void DrawSideBar();

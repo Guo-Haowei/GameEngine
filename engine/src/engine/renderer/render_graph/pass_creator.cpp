@@ -61,7 +61,6 @@ static void GbufferPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass)
     const uint32_t height = p_draw_pass->desc.depthAttachment->desc.height;
 
     gm.SetRenderTarget(p_draw_pass);
-
     gm.SetViewport(Viewport(width, height));
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
@@ -467,7 +466,7 @@ static void LightingPassFunc(const DrawData& p_data, const DrawPass* p_draw_pass
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
     DrawBatchesGeometry(p_data, pass.transparent);
 
-    auto& draw_context = p_data.debugDrawContext;
+    auto& draw_context = p_data.drawDebugContext;
     if (gm.m_debugBuffers && draw_context.drawCount) {
         gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
         gm.SetPipelineState(PSO_DEBUG_DRAW);

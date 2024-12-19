@@ -41,45 +41,6 @@ void debug_vxgi_pass_func(const DrawData& p_data, const DrawPass* p_draw_pass) {
     glDisable(GL_BLEND);
 }
 
-// @TODO: refactor
-static void debug_draw_quad(uint64_t p_handle, int p_channel, int p_screen_width, int p_screen_height, int p_width, int p_height) {
-    float half_width_ndc = (float)p_width / p_screen_width;
-    float half_height_ndc = (float)p_height / p_screen_height;
-
-    Vector2f size = Vector2f(half_width_ndc, half_height_ndc);
-    Vector2f pos;
-    pos.x = 1.0f - half_width_ndc;
-    pos.y = 1.0f - half_height_ndc;
-
-    g_debug_draw_cache.cache.c_debugDrawSize = size;
-    g_debug_draw_cache.cache.c_debugDrawPos = pos;
-    g_debug_draw_cache.cache.c_displayChannel = p_channel;
-    g_debug_draw_cache.cache.c_debugDrawMap.Set64(p_handle);
-    g_debug_draw_cache.update();
-    GraphicsManager::GetSingleton().DrawQuad();
-}
-
-void final_pass_func(const DrawData&, const DrawPass* p_draw_pass) {
-    OPTICK_EVENT();
-
-    GraphicsManager::GetSingleton().SetRenderTarget(p_draw_pass);
-    const auto [width, height] = p_draw_pass->GetBufferSize();
-
-    glViewport(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    GraphicsManager::GetSingleton().SetPipelineState(PSO_RW_TEXTURE_2D);
-
-    // @TODO: clean up
-    auto final_image_handle = GraphicsManager::GetSingleton().FindTexture(RESOURCE_TONE)->GetResidentHandle();
-    debug_draw_quad(final_image_handle, DISPLAY_CHANNEL_RGB, width, height, width, height);
-
-    if (DVAR_GET_BOOL(gfx_debug_shadow)) {
-        auto shadow_map_handle = GraphicsManager::GetSingleton().FindTexture(RESOURCE_SHADOW_MAP)->GetResidentHandle();
-        debug_draw_quad(shadow_map_handle, DISPLAY_CHANNEL_RRR, width, height, 300, 300);
-    }
-}
-
 std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
     // @TODO: early-z
     const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
@@ -119,8 +80,25 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental() {
         auto pass = graph->CreatePass(desc);
         auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
             .colorAttachments = { final_attachment },
-            .execFunc = final_pass_func,
-        });
+            .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
+                OPTICK_EVENT();
+
+                auto& gm = GraphicsManager::GetSingleton();
+                auto& frame = gm.GetCurrentFrame();
+                const uint32_t width = p_draw_pass->desc.depthAttachment->desc.width;
+                const uint32_t height = p_draw_pass->desc.depthAttachment->desc.height;
+
+                gm.SetRenderTarget(p_draw_pass);
+                gm.SetViewport(Viewport(width, height));
+                gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
+                gm.SetPipelineState(PSO_RW_TEXTURE_2D);
+
+                for (int i = 0; i < (int)p_data.drawImageContext.size(); ++i) {
+                    const auto& data = p_data.drawImageContext[i];
+                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+                    gm.DrawQuad();
+                }
+            } });
         pass->AddDrawPass(draw_pass);
     }
 

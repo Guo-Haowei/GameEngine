@@ -25,7 +25,6 @@ struct ImageAsset;
 
 // @TODO: refactor
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
-extern ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
 #define RENDER_GRAPH_LIST                              \
     RENDER_GRAPH_DECLARE(DEFAULT, "default")           \

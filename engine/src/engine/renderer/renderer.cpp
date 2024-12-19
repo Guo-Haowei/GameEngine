@@ -3,6 +3,7 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/geometry.h"
+#include "engine/core/math/vector_math.h"
 #include "engine/renderer/draw_data.h"
 
 #define DEFINE_DVAR
@@ -44,8 +45,29 @@ void BeginFrame() {
 }
 
 static void PrepareDebugDraws() {
-    auto& context = s_glob.renderData->debugDrawContext;
+    auto& context = s_glob.renderData->drawDebugContext;
     context.drawCount = (uint32_t)context.positions.size();
+}
+
+static void PrepareImageDraws() {
+    auto& buffer = s_glob.renderData->batchCache.buffer;
+    auto& context = s_glob.renderData->drawImageContext;
+    const int size = context.size();
+    if (buffer.size() < size) {
+        buffer.resize(size);
+    }
+
+    const auto resolution = DVAR_GET_VEC2(resolution);
+    for (int i = 0; i < size; ++i) {
+        auto half_ndc = context[i].size / resolution;
+        auto pos = 1.0f - half_ndc;
+
+        buffer[i].c_debugDrawPos.x = pos.x;
+        buffer[i].c_debugDrawPos.y = pos.y;
+        buffer[i].c_debugDrawSize.x = half_ndc.x;
+        buffer[i].c_debugDrawSize.y = half_ndc.y;
+        buffer[i].c_displayChannel = context[i].mode;
+    }
 }
 
 void EndFrame() {
@@ -86,7 +108,7 @@ void AddDebugCube(const AABB& p_aabb,
     std::vector<uint32_t> indices;
     BoxWireFrameHelper(min, max, positions, indices);
 
-    auto& context = s_glob.renderData->debugDrawContext;
+    auto& context = s_glob.renderData->drawDebugContext;
     for (const auto& i : indices) {
         const Vector3f& pos = positions[i];
         if (p_transform) {
@@ -96,6 +118,21 @@ void AddDebugCube(const AABB& p_aabb,
         }
         context.colors.emplace_back(p_color);
     }
+}
+
+void AddImage2D(uint64_t p_handle,
+                const NewVector2f& p_size,
+                const NewVector2f& p_position,
+                int p_mode) {
+    ASSERT_CAN_RECORD();
+
+    ImageDrawContext context = {
+        .mode = p_mode,
+        .handle = p_handle,
+        .size = p_size,
+        .position = p_position,
+    };
+    s_glob.renderData->drawImageContext.emplace_back(context);
 }
 
 PointShadowHandle AllocatePointLightShadowMap() {

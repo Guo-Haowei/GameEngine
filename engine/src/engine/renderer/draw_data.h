@@ -44,6 +44,13 @@ struct PassContext {
     std::vector<BatchContext> doubleSided;
 };
 
+struct ImageDrawContext {
+    int mode;
+    uint64_t handle;
+    NewVector2f size;
+    NewVector2f position;
+};
+
 template<typename BUFFER>
 struct BufferCache {
     std::vector<BUFFER> buffer;
@@ -114,11 +121,13 @@ struct DrawData {
 
     std::vector<UpdateBuffer> updateBuffer;
 
-    struct DebugDrawContext {
+    struct DrawDebugContext {
         std::vector<Vector3f> positions;
         std::vector<Color> colors;
         uint32_t drawCount;
-    } debugDrawContext;
+    } drawDebugContext;
+
+    std::vector<ImageDrawContext> drawImageContext;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
