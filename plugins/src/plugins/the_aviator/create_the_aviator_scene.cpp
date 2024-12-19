@@ -469,10 +469,12 @@ Scene* CreateTheAviatorScene() {
         env->sky.texturePath = "@res://images/ibl/aviator_sky.hdr";
     }
 
+#if 0
     auto res = SaveSceneText("D:/workspace/GameEngine/tools/editor/resources/scenes/the_aviator.yaml", *scene);
     if (!res) {
         CRASH_NOW();
     }
+#endif
 
     return scene;
 }

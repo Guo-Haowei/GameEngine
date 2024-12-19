@@ -3,7 +3,6 @@
 #include "engine/core/math/angle.h"
 #include "engine/core/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
-#include "engine/systems/serialization/serialization.h"
 
 namespace YAML {
 class Node;
@@ -34,6 +33,7 @@ public:
     std::string& GetNameRef() { return m_name; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 
@@ -48,6 +48,7 @@ public:
     ecs::Entity GetParent() const { return m_parentId; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 
@@ -99,6 +100,7 @@ public:
     void UpdateTransformParented(const TransformComponent& p_parent);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized();
 
     static void RegisterClass();
 
@@ -159,6 +161,8 @@ struct MeshComponent {
         uint32_t index_offset = 0;
         uint32_t index_count = 0;
         AABB local_bound;
+
+        static void RegisterClass();
     };
     std::vector<MeshSubset> subsets;
 
@@ -176,6 +180,7 @@ struct MeshComponent {
     void CreateRenderData();
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized();
 
     static void RegisterClass();
 };
@@ -204,6 +209,7 @@ struct MaterialComponent {
     bool useTexures;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized();
 
     static void RegisterClass();
 };
@@ -251,6 +257,7 @@ struct AnimationComponent {
     std::vector<Sampler> samplers;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -270,6 +277,7 @@ struct ArmatureComponent {
     std::vector<Matrix4x4f> boneTransforms;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -288,6 +296,7 @@ struct ObjectComponent {
     ecs::Entity meshId;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -352,6 +361,7 @@ public:
     const Vector3f GetFront() const { return m_front; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized();
 
     static void RegisterClass();
 
@@ -394,6 +404,7 @@ public:
     }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 
@@ -410,6 +421,7 @@ struct NativeScriptComponent {
     using InstantiateFunc = ScriptableEntity* (*)(void);
     using DestroyFunc = void (*)(NativeScriptComponent*);
 
+    std::string scriptName = typeid(this).name();
     ScriptableEntity* instance{ nullptr };
     InstantiateFunc instantiateFunc{ nullptr };
     DestroyFunc destroyFunc{ nullptr };
@@ -436,6 +448,7 @@ struct NativeScriptComponent {
     }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -464,6 +477,7 @@ struct CollisionObjectBase {
     void* physicsObject{ nullptr };
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 };
 
 struct RigidBodyComponent : CollisionObjectBase {
@@ -500,6 +514,7 @@ struct RigidBodyComponent : CollisionObjectBase {
     RigidBodyComponent& InitGhost();
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -526,6 +541,7 @@ struct ClothComponent : CollisionObjectBase {
     void* physicsObject{ nullptr };
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -547,9 +563,11 @@ struct EnvironmentComponent {
 
     struct Ambient {
         Vector4f color;
+        static void RegisterClass();
     } ambient;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -561,6 +579,7 @@ struct ForceFieldComponent {
     float radius{ 0.01f };
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -571,6 +590,7 @@ struct BoxColliderComponent {
     AABB box;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };
@@ -579,6 +599,7 @@ struct MeshColliderComponent {
     ecs::Entity objectId;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
 
     static void RegisterClass();
 };

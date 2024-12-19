@@ -18,6 +18,7 @@ struct ParticleEmitterComponent {
     uint32_t GetPostIndex() const { return 1 - aliveBufferIndex; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
     static void RegisterClass();
 
     bool gravity{ false };

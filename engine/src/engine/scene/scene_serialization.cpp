@@ -7,7 +7,7 @@
 #include "engine/core/io/file_access.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/scene/scene.h"
-#include "engine/systems/serialization/serialization.inl"
+#include "engine/systems/serialization/serialization.h"
 
 namespace my {
 
@@ -36,7 +36,6 @@ static constexpr uint32_t SCENE_VERSION = 16;
 static constexpr char SCENE_MAGIC[] = "xBScene";
 static constexpr char SCENE_GUARD_MESSAGE[] = "Should see this message";
 static constexpr uint64_t HAS_NEXT_FLAG = 6368519827137030510;
-static constexpr char BIN_GUARD_MAGIC[] = "SEETHIS";
 
 Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     Archive archive;
@@ -114,111 +113,117 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
         }
     }
 }
-#define DUMP_KEY(a) YAML::Key << (a) << YAML::Value
-
-// template<>
-// void DumpAny(YAML::Emitter& p_out, const AABB& p_value) {
-//     p_out << YAML::BeginMap;
-//     p_out << DUMP_KEY("min");
-//     DumpAny<Vector3f>(p_out, p_value.GetMin());
-//     p_out << DUMP_KEY("max");
-//     DumpAny<Vector3f>(p_out, p_value.GetMax());
-//     p_out << YAML::EndMap;
-// }
-
-// template<>
-//[[nodiscard]] bool UndumpAny(const YAML::Node& p_node, AABB& p_value) {
-//     if (!p_node || !p_node.IsMap()) {
-//         return false;
-//     }
-//
-//     Vector3f min, max;
-//     bool ok = UndumpAny(p_node["min"], min);
-//     ok = ok && UndumpAny(p_node["max"], max);
-//     if (!ok) {
-//         return false;
-//     }
-//
-//     p_value = AABB(min, max);
-//     return true;
-// }
-
-// @TODO: proper error handling
-template<typename T>
-void DumpVectorBinary(YAML::Emitter& p_out, const std::vector<T>& p_value, FileAccess* p_binary) {
-    const size_t size_in_byte = sizeof(T) * p_value.size();
-    DEV_ASSERT(size_in_byte);
-    const size_t size = p_value.size();
-    p_binary->Write(BIN_GUARD_MAGIC);
-    p_binary->Write(size);
-    const auto offset = p_binary->Tell();
-    DEV_ASSERT(offset > 0);
-    p_binary->WriteBuffer(p_value.data(), size_in_byte);
-
-    p_out << YAML::BeginMap;
-    p_out << DUMP_KEY("offset") << offset;
-    p_out << DUMP_KEY("length") << size_in_byte;
-    p_out << YAML::EndMap;
-}
-
-#if 0
-template<typename T>
-bool UndumpVectorBinary(const YAML::Node& p_node, std::vector<T>& p_value, FileAccess* p_binary) {
-    constexpr size_t internal_offset = sizeof(BIN_GUARD_MAGIC) + sizeof(size_t);
-    // can have undefind value
-    if (!p_node) {
-        return true;
-    }
-    ERR_FAIL_COND_V(!p_node.IsMap(), false);
-    size_t offset = 0;
-    size_t length = 0;
-    ERR_FAIL_COND_V(!UndumpAny(p_node["offset"], offset), false);
-    ERR_FAIL_COND_V(!UndumpAny(p_node["length"], length), false);
-    ERR_FAIL_COND_V(length == 0, false);
-    ERR_FAIL_COND_V(length % sizeof(T) != 0, false);
-    ERR_FAIL_COND_V(offset < internal_offset, false);
-
-    const int seek = p_binary->Seek((long)(offset - internal_offset));
-    ERR_FAIL_COND_V(seek != 0, false);
-
-    char magic[sizeof(BIN_GUARD_MAGIC)];
-    // @TODO: small string optimization for StringEqual
-    if (!p_binary->Read(magic) || !StringUtils::StringEqual(magic, BIN_GUARD_MAGIC)) {
-        return false;
-    }
-    size_t read_length = 0;
-    if (!p_binary->Read(read_length) || read_length == length) {
-        return false;
-    }
-    p_value.resize(length / sizeof(T));
-    p_binary->ReadBuffer(p_value.data(), length);
-    return true;
-}
-#endif
 
 template<Serializable T>
-void DumpComponent(YAML::Emitter& p_out,
-                   const char* p_name,
-                   ecs::Entity p_entity,
-                   const Scene& p_scene,
-                   FileAccess* p_bianary) {
+[[nodiscard]] Result<void> SerializeComponent(YAML::Emitter& p_out,
+                                              const char* p_name,
+                                              ecs::Entity p_entity,
+                                              const Scene& p_scene,
+                                              FileAccess* p_binary) {
 
     const T* component = p_scene.GetComponent<T>(p_entity);
     if (component) {
         p_out << DUMP_KEY(p_name);
         serialize::SerializeYamlContext context;
-        context.file = p_bianary;
-        serialize::SerializeYaml(p_out, *component, context);
+        context.file = p_binary;
+        if (auto res = serialize::SerializeYaml(p_out, *component, context); !res) {
+            return HBN_ERROR(res.error());
+        }
+    }
+    return Result<void>();
+}
+
+void RegisterClasses() {
+    static bool s_initialized = false;
+    if (DEV_VERIFY(!s_initialized)) {
+#define REGISTER_COMPONENT(a, ...) a::RegisterClass();
+        REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
+        MeshComponent::MeshSubset::RegisterClass();
+        LightComponent::Attenuation::RegisterClass();
+        EnvironmentComponent::Ambient::RegisterClass();
+        s_initialized = true;
     }
 }
 
+Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
+    std::unordered_set<uint32_t> entity_set;
+
+    for (const auto& it : p_scene.GetLibraryEntries()) {
+        auto& manager = it.second.m_manager;
+        for (auto entity : manager->GetEntityArray()) {
+            entity_set.insert(entity.GetId());
+        }
+    }
+
+    std::vector<uint32_t> entity_array(entity_set.begin(), entity_set.end());
+    std::sort(entity_array.begin(), entity_array.end());
+
+    auto binary_path = std::format("{}{}", p_path, ".bin");
+    Archive archive;
+    if (auto res = archive.OpenWrite(binary_path); !res) {
+        return HBN_ERROR(res.error());
+    }
+
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << DUMP_KEY("version") << SCENE_VERSION;
+    out << DUMP_KEY("seed") << ecs::Entity::GetSeed();
+    out << DUMP_KEY("root") << p_scene.m_root.GetId();
+    out << DUMP_KEY("binary") << binary_path;
+
+    out << DUMP_KEY("entities");
+    out << YAML::BeginSeq;
+
+    bool ok = true;
+    ok = ok && archive.Write(SCENE_MAGIC);
+    ok = ok && archive.Write(SCENE_VERSION);
+    ok = ok && archive.Write(SCENE_GUARD_MESSAGE);
+    if (!ok) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE, "failed to save file '{}'", p_path);
+    }
+
+    for (auto id : entity_array) {
+        ecs::Entity entity{ id };
+
+        out << YAML::BeginMap;
+        out << DUMP_KEY("id") << id;
+
+        out.SetSeqFormat(YAML::Flow);
+
+#define REGISTER_COMPONENT(a, ...)                                                                         \
+    if (auto res = SerializeComponent<a>(out, #a, entity, p_scene, archive.GetFileAccess().get()); !res) { \
+        return HBN_ERROR(res.error());                                                                     \
+    }
+        REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
+
+        out.SetSeqFormat(YAML::Block);
+
+        out << YAML::EndMap;
+    }
+
+    out << YAML::EndSeq;
+    out << YAML::EndMap;
+
+    auto res = FileAccess::Open(p_path, FileAccess::WRITE);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    auto yaml_file = *res;
+    const char* result = out.c_str();
+    yaml_file->WriteBuffer(result, strlen(result));
+    return Result<void>();
+}
+
 template<Serializable T>
-static Result<void> LoadComponent(const YAML::Node& p_node,
-                                  const char* p_key,
-                                  ecs::Entity p_id,
-                                  uint32_t p_version,
-                                  Scene& p_scene,
-                                  FileAccess* p_binary) {
+static Result<void> DeserializeComponent(const YAML::Node& p_node,
+                                         const char* p_key,
+                                         ecs::Entity p_id,
+                                         uint32_t p_version,
+                                         Scene& p_scene,
+                                         FileAccess* p_binary) {
     const auto& node = p_node[p_key];
     if (!node.IsDefined()) {
         return Result<void>();
@@ -228,12 +233,16 @@ static Result<void> LoadComponent(const YAML::Node& p_node,
         return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "entity {} has invalid '{}'", p_id.GetId(), p_key);
     }
 
-    // @TODO: reserve
+    // @TODO: reserve component manager
     T& component = p_scene.Create<T>(p_id);
-    if (!component.Undump(node, p_binary, p_version)) {
-        return HBN_ERROR(ErrorCode::ERR_PARSE_ERROR, "entity {} has invalid '{}'", p_id.GetId(), p_key);
+    serialize::SerializeYamlContext context;
+    context.file = p_binary;
+    context.version = p_version;
+    if (auto res = serialize::DeserializeYaml(node, component, context); !res) {
+        return HBN_ERROR(res.error());
     }
 
+    component.OnDeserialized();
     return Result<void>();
 }
 
@@ -285,94 +294,17 @@ Result<void> LoadSceneText(const std::string& p_path, Scene& p_scene) {
             return HBN_ERROR(ErrorCode::ERR_FILE_CORRUPT, "invalid format");
         }
 
-        // ecs::Entity id(entity["id"].as<uint32_t>());
+        ecs::Entity id(entity["id"].as<uint32_t>());
 
-        //#define REGISTER_COMPONENT(a, ...)                                                  \
-//    do {                                                                            \
-//        auto res2 = LoadComponent<a>(entity, #a, id, version, p_scene, file.get()); \
-//        if (!res2) { return HBN_ERROR(res2.error()); }                              \
-//    } while (0);
-        //        REGISTER_COMPONENT_LIST
-        // #undef REGISTER_COMPONENT
+#define REGISTER_COMPONENT(a, ...)                                                         \
+    do {                                                                                   \
+        auto res2 = DeserializeComponent<a>(entity, #a, id, version, p_scene, file.get()); \
+        if (!res2) { return HBN_ERROR(res2.error()); }                                     \
+    } while (0);
+        REGISTER_COMPONENT_LIST
+#undef REGISTER_COMPONENT
     }
 
-    return Result<void>();
-}
-
-Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
-    // @TODO: remove this
-    NameComponent::RegisterClass();
-    HierarchyComponent::RegisterClass();
-    TransformComponent::RegisterClass();
-
-    std::unordered_set<uint32_t> entity_set;
-
-    for (const auto& it : p_scene.GetLibraryEntries()) {
-        auto& manager = it.second.m_manager;
-        for (auto entity : manager->GetEntityArray()) {
-            entity_set.insert(entity.GetId());
-        }
-    }
-
-    std::vector<uint32_t> entity_array(entity_set.begin(), entity_set.end());
-    std::sort(entity_array.begin(), entity_array.end());
-
-    auto binary_path = std::format("{}{}", p_path, ".bin");
-    Archive archive;
-    if (auto res = archive.OpenWrite(binary_path); !res) {
-        return HBN_ERROR(res.error());
-    }
-
-    YAML::Emitter out;
-    out << YAML::BeginMap;
-    out << DUMP_KEY("version") << SCENE_VERSION;
-    out << DUMP_KEY("seed") << ecs::Entity::GetSeed();
-    out << DUMP_KEY("root") << p_scene.m_root.GetId();
-    out << DUMP_KEY("binary") << binary_path;
-
-    out << DUMP_KEY("entities");
-    out << YAML::BeginSeq;
-
-    bool ok = true;
-    ok = ok && archive.Write(SCENE_MAGIC);
-    ok = ok && archive.Write(SCENE_VERSION);
-    ok = ok && archive.Write(SCENE_GUARD_MESSAGE);
-    if (!ok) {
-        return HBN_ERROR(ErrorCode::ERR_FILE_CANT_WRITE, "failed to save file '{}'", p_path);
-    }
-
-    for (auto id : entity_array) {
-        ecs::Entity entity{ id };
-
-        out << YAML::BeginMap;
-        out << DUMP_KEY("id") << id;
-
-        out.SetSeqFormat(YAML::Flow);
-
-        DumpComponent<NameComponent>(out, "NameComponent", entity, p_scene, archive.GetFileAccess().get());
-        DumpComponent<HierarchyComponent>(out, "HierarchyComponent", entity, p_scene, archive.GetFileAccess().get());
-        DumpComponent<TransformComponent>(out, "TransformComponent", entity, p_scene, archive.GetFileAccess().get());
-
-        // #define REGISTER_COMPONENT(a, ...) DumpComponent<a>(out, #a, entity, p_scene, archive.GetFileAccess().get());
-        //         REGISTER_COMPONENT_LIST
-        // #undef REGISTER_COMPONENT
-
-        out.SetSeqFormat(YAML::Block);
-
-        out << YAML::EndMap;
-    }
-
-    out << YAML::EndSeq;
-    out << YAML::EndMap;
-
-    auto res = FileAccess::Open(p_path, FileAccess::WRITE);
-    if (!res) {
-        return HBN_ERROR(res.error());
-    }
-
-    auto yaml_file = *res;
-    const char* result = out.c_str();
-    yaml_file->WriteBuffer(result, strlen(result));
     return Result<void>();
 }
 
@@ -380,11 +312,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
 void NameComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
 
-    if (p_archive.IsWriteMode()) {
-        p_archive << m_name;
-    } else {
-        p_archive >> m_name;
-    }
+    p_archive.ArchiveValue(m_name);
 }
 
 void NameComponent::RegisterClass() {
@@ -394,11 +322,7 @@ void NameComponent::RegisterClass() {
 }
 
 void HierarchyComponent::Serialize(Archive& p_archive, uint32_t) {
-    if (p_archive.IsWriteMode()) {
-        p_archive << m_parentId;
-    } else {
-        p_archive >> m_parentId;
-    }
+    p_archive.ArchiveValue(m_parentId);
 }
 
 void HierarchyComponent::RegisterClass() {
@@ -461,6 +385,10 @@ void TransformComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
+void TransformComponent::OnDeserialized() {
+    SetDirty();
+}
+
 void TransformComponent::RegisterClass() {
     using serialize::FieldFlag;
 
@@ -502,51 +430,36 @@ void MeshComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
-void MeshComponent::RegisterClass() {
-    using serialize::FieldFlag;
+void MeshComponent::OnDeserialized() {
+    CreateRenderData();
 }
 
-// bool MeshComponent::Dump(YAML::Emitter& p_out, FileAccess* p_binary, uint32_t p_version) const {
-//     unused(p_version);
-//
-//     DUMP_BEGIN(p_out, p_binary);
-//     DUMP_KEY_VALUE("flags", flags);
-//     DUMP_KEY_VALUE("armature_id", armatureId);
-//
-//     p_out << DUMP_KEY("subsets");
-//     p_out.SetSeqFormat(YAML::Block);
-//     p_out << YAML::BeginSeq;
-//     for (const auto& subset : subsets) {
-//         p_out << YAML::BeginMap;
-//         DUMP_KEY_VALUE("material_id", subset.material_id);
-//         DUMP_KEY_VALUE("index_count", subset.index_count);
-//         DUMP_KEY_VALUE("index_offset", subset.index_offset);
-//         DUMP_KEY_VALUE("local_bound", subset.local_bound);
-//         p_out << YAML::EndMap;
-//     }
-//     p_out << YAML::EndSeq;
-//     p_out.SetSeqFormat(YAML::Flow);
-//
-// #def ine  DUMP _VEC_HELPER(a)                        \
-//    do {                                          \
-//        if (!a.empty()) {                         \
-//            p_out << DUMP_KEY(#a);                \
-//            DumpVectorBinary(p_out, a, p_binary); \
-//        }                                         \
-//    } while (0)
-//     DUMP_VEC_HELPER(indices);
-//     DUMP_VEC_HELPER(positions);
-//     DUMP_VEC_HELPER(normals);
-//     DUMP_VEC_HELPER(tangents);
-//     DUMP_VEC_HELPER(texcoords_0);
-//     DUMP_VEC_HELPER(texcoords_1);
-//     DUMP_VEC_HELPER(joints_0);
-//     DUMP_VEC_HELPER(weights_0);
-//     DUMP_VEC_HELPER(color_0);
-// #undef DUMP_VEC_HELPER
-//
-//     DUMP_END();
-// }
+void MeshComponent::MeshSubset::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, material_id, FieldFlag::NONE);
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, index_count, FieldFlag::NONE);
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, index_offset, FieldFlag::NONE);
+    REGISTER_FIELD_2(MeshComponent::MeshSubset, local_bound, FieldFlag::NONE);
+}
+
+void MeshComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD_2(MeshComponent, flags, FieldFlag::NONE);
+    REGISTER_FIELD_2(MeshComponent, subsets, FieldFlag::NONE);
+    REGISTER_FIELD(MeshComponent, "armature_id", armatureId, FieldFlag::NONE);
+
+    REGISTER_FIELD_2(MeshComponent, indices, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, positions, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, normals, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, tangents, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, texcoords_0, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, texcoords_1, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, joints_0, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, weights_0, FieldFlag::BINARY);
+    REGISTER_FIELD_2(MeshComponent, color_0, FieldFlag::BINARY);
+}
 
 void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_version);
@@ -578,8 +491,15 @@ void MaterialComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     }
 }
 
+void MaterialComponent::OnDeserialized() {
+}
+
 void MaterialComponent::RegisterClass() {
     using serialize::FieldFlag;
+    REGISTER_FIELD(MaterialComponent, "base_color", baseColor, FieldFlag::NONE);
+    REGISTER_FIELD_2(MaterialComponent, roughness, FieldFlag::NONE);
+    REGISTER_FIELD_2(MaterialComponent, metallic, FieldFlag::NONE);
+    REGISTER_FIELD_2(MaterialComponent, emissive, FieldFlag::NONE);
 }
 
 void LightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
@@ -600,8 +520,27 @@ void LightComponent::Serialize(Archive& p_archive, uint32_t p_version) {
             m_flags &= ~(SHADOW_REGION);
         }
 
-        m_flags |= DIRTY;
+        OnDeserialized();
     }
+}
+
+void LightComponent::OnDeserialized() {
+    m_flags |= DIRTY;
+}
+
+void LightComponent::Attenuation::RegisterClass() {
+    using serialize::FieldFlag;
+    REGISTER_FIELD(LightComponent::Attenuation, "constant", constant, FieldFlag::NONE);
+    REGISTER_FIELD(LightComponent::Attenuation, "linear", linear, FieldFlag::NONE);
+    REGISTER_FIELD(LightComponent::Attenuation, "quadratic", quadratic, FieldFlag::NONE);
+}
+
+void LightComponent::RegisterClass() {
+    using serialize::FieldFlag;
+    REGISTER_FIELD(LightComponent, "flags", m_flags, FieldFlag::NONE);
+    REGISTER_FIELD(LightComponent, "type", m_type, FieldFlag::NONE);
+    REGISTER_FIELD(LightComponent, "shadow_region", m_shadowRegion, FieldFlag::NUALLABLE);
+    REGISTER_FIELD(LightComponent, "attenuation", m_atten, FieldFlag::NUALLABLE);
 }
 
 void ArmatureComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -663,6 +602,10 @@ void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
     }
 }
 
+void PerspectiveCameraComponent::OnDeserialized() {
+    SetDirty();
+}
+
 void PerspectiveCameraComponent::RegisterClass() {
     using serialize::FieldFlag;
 
@@ -689,36 +632,89 @@ void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     }
 }
 
-void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t p_version) {
-    unused(p_archive);
-    unused(p_version);
-    CRASH_NOW();
+void LuaScriptComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD(LuaScriptComponent, "path", m_path, FieldFlag::NONE);
+}
+
+void NativeScriptComponent::Serialize(Archive& p_archive, uint32_t) {
+    p_archive.ArchiveValue(scriptName);
+}
+
+void NativeScriptComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD(NativeScriptComponent, "script_name", scriptName, FieldFlag::NONE);
 }
 
 void CollisionObjectBase::Serialize(Archive& p_archive, uint32_t) {
-    if (p_archive.IsWriteMode()) {
-        p_archive << collisionType;
-        p_archive << collisionMask;
-    } else {
-        p_archive >> collisionType;
-        p_archive >> collisionMask;
-    }
+    p_archive.ArchiveValue(collisionType);
+    p_archive.ArchiveValue(collisionMask);
 }
 
 void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     CollisionObjectBase::Serialize(p_archive, p_version);
 
-    if (p_archive.IsWriteMode()) {
-        p_archive << shape;
-        p_archive << objectType;
-        p_archive << param;
-        p_archive << mass;
-    } else {
-        p_archive >> shape;
-        p_archive >> objectType;
-        p_archive >> param;
-        p_archive >> mass;
-    }
+    p_archive.ArchiveValue(shape);
+    p_archive.ArchiveValue(objectType);
+    p_archive.ArchiveValue(param);
+    p_archive.ArchiveValue(mass);
+}
+
+void RigidBodyComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    // REGISTER_FIELD(RigidBodyComponent, "shape", shape, FieldFlag::NONE);
+    // REGISTER_FIELD(RigidBodyComponent, "type", objectType, FieldFlag::NONE);
+    // REGISTER_FIELD(RigidBodyComponent, "param", param, FieldFlag::NONE);
+    REGISTER_FIELD(RigidBodyComponent, "mass", mass, FieldFlag::NONE);
+}
+
+// @TODO: refactor these components
+void ParticleEmitterComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD(ParticleEmitterComponent, "scale", particleScale, FieldFlag::NONE);
+    REGISTER_FIELD(ParticleEmitterComponent, "lifespan", particleLifeSpan, FieldFlag::NONE);
+}
+
+void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+
+    p_archive.ArchiveValue(strength);
+    p_archive.ArchiveValue(radius);
+}
+
+void ForceFieldComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD_2(ForceFieldComponent, strength, FieldFlag::NONE);
+    REGISTER_FIELD_2(ForceFieldComponent, radius, FieldFlag::NONE);
+}
+
+void BoxColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+
+    p_archive.ArchiveValue(box);
+}
+
+void BoxColliderComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD_2(BoxColliderComponent, box, FieldFlag::NONE);
+}
+
+void MeshColliderComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_version);
+
+    p_archive.ArchiveValue(objectId);
+}
+
+void MeshColliderComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD(MeshColliderComponent, "object_id", objectId, FieldFlag::NONE);
 }
 
 void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
@@ -730,10 +726,31 @@ void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     }
 }
 
+void ClothComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD_2(ClothComponent, point_0, FieldFlag::NONE);
+    REGISTER_FIELD_2(ClothComponent, point_1, FieldFlag::NONE);
+    REGISTER_FIELD_2(ClothComponent, point_2, FieldFlag::NONE);
+    REGISTER_FIELD_2(ClothComponent, point_3, FieldFlag::NONE);
+}
+
 void EnvironmentComponent::Serialize(Archive& p_archive, uint32_t p_version) {
     unused(p_archive);
     unused(p_version);
     CRASH_NOW();
+}
+
+void EnvironmentComponent::Ambient::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD_2(EnvironmentComponent::Ambient, color, FieldFlag::NONE);
+}
+
+void EnvironmentComponent::RegisterClass() {
+    using serialize::FieldFlag;
+
+    REGISTER_FIELD(EnvironmentComponent, "ambient", ambient, FieldFlag::NONE);
 }
 #pragma endregion SCENE_COMPONENT_SERIALIZATION
 
