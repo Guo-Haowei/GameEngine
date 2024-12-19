@@ -46,8 +46,8 @@ public:
     void Update(const TransformComponent& p_transform);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass();
 
     const auto& GetMatrices() const { return m_lightSpaceMatrices; }
     const Vector3f& GetPosition() const { return m_position; }

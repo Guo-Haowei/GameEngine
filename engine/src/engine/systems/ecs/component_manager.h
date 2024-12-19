@@ -12,8 +12,9 @@ class Archive;
 class FileAccess;
 
 template<typename T>
-concept Serializable = requires(T& t, YAML::Emitter& p_out, const YAML::Node& p_cnode, Archive& p_archive, FileAccess* p_file, uint32_t p_version) {
+concept Serializable = requires(T& t, Archive& p_archive, uint32_t p_version) {
     { t.Serialize(p_archive, p_version) } -> std::same_as<void>;
+    { T::RegisterClass() } -> std::same_as<void>;
 };
 
 }  // namespace my

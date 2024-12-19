@@ -34,14 +34,8 @@ public:
     std::string& GetNameRef() { return m_name; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
 
-    static void RegisterClass() {
-        using serialize::FieldFlag;
-
-        REGISTER_FIELD(NameComponent, "name", m_name, FieldFlag::NONE);
-    }
+    static void RegisterClass();
 
 private:
     std::string m_name;
@@ -55,11 +49,7 @@ public:
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 
-    static void RegisterClass() {
-        using serialize::FieldFlag;
-
-        REGISTER_FIELD(HierarchyComponent, "parent_id", m_parentId, FieldFlag::NONE);
-    }
+    static void RegisterClass();
 
 private:
     ecs::Entity m_parentId;
@@ -110,14 +100,7 @@ public:
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 
-    static void RegisterClass() {
-        using serialize::FieldFlag;
-
-        REGISTER_FIELD(TransformComponent, "flags", m_flags, FieldFlag::NONE);
-        REGISTER_FIELD(TransformComponent, "translation", m_translation, FieldFlag::NONE);
-        REGISTER_FIELD(TransformComponent, "rotation", m_rotation, FieldFlag::NONE);
-        REGISTER_FIELD(TransformComponent, "scale", m_scale, FieldFlag::NONE);
-    }
+    static void RegisterClass();
 
 private:
     uint32_t m_flags = DIRTY;
@@ -193,8 +176,8 @@ struct MeshComponent {
     void CreateRenderData();
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass();
 };
 #pragma endregion MESH_COMPONENT
 
@@ -221,8 +204,8 @@ struct MaterialComponent {
     bool useTexures;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass();
 };
 #pragma endregion MATERIAL_COMPONENT
 
@@ -268,8 +251,8 @@ struct AnimationComponent {
     std::vector<Sampler> samplers;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass();
 };
 #pragma endregion ANIMATION_COMPONENT
 
@@ -287,8 +270,8 @@ struct ArmatureComponent {
     std::vector<Matrix4x4f> boneTransforms;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass();
 };
 #pragma endregion ARMATURE_COMPONENT
 
@@ -301,14 +284,13 @@ struct ObjectComponent {
         IS_TRANSPARENT = BIT(3),
     };
 
-    Flags flags = static_cast<Flags>(RENDERABLE | CAST_SHADOW);
+    uint32_t flags = RENDERABLE | CAST_SHADOW;
     ecs::Entity meshId;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass();
 };
-DEFINE_ENUM_BITWISE_OPERATIONS(ObjectComponent::Flags);
 #pragma endregion OBJECT_COMPONENT
 
 #pragma region CAMERA_COMPONENT
@@ -370,8 +352,8 @@ public:
     const Vector3f GetFront() const { return m_front; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const;
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version);
+
+    static void RegisterClass();
 
 private:
     uint32_t m_flags = DIRTY;
@@ -412,11 +394,8 @@ public:
     }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 
 private:
     std::string m_path;
@@ -457,11 +436,8 @@ struct NativeScriptComponent {
     }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 };
 #pragma endregion NATIVE_SCRIPT_COMPONENT
 
@@ -488,11 +464,6 @@ struct CollisionObjectBase {
     void* physicsObject{ nullptr };
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
 };
 
 struct RigidBodyComponent : CollisionObjectBase {
@@ -529,11 +500,8 @@ struct RigidBodyComponent : CollisionObjectBase {
     RigidBodyComponent& InitGhost();
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 };
 
 enum ClothFixFlag : uint32_t {
@@ -558,11 +526,8 @@ struct ClothComponent : CollisionObjectBase {
     void* physicsObject{ nullptr };
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 };
 #pragma endregion COLLISION_OBJECT_COMPONENT
 
@@ -585,11 +550,8 @@ struct EnvironmentComponent {
     } ambient;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 };
 #pragma endregion ENVIRONMENT_COMPONENT
 
@@ -599,11 +561,8 @@ struct ForceFieldComponent {
     float radius{ 0.01f };
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 };
 #pragma endregion FORCE_FIELD_COMPONENT
 
@@ -612,22 +571,16 @@ struct BoxColliderComponent {
     AABB box;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 };
 
 struct MeshColliderComponent {
     ecs::Entity objectId;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    WARNING_PUSH()
-    WARNING_DISABLE(4100, "-Wunused-parameter")
-    bool Dump(YAML::Emitter& p_out, FileAccess* p_file, uint32_t p_version) const { return true; }
-    bool Undump(const YAML::Node& p_node, FileAccess* p_file, uint32_t p_version) { return true; }
-    WARNING_POP()
+
+    static void RegisterClass();
 };
 
 // #pragma region _COMPONENT

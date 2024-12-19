@@ -1,5 +1,7 @@
 #include <yaml-cpp/yaml.h>
 
+#include "engine/core/math/aabb.h"
+#include "engine/core/math/angle.h"
 #include "engine/systems/serialization/serialization.h"
 
 namespace my::serialize {
@@ -8,10 +10,7 @@ template<typename T>
 concept IsArithmetic = std::is_arithmetic_v<T>;
 
 template<typename T>
-concept IsIterable = requires(T t) {
-    { std::begin(t) } -> std::same_as<typename T::iterator>;
-    { std::end(t) } -> std::same_as<typename T::iterator>;
-} && !std::is_same_v<T, std::string>;
+concept IsVector = std::same_as<std::remove_cv_t<T>, std::vector<typename T::value_type>>;
 
 template<typename T>
 concept HasMetaTable = requires(T) {
@@ -40,6 +39,16 @@ bool DeserializeYaml(const YAML::Node& p_node, ecs::Entity& p_object, SerializeY
     return true;
 }
 
+bool SerializeYaml(YAML::Emitter& p_out, const Degree& p_object, SerializeYamlContext&) {
+    p_out << p_object.GetDegree();
+    return true;
+}
+
+bool DeserializeYaml(const YAML::Node& p_node, Degree& p_object, SerializeYamlContext&) {
+    p_object = Degree(p_node.as<float>());
+    return true;
+}
+
 bool SerializeYaml(YAML::Emitter& p_out, const Vector3f& p_object, SerializeYamlContext&) {
     p_out.SetSeqFormat(YAML::Flow);
     p_out << YAML::BeginSeq;
@@ -51,7 +60,13 @@ bool SerializeYaml(YAML::Emitter& p_out, const Vector3f& p_object, SerializeYaml
 }
 
 bool DeserializeYaml(const YAML::Node& p_node, Vector3f& p_object, SerializeYamlContext&) {
-    p_object.x = p_node.as<float>();
+    if (!p_node || !(p_node.IsSequence() && p_node.size() == 4)) {
+        return false;
+    }
+
+    p_object.x = p_node[0].as<float>();
+    p_object.y = p_node[1].as<float>();
+    p_object.z = p_node[2].as<float>();
     return true;
 }
 
@@ -67,7 +82,14 @@ bool SerializeYaml(YAML::Emitter& p_out, const Vector4f& p_object, SerializeYaml
 }
 
 bool DeserializeYaml(const YAML::Node& p_node, Vector4f& p_object, SerializeYamlContext&) {
-    p_object.x = p_node.as<float>();
+    if (!p_node || !(p_node.IsSequence() && p_node.size() == 4)) {
+        return false;
+    }
+
+    p_object.x = p_node[0].as<float>();
+    p_object.y = p_node[1].as<float>();
+    p_object.z = p_node[2].as<float>();
+    p_object.w = p_node[3].as<float>();
     return true;
 }
 
@@ -102,7 +124,7 @@ bool DeserializeYaml(const YAML::Node& p_node, T& p_object, SerializeYamlContext
     return true;
 }
 
-template<IsIterable T>
+template<IsVector T>
 bool SerializeYaml(YAML::Emitter& p_out, const T& p_object, SerializeYamlContext& p_context) {
     p_out << YAML::BeginSeq;
     for (const auto& ele : p_object) {
@@ -112,7 +134,7 @@ bool SerializeYaml(YAML::Emitter& p_out, const T& p_object, SerializeYamlContext
     return true;
 }
 
-template<IsIterable T>
+template<IsVector T>
 bool DeserializeYaml(const YAML::Node& p_node, T& p_object, SerializeYamlContext& p_context) {
     const size_t size = p_node.size();
     p_object.resize(size);
