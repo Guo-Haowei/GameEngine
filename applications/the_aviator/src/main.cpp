@@ -117,16 +117,16 @@ Application* CreateApplication() {
     ApplicationSpec spec{};
     spec.rootDirectory = root;
     spec.name = "TheAviator";
-    spec.width = 800;
-    spec.height = 600;
-    spec.backend = Backend::EMPTY;
+    spec.width = 1600;
+    spec.height = 900;
+    spec.backend = Backend::OPENGL;
     spec.decorated = true;
     spec.fullscreen = false;
     spec.vsync = false;
     // spec.enableImgui = false;
     spec.enableImgui = true;
 
-    DVAR_window_resolution.SetVector2i(800, 600);
+    DVAR_window_resolution.SetVector2i(1600, 900);
     DVAR_window_resolution.SetFlag(DVAR_FLAG_OVERRIDEN);
     return new Game(spec);
 }
