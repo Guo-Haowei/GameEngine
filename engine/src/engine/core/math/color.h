@@ -13,8 +13,8 @@ enum ColorCode : uint32_t {
     COLOR_WHITE = 0xE0E0E0,
 };
 
-class Color : public Vector4<float> {
-    using Base = Vector4<float>;
+class Color : public Vector<float, 4> {
+    using Base = Vector<float, 4>;
 
 public:
     constexpr Color() : Base(0, 0, 0, 1) {}

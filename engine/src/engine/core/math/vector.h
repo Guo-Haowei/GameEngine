@@ -6,16 +6,6 @@ namespace my {
 template<typename T>
 concept Arithmetic = std::is_arithmetic_v<T>;
 
-struct VectorBaseClass {};
-
-template<typename T>
-concept VectorType = std::is_base_of_v<VectorBaseClass, T>;
-
-template<typename T>
-concept FVectorType =
-    std::is_base_of_v<VectorBaseClass, T> &&
-    std::is_floating_point_v<decltype(std::declval<T>().x)>;
-
 WARNING_PUSH()
 WARNING_DISABLE(4201, "-Wgnu-anonymous-struct")
 WARNING_DISABLE(4201, "-Wnested-anon-types")
@@ -23,7 +13,7 @@ WARNING_DISABLE(4201, "-Wpadded")
 
 template<Arithmetic T, int N>
     requires(N >= 2 && N <= 4)
-struct VectorBase : VectorBaseClass {
+struct VectorBase {
     using Self = VectorBase<T, N>;
 
     constexpr T* Data() { return reinterpret_cast<T*>(this); }
@@ -50,59 +40,74 @@ struct VectorBase : VectorBaseClass {
     }
 };
 
+template<Arithmetic T, int N>
+struct Vector;
+
 template<Arithmetic T>
-struct Vector2;
+struct Vector<T, 2>;
+
 template<Arithmetic T>
-struct Vector3;
+struct Vector<T, 3>;
+
 template<Arithmetic T>
-struct Vector4;
+struct Vector<T, 4>;
+
+template<typename T, int S, int N, int A, int B, int C, int D>
+struct Swizzle;
+
+template<typename T, int N, int A, int B, int C, int D>
+using Swizzle2 = Swizzle<T, 2, N, A, B, C, D>;
+template<typename T, int N, int A, int B, int C, int D>
+using Swizzle3 = Swizzle<T, 3, N, A, B, C, D>;
+template<typename T, int N, int A, int B, int C, int D>
+using Swizzle4 = Swizzle<T, 4, N, A, B, C, D>;
 
 template<Arithmetic T, int N, int A, int B, int C, int D>
-    requires(A <= N) && (B <= N)
-struct Swizzle2 {
+    requires(N >= 2) and (A < N) and (B < N) and (C == -1) and (D == -1)
+struct Swizzle<T, 2, N, A, B, C, D> {
     T d[N];
 
-    Vector2<T> operator=(const Vector2<T>& p_vec) {
-        return Vector2<T>(d[A] = p_vec.x, d[B] = p_vec.y);
+    Vector<T, 2> operator=(const Vector<T, 2>& p_vec) {
+        return Vector<T, 2>(d[A] = p_vec.x, d[B] = p_vec.y);
     }
 
-    operator Vector2<T>() {
-        return Vector2<T>(d[A], d[B]);
+    operator Vector<T, 2>() {
+        return Vector<T, 2>(d[A], d[B]);
     }
 };
 
 template<Arithmetic T, int N, int A, int B, int C, int D>
-    requires(A <= N) && (B <= N) && (C <= N)
-struct Swizzle3 {
+    requires(N >= 3) and (A < N) and (B < N) and (C < N) and (D == -1)
+struct Swizzle<T, 3, N, A, B, C, D> {
     T d[N];
 
-    Vector3<T> operator=(const Vector3<T>& p_vec) {
-        return Vector3<T>(d[A] = p_vec.x, d[B] = p_vec.y, d[C] = p_vec.z);
+    Vector<T, 3> operator=(const Vector<T, 3>& p_vec) {
+        return Vector<T, 3>(d[A] = p_vec.x, d[B] = p_vec.y, d[C] = p_vec.z);
     }
 
-    operator Vector3<T>() {
-        return Vector3<T>(d[A], d[B], d[C]);
+    operator Vector<T, 3>() {
+        return Vector<T, 3>(d[A], d[B], d[C]);
     }
 };
 
 template<Arithmetic T, int N, int A, int B, int C, int D>
-    requires(A <= N) && (B <= N) && (C <= N) && (D <= N)
-struct Swizzle4 {
+    requires(N >= 4) and (A < N) and (B < N) and (C < N) and (D < N)
+struct Swizzle<T, 4, N, A, B, C, D> {
     T d[N];
 
-    Vector4<T> operator=(const Vector4<T>& p_vec) {
-        return Vector4<T>(d[A] = p_vec.x, d[B] = p_vec.y, d[C] = p_vec.z, d[D] = p_vec.w);
+    Vector<T, 4> operator=(const Vector<T, 4>& p_vec) {
+        return Vector<T, 4>(d[A] = p_vec.x, d[B] = p_vec.y, d[C] = p_vec.z, d[D] = p_vec.w);
     }
 
-    operator Vector4<T>() {
-        return Vector4<T>(d[A], d[B], d[C], d[D]);
+    operator Vector<T, 4>() {
+        return Vector<T, 4>(d[A], d[B], d[C], d[D]);
     }
 };
 
 template<Arithmetic T>
-struct Vector2 : VectorBase<T, 2> {
+struct Vector<T, 2> : VectorBase<T, 2> {
     using Base = VectorBase<T, 2>;
-    using Self = Vector2<T>;
+    using Self = Vector<T, 2>;
 
     // clang-format off
     union {
@@ -113,25 +118,25 @@ struct Vector2 : VectorBase<T, 2> {
     };
     // clang-format on
 
-    explicit constexpr Vector2() : x(0), y(0) {
+    explicit constexpr Vector() : x(0), y(0) {
     }
 
-    explicit constexpr Vector2(T p_v) : x(p_v), y(p_v) {
+    explicit constexpr Vector(T p_v) : x(p_v), y(p_v) {
     }
 
-    constexpr Vector2(T p_x, T p_y) : x(p_x),
-                                      y(p_y) {
+    constexpr Vector(T p_x, T p_y) : x(p_x),
+                                     y(p_y) {
     }
 
     template<Arithmetic U>
         requires(!std::is_same<T, U>::value)
-    explicit constexpr Vector2(U p_x, U p_y) : x(static_cast<T>(p_x)),
-                                               y(static_cast<T>(p_y)) {
+    explicit constexpr Vector(U p_x, U p_y) : x(static_cast<T>(p_x)),
+                                              y(static_cast<T>(p_y)) {
     }
 
     template<int N, int A, int B>
-    constexpr Vector2(const Swizzle2<T, N, A, B, -1, -1>& p_swizzle) : x(p_swizzle.d[A]),
-                                                                       y(p_swizzle.d[B]) {
+    constexpr Vector(const Swizzle2<T, N, A, B, -1, -1>& p_swizzle) : x(p_swizzle.d[A]),
+                                                                      y(p_swizzle.d[B]) {
     }
 
     static const Self Zero;
@@ -141,9 +146,9 @@ struct Vector2 : VectorBase<T, 2> {
 };
 
 template<Arithmetic T>
-struct Vector3 : VectorBase<T, 3> {
+struct Vector<T, 3> : VectorBase<T, 3> {
     using Base = VectorBase<T, 3>;
-    using Self = Vector3<T>;
+    using Self = Vector<T, 3>;
 
     // clang-format off
     union {
@@ -155,37 +160,37 @@ struct Vector3 : VectorBase<T, 3> {
     };
     // clang-format on
 
-    explicit constexpr Vector3() : x(0),
-                                   y(0),
-                                   z(0) {
+    explicit constexpr Vector() : x(0),
+                                  y(0),
+                                  z(0) {
     }
 
-    explicit constexpr Vector3(T p_v) : x(p_v),
-                                        y(p_v),
-                                        z(p_v) {
+    explicit constexpr Vector(T p_v) : x(p_v),
+                                       y(p_v),
+                                       z(p_v) {
     }
 
-    explicit constexpr Vector3(T p_x, T p_y, T p_z) : x(p_x),
-                                                      y(p_y),
-                                                      z(p_z) {
+    explicit constexpr Vector(T p_x, T p_y, T p_z) : x(p_x),
+                                                     y(p_y),
+                                                     z(p_z) {
     }
 
     template<typename U>
         requires Arithmetic<U> && (!std::is_same<T, U>::value)
-    explicit constexpr Vector3(U p_x, U p_y, U p_z) : x(static_cast<T>(p_x)),
-                                                      y(static_cast<T>(p_y)),
-                                                      z(static_cast<T>(p_z)) {
+    explicit constexpr Vector(U p_x, U p_y, U p_z) : x(static_cast<T>(p_x)),
+                                                     y(static_cast<T>(p_y)),
+                                                     z(static_cast<T>(p_z)) {
     }
 
-    explicit constexpr Vector3(Vector2<T> p_vec, T p_z) : x(p_vec.x),
-                                                          y(p_vec.y),
-                                                          z(p_z) {
+    explicit constexpr Vector(const Vector<T, 2>& p_vec, T p_z) : x(p_vec.x),
+                                                                  y(p_vec.y),
+                                                                  z(p_z) {
     }
 
     template<int N, int A, int B, int C>
-    constexpr Vector3(const Swizzle3<T, N, A, B, C, -1>& p_swizzle) : x(p_swizzle.d[A]),
-                                                                      y(p_swizzle.d[B]),
-                                                                      z(p_swizzle.d[C]) {
+    constexpr Vector(const Swizzle3<T, N, A, B, C, -1>& p_swizzle) : x(p_swizzle.d[A]),
+                                                                     y(p_swizzle.d[B]),
+                                                                     z(p_swizzle.d[C]) {
     }
 
     static const Self Zero;
@@ -196,9 +201,9 @@ struct Vector3 : VectorBase<T, 3> {
 };
 
 template<Arithmetic T>
-struct Vector4 : VectorBase<T, 4> {
+struct Vector<T, 4> : VectorBase<T, 4> {
     using Base = VectorBase<T, 4>;
-    using Self = Vector4<T>;
+    using Self = Vector<T, 4>;
 
     // clang-format off
     union {
@@ -211,49 +216,49 @@ struct Vector4 : VectorBase<T, 4> {
     };
     // clang-format on
 
-    explicit constexpr Vector4() : x(0), y(0), z(0), w(0) {
+    explicit constexpr Vector() : x(0), y(0), z(0), w(0) {
     }
 
-    explicit constexpr Vector4(T p_v) : x(p_v), y(p_v), z(p_v), w(p_v) {
+    explicit constexpr Vector(T p_v) : x(p_v), y(p_v), z(p_v), w(p_v) {
     }
 
-    explicit constexpr Vector4(T p_x, T p_y, T p_z, T p_w) : x(p_x),
-                                                             y(p_y),
-                                                             z(p_z),
-                                                             w(p_w) {
+    explicit constexpr Vector(T p_x, T p_y, T p_z, T p_w) : x(p_x),
+                                                            y(p_y),
+                                                            z(p_z),
+                                                            w(p_w) {
     }
 
     template<typename U>
         requires Arithmetic<U> && (!std::is_same<T, U>::value)
-    explicit constexpr Vector4(U p_x, U p_y, U p_z, U p_w) : x(static_cast<T>(p_x)),
-                                                             y(static_cast<T>(p_y)),
-                                                             z(static_cast<T>(p_z)),
-                                                             w(static_cast<T>(p_w)) {
+    explicit constexpr Vector(U p_x, U p_y, U p_z, U p_w) : x(static_cast<T>(p_x)),
+                                                            y(static_cast<T>(p_y)),
+                                                            z(static_cast<T>(p_z)),
+                                                            w(static_cast<T>(p_w)) {
     }
 
-    explicit constexpr Vector4(Vector3<T> p_vec, T p_w) : x(p_vec.x),
-                                                          y(p_vec.y),
-                                                          z(p_vec.z),
-                                                          w(p_w) {
+    explicit constexpr Vector(const Vector<T, 3>& p_vec, T p_w) : x(p_vec.x),
+                                                                  y(p_vec.y),
+                                                                  z(p_vec.z),
+                                                                  w(p_w) {
     }
 
-    explicit constexpr Vector4(Vector2<T> p_vec1, Vector2<T> p_vec2) : x(p_vec1.x),
-                                                                       y(p_vec1.y),
-                                                                       z(p_vec2.x),
-                                                                       w(p_vec2.y) {
+    explicit constexpr Vector(const Vector<T, 2>& p_vec1, const Vector<T, 2>& p_vec2) : x(p_vec1.x),
+                                                                                        y(p_vec1.y),
+                                                                                        z(p_vec2.x),
+                                                                                        w(p_vec2.y) {
     }
 
-    explicit constexpr Vector4(Vector2<T> p_vec, T p_z, T p_w) : x(p_vec.x),
-                                                                 y(p_vec.y),
-                                                                 z(p_z),
-                                                                 w(p_w) {
+    explicit constexpr Vector(const Vector<T, 2>& p_vec, T p_z, T p_w) : x(p_vec.x),
+                                                                         y(p_vec.y),
+                                                                         z(p_z),
+                                                                         w(p_w) {
     }
 
     template<int N, int A, int B, int C, int D>
-    constexpr Vector4(const Swizzle4<T, N, A, B, C, D>& p_swizzle) : x(p_swizzle.d[A]),
-                                                                     y(p_swizzle.d[B]),
-                                                                     z(p_swizzle.d[C]),
-                                                                     w(p_swizzle.d[D]) {
+    constexpr Vector(const Swizzle4<T, N, A, B, C, D>& p_swizzle) : x(p_swizzle.d[A]),
+                                                                    y(p_swizzle.d[B]),
+                                                                    z(p_swizzle.d[C]),
+                                                                    w(p_swizzle.d[D]) {
     }
 
     static const Self Zero;
@@ -267,47 +272,47 @@ struct Vector4 : VectorBase<T, 4> {
 WARNING_POP()
 
 template<Arithmetic T>
-const Vector2<T> Vector2<T>::Zero(static_cast<T>(0));
+const Vector<T, 2> Vector<T, 2>::Zero(static_cast<T>(0));
 template<Arithmetic T>
-const Vector2<T> Vector2<T>::One(static_cast<T>(1));
+const Vector<T, 2> Vector<T, 2>::One(static_cast<T>(1));
 template<Arithmetic T>
-const Vector2<T> Vector2<T>::UnitX(static_cast<T>(1), static_cast<T>(0));
+const Vector<T, 2> Vector<T, 2>::UnitX(static_cast<T>(1), static_cast<T>(0));
 template<Arithmetic T>
-const Vector2<T> Vector2<T>::UnitY(static_cast<T>(0), static_cast<T>(1));
+const Vector<T, 2> Vector<T, 2>::UnitY(static_cast<T>(0), static_cast<T>(1));
 
 template<Arithmetic T>
-const Vector3<T> Vector3<T>::Zero(static_cast<T>(0));
+const Vector<T, 3> Vector<T, 3>::Zero(static_cast<T>(0));
 template<Arithmetic T>
-const Vector3<T> Vector3<T>::One(static_cast<T>(1));
+const Vector<T, 3> Vector<T, 3>::One(static_cast<T>(1));
 template<Arithmetic T>
-const Vector3<T> Vector3<T>::UnitX(static_cast<T>(1), static_cast<T>(0), static_cast<T>(0));
+const Vector<T, 3> Vector<T, 3>::UnitX(static_cast<T>(1), static_cast<T>(0), static_cast<T>(0));
 template<Arithmetic T>
-const Vector3<T> Vector3<T>::UnitY(static_cast<T>(0), static_cast<T>(1), static_cast<T>(0));
+const Vector<T, 3> Vector<T, 3>::UnitY(static_cast<T>(0), static_cast<T>(1), static_cast<T>(0));
 template<Arithmetic T>
-const Vector3<T> Vector3<T>::UnitZ(static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
+const Vector<T, 3> Vector<T, 3>::UnitZ(static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 
 template<Arithmetic T>
-const Vector4<T> Vector4<T>::Zero(static_cast<T>(0));
+const Vector<T, 4> Vector<T, 4>::Zero(static_cast<T>(0));
 template<Arithmetic T>
-const Vector4<T> Vector4<T>::One(static_cast<T>(1));
+const Vector<T, 4> Vector<T, 4>::One(static_cast<T>(1));
 template<Arithmetic T>
-const Vector4<T> Vector4<T>::UnitX(static_cast<T>(1), static_cast<T>(0), static_cast<T>(0), static_cast<T>(0));
+const Vector<T, 4> Vector<T, 4>::UnitX(static_cast<T>(1), static_cast<T>(0), static_cast<T>(0), static_cast<T>(0));
 template<Arithmetic T>
-const Vector4<T> Vector4<T>::UnitY(static_cast<T>(0), static_cast<T>(1), static_cast<T>(0), static_cast<T>(0));
+const Vector<T, 4> Vector<T, 4>::UnitY(static_cast<T>(0), static_cast<T>(1), static_cast<T>(0), static_cast<T>(0));
 template<Arithmetic T>
-const Vector4<T> Vector4<T>::UnitZ(static_cast<T>(0), static_cast<T>(0), static_cast<T>(1), static_cast<T>(0));
+const Vector<T, 4> Vector<T, 4>::UnitZ(static_cast<T>(0), static_cast<T>(0), static_cast<T>(1), static_cast<T>(0));
 template<Arithmetic T>
-const Vector4<T> Vector4<T>::UnitW(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
+const Vector<T, 4> Vector<T, 4>::UnitW(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 
-using NewVector2i = Vector2<int>;
-using NewVector3i = Vector3<int>;
-using NewVector4i = Vector4<int>;
-using NewVector2u = Vector2<uint32_t>;
-using NewVector3u = Vector3<uint32_t>;
-using NewVector4u = Vector4<uint32_t>;
-using NewVector2f = Vector2<float>;
-using NewVector3f = Vector3<float>;
-using NewVector4f = Vector4<float>;
+using NewVector2i = Vector<int, 2>;
+using NewVector3i = Vector<int, 3>;
+using NewVector4i = Vector<int, 4>;
+using NewVector2u = Vector<uint32_t, 2>;
+using NewVector3u = Vector<uint32_t, 3>;
+using NewVector4u = Vector<uint32_t, 4>;
+using NewVector2f = Vector<float, 2>;
+using NewVector3f = Vector<float, 3>;
+using NewVector4f = Vector<float, 4>;
 
 static_assert(sizeof(NewVector2f) == 8);
 static_assert(sizeof(NewVector3f) == 12);
