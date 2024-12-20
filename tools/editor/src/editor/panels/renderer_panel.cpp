@@ -46,7 +46,6 @@ void RendererPanel::UpdateInternal(Scene&) {
     ImGui::Checkbox("no texture", (bool*)DVAR_GET_POINTER(gfx_no_texture));
 
     CollapseWindow("VXGI", []() {
-        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_vxgi));
         ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_vxgi));
         int value = DVAR_GET_INT(gfx_debug_vxgi_voxel);
         ImGui::RadioButton("lighting", &value, 0);

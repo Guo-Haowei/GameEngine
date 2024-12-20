@@ -280,7 +280,7 @@ void RenderPassCreator::AddShadowPass() {
 
 static void VoxelizationPassFunc(const DrawData& p_data, const Framebuffer*) {
     OPTICK_EVENT();
-    if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
+    if (p_data.voxelPass.pass_idx == -1) {
         return;
     }
 
