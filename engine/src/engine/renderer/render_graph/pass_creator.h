@@ -34,7 +34,6 @@ public:
 
     static std::unique_ptr<RenderGraph> CreateDummy(PassCreatorConfig& p_config);
     static std::unique_ptr<RenderGraph> CreateDefault(PassCreatorConfig& p_config);
-    static std::unique_ptr<RenderGraph> CreateExperimental(PassCreatorConfig& p_config);
     static std::unique_ptr<RenderGraph> CreatePathTracer(PassCreatorConfig& p_config);
 
     static void DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager);

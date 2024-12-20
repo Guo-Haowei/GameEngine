@@ -109,9 +109,11 @@ static auto CreateShader(std::string_view p_file, GLenum p_type) -> Result<GLuin
             "#define GLSL_LANG 1\n"
             "";
 
-        // for (const auto &define : p_defines) {
-        //     fullsource.append(std::format("#define {} {}\n", define.name, define.value));
-        // }
+#if 0
+         for (const auto &define : p_defines) {
+             fullsource.append(std::format("#define {} {}\n", define.name, define.value));
+         }
+#endif
     }
 
     fullsource.append(*result);
@@ -210,7 +212,9 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
         std::vector<char> buffer(length + 1);
         glGetProgramInfoLog(program_id, length, nullptr, buffer.data());
         if (status == GL_TRUE) {
+#if 0
             LOG_WARN("[glsl] warning\ndetails:\n{}", buffer.data());
+#endif
         } else {
             LOG_ERROR("[glsl] failed to link program\ndetails:\n{}", buffer.data());
             return HBN_ERROR(ErrorCode::ERR_CANT_CREATE);

@@ -569,6 +569,25 @@ struct EnvironmentComponent {
 
     static void RegisterClass();
 };
+
+struct VoxelGiComponent {
+    enum : uint32_t {
+        ENABLED = BIT(1),
+        SHOW_DEBUG_BOX = BIT(2),
+    };
+
+    uint32_t flags = 0;
+    // Non-serialized
+    AABB region;
+
+    bool Enabled() const { return flags & ENABLED; }
+    bool ShowDebugBox() const { return flags & SHOW_DEBUG_BOX; }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
+
+    static void RegisterClass();
+};
 #pragma endregion ENVIRONMENT_COMPONENT
 
 #pragma region FORCE_FIELD_COMPONENT

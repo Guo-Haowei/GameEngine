@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/scene/scene.h"
-#include "engine/shared/undo_command.h"
+#include "engine/systems/undo_redo/undo_command.h"
 
 namespace my {
 
@@ -28,7 +28,8 @@ enum CommandType : uint8_t {
     ENTITY_TYPE(INFINITE_LIGHT,		InfiniteLight,  false) \
     ENTITY_TYPE(POINT_LIGHT,		PointLight,     false) \
     ENTITY_TYPE(ENVIRONMENT,        Environment,    false) \
-    ENTITY_TYPE(AREA_LIGHT,			AreaLight,      true ) \
+    ENTITY_TYPE(AREA_LIGHT,			AreaLight,      false ) \
+    ENTITY_TYPE(VOXEL_GI,			VoxelGi,      true ) \
     ENTITY_TYPE(TRANSFORM,			Transform,      false) \
     ENTITY_TYPE(PLANE,				Plane,          false) \
     ENTITY_TYPE(CUBE,				Cube,           false) \

@@ -2,23 +2,19 @@
 #include "engine/core/framework/entry_point.h"
 #include "engine/core/string/string_utils.h"
 
+#define DEFINE_DVAR
+#include "editor_dvars.h"
+#undef DEFINE_DVAR
+
 // @TODO: fix
 #include "plugins/the_aviator/the_aviator_layer.h"
 
 namespace my {
 
 extern Scene* CreateTheAviatorScene();
+extern Scene* CreateBoxScene();
 extern Scene* CreatePbrTestScene();
 extern Scene* CreatePhysicsTestScene();
-
-enum {
-    CREATE_EMPTY_SCENE = 0,
-    CREATE_THE_AVIATOR_SCENE = 1,
-    CREATE_PHYSICS_SCENE = 2,
-    CREATE_PBR_SCENE = 3,
-
-    DEFAULT_SCENE = 1,
-};
 
 class Editor : public Application {
 public:
@@ -29,7 +25,8 @@ public:
         AttachLayer(m_editorLayer.get());
 
         // Only creates game layer, don't attach yet
-        if constexpr (DEFAULT_SCENE == CREATE_THE_AVIATOR_SCENE) {
+        auto scene = DVAR_GET_STRING(default_scene);
+        if (scene == "the_aviator") {
             m_gameLayer = std::make_unique<TheAviatorLayer>();
         }
     }
@@ -37,8 +34,17 @@ public:
     Scene* CreateInitialScene() override;
 
 private:
+    void RegisterDvars() override;
+
     std::unique_ptr<EditorLayer> m_editorLayer;
 };
+
+void Editor::RegisterDvars() {
+    Application::RegisterDvars();
+#define REGISTER_DVAR
+#include "editor_dvars.h"
+#undef REGISTER_DVAR
+}
 
 Application* CreateApplication() {
     std::string_view root = StringUtils::BasePath(__FILE__);
@@ -59,15 +65,21 @@ Application* CreateApplication() {
 }
 
 Scene* Editor::CreateInitialScene() {
-    if constexpr (DEFAULT_SCENE == CREATE_EMPTY_SCENE) {
-        return Application::CreateInitialScene();
-    } else if constexpr (DEFAULT_SCENE == CREATE_THE_AVIATOR_SCENE) {
-        return CreateTheAviatorScene();
-    } else if constexpr (DEFAULT_SCENE == CREATE_PBR_SCENE) {
+    auto scene = DVAR_GET_STRING(default_scene);
+    if (scene == "pbr_test") {
         return CreatePbrTestScene();
-    } else if constexpr (DEFAULT_SCENE == CREATE_PHYSICS_SCENE) {
+    }
+    if (scene == "physics_test") {
         return CreatePhysicsTestScene();
     }
+    if (scene == "the_aviator") {
+        return CreateTheAviatorScene();
+    }
+    if (scene == "box") {
+        return CreateBoxScene();
+    }
+
+    return Application::CreateInitialScene();
 }
 
 }  // namespace my

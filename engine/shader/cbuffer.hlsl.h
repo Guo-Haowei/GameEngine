@@ -210,8 +210,8 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     float c_cameraFovDegree;  // 16
 
     //-----------------------------------------
-    Vector3f c_worldCenter;
-    float c_worldSizeHalf;  // 16
+    Vector3f c_voxelWorldCenter;
+    float c_voxelWorldSizeHalf;  // 16
 
     Vector3f c_cameraForward;
     int c_frameIndex;  // 16

@@ -174,36 +174,12 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     const auto& scene = p_config.scene;
 
     cache.c_cameraPosition = camera.position;
-    cache.c_enableVxgi = DVAR_GET_BOOL(gfx_enable_vxgi);
     cache.c_debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
     cache.c_noTexture = DVAR_GET_BOOL(gfx_no_texture);
 
     // Bloom
     cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
     cache.c_enableBloom = DVAR_GET_BOOL(gfx_enable_bloom);
-
-    // @TODO: refactor the following
-    const int voxel_texture_size = DVAR_GET_INT(gfx_voxel_size);
-    DEV_ASSERT(math::IsPowerOfTwo(voxel_texture_size));
-    DEV_ASSERT(voxel_texture_size <= 256);
-
-    Vector3f world_center = scene.GetBound().Center();
-    Vector3f aabb_size = scene.GetBound().Size();
-    float world_size = glm::max(aabb_size.x, glm::max(aabb_size.y, aabb_size.z));
-
-    const float max_world_size = DVAR_GET_FLOAT(gfx_vxgi_max_world_size);
-    if (world_size > max_world_size) {
-        world_center = camera.position;
-        world_size = max_world_size;
-    }
-
-    const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
-    const float voxel_size = world_size * texel_size;
-
-    cache.c_worldCenter = world_center;
-    cache.c_worldSizeHalf = 0.5f * world_size;
-    cache.c_texelSize = texel_size;
-    cache.c_voxelSize = voxel_size;
 
     cache.c_cameraFovDegree = camera.fovy.GetDegree();
     cache.c_cameraForward = camera.front;
@@ -394,19 +370,62 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
 
 static void FillVoxelPass(const RenderDataConfig& p_config,
                           DrawData& p_out_data) {
-    if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
+    bool enabled = false;
+    bool show_debug = false;
+    AABB voxel_gi_bound;
+    int counter = 0;
+    for (auto [entity, voxel_gi] : p_config.scene.m_VoxelGiComponents) {
+        voxel_gi_bound = voxel_gi.region;
+        DEV_ASSERT(voxel_gi_bound.IsValid());
+        if (!voxel_gi_bound.IsValid()) {
+            return;
+        }
+
+        show_debug = voxel_gi.ShowDebugBox();
+        enabled = voxel_gi.Enabled();
+        DEV_ASSERT_MSG(counter++ == 0, "Only support one ");
+    }
+
+    if (show_debug) {
+        renderer::AddDebugCube(voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
+    }
+
+    auto& cache = p_out_data.perFrameCache;
+    cache.c_enableVxgi = enabled;
+    // @HACK: DONT use pass_idx
+    if (!enabled) {
+        p_out_data.voxelPass.pass_idx = -1;
         return;
     }
+    p_out_data.voxelPass.pass_idx = 0;
+
+    // @TODO: refactor the following
+    const int voxel_texture_size = DVAR_GET_INT(gfx_voxel_size);
+    DEV_ASSERT(math::IsPowerOfTwo(voxel_texture_size));
+    DEV_ASSERT(voxel_texture_size <= 256);
+
+    const auto voxel_world_center = voxel_gi_bound.Center();
+    auto voxel_world_size = voxel_gi_bound.Size().x;
+    const float max_world_size = DVAR_GET_FLOAT(gfx_vxgi_max_world_size);
+    voxel_world_size = glm::min(voxel_world_size, max_world_size);
+
+    const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
+    const float voxel_size = voxel_world_size * texel_size;
+
+    // this code is a bit mess here
+    cache.c_voxelWorldCenter = voxel_world_center;
+    cache.c_voxelWorldSizeHalf = 0.5f * voxel_world_size;
+    cache.c_texelSize = texel_size;
+    cache.c_voxelSize = voxel_size;
+
     FillPass(
         p_config,
         p_out_data.voxelPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::FLAG_RENDERABLE;
         },
-        [&](const AABB& aabb) {
-            unused(aabb);
-            // return scene->get_bound().intersects(aabb);
-            return true;
+        [&](const AABB& p_aabb) {
+            return voxel_gi_bound.Intersects(p_aabb);
         },
         p_out_data);
 }
@@ -563,8 +582,8 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
     FillConstantBuffer(p_config, p_out_data);
     FillLightBuffer(p_config, p_out_data);
-    FillVoxelPass(p_config, p_out_data);
     FillMainPass(p_config, p_out_data);
+    FillVoxelPass(p_config, p_out_data);
     FillBloomConstants(p_config, p_out_data);
     FillEnvConstants(p_config, p_out_data);
     FillEmitterBuffer(p_config, p_out_data);

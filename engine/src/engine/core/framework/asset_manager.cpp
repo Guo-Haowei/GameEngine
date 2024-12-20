@@ -42,11 +42,13 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".yaml", TextSceneLoader::CreateLoader);
 
-#if 1
-    IAssetLoader::RegisterLoader(".gltf", GltfLoader::CreateLoader);
-#else
-    IAssetLoader::RegisterLoader(".gltf", AssimpAssetLoader::CreateLoader);
+    if constexpr (1) {
+        IAssetLoader::RegisterLoader(".gltf", GltfLoader::CreateLoader);
+    } else {
+#if USING(USING_ASSIMP)
+        IAssetLoader::RegisterLoader(".gltf", AssimpAssetLoader::CreateLoader);
 #endif
+    }
 #if USING(USING_ASSIMP)
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
 #endif

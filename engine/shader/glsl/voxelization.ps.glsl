@@ -79,7 +79,7 @@ void main() {
     ///////////////////////////////////////////////////////////////////////////
 
     // write lighting information to texel
-    vec3 voxel = (pass_position - c_worldCenter) / c_worldSizeHalf;  // normalize it to [-1, 1]
+    vec3 voxel = (pass_position - c_voxelWorldCenter) / c_voxelWorldSizeHalf;  // normalize it to [-1, 1]
     voxel = 0.5 * voxel + vec3(0.5);                                    // normalize to [0, 1]
     ivec3 dim = imageSize(u_albedo_texture);
     ivec3 coord = ivec3(dim * voxel);

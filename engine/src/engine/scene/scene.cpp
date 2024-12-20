@@ -68,6 +68,17 @@ void Scene::Update(float p_time_step) {
     for (auto [entity, camera] : m_PerspectiveCameraComponents) {
         camera.Update();
     }
+
+    for (auto [entity, voxel_gi] : m_VoxelGiComponents) {
+        auto transform = GetComponent<TransformComponent>(entity);
+        if (DEV_VERIFY(transform)) {
+            const auto& matrix = transform->GetWorldMatrix();
+            Vector3f center = matrix[3];
+            Vector3f scale = transform->GetScale();
+            const float size = glm::max(scale.x, glm::max(scale.y, scale.z));
+            voxel_gi.region = AABB::FromCenterSize(center, Vector3f(size));
+        }
+    }
 }
 
 void Scene::Copy(Scene& p_other) {
@@ -247,6 +258,13 @@ ecs::Entity Scene::CreateInfiniteLightEntity(const std::string& p_name,
 ecs::Entity Scene::CreateEnvironmentEntity(const std::string& p_name) {
     auto entity = CreateNameEntity(p_name);
     Create<EnvironmentComponent>(entity);
+    return entity;
+}
+
+ecs::Entity Scene::CreateVoxelGiEntity(const std::string& p_name) {
+    auto entity = CreateNameEntity(p_name);
+    Create<VoxelGiComponent>(entity);
+    Create<TransformComponent>(entity);
     return entity;
 }
 

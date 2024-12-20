@@ -143,6 +143,15 @@ static bool DrawVec3ControlImpl(int type,
     return is_dirty;
 }
 
+bool DrawCheckBoxBitflag(const char* p_title, uint32_t& p_flags, const uint32_t p_bit) {
+    bool enabled = (p_flags & p_bit);
+    if (ImGui::Checkbox(p_title, &enabled)) {
+        enabled ? (p_flags |= p_bit) : (p_flags &= ~p_bit);
+        return true;
+    }
+    return false;
+}
+
 bool DrawVec3Control(const char* p_label,
                      Vector3f& p_out_vec3,
                      float p_reset_value,

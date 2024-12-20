@@ -34,6 +34,7 @@ namespace my {
     REGISTER_COMPONENT(PerspectiveCameraComponent, "World::PerspectiveCameraComponent", 0) \
     REGISTER_COMPONENT(RigidBodyComponent, "World::RigidBodyComponent", 0)                 \
     REGISTER_COMPONENT(ClothComponent, "World::ClothComponent", 0)                         \
+    REGISTER_COMPONENT(VoxelGiComponent, "World::VoxelGiComponent", 0)                     \
     REGISTER_COMPONENT(EnvironmentComponent, "World::EnvironmentComponent", 0)
 
 // @TODO: refactor
@@ -156,6 +157,8 @@ public:
                                           const float p_emissive = 5.0f);
 
     ecs::Entity CreateEnvironmentEntity(const std::string& p_name);
+
+    ecs::Entity CreateVoxelGiEntity(const std::string& p_name);
 
     ecs::Entity CreatePlaneEntity(const std::string& p_name,
                                   const Vector3f& p_scale = Vector3f(0.5f),
