@@ -8,6 +8,7 @@ vsoutput_uv main(vsinput_position input) {
     position += c_debugDrawPos;
     vsoutput_uv output;
     output.position = float4(position, 0.0f, 1.0f);
-    output.uv = 0.5 * (input.position + 1.0);
+    output.uv = 0.5f * (input.position + 1.0f);
+    output.uv.y = 1.0f - output.uv.y;
     return output;
 }

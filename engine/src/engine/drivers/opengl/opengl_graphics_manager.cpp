@@ -19,12 +19,7 @@
 #include <GLFW/glfw3.h>
 
 // @TODO: remove the following
-#include "engine/renderer/draw_data.h"
 #include "engine/renderer/ltc_matrix.h"
-#include "engine/renderer/render_graph/pass_creator.h"
-// shader defines
-#include "shader_resource_defines.hlsl.h"
-#include "unordered_access_defines.hlsl.h"
 
 // @TODO: refactor
 using namespace my;
@@ -199,10 +194,7 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->programId);
 }
 
-void OpenGlGraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) {
-    unused(p_framebuffer);
-    unused(p_index);
-
+void OpenGlGraphicsManager::Clear(const Framebuffer*, ClearFlags p_flags, const float* p_clear_color, int) {
     if (p_flags == CLEAR_NONE) {
         return;
     }
@@ -644,7 +636,7 @@ void OpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* 
 
 void OpenGlGraphicsManager::SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) {
     DEV_ASSERT(p_framebuffer);
-    if (p_framebuffer == nullptr) {
+    if (p_framebuffer->desc.type == FramebufferDesc::SCREEN) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         return;
     }
@@ -697,11 +689,6 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 
 void OpenGlGraphicsManager::Render() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // @TODO: refactor
-    auto& p_data = *renderer::GetRenderData();
-    renderer::RenderPassCreator::DebugImagePassFunc(p_data, nullptr);
-    // @TODO: refactor
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

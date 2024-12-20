@@ -11,8 +11,8 @@
 
 namespace my::renderer {
 
-void RenderPass::AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer) {
-    m_drawPasses.push_back(p_framebuffer);
+void RenderPass::AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_function) {
+    m_drawPasses.emplace_back(DrawPass{ p_framebuffer, p_function });
 }
 
 void RenderPass::CreateInternal(RenderPassDesc& p_desc) {
@@ -23,10 +23,11 @@ void RenderPass::CreateInternal(RenderPassDesc& p_desc) {
 void RenderPass::Execute(const renderer::DrawData& p_data, GraphicsManager& p_graphics_manager) {
     RT_DEBUG("-- Executing pass '{}'", RenderPassNameToString(m_name));
 
-    for (auto& framebuffer : m_drawPasses) {
-        p_graphics_manager.BeginDrawPass(framebuffer.get());
-        framebuffer->desc.execFunc(p_data, framebuffer.get());
-        p_graphics_manager.EndDrawPass(framebuffer.get());
+    for (auto& pass : m_drawPasses) {
+        auto framebuffer = pass.framebuffer.get();
+        p_graphics_manager.BeginDrawPass(framebuffer);
+        pass.executor(p_data, framebuffer);
+        p_graphics_manager.EndDrawPass(framebuffer);
     }
 
     RT_DEBUG("-------");

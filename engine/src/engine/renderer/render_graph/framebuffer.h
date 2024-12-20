@@ -12,8 +12,6 @@ struct Framebuffer;
 
 class GraphicsManager;
 
-using DrawPassExecuteFunc = void (*)(const renderer::DrawData&, const Framebuffer*);
-
 struct ResourceTransition {
     std::shared_ptr<GpuTexture> resource;
     int slot;
@@ -22,12 +20,13 @@ struct ResourceTransition {
 };
 
 struct FramebufferDesc {
+    enum Type : uint32_t {
+        TEXTURE = 0,
+        SCREEN,
+    } type{ TEXTURE };
     std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
     std::shared_ptr<GpuTexture> depthAttachment;
-
     std::vector<ResourceTransition> transitions;
-
-    DrawPassExecuteFunc execFunc{ nullptr };
 };
 
 struct Framebuffer {

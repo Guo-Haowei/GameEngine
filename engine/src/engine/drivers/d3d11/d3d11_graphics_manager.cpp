@@ -60,9 +60,9 @@ void D3d11GraphicsManager::FinalizeImpl() {
 }
 
 void D3d11GraphicsManager::Render() {
-    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
-    m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
+    // const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    // m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -624,6 +624,11 @@ void D3d11GraphicsManager::SetRenderTarget(const Framebuffer* p_framebuffer, int
     unused(p_mip_level);
     DEV_ASSERT(p_framebuffer);
 
+    if (p_framebuffer->desc.type == FramebufferDesc::SCREEN) {
+        m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
+        return;
+    }
+
     auto framebuffer = reinterpret_cast<const D3d11Framebuffer*>(p_framebuffer);
     if (const auto depth_attachment = framebuffer->desc.depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
@@ -658,19 +663,30 @@ void D3d11GraphicsManager::UnsetRenderTarget() {
 }
 
 void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) {
+    // @TODO: refactor
+    const bool clear_color = p_flags & CLEAR_COLOR_BIT;
+    const bool clear_depth = p_flags & CLEAR_DEPTH_BIT;
+    const bool clear_stencil = p_flags & CLEAR_STENCIL_BIT;
+    if (p_framebuffer->desc.type == FramebufferDesc::SCREEN) {
+        if (clear_color) {
+            m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), p_clear_color);
+        }
+        return;
+    }
+
     auto framebuffer = reinterpret_cast<const D3d11Framebuffer*>(p_framebuffer);
 
-    if (p_flags & CLEAR_COLOR_BIT) {
+    if (clear_color) {
         for (auto& rtv : framebuffer->rtvs) {
             m_deviceContext->ClearRenderTargetView(rtv.Get(), p_clear_color);
         }
     }
 
     uint32_t clear_flags = 0;
-    if (p_flags & CLEAR_DEPTH_BIT) {
+    if (clear_depth) {
         clear_flags |= D3D11_CLEAR_DEPTH;
     }
-    if (p_flags & CLEAR_STENCIL_BIT) {
+    if (clear_stencil) {
         clear_flags |= D3D11_CLEAR_STENCIL;
     }
     if (clear_flags) {

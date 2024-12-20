@@ -118,9 +118,8 @@ void RenderPassCreator::AddGbufferPass() {
     auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
         .colorAttachments = { attachment0, attachment1, attachment2, attachment3 },
         .depthAttachment = gbuffer_depth,
-        .execFunc = GbufferPassFunc,
     });
-    pass->AddDrawPass(framebuffer);
+    pass->AddDrawPass(framebuffer, GbufferPassFunc);
 }
 
 static void HighlightPassFunc(const DrawData&, const Framebuffer* p_framebuffer) {
@@ -159,9 +158,8 @@ void RenderPassCreator::AddHighlightPass() {
     auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
         .colorAttachments = { attachment },
         .depthAttachment = gbuffer_depth,
-        .execFunc = HighlightPassFunc,
     });
-    pass->AddDrawPass(framebuffer);
+    pass->AddDrawPass(framebuffer, HighlightPassFunc);
 }
 
 /// Shadow
@@ -266,11 +264,8 @@ void RenderPassCreator::AddShadowPass() {
     desc.dependencies = { RenderPassName::ENV };
     auto pass = m_graph.CreatePass(desc);
     {
-        auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
-            .depthAttachment = shadow_map,
-            .execFunc = ShadowPassFunc,
-        });
-        pass->AddDrawPass(framebuffer);
+        auto framebuffer = manager.CreateDrawPass(FramebufferDesc{ .depthAttachment = shadow_map });
+        pass->AddDrawPass(framebuffer, ShadowPassFunc);
     }
 
     auto point_shadowMap = manager.CreateTexture(BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
@@ -279,11 +274,8 @@ void RenderPassCreator::AddShadowPass() {
                                                                          point_shadow_res, point_shadow_res, 6 * MAX_POINT_LIGHT_SHADOW_COUNT),
                                                  shadow_cube_map_sampler());
 
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
-        .depthAttachment = point_shadowMap,
-        .execFunc = PointShadowPassFunc,
-    });
-    pass->AddDrawPass(framebuffer);
+    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{ .depthAttachment = point_shadowMap });
+    pass->AddDrawPass(framebuffer, PointShadowPassFunc);
 }
 
 static void VoxelizationPassFunc(const DrawData& p_data, const Framebuffer*) {
@@ -404,10 +396,8 @@ void RenderPassCreator::AddVoxelizationPass() {
     desc.name = RenderPassName::VOXELIZATION;
     desc.dependencies = { RenderPassName::SHADOW };
     auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
-        .execFunc = VoxelizationPassFunc,
-    });
-    pass->AddDrawPass(framebuffer);
+    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{});
+    pass->AddDrawPass(framebuffer, VoxelizationPassFunc);
 }
 
 /// Lighting
@@ -532,9 +522,8 @@ void RenderPassCreator::AddLightingPass() {
                                   int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_slot); },
             },
         },
-        .execFunc = LightingPassFunc,
     });
-    pass->AddDrawPass(framebuffer);
+    pass->AddDrawPass(framebuffer, LightingPassFunc);
 }
 
 /// Emitter
@@ -602,9 +591,8 @@ void RenderPassCreator::AddEmitterPass() {
     auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
         .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
         .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
-        .execFunc = EmitterPassFunc,
     });
-    pass->AddDrawPass(framebuffer);
+    pass->AddDrawPass(framebuffer, EmitterPassFunc);
 }
 
 /// Bloom
@@ -712,9 +700,8 @@ void RenderPassCreator::AddBloomPass() {
                                       GpuTexture*,
                                       int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
                 } },
-            .execFunc = BloomSetupFunc,
         });
-        render_pass->AddDrawPass(pass);
+        render_pass->AddDrawPass(pass, BloomSetupFunc);
     }
 
     // Down Sample
@@ -733,10 +720,9 @@ void RenderPassCreator::AddBloomPass() {
                                       GpuTexture*,
                                       int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
                 } },
-            .execFunc = BloomDownSampleFunc,
         });
         pass->id = i;
-        render_pass->AddDrawPass(pass);
+        render_pass->AddDrawPass(pass, BloomDownSampleFunc);
     }
 
     // Up Sample
@@ -755,10 +741,9 @@ void RenderPassCreator::AddBloomPass() {
                                       GpuTexture*,
                                       int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
                 } },
-            .execFunc = BloomUpSampleFunc,
         });
         pass->id = i;
-        render_pass->AddDrawPass(pass);
+        render_pass->AddDrawPass(pass, BloomUpSampleFunc);
     }
 }
 
@@ -830,10 +815,7 @@ void RenderPassCreator::AddTonePass() {
                                       PointClampSampler());
     }
 
-    FramebufferDesc framebuffer_desc{
-        .colorAttachments = { attachment },
-        .execFunc = TonePassFunc,
-    };
+    FramebufferDesc framebuffer_desc{ .colorAttachments = { attachment } };
 
     if (m_config.enableHighlight) {
         auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
@@ -841,15 +823,15 @@ void RenderPassCreator::AddTonePass() {
     }
 
     auto framebuffer = gm.CreateDrawPass(framebuffer_desc);
-
-    pass->AddDrawPass(framebuffer);
+    pass->AddDrawPass(framebuffer, TonePassFunc);
 }
 
 void RenderPassCreator::DebugImagePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
     OPTICK_EVENT();
 
     auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
-    if (p_framebuffer) {
+    // @TODO: refactor this
+    if (p_framebuffer->desc.type == FramebufferDesc::TEXTURE) {
         width = p_framebuffer->desc.colorAttachments[0]->desc.width;
         height = p_framebuffer->desc.colorAttachments[0]->desc.height;
     }
@@ -876,22 +858,25 @@ void RenderPassCreator::AddDebugImagePass() {
 
     const int width = m_config.frameWidth;
     const int height = m_config.frameHeight;
-    auto final_attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
-                                                                     RESOURCE_FORMAT_TONE,
-                                                                     AttachmentType::COLOR_2D,
-                                                                     width, height),
-                                             PointClampSampler());
+
+    const bool is_runtime = true;
+    std::shared_ptr<Framebuffer> framebuffer;
+    if (is_runtime) {
+        framebuffer = std::make_shared<Framebuffer>(FramebufferDesc{ .type = FramebufferDesc::SCREEN });
+    } else {
+        auto final_attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
+                                                                         RESOURCE_FORMAT_TONE,
+                                                                         AttachmentType::COLOR_2D,
+                                                                         width, height),
+                                                 PointClampSampler());
+        framebuffer = gm.CreateDrawPass(FramebufferDesc{ .colorAttachments = { final_attachment } });
+    }
 
     RenderPassDesc desc;
     desc.name = RenderPassName::FINAL;
     desc.dependencies = { RenderPassName::TONE };
     auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = gm.CreateDrawPass(FramebufferDesc{
-        .colorAttachments = { final_attachment },
-        // @TODO: move the executor function outside framebuffer
-        .execFunc = DebugImagePassFunc,
-    });
-    pass->AddDrawPass(framebuffer);
+    pass->AddDrawPass(framebuffer, DebugImagePassFunc);
 }
 
 void RenderPassCreator::AddGenerateSkylightPass() {
@@ -916,7 +901,11 @@ void RenderPassCreator::AddGenerateSkylightPass() {
         DEV_ASSERT(cubemap);
         auto pass = gm.CreateDrawPass(FramebufferDesc{
             .colorAttachments = { cubemap },
-            .execFunc = [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+        });
+
+        render_pass->AddDrawPass(
+            pass,
+            [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
                 if (!p_data.bakeIbl) {
                     return;
                 }
@@ -941,9 +930,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                 gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
 
                 gm.GenerateMipmap(cube_map.get());
-            },
-        });
-        render_pass->AddDrawPass(pass);
+            });
     }
     // Diffuse irradiance
     {
@@ -957,7 +944,10 @@ void RenderPassCreator::AddGenerateSkylightPass() {
 
         auto pass = gm.CreateDrawPass(FramebufferDesc{
             .colorAttachments = { cubemap },
-            .execFunc = [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+        });
+        render_pass->AddDrawPass(
+            pass,
+            [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
                 if (!p_data.bakeIbl) {
                     return;
                 }
@@ -980,9 +970,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                     gm.DrawSkybox();
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
-            },
-        });
-        render_pass->AddDrawPass(pass);
+            });
     }
     // prefilter
     {
@@ -1004,7 +992,10 @@ void RenderPassCreator::AddGenerateSkylightPass() {
 
         auto pass = gm.CreateDrawPass(FramebufferDesc{
             .colorAttachments = { cubemap },
-            .execFunc = [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+        });
+        render_pass->AddDrawPass(
+            pass,
+            [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
                 if (!p_data.bakeIbl) {
                     return;
                 }
@@ -1029,9 +1020,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                     }
                 }
                 gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
-            },
-        });
-        render_pass->AddDrawPass(pass);
+            });
     }
 }
 
@@ -1088,11 +1077,7 @@ void RenderPassCreator::AddPathTracerTonePass() {
                                       PointClampSampler());
     }
 
-    FramebufferDesc framebuffer_desc{
-        .colorAttachments = { attachment },
-        .depthAttachment = nullptr,
-        .execFunc = PathTracerTonePassFunc,
-    };
+    FramebufferDesc framebuffer_desc{ .colorAttachments = { attachment } };
 
     if (m_config.enableHighlight) {
         auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
@@ -1101,7 +1086,7 @@ void RenderPassCreator::AddPathTracerTonePass() {
 
     auto framebuffer = gm.CreateDrawPass(framebuffer_desc);
 
-    pass->AddDrawPass(framebuffer);
+    pass->AddDrawPass(framebuffer, PathTracerTonePassFunc);
 }
 
 static void PathTracerPassFunc(const DrawData&, const Framebuffer*) {
@@ -1165,9 +1150,8 @@ void RenderPassCreator::AddPathTracerPass() {
                                   GpuTexture*,
                                   int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
             } },
-        .execFunc = PathTracerPassFunc,
     });
-    render_pass->AddDrawPass(pass);
+    render_pass->AddDrawPass(pass, PathTracerPassFunc);
 }
 
 /// Create pre-defined passes
