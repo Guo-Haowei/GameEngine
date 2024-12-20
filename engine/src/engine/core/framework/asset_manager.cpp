@@ -54,6 +54,10 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".lua", TextAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".ttf", BufferAssetLoader::CreateLoader);
 
+    IAssetLoader::RegisterLoader(".h", BufferAssetLoader::CreateLoader);
+    IAssetLoader::RegisterLoader(".hlsl", BufferAssetLoader::CreateLoader);
+    IAssetLoader::RegisterLoader(".glsl", BufferAssetLoader::CreateLoader);
+
     IAssetLoader::RegisterLoader(".png", ImageAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".jpg", ImageAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".hdr", ImageAssetLoader::CreateLoaderF);
@@ -111,7 +115,6 @@ void AssetManager::FinalizeImpl() {
     RequestShutdown();
 
     m_assets.clear();
-    m_textCache.clear();
 }
 
 void AssetManager::EnqueueLoadTask(LoadTask& p_task) {
@@ -161,39 +164,6 @@ void AssetManager::Wait() {
 
 void AssetManager::RequestShutdown() {
     s_assetManagerGlob.wakeCondition.notify_all();
-}
-
-std::shared_ptr<IAsset> AssetManager::FindFile(const FilePath& p_path) {
-    auto found = m_textCache.find(p_path);
-    if (found != m_textCache.end()) {
-        return found->second;
-    }
-
-    return nullptr;
-}
-
-auto AssetManager::LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<IAsset>> {
-    auto found = m_textCache.find(p_path);
-    if (found != m_textCache.end()) {
-        return found->second;
-    }
-
-    auto res = FileAccess::Open(p_path, FileAccess::READ);
-    if (!res) {
-        return HBN_ERROR(res.error());
-    }
-
-    std::shared_ptr<FileAccess> file_access = *res;
-
-    const size_t size = file_access->GetLength();
-
-    std::vector<char> buffer;
-    buffer.resize(size);
-    file_access->ReadBuffer(buffer.data(), size);
-    auto text = std::make_shared<BufferAsset>();
-    text->buffer = std::move(buffer);
-    m_textCache[p_path] = text;
-    return text;
 }
 
 }  // namespace my

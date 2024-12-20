@@ -6,7 +6,7 @@
 
 #include <fstream>
 
-#include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/string/string_builder.h"
 
 #if USING(USE_D3D_DEBUG_NAME)
@@ -35,9 +35,9 @@ public:
     STDMETHOD(Open)
     (D3D_INCLUDE_TYPE, LPCSTR p_file, LPCVOID, LPCVOID* p_out_data, UINT* p_bytes) override {
         // @TODO: fix search
-        FilePath path = FilePath{ ROOT_FOLDER } / "engine/shader/" / p_file;
+        fs::path path = fs::path{ ROOT_FOLDER } / "engine/shader/" / p_file;
 
-        auto res = AssetManager::GetSingleton().LoadFileSync(path);
+        auto res = AssetRegistry::GetSingleton().RequestAssetSync(path.string());
         if (!res) {
             StringStreamBuilder builder;
             builder << res.error();
@@ -45,9 +45,9 @@ public:
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         }
 
-        auto source_binary = dynamic_cast<BufferAsset*>(res->get());
+        auto source_binary = dynamic_cast<const BufferAsset*>(*res);
         if (source_binary->buffer.empty()) {
-            LOG_ERROR("failed to read file '{}'", path.String());
+            LOG_ERROR("failed to read file '{}'", path.string());
         }
 
         *p_out_data = source_binary->buffer.data();

@@ -20,7 +20,6 @@ public:
     void FinalizeImpl() override;
 
     auto LoadFileSync(const FilePath& p_path) -> Result<std::shared_ptr<IAsset>>;
-    std::shared_ptr<IAsset> FindFile(const FilePath& p_path);
 
     static void WorkerMain();
     static void Wait();
@@ -34,9 +33,6 @@ private:
                         void* p_user_data);
 
     void EnqueueLoadTask(LoadTask& p_task);
-
-    // @TODO: delete
-    std::map<FilePath, std::shared_ptr<IAsset>> m_textCache;
 
     std::mutex m_assetLock;
     std::vector<std::unique_ptr<IAsset>> m_assets;
