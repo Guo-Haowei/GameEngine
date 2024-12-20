@@ -716,7 +716,9 @@ bool Scene::RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray) {
         const Vector3f& A = mesh->positions[mesh->indices[i]];
         const Vector3f& B = mesh->positions[mesh->indices[i + 1]];
         const Vector3f& C = mesh->positions[mesh->indices[i + 2]];
-        if (inversedRay.Intersects(A, B, C)) {
+#define CC(a) NewVector3f(a.x, a.y, a.z)
+        if (inversedRay.Intersects(CC(A), CC(B), CC(C))) {
+#undef CC
             p_ray.CopyDist(inversedRay);
             return true;
         }

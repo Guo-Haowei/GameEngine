@@ -264,10 +264,10 @@ MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
         mesh.indices.emplace_back(i + 3);
 
         // TODO: fix dummy uv
-        mesh.texcoords_0.push_back({ 0, 0 });
-        mesh.texcoords_0.push_back({ 0, 0 });
-        mesh.texcoords_0.push_back({ 0, 0 });
-        mesh.texcoords_0.push_back({ 0, 0 });
+        mesh.texcoords_0.push_back(Vector2f::Zero);
+        mesh.texcoords_0.push_back(Vector2f::Zero);
+        mesh.texcoords_0.push_back(Vector2f::Zero);
+        mesh.texcoords_0.push_back(Vector2f::Zero);
     }
 
     MeshComponent::MeshSubset subset;

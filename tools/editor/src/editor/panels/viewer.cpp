@@ -58,7 +58,9 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
             const Vector3f ray_start = p_camera.GetPosition();
             const Vector3f direction = glm::normalize(Vector3f(inversed_projection_view * Vector4f(clicked.x, -clicked.y, 1.0f, 1.0f)));
             const Vector3f ray_end = ray_start + direction * p_camera.GetFar();
-            Ray ray(ray_start, ray_end);
+#define CC(a) NewVector3f(a.x, a.y, a.z)
+            Ray ray(CC(ray_start), CC(ray_end));
+#undef CC
 
             const auto result = p_scene.Intersects(ray);
 

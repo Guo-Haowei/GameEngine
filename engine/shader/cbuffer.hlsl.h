@@ -32,6 +32,7 @@ struct sampler_t {
         Vector2i handle_d3d;
         uint64_t handle_gl;
     };
+    sampler_t() { handle_gl = 0; }
 
     void Set32(int p_value) { handle_d3d.x = handle_d3d.y = p_value; }
     void Set64(uint64_t p_value) { handle_gl = p_value; }

@@ -11,19 +11,21 @@ WARNING_DISABLE(4201, "-Wunused-parameter")
 #include <glm/gtx/vector_angle.hpp>
 WARNING_POP()
 
+#include "vector_math.h"
+
 namespace my {
 
-using Vector2f = glm::vec2;
+using Vector2f = Vector<float, 2>;
 using Vector3f = glm::vec3;
 using Vector4f = glm::vec4;
 
-using Vector2i = glm::ivec2;
-using Vector3i = glm::ivec3;
-using Vector4i = glm::ivec4;
+using Vector2i = Vector<int32_t, 2>;
+using Vector3i = Vector<int32_t, 3>;
+using Vector4i = Vector<int32_t, 4>;
 
-using Vector2u = glm::uvec2;
-using Vector3u = glm::uvec3;
-using Vector4u = glm::uvec4;
+using Vector2u = Vector<uint32_t, 2>;
+using Vector3u = Vector<uint32_t, 3>;
+using Vector4u = Vector<uint32_t, 4>;
 
 using Matrix3x3f = glm::mat3;
 using Matrix4x4f = glm::mat4;
