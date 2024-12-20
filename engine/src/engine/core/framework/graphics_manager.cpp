@@ -631,7 +631,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
             break;
         case RenderGraphName::EXPERIMENTAL:
         case RenderGraphName::DEFAULT:
-            texture = FindTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::PATHTRACER:
             texture = FindTexture(RESOURCE_PATH_TRACER).get();

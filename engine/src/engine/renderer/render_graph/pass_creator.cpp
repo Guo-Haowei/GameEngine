@@ -845,16 +845,21 @@ void RenderPassCreator::AddTonePass() {
 }
 
 void RenderPassCreator::AddDebugImagePass() {
-    GraphicsManager& manager = GraphicsManager::GetSingleton();
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
 
-    auto final_attachment = manager.FindTexture(RESOURCE_TONE);
+    const int width = m_config.frameWidth;
+    const int height = m_config.frameHeight;
+    auto final_attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
+                                                                     RESOURCE_FORMAT_TONE,
+                                                                     AttachmentType::COLOR_2D,
+                                                                     width, height),
+                                             PointClampSampler());
 
-    // final pass
     RenderPassDesc desc;
     desc.name = RenderPassName::FINAL;
     desc.dependencies = { RenderPassName::TONE };
     auto pass = m_graph.CreatePass(desc);
-    auto draw_pass = manager.CreateDrawPass(DrawPassDesc{
+    auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { final_attachment },
         .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
             OPTICK_EVENT();
@@ -864,14 +869,15 @@ void RenderPassCreator::AddDebugImagePass() {
             const uint32_t width = p_draw_pass->desc.colorAttachments[0]->desc.width;
             const uint32_t height = p_draw_pass->desc.colorAttachments[0]->desc.height;
 
-            gm.SetRenderTarget(p_draw_pass);
             gm.SetViewport(Viewport(width, height));
+            gm.SetRenderTarget(p_draw_pass);
+            gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
             gm.SetPipelineState(PSO_RW_TEXTURE_2D);
 
-            for (int i = 0; i < (int)p_data.drawImageContext.size(); ++i) {
-                const auto& data = p_data.drawImageContext[i];
-                gm.BindTexture(Dimension::TEXTURE_2D, data.handle, GetBaseColorMapSlot());
-                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+            uint32_t offset = p_data.drawImageOffset;
+            for (const auto& draw_context : p_data.drawImageContext) {
+                gm.BindTexture(Dimension::TEXTURE_2D, draw_context.handle, GetBaseColorMapSlot());
+                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), offset++);
                 gm.DrawQuad();
                 gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
             }

@@ -271,17 +271,15 @@ void EditorLayer::OnUpdate(float) {
 
     // request images
     auto graphics_manager = m_app->GetGraphicsManager();
-    //auto resolution = DVAR_GET_IVEC2(resolution);
-    //{
-    //    auto image = graphics_manager->FindTexture(RESOURCE_TONE);
-    //    if (uint64_t handle = image ? image->GetHandle() : 0; handle) {
-    //        renderer::AddImage2D(handle, NewVector2f(resolution));
-    //    }
-    //}
+    auto resolution = DVAR_GET_IVEC2(resolution);
+    {
+        if (auto image = graphics_manager->FindTexture(RESOURCE_TONE); image) {
+            renderer::AddImage2D(image.get(), NewVector2f(resolution));
+        }
+    }
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
-        auto image = graphics_manager->FindTexture(RESOURCE_SHADOW_MAP);
-        if (uint64_t handle = image ? image->GetHandle() : 0; handle) {
-            renderer::AddImage2D(handle, NewVector2f(300), NewVector2f(1000), DISPLAY_CHANNEL_RRR);
+        if (auto image = graphics_manager->FindTexture(RESOURCE_SHADOW_MAP); image) {
+            renderer::AddImage2D(image.get(), NewVector2f(300), NewVector2f(1000), DISPLAY_CHANNEL_RRR);
         }
     }
 }

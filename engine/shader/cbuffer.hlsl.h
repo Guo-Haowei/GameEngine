@@ -81,19 +81,16 @@ struct ForceField {
 CBUFFER(PerBatchConstantBuffer, 0) {
     Matrix4x4f c_worldMatrix;
 
+    // reuse per batch buffer for bloom
+    sampler2D c_BloomInputTextureResidentHandle;
+    sampler2D c_BloomOutputImageResidentHandle;
+
     Vector2f _per_batch_padding_0;
     float c_envPassRoughness;  // for environment map
     int c_hasAnimation;
 
-    Vector2f c_debugDrawPos;
-    Vector2f c_debugDrawSize;
-
-    Vector3f _per_batch_padding_2;
-    int c_displayChannel;
-
-    // reuse per batch buffer for bloom
-    sampler2D c_BloomInputTextureResidentHandle;
-    sampler2D c_BloomOutputImageResidentHandle;
+    Vector4f _per_batch_padding_1;
+    Vector4f _per_batch_padding_2;
 
     Matrix4x4f c_cubeProjectionViewMatrix;
     Matrix4x4f _per_batch_padding_5;
@@ -108,6 +105,7 @@ CBUFFER(PerPassConstantBuffer, 1) {
 };
 
 CBUFFER(MaterialConstantBuffer, 2) {
+    // 256
     Vector4f c_baseColor;
 
     float c_metallic;
@@ -120,6 +118,17 @@ CBUFFER(MaterialConstantBuffer, 2) {
     int c_hasNormalMap;
     int c_hasHeightMap;
 
+    Vector2f c_debugDrawPos;
+    Vector2f c_debugDrawSize;
+
+    // 256
+    Vector3f _material_padding_0;
+    int c_displayChannel;
+    Vector4f _material_padding_1;
+    Vector4f _material_padding_2;
+    Vector4f _material_padding_3;
+
+    // 256
     TextureHandle c_baseColorMapHandle;
     TextureHandle c_normalMapHandle;
     TextureHandle c_materialMapHandle;
@@ -130,9 +139,8 @@ CBUFFER(MaterialConstantBuffer, 2) {
     sampler2D c_MaterialMapResidentHandle;
     sampler2D c_HeightMapResidentHandle;
 
-    Vector4f _material_padding_1;
-    Matrix4x4f _material_padding_2;
-    Matrix4x4f _material_padding_3;
+    // 256
+    Matrix4x4f _material_padding_4;
 };
 
 // @TODO: change to unordered access buffer

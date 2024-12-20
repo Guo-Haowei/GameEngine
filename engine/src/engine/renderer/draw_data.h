@@ -128,6 +128,7 @@ struct DrawData {
     } drawDebugContext;
 
     std::vector<ImageDrawContext> drawImageContext;
+    uint32_t drawImageOffset;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

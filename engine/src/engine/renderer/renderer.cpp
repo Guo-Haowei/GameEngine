@@ -50,23 +50,26 @@ static void PrepareDebugDraws() {
 }
 
 static void PrepareImageDraws() {
-    auto& buffer = s_glob.renderData->batchCache.buffer;
+    auto& buffer = s_glob.renderData->materialCache.buffer;
     auto& context = s_glob.renderData->drawImageContext;
-    const int size = (int)context.size();
-    if (buffer.size() < size) {
-        buffer.resize(size);
-    }
+    const uint32_t old_size = (uint32_t)buffer.size();
+    const uint32_t extra_size = (uint32_t)context.size();
+    s_glob.renderData->drawImageOffset = old_size;
+    buffer.resize(old_size + extra_size);
 
     const auto resolution = DVAR_GET_IVEC2(resolution);
-    for (int i = 0; i < size; ++i) {
-        auto half_ndc = context[i].size / NewVector2f(resolution);
+    for (uint32_t index = 0; index < extra_size; ++index) {
+        auto& draw = context[index];
+        auto& mat = buffer[old_size + index];
+        auto half_ndc = draw.size / NewVector2f(resolution);
         auto pos = 1.0f - half_ndc;
 
-        buffer[i].c_debugDrawPos.x = pos.x;
-        buffer[i].c_debugDrawPos.y = pos.y;
-        buffer[i].c_debugDrawSize.x = half_ndc.x;
-        buffer[i].c_debugDrawSize.y = half_ndc.y;
-        buffer[i].c_displayChannel = context[i].mode;
+        mat.c_debugDrawPos.x = pos.x;
+        mat.c_debugDrawPos.y = pos.y;
+        mat.c_debugDrawSize.x = half_ndc.x;
+        mat.c_debugDrawSize.y = half_ndc.y;
+        mat.c_displayChannel = draw.mode;
+        mat.c_BaseColorMapResidentHandle.Set32(static_cast<uint32_t>(draw.handle));
     }
 }
 
@@ -121,19 +124,24 @@ void AddDebugCube(const AABB& p_aabb,
     }
 }
 
-void AddImage2D(uint64_t p_handle,
+void AddImage2D(GpuTexture* p_texture,
                 const NewVector2f& p_size,
                 const NewVector2f& p_position,
                 int p_mode) {
     ASSERT_CAN_RECORD();
 
-    ImageDrawContext context = {
-        .mode = p_mode,
-        .handle = p_handle,
-        .size = p_size,
-        .position = p_position,
-    };
-    s_glob.renderData->drawImageContext.emplace_back(context);
+    if (DEV_VERIFY(p_texture)) {
+        ImageDrawContext context = {
+            .mode = p_mode,
+            .handle = p_texture->GetHandle(),
+            .size = p_size,
+            .position = p_position,
+        };
+        if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+            context.handle = p_texture->GetResidentHandle();
+        }
+        s_glob.renderData->drawImageContext.emplace_back(context);
+    }
 }
 
 PointShadowHandle AllocatePointLightShadowMap() {
