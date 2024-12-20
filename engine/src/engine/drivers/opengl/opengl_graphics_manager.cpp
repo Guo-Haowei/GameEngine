@@ -785,6 +785,8 @@ static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, 
         case GL_DEBUG_SEVERITY_MEDIUM:
             level = LOG_LEVEL_WARN;
             break;
+        case GL_DEBUG_SEVERITY_LOW:
+            return;
         default:
             break;
     }

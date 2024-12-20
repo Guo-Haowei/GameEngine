@@ -95,6 +95,14 @@ void Application::RegisterModule(Module* p_module) {
     m_modules.push_back(p_module);
 }
 
+Result<ImguiManager*> Application::CreateImguiManager() {
+    return new ImguiManager();
+}
+
+Result<GraphicsManager*> Application::CreateGraphicsManager() {
+    return GraphicsManager::Create();
+}
+
 auto Application::SetupModules() -> Result<void> {
     // @TODO: configure so it's easier for user to override
     m_assetManager = new AssetManager();
@@ -104,7 +112,7 @@ auto Application::SetupModules() -> Result<void> {
     m_physicsManager = new PhysicsManager();
     m_displayServer = DisplayManager::Create();
     {
-        auto res = GraphicsManager::Create();
+        auto res = CreateGraphicsManager();
         if (!res) {
             return HBN_ERROR(res.error());
         }
@@ -122,7 +130,11 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_inputManager);
 
     if (m_specification.enableImgui) {
-        m_imguiManager = new ImguiManager;
+        auto res = CreateImguiManager();
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        m_imguiManager = *res;
         RegisterModule(m_imguiManager);
     }
 
@@ -131,16 +143,21 @@ auto Application::SetupModules() -> Result<void> {
     return Result<void>();
 }
 
+// @TODO: refactor this
 extern void RegisterClasses();
+
+void Application::RegisterDvars() {
+    RegisterCommonDvars();
+    renderer::RegisterDvars();
+}
 
 auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
     // @TODO: fix
     RegisterClasses();
 
     SaveCommandLine(p_argc, p_argv);
-    RegisterCommonDvars();
-    // @TODO: refactor this part
-    renderer::RegisterDvars();
+
+    RegisterDvars();
     DynamicVariableManager::Deserialize(DVAR_CACHE_FILE);
     // parse happens after deserialization, so command line will override cache
     DynamicVariableManager::Parse(m_commandLine);

@@ -53,8 +53,6 @@ public:
     void Finalize();
     void Run();
 
-    virtual void InitLayers() {}
-
     void AttachLayer(Layer* p_layer);
     void DetachLayer(Layer* p_layer);
     void AttachGameLayer();
@@ -88,6 +86,12 @@ public:
 
 protected:
     [[nodiscard]] auto SetupModules() -> Result<void>;
+
+    virtual void RegisterDvars();
+    virtual void InitLayers() {}
+    // @TODO: add CreateXXXManager for all managers
+    virtual Result<ImguiManager*> CreateImguiManager();
+    virtual Result<GraphicsManager*> CreateGraphicsManager();
 
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
