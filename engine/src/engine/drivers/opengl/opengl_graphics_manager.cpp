@@ -693,13 +693,12 @@ void OpenGlGraphicsManager::Render() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // @TODO: refactor this
-    if (m_app->IsRuntime()) {
-        const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+    const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+    if (m_app->IsRuntime())
         renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
                                                      width,
                                                      height,
                                                      *this);
-    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

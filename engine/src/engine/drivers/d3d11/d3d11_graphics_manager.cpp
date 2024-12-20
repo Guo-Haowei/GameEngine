@@ -68,13 +68,12 @@ void D3d11GraphicsManager::Render() {
     m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
 
     // @TODO: refactor this
-    if (m_app->IsRuntime()) {
-        const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+    const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+    if (m_app->IsRuntime())
         renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
                                                      width,
                                                      height,
                                                      *this);
-    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

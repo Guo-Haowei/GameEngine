@@ -13,28 +13,29 @@ namespace my::renderer {
 struct DrawData;
 class RenderGraph;
 
+struct PassCreatorConfig {
+    bool enableShadow = true;
+    bool enablePointShadow = true;
+    bool enableVxgi = true;
+    bool enableIbl = true;
+    bool enableBloom = true;
+    bool enableHighlight = true;
+
+    bool is_runtime;
+    int frameWidth;
+    int frameHeight;
+};
+
 class RenderPassCreator {
 public:
-    struct Config {
-        bool enableShadow = true;
-        bool enablePointShadow = true;
-        bool enableVxgi = true;
-        bool enableIbl = true;
-        bool enableBloom = true;
-        bool enableHighlight = true;
-
-        int frameWidth;
-        int frameHeight;
-    };
-
-    RenderPassCreator(const Config& p_config, RenderGraph& p_graph)
+    RenderPassCreator(const PassCreatorConfig& p_config, RenderGraph& p_graph)
         : m_config(p_config),
           m_graph(p_graph) {}
 
-    static std::unique_ptr<RenderGraph> CreateDummy();
-    static std::unique_ptr<RenderGraph> CreateDefault();
-    static std::unique_ptr<RenderGraph> CreateExperimental();
-    static std::unique_ptr<RenderGraph> CreatePathTracer();
+    static std::unique_ptr<RenderGraph> CreateDummy(PassCreatorConfig& p_config);
+    static std::unique_ptr<RenderGraph> CreateDefault(PassCreatorConfig& p_config);
+    static std::unique_ptr<RenderGraph> CreateExperimental(PassCreatorConfig& p_config);
+    static std::unique_ptr<RenderGraph> CreatePathTracer(PassCreatorConfig& p_config);
 
     static void DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager);
 
@@ -59,7 +60,7 @@ private:
                                                   uint32_t p_height,
                                                   uint32_t p_array_size = 1);
 
-    Config m_config;
+    PassCreatorConfig m_config;
     RenderGraph& m_graph;
 };
 

@@ -220,12 +220,11 @@ void D3d12GraphicsManager::Render() {
     cmd_list->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // @TODO: refactor this
-    if (m_app->IsRuntime()) {
+    if (m_app->IsRuntime())
         renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
                                                      width,
                                                      height,
                                                      *this);
-    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd_list);

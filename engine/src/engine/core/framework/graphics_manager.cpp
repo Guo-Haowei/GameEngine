@@ -497,15 +497,21 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         m_activeRenderGraphName = RenderGraphName::DEFAULT;
     }
 
+    const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    renderer::PassCreatorConfig config;
+    config.frameWidth = frame_size.x;
+    config.frameHeight = frame_size.y;
+    config.is_runtime = m_app->IsRuntime();
+
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy();
+            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy(config);
             break;
         case RenderGraphName::EXPERIMENTAL:
-            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = renderer::RenderPassCreator::CreateExperimental();
+            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = renderer::RenderPassCreator::CreateExperimental(config);
             break;
         case RenderGraphName::DEFAULT:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault();
+            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault(config);
             break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
@@ -515,7 +521,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     switch (m_backend) {
         case Backend::OPENGL:
         case Backend::D3D11:
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderPassCreator::CreatePathTracer();
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderPassCreator::CreatePathTracer(config);
             break;
         default:
             break;

@@ -747,6 +747,30 @@ void RenderPassCreator::AddBloomPass() {
     }
 }
 
+static void DebugVoxels(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    OPTICK_EVENT();
+
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    gm.SetRenderTarget(p_framebuffer);
+    auto depth_buffer = p_framebuffer->desc.depthAttachment;
+    const auto [width, height] = p_framebuffer->GetBufferSize();
+
+    // glEnable(GL_BLEND);
+    gm.SetViewport(Viewport(width, height));
+    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT);
+
+    GraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
+
+    const PassContext& pass = p_data.mainPass;
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
+
+    gm.SetMesh(gm.m_boxBuffers.get());
+    const uint32_t size = DVAR_GET_INT(gfx_voxel_size);
+    gm.DrawElementsInstanced(size * size * size, gm.m_boxBuffers->desc.drawCount);
+
+    // glDisable(GL_BLEND);
+}
+
 /// Tone
 /// Change to post processing?
 static void TonePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
@@ -763,8 +787,7 @@ static void TonePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffe
     // @HACK:
     if (DVAR_GET_BOOL(gfx_debug_vxgi) && gm.GetBackend() == Backend::OPENGL) {
         // @TODO: remove
-        extern void debug_vxgi_pass_func(const DrawData&, const Framebuffer* p_framebuffer);
-        debug_vxgi_pass_func(p_data, p_framebuffer);
+        DebugVoxels(p_data, p_framebuffer);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
             std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
@@ -843,6 +866,10 @@ void RenderPassCreator::DrawDebugImages(const DrawData& p_data, int p_width, int
 }
 
 void RenderPassCreator::AddDebugImagePass() {
+    if (m_config.is_runtime) {
+        return;
+    }
+
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     const int width = m_config.frameWidth;
@@ -1142,20 +1169,13 @@ void RenderPassCreator::AddPathTracerPass() {
 }
 
 /// Create pre-defined passes
-std::unique_ptr<RenderGraph> RenderPassCreator::CreateDummy() {
-    const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
-    const int w = frame_size.x;
-    const int h = frame_size.y;
-
-    RenderPassCreator::Config config;
-    config.frameWidth = w;
-    config.frameHeight = h;
-    config.enableBloom = false;
-    config.enableIbl = false;
-    config.enableVxgi = false;
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateDummy(PassCreatorConfig& p_config) {
+    p_config.enableBloom = false;
+    p_config.enableIbl = false;
+    p_config.enableVxgi = false;
 
     auto graph = std::make_unique<RenderGraph>();
-    RenderPassCreator creator(config, *graph.get());
+    RenderPassCreator creator(p_config, *graph.get());
 
     creator.AddGbufferPass();
 
@@ -1163,21 +1183,14 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateDummy() {
     return graph;
 }
 
-std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer() {
-    const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
-    const int w = frame_size.x;
-    const int h = frame_size.y;
-
-    RenderPassCreator::Config config;
-    config.frameWidth = w;
-    config.frameHeight = h;
-    config.enableBloom = false;
-    config.enableIbl = false;
-    config.enableVxgi = false;
-    config.enableHighlight = false;
+std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer(PassCreatorConfig& p_config) {
+    p_config.enableBloom = false;
+    p_config.enableIbl = false;
+    p_config.enableVxgi = false;
+    p_config.enableHighlight = false;
 
     auto graph = std::make_unique<RenderGraph>();
-    RenderPassCreator creator(config, *graph.get());
+    RenderPassCreator creator(p_config, *graph.get());
 
     creator.AddPathTracerPass();
     creator.AddPathTracerTonePass();
@@ -1186,20 +1199,13 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer() {
     return graph;
 }
 
-std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault() {
-    const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
-    const int w = frame_size.x;
-    const int h = frame_size.y;
-
-    RenderPassCreator::Config config;
-    config.frameWidth = w;
-    config.frameHeight = h;
-    config.enableBloom = true;
-    config.enableIbl = false;
-    config.enableVxgi = false;
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault(PassCreatorConfig& p_config) {
+    p_config.enableBloom = true;
+    p_config.enableIbl = false;
+    p_config.enableVxgi = false;
 
     auto graph = std::make_unique<RenderGraph>();
-    RenderPassCreator creator(config, *graph.get());
+    RenderPassCreator creator(p_config, *graph.get());
 
     creator.AddGenerateSkylightPass();
     creator.AddShadowPass();
@@ -1274,5 +1280,26 @@ GpuTextureDesc RenderPassCreator::BuildDefaultTextureDesc(RenderTargetResourceNa
     }
     return desc;
 };
+
+std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental(PassCreatorConfig& p_config) {
+    // @TODO: early-z
+    auto graph = std::make_unique<RenderGraph>();
+    RenderPassCreator creator(p_config, *graph.get());
+
+    creator.AddGenerateSkylightPass();
+    creator.AddShadowPass();
+    creator.AddGbufferPass();
+    creator.AddHighlightPass();
+    creator.AddVoxelizationPass();
+    creator.AddLightingPass();
+    creator.AddEmitterPass();
+    creator.AddBloomPass();
+    creator.AddTonePass();
+    creator.AddDebugImagePass();
+
+    // @TODO: allow recompile
+    graph->Compile();
+    return graph;
+}
 
 }  // namespace my::renderer

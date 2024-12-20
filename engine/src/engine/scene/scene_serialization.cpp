@@ -701,9 +701,11 @@ void ClothComponent::RegisterClass() {
 }
 
 void EnvironmentComponent::Serialize(Archive& p_archive, uint32_t) {
-    unused(p_archive);
-    CRASH_NOW();
+    p_archive.ArchiveValue(sky.type);
+    p_archive.ArchiveValue(sky.texturePath);
+    p_archive.ArchiveValue(ambient.color);
 }
+
 void EnvironmentComponent::Sky::RegisterClass() {
     BEGIN_REGISTRY(EnvironmentComponent::Sky);
     REGISTER_FIELD(EnvironmentComponent::Sky, "type", type);
