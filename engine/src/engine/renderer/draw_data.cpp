@@ -397,6 +397,42 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
         return;
     }
+
+    AABB voxel_gi_bound;
+    for (auto [entity, voxel_gi] : p_config.scene.m_VoxelGiComponents) {
+        if (voxel_gi.Enabled()) {
+            voxel_gi_bound = voxel_gi.region;
+
+            if (voxel_gi.ShowDebugBox() && voxel_gi_bound.IsValid()) {
+                renderer::AddDebugCube(voxel_gi.region, Color(0.5f, 0.3f, 0.6f, 0.5f));
+            }
+            break;
+        }
+    }
+
+    if (!voxel_gi_bound.IsValid()) {
+        return;
+    }
+
+    // @TODO: refactor the following
+    const int voxel_texture_size = DVAR_GET_INT(gfx_voxel_size);
+    DEV_ASSERT(math::IsPowerOfTwo(voxel_texture_size));
+    DEV_ASSERT(voxel_texture_size <= 256);
+
+    const auto voxel_world_center = voxel_gi_bound.Center();
+    auto voxel_world_size = voxel_gi_bound.Size().x;
+    const float max_world_size = DVAR_GET_FLOAT(gfx_vxgi_max_world_size);
+    voxel_world_size = glm::min(voxel_world_size, max_world_size);
+
+    const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
+    const float voxel_size = voxel_world_size * texel_size;
+
+    auto& cache = p_out_data.perFrameCache;
+    cache.c_voxelWorldCenter = voxel_world_center;
+    cache.c_voxelWorldSizeHalf = 0.5f * voxel_world_size;
+    cache.c_texelSize = texel_size;
+    cache.c_voxelSize = voxel_size;
+
     FillPass(
         p_config,
         p_out_data.voxelPass,

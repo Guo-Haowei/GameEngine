@@ -580,6 +580,9 @@ struct VoxelGiComponent {
     // Non-serialized
     AABB region;
 
+    bool Enabled() const { return flags & ENABLED; }
+    bool ShowDebugBox() const { return flags & SHOW_DEBUG_BOX; }
+
     void Serialize(Archive& p_archive, uint32_t p_version);
     void OnDeserialized() {}
 

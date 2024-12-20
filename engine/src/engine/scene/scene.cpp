@@ -77,10 +77,6 @@ void Scene::Update(float p_time_step) {
             Vector3f scale = transform->GetScale();
             const float size = glm::max(scale.x, glm::max(scale.y, scale.z));
             voxel_gi.region = AABB::FromCenterSize(center, Vector3f(size));
-
-            if (voxel_gi.flags & VoxelGiComponent::SHOW_DEBUG_BOX) {
-                renderer::AddDebugCube(voxel_gi.region, Color(0.5f, 0.3f, 0.6f, 0.5f));
-            }
         }
     }
 }

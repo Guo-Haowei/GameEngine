@@ -214,14 +214,8 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("VoxelGi", voxel_gi_component, [](VoxelGiComponent& p_voxel_gi) {
-        auto DrawCheckBoxBitflag = [](const char* p_title, uint32_t p_bit, uint32_t& p_flag) {
-            bool enabled = (p_flag & p_bit);
-            if (ImGui::Checkbox(p_title, &enabled)) {
-                enabled ? (p_flag |= p_bit) : (p_flag &= ~p_bit);
-            }
-        };
-        DrawCheckBoxBitflag("enabled", VoxelGiComponent::ENABLED, p_voxel_gi.flags);
-        DrawCheckBoxBitflag("show_debug_box", VoxelGiComponent::SHOW_DEBUG_BOX, p_voxel_gi.flags);
+        DrawCheckBoxBitflag("enabled", p_voxel_gi.flags, VoxelGiComponent::ENABLED);
+        DrawCheckBoxBitflag("show_debug_box", p_voxel_gi.flags, VoxelGiComponent::SHOW_DEBUG_BOX);
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& p_rigid_body) {
