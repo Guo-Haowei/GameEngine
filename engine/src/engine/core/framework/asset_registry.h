@@ -48,6 +48,7 @@ public:
 
     void RegisterAssets(int p_count, IAsset::Meta* p_metas);
 
+    // @TODO: request certain type, if no such type, use default loader
     auto RequestAssetSync(const std::string& p_path) {
         return RequestAssetImpl(p_path, LOAD_SYNC, nullptr, nullptr);
     }

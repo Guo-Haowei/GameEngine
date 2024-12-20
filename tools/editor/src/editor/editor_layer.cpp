@@ -10,11 +10,15 @@
 #include "editor/panels/viewer.h"
 #include "engine/assets/asset.h"
 #include "engine/core/framework/asset_registry.h"
+#include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/layer.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/string/string_utils.h"
+
+////
+#include "engine/renderer/graphics_dvars.h"
 
 namespace my {
 
@@ -263,6 +267,20 @@ void EditorLayer::OnUpdate(float) {
         default:
             CRASH_NOW();
             break;
+    }
+
+    // request images
+    auto graphics_manager = m_app->GetGraphicsManager();
+    auto resolution = DVAR_GET_IVEC2(resolution);
+    {
+        if (auto image = graphics_manager->FindTexture(RESOURCE_TONE); image) {
+            renderer::AddImage2D(image.get(), NewVector2f(resolution));
+        }
+    }
+    if (DVAR_GET_BOOL(gfx_debug_shadow)) {
+        if (auto image = graphics_manager->FindTexture(RESOURCE_SHADOW_MAP); image) {
+            renderer::AddImage2D(image.get(), NewVector2f(300), NewVector2f(1000), DISPLAY_CHANNEL_RRR);
+        }
     }
 }
 

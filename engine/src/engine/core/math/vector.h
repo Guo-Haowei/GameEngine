@@ -134,6 +134,12 @@ struct Vector<T, 2> : VectorBase<T, 2> {
                                               y(static_cast<T>(p_y)) {
     }
 
+    template<Arithmetic U>
+        requires(!std::is_same<T, U>::value)
+    explicit Vector(const Vector<U, 2>& p_rhs) : x(static_cast<T>(p_rhs.x)),
+                                                 y(static_cast<T>(p_rhs.y)) {
+    }
+
     template<int N, int A, int B>
     constexpr Vector(const Swizzle2<T, N, A, B, -1, -1>& p_swizzle) : x(p_swizzle.d[A]),
                                                                       y(p_swizzle.d[B]) {
@@ -175,11 +181,18 @@ struct Vector<T, 3> : VectorBase<T, 3> {
                                                      z(p_z) {
     }
 
-    template<typename U>
-        requires Arithmetic<U> && (!std::is_same<T, U>::value)
+    template<Arithmetic U>
+        requires(!std::is_same<T, U>::value)
     explicit constexpr Vector(U p_x, U p_y, U p_z) : x(static_cast<T>(p_x)),
                                                      y(static_cast<T>(p_y)),
                                                      z(static_cast<T>(p_z)) {
+    }
+
+    template<Arithmetic U>
+        requires(!std::is_same<T, U>::value)
+    explicit Vector(const Vector<U, 3>& p_rhs) : x(static_cast<T>(p_rhs.x)),
+                                                 y(static_cast<T>(p_rhs.y)),
+                                                 z(static_cast<T>(p_rhs.z)) {
     }
 
     explicit constexpr Vector(const Vector<T, 2>& p_vec, T p_z) : x(p_vec.x),
@@ -234,6 +247,14 @@ struct Vector<T, 4> : VectorBase<T, 4> {
                                                             y(static_cast<T>(p_y)),
                                                             z(static_cast<T>(p_z)),
                                                             w(static_cast<T>(p_w)) {
+    }
+
+    template<Arithmetic U>
+        requires(!std::is_same<T, U>::value)
+    explicit Vector(const Vector<U, 4>& p_rhs) : x(static_cast<T>(p_rhs.x)),
+                                                 y(static_cast<T>(p_rhs.y)),
+                                                 z(static_cast<T>(p_rhs.z)),
+                                                 w(static_cast<T>(p_rhs.w)) {
     }
 
     explicit constexpr Vector(const Vector<T, 3>& p_vec, T p_w) : x(p_vec.x),

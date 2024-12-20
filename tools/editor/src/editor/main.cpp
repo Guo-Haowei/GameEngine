@@ -17,12 +17,12 @@ enum {
     CREATE_PHYSICS_SCENE = 2,
     CREATE_PBR_SCENE = 3,
 
-    DEFAULT_SCENE = 0,
+    DEFAULT_SCENE = 1,
 };
 
 class Editor : public Application {
 public:
-    using Application::Application;
+    Editor(const ApplicationSpec& p_spec) : Application(p_spec, Application::Type::EDITOR) {}
 
     void InitLayers() override {
         m_editorLayer = std::make_unique<EditorLayer>();

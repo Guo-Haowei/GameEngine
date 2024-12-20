@@ -27,6 +27,7 @@ enum CommandType : uint8_t {
 #define ENTITY_TYPE_LIST                                   \
     ENTITY_TYPE(INFINITE_LIGHT,		InfiniteLight,  false) \
     ENTITY_TYPE(POINT_LIGHT,		PointLight,     false) \
+    ENTITY_TYPE(ENVIRONMENT,        Environment,    false) \
     ENTITY_TYPE(AREA_LIGHT,			AreaLight,      true ) \
     ENTITY_TYPE(TRANSFORM,			Transform,      false) \
     ENTITY_TYPE(PLANE,				Plane,          false) \

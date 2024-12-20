@@ -18,8 +18,9 @@
 // @NOTE: include GLFW after opengl
 #include <GLFW/glfw3.h>
 
-// @TODO: remove
+// @TODO: remove the following
 #include "engine/renderer/ltc_matrix.h"
+#include "engine/renderer/render_graph/pass_creator.h"
 
 // @TODO: refactor
 using namespace my;
@@ -194,10 +195,7 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->programId);
 }
 
-void OpenGlGraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
-    unused(p_draw_pass);
-    unused(p_index);
-
+void OpenGlGraphicsManager::Clear(const Framebuffer*, ClearFlags p_flags, const float* p_clear_color, int) {
     if (p_flags == CLEAR_NONE) {
         return;
     }
@@ -525,14 +523,14 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTextureImpl(const GpuTe
     return texture;
 }
 
-std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDesc& p_desc) {
-    auto draw_pass = std::make_shared<OpenGlDrawPass>(p_desc);
+std::shared_ptr<Framebuffer> OpenGlGraphicsManager::CreateFramebuffer(const FramebufferDesc& p_desc) {
+    auto framebuffer = std::make_shared<OpenGlFramebuffer>(p_desc);
     GLuint fbo_handle = 0;
 
     const int num_depth_attachment = p_desc.depthAttachment != nullptr;
     const int num_color_attachment = (int)p_desc.colorAttachments.size();
     if (!num_depth_attachment && !num_color_attachment) {
-        return draw_pass;
+        return framebuffer;
     }
 
     glGenFramebuffers(1, &fbo_handle);
@@ -602,8 +600,8 @@ std::shared_ptr<DrawPass> OpenGlGraphicsManager::CreateDrawPass(const DrawPassDe
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    draw_pass->handle = fbo_handle;
-    return draw_pass;
+    framebuffer->handle = fbo_handle;
+    return framebuffer;
 }
 
 void OpenGlGraphicsManager::SetStencilRef(uint32_t p_ref) {
@@ -637,15 +635,21 @@ void OpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* 
     glBlendFunc(src_blend, dest_blend);
 }
 
-void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
-    auto draw_pass = reinterpret_cast<const OpenGlDrawPass*>(p_draw_pass);
-    DEV_ASSERT(draw_pass);
+void OpenGlGraphicsManager::SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) {
+    DEV_ASSERT(p_framebuffer);
+    if (p_framebuffer->desc.type == FramebufferDesc::SCREEN) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        return;
+    }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, draw_pass->handle);
+    auto framebuffer = reinterpret_cast<const OpenGlFramebuffer*>(p_framebuffer);
+    DEV_ASSERT(framebuffer);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer->handle);
 
     // @TODO: bind cube map/texture 2d array
-    if (!draw_pass->desc.colorAttachments.empty()) {
-        const auto resource = draw_pass->desc.colorAttachments[0];
+    if (!framebuffer->desc.colorAttachments.empty()) {
+        const auto resource = framebuffer->desc.colorAttachments[0];
         if (resource->desc.type == AttachmentType::COLOR_CUBE) {
             glFramebufferTexture2D(GL_FRAMEBUFFER,
                                    GL_COLOR_ATTACHMENT0,
@@ -655,7 +659,7 @@ void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_i
         }
     }
 
-    if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+    if (const auto depth_attachment = framebuffer->desc.depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
             glFramebufferTextureLayer(GL_FRAMEBUFFER,
                                       GL_DEPTH_ATTACHMENT,
@@ -686,6 +690,16 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 
 void OpenGlGraphicsManager::Render() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // @TODO: refactor this
+    const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+    if (m_app->IsRuntime())
+        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
+                                                     width,
+                                                     height,
+                                                     *this);
+
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }

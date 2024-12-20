@@ -39,16 +39,16 @@ public:
     void RegisterVector3i(std::string_view p_key, int p_x, int p_y, int p_z);
     void RegisterVector4i(std::string_view p_key, int p_x, int p_y, int p_z, int p_w);
 
-    int AsInt() const;
-    float AsFloat() const;
-    const std::string& AsString() const;
-    NewVector2f AsVector2f() const;
-    NewVector3f AsVector3f() const;
-    NewVector4f AsVector4f() const;
-    NewVector2i AsVector2i() const;
-    NewVector3i AsVector3i() const;
-    NewVector4i AsVector4i() const;
-    void* AsPointer();
+    [[nodiscard]] int AsInt() const;
+    [[nodiscard]] float AsFloat() const;
+    [[nodiscard]] const std::string& AsString() const;
+    [[nodiscard]] NewVector2f AsVector2f() const;
+    [[nodiscard]] NewVector3f AsVector3f() const;
+    [[nodiscard]] NewVector4f AsVector4f() const;
+    [[nodiscard]] NewVector2i AsVector2i() const;
+    [[nodiscard]] NewVector3i AsVector3i() const;
+    [[nodiscard]] NewVector4i AsVector4i() const;
+    [[nodiscard]] void* AsPointer();
 
     bool SetInt(int p_value);
     bool SetFloat(float p_value);

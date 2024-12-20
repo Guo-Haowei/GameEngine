@@ -1,6 +1,6 @@
 #include "opengl_pipeline_state_manager.h"
 
-#include "engine/core/framework/asset_manager.h"
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "opengl_helpers.h"
@@ -34,13 +34,13 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::st
         return HBN_ERROR(ErrorCode::ERR_COMPILATION_FAILED, "circular includes in file '{}'!", p_path.string());
     }
 
-    BufferAsset *source_handle = nullptr;
+    const BufferAsset *source_handle = nullptr;
     {
-        auto res = AssetManager::GetSingleton().LoadFileSync(FilePath{ p_path.string() });
+        auto res = AssetRegistry::GetSingleton().RequestAssetSync(p_path.string());
         if (!res) {
             return HBN_ERROR(res.error());
         }
-        source_handle = dynamic_cast<BufferAsset *>(res->get());
+        source_handle = dynamic_cast<const BufferAsset *>(*res);
     }
 
     if (source_handle->buffer.empty()) {
@@ -253,6 +253,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
     set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
     set_location("SPIRV_Cross_Combinedt_SkyboxHdrs_linearClampSampler", GetSkyboxHdrSlot());
     set_location("SPIRV_Cross_Combinedt_Skyboxs_cubemapClampSampler", GetSkyboxSlot());
+    set_location("SPIRV_Cross_Combinedt_BaseColorMaps_linearClampSampler", GetBaseColorMapSlot());
     glUseProgram(0);
 
     return program;

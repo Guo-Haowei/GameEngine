@@ -19,7 +19,7 @@ void OpenGlGpuTexture::Clear() {
     }
 }
 
-void OpenGlDrawPass::Clear() {
+void OpenGlFramebuffer::Clear() {
     if (handle) {
         glDeleteFramebuffers(1, &handle);
         handle = 0;

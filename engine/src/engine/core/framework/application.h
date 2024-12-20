@@ -41,7 +41,12 @@ public:
         COUNT,
     };
 
-    Application(const ApplicationSpec& p_spec);
+    enum class Type : uint32_t {
+        RUNTIME,
+        EDITOR,
+    };
+
+    Application(const ApplicationSpec& p_spec, Type p_type = Type::RUNTIME);
     virtual ~Application() = default;
 
     auto Initialize(int p_argc, const char** p_argv) -> Result<void>;
@@ -76,6 +81,9 @@ public:
     State GetState() const { return m_state; }
     void SetState(State p_state);
 
+    bool IsRuntime() const { return m_type == Type::RUNTIME; }
+    bool IsEditor() const { return m_type == Type::EDITOR; }
+
     virtual Scene* CreateInitialScene();
 
 protected:
@@ -95,20 +103,21 @@ protected:
 
     EventQueue m_eventQueue;
 
-    AssetRegistry* m_assetRegistry;
-    AssetManager* m_assetManager;
-    SceneManager* m_sceneManager;
-    PhysicsManager* m_physicsManager;
-    DisplayManager* m_displayServer;
-    GraphicsManager* m_graphicsManager;
-    ImguiManager* m_imguiManager;
-    ScriptManager* m_scriptManager;
-    InputManager* m_inputManager;
+    AssetRegistry* m_assetRegistry{ nullptr };
+    AssetManager* m_assetManager{ nullptr };
+    SceneManager* m_sceneManager{ nullptr };
+    PhysicsManager* m_physicsManager{ nullptr };
+    DisplayManager* m_displayServer{ nullptr };
+    GraphicsManager* m_graphicsManager{ nullptr };
+    ImguiManager* m_imguiManager{ nullptr };
+    ScriptManager* m_scriptManager{ nullptr };
+    InputManager* m_inputManager{ nullptr };
 
     std::vector<Module*> m_modules;
 
-    Scene* m_activeScene{ nullptr };
+    const Type m_type;
     State m_state{ State::EDITING };
+    Scene* m_activeScene{ nullptr };
 };
 
 }  // namespace my

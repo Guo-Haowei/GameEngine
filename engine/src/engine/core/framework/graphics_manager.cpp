@@ -65,7 +65,6 @@ static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t
 }
 
 ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
-ConstantBuffer<DebugDrawConstantBuffer> g_debug_draw_cache;
 
 // @TODO: refactor this
 template<typename T>
@@ -110,7 +109,6 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 
     // @TODO: refactor
     CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
-    CreateUniformBuffer<DebugDrawConstantBuffer>(g_debug_draw_cache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
@@ -434,31 +432,31 @@ std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
     return std::make_unique<FrameContext>();
 }
 
-void GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
-    for (auto& texture : p_draw_pass->outSrvs) {
+void GraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
+    for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             UnbindTexture(texture->desc.dimension, texture->slot);
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 
-    for (auto& transition : p_draw_pass->desc.transitions) {
+    for (auto& transition : p_framebuffer->desc.transitions) {
         if (transition.beginPassFunc) {
             transition.beginPassFunc(this, transition.resource.get(), transition.slot);
         }
     }
 }
 
-void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
+void GraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     UnsetRenderTarget();
-    for (auto& texture : p_draw_pass->outSrvs) {
+    for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             BindTexture(texture->desc.dimension, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 
-    for (auto& transition : p_draw_pass->desc.transitions) {
+    for (auto& transition : p_framebuffer->desc.transitions) {
         if (transition.endPassFunc) {
             transition.endPassFunc(this, transition.resource.get(), transition.slot);
         }
@@ -499,15 +497,21 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
         m_activeRenderGraphName = RenderGraphName::DEFAULT;
     }
 
+    const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    renderer::PassCreatorConfig config;
+    config.frameWidth = frame_size.x;
+    config.frameHeight = frame_size.y;
+    config.is_runtime = m_app->IsRuntime();
+
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy();
+            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy(config);
             break;
         case RenderGraphName::EXPERIMENTAL:
-            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = renderer::RenderPassCreator::CreateExperimental();
+            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = renderer::RenderPassCreator::CreateExperimental(config);
             break;
         case RenderGraphName::DEFAULT:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault();
+            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault(config);
             break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
@@ -517,7 +521,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     switch (m_backend) {
         case Backend::OPENGL:
         case Backend::D3D11:
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderPassCreator::CreatePathTracer();
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderPassCreator::CreatePathTracer(config);
             break;
         default:
             break;
@@ -632,14 +636,11 @@ uint64_t GraphicsManager::GetFinalImage() const {
             texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;
         case RenderGraphName::EXPERIMENTAL:
-            texture = FindTexture(RESOURCE_FINAL).get();
-            break;
         case RenderGraphName::DEFAULT:
-            texture = FindTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RESOURCE_FINAL).get();
             break;
         case RenderGraphName::PATHTRACER:
             texture = FindTexture(RESOURCE_PATH_TRACER).get();
-            // texture = FindTexture(RESOURCE_TONE).get();
             break;
         default:
             CRASH_NOW();

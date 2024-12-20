@@ -12,7 +12,6 @@ namespace my {
 namespace fs = std::filesystem;
 
 auto AssetRegistry::InitializeImpl() -> Result<void> {
-
     // @TODO: refactor
     // Always load assets
     fs::path assets_root = fs::path{ m_app->GetResourceFolder() };

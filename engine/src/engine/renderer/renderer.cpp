@@ -3,6 +3,7 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/geometry.h"
+#include "engine/core/math/vector_math.h"
 #include "engine/renderer/draw_data.h"
 
 #define DEFINE_DVAR
@@ -44,12 +45,37 @@ void BeginFrame() {
 }
 
 static void PrepareDebugDraws() {
-    auto& context = s_glob.renderData->debugDrawContext;
+    auto& context = s_glob.renderData->drawDebugContext;
     context.drawCount = (uint32_t)context.positions.size();
+}
+
+static void PrepareImageDraws() {
+    auto& buffer = s_glob.renderData->materialCache.buffer;
+    auto& context = s_glob.renderData->drawImageContext;
+    const uint32_t old_size = (uint32_t)buffer.size();
+    const uint32_t extra_size = (uint32_t)context.size();
+    s_glob.renderData->drawImageOffset = old_size;
+    buffer.resize(old_size + extra_size);
+
+    const auto resolution = DVAR_GET_IVEC2(resolution);
+    for (uint32_t index = 0; index < extra_size; ++index) {
+        auto& draw = context[index];
+        auto& mat = buffer[old_size + index];
+        auto half_ndc = draw.size / NewVector2f(resolution);
+        auto pos = 1.0f - half_ndc;
+
+        mat.c_debugDrawPos.x = pos.x;
+        mat.c_debugDrawPos.y = pos.y;
+        mat.c_debugDrawSize.x = half_ndc.x;
+        mat.c_debugDrawSize.y = half_ndc.y;
+        mat.c_displayChannel = draw.mode;
+        mat.c_BaseColorMapResidentHandle.Set32(static_cast<uint32_t>(draw.handle));
+    }
 }
 
 void EndFrame() {
     PrepareDebugDraws();
+    PrepareImageDraws();
 
     s_glob.state = RenderState::SUBMITTING;
 }
@@ -86,7 +112,7 @@ void AddDebugCube(const AABB& p_aabb,
     std::vector<uint32_t> indices;
     BoxWireFrameHelper(min, max, positions, indices);
 
-    auto& context = s_glob.renderData->debugDrawContext;
+    auto& context = s_glob.renderData->drawDebugContext;
     for (const auto& i : indices) {
         const Vector3f& pos = positions[i];
         if (p_transform) {
@@ -95,6 +121,26 @@ void AddDebugCube(const AABB& p_aabb,
             context.positions.emplace_back(Vector3f(pos));
         }
         context.colors.emplace_back(p_color);
+    }
+}
+
+void AddImage2D(GpuTexture* p_texture,
+                const NewVector2f& p_size,
+                const NewVector2f& p_position,
+                int p_mode) {
+    ASSERT_CAN_RECORD();
+
+    if (DEV_VERIFY(p_texture)) {
+        ImageDrawContext context = {
+            .mode = p_mode,
+            .handle = p_texture->GetHandle(),
+            .size = p_size,
+            .position = p_position,
+        };
+        if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+            context.handle = p_texture->GetResidentHandle();
+        }
+        s_glob.renderData->drawImageContext.emplace_back(context);
     }
 }
 

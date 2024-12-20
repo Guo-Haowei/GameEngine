@@ -41,7 +41,7 @@ static void RegisterCommonDvars() {
 #undef REGISTER_DVAR
 }
 
-Application::Application(const ApplicationSpec& p_spec) : m_specification(p_spec) {
+Application::Application(const ApplicationSpec& p_spec, Type p_type) : m_specification(p_spec), m_type(p_type) {
     // select work directory
     if (m_specification.rootDirectory.empty()) {
         LOG_ERROR("root directory is not set");

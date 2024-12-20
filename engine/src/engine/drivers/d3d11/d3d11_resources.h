@@ -7,7 +7,7 @@
 #include <wrl/client.h>
 
 #include "engine/renderer/gpu_resource.h"
-#include "engine/renderer/render_graph/draw_pass.h"
+#include "engine/renderer/render_graph/framebuffer.h"
 
 namespace my {
 
@@ -26,7 +26,7 @@ struct D3d11GpuTexture : public GpuTexture {
     Microsoft::WRL::ComPtr<ID3D11UnorderedAccessView> uav;
 };
 
-struct D3d11DrawPass : public DrawPass {
+struct D3d11Framebuffer : public Framebuffer {
     std::vector<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>> rtvs;
     std::vector<Microsoft::WRL::ComPtr<ID3D11DepthStencilView>> dsvs;
 };

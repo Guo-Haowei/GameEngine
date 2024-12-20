@@ -4,7 +4,7 @@
 #define OPENGL_RESOURCES_INCLUDED
 
 #include "engine/renderer/gpu_resource.h"
-#include "engine/renderer/render_graph/draw_pass.h"
+#include "engine/renderer/render_graph/framebuffer.h"
 #include "opengl_helpers_forward.h"
 
 namespace my {
@@ -37,8 +37,8 @@ struct OpenGlGpuTexture : public GpuTexture {
     uint64_t residentHandle = 0;
 };
 
-struct OpenGlDrawPass : public DrawPass {
-    ~OpenGlDrawPass() { Clear(); }
+struct OpenGlFramebuffer : public Framebuffer {
+    ~OpenGlFramebuffer() { Clear(); }
 
     void Clear();
 

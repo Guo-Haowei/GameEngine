@@ -109,19 +109,16 @@ void ContentBrowser::DrawSideBar() {
     }
 }
 
-void ContentBrowser::Update(Scene&) {
-    if (ImGui::Begin(m_name.c_str())) {
-        int flags = ImGuiTableFlags_Resizable;
-        flags |= ImGuiTableFlags_NoBordersInBody;
-        if (ImGui::BeginTable("Outter", 2, flags)) {
-            ImGui::TableNextColumn();
-            DrawSideBar();
-            ImGui::TableNextColumn();
-            DrawAssets();
-            ImGui::EndTable();
-        }
+void ContentBrowser::UpdateInternal(Scene&) {
+    int flags = ImGuiTableFlags_Resizable;
+    flags |= ImGuiTableFlags_NoBordersInBody;
+    if (ImGui::BeginTable("Outter", 2, flags)) {
+        ImGui::TableNextColumn();
+        DrawSideBar();
+        ImGui::TableNextColumn();
+        DrawAssets();
+        ImGui::EndTable();
     }
-    ImGui::End();
 }
 
 void ContentBrowser::DrawAssets() {

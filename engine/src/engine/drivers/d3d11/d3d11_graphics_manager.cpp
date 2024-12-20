@@ -14,6 +14,9 @@
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/scene/scene.h"
 
+// @TODO: remove the following
+#include "engine/renderer/render_graph/pass_creator.h"
+
 #define INCLUDE_AS_D3D11
 #include "engine/drivers/d3d_common/d3d_convert.h"
 
@@ -60,9 +63,17 @@ void D3d11GraphicsManager::FinalizeImpl() {
 }
 
 void D3d11GraphicsManager::Render() {
-    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
+    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
+
+    // @TODO: refactor this
+    const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+    if (m_app->IsRuntime())
+        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
+                                                     width,
+                                                     height,
+                                                     *this);
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -530,8 +541,8 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     return gpu_texture;
 }
 
-std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
-    auto draw_pass = std::make_shared<D3d11DrawPass>(p_subpass_desc);
+std::shared_ptr<Framebuffer> D3d11GraphicsManager::CreateFramebuffer(const FramebufferDesc& p_subpass_desc) {
+    auto framebuffer = std::make_shared<D3d11Framebuffer>(p_subpass_desc);
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
         auto texture = reinterpret_cast<const D3d11GpuTexture*>(color_attachment.get());
@@ -539,7 +550,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
             case AttachmentType::COLOR_2D: {
                 ComPtr<ID3D11RenderTargetView> rtv;
                 D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, rtv.GetAddressOf()), nullptr);
-                draw_pass->rtvs.emplace_back(rtv);
+                framebuffer->rtvs.emplace_back(rtv);
             } break;
             case AttachmentType::COLOR_CUBE: {
                 int mips = color_attachment->desc.mipLevels;
@@ -554,7 +565,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                         desc.Texture2DArray.FirstArraySlice = face;
 
                         D3D_FAIL_V(m_device->CreateRenderTargetView(texture->texture.Get(), &desc, rtv.GetAddressOf()), nullptr);
-                        draw_pass->rtvs.push_back(rtv);
+                        framebuffer->rtvs.push_back(rtv);
                     }
                 }
             } break;
@@ -564,7 +575,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    if (auto& depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+    if (auto& depth_attachment = framebuffer->desc.depthAttachment; depth_attachment) {
         auto texture = reinterpret_cast<const D3d11GpuTexture*>(depth_attachment.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
@@ -575,7 +586,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                 dsv_desc.Texture2D.MipSlice = 0;
 
                 D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
-                draw_pass->dsvs.push_back(dsv);
+                framebuffer->dsvs.push_back(dsv);
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -585,7 +596,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                 dsv_desc.Texture2D.MipSlice = 0;
 
                 D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
-                draw_pass->dsvs.push_back(dsv);
+                framebuffer->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
@@ -595,7 +606,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                 dsv_desc.Texture2D.MipSlice = 0;
 
                 D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
-                draw_pass->dsvs.push_back(dsv);
+                framebuffer->dsvs.push_back(dsv);
             } break;
             case AttachmentType::SHADOW_CUBE_ARRAY: {
                 for (uint32_t face = 0; face < depth_attachment->desc.arraySize; ++face) {
@@ -608,7 +619,7 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
                     dsv_desc.Texture2DArray.FirstArraySlice = face;
 
                     D3D_FAIL_V(m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, dsv.GetAddressOf()), nullptr);
-                    draw_pass->dsvs.push_back(dsv);
+                    framebuffer->dsvs.push_back(dsv);
                 }
             } break;
             default:
@@ -617,32 +628,37 @@ std::shared_ptr<DrawPass> D3d11GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    return draw_pass;
+    return framebuffer;
 }
 
-void D3d11GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+void D3d11GraphicsManager::SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) {
     unused(p_mip_level);
-    DEV_ASSERT(p_draw_pass);
+    DEV_ASSERT(p_framebuffer);
 
-    auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
-    if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+    if (p_framebuffer->desc.type == FramebufferDesc::SCREEN) {
+        m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
+        return;
+    }
+
+    auto framebuffer = reinterpret_cast<const D3d11Framebuffer*>(p_framebuffer);
+    if (const auto depth_attachment = framebuffer->desc.depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
             ID3D11RenderTargetView* rtv = nullptr;
-            m_deviceContext->OMSetRenderTargets(1, &rtv, draw_pass->dsvs[p_index].Get());
+            m_deviceContext->OMSetRenderTargets(1, &rtv, framebuffer->dsvs[p_index].Get());
             return;
         }
     }
 
     // @TODO: fixed_vector
     std::vector<ID3D11RenderTargetView*> rtvs;
-    for (auto& rtv : draw_pass->rtvs) {
+    for (auto& rtv : framebuffer->rtvs) {
         rtvs.emplace_back(rtv.Get());
     }
 
-    ID3D11DepthStencilView* dsv = draw_pass->dsvs.size() ? draw_pass->dsvs[p_index].Get() : nullptr;
+    ID3D11DepthStencilView* dsv = framebuffer->dsvs.size() ? framebuffer->dsvs[p_index].Get() : nullptr;
 
     if (rtvs.size()) {
-        if (p_draw_pass->desc.colorAttachments[0]->desc.type == AttachmentType::COLOR_CUBE) {
+        if (p_framebuffer->desc.colorAttachments[0]->desc.type == AttachmentType::COLOR_CUBE) {
             int offset = p_index + 6 * p_mip_level;
             m_deviceContext->OMSetRenderTargets(1, rtvs.data() + offset, dsv);
             return;
@@ -657,26 +673,37 @@ void D3d11GraphicsManager::UnsetRenderTarget() {
     m_deviceContext->OMSetRenderTargets(array_length(rtvs), rtvs, nullptr);
 }
 
-void D3d11GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
-    auto draw_pass = reinterpret_cast<const D3d11DrawPass*>(p_draw_pass);
+void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) {
+    // @TODO: refactor
+    const bool clear_color = p_flags & CLEAR_COLOR_BIT;
+    const bool clear_depth = p_flags & CLEAR_DEPTH_BIT;
+    const bool clear_stencil = p_flags & CLEAR_STENCIL_BIT;
+    if (p_framebuffer->desc.type == FramebufferDesc::SCREEN) {
+        if (clear_color) {
+            m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), p_clear_color);
+        }
+        return;
+    }
 
-    if (p_flags & CLEAR_COLOR_BIT) {
-        for (auto& rtv : draw_pass->rtvs) {
+    auto framebuffer = reinterpret_cast<const D3d11Framebuffer*>(p_framebuffer);
+
+    if (clear_color) {
+        for (auto& rtv : framebuffer->rtvs) {
             m_deviceContext->ClearRenderTargetView(rtv.Get(), p_clear_color);
         }
     }
 
     uint32_t clear_flags = 0;
-    if (p_flags & CLEAR_DEPTH_BIT) {
+    if (clear_depth) {
         clear_flags |= D3D11_CLEAR_DEPTH;
     }
-    if (p_flags & CLEAR_STENCIL_BIT) {
+    if (clear_stencil) {
         clear_flags |= D3D11_CLEAR_STENCIL;
     }
     if (clear_flags) {
         // @TODO: better way?
-        DEV_ASSERT_INDEX(p_index, draw_pass->dsvs.size());
-        m_deviceContext->ClearDepthStencilView(draw_pass->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
+        DEV_ASSERT_INDEX(p_index, framebuffer->dsvs.size());
+        m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
     }
 }
 

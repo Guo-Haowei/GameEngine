@@ -3,7 +3,6 @@
 #include <imgui/imgui_internal.h>
 
 #include "editor/editor_layer.h"
-#include "engine/core/math/vector_math.h"
 #include "editor/utility/imguizmo.h"
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/display_manager.h"
@@ -12,8 +11,9 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/math/ray.h"
-#include "engine/renderer/renderer.h"
+#include "engine/core/math/vector_math.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/renderer.h"
 
 namespace my {
 
@@ -85,16 +85,14 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     const auto& gm = GraphicsManager::GetSingleton();
     uint64_t handle = gm.GetFinalImage();
 
-    ImVec2 uv_min(0, 1);
-    ImVec2 uv_max(1, 0);
     switch (gm.GetBackend()) {
         case Backend::D3D11:
         case Backend::D3D12: {
-            uv_min = ImVec2(0, 0);
-            uv_max = ImVec2(1, 1);
-            ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right, uv_min, uv_max);
+            ImGui::GetWindowDrawList()->AddImage((ImTextureID)handle, top_left, bottom_right);
         } break;
         case Backend::OPENGL: {
+            ImVec2 uv_min = ImVec2(0, 1);
+            ImVec2 uv_max = ImVec2(1, 0);
             if (gm.GetActiveRenderGraphName() == RenderGraphName::PATHTRACER) {
                 uv_min = ImVec2(0, 0);
                 uv_max = ImVec2(1, 1);
