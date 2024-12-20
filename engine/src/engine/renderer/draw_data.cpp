@@ -392,9 +392,12 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
 
     auto& cache = p_out_data.perFrameCache;
     cache.c_enableVxgi = enabled;
+    // @HACK: DONT use pass_idx
     if (!enabled) {
+        p_out_data.voxelPass.pass_idx = -1;
         return;
     }
+    p_out_data.voxelPass.pass_idx = 0;
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(gfx_voxel_size);
@@ -414,7 +417,6 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     cache.c_voxelWorldSizeHalf = 0.5f * voxel_world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
-    p_out_data.voxelPass.pass_idx = 0;
 
     FillPass(
         p_config,

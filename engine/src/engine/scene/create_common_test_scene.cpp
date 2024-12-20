@@ -1,3 +1,4 @@
+#include "engine/core/base/random.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 
@@ -8,6 +9,89 @@
 */
 
 namespace my {
+
+Scene* CreateBoxScene() {
+    ecs::Entity::SetSeed();
+
+    Scene* scene = new Scene;
+    scene->m_physicsMode = PhysicsMode::SIMULATION;
+
+    auto root = scene->CreateTransformEntity("root");
+    scene->m_root = root;
+
+    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    // editor camera
+    {
+        auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
+        auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
+        DEV_ASSERT(camera);
+        camera->SetPosition(Vector3f(0, 4, 15));
+        camera->SetEditorCamera();
+        scene->AttachChild(editor_camera, root);
+    }
+    // main camera
+    {
+        auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
+        auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
+        DEV_ASSERT(camera);
+        camera->SetPosition(Vector3f(0, 4, 15));
+        camera->SetPrimary();
+        scene->AttachChild(main_camera, root);
+    }
+    // add a light
+    if constexpr (1) {
+        auto id = scene->CreatePointLightEntity("point_light", Vector3f(0, 0, 0));
+        scene->AttachChild(id, root);
+        LightComponent* light = scene->GetComponent<LightComponent>(id);
+        light->SetCastShadow();
+    }
+
+    auto world = scene->CreateTransformEntity("world");
+    scene->AttachChild(world, root);
+
+    auto white = scene->CreateMaterialEntity("white");
+    {
+        MaterialComponent* mat = scene->GetComponent<MaterialComponent>(white);
+        mat->metallic = 0.3f;
+        mat->roughness = 0.7f;
+    }
+    auto red = scene->CreateMaterialEntity("red");
+    {
+        MaterialComponent* mat = scene->GetComponent<MaterialComponent>(red);
+        mat->baseColor = Vector4f(1, 0, 0, 1);
+        mat->metallic = 0.3f;
+        mat->roughness = 0.7f;
+    }
+    auto green = scene->CreateMaterialEntity("green");
+    {
+        MaterialComponent* mat = scene->GetComponent<MaterialComponent>(green);
+        mat->baseColor = Vector4f(0, 1, 0, 1);
+        mat->metallic = 0.3f;
+        mat->roughness = 0.7f;
+    }
+    {
+        constexpr float s = 5.0f;
+        struct {
+            std::string name;
+            Matrix4x4f transform;
+            ecs::Entity material;
+        } wall_info[] = {
+            { "wall_up", glm::translate(Vector3f(0, s, 0)), white },
+            { "wall_down", glm::translate(Vector3f(0, -s, 0)), white },
+            { "wall_left", glm::rotate(glm::radians(+90.0f), Vector3f(0, 0, 1)) * glm::translate(Vector3f(0, s, 0)), red },
+            { "wall_right", glm::rotate(glm::radians(+90.0f), Vector3f(0, 0, 1)) * glm::translate(Vector3f(0, -s, 0)), green },
+            { "wall_back", glm::rotate(glm::radians(+90.0f), Vector3f(1, 0, 0)) * glm::translate(Vector3f(0, -s, 0)), white },
+        };
+
+        for (int i = 0; i < array_length(wall_info); ++i) {
+            const auto& info = wall_info[i];
+            auto wall = scene->CreateCubeEntity(info.name, info.material, Vector3f(s, 0.2f, s), info.transform);
+            scene->AttachChild(wall, world);
+        }
+    }
+
+    return scene;
+}
 
 Scene* CreatePhysicsTestScene() {
     ecs::Entity::SetSeed();

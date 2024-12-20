@@ -12,6 +12,7 @@
 namespace my {
 
 extern Scene* CreateTheAviatorScene();
+extern Scene* CreateBoxScene();
 extern Scene* CreatePbrTestScene();
 extern Scene* CreatePhysicsTestScene();
 
@@ -73,6 +74,9 @@ Scene* Editor::CreateInitialScene() {
     }
     if (scene == "the_aviator") {
         return CreateTheAviatorScene();
+    }
+    if (scene == "box") {
+        return CreateBoxScene();
     }
 
     return Application::CreateInitialScene();

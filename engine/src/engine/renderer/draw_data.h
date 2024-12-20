@@ -37,7 +37,7 @@ struct BatchContext {
 };
 
 struct PassContext {
-    int pass_idx{ -1 };
+    int pass_idx{ 0 };
 
     std::vector<BatchContext> opaque;
     std::vector<BatchContext> transparent;
