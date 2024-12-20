@@ -2,6 +2,7 @@
 
 #include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
+#include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/math/matrix_transform.h"
 #include "engine/renderer/draw_data.h"
@@ -844,6 +845,34 @@ void RenderPassCreator::AddTonePass() {
     pass->AddDrawPass(draw_pass);
 }
 
+static void DebugImagePassFunc(const DrawData& p_data, const DrawPass* p_draw_pass) {
+    OPTICK_EVENT();
+
+    DEV_ASSERT(0 && "TODO: extract this");
+
+    auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
+    if (p_draw_pass) {
+        width = p_draw_pass->desc.colorAttachments[0]->desc.width;
+        height = p_draw_pass->desc.colorAttachments[0]->desc.height;
+    }
+
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+
+    gm.SetViewport(Viewport(width, height));
+    gm.SetRenderTarget(p_draw_pass);
+    gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
+    gm.SetPipelineState(PSO_RW_TEXTURE_2D);
+
+    uint32_t offset = p_data.drawImageOffset;
+    for (const auto& draw_context : p_data.drawImageContext) {
+        gm.BindTexture(Dimension::TEXTURE_2D, draw_context.handle, GetBaseColorMapSlot());
+        gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), offset++);
+        gm.DrawQuad();
+        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+    }
+};
+
 void RenderPassCreator::AddDebugImagePass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
@@ -861,27 +890,8 @@ void RenderPassCreator::AddDebugImagePass() {
     auto pass = m_graph.CreatePass(desc);
     auto draw_pass = gm.CreateDrawPass(DrawPassDesc{
         .colorAttachments = { final_attachment },
-        .execFunc = [](const DrawData& p_data, const DrawPass* p_draw_pass) {
-            OPTICK_EVENT();
-
-            auto& gm = GraphicsManager::GetSingleton();
-            auto& frame = gm.GetCurrentFrame();
-            const uint32_t width = p_draw_pass->desc.colorAttachments[0]->desc.width;
-            const uint32_t height = p_draw_pass->desc.colorAttachments[0]->desc.height;
-
-            gm.SetViewport(Viewport(width, height));
-            gm.SetRenderTarget(p_draw_pass);
-            gm.Clear(p_draw_pass, CLEAR_COLOR_BIT);
-            gm.SetPipelineState(PSO_RW_TEXTURE_2D);
-
-            uint32_t offset = p_data.drawImageOffset;
-            for (const auto& draw_context : p_data.drawImageContext) {
-                gm.BindTexture(Dimension::TEXTURE_2D, draw_context.handle, GetBaseColorMapSlot());
-                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), offset++);
-                gm.DrawQuad();
-                gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
-            }
-        } });
+        .execFunc = DebugImagePassFunc,
+    });
     pass->AddDrawPass(draw_pass);
 }
 

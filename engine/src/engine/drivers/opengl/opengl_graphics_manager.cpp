@@ -18,8 +18,12 @@
 // @NOTE: include GLFW after opengl
 #include <GLFW/glfw3.h>
 
-// @TODO: remove
+// @TODO: remove the following
+#include "engine/renderer/draw_data.h"
 #include "engine/renderer/ltc_matrix.h"
+// shader defines
+#include "shader_resource_defines.hlsl.h"
+#include "unordered_access_defines.hlsl.h"
 
 // @TODO: refactor
 using namespace my;
@@ -638,6 +642,12 @@ void OpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* 
 }
 
 void OpenGlGraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+    DEV_ASSERT(p_draw_pass);
+    if (p_draw_pass == DEFAULT_RENDER_TARGET) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        return;
+    }
+
     auto draw_pass = reinterpret_cast<const OpenGlDrawPass*>(p_draw_pass);
     DEV_ASSERT(draw_pass);
 
@@ -686,6 +696,25 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 
 void OpenGlGraphicsManager::Render() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // @TODO: refactor
+    const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+    SetViewport(Viewport(width, height));
+    static_cast<GraphicsManager*>(this)->Clear(nullptr, CLEAR_COLOR_BIT);
+    SetPipelineState(PSO_RW_TEXTURE_2D);
+
+    auto& frame = GetCurrentFrame();
+
+    auto& p_data = *renderer::GetRenderData();
+    uint32_t offset = p_data.drawImageOffset;
+    for (const auto& draw_context : p_data.drawImageContext) {
+        BindTexture(Dimension::TEXTURE_2D, draw_context.handle, GetBaseColorMapSlot());
+        BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), offset++);
+        DrawQuad();
+        UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+    }
+    // @TODO: refactor
+
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }

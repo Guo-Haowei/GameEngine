@@ -95,15 +95,15 @@ protected:
 
     EventQueue m_eventQueue;
 
-    AssetRegistry* m_assetRegistry;
-    AssetManager* m_assetManager;
-    SceneManager* m_sceneManager;
-    PhysicsManager* m_physicsManager;
-    DisplayManager* m_displayServer;
-    GraphicsManager* m_graphicsManager;
-    ImguiManager* m_imguiManager;
-    ScriptManager* m_scriptManager;
-    InputManager* m_inputManager;
+    AssetRegistry* m_assetRegistry{ nullptr };
+    AssetManager* m_assetManager{ nullptr };
+    SceneManager* m_sceneManager{ nullptr };
+    PhysicsManager* m_physicsManager{ nullptr };
+    DisplayManager* m_displayServer{ nullptr };
+    GraphicsManager* m_graphicsManager{ nullptr };
+    ImguiManager* m_imguiManager{ nullptr };
+    ScriptManager* m_scriptManager{ nullptr };
+    InputManager* m_inputManager{ nullptr };
 
     std::vector<Module*> m_modules;
 

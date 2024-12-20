@@ -56,6 +56,9 @@ struct FrameContext {
     std::shared_ptr<GpuConstantBuffer> perFrameCb;
 };
 
+// @TODO: rename to RenderTarget
+constexpr DrawPass* DEFAULT_RENDER_TARGET = reinterpret_cast<DrawPass*>(1);
+
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
     static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
