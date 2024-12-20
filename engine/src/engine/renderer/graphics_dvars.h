@@ -8,7 +8,7 @@ DVAR_STRING(gfx_backend, DVAR_FLAG_NONE, "Renderer backend", "metal");
 #else
 DVAR_STRING(gfx_backend, DVAR_FLAG_NONE, "Renderer backend", "opengl");
 #endif
-DVAR_STRING(gfx_render_graph, DVAR_FLAG_NONE, "Renderer graph", "experimental");
+DVAR_STRING(gfx_render_graph, DVAR_FLAG_NONE, "Renderer graph", "default");
 DVAR_BOOL(gfx_gpu_validation, DVAR_FLAG_NONE, "Enable GPU validation", true);
 
 // Switches

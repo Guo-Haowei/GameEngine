@@ -39,7 +39,7 @@ Scene* CreateBoxScene() {
         scene->AttachChild(main_camera, root);
     }
     // add a light
-    if constexpr (1) {
+    if constexpr (0) {
         auto id = scene->CreatePointLightEntity("point_light", Vector3f(0, 0, 0));
         scene->AttachChild(id, root);
         LightComponent* light = scene->GetComponent<LightComponent>(id);

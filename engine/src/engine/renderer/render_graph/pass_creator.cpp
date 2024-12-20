@@ -371,6 +371,9 @@ static void VoxelizationPassFunc(const DrawData& p_data, const Framebuffer*) {
 
 void RenderPassCreator::AddVoxelizationPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
+    if (manager.GetBackend() != Backend::OPENGL) {
+        return;
+    }
 
     {
         const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
@@ -1211,7 +1214,7 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault(PassCreatorConfig&
     creator.AddShadowPass();
     creator.AddGbufferPass();
     creator.AddHighlightPass();
-    // creator.AddVoxelizationPass();
+    creator.AddVoxelizationPass();
     creator.AddLightingPass();
     creator.AddEmitterPass();
     creator.AddBloomPass();
@@ -1280,26 +1283,5 @@ GpuTextureDesc RenderPassCreator::BuildDefaultTextureDesc(RenderTargetResourceNa
     }
     return desc;
 };
-
-std::unique_ptr<RenderGraph> RenderPassCreator::CreateExperimental(PassCreatorConfig& p_config) {
-    // @TODO: early-z
-    auto graph = std::make_unique<RenderGraph>();
-    RenderPassCreator creator(p_config, *graph.get());
-
-    creator.AddGenerateSkylightPass();
-    creator.AddShadowPass();
-    creator.AddGbufferPass();
-    creator.AddHighlightPass();
-    creator.AddVoxelizationPass();
-    creator.AddLightingPass();
-    creator.AddEmitterPass();
-    creator.AddBloomPass();
-    creator.AddTonePass();
-    creator.AddDebugImagePass();
-
-    // @TODO: allow recompile
-    graph->Compile();
-    return graph;
-}
 
 }  // namespace my::renderer

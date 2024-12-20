@@ -26,10 +26,9 @@ struct ImageAsset;
 // @TODO: refactor
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
 
-#define RENDER_GRAPH_LIST                              \
-    RENDER_GRAPH_DECLARE(DEFAULT, "default")           \
-    RENDER_GRAPH_DECLARE(DUMMY, "dummy")               \
-    RENDER_GRAPH_DECLARE(EXPERIMENTAL, "experimental") \
+#define RENDER_GRAPH_LIST                    \
+    RENDER_GRAPH_DECLARE(DEFAULT, "default") \
+    RENDER_GRAPH_DECLARE(DUMMY, "dummy")     \
     RENDER_GRAPH_DECLARE(PATHTRACER, "pathtracer")
 
 enum class RenderGraphName : uint8_t {

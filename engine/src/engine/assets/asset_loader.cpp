@@ -158,7 +158,7 @@ auto ImageAssetLoader::Load() -> Result<IAsset*> {
     return p_image;
 }
 
-// @TODO: merge
+// @TODO: use same loader for both
 auto SceneLoader::Load() -> Result<IAsset*> {
     Scene* scene = new Scene;
     auto res = LoadSceneBinary(m_filePath, *scene);
@@ -171,6 +171,7 @@ auto SceneLoader::Load() -> Result<IAsset*> {
     return scene;
 }
 
+// @TODO: use same loader for both
 auto TextSceneLoader::Load() -> Result<IAsset*> {
     Scene* scene = new Scene;
     auto res = LoadSceneText(m_filePath, *scene);

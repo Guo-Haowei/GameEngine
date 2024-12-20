@@ -491,12 +491,6 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
             break;
     }
 
-    // force to default
-    if (m_backend != Backend::OPENGL && m_activeRenderGraphName == RenderGraphName::EXPERIMENTAL) {
-        LOG_WARN("'experimental' not supported, fall back to 'default'");
-        m_activeRenderGraphName = RenderGraphName::DEFAULT;
-    }
-
     const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
     renderer::PassCreatorConfig config;
     config.frameWidth = frame_size.x;
@@ -506,9 +500,6 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
             m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy(config);
-            break;
-        case RenderGraphName::EXPERIMENTAL:
-            m_renderGraphs[std::to_underlying(RenderGraphName::EXPERIMENTAL)] = renderer::RenderPassCreator::CreateExperimental(config);
             break;
         case RenderGraphName::DEFAULT:
             m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault(config);
@@ -635,7 +626,6 @@ uint64_t GraphicsManager::GetFinalImage() const {
         case RenderGraphName::DUMMY:
             texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
             break;
-        case RenderGraphName::EXPERIMENTAL:
         case RenderGraphName::DEFAULT:
             texture = FindTexture(RESOURCE_FINAL).get();
             break;
