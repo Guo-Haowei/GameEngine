@@ -6,7 +6,7 @@
 #include "engine/core/framework/pipeline_state_manager.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/pipeline_state.h"
-#include "engine/renderer/render_graph/draw_pass.h"
+#include "engine/renderer/render_graph/framebuffer.h"
 #include "engine/renderer/render_graph/render_graph.h"
 #include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
@@ -56,11 +56,9 @@ struct FrameContext {
     std::shared_ptr<GpuConstantBuffer> perFrameCb;
 };
 
-// @TODO: rename to RenderTarget
-constexpr DrawPass* DEFAULT_RENDER_TARGET = reinterpret_cast<DrawPass*>(1);
-
 class GraphicsManager : public Singleton<GraphicsManager>, public Module, public EventListener {
 public:
+    // @TODO: rename to RenderTarget
     static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
     static constexpr int NUM_BACK_BUFFERS = 2;
     static constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
@@ -80,12 +78,12 @@ public:
     virtual auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> = 0;
     virtual void UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer);
 
-    virtual void SetRenderTarget(const DrawPass* p_draw_pass, int p_index = 0, int p_mip_level = 0) = 0;
+    virtual void SetRenderTarget(const Framebuffer* p_framebuffer, int p_index = 0, int p_mip_level = 0) = 0;
     virtual void UnsetRenderTarget() = 0;
-    virtual void BeginDrawPass(const DrawPass* p_draw_pass);
-    virtual void EndDrawPass(const DrawPass* p_draw_pass);
+    virtual void BeginDrawPass(const Framebuffer* p_framebuffer);
+    virtual void EndDrawPass(const Framebuffer* p_framebuffer);
 
-    virtual void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
+    virtual void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
     virtual auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> = 0;
@@ -135,7 +133,7 @@ public:
         BindConstantBufferRange(p_buffer, sizeof(T), slot * sizeof(T));
     }
 
-    virtual std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_desc) = 0;
+    virtual std::shared_ptr<Framebuffer> CreateDrawPass(const FramebufferDesc& p_desc) = 0;
 
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc);
     std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const;

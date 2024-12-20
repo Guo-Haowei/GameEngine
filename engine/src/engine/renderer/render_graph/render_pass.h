@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/renderer/render_graph/draw_pass.h"
+#include "engine/renderer/render_graph/framebuffer.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
 namespace my {
@@ -17,7 +17,7 @@ struct RenderPassDesc {
 
 class RenderPass {
 public:
-    void AddDrawPass(std::shared_ptr<DrawPass> p_draw_pass);
+    void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer);
 
     void Execute(const renderer::DrawData& p_data, GraphicsManager& p_graphics_manager);
 
@@ -29,7 +29,7 @@ protected:
 
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;
-    std::vector<std::shared_ptr<DrawPass>> m_drawPasses;
+    std::vector<std::shared_ptr<Framebuffer>> m_drawPasses;
 
     friend class RenderGraph;
 };

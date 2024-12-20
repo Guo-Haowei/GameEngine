@@ -14,13 +14,13 @@
 
 namespace my::renderer {
 
-void debug_vxgi_pass_func(const DrawData& p_data, const DrawPass* p_draw_pass) {
+void debug_vxgi_pass_func(const DrawData& p_data, const Framebuffer* p_framebuffer) {
     OPTICK_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
-    gm.SetRenderTarget(p_draw_pass);
-    auto depth_buffer = p_draw_pass->desc.depthAttachment;
-    const auto [width, height] = p_draw_pass->GetBufferSize();
+    gm.SetRenderTarget(p_framebuffer);
+    auto depth_buffer = p_framebuffer->desc.depthAttachment;
+    const auto [width, height] = p_framebuffer->GetBufferSize();
 
     glEnable(GL_BLEND);
     gm.SetViewport(Viewport(width, height));

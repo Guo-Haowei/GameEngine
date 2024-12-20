@@ -8,11 +8,11 @@ struct DrawData;
 
 namespace my {
 
-struct DrawPass;
+struct Framebuffer;
 
 class GraphicsManager;
 
-using DrawPassExecuteFunc = void (*)(const renderer::DrawData&, const DrawPass*);
+using DrawPassExecuteFunc = void (*)(const renderer::DrawData&, const Framebuffer*);
 
 struct ResourceTransition {
     std::shared_ptr<GpuTexture> resource;
@@ -21,7 +21,7 @@ struct ResourceTransition {
     std::function<void(GraphicsManager*, GpuTexture*, int)> endPassFunc;
 };
 
-struct DrawPassDesc {
+struct FramebufferDesc {
     std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
     std::shared_ptr<GpuTexture> depthAttachment;
 
@@ -30,8 +30,8 @@ struct DrawPassDesc {
     DrawPassExecuteFunc execFunc{ nullptr };
 };
 
-struct DrawPass {
-    DrawPass(const DrawPassDesc& p_desc) : desc(p_desc) {
+struct Framebuffer {
+    Framebuffer(const FramebufferDesc& p_desc) : desc(p_desc) {
         // @TODO: better way
         for (auto it : desc.colorAttachments) {
             outSrvs.emplace_back(it);
@@ -50,7 +50,7 @@ struct DrawPass {
         return std::make_tuple(desc.colorAttachments[0]->desc.width, desc.colorAttachments[0]->desc.height);
     }
 
-    DrawPassDesc desc;
+    FramebufferDesc desc;
     uint32_t id{ 0 };
 
     std::vector<std::shared_ptr<GpuTexture>> outSrvs;

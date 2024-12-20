@@ -432,31 +432,31 @@ std::unique_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
     return std::make_unique<FrameContext>();
 }
 
-void GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
-    for (auto& texture : p_draw_pass->outSrvs) {
+void GraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
+    for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             UnbindTexture(texture->desc.dimension, texture->slot);
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 
-    for (auto& transition : p_draw_pass->desc.transitions) {
+    for (auto& transition : p_framebuffer->desc.transitions) {
         if (transition.beginPassFunc) {
             transition.beginPassFunc(this, transition.resource.get(), transition.slot);
         }
     }
 }
 
-void GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
+void GraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     UnsetRenderTarget();
-    for (auto& texture : p_draw_pass->outSrvs) {
+    for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             BindTexture(texture->desc.dimension, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 
-    for (auto& transition : p_draw_pass->desc.transitions) {
+    for (auto& transition : p_framebuffer->desc.transitions) {
         if (transition.endPassFunc) {
             transition.endPassFunc(this, transition.resource.get(), transition.slot);
         }

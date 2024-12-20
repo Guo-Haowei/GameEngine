@@ -45,7 +45,7 @@ struct D3d12GpuTexture : public GpuTexture {
     DescriptorHeapHandle uavHandle;
 };
 
-struct D3d12DrawPass : public DrawPass {
+struct D3d12Framebuffer : public Framebuffer {
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvs;
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> dsvs;
 };
@@ -290,29 +290,29 @@ void D3d12GraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p
     unused(p_mask);
 }
 
-void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) {
+void D3d12GraphicsManager::SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) {
     unused(p_mip_level);
-    DEV_ASSERT(p_draw_pass);
+    DEV_ASSERT(p_framebuffer);
 
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
 
-    auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
-    if (const auto depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+    auto framebuffer = reinterpret_cast<const D3d12Framebuffer*>(p_framebuffer);
+    if (const auto depth_attachment = framebuffer->desc.depthAttachment; depth_attachment) {
         if (depth_attachment->desc.type == AttachmentType::SHADOW_CUBE_ARRAY) {
-            D3D12_CPU_DESCRIPTOR_HANDLE dsv{ draw_pass->dsvs[p_index] };
+            D3D12_CPU_DESCRIPTOR_HANDLE dsv{ framebuffer->dsvs[p_index] };
             command_list->OMSetRenderTargets(0, nullptr, false, &dsv);
             return;
         }
     }
 
     std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvs;
-    for (auto& rtv : draw_pass->rtvs) {
+    for (auto& rtv : framebuffer->rtvs) {
         rtvs.emplace_back(rtv);
     }
 
     const D3D12_CPU_DESCRIPTOR_HANDLE* dsv_ptr = nullptr;
-    if (!draw_pass->dsvs.empty()) {
-        dsv_ptr = &(draw_pass->dsvs[0]);
+    if (!framebuffer->dsvs.empty()) {
+        dsv_ptr = &(framebuffer->dsvs[0]);
     }
     command_list->OMSetRenderTargets((uint32_t)rtvs.size(), rtvs.data(), false, dsv_ptr);
 }
@@ -320,9 +320,9 @@ void D3d12GraphicsManager::SetRenderTarget(const DrawPass* p_draw_pass, int p_in
 void D3d12GraphicsManager::UnsetRenderTarget() {
 }
 
-void D3d12GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
+void D3d12GraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
-    for (auto& texture : p_draw_pass->outSrvs) {
+    for (auto& texture : p_framebuffer->outSrvs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
             resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -338,10 +338,10 @@ void D3d12GraphicsManager::BeginDrawPass(const DrawPass* p_draw_pass) {
     }
 }
 
-void D3d12GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
+void D3d12GraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     UnsetRenderTarget();
     ID3D12GraphicsCommandList* command_list = m_graphicsCommandList.Get();
-    for (auto& texture : p_draw_pass->outSrvs) {
+    for (auto& texture : p_framebuffer->outSrvs) {
         D3D12_RESOURCE_STATES resource_state{};
         if (texture->desc.bindFlags & BIND_RENDER_TARGET) {
             resource_state = D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -357,12 +357,12 @@ void D3d12GraphicsManager::EndDrawPass(const DrawPass* p_draw_pass) {
     }
 }
 
-void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) {
-    auto draw_pass = reinterpret_cast<const D3d12DrawPass*>(p_draw_pass);
+void D3d12GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) {
+    auto framebuffer = reinterpret_cast<const D3d12Framebuffer*>(p_framebuffer);
 
     if (p_flags & CLEAR_COLOR_BIT) {
         DEV_ASSERT(p_clear_color);
-        for (auto& rtv : draw_pass->rtvs) {
+        for (auto& rtv : framebuffer->rtvs) {
             m_graphicsCommandList->ClearRenderTargetView(rtv, p_clear_color, 0, nullptr);
         }
     }
@@ -376,8 +376,8 @@ void D3d12GraphicsManager::Clear(const DrawPass* p_draw_pass, ClearFlags p_flags
     }
     if (clear_flags) {
         // @TODO: better way?
-        DEV_ASSERT_INDEX(p_index, draw_pass->dsvs.size());
-        m_graphicsCommandList->ClearDepthStencilView(draw_pass->dsvs[p_index], clear_flags, 1.0f, 0, 0, nullptr);
+        DEV_ASSERT_INDEX(p_index, framebuffer->dsvs.size());
+        m_graphicsCommandList->ClearDepthStencilView(framebuffer->dsvs[p_index], clear_flags, 1.0f, 0, 0, nullptr);
     }
 }
 
@@ -875,8 +875,8 @@ void D3d12GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
     CRASH_NOW();
 }
 
-std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDesc& p_subpass_desc) {
-    auto draw_pass = std::make_shared<D3d12DrawPass>(p_subpass_desc);
+std::shared_ptr<Framebuffer> D3d12GraphicsManager::CreateDrawPass(const FramebufferDesc& p_subpass_desc) {
+    auto framebuffer = std::make_shared<D3d12Framebuffer>(p_subpass_desc);
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
         auto texture = reinterpret_cast<const D3d12GpuTexture*>(color_attachment.get());
@@ -884,7 +884,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
             case AttachmentType::COLOR_2D: {
                 auto handle = m_rtvDescHeap.AllocHandle();
                 m_device->CreateRenderTargetView(texture->texture.Get(), nullptr, handle.cpuHandle);
-                draw_pass->rtvs.emplace_back(handle.cpuHandle);
+                framebuffer->rtvs.emplace_back(handle.cpuHandle);
             } break;
             case AttachmentType::COLOR_CUBE: {
                 for (uint32_t face = 0; face < color_attachment->desc.arraySize; ++face) {
@@ -897,7 +897,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                     desc.Texture2DArray.FirstArraySlice = face;
 
                     m_device->CreateRenderTargetView(texture->texture.Get(), &desc, handle.cpuHandle);
-                    draw_pass->rtvs.push_back(handle.cpuHandle);
+                    framebuffer->rtvs.push_back(handle.cpuHandle);
                 }
             } break;
 
@@ -907,7 +907,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    if (auto& depth_attachment = draw_pass->desc.depthAttachment; depth_attachment) {
+    if (auto& depth_attachment = framebuffer->desc.depthAttachment; depth_attachment) {
         auto texture = reinterpret_cast<const D3d12GpuTexture*>(depth_attachment.get());
         switch (depth_attachment->desc.type) {
             case AttachmentType::DEPTH_2D: {
@@ -920,7 +920,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                 // D3D_FAIL_V_MSG(m_device->CreateDepthStencilView(texture->texture.Get(), &desc, dsv.GetAddressOf()),
                 //                nullptr,
                 //                "Failed to create depth stencil view");
-                // draw_pass->dsvs.push_back(dsv);
+                // framebuffer->dsvs.push_back(dsv);
                 CRASH_NOW();
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
@@ -930,7 +930,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
                 dsv_desc.Texture2D.MipSlice = 0;
                 auto handle = m_dsvDescHeap.AllocHandle();
                 m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
-                draw_pass->dsvs.emplace_back(handle.cpuHandle);
+                framebuffer->dsvs.emplace_back(handle.cpuHandle);
             } break;
             case AttachmentType::SHADOW_2D: {
                 D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
@@ -940,7 +940,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
 
                 auto handle = m_dsvDescHeap.AllocHandle();
                 m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
-                draw_pass->dsvs.emplace_back(handle.cpuHandle);
+                framebuffer->dsvs.emplace_back(handle.cpuHandle);
             } break;
             case AttachmentType::SHADOW_CUBE_ARRAY: {
                 for (uint32_t face = 0; face < depth_attachment->desc.arraySize; ++face) {
@@ -953,7 +953,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
 
                     auto handle = m_dsvDescHeap.AllocHandle();
                     m_device->CreateDepthStencilView(texture->texture.Get(), &dsv_desc, handle.cpuHandle);
-                    draw_pass->dsvs.emplace_back(handle.cpuHandle);
+                    framebuffer->dsvs.emplace_back(handle.cpuHandle);
                 }
             } break;
             default:
@@ -962,7 +962,7 @@ std::shared_ptr<DrawPass> D3d12GraphicsManager::CreateDrawPass(const DrawPassDes
         }
     }
 
-    return draw_pass;
+    return framebuffer;
 }
 
 auto D3d12GraphicsManager::CreateDevice() -> Result<void> {

@@ -3,8 +3,13 @@
 #include "engine/renderer/pixel_format.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
+namespace my {
+struct Framebuffer;
+}
+
 namespace my::renderer {
 
+struct DrawData;
 class RenderGraph;
 
 class RenderPassCreator {
@@ -29,6 +34,8 @@ public:
     static std::unique_ptr<RenderGraph> CreateDefault();
     static std::unique_ptr<RenderGraph> CreateExperimental();
     static std::unique_ptr<RenderGraph> CreatePathTracer();
+
+    static void DebugImagePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer);
 
 private:
     void AddGbufferPass();

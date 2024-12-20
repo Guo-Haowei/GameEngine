@@ -31,12 +31,12 @@ public:
     void SetStencilRef(uint32_t p_ref) final;
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) final;
 
-    void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) final;
+    void SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) final;
     void UnsetRenderTarget() final;
-    void BeginDrawPass(const DrawPass* p_draw_pass) final;
-    void EndDrawPass(const DrawPass* p_draw_pass) final;
+    void BeginDrawPass(const Framebuffer* p_framebuffer) final;
+    void EndDrawPass(const Framebuffer* p_framebuffer) final;
 
-    void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
+    void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
     auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> final;
@@ -74,7 +74,7 @@ public:
 
     void GenerateMipmap(const GpuTexture* p_texture) final;
 
-    std::shared_ptr<DrawPass> CreateDrawPass(const DrawPassDesc& p_subpass_desc) final;
+    std::shared_ptr<Framebuffer> CreateDrawPass(const FramebufferDesc& p_subpass_desc) final;
 
     ID3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE p_type);
 

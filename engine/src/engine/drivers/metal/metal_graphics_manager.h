@@ -15,12 +15,12 @@ public:
     void SetStencilRef(uint32_t p_ref) override {}
     void SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) override {}
 
-    void SetRenderTarget(const DrawPass* p_draw_pass, int p_index, int p_mip_level) override {}
+    void SetRenderTarget(const DrawPass* p_framebuffer, int p_index, int p_mip_level) override {}
     void UnsetRenderTarget() override {}
-    void BeginDrawPass(const DrawPass* p_draw_pass) override {}
-    void EndDrawPass(const DrawPass* p_draw_pass) override {}
+    void BeginDrawPass(const DrawPass* p_framebuffer) override {}
+    void EndDrawPass(const DrawPass* p_framebuffer) override {}
 
-    void Clear(const DrawPass* p_draw_pass, ClearFlags p_flags, const float* p_clear_color, int p_index) override {}
+    void Clear(const DrawPass* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) override {}
     void SetViewport(const Viewport& p_viewport) override {}
 
     void DrawElements(uint32_t p_count, uint32_t p_offset) override {}
