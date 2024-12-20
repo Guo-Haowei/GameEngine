@@ -194,22 +194,49 @@ constexpr T Max(const T& p_lhs, const T& p_rhs) {
     return p_lhs > p_rhs ? p_lhs : p_rhs;
 }
 
+template<Arithmetic T>
+constexpr T Abs(const T& p_lhs) {
+    return std::abs(p_lhs);
+}
+
 template<Arithmetic T, int N>
 constexpr Vector<T, N> Min(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
-    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
     Vector<T, N> result;
-    for (int i = 0; i < dim; ++i) {
-        result[i] = Min(p_lhs[i], p_rhs[i]);
+    result.x = Min(p_lhs.x, p_rhs.x);
+    result.y = Min(p_lhs.y, p_rhs.y);
+    if constexpr (N >= 3) {
+        result.z = Min(p_lhs.z, p_rhs.z);
+    }
+    if constexpr (N >= 4) {
+        result.w = Min(p_lhs.w, p_rhs.w);
     }
     return result;
 }
 
 template<Arithmetic T, int N>
 constexpr Vector<T, N> Max(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
-    constexpr int dim = sizeof(p_lhs) / sizeof(p_lhs.x);
     Vector<T, N> result;
-    for (int i = 0; i < dim; ++i) {
-        result[i] = Max(p_lhs[i], p_rhs[i]);
+    result.x = Max(p_lhs.x, p_rhs.x);
+    result.y = Max(p_lhs.y, p_rhs.y);
+    if constexpr (N >= 3) {
+        result.z = Max(p_lhs.z, p_rhs.z);
+    }
+    if constexpr (N >= 4) {
+        result.w = Max(p_lhs.w, p_rhs.w);
+    }
+    return result;
+}
+
+template<Arithmetic T, int N>
+constexpr Vector<T, N> Abs(const Vector<T, N>& p_lhs) {
+    Vector<T, N> result;
+    result.x = Abs(p_lhs.x);
+    result.y = Abs(p_lhs.y);
+    if constexpr (N >= 3) {
+        result.z = Abs(p_lhs.z);
+    }
+    if constexpr (N >= 4) {
+        result.w = Abs(p_lhs.w);
     }
     return result;
 }
@@ -219,9 +246,22 @@ constexpr Vector<T, N> Clamp(const Vector<T, N>& p_value, const Vector<T, N>& p_
     return Max(p_min, Min(p_value, p_max));
 }
 
-template<Arithmetic T, int N>
+template<FloatingPoint T, int N>
 constexpr Vector<T, N> Lerp(const Vector<T, N>& p_x, const Vector<T, N>& p_y, float p_s) {
     return (static_cast<T>(1) - p_s) * p_x + p_s * p_y;
+}
+
+template<Arithmetic T, int N>
+constexpr T Dot(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+    Vector<T, N> tmp(p_lhs * p_rhs);
+    T result = tmp.x + tmp.y;
+    if constexpr (N >= 3) {
+        result += tmp.z;
+    }
+    if constexpr (N >= 4) {
+        result += tmp.w;
+    }
+    return result;
 }
 
 }  // namespace my::math

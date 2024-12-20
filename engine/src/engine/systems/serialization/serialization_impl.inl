@@ -132,7 +132,12 @@ Result<void> DeserializeYaml(const YAML::Node& p_node, T (&p_object)[N], Seriali
 }
 
 template<typename T, int N>
-Result<void> SerializeYaml(YAML::Emitter& p_out, const glm::vec<N, T, glm::defaultp>& p_object, SerializeYamlContext&) {
+Result<void> SerializeYaml(YAML::Emitter& p_out, const glm::vec<N, T, glm::defaultp>& p_object, SerializeYamlContext& p_context) {
+    return SerializeYaml(p_out, reinterpret_cast<const Vector<T, N>&>(p_object), p_context);
+}
+
+template<typename T, int N>
+Result<void> SerializeYaml(YAML::Emitter& p_out, const Vector<T, N>& p_object, SerializeYamlContext&) {
     p_out.SetSeqFormat(YAML::Flow);
     p_out << YAML::BeginSeq;
     p_out << p_object.x;
@@ -148,7 +153,12 @@ Result<void> SerializeYaml(YAML::Emitter& p_out, const glm::vec<N, T, glm::defau
 }
 
 template<typename T, int N>
-Result<void> DeserializeYaml(const YAML::Node& p_node, glm::vec<N, T, glm::defaultp>& p_object, SerializeYamlContext&) {
+Result<void> DeserializeYaml(const YAML::Node& p_node, glm::vec<N, T, glm::defaultp>& p_object, SerializeYamlContext& p_context) {
+    return DeserializeYaml(p_node, reinterpret_cast<Vector<T, N>&>(p_object), p_context);
+}
+
+template<typename T, int N>
+Result<void> DeserializeYaml(const YAML::Node& p_node, Vector<T, N>& p_object, SerializeYamlContext&) {
     if (!p_node) {
         return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "Not defined");
     }

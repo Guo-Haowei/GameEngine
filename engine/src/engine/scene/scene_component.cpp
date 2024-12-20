@@ -81,7 +81,7 @@ void MeshComponent::CreateRenderData() {
         subset.local_bound.MakeInvalid();
         for (uint32_t i = 0; i < subset.index_count; ++i) {
             const Vector3f& point = positions[indices[i + subset.index_offset]];
-            subset.local_bound.ExpandPoint(point);
+            subset.local_bound.ExpandPoint(reinterpret_cast<const NewVector3f&>(point));
         }
         subset.local_bound.MakeValid();
         localBound.UnionBox(subset.local_bound);

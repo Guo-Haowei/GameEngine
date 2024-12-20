@@ -8,8 +8,6 @@ class AABB : public Box3 {
 public:
     using Box3::Box;
 
-    Vector3f Corner(int p_index) const;
-
     void ApplyMatrix(const Matrix4x4f& p_mat);
 
     bool Intersects(const AABB& p_aabb) const { return TestIntersection::AabbAabb(*this, p_aabb); }

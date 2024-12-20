@@ -62,26 +62,4 @@ struct ImageAsset : IAsset {
     std::shared_ptr<GpuTexture> gpu_texture;
 };
 
-#if 0
-
-class MaterialAsset : public IAsset {
-public:
-    enum {
-        TEXTURE_BASE = 0,
-        TEXTURE_NORMAL,
-        TEXTURE_METALLIC_ROUGHNESS,
-    };
-
-    // @TODO: reflection to register properties?
-    Vector4f baseColor;
-    Vector3f emissive;
-    float metallic;
-    float roughness;
-    //////////////////////////////////////
-
-    Result<void> Load(const std::string& p_path) override;
-    Result<void> Save(const std::string& p_path) override;
-};
-#endif
-
 }  // namespace my

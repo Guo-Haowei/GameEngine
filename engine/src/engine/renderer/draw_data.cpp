@@ -280,12 +280,13 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
                 // @TODO: add option to specify extent
                 // @would be nice if can add debug draw
                 const AABB& world_bound = (light_component.HasShadowRegion()) ? light_component.m_shadowRegion : p_scene.GetBound();
-                Vector3f center = world_bound.Center();
-                Vector3f extents = world_bound.Size();
+                NewVector3f center = world_bound.Center();
+                NewVector3f extents = world_bound.Size();
 
-                const float size = 0.7f * glm::max(extents.x, glm::max(extents.y, extents.z));
-
-                light.view_matrix = glm::lookAt(center + light_dir * size, center, Vector3f(0, 1, 0));
+                const float size = 0.7f * math::Max(extents.x, math::Max(extents.y, extents.z));
+                NewVector3f tmp;
+                tmp.Set(&light_dir.x);
+                light.view_matrix = LookAtRh(center + tmp * size, center, NewVector3f::UnitY);
 
                 if (p_config.isOpengl) {
                     light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
@@ -413,7 +414,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     const float voxel_size = voxel_world_size * texel_size;
 
     // this code is a bit mess here
-    cache.c_voxelWorldCenter = voxel_world_center;
+    cache.c_voxelWorldCenter = *reinterpret_cast<const glm::vec3*>(&voxel_world_center);
     cache.c_voxelWorldSizeHalf = 0.5f * voxel_world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;

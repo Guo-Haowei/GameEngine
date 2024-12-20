@@ -5,6 +5,8 @@ namespace my {
 
 template<typename T>
 concept Arithmetic = std::is_arithmetic_v<T>;
+template<typename T>
+concept FloatingPoint = std::is_floating_point_v<T>;
 
 WARNING_PUSH()
 WARNING_DISABLE(4201, "-Wgnu-anonymous-struct")
@@ -19,7 +21,7 @@ struct VectorBase {
     constexpr T* Data() { return reinterpret_cast<T*>(this); }
     constexpr const T* Data() const { return reinterpret_cast<const T*>(this); }
 
-    constexpr void Set(T* p_data) {
+    constexpr void Set(const T* p_data) {
         T* data = Data();
         data[0] = p_data[0];
         data[1] = p_data[1];

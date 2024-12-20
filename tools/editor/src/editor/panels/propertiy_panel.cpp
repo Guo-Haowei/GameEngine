@@ -111,8 +111,6 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     MeshComponent* mesh_component = object_component ? p_scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
     MaterialComponent* material_component = p_scene.GetComponent<MaterialComponent>(id);
     RigidBodyComponent* rigid_body_component = p_scene.GetComponent<RigidBodyComponent>(id);
-    BoxColliderComponent* box_collider = p_scene.GetComponent<BoxColliderComponent>(id);
-    MeshColliderComponent* mesh_collider = p_scene.GetComponent<MeshColliderComponent>(id);
     AnimationComponent* animation_component = p_scene.GetComponent<AnimationComponent>(id);
     ParticleEmitterComponent* emitter_component = p_scene.GetComponent<ParticleEmitterComponent>(id);
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
@@ -305,29 +303,6 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         ImGui::Text("%zu triangles", mesh.indices.size() / 3);
         ImGui::Text("v:%zu, n:%zu, u:%zu, b:%zu", mesh.positions.size(), mesh.normals.size(),
                     mesh.texcoords_0.size(), mesh.weights_0.size());
-    });
-
-    DrawComponent("Box Collider", box_collider, [&](BoxColliderComponent& collider) {
-        Vector3f center = collider.box.Center();
-        Vector3f size = collider.box.Size();
-        if (DrawVec3Control("size", size)) {
-            collider.box = AABB::FromCenterSize(center, size);
-        }
-    });
-
-    DrawComponent("Mesh Collider", mesh_collider, [&](MeshColliderComponent& collider) {
-        char buffer[256];
-        StringUtils::Sprintf(buffer, "%d", collider.objectId.GetId());
-        ImGui::Columns(2);
-        ImGui::SetColumnWidth(0, DEFAULT_COLUMN_WIDTH);
-        ImGui::Text("Mesh ID");
-        ImGui::NextColumn();
-        ImGui::InputText("##ID", buffer, sizeof(buffer));
-        ImGui::Columns(1);
-        ecs::Entity entity{ (uint32_t)std::stoi(buffer) };
-        if (p_scene.GetComponent<ObjectComponent>(entity) != nullptr) {
-            collider.objectId = entity;
-        }
     });
 
     DrawComponent("Animation", animation_component, [&](AnimationComponent& p_animation) {

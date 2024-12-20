@@ -18,6 +18,7 @@ namespace my {
  *
  * A, B, B, C, C, D, D, A, E, F, F, G, G, H, H, E, A, E, B, F, D, H, C, G
 #endif
+#if 0
 Vector3f AABB::Corner(int p_index) const {
     // clang-format off
     switch (p_index)
@@ -35,6 +36,7 @@ Vector3f AABB::Corner(int p_index) const {
     DEV_ASSERT(0);
     return Vector3f(0);
 }
+#endif
 
 void AABB::ApplyMatrix(const Matrix4x4f& p_mat4) {
     const Vector4f points[] = { Vector4f(m_min.x, m_min.y, m_min.z, 1.0f), Vector4f(m_min.x, m_min.y, m_max.z, 1.0f),
@@ -45,7 +47,8 @@ void AABB::ApplyMatrix(const Matrix4x4f& p_mat4) {
 
     AABB new_box;
     for (size_t i = 0; i < array_length(points); ++i) {
-        new_box.ExpandPoint(Vector3f(p_mat4 * points[i]));
+        auto point = p_mat4 * points[i];
+        new_box.ExpandPoint(NewVector3f(point.x, point.y, point.z));
     }
 
     m_min = new_box.m_min;
@@ -54,9 +57,14 @@ void AABB::ApplyMatrix(const Matrix4x4f& p_mat4) {
 
 AABB AABB::FromCenterSize(const Vector3f& p_center, const Vector3f& p_size) {
     AABB box;
-    const Vector3f half_size = 0.5f * p_size;
-    box.m_min = p_center - half_size;
-    box.m_max = p_center + half_size;
+    NewVector3f center;
+    NewVector3f half_size;
+    center.Set(&p_center.x);
+    half_size.Set(&p_size.x);
+    half_size *= 0.5f;
+
+    box.m_min = center - half_size;
+    box.m_max = center + half_size;
     return box;
 }
 

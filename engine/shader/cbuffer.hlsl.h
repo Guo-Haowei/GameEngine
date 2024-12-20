@@ -3,6 +3,12 @@
 #define CBUFFER_INCLUDED
 #include "shader_defines.hlsl.h"
 
+#ifdef __cplusplus
+#include <engine/core/math/geomath.h>
+
+#include <cstdint>
+#endif
+
 BEGIN_NAME_SPACE(my)
 
 // constant buffer

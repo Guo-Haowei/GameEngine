@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/geomath.h"
+#include "engine/core/math/vector_math.h"
 
 #ifdef min
 #undef min
@@ -12,7 +12,7 @@ namespace my {
 
 template<int N>
 class Box {
-    using vec_type = glm::vec<N, float, glm::defaultp>;
+    using vec_type = Vector<float, N>;
     using self_type = Box<N>;
 
 public:
@@ -55,18 +55,18 @@ public:
     }
 
     void ExpandPoint(const vec_type& p_point) {
-        m_min = glm::min(m_min, p_point);
-        m_max = glm::max(m_max, p_point);
+        m_min = math::Min(m_min, p_point);
+        m_max = math::Max(m_max, p_point);
     }
 
     void UnionBox(const self_type& p_other) {
-        m_min = glm::min(m_min, p_other.m_min);
-        m_max = glm::max(m_max, p_other.m_max);
+        m_min = math::Min(m_min, p_other.m_min);
+        m_max = math::Max(m_max, p_other.m_max);
     }
 
     void IntersectBox(const self_type& p_other) {
-        m_min = glm::max(m_min, p_other.m_min);
-        m_max = glm::min(m_max, p_other.m_max);
+        m_min = math::Max(m_min, p_other.m_min);
+        m_max = math::Min(m_max, p_other.m_max);
     }
 
     float SurfaceArea() const;

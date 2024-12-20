@@ -275,4 +275,17 @@ TEST(vector_math, lerp) {
     }
 }
 
+TEST(vector_math, dot) {
+    {
+        const Vector2i a(4, 1);
+        const Vector2i b(2, 3);
+        EXPECT_EQ(Dot(a, b), 11);
+    }
+    {
+        const Vector4i a(1, 2, 3, 4);
+        const Vector4i b(2, 4, 6, 8);
+        EXPECT_EQ(Dot(a, b), 60);
+    }
+}
+
 }  // namespace my::math::detail

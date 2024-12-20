@@ -17,13 +17,13 @@ gpu_bvh_t::gpu_bvh_t()
 gpu_geometry_t::gpu_geometry_t()
     : kind(Kind::Invalid), material_id(-1) {}
 
-gpu_geometry_t::gpu_geometry_t(const Vector3f& A, const Vector3f& B, const Vector3f& C, int material)
+gpu_geometry_t::gpu_geometry_t(const NewVector3f& A, const NewVector3f& B, const NewVector3f& C, int material)
     : A(A), B(B), C(C), material_id(material) {
     kind = Kind::Triangle;
     CalcNormal();
 }
 
-gpu_geometry_t::gpu_geometry_t(const Vector3f& center, float radius, int material)
+gpu_geometry_t::gpu_geometry_t(const NewVector3f& center, float radius, int material)
     : A(center), material_id(material) {
     // TODO: refactor
     kind = Kind::Sphere;
@@ -31,17 +31,18 @@ gpu_geometry_t::gpu_geometry_t(const Vector3f& center, float radius, int materia
 }
 
 void gpu_geometry_t::CalcNormal() {
-    using glm::cross;
-    using glm::normalize;
-    Vector3f BA = normalize(B - A);
-    Vector3f CA = normalize(C - A);
-    Vector3f norm = normalize(cross(BA, CA));
+    CRASH_NOW();
+#if 0
+    NewVector3f BA = normalize(B - A);
+    NewVector3f CA = normalize(C - A);
+    NewVector3f norm = normalize(cross(BA, CA));
     normal1 = norm;
     normal2 = norm;
     normal3 = norm;
+#endif
 }
 
-Vector3f gpu_geometry_t::Centroid() const {
+NewVector3f gpu_geometry_t::Centroid() const {
     switch (kind) {
         case Kind::Triangle:
             return (A + B + C) / 3.0f;
@@ -49,25 +50,30 @@ Vector3f gpu_geometry_t::Centroid() const {
             return A;
         default:
             assert(0);
-            return Vector3f(0.0f);
+            return NewVector3f(0.0f);
     }
 }
 
 static Box3 Box3FromSphere(const gpu_geometry_t& sphere) {
     assert(sphere.kind == gpu_geometry_t::Kind::Sphere);
 
-    return Box3(sphere.A - Vector3f(sphere.radius), sphere.A + Vector3f(sphere.radius));
+    return Box3(sphere.A - NewVector3f(sphere.radius),
+                sphere.A + NewVector3f(sphere.radius));
 }
 
 static Box3 Box3FromTriangle(const gpu_geometry_t& triangle) {
     assert(triangle.kind == gpu_geometry_t::Kind::Triangle);
 
+    CRASH_NOW();
+    return Box3();
+#if 0
     Box3 ret = Box3(
         glm::min(triangle.C, glm::min(triangle.A, triangle.B)),
         glm::max(triangle.C, glm::max(triangle.A, triangle.B)));
 
     ret.MakeValid();
     return ret;
+#endif
 }
 
 static Box3 Box3FromGeometry(const gpu_geometry_t& geom) {
@@ -110,7 +116,7 @@ static int genIdx() {
 }
 
 static int DominantAxis(const Box3& box) {
-    const Vector3f span = box.Size();
+    const NewVector3f span = box.Size();
     int axis = 0;
     if (span[axis] < span.y) {
         axis = 1;
@@ -160,10 +166,13 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
     std::vector<Vector3f> centroids(nGeoms);
 
     Box3 centroidBox;
+    CRASH_NOW();
+#if 0
     for (size_t i = 0; i < nGeoms; ++i) {
         centroids[i] = geometries.at(i).Centroid();
         centroidBox.ExpandPoint(centroids[i]);
     }
+#endif
 
     const int axis = DominantAxis(centroidBox);
     const float tmin = centroidBox.GetMin()[axis];
@@ -212,7 +221,7 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
     GeometryList rightPartition;
 
     for (const gpu_geometry_t& geom : geometries) {
-        const Vector3f t = geom.Centroid();
+        const NewVector3f t = geom.Centroid();
         float tmp = (t[axis] - tmin) / (tmax - tmin);
         tmp *= nBuckets;
         int slot = static_cast<int>(tmp);
@@ -280,8 +289,8 @@ void Bvh::SplitByAxis(GeometryList& geoms) {
         bool operator()(const gpu_geometry_t& geom1, const gpu_geometry_t& geom2) {
             Box3 aabb1 = Box3FromGeometry(geom1);
             Box3 aabb2 = Box3FromGeometry(geom2);
-            Vector3f center1 = aabb1.Center();
-            Vector3f center2 = aabb2.Center();
+            NewVector3f center1 = aabb1.Center();
+            NewVector3f center2 = aabb2.Center();
             return center1[axis] < center2[axis];
         }
 
@@ -377,6 +386,9 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
             };
 
             // per-face material
+            gpu_geometry_t triangle;
+            CRASH_NOW();
+#if 0
             gpu_geometry_t triangle(points[0], points[1], points[2], 0);
             triangle.uv1 = uvs[0];
             triangle.uv2 = uvs[1];
@@ -384,6 +396,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
             triangle.normal1 = glm::normalize(normals[0]);
             triangle.normal2 = glm::normalize(normals[1]);
             triangle.normal3 = glm::normalize(normals[2]);
+#endif
             triangle.kind = gpu_geometry_t::Kind::Triangle;
             auto it = material_lut.find(p_mesh.subsets[0].material_id);
             DEV_ASSERT(it != material_lut.end());
@@ -406,9 +419,12 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         if (light.GetType() == LIGHT_TYPE_INFINITE) {
             auto transform = p_scene.GetComponent<TransformComponent>(entity);
             DEV_ASSERT(transform);
-            Vector3f rotation = glm::normalize(transform->GetWorldMatrix() * Vector4f(0.0, 0.0, 1.0f, 0.0f));
+            glm::vec3 rotation = glm::normalize(transform->GetWorldMatrix() * Vector4f(0.0, 0.0, 1.0f, 0.0f));
             float radius = 1000.0f;
-            Vector3f center = radius * rotation * 5.0f;
+
+            NewVector3f tmp;
+            tmp.Set(&rotation.x);
+            NewVector3f center = radius * 0.5f * tmp;
 
             auto it = material_lut.find(entity);
             DEV_ASSERT(it != material_lut.end());

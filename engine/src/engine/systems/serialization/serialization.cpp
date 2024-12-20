@@ -59,7 +59,7 @@ Result<void> DeserializeYaml(const YAML::Node& p_node, AABB& p_object, Serialize
         return Result<void>();
     }
 
-    Vector3f min, max;
+    NewVector3f min, max;
     if (auto res = DeserializeYaml(p_node["min"], min, p_context); !res) {
         return HBN_ERROR(res.error());
     }

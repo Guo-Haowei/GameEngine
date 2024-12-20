@@ -38,16 +38,16 @@ Frustum::Frustum(const Matrix4x4f& p_project_view_matrix) {
 }
 
 bool Frustum::Intersects(const AABB& p_box) const {
-    const Vector3f& box_min = p_box.GetMin();
-    const Vector3f& box_max = p_box.GetMax();
+    const auto& box_min = p_box.GetMin();
+    const auto& box_max = p_box.GetMax();
     for (int i = 0; i < 6; ++i) {
         const Plane& plane = this->operator[](i);
-        Vector3f p;
-        p.x = plane.normal.x > static_cast<float>(0) ? box_max.x : box_min.x;
-        p.y = plane.normal.y > static_cast<float>(0) ? box_max.y : box_min.y;
-        p.z = plane.normal.z > static_cast<float>(0) ? box_max.z : box_min.z;
+        NewVector3f p;
+        p.x = plane.normal.x > 0.0f ? box_max.x : box_min.x;
+        p.y = plane.normal.y > 0.0f ? box_max.y : box_min.y;
+        p.z = plane.normal.z > 0.0f ? box_max.z : box_min.z;
 
-        if (plane.Distance(p) < static_cast<float>(0)) {
+        if (plane.Distance(p) < 0.0f) {
             return false;
         }
     }

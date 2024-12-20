@@ -105,12 +105,14 @@ void AddDebugCube(const AABB& p_aabb,
                   const Matrix4x4f* p_transform) {
     ASSERT_CAN_RECORD();
 
-    const Vector3f& min = p_aabb.GetMin();
-    const Vector3f& max = p_aabb.GetMax();
+    const auto& min = p_aabb.GetMin();
+    const auto& max = p_aabb.GetMax();
 
+#define C(a) glm::vec3(a.x, a.y, a.z)
     std::vector<Vector3f> positions;
     std::vector<uint32_t> indices;
-    BoxWireFrameHelper(min, max, positions, indices);
+    BoxWireFrameHelper(C(min), C(max), positions, indices);
+#undef C
 
     auto& context = s_glob.renderData->drawDebugContext;
     for (const auto& i : indices) {

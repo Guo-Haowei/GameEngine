@@ -1,7 +1,14 @@
 #pragma once
 #include "geomath.h"
+#include "vector_math.h"
 
 namespace my {
+
+static inline Matrix4x4f LookAtRh(const NewVector3f& p_eye, const NewVector3f& p_center, const NewVector3f& p_up) {
+#define C(v) glm::vec3(v.x, v.y, v.z)
+    return glm::lookAtRH(C(p_eye), C(p_center), C(p_up));
+#undef C
+}
 
 inline Matrix4x4f BuildPerspectiveLH(float p_fovy, float p_aspect, float p_near, float p_far) {
     const float tan_half_fovy = glm::tan(0.5f * p_fovy);
