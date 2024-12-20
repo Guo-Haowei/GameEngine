@@ -115,7 +115,7 @@ void RenderPassCreator::AddGbufferPass() {
     RenderPassDesc desc;
     desc.name = RenderPassName::GBUFFER;
     auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
         .colorAttachments = { attachment0, attachment1, attachment2, attachment3 },
         .depthAttachment = gbuffer_depth,
     });
@@ -155,7 +155,7 @@ void RenderPassCreator::AddHighlightPass() {
     desc.name = RenderPassName::HIGHLIGHT_SELECT;
     desc.dependencies = { RenderPassName::GBUFFER };
     auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
         .colorAttachments = { attachment },
         .depthAttachment = gbuffer_depth,
     });
@@ -264,7 +264,7 @@ void RenderPassCreator::AddShadowPass() {
     desc.dependencies = { RenderPassName::ENV };
     auto pass = m_graph.CreatePass(desc);
     {
-        auto framebuffer = manager.CreateDrawPass(FramebufferDesc{ .depthAttachment = shadow_map });
+        auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = shadow_map });
         pass->AddDrawPass(framebuffer, ShadowPassFunc);
     }
 
@@ -274,7 +274,7 @@ void RenderPassCreator::AddShadowPass() {
                                                                          point_shadow_res, point_shadow_res, 6 * MAX_POINT_LIGHT_SHADOW_COUNT),
                                                  shadow_cube_map_sampler());
 
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{ .depthAttachment = point_shadowMap });
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = point_shadowMap });
     pass->AddDrawPass(framebuffer, PointShadowPassFunc);
 }
 
@@ -396,7 +396,7 @@ void RenderPassCreator::AddVoxelizationPass() {
     desc.name = RenderPassName::VOXELIZATION;
     desc.dependencies = { RenderPassName::SHADOW };
     auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{});
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{});
     pass->AddDrawPass(framebuffer, VoxelizationPassFunc);
 }
 
@@ -497,7 +497,7 @@ void RenderPassCreator::AddLightingPass() {
     }
 
     auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
         .colorAttachments = { lighting_attachment },
         .depthAttachment = gbuffer_depth,
         .transitions = {
@@ -588,7 +588,7 @@ void RenderPassCreator::AddEmitterPass() {
     desc.dependencies = { RenderPassName::LIGHTING };
 
     auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateDrawPass(FramebufferDesc{
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
         .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
         .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
     });
@@ -688,7 +688,7 @@ void RenderPassCreator::AddBloomPass() {
     {
         auto output = gm.FindTexture(RESOURCE_BLOOM_0);
         DEV_ASSERT(output);
-        auto pass = gm.CreateDrawPass(FramebufferDesc{
+        auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .transitions = {
                 ResourceTransition{
                     .resource = output,
@@ -708,7 +708,7 @@ void RenderPassCreator::AddBloomPass() {
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
         DEV_ASSERT(output);
-        auto pass = gm.CreateDrawPass(FramebufferDesc{
+        auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .transitions = {
                 ResourceTransition{
                     .resource = output,
@@ -729,7 +729,7 @@ void RenderPassCreator::AddBloomPass() {
     for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
         DEV_ASSERT(output);
-        auto pass = gm.CreateDrawPass(FramebufferDesc{
+        auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .transitions = {
                 ResourceTransition{
                     .resource = output,
@@ -822,36 +822,25 @@ void RenderPassCreator::AddTonePass() {
         framebuffer_desc.depthAttachment = gbuffer_depth;
     }
 
-    auto framebuffer = gm.CreateDrawPass(framebuffer_desc);
+    auto framebuffer = gm.CreateFramebuffer(framebuffer_desc);
     pass->AddDrawPass(framebuffer, TonePassFunc);
 }
 
-void RenderPassCreator::DebugImagePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+// assume render target is setup
+void RenderPassCreator::DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager) {
+    auto& frame = p_graphics_manager.GetCurrentFrame();
 
-    auto [width, height] = DisplayManager::GetSingleton().GetWindowSize();
-    // @TODO: refactor this
-    if (p_framebuffer->desc.type == FramebufferDesc::TEXTURE) {
-        width = p_framebuffer->desc.colorAttachments[0]->desc.width;
-        height = p_framebuffer->desc.colorAttachments[0]->desc.height;
-    }
-
-    auto& gm = GraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-
-    gm.SetViewport(Viewport(width, height));
-    gm.SetRenderTarget(p_framebuffer);
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
-    gm.SetPipelineState(PSO_RW_TEXTURE_2D);
+    p_graphics_manager.SetViewport(Viewport(p_width, p_height));
+    p_graphics_manager.SetPipelineState(PSO_RW_TEXTURE_2D);
 
     uint32_t offset = p_data.drawImageOffset;
     for (const auto& draw_context : p_data.drawImageContext) {
-        gm.BindTexture(Dimension::TEXTURE_2D, draw_context.handle, GetBaseColorMapSlot());
-        gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), offset++);
-        gm.DrawQuad();
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+        p_graphics_manager.BindTexture(Dimension::TEXTURE_2D, draw_context.handle, GetBaseColorMapSlot());
+        p_graphics_manager.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), offset++);
+        p_graphics_manager.DrawQuad();
+        p_graphics_manager.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
     }
-};
+}
 
 void RenderPassCreator::AddDebugImagePass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -859,24 +848,28 @@ void RenderPassCreator::AddDebugImagePass() {
     const int width = m_config.frameWidth;
     const int height = m_config.frameHeight;
 
-    const bool is_runtime = true;
     std::shared_ptr<Framebuffer> framebuffer;
-    if (is_runtime) {
-        framebuffer = std::make_shared<Framebuffer>(FramebufferDesc{ .type = FramebufferDesc::SCREEN });
-    } else {
-        auto final_attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
-                                                                         RESOURCE_FORMAT_TONE,
-                                                                         AttachmentType::COLOR_2D,
-                                                                         width, height),
-                                                 PointClampSampler());
-        framebuffer = gm.CreateDrawPass(FramebufferDesc{ .colorAttachments = { final_attachment } });
-    }
+    auto final_attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
+                                                                     GraphicsManager::DEFAULT_SURFACE_FORMAT,
+                                                                     AttachmentType::COLOR_2D,
+                                                                     width, height),
+                                             PointClampSampler());
+    framebuffer = gm.CreateFramebuffer(FramebufferDesc{ .colorAttachments = { final_attachment } });
 
     RenderPassDesc desc;
     desc.name = RenderPassName::FINAL;
     desc.dependencies = { RenderPassName::TONE };
     auto pass = m_graph.CreatePass(desc);
-    pass->AddDrawPass(framebuffer, DebugImagePassFunc);
+    pass->AddDrawPass(framebuffer, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+        OPTICK_EVENT();
+        auto& gm = GraphicsManager::GetSingleton();
+        gm.SetRenderTarget(p_framebuffer);
+        gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
+
+        const int width = p_framebuffer->desc.colorAttachments[0]->desc.width;
+        const int height = p_framebuffer->desc.colorAttachments[0]->desc.height;
+        DrawDebugImages(p_data, width, height, gm);
+    });
 }
 
 void RenderPassCreator::AddGenerateSkylightPass() {
@@ -899,38 +892,36 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                                                           FilterMode::LINEAR,
                                                           AddressMode::CLAMP));
         DEV_ASSERT(cubemap);
-        auto pass = gm.CreateDrawPass(FramebufferDesc{
+        auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .colorAttachments = { cubemap },
         });
 
-        render_pass->AddDrawPass(
-            pass,
-            [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-                if (!p_data.bakeIbl) {
-                    return;
-                }
-                OPTICK_EVENT("hdr image to -> skybox");
+        render_pass->AddDrawPass(pass, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+            if (!p_data.bakeIbl) {
+                return;
+            }
+            OPTICK_EVENT("hdr image to -> skybox");
 
-                GraphicsManager& gm = GraphicsManager::GetSingleton();
+            GraphicsManager& gm = GraphicsManager::GetSingleton();
 
-                gm.SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
-                auto cube_map = p_framebuffer->desc.colorAttachments[0];
-                const auto [width, height] = p_framebuffer->GetBufferSize();
+            gm.SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
+            auto cube_map = p_framebuffer->desc.colorAttachments[0];
+            const auto [width, height] = p_framebuffer->GetBufferSize();
 
-                auto& frame = gm.GetCurrentFrame();
-                gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
-                for (int i = 0; i < 6; ++i) {
-                    gm.SetRenderTarget(p_framebuffer, i);
+            auto& frame = gm.GetCurrentFrame();
+            gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
+            for (int i = 0; i < 6; ++i) {
+                gm.SetRenderTarget(p_framebuffer, i);
 
-                    gm.SetViewport(Viewport(width, height));
+                gm.SetViewport(Viewport(width, height));
 
-                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
-                    gm.DrawSkybox();
-                }
-                gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
+                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+                gm.DrawSkybox();
+            }
+            gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
 
-                gm.GenerateMipmap(cube_map.get());
-            });
+            gm.GenerateMipmap(cube_map.get());
+        });
     }
     // Diffuse irradiance
     {
@@ -942,35 +933,33 @@ void RenderPassCreator::AddGenerateSkylightPass() {
         auto cubemap = gm.CreateTexture(desc, LinearClampSampler());
         DEV_ASSERT(cubemap);
 
-        auto pass = gm.CreateDrawPass(FramebufferDesc{
+        auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .colorAttachments = { cubemap },
         });
-        render_pass->AddDrawPass(
-            pass,
-            [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-                if (!p_data.bakeIbl) {
-                    return;
-                }
-                OPTICK_EVENT("bake diffuse irradiance");
+        render_pass->AddDrawPass(pass, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+            if (!p_data.bakeIbl) {
+                return;
+            }
+            OPTICK_EVENT("bake diffuse irradiance");
 
-                GraphicsManager& gm = GraphicsManager::GetSingleton();
+            GraphicsManager& gm = GraphicsManager::GetSingleton();
 
-                gm.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
-                const auto [width, height] = p_framebuffer->GetBufferSize();
+            gm.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
+            const auto [width, height] = p_framebuffer->GetBufferSize();
 
-                auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-                DEV_ASSERT(skybox);
-                gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
-                auto& frame = gm.GetCurrentFrame();
-                for (int i = 0; i < 6; ++i) {
-                    gm.SetRenderTarget(p_framebuffer, i);
-                    gm.SetViewport(Viewport(width, height));
+            auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+            DEV_ASSERT(skybox);
+            gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+            auto& frame = gm.GetCurrentFrame();
+            for (int i = 0; i < 6; ++i) {
+                gm.SetRenderTarget(p_framebuffer, i);
+                gm.SetViewport(Viewport(width, height));
 
-                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
-                    gm.DrawSkybox();
-                }
-                gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
-            });
+                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+                gm.DrawSkybox();
+            }
+            gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+        });
     }
     // prefilter
     {
@@ -990,37 +979,35 @@ void RenderPassCreator::AddGenerateSkylightPass() {
                                                           AddressMode::CLAMP));
         DEV_ASSERT(cubemap);
 
-        auto pass = gm.CreateDrawPass(FramebufferDesc{
+        auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .colorAttachments = { cubemap },
         });
-        render_pass->AddDrawPass(
-            pass,
-            [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-                if (!p_data.bakeIbl) {
-                    return;
+        render_pass->AddDrawPass(pass, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+            if (!p_data.bakeIbl) {
+                return;
+            }
+            OPTICK_EVENT("bake prefiltered");
+
+            GraphicsManager& gm = GraphicsManager::GetSingleton();
+            gm.SetPipelineState(PSO_PREFILTER);
+            auto [width, height] = p_framebuffer->GetBufferSize();
+
+            auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+            DEV_ASSERT(skybox);
+            gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+            auto& frame = gm.GetCurrentFrame();
+            for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
+                for (int face_id = 0; face_id < 6; ++face_id) {
+                    const int index = mip_idx * 6 + face_id;
+                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), index);
+
+                    gm.SetRenderTarget(p_framebuffer, face_id, mip_idx);
+                    gm.SetViewport(Viewport(width, height));
+                    gm.DrawSkybox();
                 }
-                OPTICK_EVENT("bake prefiltered");
-
-                GraphicsManager& gm = GraphicsManager::GetSingleton();
-                gm.SetPipelineState(PSO_PREFILTER);
-                auto [width, height] = p_framebuffer->GetBufferSize();
-
-                auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-                DEV_ASSERT(skybox);
-                gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
-                auto& frame = gm.GetCurrentFrame();
-                for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
-                    for (int face_id = 0; face_id < 6; ++face_id) {
-                        const int index = mip_idx * 6 + face_id;
-                        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), index);
-
-                        gm.SetRenderTarget(p_framebuffer, face_id, mip_idx);
-                        gm.SetViewport(Viewport(width, height));
-                        gm.DrawSkybox();
-                    }
-                }
-                gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
-            });
+            }
+            gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+        });
     }
 }
 
@@ -1084,7 +1071,7 @@ void RenderPassCreator::AddPathTracerTonePass() {
         framebuffer_desc.depthAttachment = gbuffer_depth;
     }
 
-    auto framebuffer = gm.CreateDrawPass(framebuffer_desc);
+    auto framebuffer = gm.CreateFramebuffer(framebuffer_desc);
 
     pass->AddDrawPass(framebuffer, PathTracerTonePassFunc);
 }
@@ -1138,7 +1125,7 @@ void RenderPassCreator::AddPathTracerPass() {
 
     auto resource = gm.CreateTexture(texture_desc, LinearClampSampler());
 
-    auto pass = gm.CreateDrawPass(FramebufferDesc{
+    auto pass = gm.CreateFramebuffer(FramebufferDesc{
         .transitions = {
             ResourceTransition{
                 .resource = resource,

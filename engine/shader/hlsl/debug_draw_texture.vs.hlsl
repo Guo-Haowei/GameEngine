@@ -9,6 +9,9 @@ vsoutput_uv main(vsinput_position input) {
     vsoutput_uv output;
     output.position = float4(position, 0.0f, 1.0f);
     output.uv = 0.5f * (input.position + 1.0f);
+    // flip when hlsl
+#if !defined(HLSL_2_GLSL)
     output.uv.y = 1.0f - output.uv.y;
+#endif
     return output;
 }

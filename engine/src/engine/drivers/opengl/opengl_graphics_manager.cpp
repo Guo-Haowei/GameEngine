@@ -20,6 +20,7 @@
 
 // @TODO: remove the following
 #include "engine/renderer/ltc_matrix.h"
+#include "engine/renderer/render_graph/pass_creator.h"
 
 // @TODO: refactor
 using namespace my;
@@ -522,7 +523,7 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTextureImpl(const GpuTe
     return texture;
 }
 
-std::shared_ptr<Framebuffer> OpenGlGraphicsManager::CreateDrawPass(const FramebufferDesc& p_desc) {
+std::shared_ptr<Framebuffer> OpenGlGraphicsManager::CreateFramebuffer(const FramebufferDesc& p_desc) {
     auto framebuffer = std::make_shared<OpenGlFramebuffer>(p_desc);
     GLuint fbo_handle = 0;
 
@@ -689,6 +690,16 @@ void OpenGlGraphicsManager::CreateGpuResources() {
 
 void OpenGlGraphicsManager::Render() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // @TODO: refactor this
+    if (m_app->IsRuntime()) {
+        const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
+                                                     width,
+                                                     height,
+                                                     *this);
+    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

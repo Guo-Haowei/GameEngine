@@ -155,6 +155,7 @@ inline GLuint ConvertFormat(PixelFormat p_format) {
         case PixelFormat::R11G11B10_FLOAT:
             return GL_RGB;
         case PixelFormat::R8G8B8A8_UINT:
+        case PixelFormat::R8G8B8A8_UNORM:
         case PixelFormat::R10G10B10A2_UINT:
         case PixelFormat::R16G16B16A16_FLOAT:
         case PixelFormat::R32G32B32A32_FLOAT:
@@ -180,6 +181,7 @@ inline GLuint ConvertInternalFormat(PixelFormat p_format) {
             return GL_RG;
         case PixelFormat::R8G8B8_UINT:
             return GL_RGB;
+        case PixelFormat::R8G8B8A8_UNORM:
         case PixelFormat::R8G8B8A8_UINT:
             return GL_RGBA;
         case PixelFormat::R16_FLOAT:
@@ -221,6 +223,7 @@ inline GLuint ConvertDataType(PixelFormat p_format) {
         case PixelFormat::R8G8_UINT:
         case PixelFormat::R8G8B8_UINT:
         case PixelFormat::R8G8B8A8_UINT:
+        case PixelFormat::R8G8B8A8_UNORM:
         case PixelFormat::R10G10B10A2_UINT:
             return GL_UNSIGNED_BYTE;
         case PixelFormat::R16_FLOAT:

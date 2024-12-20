@@ -66,7 +66,7 @@ public:
 
     void GenerateMipmap(const GpuTexture* p_texture) override {}
 
-    std::shared_ptr<Framebuffer> CreateDrawPass(const FramebufferDesc& p_subpass_desc) override { return nullptr; }
+    std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc& p_subpass_desc) override { return nullptr; }
 
 protected:
     auto InitializeInternal() -> Result<void> override { return Result<void>(); }

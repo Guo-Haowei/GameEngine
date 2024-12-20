@@ -5,7 +5,8 @@
 
 namespace my {
 struct Framebuffer;
-}
+class GraphicsManager;
+}  // namespace my
 
 namespace my::renderer {
 
@@ -35,7 +36,7 @@ public:
     static std::unique_ptr<RenderGraph> CreateExperimental();
     static std::unique_ptr<RenderGraph> CreatePathTracer();
 
-    static void DebugImagePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer);
+    static void DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager);
 
 private:
     void AddGbufferPass();

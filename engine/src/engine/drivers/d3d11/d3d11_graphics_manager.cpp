@@ -14,6 +14,9 @@
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/scene/scene.h"
 
+// @TODO: remove the following
+#include "engine/renderer/render_graph/pass_creator.h"
+
 #define INCLUDE_AS_D3D11
 #include "engine/drivers/d3d_common/d3d_convert.h"
 
@@ -61,8 +64,17 @@ void D3d11GraphicsManager::FinalizeImpl() {
 
 void D3d11GraphicsManager::Render() {
     m_deviceContext->OMSetRenderTargets(1, m_windowRtv.GetAddressOf(), nullptr);
-    // const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    // m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
+    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    m_deviceContext->ClearRenderTargetView(m_windowRtv.Get(), clear_color);
+
+    // @TODO: refactor this
+    if (m_app->IsRuntime()) {
+        const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
+        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
+                                                     width,
+                                                     height,
+                                                     *this);
+    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -530,7 +542,7 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     return gpu_texture;
 }
 
-std::shared_ptr<Framebuffer> D3d11GraphicsManager::CreateDrawPass(const FramebufferDesc& p_subpass_desc) {
+std::shared_ptr<Framebuffer> D3d11GraphicsManager::CreateFramebuffer(const FramebufferDesc& p_subpass_desc) {
     auto framebuffer = std::make_shared<D3d11Framebuffer>(p_subpass_desc);
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {

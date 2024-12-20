@@ -22,7 +22,7 @@ enum {
 
 class Editor : public Application {
 public:
-    using Application::Application;
+    Editor(const ApplicationSpec& p_spec) : Application(p_spec, Application::Type::EDITOR) {}
 
     void InitLayers() override {
         m_editorLayer = std::make_unique<EditorLayer>();

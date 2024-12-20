@@ -64,7 +64,7 @@ public:
 
     void GenerateMipmap(const GpuTexture* p_texture) final;
 
-    std::shared_ptr<Framebuffer> CreateDrawPass(const FramebufferDesc& p_desc) final;
+    std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc& p_desc) final;
 
 protected:
     auto InitializeInternal() -> Result<void> final;

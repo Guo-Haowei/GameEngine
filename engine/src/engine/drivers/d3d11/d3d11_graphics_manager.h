@@ -71,7 +71,7 @@ public:
 
     void GenerateMipmap(const GpuTexture* p_texture) final;
 
-    std::shared_ptr<Framebuffer> CreateDrawPass(const FramebufferDesc&) final;
+    std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc&) final;
 
     // For fast and dirty access to device and device context, try not to use it
     Microsoft::WRL::ComPtr<ID3D11Device>& GetD3dDevice() { return m_device; }

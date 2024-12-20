@@ -41,7 +41,12 @@ public:
         COUNT,
     };
 
-    Application(const ApplicationSpec& p_spec);
+    enum class Type : uint32_t {
+        RUNTIME,
+        EDITOR,
+    };
+
+    Application(const ApplicationSpec& p_spec, Type p_type = Type::RUNTIME);
     virtual ~Application() = default;
 
     auto Initialize(int p_argc, const char** p_argv) -> Result<void>;
@@ -76,6 +81,9 @@ public:
     State GetState() const { return m_state; }
     void SetState(State p_state);
 
+    bool IsRuntime() const { return m_type == Type::RUNTIME; }
+    bool IsEditor() const { return m_type == Type::EDITOR; }
+
     virtual Scene* CreateInitialScene();
 
 protected:
@@ -107,8 +115,9 @@ protected:
 
     std::vector<Module*> m_modules;
 
-    Scene* m_activeScene{ nullptr };
+    const Type m_type;
     State m_state{ State::EDITING };
+    Scene* m_activeScene{ nullptr };
 };
 
 }  // namespace my

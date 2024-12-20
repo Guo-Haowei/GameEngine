@@ -362,7 +362,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                       .inputLayoutDesc = &s_inputLayoutPosition,
                                       .blendDesc = &s_blendStateDefault,
                                       .numRenderTargets = 1,
-                                      .rtvFormats = { RESOURCE_FORMAT_TONE },
+                                      .rtvFormats = { GraphicsManager::DEFAULT_SURFACE_FORMAT },
                                   });
 
     // @HACK: only support this many shaders

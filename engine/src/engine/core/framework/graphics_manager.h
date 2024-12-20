@@ -133,7 +133,7 @@ public:
         BindConstantBufferRange(p_buffer, sizeof(T), slot * sizeof(T));
     }
 
-    virtual std::shared_ptr<Framebuffer> CreateDrawPass(const FramebufferDesc& p_desc) = 0;
+    virtual std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc& p_desc) = 0;
 
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc);
     std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const;

@@ -74,7 +74,7 @@ public:
 
     void GenerateMipmap(const GpuTexture* p_texture) final;
 
-    std::shared_ptr<Framebuffer> CreateDrawPass(const FramebufferDesc& p_subpass_desc) final;
+    std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc& p_subpass_desc) final;
 
     ID3D12CommandQueue* CreateCommandQueue(D3D12_COMMAND_LIST_TYPE p_type);
 

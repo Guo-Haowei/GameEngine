@@ -12,6 +12,9 @@
 #include "engine/scene/scene.h"
 #include "structured_buffer.hlsl.h"
 
+// @TODO: refactor
+#include "engine/renderer/render_graph/pass_creator.h"
+
 #define INCLUDE_AS_D3D12
 #include "engine/drivers/d3d_common/d3d_convert.h"
 
@@ -215,6 +218,14 @@ void D3d12GraphicsManager::Render() {
     cmd_list->OMSetRenderTargets(1, &rtv_handle, FALSE, &dsv_handle);
     cmd_list->ClearRenderTargetView(rtv_handle, DEFAULT_CLEAR_COLOR, 0, nullptr);
     cmd_list->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+    // @TODO: refactor this
+    if (m_app->IsRuntime()) {
+        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
+                                                     width,
+                                                     height,
+                                                     *this);
+    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd_list);
@@ -875,7 +886,7 @@ void D3d12GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
     CRASH_NOW();
 }
 
-std::shared_ptr<Framebuffer> D3d12GraphicsManager::CreateDrawPass(const FramebufferDesc& p_subpass_desc) {
+std::shared_ptr<Framebuffer> D3d12GraphicsManager::CreateFramebuffer(const FramebufferDesc& p_subpass_desc) {
     auto framebuffer = std::make_shared<D3d12Framebuffer>(p_subpass_desc);
 
     for (const auto& color_attachment : p_subpass_desc.colorAttachments) {
