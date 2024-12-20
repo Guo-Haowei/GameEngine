@@ -45,15 +45,6 @@ void RendererPanel::UpdateInternal(Scene&) {
     ImGui::Checkbox("show editor", (bool*)DVAR_GET_POINTER(show_editor));
     ImGui::Checkbox("no texture", (bool*)DVAR_GET_POINTER(gfx_no_texture));
 
-    CollapseWindow("VXGI", []() {
-        ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_vxgi));
-        int value = DVAR_GET_INT(gfx_debug_vxgi_voxel);
-        ImGui::RadioButton("lighting", &value, 0);
-        ImGui::SameLine();
-        ImGui::RadioButton("normal", &value, 1);
-        DVAR_SET_INT(gfx_debug_vxgi_voxel, value);
-    });
-
     CollapseWindow("Shadow", []() {
         ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_shadow));
     });

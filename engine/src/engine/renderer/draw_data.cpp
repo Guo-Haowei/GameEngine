@@ -422,10 +422,8 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::FLAG_RENDERABLE;
         },
-        [&](const AABB& aabb) {
-            unused(aabb);
-            // return scene->get_bound().intersects(aabb);
-            return true;
+        [&](const AABB& p_aabb) {
+            return voxel_gi_bound.Intersects(p_aabb);
         },
         p_out_data);
 }
