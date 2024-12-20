@@ -200,8 +200,8 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = world_size * texel_size;
 
-    cache.c_worldCenter = world_center;
-    cache.c_worldSizeHalf = 0.5f * world_size;
+    cache.c_voxelWorldCenter = world_center;
+    cache.c_voxelWorldSizeHalf = 0.5f * world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
 

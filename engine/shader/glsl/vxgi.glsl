@@ -12,7 +12,7 @@ const DiffuseCone g_diffuse_cones[6] =
                    DiffuseCone(vec3(-0.823639, 0.5, 0.267617), 3.0 * MY_PI / 20.0));
 
 vec3 trace_cones(vec3 from, vec3 direction, float aperture) {
-    float max_dist = 2.0 * c_worldSizeHalf;
+    float max_dist = 2.0 * c_voxelWorldSizeHalf;
     vec4 acc = vec4(0.0);
 
     float offset = 2.0 * c_voxelSize;
@@ -23,7 +23,7 @@ vec3 trace_cones(vec3 from, vec3 direction, float aperture) {
         float diameter = 2.0 * aperture * dist;
         float mipLevel = log2(diameter / c_voxelSize);
 
-        vec3 coords = (conePosition - c_worldCenter) / c_worldSizeHalf;
+        vec3 coords = (conePosition - c_voxelWorldCenter) / c_voxelWorldSizeHalf;
         coords = 0.5 * coords + 0.5;
 
         vec4 voxel = textureLod(t_VoxelLighting, coords, mipLevel);

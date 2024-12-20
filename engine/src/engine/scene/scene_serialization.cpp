@@ -725,6 +725,16 @@ void EnvironmentComponent::RegisterClass() {
     REGISTER_FIELD_2(EnvironmentComponent, ambient);
     END_REGISTRY(EnvironmentComponent);
 }
+
+void VoxelGiComponent::Serialize(Archive& p_archive, uint32_t) {
+    p_archive.ArchiveValue(flags);
+}
+
+void VoxelGiComponent::RegisterClass() {
+    BEGIN_REGISTRY(VoxelGiComponent);
+    REGISTER_FIELD_2(VoxelGiComponent, flags);
+    END_REGISTRY(VoxelGiComponent);
+}
 #pragma endregion SCENE_COMPONENT_SERIALIZATION
 
 }  // namespace my

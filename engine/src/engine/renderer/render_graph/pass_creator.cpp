@@ -280,12 +280,12 @@ void RenderPassCreator::AddShadowPass() {
 
 static void VoxelizationPassFunc(const DrawData& p_data, const Framebuffer*) {
     OPTICK_EVENT();
-    auto& gm = GraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-
     if (!DVAR_GET_BOOL(gfx_enable_vxgi)) {
         return;
     }
+
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
 
     auto voxel_lighting = gm.FindTexture(RESOURCE_VOXEL_LIGHTING);
     auto voxel_normal = gm.FindTexture(RESOURCE_VOXEL_NORMAL);

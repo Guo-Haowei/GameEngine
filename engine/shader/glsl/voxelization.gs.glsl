@@ -22,7 +22,7 @@ void main() {
     vec3 output_positions[3];
 
     for (uint i = 0; i < 3; ++i) {
-        output_positions[i] = (pass_positions[i] - c_worldCenter) / c_worldSizeHalf;
+        output_positions[i] = (pass_positions[i] - c_voxelWorldCenter) / c_voxelWorldSizeHalf;
         if (maxi == 0) {
             output_positions[i].xyz = output_positions[i].zyx;
         } else if (maxi == 1) {

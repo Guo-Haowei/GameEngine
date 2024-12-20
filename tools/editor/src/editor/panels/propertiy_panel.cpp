@@ -118,6 +118,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     LuaScriptComponent* script_component = p_scene.GetComponent<LuaScriptComponent>(id);
     PerspectiveCameraComponent* perspective_camera = p_scene.GetComponent<PerspectiveCameraComponent>(id);
     EnvironmentComponent* environment_component = p_scene.GetComponent<EnvironmentComponent>(id);
+    VoxelGiComponent* voxel_gi_component = p_scene.GetComponent<VoxelGiComponent>(id);
 
     bool disable_translation = false;
     bool disable_rotation = false;
@@ -210,6 +211,17 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("Script", script_component, [](LuaScriptComponent& p_script) {
         DrawInputText("script", p_script.GetScriptRef());
+    });
+
+    DrawComponent("VoxelGi", voxel_gi_component, [](VoxelGiComponent& p_voxel_gi) {
+        auto DrawCheckBoxBitflag = [](const char* p_title, uint32_t p_bit, uint32_t& p_flag) {
+            bool enabled = (p_flag & p_bit);
+            if (ImGui::Checkbox(p_title, &enabled)) {
+                enabled ? (p_flag |= p_bit) : (p_flag &= ~p_bit);
+            }
+        };
+        DrawCheckBoxBitflag("enabled", VoxelGiComponent::ENABLED, p_voxel_gi.flags);
+        DrawCheckBoxBitflag("show_debug_box", VoxelGiComponent::SHOW_DEBUG_BOX, p_voxel_gi.flags);
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& p_rigid_body) {
