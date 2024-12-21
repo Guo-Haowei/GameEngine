@@ -6,11 +6,11 @@
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/scene_manager.h"
-#include "engine/core/math/frustum.h"
-#include "engine/core/math/geometry.h"
-#include "engine/core/math/matrix_transform.h"
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
+#include "engine/math/frustum.h"
+#include "engine/math/geometry.h"
+#include "engine/math/matrix_transform.h"
 #include "engine/renderer/draw_data.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/pass_creator.h"
@@ -491,7 +491,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
             break;
     }
 
-    const NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     renderer::PassCreatorConfig config;
     config.frameWidth = frame_size.x;
     config.frameHeight = frame_size.y;

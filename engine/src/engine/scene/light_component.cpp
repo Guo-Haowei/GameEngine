@@ -2,7 +2,7 @@
 
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/io/archive.h"
-#include "engine/core/math/matrix_transform.h"
+#include "engine/math/matrix_transform.h"
 #include "engine/renderer/renderer.h"
 #include "engine/scene/scene_component.h"
 

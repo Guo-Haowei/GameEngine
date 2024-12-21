@@ -1,8 +1,8 @@
 #include "draw_data.h"
 
 #include "engine/core/base/random.h"
-#include "engine/core/math/frustum.h"
-#include "engine/core/math/matrix_transform.h"
+#include "engine/math/frustum.h"
+#include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_defines.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
@@ -11,8 +11,13 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
+#include "engine/math/detail/matrix.h"
+#include "engine/math/matrix_transform.h"
 
 namespace my::renderer {
+
+using my::math::AABB;
+using my::math::Frustum;
 
 using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
 using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
@@ -268,12 +273,13 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
         bool cast_shadow = light_component.CastShadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.GetType();
-        light.color = material->baseColor;
+        light.color = material->baseColor.xyz;
         light.color *= material->emissive;
         switch (light_component.GetType()) {
             case LIGHT_TYPE_INFINITE: {
                 Matrix4x4f light_local_matrix = light_transform->GetLocalMatrix();
-                Vector3f light_dir = glm::normalize(light_local_matrix * Vector4f(0, 0, 1, 0));
+                Vector3f light_dir((light_local_matrix * Vector4f::UnitZ).xyz);
+                light_dir = math::normalize(light_dir);
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
@@ -283,9 +289,10 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
                 Vector3f center = world_bound.Center();
                 Vector3f extents = world_bound.Size();
 
-                const float size = 0.7f * glm::max(extents.x, glm::max(extents.y, extents.z));
-
-                light.view_matrix = glm::lookAt(center + light_dir * size, center, Vector3f(0, 1, 0));
+                const float size = 0.7f * math::max(extents.x, math::max(extents.y, extents.z));
+                Vector3f tmp;
+                tmp.Set(&light_dir.x);
+                light.view_matrix = LookAtRh(center + tmp * size, center, Vector3f::UnitY);
 
                 if (p_config.isOpengl) {
                     light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
@@ -387,7 +394,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     }
 
     if (show_debug) {
-        renderer::AddDebugCube(voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
+        renderer::AddDebugCube(voxel_gi_bound, math::Color(0.5f, 0.3f, 0.6f, 0.5f));
     }
 
     auto& cache = p_out_data.perFrameCache;
@@ -566,7 +573,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.front = p_camera.GetFront();
         camera.right = p_camera.GetRight();
-        camera.up = glm::cross(camera.front, camera.right);
+        camera.up = math::cross(camera.front, camera.right);
     }
 
     // @TODO: update soft body

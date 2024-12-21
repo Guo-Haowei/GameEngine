@@ -4,15 +4,15 @@
 
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
-#include "engine/core/math/matrix_transform.h"
+#include "engine/math/matrix_transform.h"
 
 namespace my {
 
 #pragma region TRANSFORM_COMPONENT
 Matrix4x4f TransformComponent::GetLocalMatrix() const {
     Matrix4x4f rotationMatrix = glm::toMat4(Quaternion(m_rotation.w, m_rotation.x, m_rotation.y, m_rotation.z));
-    Matrix4x4f translationMatrix = glm::translate(m_translation);
-    Matrix4x4f scaleMatrix = glm::scale(m_scale);
+    Matrix4x4f translationMatrix = math::Translate(m_translation);
+    Matrix4x4f scaleMatrix = math::Scale(m_scale);
     return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
@@ -40,7 +40,8 @@ void TransformComponent::Translate(const Vector3f& p_translation) {
 void TransformComponent::Rotate(const Vector3f& p_euler) {
     SetDirty();
     glm::quat quaternion(m_rotation.w, m_rotation.x, m_rotation.y, m_rotation.z);
-    quaternion = glm::quat(p_euler) * quaternion;
+    glm::quat euler(glm::vec3(p_euler.x, p_euler.y, p_euler.z));
+    quaternion = euler * quaternion;
 
     m_rotation.x = quaternion.x;
     m_rotation.y = quaternion.y;
@@ -81,7 +82,7 @@ void MeshComponent::CreateRenderData() {
         subset.local_bound.MakeInvalid();
         for (uint32_t i = 0; i < subset.index_count; ++i) {
             const Vector3f& point = positions[indices[i + subset.index_offset]];
-            subset.local_bound.ExpandPoint(point);
+            subset.local_bound.ExpandPoint(reinterpret_cast<const Vector3f&>(point));
         }
         subset.local_bound.MakeValid();
         localBound.UnionBox(subset.local_bound);
@@ -113,9 +114,9 @@ void PerspectiveCameraComponent::Update() {
         m_front.y = m_pitch.Sin();
         m_front.z = m_yaw.Sin() * m_pitch.Cos();
 
-        m_right = glm::cross(m_front, Vector3f(0, 1, 0));
+        m_right = math::cross(m_front, Vector3f::UnitY);
 
-        m_viewMatrix = glm::lookAt(m_position, m_position + m_front, Vector3f(0, 1, 0));
+        m_viewMatrix = LookAtRh(m_position, m_position + m_front, Vector3f::UnitY);
         m_projectionMatrix = BuildOpenGlPerspectiveRH(m_fovy.GetRadians(), GetAspect(), m_near, m_far);
         m_projectionViewMatrix = m_projectionMatrix * m_viewMatrix;
 

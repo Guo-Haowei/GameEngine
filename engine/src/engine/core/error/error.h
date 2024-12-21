@@ -114,7 +114,7 @@ public:
 };
 
 template<typename T>
-[[nodiscard]] static inline constexpr auto _create_error_arg_1(std::string_view p_file,
+[[nodiscard]] static constexpr inline auto _create_error_arg_1(std::string_view p_file,
                                                                std::string_view p_function,
                                                                int p_line,
                                                                T p_value) {
@@ -122,7 +122,7 @@ template<typename T>
 };
 
 template<typename T>
-[[nodiscard]] static inline constexpr auto _create_error_arg_1(std::string_view p_file,
+[[nodiscard]] static constexpr inline auto _create_error_arg_1(std::string_view p_file,
                                                                std::string_view p_function,
                                                                int p_line,
                                                                std::shared_ptr<InternalError<T>>& p_error) {
@@ -130,7 +130,7 @@ template<typename T>
 };
 
 template<typename T, typename... Args>
-[[nodiscard]] static inline constexpr auto _create_error_arg_2_plus(std::string_view p_file,
+[[nodiscard]] static constexpr inline auto _create_error_arg_2_plus(std::string_view p_file,
                                                                     std::string_view p_function,
                                                                     int p_line,
                                                                     T p_value,

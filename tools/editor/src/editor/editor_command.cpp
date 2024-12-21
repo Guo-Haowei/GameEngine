@@ -41,7 +41,7 @@ void EditorCommandAddComponent::Execute(Scene& p_scene) {
     switch (m_componentType) {
         case ComponentType::BOX_COLLIDER: {
             auto& collider = p_scene.Create<BoxColliderComponent>(target);
-            collider.box = AABB::FromCenterSize(Vector3f(0), Vector3f(1));
+            collider.box = math::AABB::FromCenterSize(Vector3f(0), Vector3f(1));
         } break;
         case ComponentType::MESH_COLLIDER: {
             p_scene.Create<MeshColliderComponent>(target);

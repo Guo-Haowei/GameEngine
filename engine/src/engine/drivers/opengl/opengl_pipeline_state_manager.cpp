@@ -57,7 +57,15 @@ static auto ProcessShader(const fs::path &p_path, int p_depth) -> Result<std::st
             const char *lineStr = line.c_str();
             const char *quote1 = strchr(lineStr, '"');
             const char *quote2 = strrchr(lineStr, '"');
-            DEV_ASSERT(quote1 && quote2 && (quote1 != quote2));
+            if (!(quote1 && quote2 && (quote1 != quote2))) {
+                const char *left = strchr(lineStr, '<');
+                const char *right = strrchr(lineStr, '>');
+                if (left && right && (left < right)) {
+                    // skip line
+                    continue;
+                }
+                CRASH_NOW_MSG("should not reach here");
+            }
             std::string file_to_include(quote1 + 1, quote2);
 
             fs::path new_path = p_path;

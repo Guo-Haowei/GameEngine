@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/core/math/aabb.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/aabb.h"
+#include "engine/math/geomath.h"
 #include "shader_defines.hlsl.h"
 
 namespace YAML {
@@ -61,7 +61,7 @@ public:
         static void RegisterClass();
     } m_atten;
 
-    AABB m_shadowRegion;
+    math::AABB m_shadowRegion;
 
 private:
     uint32_t m_flags = DIRTY;

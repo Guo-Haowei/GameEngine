@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/assets/asset.h"
 #include "engine/core/base/noncopyable.h"
-#include "engine/core/math/ray.h"
+#include "engine/math/ray.h"
 #include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/component_manager.h"
 #include "engine/systems/ecs/view.h"
@@ -237,10 +237,10 @@ public:
         ecs::Entity entity;
     };
 
-    RayIntersectionResult Intersects(Ray& p_ray);
-    bool RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray);
+    RayIntersectionResult Intersects(math::Ray& p_ray);
+    bool RayObjectIntersect(ecs::Entity p_object_id, math::Ray& p_ray);
 
-    const AABB& GetBound() const { return m_bound; }
+    const math::AABB& GetBound() const { return m_bound; }
 
     // @TODO: refactor
     ecs::Entity m_root;
@@ -268,7 +268,7 @@ private:
     void RunParticleEmitterUpdateSystem(jobsystem::Context& p_context);
 
     // @TODO: refactor
-    AABB m_bound;
+    math::AABB m_bound;
 };
 
 }  // namespace my

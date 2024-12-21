@@ -1,7 +1,7 @@
 #pragma once
-#include "engine/core/math/aabb.h"
-#include "engine/core/math/color.h"
-#include "engine/core/math/vector.h"
+#include "engine/math/aabb.h"
+#include "engine/math/color.h"
+#include "engine/math/vector.h"
 
 namespace my {
 class PerspectiveCameraComponent;
@@ -22,13 +22,13 @@ void BeginFrame();
 
 void EndFrame();
 
-void AddDebugCube(const AABB& p_aabb,
-                  const Color& p_color,
+void AddDebugCube(const math::AABB& p_aabb,
+                  const math::Color& p_color,
                   const Matrix4x4f* p_transform = nullptr);
 
 void AddImage2D(GpuTexture* p_texture,
-                const NewVector2f& p_size,
-                const NewVector2f& p_position = NewVector2f::Zero,
+                const Vector2f& p_size,
+                const Vector2f& p_position = Vector2f::Zero,
                 int p_mode = 0);
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
