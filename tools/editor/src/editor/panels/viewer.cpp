@@ -10,15 +10,15 @@
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/io/input_event.h"
-#include "engine/core/math/ray.h"
-#include "engine/core/math/vector_math.h"
+#include "engine/math/ray.h"
+#include "engine/math/detail/matrix.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
 
 namespace my {
 
 void Viewer::UpdateData() {
-    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     int frame_width = frame_size.x;
     int frame_height = frame_size.y;
     const float ratio = (float)frame_width / frame_height;
@@ -56,9 +56,9 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
             const Matrix4x4f inversed_projection_view = glm::inverse(p_camera.GetProjectionViewMatrix());
 
             const Vector3f ray_start = p_camera.GetPosition();
-            const Vector3f direction = glm::normalize(Vector3f(inversed_projection_view * Vector4f(clicked.x, -clicked.y, 1.0f, 1.0f)));
+            const Vector3f direction = math::normalize(Vector3f((inversed_projection_view * Vector4f(clicked, 1.0f, 1.0f)).xyz));
             const Vector3f ray_end = ray_start + direction * p_camera.GetFar();
-            Ray ray(ray_start, ray_end);
+            math::Ray ray(ray_start, ray_end);
 
             const auto result = p_scene.Intersects(ray);
 

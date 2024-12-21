@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/math.h"
+#include "engine/math/math.h"
 
 #define LOG_VERBOSE(...)   ::my::LogImpl(::my::LOG_LEVEL_VERBOSE, __VA_ARGS__)
 #define LOG(...)           ::my::LogImpl(::my::LOG_LEVEL_NORMAL, __VA_ARGS__)

@@ -25,6 +25,17 @@
 #error Platform not supported!
 #endif
 
+/// Architecture
+#if defined(__x86_64__) || defined(_M_X64)
+#define ARCH_X64   IN_USE
+#define ARCH_ARM64 NOT_IN_USE
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define ARCH_X64   NOT_IN_USE
+#define ARCH_ARM64 IN_USE
+#else
+#error Unknown architecture
+#endif
+
 /// Compiler
 #if USING(DEBUG_BUILD)
 #define DISABLE_OPTIMIZATION() static_assert(0, "DISABLE_OPTIMIZATION() should not been used width DEBUG_BUILD")
@@ -98,12 +109,12 @@
 
 namespace my {
 
-inline constexpr size_t KB = 1024;
-inline constexpr size_t MB = 1024 * KB;
-inline constexpr size_t GB = 1024 * MB;
+constexpr inline size_t KB = 1024;
+constexpr inline size_t MB = 1024 * KB;
+constexpr inline size_t GB = 1024 * MB;
 
 template<typename T, int N>
-inline constexpr int array_length(T (&)[N]) {
+constexpr inline int array_length(T (&)[N]) {
     return N;
 }
 

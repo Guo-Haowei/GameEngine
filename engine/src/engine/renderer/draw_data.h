@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/core/math/angle.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/angle.h"
+#include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/renderer.h"
 #include "engine/systems/ecs/entity.h"
@@ -47,8 +47,8 @@ struct PassContext {
 struct ImageDrawContext {
     int mode;
     uint64_t handle;
-    NewVector2f size;
-    NewVector2f position;
+    Vector2f size;
+    Vector2f position;
 };
 
 template<typename BUFFER>
@@ -123,7 +123,7 @@ struct DrawData {
 
     struct DrawDebugContext {
         std::vector<Vector3f> positions;
-        std::vector<Color> colors;
+        std::vector<math::Color> colors;
         uint32_t drawCount;
     } drawDebugContext;
 

@@ -9,7 +9,7 @@
 
 #if defined(__cplusplus)
 #define UAV(TYPE, NAME, SLOT) \
-    [[maybe_unused]] static inline constexpr int GetUavSlot##NAME() { return SLOT; }
+    [[maybe_unused]] static constexpr inline int GetUavSlot##NAME() { return SLOT; }
 UAV_DEFINES
 #undef UAV
 #elif defined(HLSL_LANG_D3D11)

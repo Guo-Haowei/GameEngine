@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/core/framework/event_queue.h"
 #include "engine/core/io/input_code.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/geomath.h"
 
 namespace my {
 

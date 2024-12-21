@@ -66,7 +66,6 @@ using uint = unsigned int;
 #define Vector2i   int2
 #define Vector3i   int3
 #define Vector4i   int4
-#define Matrix3x3f float3x3
 #define Matrix4x4f float4x4
 #elif defined(GLSL_LANG)
 #define Vector2f         vec2
@@ -75,7 +74,6 @@ using uint = unsigned int;
 #define Vector2i         ivec2
 #define Vector3i         ivec3
 #define Vector4i         ivec4
-#define Matrix3x3f       mat3x3
 #define Matrix4x4f       mat4x4
 
 // @TODO: refactor

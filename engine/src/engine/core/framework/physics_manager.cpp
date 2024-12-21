@@ -398,10 +398,17 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
 
         const ObjectComponent* object = p_scene.GetComponent<ObjectComponent>(id);
         if (DEV_VERIFY(object && object->meshId.IsValid())) {
+            Vector4f a;
+            Vector4f b;
+            Vector4f c;
+            Vector4f d;
+            CRASH_NOW();
+#if 0
             Vector4f a = transform_component->GetLocalMatrix() * Vector4f(component.point_0, 1.0f);
             Vector4f b = transform_component->GetLocalMatrix() * Vector4f(component.point_1, 1.0f);
             Vector4f c = transform_component->GetLocalMatrix() * Vector4f(component.point_2, 1.0f);
             Vector4f d = transform_component->GetLocalMatrix() * Vector4f(component.point_3, 1.0f);
+#endif
 
             btSoftBody* cloth = btSoftBodyHelpers::CreatePatch(*context.softBodyWorldInfo,
                                                                btVector3(a.x, a.y, a.z),

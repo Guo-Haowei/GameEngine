@@ -1,7 +1,7 @@
 #pragma once
-#include "engine/core/math/aabb.h"
-#include "engine/core/math/angle.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/aabb.h"
+#include "engine/math/angle.h"
+#include "engine/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
 
 namespace YAML {
@@ -161,7 +161,7 @@ struct MeshComponent {
         ecs::Entity material_id;
         uint32_t index_offset = 0;
         uint32_t index_count = 0;
-        AABB local_bound;
+        math::AABB local_bound;
 
         static void RegisterClass();
     };
@@ -171,7 +171,7 @@ struct MeshComponent {
 
     // Non-serialized
     mutable std::shared_ptr<GpuMesh> gpuResource;
-    AABB localBound;
+    math::AABB localBound;
 
     mutable std::vector<Vector3f> updatePositions;
     mutable std::vector<Vector3f> updateNormals;
@@ -578,7 +578,7 @@ struct VoxelGiComponent {
 
     uint32_t flags = 0;
     // Non-serialized
-    AABB region;
+    math::AABB region;
 
     bool Enabled() const { return flags & ENABLED; }
     bool ShowDebugBox() const { return flags & SHOW_DEBUG_BOX; }
@@ -604,7 +604,7 @@ struct ForceFieldComponent {
 
 /// @TODO: remove these
 struct BoxColliderComponent {
-    AABB box;
+    math::AABB box;
 
     void Serialize(Archive& p_archive, uint32_t p_version);
     void OnDeserialized() {}

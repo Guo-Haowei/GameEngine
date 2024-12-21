@@ -1,8 +1,8 @@
 #include "job_system.h"
 
 #include "engine/core/base/thread_safe_ring_buffer.h"
-#include "engine/core/math/geomath.h"
 #include "engine/core/os/threads.h"
+#include "engine/math/geomath.h"
 
 namespace my::jobsystem {
 

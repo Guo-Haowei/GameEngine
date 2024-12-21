@@ -4,9 +4,9 @@
 namespace my {
 
 #if USING(DEBUG_BUILD)
-inline constexpr bool IS_DEBUG_BUILD = true;
+constexpr inline bool IS_DEBUG_BUILD = true;
 #else
-inline constexpr bool IS_DEBUG_BUILD = false;
+constexpr inline bool IS_DEBUG_BUILD = false;
 #endif
 
 inline void assert_out_of_range() { assert(false && "index out of range"); }

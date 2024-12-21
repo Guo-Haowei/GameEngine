@@ -4,16 +4,17 @@
 #include "shader_defines.hlsl.h"
 
 #if defined(__cplusplus)
+#include <engine/math/vector.h>
 #ifdef min
 #undef min
 #endif
 #ifdef max
 #undef max
 #endif
-using glm::cos;
-using glm::max;
-using glm::min;
-using glm::pow;
+using ::my::math::cross;
+using ::my::math::max;
+using ::my::math::min;
+using ::my::math::normalize;
 #endif
 
 BEGIN_NAME_SPACE(my)

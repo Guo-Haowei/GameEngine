@@ -1,11 +1,13 @@
 #include "log_panel.h"
 
 #include "engine/core/io/logger.h"
-#include "engine/core/math/color.h"
+#include "engine/math/color.h"
 
 namespace my {
 
 static ImVec4 GetLogLevelColor(LogLevel level) {
+    using math::Color;
+    using math::ColorCode;
     Color color = Color::Hex(ColorCode::COLOR_WHITE);
     switch (level) {
         case my::LOG_LEVEL_VERBOSE:

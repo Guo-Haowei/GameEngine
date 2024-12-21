@@ -23,7 +23,6 @@ struct ParticleCounter {
 };
 
 struct gpu_geometry_t {
-
     Vector3f A;
 #if defined(__cplusplus)
     enum class Kind : uint32_t {
