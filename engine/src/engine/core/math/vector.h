@@ -26,6 +26,8 @@ static_assert(sizeof(Vector2u) == 8);
 static_assert(sizeof(Vector3u) == 12);
 static_assert(sizeof(Vector4u) == 16);
 
+static_assert(alignof(Vector4f) == 16);
+
 }  // namespace my::math
 
 namespace my {

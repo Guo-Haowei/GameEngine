@@ -5,7 +5,7 @@
 namespace my::math {
 
 template<Arithmetic T>
-struct Vector<T, 4> : VectorBase<T, 4> {
+struct alignas(sizeof(T) * 4) Vector<T, 4> : VectorBase<T, 4> {
     using Base = VectorBase<T, 4>;
     using Self = Vector<T, 4>;
 
@@ -17,10 +17,12 @@ struct Vector<T, 4> : VectorBase<T, 4> {
     union {
         struct { T x, y, z, w; };
         struct { T r, g, b, a; };
-
         VECTOR4_SWIZZLE2;
         VECTOR4_SWIZZLE3;
         VECTOR4_SWIZZLE4;
+#if USING(MATH_ENABLE_SIMD_SSE)
+        __m128 simd;
+#endif
     };
     // clang-format on
     WARNING_POP()

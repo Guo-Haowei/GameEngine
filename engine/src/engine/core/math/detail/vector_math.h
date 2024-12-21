@@ -3,6 +3,9 @@
 #include "vector2.h"
 #include "vector3.h"
 #include "vector4.h"
+#if USING(MATH_ENABLE_SIMD_SSE)
+#include "vector_math_sse.h"
+#endif
 
 namespace my::math {
 
@@ -44,6 +47,7 @@ constexpr bool operator==(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) 
     } while (0)
 
 #pragma region VECTOR_MATH_ADD
+
 template<Arithmetic T, int N>
 constexpr Vector<T, N> operator+(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     Vector<T, N> result;
