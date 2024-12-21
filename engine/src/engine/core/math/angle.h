@@ -1,5 +1,6 @@
 #pragma once
-#include "geomath.h"
+// @TODO: refactor
+#include "vector_math.h"
 
 namespace my {
 
@@ -59,12 +60,12 @@ public:
         return Degree(-m_value);
     }
 
-    void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
-    constexpr float GetRadians() const { return glm::radians(m_value); }
+    void Clamp(float p_a, float p_b) { m_value = math::Clamp(m_value, p_a, p_b); }
+    constexpr float GetRadians() const { return math::Radians(m_value); }
     constexpr float GetDegree() const { return m_value; }
-    float Sin() const { return glm::sin(GetRadians()); }
-    float Cos() const { return glm::cos(GetRadians()); }
-    float Tan() const { return glm::tan(GetRadians()); }
+    float Sin() const { return std::sin(GetRadians()); }
+    float Cos() const { return std::cos(GetRadians()); }
+    float Tan() const { return std::tan(GetRadians()); }
 
 private:
     float m_value;
@@ -107,12 +108,12 @@ public:
         m_value -= p_val.GetRadians();
         return *this;
     }
-    void Clamp(float p_a, float p_b) { m_value = glm::clamp(m_value, p_a, p_b); }
-    float ToDegree() const { return glm::degrees(m_value); }
+    void Clamp(float p_a, float p_b) { m_value = math::Clamp(m_value, p_a, p_b); }
+    float ToDegree() const { return math::Degrees(m_value); }
     float GetRad() const { return m_value; }
-    float Sin() const { return glm::sin(m_value); }
-    float Cos() const { return glm::cos(m_value); }
-    float Tan() const { return glm::tan(m_value); }
+    float Sin() const { return std::sin(m_value); }
+    float Cos() const { return std::cos(m_value); }
+    float Tan() const { return std::tan(m_value); }
 
 private:
     float m_value;

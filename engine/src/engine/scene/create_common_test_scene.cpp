@@ -19,7 +19,7 @@ Scene* CreateBoxScene() {
     auto root = scene->CreateTransformEntity("root");
     scene->m_root = root;
 
-    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
@@ -102,7 +102,7 @@ Scene* CreatePhysicsTestScene() {
     auto root = scene->CreateTransformEntity("root");
     scene->m_root = root;
 
-    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
@@ -208,7 +208,7 @@ Scene* CreatePbrTestScene() {
     auto root = scene->CreateTransformEntity("root");
     scene->m_root = root;
 
-    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);

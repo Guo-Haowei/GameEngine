@@ -118,7 +118,7 @@ TEST(dynamic_variable_parser, set_ivec2) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.Parse();
     EXPECT_TRUE(ok);
-    EXPECT_EQ(DVAR_GET_IVEC2(test_ivec2), NewVector2i(6, 7));
+    EXPECT_EQ(DVAR_GET_IVEC2(test_ivec2), Vector2i(6, 7));
 }
 
 TEST(dynamic_variable_parser, set_ivec3) {
@@ -129,7 +129,7 @@ TEST(dynamic_variable_parser, set_ivec3) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.Parse();
     EXPECT_TRUE(ok);
-    EXPECT_EQ(DVAR_GET_IVEC3(test_ivec3), NewVector3i(6, 7, 8));
+    EXPECT_EQ(DVAR_GET_IVEC3(test_ivec3), Vector3i(6, 7, 8));
 }
 
 TEST(dynamic_variable_parser, set_ivec4) {
@@ -140,7 +140,7 @@ TEST(dynamic_variable_parser, set_ivec4) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.Parse();
     EXPECT_TRUE(ok);
-    EXPECT_EQ(DVAR_GET_IVEC4(test_ivec4), NewVector4i(6, 7, 8, 9));
+    EXPECT_EQ(DVAR_GET_IVEC4(test_ivec4), Vector4i(6, 7, 8, 9));
 }
 
 TEST(dynamic_variable_parser, multiple_set_success) {
@@ -156,7 +156,7 @@ TEST(dynamic_variable_parser, multiple_set_success) {
     DynamicVariableParser parser{ commands, DynamicVariableParser::SOURCE_NONE };
     bool ok = parser.Parse();
     EXPECT_TRUE(ok);
-    EXPECT_EQ(DVAR_GET_IVEC4(test_ivec4), NewVector4i(7, 8, 9, 10));
+    EXPECT_EQ(DVAR_GET_IVEC4(test_ivec4), Vector4i(7, 8, 9, 10));
     EXPECT_EQ(DVAR_GET_INT(test_int), 1002);
 }
 

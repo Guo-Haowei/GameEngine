@@ -46,7 +46,7 @@ SRV_DEFINES
 #undef SRV
 #elif defined(__cplusplus)
 #define SRV(TYPE, NAME, SLOT, BINDING) \
-    [[maybe_unused]] static inline constexpr int Get##NAME##Slot() { return SLOT; }
+    [[maybe_unused]] static constexpr inline int Get##NAME##Slot() { return SLOT; }
 SRV_DEFINES
 #undef SRV
 #else

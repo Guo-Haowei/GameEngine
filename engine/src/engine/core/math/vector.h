@@ -327,12 +327,12 @@ const Vector<T, 4> Vector<T, 4>::UnitZ(static_cast<T>(0), static_cast<T>(0), sta
 template<Arithmetic T>
 const Vector<T, 4> Vector<T, 4>::UnitW(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 
-using NewVector2i = Vector<int, 2>;
-using NewVector3i = Vector<int, 3>;
-using NewVector4i = Vector<int, 4>;
-using NewVector2u = Vector<uint32_t, 2>;
-using NewVector3u = Vector<uint32_t, 3>;
-using NewVector4u = Vector<uint32_t, 4>;
+using Vector2i = Vector<int, 2>;
+using Vector3i = Vector<int, 3>;
+using Vector4i = Vector<int, 4>;
+using Vector2u = Vector<uint32_t, 2>;
+using Vector3u = Vector<uint32_t, 3>;
+using Vector4u = Vector<uint32_t, 4>;
 using NewVector2f = Vector<float, 2>;
 using NewVector3f = Vector<float, 3>;
 using NewVector4f = Vector<float, 4>;
@@ -340,11 +340,11 @@ using NewVector4f = Vector<float, 4>;
 static_assert(sizeof(NewVector2f) == 8);
 static_assert(sizeof(NewVector3f) == 12);
 static_assert(sizeof(NewVector4f) == 16);
-static_assert(sizeof(NewVector2i) == 8);
-static_assert(sizeof(NewVector3i) == 12);
-static_assert(sizeof(NewVector4i) == 16);
-static_assert(sizeof(NewVector2u) == 8);
-static_assert(sizeof(NewVector3u) == 12);
-static_assert(sizeof(NewVector4u) == 16);
+static_assert(sizeof(Vector2i) == 8);
+static_assert(sizeof(Vector3i) == 12);
+static_assert(sizeof(Vector4i) == 16);
+static_assert(sizeof(Vector2u) == 8);
+static_assert(sizeof(Vector3u) == 12);
+static_assert(sizeof(Vector4u) == 16);
 
 }  // namespace my

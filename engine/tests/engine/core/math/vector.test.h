@@ -22,12 +22,6 @@
 
 namespace my::math::detail {
 
-using Vector2i = Vector<int, 2>;
-using Vector3i = Vector<int, 3>;
-using Vector4i = Vector<int, 4>;
-using Vector2u = Vector<uint32_t, 2>;
-using Vector3u = Vector<uint32_t, 3>;
-using Vector4u = Vector<uint32_t, 4>;
 using Vector2f = Vector<float, 2>;
 using Vector3f = Vector<float, 3>;
 using Vector4f = Vector<float, 4>;

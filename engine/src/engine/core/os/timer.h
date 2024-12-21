@@ -2,8 +2,8 @@
 
 namespace my {
 
-inline constexpr uint64_t MILLISECOND = 1000000;
-inline constexpr uint64_t SECOND = MILLISECOND * 1000;
+constexpr inline uint64_t MILLISECOND = 1000000;
+constexpr inline uint64_t SECOND = MILLISECOND * 1000;
 
 struct NanoSecond {
     NanoSecond(const uint64_t p_value) : m_value(p_value) {}

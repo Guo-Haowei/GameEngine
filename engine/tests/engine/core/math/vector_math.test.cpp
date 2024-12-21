@@ -312,11 +312,93 @@ TEST(vector_math, normalize) {
         EXPECT_FLOAT_EQ(vec2.y, 4.0f / 5);
     }
     {
-        Vector3f vec1(3, 4, 5);
+        Vector3f vec1(1, 2, 2);
         auto vec2 = Normalize(vec1);
         EXPECT_FLOAT_EQ(Length(vec2), 1.0f);
-        EXPECT_FLOAT_EQ(vec2.x, 3.0f / 5);
-        EXPECT_FLOAT_EQ(vec2.y, 4.0f / 5);
+        EXPECT_FLOAT_EQ(vec2.x, 1.0f / 3);
+        EXPECT_FLOAT_EQ(vec2.y, 2.0f / 3);
+        EXPECT_FLOAT_EQ(vec2.z, 2.0f / 3);
+    }
+    {
+        Vector4f vec1(27, 36, 77, 122);
+        auto vec2 = Normalize(vec1);
+        constexpr float err = 0.001f;
+        EXPECT_FLOAT_EQ(Length(vec2), 1.0f);
+        EXPECT_NEAR(vec2.x, 27.f / 151, err);
+        EXPECT_NEAR(vec2.y, 36.f / 151, err);
+        EXPECT_NEAR(vec2.z, 77.f / 151, err);
+        EXPECT_NEAR(vec2.w, 122.f / 151, err);
+    }
+}
+
+TEST(vector_math, radians) {
+    {
+        constexpr float a = 90.0f;
+        EXPECT_FLOAT_EQ(math::Radians(a), HalfPi());
+    }
+    {
+        constexpr float a = 180.0f;
+        EXPECT_FLOAT_EQ(math::Radians(a), Pi());
+    }
+    {
+        constexpr float a = 360.0f;
+        EXPECT_FLOAT_EQ(math::Radians(a), TwoPi());
+    }
+}
+
+TEST(vector_math, degrees) {
+    {
+        constexpr float a = HalfPi();
+        EXPECT_FLOAT_EQ(math::Degrees(a), 90.0f);
+    }
+    {
+        constexpr float a = Pi();
+        EXPECT_FLOAT_EQ(math::Degrees(a), 180.0f);
+    }
+    {
+        constexpr float a = TwoPi();
+        EXPECT_FLOAT_EQ(math::Degrees(a), 360.0f);
+    }
+}
+
+TEST(vector_math, cross) {
+    constexpr Vector3f a(1, 2, 3);
+    constexpr Vector3f b(5, 6, 0);
+    constexpr auto c = Cross(a, b);
+    EXPECT_FLOAT_EQ(c.x, -18);
+    EXPECT_FLOAT_EQ(c.y, 15);
+    EXPECT_FLOAT_EQ(c.z, -4);
+}
+
+TEST(vector_math, cross_parallel_vector) {
+    constexpr Vector3f a(1, 2, 3);
+    constexpr auto c = Cross(a, 2 * a);
+    EXPECT_FLOAT_EQ(c.x, 0);
+    EXPECT_FLOAT_EQ(c.y, 0);
+    EXPECT_FLOAT_EQ(c.z, 0);
+}
+
+// @TODO: finish the tests
+TEST(vector_math, min) {
+    {
+        constexpr int a = 10;
+        constexpr int b = 3;
+        EXPECT_EQ(Min(a, b), 3);
+    }
+    {
+        constexpr Vector2f a(1, 3);
+        constexpr Vector2f b(-4, 5);
+        constexpr auto v = Min(a, b);
+        EXPECT_EQ(v.x, -4);
+        EXPECT_EQ(v.y, 3);
+    }
+}
+
+TEST(vector_math, max) {
+    {
+        constexpr int a = 10;
+        constexpr int b = 3;
+        EXPECT_EQ(Max(a, b), 10);
     }
 }
 

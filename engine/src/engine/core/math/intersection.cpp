@@ -52,7 +52,7 @@ bool TestIntersection::RayTriangle(const NewVector3f& p_a, const NewVector3f& p_
         P.z = tmp.z;
     }
     const float det = math::Dot(ab, P);
-    if (det < glm::epsilon<float>()) {
+    if (det < math::Epsilon()) {
         return false;
     }
 

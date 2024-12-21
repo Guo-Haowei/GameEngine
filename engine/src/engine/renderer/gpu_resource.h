@@ -151,7 +151,7 @@ struct GpuStructuredBuffer {
     virtual ~GpuStructuredBuffer() = default;
 };
 
-inline constexpr int MESH_MAX_VERTEX_BUFFER_COUNT = 8;
+constexpr inline int MESH_MAX_VERTEX_BUFFER_COUNT = 8;
 
 struct GpuMeshDesc {
     struct VertexLayout {
