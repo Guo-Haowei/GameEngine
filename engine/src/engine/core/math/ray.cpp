@@ -1,8 +1,9 @@
 #include "ray.h"
 
-#include "vector_math.h"
+#include "detail/matrix.h"
+#include "detail/vector_math.h"
 
-namespace my {
+namespace my::math {
 
 Vector3f Ray::Direction() const {
     return math::Normalize(m_end - m_start);
@@ -16,4 +17,4 @@ Ray Ray::Inverse(const Matrix4x4f& p_inverse_matrix) const {
     return inversed_ray;
 }
 
-}  // namespace my
+}  // namespace my::math

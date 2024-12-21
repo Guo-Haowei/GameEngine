@@ -1,8 +1,9 @@
 #pragma once
 #include "angle.h"
 #include "geomath.h"
-#include "vector_math.h"
+#include "vector.h"
 
+// @TODO: refactor
 namespace my {
 
 static inline Matrix4x4f LookAtRh(const Vector3f& p_eye, const Vector3f& p_center, const Vector3f& p_up) {

@@ -1,6 +1,5 @@
 #pragma once
-// @TODO: refactor
-#include "vector_math.h"
+#include "engine/core/math/detail/common.h"
 
 namespace my {
 

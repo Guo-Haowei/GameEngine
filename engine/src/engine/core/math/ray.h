@@ -1,7 +1,7 @@
 #pragma once
 #include "intersection.h"
 
-namespace my {
+namespace my::math {
 
 class Ray {
 public:
@@ -30,4 +30,4 @@ private:
     friend class TestIntersection;
 };
 
-}  // namespace my
+}  // namespace my::math

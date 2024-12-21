@@ -97,7 +97,7 @@ TEST(Swizzle3, vector3_swizzle3_write) {
 
 TEST(Swizzle3, vector4_swizzle3_write) {
     {
-        Vector4i vec;
+        Vector4i vec(0);
         vec.yzw = Vector3i(7, 6, 8);
         EXPECT_EQ(vec.x, 0);
         EXPECT_EQ(vec.y, 7);
@@ -105,7 +105,7 @@ TEST(Swizzle3, vector4_swizzle3_write) {
         EXPECT_EQ(vec.w, 8);
     }
     {
-        Vector4i vec;
+        Vector4i vec(0);
         vec.wzx = Vector3i(1, 2, 3);
         EXPECT_EQ(vec.x, 3);
         EXPECT_EQ(vec.y, 0);
@@ -121,7 +121,7 @@ TEST(Swizzle3, vector4_swizzle3_write) {
         EXPECT_EQ(vec.w, 8);
     }
     {
-        Vector4i vec;
+        Vector4i vec(0);
         vec.yzw = Vector3i(1, 2, 3);
         EXPECT_EQ(vec.x, 0);
         EXPECT_EQ(vec.y, 1);

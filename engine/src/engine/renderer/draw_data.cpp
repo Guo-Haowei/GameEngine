@@ -11,9 +11,13 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
+#include "engine/core/math/detail/matrix.h"
 #include "engine/core/math/matrix_transform.h"
 
 namespace my::renderer {
+
+using my::math::AABB;
+using my::math::Frustum;
 
 using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
 using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
@@ -390,7 +394,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     }
 
     if (show_debug) {
-        renderer::AddDebugCube(voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
+        renderer::AddDebugCube(voxel_gi_bound, math::Color(0.5f, 0.3f, 0.6f, 0.5f));
     }
 
     auto& cache = p_out_data.perFrameCache;

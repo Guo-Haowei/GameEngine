@@ -1,8 +1,7 @@
 #pragma once
-#include "engine/core/math/geomath.h"
 #include "engine/core/math/vector.h"
 
-namespace my {
+namespace my::math {
 
 enum ColorCode : uint32_t {
     COLOR_GREEN = 0x80E080,
@@ -32,4 +31,4 @@ public:
     static Color HexRgba(uint32_t hex);
 };
 
-}  // namespace my
+}  // namespace my::math

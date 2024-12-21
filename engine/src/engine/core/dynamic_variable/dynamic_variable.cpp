@@ -1,7 +1,5 @@
 #include "dynamic_variable.h"
 
-#include "engine/core/math/vector_math.h"
-
 namespace my {
 
 DynamicVariable::DynamicVariable(VariantType p_type, DvarFlags p_flags, const char* p_desc)

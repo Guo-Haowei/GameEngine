@@ -61,7 +61,7 @@ public:
         static void RegisterClass();
     } m_atten;
 
-    AABB m_shadowRegion;
+    math::AABB m_shadowRegion;
 
 private:
     uint32_t m_flags = DIRTY;

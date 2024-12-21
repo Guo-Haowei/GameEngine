@@ -1,4 +1,51 @@
 #pragma once
+#include "forward.h"
+
+namespace my::math {
+
+template<Arithmetic T, int N, int A, int B, int C, int D>
+    requires(N >= 2) and (A < N) and (B < N) and (C == -1) and (D == -1)
+struct Swizzle<T, 2, N, A, B, C, D> {
+    T d[N];
+
+    Vector<T, 2> operator=(const Vector<T, 2>& p_vec) {
+        return Vector<T, 2>(d[A] = p_vec.x, d[B] = p_vec.y);
+    }
+
+    operator Vector<T, 2>() {
+        return Vector<T, 2>(d[A], d[B]);
+    }
+};
+
+template<Arithmetic T, int N, int A, int B, int C, int D>
+    requires(N >= 3) and (A < N) and (B < N) and (C < N) and (D == -1)
+struct Swizzle<T, 3, N, A, B, C, D> {
+    T d[N];
+
+    Vector<T, 3> operator=(const Vector<T, 3>& p_vec) {
+        return Vector<T, 3>(d[A] = p_vec.x, d[B] = p_vec.y, d[C] = p_vec.z);
+    }
+
+    operator Vector<T, 3>() {
+        return Vector<T, 3>(d[A], d[B], d[C]);
+    }
+};
+
+template<Arithmetic T, int N, int A, int B, int C, int D>
+    requires(N >= 4) and (A < N) and (B < N) and (C < N) and (D < N)
+struct Swizzle<T, 4, N, A, B, C, D> {
+    T d[N];
+
+    Vector<T, 4> operator=(const Vector<T, 4>& p_vec) {
+        return Vector<T, 4>(d[A] = p_vec.x, d[B] = p_vec.y, d[C] = p_vec.z, d[D] = p_vec.w);
+    }
+
+    operator Vector<T, 4>() {
+        return Vector<T, 4>(d[A], d[B], d[C], d[D]);
+    }
+};
+
+}  // namespace my::math
 
 // Swizzle2
 #pragma region SWIZZLE2

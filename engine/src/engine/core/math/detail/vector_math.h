@@ -1,19 +1,10 @@
 #pragma once
-#include "vector.h"
+#include "common.h"
+#include "vector2.h"
+#include "vector3.h"
+#include "vector4.h"
 
-WARNING_PUSH()
-WARNING_DISABLE(4201, "-Wunused-parameter")
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-WARNING_POP()
-
-namespace my {
-
-constexpr inline Vector<float, 4> operator*(const glm::mat4& p_lhs, const Vector<float, 4>& p_rhs) {
-    glm::vec4 tmp(p_rhs.x, p_rhs.y, p_rhs.z, p_rhs.w);
-    tmp = p_lhs * tmp;
-    return Vector<float, 4>(tmp.x, tmp.y, tmp.z, tmp.w);
-}
+namespace my::math {
 
 template<Arithmetic T, int N>
 constexpr bool operator==(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
@@ -192,62 +183,6 @@ constexpr Vector<T, N>& operator/=(Vector<T, N>& p_lhs, const U& p_rhs) {
 }
 #pragma endregion VECTOR_MATH_DIV
 
-}  // namespace my
-
-namespace my::math {
-
-// @TODO: refactor
-template<typename T = float>
-    requires std::is_floating_point_v<T>
-constexpr inline T Pi() {
-    return static_cast<T>(3.14159265358979323846264338327950288);
-}
-
-template<typename T = float>
-    requires std::is_floating_point_v<T>
-constexpr inline T HalfPi() {
-    return static_cast<T>(0.5) * Pi();
-}
-
-template<typename T = float>
-    requires std::is_floating_point_v<T>
-constexpr inline T TwoPi() {
-    return static_cast<T>(2) * Pi();
-}
-
-template<typename T = float>
-    requires std::is_floating_point_v<T>
-constexpr inline T Epsilon() {
-    return std::numeric_limits<T>::epsilon();
-}
-
-template<typename T>
-    requires std::is_floating_point_v<T>
-constexpr inline T Radians(const T& p_degrees) {
-    return p_degrees * static_cast<T>(0.01745329251994329576923690768489);
-}
-
-template<typename T>
-    requires std::is_floating_point_v<T>
-constexpr inline T Degrees(const T& p_radians) {
-    return p_radians * static_cast<T>(57.295779513082320876798154814105);
-}
-
-template<Arithmetic T>
-constexpr inline T Min(const T& p_lhs, const T& p_rhs) {
-    return p_lhs < p_rhs ? p_lhs : p_rhs;
-}
-
-template<Arithmetic T>
-constexpr inline T Max(const T& p_lhs, const T& p_rhs) {
-    return p_lhs > p_rhs ? p_lhs : p_rhs;
-}
-
-template<Arithmetic T>
-constexpr inline T Abs(const T& p_lhs) {
-    return std::abs(p_lhs);
-}
-
 template<Arithmetic T, int N>
 constexpr inline Vector<T, N> Min(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     Vector<T, N> result;
@@ -288,11 +223,6 @@ constexpr inline Vector<T, N> Abs(const Vector<T, N>& p_lhs) {
         result.w = Abs(p_lhs.w);
     }
     return result;
-}
-
-template<Arithmetic T>
-constexpr inline T Clamp(const T& p_value, const T& p_min, const T& p_max) {
-    return Max(p_min, Min(p_value, p_max));
 }
 
 template<Arithmetic T, int N>

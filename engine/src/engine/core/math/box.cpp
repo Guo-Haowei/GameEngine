@@ -1,17 +1,19 @@
 #include "box.h"
 
-namespace my {
+#include "detail/vector3.h"
+
+namespace my::math {
 
 template<>
 float Box<3>::SurfaceArea() const {
     if (!IsValid()) {
         return 0.0f;
     }
-    Vector3f span = math::Abs(Size());
+    Vector<float, 3> span(math::Abs(Size()));
     const float result = 2.0f * (span.x * span.y +
                                  span.x * span.z +
                                  span.y * span.z);
     return result;
 }
 
-}  // namespace my
+}  // namespace my::math

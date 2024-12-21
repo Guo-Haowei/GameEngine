@@ -5,6 +5,8 @@
 
 namespace my {
 
+using ::my::math::AABB;
+
 struct OuterClass {
     struct InnerClass {
         std::string name;

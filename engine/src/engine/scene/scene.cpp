@@ -18,7 +18,9 @@ REGISTER_COMPONENT_LIST
 
 namespace my {
 
-using jobsystem::Context;
+using ::my::jobsystem::Context;
+using ::my::math::AABB;
+using ::my::math::Ray;
 
 static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 

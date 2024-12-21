@@ -1,6 +1,8 @@
 #include "geometry.h"
 
 #include "matrix_transform.h"
+// @TODO: refactor
+#include "detail/matrix.h"
 
 namespace my {
 

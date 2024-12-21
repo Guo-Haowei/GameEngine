@@ -2,7 +2,7 @@
 #include "box.h"
 #include "intersection.h"
 
-namespace my {
+namespace my::math {
 
 class AABB : public Box3 {
 public:
@@ -18,4 +18,4 @@ public:
     friend class TestIntersection;
 };
 
-}  // namespace my
+}  // namespace my::math

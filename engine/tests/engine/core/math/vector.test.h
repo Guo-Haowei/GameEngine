@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/vector_math.h"
+#include "engine/core/math/vector.h"
 
 #define CHECK_VEC2(VEC, a, b)  \
     {                          \
@@ -20,9 +20,7 @@
         EXPECT_EQ((VEC).w, d);      \
     }
 
-namespace my::math::detail {
-
-using Vector3f = Vector<float, 3>;
+namespace my::math {
 
 static_assert(sizeof(Vector2f) == 8);
 static_assert(sizeof(Vector3f) == 12);
@@ -33,9 +31,5 @@ static_assert(sizeof(Vector4i) == 16);
 static_assert(sizeof(Vector2u) == 8);
 static_assert(sizeof(Vector3u) == 12);
 static_assert(sizeof(Vector4u) == 16);
-
-}  // namespace my::math::detail
-
-namespace my::math {
 
 }  // namespace my::math

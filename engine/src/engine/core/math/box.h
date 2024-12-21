@@ -1,14 +1,7 @@
 #pragma once
-#include "engine/core/math/vector_math.h"
+#include "engine/core/math/detail/vector_math.h"
 
-#ifdef min
-#undef min
-#endif
-#ifdef max
-#undef max
-#endif
-
-namespace my {
+namespace my::math {
 
 template<int N>
 class Box {
@@ -85,4 +78,4 @@ protected:
 using Box2 = Box<2>;
 using Box3 = Box<3>;
 
-}  // namespace my
+}  // namespace my::math

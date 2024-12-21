@@ -3,7 +3,7 @@
 #include "aabb.h"
 #include "ray.h"
 
-namespace my {
+namespace my::math {
 
 bool TestIntersection::AabbAabb(const AABB& p_aabb1, const AABB& p_aabb2) {
     AABB tmp{ p_aabb1 };
@@ -69,4 +69,4 @@ bool TestIntersection::RayTriangle(const Vector3f& p_a, const Vector3f& p_b, con
     return true;
 }
 
-}  // namespace my
+}  // namespace my::math

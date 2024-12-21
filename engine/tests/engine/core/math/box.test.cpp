@@ -2,6 +2,8 @@
 
 namespace my::math {
 
+using Vector3f = Vector<float, 3>;
+
 TEST(box, constructor) {
     Box3 box(Vector3f(1), Vector3f(10));
     EXPECT_EQ(box.GetMin(), Vector3f(1));

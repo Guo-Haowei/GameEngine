@@ -1,5 +1,4 @@
 #pragma once
-#include "engine/core/math/geomath.h"
 #include "engine/core/math/vector.h"
 
 enum DvarFlags : uint32_t {

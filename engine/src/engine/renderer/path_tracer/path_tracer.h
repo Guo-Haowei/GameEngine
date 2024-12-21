@@ -16,13 +16,13 @@ public:
     ~Bvh();
 
     void CreateGpuBvh(GpuBvhList& outBvh, GeometryList& outTriangles);
-    inline const Box3& GetBox() const { return m_box; }
+    inline const auto& GetBox() const { return m_box; }
 
 private:
     void SplitByAxis(GeometryList& geoms);
     void DiscoverIdx();
 
-    Box3 m_box;
+    math::Box3 m_box;
     gpu_geometry_t m_geom;
     Bvh* m_left;
     Bvh* m_right;
@@ -62,7 +62,7 @@ struct GpuScene {
     std::vector<gpu_bvh_t> bvhs;
 
     int height;
-    Box3 bbox;
+    math::Box3 bbox;
 };
 
 void ConstructScene(const Scene& inScene, GpuScene& outScene);

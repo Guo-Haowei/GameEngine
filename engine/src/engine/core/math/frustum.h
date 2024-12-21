@@ -2,7 +2,7 @@
 #include "engine/core/math/geomath.h"
 #include "engine/core/math/plane.h"
 
-namespace my {
+namespace my::math {
 
 class AABB;
 
@@ -28,4 +28,4 @@ private:
     friend class IntersectionTest;
 };
 
-}  // namespace my
+}  // namespace my::math

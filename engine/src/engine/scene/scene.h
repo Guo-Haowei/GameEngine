@@ -237,10 +237,10 @@ public:
         ecs::Entity entity;
     };
 
-    RayIntersectionResult Intersects(Ray& p_ray);
-    bool RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray);
+    RayIntersectionResult Intersects(math::Ray& p_ray);
+    bool RayObjectIntersect(ecs::Entity p_object_id, math::Ray& p_ray);
 
-    const AABB& GetBound() const { return m_bound; }
+    const math::AABB& GetBound() const { return m_bound; }
 
     // @TODO: refactor
     ecs::Entity m_root;
@@ -268,7 +268,7 @@ private:
     void RunParticleEmitterUpdateSystem(jobsystem::Context& p_context);
 
     // @TODO: refactor
-    AABB m_bound;
+    math::AABB m_bound;
 };
 
 }  // namespace my

@@ -6,7 +6,12 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/scene/scene.h"
 
+// @TODO
+#include "engine/core/math/detail/matrix.h"
+
 namespace my {
+
+using ::my::math::Box3;
 
 gpu_bvh_t::gpu_bvh_t()
     : missIdx(-1), hitIdx(-1), leaf(0), geomIdx(-1) {

@@ -3,8 +3,10 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/math/geometry.h"
-#include "engine/core/math/vector_math.h"
 #include "engine/renderer/draw_data.h"
+
+// @TODO: refactor
+#include "engine/core/math/detail/matrix.h"
 
 #define DEFINE_DVAR
 #include "graphics_dvars.h"
@@ -100,8 +102,8 @@ const DrawData* GetRenderData() {
     return s_glob.renderData;
 }
 
-void AddDebugCube(const AABB& p_aabb,
-                  const Color& p_color,
+void AddDebugCube(const math::AABB& p_aabb,
+                  const math::Color& p_color,
                   const Matrix4x4f* p_transform) {
     ASSERT_CAN_RECORD();
 
