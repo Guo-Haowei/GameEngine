@@ -274,12 +274,12 @@ void EditorLayer::OnUpdate(float) {
     auto resolution = DVAR_GET_IVEC2(resolution);
     {
         if (auto image = graphics_manager->FindTexture(RESOURCE_TONE); image) {
-            renderer::AddImage2D(image.get(), NewVector2f(resolution));
+            renderer::AddImage2D(image.get(), Vector2f(resolution));
         }
     }
     if (DVAR_GET_BOOL(gfx_debug_shadow)) {
         if (auto image = graphics_manager->FindTexture(RESOURCE_SHADOW_MAP); image) {
-            renderer::AddImage2D(image.get(), NewVector2f(300), NewVector2f(1000), DISPLAY_CHANNEL_RRR);
+            renderer::AddImage2D(image.get(), Vector2f(300), Vector2f(1000), DISPLAY_CHANNEL_RRR);
         }
     }
 }

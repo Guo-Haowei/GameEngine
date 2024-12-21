@@ -43,14 +43,7 @@ bool TestIntersection::RayTriangle(const NewVector3f& p_a, const NewVector3f& p_
     const NewVector3f direction = p_ray.m_end - p_ray.m_start;
     const NewVector3f ab = p_b - p_a;
     const NewVector3f ac = p_c - p_a;
-    NewVector3f P;
-    {
-#define CC(a) glm::vec3(a.x, a.y, a.z)
-        auto tmp = glm::cross(CC(direction), CC(ac));
-        P.x = tmp.x;
-        P.y = tmp.y;
-        P.z = tmp.z;
-    }
+    NewVector3f P = math::Cross(direction, ac);
     const float det = math::Dot(ab, P);
     if (det < math::Epsilon()) {
         return false;
@@ -59,13 +52,7 @@ bool TestIntersection::RayTriangle(const NewVector3f& p_a, const NewVector3f& p_
     const float inv_det = 1.0f / det;
     const NewVector3f AO = p_ray.m_start - p_a;
 
-    NewVector3f q;
-    {
-        auto tmp = glm::cross(CC(AO), CC(ab));
-        q.x = tmp.x;
-        q.y = tmp.y;
-        q.z = tmp.z;
-    }
+    const NewVector3f q = math::Cross(AO, ab);
     const float u = math::Dot(AO, P) * inv_det;
     const float v = math::Dot(direction, q) * inv_det;
 
@@ -74,7 +61,7 @@ bool TestIntersection::RayTriangle(const NewVector3f& p_a, const NewVector3f& p_
     }
 
     const float t = math::Dot(ac, q) * inv_det;
-    if (t < glm::epsilon<float>() || t >= p_ray.m_dist) {
+    if (t < math::Epsilon() || t >= p_ray.m_dist) {
         return false;
     }
 

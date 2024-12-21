@@ -47,8 +47,8 @@ struct PassContext {
 struct ImageDrawContext {
     int mode;
     uint64_t handle;
-    NewVector2f size;
-    NewVector2f position;
+    Vector2f size;
+    Vector2f position;
 };
 
 template<typename BUFFER>

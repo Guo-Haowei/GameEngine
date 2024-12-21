@@ -98,9 +98,9 @@ const std::string& DynamicVariable::AsString() const {
     return m_string;
 }
 
-NewVector2f DynamicVariable::AsVector2f() const {
+Vector2f DynamicVariable::AsVector2f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC2);
-    return NewVector2f(m_vec.x, m_vec.y);
+    return Vector2f(m_vec.x, m_vec.y);
 }
 
 NewVector3f DynamicVariable::AsVector3f() const {

@@ -42,7 +42,7 @@ public:
     [[nodiscard]] int AsInt() const;
     [[nodiscard]] float AsFloat() const;
     [[nodiscard]] const std::string& AsString() const;
-    [[nodiscard]] NewVector2f AsVector2f() const;
+    [[nodiscard]] Vector2f AsVector2f() const;
     [[nodiscard]] NewVector3f AsVector3f() const;
     [[nodiscard]] NewVector4f AsVector4f() const;
     [[nodiscard]] Vector2i AsVector2i() const;

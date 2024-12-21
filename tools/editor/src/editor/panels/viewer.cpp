@@ -18,7 +18,7 @@
 namespace my {
 
 void Viewer::UpdateData() {
-    NewVector2i frame_size = DVAR_GET_IVEC2(resolution);
+    Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     int frame_width = frame_size.x;
     int frame_height = frame_size.y;
     const float ratio = (float)frame_width / frame_height;

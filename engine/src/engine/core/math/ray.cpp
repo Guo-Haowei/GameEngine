@@ -1,12 +1,14 @@
 #include "ray.h"
 
+#include "vector_math.h"
+
 namespace my {
 
 #define C(a)  glm::vec3(a.x, a.y, a.z)
 #define C2(a) NewVector3f(a.x, a.y, a.z)
 
-Vector3f Ray::Direction() const {
-    return glm::normalize(C(m_end) - C(m_start));
+NewVector3f Ray::Direction() const {
+    return math::Normalize(m_end - m_start);
 }
 
 Ray Ray::Inverse(const Matrix4x4f& p_inverse_matrix) const {

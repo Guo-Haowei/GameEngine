@@ -27,8 +27,8 @@ void AddDebugCube(const AABB& p_aabb,
                   const Matrix4x4f* p_transform = nullptr);
 
 void AddImage2D(GpuTexture* p_texture,
-                const NewVector2f& p_size,
-                const NewVector2f& p_position = NewVector2f::Zero,
+                const Vector2f& p_size,
+                const Vector2f& p_position = Vector2f::Zero,
                 int p_mode = 0);
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);

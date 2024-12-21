@@ -61,7 +61,7 @@ static void PrepareImageDraws() {
     for (uint32_t index = 0; index < extra_size; ++index) {
         auto& draw = context[index];
         auto& mat = buffer[old_size + index];
-        auto half_ndc = draw.size / NewVector2f(resolution);
+        auto half_ndc = draw.size / Vector2f(resolution);
         auto pos = 1.0f - half_ndc;
 
         mat.c_debugDrawPos.x = pos.x;
@@ -127,8 +127,8 @@ void AddDebugCube(const AABB& p_aabb,
 }
 
 void AddImage2D(GpuTexture* p_texture,
-                const NewVector2f& p_size,
-                const NewVector2f& p_position,
+                const Vector2f& p_size,
+                const Vector2f& p_position,
                 int p_mode) {
     ASSERT_CAN_RECORD();
 

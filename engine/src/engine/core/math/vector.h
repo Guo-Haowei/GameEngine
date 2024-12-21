@@ -333,11 +333,11 @@ using Vector4i = Vector<int, 4>;
 using Vector2u = Vector<uint32_t, 2>;
 using Vector3u = Vector<uint32_t, 3>;
 using Vector4u = Vector<uint32_t, 4>;
-using NewVector2f = Vector<float, 2>;
+using Vector2f = Vector<float, 2>;
 using NewVector3f = Vector<float, 3>;
 using NewVector4f = Vector<float, 4>;
 
-static_assert(sizeof(NewVector2f) == 8);
+static_assert(sizeof(Vector2f) == 8);
 static_assert(sizeof(NewVector3f) == 12);
 static_assert(sizeof(NewVector4f) == 16);
 static_assert(sizeof(Vector2i) == 8);

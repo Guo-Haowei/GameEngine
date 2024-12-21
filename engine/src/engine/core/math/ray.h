@@ -9,7 +9,7 @@ public:
 
     Ray Inverse(const Matrix4x4f& p_inverse_matrix) const;
 
-    Vector3f Direction() const;
+    NewVector3f Direction() const;
 
     bool Intersects(const AABB& p_aabb) { return TestIntersection::RayAabb(p_aabb, *this); }
 

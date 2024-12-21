@@ -104,10 +104,10 @@ TEST(dynamic_variable, string) {
 
 TEST(dynamic_variable, Vector2f) {
     auto value = DVAR_GET_VEC2(test_vec2);
-    EXPECT_EQ(value, NewVector2f(1, 2));
+    EXPECT_EQ(value, Vector2f(1, 2));
     DVAR_SET_VEC2(test_vec2, 7.0f, 8.0f);
     value = DVAR_GET_VEC2(test_vec2);
-    EXPECT_EQ(value, NewVector2f(7, 8));
+    EXPECT_EQ(value, Vector2f(7, 8));
 }
 
 TEST(dynamic_variable, Vector3f) {
