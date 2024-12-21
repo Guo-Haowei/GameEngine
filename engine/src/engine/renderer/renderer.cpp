@@ -2,9 +2,11 @@
 
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
-#include "engine/core/math/geometry.h"
-#include "engine/core/math/vector_math.h"
+#include "engine/math/geometry.h"
 #include "engine/renderer/draw_data.h"
+
+// @TODO: refactor
+#include "engine/math/detail/matrix.h"
 
 #define DEFINE_DVAR
 #include "graphics_dvars.h"
@@ -61,7 +63,7 @@ static void PrepareImageDraws() {
     for (uint32_t index = 0; index < extra_size; ++index) {
         auto& draw = context[index];
         auto& mat = buffer[old_size + index];
-        auto half_ndc = draw.size / NewVector2f(resolution);
+        auto half_ndc = draw.size / Vector2f(resolution);
         auto pos = 1.0f - half_ndc;
 
         mat.c_debugDrawPos.x = pos.x;
@@ -100,13 +102,13 @@ const DrawData* GetRenderData() {
     return s_glob.renderData;
 }
 
-void AddDebugCube(const AABB& p_aabb,
-                  const Color& p_color,
+void AddDebugCube(const math::AABB& p_aabb,
+                  const math::Color& p_color,
                   const Matrix4x4f* p_transform) {
     ASSERT_CAN_RECORD();
 
-    const Vector3f& min = p_aabb.GetMin();
-    const Vector3f& max = p_aabb.GetMax();
+    const auto& min = p_aabb.GetMin();
+    const auto& max = p_aabb.GetMax();
 
     std::vector<Vector3f> positions;
     std::vector<uint32_t> indices;
@@ -116,7 +118,8 @@ void AddDebugCube(const AABB& p_aabb,
     for (const auto& i : indices) {
         const Vector3f& pos = positions[i];
         if (p_transform) {
-            context.positions.emplace_back(Vector3f(*p_transform * Vector4f(pos, 1.0f)));
+            const auto tmp = *p_transform * Vector4f(pos, 1.0f);
+            context.positions.emplace_back(Vector3f(tmp.xyz));
         } else {
             context.positions.emplace_back(Vector3f(pos));
         }
@@ -125,8 +128,8 @@ void AddDebugCube(const AABB& p_aabb,
 }
 
 void AddImage2D(GpuTexture* p_texture,
-                const NewVector2f& p_size,
-                const NewVector2f& p_position,
+                const Vector2f& p_size,
+                const Vector2f& p_position,
                 int p_mode) {
     ASSERT_CAN_RECORD();
 

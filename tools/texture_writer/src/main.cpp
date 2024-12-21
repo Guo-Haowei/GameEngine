@@ -4,10 +4,10 @@
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/systems/job_system/job_system.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/geomath.h"
 #include "engine/core/framework/engine.h"
-#include "engine/core/math/color.h"
-#include "engine/core/math/vector_math.h"
+#include "engine/math/color.h"
+#include "engine/math/vector.h"
 #include "pbr.hlsl.h"
 
 using namespace my;
@@ -45,6 +45,8 @@ void WriteBrdfImage(const char* p_file) {
 }
 
 void WriteAviatorSkyImage(const char* p_file) {
+    using math::Color;
+
     constexpr int width = 2048;
     constexpr int height = 1024;
     constexpr int job_count = width * height;
@@ -59,7 +61,7 @@ void WriteAviatorSkyImage(const char* p_file) {
         const int index = args.jobIndex;
         const int y = index / width;
         float v = 1.0f - (y + 0.5f) / (float)(height);
-        auto color = math::Lerp(top, bottom, v);
+        auto color = math::lerp(top, bottom, v);
         image_data[channels * index + 0] = color.r;
         image_data[channels * index + 1] = color.g;
         image_data[channels * index + 2] = color.b;

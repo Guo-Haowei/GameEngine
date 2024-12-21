@@ -98,12 +98,12 @@
 
 namespace my {
 
-inline constexpr size_t KB = 1024;
-inline constexpr size_t MB = 1024 * KB;
-inline constexpr size_t GB = 1024 * MB;
+constexpr inline size_t KB = 1024;
+constexpr inline size_t MB = 1024 * KB;
+constexpr inline size_t GB = 1024 * MB;
 
 template<typename T, int N>
-inline constexpr int array_length(T (&)[N]) {
+constexpr inline int array_length(T (&)[N]) {
     return N;
 }
 

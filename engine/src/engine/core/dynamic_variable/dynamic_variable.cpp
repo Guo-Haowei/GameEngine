@@ -1,7 +1,5 @@
 #include "dynamic_variable.h"
 
-#include "engine/core/math/vector_math.h"
-
 namespace my {
 
 DynamicVariable::DynamicVariable(VariantType p_type, DvarFlags p_flags, const char* p_desc)
@@ -98,32 +96,32 @@ const std::string& DynamicVariable::AsString() const {
     return m_string;
 }
 
-NewVector2f DynamicVariable::AsVector2f() const {
+Vector2f DynamicVariable::AsVector2f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC2);
-    return NewVector2f(m_vec.x, m_vec.y);
+    return Vector2f(m_vec.x, m_vec.y);
 }
 
-NewVector3f DynamicVariable::AsVector3f() const {
+Vector3f DynamicVariable::AsVector3f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC3);
-    return NewVector3f(m_vec.x, m_vec.y, m_vec.z);
+    return Vector3f(m_vec.x, m_vec.y, m_vec.z);
 }
 
-NewVector4f DynamicVariable::AsVector4f() const {
+Vector4f DynamicVariable::AsVector4f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC4);
     return m_vec;
 }
 
-NewVector2i DynamicVariable::AsVector2i() const {
+Vector2i DynamicVariable::AsVector2i() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC2);
-    return NewVector2i(m_ivec.x, m_ivec.y);
+    return Vector2i(m_ivec.x, m_ivec.y);
 }
 
-NewVector3i DynamicVariable::AsVector3i() const {
+Vector3i DynamicVariable::AsVector3i() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC3);
-    return NewVector3i(m_ivec.x, m_ivec.y, m_ivec.z);
+    return Vector3i(m_ivec.x, m_ivec.y, m_ivec.z);
 }
 
-NewVector4i DynamicVariable::AsVector4i() const {
+Vector4i DynamicVariable::AsVector4i() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_IVEC4);
     return m_ivec;
 }

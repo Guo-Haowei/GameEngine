@@ -3,8 +3,8 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
-#include "engine/core/math/color.h"
-#include "engine/core/math/geometry.h"
+#include "engine/math/color.h"
+#include "engine/math/geometry.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
@@ -32,6 +32,7 @@ struct hash<my::Vector3f> {
 }  // namespace std
 
 namespace my {
+using math::Color;
 
 static const Color RED_COLOR = Color::Hex(0xCE190A);
 static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
@@ -148,7 +149,7 @@ class OceanScript : public ScriptableEntity {
 
             Vector3f AB = points[0] - points[1];
             Vector3f AC = points[0] - points[2];
-            Vector3f normal = glm::normalize(glm::cross(AB, AC));
+            Vector3f normal = math::normalize(math::cross(AB, AC));
             normals.emplace_back(normal);
             normals.emplace_back(normal);
             normals.emplace_back(normal);
