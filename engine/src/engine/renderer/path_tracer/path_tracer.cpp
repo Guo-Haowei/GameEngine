@@ -368,19 +368,17 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         Matrix4x4f transform = p_transform.GetWorldMatrix();
 
         for (size_t index = 0; index < p_mesh.indices.size(); index += 3) {
-            CRASH_NOW();
-#if 0
             const uint32_t index0 = p_mesh.indices[index];
             const uint32_t index1 = p_mesh.indices[index + 1];
             const uint32_t index2 = p_mesh.indices[index + 2];
 
-            Vector3f points[3] = {
+            Vector4f points[3] = {
                 transform * Vector4f(p_mesh.positions[index0], 1.0f),
                 transform * Vector4f(p_mesh.positions[index1], 1.0f),
                 transform * Vector4f(p_mesh.positions[index2], 1.0f),
             };
 
-            Vector3f normals[3] = {
+            Vector4f normals[3] = {
                 transform * Vector4f(p_mesh.normals[index0], 0.0f),
                 transform * Vector4f(p_mesh.normals[index1], 0.0f),
                 transform * Vector4f(p_mesh.normals[index2], 0.0f),
@@ -393,20 +391,20 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
             };
 
             // per-face material
-            gpu_geometry_t triangle;
-            gpu_geometry_t triangle(points[0], points[1], points[2], 0);
+            gpu_geometry_t triangle(Vector3f(points[0].xyz),
+                                    Vector3f(points[1].xyz),
+                                    Vector3f(points[2].xyz), 0);
             triangle.uv1 = uvs[0];
             triangle.uv2 = uvs[1];
             triangle.uv3 = uvs[2];
-            triangle.normal1 = glm::normalize(normals[0]);
-            triangle.normal2 = glm::normalize(normals[1]);
-            triangle.normal3 = glm::normalize(normals[2]);
+            triangle.normal1 = math::normalize(Vector3f(normals[0].xyz));
+            triangle.normal2 = math::normalize(Vector3f(normals[1].xyz));
+            triangle.normal3 = math::normalize(Vector3f(normals[2].xyz));
             triangle.kind = gpu_geometry_t::Kind::Triangle;
             auto it = material_lut.find(p_mesh.subsets[0].material_id);
             DEV_ASSERT(it != material_lut.end());
             triangle.material_id = it->second;
             tmp_gpu_objects.push_back(triangle);
-#endif
         }
     };
 

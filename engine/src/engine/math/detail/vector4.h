@@ -22,6 +22,8 @@ struct alignas(sizeof(T) * 4) Vector<T, 4> : VectorBase<T, 4> {
         VECTOR4_SWIZZLE4;
 #if USING(MATH_ENABLE_SIMD_SSE)
         __m128 simd;
+#elif USING(MATH_ENABLE_SIMD_NEON)
+        float16x4_t simd;
 #endif
     };
     // clang-format on
