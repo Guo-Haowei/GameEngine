@@ -15,15 +15,13 @@ public:
     }
 
     bool pop(T& p_out_value) {
-        m_mutex.lock();
+        std::lock_guard guard(m_mutex);
         if (m_queue.empty()) {
-            m_mutex.unlock();
             return false;
         }
 
-        p_out_value = m_queue.front();
+        p_out_value = std::move(m_queue.front());
         m_queue.pop();
-        m_mutex.unlock();
         return true;
     }
 

@@ -102,11 +102,21 @@ Result<GraphicsManager*> Application::CreateGraphicsManager() {
     return GraphicsManager::Create();
 }
 
+Result<ScriptManager*> Application::CreateScriptManager() {
+    return ScriptManager::Create();
+}
+
 auto Application::SetupModules() -> Result<void> {
     // @TODO: configure so it's easier for user to override
     m_assetManager = new AssetManager();
     m_assetRegistry = new AssetRegistry();
-    m_scriptManager = new ScriptManager();
+    {
+        auto res = CreateScriptManager();
+        if (!res) {
+            return HBN_ERROR(res.error());
+        }
+        m_scriptManager = *res;
+    }
     m_sceneManager = new SceneManager();
     m_physicsManager = new PhysicsManager();
     m_displayServer = DisplayManager::Create();
