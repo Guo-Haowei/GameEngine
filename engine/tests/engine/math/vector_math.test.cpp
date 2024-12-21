@@ -1,6 +1,6 @@
 #include "vector.test.h"
 
-namespace my::math::detail {
+namespace my::math {
 
 // add
 TEST(vector_math, add) {
@@ -258,11 +258,11 @@ TEST(vector_math, lerp) {
     {
         const Vector2f a(4.0f, 1.0f);
         const Vector2f b(2.0f, 3.0f);
-        auto vec = Lerp(a, b, 0.0f);
+        auto vec = lerp(a, b, 0.0f);
         CHECK_VEC2(vec, 4, 1);
-        vec = Lerp(a, b, 1.0f);
+        vec = lerp(a, b, 1.0f);
         CHECK_VEC2(vec, 2, 3);
-        vec = Lerp(a, b, 0.1f);
+        vec = lerp(a, b, 0.1f);
         CHECK_VEC2(vec, 3.8f, 1.2f);
         CHECK_VEC2(a, 4, 1);
         CHECK_VEC2(b, 2, 3);
@@ -270,7 +270,7 @@ TEST(vector_math, lerp) {
     {
         const Vector4f a(4.0f, 20.0f, 12.0f, 4.0f);
         const Vector4f b(2.0f, 4.0f, 6.0f, 8.0f);
-        auto vec = Lerp(a, b, .5f);
+        auto vec = lerp(a, b, .5f);
         CHECK_VEC4(vec, 3, 12, 9, 6);
     }
 }
@@ -279,26 +279,26 @@ TEST(vector_math, dot) {
     {
         const Vector2i a(4, 1);
         const Vector2i b(2, 3);
-        EXPECT_EQ(Dot(a, b), 11);
+        EXPECT_EQ(dot(a, b), 11);
     }
     {
         const Vector4i a(1, 2, 3, 4);
         const Vector4i b(2, 4, 6, 8);
-        EXPECT_EQ(Dot(a, b), 60);
+        EXPECT_EQ(dot(a, b), 60);
     }
 }
 
 TEST(vector_math, length) {
     {
-        auto length = Length(Vector2f(3, 4));
+        auto length = math::length(Vector2f(3, 4));
         EXPECT_FLOAT_EQ(length, 5.0f);
     }
     {
-        auto length = Length(Vector3f(3, 4, 5));
+        auto length = math::length(Vector3f(3, 4, 5));
         EXPECT_FLOAT_EQ(length, 7.0710678f);
     }
     {
-        auto length = Length(Vector4f::One);
+        auto length = math::length(Vector4f::One);
         EXPECT_FLOAT_EQ(length, 2.f);
     }
 }
@@ -306,24 +306,24 @@ TEST(vector_math, length) {
 TEST(vector_math, normalize) {
     {
         Vector2f vec1(3, 4);
-        auto vec2 = Normalize(vec1);
-        EXPECT_FLOAT_EQ(Length(vec2), 1.0f);
+        auto vec2 = normalize(vec1);
+        EXPECT_FLOAT_EQ(length(vec2), 1.0f);
         EXPECT_FLOAT_EQ(vec2.x, 3.0f / 5);
         EXPECT_FLOAT_EQ(vec2.y, 4.0f / 5);
     }
     {
         Vector3f vec1(1, 2, 2);
-        auto vec2 = Normalize(vec1);
-        EXPECT_FLOAT_EQ(Length(vec2), 1.0f);
+        auto vec2 = normalize(vec1);
+        EXPECT_FLOAT_EQ(length(vec2), 1.0f);
         EXPECT_FLOAT_EQ(vec2.x, 1.0f / 3);
         EXPECT_FLOAT_EQ(vec2.y, 2.0f / 3);
         EXPECT_FLOAT_EQ(vec2.z, 2.0f / 3);
     }
     {
         Vector4f vec1(27, 36, 77, 122);
-        auto vec2 = Normalize(vec1);
+        auto vec2 = normalize(vec1);
         constexpr float err = 0.001f;
-        EXPECT_FLOAT_EQ(Length(vec2), 1.0f);
+        EXPECT_FLOAT_EQ(length(vec2), 1.0f);
         EXPECT_NEAR(vec2.x, 27.f / 151, err);
         EXPECT_NEAR(vec2.y, 36.f / 151, err);
         EXPECT_NEAR(vec2.z, 77.f / 151, err);
@@ -364,7 +364,7 @@ TEST(vector_math, degrees) {
 TEST(vector_math, cross) {
     constexpr Vector3f a(1, 2, 3);
     constexpr Vector3f b(5, 6, 0);
-    constexpr auto c = Cross(a, b);
+    constexpr auto c = cross(a, b);
     EXPECT_FLOAT_EQ(c.x, -18);
     EXPECT_FLOAT_EQ(c.y, 15);
     EXPECT_FLOAT_EQ(c.z, -4);
@@ -372,7 +372,7 @@ TEST(vector_math, cross) {
 
 TEST(vector_math, cross_parallel_vector) {
     constexpr Vector3f a(1, 2, 3);
-    constexpr auto c = Cross(a, 2 * a);
+    constexpr auto c = cross(a, 2 * a);
     EXPECT_FLOAT_EQ(c.x, 0);
     EXPECT_FLOAT_EQ(c.y, 0);
     EXPECT_FLOAT_EQ(c.z, 0);
@@ -383,12 +383,12 @@ TEST(vector_math, min) {
     {
         constexpr int a = 10;
         constexpr int b = 3;
-        EXPECT_EQ(Min(a, b), 3);
+        EXPECT_EQ(min(a, b), 3);
     }
     {
         constexpr Vector2f a(1, 3);
         constexpr Vector2f b(-4, 5);
-        constexpr auto v = Min(a, b);
+        constexpr auto v = min(a, b);
         EXPECT_EQ(v.x, -4);
         EXPECT_EQ(v.y, 3);
     }
@@ -398,8 +398,8 @@ TEST(vector_math, max) {
     {
         constexpr int a = 10;
         constexpr int b = 3;
-        EXPECT_EQ(Max(a, b), 10);
+        EXPECT_EQ(max(a, b), 10);
     }
 }
 
-}  // namespace my::math::detail
+}  // namespace my::math

@@ -22,11 +22,11 @@ bool TestIntersection::RayAabb(const AABB& p_aabb, Ray& p_ray) {
     Vector3f t0s = (p_aabb.m_min - p_ray.m_start) * inv_d;
     Vector3f t1s = (p_aabb.m_max - p_ray.m_start) * inv_d;
 
-    Vector3f tsmaller = math::Min(t0s, t1s);
-    Vector3f tbigger = math::Max(t0s, t1s);
+    Vector3f tsmaller = math::min(t0s, t1s);
+    Vector3f tbigger = math::max(t0s, t1s);
 
-    const float tmin = math::Max(-FLT_MAX, math::Max(tsmaller.x, math::Max(tsmaller.y, tsmaller.z)));
-    const float tmax = math::Min(FLT_MAX, math::Min(tbigger.x, math::Min(tbigger.y, tbigger.z)));
+    const float tmin = math::max(-FLT_MAX, math::max(tsmaller.x, math::max(tsmaller.y, tsmaller.z)));
+    const float tmax = math::min(FLT_MAX, math::min(tbigger.x, math::min(tbigger.y, tbigger.z)));
 
     // check bounding box
     if (tmin >= tmax || tmin <= 0.0f || tmin >= p_ray.m_dist) {
@@ -43,8 +43,8 @@ bool TestIntersection::RayTriangle(const Vector3f& p_a, const Vector3f& p_b, con
     const Vector3f direction = p_ray.m_end - p_ray.m_start;
     const Vector3f ab = p_b - p_a;
     const Vector3f ac = p_c - p_a;
-    Vector3f P = math::Cross(direction, ac);
-    const float det = math::Dot(ab, P);
+    Vector3f P = math::cross(direction, ac);
+    const float det = math::dot(ab, P);
     if (det < math::Epsilon()) {
         return false;
     }
@@ -52,15 +52,15 @@ bool TestIntersection::RayTriangle(const Vector3f& p_a, const Vector3f& p_b, con
     const float inv_det = 1.0f / det;
     const Vector3f AO = p_ray.m_start - p_a;
 
-    const Vector3f q = math::Cross(AO, ab);
-    const float u = math::Dot(AO, P) * inv_det;
-    const float v = math::Dot(direction, q) * inv_det;
+    const Vector3f q = math::cross(AO, ab);
+    const float u = math::dot(AO, P) * inv_det;
+    const float v = math::dot(direction, q) * inv_det;
 
     if (u < 0.0 || v < 0.0 || u + v > 1.0) {
         return false;
     }
 
-    const float t = math::Dot(ac, q) * inv_det;
+    const float t = math::dot(ac, q) * inv_det;
     if (t < math::Epsilon() || t >= p_ray.m_dist) {
         return false;
     }

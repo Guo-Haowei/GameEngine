@@ -63,7 +63,7 @@ void PlaneScript::OnUpdate(float p_timestep) {
     transform->SetRotation(Vector4f(q.x, q.y, q.z, q.w));
 
     m_collisionSpeed += -0.2f * m_collisionSpeed;
-    m_collisionSpeed = math::Min(m_collisionSpeed, Vector2f::Zero);
+    m_collisionSpeed = math::min(m_collisionSpeed, Vector2f::Zero);
     m_collisionDisplacement *= 0.9f;
 }
 

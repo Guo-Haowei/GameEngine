@@ -1,6 +1,14 @@
 #pragma once
 #include "forward.h"
 
+#if defined(min)
+#undef min
+#endif
+
+#if defined(max)
+#undef max
+#endif
+
 namespace my::math {
 
 template<typename T = float>
@@ -40,23 +48,23 @@ constexpr inline T Degrees(const T& p_radians) {
 }
 
 template<Arithmetic T>
-constexpr inline T Min(const T& p_lhs, const T& p_rhs) {
+constexpr inline T min(const T& p_lhs, const T& p_rhs) {
     return p_lhs < p_rhs ? p_lhs : p_rhs;
 }
 
 template<Arithmetic T>
-constexpr inline T Max(const T& p_lhs, const T& p_rhs) {
+constexpr inline T max(const T& p_lhs, const T& p_rhs) {
     return p_lhs > p_rhs ? p_lhs : p_rhs;
 }
 
 template<Arithmetic T>
-constexpr inline T Abs(const T& p_lhs) {
+constexpr inline T abs(const T& p_lhs) {
     return std::abs(p_lhs);
 }
 
 template<Arithmetic T>
-constexpr inline T Clamp(const T& p_value, const T& p_min, const T& p_max) {
-    return Max(p_min, Min(p_value, p_max));
+constexpr inline T clamp(const T& p_value, const T& p_min, const T& p_max) {
+    return max(p_min, min(p_value, p_max));
 }
 
 }  // namespace my::math

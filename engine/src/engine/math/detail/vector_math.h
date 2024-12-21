@@ -7,6 +7,14 @@
 #include "vector_math_sse.h"
 #endif
 
+#if defined(min)
+#undef min
+#endif
+
+#if defined(max)
+#undef max
+#endif
+
 namespace my::math {
 
 template<Arithmetic T, int N>
@@ -188,59 +196,59 @@ constexpr Vector<T, N>& operator/=(Vector<T, N>& p_lhs, const U& p_rhs) {
 #pragma endregion VECTOR_MATH_DIV
 
 template<Arithmetic T, int N>
-constexpr inline Vector<T, N> Min(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+constexpr inline Vector<T, N> min(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     Vector<T, N> result;
-    result.x = Min(p_lhs.x, p_rhs.x);
-    result.y = Min(p_lhs.y, p_rhs.y);
+    result.x = min(p_lhs.x, p_rhs.x);
+    result.y = min(p_lhs.y, p_rhs.y);
     if constexpr (N >= 3) {
-        result.z = Min(p_lhs.z, p_rhs.z);
+        result.z = min(p_lhs.z, p_rhs.z);
     }
     if constexpr (N >= 4) {
-        result.w = Min(p_lhs.w, p_rhs.w);
+        result.w = min(p_lhs.w, p_rhs.w);
     }
     return result;
 }
 
 template<Arithmetic T, int N>
-constexpr inline Vector<T, N> Max(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+constexpr inline Vector<T, N> max(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     Vector<T, N> result;
-    result.x = Max(p_lhs.x, p_rhs.x);
-    result.y = Max(p_lhs.y, p_rhs.y);
+    result.x = max(p_lhs.x, p_rhs.x);
+    result.y = max(p_lhs.y, p_rhs.y);
     if constexpr (N >= 3) {
-        result.z = Max(p_lhs.z, p_rhs.z);
+        result.z = max(p_lhs.z, p_rhs.z);
     }
     if constexpr (N >= 4) {
-        result.w = Max(p_lhs.w, p_rhs.w);
+        result.w = max(p_lhs.w, p_rhs.w);
     }
     return result;
 }
 
 template<Arithmetic T, int N>
-constexpr inline Vector<T, N> Abs(const Vector<T, N>& p_lhs) {
+constexpr inline Vector<T, N> abs(const Vector<T, N>& p_lhs) {
     Vector<T, N> result;
-    result.x = Abs(p_lhs.x);
-    result.y = Abs(p_lhs.y);
+    result.x = abs(p_lhs.x);
+    result.y = abs(p_lhs.y);
     if constexpr (N >= 3) {
-        result.z = Abs(p_lhs.z);
+        result.z = abs(p_lhs.z);
     }
     if constexpr (N >= 4) {
-        result.w = Abs(p_lhs.w);
+        result.w = abs(p_lhs.w);
     }
     return result;
 }
 
 template<Arithmetic T, int N>
-constexpr inline Vector<T, N> Clamp(const Vector<T, N>& p_value, const Vector<T, N>& p_min, const Vector<T, N>& p_max) {
-    return Max(p_min, Min(p_value, p_max));
+constexpr inline Vector<T, N> clamp(const Vector<T, N>& p_value, const Vector<T, N>& p_min, const Vector<T, N>& p_max) {
+    return max(p_min, min(p_value, p_max));
 }
 
 template<FloatingPoint T, int N>
-constexpr inline Vector<T, N> Lerp(const Vector<T, N>& p_x, const Vector<T, N>& p_y, float p_s) {
+constexpr inline Vector<T, N> lerp(const Vector<T, N>& p_x, const Vector<T, N>& p_y, float p_s) {
     return (static_cast<T>(1) - p_s) * p_x + p_s * p_y;
 }
 
 template<Arithmetic T, int N>
-constexpr inline T Dot(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
+constexpr inline T dot(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     Vector<T, N> tmp(p_lhs * p_rhs);
     T result = tmp.x + tmp.y;
     if constexpr (N >= 3) {
@@ -254,19 +262,19 @@ constexpr inline T Dot(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
 
 template<Arithmetic T, int N>
     requires(std::is_floating_point_v<T>)
-constexpr inline T Length(const Vector<T, N>& p_lhs) {
-    return std::sqrt(Dot(p_lhs, p_lhs));
+constexpr inline T length(const Vector<T, N>& p_lhs) {
+    return std::sqrt(dot(p_lhs, p_lhs));
 }
 
 template<Arithmetic T, int N>
     requires(std::is_floating_point_v<T>)
-constexpr inline Vector<T, N> Normalize(const Vector<T, N>& p_lhs) {
-    const auto inverse_length = static_cast<T>(1) / Length(p_lhs);
+constexpr inline Vector<T, N> normalize(const Vector<T, N>& p_lhs) {
+    const auto inverse_length = static_cast<T>(1) / length(p_lhs);
     return p_lhs * inverse_length;
 }
 
 template<Arithmetic T>
-constexpr inline Vector<T, 3> Cross(const Vector<T, 3>& p_lhs, const Vector<T, 3>& p_rhs) {
+constexpr inline Vector<T, 3> cross(const Vector<T, 3>& p_lhs, const Vector<T, 3>& p_rhs) {
     return Vector<T, 3>(
         p_lhs.y * p_rhs.z - p_rhs.y * p_lhs.z,
         p_lhs.z * p_rhs.x - p_rhs.z * p_lhs.x,

@@ -425,7 +425,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
             auto transform = p_scene.GetComponent<TransformComponent>(entity);
             DEV_ASSERT(transform);
             Vector3f rotation = (transform->GetWorldMatrix() * Vector4f::UnitZ).xyz;
-            rotation = math::Normalize(rotation);
+            rotation = math::normalize(rotation);
             float radius = 1000.0f;
 
             Vector3f tmp;

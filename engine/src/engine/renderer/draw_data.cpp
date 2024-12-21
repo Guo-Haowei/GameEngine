@@ -279,7 +279,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
             case LIGHT_TYPE_INFINITE: {
                 Matrix4x4f light_local_matrix = light_transform->GetLocalMatrix();
                 Vector3f light_dir((light_local_matrix * Vector4f::UnitZ).xyz);
-                light_dir = math::Normalize(light_dir);
+                light_dir = math::normalize(light_dir);
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
@@ -289,7 +289,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
                 Vector3f center = world_bound.Center();
                 Vector3f extents = world_bound.Size();
 
-                const float size = 0.7f * math::Max(extents.x, math::Max(extents.y, extents.z));
+                const float size = 0.7f * math::max(extents.x, math::max(extents.y, extents.z));
                 Vector3f tmp;
                 tmp.Set(&light_dir.x);
                 light.view_matrix = LookAtRh(center + tmp * size, center, Vector3f::UnitY);
@@ -573,7 +573,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.front = p_camera.GetFront();
         camera.right = p_camera.GetRight();
-        camera.up = math::Cross(camera.front, camera.right);
+        camera.up = math::cross(camera.front, camera.right);
     }
 
     // @TODO: update soft body

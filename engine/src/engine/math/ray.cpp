@@ -6,7 +6,7 @@
 namespace my::math {
 
 Vector3f Ray::Direction() const {
-    return math::Normalize(m_end - m_start);
+    return math::normalize(m_end - m_start);
 }
 
 Ray Ray::Inverse(const Matrix4x4f& p_inverse_matrix) const {

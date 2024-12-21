@@ -287,7 +287,7 @@ auto GltfLoader::Load() -> Result<IAsset*> {
 
     // Create transform hierarchy, assign objects, meshes, armatures, cameras
     DEV_ASSERT(m_model->scenes.size());
-    const tinygltf::Scene& gltfScene = m_model->scenes[math::Max(0, m_model->defaultScene)];
+    const tinygltf::Scene& gltfScene = m_model->scenes[math::max(0, m_model->defaultScene)];
     for (size_t i = 0; i < gltfScene.nodes.size(); ++i) {
         ProcessNode(gltfScene.nodes[i], root);
     }
@@ -331,7 +331,7 @@ void GltfLoader::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
         if (m_scene->GetCount<MaterialComponent>() == 0) {
             LOG_FATAL("No material! Consider use default");
         }
-        subset.material_id = m_scene->GetEntity<MaterialComponent>(math::Max(0, prim.material));
+        subset.material_id = m_scene->GetEntity<MaterialComponent>(math::max(0, prim.material));
 
         //        const size_t index_remap[] = { 0, 1, 2 };
         uint32_t vertexOffset = (uint32_t)mesh.normals.size();
@@ -627,8 +627,8 @@ void GltfLoader::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int) {
             for (size_t j = 0; j < count; ++j) {
                 float time = ((float*)data)[j];
                 sampler.keyframeTimes[j] = time;
-                animation.start = math::Min(animation.start, time);
-                animation.end = math::Max(animation.end, time);
+                animation.start = math::min(animation.start, time);
+                animation.end = math::max(animation.end, time);
             }
         }
 

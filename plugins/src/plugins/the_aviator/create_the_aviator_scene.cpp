@@ -49,7 +49,7 @@ static MeshComponent MakeOceanMesh(float p_radius,
 
             Vector3f AB = point_1 - point_2;
             Vector3f AC = point_1 - point_3;
-            Vector3f normal = math::Normalize(math::Cross(AB, AC));
+            Vector3f normal = math::normalize(math::cross(AB, AC));
 
             mesh.positions.emplace_back(point_1);
             mesh.positions.emplace_back(point_2);

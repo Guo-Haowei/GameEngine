@@ -48,7 +48,7 @@ MeshComponent MakePlaneMesh(const Vector3f& p_point_0,
         p_point_3,
     };
 
-    const Vector3f normal = math::Normalize(math::Cross(p_point_0 - p_point_1, p_point_0 - p_point_2));
+    const Vector3f normal = math::normalize(math::cross(p_point_0 - p_point_1, p_point_0 - p_point_2));
     mesh.normals = {
         normal,
         normal,
@@ -252,7 +252,7 @@ MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
         // const Vector3f& D = mesh.positions[i + 3];
         Vector3f AB = B - A;
         Vector3f AC = C - A;
-        Vector3f normal = math::Normalize(math::Cross(AB, AC));
+        Vector3f normal = math::normalize(math::cross(AB, AC));
 
         mesh.normals.emplace_back(normal);
         mesh.normals.emplace_back(normal);
@@ -307,7 +307,7 @@ MeshComponent MakeTetrahedronMesh(float p_size) {
         Vector3f B = vertices[indices[i + 1]];
         Vector3f C = vertices[indices[i + 2]];
 
-        Vector3f normal = math::Normalize(math::Cross(A - B, A - C));
+        Vector3f normal = math::normalize(math::cross(A - B, A - C));
 
         mesh.positions.emplace_back(A);
         mesh.positions.emplace_back(B);
@@ -416,7 +416,7 @@ MeshComponent MakeCylinderMesh(float p_radius,
 
             Vector3f AB = point_1 - point_2;
             Vector3f AC = point_1 - point_3;
-            Vector3f normal = math::Normalize(math::Cross(AB, AC));
+            Vector3f normal = math::normalize(math::cross(AB, AC));
 
             mesh.positions.emplace_back(point_1);
             mesh.positions.emplace_back(point_2);
@@ -452,7 +452,7 @@ MeshComponent MakeCylinderMesh(float p_radius,
     for (float height : heights) {
         uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
 
-        Vector3f normal = math::Normalize(Vector3f(0.0f, height, 0.0f));
+        Vector3f normal = math::normalize(Vector3f(0.0f, height, 0.0f));
 
         for (int index = 0; index <= p_sectors; ++index) {
             float angle = 2.0f * pi * index / p_sectors;
@@ -520,7 +520,7 @@ MeshComponent MakeConeMesh(float p_radius,
         // Vector3f normal = glm::normalize(Vector3f(x, 0.0f, z));
         Vector3f AB = point_1 - apex;
         Vector3f AC = point_2 - apex;
-        Vector3f normal = math::Normalize(math::Cross(AC, AB));
+        Vector3f normal = math::normalize(math::cross(AC, AB));
 
         mesh.positions.emplace_back(point_1);
         mesh.positions.emplace_back(apex);
@@ -619,7 +619,7 @@ MeshComponent MakeTorusMesh(float p_radius,
             const float nz = p_tube_radius * glm::cos(angle_2) * glm::sin(angle_1);
 
             mesh.positions.emplace_back(Vector3f(x, y, z));
-            mesh.normals.emplace_back(math::Normalize(Vector3f(nx, ny, nz)));
+            mesh.normals.emplace_back(math::normalize(Vector3f(nx, ny, nz)));
             mesh.texcoords_0.emplace_back(Vector2f());
         }
     }

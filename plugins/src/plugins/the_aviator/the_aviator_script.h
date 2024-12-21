@@ -149,7 +149,7 @@ class OceanScript : public ScriptableEntity {
 
             Vector3f AB = points[0] - points[1];
             Vector3f AC = points[0] - points[2];
-            Vector3f normal = math::Normalize(math::Cross(AB, AC));
+            Vector3f normal = math::normalize(math::cross(AB, AC));
             normals.emplace_back(normal);
             normals.emplace_back(normal);
             normals.emplace_back(normal);

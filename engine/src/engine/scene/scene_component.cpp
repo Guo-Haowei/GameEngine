@@ -114,7 +114,7 @@ void PerspectiveCameraComponent::Update() {
         m_front.y = m_pitch.Sin();
         m_front.z = m_yaw.Sin() * m_pitch.Cos();
 
-        m_right = math::Cross(m_front, Vector3f::UnitY);
+        m_right = math::cross(m_front, Vector3f::UnitY);
 
         m_viewMatrix = LookAtRh(m_position, m_position + m_front, Vector3f::UnitY);
         m_projectionMatrix = BuildOpenGlPerspectiveRH(m_fovy.GetRadians(), GetAspect(), m_near, m_far);
