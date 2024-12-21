@@ -73,7 +73,7 @@ void Scene::Update(float p_time_step) {
         auto transform = GetComponent<TransformComponent>(entity);
         if (DEV_VERIFY(transform)) {
             const auto& matrix = transform->GetWorldMatrix();
-            Vector3f center = matrix[3];
+            Vector3f center{ matrix[3].x, matrix[3].y, matrix[3].z };
             Vector3f scale = transform->GetScale();
             const float size = glm::max(scale.x, glm::max(scale.y, scale.z));
             voxel_gi.region = AABB::FromCenterSize(center, Vector3f(size));
@@ -581,13 +581,21 @@ void Scene::UpdateAnimation(size_t p_index) {
 
         TransformComponent* targetTransform = GetComponent<TransformComponent>(channel.targetId);
         DEV_ASSERT(targetTransform);
+        auto dummy_mix = [](const Vector3f& a, const Vector3f& b, float t) {
+            glm::vec3 tmp = glm::mix(glm::vec3(a.x, a.y, a.z), glm::vec3(b.x, b.y, b.z), t);
+            return Vector3f(tmp.x, tmp.y, tmp.z);
+        };
+        auto dummy_mix_4 = [](const Vector4f& a, const Vector4f& b, float t) {
+            glm::vec4 tmp = glm::mix(glm::vec4(a.x, a.y, a.z, a.w), glm::vec4(b.x, b.y, b.z, b.w), t);
+            return Vector4f(tmp.x, tmp.y, tmp.z, tmp.w);
+        };
         switch (channel.path) {
             case AnimationComponent::Channel::PATH_SCALE: {
                 DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTimes.size() * 3);
                 const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
                 const Vector3f& vLeft = data[key_left];
                 const Vector3f& vRight = data[key_right];
-                targetTransform->SetScale(glm::mix(vLeft, vRight, t));
+                targetTransform->SetScale(dummy_mix(vLeft, vRight, t));
                 break;
             }
             case AnimationComponent::Channel::PATH_TRANSLATION: {
@@ -595,7 +603,7 @@ void Scene::UpdateAnimation(size_t p_index) {
                 const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
                 const Vector3f& vLeft = data[key_left];
                 const Vector3f& vRight = data[key_right];
-                targetTransform->SetTranslation(glm::mix(vLeft, vRight, t));
+                targetTransform->SetTranslation(dummy_mix(vLeft, vRight, t));
                 break;
             }
             case AnimationComponent::Channel::PATH_ROTATION: {
@@ -603,7 +611,7 @@ void Scene::UpdateAnimation(size_t p_index) {
                 const Vector4f* data = (const Vector4f*)sampler.keyframeData.data();
                 const Vector4f& vLeft = data[key_left];
                 const Vector4f& vRight = data[key_right];
-                targetTransform->SetRotation(glm::mix(vLeft, vRight, t));
+                targetTransform->SetRotation(dummy_mix_4(vLeft, vRight, t));
                 break;
             }
             default:
@@ -716,7 +724,7 @@ bool Scene::RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray) {
         const Vector3f& A = mesh->positions[mesh->indices[i]];
         const Vector3f& B = mesh->positions[mesh->indices[i + 1]];
         const Vector3f& C = mesh->positions[mesh->indices[i + 2]];
-#define CC(a) NewVector3f(a.x, a.y, a.z)
+#define CC(a) Vector3f(a.x, a.y, a.z)
         if (inversedRay.Intersects(CC(A), CC(B), CC(C))) {
 #undef CC
             p_ray.CopyDist(inversedRay);

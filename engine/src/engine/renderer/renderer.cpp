@@ -108,17 +108,16 @@ void AddDebugCube(const AABB& p_aabb,
     const auto& min = p_aabb.GetMin();
     const auto& max = p_aabb.GetMax();
 
-#define C(a) glm::vec3(a.x, a.y, a.z)
     std::vector<Vector3f> positions;
     std::vector<uint32_t> indices;
-    BoxWireFrameHelper(C(min), C(max), positions, indices);
-#undef C
+    BoxWireFrameHelper(min, max, positions, indices);
 
     auto& context = s_glob.renderData->drawDebugContext;
     for (const auto& i : indices) {
         const Vector3f& pos = positions[i];
         if (p_transform) {
-            context.positions.emplace_back(Vector3f(*p_transform * Vector4f(pos, 1.0f)));
+            const auto tmp = *p_transform * Vector4f(pos, 1.0f);
+            context.positions.emplace_back(Vector3f(tmp.xyz));
         } else {
             context.positions.emplace_back(Vector3f(pos));
         }

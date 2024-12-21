@@ -11,6 +11,7 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
+#include "engine/core/math/matrix_transform.h"
 
 namespace my::renderer {
 
@@ -268,25 +269,26 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
         bool cast_shadow = light_component.CastShadow();
         light.cast_shadow = cast_shadow;
         light.type = light_component.GetType();
-        light.color = material->baseColor;
+        light.color = material->baseColor.xyz;
         light.color *= material->emissive;
         switch (light_component.GetType()) {
             case LIGHT_TYPE_INFINITE: {
                 Matrix4x4f light_local_matrix = light_transform->GetLocalMatrix();
-                Vector3f light_dir = glm::normalize(light_local_matrix * Vector4f(0, 0, 1, 0));
+                Vector3f light_dir((light_local_matrix * Vector4f::UnitZ).xyz);
+                light_dir = math::Normalize(light_dir);
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
                 // @TODO: add option to specify extent
                 // @would be nice if can add debug draw
                 const AABB& world_bound = (light_component.HasShadowRegion()) ? light_component.m_shadowRegion : p_scene.GetBound();
-                NewVector3f center = world_bound.Center();
-                NewVector3f extents = world_bound.Size();
+                Vector3f center = world_bound.Center();
+                Vector3f extents = world_bound.Size();
 
                 const float size = 0.7f * math::Max(extents.x, math::Max(extents.y, extents.z));
-                NewVector3f tmp;
+                Vector3f tmp;
                 tmp.Set(&light_dir.x);
-                light.view_matrix = LookAtRh(center + tmp * size, center, NewVector3f::UnitY);
+                light.view_matrix = LookAtRh(center + tmp * size, center, Vector3f::UnitY);
 
                 if (p_config.isOpengl) {
                     light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
@@ -414,7 +416,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     const float voxel_size = voxel_world_size * texel_size;
 
     // this code is a bit mess here
-    cache.c_voxelWorldCenter = *reinterpret_cast<const glm::vec3*>(&voxel_world_center);
+    cache.c_voxelWorldCenter = voxel_world_center;
     cache.c_voxelWorldSizeHalf = 0.5f * voxel_world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
@@ -567,7 +569,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.front = p_camera.GetFront();
         camera.right = p_camera.GetRight();
-        camera.up = glm::cross(camera.front, camera.right);
+        camera.up = math::Cross(camera.front, camera.right);
     }
 
     // @TODO: update soft body

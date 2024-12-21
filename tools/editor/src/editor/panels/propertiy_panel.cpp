@@ -148,8 +148,9 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
         // @TODO: fix
         // DO NOT USE IMGUIZMO
-        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(old_transform), glm::value_ptr(translation),
-                                              glm::value_ptr(rotation), glm::value_ptr(scale));
+        ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(old_transform), &translation.x,
+                                              &rotation.x,
+                                              &scale.x);
 
         bool dirty = false;
         CommandType command_type{};
@@ -167,8 +168,10 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         }
         if (dirty) {
             Matrix4x4f new_transform;
-            ImGuizmo::RecomposeMatrixFromComponents(glm::value_ptr(translation), glm::value_ptr(rotation),
-                                                    glm::value_ptr(scale), glm::value_ptr(new_transform));
+            ImGuizmo::RecomposeMatrixFromComponents(&translation.x,
+                                                    &rotation.x,
+                                                    &scale.x,
+                                                    glm::value_ptr(new_transform));
 
             auto command = std::make_shared<EntityTransformCommand>(command_type, p_scene, id, old_transform, new_transform);
             m_editor.BufferCommand(command);

@@ -1,12 +1,19 @@
 #pragma once
+#include "angle.h"
 #include "geomath.h"
 #include "vector_math.h"
 
 namespace my {
 
-static inline Matrix4x4f LookAtRh(const NewVector3f& p_eye, const NewVector3f& p_center, const NewVector3f& p_up) {
+static inline Matrix4x4f LookAtRh(const Vector3f& p_eye, const Vector3f& p_center, const Vector3f& p_up) {
 #define C(v) glm::vec3(v.x, v.y, v.z)
     return glm::lookAtRH(C(p_eye), C(p_center), C(p_up));
+#undef C
+}
+
+static inline Matrix4x4f LookAtLh(const Vector3f& p_eye, const Vector3f& p_center, const Vector3f& p_up) {
+#define C(v) glm::vec3(v.x, v.y, v.z)
+    return glm::lookAtLH(C(p_eye), C(p_center), C(p_up));
 #undef C
 }
 
@@ -89,12 +96,12 @@ inline std::array<Matrix4x4f, 6> BuildPointLightCubeMapViewProjectionMatrix(cons
     auto P = BuildPerspectiveLH(glm::radians(90.0f), 1.0f, p_near, p_far);
 
     std::array<Matrix4x4f, 6> matrices = {
-        P * glm::lookAtLH(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, +1, +0)),
-        P * glm::lookAtLH(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, +1, +0)),
-        P * glm::lookAtLH(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, -1)),
-        P * glm::lookAtLH(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, +1)),
-        P * glm::lookAtLH(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, +1, +0)),
-        P * glm::lookAtLH(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, +1, +0)),
+        P * LookAtLh(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, +1, +0)),
+        P * LookAtLh(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, +1, +0)),
+        P * LookAtLh(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, -1)),
+        P * LookAtLh(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, +1)),
+        P * LookAtLh(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, +1, +0)),
+        P * LookAtLh(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, +1, +0)),
     };
 
     return matrices;
@@ -104,12 +111,12 @@ inline std::array<Matrix4x4f, 6> BuildOpenGlPointLightCubeMapViewProjectionMatri
     auto P = BuildOpenGlPerspectiveRH(glm::radians(90.0f), 1.0f, p_near, p_far);
 
     std::array<Matrix4x4f, 6> matrices = {
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, -1, +0)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, -1, +0)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, +1)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, -1)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, -1, +0)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, +1)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, -1)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, -1, +0)),
     };
 
     return matrices;
@@ -119,12 +126,12 @@ inline std::array<Matrix4x4f, 6> BuildCubeMapViewProjectionMatrix(const Vector3f
     auto P = BuildPerspectiveRH(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
     std::array<Matrix4x4f, 6> matrices = {
-        P * glm::lookAt(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, -1, +0)),
-        P * glm::lookAt(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, -1, +0)),
-        P * glm::lookAt(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, -1)),
-        P * glm::lookAt(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, +1)),
-        P * glm::lookAt(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, -1, +0)),
-        P * glm::lookAt(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, -1)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, +1)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, -1, +0)),
     };
 
     return matrices;
@@ -134,12 +141,12 @@ inline std::array<Matrix4x4f, 6> BuildOpenGlCubeMapViewProjectionMatrix(const Ve
     auto P = BuildOpenGlPerspectiveRH(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 
     std::array<Matrix4x4f, 6> matrices = {
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, -1, +0)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, -1, +0)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, +1)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, -1)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, -1, +0)),
-        P * glm::lookAtRH(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+1, +0, +0), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(-1, +0, +0), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +1, +0), Vector3f(0, +0, +1)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, -1, +0), Vector3f(0, +0, -1)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +0, +1), Vector3f(0, -1, +0)),
+        P * LookAtRh(p_eye, p_eye + Vector3f(+0, +0, -1), Vector3f(0, -1, +0)),
     };
 
     return matrices;
@@ -180,3 +187,23 @@ inline std::array<Matrix4x4f, 6> BuildOpenGlCubeMapViewMatrices(const Vector3f& 
 #endif
 
 }  // namespace my
+
+namespace my::math {
+
+static inline Matrix4x4f Translate(const Vector3f& p_vec) {
+    return glm::translate(glm::vec3(p_vec.x, p_vec.y, p_vec.z));
+}
+
+static inline Matrix4x4f Scale(const Vector3f& p_vec) {
+    return glm::scale(glm::vec3(p_vec.x, p_vec.y, p_vec.z));
+}
+
+static inline Matrix4x4f Rotate(const Degree& p_degree, const Vector3f& p_axis) {
+    return glm::rotate(p_degree.GetRadians(), glm::vec3(p_axis.x, p_axis.y, p_axis.z));
+}
+
+static inline Matrix4x4f Rotate(const Radian& p_radians, const Vector3f& p_axis) {
+    return glm::rotate(p_radians.GetRad(), glm::vec3(p_axis.x, p_axis.y, p_axis.z));
+}
+
+}  // namespace my::math

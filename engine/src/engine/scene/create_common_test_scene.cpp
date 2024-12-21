@@ -1,4 +1,5 @@
 #include "engine/core/base/random.h"
+#include "engine/core/math/matrix_transform.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 
@@ -76,11 +77,11 @@ Scene* CreateBoxScene() {
             Matrix4x4f transform;
             ecs::Entity material;
         } wall_info[] = {
-            { "wall_up", glm::translate(Vector3f(0, s, 0)), white },
-            { "wall_down", glm::translate(Vector3f(0, -s, 0)), white },
-            { "wall_left", glm::rotate(glm::radians(+90.0f), Vector3f(0, 0, 1)) * glm::translate(Vector3f(0, s, 0)), red },
-            { "wall_right", glm::rotate(glm::radians(+90.0f), Vector3f(0, 0, 1)) * glm::translate(Vector3f(0, -s, 0)), green },
-            { "wall_back", glm::rotate(glm::radians(+90.0f), Vector3f(1, 0, 0)) * glm::translate(Vector3f(0, -s, 0)), white },
+            { "wall_up", math::Translate(Vector3f(0, s, 0)), white },
+            { "wall_down", math::Translate(Vector3f(0, -s, 0)), white },
+            { "wall_left", math::Rotate(Degree(+90.0f), Vector3f::UnitZ) * math::Translate(Vector3f(0, s, 0)), red },
+            { "wall_right", math::Rotate(Degree(+90.0f), Vector3f::UnitZ) * math::Translate(Vector3f(0, -s, 0)), green },
+            { "wall_back", math::Rotate(Degree(+90.0f), Vector3f::UnitX) * math::Translate(Vector3f(0, -s, 0)), white },
         };
 
         for (int i = 0; i < array_length(wall_info); ++i) {
@@ -187,11 +188,11 @@ Scene* CreatePhysicsTestScene() {
 
         ecs::Entity id;
         if (t % 2) {
-            id = scene->CreateCubeEntity(std::format("Cube_{}", t), material_id, scale, glm::translate(translate));
+            id = scene->CreateCubeEntity(std::format("Cube_{}", t), material_id, scale, math::Translate(translate));
             scene->Create<RigidBodyComponent>(id).InitCube(scale);
         } else {
             const float radius = 0.25f;
-            id = scene->CreateSphereEntity(std::format("Sphere_{}", t), material_id, radius, glm::translate(translate));
+            id = scene->CreateSphereEntity(std::format("Sphere_{}", t), material_id, radius, math::Translate(translate));
             scene->Create<RigidBodyComponent>(id).InitSphere(radius);
         }
         scene->AttachChild(id, world);
@@ -248,7 +249,7 @@ Scene* CreatePbrTestScene() {
             material->metallic = glm::clamp(material->metallic, 0.05f, 0.95f);
             material->roughness = glm::clamp(material->roughness, 0.05f, 0.95f);
 
-            auto transform = glm::translate(Vector3f(x, y, 0.0f));
+            auto transform = math::Translate(Vector3f(x, y, 0.0f));
             auto sphere = scene->CreateSphereEntity(name, material_id, 0.5f, transform);
             scene->AttachChild(sphere, world);
         }

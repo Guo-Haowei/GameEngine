@@ -3,6 +3,7 @@
 #include "the_aviator_script.h"
 
 // @TODO: remove
+#include "engine/core/math/matrix_transform.h"
 #include "engine/scene/scene_serialization.h"
 
 namespace my {
@@ -32,11 +33,11 @@ static MeshComponent MakeOceanMesh(float p_radius,
             uint32_t point_offset = (uint32_t)mesh.positions.size();
 
             float angle_1 = 2.0f * pi * index / p_sectors;
-            float x_1 = p_radius * glm::cos(angle_1);
-            float z_1 = p_radius * glm::sin(angle_1);
+            float x_1 = p_radius * std::cos(angle_1);
+            float z_1 = p_radius * std::sin(angle_1);
             float angle_2 = 2.0f * pi * ((index + 1) == p_sectors ? 0 : (index + 1)) / p_sectors;
-            float x_2 = p_radius * glm::cos(angle_2);
-            float z_2 = p_radius * glm::sin(angle_2);
+            float x_2 = p_radius * std::cos(angle_2);
+            float z_2 = p_radius * std::sin(angle_2);
 
             Vector3f point_1(x_1, y, z_1);
             Vector3f point_2(x_1, y + height_step, z_1);
@@ -46,7 +47,7 @@ static MeshComponent MakeOceanMesh(float p_radius,
 
             Vector3f AB = point_1 - point_2;
             Vector3f AC = point_1 - point_3;
-            Vector3f normal = glm::normalize(glm::cross(AB, AC));
+            Vector3f normal = math::Normalize(math::Cross(AB, AC));
 
             mesh.positions.emplace_back(point_1);
             mesh.positions.emplace_back(point_2);
@@ -248,28 +249,28 @@ Scene* CreateTheAviatorScene() {
         auto engine = scene->CreateCubeEntity("engine",
                                               material_white,
                                               Vector3f(1.0f, 2.5f, 2.5f),
-                                              glm::translate(Vector3f(5, 0, 0)));
+                                              math::Translate(Vector3f(5, 0, 0)));
         scene->AttachChild(engine, plane);
     }
     {
         auto side_wing = scene->CreateCubeEntity("side_wing",
                                                  material_red,
                                                  Vector3f(1.5f, 0.25f, 6.0f),
-                                                 glm::translate(Vector3f(0.0f, 1.5f, 0.0f)));
+                                                 math::Translate(Vector3f(0.0f, 1.5f, 0.0f)));
         scene->AttachChild(side_wing, plane);
     }
     {
         auto tail = scene->CreateCubeEntity("tail",
                                             material_red,
                                             Vector3f(0.75f, 1.0f, 0.25f),
-                                            glm::translate(Vector3f(-4, 2, 0)));
+                                            math::Translate(Vector3f(-4, 2, 0)));
         scene->AttachChild(tail, plane);
     }
     {
         auto wind_shield = scene->CreateCubeEntity("wind_shield",
                                                    material_white_transparent,
                                                    Vector3f(0.15f, 0.75f, 1.0f),
-                                                   glm::translate(Vector3f(1.8f, 2.7f, 0.0f)));
+                                                   math::Translate(Vector3f(1.8f, 2.7f, 0.0f)));
         ObjectComponent* obj = scene->GetComponent<ObjectComponent>(wind_shield);
         obj->flags |= ObjectComponent::FLAG_TRANSPARENT;
         scene->AttachChild(wind_shield, plane);
@@ -278,27 +279,27 @@ Scene* CreateTheAviatorScene() {
         auto wheel_protection_1 = scene->CreateCubeEntity("wheel_protection_1",
                                                           material_red,
                                                           Vector3f(1.5f, 0.75f, 0.5f),
-                                                          glm::translate(Vector3f(2.5f, -2.0f, 2.5f)));
+                                                          math::Translate(Vector3f(2.5f, -2.0f, 2.5f)));
         scene->AttachChild(wheel_protection_1, plane);
     }
     {
         auto wheel_protection_2 = scene->CreateCubeEntity("wheel_protection_2",
                                                           material_red,
                                                           Vector3f(1.5f, 0.75f, 0.5f),
-                                                          glm::translate(Vector3f(2.5f, -2.0f, -2.5f)));
+                                                          math::Translate(Vector3f(2.5f, -2.0f, -2.5f)));
         scene->AttachChild(wheel_protection_2, plane);
     }
     {
         auto wheel_axis = scene->CreateCubeEntity("wheel_axis",
                                                   material_brown,
                                                   Vector3f(0.5f, 0.5f, 2.95f),
-                                                  glm::translate(Vector3f(2.5f, -2.8f, -0.0f)));
+                                                  math::Translate(Vector3f(2.5f, -2.8f, -0.0f)));
         scene->AttachChild(wheel_axis, plane);
     }
 
     {
-        Matrix4x4f rotation = glm::rotate(Degree(160.f).GetRadians(), Vector3f(0, 0, 1));
-        Matrix4x4f translation = glm::translate(Vector3f(-3.3f, -0.2f, 0.0f));
+        Matrix4x4f rotation = math::Rotate(Degree(160.f), Vector3f(0, 0, 1));
+        Matrix4x4f translation = math::Translate(Vector3f(-3.3f, -0.2f, 0.0f));
         auto suspension = scene->CreateCubeEntity("suspension",
                                                   material_red,
                                                   Vector3f(0.2f, 1.0f, 0.2f),
@@ -309,38 +310,38 @@ Scene* CreateTheAviatorScene() {
         auto tire_1 = scene->CreateCubeEntity("tire_1",
                                               material_dark_brown,
                                               Vector3f(1.2f, 1.2f, 0.2f),
-                                              glm::translate(Vector3f(2.5f, -2.8f, 2.5f)));
+                                              math::Translate(Vector3f(2.5f, -2.8f, 2.5f)));
         scene->AttachChild(tire_1, plane);
         auto tire_2 = scene->CreateCubeEntity("tire_2",
                                               material_dark_brown,
                                               Vector3f(1.2f, 1.2f, 0.2f),
-                                              glm::translate(Vector3f(2.5f, -2.8f, -2.5f)));
+                                              math::Translate(Vector3f(2.5f, -2.8f, -2.5f)));
         scene->AttachChild(tire_2, plane);
         auto tire_3 = scene->CreateCubeEntity("tire_3",
                                               material_brown,
                                               Vector3f(0.4f, 0.4f, 0.15f),
-                                              glm::translate(Vector3f(-3.5f, -0.8f, 0.0f)));
+                                              math::Translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         scene->AttachChild(tire_3, plane);
         auto tire_4 = scene->CreateCubeEntity("tire_4",
                                               material_dark_brown,
                                               Vector3f(0.6f, 0.6f, 0.1f),
-                                              glm::translate(Vector3f(-3.5f, -0.8f, 0.0f)));
+                                              math::Translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         scene->AttachChild(tire_4, plane);
         auto body = scene->CreateCubeEntity("body",
                                             material_brown,
                                             Vector3f(1.5f) * 0.7f,
-                                            glm::translate(Vector3f(.2f, 1.5f, 0.0f)));
+                                            math::Translate(Vector3f(.2f, 1.5f, 0.0f)));
         scene->AttachChild(body, plane);
         auto face = scene->CreateCubeEntity("face",
                                             material_pink,
                                             Vector3f(1.0f) * 0.7f,
-                                            glm::translate(Vector3f(.0f, 2.7f, 0.0f)));
+                                            math::Translate(Vector3f(.0f, 2.7f, 0.0f)));
 
         scene->AttachChild(face, plane);
         auto hair_side = scene->CreateCubeEntity("hair_side",
                                                  material_dark_brown,
                                                  Vector3f(1.2f, 0.6f, 1.2f) * 0.7f,
-                                                 glm::translate(Vector3f(-.3f, 3.2f, 0.0f)));
+                                                 math::Translate(Vector3f(-.3f, 3.2f, 0.0f)));
         scene->AttachChild(hair_side, plane);
 
         for (int i = 0; i < 12; ++i) {
@@ -348,7 +349,7 @@ Scene* CreateTheAviatorScene() {
             const int row = i / 3;
             Vector3f translation(-0.9f + row * 0.4f, 3.5f, -0.4f + col * 0.4f);
             float scale_y = col == 1 ? 0.7f : 0.6f;
-            auto hair = scene->CreateCubeEntity(std::format("hair_{}", i), material_dark_brown, Vector3f(0.27f, scale_y, 0.27f), glm::translate(translation));
+            auto hair = scene->CreateCubeEntity(std::format("hair_{}", i), material_dark_brown, Vector3f(0.27f, scale_y, 0.27f), math::Translate(translation));
             TransformComponent* transform = scene->GetComponent<TransformComponent>(hair);
             float s = 0.5f + (3 - row) * 0.15f;
             transform->SetScale(Vector3f(1, s, 1));
@@ -378,14 +379,14 @@ Scene* CreateTheAviatorScene() {
         auto blade1 = scene->CreateCubeEntity("blade1",
                                               material_dark_brown,
                                               Vector3f(0.2f, 4.0f, 0.2f),
-                                              glm::translate(Vector3f(0.4f, 0.0f, 0.0f)));
+                                              math::Translate(Vector3f(0.4f, 0.0f, 0.0f)));
         scene->AttachChild(blade1, propeller);
     }
     {
         auto blade2 = scene->CreateCubeEntity("blade2",
                                               material_dark_brown,
                                               Vector3f(0.2f, 0.2f, 4.0f),
-                                              glm::translate(Vector3f(0.4f, 0.0f, 0.0f)));
+                                              math::Translate(Vector3f(0.4f, 0.0f, 0.0f)));
         scene->AttachChild(blade2, propeller);
     }
 #pragma endregion SETUP_PLANE
@@ -454,7 +455,11 @@ Scene* CreateTheAviatorScene() {
         auto transform = scene->GetComponent<TransformComponent>(cloud);
         const float x = glm::sin(angle) * (OCEAN_RADIUS + 40.0f);
         const float y = glm::cos(angle) * (OCEAN_RADIUS + 40.0f);
-        Matrix4x4f matrix = glm::translate(Vector3f(x, y, -50.0f)) * glm::rotate(angle, Vector3f(0, 0, -1));
+        const Radian rad(angle);
+        // @TODO: NEG_UNIT_X
+        // @TODO: NEG_UNIT_Y
+        // @TODO: NEG_UNIT_Z
+        Matrix4x4f matrix = math::Translate(Vector3f(x, y, -50.0f)) * math::Rotate(rad, Vector3f(0, 0, -1));
         transform->SetLocalTransform(matrix);
         create_cloud(cloud_index, cloud);
     }

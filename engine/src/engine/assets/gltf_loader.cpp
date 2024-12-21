@@ -461,7 +461,7 @@ void GltfLoader::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
             } else if (attrName == "TANGENT") {
                 mesh.tangents.resize(vertexOffset + vertexCount);
                 for (size_t index = 0; index < vertexCount; ++index) {
-                    mesh.tangents[vertexOffset + index] = *(const Vector4f*)(data + index * stride);
+                    mesh.tangents[vertexOffset + index] = *(const Vector3f*)(data + index * stride);
                 }
             } else if (attrName == "TEXCOORD_0") {
                 mesh.texcoords_0.resize(vertexOffset + vertexCount);

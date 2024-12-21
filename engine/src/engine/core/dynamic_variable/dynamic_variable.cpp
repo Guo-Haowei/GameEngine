@@ -103,12 +103,12 @@ Vector2f DynamicVariable::AsVector2f() const {
     return Vector2f(m_vec.x, m_vec.y);
 }
 
-NewVector3f DynamicVariable::AsVector3f() const {
+Vector3f DynamicVariable::AsVector3f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC3);
-    return NewVector3f(m_vec.x, m_vec.y, m_vec.z);
+    return Vector3f(m_vec.x, m_vec.y, m_vec.z);
 }
 
-NewVector4f DynamicVariable::AsVector4f() const {
+Vector4f DynamicVariable::AsVector4f() const {
     DEV_ASSERT(m_type == VARIANT_TYPE_VEC4);
     return m_vec;
 }

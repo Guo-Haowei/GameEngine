@@ -2,7 +2,7 @@
 
 namespace my {
 
-float Plane::Distance(const NewVector3f& p_point) const {
+float Plane::Distance(const Vector3f& p_point) const {
     return math::Dot(p_point, normal) + dist;
 }
 

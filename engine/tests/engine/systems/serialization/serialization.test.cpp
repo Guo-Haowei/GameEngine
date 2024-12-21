@@ -106,7 +106,7 @@ TEST(RegisterClass, light_component) {
         component.m_atten.constant = 2.0f;
         component.m_atten.linear = 1.0f;
         component.m_atten.quadratic = 3.0f;
-        component.m_shadowRegion = AABB(NewVector3f(-1, -2, -3), NewVector3f(1, 2, 3));
+        component.m_shadowRegion = AABB(Vector3f(-1, -2, -3), Vector3f(1, 2, 3));
         SerializeYamlContext context;
         SerializeYaml(out, component, context);
     }

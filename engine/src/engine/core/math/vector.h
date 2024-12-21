@@ -120,8 +120,7 @@ struct Vector<T, 2> : VectorBase<T, 2> {
     };
     // clang-format on
 
-    explicit constexpr Vector() : x(0), y(0) {
-    }
+    explicit constexpr Vector() = default;
 
     explicit constexpr Vector(T p_v) : x(p_v), y(p_v) {
     }
@@ -168,10 +167,7 @@ struct Vector<T, 3> : VectorBase<T, 3> {
     };
     // clang-format on
 
-    explicit constexpr Vector() : x(0),
-                                  y(0),
-                                  z(0) {
-    }
+    explicit constexpr Vector() = default;
 
     explicit constexpr Vector(T p_v) : x(p_v),
                                        y(p_v),
@@ -231,8 +227,7 @@ struct Vector<T, 4> : VectorBase<T, 4> {
     };
     // clang-format on
 
-    explicit constexpr Vector() : x(0), y(0), z(0), w(0) {
-    }
+    explicit constexpr Vector() = default;
 
     explicit constexpr Vector(T p_v) : x(p_v), y(p_v), z(p_v), w(p_v) {
     }
@@ -334,12 +329,12 @@ using Vector2u = Vector<uint32_t, 2>;
 using Vector3u = Vector<uint32_t, 3>;
 using Vector4u = Vector<uint32_t, 4>;
 using Vector2f = Vector<float, 2>;
-using NewVector3f = Vector<float, 3>;
-using NewVector4f = Vector<float, 4>;
+using Vector3f = Vector<float, 3>;
+using Vector4f = Vector<float, 4>;
 
 static_assert(sizeof(Vector2f) == 8);
-static_assert(sizeof(NewVector3f) == 12);
-static_assert(sizeof(NewVector4f) == 16);
+static_assert(sizeof(Vector3f) == 12);
+static_assert(sizeof(Vector4f) == 16);
 static_assert(sizeof(Vector2i) == 8);
 static_assert(sizeof(Vector3i) == 12);
 static_assert(sizeof(Vector4i) == 16);

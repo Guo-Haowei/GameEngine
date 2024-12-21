@@ -22,9 +22,7 @@
 
 namespace my::math::detail {
 
-using Vector2f = Vector<float, 2>;
 using Vector3f = Vector<float, 3>;
-using Vector4f = Vector<float, 4>;
 
 static_assert(sizeof(Vector2f) == 8);
 static_assert(sizeof(Vector3f) == 12);

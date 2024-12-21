@@ -4,7 +4,7 @@
 
 namespace my {
 
-class Radians;
+class Radian;
 class Degree;
 
 class Degree {
@@ -13,7 +13,7 @@ public:
     explicit constexpr Degree(float p_degree) : m_value(p_degree) {}
     explicit constexpr Degree(double p_degree) : m_value(static_cast<float>(p_degree)) {}
 
-    Degree& operator=(const Radians& p_rad);
+    Degree& operator=(const Radian& p_rad);
 
     Degree operator*(float p_val) const {
         return Degree{ m_value * p_val };
@@ -71,44 +71,46 @@ private:
     float m_value;
 };
 
-class Radians {
+class Radian {
 public:
-    explicit constexpr Radians() : m_value(0) {}
-    explicit constexpr Radians(float p_angle) : m_value(p_angle) {}
+    explicit constexpr Radian() : m_value(0) {}
+    explicit constexpr Radian(float p_angle) : m_value(p_angle) {}
 
-    Radians& operator=(const Degree& p_degree);
+    Radian& operator=(const Degree& p_degree);
 
-    Radians operator*(float p_val) const {
-        return Radians{ m_value * p_val };
+    Radian operator*(float p_val) const {
+        return Radian{ m_value * p_val };
     }
-    Radians operator/(float p_val) const {
-        return Radians{ m_value / p_val };
+    Radian operator/(float p_val) const {
+        return Radian{ m_value / p_val };
     }
-    Radians& operator*=(float p_val) {
+    Radian& operator*=(float p_val) {
         m_value *= p_val;
         return *this;
     }
-    Radians& operator/=(float p_val) {
+    Radian& operator/=(float p_val) {
         m_value /= p_val;
         return *this;
     }
-    Radians& operator+=(Radians p_val) {
+    Radian& operator+=(Radian p_val) {
         m_value += p_val.m_value;
         return *this;
     }
-    Radians& operator-=(Radians p_val) {
+    Radian& operator-=(Radian p_val) {
         m_value -= p_val.m_value;
         return *this;
     }
-    Radians& operator+=(Degree p_val) {
+    Radian& operator+=(Degree p_val) {
         m_value += p_val.GetRadians();
         return *this;
     }
-    Radians& operator-=(Degree p_val) {
+    Radian& operator-=(Degree p_val) {
         m_value -= p_val.GetRadians();
         return *this;
     }
+
     void Clamp(float p_a, float p_b) { m_value = math::Clamp(m_value, p_a, p_b); }
+    // @TODO: rename for consistancy
     float ToDegree() const { return math::Degrees(m_value); }
     float GetRad() const { return m_value; }
     float Sin() const { return std::sin(m_value); }

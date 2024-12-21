@@ -48,7 +48,7 @@ void AABB::ApplyMatrix(const Matrix4x4f& p_mat4) {
     AABB new_box;
     for (size_t i = 0; i < array_length(points); ++i) {
         auto point = p_mat4 * points[i];
-        new_box.ExpandPoint(NewVector3f(point.x, point.y, point.z));
+        new_box.ExpandPoint(Vector3f(point.x, point.y, point.z));
     }
 
     m_min = new_box.m_min;
@@ -57,8 +57,8 @@ void AABB::ApplyMatrix(const Matrix4x4f& p_mat4) {
 
 AABB AABB::FromCenterSize(const Vector3f& p_center, const Vector3f& p_size) {
     AABB box;
-    NewVector3f center;
-    NewVector3f half_size;
+    Vector3f center;
+    Vector3f half_size;
     center.Set(&p_center.x);
     half_size.Set(&p_size.x);
     half_size *= 0.5f;

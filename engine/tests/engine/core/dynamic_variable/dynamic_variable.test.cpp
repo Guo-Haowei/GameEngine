@@ -112,18 +112,18 @@ TEST(dynamic_variable, Vector2f) {
 
 TEST(dynamic_variable, Vector3f) {
     auto value = DVAR_GET_VEC3(test_vec3);
-    EXPECT_EQ(value, NewVector3f(1, 2, 3));
+    EXPECT_EQ(value, Vector3f(1, 2, 3));
     DVAR_SET_VEC3(test_vec3, 7.0f, 8.0f, 9.0f);
     value = DVAR_GET_VEC3(test_vec3);
-    EXPECT_EQ(value, NewVector3f(7, 8, 9));
+    EXPECT_EQ(value, Vector3f(7, 8, 9));
 }
 
 TEST(dynamic_variable, Vector4f) {
     auto value = DVAR_GET_VEC4(test_vec4);
-    EXPECT_EQ(value, NewVector4f(1, 2, 3, 4));
+    EXPECT_EQ(value, Vector4f(1, 2, 3, 4));
     DVAR_SET_VEC4(test_vec4, 7.0f, 8.0f, 9.0f, 10.0f);
     value = DVAR_GET_VEC4(test_vec4);
-    EXPECT_EQ(value, NewVector4f(7, 8, 9, 10));
+    EXPECT_EQ(value, Vector4f(7, 8, 9, 10));
 }
 
 TEST(dynamic_variable, Vector2i) {

@@ -43,8 +43,8 @@ public:
     [[nodiscard]] float AsFloat() const;
     [[nodiscard]] const std::string& AsString() const;
     [[nodiscard]] Vector2f AsVector2f() const;
-    [[nodiscard]] NewVector3f AsVector3f() const;
-    [[nodiscard]] NewVector4f AsVector4f() const;
+    [[nodiscard]] Vector3f AsVector3f() const;
+    [[nodiscard]] Vector4f AsVector4f() const;
     [[nodiscard]] Vector2i AsVector2i() const;
     [[nodiscard]] Vector3i AsVector3i() const;
     [[nodiscard]] Vector4i AsVector4i() const;
@@ -82,7 +82,7 @@ private:
     union {
         int m_int;
         float m_float;
-        NewVector4f m_vec;
+        Vector4f m_vec;
         Vector4i m_ivec;
     };
     std::string m_string;

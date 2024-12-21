@@ -42,7 +42,7 @@ bool Frustum::Intersects(const AABB& p_box) const {
     const auto& box_max = p_box.GetMax();
     for (int i = 0; i < 6; ++i) {
         const Plane& plane = this->operator[](i);
-        NewVector3f p;
+        Vector3f p;
         p.x = plane.normal.x > 0.0f ? box_max.x : box_min.x;
         p.y = plane.normal.y > 0.0f ? box_max.y : box_min.y;
         p.z = plane.normal.z > 0.0f ? box_max.z : box_min.z;

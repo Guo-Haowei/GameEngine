@@ -22,15 +22,8 @@ struct ParticleCounter {
     int emissionCount;
 };
 
-#if defined(__cplusplus)
-#define VEC3 NewVector3f
-#else
-#define VEC3 Vector3f
-#endif
-
 struct gpu_geometry_t {
-
-    VEC3 A;
+    Vector3f A;
 #if defined(__cplusplus)
     enum class Kind : uint32_t {
         Invalid,
@@ -44,10 +37,10 @@ struct gpu_geometry_t {
     int kind;
 #endif
 
-    VEC3 B;
+    Vector3f B;
     float radius;
 
-    VEC3 C;
+    Vector3f C;
     int material_id;
 
     Vector2f uv1;
@@ -62,28 +55,28 @@ struct gpu_geometry_t {
     float _padding_4;
     float _padding_5;
 
-    VEC3 normal1;
+    Vector3f normal1;
     float _padding_6;
 
-    VEC3 normal2;
+    Vector3f normal2;
     float _padding_7;
 
-    VEC3 normal3;
+    Vector3f normal3;
     float _padding_8;
 
 #if defined(__cplusplus)
     gpu_geometry_t();
-    gpu_geometry_t(const VEC3& A, const VEC3& B, const VEC3& C, int material);
-    gpu_geometry_t(const VEC3& center, float radius, int material);
-    VEC3 Centroid() const;
+    gpu_geometry_t(const Vector3f& A, const Vector3f& B, const Vector3f& C, int material);
+    gpu_geometry_t(const Vector3f& center, float radius, int material);
+    Vector3f Centroid() const;
     void CalcNormal();
 #endif
 };
 
 struct gpu_bvh_t {
-    VEC3 min;
+    Vector3f min;
     int missIdx;
-    VEC3 max;
+    Vector3f max;
     int hitIdx;
 
     int leaf;

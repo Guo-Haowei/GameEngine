@@ -16,14 +16,14 @@ bool TestIntersection::AabbAabb(const AABB& p_aabb1, const AABB& p_aabb2) {
 }
 
 bool TestIntersection::RayAabb(const AABB& p_aabb, Ray& p_ray) {
-    const NewVector3f direction = p_ray.m_end - p_ray.m_start;
+    const Vector3f direction = p_ray.m_end - p_ray.m_start;
 
-    NewVector3f inv_d = 1.0f / direction;
-    NewVector3f t0s = (p_aabb.m_min - p_ray.m_start) * inv_d;
-    NewVector3f t1s = (p_aabb.m_max - p_ray.m_start) * inv_d;
+    Vector3f inv_d = 1.0f / direction;
+    Vector3f t0s = (p_aabb.m_min - p_ray.m_start) * inv_d;
+    Vector3f t1s = (p_aabb.m_max - p_ray.m_start) * inv_d;
 
-    NewVector3f tsmaller = math::Min(t0s, t1s);
-    NewVector3f tbigger = math::Max(t0s, t1s);
+    Vector3f tsmaller = math::Min(t0s, t1s);
+    Vector3f tbigger = math::Max(t0s, t1s);
 
     const float tmin = math::Max(-FLT_MAX, math::Max(tsmaller.x, math::Max(tsmaller.y, tsmaller.z)));
     const float tmax = math::Min(FLT_MAX, math::Min(tbigger.x, math::Min(tbigger.y, tbigger.z)));
@@ -37,22 +37,22 @@ bool TestIntersection::RayAabb(const AABB& p_aabb, Ray& p_ray) {
     return true;
 }
 
-bool TestIntersection::RayTriangle(const NewVector3f& p_a, const NewVector3f& p_b, const NewVector3f& p_c, Ray& p_ray) {
+bool TestIntersection::RayTriangle(const Vector3f& p_a, const Vector3f& p_b, const Vector3f& p_c, Ray& p_ray) {
     // P = A + u(B - A) + v(C - A) => O - A = -tD + u(B - A) + v(C - A)
     // -tD + uAB + vAC = AO
-    const NewVector3f direction = p_ray.m_end - p_ray.m_start;
-    const NewVector3f ab = p_b - p_a;
-    const NewVector3f ac = p_c - p_a;
-    NewVector3f P = math::Cross(direction, ac);
+    const Vector3f direction = p_ray.m_end - p_ray.m_start;
+    const Vector3f ab = p_b - p_a;
+    const Vector3f ac = p_c - p_a;
+    Vector3f P = math::Cross(direction, ac);
     const float det = math::Dot(ab, P);
     if (det < math::Epsilon()) {
         return false;
     }
 
     const float inv_det = 1.0f / det;
-    const NewVector3f AO = p_ray.m_start - p_a;
+    const Vector3f AO = p_ray.m_start - p_a;
 
-    const NewVector3f q = math::Cross(AO, ab);
+    const Vector3f q = math::Cross(AO, ab);
     const float u = math::Dot(AO, P) * inv_det;
     const float v = math::Dot(direction, q) * inv_det;
 

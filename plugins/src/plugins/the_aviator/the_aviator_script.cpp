@@ -14,7 +14,7 @@ void PlaneScript::OnCollision(ecs::Entity p_other_id) {
         case COLLISION_BIT_ROCK: {
             TransformComponent* transform_1 = GetComponent<TransformComponent>();
             TransformComponent* transform_2 = m_scene->GetComponent<TransformComponent>(p_other_id);
-            Vector3f distance = transform_1->GetWorldMatrix()[3] - transform_2->GetWorldMatrix()[3];
+            auto distance = transform_1->GetWorldMatrix()[3] - transform_2->GetWorldMatrix()[3];
             distance = glm::normalize(distance);
             m_collisionSpeed = 30.0f * Vector2f(distance.x, distance.y);
         } break;
@@ -59,7 +59,7 @@ void PlaneScript::OnUpdate(float p_timestep) {
 
     float rotate_z_angle = 0.3f * delta.y;
     rotate_z_angle = glm::clamp(rotate_z_angle, glm::radians(-60.0f), glm::radians(60.0f));
-    Quaternion q(Vector3f(0.0f, 0.0f, rotate_z_angle));
+    Quaternion q(glm::vec3(0.0f, 0.0f, rotate_z_angle));
     transform->SetRotation(Vector4f(q.x, q.y, q.z, q.w));
 
     m_collisionSpeed += -0.2f * m_collisionSpeed;

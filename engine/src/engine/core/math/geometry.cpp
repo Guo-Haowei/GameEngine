@@ -1,5 +1,7 @@
 #include "geometry.h"
 
+#include "matrix_transform.h"
+
 namespace my {
 
 /**
@@ -44,7 +46,7 @@ MeshComponent MakePlaneMesh(const Vector3f& p_point_0,
         p_point_3,
     };
 
-    const Vector3f normal = glm::normalize(glm::cross(p_point_0 - p_point_1, p_point_0 - p_point_2));
+    const Vector3f normal = math::Normalize(math::Cross(p_point_0 - p_point_1, p_point_0 - p_point_2));
     mesh.normals = {
         normal,
         normal,
@@ -248,7 +250,7 @@ MeshComponent MakeCubeMesh(const std::array<Vector3f, 8>& p_points) {
         // const Vector3f& D = mesh.positions[i + 3];
         Vector3f AB = B - A;
         Vector3f AC = C - A;
-        Vector3f normal = glm::normalize(glm::cross(AB, AC));
+        Vector3f normal = math::Normalize(math::Cross(AB, AC));
 
         mesh.normals.emplace_back(normal);
         mesh.normals.emplace_back(normal);
@@ -303,7 +305,7 @@ MeshComponent MakeTetrahedronMesh(float p_size) {
         Vector3f B = vertices[indices[i + 1]];
         Vector3f C = vertices[indices[i + 2]];
 
-        Vector3f normal = glm::normalize(glm::cross(A - B, A - C));
+        Vector3f normal = math::Normalize(math::Cross(A - B, A - C));
 
         mesh.positions.emplace_back(A);
         mesh.positions.emplace_back(B);
@@ -398,11 +400,11 @@ MeshComponent MakeCylinderMesh(float p_radius,
         uint32_t point_offset = (uint32_t)mesh.positions.size();
         for (int index = 0; index < p_sectors; ++index) {
             float angle_1 = 2.0f * pi * index / p_sectors;
-            float x_1 = p_radius * glm::cos(angle_1);
-            float z_1 = p_radius * glm::sin(angle_1);
+            float x_1 = p_radius * std::cos(angle_1);
+            float z_1 = p_radius * std::sin(angle_1);
             float angle_2 = 2.0f * pi * (index + 1) / p_sectors;
-            float x_2 = p_radius * glm::cos(angle_2);
-            float z_2 = p_radius * glm::sin(angle_2);
+            float x_2 = p_radius * std::cos(angle_2);
+            float z_2 = p_radius * std::sin(angle_2);
 
             Vector3f point_1(x_1, y, z_1);
             Vector3f point_2(x_1, y + height_step, z_1);
@@ -412,7 +414,7 @@ MeshComponent MakeCylinderMesh(float p_radius,
 
             Vector3f AB = point_1 - point_2;
             Vector3f AC = point_1 - point_3;
-            Vector3f normal = glm::normalize(glm::cross(AB, AC));
+            Vector3f normal = math::Normalize(math::Cross(AB, AC));
 
             mesh.positions.emplace_back(point_1);
             mesh.positions.emplace_back(point_2);
@@ -448,7 +450,7 @@ MeshComponent MakeCylinderMesh(float p_radius,
     for (float height : heights) {
         uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
 
-        Vector3f normal = glm::normalize(Vector3f(0.0f, height, 0.0f));
+        Vector3f normal = math::Normalize(Vector3f(0.0f, height, 0.0f));
 
         for (int index = 0; index <= p_sectors; ++index) {
             float angle = 2.0f * pi * index / p_sectors;
@@ -516,7 +518,7 @@ MeshComponent MakeConeMesh(float p_radius,
         // Vector3f normal = glm::normalize(Vector3f(x, 0.0f, z));
         Vector3f AB = point_1 - apex;
         Vector3f AC = point_2 - apex;
-        Vector3f normal = -glm::normalize(glm::cross(AB, AC));
+        Vector3f normal = math::Normalize(math::Cross(AC, AB));
 
         mesh.positions.emplace_back(point_1);
         mesh.positions.emplace_back(apex);
@@ -615,7 +617,7 @@ MeshComponent MakeTorusMesh(float p_radius,
             const float nz = p_tube_radius * glm::cos(angle_2) * glm::sin(angle_1);
 
             mesh.positions.emplace_back(Vector3f(x, y, z));
-            mesh.normals.emplace_back(glm::normalize(Vector3f(nx, ny, nz)));
+            mesh.normals.emplace_back(math::Normalize(Vector3f(nx, ny, nz)));
             mesh.texcoords_0.emplace_back(Vector2f());
         }
     }
@@ -705,26 +707,28 @@ MeshComponent MakeGrassBillboard(const Vector3f& p_scale) {
     };
 
     // @TODO: correct sampler
-    std::array<Vector2f, 4> uvs = {
+    constexpr std::array<Vector2f, 4> uvs = {
         Vector2f(0, 1),  // top-left
         Vector2f(0, 0),  // bottom-left
         Vector2f(1, 0),  // bottom-right
         Vector2f(1, 1),  // top-right
     };
 
-    uint32_t indices[] = {
+    constexpr uint32_t indices[] = {
         A, B, D,  // ABD
         D, B, C,  // DBC
     };
 
-    float angle = 0.0f;
-    for (int i = 0; i < 3; ++i, angle += glm::radians(120.0f)) {
-        Matrix4x4f rotation = glm::rotate(angle, Vector3f(0, 1, 0));
-        Vector4f normal = rotation * Vector4f{ 0, 0, 1, 0 };
+    Degree angle;
+    for (int i = 0; i < 3; ++i, angle += Degree(120.0f)) {
+        const Matrix4x4f rotation = math::Rotate(angle, Vector3f(0, 1, 0));
+        const Vector4f normal4 = rotation * Vector4f{ 0, 0, 1, 0 };
+        const Vector3f normal = normal4.xyz;
 
         uint32_t offset = static_cast<uint32_t>(mesh.positions.size());
         for (size_t j = 0; j < points.size(); ++j) {
-            mesh.positions.emplace_back(rotation * points[j]);
+            Vector4f tmp = rotation * points[i];
+            mesh.positions.emplace_back(Vector3f(tmp.xyz));
             mesh.normals.emplace_back(normal);
             mesh.texcoords_0.emplace_back(uvs[j]);
         }
