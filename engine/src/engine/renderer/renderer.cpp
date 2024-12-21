@@ -2,11 +2,11 @@
 
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
-#include "engine/core/math/geometry.h"
+#include "engine/math/geometry.h"
 #include "engine/renderer/draw_data.h"
 
 // @TODO: refactor
-#include "engine/core/math/detail/matrix.h"
+#include "engine/math/detail/matrix.h"
 
 #define DEFINE_DVAR
 #include "graphics_dvars.h"

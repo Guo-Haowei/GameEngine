@@ -4,7 +4,7 @@
 #include "shader_defines.hlsl.h"
 
 #ifdef __cplusplus
-#include <engine/core/math/geomath.h>
+#include <engine/math/geomath.h>
 
 #include <cstdint>
 #endif

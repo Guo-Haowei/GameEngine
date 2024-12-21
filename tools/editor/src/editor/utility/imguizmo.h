@@ -55,7 +55,7 @@
 #define IMGUIZMO_NAMESPACE ImGuizmo
 #endif
 
-#include "engine/core/math/geomath.h"
+#include "engine/math/geomath.h"
 
 namespace IMGUIZMO_NAMESPACE {
 // call inside your own window and before Manipulate() in order to draw gizmo to that window.

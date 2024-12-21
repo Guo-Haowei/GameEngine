@@ -1,7 +1,7 @@
-#include "engine/core/math/aabb.h"
+#include "engine/math/aabb.h"
 
 // @TODO: remove this
-#include "engine/core/math/geomath.h"
+#include "engine/math/geomath.h"
 
 namespace my::math {
 

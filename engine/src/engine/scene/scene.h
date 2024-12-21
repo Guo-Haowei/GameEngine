@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/assets/asset.h"
 #include "engine/core/base/noncopyable.h"
-#include "engine/core/math/ray.h"
+#include "engine/math/ray.h"
 #include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/component_manager.h"
 #include "engine/systems/ecs/view.h"

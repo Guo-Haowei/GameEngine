@@ -7,7 +7,7 @@
 #include "engine/scene/scene.h"
 
 // @TODO
-#include "engine/core/math/detail/matrix.h"
+#include "engine/math/detail/matrix.h"
 
 namespace my {
 

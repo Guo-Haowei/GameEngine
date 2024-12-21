@@ -3,7 +3,7 @@
 #include "the_aviator_script.h"
 
 // @TODO: remove
-#include "engine/core/math/matrix_transform.h"
+#include "engine/math/matrix_transform.h"
 #include "engine/scene/scene_serialization.h"
 
 namespace my {
@@ -14,6 +14,8 @@ namespace my {
 // * 2D UI
 // * draw elements and draw array
 // * motion blur
+
+using math::AABB;
 
 static MeshComponent MakeOceanMesh(float p_radius,
                                    float p_height,

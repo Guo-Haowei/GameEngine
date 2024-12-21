@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/box.h"
+#include "engine/math/box.h"
 #include "structured_buffer.hlsl.h"
 
 namespace my {

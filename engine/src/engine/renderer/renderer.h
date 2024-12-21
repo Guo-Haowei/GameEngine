@@ -1,7 +1,7 @@
 #pragma once
-#include "engine/core/math/aabb.h"
-#include "engine/core/math/color.h"
-#include "engine/core/math/vector.h"
+#include "engine/math/aabb.h"
+#include "engine/math/color.h"
+#include "engine/math/vector.h"
 
 namespace my {
 class PerspectiveCameraComponent;

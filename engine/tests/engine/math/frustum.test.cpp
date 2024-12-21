@@ -1,4 +1,4 @@
-#include "engine/core/math/frustum.h"
+#include "engine/math/frustum.h"
 
 namespace my::math {
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/detail/common.h"
+#include "engine/math/detail/common.h"
 
 namespace my {
 

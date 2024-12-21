@@ -1,8 +1,8 @@
 #include "draw_data.h"
 
 #include "engine/core/base/random.h"
-#include "engine/core/math/frustum.h"
-#include "engine/core/math/matrix_transform.h"
+#include "engine/math/frustum.h"
+#include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_defines.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
@@ -11,8 +11,8 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
-#include "engine/core/math/detail/matrix.h"
-#include "engine/core/math/matrix_transform.h"
+#include "engine/math/detail/matrix.h"
+#include "engine/math/matrix_transform.h"
 
 namespace my::renderer {
 

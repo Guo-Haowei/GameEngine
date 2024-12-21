@@ -1,4 +1,4 @@
-#include "engine/core/math/color.h"
+#include "engine/math/color.h"
 
 namespace my::math {
 

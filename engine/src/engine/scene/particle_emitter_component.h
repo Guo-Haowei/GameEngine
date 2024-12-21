@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/geomath.h"
+#include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 
 namespace YAML {

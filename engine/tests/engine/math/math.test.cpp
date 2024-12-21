@@ -1,4 +1,4 @@
-#include "engine/core/math/math.h"
+#include "engine/math/math.h"
 
 namespace my::math {
 

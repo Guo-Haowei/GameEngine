@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/vector.h"
+#include "engine/math/vector.h"
 
 enum DvarFlags : uint32_t {
     DVAR_FLAG_NONE = BIT(0),

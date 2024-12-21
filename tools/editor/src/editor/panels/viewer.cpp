@@ -10,8 +10,8 @@
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/core/io/input_event.h"
-#include "engine/core/math/ray.h"
-#include "engine/core/math/vector_math.h"
+#include "engine/math/ray.h"
+#include "engine/math/detail/matrix.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
 
@@ -58,7 +58,7 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
             const Vector3f ray_start = p_camera.GetPosition();
             const Vector3f direction = math::Normalize(Vector3f((inversed_projection_view * Vector4f(clicked, 1.0f, 1.0f)).xyz));
             const Vector3f ray_end = ray_start + direction * p_camera.GetFar();
-            Ray ray(ray_start, ray_end);
+            math::Ray ray(ray_start, ray_end);
 
             const auto result = p_scene.Intersects(ray);
 

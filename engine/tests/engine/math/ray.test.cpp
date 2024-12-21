@@ -1,4 +1,4 @@
-#include "engine/core/math/ray.h"
+#include "engine/math/ray.h"
 
 namespace my::math {
 

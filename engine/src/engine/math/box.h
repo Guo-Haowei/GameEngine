@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/math/detail/vector_math.h"
+#include "engine/math/detail/vector_math.h"
 
 namespace my::math {
 

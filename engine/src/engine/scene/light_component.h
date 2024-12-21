@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/core/math/aabb.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/aabb.h"
+#include "engine/math/geomath.h"
 #include "shader_defines.hlsl.h"
 
 namespace YAML {

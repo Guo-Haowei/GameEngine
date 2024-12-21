@@ -1,7 +1,7 @@
 #pragma once
-#include "engine/core/math/aabb.h"
-#include "engine/core/math/angle.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/aabb.h"
+#include "engine/math/angle.h"
+#include "engine/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
 
 namespace YAML {

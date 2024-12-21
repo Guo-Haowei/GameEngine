@@ -4,10 +4,10 @@
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
 #include "engine/systems/job_system/job_system.h"
-#include "engine/core/math/geomath.h"
+#include "engine/math/geomath.h"
 #include "engine/core/framework/engine.h"
-#include "engine/core/math/color.h"
-#include "engine/core/math/vector_math.h"
+#include "engine/math/color.h"
+#include "engine/math/vector_math.h"
 #include "pbr.hlsl.h"
 
 using namespace my;
