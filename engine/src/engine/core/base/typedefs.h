@@ -25,6 +25,17 @@
 #error Platform not supported!
 #endif
 
+/// Architecture
+#if defined(__x86_64__) || defined(_M_X64)
+#define ARCH_X64   IN_USE
+#define ARCH_ARM64 NOT_IN_USE
+#elif defined(__aarch64__) || defined(_M_ARM64)
+#define ARCH_X64   NOT_IN_USE
+#define ARCH_ARM64 IN_USE
+#else
+#error Unknown architecture
+#endif
+
 /// Compiler
 #if USING(DEBUG_BUILD)
 #define DISABLE_OPTIMIZATION() static_assert(0, "DISABLE_OPTIMIZATION() should not been used width DEBUG_BUILD")

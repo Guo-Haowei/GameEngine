@@ -54,20 +54,20 @@ Vector3f gpu_geometry_t::Centroid() const {
         case Kind::Sphere:
             return A;
         default:
-            assert(0);
+            CRASH_NOW();
             return Vector3f(0.0f);
     }
 }
 
 static Box3 Box3FromSphere(const gpu_geometry_t& sphere) {
-    assert(sphere.kind == gpu_geometry_t::Kind::Sphere);
+    DEV_ASSERT(sphere.kind == gpu_geometry_t::Kind::Sphere);
 
     return Box3(sphere.A - Vector3f(sphere.radius),
                 sphere.A + Vector3f(sphere.radius));
 }
 
 static Box3 Box3FromTriangle(const gpu_geometry_t& triangle) {
-    assert(triangle.kind == gpu_geometry_t::Kind::Triangle);
+    DEV_ASSERT(triangle.kind == gpu_geometry_t::Kind::Triangle);
 
     CRASH_NOW();
     return Box3();
@@ -88,9 +88,9 @@ static Box3 Box3FromGeometry(const gpu_geometry_t& geom) {
         case gpu_geometry_t::Kind::Sphere:
             return Box3FromSphere(geom);
         default:
-            assert(0);
+            CRASH_NOW();
+            return Box3();
     }
-    return Box3();
 }
 
 static Box3 Box3FromGeometries(const GeometryList& geoms) {
@@ -144,7 +144,7 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
 
     const size_t nGeoms = geometries.size();
 
-    assert(nGeoms);
+    DEV_ASSERT(nGeoms);
 
     if (nGeoms == 1) {
         m_geom = geometries.front();
@@ -301,7 +301,7 @@ void Bvh::SplitByAxis(GeometryList& geoms) {
 
         Sorter(int axis)
             : axis(axis) {
-            assert(axis < 3);
+            DEV_ASSERT(axis < 3);
         }
 
     private:

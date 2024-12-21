@@ -1,4 +1,6 @@
 #pragma once
+#include <xmmintrin.h>
+
 #include "common.h"
 #include "vector2.h"
 #include "vector3.h"

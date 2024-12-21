@@ -2,23 +2,20 @@
 
 #define MATH_ENABLE_SIMD IN_USE
 
-#if defined(__i386__) && defined(__x86_64__)
-// @TODO: arch
-#endif
-
 #if USING(MATH_ENABLE_SIMD)
-#if USING(PLATFORM_WINDOWS)
+#if USING(ARCH_X64)
 #define MATH_ENABLE_SIMD_SSE  IN_USE
 #define MATH_ENABLE_SIMD_NEON NOT_IN_USE
 #include <xmmintrin.h>
-#elif USING(PLATFORM_APPLE)
+#elif USING(ARCH_ARM64)  // #if USING(ARCH_X64)
 #define MATH_ENABLE_SIMD_SSE  NOT_IN_USE
 #define MATH_ENABLE_SIMD_NEON IN_USE
 #include <arm_neon.h>
-#else
-#error Platform not supported
-#endif
-#else
+#else  // #elif USING(ARCH_ARM64) // #if USING(ARCH_X64)
 #define MATH_ENABLE_SIMD_SSE NOT_IN_USE
 #define MATH_ENABLE_SIMD_AVX NOT_IN_USE
-#endif
+#endif  // #else // #elif USING(ARCH_ARM64) // #if USING(ARCH_X64)
+#else   // #if USING(MATH_ENABLE_SIMD)
+#define MATH_ENABLE_SIMD_SSE NOT_IN_USE
+#define MATH_ENABLE_SIMD_AVX NOT_IN_USE
+#endif  // #else // #if USING(MATH_ENABLE_SIMD)
