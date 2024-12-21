@@ -264,4 +264,17 @@ constexpr T Dot(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
     return result;
 }
 
+template<Arithmetic T, int N>
+    requires(std::is_floating_point_v<T>)
+constexpr T Length(const Vector<T, N>& p_lhs) {
+    return std::sqrt(Dot(p_lhs, p_lhs));
+}
+
+template<Arithmetic T, int N>
+    requires(std::is_floating_point_v<T>)
+constexpr Vector<T, N> Normalize(const Vector<T, N>& p_lhs) {
+    const auto inverse_length = static_cast<T>(1) / Length(p_lhs);
+    return p_lhs * inverse_length;
+}
+
 }  // namespace my::math

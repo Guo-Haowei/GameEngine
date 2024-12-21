@@ -288,4 +288,36 @@ TEST(vector_math, dot) {
     }
 }
 
+TEST(vector_math, length) {
+    {
+        auto length = Length(Vector2f(3, 4));
+        EXPECT_FLOAT_EQ(length, 5.0f);
+    }
+    {
+        auto length = Length(Vector3f(3, 4, 5));
+        EXPECT_FLOAT_EQ(length, 7.0710678f);
+    }
+    {
+        auto length = Length(Vector4f::One);
+        EXPECT_FLOAT_EQ(length, 2.f);
+    }
+}
+
+TEST(vector_math, normalize) {
+    {
+        Vector2f vec1(3, 4);
+        auto vec2 = Normalize(vec1);
+        EXPECT_FLOAT_EQ(Length(vec2), 1.0f);
+        EXPECT_FLOAT_EQ(vec2.x, 3.0f / 5);
+        EXPECT_FLOAT_EQ(vec2.y, 4.0f / 5);
+    }
+    {
+        Vector3f vec1(3, 4, 5);
+        auto vec2 = Normalize(vec1);
+        EXPECT_FLOAT_EQ(Length(vec2), 1.0f);
+        EXPECT_FLOAT_EQ(vec2.x, 3.0f / 5);
+        EXPECT_FLOAT_EQ(vec2.y, 4.0f / 5);
+    }
+}
+
 }  // namespace my::math::detail
