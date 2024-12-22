@@ -7,6 +7,8 @@
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
 
+#include "lua_math_binding.h"
+
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
 #define SOL_PRINT_ERRORS  0
@@ -34,6 +36,8 @@ static Scene* lua_HelperGetScene(lua_State* L) {
 }
 
 auto LuaScriptManager::InitializeImpl() -> Result<void> {
+    lua::BindMathLib(nullptr);
+
     m_state = new sol::state;
     sol::state& lua = *m_state;
 

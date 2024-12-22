@@ -18,8 +18,11 @@ target_include_directories(${TARGET_NAME} PRIVATE
     ${VCPKG_INSTALLED_DIR}/arm64-osx/include
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/engine/shader
-    ${LUABRIDGE3_INCLUDE_DIRS}
+    ${LUABRIDGE3_INCLUDE_DIRS}/luabridge3
 )
+
+message(STATUS "******************")
+message(STATUS "path is ${LUABRIDGE3_INCLUDE_DIRS}")
 
 target_set_warning_level(${TARGET_NAME})
 
