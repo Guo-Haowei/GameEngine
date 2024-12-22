@@ -7,7 +7,11 @@ namespace my::lua {
 static void BindTransformComponent(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginClass<TransformComponent>("TransformComponent")
-        .addFunction("rotate", &TransformComponent::Rotate)
+        .addFunction("Rotate", &TransformComponent::Rotate)
+        .addFunction("GetScale", [](TransformComponent* p_transform) -> Vector3f {
+            return p_transform->GetScale();
+        })
+        .addFunction("SetScale", &TransformComponent::SetScale)
         .endClass();
 }
 

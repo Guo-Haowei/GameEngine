@@ -387,15 +387,26 @@ private:
 #pragma endregion CAMERA_COMPONENT
 
 #pragma region LUA_SCRIPT_COMPONENT
-struct LuaScriptComponent {
-    std::string path;
-    // Non-Serialized
-    int instance{ 0 };
+class LuaScriptComponent {
+public:
+    void SetPath(std::string_view p_path);
+    void SetPath(const std::string& p_path) { SetPath(std::string_view(p_path)); }
+    void SetPath(const char* p_path) { SetPath(std::string_view(p_path)); }
+
+    const std::string& GetPath() { return m_path; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
     void OnDeserialized();
 
     static void RegisterClass();
+
+private:
+    std::string m_path;
+
+    // Non-Serialized
+    int m_instance{ 0 };
+
+    friend class LuaScriptManager;
 };
 #pragma endregion LUA_SCRIPT_COMPONENT
 

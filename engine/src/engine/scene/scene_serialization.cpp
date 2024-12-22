@@ -598,7 +598,7 @@ void PerspectiveCameraComponent::RegisterClass() {
 }
 
 void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t) {
-    p_archive.ArchiveValue(path);
+    p_archive.ArchiveValue(m_path);
 }
 
 void LuaScriptComponent::OnDeserialized() {
@@ -606,7 +606,7 @@ void LuaScriptComponent::OnDeserialized() {
 
 void LuaScriptComponent::RegisterClass() {
     BEGIN_REGISTRY(LuaScriptComponent);
-    REGISTER_FIELD(LuaScriptComponent, "path", path);
+    REGISTER_FIELD(LuaScriptComponent, "path", m_path);
     END_REGISTRY(LuaScriptComponent);
 }
 

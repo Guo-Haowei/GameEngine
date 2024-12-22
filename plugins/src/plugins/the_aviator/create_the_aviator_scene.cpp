@@ -357,7 +357,8 @@ Scene* CreateTheAviatorScene() {
             transform->SetScale(Vector3f(1, s, 1));
             scene->AttachChild(hair, plane);
 
-            scene->Create<NativeScriptComponent>(hair).Bind<HairScript>();
+            scene->Create<LuaScriptComponent>(hair)
+                .SetPath("@res://scripts/Hair.lua");
         }
     }
 
@@ -366,8 +367,8 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(propeller);
         transform->Translate(Vector3f(6.0f, 0.0f, 0.0f));
         scene->AttachChild(propeller, plane);
-        auto& script = scene->Create<LuaScriptComponent>(propeller);
-        script.path = "@res://scripts/Propeller.lua";
+        scene->Create<LuaScriptComponent>(propeller)
+            .SetPath("@res://scripts/Propeller.lua");
     }
     {
         auto pivot = scene->CreateMeshEntity("pivot",
@@ -402,10 +403,9 @@ Scene* CreateTheAviatorScene() {
     }
 
     auto earth = scene->CreateTransformEntity("earth");
-    {
-        scene->AttachChild(earth, world);
-        scene->Create<NativeScriptComponent>(earth).Bind<EarthScript>();
-    }
+    scene->AttachChild(earth, world);
+    scene->Create<LuaScriptComponent>(earth)
+        .SetPath("@res://scripts/Earth.lua");
 
 #pragma region SETUP_OCEAN
     // ocean

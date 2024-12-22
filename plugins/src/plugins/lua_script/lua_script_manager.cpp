@@ -37,14 +37,7 @@ function GameObject:OnUpdate(timestep)
 	print("hello from GameObject")
 end
 )";
-
     CheckError(luaL_dostring(m_state, source));
-
-    luabridge::LuaRef meta = luabridge::getGlobal(m_state, "GameObject");
-    auto res = meta["new"](32);
-    DEV_ASSERT(res.wasOk());
-    luabridge::LuaRef instance = res[0];
-    instance["OnUpdate"](0.01);
 
     return Result<void>();
 }
@@ -58,6 +51,7 @@ void LuaScriptManager::FinalizeImpl() {
 
 void LuaScriptManager::Update(Scene& p_scene) {
     lua_State* L = m_state; // alias
+    const lua_Number timestep = p_scene.m_timestep;
 
     const size_t scene_ptr = (size_t)&p_scene;
     if (auto res = luabridge::push(m_state, scene_ptr); !res) {
@@ -67,32 +61,32 @@ void LuaScriptManager::Update(Scene& p_scene) {
     lua_setglobal(L, LUA_GLOBAL_SCENE);
 
     for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
-        if (script.path.empty()) {
+        if (script.m_path.empty()) {
             continue;
         }
 
-        const auto& meta = FindOrAdd(script.path);
-        if (script.instance == 0) {
+        const auto& meta = FindOrAdd(script.m_path);
+        if (script.m_instance == 0) {
             if (meta.funcNew) {
                 lua_rawgeti(L, LUA_REGISTRYINDEX, meta.funcNew);
                 // @TODO: check if function
                 lua_pushinteger(L, entity.GetId());
                 if (auto ret = CheckError(lua_pcall(L, 1, 1, 0)); ret == LUA_OK) {
                     int instance = luaL_ref(L, LUA_REGISTRYINDEX);
-                    script.instance = instance;
+                    script.m_instance = instance;
                     LOG_VERBOSE("instance created for entity {}", entity.GetId());
                 }
                 // @TODO: create instance
             }
         }
-        DEV_ASSERT(script.instance);
+        DEV_ASSERT(script.m_instance);
 
         // push the instance to stack
-        lua_rawgeti(L, LUA_REGISTRYINDEX, script.instance);
+        lua_rawgeti(L, LUA_REGISTRYINDEX, script.m_instance);
         lua_getfield(L, -1, "OnUpdate");
         if (lua_isfunction(L, -1)) {
-            lua_rawgeti(L, LUA_REGISTRYINDEX, script.instance);
-            lua_pushinteger(L, 1);
+            lua_rawgeti(L, LUA_REGISTRYINDEX, script.m_instance);
+            lua_pushnumber(L, timestep);
             CheckError(lua_pcall(L, 2, 0, 0));
             lua_pop(L, 1); // pop the return value
         } else {

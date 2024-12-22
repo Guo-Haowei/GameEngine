@@ -134,27 +134,14 @@ void PerspectiveCameraComponent::SetDimension(int p_width, int p_height) {
 #pragma endregion CAMERA_COMPONENT
 
 #pragma region LUA_SCRIPT_COMPONENT
-// std::string& LuaScriptComponent::GetScriptRef() {
-//     return m_path;
-// }
-//
-// void LuaScriptComponent::SetScript(const std::string& p_path) {
-//     if (p_path.empty()) {
-//         return;
-//     }
-//
-//     if (p_path == m_path) {
-//         return;
-//     }
-//
-//     m_path = p_path;
-//     m_asset = nullptr;
-//     AssetRegistry::GetSingleton().RequestAssetAsync(p_path);
-// }
-//
-// const char* LuaScriptComponent::GetSource() const {
-//     return m_asset ? m_asset->source.c_str() : nullptr;
-// }
+void LuaScriptComponent::SetPath(std::string_view p_path) {
+    if (p_path == m_path) {
+        return;
+    }
+
+    m_path = p_path;
+    LOG_VERBOSE("changing script '{}' to '{}' empty", m_path, p_path);
+}
 #pragma endregion LUA_SCRIPT_COMPONENT
 
 #pragma region NATIVE_SCRIPT_COMPONENT
