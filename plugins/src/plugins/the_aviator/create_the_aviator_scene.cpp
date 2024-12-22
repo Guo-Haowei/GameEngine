@@ -366,7 +366,8 @@ Scene* CreateTheAviatorScene() {
         TransformComponent* transform = scene->GetComponent<TransformComponent>(propeller);
         transform->Translate(Vector3f(6.0f, 0.0f, 0.0f));
         scene->AttachChild(propeller, plane);
-        scene->Create<NativeScriptComponent>(propeller).Bind<PropellerScript>();
+        auto& script = scene->Create<LuaScriptComponent>(propeller);
+        script.SetScript("@res://scripts/propeller.lua");
     }
     {
         auto pivot = scene->CreateMeshEntity("pivot",

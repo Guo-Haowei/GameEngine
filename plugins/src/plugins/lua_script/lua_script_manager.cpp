@@ -7,106 +7,45 @@
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
 
-#include "lua_math_binding.h"
-
-WARNING_PUSH()
-WARNING_DISABLE(4100, "-Wunused-parameter")
-#define SOL_PRINT_ERRORS  0
-#define SOL_NO_EXCEPTIONS 1
-#include "sol/sol.hpp"
-WARNING_POP()
+// lua include
+#include "lua_binding.h"
+#include "lua_bridge_include.h"
 
 namespace my {
 
-#define LUA_GLOBAL_SCENE  "g_scene"
-#define LUA_GLOBAL_ENTITY "g_entity"
-
-static ecs::Entity lua_HelperGetEntity(lua_State* L) {
-    lua_getglobal(L, LUA_GLOBAL_ENTITY);
-    ecs::Entity entity{ static_cast<uint32_t>(lua_tointeger(L, -1)) };
-    lua_pop(L, 1);
-    return entity;
-}
-
-static Scene* lua_HelperGetScene(lua_State* L) {
-    lua_getglobal(L, LUA_GLOBAL_SCENE);
-    Scene* scene = (Scene*)lua_tointeger(L, -1);
-    lua_pop(L, 1);
-    return scene;
-}
-
 auto LuaScriptManager::InitializeImpl() -> Result<void> {
-    lua::BindMathLib(nullptr);
+    m_state = luaL_newstate();
 
-    m_state = new sol::state;
-    sol::state& lua = *m_state;
+    // @TODO: bind
+    luaL_openlibs(m_state);
 
-    lua.open_libraries(sol::lib::base);
-
-#if USING(PLATFORM_WINDOWS)
-    lua.new_usertype<Vector2f>("Vector2f",
-                               sol::constructors<Vector2f(float, float)>(),
-                               "x", &Vector2f::x,
-                               "y", &Vector2f::y);
-    lua.new_usertype<Vector3f>("Vector3f",
-                               sol::constructors<Vector3f(float, float, float)>(),
-                               "x", &Vector3f::x,
-                               "y", &Vector3f::y,
-                               "z", &Vector3f::z);
-#endif
-
-    lua["scene_helper"] = lua.create_table();
-    lua["scene_helper"]["entity_rotate_x"] = [](sol::this_state L, float p_degree) {
-        auto entity = lua_HelperGetEntity(L);
-        auto scene = lua_HelperGetScene(L);
-        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
-        if (transform) {
-            transform->RotateX(Degree(p_degree));
-        }
-    };
-    lua["scene_helper"]["entity_rotate_y"] = [](sol::this_state L, float p_degree) {
-        auto entity = lua_HelperGetEntity(L);
-        auto scene = lua_HelperGetScene(L);
-        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
-        if (transform) {
-            transform->RotateY(Degree(p_degree));
-        }
-    };
-    lua["scene_helper"]["entity_rotate_z"] = [](sol::this_state L, float p_degree) {
-        auto entity = lua_HelperGetEntity(L);
-        auto scene = lua_HelperGetScene(L);
-        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
-        if (transform) {
-            transform->RotateZ(Degree(p_degree));
-        }
-    };
-    lua["scene_helper"]["entity_translate"] = [](sol::this_state L, const Vector3f& p_translation) {
-        auto entity = lua_HelperGetEntity(L);
-        auto scene = lua_HelperGetScene(L);
-        TransformComponent* transform = scene->GetComponent<TransformComponent>(entity);
-        if (transform) {
-            transform->Translate(p_translation);
-        }
-    };
-
-    lua["input"] = lua.create_table();
-    lua["input"]["mouse_move"] = []() {
-        return InputManager::GetSingleton().MouseMove();
-    };
+    lua::OpenMathLib(m_state);
+    lua::OpenSceneLib(m_state);
 
     return Result<void>();
 }
 
 void LuaScriptManager::FinalizeImpl() {
     if (m_state) {
-        delete m_state;
+        lua_close(m_state);
+        m_state = nullptr;
     }
 }
 
 void LuaScriptManager::Update(Scene& p_scene) {
-    // alias
-    sol::state& lua = *m_state;
-    lua[LUA_GLOBAL_SCENE] = (size_t)(&p_scene);
+    const size_t scene_ptr = (size_t)&p_scene;
+    if (auto res = luabridge::push(m_state, scene_ptr); !res) {
+        LOG_ERROR("failed to push scene, error: {}", res.message());
+        return;
+    }
+    lua_setglobal(m_state, LUA_GLOBAL_SCENE);
+
+    if (auto res = luabridge::push(m_state, p_scene.m_timestep); !res) {
+        LOG_ERROR("failed to push {}, error: {}", LUA_GLOBAL_TIMESTEP, res.message());
+        return;
+    }
+    lua_setglobal(m_state, LUA_GLOBAL_TIMESTEP);
+
     for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
         const char* source = script.GetSource();
         if (!source) {
@@ -117,13 +56,20 @@ void LuaScriptManager::Update(Scene& p_scene) {
             }
         }
 
-        if (source) {
-            lua[LUA_GLOBAL_ENTITY] = entity.GetId();
-            auto res = lua.script(source);
-            if (!res.valid()) {
-                sol::error err = res;
-                LOG_ERROR("script error: {}", err.what());
-            }
+        if (!source) {
+            continue;
+        }
+
+        const uint32_t id = entity.GetId();
+        if (auto res = luabridge::push(m_state, id); !res) {
+            LOG_ERROR("failed to push id, error: {}", res.message());
+            continue;
+        }
+
+        lua_setglobal(m_state, LUA_GLOBAL_ENTITY);
+        if (auto code = luaL_dostring(m_state, source); code != 0) {
+            const char* err = lua_tostring(m_state, -1);
+            LOG_ERROR("script error: {}", err);
         }
     }
 

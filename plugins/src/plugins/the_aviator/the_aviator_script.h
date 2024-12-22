@@ -180,11 +180,4 @@ class HairScript : public ScriptableEntity {
     float m_scaleY;
 };
 
-class PropellerScript : public ScriptableEntity {
-    void OnUpdate(float p_timestep) {
-        TransformComponent& transform = *GetComponent<TransformComponent>();
-        transform.RotateX(Degree(p_timestep * 500.0f));
-    }
-};
-
 }  // namespace my

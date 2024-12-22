@@ -3,6 +3,7 @@ set(TARGET_NAME lua_script)
 file(GLOB_RECURSE SRC
     "*.h"
     "*.cpp"
+    "*.lua"
 )
 
 add_library(${TARGET_NAME} STATIC ${SRC})
