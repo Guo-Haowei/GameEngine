@@ -239,4 +239,14 @@ TEST(StringUtils, extension_multi_extension) {
     EXPECT_EQ(name, ".scene");
 }
 
+TEST(remove_extension, extension_found) {
+    auto file = StringUtils::RemoveExtension("abc.lua", ".lua");
+    EXPECT_EQ(file, "abc");
+}
+
+TEST(remove_extension, extension_not_found) {
+    auto file = StringUtils::RemoveExtension("abc.c", ".lua");
+    EXPECT_EQ(file, "");
+}
+
 }  // namespace my::string_utils

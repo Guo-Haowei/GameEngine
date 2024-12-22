@@ -92,6 +92,7 @@ protected:
     // @TODO: add CreateXXXManager for all managers
     virtual Result<ImguiManager*> CreateImguiManager();
     virtual Result<GraphicsManager*> CreateGraphicsManager();
+    virtual Result<ScriptManager*> CreateScriptManager();
 
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);

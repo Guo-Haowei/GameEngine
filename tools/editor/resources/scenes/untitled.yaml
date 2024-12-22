@@ -23,9 +23,9 @@ entities:
       far: 1000
       width: 1920
       height: 1080
-      pitch: -40.2114983
-      yaw: -89.7723236
-      position: [-1.2781744, 18.8670235, 33.1387863]
+      pitch: -25.5744705
+      yaw: -90.0451431
+      position: [-1.27062809, 8.53069019, 31.2397804]
   - id: 3
     NameComponent:
       name: main_camera
@@ -273,7 +273,7 @@ entities:
         quadratic: 0
   - id: 19
     NameComponent:
-      name: VoxelGi-2
+      name: VoxelGI
     TransformComponent:
       flags: 0
       translation: [0, 0, 0]
@@ -3888,8 +3888,8 @@ entities:
       name: Transform::Skeleton_torso_joint_1
     TransformComponent:
       flags: 0
-      translation: [1.02477165e-08, -0.0296748467, 0.684176087]
-      rotation: [-0.0114214057, -0.0368739255, -0.0034150444, -0.999248803]
+      translation: [2.205363e-08, -0.0296162721, 0.657133341]
+      rotation: [-0.0108409934, -0.0590227842, -0.0032983399, -0.998191297]
       scale: [1.00000036, 1, 0.999999821]
     HierarchyComponent:
       parent_id: 288
@@ -3898,9 +3898,9 @@ entities:
       name: Transform::Skeleton_torso_joint_2
     TransformComponent:
       flags: 0
-      translation: [1.34944357e-05, 0.000986605999, 0.145416901]
-      rotation: [0.0108289775, -0.710928977, -0.00591850467, -0.703155041]
-      scale: [1.00000012, 1.00000012, 0.999999225]
+      translation: [1.34970214e-05, 0.000986601925, 0.145416945]
+      rotation: [-0.00249436637, -0.733256996, -0.0182675868, -0.679699361]
+      scale: [1.00000024, 1, 0.999999166]
     HierarchyComponent:
       parent_id: 289
   - id: 291
@@ -3908,9 +3908,9 @@ entities:
       name: Transform::torso_joint_3
     TransformComponent:
       flags: 0
-      translation: [-0.250516713, 5.77873834e-07, -7.28032319e-05]
-      rotation: [-0.00695328834, 0.624596894, -0.036317043, -0.780056119]
-      scale: [1.00000072, 1, 0.999999762]
+      translation: [-0.250516772, 5.84599036e-07, -7.28437881e-05]
+      rotation: [-0.0108621353, 0.635312676, -0.0250600688, -0.77176702]
+      scale: [1.00000072, 1, 0.999999702]
     HierarchyComponent:
       parent_id: 290
   - id: 292
@@ -3918,9 +3918,9 @@ entities:
       name: Transform::Skeleton_neck_joint_1
     TransformComponent:
       flags: 0
-      translation: [-2.46886293e-06, 2.43252066e-06, 0.0648385882]
-      rotation: [0.0330788009, -0.659274042, 0.0380571969, -0.750207543]
-      scale: [0.99999994, 0.999999821, 0.999999762]
+      translation: [-2.47690787e-06, 2.40998861e-06, 0.0648385212]
+      rotation: [-0.0158431623, -0.640977919, -0.0191283897, -0.767153025]
+      scale: [0.999999881, 0.999999762, 1]
     HierarchyComponent:
       parent_id: 291
   - id: 293
@@ -3928,9 +3928,9 @@ entities:
       name: Transform::Skeleton_neck_joint_2
     TransformComponent:
       flags: 0
-      translation: [-0.0520396717, -1.81545601e-09, -2.5964307e-06]
-      rotation: [0.0442349985, 0.998844147, 0.00194838631, 0.0186765008]
-      scale: [1, 1.00000012, 1.00000072]
+      translation: [-0.0520397946, -9.78822357e-09, -2.6143407e-06]
+      rotation: [-0.0215874277, 0.998348951, -0.000253749255, 0.052959986]
+      scale: [1.00000012, 1.00000012, 1.00000048]
     HierarchyComponent:
       parent_id: 292
   - id: 294
@@ -3938,9 +3938,9 @@ entities:
       name: Transform::Skeleton_arm_joint_L__4_
     TransformComponent:
       flags: 0
-      translation: [-3.75367672e-05, 0.0880000815, -5.89565716e-05]
-      rotation: [0.102209225, 0.889666557, -0.425285161, 0.129968002]
-      scale: [1.00000024, 0.99999994, 1.00000012]
+      translation: [-3.75499149e-05, 0.0880000666, -5.90729542e-05]
+      rotation: [0.268768072, 0.807187438, -0.376338452, 0.366755694]
+      scale: [1.00000024, 0.999999881, 1.00000012]
     HierarchyComponent:
       parent_id: 291
   - id: 295
@@ -3948,9 +3948,9 @@ entities:
       name: Transform::Skeleton_arm_joint_L__3_
     TransformComponent:
       flags: 0
-      translation: [0.0132217389, 0.215499505, 0.109332204]
-      rotation: [0.00250251312, -0.157837793, 0.174900323, -0.971848726]
-      scale: [0.999999404, 0.999999642, 0.999999523]
+      translation: [0.013221737, 0.21549955, 0.109332301]
+      rotation: [0.0134113617, -0.124052055, 0.118576899, -0.985054672]
+      scale: [0.999999404, 0.999999642, 0.999999642]
     HierarchyComponent:
       parent_id: 294
   - id: 296
@@ -3958,9 +3958,9 @@ entities:
       name: Transform::Skeleton_arm_joint_L__2_
     TransformComponent:
       flags: 0
-      translation: [-0.0933246389, 0.143000007, 0.0781477839]
-      rotation: [0.0205355827, -0.0912737176, 0.164439172, -0.981940746]
-      scale: [1.00000048, 1.00000012, 1.00000048]
+      translation: [-0.0933246464, 0.143000007, 0.078147918]
+      rotation: [0.0242976528, -0.0808684826, 0.147668213, -0.985330045]
+      scale: [1.00000024, 1.00000012, 1.00000048]
     HierarchyComponent:
       parent_id: 295
   - id: 297
@@ -3968,9 +3968,9 @@ entities:
       name: Transform::Skeleton_arm_joint_R
     TransformComponent:
       flags: 0
-      translation: [-3.91528738e-05, -0.0879999995, -5.94900339e-05]
-      rotation: [-0.184017241, 0.917617202, 0.345488459, 0.0683134049]
-      scale: [1.00000012, 1, 1]
+      translation: [-3.91329304e-05, -0.0880000591, -5.9434984e-05]
+      rotation: [0.103856117, 0.887657046, 0.376523674, -0.243486673]
+      scale: [0.999999881, 1, 1]
     HierarchyComponent:
       parent_id: 291
   - id: 298
@@ -3978,9 +3978,9 @@ entities:
       name: Transform::Skeleton_arm_joint_R__2_
     TransformComponent:
       flags: 0
-      translation: [-0.0355462506, -0.215498984, 0.104233183]
-      rotation: [-0.147796333, 0.92443639, 0.000157523376, 0.35152632]
-      scale: [1.00000036, 1.00000012, 0.99999994]
+      translation: [-0.0355463549, -0.215498909, 0.104233198]
+      rotation: [-0.102900796, 0.927087903, -0.058287058, 0.355697602]
+      scale: [1.00000024, 1, 0.999999702]
     HierarchyComponent:
       parent_id: 297
   - id: 299
@@ -3988,9 +3988,9 @@ entities:
       name: Transform::Skeleton_arm_joint_R__3_
     TransformComponent:
       flags: 0
-      translation: [0.0313703604, -0.143000886, -0.117611699]
-      rotation: [0.0556951016, 0.39260301, -0.0153142838, -0.917892396]
-      scale: [1, 1, 1.00000012]
+      translation: [0.0313703977, -0.14300096, -0.117611602]
+      rotation: [0.0879828632, 0.36849153, 0.0121526308, -0.925283313]
+      scale: [1.00000012, 1, 1.00000024]
     HierarchyComponent:
       parent_id: 298
   - id: 300
@@ -3998,9 +3998,9 @@ entities:
       name: Transform::leg_joint_L_1
     TransformComponent:
       flags: 0
-      translation: [0.0285201613, 0.0676218122, -0.062959902]
-      rotation: [-0.00149661407, -0.469711691, -0.0253665522, -0.882302821]
-      scale: [0.999999762, 1, 0.999999881]
+      translation: [0.0285201296, 0.0676217824, -0.0629599616]
+      rotation: [-0.00133600901, -0.620890558, -0.0302355103, -0.783294916]
+      scale: [1.00000012, 1.00000024, 0.999999881]
     HierarchyComponent:
       parent_id: 289
   - id: 301
@@ -4008,9 +4008,9 @@ entities:
       name: Transform::leg_joint_L_2
     TransformComponent:
       flags: 0
-      translation: [0.209164008, 0.00905547105, -0.164269716]
-      rotation: [0.00752078602, -0.334174156, 0.00320692873, -0.94237566]
-      scale: [1.00000012, 0.999999404, 1]
+      translation: [0.209163964, 0.00905548222, -0.164269745]
+      rotation: [0.0037739519, -0.51428622, -0.0121396082, -0.857488811]
+      scale: [0.999999821, 0.999999285, 1]
     HierarchyComponent:
       parent_id: 300
   - id: 302
@@ -4018,9 +4018,9 @@ entities:
       name: Transform::leg_joint_L_3
     TransformComponent:
       flags: 0
-      translation: [0.275789917, 0.00139726175, 0.00412250403]
-      rotation: [-0.0306521431, -0.867796659, 0.0169520825, -0.49567461]
-      scale: [1.0000006, 1.0000006, 1.00000012]
+      translation: [0.275789917, 0.00139726338, 0.0041224584]
+      rotation: [-0.0124768391, -0.977919817, 0.00814253278, -0.208283037]
+      scale: [1.00000072, 1.00000048, 1.00000024]
     HierarchyComponent:
       parent_id: 301
   - id: 303
@@ -4028,9 +4028,9 @@ entities:
       name: Transform::leg_joint_L_5
     TransformComponent:
       flags: 0
-      translation: [-0.0655838326, 0.00109058782, 0.0292913392]
-      rotation: [0.00807754602, 0.313909143, -0.0455473326, -0.948315144]
-      scale: [1.00000036, 1, 1]
+      translation: [-0.0655838251, 0.00109059794, 0.0292912703]
+      rotation: [0.0222355984, 0.516274929, -0.0407176986, -0.855096936]
+      scale: [1.0000006, 0.99999994, 0.999999642]
     HierarchyComponent:
       parent_id: 302
   - id: 304
@@ -4038,9 +4038,9 @@ entities:
       name: Transform::leg_joint_R_1
     TransformComponent:
       flags: 0
-      translation: [0.0285571814, -0.0684543326, -0.0629586056]
-      rotation: [0.0252292957, -0.663647056, 0.0125302775, -0.746966481]
-      scale: [1, 1.00000036, 1.00000012]
+      translation: [0.0285571963, -0.0684543401, -0.0629586652]
+      rotation: [0.022054188, -0.558086812, 0.00432789046, -0.829454064]
+      scale: [0.999999821, 1.00000024, 1.00000036]
     HierarchyComponent:
       parent_id: 289
   - id: 305
@@ -4048,9 +4048,9 @@ entities:
       name: Transform::leg_joint_R_2
     TransformComponent:
       flags: 0
-      translation: [0.260890901, -0.00902606361, 0.0516709611]
-      rotation: [-0.0113331433, -0.696371078, 0.00113759772, -0.717071176]
-      scale: [0.999999523, 1.00000036, 1.0000006]
+      translation: [0.260890812, -0.00902605429, 0.0516708605]
+      rotation: [0.022840349, 0.134363055, 0.0175889619, -0.99051106]
+      scale: [1.00000036, 1.0000006, 1]
     HierarchyComponent:
       parent_id: 304
   - id: 306
@@ -4058,9 +4058,9 @@ entities:
       name: Transform::leg_joint_R_3
     TransformComponent:
       flags: 0
-      translation: [0.275460213, -0.00143169356, -0.0141048264]
-      rotation: [-0.00129421381, 0.952952802, 0.027465526, 0.301634163]
-      scale: [0.999999583, 0.999999285, 0.99999994]
+      translation: [0.275460303, -0.00143171789, -0.0141048245]
+      rotation: [0.00598384161, 0.89746213, 0.0454281345, 0.438697875]
+      scale: [0.999999642, 0.999999285, 0.999999881]
     HierarchyComponent:
       parent_id: 305
   - id: 307
@@ -4068,9 +4068,9 @@ entities:
       name: Transform::leg_joint_R_5
     TransformComponent:
       flags: 0
-      translation: [-0.066819787, -0.00107217417, 0.0263512917]
-      rotation: [-0.0257679112, 0.2745924, 0.107563205, -0.955174744]
-      scale: [1.00000012, 0.999999464, 0.999999106]
+      translation: [-0.0668196976, -0.00107217208, 0.0263513196]
+      rotation: [0.00328320079, 0.393601596, 0.0458610021, -0.91811955]
+      scale: [1, 0.999999464, 0.999999166]
     HierarchyComponent:
       parent_id: 306
   - id: 308
@@ -4095,7 +4095,7 @@ entities:
       flags: 3
       start: 0
       end: 2
-      timer: 1.24952006
+      timer: 1.79852355
       amount: 1
       speed: 1
       channels:
@@ -16467,9 +16467,9 @@ entities:
       name: Transform::Skeleton_torso_joint_1
     TransformComponent:
       flags: 0
-      translation: [1.93733491e-08, -0.0200001094, 0.661844492]
-      rotation: [-0.00109486084, -0.0350512974, -0.000105335857, -0.999384642]
-      scale: [1.00000024, 1.00000012, 0.99999994]
+      translation: [2.38178863e-08, -0.0250001084, 0.649071038]
+      rotation: [-0.0115953777, -0.028406091, -0.00301537919, -0.999524295]
+      scale: [1.00000024, 0.999999881, 0.999999881]
     HierarchyComponent:
       parent_id: 321
   - id: 323
@@ -16477,9 +16477,9 @@ entities:
       name: Transform::Skeleton_torso_joint_2
     TransformComponent:
       flags: 0
-      translation: [1.3486484e-05, 0.00098660402, 0.14541696]
-      rotation: [0.00137099659, -0.72719872, 0.000417235424, -0.686425269]
-      scale: [1.00000024, 1, 0.999999285]
+      translation: [1.34473485e-05, 0.00098660402, 0.145417124]
+      rotation: [0.00688014552, -0.717168629, -0.0057641156, -0.696841419]
+      scale: [1.00000024, 1, 0.999999225]
     HierarchyComponent:
       parent_id: 322
   - id: 324
@@ -16487,8 +16487,8 @@ entities:
       name: Transform::torso_joint_3
     TransformComponent:
       flags: 0
-      translation: [-0.250516683, 5.7369499e-07, -7.28234299e-05]
-      rotation: [0.00179299922, 0.6236462, -0.00421268214, -0.781689823]
+      translation: [-0.250516713, 5.71222301e-07, -7.2802075e-05]
+      rotation: [0.13764523, 0.62980032, -0.0158401988, -0.764295936]
       scale: [1.00000072, 1.00000012, 0.999999762]
     HierarchyComponent:
       parent_id: 323
@@ -16497,9 +16497,9 @@ entities:
       name: Transform::Skeleton_neck_joint_1
     TransformComponent:
       flags: 0
-      translation: [-2.49741197e-06, 2.41435919e-06, 0.0648386106]
-      rotation: [-0.0188457072, -0.633878589, -0.0231775828, -0.77284956]
-      scale: [0.999999881, 0.999999762, 0.999999881]
+      translation: [-2.44890043e-06, 2.42763531e-06, 0.0648386031]
+      rotation: [0.00881894398, -0.651529729, 0.0116548408, -0.758476019]
+      scale: [0.999999702, 0.999999881, 1]
     HierarchyComponent:
       parent_id: 324
   - id: 326
@@ -16507,9 +16507,9 @@ entities:
       name: Transform::Skeleton_neck_joint_2
     TransformComponent:
       flags: 0
-      translation: [-0.0520398095, -3.24187432e-08, -2.6106859e-06]
-      rotation: [-0.0615639687, 0.996852636, -0.00073752203, 0.0487608276]
-      scale: [1, 1, 1.00000072]
+      translation: [-0.0520395786, -9.88885684e-09, -2.60519391e-06]
+      rotation: [-0.00904959533, 0.998397291, -0.000475931301, 0.0558415353]
+      scale: [1.00000024, 0.999999702, 1.00000048]
     HierarchyComponent:
       parent_id: 325
   - id: 327
@@ -16517,9 +16517,9 @@ entities:
       name: Transform::Skeleton_arm_joint_L__4_
     TransformComponent:
       flags: 0
-      translation: [-3.75464624e-05, 0.088000007, -5.90569362e-05]
-      rotation: [0.259614766, 0.851867437, -0.310479492, 0.331683457]
-      scale: [1.00000036, 1, 1]
+      translation: [-3.75428135e-05, 0.0880000889, -5.89356678e-05]
+      rotation: [-0.104143672, 0.905913711, -0.395618588, -0.109128982]
+      scale: [1.00000024, 1, 1]
     HierarchyComponent:
       parent_id: 324
   - id: 328
@@ -16527,9 +16527,9 @@ entities:
       name: Transform::Skeleton_arm_joint_L__3_
     TransformComponent:
       flags: 0
-      translation: [0.0132217705, 0.215499505, 0.109332263]
-      rotation: [-0.0569749586, -0.179726735, 0.130741298, -0.97332263]
-      scale: [0.999999404, 0.999999523, 0.999999523]
+      translation: [0.0132217668, 0.215499535, 0.109332204]
+      rotation: [-0.0147968354, -0.100480154, 0.0638827235, -0.992715955]
+      scale: [0.999999762, 0.999999642, 0.999999523]
     HierarchyComponent:
       parent_id: 327
   - id: 329
@@ -16537,9 +16537,9 @@ entities:
       name: Transform::Skeleton_arm_joint_L__2_
     TransformComponent:
       flags: 0
-      translation: [-0.0933246464, 0.143000066, 0.0781477988]
-      rotation: [0.0337207615, 0.00264743716, 0.00378494244, -0.999420762]
-      scale: [1.00000036, 1.00000024, 1.00000048]
+      translation: [-0.0933246762, 0.143000007, 0.0781477839]
+      rotation: [0.0205355957, -0.0912737101, 0.164439142, -0.981940567]
+      scale: [1.00000036, 0.999999762, 1.00000024]
     HierarchyComponent:
       parent_id: 328
   - id: 330
@@ -16547,9 +16547,9 @@ entities:
       name: Transform::Skeleton_arm_joint_R
     TransformComponent:
       flags: 0
-      translation: [-3.91252179e-05, -0.0879999101, -5.94894918e-05]
-      rotation: [0.155869037, 0.917901754, 0.32212469, -0.166391775]
-      scale: [0.999999762, 1, 0.999999821]
+      translation: [-3.91144931e-05, -0.0879999995, -5.93367804e-05]
+      rotation: [-0.267670631, 0.902521968, 0.271489918, 0.200246334]
+      scale: [1, 0.99999994, 0.999999881]
     HierarchyComponent:
       parent_id: 324
   - id: 331
@@ -16557,9 +16557,9 @@ entities:
       name: Transform::Skeleton_arm_joint_R__2_
     TransformComponent:
       flags: 0
-      translation: [-0.0355463289, -0.215498969, 0.104233138]
-      rotation: [-0.0902260765, 0.922926903, -0.0476686321, 0.371045679]
-      scale: [1, 0.999999881, 0.99999994]
+      translation: [-0.0355463438, -0.215498894, 0.104233131]
+      rotation: [-0.14799729, 0.930977464, -0.0386016667, 0.331484258]
+      scale: [1.00000048, 0.99999994, 0.99999994]
     HierarchyComponent:
       parent_id: 330
   - id: 332
@@ -16567,9 +16567,9 @@ entities:
       name: Transform::Skeleton_arm_joint_R__3_
     TransformComponent:
       flags: 0
-      translation: [0.031370379, -0.143001005, -0.117611662]
-      rotation: [0.179839894, 0.285601616, 0.0884724408, -0.937072575]
-      scale: [1, 1.00000036, 1.00000036]
+      translation: [0.0313704088, -0.143000901, -0.117611632]
+      rotation: [0.0836233124, 0.350766331, 0.0338431261, -0.932063103]
+      scale: [1, 0.99999994, 1.00000024]
     HierarchyComponent:
       parent_id: 331
   - id: 333
@@ -16577,9 +16577,9 @@ entities:
       name: Transform::leg_joint_L_1
     TransformComponent:
       flags: 0
-      translation: [0.0285201222, 0.0676218122, -0.0629600361]
-      rotation: [0.0123575926, -0.527686596, -0.00714178383, -0.848348618]
-      scale: [1, 1.00000048, 0.999999821]
+      translation: [0.0285200998, 0.0676217824, -0.062959969]
+      rotation: [-0.00537403068, -0.200185299, -0.0039751702, -0.979732394]
+      scale: [0.999999583, 1.00000036, 1]
     HierarchyComponent:
       parent_id: 322
   - id: 334
@@ -16587,9 +16587,9 @@ entities:
       name: Transform::leg_joint_L_2
     TransformComponent:
       flags: 0
-      translation: [0.209163934, 0.00905547664, -0.164269745]
-      rotation: [-0.00879644789, -0.757010221, -0.0137408692, -0.649353147]
-      scale: [0.999999762, 0.999999166, 1]
+      translation: [0.209163994, 0.0090554785, -0.164269701]
+      rotation: [-0.00713876355, -0.32730186, 0.00101050839, -0.94488883]
+      scale: [0.999999881, 0.999999225, 0.999999702]
     HierarchyComponent:
       parent_id: 333
   - id: 335
@@ -16597,9 +16597,9 @@ entities:
       name: Transform::leg_joint_L_3
     TransformComponent:
       flags: 0
-      translation: [0.275790006, 0.00139726559, 0.00412249332]
-      rotation: [-0.00751082646, -0.968059063, 0.0210678, -0.247968912]
-      scale: [1.00000072, 1.00000072, 1.00000012]
+      translation: [0.275789917, 0.00139726186, 0.00412249053]
+      rotation: [-0.020878505, -0.846638083, 0.0122336568, -0.531611919]
+      scale: [1.00000048, 1.00000072, 1]
     HierarchyComponent:
       parent_id: 334
   - id: 336
@@ -16607,9 +16607,9 @@ entities:
       name: Transform::leg_joint_L_5
     TransformComponent:
       flags: 0
-      translation: [-0.0655838102, 0.00109060248, 0.0292913634]
-      rotation: [0.0123087242, 0.350486189, -0.0192333162, -0.936251819]
-      scale: [1.00000048, 1, 0.999999881]
+      translation: [-0.0655837879, 0.00109059608, 0.0292913355]
+      rotation: [0.0118246228, 0.371959567, -0.045542933, -0.927055478]
+      scale: [1.00000036, 0.999999881, 0.999999762]
     HierarchyComponent:
       parent_id: 335
   - id: 337
@@ -16617,9 +16617,9 @@ entities:
       name: Transform::leg_joint_R_1
     TransformComponent:
       flags: 0
-      translation: [0.0285571851, -0.0684543401, -0.0629586801]
-      rotation: [0.00748881884, -0.638212502, -0.00589993037, -0.76846081]
-      scale: [1, 1.00000012, 1.00000024]
+      translation: [0.0285572149, -0.068454355, -0.0629585832]
+      rotation: [-0.0045397738, -0.936162889, 0.0168964807, -0.351106703]
+      scale: [0.999999642, 1.00000036, 1.00000048]
     HierarchyComponent:
       parent_id: 322
   - id: 338
@@ -16627,9 +16627,9 @@ entities:
       name: Transform::leg_joint_R_2
     TransformComponent:
       flags: 0
-      translation: [0.260890812, -0.00902605522, 0.051670894]
-      rotation: [0.000163888064, -0.0728001595, -0.00204325374, -0.99632442]
-      scale: [1.00000036, 1.00000048, 0.99999994]
+      translation: [0.260890722, -0.00902604498, 0.051670894]
+      rotation: [-0.000704030273, -0.0615185723, -0.00487271883, -0.998093724]
+      scale: [1.00000012, 1.00000024, 1]
     HierarchyComponent:
       parent_id: 337
   - id: 339
@@ -16637,9 +16637,9 @@ entities:
       name: Transform::leg_joint_R_3
     TransformComponent:
       flags: 0
-      translation: [0.275460303, -0.00143171381, -0.0141048245]
-      rotation: [0.000419932738, 0.908845723, 0.0027549942, 0.417077959]
-      scale: [0.999999702, 0.999999285, 1]
+      translation: [0.275460303, -0.00143171125, -0.0141047891]
+      rotation: [0.0031503248, 0.989702702, 0.0136088124, 0.141747802]
+      scale: [0.999999642, 0.999999404, 0.999999881]
     HierarchyComponent:
       parent_id: 338
   - id: 340
@@ -16647,9 +16647,9 @@ entities:
       name: Transform::leg_joint_R_5
     TransformComponent:
       flags: 0
-      translation: [-0.0668197572, -0.00107218779, 0.0263513029]
-      rotation: [-0.00033531792, 0.33427161, -0.00111322803, -0.942474604]
-      scale: [1, 0.999999583, 0.999998987]
+      translation: [-0.0668197051, -0.00107215054, 0.0263513289]
+      rotation: [-0.0134829581, 0.493461013, -0.0199044701, -0.869411826]
+      scale: [0.999999523, 0.999999404, 0.999999344]
     HierarchyComponent:
       parent_id: 339
   - id: 341
@@ -16674,7 +16674,7 @@ entities:
       flags: 3
       start: 0
       end: 2
-      timer: 0.144411504
+      timer: 0.790946484
       amount: 1
       speed: 1
       channels:

@@ -159,32 +159,4 @@ class OceanScript : public ScriptableEntity {
     std::vector<Wave> m_waves;
 };
 
-class HairScript : public ScriptableEntity {
-    void OnCreate() override {
-        TransformComponent& transform = *GetComponent<TransformComponent>();
-        Vector3f scale = transform.GetScale();
-        m_scaleY = scale.y;
-    }
-
-    void OnUpdate(float p_timestep) override {
-        TransformComponent& transform = *GetComponent<TransformComponent>();
-        m_scaleY += p_timestep;
-        if (m_scaleY > 0.95f) {
-            m_scaleY = 0.5f;
-        }
-        Vector3f scale = transform.GetScale();
-        scale.y = m_scaleY;
-        transform.SetScale(scale);
-    }
-
-    float m_scaleY;
-};
-
-class PropellerScript : public ScriptableEntity {
-    void OnUpdate(float p_timestep) {
-        TransformComponent& transform = *GetComponent<TransformComponent>();
-        transform.RotateX(Degree(p_timestep * 500.0f));
-    }
-};
-
 }  // namespace my

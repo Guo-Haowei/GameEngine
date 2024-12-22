@@ -389,15 +389,14 @@ private:
 #pragma region LUA_SCRIPT_COMPONENT
 class LuaScriptComponent {
 public:
-    void SetScript(const std::string& p_path);
+    LuaScriptComponent& SetClassName(std::string_view p_class_name);
+    LuaScriptComponent& SetPath(std::string_view p_path);
 
-    std::string& GetScriptRef();
+    const std::string& GetPath() const { return m_path; }
+    const std::string& GetClassName() const { return m_className; }
 
-    const char* GetSource() const;
-
-    void SetAsset(const TextAsset* p_asset) {
-        m_asset = p_asset;
-    }
+    std::string& GetPathRef() { return m_path; }
+    std::string& GetClassNameRef() { return m_className; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
     void OnDeserialized();
@@ -405,10 +404,13 @@ public:
     static void RegisterClass();
 
 private:
+    std::string m_className;
     std::string m_path;
 
     // Non-Serialized
-    const TextAsset* m_asset{ nullptr };
+    int m_instance{ 0 };
+
+    friend class LuaScriptManager;
 };
 #pragma endregion LUA_SCRIPT_COMPONENT
 

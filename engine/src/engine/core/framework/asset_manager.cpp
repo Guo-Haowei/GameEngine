@@ -68,9 +68,11 @@ auto AssetManager::InitializeImpl() -> Result<void> {
 }
 
 auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset*> {
+#if 0
     if (thread::GetThreadId() == thread::THREAD_MAIN) {
         LOG_WARN("Loading asset '{}' on main thread, this can be an expensive operation", p_handle->meta.path);
     }
+#endif
 
     auto loader = IAssetLoader::Create(p_handle->meta);
     if (!loader) {

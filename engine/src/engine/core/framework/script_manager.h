@@ -1,26 +1,18 @@
 #pragma once
 #include "engine/core/framework/module.h"
 
-namespace sol {
-class state;
-}
-
 namespace my {
 
 class Scene;
 
 class ScriptManager : public Module {
-
 public:
     ScriptManager() : Module("ScriptManager") {}
+    ScriptManager(std::string_view name) : Module(name) {}
 
-    void Update(Scene& p_scene);
+    virtual void Update(Scene& p_scene);
 
-protected:
-    auto InitializeImpl() -> Result<void> final;
-    void FinalizeImpl() final;
-
-    sol::state* m_state;
+    static Result<ScriptManager*> Create();
 };
 
 }  // namespace my

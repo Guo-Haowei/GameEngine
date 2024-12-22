@@ -80,6 +80,8 @@ public:
         return -1;
     }
 
+    static std::string_view RemoveExtension(std::string_view p_file, std::string_view p_extension);
+
     static constexpr std::string_view FindLastOf(std::string_view p_string, char p_pattern) {
         const size_t found = p_string.find_last_of(p_pattern);
         return found == std::string_view::npos ? "" : std::string_view(p_string.data() + found, p_string.size() - found);

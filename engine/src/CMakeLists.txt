@@ -54,10 +54,10 @@ set(TARGET_LIBS
     imgui
     glfw
     glad::glad
-    lua
     ${BULLET_LIBRARIES}
     glm::glm
     yaml-cpp::yaml-cpp
+    lua_script
 )
 
 if(WIN32)
