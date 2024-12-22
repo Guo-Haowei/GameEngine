@@ -81,13 +81,6 @@ class BatteryScript : public ScriptableEntity {
     void OnUpdate(float p_timestep) override;
 };
 
-class EarthScript : public ScriptableEntity {
-    void OnUpdate(float p_timestep) override {
-        auto transform = GetComponent<TransformComponent>();
-        transform->Rotate(Vector3f(0.0f, 0.0f, p_timestep * WORLD_SPEED));
-    }
-};
-
 class OceanScript : public ScriptableEntity {
     struct Wave {
         float angle;

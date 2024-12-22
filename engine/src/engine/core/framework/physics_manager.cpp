@@ -36,30 +36,9 @@ struct CustomContactResultCallback : btCollisionWorld::ContactResultCallback {
         ecs::Entity entity_1{ (uint32_t)(uintptr_t)object_1->getUserPointer() };
         ecs::Entity entity_2{ (uint32_t)(uintptr_t)object_2->getUserPointer() };
 
+        // @TODO: use lua OnCollision
         NativeScriptComponent* script_1 = m_scene.GetComponent<NativeScriptComponent>(entity_1);
         NativeScriptComponent* script_2 = m_scene.GetComponent<NativeScriptComponent>(entity_2);
-
-#if 0
-        if (script_1 || script_2) {
-            NameComponent* name_1 = m_scene.GetComponent<NameComponent>(entity_1);
-            NameComponent* name_2 = m_scene.GetComponent<NameComponent>(entity_2);
-            struct A {
-                const btCollisionObject* object;
-                std::string name;
-            };
-            std::array<A, 2> objects = { A{ object_1, name_1->GetName() }, A{ object_2, name_2->GetName() } };
-            for (const auto& a : objects) {
-                const btCollisionObject* obj = a.object;
-                auto shape = obj->getCollisionShape();
-                btScalar scale;
-                btVector3 origin;
-                shape->getBoundingSphere(origin, scale);
-                origin += obj->getWorldTransform().getOrigin();
-                LOG_VERBOSE("{} bounding object radius {}, origin {} {} {}", a.name, scale, origin.getX(), origin.getY(), origin.getZ());
-            }
-            LOG_OK("(((****");
-        }
-#endif
 
         if (script_1 && script_1->instance) {
             script_1->instance->OnCollision(entity_2);

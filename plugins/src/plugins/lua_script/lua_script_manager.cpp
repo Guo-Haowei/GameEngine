@@ -17,7 +17,6 @@ namespace my {
 auto LuaScriptManager::InitializeImpl() -> Result<void> {
     m_state = luaL_newstate();
 
-    // @TODO: bind
     luaL_openlibs(m_state);
 
     lua::OpenMathLib(m_state);
@@ -79,7 +78,6 @@ void LuaScriptManager::Update(Scene& p_scene) {
                     script.m_instance = instance;
                     LOG_VERBOSE("instance created for entity {}", entity.GetId());
                 }
-                // @TODO: create instance
             }
         }
         DEV_ASSERT(script.m_instance);
@@ -97,38 +95,6 @@ void LuaScriptManager::Update(Scene& p_scene) {
             lua_pop(L, 1); // remove the value (not a function)
         }
     }
-#if 0
-
-    if (auto res = luabridge::push(m_state, p_scene.m_timestep); !res) {
-        LOG_ERROR("failed to push {}, error: {}", LUA_GLOBAL_TIMESTEP, res.message());
-        return;
-    }
-    lua_setglobal(m_state, LUA_GLOBAL_TIMESTEP);
-
-    for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
-        const char* source = script.GetSource();
-        if (!source) {
-            auto asset = m_app->GetAssetRegistry()->GetAssetByHandle<TextAsset>(AssetHandle{ script.GetScriptRef() });
-            if (asset) {
-                script.SetAsset(asset);
-                source = asset->source.c_str();
-            }
-        }
-
-        if (!source) {
-            continue;
-        }
-
-        const uint32_t id = entity.GetId();
-        if (auto res = luabridge::push(m_state, id); !res) {
-            LOG_ERROR("failed to push id, error: {}", res.message());
-            continue;
-        }
-
-        lua_setglobal(m_state, LUA_GLOBAL_ENTITY);
-        CheckError(luaL_dostring(m_state, source));
-    }
-    #endif
 
     ScriptManager::Update(p_scene);
 }

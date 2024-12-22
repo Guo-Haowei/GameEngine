@@ -11,10 +11,6 @@ namespace my::lua {
 
 // @TODO: create a namespace
 #define LUA_GLOBAL_SCENE  "g_scene"
-#define LUA_GLOBAL_ENTITY "g_entity"
-#define LUA_GLOBAL_TIMESTEP "timestep"
-
-ecs::Entity lua_HelperGetEntity(lua_State* L);
 
 Scene* lua_HelperGetScene(lua_State* L);
 
