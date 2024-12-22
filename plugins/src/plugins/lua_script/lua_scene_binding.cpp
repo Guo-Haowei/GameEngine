@@ -13,14 +13,17 @@ static void BindTransformComponent(lua_State* L) {
 
 template<Serializable T>
 TransformComponent* lua_SceneGetComponent(lua_State* L) {
-    ecs::Entity id = lua_HelperGetEntity(L);
-    Scene* scene = lua_HelperGetScene(L);
+    if (lua_gettop(L) == 1) {
+        if (lua_isnumber(L, 1)) {
+            lua_Integer id = luaL_checkinteger(L, 1);
+            Scene* scene = lua_HelperGetScene(L);
+            auto component = scene->GetComponent<T>(ecs::Entity(static_cast<uint32_t>(id)));
+            return component;
+        }
+    }
 
-    // auto tmp = luabridge::getGlobal<uint32_t>(m_state, LUA_GLOBAL_ENTITY).value();
-    // DEV_ASSERT(tmp != id);
-
-    auto component = scene->GetComponent<T>(id);
-    return component;
+    DEV_ASSERT(0);
+    return nullptr;
 }
 
 bool OpenSceneLib(lua_State* L) {

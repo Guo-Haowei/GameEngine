@@ -23,8 +23,9 @@ protected:
     auto InitializeImpl() -> Result<void> final;
     void FinalizeImpl() final;
 
-    void CheckError(int p_result);
-    const GameObjectMetatable& FindOrAdd(const std::string& p_path);
+    int CheckError(int p_result);
+    GameObjectMetatable FindOrAdd(const std::string& p_path);
+    Result<void> LoadMetaTable(const std::string& p_path, GameObjectMetatable& p_meta);
 
     lua_State* m_state{ nullptr };
     std::map<std::string, GameObjectMetatable> m_objectsMeta;

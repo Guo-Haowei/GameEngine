@@ -29,29 +29,12 @@ GameObject.__index = GameObject
 
 function GameObject.new(id)
 	local self = setmetatable({}, GameObject)
-	print("????")
 	self.id = id
 	return self
 end
 
 function GameObject:OnUpdate(timestep)
 	print("hello from GameObject")
-end
-
--- propeller.lua
-Propeller = {}
-Propeller.__index = Propeller
-setmetatable(Propeller, GameObject)
-
-function Propeller.new(id)
-	local self = GameObject.new(id)
-	setmetatable(self, Propeller)
-	print("????")
-	return self
-end
-
-function Propeller:OnUpdate(timestep)
-	print("hello from Propeller")
 end
 )";
 
@@ -74,12 +57,14 @@ void LuaScriptManager::FinalizeImpl() {
 }
 
 void LuaScriptManager::Update(Scene& p_scene) {
+    lua_State* L = m_state; // alias
+
     const size_t scene_ptr = (size_t)&p_scene;
     if (auto res = luabridge::push(m_state, scene_ptr); !res) {
         LOG_ERROR("failed to push scene, error: {}", res.message());
         return;
     }
-    lua_setglobal(m_state, LUA_GLOBAL_SCENE);
+    lua_setglobal(L, LUA_GLOBAL_SCENE);
 
     for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
         if (script.path.empty()) {
@@ -89,13 +74,30 @@ void LuaScriptManager::Update(Scene& p_scene) {
         const auto& meta = FindOrAdd(script.path);
         if (script.instance == 0) {
             if (meta.funcNew) {
+                lua_rawgeti(L, LUA_REGISTRYINDEX, meta.funcNew);
+                // @TODO: check if function
+                lua_pushinteger(L, entity.GetId());
+                if (auto ret = CheckError(lua_pcall(L, 1, 1, 0)); ret == LUA_OK) {
+                    int instance = luaL_ref(L, LUA_REGISTRYINDEX);
+                    script.instance = instance;
+                    LOG_VERBOSE("instance created for entity {}", entity.GetId());
+                }
                 // @TODO: create instance
             }
         }
         DEV_ASSERT(script.instance);
 
-        if (meta.funcUpdate) {
-            // @TODO:
+        // push the instance to stack
+        lua_rawgeti(L, LUA_REGISTRYINDEX, script.instance);
+        lua_getfield(L, -1, "OnUpdate");
+        if (lua_isfunction(L, -1)) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, script.instance);
+            lua_pushinteger(L, 1);
+            CheckError(lua_pcall(L, 2, 0, 0));
+            lua_pop(L, 1); // pop the return value
+        } else {
+            DEV_ASSERT(0);
+            lua_pop(L, 1); // remove the value (not a function)
         }
     }
 #if 0
@@ -134,32 +136,76 @@ void LuaScriptManager::Update(Scene& p_scene) {
     ScriptManager::Update(p_scene);
 }
 
-void LuaScriptManager::CheckError(int p_result) {
-    if (p_result == LUA_OK) {
-        return;
+int LuaScriptManager::CheckError(int p_result) {
+    if (p_result != LUA_OK) {
+        const char* err = lua_tostring(m_state, -1);
+        LOG_ERROR("script error: {}", err);
     }
-    const char* err = lua_tostring(m_state, -1);
-    LOG_ERROR("script error: {}", err);
+    return p_result;
 }
 
-const LuaScriptManager::GameObjectMetatable& LuaScriptManager::FindOrAdd(const std::string& p_path) {
+Result<void> LuaScriptManager::LoadMetaTable(const std::string& p_path, GameObjectMetatable& p_meta) {
+    auto res = AssetRegistry::GetSingleton().RequestAssetSync(p_path);
+    if (!res) {
+        return HBN_ERROR(res.error());
+    }
+
+    auto source = dynamic_cast<const TextAsset*>(*res);
+
+    if (auto err = CheckError(luaL_dostring(m_state, source->source.c_str())); err != LUA_OK) {
+        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", p_path);
+    }
+
+    // @TODO: refactor
+    auto RemoveExtension = [](std::string_view p_file, std::string_view p_extension) {
+        const size_t pos = p_file.rfind(p_extension);
+        if (pos != std::string_view::npos && pos + p_extension.size() == p_file.size()) {
+            // Remove the ".lua" extension
+            return p_file.substr(0, pos);
+        }
+
+        return std::string_view();
+    };
+
+    auto file_name_with_ext = StringUtils::FileName(p_path, '/');
+    auto file_name = RemoveExtension(file_name_with_ext, ".lua");
+    LOG("{}", file_name);
+    if (file_name.empty()) {
+        return HBN_ERROR(ErrorCode::FAILURE, "file '{}' is not a valid script", p_path);
+    }
+
+    auto L = m_state;
+    // check if function exists
+    std::string class_name(file_name);
+    lua_getglobal(L, class_name.c_str());
+    if (!lua_istable(L, -1)) {
+        CRASH_NOW();
+    }
+
+    lua_getfield(L, -1, "new");
+    auto ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    if (ref == LUA_REFNIL) {
+        CRASH_NOW();
+    }
+    p_meta.funcNew = ref;
+    return Result<void>();
+}
+
+LuaScriptManager::GameObjectMetatable LuaScriptManager::FindOrAdd(const std::string& p_path) {
     auto it = m_objectsMeta.find(p_path);
     if (it != m_objectsMeta.end()) {
         return it->second;
     }
 
-    auto res = AssetRegistry::GetSingleton().RequestAssetSync(p_path);
     GameObjectMetatable meta;
+    auto res = LoadMetaTable(p_path, meta);
     if (!res) {
-        CRASH_NOW_MSG("error handling");
-        return meta;
+        CRASH_NOW();
+    } else {
+        m_objectsMeta[p_path] = meta;
     }
 
-    auto file_name = StringUtils::FileName(p_path);
-    LOG("{}", file_name);
-
-    m_objectsMeta[p_path] = meta;
-    return m_objectsMeta[p_path];
+    return meta;
 }
 
 }  // namespace my
