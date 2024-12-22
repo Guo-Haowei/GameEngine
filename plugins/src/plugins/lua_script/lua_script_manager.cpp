@@ -23,6 +23,7 @@ auto LuaScriptManager::InitializeImpl() -> Result<void> {
     lua::OpenMathLib(m_state);
     lua::OpenSceneLib(m_state);
 
+    // @TODO: refactor this
     constexpr const char* source = R"(
 GameObject = {}
 GameObject.__index = GameObject
@@ -37,7 +38,9 @@ function GameObject:OnUpdate(timestep)
 	print("hello from GameObject")
 end
 )";
-    CheckError(luaL_dostring(m_state, source));
+    if (auto res = CheckError(luaL_dostring(m_state, source)); res != LUA_OK) {
+        return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to initialize GameObject");
+    }
 
     return Result<void>();
 }
@@ -65,7 +68,7 @@ void LuaScriptManager::Update(Scene& p_scene) {
             continue;
         }
 
-        const auto& meta = FindOrAdd(script.m_path);
+        const auto& meta = FindOrAdd(script.m_path, script.m_className.c_str());
         if (script.m_instance == 0) {
             if (meta.funcNew) {
                 lua_rawgeti(L, LUA_REGISTRYINDEX, meta.funcNew);
@@ -138,7 +141,7 @@ int LuaScriptManager::CheckError(int p_result) {
     return p_result;
 }
 
-Result<void> LuaScriptManager::LoadMetaTable(const std::string& p_path, GameObjectMetatable& p_meta) {
+Result<void> LuaScriptManager::LoadMetaTable(const std::string& p_path, const char* p_class_name, GameObjectMetatable& p_meta) {
     auto res = AssetRegistry::GetSingleton().RequestAssetSync(p_path);
     if (!res) {
         return HBN_ERROR(res.error());
@@ -150,28 +153,9 @@ Result<void> LuaScriptManager::LoadMetaTable(const std::string& p_path, GameObje
         return HBN_ERROR(ErrorCode::ERR_SCRIPT_FAILED, "failed to execute script '{}'", p_path);
     }
 
-    // @TODO: refactor
-    auto RemoveExtension = [](std::string_view p_file, std::string_view p_extension) {
-        const size_t pos = p_file.rfind(p_extension);
-        if (pos != std::string_view::npos && pos + p_extension.size() == p_file.size()) {
-            // Remove the ".lua" extension
-            return p_file.substr(0, pos);
-        }
-
-        return std::string_view();
-    };
-
-    auto file_name_with_ext = StringUtils::FileName(p_path, '/');
-    auto file_name = RemoveExtension(file_name_with_ext, ".lua");
-    LOG("{}", file_name);
-    if (file_name.empty()) {
-        return HBN_ERROR(ErrorCode::FAILURE, "file '{}' is not a valid script", p_path);
-    }
-
     auto L = m_state;
     // check if function exists
-    std::string class_name(file_name);
-    lua_getglobal(L, class_name.c_str());
+    lua_getglobal(L, p_class_name);
     if (!lua_istable(L, -1)) {
         CRASH_NOW();
     }
@@ -185,14 +169,14 @@ Result<void> LuaScriptManager::LoadMetaTable(const std::string& p_path, GameObje
     return Result<void>();
 }
 
-LuaScriptManager::GameObjectMetatable LuaScriptManager::FindOrAdd(const std::string& p_path) {
+LuaScriptManager::GameObjectMetatable LuaScriptManager::FindOrAdd(const std::string& p_path, const char* p_class_name) {
     auto it = m_objectsMeta.find(p_path);
     if (it != m_objectsMeta.end()) {
         return it->second;
     }
 
     GameObjectMetatable meta;
-    auto res = LoadMetaTable(p_path, meta);
+    auto res = LoadMetaTable(p_path, p_class_name, meta);
     if (!res) {
         CRASH_NOW();
     } else {

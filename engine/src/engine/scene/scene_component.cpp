@@ -134,13 +134,21 @@ void PerspectiveCameraComponent::SetDimension(int p_width, int p_height) {
 #pragma endregion CAMERA_COMPONENT
 
 #pragma region LUA_SCRIPT_COMPONENT
-void LuaScriptComponent::SetPath(std::string_view p_path) {
-    if (p_path == m_path) {
-        return;
+LuaScriptComponent& LuaScriptComponent::SetClassName(std::string_view p_class_name) {
+    if (DEV_VERIFY(!p_class_name.empty())) {
+        m_className = p_class_name;
     }
 
-    m_path = p_path;
-    LOG_VERBOSE("changing script '{}' to '{}' empty", m_path, p_path);
+    return *this;
+}
+
+LuaScriptComponent& LuaScriptComponent::SetPath(std::string_view p_path) {
+    if (p_path != m_path) {
+        m_path = p_path;
+        LOG_VERBOSE("changing script '{}' to '{}' empty", m_path, p_path);
+    }
+
+    return *this;
 }
 #pragma endregion LUA_SCRIPT_COMPONENT
 

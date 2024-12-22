@@ -212,8 +212,8 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Script", script_component, [](LuaScriptComponent& p_script) {
-        unused(p_script);
-        //DrawInputText("script", p_script.path);
+        DrawInputText("class_name", p_script.GetClassNameRef());
+        DrawInputText("path", p_script.GetPathRef());
     });
 
     DrawComponent("VoxelGi", voxel_gi_component, [](VoxelGiComponent& p_voxel_gi) {

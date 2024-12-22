@@ -389,11 +389,14 @@ private:
 #pragma region LUA_SCRIPT_COMPONENT
 class LuaScriptComponent {
 public:
-    void SetPath(std::string_view p_path);
-    void SetPath(const std::string& p_path) { SetPath(std::string_view(p_path)); }
-    void SetPath(const char* p_path) { SetPath(std::string_view(p_path)); }
+    LuaScriptComponent& SetClassName(std::string_view p_class_name);
+    LuaScriptComponent& SetPath(std::string_view p_path);
 
-    const std::string& GetPath() { return m_path; }
+    const std::string& GetPath() const { return m_path; }
+    const std::string& GetClassName() const { return m_className; }
+
+    std::string& GetPathRef() { return m_path; }
+    std::string& GetClassNameRef() { return m_className; }
 
     void Serialize(Archive& p_archive, uint32_t p_version);
     void OnDeserialized();
@@ -401,6 +404,7 @@ public:
     static void RegisterClass();
 
 private:
+    std::string m_className;
     std::string m_path;
 
     // Non-Serialized

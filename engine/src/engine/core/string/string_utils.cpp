@@ -25,4 +25,13 @@ char* StringUtils::Strdup(const char* p_source) {
 #endif
 }
 
+std::string_view StringUtils::RemoveExtension(std::string_view p_file, std::string_view p_extension) {
+    const size_t pos = p_file.rfind(p_extension);
+    if (pos != std::string_view::npos && pos + p_extension.size() == p_file.size()) {
+        return p_file.substr(0, pos);
+    }
+
+    return std::string_view();
+}
+
 }  // namespace my

@@ -17,15 +17,14 @@ public:
 protected:
     struct GameObjectMetatable {
         int funcNew{ 0 };
-        int funcUpdate{ 0 };
     };
 
     auto InitializeImpl() -> Result<void> final;
     void FinalizeImpl() final;
 
     int CheckError(int p_result);
-    GameObjectMetatable FindOrAdd(const std::string& p_path);
-    Result<void> LoadMetaTable(const std::string& p_path, GameObjectMetatable& p_meta);
+    GameObjectMetatable FindOrAdd(const std::string& p_path, const char* p_class_name);
+    Result<void> LoadMetaTable(const std::string& p_path, const char* p_class_name, GameObjectMetatable& p_meta);
 
     lua_State* m_state{ nullptr };
     std::map<std::string, GameObjectMetatable> m_objectsMeta;
