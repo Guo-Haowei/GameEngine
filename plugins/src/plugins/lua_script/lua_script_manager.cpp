@@ -4,6 +4,7 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
+#include "engine/core/string/string_utils.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
 
@@ -22,6 +23,46 @@ auto LuaScriptManager::InitializeImpl() -> Result<void> {
     lua::OpenMathLib(m_state);
     lua::OpenSceneLib(m_state);
 
+    constexpr const char* source = R"(
+GameObject = {}
+GameObject.__index = GameObject
+
+function GameObject.new(id)
+	local self = setmetatable({}, GameObject)
+	print("????")
+	self.id = id
+	return self
+end
+
+function GameObject:OnUpdate(timestep)
+	print("hello from GameObject")
+end
+
+-- propeller.lua
+Propeller = {}
+Propeller.__index = Propeller
+setmetatable(Propeller, GameObject)
+
+function Propeller.new(id)
+	local self = GameObject.new(id)
+	setmetatable(self, Propeller)
+	print("????")
+	return self
+end
+
+function Propeller:OnUpdate(timestep)
+	print("hello from Propeller")
+end
+)";
+
+    CheckError(luaL_dostring(m_state, source));
+
+    luabridge::LuaRef meta = luabridge::getGlobal(m_state, "GameObject");
+    auto res = meta["new"](32);
+    DEV_ASSERT(res.wasOk());
+    luabridge::LuaRef instance = res[0];
+    instance["OnUpdate"](0.01);
+
     return Result<void>();
 }
 
@@ -39,6 +80,25 @@ void LuaScriptManager::Update(Scene& p_scene) {
         return;
     }
     lua_setglobal(m_state, LUA_GLOBAL_SCENE);
+
+    for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
+        if (script.path.empty()) {
+            continue;
+        }
+
+        const auto& meta = FindOrAdd(script.path);
+        if (script.instance == 0) {
+            if (meta.funcNew) {
+                // @TODO: create instance
+            }
+        }
+        DEV_ASSERT(script.instance);
+
+        if (meta.funcUpdate) {
+            // @TODO:
+        }
+    }
+#if 0
 
     if (auto res = luabridge::push(m_state, p_scene.m_timestep); !res) {
         LOG_ERROR("failed to push {}, error: {}", LUA_GLOBAL_TIMESTEP, res.message());
@@ -67,13 +127,39 @@ void LuaScriptManager::Update(Scene& p_scene) {
         }
 
         lua_setglobal(m_state, LUA_GLOBAL_ENTITY);
-        if (auto code = luaL_dostring(m_state, source); code != 0) {
-            const char* err = lua_tostring(m_state, -1);
-            LOG_ERROR("script error: {}", err);
-        }
+        CheckError(luaL_dostring(m_state, source));
     }
+    #endif
 
     ScriptManager::Update(p_scene);
+}
+
+void LuaScriptManager::CheckError(int p_result) {
+    if (p_result == LUA_OK) {
+        return;
+    }
+    const char* err = lua_tostring(m_state, -1);
+    LOG_ERROR("script error: {}", err);
+}
+
+const LuaScriptManager::GameObjectMetatable& LuaScriptManager::FindOrAdd(const std::string& p_path) {
+    auto it = m_objectsMeta.find(p_path);
+    if (it != m_objectsMeta.end()) {
+        return it->second;
+    }
+
+    auto res = AssetRegistry::GetSingleton().RequestAssetSync(p_path);
+    GameObjectMetatable meta;
+    if (!res) {
+        CRASH_NOW_MSG("error handling");
+        return meta;
+    }
+
+    auto file_name = StringUtils::FileName(p_path);
+    LOG("{}", file_name);
+
+    m_objectsMeta[p_path] = meta;
+    return m_objectsMeta[p_path];
 }
 
 }  // namespace my

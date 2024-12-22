@@ -16,8 +16,8 @@ TransformComponent* lua_SceneGetComponent(lua_State* L) {
     ecs::Entity id = lua_HelperGetEntity(L);
     Scene* scene = lua_HelperGetScene(L);
 
-        //auto tmp = luabridge::getGlobal<uint32_t>(m_state, LUA_GLOBAL_ENTITY).value();
-        //DEV_ASSERT(tmp != id);
+    // auto tmp = luabridge::getGlobal<uint32_t>(m_state, LUA_GLOBAL_ENTITY).value();
+    // DEV_ASSERT(tmp != id);
 
     auto component = scene->GetComponent<T>(id);
     return component;
