@@ -30,6 +30,19 @@ void ScriptManager::Update(Scene& p_scene) {
     }
 }
 
+void ScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2) {
+    NativeScriptComponent* script_1 = p_scene.GetComponent<NativeScriptComponent>(p_entity_1);
+    NativeScriptComponent* script_2 = p_scene.GetComponent<NativeScriptComponent>(p_entity_2);
+
+    if (script_1 && script_1->instance) {
+        script_1->instance->OnCollision(p_entity_2);
+    }
+
+    if (script_2 && script_2->instance) {
+        script_2->instance->OnCollision(p_entity_1);
+    }
+}
+
 Result<ScriptManager*> ScriptManager::Create() {
     return new LuaScriptManager();
 }

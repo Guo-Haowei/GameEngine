@@ -41,23 +41,6 @@ static const Color DRAK_BROWN_COLOR = Color::Hex(0x23190F);
 static const Color BLUE_COLOR = Color::Hex(0X10A8A3);
 static const Color PINK_COLOR = Color::Hex(0xF5986E);
 
-// @TODO: extract common script
-class CameraScript : public ScriptableEntity {
-protected:
-    void OnUpdate(float p_timestep) override {
-        PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
-        if (camera) {
-            const Vector2f mouse_move = InputManager::GetSingleton().MouseMove();
-            if (glm::abs(mouse_move.x) > 2.0f) {
-                float angle = camera->GetFovy().GetDegree();
-                angle += mouse_move.x * p_timestep * 2.0f;
-                angle = glm::clamp(angle, 35.0f, 80.0f);
-                camera->SetFovy(Degree(angle));
-            }
-        }
-    }
-};
-
 class PlaneScript : public ScriptableEntity {
     void OnCollision(ecs::Entity p_other_id) override;
 
@@ -67,25 +50,6 @@ class PlaneScript : public ScriptableEntity {
 
     Vector2f m_collisionSpeed{ 0.0f };
     Vector2f m_collisionDisplacement{ 0.0f };
-};
-
-class RockScript : public ScriptableEntity {
-    void OnCollision(ecs::Entity p_other_id) override;
-
-    void OnUpdate(float p_timestep) override;
-};
-
-class BatteryScript : public ScriptableEntity {
-    void OnCollision(ecs::Entity p_other_id) override;
-
-    void OnUpdate(float p_timestep) override;
-};
-
-class EarthScript : public ScriptableEntity {
-    void OnUpdate(float p_timestep) override {
-        auto transform = GetComponent<TransformComponent>();
-        transform->Rotate(Vector3f(0.0f, 0.0f, p_timestep * WORLD_SPEED));
-    }
 };
 
 class OceanScript : public ScriptableEntity {

@@ -65,6 +65,7 @@ public:
     InputManager* GetInputManager() { return m_inputManager; }
     SceneManager* GetSceneManager() { return m_sceneManager; }
     PhysicsManager* GetPhysicsManager() { return m_physicsManager; }
+    ScriptManager* GetScriptManager() { return m_scriptManager; }
     DisplayManager* GetDisplayServer() { return m_displayServer; }
     GraphicsManager* GetGraphicsManager() { return m_graphicsManager; }
     ImguiManager* GetImguiManager() { return m_imguiManager; }

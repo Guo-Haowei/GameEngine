@@ -46,7 +46,9 @@ void TheAviatorLayer::OnAttach() {
         rigid_body.collisionType = COLLISION_BIT_ROCK;
         rigid_body.collisionMask = COLLISION_BIT_PLAYER;
 
-        m_scene->Create<NativeScriptComponent>(rock.id).Bind<RockScript>();
+        m_scene->Create<LuaScriptComponent>(rock.id)
+            .SetClassName("Battery")
+            .SetPath("@res://scripts/battery.lua");
     }
 
     counter = 0;
@@ -64,7 +66,9 @@ void TheAviatorLayer::OnAttach() {
         rigid_body.collisionType = COLLISION_BIT_BATTERY;
         rigid_body.collisionMask = COLLISION_BIT_PLAYER;
 
-        m_scene->Create<NativeScriptComponent>(battery.id).Bind<BatteryScript>();
+        m_scene->Create<LuaScriptComponent>(battery.id)
+            .SetClassName("Battery")
+            .SetPath("@res://scripts/battery.lua");
     }
 }
 

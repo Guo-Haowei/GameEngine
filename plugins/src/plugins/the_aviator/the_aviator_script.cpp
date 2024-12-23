@@ -67,32 +67,4 @@ void PlaneScript::OnUpdate(float p_timestep) {
     m_collisionDisplacement *= 0.9f;
 }
 
-void RockScript::OnCollision(ecs::Entity p_other_id) {
-    unused(p_other_id);
-
-    TransformComponent* transform = GetComponent<TransformComponent>();
-    transform->Translate(Vector3f(0.0f, -1000.0f, 0.0f));
-}
-
-void RockScript::OnUpdate(float p_timestep) {
-    Vector3f rotation(1, 1, 0);
-
-    TransformComponent* transform = GetComponent<TransformComponent>();
-    transform->Rotate(p_timestep * rotation);
-}
-
-void BatteryScript::OnCollision(ecs::Entity p_other_id) {
-    unused(p_other_id);
-
-    TransformComponent* transform = GetComponent<TransformComponent>();
-    transform->Translate(Vector3f(0.0f, -1000.0f, 0.0f));
-}
-
-void BatteryScript::OnUpdate(float p_timestep) {
-    Vector3f rotation(1, 1, 0);
-
-    TransformComponent* transform = GetComponent<TransformComponent>();
-    transform->Rotate(p_timestep * rotation);
-}
-
 }  // namespace my
