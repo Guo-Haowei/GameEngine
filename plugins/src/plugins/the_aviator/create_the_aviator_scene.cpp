@@ -16,12 +16,20 @@ namespace my {
 // * motion blur
 
 using math::AABB;
+using math::Color;
 
 static constexpr float ROCK_SIZE = 4.0f;
 static constexpr float BATTERY_SIZE = 2.0f;
 static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
 static constexpr int ROCK_POOL_SIZE = 16;
 static constexpr int BATTERY_POOL_SIZE = 32;
+
+static const Color RED_COLOR = Color::Hex(0xCE190A);
+static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
+static const Color BROWN_COLOR = Color::Hex(0x59332E);
+static const Color DRAK_BROWN_COLOR = Color::Hex(0x23190F);
+static const Color BLUE_COLOR = Color::Hex(0X10A8A3);
+static const Color PINK_COLOR = Color::Hex(0xF5986E);
 
 static MeshComponent MakeOceanMesh(float p_radius,
                                    float p_height,
@@ -143,10 +151,10 @@ Scene* CreateTheAviatorScene() {
 
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
-        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 400.0f));
         camera->SetPrimary();
 
-#if 0
+#if 1
         class InGameDebugCameraController : public EditorCameraController {
         public:
             InGameDebugCameraController() {

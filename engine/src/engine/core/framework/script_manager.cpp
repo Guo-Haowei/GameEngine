@@ -6,6 +6,13 @@
 
 namespace my {
 
+auto ScriptManager::InitializeImpl() -> Result<void> {
+    return Result<void>();
+}
+
+void ScriptManager::FinalizeImpl() {
+}
+
 void ScriptManager::Update(Scene& p_scene) {
     for (auto [entity, script] : p_scene.View<NativeScriptComponent>()) {
         // @HACK: if OnCreate() creates new NativeScriptComponents
@@ -46,7 +53,11 @@ void ScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Ent
 }
 
 Result<ScriptManager*> ScriptManager::Create() {
+#if 1
     return new LuaScriptManager();
+#else
+    return new ScriptManager();
+#endif
 }
 
 }  // namespace my

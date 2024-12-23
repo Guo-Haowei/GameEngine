@@ -79,7 +79,7 @@ function Game:OnUpdate(timestep)
                 type.dead[#type.dead + 1] = item
                 -- move dead item away
                 local transform = g_scene:GetTransform(item.id)
-                transform:SetTranslation(Vector3(0, 900, 0))
+                transform:SetTranslation(Vector3(0, 1000, 0))
             end
         end
         type.alive = tmp

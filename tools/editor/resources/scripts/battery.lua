@@ -17,5 +17,5 @@ end
 
 function Battery:OnCollision(other)
     local transform = g_scene:GetTransform(self.id)
-    transform:SetTranslation(Vector3(0, -1000, 0))
+    transform:SetTranslation(Vector3(0, 1000, 0))
 end

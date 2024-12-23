@@ -1,5 +1,6 @@
 #include "lua_script_manager.h"
 
+#include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/input_manager.h"
@@ -145,6 +146,8 @@ void LuaScriptManager::OnSimEnd(Scene& p_scene) {
 }
 
 void LuaScriptManager::Update(Scene& p_scene) {
+    HBN_PROFILE_EVENT();
+
     if (DEV_VERIFY(p_scene.L)) {
         lua_State* L = p_scene.L;
         const lua_Number timestep = p_scene.m_timestep;
