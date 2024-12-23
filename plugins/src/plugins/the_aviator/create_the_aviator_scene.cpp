@@ -242,7 +242,9 @@ Scene* CreateTheAviatorScene() {
         rigid_body.collisionMask = COLLISION_BIT_BATTERY | COLLISION_BIT_ROCK;
 
         scene->AttachChild(plane, root);
-        scene->Create<NativeScriptComponent>(plane).Bind<PlaneScript>();
+        scene->Create<LuaScriptComponent>(plane)
+            .SetClassName("Plane")
+            .SetPath("@res://scripts/plane.lua");
     }
     {
         auto cockpit = scene->CreateMeshEntity("cockpit",

@@ -23,6 +23,7 @@ auto LuaScriptManager::InitializeImpl() -> Result<void> {
     lua::OpenMathLib(m_state);
     lua::OpenSceneLib(m_state);
     lua::OpenInputLib(m_state);
+    lua::OpenDisplayLib(m_state);
 
     // @TODO: refactor this
     constexpr const char* source = R"(
