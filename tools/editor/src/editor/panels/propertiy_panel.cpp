@@ -92,16 +92,6 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         if (ImGui::MenuItem("Script")) {
             m_editor.AddComponent(ComponentType::SCRIPT, id);
         }
-        if (ImGui::BeginMenu("Selectable")) {
-            // @TODO: check if exists, if exists, disable
-            if (ImGui::MenuItem("Box Collider")) {
-                m_editor.AddComponent(ComponentType::BOX_COLLIDER, id);
-            }
-            if (ImGui::MenuItem("Mesh Collider")) {
-                m_editor.AddComponent(ComponentType::MESH_COLLIDER, id);
-            }
-            ImGui::EndMenu();
-        }
         ImGui::EndPopup();
     }
 

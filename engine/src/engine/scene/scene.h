@@ -7,7 +7,6 @@
 #include "engine/systems/ecs/view.h"
 // @TODO: refactor all components
 #include "engine/scene/light_component.h"
-#include "engine/scene/particle_emitter_component.h"
 
 struct lua_State;
 
@@ -27,8 +26,6 @@ namespace my {
     REGISTER_COMPONENT(LightComponent, "World::LightComponent", 0)                         \
     REGISTER_COMPONENT(ArmatureComponent, "World::ArmatureComponent", 0)                   \
     REGISTER_COMPONENT(AnimationComponent, "World::AnimationComponent", 0)                 \
-    REGISTER_COMPONENT(BoxColliderComponent, "World::BoxColliderComponent", 0)             \
-    REGISTER_COMPONENT(MeshColliderComponent, "World::MeshColliderComponent", 0)           \
     REGISTER_COMPONENT(ParticleEmitterComponent, "World::ParticleEmitterComponent", 0)     \
     REGISTER_COMPONENT(ForceFieldComponent, "World::ForceFieldComponent", 0)               \
     REGISTER_COMPONENT(LuaScriptComponent, "World::LuaScriptComponent", 0)                 \

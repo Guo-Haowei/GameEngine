@@ -48,9 +48,6 @@ enum class EntityType : uint8_t {
 };
 
 enum class ComponentType : uint8_t {
-    BOX_COLLIDER,
-    MESH_COLLIDER,
-    SPHERE_COLLIDER,
     SCRIPT,
     COUNT,
 };

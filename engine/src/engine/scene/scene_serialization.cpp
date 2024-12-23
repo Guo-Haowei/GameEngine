@@ -52,9 +52,11 @@ Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     archive << SCENE_GUARD_MESSAGE;
 
     for (const auto& it : p_scene.GetLibraryEntries()) {
-        archive << HAS_NEXT_FLAG;
-        archive << it.first;  // write name
-        it.second.m_manager->Serialize(archive, LATEST_SCENE_VERSION);
+        if (it.second.m_manager->GetCount()) {
+            archive << HAS_NEXT_FLAG;
+            archive << it.first;  // write name
+            it.second.m_manager->Serialize(archive, LATEST_SCENE_VERSION);
+        }
     }
     archive << uint64_t(0);
     return Result<void>();
@@ -646,12 +648,24 @@ void RigidBodyComponent::RegisterClass() {
     END_REGISTRY(RigidBodyComponent);
 }
 
-// @TODO: refactor these components
 void ParticleEmitterComponent::RegisterClass() {
     BEGIN_REGISTRY(ParticleEmitterComponent);
+    REGISTER_FIELD(ParticleEmitterComponent, "max", maxParticleCount);
+    REGISTER_FIELD(ParticleEmitterComponent, "per_frame", particlesPerFrame);
     REGISTER_FIELD(ParticleEmitterComponent, "scale", particleScale);
     REGISTER_FIELD(ParticleEmitterComponent, "lifespan", particleLifeSpan);
+    REGISTER_FIELD(ParticleEmitterComponent, "velocity", startingVelocity);
+    REGISTER_FIELD(ParticleEmitterComponent, "gravity", gravity);
     END_REGISTRY(ParticleEmitterComponent);
+}
+
+void ParticleEmitterComponent::Serialize(Archive& p_archive, uint32_t) {
+    p_archive.ArchiveValue(maxParticleCount);
+    p_archive.ArchiveValue(particlesPerFrame);
+    p_archive.ArchiveValue(particleScale);
+    p_archive.ArchiveValue(particleLifeSpan);
+    p_archive.ArchiveValue(startingVelocity);
+    p_archive.ArchiveValue(gravity);
 }
 
 void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t) {
@@ -664,26 +678,6 @@ void ForceFieldComponent::RegisterClass() {
     REGISTER_FIELD_2(ForceFieldComponent, strength);
     REGISTER_FIELD_2(ForceFieldComponent, radius);
     END_REGISTRY(ForceFieldComponent);
-}
-
-void BoxColliderComponent::Serialize(Archive& p_archive, uint32_t) {
-    p_archive.ArchiveValue(box);
-}
-
-void BoxColliderComponent::RegisterClass() {
-    BEGIN_REGISTRY(BoxColliderComponent);
-    REGISTER_FIELD_2(BoxColliderComponent, box);
-    END_REGISTRY(BoxColliderComponent);
-}
-
-void MeshColliderComponent::Serialize(Archive& p_archive, uint32_t) {
-    p_archive.ArchiveValue(objectId);
-}
-
-void MeshColliderComponent::RegisterClass() {
-    BEGIN_REGISTRY(MeshColliderComponent);
-    REGISTER_FIELD(MeshColliderComponent, "object_id", objectId);
-    END_REGISTRY(MeshColliderComponent);
 }
 
 void ClothComponent::Serialize(Archive& p_archive, uint32_t p_version) {

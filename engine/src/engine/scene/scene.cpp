@@ -24,7 +24,6 @@ using ::my::math::Ray;
 
 static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 
-// @TODO: refactor
 #define JS_FORCE_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
     CTX.Dispatch(                                               \
         static_cast<uint32_t>(GetCount<TYPE>()),                \
@@ -795,7 +794,7 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
     unused(p_context);
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
-        emitter.Update(m_timestep);
+        emitter.aliveBufferIndex = 1 - emitter.aliveBufferIndex;
     }
 }
 
