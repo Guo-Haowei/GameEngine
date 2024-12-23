@@ -21,3 +21,5 @@ files:
     type: Image
   - path: "@res://images/icons/meta_icon.png"
     type: Image
+  - path: "@res://images/flame.png"
+    type: Image

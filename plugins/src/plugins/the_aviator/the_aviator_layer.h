@@ -83,9 +83,6 @@ private:
     static constexpr float BATTERY_SIZE = 2.0f;
     static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
 
-    [[nodiscard]] ecs::Entity CreateRockResource();
-    [[nodiscard]] ecs::Entity CreateBatteryResource();
-
     float m_time;
     float m_lastSpawnTime;
 

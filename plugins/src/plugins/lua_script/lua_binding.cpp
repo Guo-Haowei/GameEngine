@@ -8,14 +8,7 @@
 
 namespace my::lua {
 
-Scene* lua_HelperGetScene(lua_State* L) {
-    lua_getglobal(L, LUA_GLOBAL_SCENE);
-    Scene* scene = (Scene*)lua_tointeger(L, -1);
-    lua_pop(L, 1);
-    return scene;
-}
-
-// @TODO
+// @TODO: refactor
 struct Quat {
     Quat(const Vector3f& p_euler) {
         value = Quaternion(glm::vec3(p_euler.x, p_euler.y, p_euler.z));
@@ -98,19 +91,41 @@ bool OpenDisplayLib(lua_State* L) {
     return true;
 }
 
-template<Serializable T>
-T* lua_SceneGetComponent(lua_State* L) {
-    if (lua_gettop(L) == 1) {
-        if (lua_isnumber(L, 1)) {
-            lua_Integer id = luaL_checkinteger(L, 1);
-            Scene* scene = lua_HelperGetScene(L);
-            auto component = scene->GetComponent<T>(ecs::Entity(static_cast<uint32_t>(id)));
-            return component;
-        }
+#if 0
+    - Scene* lua_HelperGetScene(lua_State* L) {
+    -lua_getglobal(L, LUA_GLOBAL_SCENE);
+    -Scene* scene = (Scene*)lua_tointeger(L, -1);
+    -lua_pop(L, 1);
+    -return scene;
+
+    -T* lua_SceneGetComponent(lua_State* L) {
+-    if (lua_gettop(L) == 1) {
+-        if (lua_isnumber(L, 1)) {
+-            lua_Integer id = luaL_checkinteger(L, 1);
+-            Scene* scene = lua_HelperGetScene(L);
+-            auto component = scene->GetComponent<T>(ecs::Entity(static_cast<uint32_t>(id)));
+-            return component;
+-        }
+-    }
+-
+-    DEV_ASSERT(0);
+-    return nullptr;
+-}
+#endif
+
+static int lua_GetAllLuaScripts(lua_State* L) {
+    Scene* scene = luabridge::getGlobal(L, LUA_GLOBAL_SCENE);
+    auto view = scene->View<LuaScriptComponent>();
+    int i = 0;
+
+    lua_newtable(L);
+    for (auto [id, script] : view) {
+        lua_pushinteger(L, ++i);
+        lua_pushinteger(L, id.GetId());
+        lua_settable(L, -3);
     }
 
-    DEV_ASSERT(0);
-    return nullptr;
+    return 1;
 }
 
 bool OpenSceneLib(lua_State* L) {
@@ -156,15 +171,36 @@ bool OpenSceneLib(lua_State* L) {
         .addProperty("collision_type", &RigidBodyComponent::collisionType)
         .endClass();
 
+    // LuaScriptComponent
     luabridge::getGlobalNamespace(L)
-        .beginNamespace("scene")
-        .addFunction(
-            "GetTransform", &lua_SceneGetComponent<TransformComponent>)
-        .addFunction(
-            "GetPerspectiveCamera", &lua_SceneGetComponent<PerspectiveCameraComponent>)
-        .addFunction(
-            "GetRigidBody", &lua_SceneGetComponent<RigidBodyComponent>)
-        .endNamespace();
+        .beginClass<LuaScriptComponent>("LuaScriptComponent")
+        .addFunction("GetClass", [](LuaScriptComponent* p_script) {
+            return p_script->GetClassName();
+        })
+        .addFunction("GetRef", [](LuaScriptComponent* p_script) {
+            return p_script->GetInstance();
+        })
+        .endClass();
+
+    luabridge::getGlobalNamespace(L)
+        .beginClass<Scene>("Scene")
+        .addFunction("GetTransform", [](Scene* p_scene, uint32_t p_entity) {
+            return p_scene->GetComponent<TransformComponent>(ecs::Entity(p_entity));
+        })
+        .addFunction("GetPerspectiveCamera", [](Scene* p_scene, uint32_t p_entity) {
+            return p_scene->GetComponent<PerspectiveCameraComponent>(ecs::Entity(p_entity));
+        })
+        .addFunction("GetRigidBody", [](Scene* p_scene, uint32_t p_entity) {
+            return p_scene->GetComponent<RigidBodyComponent>(ecs::Entity(p_entity));
+        })
+        .addFunction("GetScript", [](Scene* p_scene, uint32_t p_entity) {
+            return p_scene->GetComponent<LuaScriptComponent>(ecs::Entity(p_entity));
+        })
+        .addFunction("FindEntityByName", [](Scene* p_scene, const char* p_name) {
+            return p_scene->FindEntityByName(p_name).GetId();
+        })
+        .addFunction("GetAllLuaScripts", lua_GetAllLuaScripts)
+        .endClass();
     return true;
 }
 

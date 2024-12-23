@@ -15,7 +15,7 @@ void ScriptManager::Update(Scene& p_scene) {
         // but append
         // @TODO: [SCRUM-134] better ECS
         ScriptableEntity* instance = nullptr;
-        if (!script.instance) {
+        if (!script.instance && script.instantiateFunc) {
             instance = script.instantiateFunc();
             script.instance = instance;
 
@@ -26,7 +26,9 @@ void ScriptManager::Update(Scene& p_scene) {
             instance = script.instance;
         }
 
-        instance->OnUpdate(p_scene.m_timestep);
+        if (instance) {
+            instance->OnUpdate(p_scene.m_timestep);
+        }
     }
 }
 

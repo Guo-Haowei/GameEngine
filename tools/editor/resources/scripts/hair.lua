@@ -6,14 +6,14 @@ setmetatable(Hair, GameObject)
 function Hair.new(id)
     local self = GameObject.new(id)
     setmetatable(self, Hair)
-    local transform = scene.GetTransform(self.id)
+    local transform = g_scene:GetTransform(self.id)
     local scale = transform:GetScale();
     self.scale_y = scale.y
     return self
 end
 
 function Hair:OnUpdate(timestep)
-    local transform = scene.GetTransform(self.id)
+    local transform = g_scene:GetTransform(self.id)
     local new_scale = self.scale_y + timestep
     if new_scale > 0.95 then
         new_scale = 0.5

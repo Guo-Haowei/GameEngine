@@ -656,6 +656,8 @@ void ParticleEmitterComponent::RegisterClass() {
     REGISTER_FIELD(ParticleEmitterComponent, "lifespan", particleLifeSpan);
     REGISTER_FIELD(ParticleEmitterComponent, "velocity", startingVelocity);
     REGISTER_FIELD(ParticleEmitterComponent, "gravity", gravity);
+    REGISTER_FIELD(ParticleEmitterComponent, "color", color);
+    REGISTER_FIELD(ParticleEmitterComponent, "texture", texture);
     END_REGISTRY(ParticleEmitterComponent);
 }
 
@@ -666,6 +668,8 @@ void ParticleEmitterComponent::Serialize(Archive& p_archive, uint32_t) {
     p_archive.ArchiveValue(particleLifeSpan);
     p_archive.ArchiveValue(startingVelocity);
     p_archive.ArchiveValue(gravity);
+    p_archive.ArchiveValue(color);
+    p_archive.ArchiveValue(texture);
 }
 
 void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t) {

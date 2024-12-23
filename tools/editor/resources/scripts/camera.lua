@@ -10,7 +10,7 @@ function Camera.new(id)
 end
 
 function Camera:OnUpdate(timestep)
-    local camera = scene.GetPerspectiveCamera(self.id)
+    local camera = g_scene:GetPerspectiveCamera(self.id)
     local mouse_move = input.GetMouseMove()
     if (math.abs(mouse_move.x) > 2) then
         local angle = camera:GetFovy()

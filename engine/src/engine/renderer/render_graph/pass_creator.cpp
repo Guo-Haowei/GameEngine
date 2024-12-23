@@ -14,6 +14,9 @@
 #include "shader_resource_defines.hlsl.h"
 #include "unordered_access_defines.hlsl.h"
 
+// @TODO: remove
+#include "engine/core/framework/asset_registry.h"
+
 namespace my::renderer {
 
 /// Gbuffer
@@ -541,9 +544,6 @@ void RenderPassCreator::AddLightingPass() {
 
 /// Emitter
 static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    unused(p_data);
-    unused(p_framebuffer);
-#if 0
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -556,10 +556,14 @@ static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    const Scene& scene = SceneManager::GetScene();
     int particle_idx = 0;
-    for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx++);
+    for (const auto& emitter : p_data.emitters) {
+        if (!emitter.particleBuffer) {
+            continue;
+        }
+
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
+        ++particle_idx;
 
         gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
         gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
@@ -585,11 +589,23 @@ static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
         // Renderering
         gm.SetPipelineState(PSO_PARTICLE_RENDERING);
 
+        bool use_texture = false;
+        if (!emitter.texture.empty()) {
+            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
+            if (image && image->gpu_texture) {
+                gm.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
+                use_texture = true;
+            }
+        }
+
         gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-        RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
+        gm.DrawQuadInstanced(MAX_PARTICLE_COUNT);
         gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
+
+        if (use_texture) {
+            gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+        }
     }
-#endif
 }
 
 void RenderPassCreator::AddEmitterPass() {

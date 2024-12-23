@@ -24,7 +24,7 @@ function Plane:OnUpdate(timestep)
     cursor = cursor - Vector2(1, 1)
     cursor.y = -cursor.y
 
-    local transform = scene.GetTransform(self.id)
+    local transform = g_scene:GetTransform(self.id)
     local translate = transform:GetTranslation()
     self.displacement = self.displacement + self.speed
 
@@ -56,12 +56,12 @@ function Plane:OnUpdate(timestep)
 end
 
 function Plane:OnCollision(other)
-    local rigid = scene.GetRigidBody(other)
+    local rigid = g_scene:GetRigidBody(other)
     local type = rigid.collision_type
     -- TODO: use enum instead of numbers
     if type == 2 then
-        local plane_transform = scene.GetTransform(self.id)
-        local rock_transform = scene.GetTransform(other)
+        local plane_transform = g_scene:GetTransform(self.id)
+        local rock_transform = g_scene:GetTransform(other)
         local plane_position = plane_transform:GetWorldTranslation()
         local rock_position = rock_transform:GetWorldTranslation()
         local dist = plane_position - rock_position

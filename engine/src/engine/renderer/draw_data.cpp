@@ -22,6 +22,48 @@ using my::math::Frustum;
 using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
 using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
+static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent* p_material, MaterialConstantBuffer& cb) {
+    cb.c_baseColor = p_material->baseColor;
+    cb.c_metallic = p_material->metallic;
+    cb.c_roughness = p_material->roughness;
+    cb.c_emissivePower = p_material->emissive;
+
+    auto set_texture = [&](int p_idx,
+                           TextureHandle& p_out_handle,
+                           sampler_t& p_out_resident_handle) {
+        p_out_handle = 0;
+        p_out_resident_handle.Set64(0);
+
+        if (!p_material->textures[p_idx].enabled) {
+            return false;
+        }
+
+        const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(p_material->textures[p_idx].path);
+        if (!image) {
+            return false;
+        }
+
+        auto texture = reinterpret_cast<GpuTexture*>(image->gpu_texture.get());
+        if (!texture) {
+            return false;
+        }
+
+        const uint64_t resident_handle = texture->GetResidentHandle();
+
+        p_out_handle = texture->GetHandle();
+        if (p_is_opengl) {
+            p_out_resident_handle.Set64(resident_handle);
+        } else {
+            p_out_resident_handle.Set32(static_cast<uint32_t>(resident_handle));
+        }
+        return true;
+    };
+
+    cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_BaseColorMapResidentHandle);
+    cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_NormalMapResidentHandle);
+    cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
+};
+
 static void FillPass(const RenderDataConfig& p_config,
                      PassContext& p_pass,
                      FilterObjectFunc1 p_filter1,
@@ -30,48 +72,6 @@ static void FillPass(const RenderDataConfig& p_config,
     const Scene& scene = p_config.scene;
 
     const bool is_opengl = p_config.isOpengl;
-    auto FillMaterialConstantBuffer = [&](const MaterialComponent* material, MaterialConstantBuffer& cb) {
-        cb.c_baseColor = material->baseColor;
-        cb.c_metallic = material->metallic;
-        cb.c_roughness = material->roughness;
-        cb.c_emissivePower = material->emissive;
-
-        auto set_texture = [&](int p_idx,
-                               TextureHandle& p_out_handle,
-                               sampler_t& p_out_resident_handle) {
-            p_out_handle = 0;
-            p_out_resident_handle.Set64(0);
-
-            if (!material->textures[p_idx].enabled) {
-                return false;
-            }
-
-            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(material->textures[p_idx].path);
-            if (!image) {
-                return false;
-            }
-
-            auto texture = reinterpret_cast<GpuTexture*>(image->gpu_texture.get());
-            if (!texture) {
-                return false;
-            }
-
-            const uint64_t resident_handle = texture->GetResidentHandle();
-
-            p_out_handle = texture->GetHandle();
-            if (is_opengl) {
-                p_out_resident_handle.Set64(resident_handle);
-            } else {
-                p_out_resident_handle.Set32(static_cast<uint32_t>(resident_handle));
-            }
-            return true;
-        };
-
-        cb.c_hasBaseColorMap = set_texture(MaterialComponent::TEXTURE_BASE, cb.c_baseColorMapHandle, cb.c_BaseColorMapResidentHandle);
-        cb.c_hasNormalMap = set_texture(MaterialComponent::TEXTURE_NORMAL, cb.c_normalMapHandle, cb.c_NormalMapResidentHandle);
-        cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
-    };
-
     for (auto [entity, obj] : scene.m_ObjectComponents) {
         if (!scene.Contains<TransformComponent>(entity)) {
             continue;
@@ -141,7 +141,7 @@ static void FillPass(const RenderDataConfig& p_config,
 
             const MaterialComponent* material = scene.GetComponent<MaterialComponent>(subset.material_id);
             MaterialConstantBuffer material_buffer;
-            FillMaterialConstantBuffer(material, material_buffer);
+            FillMaterialConstantBuffer(is_opengl, material, material_buffer);
 
             DrawContext sub_mesh;
 
@@ -519,8 +519,13 @@ static void FillBloomConstants(const RenderDataConfig& p_config,
 
 static void FillEmitterBuffer(const RenderDataConfig& p_config,
                               DrawData& p_out_data) {
+    // @TODO: engine->get frame
+    static int s_counter = -1;
+    s_counter++;
+
     const auto& p_scene = p_config.scene;
-    for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
+    const auto view = p_scene.View<ParticleEmitterComponent>();
+    for (auto [id, emitter] : view) {
         const uint32_t pre_sim_idx = emitter.GetPreIndex();
         const uint32_t post_sim_idx = emitter.GetPostIndex();
         EmitterConstantBuffer buffer;
@@ -537,7 +542,13 @@ static void FillEmitterBuffer(const RenderDataConfig& p_config,
         buffer.c_emitterMaxParticleCount = emitter.maxParticleCount;
         buffer.c_emitterHasGravity = emitter.gravity;
 
+        buffer.c_particleColor = emitter.color;
+        buffer.c_emitterUseTexture = !emitter.texture.empty();
+        buffer.c_emitterSubUv;
+        buffer.c_subUvCounter = s_counter;
+
         p_out_data.emitterCache.push_back(buffer);
+        p_out_data.emitters.emplace_back(emitter);
     }
 }
 

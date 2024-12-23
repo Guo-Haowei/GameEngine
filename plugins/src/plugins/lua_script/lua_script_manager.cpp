@@ -69,6 +69,22 @@ static void EntityCall(lua_State* L, int p_ref, const char* p_method, Args&&... 
     }
 }
 
+template<typename... Args>
+static int CreateInstance(const GameObjectMetatable& p_meta, lua_State* L, Args&&... p_args) {
+    if (!p_meta.funcNew) {
+        return 0;
+    }
+
+    lua_rawgeti(L, LUA_REGISTRYINDEX, p_meta.funcNew);
+    const int arg_count = PushArg(L, std::forward<Args>(p_args)...);
+    if (lua_pcall(L, arg_count, 1, 0) != LUA_OK) {
+        LOG_ERROR("failed to create new instance, error: {}", lua_tostring(L, -1));
+        return 0;
+    }
+
+    return luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
 void LuaScriptManager::OnSimBegin(Scene& p_scene) {
     p_scene.L = nullptr;
 
@@ -86,14 +102,28 @@ void LuaScriptManager::OnSimBegin(Scene& p_scene) {
         return;
     }
 
-    const size_t scene_ptr = (size_t)&p_scene;
-    if (auto res = luabridge::push(L, scene_ptr); !res) {
+    if (auto res = luabridge::push(L, &p_scene); !res) {
         LOG_ERROR("failed to push scene, error: {}", res.message());
         return;
     }
     lua_setglobal(L, LUA_GLOBAL_SCENE);
 
     p_scene.L = L;
+
+    for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
+        if (script.m_path.empty()) {
+            continue;
+        }
+
+        const auto& meta = FindOrAdd(L, script.m_path, script.m_className.c_str());
+        if (script.m_instance == 0) {
+            script.m_instance = CreateInstance(meta, L, entity.GetId());
+        }
+    }
+
+    // @TODO: call Game.new
+    const auto& meta = FindOrAdd(L, "@res://scripts/game.lua", "Game");
+    m_gameRef = CreateInstance(meta, L);
     return;
 }
 
@@ -111,6 +141,7 @@ void LuaScriptManager::OnSimEnd(Scene& p_scene) {
         lua_close(p_scene.L);
         p_scene.L = nullptr;
     }
+    m_gameRef = 0;
 }
 
 void LuaScriptManager::Update(Scene& p_scene) {
@@ -118,25 +149,11 @@ void LuaScriptManager::Update(Scene& p_scene) {
         lua_State* L = p_scene.L;
         const lua_Number timestep = p_scene.m_timestep;
 
+        EntityCall(L, m_gameRef, "OnUpdate", timestep);
+
         for (auto [entity, script] : p_scene.m_LuaScriptComponents) {
             if (script.m_path.empty()) {
                 continue;
-            }
-
-            const auto& meta = FindOrAdd(L, script.m_path, script.m_className.c_str());
-            if (script.m_instance == 0) {
-                if (meta.funcNew) {
-                    lua_rawgeti(L, LUA_REGISTRYINDEX, meta.funcNew);
-                    // @TODO: check if function
-                    lua_pushinteger(L, entity.GetId());
-                    if (lua_pcall(L, 1, 1, 0) != LUA_OK) {
-                        LOG_ERROR("failed to create new instance, error: {}", lua_tostring(L, -1));
-                    } else {
-                        const int instance = luaL_ref(L, LUA_REGISTRYINDEX);
-                        script.m_instance = instance;
-                        // LOG_VERBOSE("instance created for entity {}", entity.GetId());
-                    }
-                }
             }
 
             if (DEV_VERIFY(script.m_instance)) {
@@ -195,7 +212,7 @@ Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_
     return Result<void>();
 }
 
-LuaScriptManager::GameObjectMetatable LuaScriptManager::FindOrAdd(lua_State* L, const std::string& p_path, const char* p_class_name) {
+GameObjectMetatable LuaScriptManager::FindOrAdd(lua_State* L, const std::string& p_path, const char* p_class_name) {
     auto it = m_objectsMeta.find(p_path);
     if (it != m_objectsMeta.end()) {
         return it->second;

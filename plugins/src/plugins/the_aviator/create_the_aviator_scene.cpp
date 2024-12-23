@@ -17,6 +17,10 @@ namespace my {
 
 using math::AABB;
 
+static constexpr float ROCK_SIZE = 4.0f;
+static constexpr float BATTERY_SIZE = 2.0f;
+static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
+
 static MeshComponent MakeOceanMesh(float p_radius,
                                    float p_height,
                                    int p_sectors,
@@ -226,7 +230,28 @@ Scene* CreateTheAviatorScene() {
         material->metallic = default_metallic;
     }
 #pragma endregion SETUP_MATERIALS
+    // battery mesh
+    {
+        ecs::Entity mesh_id = scene->CreateMeshEntity("battery_mesh");
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(mesh_id);
+        *mesh = MakeTetrahedronMesh(BATTERY_SIZE);
 
+        ecs::Entity material_id = scene->CreateMaterialEntity("battery_material");
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_id);
+        material->baseColor = Vector4f(BLUE_COLOR.r, BLUE_COLOR.g, BLUE_COLOR.b, 1.0f);
+        mesh->subsets[0].material_id = material_id;
+    }
+    // rock mesh
+    {
+        ecs::Entity mesh_id = scene->CreateMeshEntity("rock_mesh");
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(mesh_id);
+        *mesh = MakeSphereMesh(ROCK_SIZE, 6, 6);
+
+        ecs::Entity material_id = scene->CreateMaterialEntity("rock_material");
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_id);
+        material->baseColor = Vector4f(RED_COLOR.r, RED_COLOR.g, RED_COLOR.b, 1.0f);
+        mesh->subsets[0].material_id = material_id;
+    }
 #pragma region SETUP_PLANE
     // create plane
     auto plane = scene->CreateTransformEntity("plane");

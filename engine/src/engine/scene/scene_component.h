@@ -395,6 +395,7 @@ public:
 
     const std::string& GetPath() const { return m_path; }
     const std::string& GetClassName() const { return m_className; }
+    int GetInstance() const { return m_instance; }
 
     std::string& GetPathRef() { return m_path; }
     std::string& GetClassNameRef() { return m_className; }
@@ -595,19 +596,14 @@ struct VoxelGiComponent {
 
 #pragma region PARTICLE_EMITTER_COMPONENT
 struct ParticleEmitterComponent {
-    uint32_t GetPreIndex() const { return aliveBufferIndex; }
-    uint32_t GetPostIndex() const { return 1 - aliveBufferIndex; }
-
-    void Serialize(Archive& p_archive, uint32_t p_version);
-    void OnDeserialized() {}
-    static void RegisterClass();
-
-    bool gravity{ false };
+    bool gravity{ false };  // @TODO: force instead of gravity
     int maxParticleCount{ 1000 };
     int particlesPerFrame{ 10 };
     float particleScale{ 1.0f };
     float particleLifeSpan{ 3.0f };
     Vector3f startingVelocity{ 0.0f };
+    Vector4f color{ Vector4f::One };
+    std::string texture;
 
     // Non-Serialized
     std::shared_ptr<GpuStructuredBuffer> particleBuffer{ nullptr };
@@ -616,6 +612,13 @@ struct ParticleEmitterComponent {
     std::shared_ptr<GpuStructuredBuffer> aliveBuffer[2]{ nullptr, nullptr };
 
     uint32_t aliveBufferIndex{ 0 };
+
+    uint32_t GetPreIndex() const { return aliveBufferIndex; }
+    uint32_t GetPostIndex() const { return 1 - aliveBufferIndex; }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
+    static void RegisterClass();
 };
 #pragma endregion PARTICLE_EMITTER_COMPONENT
 

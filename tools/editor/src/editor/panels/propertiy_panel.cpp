@@ -255,32 +255,24 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("PerspectiveCamera", perspective_camera, [&](PerspectiveCameraComponent& p_camera) {
-        {
-            const bool is_editor = p_camera.IsEditorCamera();
-            bool is_main = p_camera.IsPrimary();
-            ImGui::BeginDisabled(is_editor);
-            if (ImGui::Checkbox("main camera", &is_main)) {
-                p_camera.SetPrimary(is_main);
-            }
-            ImGui::EndDisabled();
+        const bool is_editor = p_camera.IsEditorCamera();
+        bool is_main = p_camera.IsPrimary();
+        ImGui::BeginDisabled(is_editor);
+        if (ImGui::Checkbox("main camera", &is_main)) {
+            p_camera.SetPrimary(is_main);
         }
-        {
-            float near = p_camera.GetNear();
-            if (DrawDragFloat("near", near, 0.1f, 0.1f, 1.0f)) {
-                p_camera.SetNear(near);
-            }
+        ImGui::EndDisabled();
+        float near = p_camera.GetNear();
+        if (DrawDragFloat("near", near, 0.1f, 0.1f, 1.0f)) {
+            p_camera.SetNear(near);
         }
-        {
-            float far = p_camera.GetFar();
-            if (DrawDragFloat("far", far, 1.0f, 10.0f, 10000.0f)) {
-                p_camera.SetFar(far);
-            }
+        float far = p_camera.GetFar();
+        if (DrawDragFloat("far", far, 1.0f, 10.0f, 10000.0f)) {
+            p_camera.SetFar(far);
         }
-        {
-            float fovy = p_camera.GetFovy().GetDegree();
-            if (DrawDragFloat("fov", fovy, 0.1f, 30.0f, 120.0f)) {
-                p_camera.SetFovy(Degree(fovy));
-            }
+        float fovy = p_camera.GetFovy().GetDegree();
+        if (DrawDragFloat("fov", fovy, 0.1f, 30.0f, 120.0f)) {
+            p_camera.SetFovy(Degree(fovy));
         }
     });
 
@@ -316,13 +308,16 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("Emitter", emitter_component, [&](ParticleEmitterComponent& p_emitter) {
-        const float width = 120.0f;
+        const float width = 100.0f;
         ImGui::Checkbox("Gravity", &p_emitter.gravity);
         DrawVec3Control("Velocity", p_emitter.startingVelocity, 0.0f, width);
         DrawDragInt("Max count", p_emitter.maxParticleCount, 1000.f, 1000, MAX_PARTICLE_COUNT, width);
         DrawDragInt("Emit per frame", p_emitter.particlesPerFrame, 10.0f, 1, 10000, width);
         DrawDragFloat("Scaling", p_emitter.particleScale, 0.01f, 0.01f, 10.0f, width);
         DrawDragFloat("Life span", p_emitter.particleLifeSpan, 0.1f, 0.1f, 10.0f, width);
+        ImGui::Separator();
+        DrawColorPicker3("base color", &p_emitter.color.x, width);
+        DrawInputText("texture", p_emitter.texture, width);
     });
 
     DrawComponent("Force Field", force_field_component, [&](ForceFieldComponent& p_force_field) {

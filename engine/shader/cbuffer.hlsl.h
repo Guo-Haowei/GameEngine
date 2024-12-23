@@ -233,11 +233,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 };
 
 CBUFFER(EmitterConstantBuffer, 6) {
-    int c_preSimIdx;
-    int c_postSimIdx;
-    float c_elapsedTime;
-    float c_lifeSpan;
-
+    Vector4f c_particleColor;
     Vector3f c_seeds;
     float c_emitterScale;
     Vector3f c_emitterPosition;
@@ -245,11 +241,18 @@ CBUFFER(EmitterConstantBuffer, 6) {
     Vector3f c_emitterStartingVelocity;
     int c_emitterMaxParticleCount;
 
-    Vector3f _emitter_padding_0;
+    int c_preSimIdx;
+    int c_postSimIdx;
+    float c_elapsedTime;
+    float c_lifeSpan;
+
+    Vector2i c_emitterSubUv;
+    int c_emitterUseTexture;
     int c_emitterHasGravity;
 
-    Vector4f _emitter_padding_1;
-    Vector4f _emitter_padding_2;
+    Vector3f _emitter_padding_2;
+    int c_subUvCounter;
+
     Vector4f _emitter_padding_3;
     Matrix4x4f _emitter_padding_4;
     Matrix4x4f _emitter_padding_5;

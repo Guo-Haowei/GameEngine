@@ -7,6 +7,10 @@ namespace my {
 
 class Scene;
 
+struct GameObjectMetatable {
+    int funcNew{ 0 };
+};
+
 class LuaScriptManager : public ScriptManager {
 
 public:
@@ -19,9 +23,6 @@ public:
     void OnSimEnd(Scene& p_scene) override;
 
 protected:
-    struct GameObjectMetatable {
-        int funcNew{ 0 };
-    };
 
     auto InitializeImpl() -> Result<void> final;
     void FinalizeImpl() final;
@@ -30,6 +31,7 @@ protected:
     Result<void> LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, GameObjectMetatable& p_meta);
 
     std::map<std::string, GameObjectMetatable> m_objectsMeta;
+    int m_gameRef{ 0 };
 };
 
 }  // namespace my
