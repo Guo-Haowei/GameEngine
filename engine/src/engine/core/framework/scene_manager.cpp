@@ -53,7 +53,7 @@ bool SceneManager::TrySwapScene() {
 }
 
 void SceneManager::Update() {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     TrySwapScene();
 

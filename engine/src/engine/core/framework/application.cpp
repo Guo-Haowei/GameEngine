@@ -260,7 +260,7 @@ void Application::Run() {
     // @TODO: add frame count, timestep time, etc
     Timer timer;
     do {
-        OPTICK_FRAME("MainThread");
+        HBN_PROFILE_FRAME("MainThread");
 
         m_displayServer->BeginFrame();
         if (m_displayServer->ShouldClose()) {

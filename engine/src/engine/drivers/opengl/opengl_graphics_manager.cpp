@@ -706,7 +706,7 @@ void OpenGlGraphicsManager::Render() {
 }
 
 void OpenGlGraphicsManager::Present() {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     if (m_app->GetSpecification().enableImgui) {
         GLFWwindow* oldContext = glfwGetCurrentContext();

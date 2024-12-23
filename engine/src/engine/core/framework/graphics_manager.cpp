@@ -344,7 +344,7 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
 }
 
 void GraphicsManager::Update(Scene& p_scene) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     // @TODO: make it a function
     auto loaded_images = m_loadedImages.pop_all();
@@ -362,7 +362,7 @@ void GraphicsManager::Update(Scene& p_scene) {
     }
 
     {
-        OPTICK_EVENT("Render");
+        HBN_PROFILE_EVENT("Render");
         BeginFrame();
 
         auto data = renderer::GetRenderData();

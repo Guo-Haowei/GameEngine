@@ -3,6 +3,7 @@
 #include <latch>
 #include <thread>
 
+#include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/asset_manager.h"
 #include "engine/core/io/print.h"
 #include "engine/drivers/windows/win32_prerequisites.h"
@@ -44,6 +45,7 @@ bool Initialize() {
 
                 latch.count_down();
                 LOG_VERBOSE("[threads] thread '{}'(id: {}) starts.", p_object->name, p_object->id);
+                HBN_PROFILE_THREAD(p_object->name);
                 p_object->threadFunc();
                 LOG_VERBOSE("[threads] thread '{}'(id: {}) ends.", p_object->name, p_object->id);
             },
