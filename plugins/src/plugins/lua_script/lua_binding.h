@@ -18,4 +18,6 @@ bool OpenMathLib(lua_State* L);
 
 bool OpenSceneLib(lua_State* L);
 
+bool OpenInputLib(lua_State* L);
+
 }  // namespace my::lua

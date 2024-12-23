@@ -4,6 +4,7 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/scene_manager.h"
+#include "engine/core/string/string_builder.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
@@ -21,6 +22,7 @@ auto LuaScriptManager::InitializeImpl() -> Result<void> {
 
     lua::OpenMathLib(m_state);
     lua::OpenSceneLib(m_state);
+    lua::OpenInputLib(m_state);
 
     // @TODO: refactor this
     constexpr const char* source = R"(
@@ -127,8 +129,10 @@ void LuaScriptManager::Update(Scene& p_scene) {
                 }
             }
         }
-        DEV_ASSERT(script.m_instance);
-        EntityCall(L, script.m_instance, "OnUpdate", timestep);
+
+        if (DEV_VERIFY(script.m_instance)) {
+            EntityCall(L, script.m_instance, "OnUpdate", timestep);
+        }
     }
 
     ScriptManager::Update(p_scene);
@@ -194,9 +198,10 @@ LuaScriptManager::GameObjectMetatable LuaScriptManager::FindOrAdd(const std::str
     }
 
     GameObjectMetatable meta;
-    auto res = LoadMetaTable(p_path, p_class_name, meta);
-    if (!res) {
-        CRASH_NOW();
+    if (auto res = LoadMetaTable(p_path, p_class_name, meta); !res) {
+        StringStreamBuilder builder;
+        builder << res.error();
+        LOG_ERROR("{}", builder.ToString());
     } else {
         m_objectsMeta[p_path] = meta;
     }

@@ -139,6 +139,8 @@ Scene* CreateTheAviatorScene() {
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
         camera->SetPrimary();
+
+#if 0
         class InGameDebugCameraController : public EditorCameraController {
         public:
             InGameDebugCameraController() {
@@ -146,10 +148,11 @@ Scene* CreateTheAviatorScene() {
                 SetMoveSpeed(30.0f);
             }
         };
-#if 0
         scene->Create<NativeScriptComponent>(main_camera).Bind<InGameDebugCameraController>();
 #else
-        scene->Create<NativeScriptComponent>(main_camera).Bind<CameraScript>();
+        scene->Create<LuaScriptComponent>(main_camera)
+            .SetClassName("Camera")
+            .SetPath("@res://scripts/camera.lua");
 #endif
     }
 
