@@ -1,5 +1,7 @@
 #include <imgui/imgui_internal.h>
 
+#include <filesystem>
+
 #include "engine/core/framework/common_dvars.h"
 #include "engine/core/framework/entry_point.h"
 #include "engine/core/framework/graphics_manager.h"
@@ -10,6 +12,8 @@
 #include "plugins/the_aviator/the_aviator_layer.h"
 
 namespace my {
+
+namespace fs = std::filesystem;
 
 extern Scene* CreateTheAviatorScene();
 
@@ -57,11 +61,14 @@ public:
 };
 
 Application* CreateApplication() {
-    std::string_view root = StringUtils::BasePath(__FILE__);
-    root = StringUtils::BasePath(root);
+    auto res_path = fs::path{ ROOT_FOLDER } / "tools/editor/resources";
+    auto res_string = res_path.string();
+    auto user_path = fs::path{ ROOT_FOLDER } / "applications/the_aviator/user";
+    auto user_string = user_path.string();
 
     ApplicationSpec spec{};
-    spec.rootDirectory = root;
+    spec.resourceFolder = res_string;
+    spec.userFolder = user_string;
     spec.name = "TheAviator";
     spec.width = 1600;
     spec.height = 900;

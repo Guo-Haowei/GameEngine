@@ -42,17 +42,9 @@ static void RegisterCommonDvars() {
 
 Application::Application(const ApplicationSpec& p_spec, Type p_type) : m_specification(p_spec), m_type(p_type) {
     // select work directory
-    if (m_specification.rootDirectory.empty()) {
-        LOG_ERROR("root directory is not set");
-    } else {
-        LOG_OK("root directory is '{}'", m_specification.rootDirectory);
-    }
+    m_userFolder = std::string{ m_specification.userFolder };
 
-    m_userFolder = std::string{ m_specification.rootDirectory };
-    m_userFolder.append(DELIMITER_STR "user");
-
-    m_resourceFolder = std::string{ m_specification.rootDirectory };
-    m_resourceFolder.append(DELIMITER_STR "resources");
+    m_resourceFolder = std::string{ m_specification.resourceFolder };
 
     FileAccess::SetFolderCallback(
         [&]() { return m_userFolder.c_str(); },

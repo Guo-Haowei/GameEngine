@@ -237,8 +237,6 @@ void PhysicsManager::UpdateCollision(Scene& p_scene) {
 }
 
 void PhysicsManager::Update(Scene& p_scene) {
-    CreateWorld(p_scene);
-
     switch (p_scene.m_physicsMode) {
         case PhysicsMode::SIMULATION: {
             UpdateSimulation(p_scene);
@@ -251,13 +249,14 @@ void PhysicsManager::Update(Scene& p_scene) {
     }
 }
 
-void PhysicsManager::CreateWorld(Scene& p_scene) {
+void PhysicsManager::OnSimBegin(Scene& p_scene) {
     if (p_scene.m_physicsMode == PhysicsMode::NONE) {
         return;
     }
     HBN_PROFILE_EVENT();
 
-    // @TODO: bench mark
+    DEV_ASSERT(p_scene.m_physicsWorld == nullptr);
+
     if (!p_scene.m_physicsWorld) {
         p_scene.m_physicsWorld = new PhysicsWorldContext;
         PhysicsWorldContext& context = *p_scene.m_physicsWorld;
@@ -423,8 +422,8 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
     }
 }
 
-void PhysicsManager::CleanWorld() {
-    // @TODO: delete
+void PhysicsManager::OnSimEnd(Scene&) {
+    // @TODO: delete everything
 }
 
 }  // namespace my

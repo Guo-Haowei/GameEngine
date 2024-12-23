@@ -33,6 +33,9 @@ public:
 
     void Update(Scene& p_scene);
 
+    virtual void OnSimBegin(Scene& p_scene);
+    virtual void OnSimEnd(Scene& p_scene);
+
 protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;

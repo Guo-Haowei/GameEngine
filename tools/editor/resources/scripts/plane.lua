@@ -67,7 +67,6 @@ function Plane:OnCollision(other)
         local dist = plane_position - rock_position
         dist:normalize()
         self.speed = Vector2(30 * dist.x, 30 * dist.y)
-        print(dist.x, dist.y, dist.z)
     elseif type == 4 then
         print('BATTERY!')
     else

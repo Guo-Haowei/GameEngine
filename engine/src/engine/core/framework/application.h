@@ -20,7 +20,8 @@ class ScriptManager;
 class Scene;
 
 struct ApplicationSpec {
-    std::string_view rootDirectory;
+    std::string_view resourceFolder;
+    std::string_view userFolder;
     std::string_view name;
     int width;
     int height;

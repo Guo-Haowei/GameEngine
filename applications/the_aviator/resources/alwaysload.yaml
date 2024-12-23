@@ -1,5 +1,0 @@
-files:
-  - path: "@res://images/brdf.hdr"
-    type: Image
-  - path: "@res://images/ibl/aviator_sky.hdr"
-    type: Image

@@ -1,3 +1,5 @@
+#include <filesystem>
+
 #include "editor/editor_layer.h"
 #include "engine/core/framework/entry_point.h"
 #include "engine/core/string/string_utils.h"
@@ -10,6 +12,8 @@
 #include "plugins/the_aviator/the_aviator_layer.h"
 
 namespace my {
+
+namespace fs = std::filesystem;
 
 extern Scene* CreateTheAviatorScene();
 extern Scene* CreateBoxScene();
@@ -51,8 +55,14 @@ Application* CreateApplication() {
     root = StringUtils::BasePath(root);
     root = StringUtils::BasePath(root);
 
+    auto res_path = fs::path{ root } / "resources";
+    auto res_string = res_path.string();
+    auto user_path = fs::path{ root } / "user";
+    auto user_string = user_path.string();
+
     ApplicationSpec spec{};
-    spec.rootDirectory = root;
+    spec.resourceFolder = res_string;
+    spec.userFolder = user_string;
     spec.name = "Editor";
     spec.width = 800;
     spec.height = 600;

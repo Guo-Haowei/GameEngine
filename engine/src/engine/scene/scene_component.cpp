@@ -144,7 +144,7 @@ LuaScriptComponent& LuaScriptComponent::SetClassName(std::string_view p_class_na
 
 LuaScriptComponent& LuaScriptComponent::SetPath(std::string_view p_path) {
     if (p_path != m_path) {
-        LOG_VERBOSE("changing script '{}' to '{}'", m_path, p_path);
+        // LOG_VERBOSE("changing script '{}' to '{}'", m_path, p_path);
         m_path = p_path;
     }
 
