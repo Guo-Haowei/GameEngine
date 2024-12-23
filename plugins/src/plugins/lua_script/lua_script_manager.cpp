@@ -34,7 +34,9 @@ function GameObject.new(id)
 end
 
 function GameObject:OnUpdate(timestep)
-	print("hello from GameObject")
+end
+
+function GameObject:OnCollision(other)
 end
 )";
     if (auto res = CheckError(luaL_dostring(m_state, source)); res != LUA_OK) {
@@ -48,6 +50,51 @@ void LuaScriptManager::FinalizeImpl() {
     if (m_state) {
         lua_close(m_state);
         m_state = nullptr;
+    }
+}
+
+inline int PushArg(lua_State*) {
+    return 0;
+}
+
+template<typename T>
+    requires std::is_integral_v<T>
+static int PushArg(lua_State* L, const T& p_value) {
+    lua_pushinteger(L, p_value);
+    return 1;
+}
+
+template<typename T>
+    requires std::is_floating_point_v<T>
+static int PushArg(lua_State* L, const T& p_value) {
+    lua_pushnumber(L, p_value);
+    return 1;
+}
+
+template<typename T, typename... Args>
+static int PushArg(lua_State* L, T&& p_value, Args&&... p_args) {
+    PushArg<T>(L, p_value);
+    PushArg(L, std::forward<Args>(p_args)...);
+    return 1 + sizeof...(p_args);
+}
+
+template<typename ...Args>
+static void EntityCall(lua_State* L, int p_ref, const char* p_method, Args&&... p_args) {
+    lua_rawgeti(L, LUA_REGISTRYINDEX, p_ref);
+    lua_getfield(L, -1, p_method);
+    if (lua_isfunction(L, -1)) {
+        // push self
+        lua_rawgeti(L, LUA_REGISTRYINDEX, p_ref);
+        int arg_count = PushArg(L, std::forward<Args>(p_args)...);
+        const int result = lua_pcall(L, 1 + arg_count, 0, 0);
+        if (result != LUA_OK) {
+            const char* err = lua_tostring(L, -1);
+            LOG_ERROR("script error: {}", err);
+        }
+        lua_pop(L, 1);  // pop the return value
+    } else {
+        DEV_ASSERT(0);
+        lua_pop(L, 1);
     }
 }
 
@@ -76,27 +123,32 @@ void LuaScriptManager::Update(Scene& p_scene) {
                 if (auto ret = CheckError(lua_pcall(L, 1, 1, 0)); ret == LUA_OK) {
                     int instance = luaL_ref(L, LUA_REGISTRYINDEX);
                     script.m_instance = instance;
-                    LOG_VERBOSE("instance created for entity {}", entity.GetId());
+                    // LOG_VERBOSE("instance created for entity {}", entity.GetId());
                 }
             }
         }
         DEV_ASSERT(script.m_instance);
-
-        // push the instance to stack
-        lua_rawgeti(L, LUA_REGISTRYINDEX, script.m_instance);
-        lua_getfield(L, -1, "OnUpdate");
-        if (lua_isfunction(L, -1)) {
-            lua_rawgeti(L, LUA_REGISTRYINDEX, script.m_instance);
-            lua_pushnumber(L, timestep);
-            CheckError(lua_pcall(L, 2, 0, 0));
-            lua_pop(L, 1); // pop the return value
-        } else {
-            DEV_ASSERT(0);
-            lua_pop(L, 1); // remove the value (not a function)
-        }
+        EntityCall(L, script.m_instance, "OnUpdate", timestep);
     }
 
     ScriptManager::Update(p_scene);
+}
+
+void LuaScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2) {
+    ScriptManager::OnCollision(p_scene, p_entity_1, p_entity_2);
+
+    lua_State* L = m_state;
+
+    LuaScriptComponent* script_1 = p_scene.GetComponent<LuaScriptComponent>(p_entity_1);
+    LuaScriptComponent* script_2 = p_scene.GetComponent<LuaScriptComponent>(p_entity_2);
+
+    if (script_1 && script_1->m_instance) {
+        EntityCall(L, script_1->m_instance, "OnCollision", p_entity_2.GetId());
+    }
+
+    if (script_2 && script_2->m_instance) {
+        EntityCall(L, script_2->m_instance, "OnCollision", p_entity_1.GetId());
+    }
 }
 
 int LuaScriptManager::CheckError(int p_result) {

@@ -12,7 +12,8 @@ class LuaScriptManager : public ScriptManager {
 public:
     LuaScriptManager() : ScriptManager("LuaScriptManager") {}
 
-    void Update(Scene& p_scene);
+    void Update(Scene& p_scene) override;
+    void OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2) override;
 
 protected:
     struct GameObjectMetatable {

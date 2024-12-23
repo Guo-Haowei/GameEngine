@@ -69,18 +69,6 @@ class PlaneScript : public ScriptableEntity {
     Vector2f m_collisionDisplacement{ 0.0f };
 };
 
-class RockScript : public ScriptableEntity {
-    void OnCollision(ecs::Entity p_other_id) override;
-
-    void OnUpdate(float p_timestep) override;
-};
-
-class BatteryScript : public ScriptableEntity {
-    void OnCollision(ecs::Entity p_other_id) override;
-
-    void OnUpdate(float p_timestep) override;
-};
-
 class OceanScript : public ScriptableEntity {
     struct Wave {
         float angle;

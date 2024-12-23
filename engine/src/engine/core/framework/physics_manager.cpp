@@ -1,7 +1,8 @@
 #include "physics_manager.h"
 
+#include "engine/core/framework/application.h"
 #include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/scene_manager.h"
+#include "engine/core/framework/script_manager.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
 
@@ -26,7 +27,9 @@ static btTransform ConvertTransform(const TransformComponent& p_transform) {
 }
 
 struct CustomContactResultCallback : btCollisionWorld::ContactResultCallback {
-    CustomContactResultCallback(Scene& p_scene) : m_scene(p_scene) {
+    CustomContactResultCallback(Scene& p_scene,
+                                ScriptManager& p_scriptManager) : m_scene(p_scene),
+                                                                  m_scriptManager(p_scriptManager) {
     }
 
     btScalar addSingleResult(btManifoldPoint&, const btCollisionObjectWrapper* p_wrap_1, int, int, const btCollisionObjectWrapper* p_wrap_2, int, int) override {
@@ -36,22 +39,12 @@ struct CustomContactResultCallback : btCollisionWorld::ContactResultCallback {
         ecs::Entity entity_1{ (uint32_t)(uintptr_t)object_1->getUserPointer() };
         ecs::Entity entity_2{ (uint32_t)(uintptr_t)object_2->getUserPointer() };
 
-        // @TODO: use lua OnCollision
-        NativeScriptComponent* script_1 = m_scene.GetComponent<NativeScriptComponent>(entity_1);
-        NativeScriptComponent* script_2 = m_scene.GetComponent<NativeScriptComponent>(entity_2);
-
-        if (script_1 && script_1->instance) {
-            script_1->instance->OnCollision(entity_2);
-        }
-
-        if (script_2 && script_2->instance) {
-            script_2->instance->OnCollision(entity_1);
-        }
-
+        m_scriptManager.OnCollision(m_scene, entity_1, entity_2);
         return 0.0f;
     }
 
     Scene& m_scene;
+    ScriptManager& m_scriptManager;
 };
 
 class CustomCollisionDispatcher : public btCollisionDispatcher {
@@ -253,7 +246,7 @@ void PhysicsManager::UpdateCollision(Scene& p_scene) {
                                (rigid_body_2->collisionType & rigid_body_1->collisionMask);
 
             if (check) {
-                CustomContactResultCallback callback(p_scene);
+                CustomContactResultCallback callback(p_scene, *m_app->GetScriptManager());
                 context.dynamicWorld->contactPairTest(object_1, object_2, callback);
             }
         }
