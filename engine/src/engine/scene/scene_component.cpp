@@ -173,13 +173,13 @@ NativeScriptComponent& NativeScriptComponent::operator=(const NativeScriptCompon
 #pragma region RIGID_BODY_COMPONENT
 RigidBodyComponent& RigidBodyComponent::InitCube(const Vector3f& p_half_size) {
     shape = SHAPE_CUBE;
-    param.box.half_size = p_half_size;
+    size = p_half_size;
     return *this;
 }
 
 RigidBodyComponent& RigidBodyComponent::InitSphere(float p_radius) {
     shape = SHAPE_SPHERE;
-    param.sphere.radius = p_radius;
+    size = Vector3f(p_radius);
     return *this;
 }
 

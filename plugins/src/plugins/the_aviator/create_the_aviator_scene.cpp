@@ -20,6 +20,8 @@ using math::AABB;
 static constexpr float ROCK_SIZE = 4.0f;
 static constexpr float BATTERY_SIZE = 2.0f;
 static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
+static constexpr int ROCK_POOL_SIZE = 16;
+static constexpr int BATTERY_POOL_SIZE = 32;
 
 static MeshComponent MakeOceanMesh(float p_radius,
                                    float p_height,
@@ -231,9 +233,9 @@ Scene* CreateTheAviatorScene() {
     }
 #pragma endregion SETUP_MATERIALS
     // battery mesh
+    ecs::Entity battery_mesh = scene->CreateMeshEntity("battery_mesh");
     {
-        ecs::Entity mesh_id = scene->CreateMeshEntity("battery_mesh");
-        MeshComponent* mesh = scene->GetComponent<MeshComponent>(mesh_id);
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(battery_mesh);
         *mesh = MakeTetrahedronMesh(BATTERY_SIZE);
 
         ecs::Entity material_id = scene->CreateMaterialEntity("battery_material");
@@ -242,9 +244,9 @@ Scene* CreateTheAviatorScene() {
         mesh->subsets[0].material_id = material_id;
     }
     // rock mesh
+    ecs::Entity rock_mesh = scene->CreateMeshEntity("rock_mesh");
     {
-        ecs::Entity mesh_id = scene->CreateMeshEntity("rock_mesh");
-        MeshComponent* mesh = scene->GetComponent<MeshComponent>(mesh_id);
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(rock_mesh);
         *mesh = MakeSphereMesh(ROCK_SIZE, 6, 6);
 
         ecs::Entity material_id = scene->CreateMaterialEntity("rock_material");
@@ -500,6 +502,42 @@ Scene* CreateTheAviatorScene() {
         create_cloud(cloud_index, cloud);
     }
 #pragma endregion SETUP_SKY
+
+#pragma region SETUP_GAME_OBJECTS
+    {
+        auto generator = scene->CreateTransformEntity("generator");
+        scene->AttachChild(generator, earth);
+        for (int i = 0; i < ROCK_POOL_SIZE; ++i) {
+            auto id = scene->CreateObjectEntity(std::format("rock_{}", ++i));
+            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            object->meshId = rock_mesh;
+            auto& rigid_body = scene->Create<RigidBodyComponent>(id)
+                                   .InitSphere(0.5f * ROCK_SIZE);
+            rigid_body.collisionType = COLLISION_BIT_ROCK;
+            rigid_body.collisionMask = COLLISION_BIT_PLAYER;
+
+            scene->Create<LuaScriptComponent>(id)
+                .SetClassName("Rock")
+                .SetPath("@res://scripts/rock.lua");
+            scene->AttachChild(id, generator);
+        }
+
+        for (int i = 0; i < BATTERY_POOL_SIZE; ++i) {
+            auto id = scene->CreateObjectEntity(std::format("battery_{}", ++i));
+            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            object->meshId = battery_mesh;
+            auto& rigid_body = scene->Create<RigidBodyComponent>(id)
+                                   .InitSphere(0.5f * ROCK_SIZE);
+            rigid_body.collisionType = COLLISION_BIT_BATTERY;
+            rigid_body.collisionMask = COLLISION_BIT_PLAYER;
+
+            scene->Create<LuaScriptComponent>(id)
+                .SetClassName("Battery")
+                .SetPath("@res://scripts/battery.lua");
+            scene->AttachChild(id, generator);
+        }
+    }
+#pragma endregion SETUP_GAME_OBJECTS
 
     {
         auto id = scene->CreateEnvironmentEntity("environment");

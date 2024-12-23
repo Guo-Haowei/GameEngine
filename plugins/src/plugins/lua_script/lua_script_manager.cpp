@@ -70,7 +70,7 @@ static void EntityCall(lua_State* L, int p_ref, const char* p_method, Args&&... 
 }
 
 template<typename... Args>
-static int CreateInstance(const GameObjectMetatable& p_meta, lua_State* L, Args&&... p_args) {
+static int CreateInstance(const ObjectFunctions& p_meta, lua_State* L, Args&&... p_args) {
     if (!p_meta.funcNew) {
         return 0;
     }
@@ -183,7 +183,7 @@ void LuaScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::
     }
 }
 
-Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, GameObjectMetatable& p_meta) {
+Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, ObjectFunctions& p_meta) {
     auto asset_registry = m_app->GetAssetRegistry();
     auto res = asset_registry->RequestAssetSync(p_path);
     if (!res) {
@@ -212,13 +212,13 @@ Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_
     return Result<void>();
 }
 
-GameObjectMetatable LuaScriptManager::FindOrAdd(lua_State* L, const std::string& p_path, const char* p_class_name) {
+ObjectFunctions LuaScriptManager::FindOrAdd(lua_State* L, const std::string& p_path, const char* p_class_name) {
     auto it = m_objectsMeta.find(p_path);
     if (it != m_objectsMeta.end()) {
         return it->second;
     }
 
-    GameObjectMetatable meta;
+    ObjectFunctions meta;
     if (auto res = LoadMetaTable(L, p_path, p_class_name, meta); !res) {
         StringStreamBuilder builder;
         builder << res.error();

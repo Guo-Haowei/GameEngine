@@ -481,31 +481,22 @@ struct CollisionObjectBase {
 };
 
 struct RigidBodyComponent : CollisionObjectBase {
-    enum CollisionShape : uint8_t {
+    enum CollisionShape : uint32_t {
         SHAPE_UNKNOWN,
         SHAPE_SPHERE,
         SHAPE_CUBE,
         SHAPE_MAX,
     };
 
-    enum ObjectType : uint8_t {
+    enum ObjectType : uint32_t {
         DYNAMIC,
         GHOST,
     };
 
-    union Parameter {
-        struct {
-            Vector3f half_size;
-        } box;
-        struct {
-            float radius;
-        } sphere;
-    };
-
     CollisionShape shape{ SHAPE_UNKNOWN };
     ObjectType objectType{ DYNAMIC };
+    Vector3f size;
     float mass{ 1.0f };
-    Parameter param;
 
     RigidBodyComponent& InitCube(const Vector3f& p_half_size);
 

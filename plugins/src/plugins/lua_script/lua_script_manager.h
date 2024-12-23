@@ -7,7 +7,7 @@ namespace my {
 
 class Scene;
 
-struct GameObjectMetatable {
+struct ObjectFunctions {
     int funcNew{ 0 };
 };
 
@@ -27,10 +27,10 @@ protected:
     auto InitializeImpl() -> Result<void> final;
     void FinalizeImpl() final;
 
-    GameObjectMetatable FindOrAdd(lua_State* L, const std::string& p_path, const char* p_class_name);
-    Result<void> LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, GameObjectMetatable& p_meta);
+    ObjectFunctions FindOrAdd(lua_State* L, const std::string& p_path, const char* p_class_name);
+    Result<void> LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, ObjectFunctions& p_meta);
 
-    std::map<std::string, GameObjectMetatable> m_objectsMeta;
+    std::map<std::string, ObjectFunctions> m_objectsMeta;
     int m_gameRef{ 0 };
 };
 

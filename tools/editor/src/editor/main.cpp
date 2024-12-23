@@ -8,9 +8,6 @@
 #include "editor_dvars.h"
 #undef DEFINE_DVAR
 
-// @TODO: fix
-#include "plugins/the_aviator/the_aviator_layer.h"
-
 namespace my {
 
 namespace fs = std::filesystem;
@@ -29,10 +26,7 @@ public:
         AttachLayer(m_editorLayer.get());
 
         // Only creates game layer, don't attach yet
-        auto scene = DVAR_GET_STRING(default_scene);
-        if (scene == "the_aviator") {
-            m_gameLayer = std::make_unique<TheAviatorLayer>();
-        }
+        m_gameLayer = std::make_unique<GameLayer>("GameLayer");
     }
 
     Scene* CreateInitialScene() override;

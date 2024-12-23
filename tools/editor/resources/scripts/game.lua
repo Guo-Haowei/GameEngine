@@ -53,7 +53,6 @@ function Game:OnUpdate(timestep)
         transform:SetTranslation(translation)
 
         type.alive[#type.alive + 1] = item
-        print('item ' .. item.id ..  ' spawned at ' .. angle)
         return true
     end
 
@@ -81,7 +80,6 @@ function Game:OnUpdate(timestep)
                 -- move dead item away
                 local transform = g_scene:GetTransform(item.id)
                 transform:SetTranslation(Vector3(0, 900, 0))
-                print('item ' .. item.id .. ' recycled')
             end
         end
         type.alive = tmp

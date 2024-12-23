@@ -221,9 +221,9 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& p_rigid_body) {
         switch (p_rigid_body.shape) {
             case RigidBodyComponent::SHAPE_CUBE: {
-                const auto& half = p_rigid_body.param.box.half_size;
-                ImGui::Text("shape: box");
-                ImGui::Text("half size: %.2f, %.2f, %.2f", half.x, half.y, half.z);
+                //const auto& half = p_rigid_body.param.box.half_size;
+                //ImGui::Text("shape: box");
+                //ImGui::Text("half size: %.2f, %.2f, %.2f", half.x, half.y, half.z);
                 break;
             }
             default:

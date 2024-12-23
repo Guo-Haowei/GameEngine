@@ -297,12 +297,12 @@ void PhysicsManager::OnSimBegin(Scene& p_scene) {
         btCollisionShape* shape = nullptr;
         switch (component.shape) {
             case RigidBodyComponent::SHAPE_CUBE: {
-                const Vector3f& half = component.param.box.half_size;
+                const Vector3f& half = component.size;
                 shape = new btBoxShape(btVector3(half.x, half.y, half.z));
                 break;
             }
             case RigidBodyComponent::SHAPE_SPHERE: {
-                shape = new btSphereShape(component.param.sphere.radius);
+                shape = new btSphereShape(component.size.x);
                 break;
             }
             default:

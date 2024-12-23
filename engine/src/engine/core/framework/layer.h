@@ -34,6 +34,8 @@ public:
     void OnAttach() final;
     void OnDetach() final;
 
+    void OnUpdate(float) override {}
+
 protected:
     virtual void OnAttachInternal() {}
     virtual void OnDetachInternal() {}

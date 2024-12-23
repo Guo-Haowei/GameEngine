@@ -32,6 +32,7 @@ namespace my {
 // version 15: add predefined shadow region to lights
 // version 16: change scene binary representation
 // version 17: remove armature.flags
+// version 18: change RigidBodyComponent
 #pragma endregion VERSION_HISTORY
 static constexpr uint32_t LATEST_SCENE_VERSION = 17;
 static constexpr char SCENE_MAGIC[] = "xBScene";
@@ -634,16 +635,17 @@ void RigidBodyComponent::Serialize(Archive& p_archive, uint32_t p_version) {
 
     p_archive.ArchiveValue(shape);
     p_archive.ArchiveValue(objectType);
-    p_archive.ArchiveValue(param);
+    p_archive.ArchiveValue(size);
     p_archive.ArchiveValue(mass);
 }
 
 void RigidBodyComponent::RegisterClass() {
-    // @TODO: fix this part
-    // REGISTER_FIELD(RigidBodyComponent, "shape", shape);
-    // REGISTER_FIELD(RigidBodyComponent, "type", objectType);
-    // REGISTER_FIELD(RigidBodyComponent, "param", param);
     BEGIN_REGISTRY(RigidBodyComponent);
+    REGISTER_FIELD(RigidBodyComponent, "collision_type", collisionType);
+    REGISTER_FIELD(RigidBodyComponent, "collision_mask", collisionMask);
+    REGISTER_FIELD(RigidBodyComponent, "shape", shape);
+    REGISTER_FIELD(RigidBodyComponent, "type", objectType);
+    REGISTER_FIELD(RigidBodyComponent, "size", size);
     REGISTER_FIELD(RigidBodyComponent, "mass", mass);
     END_REGISTRY(RigidBodyComponent);
 }
