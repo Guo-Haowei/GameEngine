@@ -27,4 +27,16 @@ protected:
     friend class Application;
 };
 
+class GameLayer : public Layer {
+public:
+    using Layer::Layer;
+
+    void OnAttach() final;
+    void OnDetach() final;
+
+protected:
+    virtual void OnAttachInternal() {}
+    virtual void OnDetachInternal() {}
+};
+
 }  // namespace my

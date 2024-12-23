@@ -11,6 +11,9 @@ public:
     ScriptManager() : Module("ScriptManager") {}
     ScriptManager(std::string_view name) : Module(name) {}
 
+    virtual void OnSimBegin(Scene&) {}
+    virtual void OnSimEnd(Scene&) {}
+
     virtual void Update(Scene& p_scene);
     virtual void OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2);
 

@@ -1,5 +1,6 @@
 #include "physics_manager.h"
 
+#include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/script_manager.h"
@@ -67,27 +68,6 @@ public:
             NativeScriptComponent* script_1 = m_scene.GetComponent<NativeScriptComponent>(entity_1);
             NativeScriptComponent* script_2 = m_scene.GetComponent<NativeScriptComponent>(entity_2);
 
-            if (script_1 || script_2) {
-                NameComponent* name_1 = m_scene.GetComponent<NameComponent>(entity_1);
-                NameComponent* name_2 = m_scene.GetComponent<NameComponent>(entity_2);
-                struct A {
-                    const btCollisionObject* object;
-                    std::string name;
-                };
-                std::array<A, 2> objects = { A{ object_1, name_1->GetName() }, A{ object_2, name_2->GetName() } };
-                for (const auto& a : objects) {
-                    const btCollisionObject* obj = a.object;
-                    auto shape = obj->getCollisionShape();
-                    btScalar scale;
-                    btVector3 origin;
-                    shape->getBoundingSphere(origin, scale);
-                    origin += obj->getWorldTransform().getOrigin();
-                    auto speed = obj->getInterpolationLinearVelocity();
-                    LOG_VERBOSE("{} bounding object radius {}, origin {} {} {}, speed {} {} {}", a.name, scale, origin.getX(), origin.getY(), origin.getZ(), speed.getX(), speed.getY(), speed.getZ());
-                }
-                LOG_OK("(((****");
-            }
-
             if (script_1 && script_1->instance) {
                 script_1->instance->OnCollision(entity_2);
             }
@@ -111,6 +91,8 @@ void PhysicsManager::FinalizeImpl() {
 }
 
 void PhysicsManager::UpdateSimulation(Scene& p_scene) {
+    HBN_PROFILE_EVENT();
+
     const float delta_time = p_scene.m_timestep;
 
     PhysicsWorldContext& context = *p_scene.m_physicsWorld;
@@ -190,8 +172,9 @@ void PhysicsManager::UpdateSimulation(Scene& p_scene) {
 }
 
 void PhysicsManager::UpdateCollision(Scene& p_scene) {
-    PhysicsWorldContext& context = *p_scene.m_physicsWorld;
+    HBN_PROFILE_EVENT();
 
+    PhysicsWorldContext& context = *p_scene.m_physicsWorld;
     // set positions
     for (int j = context.dynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--) {
         btCollisionObject* collision_object = context.dynamicWorld->getCollisionObjectArray()[j];
@@ -257,12 +240,12 @@ void PhysicsManager::Update(Scene& p_scene) {
     CreateWorld(p_scene);
 
     switch (p_scene.m_physicsMode) {
-        case PhysicsMode::SIMULATION:
+        case PhysicsMode::SIMULATION: {
             UpdateSimulation(p_scene);
-            break;
-        case PhysicsMode::COLLISION_DETECTION:
+        } break;
+        case PhysicsMode::COLLISION_DETECTION: {
             UpdateCollision(p_scene);
-            break;
+        } break;
         default:
             break;
     }
@@ -272,9 +255,9 @@ void PhysicsManager::CreateWorld(Scene& p_scene) {
     if (p_scene.m_physicsMode == PhysicsMode::NONE) {
         return;
     }
+    HBN_PROFILE_EVENT();
 
     // @TODO: bench mark
-
     if (!p_scene.m_physicsWorld) {
         p_scene.m_physicsWorld = new PhysicsWorldContext;
         PhysicsWorldContext& context = *p_scene.m_physicsWorld;

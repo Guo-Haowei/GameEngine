@@ -59,6 +59,8 @@ public:
         return RequestAssetImpl(p_path, LOAD_ASYNC, p_on_success, p_user_data);
     }
 
+    void RemoveAsset(const std::string& p_path);
+
 protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;

@@ -98,7 +98,7 @@ protected:
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
 
-    std::unique_ptr<Layer> m_gameLayer;
+    std::unique_ptr<GameLayer> m_gameLayer;
     std::vector<Layer*> m_layers;
 
     std::vector<std::string> m_commandLine;

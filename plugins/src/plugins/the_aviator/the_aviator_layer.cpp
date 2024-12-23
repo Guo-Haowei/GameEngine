@@ -6,12 +6,10 @@
 
 namespace my {
 
-TheAviatorLayer::TheAviatorLayer() : Layer("TheAviator") {
+TheAviatorLayer::TheAviatorLayer() : GameLayer("TheAviator") {
 }
 
-void TheAviatorLayer::OnAttach() {
-    LOG("Layer '{}' attached", m_name);
-
+void TheAviatorLayer::OnAttachInternal() {
     m_time = 0.0f;
     m_lastSpawnTime = 0.0f;
     m_scene = m_app->GetActiveScene();
@@ -70,10 +68,6 @@ void TheAviatorLayer::OnAttach() {
             .SetClassName("Battery")
             .SetPath("@res://scripts/battery.lua");
     }
-}
-
-void TheAviatorLayer::OnDetach() {
-    LOG("Layer '{}' detached", m_name);
 }
 
 void TheAviatorLayer::OnUpdate(float p_timestep) {

@@ -9,6 +9,8 @@
 #include "engine/scene/light_component.h"
 #include "engine/scene/particle_emitter_component.h"
 
+struct lua_State;
+
 namespace my::jobsystem {
 class Context;
 }
@@ -249,7 +251,8 @@ public:
     bool m_replace = false;
 
     PhysicsMode m_physicsMode{ PhysicsMode::NONE };
-    mutable PhysicsWorldContext* m_physicsWorld = nullptr;
+    mutable PhysicsWorldContext* m_physicsWorld{ nullptr };
+    mutable lua_State* L{ nullptr };
 
     const auto& GetLibraryEntries() const { return m_componentLib.m_entries; }
 

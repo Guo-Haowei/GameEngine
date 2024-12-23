@@ -57,16 +57,15 @@ struct ObjectPool {
 };
 
 
-class TheAviatorLayer : public Layer {
+class TheAviatorLayer : public GameLayer {
 public:
     TheAviatorLayer();
-
-    void OnAttach() override;
-    void OnDetach() override;
 
     void OnUpdate(float p_timestep) override;
 
 private:
+    void OnAttachInternal() override;
+
     enum : uint32_t {
         ROCK_POOL_SIZE = 16,
         BATTERY_POOL_SIZE = 32,

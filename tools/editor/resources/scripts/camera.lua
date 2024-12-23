@@ -3,11 +3,6 @@ Camera = {}
 Camera.__index = Camera
 setmetatable(Camera, GameObject)
 
--- @TODO: refactor
-function math.clamp(value, min, max)
-    return math.max(min, math.min(max, value))
-end
-
 function Camera.new(id)
     local self = GameObject.new(id)
     setmetatable(self, Camera)
