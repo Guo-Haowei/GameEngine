@@ -13,7 +13,9 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/core/framework/layer.h"
+#include "engine/core/framework/physics_manager.h"
 #include "engine/core/framework/scene_manager.h"
+#include "engine/core/framework/script_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/string/string_utils.h"
 
@@ -239,26 +241,27 @@ void EditorLayer::OnUpdate(float) {
             m_app->SetActiveScene(scene);
         } break;
         case Application::State::BEGIN_SIM: {
-            if (m_simScene) {
-                delete m_simScene;
-            }
+            DEV_ASSERT(m_simScene == nullptr);
+
             m_simScene = new Scene;
             m_simScene->Copy(*scene);
             m_simScene->Update(0.0f);
+
             m_app->SetActiveScene(m_simScene);
             m_app->SetState(Application::State::SIM);
 
             m_app->AttachGameLayer();
         } break;
         case Application::State::END_SIM: {
+            m_app->DetachGameLayer();
+
+            m_app->SetActiveScene(scene);
+            m_app->SetState(Application::State::EDITING);
+
             if (DEV_VERIFY(m_simScene)) {
                 delete m_simScene;
                 m_simScene = nullptr;
             }
-            m_app->SetActiveScene(scene);
-            m_app->SetState(Application::State::EDITING);
-
-            m_app->DetachGameLayer();
         } break;
         case Application::State::SIM: {
             DEV_ASSERT(m_simScene);

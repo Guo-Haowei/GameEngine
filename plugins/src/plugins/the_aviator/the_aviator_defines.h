@@ -8,7 +8,7 @@ inline constexpr float WORLD_SPEED = 0.3f;
 inline constexpr float MIN_HEIGHT = 15.f;
 inline constexpr float MAX_HEIGHT = 45.f;
 inline constexpr float AMP_WIDTH = 30.0f;
-inline constexpr float AMP_HEIGHT = 32.0f;
+inline constexpr float AMP_HEIGHT = 30.0f;
 
 enum : uint32_t {
     COLLISION_BIT_PLAYER = BIT(1),

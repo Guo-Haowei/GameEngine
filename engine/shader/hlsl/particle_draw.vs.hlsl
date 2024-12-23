@@ -12,12 +12,12 @@ SBUFFER_LIST
 #include "shader_resource_defines.hlsl.h"
 #endif
 
-vsoutput_color main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
-    vsoutput_color output;
+vsoutput_uv main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
+    vsoutput_uv output;
 
     Particle particle = GlobalParticleData[instance_id];
     if (particle.lifeRemaining <= 0.0) {
-        output.color = float4(1.0, 1.0, 1.0, 1.0);
+        output.uv = float2(0.0, 0.0);
         output.position = float4(1000.0, 1000.0, 1000.0, 1.0);
         return output;
     }
@@ -55,6 +55,17 @@ vsoutput_color main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
     position = mul(c_projectionMatrix, position);
 
     output.position = position;
-    output.color.rgb = particle.color.rgb;
+    float2 uv = 0.5f * (input.position.xy + 1.0f);
+
+    // @TODO FIX THIS HACK!!!!
+    {
+        int counter = (c_subUvCounter / 4) % 16;
+        int u = counter % 4;
+        int v = counter / 4;
+        uv *= 0.25;
+        uv += 0.25 * float2(u, v);
+    }
+
+    output.uv = uv;
     return output;
 }

@@ -32,25 +32,6 @@ struct hash<my::Vector3f> {
 }  // namespace std
 
 namespace my {
-using math::Color;
-
-static const Color RED_COLOR = Color::Hex(0xCE190A);
-static const Color WHITE_COLOR = Color::Hex(0XD8D0D1);
-static const Color BROWN_COLOR = Color::Hex(0x59332E);
-static const Color DRAK_BROWN_COLOR = Color::Hex(0x23190F);
-static const Color BLUE_COLOR = Color::Hex(0X10A8A3);
-static const Color PINK_COLOR = Color::Hex(0xF5986E);
-
-class PlaneScript : public ScriptableEntity {
-    void OnCollision(ecs::Entity p_other_id) override;
-
-    void OnCreate() override;
-
-    void OnUpdate(float p_timestep) override;
-
-    Vector2f m_collisionSpeed{ 0.0f };
-    Vector2f m_collisionDisplacement{ 0.0f };
-};
 
 class OceanScript : public ScriptableEntity {
     struct Wave {

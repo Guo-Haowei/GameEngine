@@ -7,6 +7,10 @@ namespace my {
 
 class Scene;
 
+struct ObjectFunctions {
+    int funcNew{ 0 };
+};
+
 class LuaScriptManager : public ScriptManager {
 
 public:
@@ -15,20 +19,19 @@ public:
     void Update(Scene& p_scene) override;
     void OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2) override;
 
+    void OnSimBegin(Scene& p_scene) override;
+    void OnSimEnd(Scene& p_scene) override;
+
 protected:
-    struct GameObjectMetatable {
-        int funcNew{ 0 };
-    };
 
     auto InitializeImpl() -> Result<void> final;
     void FinalizeImpl() final;
 
-    int CheckError(int p_result);
-    GameObjectMetatable FindOrAdd(const std::string& p_path, const char* p_class_name);
-    Result<void> LoadMetaTable(const std::string& p_path, const char* p_class_name, GameObjectMetatable& p_meta);
+    ObjectFunctions FindOrAdd(lua_State* L, const std::string& p_path, const char* p_class_name);
+    Result<void> LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, ObjectFunctions& p_meta);
 
-    lua_State* m_state{ nullptr };
-    std::map<std::string, GameObjectMetatable> m_objectsMeta;
+    std::map<std::string, ObjectFunctions> m_objectsMeta;
+    int m_gameRef{ 0 };
 };
 
 }  // namespace my

@@ -20,7 +20,8 @@ class ScriptManager;
 class Scene;
 
 struct ApplicationSpec {
-    std::string_view rootDirectory;
+    std::string_view resourceFolder;
+    std::string_view userFolder;
     std::string_view name;
     int width;
     int height;
@@ -98,7 +99,7 @@ protected:
     void SaveCommandLine(int p_argc, const char** p_argv);
     void RegisterModule(Module* p_module);
 
-    std::unique_ptr<Layer> m_gameLayer;
+    std::unique_ptr<GameLayer> m_gameLayer;
     std::vector<Layer*> m_layers;
 
     std::vector<std::string> m_commandLine;

@@ -6,6 +6,13 @@
 
 namespace my {
 
+auto ScriptManager::InitializeImpl() -> Result<void> {
+    return Result<void>();
+}
+
+void ScriptManager::FinalizeImpl() {
+}
+
 void ScriptManager::Update(Scene& p_scene) {
     for (auto [entity, script] : p_scene.View<NativeScriptComponent>()) {
         // @HACK: if OnCreate() creates new NativeScriptComponents
@@ -15,7 +22,7 @@ void ScriptManager::Update(Scene& p_scene) {
         // but append
         // @TODO: [SCRUM-134] better ECS
         ScriptableEntity* instance = nullptr;
-        if (!script.instance) {
+        if (!script.instance && script.instantiateFunc) {
             instance = script.instantiateFunc();
             script.instance = instance;
 
@@ -26,7 +33,9 @@ void ScriptManager::Update(Scene& p_scene) {
             instance = script.instance;
         }
 
-        instance->OnUpdate(p_scene.m_timestep);
+        if (instance) {
+            instance->OnUpdate(p_scene.m_timestep);
+        }
     }
 }
 
@@ -44,7 +53,11 @@ void ScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Ent
 }
 
 Result<ScriptManager*> ScriptManager::Create() {
+#if 1
     return new LuaScriptManager();
+#else
+    return new ScriptManager();
+#endif
 }
 
 }  // namespace my

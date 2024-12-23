@@ -10,7 +10,7 @@ function Propeller.new(id)
 end
 
 function Propeller:OnUpdate(timestep)
-    local transform = scene.GetTransform(self.id)
+    local transform = g_scene:GetTransform(self.id)
     local rad = timestep * 10
     transform:Rotate(Vector3(rad, 0, 0))
 end

@@ -24,7 +24,6 @@ using ::my::math::Ray;
 
 static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 
-// @TODO: refactor
 #define JS_FORCE_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
     CTX.Dispatch(                                               \
         static_cast<uint32_t>(GetCount<TYPE>()),                \
@@ -467,7 +466,6 @@ ecs::Entity Scene::CreateEmitterEntity(const std::string& p_name, const Matrix4x
 
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);
-
     return entity;
 }
 
@@ -479,6 +477,15 @@ ecs::Entity Scene::CreateForceFieldEntity(const std::string& p_name, const Matri
     transform.MatrixTransform(p_transform);
 
     return entity;
+}
+
+ecs::Entity Scene::FindEntityByName(const char* p_name) {
+    for (auto [entity, name] : m_NameComponents) {
+        if (name.GetName() == p_name) {
+            return entity;
+        }
+    }
+    return ecs::Entity::INVALID;
 }
 
 void Scene::AttachChild(ecs::Entity p_child, ecs::Entity p_parent) {
@@ -795,7 +802,7 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
     unused(p_context);
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
-        emitter.Update(m_timestep);
+        emitter.aliveBufferIndex = 1 - emitter.aliveBufferIndex;
     }
 }
 

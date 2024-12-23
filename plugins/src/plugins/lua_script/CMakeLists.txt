@@ -17,6 +17,7 @@ find_path(LUABRIDGE3_INCLUDE_DIRS "luabridge3/LuaBridge/Array.h")
 target_include_directories(${TARGET_NAME} PRIVATE
     ${VCPKG_INSTALLED_DIR}/x64-windows/include
     ${VCPKG_INSTALLED_DIR}/arm64-osx/include
+    ${PROJECT_SOURCE_DIR}/thirdparty/optick
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/engine/shader
     ${LUABRIDGE3_INCLUDE_DIRS}/luabridge3

@@ -14,6 +14,9 @@
 #include "shader_resource_defines.hlsl.h"
 #include "unordered_access_defines.hlsl.h"
 
+// @TODO: remove
+#include "engine/core/framework/asset_registry.h"
+
 namespace my::renderer {
 
 /// Gbuffer
@@ -54,7 +57,7 @@ static void DrawBatchesGeometry(const DrawData& p_data, const std::vector<BatchC
 }
 
 static void GbufferPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -123,7 +126,7 @@ void RenderPassCreator::AddGbufferPass() {
 }
 
 static void HighlightPassFunc(const DrawData&, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_framebuffer);
@@ -164,7 +167,7 @@ void RenderPassCreator::AddHighlightPass() {
 
 /// Shadow
 static void PointShadowPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -194,6 +197,16 @@ static void PointShadowPassFunc(const DrawData& p_data, const Framebuffer* p_fra
 
         const PassContext& pass = *pass_ptr.get();
         for (int face_id = 0; face_id < 6; ++face_id) {
+#if USING(USE_PROFILER)
+            const auto event_name = std::format("point_shadow_pass_{}_{}", pass_id, face_id);
+            auto desc = Optick::CreateDescription(OPTICK_FUNC,
+                                                  __FILE__,
+                                                  __LINE__,
+                                                  event_name.c_str(),
+                                                  Optick::Category::None,
+                                                  Optick::EventDescription::COPY_NAME_STRING);
+            Optick::Event event(*desc);
+#endif
             const uint32_t slot = pass_id * 6 + face_id;
             gm.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
 
@@ -212,7 +225,7 @@ static void PointShadowPassFunc(const DrawData& p_data, const Framebuffer* p_fra
 }
 
 static void ShadowPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -279,11 +292,11 @@ void RenderPassCreator::AddShadowPass() {
 }
 
 static void VoxelizationPassFunc(const DrawData& p_data, const Framebuffer*) {
-    OPTICK_EVENT();
     if (p_data.voxelPass.pass_idx < 0) {
         return;
     }
 
+    HBN_PROFILE_EVENT();
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -405,7 +418,7 @@ void RenderPassCreator::AddVoxelizationPass() {
 
 /// Lighting
 static void LightingPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
     const auto [width, height] = p_framebuffer->GetBufferSize();
@@ -531,10 +544,7 @@ void RenderPassCreator::AddLightingPass() {
 
 /// Emitter
 static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    unused(p_data);
-    unused(p_framebuffer);
-#if 0
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -546,10 +556,14 @@ static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    const Scene& scene = SceneManager::GetScene();
     int particle_idx = 0;
-    for (auto [id, emitter] : scene.m_ParticleEmitterComponents) {
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx++);
+    for (const auto& emitter : p_data.emitters) {
+        if (!emitter.particleBuffer) {
+            continue;
+        }
+
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
+        ++particle_idx;
 
         gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
         gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
@@ -575,11 +589,23 @@ static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
         // Renderering
         gm.SetPipelineState(PSO_PARTICLE_RENDERING);
 
+        bool use_texture = false;
+        if (!emitter.texture.empty()) {
+            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
+            if (image && image->gpu_texture) {
+                gm.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
+                use_texture = true;
+            }
+        }
+
         gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-        RenderManager::GetSingleton().draw_quad_instanced(MAX_PARTICLE_COUNT);
+        gm.DrawQuadInstanced(MAX_PARTICLE_COUNT);
         gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
+
+        if (use_texture) {
+            gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+        }
     }
-#endif
 }
 
 void RenderPassCreator::AddEmitterPass() {
@@ -599,8 +625,8 @@ void RenderPassCreator::AddEmitterPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const DrawData&, const Framebuffer* p_framebuffer) {
-    unused(p_framebuffer);
+static void BloomSetupFunc(const DrawData&, const Framebuffer*) {
+    HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -621,6 +647,8 @@ static void BloomSetupFunc(const DrawData&, const Framebuffer* p_framebuffer) {
 }
 
 static void BloomDownSampleFunc(const DrawData&, const Framebuffer* p_framebuffer) {
+    HBN_PROFILE_EVENT();
+
     const uint32_t pass_id = p_framebuffer->id;
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
@@ -643,6 +671,8 @@ static void BloomDownSampleFunc(const DrawData&, const Framebuffer* p_framebuffe
 }
 
 static void BloomUpSampleFunc(const DrawData&, const Framebuffer* p_framebuffer) {
+    HBN_PROFILE_EVENT();
+
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     const uint32_t pass_id = p_framebuffer->id;
     auto& frame = gm.GetCurrentFrame();
@@ -751,7 +781,7 @@ void RenderPassCreator::AddBloomPass() {
 }
 
 static void DebugVoxels(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_framebuffer);
@@ -777,7 +807,7 @@ static void DebugVoxels(const DrawData& p_data, const Framebuffer* p_framebuffer
 /// Tone
 /// Change to post processing?
 static void TonePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_framebuffer);
@@ -891,7 +921,7 @@ void RenderPassCreator::AddDebugImagePass() {
     desc.dependencies = { RenderPassName::TONE };
     auto pass = m_graph.CreatePass(desc);
     pass->AddDrawPass(framebuffer, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-        OPTICK_EVENT();
+        HBN_PROFILE_EVENT();
         auto& gm = GraphicsManager::GetSingleton();
         gm.SetRenderTarget(p_framebuffer);
         gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
@@ -930,7 +960,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
             if (!p_data.bakeIbl) {
                 return;
             }
-            OPTICK_EVENT("hdr image to -> skybox");
+            HBN_PROFILE_EVENT("hdr image to -> skybox");
 
             GraphicsManager& gm = GraphicsManager::GetSingleton();
 
@@ -970,7 +1000,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
             if (!p_data.bakeIbl) {
                 return;
             }
-            OPTICK_EVENT("bake diffuse irradiance");
+            HBN_PROFILE_EVENT("bake diffuse irradiance");
 
             GraphicsManager& gm = GraphicsManager::GetSingleton();
 
@@ -1016,7 +1046,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
             if (!p_data.bakeIbl) {
                 return;
             }
-            OPTICK_EVENT("bake prefiltered");
+            HBN_PROFILE_EVENT("bake prefiltered");
 
             GraphicsManager& gm = GraphicsManager::GetSingleton();
             gm.SetPipelineState(PSO_PREFILTER);
@@ -1042,7 +1072,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
 }
 
 static void PathTracerTonePassFunc(const DrawData&, const Framebuffer* p_framebuffer) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
     gm.SetRenderTarget(p_framebuffer);

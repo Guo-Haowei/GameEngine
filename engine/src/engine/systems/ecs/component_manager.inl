@@ -138,8 +138,11 @@ bool ComponentManager<T>::Serialize(Archive& p_archive, uint32_t p_version) {
     constexpr uint64_t magic = 7165065861825654388llu;
     size_t count;
     if (p_archive.IsWriteMode()) {
-        p_archive << magic;
         count = static_cast<uint32_t>(m_componentArray.size());
+        if (count == 0) {
+            return true;
+        }
+        p_archive << magic;
         p_archive << count;
         for (auto& component : m_componentArray) {
             component.Serialize(p_archive, p_version);

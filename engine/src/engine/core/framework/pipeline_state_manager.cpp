@@ -302,10 +302,10 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     CREATE_PSO(PSO_PARTICLE_RENDERING, {
                                            .vs = "particle_draw.vs",
                                            .ps = "particle_draw.ps",
-                                           .rasterizerDesc = &s_rasterizerFrontFace,
+                                           .rasterizerDesc = &s_rasterizerDoubleSided,
                                            .depthStencilDesc = &s_depthStencilDefault,
                                            .inputLayoutDesc = &s_inputLayoutMesh,
-                                           .blendDesc = &s_blendStateDefault,
+                                           .blendDesc = &s_transparent,
                                            .numRenderTargets = 1,
                                            .rtvFormats = { RESOURCE_FORMAT_TONE },
                                            .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer

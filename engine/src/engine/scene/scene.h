@@ -7,7 +7,8 @@
 #include "engine/systems/ecs/view.h"
 // @TODO: refactor all components
 #include "engine/scene/light_component.h"
-#include "engine/scene/particle_emitter_component.h"
+
+struct lua_State;
 
 namespace my::jobsystem {
 class Context;
@@ -25,8 +26,6 @@ namespace my {
     REGISTER_COMPONENT(LightComponent, "World::LightComponent", 0)                         \
     REGISTER_COMPONENT(ArmatureComponent, "World::ArmatureComponent", 0)                   \
     REGISTER_COMPONENT(AnimationComponent, "World::AnimationComponent", 0)                 \
-    REGISTER_COMPONENT(BoxColliderComponent, "World::BoxColliderComponent", 0)             \
-    REGISTER_COMPONENT(MeshColliderComponent, "World::MeshColliderComponent", 0)           \
     REGISTER_COMPONENT(ParticleEmitterComponent, "World::ParticleEmitterComponent", 0)     \
     REGISTER_COMPONENT(ForceFieldComponent, "World::ForceFieldComponent", 0)               \
     REGISTER_COMPONENT(LuaScriptComponent, "World::LuaScriptComponent", 0)                 \
@@ -227,6 +226,8 @@ public:
 
     ecs::Entity CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
+    ecs::Entity FindEntityByName(const char* p_name);
+
     void AttachChild(ecs::Entity p_entity, ecs::Entity p_parent);
 
     void AttachChild(ecs::Entity p_entity) { AttachChild(p_entity, m_root); }
@@ -249,7 +250,8 @@ public:
     bool m_replace = false;
 
     PhysicsMode m_physicsMode{ PhysicsMode::NONE };
-    mutable PhysicsWorldContext* m_physicsWorld = nullptr;
+    mutable PhysicsWorldContext* m_physicsWorld{ nullptr };
+    mutable lua_State* L{ nullptr };
 
     const auto& GetLibraryEntries() const { return m_componentLib.m_entries; }
 

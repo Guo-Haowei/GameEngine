@@ -344,7 +344,7 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
 }
 
 void GraphicsManager::Update(Scene& p_scene) {
-    OPTICK_EVENT();
+    HBN_PROFILE_EVENT();
 
     // @TODO: make it a function
     auto loaded_images = m_loadedImages.pop_all();
@@ -362,15 +362,17 @@ void GraphicsManager::Update(Scene& p_scene) {
     }
 
     {
-        OPTICK_EVENT("Render");
+        HBN_PROFILE_EVENT("Render");
         BeginFrame();
 
         auto data = renderer::GetRenderData();
 
         for (const auto& update_buffer : data->updateBuffer) {
             GpuMesh* mesh = (GpuMesh*)update_buffer.id;
-            UpdateBuffer(renderer::CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
-            UpdateBuffer(renderer::CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
+            if (mesh) {
+                UpdateBuffer(renderer::CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
+                UpdateBuffer(renderer::CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
+            }
         }
 
         // @TODO: remove this

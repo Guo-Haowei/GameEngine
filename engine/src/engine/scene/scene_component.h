@@ -12,6 +12,7 @@ class Emitter;
 namespace my {
 
 struct GpuMesh;
+struct GpuStructuredBuffer;
 struct ImageAsset;
 struct TextAsset;
 class Archive;
@@ -394,6 +395,7 @@ public:
 
     const std::string& GetPath() const { return m_path; }
     const std::string& GetClassName() const { return m_className; }
+    int GetInstance() const { return m_instance; }
 
     std::string& GetPathRef() { return m_path; }
     std::string& GetClassNameRef() { return m_className; }
@@ -479,31 +481,22 @@ struct CollisionObjectBase {
 };
 
 struct RigidBodyComponent : CollisionObjectBase {
-    enum CollisionShape : uint8_t {
+    enum CollisionShape : uint32_t {
         SHAPE_UNKNOWN,
         SHAPE_SPHERE,
         SHAPE_CUBE,
         SHAPE_MAX,
     };
 
-    enum ObjectType : uint8_t {
+    enum ObjectType : uint32_t {
         DYNAMIC,
         GHOST,
     };
 
-    union Parameter {
-        struct {
-            Vector3f half_size;
-        } box;
-        struct {
-            float radius;
-        } sphere;
-    };
-
     CollisionShape shape{ SHAPE_UNKNOWN };
     ObjectType objectType{ DYNAMIC };
+    Vector3f size;
     float mass{ 1.0f };
-    Parameter param;
 
     RigidBodyComponent& InitCube(const Vector3f& p_half_size);
 
@@ -592,6 +585,34 @@ struct VoxelGiComponent {
 };
 #pragma endregion ENVIRONMENT_COMPONENT
 
+#pragma region PARTICLE_EMITTER_COMPONENT
+struct ParticleEmitterComponent {
+    bool gravity{ false };  // @TODO: force instead of gravity
+    int maxParticleCount{ 1000 };
+    int particlesPerFrame{ 10 };
+    float particleScale{ 1.0f };
+    float particleLifeSpan{ 3.0f };
+    Vector3f startingVelocity{ 0.0f };
+    Vector4f color{ Vector4f::One };
+    std::string texture;
+
+    // Non-Serialized
+    std::shared_ptr<GpuStructuredBuffer> particleBuffer{ nullptr };
+    std::shared_ptr<GpuStructuredBuffer> counterBuffer{ nullptr };
+    std::shared_ptr<GpuStructuredBuffer> deadBuffer{ nullptr };
+    std::shared_ptr<GpuStructuredBuffer> aliveBuffer[2]{ nullptr, nullptr };
+
+    uint32_t aliveBufferIndex{ 0 };
+
+    uint32_t GetPreIndex() const { return aliveBufferIndex; }
+    uint32_t GetPostIndex() const { return 1 - aliveBufferIndex; }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
+    static void RegisterClass();
+};
+#pragma endregion PARTICLE_EMITTER_COMPONENT
+
 #pragma region FORCE_FIELD_COMPONENT
 struct ForceFieldComponent {
     float strength{ 1.0f };
@@ -603,25 +624,6 @@ struct ForceFieldComponent {
     static void RegisterClass();
 };
 #pragma endregion FORCE_FIELD_COMPONENT
-
-/// @TODO: remove these
-struct BoxColliderComponent {
-    math::AABB box;
-
-    void Serialize(Archive& p_archive, uint32_t p_version);
-    void OnDeserialized() {}
-
-    static void RegisterClass();
-};
-
-struct MeshColliderComponent {
-    ecs::Entity objectId;
-
-    void Serialize(Archive& p_archive, uint32_t p_version);
-    void OnDeserialized() {}
-
-    static void RegisterClass();
-};
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

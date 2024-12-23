@@ -3,6 +3,7 @@
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/entity.h"
 
 // include this file the last
@@ -109,6 +110,8 @@ struct DrawData {
 
     PassContext voxelPass;
     PassContext mainPass;
+
+    std::vector<ParticleEmitterComponent> emitters;
 
     bool bakeIbl;
     std::shared_ptr<GpuTexture> skyboxHdr;

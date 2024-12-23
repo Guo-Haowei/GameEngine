@@ -73,6 +73,23 @@ void AssetRegistry::GetAssetByType(AssetType p_type, std::vector<IAsset*>& p_out
     }
 }
 
+void AssetRegistry::RemoveAsset(const std::string& p_path) {
+    std::lock_guard gurad(m_lock);
+    auto it = m_lookup.find(p_path);
+    if (it == m_lookup.end()) {
+        return;
+    }
+
+    auto val = it->second;
+    m_lookup.erase(it);
+    for (auto it2 = m_handles.begin(); it2 != m_handles.end(); ++it2) {
+        if (it2->get() == val) {
+            m_handles.erase(it2);
+            break;
+        }
+    }
+}
+
 auto AssetRegistry::RequestAssetImpl(const std::string& p_path,
                                      RequestMode p_mode,
                                      OnAssetLoadSuccessFunc p_on_success,
