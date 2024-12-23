@@ -544,7 +544,6 @@ static void FillEmitterBuffer(const RenderDataConfig& p_config,
 
         buffer.c_particleColor = emitter.color;
         buffer.c_emitterUseTexture = !emitter.texture.empty();
-        buffer.c_emitterSubUv;
         buffer.c_subUvCounter = s_counter;
 
         p_out_data.emitterCache.push_back(buffer);

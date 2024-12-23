@@ -20,7 +20,6 @@ using math::Color;
 
 static constexpr float ROCK_SIZE = 4.0f;
 static constexpr float BATTERY_SIZE = 2.0f;
-static constexpr float ENTITY_LIFE_TIME = 1.5f * glm::pi<float>() / WORLD_SPEED - 3.0f;
 static constexpr int ROCK_POOL_SIZE = 16;
 static constexpr int BATTERY_POOL_SIZE = 32;
 
