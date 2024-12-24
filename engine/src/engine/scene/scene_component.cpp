@@ -2,6 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include "engine/core/base/random.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/math/matrix_transform.h"
@@ -189,6 +190,48 @@ RigidBodyComponent& RigidBodyComponent::InitGhost() {
     return *this;
 }
 #pragma endregion RIGID_BODY_COMPONENT
+
+#pragma region MESH_EMITTER_COMPONENT
+void MeshEmitterComponent::Reset() {
+    if (particles.size() != maxMeshCount) {
+        particles.resize(maxMeshCount);
+    }
+
+    deadList.clear();
+    deadList.reserve(maxMeshCount);
+    for (int i = 0; i < maxMeshCount; ++i) {
+        deadList.emplace_back(i);
+    }
+}
+
+void MeshEmitterComponent::InitParticle(int p_index, const Vector3f& p_position) {
+    DEV_ASSERT(p_index < particles.size());
+    auto& p = particles[p_index];
+
+    Vector3f initial_speed{ 0 };
+    initial_speed.x += Random::Float(vxRange.x, vxRange.y);
+    initial_speed.y += Random::Float(vyRange.x, vyRange.y);
+    initial_speed.z += Random::Float(vzRange.x, vzRange.y);
+    p.Init(Random::Float(lifetimeRange.x, lifetimeRange.y),
+           p_position,
+           initial_speed);
+}
+
+void MeshEmitterComponent::UpdateParticle(int p_index, float p_timestep) {
+    DEV_ASSERT(p_index < particles.size());
+    auto& p = particles[p_index];
+    DEV_ASSERT(p.lifespan > 0.0f);
+    // @TODO: better force
+    p.position += p.velocity;
+
+    p.velocity.x -= (1 - p_timestep);
+    p.velocity.z *= (1 - p_timestep);
+    p.velocity.y -= p_timestep * 0.5f;
+
+    p.lifespan -= p_timestep;
+}
+
+#pragma endregion MESH_EMITTER_COMPONENT
 
 #pragma region SOFT_BODY_COMPONENT
 #pragma endregion SOFT_BODY_COMPONENT

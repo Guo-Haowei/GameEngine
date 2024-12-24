@@ -4,6 +4,7 @@
 #include "engine/core/io/archive.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scene_system.h"
 #include "engine/systems/ecs/component_manager.inl"
 #include "engine/systems/job_system/job_system.h"
 
@@ -56,6 +57,8 @@ void Scene::Update(float p_time_step) {
     // hierarchy, update world matrix based on hierarchy
     RunHierarchyUpdateSystem(ctx);
     ctx.Wait();
+    // mesh particles
+    RunMeshEmitterUpdateSystem(ctx);
     // particle
     RunParticleEmitterUpdateSystem(ctx);
     // armature
@@ -803,6 +806,15 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
         emitter.aliveBufferIndex = 1 - emitter.aliveBufferIndex;
+    }
+}
+
+void Scene::RunMeshEmitterUpdateSystem(jobsystem::Context& p_context) {
+    for (auto [id, emitter] : m_MeshEmitterComponents) {
+        const TransformComponent* transform = GetComponent<TransformComponent>(id);
+        if (DEV_VERIFY(transform)) {
+            UpdateMeshEmitter(m_timestep, *transform, emitter);
+        }
     }
 }
 

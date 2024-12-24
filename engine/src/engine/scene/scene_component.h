@@ -613,6 +613,55 @@ struct ParticleEmitterComponent {
 };
 #pragma endregion PARTICLE_EMITTER_COMPONENT
 
+#pragma region MESH_EMITTER_COMPONENT
+struct MeshEmitterComponent {
+    enum : uint32_t {
+        NONE = BIT(0),
+        PAUSED = BIT(1),
+        RECYCLE = BIT(2),
+    };
+
+    struct Particle {
+        Vector3f position;
+        float lifespan;
+        Vector3f rotation;
+        Vector3f scale;
+        Vector3f velocity;
+        Vector3f angularVelocity;
+
+        void Init(float p_lifespan,
+                  const Vector3f& p_position,
+                  const Vector3f& p_velocity) {
+            position = p_position;
+            lifespan = p_lifespan;
+            velocity = p_velocity;
+        }
+    };
+
+    uint32_t flags{ NONE };
+    int maxMeshCount{ 100 };
+    int emissionPerFrame{ 1 };
+    ecs::Entity meshId;
+    Vector3f gravity{ 0 };
+    Vector2f vxRange{ 0 };
+    Vector2f vyRange{ 0 };
+    Vector2f vzRange{ 0 };
+    Vector2f lifetimeRange{ 3, 3 };
+
+    std::vector<Particle> particles;
+    std::vector<uint32_t> deadList;
+    std::vector<uint32_t> aliveList;
+
+    void InitParticle(int p_index, const Vector3f& p_position);
+    void UpdateParticle(int p_index, float p_timestep);
+    void Reset();
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() {}
+    static void RegisterClass();
+};
+#pragma endregion MESH_EMITTER_COMPONENT
+
 #pragma region FORCE_FIELD_COMPONENT
 struct ForceFieldComponent {
     float strength{ 1.0f };
