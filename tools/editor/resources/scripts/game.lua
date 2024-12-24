@@ -4,15 +4,23 @@ local g = require('@res://scripts/constants.lua')
 Game = {}
 Game.__index = Game
 
+-- @TODO: refactor
+string.starts_with = function(str, prefix)
+    return string.sub(str, 1, string.len(prefix)) == prefix
+end
+
 function Game.new()
     local self = setmetatable({}, Game)
 
     local battery_pool = {}
     local rock_pool = {}
+    local battery_particle = {}
+    local rock_particle = {}
 
     local scripts = g_scene:GetAllLuaScripts()
     for i = 1, #scripts do
-        local script = g_scene:GetScript(scripts[i])
+        local id = scripts[i]
+        local script = g_scene:GetScript(id)
         local ref = script:GetRef()
         local class = script:GetClass()
         if class == 'Battery' then
@@ -23,13 +31,56 @@ function Game.new()
             local object = debug.getregistry()[ref]
             rock_pool[#rock_pool + 1] = object
         end
+        if class == 'Particle' then
+            local object = debug.getregistry()[ref]
+            local name = g_scene:GetName(id)
+            if string.starts_with(name, 'battery') then
+                battery_particle[#battery_particle + 1] = object
+            elseif string.starts_with(name, 'rock') then
+                rock_particle[#rock_particle + 1] = object
+            else
+                error('unknown particle ' .. name)
+            end
+        end
     end
 
     self.time = 0
     self.batteries = { name = 'battery', dead = battery_pool, alive = {}, last_spawn = 0, interval = 1 }
     self.rocks = { name = 'rock', dead = rock_pool, alive = {}, last_spawn = 0, interval = 1 }
+    self.rock_particle = { dead = rock_particle, alive = {} }
+    self.battery_particle = { dead = battery_particle, alive = {} }
     self.angle = 0
+    
+    Game.instance = self
     return self
+end
+
+function Game:RequestParticle(count, position, name)
+    local dead = self[name].dead
+    local alive = self[name].alive
+    for i = 1, count do
+        local item = table.remove(dead)
+        if not item then
+            engine.log('failed to allocate [' .. name .. '], consider increase the capacity')
+            break
+        end
+
+        local vx = math.random() * 3 - 1.5
+        local vy = math.random() - 0.5
+        local vz = math.random() * 3 - 1.5
+        item.velocity = Vector3(vx, vy, vz)
+        item.life_time = g.PARTICLE_LIFE_TIME
+        item.sacle = 0.5
+        item.rotation = Vector3(math.random(), math.random(), math.random())
+
+        local transform = g_scene:GetTransform(item.id)
+
+        transform:SetTranslation(Vector3(
+            position.x,
+            position.y + g.OCEAN_RADIUS,
+            position.z))
+        alive[#alive + 1] = item
+    end
 end
 
 function Game:OnUpdate(timestep)
@@ -43,7 +94,7 @@ function Game:OnUpdate(timestep)
 
         local count = 1
         if type.name == 'battery' then
-            count = 2 + math.floor(math.random(0, 3))
+            count = 3 + math.random(0, 2)
         end
 
         offset = offset + math.random(-3, 3)
@@ -51,11 +102,11 @@ function Game:OnUpdate(timestep)
         for i = 1, count do
             local item = table.remove(type.dead)
             if not item then
-                engine.Log('failed to allocate [' .. type.name .. ']')
+                engine.log('failed to allocate [' .. type.name .. '], consider increase the capacity')
                 return
             end
 
-            item.life_time = 12
+            item.life_time = g.ENTITY_LIFE_TIME
             local transform = g_scene:GetTransform(item.id)
             local angle = self.angle + math.rad(offset)
             d = d + math.random(-2, 2)
@@ -93,4 +144,14 @@ function Game:OnUpdate(timestep)
 
     recycle(self.batteries)
     recycle(self.rocks)
+    recycle(self.battery_particle)
+    recycle(self.rock_particle)
+end
+
+function Game.RequestRockParticle(position)
+    Game.instance:RequestParticle(8, position, 'rock_particle')
+end
+
+function Game.RequestBatteryParticle(position)
+    Game.instance:RequestParticle(6, position, 'battery_particle')
 end

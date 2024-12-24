@@ -50,10 +50,15 @@ enum : uint32_t {
     COLLISION_BIT_BATTERY = BIT(3),
 };
 
+#define USE_DEBUG_CAMERA NOT_IN_USE
+
 static constexpr float ROCK_SIZE = 4.0f;
 static constexpr float BATTERY_SIZE = 2.0f;
-static constexpr int ROCK_POOL_SIZE = 24;
-static constexpr int BATTERY_POOL_SIZE = 96;
+static constexpr float PARTICLE_SIZE = 1.0f;
+static constexpr int ROCK_POOL_SIZE = 16;
+static constexpr int BATTERY_POOL_SIZE = 32;
+static constexpr int ROCK_PARTICLE_POOL_SIZE = 12;
+static constexpr int BATTERY_PARTICLE_POOL_SIZE = 48;
 static constexpr float OCEAN_RADIUS = 240.0f;
 static constexpr int CLOUD_COUNT = 20;
 
@@ -256,7 +261,7 @@ Scene* CreateTheAviatorScene() {
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
 
-#if 0
+#if USING(USE_DEBUG_CAMERA)
         camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 400.0f));
         camera->SetPrimary();
         class InGameDebugCameraController : public EditorCameraController {
@@ -347,26 +352,38 @@ Scene* CreateTheAviatorScene() {
     }
 #pragma endregion SETUP_MATERIALS
     // battery mesh
-    ecs::Entity battery_mesh = scene->CreateMeshEntity("battery_mesh");
+    auto battery_mesh = scene->CreateMeshEntity("battery_mesh");
+    auto battery_particle_mesh = scene->CreateMeshEntity("battery_particle_mesh");
+    auto battery_material = scene->CreateMaterialEntity("battery_material");
     {
         MeshComponent* mesh = scene->GetComponent<MeshComponent>(battery_mesh);
         *mesh = MakeTetrahedronMesh(BATTERY_SIZE);
 
-        ecs::Entity material_id = scene->CreateMaterialEntity("battery_material");
-        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_id);
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(battery_material);
         material->baseColor = Vector4f(BLUE_COLOR.r, BLUE_COLOR.g, BLUE_COLOR.b, 1.0f);
-        mesh->subsets[0].material_id = material_id;
+        mesh->subsets[0].material_id = battery_material;
     }
-    // rock mesh
-    ecs::Entity rock_mesh = scene->CreateMeshEntity("rock_mesh");
+    {
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(battery_particle_mesh);
+        *mesh = MakeTetrahedronMesh(PARTICLE_SIZE);
+        mesh->subsets[0].material_id = battery_material;
+    }
+    // rock
+    auto rock_mesh = scene->CreateMeshEntity("rock_mesh");
+    auto rock_particle_mesh = scene->CreateMeshEntity("rock_particle_mesh");
+    auto rock_material = scene->CreateMaterialEntity("rock_material");
     {
         MeshComponent* mesh = scene->GetComponent<MeshComponent>(rock_mesh);
         *mesh = MakeSphereMesh(ROCK_SIZE, 6, 6);
 
-        ecs::Entity material_id = scene->CreateMaterialEntity("rock_material");
-        MaterialComponent* material = scene->GetComponent<MaterialComponent>(material_id);
+        MaterialComponent* material = scene->GetComponent<MaterialComponent>(rock_material);
         material->baseColor = Vector4f(RED_COLOR.r, RED_COLOR.g, RED_COLOR.b, 1.0f);
-        mesh->subsets[0].material_id = material_id;
+        mesh->subsets[0].material_id = rock_material;
+    }
+    {
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(rock_particle_mesh);
+        *mesh = MakeTetrahedronMesh(PARTICLE_SIZE * 2.0f);
+        mesh->subsets[0].material_id = rock_material;
     }
 #pragma region SETUP_PLANE
     // create plane
@@ -579,6 +596,64 @@ Scene* CreateTheAviatorScene() {
     }
 #pragma endregion SETUP_OCEAN
 
+#pragma region SETUP_GAME_OBJECTS
+    {
+        auto generator = scene->CreateTransformEntity("generator");
+        scene->AttachChild(generator, earth);
+        for (int i = 0; i < ROCK_POOL_SIZE; ++i) {
+            auto id = scene->CreateObjectEntity(std::format("rock_{}", i));
+            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            object->meshId = rock_mesh;
+            auto& rigid_body = scene->Create<RigidBodyComponent>(id)
+                                   .InitSphere(0.5f * ROCK_SIZE);
+            rigid_body.collisionType = COLLISION_BIT_ROCK;
+            rigid_body.collisionMask = COLLISION_BIT_PLAYER;
+
+            scene->Create<LuaScriptComponent>(id)
+                .SetClassName("Rock")
+                .SetPath("@res://scripts/rock.lua");
+            scene->AttachChild(id, generator);
+        }
+
+        for (int i = 0; i < BATTERY_POOL_SIZE; ++i) {
+            auto id = scene->CreateObjectEntity(std::format("battery_{}", i));
+            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            object->meshId = battery_mesh;
+            auto& rigid_body = scene->Create<RigidBodyComponent>(id)
+                                   .InitSphere(0.5f * ROCK_SIZE);
+            rigid_body.collisionType = COLLISION_BIT_BATTERY;
+            rigid_body.collisionMask = COLLISION_BIT_PLAYER;
+
+            scene->Create<LuaScriptComponent>(id)
+                .SetClassName("Battery")
+                .SetPath("@res://scripts/battery.lua");
+            scene->AttachChild(id, generator);
+        }
+
+        auto particle_wrapper = scene->CreateTransformEntity("particles");
+        scene->AttachChild(particle_wrapper, world);
+        for (int i = 0; i < ROCK_PARTICLE_POOL_SIZE; ++i) {
+            auto id = scene->CreateObjectEntity(std::format("rock_particle_{}", i));
+            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            object->meshId = rock_particle_mesh;
+            scene->Create<LuaScriptComponent>(id)
+                .SetClassName("Particle")
+                .SetPath("@res://scripts/particle.lua");
+            scene->AttachChild(id, particle_wrapper);
+        }
+
+        for (int i = 0; i < BATTERY_PARTICLE_POOL_SIZE; ++i) {
+            auto id = scene->CreateObjectEntity(std::format("battery_particle_{}", i));
+            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            object->meshId = battery_particle_mesh;
+            scene->Create<LuaScriptComponent>(id)
+                .SetClassName("Particle")
+                .SetPath("@res://scripts/particle.lua");
+            scene->AttachChild(id, particle_wrapper);
+        }
+    }
+#pragma endregion SETUP_GAME_OBJECTS
+
 #pragma region SETUP_SKY
     constexpr float TWO_PI = 2.0f * glm::pi<float>();
     auto create_cloud = [&](int p_index, ecs::Entity p_parent) {
@@ -616,42 +691,6 @@ Scene* CreateTheAviatorScene() {
         create_cloud(cloud_index, cloud);
     }
 #pragma endregion SETUP_SKY
-
-#pragma region SETUP_GAME_OBJECTS
-    {
-        auto generator = scene->CreateTransformEntity("generator");
-        scene->AttachChild(generator, earth);
-        for (int i = 0; i < ROCK_POOL_SIZE; ++i) {
-            auto id = scene->CreateObjectEntity(std::format("rock_{}", ++i));
-            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
-            object->meshId = rock_mesh;
-            auto& rigid_body = scene->Create<RigidBodyComponent>(id)
-                                   .InitSphere(0.5f * ROCK_SIZE);
-            rigid_body.collisionType = COLLISION_BIT_ROCK;
-            rigid_body.collisionMask = COLLISION_BIT_PLAYER;
-
-            scene->Create<LuaScriptComponent>(id)
-                .SetClassName("Rock")
-                .SetPath("@res://scripts/rock.lua");
-            scene->AttachChild(id, generator);
-        }
-
-        for (int i = 0; i < BATTERY_POOL_SIZE; ++i) {
-            auto id = scene->CreateObjectEntity(std::format("battery_{}", ++i));
-            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
-            object->meshId = battery_mesh;
-            auto& rigid_body = scene->Create<RigidBodyComponent>(id)
-                                   .InitSphere(0.5f * ROCK_SIZE);
-            rigid_body.collisionType = COLLISION_BIT_BATTERY;
-            rigid_body.collisionMask = COLLISION_BIT_PLAYER;
-
-            scene->Create<LuaScriptComponent>(id)
-                .SetClassName("Battery")
-                .SetPath("@res://scripts/battery.lua");
-            scene->AttachChild(id, generator);
-        }
-    }
-#pragma endregion SETUP_GAME_OBJECTS
 
     {
         auto id = scene->CreateEnvironmentEntity("environment");

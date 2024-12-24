@@ -123,11 +123,12 @@ bool OpenDisplayLib(lua_State* L) {
 bool OpenEngineLib(lua_State* L) {
     luabridge::getGlobalNamespace(L)
         .beginNamespace("engine")
-        .addFunction("Log", [](const char* p_message) {
+        .addFunction("log", [](const char* p_message) {
             LogImpl(LOG_LEVEL_NORMAL, "{}", p_message);
         })
-        .addFunction("Assert", [](bool p_statement) {
-            DEV_ASSERT(p_statement);
+        .addFunction("error", [](const char* p_file, int p_line, const char* p_error) {
+            ReportErrorImpl("lua_function", p_file, p_line, p_error);
+            GENERATE_TRAP();                                                                                    
         })
         .endNamespace();
     return true;
@@ -152,7 +153,9 @@ bool OpenSceneLib(lua_State* L) {
     // TransformComponent
     luabridge::getGlobalNamespace(L)
         .beginClass<TransformComponent>("TransformComponent")
-        .addFunction("Translate", &TransformComponent::Translate)
+        .addFunction("Translate", [](TransformComponent& p_transform, const Vector3f& p_translation) {
+            p_transform.Translate(p_translation);
+        })
         .addFunction("GetTranslation", [](TransformComponent& p_transform) -> Vector3f {
             return p_transform.GetTranslation();
         })
@@ -204,6 +207,10 @@ bool OpenSceneLib(lua_State* L) {
 
     luabridge::getGlobalNamespace(L)
         .beginClass<Scene>("Scene")
+        .addFunction("GetName", [](Scene* p_scene, uint32_t p_entity) {
+            auto ret = p_scene->GetComponent<NameComponent>(ecs::Entity(p_entity));
+            return ret->GetName();
+        })
         .addFunction("GetTransform", [](Scene* p_scene, uint32_t p_entity) {
             return p_scene->GetComponent<TransformComponent>(ecs::Entity(p_entity));
         })

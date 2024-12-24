@@ -41,3 +41,5 @@ files:
     type: Text
   - path: "@res://scripts/rock.lua"
     type: Text
+  - path: "@res://scripts/particle.lua"
+    type: Text

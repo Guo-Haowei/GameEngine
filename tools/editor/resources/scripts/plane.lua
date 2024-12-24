@@ -64,7 +64,7 @@ function Plane:OnCollision(other)
         dist:normalize()
         self.speed = Vector2(30 * dist.x, 30 * dist.y)
     elseif type == 4 then
-        engine.Log('Battery!')
+        -- engine.log('Battery!')
     else
         error('Unknown type ' .. type)
     end
