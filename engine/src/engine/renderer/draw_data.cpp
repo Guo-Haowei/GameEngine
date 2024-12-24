@@ -98,7 +98,7 @@ static void FillPass(const RenderDataConfig& p_config,
 
         PerBatchConstantBuffer batch_buffer;
         batch_buffer.c_worldMatrix = world_matrix;
-        batch_buffer.c_hasAnimation = mesh.armatureId.IsValid();
+        batch_buffer.c_meshFlag = mesh.armatureId.IsValid();
 
         BatchContext draw;
         draw.flags = 0;
@@ -517,8 +517,58 @@ static void FillBloomConstants(const RenderDataConfig& p_config,
     }
 }
 
-static void FillEmitterBuffer(const RenderDataConfig& p_config,
-                              DrawData& p_out_data) {
+static void FillMeshEmitterBuffer(const RenderDataConfig& p_config,
+                                  DrawData& p_out_data) {
+    const Scene& scene = p_config.scene;
+    for (auto [id, emitter] : scene.m_MeshEmitterComponents) {
+        auto transform = scene.GetComponent<TransformComponent>(id);
+        auto mesh = scene.GetComponent<MeshComponent>(emitter.meshId);
+        if (DEV_VERIFY(transform && mesh)) {
+            PerBatchConstantBuffer batch_buffer;
+            batch_buffer.c_worldMatrix = transform->GetWorldMatrix();
+            batch_buffer.c_meshFlag = MESH_HAS_INSTANCE;
+
+            BatchContext draw;
+            draw.flags = STENCIL_FLAG_SELECTED;
+
+            auto& position_buffer = p_out_data.boneCache.buffer;
+
+            InstanceContext instance;
+            instance.gpuMesh = mesh->gpuResource.get();
+            instance.indexCount = (uint32_t)mesh->indices.size();
+            instance.indexOffset = 0;
+            instance.instanceCount = (uint32_t)emitter.aliveList.size();
+            instance.batchIdx = p_out_data.batchCache.FindOrAdd(id, batch_buffer);
+            instance.instanceBufferIndex = (int)position_buffer.size();
+            auto material_id = mesh->subsets[0].material_id;
+            auto material = scene.GetComponent<MaterialComponent>(material_id);
+            DEV_ASSERT(material);
+            MaterialConstantBuffer material_buffer;
+            FillMaterialConstantBuffer(p_config.isOpengl, material, material_buffer);
+            instance.materialIdx = p_out_data.materialCache.FindOrAdd(material_id, material_buffer);
+
+            // @HACK: use bone cache
+            DEV_ASSERT(instance.instanceCount <= MAX_BONE_COUNT);
+            position_buffer.resize(position_buffer.size() + 1);
+            auto& gpu_buffer = position_buffer.back();
+            int i = 0;
+            for (auto index : emitter.aliveList) {
+                const auto& particle = emitter.particles[index.v];
+
+                Matrix4x4f translation = math::Translate(particle.position);
+                gpu_buffer.c_bones[i++] = translation;
+                // Matrix4x4f rotationMatrix = glm::toMat4(Quaternion(m_rotation.w, m_rotation.x, m_rotation.y, m_rotation.z));
+                // Matrix4x4f scaleMatrix = math::Scale(m_scale);
+                // return translationMatrix * rotationMatrix * scaleMatrix;
+            }
+
+            p_out_data.instances.push_back(instance);
+        }
+    }
+}
+
+static void FillParticleEmitterBuffer(const RenderDataConfig& p_config,
+                                      DrawData& p_out_data) {
     // @TODO: engine->get frame
     static int s_counter = -1;
     s_counter++;
@@ -601,9 +651,10 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     FillLightBuffer(p_config, p_out_data);
     FillMainPass(p_config, p_out_data);
     FillVoxelPass(p_config, p_out_data);
+    FillMeshEmitterBuffer(p_config, p_out_data);
     FillBloomConstants(p_config, p_out_data);
     FillEnvConstants(p_config, p_out_data);
-    FillEmitterBuffer(p_config, p_out_data);
+    FillParticleEmitterBuffer(p_config, p_out_data);
 }
 
 }  // namespace my::renderer

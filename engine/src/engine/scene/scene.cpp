@@ -810,6 +810,8 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
 }
 
 void Scene::RunMeshEmitterUpdateSystem(jobsystem::Context& p_context) {
+    unused(p_context);
+
     for (auto [id, emitter] : m_MeshEmitterComponents) {
         const TransformComponent* transform = GetComponent<TransformComponent>(id);
         if (DEV_VERIFY(transform)) {

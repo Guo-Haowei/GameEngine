@@ -617,7 +617,7 @@ struct ParticleEmitterComponent {
 struct MeshEmitterComponent {
     enum : uint32_t {
         NONE = BIT(0),
-        PAUSED = BIT(1),
+        RUNNING = BIT(1),
         RECYCLE = BIT(2),
     };
 
@@ -648,16 +648,24 @@ struct MeshEmitterComponent {
     Vector2f vzRange{ 0 };
     Vector2f lifetimeRange{ 3, 3 };
 
+    // Non Serialized
     std::vector<Particle> particles;
-    std::vector<uint32_t> deadList;
-    std::vector<uint32_t> aliveList;
+    // use this to avoid feeding wrong index
+    struct Index {
+        uint32_t v;
+    };
+    std::vector<Index> deadList;
+    std::vector<Index> aliveList;
 
-    void InitParticle(int p_index, const Vector3f& p_position);
-    void UpdateParticle(int p_index, float p_timestep);
+    bool IsRunning() const { return flags & RUNNING; }
+    bool IsRecycle() const { return flags & RECYCLE; }
+
+    void InitParticle(Index p_index, const Vector3f& p_position);
+    void UpdateParticle(Index p_index, float p_timestep);
     void Reset();
 
     void Serialize(Archive& p_archive, uint32_t p_version);
-    void OnDeserialized() {}
+    void OnDeserialized() { Reset(); }
     static void RegisterClass();
 };
 #pragma endregion MESH_EMITTER_COMPONENT

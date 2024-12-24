@@ -32,6 +32,10 @@
 #define MAX_PARTICLE_COUNT    1048576
 #define MAX_FORCE_FIELD_COUNT 64
 
+// mesh defines
+#define MESH_HAS_BONE     (1)
+#define MESH_HAS_INSTANCE (2)
+
 // compute local sizes
 #define COMPUTE_LOCAL_SIZE_VOXEL 4
 

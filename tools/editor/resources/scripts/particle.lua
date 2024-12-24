@@ -22,7 +22,6 @@ function Particle:OnUpdate(timestep)
 
     local transform = g_scene:GetTransform(self.id)
 
-    print(self.velocity.x, self.velocity.y)
     transform:Translate(self.velocity)
 
     local s = self.life_time / g.PARTICLE_LIFE_TIME

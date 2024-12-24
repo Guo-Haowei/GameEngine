@@ -27,7 +27,15 @@ public:
         return Vector4f(r, g, b, a);
     }
 
-    static Color Hex(uint32_t hex);
+    static constexpr Color Hex(uint32_t p_hex) {
+        float b = (p_hex & 0xFF) / 255.0f;
+        p_hex >>= 8;
+        float g = (p_hex & 0xFF) / 255.0f;
+        p_hex >>= 8;
+        float r = (p_hex & 0xFF) / 255.0f;
+        return Color(r, g, b, 1.0f);
+    }
+
     static Color HexRgba(uint32_t hex);
 };
 

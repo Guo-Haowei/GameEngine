@@ -94,7 +94,7 @@ CBUFFER(PerBatchConstantBuffer, 0) {
 
     Vector2f _per_batch_padding_0;
     float c_envPassRoughness;  // for environment map
-    int c_hasAnimation;
+    int c_meshFlag;
 
     Vector4f _per_batch_padding_1;
     Vector4f _per_batch_padding_2;

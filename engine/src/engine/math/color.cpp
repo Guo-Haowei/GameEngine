@@ -22,14 +22,14 @@ uint32_t Color::ToRgba() const {
     return c;
 }
 
-Color Color::Hex(uint32_t hex) {
-    float b = (hex & 0xFF) / 255.0f;
-    hex >>= 8;
-    float g = (hex & 0xFF) / 255.0f;
-    hex >>= 8;
-    float r = (hex & 0xFF) / 255.0f;
-    return Color(r, g, b, 1.0f);
-}
+// Color Color::Hex(uint32_t hex) {
+//     float b = (hex & 0xFF) / 255.0f;
+//     hex >>= 8;
+//     float g = (hex & 0xFF) / 255.0f;
+//     hex >>= 8;
+//     float r = (hex & 0xFF) / 255.0f;
+//     return Color(r, g, b, 1.0f);
+// }
 
 Color Color::HexRgba(uint32_t hex) {
     float a = (hex & 0xFF) / 255.0f;

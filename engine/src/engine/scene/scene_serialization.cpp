@@ -688,6 +688,17 @@ void ParticleEmitterComponent::Serialize(Archive& p_archive, uint32_t) {
     p_archive.ArchiveValue(texture);
 }
 
+void MeshEmitterComponent::Serialize(Archive& p_archive, uint32_t) {
+    unused(p_archive);
+    CRASH_NOW();
+}
+
+void MeshEmitterComponent::RegisterClass() {
+    BEGIN_REGISTRY(MeshEmitterComponent);
+    // REGISTER_FIELD(MeshEmitterComponent, "texture", texture);
+    END_REGISTRY(MeshEmitterComponent);
+}
+
 void ForceFieldComponent::Serialize(Archive& p_archive, uint32_t) {
     p_archive.ArchiveValue(strength);
     p_archive.ArchiveValue(radius);

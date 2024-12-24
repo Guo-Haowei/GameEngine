@@ -204,9 +204,9 @@ void MeshEmitterComponent::Reset() {
     }
 }
 
-void MeshEmitterComponent::InitParticle(int p_index, const Vector3f& p_position) {
-    DEV_ASSERT(p_index < particles.size());
-    auto& p = particles[p_index];
+void MeshEmitterComponent::InitParticle(Index p_index, const Vector3f& p_position) {
+    DEV_ASSERT(p_index.v < particles.size());
+    auto& p = particles[p_index.v];
 
     Vector3f initial_speed{ 0 };
     initial_speed.x += Random::Float(vxRange.x, vxRange.y);
@@ -217,16 +217,19 @@ void MeshEmitterComponent::InitParticle(int p_index, const Vector3f& p_position)
            initial_speed);
 }
 
-void MeshEmitterComponent::UpdateParticle(int p_index, float p_timestep) {
-    DEV_ASSERT(p_index < particles.size());
-    auto& p = particles[p_index];
-    DEV_ASSERT(p.lifespan > 0.0f);
+void MeshEmitterComponent::UpdateParticle(Index p_index, float p_timestep) {
+    DEV_ASSERT(p_index.v < particles.size());
+    auto& p = particles[p_index.v];
+    DEV_ASSERT(p.lifespan >= 0.0f);
+
     // @TODO: better force
     p.position += p.velocity;
 
-    p.velocity.x -= (1 - p_timestep);
+    p.velocity.x *= (1 - p_timestep);
     p.velocity.z *= (1 - p_timestep);
-    p.velocity.y -= p_timestep * 0.5f;
+    // p.velocity.y -= p_timestep * 0.5f;
+
+    // LOG("position is {} {} {}", p.position.x, p.position.y, p.position.z);
 
     p.lifespan -= p_timestep;
 }

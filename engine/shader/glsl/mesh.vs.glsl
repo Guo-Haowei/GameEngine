@@ -12,7 +12,7 @@ out struct PS_INPUT {
 
 void main() {
     mat4 world_matrix;
-    if (c_hasAnimation == 0) {
+    if (c_meshFlag == 0) {
         world_matrix = c_worldMatrix;
     } else {
         mat4 bone_matrix = c_bones[in_bone_id.x] * in_bone_weight.x;
