@@ -9,7 +9,6 @@ class Scene;
 
 namespace my::lua {
 
-// @TODO: create a namespace
 #define LUA_GLOBAL_SCENE  "g_scene"
 
 void SetPreloadFunc(lua_State* L);

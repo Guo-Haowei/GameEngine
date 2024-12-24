@@ -1,7 +1,7 @@
 -- file: constants.lua
 local M = {}
 
-M.ENTITY_LIFE_TIME = 12
+M.ENTITY_LIFE_TIME = 8
 M.WORLD_SPEED = 0.3
 M.OCEAN_RADIUS = 240
 M.MIN_HEIGHT = 15

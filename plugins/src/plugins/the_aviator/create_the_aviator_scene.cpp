@@ -52,8 +52,8 @@ enum : uint32_t {
 
 static constexpr float ROCK_SIZE = 4.0f;
 static constexpr float BATTERY_SIZE = 2.0f;
-static constexpr int ROCK_POOL_SIZE = 16;
-static constexpr int BATTERY_POOL_SIZE = 32;
+static constexpr int ROCK_POOL_SIZE = 24;
+static constexpr int BATTERY_POOL_SIZE = 96;
 static constexpr float OCEAN_RADIUS = 240.0f;
 static constexpr int CLOUD_COUNT = 20;
 
@@ -255,10 +255,10 @@ Scene* CreateTheAviatorScene() {
 
         auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
         DEV_ASSERT(camera);
+
+#if 0
         camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 400.0f));
         camera->SetPrimary();
-
-#if 1
         class InGameDebugCameraController : public EditorCameraController {
         public:
             InGameDebugCameraController() {
@@ -268,6 +268,8 @@ Scene* CreateTheAviatorScene() {
         };
         scene->Create<NativeScriptComponent>(main_camera).Bind<InGameDebugCameraController>();
 #else
+        camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 80.0f));
+        camera->SetPrimary();
         scene->Create<LuaScriptComponent>(main_camera)
             .SetClassName("Camera")
             .SetPath("@res://scripts/camera.lua");

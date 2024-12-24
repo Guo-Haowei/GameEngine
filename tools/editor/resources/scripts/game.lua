@@ -25,43 +25,52 @@ function Game.new()
         end
     end
 
-    self.last_spawn = 0.0
-    self.time = 0.0
-    self.batteries = { dead = battery_pool, alive = {} }
-    self.rocks = { dead = rock_pool, alive = {} }
+    self.time = 0
+    self.batteries = { name = 'battery', dead = battery_pool, alive = {}, last_spawn = 0, interval = 1 }
+    self.rocks = { name = 'rock', dead = rock_pool, alive = {}, last_spawn = 0, interval = 1 }
+    self.angle = 0
     return self
 end
 
 function Game:OnUpdate(timestep)
     self.time = self.time + timestep
+    self.angle = self.angle + timestep * g.WORLD_SPEED
 
     local function spawn(type, offset)
-        local item = table.remove(type.dead)
-        if not item then
-            return false
+        if self.time - type.last_spawn < type.interval then
+            return
         end
 
-        item.life_time = 12
-        local transform = g_scene:GetTransform(item.id)
-        local angle = self.time * g.WORLD_SPEED
-        local d = g.OCEAN_RADIUS + math.random(g.MIN_HEIGHT, g.MAX_HEIGHT)
-        angle = math.deg(angle) - offset
-        local translation = Vector3(d * math.sin(angle), d * math.cos(angle), 0)
-        transform:SetTranslation(translation)
+        local count = 1
+        if type.name == 'battery' then
+            count = 2 + math.floor(math.random(0, 3))
+        end
 
-        type.alive[#type.alive + 1] = item
-        return true
+        offset = offset + math.random(-3, 3)
+        local d = g.OCEAN_RADIUS + math.random(g.MIN_HEIGHT, g.MAX_HEIGHT)
+        for i = 1, count do
+            local item = table.remove(type.dead)
+            if not item then
+                engine.Log('failed to allocate [' .. type.name .. ']')
+                return
+            end
+
+            item.life_time = 12
+            local transform = g_scene:GetTransform(item.id)
+            local angle = self.angle + math.rad(offset)
+            d = d + math.random(-2, 2)
+            offset = offset + 2
+            local translation = Vector3(d * math.sin(angle), d * math.cos(angle), 0)
+            transform:SetTranslation(translation)
+            type.alive[#type.alive + 1] = item
+        end
+
+        type.last_spawn = self.time
     end
 
     -- spawn new items
-    if self.time - self.last_spawn > 1 then
-        if spawn(self.batteries, 60) then
-           self.last_spawn = self.time
-        end
-        if spawn(self.rocks, 85) then
-            self.last_spawn = self.time
-        end
-    end
+    spawn(self.batteries, 40)
+    spawn(self.rocks, 50)
 
     -- recycle dead items
     local function recycle(type)
