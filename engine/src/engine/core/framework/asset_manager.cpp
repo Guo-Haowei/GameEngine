@@ -104,6 +104,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
         GraphicsManager::GetSingleton().RequestTexture(image);
     }
 
+    LOG_VERBOSE("asset {} loaded", asset->meta.path);
     return asset;
 }
 

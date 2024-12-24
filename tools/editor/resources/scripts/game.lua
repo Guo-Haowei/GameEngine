@@ -1,3 +1,6 @@
+-- file: game.lua
+local g = require('@res://scripts/constants.lua')
+
 Game = {}
 Game.__index = Game
 
@@ -33,12 +36,6 @@ function Game:OnUpdate(timestep)
     self.time = self.time + timestep
 
     local function spawn(type, offset)
-        local ENTITY_LIFE_TIME = 12
-        local WORLD_SPEED = 0.3
-        local OCEAN_RADIUS = 240.0
-        local MIN_HEIGHT = 15
-        local MAX_HEIGHT = 45
- 
         local item = table.remove(type.dead)
         if not item then
             return false
@@ -46,8 +43,8 @@ function Game:OnUpdate(timestep)
 
         item.life_time = 12
         local transform = g_scene:GetTransform(item.id)
-        local angle = self.time * WORLD_SPEED
-        local d = OCEAN_RADIUS + math.random(MIN_HEIGHT, MAX_HEIGHT)
+        local angle = self.time * g.WORLD_SPEED
+        local d = g.OCEAN_RADIUS + math.random(g.MIN_HEIGHT, g.MAX_HEIGHT)
         angle = math.deg(angle) - offset
         local translation = Vector3(d * math.sin(angle), d * math.cos(angle), 0)
         transform:SetTranslation(translation)
@@ -88,4 +85,3 @@ function Game:OnUpdate(timestep)
     recycle(self.batteries)
     recycle(self.rocks)
 end
-

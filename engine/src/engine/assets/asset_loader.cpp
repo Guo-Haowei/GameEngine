@@ -67,13 +67,12 @@ auto TextAssetLoader::Load() -> Result<IAsset*> {
     std::shared_ptr<FileAccess> file_access = *res;
 
     const size_t size = file_access->GetLength();
-
-    std::string buffer;
-    buffer.resize(size + 1);
-    buffer[size] = 0;
+    std::vector<char> buffer;
+    buffer.resize(size);
     file_access->ReadBuffer(buffer.data(), size);
+
     auto file = new TextAsset;
-    file->source = std::move(buffer);
+    file->source = std::move(std::string(buffer.begin(), buffer.end()));
     return file;
 }
 

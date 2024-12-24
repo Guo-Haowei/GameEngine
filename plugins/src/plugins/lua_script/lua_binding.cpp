@@ -1,5 +1,6 @@
 #include "lua_binding.h"
 
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/math/vector.h"
@@ -16,6 +17,34 @@ struct Quat {
 
     Quaternion value;
 };
+
+void SetPreloadFunc(lua_State* L) {
+    lua_getglobal(L, "package");           
+    lua_getfield(L, -1, "searchers");
+    lua_pushcfunction(L, [](lua_State* L) -> int {
+        const char* path = luaL_checkstring(L, 1);
+        auto asset = dynamic_cast<const TextAsset*>(
+            AssetRegistry::GetSingleton()
+                .GetAssetByHandle(std::format("{}", path)));
+        if (!asset) {
+            return 0;
+        }
+
+        const auto& source = asset->source;
+        if (luaL_loadbuffer(L, source.data(), source.length(), path) == LUA_OK) {
+            return 1;
+        }
+
+        const char* error_message = lua_tostring(L, -1);
+        printf(error_message);
+
+        auto error = std::format("error loading '{}'", path);
+        lua_pushstring(L, error.c_str());
+        return 1;
+    });
+
+    lua_rawseti(L, -2, 1);
+}
 
 bool OpenMathLib(lua_State* L) {
     luabridge::getGlobalNamespace(L)
@@ -91,13 +120,20 @@ bool OpenDisplayLib(lua_State* L) {
     return true;
 }
 
-#if 0
-    - Scene* lua_HelperGetScene(lua_State* L) {
-    -lua_getglobal(L, LUA_GLOBAL_SCENE);
-    -Scene* scene = (Scene*)lua_tointeger(L, -1);
-    -lua_pop(L, 1);
-    -return scene;
+bool OpenEngineLib(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("engine")
+        .addFunction("Log", [](const char* p_message) {
+            LogImpl(LOG_LEVEL_NORMAL, "{}", p_message);
+        })
+        .addFunction("Assert", [](bool p_statement) {
+            DEV_ASSERT(p_statement);
+        })
+        .endNamespace();
+    return true;
+}
 
+#if 0
     -T* lua_SceneGetComponent(lua_State* L) {
 -    if (lua_gettop(L) == 1) {
 -        if (lua_isnumber(L, 1)) {
