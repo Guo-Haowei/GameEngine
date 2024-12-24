@@ -219,13 +219,16 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& p_rigid_body) {
+        const auto& size = p_rigid_body.size;
         switch (p_rigid_body.shape) {
             case RigidBodyComponent::SHAPE_CUBE: {
-                //const auto& half = p_rigid_body.param.box.half_size;
-                //ImGui::Text("shape: box");
-                //ImGui::Text("half size: %.2f, %.2f, %.2f", half.x, half.y, half.z);
-                break;
-            }
+                ImGui::Text("shape: box");
+                ImGui::Text("half size: %.2f, %.2f, %.2f", size.x, size.y, size.z);
+            } break;
+            case RigidBodyComponent::SHAPE_SPHERE: {
+                ImGui::Text("shape: sphere");
+                ImGui::Text("radius: %.2f", size.x);
+            } break;
             default:
                 break;
         }

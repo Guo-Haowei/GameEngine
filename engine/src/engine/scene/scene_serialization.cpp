@@ -33,8 +33,9 @@ namespace my {
 // version 16: change scene binary representation
 // version 17: remove armature.flags
 // version 18: change RigidBodyComponent
+// version 19: serialize scene.m_physicsMode
 #pragma endregion VERSION_HISTORY
-static constexpr uint32_t LATEST_SCENE_VERSION = 17;
+static constexpr uint32_t LATEST_SCENE_VERSION = 19;
 static constexpr char SCENE_MAGIC[] = "xBScene";
 static constexpr char SCENE_GUARD_MESSAGE[] = "Should see this message";
 static constexpr uint64_t HAS_NEXT_FLAG = 6368519827137030510;
@@ -49,6 +50,7 @@ Result<void> SaveSceneBinary(const std::string& p_path, Scene& p_scene) {
     archive << LATEST_SCENE_VERSION;
     archive << ecs::Entity::GetSeed();
     archive << p_scene.m_root;
+    archive << p_scene.m_physicsMode;
 
     archive << SCENE_GUARD_MESSAGE;
 
@@ -89,6 +91,11 @@ Result<void> LoadSceneBinary(const std::string& p_path, Scene& p_scene) {
     ecs::Entity::SetSeed(seed);
 
     archive >> p_scene.m_root;
+
+    p_scene.m_physicsMode = PhysicsMode::NONE;
+    if (version >= 19) {
+        archive >> p_scene.m_physicsMode;
+    }
 
     char guard_message[sizeof(SCENE_GUARD_MESSAGE)]{ 0 };
     archive >> guard_message;
@@ -179,6 +186,7 @@ Result<void> SaveSceneText(const std::string& p_path, const Scene& p_scene) {
     out << DUMP_KEY("seed") << ecs::Entity::GetSeed();
     out << DUMP_KEY("root") << p_scene.m_root.GetId();
     out << DUMP_KEY("binary") << binary_path;
+    out << DUMP_KEY("physics_mode") << static_cast<uint32_t>(p_scene.m_physicsMode);
 
     out << DUMP_KEY("entities");
     out << YAML::BeginSeq;
@@ -284,6 +292,12 @@ Result<void> LoadSceneText(const std::string& p_path, Scene& p_scene) {
 
     ecs::Entity root(node["root"].as<uint32_t>());
     p_scene.m_root = root;
+
+    const auto physics_mode = node["physics_mode"];
+    if (physics_mode) {
+        auto mode = physics_mode.as<uint32_t>();
+        p_scene.m_physicsMode = static_cast<PhysicsMode>(mode);
+    }
 
     auto binary_file = node["binary"].as<std::string>();
     res = FileAccess::Open(binary_file, FileAccess::READ);
