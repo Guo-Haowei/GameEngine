@@ -187,7 +187,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
-                   .rtvFormats = { RESOURCE_FORMAT_TONE },
+                   .rtvFormats = { RT_FMT_TONE },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -200,7 +200,10 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_blendStateDefault,
                    .numRenderTargets = 4,
-                   .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
+                   .rtvFormats = { RT_FMT_GBUFFER_BASE_COLOR,
+                                   RT_FMT_GBUFFER_POSITION,
+                                   RT_FMT_GBUFFER_NORMAL,
+                                   RT_FMT_GBUFFER_MATERIAL },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -213,7 +216,10 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_blendStateDefault,
                    .numRenderTargets = 4,
-                   .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
+                   .rtvFormats = { RT_FMT_GBUFFER_BASE_COLOR,
+                                   RT_FMT_GBUFFER_POSITION,
+                                   RT_FMT_GBUFFER_NORMAL,
+                                   RT_FMT_GBUFFER_MATERIAL },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -272,7 +278,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .inputLayoutDesc = &s_inputLayoutPosition,
                                   .blendDesc = &s_blendStateDefault,
                                   .numRenderTargets = 1,
-                                  .rtvFormats = { RESOURCE_FORMAT_HIGHLIGHT_SELECT },
+                                  .rtvFormats = { RT_FMT_OUTLINE_SELECT },
                                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                               });
 
@@ -284,7 +290,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                              .inputLayoutDesc = &s_inputLayoutPosition,
                              .blendDesc = &s_blendStateDefault,
                              .numRenderTargets = 1,
-                             .rtvFormats = { RESOURCE_FORMAT_TONE },
+                             .rtvFormats = { RT_FMT_TONE },
                              .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                          });
 
@@ -307,7 +313,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .inputLayoutDesc = &s_inputLayoutMesh,
                                            .blendDesc = &s_transparent,
                                            .numRenderTargets = 1,
-                                           .rtvFormats = { RESOURCE_FORMAT_TONE },
+                                           .rtvFormats = { RT_FMT_TONE },
                                            .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                                        });
 #pragma endregion PSO_PARTICLE
@@ -361,7 +367,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                       .inputLayoutDesc = &s_inputLayoutPosition,
                                       .blendDesc = &s_blendStateDefault,
                                       .numRenderTargets = 1,
-                                      .rtvFormats = { GraphicsManager::DEFAULT_SURFACE_FORMAT },
+                                      .rtvFormats = { DEFAULT_SURFACE_FORMAT },
                                   });
 
     // @HACK: only support this many shaders

@@ -493,6 +493,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
             break;
     }
 
+    renderer::RenderPassCreator::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     renderer::PassCreatorConfig config;
     config.frameWidth = frame_size.x;

@@ -426,37 +426,38 @@ void SceneCreator::CreateMeshEmitter(Scene* p_scene) {
     auto setup_emitter = [](MeshEmitterComponent& p_emitter) {
         p_emitter.flags |= MeshEmitterComponent::RUNNING;
 
+        // @TODO: better to be a min speed with randomness
         p_emitter.vxRange = Vector2f(-20, -10);
-        p_emitter.vyRange = Vector2f(-4, -2);
-        p_emitter.vzRange = Vector2f(-3, +3);
+        p_emitter.vyRange = Vector2f(-10, +10);
+        p_emitter.vzRange = Vector2f(-10, +10);
         p_emitter.gravity = Vector3f{ 0, -50, 0 };
         p_emitter.scale = 0.6f;
         p_emitter.maxMeshCount = 24;
         p_emitter.emissionPerFrame = 2;
         p_emitter.lifetimeRange = Vector2f(1.f, 2.f);
     };
-    for (int i = 0; i < 4; ++i) {
-        auto id = p_scene->CreateTransformEntity(std::format("emitter::rock_particle_{}", i));
+    for (int i = 0; i < 3; ++i) {
+        auto id = p_scene->CreateMeshEmitterEntity(std::format("emitter::rock_particle_{}", i), Vector3f(0, -100, 0));
         p_scene->AttachChild(id);
 
         p_scene->Create<LuaScriptComponent>(id)
             .SetClassName("Emitter")
             .SetPath("@res://scripts/emitter.lua");
 
-        auto& emitter = p_scene->Create<MeshEmitterComponent>(id);
+        auto& emitter = *p_scene->GetComponent<MeshEmitterComponent>(id);
         DEV_ASSERT(mesh_rock_patricle.IsValid());
         emitter.meshId = mesh_rock_patricle;
         setup_emitter(emitter);
     }
     for (int i = 0; i < 8; ++i) {
-        auto id = p_scene->CreateTransformEntity(std::format("emitter::battery_particle_{}", i));
+        auto id = p_scene->CreateMeshEmitterEntity(std::format("emitter::battery_particle_{}", i), Vector3f(0, -100, 0));
         p_scene->AttachChild(id);
 
         p_scene->Create<LuaScriptComponent>(id)
             .SetClassName("Emitter")
             .SetPath("@res://scripts/emitter.lua");
 
-        auto& emitter = p_scene->Create<MeshEmitterComponent>(id);
+        auto& emitter = *p_scene->GetComponent<MeshEmitterComponent>(id);
         DEV_ASSERT(mesh_rock_patricle.IsValid());
         emitter.meshId = mesh_battery_particle;
         setup_emitter(emitter);

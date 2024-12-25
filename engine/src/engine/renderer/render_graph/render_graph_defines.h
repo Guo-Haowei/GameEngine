@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/renderer/pixel_format.h"
+#include "engine/renderer/render_graph/render_graph_resources.h"
 
 // @TODO: move to shader_defines
 constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
@@ -29,7 +30,7 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_GBUFFER_BASE_COLOR)              \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_GBUFFER_MATERIAL)                \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_GBUFFER_DEPTH)                   \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_HIGHLIGHT_SELECT)                \
+    RENDER_TARGET_RESOURCE_NAME(RESOURCE_OUTLINE_SELECT)                  \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_ENV_SKYBOX_CUBE_MAP)             \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP) \
     RENDER_TARGET_RESOURCE_NAME(RESOURCE_ENV_PREFILTER_CUBE_MAP)          \
@@ -52,14 +53,7 @@ namespace my {
 constexpr int BLOOM_MIP_CHAIN_MAX = 7;
 constexpr int IBL_MIP_CHAIN_MAX = 5;
 
-constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_DEPTH = PixelFormat::R24G8_TYPELESS;
-constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_BASE_COLOR = PixelFormat::R16G16B16A16_FLOAT;
-constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_POSITION = PixelFormat::R16G16B16A16_FLOAT;
-constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_NORMAL = PixelFormat::R16G16B16A16_FLOAT;
-constexpr PixelFormat RESOURCE_FORMAT_GBUFFER_MATERIAL = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RESOURCE_FORMAT_LIGHTING = PixelFormat::R16G16B16A16_FLOAT;
-constexpr PixelFormat RESOURCE_FORMAT_HIGHLIGHT_SELECT = PixelFormat::R8_UINT;
-constexpr PixelFormat RESOURCE_FORMAT_TONE = PixelFormat::R16G16B16A16_FLOAT;
 
 enum class RenderPassName {
 #define RENDER_PASS_NAME(name) name,
@@ -73,7 +67,7 @@ enum RenderTargetResourceName : uint8_t {
     RENDER_TARGET_RESOURCE_NAME_LIST
 #undef RENDER_TARGET_RESOURCE_NAME
 
-        ATTRIB_MAX,
+        COUNT,
 
     RESOURCE_BLOOM_MIN = RESOURCE_BLOOM_0,
     RESOURCE_BLOOM_MAX = RESOURCE_BLOOM_6,
@@ -93,9 +87,9 @@ static inline const char* RenderPassNameToString(RenderPassName p_name) {
 }
 
 static inline const char* RenderTargetResourceNameToString(RenderTargetResourceName p_name) {
-    DEV_ASSERT_INDEX(p_name, RenderTargetResourceName::ATTRIB_MAX);
+    DEV_ASSERT_INDEX(p_name, RenderTargetResourceName::COUNT);
 
-    static const char* s_names[static_cast<int>(RenderTargetResourceName::ATTRIB_MAX)] = {
+    static const char* s_names[static_cast<int>(RenderTargetResourceName::COUNT)] = {
 #define RENDER_TARGET_RESOURCE_NAME(name) #name,
         RENDER_TARGET_RESOURCE_NAME_LIST
 #undef RENDER_TARGET_RESOURCE_NAME

@@ -230,7 +230,7 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     cache.c_PointShadowArrayResidentHandle.Set32(find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY));
     cache.c_ShadowMapResidentHandle.Set32(find_index(RESOURCE_SHADOW_MAP));
 
-    cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_HIGHLIGHT_SELECT));
+    cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_OUTLINE_SELECT));
     cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
 
     // @TODO: fix
