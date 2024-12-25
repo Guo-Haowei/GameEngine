@@ -531,14 +531,6 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
     m_NameComponents.Remove(p_entity);
 }
 
-void Scene::UpdateLight(size_t p_index) {
-    auto entity = GetEntityByIndex<LightComponent>(p_index);
-    const TransformComponent* transform = GetComponent<TransformComponent>(entity);
-    if (DEV_VERIFY(transform)) {
-        GetComponentByIndex<LightComponent>(p_index).Update(*transform);
-    }
-}
-
 void Scene::UpdateAnimation(size_t p_index) {
     AnimationComponent& animation = GetComponentByIndex<AnimationComponent>(p_index);
 
@@ -761,7 +753,14 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
-    JS_NO_PARALLEL_FOR(LightComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
+    unused(p_context);
+
+    for (auto [id, light] : m_LightComponents) {
+        const TransformComponent* transform = GetComponent<TransformComponent>(id);
+        if (DEV_VERIFY(transform)) {
+            UpdateLight(m_timestep, *transform, light);
+        }
+    }
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {

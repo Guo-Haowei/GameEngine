@@ -1,13 +1,15 @@
 #include "scene_system.h"
 
 #include "engine/core/base/random.h"
+#include "engine/core/framework/graphics_manager.h"
+#include "engine/math/matrix_transform.h"
+#include "engine/renderer/renderer.h"
 
 namespace my {
 
 void UpdateMeshEmitter(float p_timestep,
                        const TransformComponent& p_transform,
                        MeshEmitterComponent& p_emitter) {
-
     // initialize
     if (p_emitter.particles.empty()) {
         p_emitter.Reset();
@@ -69,6 +71,73 @@ void UpdateMeshEmitter(float p_timestep,
         }
     }
     p_emitter.aliveList = std::move(tmp);
+}
+
+void UpdateLight(float p_timestep,
+                 const TransformComponent& p_transform,
+                 LightComponent& p_light) {
+    unused(p_timestep);
+
+    p_light.m_position = p_transform.GetTranslation();
+
+    if (p_light.IsDirty() || p_transform.IsDirty()) {
+        // update max distance
+        constexpr float atten_factor_inv = 1.0f / 0.03f;
+        if (p_light.m_atten.linear == 0.0f && p_light.m_atten.quadratic == 0.0f) {
+            p_light.m_maxDistance = 1000.0f;
+        } else {
+            // (constant + linear * x + quad * x^2) * atten_factor = 1
+            // quad * x^2 + linear * x + constant - 1.0 / atten_factor = 0
+            const float a = p_light.m_atten.quadratic;
+            const float b = p_light.m_atten.linear;
+            const float c = p_light.m_atten.constant - atten_factor_inv;
+
+            float discriminant = b * b - 4 * a * c;
+            if (discriminant < 0.0f) {
+                CRASH_NOW_MSG("TODO: fix");
+            }
+
+            float sqrt_d = glm::sqrt(discriminant);
+            float root1 = (-b + sqrt_d) / (2 * a);
+            float root2 = (-b - sqrt_d) / (2 * a);
+            p_light.m_maxDistance = root1 > 0.0f ? root1 : root2;
+            p_light.m_maxDistance = glm::max(LIGHT_SHADOW_MIN_DISTANCE + 1.0f, p_light.m_maxDistance);
+        }
+
+        // update shadow map
+        if (p_light.CastShadow()) {
+            // @TODO: get rid of the
+            if (p_light.m_shadowMapIndex == renderer::INVALID_POINT_SHADOW_HANDLE) {
+                p_light.m_shadowMapIndex = renderer::AllocatePointLightShadowMap();
+            }
+        } else {
+            if (p_light.m_shadowMapIndex != renderer::INVALID_POINT_SHADOW_HANDLE) {
+                renderer::FreePointLightShadowMap(p_light.m_shadowMapIndex);
+            }
+        }
+
+        // update light space matrices
+        if (p_light.CastShadow()) {
+            switch (p_light.m_type) {
+                case LIGHT_TYPE_POINT: {
+                    constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
+                    const float far_plane = p_light.m_maxDistance;
+                    const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
+                    auto matrices = is_opengl ? BuildOpenGlPointLightCubeMapViewProjectionMatrix(p_light.m_position, near_plane, far_plane)
+                                              : BuildPointLightCubeMapViewProjectionMatrix(p_light.m_position, near_plane, far_plane);
+
+                    for (size_t i = 0; i < matrices.size(); ++i) {
+                        p_light.m_lightSpaceMatrices[i] = matrices[i];
+                    }
+                } break;
+                default:
+                    break;
+            }
+        }
+
+        // @TODO: query if transformation is dirty, so don't update shadow map unless necessary
+        p_light.SetDirty(false);
+    }
 }
 
 }  // namespace my

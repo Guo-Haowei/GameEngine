@@ -3,6 +3,7 @@
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
+#include "shader_defines.hlsl.h"
 
 namespace YAML {
 class Node;
@@ -685,6 +686,60 @@ struct ForceFieldComponent {
     static void RegisterClass();
 };
 #pragma endregion FORCE_FIELD_COMPONENT
+
+#pragma region LIGHT_COMPONENT
+class LightComponent {
+public:
+    enum : uint32_t {
+        NONE = BIT(0),
+        DIRTY = BIT(1),
+        CAST_SHADOW = BIT(2),
+        SHADOW_REGION = BIT(3),
+    };
+
+    bool IsDirty() const { return m_flags & DIRTY; }
+    void SetDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
+
+    bool CastShadow() const { return m_flags & CAST_SHADOW; }
+    void SetCastShadow(bool p_cast = true) { p_cast ? m_flags |= CAST_SHADOW : m_flags &= ~CAST_SHADOW; }
+
+    bool HasShadowRegion() const { return m_flags & SHADOW_REGION; }
+    void SetShadowRegion(bool p_region = true) { p_region ? m_flags |= SHADOW_REGION : m_flags &= ~SHADOW_REGION; }
+
+    int GetType() const { return m_type; }
+    void SetType(int p_type) { m_type = p_type; }
+
+    float GetMaxDistance() const { return m_maxDistance; }
+    int GetShadowMapIndex() const { return m_shadowMapIndex; }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized();
+
+    static void RegisterClass();
+
+    const auto& GetMatrices() const { return m_lightSpaceMatrices; }
+    const Vector3f& GetPosition() const { return m_position; }
+
+    struct Attenuation {
+        float constant;
+        float linear;
+        float quadratic;
+
+        static void RegisterClass();
+    } m_atten;
+
+    math::AABB m_shadowRegion;
+
+    uint32_t m_flags = DIRTY;
+    int m_type = LIGHT_TYPE_INFINITE;
+
+    // Non-serialized
+    float m_maxDistance;
+    Vector3f m_position;
+    int m_shadowMapIndex = -1;
+    std::array<Matrix4x4f, 6> m_lightSpaceMatrices;
+};
+#pragma endregion LIGHT_COMPONENT
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

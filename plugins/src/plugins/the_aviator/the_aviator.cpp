@@ -451,10 +451,13 @@ void SceneCreator::CreateMeshEmitter(Scene* p_scene) {
     emitter.meshId = mesh_rock_patricle;
     emitter.flags |= MeshEmitterComponent::RECYCLE;
 
-    emitter.vxRange = Vector2f(-1, +1);
-    emitter.vyRange = Vector2f(-1, +1);
-    emitter.vzRange = Vector2f(-1, +1);
-    emitter.scale = 0.1f;
+    emitter.vxRange = Vector2f(-3, +3);
+    emitter.vyRange = Vector2f(-3, +3);
+    emitter.vzRange = Vector2f(-3, +3);
+    emitter.gravity = Vector3f(0, -4, 0);
+    emitter.scale = 0.4f;
+    emitter.maxMeshCount = 24;
+    emitter.emissionPerFrame = 2;
     emitter.lifetimeRange = Vector2f(3.f, 5.f);
 
     p_scene->AttachChild(id);

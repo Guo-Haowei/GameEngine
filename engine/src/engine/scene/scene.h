@@ -5,8 +5,6 @@
 #include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/component_manager.h"
 #include "engine/systems/ecs/view.h"
-// @TODO: refactor all components
-#include "engine/scene/light_component.h"
 
 struct lua_State;
 
@@ -260,7 +258,6 @@ private:
     void UpdateHierarchy(size_t p_index);
     void UpdateAnimation(size_t p_index);
     void UpdateArmature(size_t p_index);
-    void UpdateLight(size_t p_index);
 
     void RunLightUpdateSystem(jobsystem::Context& p_context);
     void RunTransformationUpdateSystem(jobsystem::Context& p_context);

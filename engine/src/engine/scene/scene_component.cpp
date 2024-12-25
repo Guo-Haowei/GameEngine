@@ -212,7 +212,9 @@ void MeshEmitterComponent::UpdateParticle(Index p_index, float p_timestep) {
 
     p.position += p_timestep * p.velocity;
     // @TODO: gravity
-    p.velocity.y += p_timestep * -1.0f;
+    p.scale *= (1.0f - p_timestep);
+    p.scale = math::max(p.scale, 0.1f);
+    p.velocity += p_timestep * gravity;
     p.rotation += Vector3f(p_timestep);
     p.lifespan -= p_timestep;
 }
