@@ -887,7 +887,7 @@ void RenderPassCreator::AddTonePass() {
     desc.name = RenderPassName::TONE;
 
     if (m_config.enableBloom) {
-        desc.dependencies = { RenderPassName::BLOOM };
+        desc.dependencies = { RenderPassName::BLOOM, RenderPassName::HIGHLIGHT_SELECT };
     }
 
     auto pass = m_graph.CreatePass(desc);
@@ -1269,7 +1269,7 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer(PassCreatorConf
 std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault(PassCreatorConfig& p_config) {
     p_config.enableBloom = true;
     p_config.enableIbl = false;
-    p_config.enableVxgi = false;
+    p_config.enableVxgi = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
 
     auto graph = std::make_unique<RenderGraph>();
     RenderPassCreator creator(p_config, *graph.get());

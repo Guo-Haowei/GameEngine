@@ -30,7 +30,7 @@ private:
 
     std::map<RenderPassName, int> m_renderPassLookup;
 
-    friend class RenderGraphEditorDelegate;
+    friend class RenderGraphViewer;
 };
 
 }  // namespace my::renderer

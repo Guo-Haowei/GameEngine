@@ -39,6 +39,7 @@ protected:
     std::vector<DrawPass> m_drawPasses;
 
     friend class RenderGraph;
+    friend class RenderGraphViewer;
 };
 
 }  // namespace my::renderer
