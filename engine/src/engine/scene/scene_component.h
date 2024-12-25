@@ -665,6 +665,8 @@ struct MeshEmitterComponent {
 
     bool IsRunning() const { return flags & RUNNING; }
     bool IsRecycle() const { return flags & RECYCLE; }
+    void Start() { flags |= RUNNING; }
+    void Stop() { flags &= ~RUNNING; }
 
     void UpdateParticle(Index p_index, float p_timestep);
     void Reset();

@@ -37,6 +37,7 @@ struct BatchContext {
     uint32_t flags;
 };
 
+// @TODO: unify BatchContext and InstanceContext
 struct InstanceContext {
     const GpuMesh* gpuMesh;
     uint32_t indexCount;

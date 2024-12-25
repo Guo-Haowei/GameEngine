@@ -310,6 +310,7 @@ void Application::Run() {
 
         // @TODO: refactor this
         if (m_imguiManager) {
+            HBN_PROFILE_EVENT("Application::ImGui");
             m_imguiManager->BeginFrame();
 
             for (int i = (int)m_layers.size() - 1; i >= 0; --i) {

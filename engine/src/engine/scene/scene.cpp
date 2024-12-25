@@ -1,5 +1,6 @@
 #include "scene.h"
 
+#include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/math/geometry.h"
@@ -44,6 +45,8 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 #endif
 
 void Scene::Update(float p_time_step) {
+    HBN_PROFILE_EVENT();
+
     m_timestep = p_time_step;
 
     Context ctx;
@@ -753,6 +756,7 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     unused(p_context);
 
     for (auto [id, light] : m_LightComponents) {
@@ -764,22 +768,27 @@ void Scene::RunLightUpdateSystem(Context& p_context) {
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(TransformComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, GetComponentByIndex<TransformComponent>(index).UpdateTransform());
 }
 
 void Scene::RunAnimationUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(AnimationComponent, p_context, index, 1, UpdateAnimation(index));
 }
 
 void Scene::RunArmatureUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(ArmatureComponent, p_context, index, 1, UpdateArmature(index));
 }
 
 void Scene::RunHierarchyUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(HierarchyComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateHierarchy(index));
 }
 
 void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
+    HBN_PROFILE_EVENT();
     unused(p_context);
 
     m_bound.MakeInvalid();
@@ -801,6 +810,7 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
 }
 
 void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
+    HBN_PROFILE_EVENT();
     unused(p_context);
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
@@ -809,7 +819,8 @@ void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
 }
 
 void Scene::RunMeshEmitterUpdateSystem(jobsystem::Context& p_context) {
-    // @TODO: concurrent
+    HBN_PROFILE_EVENT();
+
     unused(p_context);
     for (auto [id, emitter] : m_MeshEmitterComponents) {
         const TransformComponent* transform = GetComponent<TransformComponent>(id);

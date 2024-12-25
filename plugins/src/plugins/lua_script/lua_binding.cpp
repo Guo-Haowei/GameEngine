@@ -197,11 +197,28 @@ bool OpenSceneLib(lua_State* L) {
     // LuaScriptComponent
     luabridge::getGlobalNamespace(L)
         .beginClass<LuaScriptComponent>("LuaScriptComponent")
-        .addFunction("GetClass", [](LuaScriptComponent* p_script) {
-            return p_script->GetClassName();
+        .addFunction("GetClass", [](LuaScriptComponent* p_component) {
+            return p_component->GetClassName();
         })
-        .addFunction("GetRef", [](LuaScriptComponent* p_script) {
-            return p_script->GetInstance();
+        .addFunction("GetRef", [](LuaScriptComponent* p_component) {
+            return p_component->GetInstance();
+        })
+        .endClass();
+
+    // MeshEmitterComponent
+    luabridge::getGlobalNamespace(L)
+        .beginClass<MeshEmitterComponent>("MeshEmitterComponent")
+        .addFunction("Reset", [](MeshEmitterComponent* p_component) {
+            return p_component->Reset();
+        })
+        .addFunction("Start", [](MeshEmitterComponent* p_component) {
+            return p_component->Start();
+        })
+        .addFunction("Stop", [](MeshEmitterComponent* p_component) {
+            return p_component->Stop();
+        })
+        .addFunction("IsRunning", [](MeshEmitterComponent* p_component) {
+            return p_component->IsRunning();
         })
         .endClass();
 
@@ -219,6 +236,9 @@ bool OpenSceneLib(lua_State* L) {
         })
         .addFunction("GetRigidBody", [](Scene* p_scene, uint32_t p_entity) {
             return p_scene->GetComponent<RigidBodyComponent>(ecs::Entity(p_entity));
+        })
+        .addFunction("GetMeshEmitter", [](Scene* p_scene, uint32_t p_entity) {
+            return p_scene->GetComponent<MeshEmitterComponent>(ecs::Entity(p_entity));
         })
         .addFunction("GetScript", [](Scene* p_scene, uint32_t p_entity) {
             return p_scene->GetComponent<LuaScriptComponent>(ecs::Entity(p_entity));

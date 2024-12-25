@@ -122,7 +122,8 @@ void LuaScriptManager::OnSimBegin(Scene& p_scene) {
 
         const auto& meta = FindOrAdd(L, script.m_path, script.m_className.c_str());
         if (script.m_instance == 0) {
-            script.m_instance = CreateInstance(meta, L, entity.GetId());
+            const auto instance = CreateInstance(meta, L, entity.GetId());
+            script.m_instance = instance;
         }
     }
 

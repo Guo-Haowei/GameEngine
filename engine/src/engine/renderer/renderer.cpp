@@ -1,5 +1,6 @@
 #include "renderer.h"
 
+#include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/math/geometry.h"
@@ -83,6 +84,8 @@ void EndFrame() {
 }
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
+    HBN_PROFILE_EVENT();
+
     ASSERT_CAN_RECORD();
 
     RenderDataConfig config(p_scene);

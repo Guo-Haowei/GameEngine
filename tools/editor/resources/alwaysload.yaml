@@ -31,6 +31,8 @@ files:
     type: Text
   - path: "@res://scripts/earth.lua"
     type: Text
+  - path: "@res://scripts/emitter.lua"
+    type: Text
   - path: "@res://scripts/game.lua"
     type: Text
   - path: "@res://scripts/hair.lua"
@@ -40,6 +42,4 @@ files:
   - path: "@res://scripts/propeller.lua"
     type: Text
   - path: "@res://scripts/rock.lua"
-    type: Text
-  - path: "@res://scripts/particle.lua"
     type: Text

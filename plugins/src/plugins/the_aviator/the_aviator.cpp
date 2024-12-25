@@ -75,15 +75,15 @@ private:
     ecs::Entity material_blue_transparent;
     ecs::Entity material_pink;
     ecs::Entity mesh_rock;
+    ecs::Entity mesh_battery;
     ecs::Entity mesh_rock_patricle;
+    ecs::Entity mesh_battery_particle;
 
     static constexpr float ROCK_SIZE = 4.0f;
     static constexpr float BATTERY_SIZE = 2.0f;
     static constexpr float PARTICLE_SIZE = 1.0f;
     static constexpr int ROCK_POOL_SIZE = 16;
-    static constexpr int BATTERY_POOL_SIZE = 32;
-    static constexpr int ROCK_PARTICLE_POOL_SIZE = 12;
-    static constexpr int BATTERY_PARTICLE_POOL_SIZE = 48;
+    static constexpr int BATTERY_POOL_SIZE = 64;
     static constexpr float OCEAN_RADIUS = 240.0f;
     static constexpr int CLOUD_COUNT = 20;
     static constexpr float plane_height = 30.0f;
@@ -187,13 +187,14 @@ Scene* SceneCreator::CreateScene() {
     CreateOcean(scene, earth);
 
     // battery mesh
-    mesh_rock = scene->CreateMeshEntity("rock_mesh");
-    mesh_rock_patricle = scene->CreateMeshEntity("rock_particle_mesh");
-    auto battery_mesh = scene->CreateMeshEntity("battery_mesh");
-    auto battery_particle_mesh = scene->CreateMeshEntity("battery_particle_mesh");
-    auto battery_material = scene->CreateMaterialEntity("battery_material");
+    mesh_rock = scene->CreateMeshEntity("mesh::rock");
+    mesh_rock_patricle = scene->CreateMeshEntity("mesh::rock_particle");
+    mesh_battery = scene->CreateMeshEntity("mesh::battery");
+    mesh_battery_particle = scene->CreateMeshEntity("mesh::battery_particle");
+    auto rock_material = scene->CreateMaterialEntity("material::rock");
+    auto battery_material = scene->CreateMaterialEntity("material::battery");
     {
-        MeshComponent* mesh = scene->GetComponent<MeshComponent>(battery_mesh);
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(mesh_battery);
         *mesh = MakeTetrahedronMesh(BATTERY_SIZE);
 
         MaterialComponent* material = scene->GetComponent<MaterialComponent>(battery_material);
@@ -201,12 +202,11 @@ Scene* SceneCreator::CreateScene() {
         mesh->subsets[0].material_id = battery_material;
     }
     {
-        MeshComponent* mesh = scene->GetComponent<MeshComponent>(battery_particle_mesh);
+        MeshComponent* mesh = scene->GetComponent<MeshComponent>(mesh_battery_particle);
         *mesh = MakeTetrahedronMesh(PARTICLE_SIZE);
         mesh->subsets[0].material_id = battery_material;
     }
     // rock
-    auto rock_material = scene->CreateMaterialEntity("rock_material");
     {
         MeshComponent* mesh = scene->GetComponent<MeshComponent>(mesh_rock);
         *mesh = MakeSphereMesh(ROCK_SIZE, 6, 6);
@@ -245,7 +245,7 @@ Scene* SceneCreator::CreateScene() {
         for (int i = 0; i < BATTERY_POOL_SIZE; ++i) {
             auto id = scene->CreateObjectEntity(std::format("battery_{}", i));
             ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
-            object->meshId = battery_mesh;
+            object->meshId = mesh_battery;
             auto& rigid_body = scene->Create<RigidBodyComponent>(id)
                                    .InitSphere(0.5f * ROCK_SIZE);
             rigid_body.collisionType = COLLISION_BIT_BATTERY;
@@ -255,28 +255,6 @@ Scene* SceneCreator::CreateScene() {
                 .SetClassName("Battery")
                 .SetPath("@res://scripts/battery.lua");
             scene->AttachChild(id, generator);
-        }
-
-        auto particle_wrapper = scene->CreateTransformEntity("particles");
-        scene->AttachChild(particle_wrapper, world);
-        for (int i = 0; i < ROCK_PARTICLE_POOL_SIZE; ++i) {
-            auto id = scene->CreateObjectEntity(std::format("rock_particle_{}", i));
-            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
-            object->meshId = mesh_rock_patricle;
-            scene->Create<LuaScriptComponent>(id)
-                .SetClassName("Particle")
-                .SetPath("@res://scripts/particle.lua");
-            scene->AttachChild(id, particle_wrapper);
-        }
-
-        for (int i = 0; i < BATTERY_PARTICLE_POOL_SIZE; ++i) {
-            auto id = scene->CreateObjectEntity(std::format("battery_particle_{}", i));
-            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
-            object->meshId = battery_particle_mesh;
-            scene->Create<LuaScriptComponent>(id)
-                .SetClassName("Particle")
-                .SetPath("@res://scripts/particle.lua");
-            scene->AttachChild(id, particle_wrapper);
         }
     }
 #pragma endregion SETUP_GAME_OBJECTS
@@ -445,22 +423,44 @@ MeshComponent SceneCreator::MakeOceanMesh(float p_radius,
 }
 
 void SceneCreator::CreateMeshEmitter(Scene* p_scene) {
-    auto id = p_scene->CreateTransformEntity("mesh_emitter");
-    auto& emitter = p_scene->Create<MeshEmitterComponent>(id);
-    DEV_ASSERT(mesh_rock_patricle.IsValid());
-    emitter.meshId = mesh_rock_patricle;
-    emitter.flags |= MeshEmitterComponent::RECYCLE;
+    auto setup_emitter = [](MeshEmitterComponent& p_emitter) {
+        p_emitter.flags |= MeshEmitterComponent::RUNNING;
 
-    emitter.vxRange = Vector2f(-3, +3);
-    emitter.vyRange = Vector2f(-3, +3);
-    emitter.vzRange = Vector2f(-3, +3);
-    emitter.gravity = Vector3f(0, -4, 0);
-    emitter.scale = 0.4f;
-    emitter.maxMeshCount = 24;
-    emitter.emissionPerFrame = 2;
-    emitter.lifetimeRange = Vector2f(3.f, 5.f);
+        p_emitter.vxRange = Vector2f(-20, -10);
+        p_emitter.vyRange = Vector2f(-4, -2);
+        p_emitter.vzRange = Vector2f(-3, +3);
+        p_emitter.gravity = Vector3f{ 0, -50, 0 };
+        p_emitter.scale = 0.6f;
+        p_emitter.maxMeshCount = 24;
+        p_emitter.emissionPerFrame = 2;
+        p_emitter.lifetimeRange = Vector2f(1.f, 2.f);
+    };
+    for (int i = 0; i < 4; ++i) {
+        auto id = p_scene->CreateTransformEntity(std::format("emitter::rock_particle_{}", i));
+        p_scene->AttachChild(id);
 
-    p_scene->AttachChild(id);
+        p_scene->Create<LuaScriptComponent>(id)
+            .SetClassName("Emitter")
+            .SetPath("@res://scripts/emitter.lua");
+
+        auto& emitter = p_scene->Create<MeshEmitterComponent>(id);
+        DEV_ASSERT(mesh_rock_patricle.IsValid());
+        emitter.meshId = mesh_rock_patricle;
+        setup_emitter(emitter);
+    }
+    for (int i = 0; i < 8; ++i) {
+        auto id = p_scene->CreateTransformEntity(std::format("emitter::battery_particle_{}", i));
+        p_scene->AttachChild(id);
+
+        p_scene->Create<LuaScriptComponent>(id)
+            .SetClassName("Emitter")
+            .SetPath("@res://scripts/emitter.lua");
+
+        auto& emitter = p_scene->Create<MeshEmitterComponent>(id);
+        DEV_ASSERT(mesh_rock_patricle.IsValid());
+        emitter.meshId = mesh_battery_particle;
+        setup_emitter(emitter);
+    }
 }
 
 void SceneCreator::CreateOcean(Scene* p_scene, ecs::Entity p_earth) {

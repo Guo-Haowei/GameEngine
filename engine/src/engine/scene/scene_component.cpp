@@ -210,13 +210,13 @@ void MeshEmitterComponent::UpdateParticle(Index p_index, float p_timestep) {
     auto& p = particles[p_index.v];
     DEV_ASSERT(p.lifespan >= 0.0f);
 
-    p.position += p_timestep * p.velocity;
-    // @TODO: gravity
     p.scale *= (1.0f - p_timestep);
     p.scale = math::max(p.scale, 0.1f);
     p.velocity += p_timestep * gravity;
     p.rotation += Vector3f(p_timestep);
     p.lifespan -= p_timestep;
+
+    p.position += p_timestep * p.velocity;
 }
 
 #pragma endregion MESH_EMITTER_COMPONENT
