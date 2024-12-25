@@ -1,10 +1,6 @@
 #pragma once
 
-extern "C" {
-#include "lauxlib.h"
-#include "lua.h"
-#include "lualib.h"
-}
+#include <luajit/lua.hpp>
 
 WARNING_PUSH()
 WARNING_DISABLE(4702, "-Wunused-parameter")  // unreachable code

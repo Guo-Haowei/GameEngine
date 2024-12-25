@@ -30,7 +30,7 @@ if(NOT APPLE)
     set_target_properties(optick PROPERTIES FOLDER thirdparty)
 endif()
 
-include(cmake/build-lua.cmake)
+# include(cmake/build-lua.cmake)
 include(cmake/build-imgui.cmake)
 
 # gtest
