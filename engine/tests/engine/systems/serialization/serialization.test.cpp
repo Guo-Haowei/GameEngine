@@ -1,6 +1,5 @@
 #include "engine/systems/serialization/serialization.h"
 
-#include "engine/scene/light_component.h"
 #include "engine/scene/scene_component.h"
 
 namespace my {

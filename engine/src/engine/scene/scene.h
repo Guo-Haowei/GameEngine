@@ -5,8 +5,6 @@
 #include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/component_manager.h"
 #include "engine/systems/ecs/view.h"
-// @TODO: refactor all components
-#include "engine/scene/light_component.h"
 
 struct lua_State;
 
@@ -27,6 +25,7 @@ namespace my {
     REGISTER_COMPONENT(ArmatureComponent, "World::ArmatureComponent", 0)                   \
     REGISTER_COMPONENT(AnimationComponent, "World::AnimationComponent", 0)                 \
     REGISTER_COMPONENT(ParticleEmitterComponent, "World::ParticleEmitterComponent", 0)     \
+    REGISTER_COMPONENT(MeshEmitterComponent, "World::MeshEmitterComponent", 0)             \
     REGISTER_COMPONENT(ForceFieldComponent, "World::ForceFieldComponent", 0)               \
     REGISTER_COMPONENT(LuaScriptComponent, "World::LuaScriptComponent", 0)                 \
     REGISTER_COMPONENT(NativeScriptComponent, "World::NativeScriptComponent", 0)           \
@@ -259,7 +258,6 @@ private:
     void UpdateHierarchy(size_t p_index);
     void UpdateAnimation(size_t p_index);
     void UpdateArmature(size_t p_index);
-    void UpdateLight(size_t p_index);
 
     void RunLightUpdateSystem(jobsystem::Context& p_context);
     void RunTransformationUpdateSystem(jobsystem::Context& p_context);
@@ -268,6 +266,7 @@ private:
     void RunArmatureUpdateSystem(jobsystem::Context& p_context);
     void RunObjectUpdateSystem(jobsystem::Context& p_context);
     void RunParticleEmitterUpdateSystem(jobsystem::Context& p_context);
+    void RunMeshEmitterUpdateSystem(jobsystem::Context& p_context);
 
     // @TODO: refactor
     math::AABB m_bound;

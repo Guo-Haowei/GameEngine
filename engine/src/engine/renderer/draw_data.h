@@ -37,6 +37,17 @@ struct BatchContext {
     uint32_t flags;
 };
 
+// @TODO: unify BatchContext and InstanceContext
+struct InstanceContext {
+    const GpuMesh* gpuMesh;
+    uint32_t indexCount;
+    uint32_t indexOffset;
+    uint32_t instanceCount;
+    int batchIdx;
+    int materialIdx;
+    int instanceBufferIndex;
+};
+
 struct PassContext {
     int pass_idx{ 0 };
 
@@ -110,6 +121,8 @@ struct DrawData {
 
     PassContext voxelPass;
     PassContext mainPass;
+
+    std::vector<InstanceContext> instances;
 
     std::vector<ParticleEmitterComponent> emitters;
 

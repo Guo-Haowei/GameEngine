@@ -1,5 +1,6 @@
 #include "lua_binding.h"
 
+#include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/input_manager.h"
 #include "engine/math/vector.h"
@@ -16,6 +17,34 @@ struct Quat {
 
     Quaternion value;
 };
+
+void SetPreloadFunc(lua_State* L) {
+    lua_getglobal(L, "package");           
+    lua_getfield(L, -1, "searchers");
+    lua_pushcfunction(L, [](lua_State* L) -> int {
+        const char* path = luaL_checkstring(L, 1);
+        auto asset = dynamic_cast<const TextAsset*>(
+            AssetRegistry::GetSingleton()
+                .GetAssetByHandle(std::format("{}", path)));
+        if (!asset) {
+            return 0;
+        }
+
+        const auto& source = asset->source;
+        if (luaL_loadbuffer(L, source.data(), source.length(), path) == LUA_OK) {
+            return 1;
+        }
+
+        const char* error_message = lua_tostring(L, -1);
+        printf(error_message);
+
+        auto error = std::format("error loading '{}'", path);
+        lua_pushstring(L, error.c_str());
+        return 1;
+    });
+
+    lua_rawseti(L, -2, 1);
+}
 
 bool OpenMathLib(lua_State* L) {
     luabridge::getGlobalNamespace(L)
@@ -91,27 +120,19 @@ bool OpenDisplayLib(lua_State* L) {
     return true;
 }
 
-#if 0
-    - Scene* lua_HelperGetScene(lua_State* L) {
-    -lua_getglobal(L, LUA_GLOBAL_SCENE);
-    -Scene* scene = (Scene*)lua_tointeger(L, -1);
-    -lua_pop(L, 1);
-    -return scene;
-
-    -T* lua_SceneGetComponent(lua_State* L) {
--    if (lua_gettop(L) == 1) {
--        if (lua_isnumber(L, 1)) {
--            lua_Integer id = luaL_checkinteger(L, 1);
--            Scene* scene = lua_HelperGetScene(L);
--            auto component = scene->GetComponent<T>(ecs::Entity(static_cast<uint32_t>(id)));
--            return component;
--        }
--    }
--
--    DEV_ASSERT(0);
--    return nullptr;
--}
-#endif
+bool OpenEngineLib(lua_State* L) {
+    luabridge::getGlobalNamespace(L)
+        .beginNamespace("engine")
+        .addFunction("log", [](const char* p_message) {
+            LogImpl(LOG_LEVEL_NORMAL, "{}", p_message);
+        })
+        .addFunction("error", [](const char* p_file, int p_line, const char* p_error) {
+            ReportErrorImpl("lua_function", p_file, p_line, p_error);
+            GENERATE_TRAP();                                                                                    
+        })
+        .endNamespace();
+    return true;
+}
 
 static int lua_GetAllLuaScripts(lua_State* L) {
     Scene* scene = luabridge::getGlobal(L, LUA_GLOBAL_SCENE);
@@ -132,7 +153,9 @@ bool OpenSceneLib(lua_State* L) {
     // TransformComponent
     luabridge::getGlobalNamespace(L)
         .beginClass<TransformComponent>("TransformComponent")
-        .addFunction("Translate", &TransformComponent::Translate)
+        .addFunction("Translate", [](TransformComponent& p_transform, const Vector3f& p_translation) {
+            p_transform.Translate(p_translation);
+        })
         .addFunction("GetTranslation", [](TransformComponent& p_transform) -> Vector3f {
             return p_transform.GetTranslation();
         })
@@ -174,16 +197,37 @@ bool OpenSceneLib(lua_State* L) {
     // LuaScriptComponent
     luabridge::getGlobalNamespace(L)
         .beginClass<LuaScriptComponent>("LuaScriptComponent")
-        .addFunction("GetClass", [](LuaScriptComponent* p_script) {
-            return p_script->GetClassName();
+        .addFunction("GetClass", [](LuaScriptComponent* p_component) {
+            return p_component->GetClassName();
         })
-        .addFunction("GetRef", [](LuaScriptComponent* p_script) {
-            return p_script->GetInstance();
+        .addFunction("GetRef", [](LuaScriptComponent* p_component) {
+            return p_component->GetInstance();
+        })
+        .endClass();
+
+    // MeshEmitterComponent
+    luabridge::getGlobalNamespace(L)
+        .beginClass<MeshEmitterComponent>("MeshEmitterComponent")
+        .addFunction("Reset", [](MeshEmitterComponent* p_component) {
+            return p_component->Reset();
+        })
+        .addFunction("Start", [](MeshEmitterComponent* p_component) {
+            return p_component->Start();
+        })
+        .addFunction("Stop", [](MeshEmitterComponent* p_component) {
+            return p_component->Stop();
+        })
+        .addFunction("IsRunning", [](MeshEmitterComponent* p_component) {
+            return p_component->IsRunning();
         })
         .endClass();
 
     luabridge::getGlobalNamespace(L)
         .beginClass<Scene>("Scene")
+        .addFunction("GetName", [](Scene* p_scene, uint32_t p_entity) {
+            auto ret = p_scene->GetComponent<NameComponent>(ecs::Entity(p_entity));
+            return ret->GetName();
+        })
         .addFunction("GetTransform", [](Scene* p_scene, uint32_t p_entity) {
             return p_scene->GetComponent<TransformComponent>(ecs::Entity(p_entity));
         })
@@ -192,6 +236,9 @@ bool OpenSceneLib(lua_State* L) {
         })
         .addFunction("GetRigidBody", [](Scene* p_scene, uint32_t p_entity) {
             return p_scene->GetComponent<RigidBodyComponent>(ecs::Entity(p_entity));
+        })
+        .addFunction("GetMeshEmitter", [](Scene* p_scene, uint32_t p_entity) {
+            return p_scene->GetComponent<MeshEmitterComponent>(ecs::Entity(p_entity));
         })
         .addFunction("GetScript", [](Scene* p_scene, uint32_t p_entity) {
             return p_scene->GetComponent<LuaScriptComponent>(ecs::Entity(p_entity));

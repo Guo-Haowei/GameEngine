@@ -1,4 +1,6 @@
 -- file: earth.lua
+local g = require('@res://scripts/constants.lua')
+
 Earth = {}
 Earth.__index = Earth
 setmetatable(Earth, GameObject)
@@ -10,8 +12,7 @@ function Earth.new(id)
 end
 
 function Earth:OnUpdate(timestep)
-    local WORLD_SPEED = 0.3
     local transform = g_scene:GetTransform(self.id)
-    local rad = timestep * WORLD_SPEED
+    local rad = timestep * g.WORLD_SPEED
     transform:Rotate(Vector3(0, 0, rad))
 end

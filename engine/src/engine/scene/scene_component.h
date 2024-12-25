@@ -3,6 +3,7 @@
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
+#include "shader_defines.hlsl.h"
 
 namespace YAML {
 class Node;
@@ -613,6 +614,69 @@ struct ParticleEmitterComponent {
 };
 #pragma endregion PARTICLE_EMITTER_COMPONENT
 
+#pragma region MESH_EMITTER_COMPONENT
+struct MeshEmitterComponent {
+    enum : uint32_t {
+        NONE = BIT(0),
+        RUNNING = BIT(1),
+        RECYCLE = BIT(2),
+    };
+
+    struct Particle {
+        Vector3f position;
+        float lifespan;
+        Vector3f rotation;
+        float scale;
+        Vector3f velocity;
+        Vector3f angularVelocity;
+
+        void Init(float p_lifespan,
+                  const Vector3f& p_position,
+                  const Vector3f& p_velocity,
+                  const Vector3f& p_rotation,
+                  float p_scale) {
+            position = p_position;
+            lifespan = p_lifespan;
+            velocity = p_velocity;
+            rotation = p_rotation;
+            scale = p_scale;
+        }
+    };
+
+    uint32_t flags{ NONE };
+    int maxMeshCount{ 128 };
+    int emissionPerFrame{ 1 };
+    ecs::Entity meshId;
+    Vector3f gravity{ 0 };
+    float scale{ 1.0f };
+    Vector2f vxRange{ 0 };
+    Vector2f vyRange{ 0 };
+    Vector2f vzRange{ 0 };
+    Vector2f lifetimeRange{ 3, 3 };
+
+    // Non Serialized
+    std::vector<Particle> particles;
+    // use this to avoid feeding wrong index
+    struct Index {
+        uint32_t v;
+    };
+    std::vector<Index> deadList;
+    std::vector<Index> aliveList;
+
+    bool IsRunning() const { return flags & RUNNING; }
+    bool IsRecycle() const { return flags & RECYCLE; }
+    void Start() { flags |= RUNNING; }
+    void Stop() { flags &= ~RUNNING; }
+
+    void UpdateParticle(Index p_index, float p_timestep);
+    void Reset();
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized() { Reset(); }
+    static void RegisterClass();
+};
+#pragma endregion MESH_EMITTER_COMPONENT
+
 #pragma region FORCE_FIELD_COMPONENT
 struct ForceFieldComponent {
     float strength{ 1.0f };
@@ -624,6 +688,60 @@ struct ForceFieldComponent {
     static void RegisterClass();
 };
 #pragma endregion FORCE_FIELD_COMPONENT
+
+#pragma region LIGHT_COMPONENT
+class LightComponent {
+public:
+    enum : uint32_t {
+        NONE = BIT(0),
+        DIRTY = BIT(1),
+        CAST_SHADOW = BIT(2),
+        SHADOW_REGION = BIT(3),
+    };
+
+    bool IsDirty() const { return m_flags & DIRTY; }
+    void SetDirty(bool p_dirty = true) { p_dirty ? m_flags |= DIRTY : m_flags &= ~DIRTY; }
+
+    bool CastShadow() const { return m_flags & CAST_SHADOW; }
+    void SetCastShadow(bool p_cast = true) { p_cast ? m_flags |= CAST_SHADOW : m_flags &= ~CAST_SHADOW; }
+
+    bool HasShadowRegion() const { return m_flags & SHADOW_REGION; }
+    void SetShadowRegion(bool p_region = true) { p_region ? m_flags |= SHADOW_REGION : m_flags &= ~SHADOW_REGION; }
+
+    int GetType() const { return m_type; }
+    void SetType(int p_type) { m_type = p_type; }
+
+    float GetMaxDistance() const { return m_maxDistance; }
+    int GetShadowMapIndex() const { return m_shadowMapIndex; }
+
+    void Serialize(Archive& p_archive, uint32_t p_version);
+    void OnDeserialized();
+
+    static void RegisterClass();
+
+    const auto& GetMatrices() const { return m_lightSpaceMatrices; }
+    const Vector3f& GetPosition() const { return m_position; }
+
+    struct Attenuation {
+        float constant;
+        float linear;
+        float quadratic;
+
+        static void RegisterClass();
+    } m_atten;
+
+    math::AABB m_shadowRegion;
+
+    uint32_t m_flags = DIRTY;
+    int m_type = LIGHT_TYPE_INFINITE;
+
+    // Non-serialized
+    float m_maxDistance;
+    Vector3f m_position;
+    int m_shadowMapIndex = -1;
+    std::array<Matrix4x4f, 6> m_lightSpaceMatrices;
+};
+#pragma endregion LIGHT_COMPONENT
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

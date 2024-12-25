@@ -1,9 +1,11 @@
 #include "scene.h"
 
+#include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/renderer.h"
+#include "engine/scene/scene_system.h"
 #include "engine/systems/ecs/component_manager.inl"
 #include "engine/systems/job_system/job_system.h"
 
@@ -43,6 +45,8 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 #endif
 
 void Scene::Update(float p_time_step) {
+    HBN_PROFILE_EVENT();
+
     m_timestep = p_time_step;
 
     Context ctx;
@@ -56,6 +60,8 @@ void Scene::Update(float p_time_step) {
     // hierarchy, update world matrix based on hierarchy
     RunHierarchyUpdateSystem(ctx);
     ctx.Wait();
+    // mesh particles
+    RunMeshEmitterUpdateSystem(ctx);
     // particle
     RunParticleEmitterUpdateSystem(ctx);
     // armature
@@ -528,14 +534,6 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
     m_NameComponents.Remove(p_entity);
 }
 
-void Scene::UpdateLight(size_t p_index) {
-    auto entity = GetEntityByIndex<LightComponent>(p_index);
-    const TransformComponent* transform = GetComponent<TransformComponent>(entity);
-    if (DEV_VERIFY(transform)) {
-        GetComponentByIndex<LightComponent>(p_index).Update(*transform);
-    }
-}
-
 void Scene::UpdateAnimation(size_t p_index) {
     AnimationComponent& animation = GetComponentByIndex<AnimationComponent>(p_index);
 
@@ -758,26 +756,39 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
 }
 
 void Scene::RunLightUpdateSystem(Context& p_context) {
-    JS_NO_PARALLEL_FOR(LightComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateLight(index));
+    HBN_PROFILE_EVENT();
+    unused(p_context);
+
+    for (auto [id, light] : m_LightComponents) {
+        const TransformComponent* transform = GetComponent<TransformComponent>(id);
+        if (DEV_VERIFY(transform)) {
+            UpdateLight(m_timestep, *transform, light);
+        }
+    }
 }
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(TransformComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, GetComponentByIndex<TransformComponent>(index).UpdateTransform());
 }
 
 void Scene::RunAnimationUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(AnimationComponent, p_context, index, 1, UpdateAnimation(index));
 }
 
 void Scene::RunArmatureUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(ArmatureComponent, p_context, index, 1, UpdateArmature(index));
 }
 
 void Scene::RunHierarchyUpdateSystem(Context& p_context) {
+    HBN_PROFILE_EVENT();
     JS_PARALLEL_FOR(HierarchyComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateHierarchy(index));
 }
 
 void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
+    HBN_PROFILE_EVENT();
     unused(p_context);
 
     m_bound.MakeInvalid();
@@ -799,10 +810,23 @@ void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
 }
 
 void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
+    HBN_PROFILE_EVENT();
     unused(p_context);
 
     for (auto [entity, emitter] : m_ParticleEmitterComponents) {
         emitter.aliveBufferIndex = 1 - emitter.aliveBufferIndex;
+    }
+}
+
+void Scene::RunMeshEmitterUpdateSystem(jobsystem::Context& p_context) {
+    HBN_PROFILE_EVENT();
+
+    unused(p_context);
+    for (auto [id, emitter] : m_MeshEmitterComponents) {
+        const TransformComponent* transform = GetComponent<TransformComponent>(id);
+        if (DEV_VERIFY(transform)) {
+            UpdateMeshEmitter(m_timestep, *transform, emitter);
+        }
     }
 }
 

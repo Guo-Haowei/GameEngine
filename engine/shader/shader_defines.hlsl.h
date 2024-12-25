@@ -11,7 +11,7 @@
 #endif
 
 #define MAX_LIGHT_COUNT              16
-#define MAX_BONE_COUNT               64
+#define MAX_BONE_COUNT               128
 #define MAX_POINT_LIGHT_SHADOW_COUNT 8
 #define LIGHT_SHADOW_MIN_DISTANCE    0.1f
 
@@ -31,6 +31,10 @@
 #define PARTICLE_LOCAL_SIZE   32
 #define MAX_PARTICLE_COUNT    1048576
 #define MAX_FORCE_FIELD_COUNT 64
+
+// mesh defines
+#define MESH_HAS_BONE     (1)
+#define MESH_HAS_INSTANCE (2)
 
 // compute local sizes
 #define COMPUTE_LOCAL_SIZE_VOXEL 4

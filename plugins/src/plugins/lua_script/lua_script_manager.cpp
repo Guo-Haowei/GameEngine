@@ -19,6 +19,8 @@ extern const char* g_lua_always_load;
 namespace my {
 
 auto LuaScriptManager::InitializeImpl() -> Result<void> {
+    m_includePath = m_app->GetResourceFolder();
+    m_includePath.append("/scripts/");
     return Result<void>();
 }
 
@@ -92,10 +94,12 @@ void LuaScriptManager::OnSimBegin(Scene& p_scene) {
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
 
+    lua::SetPreloadFunc(L);
     lua::OpenMathLib(L);
     lua::OpenSceneLib(L);
     lua::OpenInputLib(L);
     lua::OpenDisplayLib(L);
+    lua::OpenEngineLib(L);
 
     if (luaL_dostring(L, g_lua_always_load) != LUA_OK) {
         LOG_ERROR("failed to execute script, error: {}", lua_tostring(L, -1));
@@ -118,7 +122,8 @@ void LuaScriptManager::OnSimBegin(Scene& p_scene) {
 
         const auto& meta = FindOrAdd(L, script.m_path, script.m_className.c_str());
         if (script.m_instance == 0) {
-            script.m_instance = CreateInstance(meta, L, entity.GetId());
+            const auto instance = CreateInstance(meta, L, entity.GetId());
+            script.m_instance = instance;
         }
     }
 
@@ -130,13 +135,6 @@ void LuaScriptManager::OnSimBegin(Scene& p_scene) {
 
 void LuaScriptManager::OnSimEnd(Scene& p_scene) {
     m_objectsMeta.clear();
-    auto asset_registry = m_app->GetAssetRegistry();
-    // unload scripts for hot reload
-    for (auto [id, script] : p_scene.m_LuaScriptComponents) {
-        if (!script.m_path.empty()) {
-            asset_registry->RemoveAsset(script.m_path);
-        }
-    }
 
     if (p_scene.L) {
         lua_close(p_scene.L);
@@ -188,12 +186,10 @@ void LuaScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::
 
 Result<void> LuaScriptManager::LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, ObjectFunctions& p_meta) {
     auto asset_registry = m_app->GetAssetRegistry();
-    auto res = asset_registry->RequestAssetSync(p_path);
-    if (!res) {
-        return HBN_ERROR(res.error());
+    auto source = dynamic_cast<const TextAsset*>(asset_registry->GetAssetByHandle(p_path));
+    if (!source) {
+        return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "file {} not found", p_path);
     }
-
-    auto source = dynamic_cast<const TextAsset*>(*res);
 
     if (luaL_dostring(L, source->source.c_str()) != LUA_OK) {
         LOG_ERROR("failed to execute script '{}', error: '{}'", source->meta.path, lua_tostring(L, -1));

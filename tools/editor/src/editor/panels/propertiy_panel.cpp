@@ -102,7 +102,8 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     MaterialComponent* material_component = p_scene.GetComponent<MaterialComponent>(id);
     RigidBodyComponent* rigid_body_component = p_scene.GetComponent<RigidBodyComponent>(id);
     AnimationComponent* animation_component = p_scene.GetComponent<AnimationComponent>(id);
-    ParticleEmitterComponent* emitter_component = p_scene.GetComponent<ParticleEmitterComponent>(id);
+    ParticleEmitterComponent* particle_emitter_component = p_scene.GetComponent<ParticleEmitterComponent>(id);
+    MeshEmitterComponent* mesh_emitter_component = p_scene.GetComponent<MeshEmitterComponent>(id);
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
     LuaScriptComponent* script_component = p_scene.GetComponent<LuaScriptComponent>(id);
     PerspectiveCameraComponent* perspective_camera = p_scene.GetComponent<PerspectiveCameraComponent>(id);
@@ -219,13 +220,16 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     });
 
     DrawComponent("RigidBody", rigid_body_component, [](RigidBodyComponent& p_rigid_body) {
+        const auto& size = p_rigid_body.size;
         switch (p_rigid_body.shape) {
             case RigidBodyComponent::SHAPE_CUBE: {
-                //const auto& half = p_rigid_body.param.box.half_size;
-                //ImGui::Text("shape: box");
-                //ImGui::Text("half size: %.2f, %.2f, %.2f", half.x, half.y, half.z);
-                break;
-            }
+                ImGui::Text("shape: box");
+                ImGui::Text("half size: %.2f, %.2f, %.2f", size.x, size.y, size.z);
+            } break;
+            case RigidBodyComponent::SHAPE_SPHERE: {
+                ImGui::Text("shape: sphere");
+                ImGui::Text("radius: %.2f", size.x);
+            } break;
             default:
                 break;
         }
@@ -307,7 +311,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         ImGui::Separator();
     });
 
-    DrawComponent("Emitter", emitter_component, [&](ParticleEmitterComponent& p_emitter) {
+    DrawComponent("ParticleEmitter", particle_emitter_component, [](ParticleEmitterComponent& p_emitter) {
         const float width = 100.0f;
         ImGui::Checkbox("Gravity", &p_emitter.gravity);
         DrawVec3Control("Velocity", p_emitter.startingVelocity, 0.0f, width);
@@ -320,7 +324,17 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         DrawInputText("texture", p_emitter.texture, width);
     });
 
-    DrawComponent("Force Field", force_field_component, [&](ForceFieldComponent& p_force_field) {
+    DrawComponent("MeshEmitter", mesh_emitter_component, [](MeshEmitterComponent& p_emitter) {
+        // const float width = 100.0f;
+        if (ImGui::Button("reset")) {
+            p_emitter.Reset();
+        }
+
+        DrawCheckBoxBitflag("run", p_emitter.flags, MeshEmitterComponent::RUNNING);
+        DrawCheckBoxBitflag("recycle", p_emitter.flags, MeshEmitterComponent::RECYCLE);
+    });
+
+    DrawComponent("Force Field", force_field_component, [](ForceFieldComponent& p_force_field) {
         const float width = 120.0f;
         DrawDragFloat("Strength", p_force_field.strength, 0.1f, -10.0f, 10.0f, width);
         DrawDragFloat("Radius", p_force_field.radius, 0.1f, 0.1f, 100.0f, width);

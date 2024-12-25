@@ -17,5 +17,7 @@ end
 
 function Rock:OnCollision(other)
     local transform = g_scene:GetTransform(self.id)
+    local position = transform:GetWorldTranslation()
     transform:SetTranslation(Vector3(0, 1000, 0))
+    Game.RequestRockParticle(position)
 end

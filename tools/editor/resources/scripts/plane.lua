@@ -1,4 +1,5 @@
 -- file: plane.lua
+local g = require('@res://scripts/constants.lua')
 Plane = {}
 Plane.__index = Plane
 setmetatable(Plane, GameObject)
@@ -28,19 +29,14 @@ function Plane:OnUpdate(timestep)
     local translate = transform:GetTranslation()
     self.displacement = self.displacement + self.speed
 
-    -- @TODO: refactor constants
-    local AMP_WIDTH = 30
-    local MIN_HEIGHT = 15
-    local MAX_HEIGHT = 45
-
-    local target_x = normalize(cursor.x, -1, 1, -AMP_WIDTH, -0.7 * AMP_WIDTH) + self.displacement.x
-    local target_y = normalize(cursor.y, -0.75, 0.75, translate.y -AMP_WIDTH, translate.y + AMP_WIDTH) + self.displacement.y
+    local target_x = normalize(cursor.x, -1, 1, -g.AMP_WIDTH, -0.7 * g.AMP_WIDTH) + self.displacement.x
+    local target_y = normalize(cursor.y, -0.75, 0.75, translate.y -g.AMP_WIDTH, translate.y + g.AMP_WIDTH) + self.displacement.y
 
     local speed = 3 * timestep
     local delta = Vector2(target_x - translate.x, target_y - translate.y) * Vector2(speed, speed)
     translate.x = translate.x + delta.x
     translate.y = translate.y + delta.y
-    translate.y = math.clamp(translate.y, MIN_HEIGHT, MAX_HEIGHT)
+    translate.y = math.clamp(translate.y, g.MIN_HEIGHT, g.MAX_HEIGHT)
 
     transform:SetTranslation(translate)
 
@@ -68,8 +64,8 @@ function Plane:OnCollision(other)
         dist:normalize()
         self.speed = Vector2(30 * dist.x, 30 * dist.y)
     elseif type == 4 then
-        print('BATTERY!')
+        -- engine.log('Battery!')
     else
-        error("Unknown type " .. type)
+        error('Unknown type ' .. type)
     end
 end
