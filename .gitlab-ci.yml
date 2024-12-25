@@ -16,7 +16,7 @@ check_format:
 shader_generation:
   stage: prepare
   script:
-    - python generate_shader.py
+    - python .\scripts\generate_shader.py
 
 build_debug:
   stage: build

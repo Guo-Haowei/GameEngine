@@ -19,8 +19,6 @@ extern const char* g_lua_always_load;
 namespace my {
 
 auto LuaScriptManager::InitializeImpl() -> Result<void> {
-    m_includePath = m_app->GetResourceFolder();
-    m_includePath.append("/scripts/");
     return Result<void>();
 }
 
@@ -93,7 +91,6 @@ void LuaScriptManager::OnSimBegin(Scene& p_scene) {
 
     lua_State* L = luaL_newstate();
     luaL_openlibs(L);
-
     lua::SetPreloadFunc(L);
     lua::OpenMathLib(L);
     lua::OpenSceneLib(L);

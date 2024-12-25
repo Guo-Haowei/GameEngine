@@ -19,8 +19,11 @@ struct Quat {
 };
 
 void SetPreloadFunc(lua_State* L) {
-    lua_getglobal(L, "package");           
-    lua_getfield(L, -1, "searchers");
+
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "loaders");
+    int count = (int)lua_objlen(L, -1);
+
     lua_pushcfunction(L, [](lua_State* L) -> int {
         const char* path = luaL_checkstring(L, 1);
         auto asset = dynamic_cast<const TextAsset*>(
@@ -36,14 +39,29 @@ void SetPreloadFunc(lua_State* L) {
         }
 
         const char* error_message = lua_tostring(L, -1);
-        printf(error_message);
+        LOG_ERROR("{}", error_message);
 
         auto error = std::format("error loading '{}'", path);
         lua_pushstring(L, error.c_str());
         return 1;
     });
+    lua_rawseti(L, -2, count + 1);
+    lua_pop(L, 2);
 
-    lua_rawseti(L, -2, 1);
+    // @NOTE: turn on to see if loaders are appended correctly
+#if 0
+    const char* source = R"(
+require('ffi')
+for key, value in pairs(package.loaders) do
+    print('key: ' .. key)
+    print('type: ' .. type(value))
+end
+)";
+    int ok = luaL_dostring(L, source);
+    if (ok != LUA_OK) {
+        LOG_ERROR("{}", lua_tostring(L, -1));
+    }
+#endif
 }
 
 bool OpenMathLib(lua_State* L) {
@@ -125,6 +143,9 @@ bool OpenEngineLib(lua_State* L) {
         .beginNamespace("engine")
         .addFunction("log", [](const char* p_message) {
             LogImpl(LOG_LEVEL_NORMAL, "{}", p_message);
+        })
+        .addFunction("log_ok", [](const char* p_message) {
+            LogImpl(LOG_LEVEL_OK, "{}", p_message);
         })
         .addFunction("error", [](const char* p_file, int p_line, const char* p_error) {
             ReportErrorImpl("lua_function", p_file, p_line, p_error);

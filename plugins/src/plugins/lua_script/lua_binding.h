@@ -1,5 +1,6 @@
 #pragma once
-#include <lua.hpp>
+
+#include <luajit/lua.hpp>
 
 #include "engine/systems/ecs/entity.h"
 

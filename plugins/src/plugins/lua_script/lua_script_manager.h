@@ -31,7 +31,6 @@ protected:
     Result<void> LoadMetaTable(lua_State* L, const std::string& p_path, const char* p_class_name, ObjectFunctions& p_meta);
 
     std::map<std::string, ObjectFunctions> m_objectsMeta;
-    std::string m_includePath;
     int m_gameRef{ 0 };
 };
 

@@ -140,3 +140,25 @@ end
 function Game.RequestBatteryParticle(position)
     Game.instance:RequestParticle(Game.instance.battery_emitter, position)
 end
+
+-- @TODO: refactor this, this is just a test to see if jit works
+local ffi = require('ffi')
+
+ffi.cdef[[
+    typedef struct {
+        float x;
+        float y;
+        float z;
+    } Vector3D;
+]]
+
+local function new_vector(x, y, z)
+    local v = ffi.new("Vector3D")
+    v.x = x
+    v.y = y
+    v.z = z
+    return v
+end
+
+local result = new_vector(1, 2, 3)
+engine.log_ok('this is a test of ffi, ' .. result.x .. ', '.. result.y .. ', ' .. result.z)
