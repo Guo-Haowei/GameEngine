@@ -192,7 +192,7 @@ RigidBodyComponent& RigidBodyComponent::InitGhost() {
 
 #pragma region MESH_EMITTER_COMPONENT
 void MeshEmitterComponent::Reset() {
-    if (particles.size() != maxMeshCount) {
+    if ((int)particles.size() != maxMeshCount) {
         particles.resize(maxMeshCount);
     }
 

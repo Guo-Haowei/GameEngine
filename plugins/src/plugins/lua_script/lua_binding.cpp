@@ -36,7 +36,7 @@ void SetPreloadFunc(lua_State* L) {
         }
 
         const char* error_message = lua_tostring(L, -1);
-        printf(error_message);
+        LOG_ERROR("{}", error_message);
 
         auto error = std::format("error loading '{}'", path);
         lua_pushstring(L, error.c_str());

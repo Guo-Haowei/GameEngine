@@ -72,7 +72,7 @@ auto TextAssetLoader::Load() -> Result<IAsset*> {
     file_access->ReadBuffer(buffer.data(), size);
 
     auto file = new TextAsset;
-    file->source = std::move(std::string(buffer.begin(), buffer.end()));
+    file->source = std::string(buffer.begin(), buffer.end());
     return file;
 }
 
