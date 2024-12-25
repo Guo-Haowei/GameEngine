@@ -1,5 +1,16 @@
 #pragma once
-#include <lua.hpp>
+
+extern "C" {
+#include "lauxlib.h"
+#include "lua.h"
+#include "lualib.h"
+}
+
+#ifndef LUA_OK
+enum {
+    LUA_OK = 0,
+};
+#endif
 
 #include "engine/systems/ecs/entity.h"
 

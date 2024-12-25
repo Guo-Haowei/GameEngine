@@ -20,7 +20,7 @@ struct Quat {
 
 void SetPreloadFunc(lua_State* L) {
     lua_getglobal(L, "package");           
-    lua_getfield(L, -1, "searchers");
+    lua_getfield(L, -1, "loaders");
     lua_pushcfunction(L, [](lua_State* L) -> int {
         const char* path = luaL_checkstring(L, 1);
         auto asset = dynamic_cast<const TextAsset*>(
@@ -42,8 +42,8 @@ void SetPreloadFunc(lua_State* L) {
         lua_pushstring(L, error.c_str());
         return 1;
     });
-
     lua_rawseti(L, -2, 1);
+    lua_pop(L, 2);
 }
 
 bool OpenMathLib(lua_State* L) {
