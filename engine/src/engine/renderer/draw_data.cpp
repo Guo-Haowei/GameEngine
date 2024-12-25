@@ -525,7 +525,7 @@ static void FillMeshEmitterBuffer(const RenderDataConfig& p_config,
         auto mesh = scene.GetComponent<MeshComponent>(emitter.meshId);
         if (DEV_VERIFY(transform && mesh)) {
             PerBatchConstantBuffer batch_buffer;
-            batch_buffer.c_worldMatrix = transform->GetWorldMatrix();
+            batch_buffer.c_worldMatrix = Matrix4x4f(1);
             batch_buffer.c_meshFlag = MESH_HAS_INSTANCE;
 
             BatchContext draw;
@@ -553,13 +553,12 @@ static void FillMeshEmitterBuffer(const RenderDataConfig& p_config,
             auto& gpu_buffer = position_buffer.back();
             int i = 0;
             for (auto index : emitter.aliveList) {
-                const auto& particle = emitter.particles[index.v];
+                const auto& p = emitter.particles[index.v];
 
-                Matrix4x4f translation = math::Translate(particle.position);
-                gpu_buffer.c_bones[i++] = translation;
-                // Matrix4x4f rotationMatrix = glm::toMat4(Quaternion(m_rotation.w, m_rotation.x, m_rotation.y, m_rotation.z));
-                // Matrix4x4f scaleMatrix = math::Scale(m_scale);
-                // return translationMatrix * rotationMatrix * scaleMatrix;
+                Matrix4x4f translation = math::Translate(p.position);
+                Matrix4x4f scale = math::Scale(Vector3f(p.scale));
+                Matrix4x4f rotation = glm::toMat4(glm::quat(glm::vec3(p.rotation.x, p.rotation.y, p.rotation.z)));
+                gpu_buffer.c_bones[i++] = translation * rotation * scale;
             }
 
             p_out_data.instances.push_back(instance);

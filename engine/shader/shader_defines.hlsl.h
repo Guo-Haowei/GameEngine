@@ -11,7 +11,7 @@
 #endif
 
 #define MAX_LIGHT_COUNT              16
-#define MAX_BONE_COUNT               64
+#define MAX_BONE_COUNT               128
 #define MAX_POINT_LIGHT_SHADOW_COUNT 8
 #define LIGHT_SHADOW_MIN_DISTANCE    0.1f
 

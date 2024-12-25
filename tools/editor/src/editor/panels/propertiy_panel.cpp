@@ -330,19 +330,8 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             p_emitter.Reset();
         }
 
-        // @TODO: refactor this
-        if (p_emitter.IsRunning()) {
-            if (ImGui::Button("pause")) {
-                p_emitter.flags &= ~MeshEmitterComponent::RUNNING;
-            }
-        } else {
-            if (ImGui::Button("run")) {
-                p_emitter.flags |= MeshEmitterComponent::RUNNING;
-                if (p_emitter.particles.empty()) {
-                    p_emitter.Reset();
-                }
-            }
-        }
+        DrawCheckBoxBitflag("run", p_emitter.flags, MeshEmitterComponent::RUNNING);
+        DrawCheckBoxBitflag("recycle", p_emitter.flags, MeshEmitterComponent::RECYCLE);
     });
 
     DrawComponent("Force Field", force_field_component, [](ForceFieldComponent& p_force_field) {

@@ -449,10 +449,13 @@ void SceneCreator::CreateMeshEmitter(Scene* p_scene) {
     auto& emitter = p_scene->Create<MeshEmitterComponent>(id);
     DEV_ASSERT(mesh_rock_patricle.IsValid());
     emitter.meshId = mesh_rock_patricle;
+    emitter.flags |= MeshEmitterComponent::RECYCLE;
 
-    emitter.vxRange = Vector2f(-1, 1);
-    emitter.vyRange = Vector2f(0, 0);
-    emitter.vzRange = Vector2f(-1, 1);
+    emitter.vxRange = Vector2f(-1, +1);
+    emitter.vyRange = Vector2f(-1, +1);
+    emitter.vzRange = Vector2f(-1, +1);
+    emitter.scale = 0.1f;
+    emitter.lifetimeRange = Vector2f(3.f, 5.f);
 
     p_scene->AttachChild(id);
 }

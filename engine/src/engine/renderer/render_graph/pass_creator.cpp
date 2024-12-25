@@ -56,6 +56,39 @@ static void DrawBatchesGeometry(const DrawData& p_data, const std::vector<BatchC
     }
 }
 
+static void DrawInstacedGeometry(const DrawData& p_data, const std::vector<InstanceContext>& p_instances) {
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+
+    for (const auto& instance : p_instances) {
+        DEV_ASSERT(instance.instanceBufferIndex >= 0);
+        gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), instance.instanceBufferIndex);
+
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), instance.batchIdx);
+
+        gm.SetMesh(instance.gpuMesh);
+
+        // if (instance..flags) {
+        //     gm.SetStencilRef(draw.flags);
+        // }
+
+        const MaterialConstantBuffer& material = p_data.materialCache.buffer[instance.materialIdx];
+        gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
+        gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
+        gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
+
+        gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), instance.materialIdx);
+
+        gm.DrawElementsInstanced(instance.instanceCount,
+                                 instance.indexCount,
+                                 instance.indexOffset);
+
+        // if (draw.flags) {
+        //     gm.SetStencilRef(0);
+        // }
+    }
+}
+
 static void GbufferPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
@@ -75,6 +108,7 @@ static void GbufferPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
 
     gm.SetPipelineState(PSO_GBUFFER);
     DrawBatchesGeometry(p_data, pass.opaque);
+    DrawInstacedGeometry(p_data, p_data.instances);
     gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
     DrawBatchesGeometry(p_data, pass.doubleSided);
 }

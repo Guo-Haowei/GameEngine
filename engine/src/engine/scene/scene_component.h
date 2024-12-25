@@ -625,24 +625,29 @@ struct MeshEmitterComponent {
         Vector3f position;
         float lifespan;
         Vector3f rotation;
-        Vector3f scale;
+        float scale;
         Vector3f velocity;
         Vector3f angularVelocity;
 
         void Init(float p_lifespan,
                   const Vector3f& p_position,
-                  const Vector3f& p_velocity) {
+                  const Vector3f& p_velocity,
+                  const Vector3f& p_rotation,
+                  float p_scale) {
             position = p_position;
             lifespan = p_lifespan;
             velocity = p_velocity;
+            rotation = p_rotation;
+            scale = p_scale;
         }
     };
 
     uint32_t flags{ NONE };
-    int maxMeshCount{ 100 };
+    int maxMeshCount{ 128 };
     int emissionPerFrame{ 1 };
     ecs::Entity meshId;
     Vector3f gravity{ 0 };
+    float scale{ 1.0f };
     Vector2f vxRange{ 0 };
     Vector2f vyRange{ 0 };
     Vector2f vzRange{ 0 };
@@ -660,7 +665,6 @@ struct MeshEmitterComponent {
     bool IsRunning() const { return flags & RUNNING; }
     bool IsRecycle() const { return flags & RECYCLE; }
 
-    void InitParticle(Index p_index, const Vector3f& p_position);
     void UpdateParticle(Index p_index, float p_timestep);
     void Reset();
 

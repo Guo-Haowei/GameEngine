@@ -2,7 +2,6 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "engine/core/base/random.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/math/matrix_transform.h"
@@ -197,6 +196,8 @@ void MeshEmitterComponent::Reset() {
         particles.resize(maxMeshCount);
     }
 
+    aliveList.clear();
+    aliveList.reserve(maxMeshCount);
     deadList.clear();
     deadList.reserve(maxMeshCount);
     for (int i = 0; i < maxMeshCount; ++i) {
@@ -204,33 +205,15 @@ void MeshEmitterComponent::Reset() {
     }
 }
 
-void MeshEmitterComponent::InitParticle(Index p_index, const Vector3f& p_position) {
-    DEV_ASSERT(p_index.v < particles.size());
-    auto& p = particles[p_index.v];
-
-    Vector3f initial_speed{ 0 };
-    initial_speed.x += Random::Float(vxRange.x, vxRange.y);
-    initial_speed.y += Random::Float(vyRange.x, vyRange.y);
-    initial_speed.z += Random::Float(vzRange.x, vzRange.y);
-    p.Init(Random::Float(lifetimeRange.x, lifetimeRange.y),
-           p_position,
-           initial_speed);
-}
-
 void MeshEmitterComponent::UpdateParticle(Index p_index, float p_timestep) {
     DEV_ASSERT(p_index.v < particles.size());
     auto& p = particles[p_index.v];
     DEV_ASSERT(p.lifespan >= 0.0f);
 
-    // @TODO: better force
-    p.position += p.velocity;
-
-    p.velocity.x *= (1 - p_timestep);
-    p.velocity.z *= (1 - p_timestep);
-    // p.velocity.y -= p_timestep * 0.5f;
-
-    // LOG("position is {} {} {}", p.position.x, p.position.y, p.position.z);
-
+    p.position += p_timestep * p.velocity;
+    // @TODO: gravity
+    p.velocity.y += p_timestep * -1.0f;
+    p.rotation += Vector3f(p_timestep);
     p.lifespan -= p_timestep;
 }
 

@@ -1,10 +1,18 @@
 #include "scene_system.h"
 
+#include "engine/core/base/random.h"
+
 namespace my {
 
 void UpdateMeshEmitter(float p_timestep,
                        const TransformComponent& p_transform,
                        MeshEmitterComponent& p_emitter) {
+
+    // initialize
+    if (p_emitter.particles.empty()) {
+        p_emitter.Reset();
+    }
+
     if (!p_emitter.IsRunning()) {
         return;
     }
@@ -19,10 +27,27 @@ void UpdateMeshEmitter(float p_timestep,
         p_emitter.deadList.pop_back();
         p_emitter.aliveList.push_back(free_index);
 
-        p_emitter.InitParticle(free_index, position);
+        DEV_ASSERT(free_index.v < p_emitter.particles.size());
+        auto& p = p_emitter.particles[free_index.v];
+
+        Vector3f initial_speed{ 0 };
+        initial_speed.x += Random::Float(p_emitter.vxRange.x, p_emitter.vxRange.y);
+        initial_speed.y += Random::Float(p_emitter.vyRange.x, p_emitter.vyRange.y);
+        initial_speed.z += Random::Float(p_emitter.vzRange.x, p_emitter.vzRange.y);
+        Vector3f initial_rotation{
+            Random::Float(-math::HalfPi(), math::HalfPi()),
+            Random::Float(-math::HalfPi(), math::HalfPi()),
+            Random::Float(-math::HalfPi(), math::HalfPi()),
+        };
+
+        p.Init(Random::Float(p_emitter.lifetimeRange.x, p_emitter.lifetimeRange.y),
+               position,
+               initial_speed,
+               initial_rotation,
+               p_emitter.scale);
     }
 
-    // 2. update alive ones (TODO: use jobsystem)
+    // 2. update alive ones
     for (const auto index : p_emitter.aliveList) {
         p_emitter.UpdateParticle(index, p_timestep);
     }

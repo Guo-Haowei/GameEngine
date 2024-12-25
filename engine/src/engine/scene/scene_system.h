@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/scene/scene_component.h"
+#include "engine/systems/job_system/job_system.h"
 
 namespace my {
 
