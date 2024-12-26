@@ -17,6 +17,7 @@
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_misc.h"
+#include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
 #include "shader_resource_defines.hlsl.h"
 
@@ -330,16 +331,16 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
     p_texture_desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
     p_texture_desc.initialData = p_image->buffer.data();
     p_texture_desc.mipLevels = 1;
+    p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
 
     if (is_hdr_file) {
-        p_sampler_desc.minFilter = p_sampler_desc.magFilter = FilterMode::LINEAR;
+        p_sampler_desc.minFilter = MinFilter::LINEAR;
+        p_sampler_desc.magFilter = MagFilter::LINEAR;
         p_sampler_desc.addressU = p_sampler_desc.addressV = AddressMode::CLAMP;
         // p_texture_desc.bindFlags &= (~BIND_RENDER_TARGET);
-        p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
     } else {
-        p_texture_desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
-        p_sampler_desc.minFilter = FilterMode::MIPMAP_LINEAR;
-        p_sampler_desc.magFilter = FilterMode::LINEAR;
+        p_sampler_desc.minFilter = MinFilter::LINEAR_MIPMAP_LINEAR;
+        p_sampler_desc.magFilter = MagFilter::LINEAR;
     }
 }
 

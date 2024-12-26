@@ -42,13 +42,18 @@ enum StencilFlags : uint8_t {
     STENCIL_FLAG_SELECTED = BIT(8),
 };
 
-enum class FilterMode {
+enum class MagFilter : uint8_t {
     POINT,
     LINEAR,
-    MIPMAP_LINEAR,  // @TODO: change
 };
 
-enum class AddressMode {
+enum class MinFilter : uint8_t {
+    POINT,
+    LINEAR,
+    LINEAR_MIPMAP_LINEAR,
+};
+
+enum class AddressMode : uint8_t {
     WRAP,
     CLAMP,
     BORDER,

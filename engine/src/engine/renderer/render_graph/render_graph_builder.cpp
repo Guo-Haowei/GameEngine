@@ -9,6 +9,7 @@
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer_misc.h"
+#include "engine/renderer/sampler.h"
 
 // shader defines
 #include "shader_resource_defines.hlsl.h"
@@ -412,7 +413,7 @@ void RenderGraphBuilder::AddVoxelizationPass() {
         desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
         desc.bindFlags |= BIND_RENDER_TARGET | BIND_SHADER_RESOURCE | BIND_UNORDERED_ACCESS;
 
-        SamplerDesc sampler(FilterMode::MIPMAP_LINEAR, FilterMode::POINT, AddressMode::BORDER);
+        SamplerDesc sampler(MinFilter::LINEAR_MIPMAP_LINEAR, MagFilter::POINT, AddressMode::BORDER);
 
         auto voxel_lighting = manager.CreateTexture(desc, sampler);
 

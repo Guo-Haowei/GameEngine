@@ -27,6 +27,7 @@ public:
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
     const auto& GetDrawPasses() const { return m_drawPasses; }
+
 protected:
     void CreateInternal(RenderPassDesc& pass_desc);
 

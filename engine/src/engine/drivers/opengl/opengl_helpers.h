@@ -248,14 +248,26 @@ inline GLuint ConvertDataType(PixelFormat p_format) {
     }
 }
 
-inline GLenum ConvertFilter(FilterMode p_mode) {
+inline GLenum ConvertFilter(MinFilter p_mode) {
     switch (p_mode) {
-        case FilterMode::POINT:
+        case MinFilter::POINT:
             return GL_NEAREST;
-        case FilterMode::LINEAR:
+        case MinFilter::LINEAR:
             return GL_LINEAR;
-        case FilterMode::MIPMAP_LINEAR:
+        case MinFilter::LINEAR_MIPMAP_LINEAR:
             return GL_LINEAR_MIPMAP_LINEAR;
+        default:
+            CRASH_NOW();
+            return 0;
+    }
+}
+
+inline GLenum ConvertFilter(MagFilter p_mode) {
+    switch (p_mode) {
+        case MagFilter::POINT:
+            return GL_NEAREST;
+        case MagFilter::LINEAR:
+            return GL_LINEAR;
         default:
             CRASH_NOW();
             return 0;

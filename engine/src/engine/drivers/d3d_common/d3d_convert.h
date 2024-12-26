@@ -195,22 +195,13 @@ static inline D3D_(STENCIL_OP) Convert(StencilOp p_op) {
 }
 
 // @TODO: refactor this
-static inline D3D_(FILTER) Convert(FilterMode p_min_filter, FilterMode p_mag_filter) {
-    if (p_min_filter == FilterMode::MIPMAP_LINEAR && p_mag_filter == FilterMode::MIPMAP_LINEAR) {
-        return D3D_FILTER_(MIN_MAG_MIP_LINEAR);
-    }
-    if (p_min_filter == FilterMode::POINT && p_mag_filter == FilterMode::POINT) {
-        return D3D_FILTER_(MIN_MAG_MIP_POINT);
-    }
-    if (p_min_filter == FilterMode::LINEAR && p_mag_filter == FilterMode::LINEAR) {
-        return D3D_FILTER_(MIN_MAG_LINEAR_MIP_POINT);
-    }
-    if (p_min_filter == FilterMode::MIPMAP_LINEAR && p_mag_filter == FilterMode::LINEAR) {
-        return D3D_FILTER_(MIN_LINEAR_MAG_POINT_MIP_LINEAR);
-    }
+static inline D3D_(FILTER) Convert(MinFilter p_min_filter, MagFilter p_mag_filter) {
+    const bool min_linear = p_min_filter != MinFilter::POINT;
+    const bool mag_linear = p_mag_filter != MagFilter::POINT;
+    const bool mip_linear = true;
 
-    CRASH_NOW_MSG(std::format("Unknown filter {} and {}", static_cast<int>(p_min_filter), static_cast<int>(p_mag_filter)));
-    return D3D_FILTER_(MIN_MAG_MIP_POINT);
+    const auto filter = static_cast<D3D_(FILTER)>((min_linear << 4) | (mag_linear << 2) | mip_linear);
+    return filter;
 }
 
 static inline auto Convert(const StencilOpDesc* p_in) {

@@ -4,8 +4,8 @@
 namespace my {
 
 struct SamplerDesc {
-    SamplerDesc(FilterMode p_min_filter = FilterMode::POINT,
-                FilterMode p_mag_filter = FilterMode::POINT,
+    SamplerDesc(MinFilter p_min_filter = MinFilter::POINT,
+                MagFilter p_mag_filter = MagFilter::POINT,
                 AddressMode p_address_mode = AddressMode::WRAP,
                 StaticBorderColor p_border_color = StaticBorderColor::TRANSPARENT_BLACK,
                 float p_min_lod_bias = 0.0f,
@@ -50,8 +50,8 @@ struct SamplerDesc {
     }
 
     // @TODO: mipmap filter
-    FilterMode minFilter;
-    FilterMode magFilter;
+    MinFilter minFilter;
+    MagFilter magFilter;
 
     AddressMode addressU;
     AddressMode addressV;
@@ -68,21 +68,42 @@ struct SamplerDesc {
 };
 
 static inline SamplerDesc PointClampSampler() {
-    SamplerDesc desc(FilterMode::POINT, FilterMode::POINT, AddressMode::CLAMP);
+    SamplerDesc desc(MinFilter::POINT, MagFilter::POINT, AddressMode::CLAMP);
     return desc;
 }
 
 static inline SamplerDesc LinearClampSampler() {
-    SamplerDesc desc(FilterMode::LINEAR, FilterMode::LINEAR, AddressMode::CLAMP);
+    SamplerDesc desc(MinFilter::LINEAR, MagFilter::LINEAR, AddressMode::CLAMP);
+    return desc;
+}
+
+static inline SamplerDesc LinearWrapSampler() {
+    SamplerDesc desc(MinFilter::LINEAR, MagFilter::LINEAR, AddressMode::WRAP);
     return desc;
 }
 
 SamplerDesc CubemapSampler();
 
+// @TODO: refactor?
+inline SamplerDesc shadow_map_sampler() {
+    // @TODO: may be change this to LINEAR
+    SamplerDesc desc(MinFilter::LINEAR,
+                     MagFilter::LINEAR,
+                     AddressMode::BORDER, StaticBorderColor ::OPAQUE_WHITE);
+    return desc;
+}
+
+inline SamplerDesc shadow_cube_map_sampler() {
+    SamplerDesc desc{};
+    desc.addressU = desc.addressV = desc.addressW = AddressMode::CLAMP;
+    return desc;
+}
+
 // @TODO: refactor
 inline SamplerDesc bloom_downsample() {
     SamplerDesc desc{};
-    desc.minFilter = desc.magFilter = FilterMode::LINEAR;
+    desc.minFilter = MinFilter::LINEAR;
+    desc.magFilter = MagFilter::LINEAR;
     desc.addressU = desc.addressV = desc.addressW = AddressMode::BORDER;
     desc.border[0] = 0.0;
     desc.border[1] = 0.0;
@@ -93,27 +114,9 @@ inline SamplerDesc bloom_downsample() {
 
 inline SamplerDesc env_cube_map_sampler_mip() {
     SamplerDesc desc{};
-    desc.minFilter = FilterMode::MIPMAP_LINEAR;
-    desc.magFilter = FilterMode::LINEAR;
+    desc.minFilter = MinFilter::LINEAR_MIPMAP_LINEAR;
+    desc.magFilter = MagFilter::LINEAR;
     desc.addressU = desc.addressV = desc.addressW = AddressMode::CLAMP;
-    return desc;
-}
-
-inline SamplerDesc shadow_cube_map_sampler() {
-    SamplerDesc desc{};
-    desc.minFilter = desc.magFilter = FilterMode::POINT;
-    desc.addressU = desc.addressV = desc.addressW = AddressMode::CLAMP;
-    return desc;
-}
-
-inline SamplerDesc shadow_map_sampler() {
-    SamplerDesc desc{};
-    desc.minFilter = desc.magFilter = FilterMode::POINT;
-    desc.addressU = desc.addressV = desc.addressW = AddressMode::BORDER;
-    desc.border[0] = 1.0f;
-    desc.border[1] = 1.0f;
-    desc.border[2] = 1.0f;
-    desc.border[3] = 1.0f;
     return desc;
 }
 

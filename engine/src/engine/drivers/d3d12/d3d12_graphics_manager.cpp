@@ -9,6 +9,7 @@
 #include "engine/drivers/d3d_common/d3d_common.h"
 #include "engine/drivers/windows/win32_display_manager.h"
 #include "engine/renderer/graphics_private.h"
+#include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
 #include "structured_buffer.hlsl.h"
 

@@ -6,8 +6,8 @@
 namespace my {
 
 SamplerDesc CubemapSampler() {
-    SamplerDesc desc(FilterMode::MIPMAP_LINEAR,
-                     FilterMode::MIPMAP_LINEAR,
+    SamplerDesc desc(MinFilter::LINEAR_MIPMAP_LINEAR,
+                     MagFilter::LINEAR,
                      AddressMode::WRAP,
                      StaticBorderColor::TRANSPARENT_BLACK,
                      0.0f,
