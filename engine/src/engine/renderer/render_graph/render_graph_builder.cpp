@@ -540,12 +540,18 @@ static void LightingPassFunc(const DrawData& p_data, const Framebuffer* p_frameb
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     // DrawBatches
-    auto skybox = p_data.skyboxHdr;
+#if 0
+    auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
+    constexpr int skybox_slot = GetPrefilteredSlot();
+#else
+    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+    constexpr int skybox_slot = GetSkyboxSlot();
+#endif
     if (skybox) {
-        gm.BindTexture(Dimension::TEXTURE_2D, skybox->GetHandle(), GetSkyboxHdrSlot());
+        gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.DrawSkybox();
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
+        gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
     }
 
     // draw transparent objects

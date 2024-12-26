@@ -6,4 +6,4 @@
 #include "shader_resource_defines.hlsl.h"
 
 // include implementation
-#include "prefilter.ps.hlsl.h"
+#include "ibl_prefilter.ps.hlsl.h"

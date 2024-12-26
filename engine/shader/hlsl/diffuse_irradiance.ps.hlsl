@@ -5,4 +5,4 @@
 #include "shader_resource_defines.hlsl.h"
 
 // include implementation
-#include "diffuse_irradiance.ps.hlsl.h"
+#include "ibl_diffuse_irradiance.ps.hlsl.h"

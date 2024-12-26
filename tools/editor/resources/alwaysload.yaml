@@ -6,7 +6,7 @@ files:
     type: Image
   - path: "@res://images/ibl/sky.hdr"
     type: Image
-  - path: "@res://images/ibl/aviator_sky.hdr"
+  - path: "@res://images/ibl/night.hdr"
     type: Image
   - path: "@res://fonts/DroidSans.ttf"
     type: Font
