@@ -66,7 +66,7 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
         ImGui::Spacing();
         {
             ImNodes::BeginStaticAttribute(id);
-            const auto& framebuffer = pass->m_drawPasses[0].framebuffer;
+            const auto& framebuffer = pass->GetDrawPasses()[0].framebuffer;
             if (framebuffer) {
                 auto add_image = [](const std::shared_ptr<GpuTexture>& p_texture) {
                     if (p_texture && p_texture->desc.dimension == Dimension::TEXTURE_2D) {
@@ -116,6 +116,14 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
 
 void RenderGraphViewer::UpdateInternal(Scene&) {
     auto graphics_manager = m_editor.GetApplication()->GetGraphicsManager();
+
+    switch (graphics_manager->GetBackend()) {
+        case Backend::METAL:
+            return;
+        default:
+            break;
+    }
+    
     const auto graph = graphics_manager->GetActiveRenderGraph();
 
 #if 0
@@ -154,7 +162,7 @@ void RenderGraphViewer::UpdateInternal(Scene&) {
 
     ImNodes::BeginNodeEditor();
 
-    DrawNodes(graph->m_graph);
+    DrawNodes(graph->GetGraph());
 
     ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
     ImNodes::EndNodeEditor();
