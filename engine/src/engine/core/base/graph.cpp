@@ -2,21 +2,31 @@
 
 namespace my {
 
-bool Graph::has_edge(int from, int to) const {
-    return m_adj[from].find(to) != m_adj[from].end();
+void GraphBase::SetNodeCount(int p_count) {
+    DEV_ASSERT(p_count > 0);
+    m_vertexCount = p_count;
+    m_adjList.resize(p_count);
 }
 
-void Graph::add_edge(int from, int to) {
-    DEV_ASSERT(from != to);
-    DEV_ASSERT(!has_edge(from, to));
-    m_adj[from].insert(to);
+bool GraphBase::HasEdge(int p_from, int p_to) const {
+    DEV_ASSERT_INDEX(p_from, m_vertexCount);
+    DEV_ASSERT_INDEX(p_to, m_vertexCount);
+    return m_adjList[p_from].find(p_to) != m_adjList[p_from].end();
+}
+
+void GraphBase::AddEdge(int p_from, int p_to) {
+    DEV_ASSERT_INDEX(p_from, m_vertexCount);
+    DEV_ASSERT_INDEX(p_to, m_vertexCount);
+    DEV_ASSERT(p_from != p_to);
+    DEV_ASSERT(!HasEdge(p_from, p_to));
+    m_adjList[p_from].insert(p_to);
     return;
 }
 
-bool Graph::has_cycle() const {
+bool GraphBase::HasCycle() const {
     for (int i = 0; i < m_vertexCount; ++i) {
-        for (int from : m_adj[i]) {
-            if (is_reachable(from, i)) {
+        for (int from : m_adjList[i]) {
+            if (IsReachable(from, i)) {
                 return true;
             }
         }
@@ -24,26 +34,26 @@ bool Graph::has_cycle() const {
     return false;
 }
 
-int Graph::is_reachable(int from, int to) const {
-    DEV_ASSERT(from != to);
-    DEV_ASSERT_INDEX(from, m_vertexCount);
-    DEV_ASSERT_INDEX(to, m_vertexCount);
+bool GraphBase::IsReachable(int p_from, int p_to) const {
+    DEV_ASSERT(p_from != p_to);
+    DEV_ASSERT_INDEX(p_from, m_vertexCount);
+    DEV_ASSERT_INDEX(p_to, m_vertexCount);
 
-    if (from == to) {
+    if (p_from == p_to) {
         return true;
     }
 
     std::queue<int> queue;
     std::vector<bool> visited(m_vertexCount, false);
-    visited[from] = true;
-    queue.push(from);
+    visited[p_from] = true;
+    queue.push(p_from);
 
     while (!queue.empty()) {
-        from = queue.front();
+        p_from = queue.front();
         queue.pop();
 
-        for (int node : m_adj[from]) {
-            if (node == to) {
+        for (int node : m_adjList[p_from]) {
+            if (node == p_to) {
                 return true;
             }
 
@@ -57,75 +67,32 @@ int Graph::is_reachable(int from, int to) const {
     return false;
 }
 
-void Graph::remove_redundant() {
-    for (int from = 0; from < m_vertexCount; ++from) {
-        for (int to = 0; to < m_vertexCount; ++to) {
-            if (from == to) {
-                continue;
-            }
+bool GraphBase::Sort(std::vector<int>& p_stack) const {
+    if (HasCycle()) {
+        return false;
+    }
 
-            auto& adj = m_adj[from];
-            bool has_direct_path = adj.find(to) != adj.end();
-            if (!has_direct_path) {
-                continue;
-            }
+    std::vector<uint8_t> visited(m_vertexCount, false);
 
-            for (int middle = 0; middle < m_vertexCount; ++middle) {
-                if (middle == from || middle == to) {
-                    continue;
-                }
-
-                if (is_reachable(from, middle) && is_reachable(middle, to)) {
-                    adj.erase(to);
-                }
-            }
+    for (int i = 0; i < m_vertexCount; ++i) {
+        if (!visited[i]) {
+            SortUtil(i, visited, p_stack);
         }
     }
+
+    std::reverse(p_stack.begin(), p_stack.end());
+    return true;
 }
 
-std::vector<std::vector<int>> Graph::build_level() const {
-    std::vector<std::vector<int>> levels(1);
-    std::list<int> list;
-    for (int i = 0; i < m_vertexCount; ++i) {
-        bool no_dependency = true;
-        for (int j = 0; j < m_vertexCount; ++j) {
-            if (i == j) {
-                continue;
-            }
-            if (has_edge(j, i)) {
-                no_dependency = false;
-                break;
-            }
-        }
-        if (no_dependency) {
-            levels[0].push_back(i);
-        } else {
-            list.push_back(i);
+void GraphBase::SortUtil(int p_from, std::vector<uint8_t>& p_visited, std::vector<int>& p_topological_stack) const {
+    p_visited[p_from] = true;
+    for (int to : m_adjList[p_from]) {
+        if (!p_visited[to]) {
+            SortUtil(to, p_visited, p_topological_stack);
         }
     }
 
-    while (!list.empty()) {
-        std::vector<int> level;
-        auto it = list.begin();
-        while (it != list.end()) {
-            bool exist_edge = false;
-            for (int i : levels.back()) {
-                if (has_edge(i, *it)) {
-                    exist_edge = true;
-                    break;
-                }
-            }
-            if (exist_edge) {
-                level.push_back(*it);
-                it = list.erase(it);
-            } else {
-                ++it;
-            }
-        }
-        levels.emplace_back(level);
-    }
-
-    return levels;
+    p_topological_stack.push_back(p_from);
 }
 
 }  // namespace my

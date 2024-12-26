@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/core/base/graph.h"
 #include "engine/core/base/noncopyable.h"
 #include "render_pass.h"
 
@@ -28,9 +29,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
-    std::vector<int> m_sortedOrder;
-    std::vector<Edge> m_links;
-    std::vector<std::vector<int>> m_levels;
+    Graph<RenderPass*> m_graph;
 
     std::map<RenderPassName, int> m_renderPassLookup;
 
