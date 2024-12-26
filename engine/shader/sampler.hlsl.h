@@ -25,13 +25,6 @@ SAMPLER_STATE(2, s_linearClampSampler,
               SamplerDesc(FilterMode::MIPMAP_LINEAR,
                           FilterMode::MIPMAP_LINEAR,
                           AddressMode::CLAMP));
-// SAMPLER_STATE(3, s_cubemapClampSampler,
-//               SamplerDesc(FilterMode::MIPMAP_LINEAR,
-//                           FilterMode::MIPMAP_LINEAR,
-//                           AddressMode::CLAMP));
-SAMPLER_STATE(3, s_cubemapClampSampler,
-              SamplerDesc(FilterMode::LINEAR,
-                          FilterMode::LINEAR,
-                          AddressMode::CLAMP));
+SAMPLER_STATE(3, s_cubemapClampSampler, CubemapSampler());
 
 #endif  // #ifndef SAMPLER_HLSL_H_INCLUDED

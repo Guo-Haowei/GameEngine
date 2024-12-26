@@ -7,10 +7,6 @@
 #include "vxgi.glsl"
 #endif
 
-vec3 FresnelSchlickRoughness(float cosTheta, in vec3 F0, float roughness) {
-    return F0 + (max(vec3(1.0 - roughness) - F0, vec3(0.0))) * pow(1.0 - cosTheta, 5.0);
-}
-
 // @TODO: refactor
 vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec3 p_base_color) {
     vec3 Lo = vec3(0.0, 0.0, 0.0);
@@ -134,7 +130,7 @@ vec3 compute_lighting(vec3 base_color, vec3 world_position, vec3 N, float metall
     }
 
     const vec3 V = normalize(c_cameraPosition - world_position);
-    const float NdotV = clamp(dot(N, V), 0.0, 1.0);
+    const float NdotV = max(dot(N, V), 0.0);
     vec3 R = reflect(-V, N);
 
     vec3 Lo = vec3(0.0);
@@ -207,12 +203,12 @@ vec3 compute_lighting(vec3 base_color, vec3 world_position, vec3 N, float metall
     kD *= 1.0 - metallic;
     vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
     vec3 diffuse = irradiance * base_color.rgb;
-    diffuse = base_color.rgb * c_ambientColor.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 envBRDF = texture(t_BrdfLut, vec2(NdotV, roughness)).rg;
-    vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+    vec2 brdf_uv = vec2(NdotV, 1.0 - roughness);
+    vec2 brdf = texture(t_BrdfLut, brdf_uv).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     const float ao = 1.0;
     vec3 ambient = (kD * diffuse + specular) * ao;

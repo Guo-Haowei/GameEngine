@@ -15,7 +15,7 @@
 #include "engine/scene/scene.h"
 
 // @TODO: remove the following
-#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_graph/render_graph_builder.h"
 
 #define INCLUDE_AS_D3D11
 #include "engine/drivers/d3d_common/d3d_convert.h"
@@ -70,10 +70,10 @@ void D3d11GraphicsManager::Render() {
     // @TODO: refactor this
     const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
     if (m_app->IsRuntime())
-        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
-                                                     width,
-                                                     height,
-                                                     *this);
+        renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+                                                      width,
+                                                      height,
+                                                      *this);
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

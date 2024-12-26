@@ -60,10 +60,10 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     }
 
     // Gamma correction
-    const float v = 1.0 / 2.0;
-    const float3 gamma = float3(v, v, v);
-    color = color / (color + float3(1.0, 1.0, 1.0));
-    color = pow(color, gamma);
+    // HDR tonemapping
+    color = color / (color + float3(1.0f, 1.0f, 1.0f));
+    const float gamma = 2.2f;
+    color = pow(color, 1.0f / float3(gamma, gamma, gamma));
 
     return float4(color, 1.0);
 }

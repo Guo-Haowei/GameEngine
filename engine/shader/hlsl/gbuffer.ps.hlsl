@@ -51,7 +51,9 @@ ps_output main(vsoutput_mesh input) {
     // output.base_color = 0.5f * N + 0.5f;
 
     output.position.xyz = input.world_position;
+    output.position.a = 1.0f;
     output.normal.xyz = N;
+    output.normal.a = 1.0f;
 
     // [SCRUM-29] Generate this code with cross compiler
     output.out_emissive_roughness_metallic.r = c_emissivePower;

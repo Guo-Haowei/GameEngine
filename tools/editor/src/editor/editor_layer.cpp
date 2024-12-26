@@ -1,14 +1,15 @@
 #include "editor_layer.h"
 
 #include <imgui/imgui_internal.h>
+#include <imnodes/imnodes.h>
 
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"
 #include "editor/panels/propertiy_panel.h"
+#include "editor/panels/render_graph_viewer.h"
 #include "editor/panels/renderer_panel.h"
 #include "editor/panels/viewer.h"
-#include "engine/assets/asset.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
@@ -19,7 +20,7 @@
 #include "engine/core/io/input_event.h"
 #include "engine/core/string/string_utils.h"
 
-////
+// @NOTE: include dvars at last
 #include "engine/renderer/graphics_dvars.h"
 
 namespace my {
@@ -31,6 +32,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<PropertyPanel>(*this));
     AddPanel(std::make_shared<Viewer>(*this));
     AddPanel(std::make_shared<ContentBrowser>(*this));
+    AddPanel(std::make_shared<RenderGraphViewer>(*this));
 
     m_menuBar = std::make_shared<MenuBar>(*this);
 
@@ -118,6 +120,8 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 }
 
 void EditorLayer::OnAttach() {
+    ImNodes::CreateContext();
+
     auto asset_registry = m_app->GetAssetRegistry();
     m_playButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/play.png" });
     m_pauseButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/pause.png" });
@@ -131,6 +135,8 @@ void EditorLayer::OnAttach() {
 
 void EditorLayer::OnDetach() {
     m_app->GetInputManager()->GetEventQueue().UnregisterListener(this);
+
+    ImNodes::DestroyContext();
 }
 
 void EditorLayer::AddPanel(std::shared_ptr<EditorItem> p_panel) {

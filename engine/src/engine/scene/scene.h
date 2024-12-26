@@ -223,6 +223,8 @@ public:
 
     ecs::Entity CreateEmitterEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
+    ecs::Entity CreateMeshEmitterEntity(const std::string& p_name, const Vector3f& p_translation = Vector3f::Zero);
+
     ecs::Entity CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity FindEntityByName(const char* p_name);

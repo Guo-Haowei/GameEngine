@@ -187,7 +187,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
-                   .rtvFormats = { RESOURCE_FORMAT_TONE },
+                   .rtvFormats = { RT_FMT_TONE },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -200,7 +200,10 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_blendStateDefault,
                    .numRenderTargets = 4,
-                   .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
+                   .rtvFormats = { RT_FMT_GBUFFER_BASE_COLOR,
+                                   RT_FMT_GBUFFER_POSITION,
+                                   RT_FMT_GBUFFER_NORMAL,
+                                   RT_FMT_GBUFFER_MATERIAL },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -213,7 +216,10 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_blendStateDefault,
                    .numRenderTargets = 4,
-                   .rtvFormats = { RESOURCE_FORMAT_GBUFFER_BASE_COLOR, RESOURCE_FORMAT_GBUFFER_POSITION, RESOURCE_FORMAT_GBUFFER_NORMAL, RESOURCE_FORMAT_GBUFFER_MATERIAL },
+                   .rtvFormats = { RT_FMT_GBUFFER_BASE_COLOR,
+                                   RT_FMT_GBUFFER_POSITION,
+                                   RT_FMT_GBUFFER_NORMAL,
+                                   RT_FMT_GBUFFER_MATERIAL },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -226,7 +232,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
-                   .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                   .rtvFormats = { RT_FMT_LIGHTING },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -249,9 +255,27 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                  .inputLayoutDesc = &s_inputLayoutPosition,
                                  .blendDesc = &s_blendStateDefault,
                                  .numRenderTargets = 1,
-                                 .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                 .rtvFormats = { RT_FMT_LIGHTING },
                                  .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                              });
+
+#pragma region PSO_PARTICLE
+    CREATE_PSO(PSO_PARTICLE_INIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_initialization.cs" });
+    CREATE_PSO(PSO_PARTICLE_KICKOFF, { .type = PipelineStateType::COMPUTE, .cs = "particle_kickoff.cs" });
+    CREATE_PSO(PSO_PARTICLE_EMIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_emission.cs" });
+    CREATE_PSO(PSO_PARTICLE_SIM, { .type = PipelineStateType::COMPUTE, .cs = "particle_simulation.cs" });
+    CREATE_PSO(PSO_PARTICLE_RENDERING, {
+                                           .vs = "particle_draw.vs",
+                                           .ps = "particle_draw.ps",
+                                           .rasterizerDesc = &s_rasterizerDoubleSided,
+                                           .depthStencilDesc = &s_depthStencilDefault,
+                                           .inputLayoutDesc = &s_inputLayoutMesh,
+                                           .blendDesc = &s_transparent,
+                                           .numRenderTargets = 1,
+                                           .rtvFormats = { RT_FMT_LIGHTING },
+                                           .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                                       });
+#pragma endregion PSO_PARTICLE
 
     CREATE_PSO(PSO_POINT_SHADOW, {
                                      .vs = "shadowmap_point.vs",
@@ -272,7 +296,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .inputLayoutDesc = &s_inputLayoutPosition,
                                   .blendDesc = &s_blendStateDefault,
                                   .numRenderTargets = 1,
-                                  .rtvFormats = { RESOURCE_FORMAT_HIGHLIGHT_SELECT },
+                                  .rtvFormats = { RT_FMT_OUTLINE_SELECT },
                                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                               });
 
@@ -284,7 +308,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                              .inputLayoutDesc = &s_inputLayoutPosition,
                              .blendDesc = &s_blendStateDefault,
                              .numRenderTargets = 1,
-                             .rtvFormats = { RESOURCE_FORMAT_TONE },
+                             .rtvFormats = { RT_FMT_TONE },
                              .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                          });
 
@@ -294,24 +318,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     CREATE_PSO(PSO_BLOOM_UPSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_upsample.cs" });
 #pragma endregion PSO_BLOOM
 
-#pragma region PSO_PARTICLE
-    CREATE_PSO(PSO_PARTICLE_INIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_initialization.cs" });
-    CREATE_PSO(PSO_PARTICLE_KICKOFF, { .type = PipelineStateType::COMPUTE, .cs = "particle_kickoff.cs" });
-    CREATE_PSO(PSO_PARTICLE_EMIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_emission.cs" });
-    CREATE_PSO(PSO_PARTICLE_SIM, { .type = PipelineStateType::COMPUTE, .cs = "particle_simulation.cs" });
-    CREATE_PSO(PSO_PARTICLE_RENDERING, {
-                                           .vs = "particle_draw.vs",
-                                           .ps = "particle_draw.ps",
-                                           .rasterizerDesc = &s_rasterizerDoubleSided,
-                                           .depthStencilDesc = &s_depthStencilDefault,
-                                           .inputLayoutDesc = &s_inputLayoutMesh,
-                                           .blendDesc = &s_transparent,
-                                           .numRenderTargets = 1,
-                                           .rtvFormats = { RESOURCE_FORMAT_TONE },
-                                           .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
-                                       });
-#pragma endregion PSO_PARTICLE
-
     CREATE_PSO(PSO_ENV_SKYBOX, {
                                    .vs = "skybox.vs",
                                    .ps = "skybox.ps",
@@ -320,7 +326,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .inputLayoutDesc = &s_inputLayoutMesh,
                                    .blendDesc = &s_blendStateDefault,
                                    .numRenderTargets = 1,
-                                   .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                   .rtvFormats = { RT_FMT_LIGHTING },
                                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                                });
 
@@ -361,7 +367,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                       .inputLayoutDesc = &s_inputLayoutPosition,
                                       .blendDesc = &s_blendStateDefault,
                                       .numRenderTargets = 1,
-                                      .rtvFormats = { GraphicsManager::DEFAULT_SURFACE_FORMAT },
+                                      .rtvFormats = { DEFAULT_SURFACE_FORMAT },
                                   });
 
     // @HACK: only support this many shaders

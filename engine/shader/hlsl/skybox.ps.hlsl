@@ -15,7 +15,7 @@ float2 sample_spherical_map(float3 v) {
 
 float4 main(vsoutput_position input) : SV_TARGET {
     float2 uv = sample_spherical_map(input.world_position);
-    float3 color = TEXTURE_2D(SkyboxHdr).Sample(s_linearClampSampler, uv).rgb;
+    float3 color = TEXTURE_2D(SkyboxHdr).Sample(s_cubemapClampSampler, uv).rgb;
     // color = color / (color + float3(1.0, 1.0, 1.0));
     // color = pow(color, float3(1.0, 1.0, 1.0) / 2.2);
     return float4(color, 1.0f);

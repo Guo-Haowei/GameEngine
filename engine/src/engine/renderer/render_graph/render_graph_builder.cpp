@@ -1,4 +1,4 @@
-#include "pass_creator.h"
+#include "render_graph_builder.h"
 
 #include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
@@ -18,6 +18,22 @@
 #include "engine/core/framework/asset_registry.h"
 
 namespace my::renderer {
+
+struct FramebufferCreateInfo {
+    std::vector<RenderTargetResourceName> colorAttachments;
+    RenderTargetResourceName depthAttachment = RenderTargetResourceName::COUNT;
+};
+
+struct DrawPassCreateInfo {
+    FramebufferCreateInfo framebuffer;
+    DrawPassExecuteFunc func{ nullptr };
+};
+
+struct RenderPassCreateInfo {
+    RenderPassName name;
+    std::vector<RenderPassName> dependencies;
+    std::vector<DrawPassCreateInfo> drawPasses;
+};
 
 /// Gbuffer
 static void DrawBatchesGeometry(const DrawData& p_data, const std::vector<BatchContext>& p_batches) {
@@ -113,50 +129,23 @@ static void GbufferPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
     DrawBatchesGeometry(p_data, pass.doubleSided);
 }
 
-void RenderPassCreator::AddGbufferPass() {
-    GraphicsManager& manager = GraphicsManager::GetSingleton();
+void RenderGraphBuilder::AddGbufferPass() {
+    RenderPassCreateInfo info{
+        .name = RenderPassName::GBUFFER,
+        .dependencies = {},
+        .drawPasses = {
+            { { {
+                    RESOURCE_GBUFFER_BASE_COLOR,
+                    RESOURCE_GBUFFER_POSITION,
+                    RESOURCE_GBUFFER_NORMAL,
+                    RESOURCE_GBUFFER_MATERIAL,
+                },
+                RESOURCE_GBUFFER_DEPTH },
+              GbufferPassFunc },
+        },
+    };
 
-    const int w = m_config.frameWidth;
-    const int h = m_config.frameHeight;
-
-    auto gbuffer_depth = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
-                                                                       RESOURCE_FORMAT_GBUFFER_DEPTH,
-                                                                       AttachmentType::DEPTH_STENCIL_2D,
-                                                                       w, h),
-                                               PointClampSampler());
-
-    auto attachment0 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
-                                                                     RESOURCE_FORMAT_GBUFFER_BASE_COLOR,
-                                                                     AttachmentType::COLOR_2D,
-                                                                     w, h),
-                                             PointClampSampler());
-
-    auto attachment1 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_POSITION,
-                                                                     RESOURCE_FORMAT_GBUFFER_POSITION,
-                                                                     AttachmentType::COLOR_2D,
-                                                                     w, h),
-                                             PointClampSampler());
-
-    auto attachment2 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_NORMAL,
-                                                                     RESOURCE_FORMAT_GBUFFER_NORMAL,
-                                                                     AttachmentType::COLOR_2D,
-                                                                     w, h),
-                                             PointClampSampler());
-
-    auto attachment3 = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
-                                                                     RESOURCE_FORMAT_GBUFFER_MATERIAL,
-                                                                     AttachmentType::COLOR_2D,
-                                                                     w, h),
-                                             PointClampSampler());
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::GBUFFER;
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { attachment0, attachment1, attachment2, attachment3 },
-        .depthAttachment = gbuffer_depth,
-    });
-    pass->AddDrawPass(framebuffer, GbufferPassFunc);
+    CreateRenderPass(info);
 }
 
 static void HighlightPassFunc(const DrawData&, const Framebuffer* p_framebuffer) {
@@ -175,28 +164,18 @@ static void HighlightPassFunc(const DrawData&, const Framebuffer* p_framebuffer)
     gm.SetStencilRef(0);
 }
 
-void RenderPassCreator::AddHighlightPass() {
-    GraphicsManager& manager = GraphicsManager::GetSingleton();
+void RenderGraphBuilder::AddHighlightPass() {
+    RenderPassCreateInfo info{
+        .name = RenderPassName::OUTLINE,
+        .dependencies = { RenderPassName::GBUFFER },
+        .drawPasses = {
+            { { { RESOURCE_OUTLINE_SELECT },
+                RESOURCE_GBUFFER_DEPTH },
+              HighlightPassFunc },
+        },
+    };
 
-    const int w = m_config.frameWidth;
-    const int h = m_config.frameHeight;
-
-    auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
-    auto attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_HIGHLIGHT_SELECT,
-                                                                    RESOURCE_FORMAT_HIGHLIGHT_SELECT,
-                                                                    AttachmentType::COLOR_2D,
-                                                                    w, h),
-                                            PointClampSampler());
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::HIGHLIGHT_SELECT;
-    desc.dependencies = { RenderPassName::GBUFFER };
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { attachment },
-        .depthAttachment = gbuffer_depth,
-    });
-    pass->AddDrawPass(framebuffer, HighlightPassFunc);
+    CreateRenderPass(info);
 }
 
 /// Shadow
@@ -293,7 +272,7 @@ static void ShadowPassFunc(const DrawData& p_data, const Framebuffer* p_framebuf
     draw_batches(pass.doubleSided);
 }
 
-void RenderPassCreator::AddShadowPass() {
+void RenderGraphBuilder::AddShadowPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     const int shadow_res = DVAR_GET_INT(gfx_shadow_res);
@@ -308,7 +287,6 @@ void RenderPassCreator::AddShadowPass() {
                                             shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = RenderPassName::SHADOW;
-    desc.dependencies = { RenderPassName::ENV };
     auto pass = m_graph.CreatePass(desc);
     {
         auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = shadow_map });
@@ -416,7 +394,7 @@ static void VoxelizationPassFunc(const DrawData& p_data, const Framebuffer*) {
     gm.UnsetRenderTarget();
 }
 
-void RenderPassCreator::AddVoxelizationPass() {
+void RenderGraphBuilder::AddVoxelizationPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
     if (manager.GetBackend() != Backend::OPENGL) {
         return;
@@ -448,6 +426,72 @@ void RenderPassCreator::AddVoxelizationPass() {
     auto pass = m_graph.CreatePass(desc);
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{});
     pass->AddDrawPass(framebuffer, VoxelizationPassFunc);
+}
+
+/// Emitter
+static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    HBN_PROFILE_EVENT();
+
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+    const auto [width, height] = p_framebuffer->GetBufferSize();
+
+    gm.SetRenderTarget(p_framebuffer);
+    gm.SetViewport(Viewport(width, height));
+
+    const PassContext& pass = p_data.mainPass;
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+
+    int particle_idx = 0;
+    for (const auto& emitter : p_data.emitters) {
+        if (!emitter.particleBuffer) {
+            continue;
+        }
+
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
+        ++particle_idx;
+
+        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
+        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+
+        gm.SetPipelineState(PSO_PARTICLE_KICKOFF);
+        gm.Dispatch(1, 1, 1);
+
+        gm.SetPipelineState(PSO_PARTICLE_EMIT);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.SetPipelineState(PSO_PARTICLE_SIM);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
+        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
+
+        // Renderering
+        gm.SetPipelineState(PSO_PARTICLE_RENDERING);
+
+        bool use_texture = false;
+        if (!emitter.texture.empty()) {
+            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
+            if (image && image->gpu_texture) {
+                gm.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
+                use_texture = true;
+            }
+        }
+
+        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+        gm.DrawQuadInstanced(MAX_PARTICLE_COUNT);
+        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
+
+        if (use_texture) {
+            gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+        }
+    }
 }
 
 /// Lighting
@@ -519,15 +563,17 @@ static void LightingPassFunc(const DrawData& p_data, const Framebuffer* p_frameb
         gm.SetMesh(gm.m_debugBuffers.get());
         gm.DrawArrays(draw_context.drawCount);
     }
+
+    EmitterPassFunc(p_data, p_framebuffer);
 }
 
-void RenderPassCreator::AddLightingPass() {
+void RenderGraphBuilder::AddLightingPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
     auto lighting_attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
-                                                                             RESOURCE_FORMAT_LIGHTING,
+                                                                             RT_FMT_LIGHTING,
                                                                              AttachmentType::COLOR_2D,
                                                                              m_config.frameWidth, m_config.frameHeight),
                                                      PointClampSampler());
@@ -535,15 +581,12 @@ void RenderPassCreator::AddLightingPass() {
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
 
-    desc.dependencies = { RenderPassName::GBUFFER };
+    desc.dependencies = { RenderPassName::GBUFFER, RenderPassName::ENV };
     if (m_config.enableShadow) {
         desc.dependencies.push_back(RenderPassName::SHADOW);
     }
     if (m_config.enableVxgi) {
         desc.dependencies.push_back(RenderPassName::VOXELIZATION);
-    }
-    if (m_config.enableIbl) {
-        desc.dependencies.push_back(RenderPassName::ENV);
     }
 
     auto pass = m_graph.CreatePass(desc);
@@ -574,88 +617,6 @@ void RenderPassCreator::AddLightingPass() {
         },
     });
     pass->AddDrawPass(framebuffer, LightingPassFunc);
-}
-
-/// Emitter
-static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    HBN_PROFILE_EVENT();
-
-    auto& gm = GraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-    const auto [width, height] = p_framebuffer->GetBufferSize();
-
-    gm.SetRenderTarget(p_framebuffer);
-    gm.SetViewport(Viewport(width, height));
-
-    const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
-
-    int particle_idx = 0;
-    for (const auto& emitter : p_data.emitters) {
-        if (!emitter.particleBuffer) {
-            continue;
-        }
-
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
-        ++particle_idx;
-
-        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-
-        gm.SetPipelineState(PSO_PARTICLE_KICKOFF);
-        gm.Dispatch(1, 1, 1);
-
-        gm.SetPipelineState(PSO_PARTICLE_EMIT);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-        gm.SetPipelineState(PSO_PARTICLE_SIM);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
-        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
-
-        // Renderering
-        gm.SetPipelineState(PSO_PARTICLE_RENDERING);
-
-        bool use_texture = false;
-        if (!emitter.texture.empty()) {
-            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
-            if (image && image->gpu_texture) {
-                gm.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
-                use_texture = true;
-            }
-        }
-
-        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-        gm.DrawQuadInstanced(MAX_PARTICLE_COUNT);
-        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
-
-        if (use_texture) {
-            gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
-        }
-    }
-}
-
-void RenderPassCreator::AddEmitterPass() {
-    GraphicsManager& manager = GraphicsManager::GetSingleton();
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::EMITTER;
-
-    desc.dependencies = { RenderPassName::LIGHTING };
-
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
-        .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
-    });
-    pass->AddDrawPass(framebuffer, EmitterPassFunc);
 }
 
 /// Bloom
@@ -727,7 +688,7 @@ static void BloomUpSampleFunc(const DrawData&, const Framebuffer* p_framebuffer)
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-void RenderPassCreator::AddBloomPass() {
+void RenderGraphBuilder::AddBloomPass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
@@ -865,7 +826,7 @@ static void TonePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffe
             gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
         };
         bind_slot(RESOURCE_LIGHTING, GetTextureLightingSlot());
-        bind_slot(RESOURCE_HIGHLIGHT_SELECT, GetTextureHighlightSelectSlot());
+        bind_slot(RESOURCE_OUTLINE_SELECT, GetTextureHighlightSelectSlot());
         bind_slot(RESOURCE_BLOOM_0, GetBloomInputTextureSlot());
 
         gm.SetViewport(Viewport(width, height));
@@ -880,44 +841,43 @@ static void TonePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffe
     }
 }
 
-void RenderPassCreator::AddTonePass() {
+void RenderGraphBuilder::CreateRenderPass(RenderPassCreateInfo& p_info) {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
-    RenderPassDesc desc;
-    desc.name = RenderPassName::TONE;
+    auto pass = m_graph.CreatePass(reinterpret_cast<RenderPassDesc&>(p_info));
+    for (const auto& info : p_info.drawPasses) {
+        FramebufferDesc framebuffer_desc;
+        for (const auto color : info.framebuffer.colorAttachments) {
+            auto resource = gm.FindTexture(color);
+            DEV_ASSERT(resource);
+            framebuffer_desc.colorAttachments.emplace_back(resource);
+        }
+        if (info.framebuffer.depthAttachment != RenderTargetResourceName::COUNT) {
+            auto resource = gm.FindTexture(info.framebuffer.depthAttachment);
+            DEV_ASSERT(resource);
+            framebuffer_desc.depthAttachment = resource;
+        }
 
-    if (m_config.enableBloom) {
-        desc.dependencies = { RenderPassName::BLOOM };
+        auto framebuffer = gm.CreateFramebuffer(framebuffer_desc);
+        pass->AddDrawPass(framebuffer, info.func);
     }
+}
 
-    auto pass = m_graph.CreatePass(desc);
+void RenderGraphBuilder::AddTonePass() {
+    RenderPassCreateInfo info{
+        .name = RenderPassName::TONE,
+        .dependencies = { RenderPassName::BLOOM,
+                          RenderPassName::OUTLINE },
+        .drawPasses = {
+            { { { RESOURCE_TONE }, RESOURCE_GBUFFER_DEPTH }, TonePassFunc },
+        },
+    };
 
-    const int width = m_config.frameWidth;
-    const int height = m_config.frameHeight;
-
-    auto attachment = gm.FindTexture(RESOURCE_TONE);
-
-    if (!attachment) {
-        attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
-                                                              RESOURCE_FORMAT_TONE,
-                                                              AttachmentType::COLOR_2D,
-                                                              width, height),
-                                      PointClampSampler());
-    }
-
-    FramebufferDesc framebuffer_desc{ .colorAttachments = { attachment } };
-
-    if (m_config.enableHighlight) {
-        auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
-        framebuffer_desc.depthAttachment = gbuffer_depth;
-    }
-
-    auto framebuffer = gm.CreateFramebuffer(framebuffer_desc);
-    pass->AddDrawPass(framebuffer, TonePassFunc);
+    CreateRenderPass(info);
 }
 
 // assume render target is setup
-void RenderPassCreator::DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager) {
+void RenderGraphBuilder::DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager) {
     auto& frame = p_graphics_manager.GetCurrentFrame();
 
     p_graphics_manager.SetViewport(Viewport(p_width, p_height));
@@ -932,41 +892,33 @@ void RenderPassCreator::DrawDebugImages(const DrawData& p_data, int p_width, int
     }
 }
 
-void RenderPassCreator::AddDebugImagePass() {
+void RenderGraphBuilder::AddDebugImagePass() {
     if (m_config.is_runtime) {
         return;
     }
 
-    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    RenderPassCreateInfo info{
+        .name = RenderPassName::FINAL,
+        .dependencies = { RenderPassName::TONE },
+        .drawPasses = {
+            { { { RESOURCE_FINAL } },
+              [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+                  HBN_PROFILE_EVENT();
+                  auto& gm = GraphicsManager::GetSingleton();
+                  gm.SetRenderTarget(p_framebuffer);
+                  gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
 
-    const int width = m_config.frameWidth;
-    const int height = m_config.frameHeight;
+                  const int width = p_framebuffer->desc.colorAttachments[0]->desc.width;
+                  const int height = p_framebuffer->desc.colorAttachments[0]->desc.height;
+                  DrawDebugImages(p_data, width, height, gm);
+              } },
+        },
+    };
 
-    std::shared_ptr<Framebuffer> framebuffer;
-    auto final_attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_FINAL,
-                                                                     GraphicsManager::DEFAULT_SURFACE_FORMAT,
-                                                                     AttachmentType::COLOR_2D,
-                                                                     width, height),
-                                             PointClampSampler());
-    framebuffer = gm.CreateFramebuffer(FramebufferDesc{ .colorAttachments = { final_attachment } });
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::FINAL;
-    desc.dependencies = { RenderPassName::TONE };
-    auto pass = m_graph.CreatePass(desc);
-    pass->AddDrawPass(framebuffer, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-        HBN_PROFILE_EVENT();
-        auto& gm = GraphicsManager::GetSingleton();
-        gm.SetRenderTarget(p_framebuffer);
-        gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
-
-        const int width = p_framebuffer->desc.colorAttachments[0]->desc.width;
-        const int height = p_framebuffer->desc.colorAttachments[0]->desc.height;
-        DrawDebugImages(p_data, width, height, gm);
-    });
+    CreateRenderPass(info);
 }
 
-void RenderPassCreator::AddGenerateSkylightPass() {
+void RenderGraphBuilder::AddGenerateSkylightPass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc render_pass_desc{
@@ -979,12 +931,10 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     {
         const int size = 512;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_SKYBOX_CUBE_MAP,
-                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            PixelFormat::R32G32B32A32_FLOAT,
                                             AttachmentType::COLOR_CUBE,
                                             size, size, 6);
-        auto cubemap = gm.CreateTexture(desc, SamplerDesc(FilterMode::LINEAR,
-                                                          FilterMode::LINEAR,
-                                                          AddressMode::CLAMP));
+        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
         DEV_ASSERT(cubemap);
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .colorAttachments = { cubemap },
@@ -1021,10 +971,10 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     {
         const int size = 32;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP,
-                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            PixelFormat::R32G32B32A32_FLOAT,
                                             AttachmentType::COLOR_CUBE,
                                             size, size, 6);
-        auto cubemap = gm.CreateTexture(desc, LinearClampSampler());
+        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
         DEV_ASSERT(cubemap);
 
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
@@ -1059,7 +1009,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
     {
         const int size = 512;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_PREFILTER_CUBE_MAP,
-                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            PixelFormat::R32G32B32A32_FLOAT,
                                             AttachmentType::COLOR_CUBE,
                                             size, size, 6);
         if (gm.GetBackend() == Backend::OPENGL) {
@@ -1068,9 +1018,7 @@ void RenderPassCreator::AddGenerateSkylightPass() {
         }
         desc.mipLevels = IBL_MIP_CHAIN_MAX;
 
-        auto cubemap = gm.CreateTexture(desc, SamplerDesc(FilterMode::LINEAR,
-                                                          FilterMode::LINEAR,
-                                                          AddressMode::CLAMP));
+        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
         DEV_ASSERT(cubemap);
 
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
@@ -1135,7 +1083,7 @@ static void PathTracerTonePassFunc(const DrawData&, const Framebuffer* p_framebu
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-void RenderPassCreator::AddPathTracerTonePass() {
+void RenderGraphBuilder::AddPathTracerTonePass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
@@ -1145,18 +1093,7 @@ void RenderPassCreator::AddPathTracerTonePass() {
 
     auto pass = m_graph.CreatePass(desc);
 
-    int width = m_config.frameWidth;
-    int height = m_config.frameHeight;
-
     auto attachment = gm.FindTexture(RESOURCE_TONE);
-
-    if (!attachment) {
-        attachment = gm.CreateTexture(BuildDefaultTextureDesc(RESOURCE_TONE,
-                                                              RESOURCE_FORMAT_TONE,
-                                                              AttachmentType::COLOR_2D,
-                                                              width, height),
-                                      PointClampSampler());
-    }
 
     FramebufferDesc framebuffer_desc{ .colorAttachments = { attachment } };
 
@@ -1200,7 +1137,7 @@ static void PathTracerPassFunc(const DrawData&, const Framebuffer*) {
     gm.UnbindStructuredBuffer(GetGlobalMaterialsSlot());
 }
 
-void RenderPassCreator::AddPathTracerPass() {
+void RenderGraphBuilder::AddPathTracerPass() {
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
@@ -1236,13 +1173,13 @@ void RenderPassCreator::AddPathTracerPass() {
 }
 
 /// Create pre-defined passes
-std::unique_ptr<RenderGraph> RenderPassCreator::CreateDummy(PassCreatorConfig& p_config) {
+std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = false;
     p_config.enableIbl = false;
     p_config.enableVxgi = false;
 
     auto graph = std::make_unique<RenderGraph>();
-    RenderPassCreator creator(p_config, *graph.get());
+    RenderGraphBuilder creator(p_config, *graph.get());
 
     creator.AddGbufferPass();
 
@@ -1250,14 +1187,14 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateDummy(PassCreatorConfig& p
     return graph;
 }
 
-std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer(PassCreatorConfig& p_config) {
+std::unique_ptr<RenderGraph> RenderGraphBuilder::CreatePathTracer(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = false;
     p_config.enableIbl = false;
     p_config.enableVxgi = false;
     p_config.enableHighlight = false;
 
     auto graph = std::make_unique<RenderGraph>();
-    RenderPassCreator creator(p_config, *graph.get());
+    RenderGraphBuilder creator(p_config, *graph.get());
 
     creator.AddPathTracerPass();
     creator.AddPathTracerTonePass();
@@ -1266,13 +1203,49 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreatePathTracer(PassCreatorConf
     return graph;
 }
 
-std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault(PassCreatorConfig& p_config) {
+static void RgCreateResource(GraphicsManager& p_manager,
+                             const SamplerDesc& p_sampler,
+                             RenderTargetResourceName p_name,
+                             PixelFormat p_format,
+                             AttachmentType p_type,
+                             int p_width,
+                             int p_height,
+                             int p_depth = 1) {
+    int width = p_width;
+    int height = p_height;
+    if (p_width < 0) {
+        switch (p_width) {
+            case RESOURCE_SIZE_FRAME: {
+                const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+                width = frame_size.x;
+                height = frame_size.y;
+            } break;
+            default: {
+                CRASH_NOW();
+            } break;
+        }
+    }
+    DEV_ASSERT(width > 0 && height > 0);
+
+    auto desc = RenderGraphBuilder::BuildDefaultTextureDesc(p_name, p_format, p_type, width, height, p_depth);
+    [[maybe_unused]] auto ret = p_manager.CreateTexture(desc, p_sampler);
+    DEV_ASSERT(ret);
+}
+
+void RenderGraphBuilder::CreateResources() {
+    auto& manager = GraphicsManager::GetSingleton();
+#define RG_RESOURCE(NAME, SAMPLER, FORMAT, TYPE, W, ...) \
+    RgCreateResource(manager, SAMPLER, NAME, FORMAT, TYPE, W, __VA_ARGS__);
+#include "engine/renderer/render_graph/render_graph_resources.h"
+}
+
+std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = true;
     p_config.enableIbl = false;
-    p_config.enableVxgi = false;
+    p_config.enableVxgi = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
 
     auto graph = std::make_unique<RenderGraph>();
-    RenderPassCreator creator(p_config, *graph.get());
+    RenderGraphBuilder creator(p_config, *graph.get());
 
     creator.AddGenerateSkylightPass();
     creator.AddShadowPass();
@@ -1280,7 +1253,6 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault(PassCreatorConfig&
     creator.AddHighlightPass();
     creator.AddVoxelizationPass();
     creator.AddLightingPass();
-    creator.AddEmitterPass();
     creator.AddBloomPass();
     creator.AddTonePass();
     creator.AddDebugImagePass();
@@ -1289,12 +1261,12 @@ std::unique_ptr<RenderGraph> RenderPassCreator::CreateDefault(PassCreatorConfig&
     return graph;
 }
 
-GpuTextureDesc RenderPassCreator::BuildDefaultTextureDesc(RenderTargetResourceName p_name,
-                                                          PixelFormat p_format,
-                                                          AttachmentType p_type,
-                                                          uint32_t p_width,
-                                                          uint32_t p_height,
-                                                          uint32_t p_array_size) {
+GpuTextureDesc RenderGraphBuilder::BuildDefaultTextureDesc(RenderTargetResourceName p_name,
+                                                           PixelFormat p_format,
+                                                           AttachmentType p_type,
+                                                           uint32_t p_width,
+                                                           uint32_t p_height,
+                                                           uint32_t p_array_size) {
     GpuTextureDesc desc{};
     desc.type = p_type;
     desc.name = p_name;

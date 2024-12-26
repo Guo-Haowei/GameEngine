@@ -61,8 +61,6 @@ public:
     static constexpr int NUM_FRAMES_IN_FLIGHT = 2;
     static constexpr int NUM_BACK_BUFFERS = 2;
     static constexpr float DEFAULT_CLEAR_COLOR[4] = { 0.0f, 0.0f, 0.0f, 1.0 };
-    static constexpr PixelFormat DEFAULT_SURFACE_FORMAT = PixelFormat::R8G8B8A8_UNORM;
-    static constexpr PixelFormat DEFAULT_DEPTH_STENCIL_FORMAT = PixelFormat::D32_FLOAT;
 
     GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
         : Module(p_name),

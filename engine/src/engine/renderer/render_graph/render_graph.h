@@ -13,6 +13,11 @@ struct DrawData;
 
 class RenderGraph : public NonCopyable {
 public:
+    struct Edge {
+        int from;
+        int to;
+    };
+
     std::shared_ptr<RenderPass> CreatePass(RenderPassDesc& p_desc);
     std::shared_ptr<RenderPass> FindPass(RenderPassName p_name) const;
 
@@ -24,13 +29,11 @@ public:
 
 private:
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
-    std::vector<int> m_sortedOrder;
-    std::vector<std::pair<int, int>> m_links;
-    std::vector<std::vector<int>> m_levels;
+    Graph<RenderPass*> m_graph;
 
     std::map<RenderPassName, int> m_renderPassLookup;
 
-    friend class RenderGraphEditorDelegate;
+    friend class RenderGraphViewer;
 };
 
 }  // namespace my::renderer

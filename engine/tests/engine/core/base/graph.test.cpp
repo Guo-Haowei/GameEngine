@@ -2,100 +2,155 @@
 
 namespace my {
 
-TEST(graph, has_cycle) {
-    Graph graph(5);
-
-    graph.add_edge(0, 1);
-    graph.add_edge(1, 2);
-    graph.add_edge(2, 3);
-    graph.add_edge(3, 4);
-    EXPECT_FALSE(graph.has_cycle());
-    // introduce a cycle
-    graph.add_edge(4, 1);
-    EXPECT_TRUE(graph.has_cycle());
-}
-
-TEST(graph, sort) {
-    Graph graph(5);
-
-    enum {
-        A = 2,
-        B = 1,
-        C = 4,
-        D = 0,
-        E = 3,
-    };
-
-    graph.add_edge(A, B);  // A -> B
-    graph.add_edge(B, C);  // B -> C
-    graph.add_edge(C, D);  // C -> D
-    graph.add_edge(D, E);  // D -> E
-
-    EXPECT_FALSE(graph.has_cycle());
-}
-
-TEST(graph, remove_redundant) {
-    Graph graph(5);
-
-    graph.add_edge(0, 1);
-    graph.add_edge(1, 2);
-    graph.add_edge(2, 3);
-    graph.add_edge(3, 4);
-    graph.add_edge(1, 3);
-    graph.add_edge(0, 4);
-
-    EXPECT_FALSE(graph.has_cycle());
-
-    EXPECT_TRUE(graph.has_edge(0, 1));
-    EXPECT_TRUE(graph.has_edge(1, 2));
-    EXPECT_TRUE(graph.has_edge(2, 3));
-    EXPECT_TRUE(graph.has_edge(3, 4));
-    EXPECT_TRUE(graph.has_edge(1, 3));
-    EXPECT_TRUE(graph.has_edge(0, 4));
-
-    graph.remove_redundant();
-
-    EXPECT_TRUE(graph.has_edge(0, 1));
-    EXPECT_TRUE(graph.has_edge(1, 2));
-    EXPECT_TRUE(graph.has_edge(2, 3));
-    EXPECT_TRUE(graph.has_edge(3, 4));
-    EXPECT_FALSE(graph.has_edge(1, 3));
-    EXPECT_FALSE(graph.has_edge(0, 4));
-}
-
-TEST(graph, sort_level) {
+/*
+A - B
+| / |
+C - D
+*/
+static void BuildInvalidGraph1(GraphBase& p_graph) {
     enum {
         A = 0,
-        B = 1,
-        C = 2,
-        D = 3,
-        E = 4,
-        F = 5,
+        B,
+        C,
+        D,
+        MAX,
+    };
+    p_graph.SetNodeCount(MAX);
+    p_graph.AddEdge(A, B);
+    p_graph.AddEdge(B, D);
+    p_graph.AddEdge(D, C);
+    p_graph.AddEdge(C, A);
+    p_graph.AddEdge(C, B);
+}
+
+/*
+A -> B \
+        E -> F
+C -> D /
+*/
+static void BuildValidGraph1(GraphBase& p_graph) {
+    enum {
+        A = 0,
+        B,
+        C,
+        D,
+        E,
+        F,
+        MAX,
+    };
+    p_graph.SetNodeCount(MAX);
+    p_graph.AddEdge(A, B);
+    p_graph.AddEdge(C, D);
+    p_graph.AddEdge(B, E);
+    p_graph.AddEdge(D, E);
+    p_graph.AddEdge(E, F);
+}
+
+/*
+A -> B \
+|------> E -> F
+         |    |
+         C -> D
+*/
+static void BuildValidGraph2(GraphBase& p_graph) {
+    enum {
+        A = 0,
+        B,
+        C,
+        D,
+        E,
+        F,
+        MAX,
+    };
+    p_graph.SetNodeCount(MAX);
+    p_graph.AddEdge(A, B);
+    p_graph.AddEdge(A, E);
+    p_graph.AddEdge(B, E);
+    p_graph.AddEdge(E, F);
+    p_graph.AddEdge(E, C);
+    p_graph.AddEdge(C, D);
+    p_graph.AddEdge(D, F);
+}
+
+TEST(GraphBase, check_cycle_valid) {
+    GraphBase graph;
+    BuildValidGraph1(graph);
+    EXPECT_FALSE(graph.HasCycle());
+}
+
+TEST(GraphBase, check_cycle_invalid) {
+    GraphBase graph;
+    BuildInvalidGraph1(graph);
+    EXPECT_TRUE(graph.HasCycle());
+}
+
+static void CheckSorted(const GraphBase& p_graph, const std::vector<int>& p_sorted) {
+#if 0
+    for (auto i : p_sorted) {
+        printf("%c -> ", i + 'A');
+    }
+    printf("\n");
+#endif
+
+    for (size_t i = 0; i < p_sorted.size() - 1; ++i) {
+        int from = p_sorted[i];
+        for (size_t j = i + 1; j < p_sorted.size(); ++j) {
+            int to = p_sorted[j];
+            EXPECT_FALSE(p_graph.IsReachable(to, from)) << "Test failed! There's a path from " << char(to + 'A') << " to " << char(from + 'A');
+        }
+    }
+}
+
+TEST(GraphBase, topological_sort_1) {
+    GraphBase graph;
+    BuildValidGraph1(graph);
+
+    std::vector<int> sorted;
+    EXPECT_TRUE(graph.Sort(sorted));
+
+    CheckSorted(graph, sorted);
+}
+
+TEST(GraphBase, topological_sort_2) {
+    GraphBase graph;
+    BuildValidGraph2(graph);
+
+    std::vector<int> sorted;
+    EXPECT_TRUE(graph.Sort(sorted));
+
+    CheckSorted(graph, sorted);
+}
+
+TEST(Graph, sort) {
+    enum {
+        A = 0,
+        B,
+        C,
+        D,
+        E,
+        F,
+        MAX,
     };
 
-    Graph graph(6);
+    Graph<char> graph;
+    graph.SetNodeCount(MAX);
+    graph.AddVertex('A');
+    graph.AddVertex('B');
+    graph.AddVertex('C');
+    graph.AddVertex('D');
+    graph.AddVertex('E');
+    graph.AddVertex('F');
+    graph.AddEdge(A, B);
+    graph.AddEdge(A, E);
+    graph.AddEdge(B, E);
+    graph.AddEdge(E, F);
+    graph.AddEdge(E, C);
+    graph.AddEdge(C, D);
+    graph.AddEdge(D, F);
 
-    graph.add_edge(A, B);  // A -> B
-    graph.add_edge(C, D);  // C -> D
-    graph.add_edge(B, E);  // B -> E
-    graph.add_edge(D, E);  // D -> E
-    graph.add_edge(E, F);  // E -> F
-    /*
-    A -> B \
-             E -> F
-    C -> D /
-    */
-    EXPECT_FALSE(graph.has_cycle());
+    graph.Compile();
 
-    auto levels = graph.build_level();
-
-    EXPECT_EQ(levels[0][0], A);
-    EXPECT_EQ(levels[0][1], C);
-    EXPECT_EQ(levels[1][0], B);
-    EXPECT_EQ(levels[1][1], D);
-    EXPECT_EQ(levels[2][0], E);
-    EXPECT_EQ(levels[3][0], F);
-    return;
+    EXPECT_FALSE(graph.HasCycle());
 }
 
 }  // namespace my

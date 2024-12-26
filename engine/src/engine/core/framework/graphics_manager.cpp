@@ -13,7 +13,7 @@
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/draw_data.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_graph/render_graph_builder.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_misc.h"
@@ -493,18 +493,19 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
             break;
     }
 
+    renderer::RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    renderer::PassCreatorConfig config;
+    renderer::RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;
     config.frameHeight = frame_size.y;
     config.is_runtime = m_app->IsRuntime();
 
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy(config);
+            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderGraphBuilder::CreateDummy(config);
             break;
         case RenderGraphName::DEFAULT:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault(config);
+            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderGraphBuilder::CreateDefault(config);
             break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
@@ -514,7 +515,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     switch (m_backend) {
         case Backend::OPENGL:
         case Backend::D3D11:
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderPassCreator::CreatePathTracer(config);
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
             break;
         default:
             break;

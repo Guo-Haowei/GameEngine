@@ -19,7 +19,7 @@ DESCRIPTOR_SRV_LIST
     SRV(Texture3D, VoxelNormal, 5, RESOURCE_VOXEL_NORMAL)                             \
     SRV(Texture2D, ShadowMap, 6, RESOURCE_NONE)                                       \
     SRV(TextureCubeArray, PointShadowArray, 7, RESOURCE_NONE)                         \
-    SRV(Texture2D, TextureHighlightSelect, 8, RESOURCE_HIGHLIGHT_SELECT)              \
+    SRV(Texture2D, TextureHighlightSelect, 8, RESOURCE_OUTLINE_SELECT)                \
     SRV(Texture2D, GbufferDepth, 9, RESOURCE_GBUFFER_DEPTH)                           \
     SRV(Texture2D, GbufferBaseColorMap, 10, RESOURCE_GBUFFER_BASE_COLOR)              \
     SRV(Texture2D, GbufferPositionMap, 11, RESOURCE_GBUFFER_POSITION)                 \

@@ -13,7 +13,7 @@
 #include "structured_buffer.hlsl.h"
 
 // @TODO: refactor
-#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_graph/render_graph_builder.h"
 
 #define INCLUDE_AS_D3D12
 #include "engine/drivers/d3d_common/d3d_convert.h"
@@ -221,10 +221,10 @@ void D3d12GraphicsManager::Render() {
 
     // @TODO: refactor this
     if (m_app->IsRuntime())
-        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
-                                                     width,
-                                                     height,
-                                                     *this);
+        renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+                                                      width,
+                                                      height,
+                                                      *this);
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd_list);

@@ -475,6 +475,13 @@ ecs::Entity Scene::CreateEmitterEntity(const std::string& p_name, const Matrix4x
     return entity;
 }
 
+ecs::Entity Scene::CreateMeshEmitterEntity(const std::string& p_name, const Vector3f& p_translation) {
+    auto entity = CreateNameEntity(p_name);
+    Create<TransformComponent>(entity).SetTranslation(p_translation);
+    Create<MeshEmitterComponent>(entity);
+    return entity;
+}
+
 ecs::Entity Scene::CreateForceFieldEntity(const std::string& p_name, const Matrix4x4f& p_transform) {
     auto entity = CreateTransformEntity(p_name);
     Create<ForceFieldComponent>(entity);

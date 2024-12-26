@@ -21,11 +21,11 @@ BEGIN_NAME_SPACE(my)
 
 // @TODO: refactor the functions
 // NDF(n, h, alpha) = alpha^2 / (pi * ((n dot h)^2 * (alpha^2 - 1) + 1)^2)
-float DistributionGGX(float p_n_dot_h, float p_roughness) {
+float DistributionGGX(float NdotH, float p_roughness) {
     float a = p_roughness * p_roughness;
     float a2 = a * a;
     float nom = a2;
-    float denom = p_n_dot_h * p_n_dot_h * (a2 - 1.0f) + 1.0f;
+    float denom = NdotH * NdotH * (a2 - 1.0f) + 1.0f;
     denom = MY_PI * denom * denom;
     // if roughness = 0, NDF = 0,
     // if roughness = 1, NDF = 1 / pi
@@ -98,6 +98,12 @@ Vector3f ImportanceSampleGGX(Vector2f Xi, Vector3f N, float roughness) {
 
     Vector3f sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
     return normalize(sampleVec);
+}
+
+Vector3f FresnelSchlickRoughness(float p_cos_theta, Vector3f F0, float p_roughness) {
+    Vector3f zero = Vector3f(0.0f, 0.0f, 0.0f);
+    Vector3f tmp = Vector3f(1.0f, 1.0f, 1.0f) - p_roughness;
+    return F0 + (max(tmp - F0, zero)) * pow(1.0f - p_cos_theta, 5.0f);
 }
 
 Vector2f IntegrateBRDF(float NdotV, float roughness) {

@@ -1,6 +1,5 @@
 #pragma once
 #include "engine/renderer/gpu_resource.h"
-#include "engine/renderer/render_graph/render_graph_defines.h"
 
 namespace my::renderer {
 struct DrawData;
