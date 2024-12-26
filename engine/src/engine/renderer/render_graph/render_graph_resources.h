@@ -12,6 +12,12 @@ enum : int {
 };
 
 namespace my {
+constexpr int BLOOM_MIP_CHAIN_MAX = 7;
+constexpr int IBL_MIP_CHAIN_MAX = 7;
+
+constexpr int RT_SIZE_IBL_CUBEMAP = 512;
+constexpr int RT_SIZE_IBL_IRRADIANCE_CUBEMAP = 32;
+constexpr int RT_SIZE_IBL_PREFILTERED_CUBEMAP = 512;
 // RT_FMT stands form RENDER_TARGET_FORMAT
 constexpr PixelFormat RT_FMT_GBUFFER_DEPTH = PixelFormat::R24G8_TYPELESS;
 constexpr PixelFormat RT_FMT_GBUFFER_BASE_COLOR = PixelFormat::R16G16B16A16_FLOAT;
@@ -85,5 +91,33 @@ RG_RESOURCE(RESOURCE_FINAL,
             AttachmentType::COLOR_2D,
             RESOURCE_SIZE_FRAME,
             RESOURCE_SIZE_FRAME)
+
+RG_RESOURCE(RESOURCE_ENV_SKYBOX_CUBE_MAP,
+            CubemapSampler(),
+            PixelFormat::R32G32B32A32_FLOAT,
+            AttachmentType::COLOR_CUBE,
+            RT_SIZE_IBL_CUBEMAP,
+            RT_SIZE_IBL_CUBEMAP,
+            6,
+            RESOURCE_MISC_GENERATE_MIPS,
+            IBL_MIP_CHAIN_MAX)
+
+RG_RESOURCE(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP,
+            CubemapNoMipSampler(),
+            PixelFormat::R32G32B32A32_FLOAT,
+            AttachmentType::COLOR_CUBE,
+            RT_SIZE_IBL_IRRADIANCE_CUBEMAP,
+            RT_SIZE_IBL_IRRADIANCE_CUBEMAP,
+            6)
+
+RG_RESOURCE(RESOURCE_ENV_PREFILTER_CUBE_MAP,
+            CubemapLodSampler(),
+            PixelFormat::R32G32B32A32_FLOAT,
+            AttachmentType::COLOR_CUBE,
+            RT_SIZE_IBL_PREFILTERED_CUBEMAP,
+            RT_SIZE_IBL_PREFILTERED_CUBEMAP,
+            6,
+            RESOURCE_MISC_GENERATE_MIPS,
+            IBL_MIP_CHAIN_MAX)
 
 #undef RG_RESOURCE

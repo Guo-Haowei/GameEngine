@@ -12,6 +12,7 @@
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/graphics_private.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
 
 // @TODO: remove the following

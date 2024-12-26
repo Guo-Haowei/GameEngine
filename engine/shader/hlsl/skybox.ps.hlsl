@@ -4,6 +4,7 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
+#if 0
 float2 sample_spherical_map(float3 v) {
     const float2 inv_atan = float2(0.1591, 0.3183);
     float2 uv = float2(atan2(v.z, v.x), asin(v.y));
@@ -12,11 +13,15 @@ float2 sample_spherical_map(float3 v) {
     uv.y = 1.0 - uv.y;
     return uv;
 }
+#endif
 
 float4 main(vsoutput_position input) : SV_TARGET {
-    float2 uv = sample_spherical_map(input.world_position);
-    float3 color = TEXTURE_2D(SkyboxHdr).Sample(s_cubemapClampSampler, uv).rgb;
-    // color = color / (color + float3(1.0, 1.0, 1.0));
-    // color = pow(color, float3(1.0, 1.0, 1.0) / 2.2);
+    float3 uvw = input.world_position;
+#if !defined(HLSL_2_GLSL)
+    uvw.y = -uvw.y;
+#endif
+    float3 color = TEXTURE_CUBE(Skybox).SampleLevel(s_cubemapClampSampler, uvw, 0.0f).rgb;
+    //  color = color / (color + float3(1.0, 1.0, 1.0));
+    //  color = pow(color, float3(1.0, 1.0, 1.0) / 2.2);
     return float4(color, 1.0f);
 }

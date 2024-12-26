@@ -26,6 +26,8 @@ public:
     RenderPassName GetName() const { return m_name; }
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
+    const auto& GetDrawPasses() const { return m_drawPasses; }
+
 protected:
     void CreateInternal(RenderPassDesc& pass_desc);
 
@@ -39,7 +41,6 @@ protected:
     std::vector<DrawPass> m_drawPasses;
 
     friend class RenderGraph;
-    friend class RenderGraphViewer;
 };
 
 }  // namespace my::renderer

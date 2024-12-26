@@ -49,9 +49,6 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
 
 namespace my {
 
-constexpr int BLOOM_MIP_CHAIN_MAX = 7;
-constexpr int IBL_MIP_CHAIN_MAX = 7;
-
 enum class RenderPassName {
 #define RENDER_PASS_NAME(name) name,
     RENDER_PASS_NAME_LIST

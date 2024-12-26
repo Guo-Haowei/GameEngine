@@ -156,8 +156,7 @@ float3 compute_lighting(float3 base_color,
     // HACK
     // diffuse = base_color.rgb * c_ambientColor.rgb;
 
-    const float MAX_REFLECTION_LOD = 4.0f;
-    float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
+    float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampLodSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
     float2 brdf_uv = float2(NdotV, roughness);
     float2 brdf = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, brdf_uv).rg;
     float3 specular = prefilteredColor * (F * brdf.x + brdf.y);

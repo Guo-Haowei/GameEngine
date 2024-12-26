@@ -10,7 +10,6 @@
 #include "engine/renderer/render_graph/render_graph.h"
 #include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
-#include "engine/renderer/sampler.h"
 
 // @TODO: refactor
 #include "cbuffer.hlsl.h"
@@ -19,9 +18,10 @@ using my::renderer::RenderPass;
 
 namespace my {
 
-struct MeshComponent;
-class Scene;
 struct ImageAsset;
+struct MeshComponent;
+struct SamplerDesc;
+class Scene;
 
 // @TODO: refactor
 extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;

@@ -43,7 +43,9 @@ public:
                                                   AttachmentType p_type,
                                                   uint32_t p_width,
                                                   uint32_t p_height,
-                                                  uint32_t p_array_size = 1);
+                                                  uint32_t p_array_size = 1,
+                                                  ResourceMiscFlags p_misc_flag = RESOURCE_MISC_NONE,
+                                                  uint32_t p_mips_level = 0);
 
     // @TODO: refactor
     static void CreateResources();

@@ -303,7 +303,7 @@ Scene* SceneCreator::CreateScene() {
 
         auto* env = scene->GetComponent<EnvironmentComponent>(id);
         env->ambient.color = Color::Hex(0xf7d9aa).ToVector4f();
-        env->sky.texturePath = "@res://images/ibl/aviator_sky.hdr";
+        env->sky.texturePath = "@res://images/ibl/sky.hdr";
     }
 
     return scene;
@@ -538,7 +538,7 @@ void SceneCreator::CreateOcean(Scene* p_scene, ecs::Entity p_earth) {
 
     auto ocean = p_scene->CreateMeshEntity("ocean", material_blue_transparent, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
     ObjectComponent* object = p_scene->GetComponent<ObjectComponent>(ocean);
-    object->flags |= ObjectComponent::FLAG_TRANSPARENT;
+    // object->flags |= ObjectComponent::FLAG_TRANSPARENT;
 
     DEV_ASSERT(object);
 
