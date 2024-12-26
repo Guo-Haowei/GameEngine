@@ -695,10 +695,10 @@ void OpenGlGraphicsManager::Render() {
     // @TODO: refactor this
     const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
     if (m_app->IsRuntime())
-        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
-                                                     width,
-                                                     height,
-                                                     *this);
+        renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+                                                      width,
+                                                      height,
+                                                      *this);
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

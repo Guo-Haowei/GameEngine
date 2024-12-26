@@ -26,11 +26,11 @@ struct PassCreatorConfig {
     int frameHeight;
 };
 
-class RenderPassCreator {
+class RenderGraphBuilder {
 public:
-    RenderPassCreator(const PassCreatorConfig& p_config,
-                      RenderGraph& p_graph) : m_config(p_config),
-                                              m_graph(p_graph) {}
+    RenderGraphBuilder(const PassCreatorConfig& p_config,
+                       RenderGraph& p_graph) : m_config(p_config),
+                                               m_graph(p_graph) {}
 
     static std::unique_ptr<RenderGraph> CreateDummy(PassCreatorConfig& p_config);
     static std::unique_ptr<RenderGraph> CreateDefault(PassCreatorConfig& p_config);

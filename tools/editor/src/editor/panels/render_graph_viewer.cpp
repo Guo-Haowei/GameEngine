@@ -16,6 +16,34 @@ void RenderGraphViewer::UpdateInternal(Scene&) {
 
     static int first_frame = -1;
     first_frame++;
+    if (first_frame == 0) {
+        // @TODO: debug print the dependencies
+        int size = (int)graph->m_renderPasses.size();
+        std::vector<std::vector<int>> chart;
+
+        std::string header;
+        for (int i = 0; i < size; ++i) {
+            chart.push_back(std::vector<int>());
+            chart.back().resize(size);
+
+            header += std::format("{:<12}", graph->m_renderPasses[i]->GetNameString());
+        }
+
+        for (const auto& link : graph->m_links) {
+            chart[link.from][link.to] = 1;
+        }
+
+        LOG("{}", header);
+
+        for (int i = 0; i < size; ++i) {
+            std::string line;
+            for (int j = 0; j < size; ++j) {
+                line += std::format("{:<12}", chart[i][j]);
+            }
+            line += std::format("[{}]", graph->m_renderPasses[i]->GetNameString());
+            LOG("{}", line);
+        }
+    }
 
     for (size_t x = 0; x < graph->m_levels.size(); ++x) {
         for (size_t y = 0; y < graph->m_levels[x].size(); ++y) {
@@ -50,15 +78,16 @@ void RenderGraphViewer::UpdateInternal(Scene&) {
                 ImNodes::BeginStaticAttribute(id);
                 const auto& framebuffer = pass->m_drawPasses[0].framebuffer;
                 if (framebuffer) {
-                    const GpuTexture* texture = nullptr;
-                    if (!framebuffer->desc.colorAttachments.empty()) {
-                        texture = framebuffer->desc.colorAttachments[0].get();
-                    } else if (framebuffer->desc.depthAttachment) {
-                        texture = framebuffer->desc.depthAttachment.get();
+                    auto add_image = [](const std::shared_ptr<GpuTexture>& p_texture) {
+                        if (p_texture && p_texture->desc.dimension == Dimension::TEXTURE_2D) {
+                            ImGui::Image(p_texture->GetHandle(), ImVec2(180, 120));
+                        }
+                    };
+
+                    for (const auto& texture : framebuffer->desc.colorAttachments) {
+                        add_image(texture);
                     }
-                    if (texture && texture->desc.dimension == Dimension::TEXTURE_2D) {
-                        ImGui::Image(texture->GetHandle(), ImVec2(180, 120));
-                    }
+                    add_image(framebuffer->desc.depthAttachment);
                 }
                 ImNodes::EndStaticAttribute();
             }

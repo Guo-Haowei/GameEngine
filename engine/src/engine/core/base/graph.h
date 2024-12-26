@@ -4,7 +4,7 @@ namespace my {
 
 class Graph {
 public:
-    Graph(int num_vertex) : m_num_vertex(num_vertex) {
+    Graph(int num_vertex) : m_vertexCount(num_vertex) {
         m_adj.resize(num_vertex);
     }
 
@@ -23,7 +23,7 @@ public:
 private:
     std::vector<int> m_nodes;
     std::vector<std::unordered_set<int>> m_adj;
-    const int m_num_vertex;
+    const int m_vertexCount;
 };
 
 }  // namespace my

@@ -14,7 +14,7 @@ void Graph::add_edge(int from, int to) {
 }
 
 bool Graph::has_cycle() const {
-    for (int i = 0; i < m_num_vertex; ++i) {
+    for (int i = 0; i < m_vertexCount; ++i) {
         for (int from : m_adj[i]) {
             if (is_reachable(from, i)) {
                 return true;
@@ -26,15 +26,15 @@ bool Graph::has_cycle() const {
 
 int Graph::is_reachable(int from, int to) const {
     DEV_ASSERT(from != to);
-    DEV_ASSERT_INDEX(from, m_num_vertex);
-    DEV_ASSERT_INDEX(to, m_num_vertex);
+    DEV_ASSERT_INDEX(from, m_vertexCount);
+    DEV_ASSERT_INDEX(to, m_vertexCount);
 
     if (from == to) {
         return true;
     }
 
     std::queue<int> queue;
-    std::vector<bool> visited(m_num_vertex, false);
+    std::vector<bool> visited(m_vertexCount, false);
     visited[from] = true;
     queue.push(from);
 
@@ -58,8 +58,8 @@ int Graph::is_reachable(int from, int to) const {
 }
 
 void Graph::remove_redundant() {
-    for (int from = 0; from < m_num_vertex; ++from) {
-        for (int to = 0; to < m_num_vertex; ++to) {
+    for (int from = 0; from < m_vertexCount; ++from) {
+        for (int to = 0; to < m_vertexCount; ++to) {
             if (from == to) {
                 continue;
             }
@@ -70,7 +70,7 @@ void Graph::remove_redundant() {
                 continue;
             }
 
-            for (int middle = 0; middle < m_num_vertex; ++middle) {
+            for (int middle = 0; middle < m_vertexCount; ++middle) {
                 if (middle == from || middle == to) {
                     continue;
                 }
@@ -86,9 +86,9 @@ void Graph::remove_redundant() {
 std::vector<std::vector<int>> Graph::build_level() const {
     std::vector<std::vector<int>> levels(1);
     std::list<int> list;
-    for (int i = 0; i < m_num_vertex; ++i) {
+    for (int i = 0; i < m_vertexCount; ++i) {
         bool no_dependency = true;
-        for (int j = 0; j < m_num_vertex; ++j) {
+        for (int j = 0; j < m_vertexCount; ++j) {
             if (i == j) {
                 continue;
             }

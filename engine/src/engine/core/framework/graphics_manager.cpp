@@ -493,7 +493,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
             break;
     }
 
-    renderer::RenderPassCreator::CreateResources();
+    renderer::RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     renderer::PassCreatorConfig config;
     config.frameWidth = frame_size.x;
@@ -502,10 +502,10 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
 
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderPassCreator::CreateDummy(config);
+            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderGraphBuilder::CreateDummy(config);
             break;
         case RenderGraphName::DEFAULT:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderPassCreator::CreateDefault(config);
+            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderGraphBuilder::CreateDefault(config);
             break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
@@ -515,7 +515,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     switch (m_backend) {
         case Backend::OPENGL:
         case Backend::D3D11:
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderPassCreator::CreatePathTracer(config);
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
             break;
         default:
             break;

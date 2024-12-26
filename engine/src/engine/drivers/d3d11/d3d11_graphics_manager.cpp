@@ -70,10 +70,10 @@ void D3d11GraphicsManager::Render() {
     // @TODO: refactor this
     const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
     if (m_app->IsRuntime())
-        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
-                                                     width,
-                                                     height,
-                                                     *this);
+        renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+                                                      width,
+                                                      height,
+                                                      *this);
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

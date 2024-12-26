@@ -221,10 +221,10 @@ void D3d12GraphicsManager::Render() {
 
     // @TODO: refactor this
     if (m_app->IsRuntime())
-        renderer::RenderPassCreator::DrawDebugImages(*renderer::GetRenderData(),
-                                                     width,
-                                                     height,
-                                                     *this);
+        renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+                                                      width,
+                                                      height,
+                                                      *this);
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd_list);

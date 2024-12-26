@@ -1,5 +1,7 @@
 #include "render_graph.h"
 
+#include "engine/core/base/graph.h"
+
 #define RENDER_GRAPH_DEBUG_PRINT IN_USE
 
 namespace my::renderer {
@@ -36,6 +38,7 @@ void RenderGraph::Compile() {
                 CRASH_NOW_MSG(std::format("dependency '{}' not found", RenderPassNameToString(input)));
             } else {
                 graph.add_edge(it->second, pass_index);
+                LOG("add edge: {} -> {}", it->second, pass_index);
             }
         }
     }
@@ -44,7 +47,7 @@ void RenderGraph::Compile() {
         CRASH_NOW_MSG("render graph has cycle");
     }
 
-    graph.remove_redundant();
+    // graph.remove_redundant();
 
     m_levels = graph.build_level();
     m_sortedOrder.reserve(num_passes);
