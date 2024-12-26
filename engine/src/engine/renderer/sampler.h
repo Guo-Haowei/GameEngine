@@ -9,7 +9,7 @@ struct SamplerDesc {
                 AddressMode p_address_mode = AddressMode::WRAP,
                 StaticBorderColor p_border_color = StaticBorderColor::TRANSPARENT_BLACK,
                 float p_min_lod_bias = 0.0f,
-                uint32_t p_max_anisotropy = 0.0f,
+                uint32_t p_max_anisotropy = 1.0f,
                 ComparisonFunc p_func = ComparisonFunc::LESS_EQUAL,
                 float p_min_lod = 0.0f,
                 float p_max_lod = 3.402823466e+38f) {
@@ -76,6 +76,8 @@ static inline SamplerDesc LinearClampSampler() {
     SamplerDesc desc(FilterMode::LINEAR, FilterMode::LINEAR, AddressMode::CLAMP);
     return desc;
 }
+
+SamplerDesc CubemapSampler();
 
 // @TODO: refactor
 inline SamplerDesc bloom_downsample() {

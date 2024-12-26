@@ -11,7 +11,6 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
     RENDER_PASS_NAME(SHADOW)       \
     RENDER_PASS_NAME(GBUFFER)      \
     RENDER_PASS_NAME(LIGHTING)     \
-    RENDER_PASS_NAME(EMITTER)      \
     RENDER_PASS_NAME(BLOOM)        \
     RENDER_PASS_NAME(ENV)          \
     RENDER_PASS_NAME(OUTLINE)      \
@@ -51,7 +50,7 @@ constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
 namespace my {
 
 constexpr int BLOOM_MIP_CHAIN_MAX = 7;
-constexpr int IBL_MIP_CHAIN_MAX = 5;
+constexpr int IBL_MIP_CHAIN_MAX = 7;
 
 enum class RenderPassName {
 #define RENDER_PASS_NAME(name) name,

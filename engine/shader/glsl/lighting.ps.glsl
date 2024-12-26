@@ -1,7 +1,7 @@
 /// File: lighting.ps.glsl
 #include "../cbuffer.hlsl.h"
 
-layout(location = 0) out vec3 out_color;
+layout(location = 0) out vec4 out_color;
 layout(location = 0) in vec2 pass_uv;
 
 #include "lighting.glsl"
@@ -29,114 +29,15 @@ void main() {
     }
 
     if (emissive > 0.0) {
-        out_color = emissive * base_color;
+        out_color = vec4(emissive * base_color, 1.0);
         return;
     }
 
-    /// <summary>
-    /// ///////////
-    /// </summary>
-    const vec3 V = normalize(c_cameraPosition - world_position);
-    const float NdotV = clamp(dot(N, V), 0.0, 1.0);
-    vec3 R = reflect(-V, N);
-
-    vec3 Lo = vec3(0.0);
-    vec3 F0 = mix(vec3(0.04), base_color, metallic);
-
-    // ------------------- for area light
-    // use roughness and sqrt(1-cos_theta) to sample M_texture
-    vec2 uv = vec2(roughness, sqrt(1.0f - NdotV));
-    uv = uv * LUT_SCALE + LUT_BIAS;
-
-    // get 4 parameters for inverse_M
-    vec4 t1 = texture(c_ltc1, uv);
-
-    // Get 2 parameters for Fresnel calculation
-    vec4 t2 = texture(c_ltc2, uv);
-
-    mat3 Minv = mat3(
-        vec3(t1.x, 0, t1.y),
-        vec3(0, 1, 0),
-        vec3(t1.z, 0, t1.w));
-    // ------------------- for area light
-
-    for (int light_idx = 0; light_idx < c_lightCount; ++light_idx) {
-        Light light = c_lights[light_idx];
-        int light_type = c_lights[light_idx].type;
-        vec3 direct_lighting = vec3(0.0);
-        float shadow = 0.0;
-        const vec3 radiance = light.color;
-        switch (light.type) {
-            case LIGHT_TYPE_INFINITE: {
-                vec3 L = light.position;
-                float atten = 1.0;
-                const vec3 H = normalize(V + L);
-                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
-                if (light.cast_shadow == 1) {
-                    const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, world_position, NdotL);
-                    direct_lighting *= (1.0 - shadow);
-                }
-            } break;
-            case LIGHT_TYPE_POINT: {
-                vec3 delta = -world_position + light.position;
-                float dist = length(delta);
-                float atten = (light.atten_constant + light.atten_linear * dist +
-                               light.atten_quadratic * (dist * dist));
-                atten = 1.0 / atten;
-                if (atten > 0.01) {
-                    vec3 L = normalize(delta);
-                    const vec3 H = normalize(V + L);
-                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
-                    if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(light, world_position, c_cameraPosition);
-                    }
-                }
-            } break;
-            case LIGHT_TYPE_AREA: {
-                direct_lighting = radiance * area_light(Minv, N, V, world_position, t2, F0, base_color, light.points);
-            } break;
-            default:
-                break;
-        }
-        Lo += (1.0 - shadow) * direct_lighting;
-    }
-
-    // ambient
-
-    vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
-    vec3 kS = F;
-    vec3 kD = 1.0 - kS;
-    kD *= 1.0 - metallic;
-    vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
-    vec3 diffuse = irradiance * base_color.rgb;
-    diffuse = base_color.rgb * c_ambientColor.rgb;
-
-    const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 envBRDF = texture(t_BrdfLut, vec2(NdotV, roughness)).rg;
-    vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
-
-    const float ao = 1.0;
-    vec3 ambient = (kD * diffuse + specular) * ao;
-
-#if ENABLE_VXGI
-    if (c_enableVxgi == 1) {
-        const vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
-        const vec3 kS = F;
-        const vec3 kD = (1.0 - kS) * (1.0 - metallic);
-
-        // indirect diffuse
-        vec3 diffuse = base_color.rgb * cone_diffuse(world_position, N);
-
-        // specular cone
-        vec3 coneDirection = reflect(-V, N);
-        vec3 specular = vec3(0);
-        specular = metallic * cone_specular(world_position, coneDirection, roughness);
-        Lo += (kD * diffuse + specular) * ao;
-    }
-#endif
-
-    vec3 color = Lo + ambient;
-    out_color = color;
+    vec3 color = compute_lighting(base_color,
+                                  world_position,
+                                  N,
+                                  metallic,
+                                  roughness,
+                                  emissive);
+    out_color = vec4(color, 1.0f);
 }

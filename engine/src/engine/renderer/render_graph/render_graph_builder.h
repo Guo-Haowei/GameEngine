@@ -54,7 +54,6 @@ private:
     void AddShadowPass();
     void AddVoxelizationPass();
     void AddLightingPass();
-    void AddEmitterPass();
     void AddBloomPass();
     void AddTonePass();
     void AddGenerateSkylightPass();

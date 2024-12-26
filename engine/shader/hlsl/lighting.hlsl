@@ -1,12 +1,6 @@
 #include "pbr.hlsl.h"
 #include "shadow.hlsl"
 
-float3 FresnelSchlickRoughness(float cosTheta, in float3 F0, float roughness) {
-    float3 zero = float3(0.0, 0.0, 0.0);
-    float3 tmp = float3(1.0, 1.0, 1.0) - roughness;
-    return F0 + (max(tmp, zero)) * pow(1.0 - cosTheta, 5.0);
-}
-
 // @TODO: refactor shadow
 #define NUM_POINT_SHADOW_SAMPLES 20
 
@@ -157,17 +151,16 @@ float3 compute_lighting(float3 base_color,
     float3 kS = F;
     float3 kD = 1.0 - kS;
     // kD *= 1.0 - metallic;
-    float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).SampleLevel(s_cubemapClampSampler, N, 0.0f).rgb;
+    float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).Sample(s_cubemapClampSampler, N).rgb;
     float3 diffuse = irradiance * base_color.rgb;
     // HACK
-    diffuse = base_color.rgb * c_ambientColor.rgb;
+    // diffuse = base_color.rgb * c_ambientColor.rgb;
 
     const float MAX_REFLECTION_LOD = 4.0f;
     float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
-    float2 lut_uv = float2(NdotV, roughness);
-    lut_uv.y = 1.0 - lut_uv.y;
-    float2 envBRDF = TEXTURE_2D(BrdfLut).SampleLevel(s_linearClampSampler, lut_uv, 0.0f).rg;
-    float3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+    float2 brdf_uv = float2(NdotV, roughness);
+    float2 brdf = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, brdf_uv).rg;
+    float3 specular = prefilteredColor * (F * brdf.x + brdf.y);
 
     const float ao = 1.0;
     float3 ambient = (kD * diffuse + specular) * ao;

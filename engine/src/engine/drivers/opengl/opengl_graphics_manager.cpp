@@ -718,67 +718,72 @@ void OpenGlGraphicsManager::Present() {
     glfwSwapBuffers(m_window);
 }
 
-static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei,
-                                   const char* message, const void*) {
-    switch (id) {
+static void APIENTRY DebugCallback(GLenum p_source,
+                                   GLenum p_type,
+                                   uint32_t p_id,
+                                   GLenum p_severity,
+                                   GLsizei,
+                                   const char* p_message,
+                                   const void*) {
+    switch (p_id) {
         case 131185:
         case 131204:
             return;
     }
 
-    const char* sourceStr = "GL_DEBUG_SOURCE_OTHER";
-    switch (source) {
+    const char* source = "GL_DEBUG_SOURCE_OTHER";
+    switch (p_source) {
         case GL_DEBUG_SOURCE_API:
-            sourceStr = "GL_DEBUG_SOURCE_API";
+            source = "GL_DEBUG_SOURCE_API";
             break;
         case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-            sourceStr = "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
+            source = "GL_DEBUG_SOURCE_WINDOW_SYSTEM";
             break;
         case GL_DEBUG_SOURCE_SHADER_COMPILER:
-            sourceStr = "GL_DEBUG_SOURCE_SHADER_COMPILER";
+            source = "GL_DEBUG_SOURCE_SHADER_COMPILER";
             break;
         case GL_DEBUG_SOURCE_THIRD_PARTY:
-            sourceStr = "GL_DEBUG_SOURCE_THIRD_PARTY";
+            source = "GL_DEBUG_SOURCE_THIRD_PARTY";
             break;
         case GL_DEBUG_SOURCE_APPLICATION:
-            sourceStr = "GL_DEBUG_SOURCE_APPLICATION";
+            source = "GL_DEBUG_SOURCE_APPLICATION";
             break;
         default:
             break;
     }
 
-    const char* typeStr = "GL_DEBUG_TYPE_OTHER";
-    switch (type) {
+    const char* type = "GL_DEBUG_TYPE_OTHER";
+    switch (p_type) {
         case GL_DEBUG_TYPE_ERROR:
-            typeStr = "GL_DEBUG_TYPE_ERROR";
+            type = "GL_DEBUG_TYPE_ERROR";
             break;
         case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-            typeStr = "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
+            type = "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR";
             break;
         case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-            typeStr = "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
+            type = "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR";
             break;
         case GL_DEBUG_TYPE_PORTABILITY:
-            typeStr = "GL_DEBUG_TYPE_PORTABILITY";
+            type = "GL_DEBUG_TYPE_PORTABILITY";
             break;
         case GL_DEBUG_TYPE_PERFORMANCE:
-            typeStr = "GL_DEBUG_TYPE_PERFORMANCE";
+            type = "GL_DEBUG_TYPE_PERFORMANCE";
             break;
         case GL_DEBUG_TYPE_MARKER:
-            typeStr = "GL_DEBUG_TYPE_MARKER";
+            type = "GL_DEBUG_TYPE_MARKER";
             break;
         case GL_DEBUG_TYPE_PUSH_GROUP:
-            typeStr = "GL_DEBUG_TYPE_PUSH_GROUP";
+            type = "GL_DEBUG_TYPE_PUSH_GROUP";
             break;
         case GL_DEBUG_TYPE_POP_GROUP:
-            typeStr = "GL_DEBUG_TYPE_POP_GROUP";
+            type = "GL_DEBUG_TYPE_POP_GROUP";
             break;
         default:
             break;
     }
 
     LogLevel level = LOG_LEVEL_NORMAL;
-    switch (severity) {
+    switch (p_severity) {
         case GL_DEBUG_SEVERITY_HIGH:
             level = LOG_LEVEL_ERROR;
             break;
@@ -791,7 +796,7 @@ static void APIENTRY DebugCallback(GLenum source, GLenum type, unsigned int id, 
             break;
     }
 
-    my::LogImpl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", message, id, sourceStr, typeStr));
+    my::LogImpl(level, std::format("[opengl] {}\n\t| id: {} | source: {} | type: {}", p_message, p_id, source, type));
 }
 
 }  // namespace my

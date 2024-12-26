@@ -428,6 +428,72 @@ void RenderGraphBuilder::AddVoxelizationPass() {
     pass->AddDrawPass(framebuffer, VoxelizationPassFunc);
 }
 
+/// Emitter
+static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    HBN_PROFILE_EVENT();
+
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+    const auto [width, height] = p_framebuffer->GetBufferSize();
+
+    gm.SetRenderTarget(p_framebuffer);
+    gm.SetViewport(Viewport(width, height));
+
+    const PassContext& pass = p_data.mainPass;
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+
+    int particle_idx = 0;
+    for (const auto& emitter : p_data.emitters) {
+        if (!emitter.particleBuffer) {
+            continue;
+        }
+
+        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
+        ++particle_idx;
+
+        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
+        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
+        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+
+        gm.SetPipelineState(PSO_PARTICLE_KICKOFF);
+        gm.Dispatch(1, 1, 1);
+
+        gm.SetPipelineState(PSO_PARTICLE_EMIT);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.SetPipelineState(PSO_PARTICLE_SIM);
+        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+
+        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
+        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
+        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
+
+        // Renderering
+        gm.SetPipelineState(PSO_PARTICLE_RENDERING);
+
+        bool use_texture = false;
+        if (!emitter.texture.empty()) {
+            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
+            if (image && image->gpu_texture) {
+                gm.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
+                use_texture = true;
+            }
+        }
+
+        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+        gm.DrawQuadInstanced(MAX_PARTICLE_COUNT);
+        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
+
+        if (use_texture) {
+            gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+        }
+    }
+}
+
 /// Lighting
 static void LightingPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
@@ -497,22 +563,8 @@ static void LightingPassFunc(const DrawData& p_data, const Framebuffer* p_frameb
         gm.SetMesh(gm.m_debugBuffers.get());
         gm.DrawArrays(draw_context.drawCount);
     }
-}
 
-void RenderGraphBuilder::AddEmitterPass() {
-    GraphicsManager& manager = GraphicsManager::GetSingleton();
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::EMITTER;
-
-    desc.dependencies = { RenderPassName::LIGHTING };
-
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
-        .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
-    });
-    pass->AddDrawPass(framebuffer, EmitterPassFunc);
+    EmitterPassFunc(p_data, p_framebuffer);
 }
 
 void RenderGraphBuilder::AddLightingPass() {
@@ -565,72 +617,6 @@ void RenderGraphBuilder::AddLightingPass() {
         },
     });
     pass->AddDrawPass(framebuffer, LightingPassFunc);
-}
-
-/// Emitter
-static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
-    HBN_PROFILE_EVENT();
-
-    auto& gm = GraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-    const auto [width, height] = p_framebuffer->GetBufferSize();
-
-    gm.SetRenderTarget(p_framebuffer);
-    gm.SetViewport(Viewport(width, height));
-
-    const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
-
-    int particle_idx = 0;
-    for (const auto& emitter : p_data.emitters) {
-        if (!emitter.particleBuffer) {
-            continue;
-        }
-
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
-        ++particle_idx;
-
-        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-
-        gm.SetPipelineState(PSO_PARTICLE_KICKOFF);
-        gm.Dispatch(1, 1, 1);
-
-        gm.SetPipelineState(PSO_PARTICLE_EMIT);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-        gm.SetPipelineState(PSO_PARTICLE_SIM);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
-
-        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
-        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
-
-        // Renderering
-        gm.SetPipelineState(PSO_PARTICLE_RENDERING);
-
-        bool use_texture = false;
-        if (!emitter.texture.empty()) {
-            const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
-            if (image && image->gpu_texture) {
-                gm.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
-                use_texture = true;
-            }
-        }
-
-        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-        gm.DrawQuadInstanced(MAX_PARTICLE_COUNT);
-        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
-
-        if (use_texture) {
-            gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
-        }
-    }
 }
 
 /// Bloom
@@ -707,7 +693,7 @@ void RenderGraphBuilder::AddBloomPass() {
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
-    desc.dependencies = { RenderPassName::LIGHTING, RenderPassName::EMITTER };
+    desc.dependencies = { RenderPassName::LIGHTING };
     auto render_pass = m_graph.CreatePass(desc);
 
     int width = m_config.frameWidth;
@@ -945,12 +931,10 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
     {
         const int size = 512;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_SKYBOX_CUBE_MAP,
-                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            PixelFormat::R32G32B32A32_FLOAT,
                                             AttachmentType::COLOR_CUBE,
                                             size, size, 6);
-        auto cubemap = gm.CreateTexture(desc, SamplerDesc(FilterMode::LINEAR,
-                                                          FilterMode::LINEAR,
-                                                          AddressMode::CLAMP));
+        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
         DEV_ASSERT(cubemap);
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
             .colorAttachments = { cubemap },
@@ -987,10 +971,10 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
     {
         const int size = 32;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP,
-                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            PixelFormat::R32G32B32A32_FLOAT,
                                             AttachmentType::COLOR_CUBE,
                                             size, size, 6);
-        auto cubemap = gm.CreateTexture(desc, LinearClampSampler());
+        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
         DEV_ASSERT(cubemap);
 
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
@@ -1025,7 +1009,7 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
     {
         const int size = 512;
         auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_PREFILTER_CUBE_MAP,
-                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            PixelFormat::R32G32B32A32_FLOAT,
                                             AttachmentType::COLOR_CUBE,
                                             size, size, 6);
         if (gm.GetBackend() == Backend::OPENGL) {
@@ -1034,9 +1018,7 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
         }
         desc.mipLevels = IBL_MIP_CHAIN_MAX;
 
-        auto cubemap = gm.CreateTexture(desc, SamplerDesc(FilterMode::LINEAR,
-                                                          FilterMode::LINEAR,
-                                                          AddressMode::CLAMP));
+        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
         DEV_ASSERT(cubemap);
 
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
@@ -1271,7 +1253,6 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     creator.AddHighlightPass();
     creator.AddVoxelizationPass();
     creator.AddLightingPass();
-    creator.AddEmitterPass();
     creator.AddBloomPass();
     creator.AddTonePass();
     creator.AddDebugImagePass();
