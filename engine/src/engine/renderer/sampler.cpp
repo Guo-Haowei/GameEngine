@@ -19,4 +19,11 @@ SamplerDesc CubemapSampler() {
     return desc;
 }
 
+SamplerDesc ShadowMapSampler() {
+    SamplerDesc desc(MinFilter::LINEAR,
+                     MagFilter::LINEAR,
+                     AddressMode::BORDER, StaticBorderColor ::OPAQUE_WHITE);
+    return desc;
+}
+
 }  // namespace my

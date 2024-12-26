@@ -5,8 +5,12 @@
 #include "editor/editor_layer.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/graphics_manager.h"
+#include "editor/editor_layer.h"
 
 namespace my {
+
+RenderGraphViewer::RenderGraphViewer(EditorLayer& p_editor) : EditorWindow("RenderGraph", p_editor) {
+}
 
 void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
     const auto& order = p_graph.GetSortedOrder();
@@ -68,16 +72,22 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
             ImNodes::BeginStaticAttribute(id);
             const auto& framebuffer = pass->GetDrawPasses()[0].framebuffer;
             if (framebuffer) {
-                auto add_image = [](const std::shared_ptr<GpuTexture>& p_texture) {
+                auto add_image = [](bool p_flip, const std::shared_ptr<GpuTexture>& p_texture) {
                     if (p_texture && p_texture->desc.dimension == Dimension::TEXTURE_2D) {
-                        ImGui::Image(p_texture->GetHandle(), ImVec2(180, 120));
+                        ImVec2 size(180, 120);
+                        if (p_flip) {
+                            ImGui::Image(p_texture->GetHandle(), size, ImVec2(0, 1), ImVec2(1, 0));
+                        } else {
+                            ImGui::Image(p_texture->GetHandle(), size);
+                        }
                     }
                 };
 
+                const bool flip_image = m_backend == Backend::OPENGL;
                 for (const auto& texture : framebuffer->desc.colorAttachments) {
-                    add_image(texture);
+                    add_image(flip_image, texture);
                 }
-                add_image(framebuffer->desc.depthAttachment);
+                add_image(flip_image, framebuffer->desc.depthAttachment);
             }
             ImNodes::EndStaticAttribute();
         }
@@ -116,6 +126,9 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
 
 void RenderGraphViewer::UpdateInternal(Scene&) {
     auto graphics_manager = m_editor.GetApplication()->GetGraphicsManager();
+    if (m_backend == Backend::COUNT) {
+        m_backend = m_editor.GetApplication()->GetGraphicsManager()->GetBackend();
+    }
 
     switch (graphics_manager->GetBackend()) {
         case Backend::METAL:

@@ -285,7 +285,7 @@ void RenderGraphBuilder::AddShadowPass() {
                                                                     PixelFormat::D32_FLOAT,
                                                                     AttachmentType::SHADOW_2D,
                                                                     1 * shadow_res, shadow_res),
-                                            shadow_map_sampler());
+                                            ShadowMapSampler());
     RenderPassDesc desc;
     desc.name = RenderPassName::SHADOW;
     auto pass = m_graph.CreatePass(desc);
@@ -298,7 +298,7 @@ void RenderGraphBuilder::AddShadowPass() {
                                                                          PixelFormat::D32_FLOAT,
                                                                          AttachmentType::SHADOW_CUBE_ARRAY,
                                                                          point_shadow_res, point_shadow_res, 6 * MAX_POINT_LIGHT_SHADOW_COUNT),
-                                                 shadow_cube_map_sampler());
+                                                 ShadowMapSampler());
 
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = point_shadowMap });
     pass->AddDrawPass(framebuffer, PointShadowPassFunc);

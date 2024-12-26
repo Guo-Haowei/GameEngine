@@ -83,21 +83,7 @@ static inline SamplerDesc LinearWrapSampler() {
 }
 
 SamplerDesc CubemapSampler();
-
-// @TODO: refactor?
-inline SamplerDesc shadow_map_sampler() {
-    // @TODO: may be change this to LINEAR
-    SamplerDesc desc(MinFilter::LINEAR,
-                     MagFilter::LINEAR,
-                     AddressMode::BORDER, StaticBorderColor ::OPAQUE_WHITE);
-    return desc;
-}
-
-inline SamplerDesc shadow_cube_map_sampler() {
-    SamplerDesc desc{};
-    desc.addressU = desc.addressV = desc.addressW = AddressMode::CLAMP;
-    return desc;
-}
+SamplerDesc ShadowMapSampler();
 
 // @TODO: refactor
 inline SamplerDesc bloom_downsample() {
