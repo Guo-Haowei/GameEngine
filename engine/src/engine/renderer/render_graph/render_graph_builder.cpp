@@ -919,139 +919,95 @@ void RenderGraphBuilder::AddDebugImagePass() {
     CreateRenderPass(info);
 }
 
-void RenderGraphBuilder::AddGenerateSkylightPass() {
+static void ConvertToCubemapFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    HBN_PROFILE_EVENT("hdr image to -> skybox");
+    if (!p_data.bakeIbl) {
+        return;
+    }
+
     GraphicsManager& gm = GraphicsManager::GetSingleton();
 
-    RenderPassDesc render_pass_desc{
-        .name = RenderPassName::ENV,
-    };
-    // @TODO: rename to skylight
-    auto render_pass = m_graph.CreatePass(render_pass_desc);
+    gm.SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
+    auto cube_map = p_framebuffer->desc.colorAttachments[0];
+    const auto [width, height] = p_framebuffer->GetBufferSize();
 
-    // hdr -> cubemap
-    {
-        const int size = 512;
-        auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_SKYBOX_CUBE_MAP,
-                                            PixelFormat::R32G32B32A32_FLOAT,
-                                            AttachmentType::COLOR_CUBE,
-                                            size, size, 6);
-        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
-        DEV_ASSERT(cubemap);
-        auto pass = gm.CreateFramebuffer(FramebufferDesc{
-            .colorAttachments = { cubemap },
-        });
+    auto& frame = gm.GetCurrentFrame();
+    gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
+    for (int i = 0; i < 6; ++i) {
+        gm.SetRenderTarget(p_framebuffer, i);
 
-        render_pass->AddDrawPass(pass, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-            if (!p_data.bakeIbl) {
-                return;
-            }
-            HBN_PROFILE_EVENT("hdr image to -> skybox");
+        gm.SetViewport(Viewport(width, height));
 
-            GraphicsManager& gm = GraphicsManager::GetSingleton();
-
-            gm.SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
-            auto cube_map = p_framebuffer->desc.colorAttachments[0];
-            const auto [width, height] = p_framebuffer->GetBufferSize();
-
-            auto& frame = gm.GetCurrentFrame();
-            gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
-            for (int i = 0; i < 6; ++i) {
-                gm.SetRenderTarget(p_framebuffer, i);
-
-                gm.SetViewport(Viewport(width, height));
-
-                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
-                gm.DrawSkybox();
-            }
-            gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
-
-            gm.GenerateMipmap(cube_map.get());
-        });
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+        gm.DrawSkybox();
     }
-    // Diffuse irradiance
-    {
-        const int size = 32;
-        auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP,
-                                            PixelFormat::R32G32B32A32_FLOAT,
-                                            AttachmentType::COLOR_CUBE,
-                                            size, size, 6);
-        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
-        DEV_ASSERT(cubemap);
+    gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
+    gm.GenerateMipmap(cube_map.get());
+}
 
-        auto pass = gm.CreateFramebuffer(FramebufferDesc{
-            .colorAttachments = { cubemap },
-        });
-        render_pass->AddDrawPass(pass, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-            if (!p_data.bakeIbl) {
-                return;
-            }
-            HBN_PROFILE_EVENT("bake diffuse irradiance");
-
-            GraphicsManager& gm = GraphicsManager::GetSingleton();
-
-            gm.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
-            const auto [width, height] = p_framebuffer->GetBufferSize();
-
-            auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-            DEV_ASSERT(skybox);
-            gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
-            auto& frame = gm.GetCurrentFrame();
-            for (int i = 0; i < 6; ++i) {
-                gm.SetRenderTarget(p_framebuffer, i);
-                gm.SetViewport(Viewport(width, height));
-
-                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
-                gm.DrawSkybox();
-            }
-            gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
-        });
+static void DiffuseIrradianceFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    if (!p_data.bakeIbl) {
+        return;
     }
-    // prefilter
-    {
-        const int size = 512;
-        auto desc = BuildDefaultTextureDesc(RESOURCE_ENV_PREFILTER_CUBE_MAP,
-                                            PixelFormat::R32G32B32A32_FLOAT,
-                                            AttachmentType::COLOR_CUBE,
-                                            size, size, 6);
-        if (gm.GetBackend() == Backend::OPENGL) {
-            // @HACK
-            desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+    HBN_PROFILE_EVENT("bake diffuse irradiance");
+
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+
+    gm.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
+    const auto [width, height] = p_framebuffer->GetBufferSize();
+
+    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+    DEV_ASSERT(skybox);
+    gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+    auto& frame = gm.GetCurrentFrame();
+    for (int i = 0; i < 6; ++i) {
+        gm.SetRenderTarget(p_framebuffer, i);
+        gm.SetViewport(Viewport(width, height));
+
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+        gm.DrawSkybox();
+    }
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+}
+
+static void PrefilteredFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    if (!p_data.bakeIbl) {
+        return;
+    }
+    HBN_PROFILE_EVENT("bake prefiltered");
+
+    GraphicsManager& gm = GraphicsManager::GetSingleton();
+    gm.SetPipelineState(PSO_PREFILTER);
+    auto [width, height] = p_framebuffer->GetBufferSize();
+
+    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+    DEV_ASSERT(skybox);
+    gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+    auto& frame = gm.GetCurrentFrame();
+    for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
+        for (int face_id = 0; face_id < 6; ++face_id) {
+            const int index = mip_idx * 6 + face_id;
+            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), index);
+
+            gm.SetRenderTarget(p_framebuffer, face_id, mip_idx);
+            gm.SetViewport(Viewport(width, height));
+            gm.DrawSkybox();
         }
-        desc.mipLevels = IBL_MIP_CHAIN_MAX;
-
-        auto cubemap = gm.CreateTexture(desc, CubemapSampler());
-        DEV_ASSERT(cubemap);
-
-        auto pass = gm.CreateFramebuffer(FramebufferDesc{
-            .colorAttachments = { cubemap },
-        });
-        render_pass->AddDrawPass(pass, [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
-            if (!p_data.bakeIbl) {
-                return;
-            }
-            HBN_PROFILE_EVENT("bake prefiltered");
-
-            GraphicsManager& gm = GraphicsManager::GetSingleton();
-            gm.SetPipelineState(PSO_PREFILTER);
-            auto [width, height] = p_framebuffer->GetBufferSize();
-
-            auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-            DEV_ASSERT(skybox);
-            gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
-            auto& frame = gm.GetCurrentFrame();
-            for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
-                for (int face_id = 0; face_id < 6; ++face_id) {
-                    const int index = mip_idx * 6 + face_id;
-                    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), index);
-
-                    gm.SetRenderTarget(p_framebuffer, face_id, mip_idx);
-                    gm.SetViewport(Viewport(width, height));
-                    gm.DrawSkybox();
-                }
-            }
-            gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
-        });
     }
+    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+}
+
+void RenderGraphBuilder::AddGenerateSkylightPass() {
+    RenderPassCreateInfo info{
+        .name = RenderPassName::ENV,
+        .drawPasses = {
+            { { { RESOURCE_ENV_SKYBOX_CUBE_MAP } }, ConvertToCubemapFunc },
+            { { { RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP } }, DiffuseIrradianceFunc },
+            { { { RESOURCE_ENV_PREFILTER_CUBE_MAP } }, PrefilteredFunc },
+        },
+    };
+
+    CreateRenderPass(info);
 }
 
 static void PathTracerTonePassFunc(const DrawData&, const Framebuffer* p_framebuffer) {
@@ -1062,8 +1018,6 @@ static void PathTracerTonePassFunc(const DrawData&, const Framebuffer* p_framebu
 
     auto depth_buffer = p_framebuffer->desc.depthAttachment;
     const auto [width, height] = p_framebuffer->GetBufferSize();
-
-    // draw billboards
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
         std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
@@ -1211,7 +1165,9 @@ static void RgCreateResource(GraphicsManager& p_manager,
                              AttachmentType p_type,
                              int p_width,
                              int p_height,
-                             int p_depth = 1) {
+                             int p_depth = 1,
+                             ResourceMiscFlags p_misc_flag = RESOURCE_MISC_NONE,
+                             uint32_t p_mips_level = 0) {
     int width = p_width;
     int height = p_height;
     if (p_width < 0) {
@@ -1228,7 +1184,7 @@ static void RgCreateResource(GraphicsManager& p_manager,
     }
     DEV_ASSERT(width > 0 && height > 0);
 
-    auto desc = RenderGraphBuilder::BuildDefaultTextureDesc(p_name, p_format, p_type, width, height, p_depth);
+    auto desc = RenderGraphBuilder::BuildDefaultTextureDesc(p_name, p_format, p_type, width, height, p_depth, p_misc_flag, p_mips_level);
     [[maybe_unused]] auto ret = p_manager.CreateTexture(desc, p_sampler);
     DEV_ASSERT(ret);
 }
@@ -1267,7 +1223,9 @@ GpuTextureDesc RenderGraphBuilder::BuildDefaultTextureDesc(RenderTargetResourceN
                                                            AttachmentType p_type,
                                                            uint32_t p_width,
                                                            uint32_t p_height,
-                                                           uint32_t p_array_size) {
+                                                           uint32_t p_array_size,
+                                                           ResourceMiscFlags p_misc_flag,
+                                                           uint32_t p_mips_level) {
     GpuTextureDesc desc{};
     desc.type = p_type;
     desc.name = p_name;
@@ -1276,7 +1234,8 @@ GpuTextureDesc RenderGraphBuilder::BuildDefaultTextureDesc(RenderTargetResourceN
     desc.dimension = Dimension::TEXTURE_2D;
     desc.width = p_width;
     desc.height = p_height;
-    desc.mipLevels = 1;
+    desc.mipLevels = p_mips_level ? p_mips_level : 1;
+    desc.miscFlags = p_misc_flag;
     desc.initialData = nullptr;
 
     switch (p_type) {

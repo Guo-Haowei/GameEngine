@@ -17,6 +17,8 @@ using ::my::math::min;
 using ::my::math::normalize;
 #endif
 
+#define MAX_REFLECTION_LOD 4.0
+
 BEGIN_NAME_SPACE(my)
 
 // @TODO: refactor the functions

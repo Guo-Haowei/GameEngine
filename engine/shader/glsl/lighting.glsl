@@ -204,7 +204,6 @@ vec3 compute_lighting(vec3 base_color, vec3 world_position, vec3 N, float metall
     vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
     vec3 diffuse = irradiance * base_color.rgb;
 
-    const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf_uv = vec2(NdotV, 1.0 - roughness);
     vec2 brdf = texture(t_BrdfLut, brdf_uv).rg;

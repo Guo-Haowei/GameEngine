@@ -82,7 +82,9 @@ static inline SamplerDesc LinearWrapSampler() {
     return desc;
 }
 
+SamplerDesc CubemapNoMipSampler();
 SamplerDesc CubemapSampler();
+SamplerDesc CubemapLodSampler();
 SamplerDesc ShadowMapSampler();
 
 // @TODO: refactor
