@@ -232,7 +232,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
-                   .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                   .rtvFormats = { RT_FMT_LIGHTING },
                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                });
 
@@ -255,9 +255,27 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                  .inputLayoutDesc = &s_inputLayoutPosition,
                                  .blendDesc = &s_blendStateDefault,
                                  .numRenderTargets = 1,
-                                 .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                 .rtvFormats = { RT_FMT_LIGHTING },
                                  .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                              });
+
+#pragma region PSO_PARTICLE
+    CREATE_PSO(PSO_PARTICLE_INIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_initialization.cs" });
+    CREATE_PSO(PSO_PARTICLE_KICKOFF, { .type = PipelineStateType::COMPUTE, .cs = "particle_kickoff.cs" });
+    CREATE_PSO(PSO_PARTICLE_EMIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_emission.cs" });
+    CREATE_PSO(PSO_PARTICLE_SIM, { .type = PipelineStateType::COMPUTE, .cs = "particle_simulation.cs" });
+    CREATE_PSO(PSO_PARTICLE_RENDERING, {
+                                           .vs = "particle_draw.vs",
+                                           .ps = "particle_draw.ps",
+                                           .rasterizerDesc = &s_rasterizerDoubleSided,
+                                           .depthStencilDesc = &s_depthStencilDefault,
+                                           .inputLayoutDesc = &s_inputLayoutMesh,
+                                           .blendDesc = &s_transparent,
+                                           .numRenderTargets = 1,
+                                           .rtvFormats = { RT_FMT_LIGHTING },
+                                           .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                                       });
+#pragma endregion PSO_PARTICLE
 
     CREATE_PSO(PSO_POINT_SHADOW, {
                                      .vs = "shadowmap_point.vs",
@@ -300,24 +318,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     CREATE_PSO(PSO_BLOOM_UPSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_upsample.cs" });
 #pragma endregion PSO_BLOOM
 
-#pragma region PSO_PARTICLE
-    CREATE_PSO(PSO_PARTICLE_INIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_initialization.cs" });
-    CREATE_PSO(PSO_PARTICLE_KICKOFF, { .type = PipelineStateType::COMPUTE, .cs = "particle_kickoff.cs" });
-    CREATE_PSO(PSO_PARTICLE_EMIT, { .type = PipelineStateType::COMPUTE, .cs = "particle_emission.cs" });
-    CREATE_PSO(PSO_PARTICLE_SIM, { .type = PipelineStateType::COMPUTE, .cs = "particle_simulation.cs" });
-    CREATE_PSO(PSO_PARTICLE_RENDERING, {
-                                           .vs = "particle_draw.vs",
-                                           .ps = "particle_draw.ps",
-                                           .rasterizerDesc = &s_rasterizerDoubleSided,
-                                           .depthStencilDesc = &s_depthStencilDefault,
-                                           .inputLayoutDesc = &s_inputLayoutMesh,
-                                           .blendDesc = &s_transparent,
-                                           .numRenderTargets = 1,
-                                           .rtvFormats = { RT_FMT_TONE },
-                                           .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
-                                       });
-#pragma endregion PSO_PARTICLE
-
     CREATE_PSO(PSO_ENV_SKYBOX, {
                                    .vs = "skybox.vs",
                                    .ps = "skybox.ps",
@@ -326,7 +326,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .inputLayoutDesc = &s_inputLayoutMesh,
                                    .blendDesc = &s_blendStateDefault,
                                    .numRenderTargets = 1,
-                                   .rtvFormats = { RESOURCE_FORMAT_LIGHTING },
+                                   .rtvFormats = { RT_FMT_LIGHTING },
                                    .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
                                });
 

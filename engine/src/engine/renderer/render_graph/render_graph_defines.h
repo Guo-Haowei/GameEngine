@@ -53,8 +53,6 @@ namespace my {
 constexpr int BLOOM_MIP_CHAIN_MAX = 7;
 constexpr int IBL_MIP_CHAIN_MAX = 5;
 
-constexpr PixelFormat RESOURCE_FORMAT_LIGHTING = PixelFormat::R16G16B16A16_FLOAT;
-
 enum class RenderPassName {
 #define RENDER_PASS_NAME(name) name,
     RENDER_PASS_NAME_LIST

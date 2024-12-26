@@ -1,4 +1,4 @@
-#include "pass_creator.h"
+#include "render_graph_builder.h"
 
 #include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
@@ -287,7 +287,6 @@ void RenderGraphBuilder::AddShadowPass() {
                                             shadow_map_sampler());
     RenderPassDesc desc;
     desc.name = RenderPassName::SHADOW;
-    desc.dependencies = { RenderPassName::ENV };
     auto pass = m_graph.CreatePass(desc);
     {
         auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = shadow_map });
@@ -500,13 +499,29 @@ static void LightingPassFunc(const DrawData& p_data, const Framebuffer* p_frameb
     }
 }
 
+void RenderGraphBuilder::AddEmitterPass() {
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::EMITTER;
+
+    desc.dependencies = { RenderPassName::LIGHTING };
+
+    auto pass = m_graph.CreatePass(desc);
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
+        .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
+        .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
+    });
+    pass->AddDrawPass(framebuffer, EmitterPassFunc);
+}
+
 void RenderGraphBuilder::AddLightingPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
     auto lighting_attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
-                                                                             RESOURCE_FORMAT_LIGHTING,
+                                                                             RT_FMT_LIGHTING,
                                                                              AttachmentType::COLOR_2D,
                                                                              m_config.frameWidth, m_config.frameHeight),
                                                      PointClampSampler());
@@ -514,15 +529,12 @@ void RenderGraphBuilder::AddLightingPass() {
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
 
-    desc.dependencies = { RenderPassName::GBUFFER };
+    desc.dependencies = { RenderPassName::GBUFFER, RenderPassName::ENV };
     if (m_config.enableShadow) {
         desc.dependencies.push_back(RenderPassName::SHADOW);
     }
     if (m_config.enableVxgi) {
         desc.dependencies.push_back(RenderPassName::VOXELIZATION);
-    }
-    if (m_config.enableIbl) {
-        desc.dependencies.push_back(RenderPassName::ENV);
     }
 
     auto pass = m_graph.CreatePass(desc);
@@ -621,22 +633,6 @@ static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
     }
 }
 
-void RenderGraphBuilder::AddEmitterPass() {
-    GraphicsManager& manager = GraphicsManager::GetSingleton();
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::EMITTER;
-
-    desc.dependencies = { RenderPassName::LIGHTING };
-
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { manager.FindTexture(RESOURCE_LIGHTING) },
-        .depthAttachment = manager.FindTexture(RESOURCE_GBUFFER_DEPTH),
-    });
-    pass->AddDrawPass(framebuffer, EmitterPassFunc);
-}
-
 /// Bloom
 static void BloomSetupFunc(const DrawData&, const Framebuffer*) {
     HBN_PROFILE_EVENT();
@@ -711,7 +707,7 @@ void RenderGraphBuilder::AddBloomPass() {
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
-    desc.dependencies = { RenderPassName::LIGHTING };
+    desc.dependencies = { RenderPassName::LIGHTING, RenderPassName::EMITTER };
     auto render_pass = m_graph.CreatePass(desc);
 
     int width = m_config.frameWidth;
@@ -1195,7 +1191,7 @@ void RenderGraphBuilder::AddPathTracerPass() {
 }
 
 /// Create pre-defined passes
-std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(PassCreatorConfig& p_config) {
+std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = false;
     p_config.enableIbl = false;
     p_config.enableVxgi = false;
@@ -1209,7 +1205,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(PassCreatorConfig& 
     return graph;
 }
 
-std::unique_ptr<RenderGraph> RenderGraphBuilder::CreatePathTracer(PassCreatorConfig& p_config) {
+std::unique_ptr<RenderGraph> RenderGraphBuilder::CreatePathTracer(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = false;
     p_config.enableIbl = false;
     p_config.enableVxgi = false;
@@ -1261,7 +1257,7 @@ void RenderGraphBuilder::CreateResources() {
 #include "engine/renderer/render_graph/render_graph_resources.h"
 }
 
-std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(PassCreatorConfig& p_config) {
+std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = true;
     p_config.enableIbl = false;
     p_config.enableVxgi = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;

@@ -13,7 +13,7 @@
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/draw_data.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_graph/render_graph_builder.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_misc.h"
@@ -495,7 +495,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
 
     renderer::RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    renderer::PassCreatorConfig config;
+    renderer::RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;
     config.frameHeight = frame_size.y;
     config.is_runtime = m_app->IsRuntime();

@@ -14,7 +14,9 @@ public:
 
 protected:
     void UpdateInternal(Scene& scene) override;
-    void DrawNodes(bool p_first_frame, const Graph<renderer::RenderPass*> p_graph);
+    void DrawNodes(const Graph<renderer::RenderPass*> p_graph);
+
+    bool m_firstFrame{ true };
 };
 
 }  // namespace my

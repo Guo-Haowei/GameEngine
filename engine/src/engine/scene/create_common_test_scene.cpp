@@ -255,12 +255,13 @@ Scene* CreatePbrTestScene() {
         }
     }
 
-#if 0
     {
-        auto sky_light = scene->CreateEnvironmentEntity("sky_light", "@res://images/ibl/circus.hdr");
-        scene->AttachChild(sky_light, root);
+        auto id = scene->CreateEnvironmentEntity("environment");
+        scene->AttachChild(id, root);
+
+        auto* env = scene->GetComponent<EnvironmentComponent>(id);
+        env->sky.texturePath = "@res://images/ibl/circus.hdr";
     }
-#endif
 
     return scene;
 }

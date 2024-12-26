@@ -8,21 +8,46 @@
 
 namespace my {
 
-void RenderGraphViewer::DrawNodes(bool p_first_frame, const Graph<RenderPass*> p_graph) {
+void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
     const auto& order = p_graph.GetSortedOrder();
     const auto& vertices = p_graph.GetVertices();
 
-    for (size_t i = 0; i < order.size(); ++i) {
-        const int id = order[i];
+    // @TODO: draw nodes without dependencies
+    std::list<int> no_dependencies;
+    std::list<int> with_dependencies;
+    const auto& adj_list = p_graph.GetAdjList();
+    for (auto id : order) {
+        bool has_dep = false;
+        for (const auto& adj : adj_list) {
+            if (adj.contains(id)) {
+                has_dep = true;
+                break;
+            }
+        }
+
+        if (has_dep) {
+            with_dependencies.push_back(id);
+        } else {
+            no_dependencies.push_front(id);
+        }
+    }
+
+#if 0
+    for (auto id : no_dependencies) {
+        LOG("{} doesn't have dependecies", vertices[id]->GetNameString());
+    }
+    for (auto id : with_dependencies) {
+        LOG("{} has dependecies", vertices[id]->GetNameString());
+    }
+#endif
+
+    auto draw_node = [&vertices, this](int id, float x, float y) {
         const auto pass = vertices[id];
 
         ImNodes::BeginNode(id);
 
-        const float width = 300.0f * static_cast<float>(i) + 100;
-        const float height = 100.0f;
-        ImVec2 position(width, height);
-        // @HACK
-        if (p_first_frame) {
+        if (m_firstFrame) {
+            ImVec2 position(x, y);
             ImNodes::SetNodeGridSpacePos(id, position);
         }
         {
@@ -66,9 +91,21 @@ void RenderGraphViewer::DrawNodes(bool p_first_frame, const Graph<RenderPass*> p
         }
 
         ImNodes::EndNode();
+    };
+
+    const float initial_offset = 20.f;
+    float x_offset = initial_offset;
+    float y_offset = initial_offset;
+    for (auto id : no_dependencies) {
+        draw_node(id, x_offset, y_offset);
+        y_offset += 240.0f;
     }
 
-    const auto& adj_list = p_graph.GetAdjList();
+    for (auto id : with_dependencies) {
+        x_offset += 240.0f;
+        draw_node(id, x_offset, initial_offset);
+    }
+
     for (int from = 0; from < (int)adj_list.size(); ++from) {
         for (auto to : adj_list[from]) {
             const int id = (from << 24) | (to << 16);
@@ -81,8 +118,7 @@ void RenderGraphViewer::UpdateInternal(Scene&) {
     auto graphics_manager = m_editor.GetApplication()->GetGraphicsManager();
     const auto graph = graphics_manager->GetActiveRenderGraph();
 
-    static int frame_count = -1;
-    frame_count++;
+#if 0
     if (frame_count == 0) {
         // @TODO: debug print the dependencies
         int size = (int)graph->m_renderPasses.size();
@@ -114,13 +150,16 @@ void RenderGraphViewer::UpdateInternal(Scene&) {
             LOG("{}", line);
         }
     }
+#endif
 
     ImNodes::BeginNodeEditor();
 
-    DrawNodes(frame_count == 0, graph->m_graph);
+    DrawNodes(graph->m_graph);
 
     ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
     ImNodes::EndNodeEditor();
+
+    m_firstFrame = false;
 }
 
 }  // namespace my

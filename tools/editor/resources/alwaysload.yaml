@@ -1,5 +1,8 @@
+# TODO: auto generate alwaysload
 files:
   - path: "@res://images/brdf.hdr"
+    type: Image
+  - path: "@res://images/ibl/circus.hdr"
     type: Image
   - path: "@res://images/ibl/sky.hdr"
     type: Image

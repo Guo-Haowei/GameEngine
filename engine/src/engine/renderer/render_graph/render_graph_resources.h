@@ -19,6 +19,7 @@ constexpr PixelFormat RT_FMT_GBUFFER_POSITION = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_GBUFFER_NORMAL = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_GBUFFER_MATERIAL = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_TONE = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RT_FMT_LIGHTING = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_OUTLINE_SELECT = PixelFormat::R8_UINT;
 // @TODO: rename
 constexpr PixelFormat DEFAULT_SURFACE_FORMAT = PixelFormat::R8G8B8A8_UNORM;

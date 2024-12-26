@@ -13,7 +13,7 @@ struct DrawData;
 struct RenderPassCreateInfo;
 class RenderGraph;
 
-struct PassCreatorConfig {
+struct RenderGraphBuilderConfig {
     bool enableShadow = true;
     bool enablePointShadow = true;
     bool enableVxgi = true;
@@ -28,13 +28,13 @@ struct PassCreatorConfig {
 
 class RenderGraphBuilder {
 public:
-    RenderGraphBuilder(const PassCreatorConfig& p_config,
+    RenderGraphBuilder(const RenderGraphBuilderConfig& p_config,
                        RenderGraph& p_graph) : m_config(p_config),
                                                m_graph(p_graph) {}
 
-    static std::unique_ptr<RenderGraph> CreateDummy(PassCreatorConfig& p_config);
-    static std::unique_ptr<RenderGraph> CreateDefault(PassCreatorConfig& p_config);
-    static std::unique_ptr<RenderGraph> CreatePathTracer(PassCreatorConfig& p_config);
+    static std::unique_ptr<RenderGraph> CreateDummy(RenderGraphBuilderConfig& p_config);
+    static std::unique_ptr<RenderGraph> CreateDefault(RenderGraphBuilderConfig& p_config);
+    static std::unique_ptr<RenderGraph> CreatePathTracer(RenderGraphBuilderConfig& p_config);
 
     static void DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager);
 
@@ -64,7 +64,7 @@ private:
 
     void CreateRenderPass(RenderPassCreateInfo& p_info);
 
-    PassCreatorConfig m_config;
+    RenderGraphBuilderConfig m_config;
     RenderGraph& m_graph;
 };
 

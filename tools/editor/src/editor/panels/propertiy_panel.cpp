@@ -199,6 +199,11 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     DrawComponent("Environment", environment_component, [](EnvironmentComponent& p_environment) {
         DrawInputText("texture", p_environment.sky.texturePath);
+        ImGui::BeginDisabled(p_environment.sky.texturePath.empty());
+        if (ImGui::Button("bake IBL")) {
+            renderer::RequestBakingIbl();
+        }
+        ImGui::EndDisabled();
         DrawColorPicker3("ambient", &p_environment.ambient.color.x);
     });
 

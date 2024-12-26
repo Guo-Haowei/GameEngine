@@ -20,7 +20,7 @@
 
 // @TODO: remove the following
 #include "engine/renderer/ltc_matrix.h"
-#include "engine/renderer/render_graph/pass_creator.h"
+#include "engine/renderer/render_graph/render_graph_builder.h"
 
 // @TODO: refactor
 using namespace my;
