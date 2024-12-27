@@ -70,6 +70,15 @@ void RendererPanel::UpdateInternal(Scene&) {
                 }
             }
         }
+
+        if (ImGui::Button("Generate BVH")) {
+            DVAR_SET_BOOL(gfx_bvh_generate, true);
+        }
+        int bvh_level = DVAR_GET_INT(gfx_bvh_debug);
+        // @TODO: get rid of hard code
+        if (ImGui::DragInt("Debug BVH", &bvh_level, 0.1f, -1, 12)) {
+            DVAR_SET_INT(gfx_bvh_debug, bvh_level);
+        }
     });
 }
 

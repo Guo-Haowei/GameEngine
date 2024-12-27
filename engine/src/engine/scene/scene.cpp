@@ -9,6 +9,10 @@
 #include "engine/systems/ecs/component_manager.inl"
 #include "engine/systems/job_system/job_system.h"
 
+// @TODO: refactor
+#include "engine/renderer/bvh.h"
+#include "engine/renderer/graphics_dvars.h"
+
 namespace my::ecs {
 
 // instantiate ComponentManagers
@@ -85,6 +89,16 @@ void Scene::Update(float p_time_step) {
             const float size = glm::max(scale.x, glm::max(scale.y, scale.z));
             voxel_gi.region = AABB::FromCenterSize(center, Vector3f(size));
         }
+    }
+
+    // @TODO: refactor
+    if (DVAR_GET_BOOL(gfx_bvh_generate)) {
+        for (auto [entity, mesh] : m_MeshComponents) {
+            if (!mesh.bvh) {
+                mesh.bvh = BVH::Construct(mesh.indices, mesh.positions);
+            }
+        }
+        DVAR_SET_BOOL(gfx_bvh_generate, false);
     }
 }
 

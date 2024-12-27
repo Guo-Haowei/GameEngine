@@ -12,6 +12,7 @@ class Emitter;
 
 namespace my {
 
+struct BVH;
 struct GpuMesh;
 struct GpuStructuredBuffer;
 struct ImageAsset;
@@ -173,6 +174,7 @@ struct MeshComponent {
 
     // Non-serialized
     mutable std::shared_ptr<GpuMesh> gpuResource;
+    mutable std::shared_ptr<BVH> bvh;
     math::AABB localBound;
 
     mutable std::vector<Vector3f> updatePositions;

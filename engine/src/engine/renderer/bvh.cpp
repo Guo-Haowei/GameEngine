@@ -11,7 +11,8 @@ class BVHSorter;
 
 class BVHBuilder {
 public:
-    BVHBuilder(const VertexList& p_vertices,
+    BVHBuilder(int p_max_depth,
+               const VertexList& p_vertices,
                const TriangleList& p_triangles);
 
     BVH::Ref ConstructHelper(int p_depth, const std::vector<uint32_t>& p_indices) const;
@@ -22,6 +23,7 @@ private:
     void SplitByAxis(BVH::Ref& p_parent, const std::vector<uint32_t>& p_indices) const;
     AABB AABBFromTriangles(const std::vector<uint32_t>& p_indices) const;
 
+    const int m_maxDepth;
     const VertexList& m_vertices;
     const TriangleList& m_triangles;
     std::vector<AABB> m_aabbs;
@@ -49,8 +51,10 @@ private:
     const BVHBuilder& m_builder;
 };
 
-BVHBuilder::BVHBuilder(const VertexList& p_vertices,
-                       const TriangleList& p_triangles) : m_vertices(p_vertices),
+BVHBuilder::BVHBuilder(int p_max_depth,
+                       const VertexList& p_vertices,
+                       const TriangleList& p_triangles) : m_maxDepth(p_max_depth),
+                                                          m_vertices(p_vertices),
                                                           m_triangles(p_triangles) {
     m_aabbs.resize(m_triangles.size());
     m_centroids.resize(m_triangles.size());
@@ -109,11 +113,16 @@ void BVHBuilder::SplitByAxis(BVH::Ref& p_parent,
 }
 
 BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p_indices) const {
+    if (p_depth > m_maxDepth) {
+        return nullptr;
+        // CRASH_NOW_MSG("TOO MANY LEVELS OF BVH");
+    }
+
     const int triangle_count = (int)p_indices.size();
 
     const AABB aabb = AABBFromTriangles(p_indices);
 
-    auto bvh = std::make_unique<BVH>();
+    auto bvh = std::make_shared<BVH>();
     bvh->aabb = aabb;
     bvh->depth = p_depth;
 
@@ -123,6 +132,7 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
         return bvh;
     }
 
+    // @TODO: refactor
     const float surface_area = aabb.SurfaceArea();
 
     // @TODO rework
@@ -132,12 +142,12 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
         return bvh;
     }
 
-    constexpr int nBuckets = 12;
+    constexpr int BUCKED_MAX = 12;
     struct BucketInfo {
         int count = 0;
         AABB box;
     };
-    std::array<BucketInfo, nBuckets> buckets;
+    std::array<BucketInfo, BUCKED_MAX> buckets;
 
     std::vector<Vector3f> centroids(triangle_count);
 
@@ -153,24 +163,24 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
     const float tmax = centroidBox.GetMax()[axis];
 
     for (int i = 0; i < triangle_count; ++i) {
-        float tmp = ((centroids.at(i)[axis] - tmin) * nBuckets) / (tmax - tmin);
+        float tmp = ((centroids.at(i)[axis] - tmin) * BUCKED_MAX) / (tmax - tmin);
         int slot = static_cast<int>(tmp);
-        slot = math::clamp(slot, 0, nBuckets - 1);
+        slot = math::clamp(slot, 0, BUCKED_MAX - 1);
         BucketInfo& bucket = buckets[slot];
         ++bucket.count;
         bucket.box.UnionBox(m_aabbs.at(p_indices.at(i)));
         // bucket.box.UnionBox(Box3FromGeometry(geometries.at(i)));
     }
 
-    float costs[nBuckets - 1];
-    for (int i = 0; i < nBuckets - 1; ++i) {
+    float costs[BUCKED_MAX - 1];
+    for (int i = 0; i < BUCKED_MAX - 1; ++i) {
         AABB b0, b1;
         int count0 = 0, count1 = 0;
         for (int j = 0; j <= i; ++j) {
             b0.UnionBox(buckets[j].box);
             count0 += buckets[j].count;
         }
-        for (int j = i + 1; j < nBuckets; ++j) {
+        for (int j = i + 1; j < BUCKED_MAX; ++j) {
             b1.UnionBox(buckets[j].box);
             count1 += buckets[j].count;
         }
@@ -181,7 +191,7 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
 
     int splitIndex = 0;
     float minCost = costs[splitIndex];
-    for (int i = 0; i < nBuckets - 1; ++i) {
+    for (int i = 0; i < BUCKED_MAX - 1; ++i) {
         // printf("cost of split after bucket %d is %f\n", i, costs[i]);
         if (costs[i] < minCost) {
             splitIndex = i;
@@ -197,9 +207,9 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
     for (auto index : p_indices) {
         const auto& t = m_centroids.at(index);
         float tmp = (t[axis] - tmin) / (tmax - tmin);
-        tmp *= nBuckets;
+        tmp *= BUCKED_MAX;
         int slot = static_cast<int>(tmp);
-        slot = glm::clamp(slot, 0, nBuckets - 1);
+        slot = glm::clamp(slot, 0, BUCKED_MAX - 1);
         if (slot <= splitIndex) {
             leftPartition.push_back(index);
         } else {
@@ -214,7 +224,9 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
 }
 
 BVH::Ref BVH::Construct(const std::vector<uint32_t>& p_indices,
-                        const VertexList& p_vertices) {
+                        const VertexList& p_vertices,
+                        int p_max_depth) {
+
     const int index_count = (int)p_indices.size();
     DEV_ASSERT(index_count % 3 == 0);
     const int triangle_count = index_count / 3;
@@ -233,7 +245,7 @@ BVH::Ref BVH::Construct(const std::vector<uint32_t>& p_indices,
         triangle_indices[index] = index;
     }
 
-    BVHBuilder builder(p_vertices, triangles);
+    BVHBuilder builder(p_max_depth, p_vertices, triangles);
     return builder.ConstructHelper(0, triangle_indices);
 }
 

@@ -5,6 +5,7 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/os/timer.h"
+#include "engine/renderer/bvh.h"
 #include "engine/scene/scene.h"
 
 // @TODO
@@ -311,6 +312,12 @@ void Bvh::SplitByAxis(GeometryList& geoms) {
 }
 
 void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
+    for (auto [id, mesh] : p_scene.m_MeshComponents) {
+        if (!mesh.bvh) {
+            mesh.bvh = BVH::Construct(mesh.indices, mesh.positions);
+        }
+    }
+
     /// materials
     using ecs::Entity;
     std::map<Entity, int> material_lut;
