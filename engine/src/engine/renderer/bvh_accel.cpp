@@ -1,5 +1,7 @@
 #include "bvh_accel.h"
 
+#include <algorithm>
+
 namespace my {
 
 using math::AABB;
@@ -11,13 +13,12 @@ class BvhSorter;
 
 class BvhBuilder {
 public:
-    BvhBuilder(int p_max_depth,
-               const VertexList& p_vertices,
+    BvhBuilder(const VertexList& p_vertices,
                const TriangleList& p_triangles);
 
     BvhAccel::Ref ConstructHelper(const BvhAccel* p_parent, const std::vector<uint32_t>& p_indices) const;
 
-    const uint32_t GetBVHCount() const {
+    uint32_t GetBVHCount() const {
         return m_bvhCounter;
     }
 
@@ -28,7 +29,6 @@ private:
     AABB AABBFromTriangles(const std::vector<uint32_t>& p_indices) const;
 
     mutable uint32_t m_bvhCounter = 0;
-    const int m_maxDepth;
     const VertexList& m_vertices;
     const TriangleList& m_triangles;
     std::vector<AABB> m_aabbs;
@@ -56,10 +56,8 @@ private:
     const BvhBuilder& m_builder;
 };
 
-BvhBuilder::BvhBuilder(int p_max_depth,
-                       const VertexList& p_vertices,
-                       const TriangleList& p_triangles) : m_maxDepth(p_max_depth),
-                                                          m_vertices(p_vertices),
+BvhBuilder::BvhBuilder(const VertexList& p_vertices,
+                       const TriangleList& p_triangles) : m_vertices(p_vertices),
                                                           m_triangles(p_triangles) {
     m_aabbs.resize(m_triangles.size());
     m_centroids.resize(m_triangles.size());
@@ -264,8 +262,7 @@ void BvhAccel::FillGpuBvhAccel(int p_mesh_index, std::vector<GpuBvhAccel>& p_out
 }
 
 BvhAccel::Ref BvhAccel::Construct(const std::vector<uint32_t>& p_indices,
-                                  const VertexList& p_vertices,
-                                  int p_max_depth) {
+                                  const VertexList& p_vertices) {
 
     const int index_count = (int)p_indices.size();
     DEV_ASSERT(index_count % 3 == 0);
@@ -285,7 +282,7 @@ BvhAccel::Ref BvhAccel::Construct(const std::vector<uint32_t>& p_indices,
         triangle_indices[index] = index;
     }
 
-    BvhBuilder builder(p_max_depth, p_vertices, triangles);
+    BvhBuilder builder(p_vertices, triangles);
     return builder.ConstructHelper(nullptr, triangle_indices);
 }
 

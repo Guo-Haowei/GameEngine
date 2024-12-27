@@ -280,8 +280,6 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
                 }
             }
         }
-        for (auto const [entity, mesh] : p_config.scene.m_MeshComponents) {
-        }
     }
 }
 

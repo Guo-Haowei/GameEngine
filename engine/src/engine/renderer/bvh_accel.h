@@ -28,8 +28,7 @@ struct BvhAccel {
     bool isLeaf{ false };
 
     static Ref Construct(const std::vector<uint32_t>& p_indices,
-                         const std::vector<Vector3f>& p_vertices,
-                         int p_max_depth = 32);
+                         const std::vector<Vector3f>& p_vertices);
 
     void FillGpuBvhAccel(int p_mesh_index, std::vector<GpuBvhAccel>& p_out);
 };
