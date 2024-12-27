@@ -139,7 +139,7 @@ auto GraphicsManager::InitializeImpl() -> Result<void> {
 
     // @TODO: refactor
     {
-        constexpr int max_count = 4096 * 16;
+        constexpr int max_count = 4096 * 128;
         MeshComponent mesh;
         mesh.flags |= MeshComponent::DYNAMIC;
         mesh.positions.resize(max_count);

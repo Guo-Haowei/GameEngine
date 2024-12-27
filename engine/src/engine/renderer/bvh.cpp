@@ -99,7 +99,6 @@ AABB BVHBuilder::AABBFromTriangles(const std::vector<uint32_t>& p_indices) const
 
 void BVHBuilder::SplitByAxis(BVH::Ref& p_parent,
                              const std::vector<uint32_t>& p_indices) const {
-
     auto indices = p_indices;
     const int axis = DominantAxis(p_parent->aabb);
     BVHSorter sorter(axis, *this);
@@ -113,18 +112,17 @@ void BVHBuilder::SplitByAxis(BVH::Ref& p_parent,
 }
 
 BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p_indices) const {
-    if (p_depth > m_maxDepth) {
+    if (p_depth > 32) {
+        CRASH_NOW_MSG("TOO MANY LEVELS OF BVH");
         return nullptr;
-        // CRASH_NOW_MSG("TOO MANY LEVELS OF BVH");
     }
 
     const int triangle_count = (int)p_indices.size();
-
-    const AABB aabb = AABBFromTriangles(p_indices);
-
+    const AABB parent_aabb = AABBFromTriangles(p_indices);
     auto bvh = std::make_shared<BVH>();
-    bvh->aabb = aabb;
+    bvh->aabb = parent_aabb;
     bvh->depth = p_depth;
+    bvh->isLeaf = false;
 
     if (triangle_count == 1) {
         bvh->isLeaf = true;
@@ -133,11 +131,10 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
     }
 
     // @TODO: refactor
-    const float surface_area = aabb.SurfaceArea();
+    const float parent_surface = parent_aabb.SurfaceArea();
 
     // @TODO rework
-    if (triangle_count <= 4 || surface_area == 0.0f) {
-        bvh->isLeaf = false;
+    if (triangle_count <= 4 || parent_surface == 0.0f) {
         SplitByAxis(bvh, p_indices);
         return bvh;
     }
@@ -149,27 +146,24 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
     };
     std::array<BucketInfo, BUCKED_MAX> buckets;
 
-    std::vector<Vector3f> centroids(triangle_count);
-
     AABB centroidBox;
     for (const auto index : p_indices) {
         const Vector3f& point = m_centroids.at(index);
         centroidBox.ExpandPoint(point);
     }
-    DEV_ASSERT(centroidBox.IsValid());
+    centroidBox.MakeValid();
 
     const int axis = DominantAxis(centroidBox);
     const float tmin = centroidBox.GetMin()[axis];
     const float tmax = centroidBox.GetMax()[axis];
 
-    for (int i = 0; i < triangle_count; ++i) {
-        float tmp = ((centroids.at(i)[axis] - tmin) * BUCKED_MAX) / (tmax - tmin);
+    for (int index : p_indices) {
+        float tmp = ((m_centroids.at(index)[axis] - tmin) * BUCKED_MAX) / (tmax - tmin);
         int slot = static_cast<int>(tmp);
         slot = math::clamp(slot, 0, BUCKED_MAX - 1);
         BucketInfo& bucket = buckets[slot];
         ++bucket.count;
-        bucket.box.UnionBox(m_aabbs.at(p_indices.at(i)));
-        // bucket.box.UnionBox(Box3FromGeometry(geometries.at(i)));
+        bucket.box.UnionBox(m_aabbs.at(index));
     }
 
     float costs[BUCKED_MAX - 1];
@@ -186,7 +180,7 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
         }
 
         constexpr float travCost = 0.125f;
-        costs[i] = travCost + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / surface_area;
+        costs[i] = travCost + (count0 * b0.SurfaceArea() + count1 * b1.SurfaceArea()) / parent_surface;
     }
 
     int splitIndex = 0;
@@ -217,7 +211,6 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
         }
     }
 
-    bvh->isLeaf = false;
     bvh->left = ConstructHelper(p_depth + 1, leftPartition);
     bvh->right = ConstructHelper(p_depth + 1, rightPartition);
     return bvh;
