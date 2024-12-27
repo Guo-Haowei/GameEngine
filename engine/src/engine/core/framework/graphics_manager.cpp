@@ -6,6 +6,7 @@
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/scene_manager.h"
+#include "engine/core/os/timer.h"
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
 #include "engine/math/frustum.h"
@@ -549,7 +550,7 @@ renderer::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
 
 bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
     unused(p_method);
-    if (m_pathTracerGeometryBuffer) {
+    if (m_pathTracerVertexBuffer) {
         return true;
     }
 
@@ -560,26 +561,18 @@ bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
     SceneManager* scene_manager = m_app->GetSceneManager();
     Scene* scene = scene_manager->GetScenePtr();
     if (DEV_VERIFY(scene)) {
+        Timer timer;
         GpuScene gpu_scene;
         ConstructScene(*scene, gpu_scene);
 
-        const uint32_t geometry_count = (uint32_t)gpu_scene.geometries.size();
+        const uint32_t triangle_count = (uint32_t)gpu_scene.triangles.size();
+        const uint32_t vertex_count = (uint32_t)gpu_scene.vertices.size();
         const uint32_t bvh_count = (uint32_t)gpu_scene.bvhs.size();
-        const uint32_t material_count = (uint32_t)gpu_scene.materials.size();
 
         {
             GpuBufferDesc desc{
-                .slot = GetGlobalGeometriesSlot(),
-                .elementSize = sizeof(gpu_geometry_t),
-                .elementCount = geometry_count,
-                .initialData = gpu_scene.geometries.data(),
-            };
-            m_pathTracerGeometryBuffer = *CreateStructuredBuffer(desc);
-        }
-        {
-            GpuBufferDesc desc{
-                .slot = GetGlobalGeometriesSlot(),
-                .elementSize = sizeof(gpu_bvh_t),
+                .slot = GetGlobalBvhsSlot(),
+                .elementSize = sizeof(GpuBvhAccel),
                 .elementCount = bvh_count,
                 .initialData = gpu_scene.bvhs.data(),
             };
@@ -587,15 +580,27 @@ bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
         }
         {
             GpuBufferDesc desc{
-                .slot = GetGlobalMaterialsSlot(),
-                .elementSize = sizeof(gpu_material_t),
-                .elementCount = material_count,
-                .initialData = gpu_scene.materials.data(),
+                .slot = GetGlobalTriangleVerticesSlot(),
+                .elementSize = sizeof(GpuTriangleVertex),
+                .elementCount = vertex_count,
+                .initialData = gpu_scene.vertices.data(),
             };
-            m_pathTracerMaterialBuffer = *CreateStructuredBuffer(desc);
+            m_pathTracerVertexBuffer = *CreateStructuredBuffer(desc);
+        }
+        {
+            GpuBufferDesc desc{
+                .slot = GetGlobalTriangleIndicesSlot(),
+                .elementSize = sizeof(GpuTriangleIndex),
+                .elementCount = triangle_count,
+                .initialData = gpu_scene.triangles.data(),
+            };
+            m_pathTracerTriangleBuffer = *CreateStructuredBuffer(desc);
         }
 
-        LOG("Path tracer scene loaded, contains {} triangles, {} BVH", geometry_count, bvh_count);
+        LOG("Path tracer scene loaded in {}, contains {} triangles, {} BVH",
+            timer.GetDurationString(),
+            triangle_count,
+            bvh_count);
 
         return true;
     }

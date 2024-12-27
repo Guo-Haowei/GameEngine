@@ -1,4 +1,4 @@
-#include "bvh.h"
+#include "bvh_accel.h"
 
 namespace my {
 
@@ -7,35 +7,40 @@ using math::AABB;
 using VertexList = std::vector<Vector3f>;
 using TriangleList = std::vector<Vector3i>;
 
-class BVHSorter;
+class BvhSorter;
 
-class BVHBuilder {
+class BvhBuilder {
 public:
-    BVHBuilder(int p_max_depth,
+    BvhBuilder(int p_max_depth,
                const VertexList& p_vertices,
                const TriangleList& p_triangles);
 
-    BVH::Ref ConstructHelper(int p_depth, const std::vector<uint32_t>& p_indices) const;
+    BvhAccel::Ref ConstructHelper(const BvhAccel* p_parent, const std::vector<uint32_t>& p_indices) const;
+
+    const uint32_t GetBVHCount() const {
+        return m_bvhCounter;
+    }
 
 private:
-    BVHBuilder(const BVHBuilder&) = delete;
+    BvhBuilder(const BvhBuilder&) = delete;
 
-    void SplitByAxis(BVH::Ref& p_parent, const std::vector<uint32_t>& p_indices) const;
+    void SplitByAxis(BvhAccel* p_parent, const std::vector<uint32_t>& p_indices) const;
     AABB AABBFromTriangles(const std::vector<uint32_t>& p_indices) const;
 
+    mutable uint32_t m_bvhCounter = 0;
     const int m_maxDepth;
     const VertexList& m_vertices;
     const TriangleList& m_triangles;
     std::vector<AABB> m_aabbs;
     std::vector<Vector3f> m_centroids;
 
-    friend class BVHSorter;
+    friend class BvhSorter;
 };
 
-class BVHSorter {
+class BvhSorter {
 public:
-    BVHSorter(int p_axis,
-              const BVHBuilder& p_builder) : m_axis(p_axis),
+    BvhSorter(int p_axis,
+              const BvhBuilder& p_builder) : m_axis(p_axis),
                                              m_builder(p_builder) {}
 
     bool operator()(uint32_t p_lhs, uint32_t p_rhs) const {
@@ -48,10 +53,10 @@ public:
 
 private:
     const int m_axis;
-    const BVHBuilder& m_builder;
+    const BvhBuilder& m_builder;
 };
 
-BVHBuilder::BVHBuilder(int p_max_depth,
+BvhBuilder::BvhBuilder(int p_max_depth,
                        const VertexList& p_vertices,
                        const TriangleList& p_triangles) : m_maxDepth(p_max_depth),
                                                           m_vertices(p_vertices),
@@ -85,7 +90,7 @@ static int DominantAxis(const AABB& p_aabb) {
     return axis;
 }
 
-AABB BVHBuilder::AABBFromTriangles(const std::vector<uint32_t>& p_indices) const {
+AABB BvhBuilder::AABBFromTriangles(const std::vector<uint32_t>& p_indices) const {
     AABB aabb;
     for (uint32_t index : p_indices) {
         const auto& points = m_triangles[index];
@@ -97,36 +102,36 @@ AABB BVHBuilder::AABBFromTriangles(const std::vector<uint32_t>& p_indices) const
     return aabb;
 }
 
-void BVHBuilder::SplitByAxis(BVH::Ref& p_parent,
+void BvhBuilder::SplitByAxis(BvhAccel* p_parent,
                              const std::vector<uint32_t>& p_indices) const {
     auto indices = p_indices;
     const int axis = DominantAxis(p_parent->aabb);
-    BVHSorter sorter(axis, *this);
+    BvhSorter sorter(axis, *this);
     std::sort(indices.begin(), indices.end(), sorter);
     const size_t mid = indices.size() / 2;
     std::vector<uint32_t> left(indices.begin(), indices.begin() + mid);
     std::vector<uint32_t> right(indices.begin() + mid, indices.end());
 
-    p_parent->left = ConstructHelper(p_parent->depth + 1, left);
-    p_parent->right = ConstructHelper(p_parent->depth + 1, right);
+    p_parent->left = ConstructHelper(p_parent, left);
+    p_parent->right = ConstructHelper(p_parent, right);
 }
 
-BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p_indices) const {
-    if (p_depth > 32) {
+BvhAccel::Ref BvhBuilder::ConstructHelper(const BvhAccel* p_parent, const std::vector<uint32_t>& p_indices) const {
+    const int depth = p_parent ? p_parent->depth + 1 : 0;
+    if (depth > 32) {
         CRASH_NOW_MSG("TOO MANY LEVELS OF BVH");
         return nullptr;
     }
 
     const int triangle_count = (int)p_indices.size();
     const AABB parent_aabb = AABBFromTriangles(p_indices);
-    auto bvh = std::make_shared<BVH>();
+    auto bvh = std::make_shared<BvhAccel>(m_bvhCounter++, p_parent);
     bvh->aabb = parent_aabb;
-    bvh->depth = p_depth;
-    bvh->isLeaf = false;
+    bvh->depth = depth;
 
     if (triangle_count == 1) {
         bvh->isLeaf = true;
-        bvh->indices = m_triangles.at(p_indices[0]);
+        bvh->triangleIndex = p_indices[0];
         return bvh;
     }
 
@@ -135,7 +140,7 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
 
     // @TODO rework
     if (triangle_count <= 4 || parent_surface == 0.0f) {
-        SplitByAxis(bvh, p_indices);
+        SplitByAxis(bvh.get(), p_indices);
         return bvh;
     }
 
@@ -211,14 +216,56 @@ BVH::Ref BVHBuilder::ConstructHelper(int p_depth, const std::vector<uint32_t>& p
         }
     }
 
-    bvh->left = ConstructHelper(p_depth + 1, leftPartition);
-    bvh->right = ConstructHelper(p_depth + 1, rightPartition);
+    bvh->left = ConstructHelper(bvh.get(), leftPartition);
+    bvh->right = ConstructHelper(bvh.get(), rightPartition);
     return bvh;
 }
 
-BVH::Ref BVH::Construct(const std::vector<uint32_t>& p_indices,
-                        const VertexList& p_vertices,
-                        int p_max_depth) {
+void BvhAccel::DiscoverIdx() {
+    missIndex = -1;
+
+    // hit link (find right link)
+    for (const BvhAccel* cursor = parent; cursor; cursor = cursor->parent) {
+        if (cursor->right && cursor->right->index > index) {
+            missIndex = cursor->right->index;
+            break;
+        }
+    }
+
+    // if it's a hit, then check the left child node
+    // if there's not left child, treat it as a miss, so next bounding box to check is the miss node
+    hitIndex = left ? left->index : missIndex;
+}
+
+void BvhAccel::FillGpuBvhAccel(int p_mesh_index, std::vector<GpuBvhAccel>& p_out) {
+    DiscoverIdx();
+    DEV_ASSERT(aabb.IsValid());
+
+    GpuBvhAccel gpu_bvh;
+    gpu_bvh.min = aabb.GetMin();
+    gpu_bvh.max = aabb.GetMax();
+    gpu_bvh.hitIdx = hitIndex;
+    gpu_bvh.missIdx = missIndex;
+    gpu_bvh.leaf = !!isLeaf;
+    gpu_bvh.meshIndex = p_mesh_index;
+    gpu_bvh.triangleIndex = -1;
+    if (isLeaf) {
+        DEV_ASSERT(triangleIndex != -1);
+        gpu_bvh.triangleIndex = triangleIndex;
+    }
+
+    p_out.push_back(gpu_bvh);
+    if (left) {
+        left->FillGpuBvhAccel(p_mesh_index, p_out);
+    }
+    if (right) {
+        right->FillGpuBvhAccel(p_mesh_index, p_out);
+    }
+}
+
+BvhAccel::Ref BvhAccel::Construct(const std::vector<uint32_t>& p_indices,
+                                  const VertexList& p_vertices,
+                                  int p_max_depth) {
 
     const int index_count = (int)p_indices.size();
     DEV_ASSERT(index_count % 3 == 0);
@@ -238,8 +285,8 @@ BVH::Ref BVH::Construct(const std::vector<uint32_t>& p_indices,
         triangle_indices[index] = index;
     }
 
-    BVHBuilder builder(p_max_depth, p_vertices, triangles);
-    return builder.ConstructHelper(0, triangle_indices);
+    BvhBuilder builder(p_max_depth, p_vertices, triangles);
+    return builder.ConstructHelper(nullptr, triangle_indices);
 }
 
 }  // namespace my

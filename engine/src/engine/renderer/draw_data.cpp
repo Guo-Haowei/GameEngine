@@ -13,7 +13,7 @@
 #include "engine/core/framework/input_manager.h"
 #include "engine/math/detail/matrix.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/bvh.h"
+#include "engine/renderer/bvh_accel.h"
 
 namespace my::renderer {
 
@@ -173,7 +173,7 @@ static void FillPass(const RenderDataConfig& p_config,
     }
 }
 
-static void DebugDrawBVH(int p_level, BVH* p_bvh, const Matrix4x4f* p_matrix) {
+static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matrix) {
     if (!p_bvh || p_bvh->depth > p_level) {
         return;
     }

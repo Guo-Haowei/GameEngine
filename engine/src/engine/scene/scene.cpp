@@ -10,7 +10,7 @@
 #include "engine/systems/job_system/job_system.h"
 
 // @TODO: refactor
-#include "engine/renderer/bvh.h"
+#include "engine/renderer/bvh_accel.h"
 #include "engine/renderer/graphics_dvars.h"
 
 namespace my::ecs {
@@ -95,7 +95,7 @@ void Scene::Update(float p_time_step) {
     if (DVAR_GET_BOOL(gfx_bvh_generate)) {
         for (auto [entity, mesh] : m_MeshComponents) {
             if (!mesh.bvh) {
-                mesh.bvh = BVH::Construct(mesh.indices, mesh.positions);
+                mesh.bvh = BvhAccel::Construct(mesh.indices, mesh.positions);
             }
         }
         DVAR_SET_BOOL(gfx_bvh_generate, false);
