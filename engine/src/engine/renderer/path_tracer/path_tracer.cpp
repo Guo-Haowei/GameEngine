@@ -4,6 +4,7 @@
 
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
+#include "engine/core/os/timer.h"
 #include "engine/scene/scene.h"
 
 // @TODO
@@ -36,15 +37,12 @@ gpu_geometry_t::gpu_geometry_t(const Vector3f& center, float radius, int materia
 }
 
 void gpu_geometry_t::CalcNormal() {
-    CRASH_NOW();
-#if 0
-    Vector3f BA = normalize(B - A);
-    Vector3f CA = normalize(C - A);
-    Vector3f norm = normalize(cross(BA, CA));
+    Vector3f BA = math::normalize(B - A);
+    Vector3f CA = math::normalize(C - A);
+    Vector3f norm = math::normalize(cross(BA, CA));
     normal1 = norm;
     normal2 = norm;
     normal3 = norm;
-#endif
 }
 
 Vector3f gpu_geometry_t::Centroid() const {
@@ -69,16 +67,11 @@ static Box3 Box3FromSphere(const gpu_geometry_t& sphere) {
 static Box3 Box3FromTriangle(const gpu_geometry_t& triangle) {
     DEV_ASSERT(triangle.kind == gpu_geometry_t::Kind::Triangle);
 
-    CRASH_NOW();
-    return Box3();
-#if 0
-    Box3 ret = Box3(
-        glm::min(triangle.C, glm::min(triangle.A, triangle.B)),
-        glm::max(triangle.C, glm::max(triangle.A, triangle.B)));
+    Box3 ret = Box3(math::min(triangle.C, math::min(triangle.A, triangle.B)),
+                    math::max(triangle.C, math::max(triangle.A, triangle.B)));
 
     ret.MakeValid();
     return ret;
-#endif
 }
 
 static Box3 Box3FromGeometry(const gpu_geometry_t& geom) {
@@ -171,13 +164,10 @@ Bvh::Bvh(GeometryList& geometries, Bvh* parent)
     std::vector<Vector3f> centroids(nGeoms);
 
     Box3 centroidBox;
-    CRASH_NOW();
-#if 0
     for (size_t i = 0; i < nGeoms; ++i) {
         centroids[i] = geometries.at(i).Centroid();
         centroidBox.ExpandPoint(centroids[i]);
     }
-#endif
 
     const int axis = DominantAxis(centroidBox);
     const float tmin = centroidBox.GetMin()[axis];
@@ -441,9 +431,11 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_out_scene) {
         }
     }
 
+    Timer timer;
     /// construct bvh
     Bvh root(tmp_gpu_objects);
     root.CreateGpuBvh(p_out_scene.bvhs, p_out_scene.geometries);
+    LOG("[PathTracer] bvh created in {}", timer.GetDurationString());
 
     p_out_scene.bbox = root.GetBox();
 
