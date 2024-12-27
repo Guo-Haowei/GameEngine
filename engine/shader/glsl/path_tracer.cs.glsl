@@ -209,9 +209,9 @@ vec3 RayColor(inout Ray ray, inout uint state) {
 
     for (int i = 0; i < MAX_BOUNCE; ++i) {
         bool anyHit = HitScene(ray);
-        //if (anyHit) {
-        //    return 0.5 * (ray.hit_normal + 1.0);
-        //}
+        if (anyHit) {
+            return 0.5 * (ray.hit_normal + 1.0);
+        }
 
         if (anyHit) {
             ray.origin = ray.origin + ray.t * ray.direction;

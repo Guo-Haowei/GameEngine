@@ -307,11 +307,14 @@ void OpenGlGraphicsManager::SetMesh(const GpuMesh* p_mesh) {
 }
 
 void OpenGlGraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
-    const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
-    const uint32_t vbo = p_buffer->GetHandle32();
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_desc.initialData);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    DEV_ASSERT(p_desc.elementSize == p_buffer->desc.elementSize);
+    if (DEV_VERIFY(p_buffer->desc.elementCount >= p_desc.elementCount)) {
+        const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
+        const uint32_t vbo = p_buffer->GetHandle32();
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, size_in_byte, p_desc.initialData);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
 }
 
 void OpenGlGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {

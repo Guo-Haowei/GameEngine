@@ -204,8 +204,8 @@ public:
     std::shared_ptr<GpuMesh> m_debugBuffers;
 
     std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerGeometryBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerMaterialBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_pathTracerVertexBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_pathTracerTriangleBuffer;
     bool m_bufferUpdated = false;
 
     const ImageAsset* m_brdfImage{ nullptr };

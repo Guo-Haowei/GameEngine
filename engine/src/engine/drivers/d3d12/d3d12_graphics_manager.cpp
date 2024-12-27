@@ -504,9 +504,12 @@ void D3d12GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
 }
 
 void D3d12GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
-    auto buffer = reinterpret_cast<D3d12Buffer*>(p_buffer);
-    const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
-    UploadBuffer(size_in_byte, p_desc.initialData, buffer->buffer.Get());
+    DEV_ASSERT(p_desc.elementSize == p_buffer->desc.elementSize);
+    if (DEV_VERIFY(p_buffer->desc.elementCount >= p_desc.elementCount)) {
+        auto buffer = reinterpret_cast<D3d12Buffer*>(p_buffer);
+        const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
+        UploadBuffer(size_in_byte, p_desc.initialData, buffer->buffer.Get());
+    }
 }
 
 void D3d12GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {

@@ -810,13 +810,16 @@ void D3d11GraphicsManager::SetMesh(const GpuMesh* p_mesh) {
 }
 
 void D3d11GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
-    auto buffer = reinterpret_cast<D3d11Buffer*>(p_buffer);
-    D3D11_MAPPED_SUBRESOURCE mapped;
-    HRESULT hr = m_deviceContext->Map(buffer->buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-    DEV_ASSERT(SUCCEEDED(hr));
+    DEV_ASSERT(p_desc.elementSize == p_buffer->desc.elementSize);
+    if (DEV_VERIFY(p_buffer->desc.elementCount >= p_desc.elementCount)) {
+        auto buffer = reinterpret_cast<D3d11Buffer*>(p_buffer);
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        HRESULT hr = m_deviceContext->Map(buffer->buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+        DEV_ASSERT(SUCCEEDED(hr));
 
-    memcpy(mapped.pData, p_desc.initialData, p_desc.elementSize * p_desc.elementCount);
-    m_deviceContext->Unmap(buffer->buffer.Get(), 0);
+        memcpy(mapped.pData, p_desc.initialData, p_desc.elementSize * p_desc.elementCount);
+        m_deviceContext->Unmap(buffer->buffer.Get(), 0);
+    }
 }
 
 void D3d11GraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {

@@ -13,6 +13,7 @@
 #include "engine/core/framework/input_manager.h"
 #include "engine/math/detail/matrix.h"
 #include "engine/math/matrix_transform.h"
+#include "engine/renderer/bvh_accel.h"
 
 namespace my::renderer {
 
@@ -172,6 +173,21 @@ static void FillPass(const RenderDataConfig& p_config,
     }
 }
 
+static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matrix) {
+    if (!p_bvh || p_bvh->depth > p_level) {
+        return;
+    }
+
+    if (p_bvh->depth == p_level) {
+        renderer::AddDebugCube(p_bvh->aabb,
+                               math::Color::HexRgba(0xFFFF0037),
+                               p_matrix);
+    }
+
+    DebugDrawBVH(p_level, p_bvh->left.get(), p_matrix);
+    DebugDrawBVH(p_level, p_bvh->right.get(), p_matrix);
+};
+
 static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out_data) {
     auto& cache = p_out_data.perFrameCache;
 
@@ -196,7 +212,8 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     static int s_frameIndex = 0;
     cache.c_frameIndex = s_frameIndex++;
     // @TODO: fix this
-    cache.c_sceneDirty = false;
+    // cache.c_sceneDirty = false;
+    cache.c_sceneDirty = true;
 
     // Force fields
 
@@ -247,6 +264,23 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
             // @TODO: fix this
             g_constantCache.cache.c_hdrEnvMap.Set64(asset->gpu_texture->GetResidentHandle());
             g_constantCache.update();
+        }
+    }
+
+    // @TODO:
+    const int level = DVAR_GET_INT(gfx_bvh_debug);
+    if (level > -1) {
+        for (auto const [id, obj] : scene.m_ObjectComponents) {
+            const MeshComponent* mesh = scene.GetComponent<MeshComponent>(obj.meshId);
+            const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
+            if (mesh && transform) {
+                if (const auto& bvh = mesh->bvh; bvh) {
+                    const auto& matrix = transform->GetWorldMatrix();
+                    DebugDrawBVH(level, bvh.get(), &matrix);
+                }
+            }
+        }
+        for (auto const [entity, mesh] : p_config.scene.m_MeshComponents) {
         }
     }
 }

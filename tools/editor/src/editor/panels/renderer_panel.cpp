@@ -10,18 +10,6 @@
 
 namespace my {
 
-#if 0
-static void disable_widget() {
-    ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-}
-
-static void enable_widget() {
-    ImGui::PopItemFlag();
-    ImGui::PopStyleVar();
-}
-#endif
-
 static void CollapseWindow(const std::string& p_window_name, std::function<void(void)>&& p_funcion) {
     const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed |
                                      ImGuiTreeNodeFlags_SpanAvailWidth | ImGuiTreeNodeFlags_AllowItemOverlap |
@@ -69,6 +57,16 @@ void RendererPanel::UpdateInternal(Scene&) {
                     gm.StartPathTracer(PathTracerMethod::ACCUMULATIVE);
                 }
             }
+        }
+
+        if (ImGui::Button("Generate BVH")) {
+            DVAR_SET_BOOL(gfx_bvh_generate, true);
+        }
+        int bvh_level = DVAR_GET_INT(gfx_bvh_debug);
+        // drawing too many bvh nodes causes performance issue,
+        // set a maximum number
+        if (ImGui::DragInt("Debug BVH", &bvh_level, 0.1f, -1, 10)) {
+            DVAR_SET_INT(gfx_bvh_debug, bvh_level);
         }
     });
 }
