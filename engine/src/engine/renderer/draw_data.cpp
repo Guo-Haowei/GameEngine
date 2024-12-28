@@ -13,7 +13,7 @@
 #include "engine/core/framework/input_manager.h"
 #include "engine/math/detail/matrix.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/bvh_accel.h"
+#include "engine/renderer/path_tracer/bvh_accel.h"
 
 namespace my::renderer {
 

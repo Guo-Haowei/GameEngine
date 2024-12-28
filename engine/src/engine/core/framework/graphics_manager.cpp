@@ -5,8 +5,6 @@
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_registry.h"
-#include "engine/core/framework/scene_manager.h"
-#include "engine/core/os/timer.h"
 #include "engine/drivers/empty/empty_graphics_manager.h"
 #include "engine/drivers/opengl/opengl_graphics_manager.h"
 #include "engine/math/frustum.h"
@@ -549,76 +547,6 @@ renderer::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
     ERR_FAIL_INDEX_V(index, RenderGraphName::COUNT, nullptr);
     DEV_ASSERT(m_renderGraphs[index] != nullptr);
     return m_renderGraphs[index].get();
-}
-
-bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
-    unused(p_method);
-    if (m_ptVertexBuffer) {
-        return true;
-    }
-
-    // @TODO: refactor
-    DEV_ASSERT(m_activeRenderGraphName == RenderGraphName::PATHTRACER);
-    DEV_ASSERT(m_backend == Backend::OPENGL || m_backend == Backend::D3D11);
-
-    SceneManager* scene_manager = m_app->GetSceneManager();
-    Scene* scene = scene_manager->GetScenePtr();
-    if (DEV_VERIFY(scene)) {
-        Timer timer;
-        GpuScene gpu_scene;
-        ConstructScene(*scene, gpu_scene);
-
-        const uint32_t triangle_count = (uint32_t)gpu_scene.indices.size();
-        const uint32_t vertex_count = (uint32_t)gpu_scene.vertices.size();
-        const uint32_t bvh_count = (uint32_t)gpu_scene.bvhs.size();
-        const uint32_t mesh_count = (uint32_t)gpu_scene.meshes.size();
-
-        {
-            GpuBufferDesc desc{
-                .slot = GetGlobalPtMeshesSlot(),
-                .elementSize = sizeof(GpuPtMesh),
-                .elementCount = mesh_count,
-                .initialData = gpu_scene.meshes.data(),
-            };
-            m_ptMeshBuffer = *CreateStructuredBuffer(desc);
-        }
-        {
-            GpuBufferDesc desc{
-                .slot = GetGlobalRtBvhsSlot(),
-                .elementSize = sizeof(GpuPtBvh),
-                .elementCount = bvh_count,
-                .initialData = gpu_scene.bvhs.data(),
-            };
-            m_ptBvhBuffer = *CreateStructuredBuffer(desc);
-        }
-        {
-            GpuBufferDesc desc{
-                .slot = GetGlobalRtVerticesSlot(),
-                .elementSize = sizeof(GpuPtVertex),
-                .elementCount = vertex_count,
-                .initialData = gpu_scene.vertices.data(),
-            };
-            m_ptVertexBuffer = *CreateStructuredBuffer(desc);
-        }
-        {
-            GpuBufferDesc desc{
-                .slot = GetGlobalRtIndicesSlot(),
-                .elementSize = sizeof(Vector3i),
-                .elementCount = triangle_count,
-                .initialData = gpu_scene.indices.data(),
-            };
-            m_ptIndexBuffer = *CreateStructuredBuffer(desc);
-        }
-
-        LOG("Path tracer scene loaded in {}, contains {} triangles, {} BVH",
-            timer.GetDurationString(),
-            triangle_count,
-            bvh_count);
-
-        return true;
-    }
-
-    return false;
 }
 
 std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {

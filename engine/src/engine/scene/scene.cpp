@@ -10,8 +10,8 @@
 #include "engine/systems/job_system/job_system.h"
 
 // @TODO: refactor
-#include "engine/renderer/bvh_accel.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/path_tracer/bvh_accel.h"
 
 namespace my::ecs {
 

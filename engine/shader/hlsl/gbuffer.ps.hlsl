@@ -48,7 +48,9 @@ ps_output main(vsoutput_mesh input) {
 
     ps_output output;
     output.base_color = color;
-    // output.base_color = 0.5f * N + 0.5f;
+#if 1
+    output.base_color = float4(0.5f * N + 0.5f, 1.0f);
+#endif
 
     output.position.xyz = input.world_position;
     output.position.a = 1.0f;

@@ -1071,15 +1071,11 @@ void RenderGraphBuilder::AddPathTracerTonePass() {
 
 static void PathTracerPassFunc(const DrawData&, const Framebuffer*) {
     // @TODO: refactor this part
+    if (!renderer::IsPathTracerActive()) {
+        return;
+    }
+
     GraphicsManager& gm = GraphicsManager::GetSingleton();
-    if (gm.m_bufferUpdated && gm.m_ptVertexBuffer) {
-        LOG_FATAL("currently broken, cause SwapBuffers crash");
-        gm.m_bufferUpdated = false;
-        return;
-    }
-    if (!gm.m_ptVertexBuffer) {
-        return;
-    }
 
     gm.SetPipelineState(PSO_PATH_TRACER);
     auto input = gm.FindTexture(RESOURCE_PATH_TRACER);
@@ -1092,15 +1088,11 @@ static void PathTracerPassFunc(const DrawData&, const Framebuffer*) {
     const uint32_t work_group_y = CeilingDivision(height, 16);
 
     // @TODO: transition
-    gm.BindStructuredBuffer(GetGlobalPtMeshesSlot(), gm.m_ptMeshBuffer.get());
-    gm.BindStructuredBuffer(GetGlobalRtBvhsSlot(), gm.m_ptBvhBuffer.get());
-    gm.BindStructuredBuffer(GetGlobalRtVerticesSlot(), gm.m_ptVertexBuffer.get());
-    gm.BindStructuredBuffer(GetGlobalRtIndicesSlot(), gm.m_ptIndexBuffer.get());
+    renderer::BindPathTracerData(gm);
+
     gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.UnbindStructuredBuffer(GetGlobalRtBvhsSlot());
-    gm.UnbindStructuredBuffer(GetGlobalRtVerticesSlot());
-    gm.UnbindStructuredBuffer(GetGlobalRtIndicesSlot());
-    gm.UnbindStructuredBuffer(GetGlobalPtMeshesSlot());
+
+    renderer::UnbindPathTracerData(gm);
 }
 
 void RenderGraphBuilder::AddPathTracerPass() {

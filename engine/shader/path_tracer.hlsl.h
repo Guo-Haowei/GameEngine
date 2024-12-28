@@ -209,9 +209,9 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
         }
     }
 
-    return radiance;
+    return throughput;
+    // return radiance;
 }
-
 
 #if 0
 bool HitSphere(inout Ray ray, in Sphere sphere) {

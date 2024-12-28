@@ -43,11 +43,6 @@ enum class RenderGraphName : uint8_t {
 
 const char* ToString(RenderGraphName p_name);
 
-enum class PathTracerMethod {
-    ACCUMULATIVE,
-    TILED,
-};
-
 struct FrameContext {
     std::shared_ptr<GpuConstantBuffer> batchCb;
     std::shared_ptr<GpuConstantBuffer> materialCb;
@@ -159,7 +154,6 @@ public:
     bool SetActiveRenderGraph(RenderGraphName p_name);
     renderer::RenderGraph* GetActiveRenderGraph();
     const auto& GetRenderGraphs() const { return m_renderGraphs; }
-    bool StartPathTracer(PathTracerMethod p_method);
 
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
@@ -205,13 +199,6 @@ public:
     // @TODO: make private
     std::shared_ptr<GpuMesh> m_boxBuffers;
     std::shared_ptr<GpuMesh> m_debugBuffers;
-
-    // @TODO: move the buffers outside graphics_manager
-    std::shared_ptr<GpuStructuredBuffer> m_ptBvhBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_ptVertexBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_ptIndexBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_ptMeshBuffer;
-    bool m_bufferUpdated = false;
 
     const ImageAsset* m_brdfImage{ nullptr };
 
