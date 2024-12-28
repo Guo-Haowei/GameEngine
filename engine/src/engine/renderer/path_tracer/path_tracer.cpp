@@ -89,7 +89,6 @@ static void AppendVertices(const std::vector<GpuPtVertex>& p_source, std::vector
 }
 
 static void AppendIndices(const std::vector<GpuPtIndex>& p_source, std::vector<GpuPtIndex>& p_dest, int p_vertex_count) {
-#if 0
     const int offset = (int)p_dest.size();
     const int count = (int)p_source.size();
     p_dest.resize(offset + count);
@@ -98,13 +97,6 @@ static void AppendIndices(const std::vector<GpuPtIndex>& p_source, std::vector<G
         auto& dest = p_dest[i + offset];
         dest.tri = source.tri + p_vertex_count;
     }
-#else
-    for (auto index : p_source) {
-        index.tri += p_vertex_count;
-        index._padding1 = 0;
-        p_dest.emplace_back(index);
-    }
-#endif
 }
 
 static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtBvh>& p_dest, int p_index_offset) {
@@ -117,14 +109,6 @@ static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtB
         p_index += offset;
     };
 
-#if 0
-    for (auto bvh : p_source) {
-        adjust_index(bvh.hitIdx);
-        adjust_index(bvh.missIdx);
-        bvh.triangleIndex += p_index_offset;
-        p_dest.emplace_back(bvh);
-    }
-#else
     const int count = (int)p_source.size();
     p_dest.resize(offset + count);
 
@@ -135,9 +119,10 @@ static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtB
 
         adjust_index(dest.hitIdx);
         adjust_index(dest.missIdx);
-        dest.triangleIndex += p_index_offset;
+        if (dest.triangleIndex >= 0) {
+            dest.triangleIndex += p_index_offset;
+        }
     }
-#endif
 }
 
 void PathTracer::UpdateAccelStructure(const Scene& p_scene) {

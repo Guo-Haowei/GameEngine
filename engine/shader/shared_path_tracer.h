@@ -21,7 +21,7 @@ extern GpuPtMesh GlobalPtMeshes[];
 #endif
 
 #define EPSILON       1.1920929e-7
-#define MAX_BOUNCE    1
+#define MAX_BOUNCE    5
 #define RAY_T_MIN     1e-6
 #define RAY_T_MAX     999999999.0
 #define TRIANGLE_KIND 1
@@ -42,9 +42,9 @@ struct Ray {
 };
 
 struct HitResult {
+    Vector2f uv;
     int hitTriangleId;  // @TODO: rename
     int hitMeshId;
-    Vector2f uv;
 };
 
 struct Sphere {
@@ -154,8 +154,6 @@ HitResult HitScene(inout Ray p_ray) {
     res.hitTriangleId = -1;
     res.uv = Vector2f(0.0f, 0.0f);
 
-    bool anyHit = false;
-
     // check if it hits all the objects
     for (int mesh_id = 0; mesh_id < c_ptObjectCount; ++mesh_id) {
         GpuPtMesh mesh = GlobalPtMeshes[mesh_id];
@@ -166,9 +164,8 @@ HitResult HitScene(inout Ray p_ray) {
         local_ray.invDir = 1.0f / local_ray.direction;
         local_ray.t = p_ray.t;
 
-        // @TODO: bvh start, it should stored in mesh
         int bvhIndex = mesh.rootBvhId;
-        while (bvhIndex != -1) {
+        while (bvhIndex >= 0) {
             GpuPtBvh bvh = GlobalRtBvhs[bvhIndex];
             if (HitBvh(local_ray, bvh.min, bvh.max)) {
                 if (bvh.triangleIndex != -1) {
@@ -176,8 +173,8 @@ HitResult HitScene(inout Ray p_ray) {
                     if (result.hitTriangleId != -1) {
                         res.hitTriangleId = result.hitTriangleId;
                         res.hitMeshId = mesh_id;
+                        res.uv = result.uv;
                         p_ray.t = local_ray.t;
-                        anyHit = true;
                     }
                 }
                 bvhIndex = bvh.hitIdx;
@@ -194,10 +191,10 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
     Vector3f radiance = Vector3f(0, 0, 0);
     Vector3f throughput = Vector3f(1, 1, 1);
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < MAX_BOUNCE; ++i) {
         // check all objects
         HitResult result = HitScene(p_ray);
-        if (result.hitMeshId != -1) {
+        if (result.hitMeshId >= 0 && result.hitTriangleId >= 0) {
             p_ray.origin = p_ray.origin + p_ray.t * p_ray.direction;
             p_ray.t = RAY_T_MAX;
 
@@ -210,6 +207,9 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
             Vector3f n3 = GlobalRtVertices[indices.z].normal;
             Vector3f n = n1 + result.uv.x * (n2 - n1) + result.uv.y * (n3 - n1);
             n = normalize(mul(transform, Vector4f(n, 0.0f)).xyz);
+#if 0
+            return 0.5f * n + 0.5f;
+#endif
 
             Vector3f diffuse_color = Vector3f(1, 1, 1);
             float metallic = 0.05f;
