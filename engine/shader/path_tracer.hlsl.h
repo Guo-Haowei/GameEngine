@@ -4,6 +4,8 @@
 
 #include <cmath>
 namespace my {
+#include "structured_buffer.hlsl.h"
+
 #define inout
 #define in
 using uint = unsigned int;
@@ -14,27 +16,6 @@ using math::min;
 using std::cos;
 using std::sin;
 using std::sqrt;
-
-// dummy definition
-struct GpuBvhAccel {
-    Vector3f min;
-    int missIdx;
-    Vector3f max;
-    int hitIdx;
-
-    int leaf;
-    int meshIndex;
-    int triangleIndex;
-    int _padding_1;
-};
-
-struct GpuTriangleVertex {
-    Vector3f vertex;
-};
-
-struct GpuTriangleIndex {
-    Vector3i indices;
-};
 
 extern GpuTriangleVertex GlobalTriangleVertices[];
 extern GpuTriangleIndex GlobalTriangleIndices[];

@@ -2,8 +2,6 @@
 #define STRUCTURED_BUFFER_HLSL_H_INCLUDED
 #include "cbuffer.hlsl.h"
 
-BEGIN_NAME_SPACE(my)
-
 struct Particle {
     Vector4f position;
     Vector4f velocity;
@@ -52,7 +50,5 @@ struct GpuTriangleIndex {
     SBUFFER(GpuTriangleVertex, GlobalTriangleVertices, 21, 506) \
     SBUFFER(GpuTriangleIndex, GlobalTriangleIndices, 22, 505)   \
     SBUFFER(GpuBvhAccel, GlobalBvhs, 23, 504)
-
-END_NAME_SPACE(my)
 
 #endif

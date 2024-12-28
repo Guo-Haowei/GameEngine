@@ -11,12 +11,13 @@
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 
-// shader defines
-#include "shader_resource_defines.hlsl.h"
-#include "unordered_access_defines.hlsl.h"
-
 // @TODO: remove
 #include "engine/core/framework/asset_registry.h"
+
+namespace my {
+#include "shader_resource_defines.hlsl.h"
+#include "unordered_access_defines.hlsl.h"
+}  // namespace my
 
 namespace my::renderer {
 

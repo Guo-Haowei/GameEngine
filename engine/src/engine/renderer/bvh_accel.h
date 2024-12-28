@@ -1,7 +1,10 @@
 #pragma once
 #include "engine/math/aabb.h"
 #include "engine/math/vector.h"
+
+namespace my {
 #include "structured_buffer.hlsl.h"
+}  // namespace my
 
 namespace my {
 

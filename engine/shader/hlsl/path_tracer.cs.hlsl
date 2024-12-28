@@ -1,20 +1,15 @@
 /// File: pass_tracer.cs.hlsl
 #include "cbuffer.hlsl.h"
-#include "path_tracer.hlsl.h"
 #include "shader_defines.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 #include "unordered_access_defines.hlsl.h"
 
+// @NOTE: include this at last
+#include "path_tracer.hlsl.h"
+
 Vector3f RayColor(inout Ray ray, inout uint state) {
     Vector3f radiance = Vector3f(0.0f, 0.0f, 0.0f);
     Vector3f throughput = Vector3f(1.0f, 1.0f, 1.0f);
-
-    Sphere sphere;
-    sphere.radius = 4.0f;
-    sphere.A = Vector3f(0.0f, 0.0f, -3.0f);
-    // if (HitSphere(ray, sphere)) {
-    //     return throughput;
-    // }
 
     for (int i = 0; i < 1; ++i) {
         bool any_hit = HitScene(ray);

@@ -11,8 +11,11 @@
 #include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
 
-// @TODO: refactor
+namespace my {
 #include "cbuffer.hlsl.h"
+}  // namespace my
+
+// @TODO: refactor
 struct MaterialConstantBuffer;
 using my::renderer::RenderPass;
 

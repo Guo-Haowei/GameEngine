@@ -3,7 +3,10 @@
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
+
+namespace my {
 #include "shader_defines.hlsl.h"
+}  // namespace my
 
 namespace YAML {
 class Node;

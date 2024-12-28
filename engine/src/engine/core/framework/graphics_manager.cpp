@@ -20,7 +20,6 @@
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
-#include "shader_resource_defines.hlsl.h"
 
 #if USING(PLATFORM_WINDOWS)
 #include "engine/drivers/d3d11/d3d11_graphics_manager.h"
@@ -29,6 +28,10 @@
 #elif USING(PLATFORM_APPLE)
 #include "engine/drivers/metal/metal_graphics_manager.h"
 #endif
+
+namespace my {
+#include "shader_resource_defines.hlsl.h"
+}  // namespace my
 
 // @TODO: refactor
 #include "engine/renderer/path_tracer/path_tracer.h"

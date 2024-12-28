@@ -3,14 +3,6 @@
 #define CBUFFER_INCLUDED
 #include "shader_defines.hlsl.h"
 
-#ifdef __cplusplus
-#include <engine/math/geomath.h>
-
-#include <cstdint>
-#endif
-
-BEGIN_NAME_SPACE(my)
-
 // constant buffer
 #if defined(__cplusplus)
 using TextureHandle = uint64_t;
@@ -277,7 +269,5 @@ CBUFFER(PerSceneConstantBuffer, 7) {
 };
 
 #endif
-
-END_NAME_SPACE(my)
 
 #endif

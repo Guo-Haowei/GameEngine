@@ -11,13 +11,16 @@
 #include "engine/renderer/graphics_private.h"
 #include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
-#include "structured_buffer.hlsl.h"
 
 // @TODO: refactor
 #include "engine/renderer/render_graph/render_graph_builder.h"
 
 #define INCLUDE_AS_D3D12
 #include "engine/drivers/d3d_common/d3d_convert.h"
+
+namespace my {
+#include "structured_buffer.hlsl.h"
+}  // namespace my
 
 namespace my {
 

@@ -11,6 +11,7 @@
 #ifdef max
 #undef max
 #endif
+using namespace my;
 using ::my::math::cross;
 using ::my::math::max;
 using ::my::math::min;
@@ -18,8 +19,6 @@ using ::my::math::normalize;
 #endif
 
 #define MAX_REFLECTION_LOD 4.0
-
-BEGIN_NAME_SPACE(my)
 
 // @TODO: refactor the functions
 // NDF(n, h, alpha) = alpha^2 / (pi * ((n dot h)^2 * (alpha^2 - 1) + 1)^2)
@@ -145,5 +144,4 @@ Vector2f IntegrateBRDF(float NdotV, float roughness) {
     return Vector2f(A, B);
 }
 
-END_NAME_SPACE(my)
 #endif

@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/math/box.h"
-#include "structured_buffer.hlsl.h"
+#include "engine/renderer/bvh_accel.h"
 
 namespace my {
 

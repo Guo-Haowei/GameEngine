@@ -4,7 +4,10 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "opengl_helpers.h"
+
+namespace my {
 #include "shader_resource_defines.hlsl.h"
+}  // namespace my
 
 namespace my {
 
