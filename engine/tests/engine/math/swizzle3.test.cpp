@@ -1,6 +1,6 @@
 #include "vector.test.h"
 
-namespace my::math::detail {
+namespace my::detail {
 
 TEST(Swizzle3, vector3_swizzle3_read) {
     {
@@ -130,4 +130,4 @@ TEST(Swizzle3, vector4_swizzle3_write) {
     }
 }
 
-}  // namespace my::math::detail
+}  // namespace my::detail

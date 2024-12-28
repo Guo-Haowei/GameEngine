@@ -11,8 +11,8 @@ namespace my {
 #pragma region TRANSFORM_COMPONENT
 Matrix4x4f TransformComponent::GetLocalMatrix() const {
     Matrix4x4f rotationMatrix = glm::toMat4(Quaternion(m_rotation.w, m_rotation.x, m_rotation.y, m_rotation.z));
-    Matrix4x4f translationMatrix = math::Translate(m_translation);
-    Matrix4x4f scaleMatrix = math::Scale(m_scale);
+    Matrix4x4f translationMatrix = my::Translate(m_translation);
+    Matrix4x4f scaleMatrix = my::Scale(m_scale);
     return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
@@ -114,7 +114,7 @@ void PerspectiveCameraComponent::Update() {
         m_front.y = m_pitch.Sin();
         m_front.z = m_yaw.Sin() * m_pitch.Cos();
 
-        m_right = math::cross(m_front, Vector3f::UnitY);
+        m_right = cross(m_front, Vector3f::UnitY);
 
         m_viewMatrix = LookAtRh(m_position, m_position + m_front, Vector3f::UnitY);
         m_projectionMatrix = BuildOpenGlPerspectiveRH(m_fovy.GetRadians(), GetAspect(), m_near, m_far);
@@ -211,7 +211,7 @@ void MeshEmitterComponent::UpdateParticle(Index p_index, float p_timestep) {
     DEV_ASSERT(p.lifespan >= 0.0f);
 
     p.scale *= (1.0f - p_timestep);
-    p.scale = math::max(p.scale, 0.1f);
+    p.scale = max(p.scale, 0.1f);
     p.velocity += p_timestep * gravity;
     p.rotation += Vector3f(p_timestep);
     p.lifespan -= p_timestep;

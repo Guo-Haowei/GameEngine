@@ -138,7 +138,7 @@ struct DrawData {
 
     struct DrawDebugContext {
         std::vector<Vector3f> positions;
-        std::vector<math::Color> colors;
+        std::vector<Color> colors;
         uint32_t drawCount;
     } drawDebugContext;
 

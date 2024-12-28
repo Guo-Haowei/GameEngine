@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/math/detail/vector_math.h"
 
-namespace my::math {
+namespace my {
 
 template<int N>
 class Box {
@@ -48,18 +48,18 @@ public:
     }
 
     void ExpandPoint(const vec_type& p_point) {
-        m_min = math::min(m_min, p_point);
-        m_max = math::max(m_max, p_point);
+        m_min = min(m_min, p_point);
+        m_max = max(m_max, p_point);
     }
 
     void UnionBox(const self_type& p_other) {
-        m_min = math::min(m_min, p_other.m_min);
-        m_max = math::max(m_max, p_other.m_max);
+        m_min = min(m_min, p_other.m_min);
+        m_max = max(m_max, p_other.m_max);
     }
 
     void IntersectBox(const self_type& p_other) {
-        m_min = math::max(m_min, p_other.m_min);
-        m_max = math::min(m_max, p_other.m_max);
+        m_min = max(m_min, p_other.m_min);
+        m_max = min(m_max, p_other.m_max);
     }
 
     float SurfaceArea() const;
@@ -78,4 +78,4 @@ protected:
 using Box2 = Box<2>;
 using Box3 = Box<3>;
 
-}  // namespace my::math
+}  // namespace my

@@ -15,7 +15,7 @@
 #undef max
 #endif
 
-namespace my::math {
+namespace my {
 
 template<Arithmetic T, int N>
 constexpr bool operator==(const Vector<T, N>& p_lhs, const Vector<T, N>& p_rhs) {
@@ -281,4 +281,4 @@ constexpr inline Vector<T, 3> cross(const Vector<T, 3>& p_lhs, const Vector<T, 3
         p_lhs.x * p_rhs.y - p_rhs.x * p_lhs.y);
 }
 
-}  // namespace my::math
+}  // namespace my

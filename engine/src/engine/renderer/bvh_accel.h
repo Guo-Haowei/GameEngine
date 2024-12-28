@@ -17,7 +17,7 @@ struct BvhAccel {
 
     void DiscoverIdx();
 
-    math::AABB aabb;
+    AABB aabb;
 
     const int index;
     const BvhAccel* parent;

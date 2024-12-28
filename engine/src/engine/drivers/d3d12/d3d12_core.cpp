@@ -176,7 +176,7 @@ CopyContext::CopyCommand CopyContext::Allocate(uint32_t p_staging_size) {
             cmd.uploadBuffer.buffer.Reset();
         }
 
-        cmd.uploadBuffer.desc.byteWidth = math::NextPowerOfTwo(p_staging_size);
+        cmd.uploadBuffer.desc.byteWidth = NextPowerOfTwo(p_staging_size);
         auto heapProperties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         auto buffer = CD3DX12_RESOURCE_DESC::Buffer(cmd.uploadBuffer.desc.byteWidth);
         D3D_CALL(device->CreateCommittedResource(

@@ -6,8 +6,6 @@
 namespace my {
 
 static ImVec4 GetLogLevelColor(LogLevel level) {
-    using math::Color;
-    using math::ColorCode;
     Color color = Color::Hex(ColorCode::COLOR_WHITE);
     switch (level) {
         case my::LOG_LEVEL_VERBOSE:

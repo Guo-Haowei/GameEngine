@@ -278,9 +278,9 @@ void RenderGraphBuilder::AddShadowPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     const int shadow_res = DVAR_GET_INT(gfx_shadow_res);
-    DEV_ASSERT(math::IsPowerOfTwo(shadow_res));
+    DEV_ASSERT(IsPowerOfTwo(shadow_res));
     const int point_shadow_res = DVAR_GET_INT(gfx_point_shadow_res);
-    DEV_ASSERT(math::IsPowerOfTwo(point_shadow_res));
+    DEV_ASSERT(IsPowerOfTwo(point_shadow_res));
 
     auto shadow_map = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
                                                                     PixelFormat::D32_FLOAT,
@@ -409,7 +409,7 @@ void RenderGraphBuilder::AddVoxelizationPass() {
                                                       AttachmentType::RW_TEXTURE,
                                                       voxel_size, voxel_size);
         desc.dimension = Dimension::TEXTURE_3D;
-        desc.mipLevels = math::LogTwo(voxel_size);
+        desc.mipLevels = LogTwo(voxel_size);
         desc.depth = voxel_size;
         desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
         desc.bindFlags |= BIND_RENDER_TARGET | BIND_SHADER_RESOURCE | BIND_UNORDERED_ACCESS;
@@ -639,8 +639,8 @@ static void BloomSetupFunc(const DrawData&, const Framebuffer*) {
 
     const uint32_t width = input->desc.width;
     const uint32_t height = input->desc.height;
-    const uint32_t work_group_x = math::CeilingDivision(width, 16);
-    const uint32_t work_group_y = math::CeilingDivision(height, 16);
+    const uint32_t work_group_x = CeilingDivision(width, 16);
+    const uint32_t work_group_y = CeilingDivision(height, 16);
 
     gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
 
@@ -663,8 +663,8 @@ static void BloomDownSampleFunc(const DrawData&, const Framebuffer* p_framebuffe
 
     const uint32_t width = input->desc.width;
     const uint32_t height = input->desc.height;
-    const uint32_t work_group_x = math::CeilingDivision(width, 16);
-    const uint32_t work_group_y = math::CeilingDivision(height, 16);
+    const uint32_t work_group_x = CeilingDivision(width, 16);
+    const uint32_t work_group_y = CeilingDivision(height, 16);
 
     gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + 1);
 
@@ -686,8 +686,8 @@ static void BloomUpSampleFunc(const DrawData&, const Framebuffer* p_framebuffer)
 
     const uint32_t width = output->desc.width;
     const uint32_t height = output->desc.height;
-    const uint32_t work_group_x = math::CeilingDivision(width, 16);
-    const uint32_t work_group_y = math::CeilingDivision(height, 16);
+    const uint32_t work_group_x = CeilingDivision(width, 16);
+    const uint32_t work_group_y = CeilingDivision(height, 16);
 
     gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + BLOOM_MIP_CHAIN_MAX);
 
@@ -1088,8 +1088,8 @@ static void PathTracerPassFunc(const DrawData&, const Framebuffer*) {
 
     const uint32_t width = input->desc.width;
     const uint32_t height = input->desc.height;
-    const uint32_t work_group_x = math::CeilingDivision(width, 16);
-    const uint32_t work_group_y = math::CeilingDivision(height, 16);
+    const uint32_t work_group_x = CeilingDivision(width, 16);
+    const uint32_t work_group_y = CeilingDivision(height, 16);
 
     gm.BindStructuredBuffer(GetGlobalBvhsSlot(), gm.m_pathTracerBvhBuffer.get());
     gm.BindStructuredBuffer(GetGlobalTriangleVerticesSlot(), gm.m_pathTracerVertexBuffer.get());

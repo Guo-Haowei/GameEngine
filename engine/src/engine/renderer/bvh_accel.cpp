@@ -4,8 +4,6 @@
 
 namespace my {
 
-using math::AABB;
-
 using VertexList = std::vector<Vector3f>;
 using TriangleList = std::vector<Vector3i>;
 
@@ -163,7 +161,7 @@ BvhAccel::Ref BvhBuilder::ConstructHelper(const BvhAccel* p_parent, const std::v
     for (int index : p_indices) {
         float tmp = ((m_centroids.at(index)[axis] - tmin) * BUCKED_MAX) / (tmax - tmin);
         int slot = static_cast<int>(tmp);
-        slot = math::clamp(slot, 0, BUCKED_MAX - 1);
+        slot = clamp(slot, 0, BUCKED_MAX - 1);
         BucketInfo& bucket = buckets[slot];
         ++bucket.count;
         bucket.box.UnionBox(m_aabbs.at(index));

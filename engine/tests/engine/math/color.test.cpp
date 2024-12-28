@@ -1,6 +1,6 @@
 #include "engine/math/color.h"
 
-namespace my::math {
+namespace my {
 
 TEST(color, to_rgb) {
     auto c = Color::Hex(ColorCode::COLOR_RED);
@@ -8,4 +8,4 @@ TEST(color, to_rgb) {
     EXPECT_EQ(rgb, ColorCode::COLOR_RED);
 }
 
-}  // namespace my::math
+}  // namespace my

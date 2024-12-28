@@ -9,10 +9,6 @@ namespace my {
 #define inout
 #define in
 using uint = unsigned int;
-using math::cross;
-using math::dot;
-using math::max;
-using math::min;
 using std::cos;
 using std::sin;
 using std::sqrt;
@@ -75,6 +71,11 @@ Vector3f RandomUnitVector(inout uint state) {
     float y = r * sin(a);
     return Vector3f(x, y, z);
 }
+
+// how to transform a ray?
+//Ray TransformRay(in Ray p_ray, Matrix4x4f p_transform) {
+//
+//}
 
 //------------------------------------------------------------------------------
 // Common Ray Trace Functions

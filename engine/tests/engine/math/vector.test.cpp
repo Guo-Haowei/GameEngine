@@ -1,6 +1,6 @@
 #include "vector.test.h"
 
-namespace my::math::detail {
+namespace my::detail {
 
 TEST(vector, vector2_constructor) {
     CHECK_VEC2(Vector2u::Zero, 0, 0);
@@ -79,4 +79,4 @@ TEST(vector, access_operator) {
     CHECK_VEC2(a, 1, 1);
 }
 
-}  // namespace my::math::detail
+}  // namespace my::detail

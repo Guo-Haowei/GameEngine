@@ -4,7 +4,7 @@
 #include "detail/vector4.h"
 #include "detail/vector_math.h"
 
-namespace my::math {
+namespace my {
 
 using Vector2i = Vector<int, 2>;
 using Vector3i = Vector<int, 3>;
@@ -27,20 +27,5 @@ static_assert(sizeof(Vector3u) == 12);
 static_assert(sizeof(Vector4u) == 16);
 
 static_assert(alignof(Vector4f) == 16);
-
-}  // namespace my::math
-
-namespace my {
-
-// @TODO: refactor this
-using math::Vector2f;
-using math::Vector2i;
-using math::Vector2u;
-using math::Vector3f;
-using math::Vector3i;
-using math::Vector3u;
-using math::Vector4f;
-using math::Vector4i;
-using math::Vector4u;
 
 }  // namespace my

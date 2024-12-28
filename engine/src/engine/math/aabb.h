@@ -1,8 +1,9 @@
 #pragma once
 #include "box.h"
 #include "intersection.h"
+#include "matrix_transform.h"
 
-namespace my::math {
+namespace my {
 
 class AABB : public Box3 {
 public:
@@ -18,4 +19,4 @@ public:
     friend class TestIntersection;
 };
 
-}  // namespace my::math
+}  // namespace my

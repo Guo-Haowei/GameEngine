@@ -4,7 +4,7 @@
 
 namespace my {
 
-using ::my::math::AABB;
+using ::my::AABB;
 
 struct OuterClass {
     struct InnerClass {

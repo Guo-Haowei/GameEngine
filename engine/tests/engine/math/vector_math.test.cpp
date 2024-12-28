@@ -1,6 +1,6 @@
 #include "vector.test.h"
 
-namespace my::math {
+namespace my {
 
 // add
 TEST(vector_math, add) {
@@ -290,16 +290,16 @@ TEST(vector_math, dot) {
 
 TEST(vector_math, length) {
     {
-        auto length = math::length(Vector2f(3, 4));
-        EXPECT_FLOAT_EQ(length, 5.0f);
+        auto len = length(Vector2f(3, 4));
+        EXPECT_FLOAT_EQ(len, 5.0f);
     }
     {
-        auto length = math::length(Vector3f(3, 4, 5));
-        EXPECT_FLOAT_EQ(length, 7.0710678f);
+        auto len = length(Vector3f(3, 4, 5));
+        EXPECT_FLOAT_EQ(len, 7.0710678f);
     }
     {
-        auto length = math::length(Vector4f::One);
-        EXPECT_FLOAT_EQ(length, 2.f);
+        auto len = length(Vector4f::One);
+        EXPECT_FLOAT_EQ(len, 2.f);
     }
 }
 
@@ -334,30 +334,30 @@ TEST(vector_math, normalize) {
 TEST(vector_math, radians) {
     {
         constexpr float a = 90.0f;
-        EXPECT_FLOAT_EQ(math::Radians(a), HalfPi());
+        EXPECT_FLOAT_EQ(Radians(a), HalfPi());
     }
     {
         constexpr float a = 180.0f;
-        EXPECT_FLOAT_EQ(math::Radians(a), Pi());
+        EXPECT_FLOAT_EQ(Radians(a), Pi());
     }
     {
         constexpr float a = 360.0f;
-        EXPECT_FLOAT_EQ(math::Radians(a), TwoPi());
+        EXPECT_FLOAT_EQ(Radians(a), TwoPi());
     }
 }
 
 TEST(vector_math, degrees) {
     {
         constexpr float a = HalfPi();
-        EXPECT_FLOAT_EQ(math::Degrees(a), 90.0f);
+        EXPECT_FLOAT_EQ(Degrees(a), 90.0f);
     }
     {
         constexpr float a = Pi();
-        EXPECT_FLOAT_EQ(math::Degrees(a), 180.0f);
+        EXPECT_FLOAT_EQ(Degrees(a), 180.0f);
     }
     {
         constexpr float a = TwoPi();
-        EXPECT_FLOAT_EQ(math::Degrees(a), 360.0f);
+        EXPECT_FLOAT_EQ(Degrees(a), 360.0f);
     }
 }
 
@@ -402,4 +402,4 @@ TEST(vector_math, max) {
     }
 }
 
-}  // namespace my::math
+}  // namespace my

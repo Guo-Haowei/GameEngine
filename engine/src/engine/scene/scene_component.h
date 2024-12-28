@@ -167,7 +167,7 @@ struct MeshComponent {
         ecs::Entity material_id;
         uint32_t index_offset = 0;
         uint32_t index_count = 0;
-        math::AABB local_bound;
+        AABB local_bound;
 
         static void RegisterClass();
     };
@@ -178,7 +178,7 @@ struct MeshComponent {
     // Non-serialized
     mutable std::shared_ptr<GpuMesh> gpuResource;
     mutable std::shared_ptr<BvhAccel> bvh;
-    math::AABB localBound;
+    AABB localBound;
 
     mutable std::vector<Vector3f> updatePositions;
     mutable std::vector<Vector3f> updateNormals;
@@ -579,7 +579,7 @@ struct VoxelGiComponent {
 
     uint32_t flags = 0;
     // Non-serialized
-    math::AABB region;
+    AABB region;
 
     bool Enabled() const { return flags & ENABLED; }
     bool ShowDebugBox() const { return flags & SHOW_DEBUG_BOX; }
@@ -735,7 +735,7 @@ public:
         static void RegisterClass();
     } m_atten;
 
-    math::AABB m_shadowRegion;
+    AABB m_shadowRegion;
 
     uint32_t m_flags = DIRTY;
     int m_type = LIGHT_TYPE_INFINITE;

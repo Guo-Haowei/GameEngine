@@ -38,7 +38,7 @@ Result<void> DeserializeYaml(const YAML::Node& p_node, Degree& p_object, Seriali
     return Result<void>();
 }
 
-Result<void> SerializeYaml(YAML::Emitter& p_out, const math::AABB& p_object, SerializeYamlContext& p_context) {
+Result<void> SerializeYaml(YAML::Emitter& p_out, const AABB& p_object, SerializeYamlContext& p_context) {
     if (!p_object.IsValid()) {
         p_out << YAML::Null;
         return Result<void>();
@@ -53,7 +53,7 @@ Result<void> SerializeYaml(YAML::Emitter& p_out, const math::AABB& p_object, Ser
     return Result<void>();
 }
 
-Result<void> DeserializeYaml(const YAML::Node& p_node, math::AABB& p_object, SerializeYamlContext& p_context) {
+Result<void> DeserializeYaml(const YAML::Node& p_node, AABB& p_object, SerializeYamlContext& p_context) {
     if (!p_node || p_node.IsNull()) {
         p_object.MakeInvalid();
         return Result<void>();
@@ -67,7 +67,7 @@ Result<void> DeserializeYaml(const YAML::Node& p_node, math::AABB& p_object, Ser
         return HBN_ERROR(res.error());
     }
 
-    p_object = math::AABB(min, max);
+    p_object = AABB(min, max);
     return Result<void>();
 }
 

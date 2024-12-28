@@ -105,8 +105,8 @@ const DrawData* GetRenderData() {
     return s_glob.renderData;
 }
 
-void AddDebugCube(const math::AABB& p_aabb,
-                  const math::Color& p_color,
+void AddDebugCube(const AABB& p_aabb,
+                  const Color& p_color,
                   const Matrix4x4f* p_transform) {
     ASSERT_CAN_RECORD();
 

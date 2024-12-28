@@ -1,7 +1,7 @@
 #pragma once
 #include "forward.h"
 
-namespace my::math {
+namespace my {
 
 template<Arithmetic T, int N>
     requires(N >= 2 && N <= 4)
@@ -32,4 +32,4 @@ struct VectorBase {
     }
 };
 
-}  // namespace my::math
+}  // namespace my

@@ -41,9 +41,6 @@ namespace my {
 // * draw elements and draw array
 // * motion blur
 
-using math::AABB;
-using math::Color;
-
 enum : uint32_t {
     COLLISION_BIT_PLAYER = BIT(1),
     COLLISION_BIT_ROCK = BIT(2),
@@ -291,7 +288,7 @@ Scene* SceneCreator::CreateScene() {
         // @TODO: NEG_UNIT_X
         // @TODO: NEG_UNIT_Y
         // @TODO: NEG_UNIT_Z
-        Matrix4x4f matrix = math::Translate(Vector3f(x, y, -50.0f)) * math::Rotate(rad, Vector3f(0, 0, -1));
+        Matrix4x4f matrix = Translate(Vector3f(x, y, -50.0f)) * Rotate(rad, Vector3f(0, 0, -1));
         transform->SetLocalTransform(matrix);
         create_cloud(cloud_index, cloud);
     }
@@ -373,7 +370,7 @@ MeshComponent SceneCreator::MakeOceanMesh(float p_radius,
 
             Vector3f AB = point_1 - point_2;
             Vector3f AC = point_1 - point_3;
-            Vector3f normal = math::normalize(math::cross(AB, AC));
+            Vector3f normal = normalize(cross(AB, AC));
 
             mesh.positions.emplace_back(point_1);
             mesh.positions.emplace_back(point_2);
@@ -526,7 +523,7 @@ void SceneCreator::CreateOcean(Scene* p_scene, ecs::Entity p_earth) {
 
                 Vector3f AB = points[0] - points[1];
                 Vector3f AC = points[0] - points[2];
-                Vector3f normal = math::normalize(math::cross(AB, AC));
+                Vector3f normal = normalize(cross(AB, AC));
                 normals.emplace_back(normal);
                 normals.emplace_back(normal);
                 normals.emplace_back(normal);
@@ -584,28 +581,28 @@ void SceneCreator::CreatePlane(Scene* p_scene) {
         auto engine = p_scene->CreateCubeEntity("engine",
                                                 material_white,
                                                 Vector3f(1.0f, 2.5f, 2.5f),
-                                                math::Translate(Vector3f(5, 0, 0)));
+                                                Translate(Vector3f(5, 0, 0)));
         p_scene->AttachChild(engine, plane);
     }
     {
         auto side_wing = p_scene->CreateCubeEntity("side_wing",
                                                    material_red,
                                                    Vector3f(1.5f, 0.25f, 6.0f),
-                                                   math::Translate(Vector3f(0.0f, 1.5f, 0.0f)));
+                                                   Translate(Vector3f(0.0f, 1.5f, 0.0f)));
         p_scene->AttachChild(side_wing, plane);
     }
     {
         auto tail = p_scene->CreateCubeEntity("tail",
                                               material_red,
                                               Vector3f(0.75f, 1.0f, 0.25f),
-                                              math::Translate(Vector3f(-4, 2, 0)));
+                                              Translate(Vector3f(-4, 2, 0)));
         p_scene->AttachChild(tail, plane);
     }
     {
         auto wind_shield = p_scene->CreateCubeEntity("wind_shield",
                                                      material_white_transparent,
                                                      Vector3f(0.15f, 0.75f, 1.0f),
-                                                     math::Translate(Vector3f(1.8f, 2.7f, 0.0f)));
+                                                     Translate(Vector3f(1.8f, 2.7f, 0.0f)));
         ObjectComponent* obj = p_scene->GetComponent<ObjectComponent>(wind_shield);
         obj->flags |= ObjectComponent::FLAG_TRANSPARENT;
         p_scene->AttachChild(wind_shield, plane);
@@ -614,27 +611,27 @@ void SceneCreator::CreatePlane(Scene* p_scene) {
         auto wheel_protection_1 = p_scene->CreateCubeEntity("wheel_protection_1",
                                                             material_red,
                                                             Vector3f(1.5f, 0.75f, 0.5f),
-                                                            math::Translate(Vector3f(2.5f, -2.0f, 2.5f)));
+                                                            Translate(Vector3f(2.5f, -2.0f, 2.5f)));
         p_scene->AttachChild(wheel_protection_1, plane);
     }
     {
         auto wheel_protection_2 = p_scene->CreateCubeEntity("wheel_protection_2",
                                                             material_red,
                                                             Vector3f(1.5f, 0.75f, 0.5f),
-                                                            math::Translate(Vector3f(2.5f, -2.0f, -2.5f)));
+                                                            Translate(Vector3f(2.5f, -2.0f, -2.5f)));
         p_scene->AttachChild(wheel_protection_2, plane);
     }
     {
         auto wheel_axis = p_scene->CreateCubeEntity("wheel_axis",
                                                     material_brown,
                                                     Vector3f(0.5f, 0.5f, 2.95f),
-                                                    math::Translate(Vector3f(2.5f, -2.8f, -0.0f)));
+                                                    Translate(Vector3f(2.5f, -2.8f, -0.0f)));
         p_scene->AttachChild(wheel_axis, plane);
     }
 
     {
-        Matrix4x4f rotation = math::Rotate(Degree(160.f), Vector3f(0, 0, 1));
-        Matrix4x4f translation = math::Translate(Vector3f(-3.3f, -0.2f, 0.0f));
+        Matrix4x4f rotation = Rotate(Degree(160.f), Vector3f(0, 0, 1));
+        Matrix4x4f translation = Translate(Vector3f(-3.3f, -0.2f, 0.0f));
         auto suspension = p_scene->CreateCubeEntity("suspension",
                                                     material_red,
                                                     Vector3f(0.2f, 1.0f, 0.2f),
@@ -645,38 +642,38 @@ void SceneCreator::CreatePlane(Scene* p_scene) {
         auto tire_1 = p_scene->CreateCubeEntity("tire_1",
                                                 material_dark_brown,
                                                 Vector3f(1.2f, 1.2f, 0.2f),
-                                                math::Translate(Vector3f(2.5f, -2.8f, 2.5f)));
+                                                Translate(Vector3f(2.5f, -2.8f, 2.5f)));
         p_scene->AttachChild(tire_1, plane);
         auto tire_2 = p_scene->CreateCubeEntity("tire_2",
                                                 material_dark_brown,
                                                 Vector3f(1.2f, 1.2f, 0.2f),
-                                                math::Translate(Vector3f(2.5f, -2.8f, -2.5f)));
+                                                Translate(Vector3f(2.5f, -2.8f, -2.5f)));
         p_scene->AttachChild(tire_2, plane);
         auto tire_3 = p_scene->CreateCubeEntity("tire_3",
                                                 material_brown,
                                                 Vector3f(0.4f, 0.4f, 0.15f),
-                                                math::Translate(Vector3f(-3.5f, -0.8f, 0.0f)));
+                                                Translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         p_scene->AttachChild(tire_3, plane);
         auto tire_4 = p_scene->CreateCubeEntity("tire_4",
                                                 material_dark_brown,
                                                 Vector3f(0.6f, 0.6f, 0.1f),
-                                                math::Translate(Vector3f(-3.5f, -0.8f, 0.0f)));
+                                                Translate(Vector3f(-3.5f, -0.8f, 0.0f)));
         p_scene->AttachChild(tire_4, plane);
         auto body = p_scene->CreateCubeEntity("body",
                                               material_brown,
                                               Vector3f(1.5f) * 0.7f,
-                                              math::Translate(Vector3f(.2f, 1.5f, 0.0f)));
+                                              Translate(Vector3f(.2f, 1.5f, 0.0f)));
         p_scene->AttachChild(body, plane);
         auto face = p_scene->CreateCubeEntity("face",
                                               material_pink,
                                               Vector3f(1.0f) * 0.7f,
-                                              math::Translate(Vector3f(.0f, 2.7f, 0.0f)));
+                                              Translate(Vector3f(.0f, 2.7f, 0.0f)));
 
         p_scene->AttachChild(face, plane);
         auto hair_side = p_scene->CreateCubeEntity("hair_side",
                                                    material_dark_brown,
                                                    Vector3f(1.2f, 0.6f, 1.2f) * 0.7f,
-                                                   math::Translate(Vector3f(-.3f, 3.2f, 0.0f)));
+                                                   Translate(Vector3f(-.3f, 3.2f, 0.0f)));
         p_scene->AttachChild(hair_side, plane);
 
         for (int i = 0; i < 12; ++i) {
@@ -684,7 +681,7 @@ void SceneCreator::CreatePlane(Scene* p_scene) {
             const int row = i / 3;
             Vector3f translation(-0.9f + row * 0.4f, 3.5f, -0.4f + col * 0.4f);
             float scale_y = col == 1 ? 0.7f : 0.6f;
-            auto hair = p_scene->CreateCubeEntity(std::format("hair_{}", i), material_dark_brown, Vector3f(0.27f, scale_y, 0.27f), math::Translate(translation));
+            auto hair = p_scene->CreateCubeEntity(std::format("hair_{}", i), material_dark_brown, Vector3f(0.27f, scale_y, 0.27f), Translate(translation));
             TransformComponent* transform = p_scene->GetComponent<TransformComponent>(hair);
             float s = 0.5f + (3 - row) * 0.15f;
             transform->SetScale(Vector3f(1, s, 1));
@@ -718,14 +715,14 @@ void SceneCreator::CreatePlane(Scene* p_scene) {
         auto blade1 = p_scene->CreateCubeEntity("blade1",
                                                 material_dark_brown,
                                                 Vector3f(0.2f, 4.0f, 0.2f),
-                                                math::Translate(Vector3f(0.4f, 0.0f, 0.0f)));
+                                                Translate(Vector3f(0.4f, 0.0f, 0.0f)));
         p_scene->AttachChild(blade1, propeller);
     }
     {
         auto blade2 = p_scene->CreateCubeEntity("blade2",
                                                 material_dark_brown,
                                                 Vector3f(0.2f, 0.2f, 4.0f),
-                                                math::Translate(Vector3f(0.4f, 0.0f, 0.0f)));
+                                                Translate(Vector3f(0.4f, 0.0f, 0.0f)));
         p_scene->AttachChild(blade2, propeller);
     }
 }

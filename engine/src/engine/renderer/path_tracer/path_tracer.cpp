@@ -12,8 +12,6 @@
 
 namespace my {
 
-using math::Box3;
-
 void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
     for (auto [id, mesh] : p_scene.m_MeshComponents) {
         if (!mesh.bvh) {
@@ -114,9 +112,9 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
             triangle.uv1 = uvs[0];
             triangle.uv2 = uvs[1];
             triangle.uv3 = uvs[2];
-            triangle.normal1 = math::normalize(Vector3f(normals[0].xyz));
-            triangle.normal2 = math::normalize(Vector3f(normals[1].xyz));
-            triangle.normal3 = math::normalize(Vector3f(normals[2].xyz));
+            triangle.normal1 = normalize(Vector3f(normals[0].xyz));
+            triangle.normal2 = normalize(Vector3f(normals[1].xyz));
+            triangle.normal3 = normalize(Vector3f(normals[2].xyz));
             triangle.kind = gpu_geometry_t::Kind::Triangle;
             auto it = material_lut.find(p_mesh.subsets[0].material_id);
             DEV_ASSERT(it != material_lut.end());
@@ -140,7 +138,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
             auto transform = p_scene.GetComponent<TransformComponent>(entity);
             DEV_ASSERT(transform);
             Vector3f rotation = (transform->GetWorldMatrix() * Vector4f::UnitZ).xyz;
-            rotation = math::normalize(rotation);
+            rotation = normalize(rotation);
             float radius = 1000.0f;
 
             Vector3f tmp;

@@ -12,10 +12,10 @@
 #undef max
 #endif
 using namespace my;
-using ::my::math::cross;
-using ::my::math::max;
-using ::my::math::min;
-using ::my::math::normalize;
+using ::my::cross;
+using ::my::max;
+using ::my::min;
+using ::my::normalize;
 #endif
 
 #define MAX_REFLECTION_LOD 4.0

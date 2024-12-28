@@ -2,7 +2,7 @@
 #include "swizzle.h"
 #include "vector_base.h"
 
-namespace my::math {
+namespace my {
 
 template<Arithmetic T>
 struct alignas(sizeof(T) * 4) Vector<T, 4> : VectorBase<T, 4> {
@@ -102,4 +102,4 @@ const Vector<T, 4> Vector<T, 4>::UnitZ(static_cast<T>(0), static_cast<T>(0), sta
 template<Arithmetic T>
 const Vector<T, 4> Vector<T, 4>::UnitW(static_cast<T>(0), static_cast<T>(0), static_cast<T>(0), static_cast<T>(1));
 
-}  // namespace my::math
+}  // namespace my

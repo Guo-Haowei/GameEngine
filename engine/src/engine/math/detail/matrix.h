@@ -7,7 +7,7 @@ WARNING_DISABLE(4201, "-Wunused-parameter")
 #include <glm/glm.hpp>
 WARNING_POP()
 
-namespace my::math {
+namespace my {
 
 constexpr inline Vector<float, 4> operator*(const glm::mat4& p_lhs, const Vector<float, 4>& p_rhs) {
     glm::vec4 tmp(p_rhs.x, p_rhs.y, p_rhs.z, p_rhs.w);
@@ -15,4 +15,4 @@ constexpr inline Vector<float, 4> operator*(const glm::mat4& p_lhs, const Vector
     return Vector<float, 4>(tmp.x, tmp.y, tmp.z, tmp.w);
 }
 
-}  // namespace my::math
+}  // namespace my

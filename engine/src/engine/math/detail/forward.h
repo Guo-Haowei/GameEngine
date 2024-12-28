@@ -2,7 +2,7 @@
 #include "config.h"
 
 // @TODO: add name space
-namespace my::math {
+namespace my {
 
 template<typename T>
 concept Arithmetic = std::is_arithmetic_v<T>;
@@ -35,4 +35,4 @@ using Swizzle3 = Swizzle<T, 3, N, A, B, C, D>;
 template<typename T, int N, int A, int B, int C, int D>
 using Swizzle4 = Swizzle<T, 4, N, A, B, C, D>;
 
-}  // namespace my::math
+}  // namespace my

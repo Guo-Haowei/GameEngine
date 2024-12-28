@@ -1,6 +1,6 @@
 #include "engine/math/math.h"
 
-namespace my::math {
+namespace my {
 
 TEST(Bit, compile_time) {
     static_assert(Bit(0) == 0);
@@ -108,4 +108,4 @@ TEST(next_power_of_two, compile_time) {
     static_assert(NextPowerOfTwo(17) == 32);
 }
 
-}  // namespace my::math
+}  // namespace my

@@ -47,8 +47,6 @@ void WriteBrdfImage(const char* p_file) {
 }
 
 void WriteAviatorSkyImage(const char* p_file) {
-    using math::Color;
-
     constexpr int width = 2048;
     constexpr int height = 1024;
     constexpr int job_count = width * height;
@@ -63,7 +61,7 @@ void WriteAviatorSkyImage(const char* p_file) {
         const int index = args.jobIndex;
         const int y = index / width;
         float v = 1.0f - (y + 0.5f) / (float)(height);
-        auto color = math::lerp(top, bottom, v);
+        auto color = lerp(top, bottom, v);
         image_data[channels * index + 0] = color.r;
         image_data[channels * index + 1] = color.g;
         image_data[channels * index + 2] = color.b;
