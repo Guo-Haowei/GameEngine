@@ -97,7 +97,7 @@ public:
 
     Matrix4x4f GetLocalMatrix() const;
 
-    void UpdateTransform();
+    bool UpdateTransform();
     void Scale(const Vector3f& p_scale);
     void Translate(const Vector3f& p_translation);
     void Rotate(const Vector3f& p_euler);
@@ -324,7 +324,7 @@ public:
     static constexpr float DEFAULT_FAR = 1000.0f;
     static constexpr Degree DEFAULT_FOVY{ 50.0f };
 
-    void Update();
+    bool Update();
 
     void SetDimension(int p_width, int p_height);
 

@@ -16,11 +16,13 @@ Matrix4x4f TransformComponent::GetLocalMatrix() const {
     return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
-void TransformComponent::UpdateTransform() {
+bool TransformComponent::UpdateTransform() {
     if (IsDirty()) {
         SetDirty(false);
         m_worldMatrix = GetLocalMatrix();
+        return true;
     }
+    return false;
 }
 
 void TransformComponent::Scale(const Vector3f& p_scale) {
@@ -108,7 +110,7 @@ void MeshComponent::CreateRenderData() {
 #pragma endregion MATERIAL_COMPONENT
 
 #pragma region CAMERA_COMPONENT
-void PerspectiveCameraComponent::Update() {
+bool PerspectiveCameraComponent::Update() {
     if (IsDirty()) {
         m_front.x = m_yaw.Cos() * m_pitch.Cos();
         m_front.y = m_pitch.Sin();
@@ -121,7 +123,10 @@ void PerspectiveCameraComponent::Update() {
         m_projectionViewMatrix = m_projectionMatrix * m_viewMatrix;
 
         SetDirty(false);
+        return true;
     }
+
+    return false;
 }
 
 void PerspectiveCameraComponent::SetDimension(int p_width, int p_height) {

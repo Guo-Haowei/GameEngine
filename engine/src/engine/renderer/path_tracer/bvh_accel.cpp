@@ -114,7 +114,7 @@ void BvhBuilder::SplitByAxis(BvhAccel* p_parent,
 
 BvhAccel::Ref BvhBuilder::ConstructHelper(const BvhAccel* p_parent, const std::vector<uint32_t>& p_indices) const {
     const int depth = p_parent ? p_parent->depth + 1 : 0;
-    if (depth > 32) {
+    if (depth > 64) {
         CRASH_NOW_MSG("TOO MANY LEVELS OF BVH");
         return nullptr;
     }
