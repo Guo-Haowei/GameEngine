@@ -35,6 +35,7 @@ struct GpuPtBvh {
 
 struct GpuPtVertex {
     Vector3f position;
+    Vector3f normal;
 };
 
 struct GpuPtMesh {

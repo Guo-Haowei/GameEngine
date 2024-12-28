@@ -20,14 +20,10 @@ extern GpuPtBvh GlobalRtBvhs[];
 extern GpuPtMesh GlobalPtMeshes[];
 #endif
 
-#ifndef PI
-#define PI     3.14159265359
-#define TWO_PI 6.28318530718
-#endif
-#define EPSILON       1e-6
+#define EPSILON       1.1920929e-7
 #define MAX_BOUNCE    10
 #define RAY_T_MIN     1e-6
-#define RAY_T_MAX     9999999.0
+#define RAY_T_MAX     999999999.0
 #define TRIANGLE_KIND 1
 #define SPHERE_KIND   2
 
@@ -35,6 +31,7 @@ struct Ray {
     Vector3f origin;
     float t;
     Vector3f direction;
+    Vector3f invDir;
 };
 
 struct HitResult {
@@ -67,9 +64,9 @@ float Random(inout uint p_state) {
 }
 
 // random unit vector
-Vector3f RandomUnitVector(inout uint state) {
-    float z = Random(state) * 2.0 - 1.0;
-    float a = Random(state) * TWO_PI;
+Vector3f RandomUnitVector(inout uint p_state) {
+    float z = Random(p_state) * 2.0 - 1.0;
+    float a = Random(p_state) * MY_TWO_PI;
     float r = sqrt(1.0 - z * z);
     float x = r * cos(a);
     float y = r * sin(a);
@@ -80,7 +77,7 @@ Vector3f RandomUnitVector(inout uint state) {
 // Common Ray Trace Functions
 //------------------------------------------------------------------------------
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
-HitResult HitTriangle(inout Ray ray, int p_triangle_id) {
+HitResult HitTriangle(inout Ray p_ray, int p_triangle_id) {
     // P = A + u(B - A) + v(C - A) => O - A = -tD + u(B - A) + v(C - A)
     // -tD + uAB + vAC = AO
     Vector3i indices = GlobalRtIndices[p_triangle_id];
@@ -91,7 +88,7 @@ HitResult HitTriangle(inout Ray ray, int p_triangle_id) {
     Vector3f AB = B - A;
     Vector3f AC = C - A;
 
-    Vector3f P = cross(ray.direction, AC);
+    Vector3f P = cross(p_ray.direction, AC);
     float det = dot(AB, P);
 
     HitResult result;
@@ -103,48 +100,49 @@ HitResult HitTriangle(inout Ray ray, int p_triangle_id) {
     }
 
     float invDet = 1.0 / det;
-    Vector3f AO = ray.origin - A;
+    Vector3f AO = p_ray.origin - A;
 
     Vector3f Q = cross(AO, AB);
     float u = dot(AO, P) * invDet;
-    float v = dot(ray.direction, Q) * invDet;
+    float v = dot(p_ray.direction, Q) * invDet;
 
-    if (u < 0.0 || v < 0.0 || u + v > 1.0) {
+    if (u < 0.0f || v < 0.0f || u + v > 1.0f) {
         return result;
     }
 
     float t = dot(AC, Q) * invDet;
-    if (t >= ray.t || t < EPSILON) {
+    if (t >= p_ray.t || t < EPSILON) {
         return result;
     }
 
-    ray.t = t;
+    p_ray.t = t;
     result.hitTriangleId = p_triangle_id;
     result.uv = Vector2f(u, v);
     return result;
 }
 
 // https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
-bool HitBvh(in Ray ray, in GpuPtBvh bvh) {
-    Vector3f invD = 1.0f / (ray.direction);
-    Vector3f t0s = (bvh.min - ray.origin) * invD;
-    Vector3f t1s = (bvh.max - ray.origin) * invD;
+bool HitBvh(in Ray p_ray, in Vector3f p_min, in Vector3f p_max) {
+    Vector3f t_min = (p_min - p_ray.origin) * p_ray.invDir;
+    Vector3f t_max = (p_max - p_ray.origin) * p_ray.invDir;
 
-    Vector3f tsmaller = min(t0s, t1s);
-    Vector3f tbigger = max(t0s, t1s);
+    Vector3f tsmaller = min(t_min, t_max);
+    Vector3f tbigger = max(t_min, t_max);
 
-    float tmin = max(RAY_T_MIN, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
-    float tmax = min(RAY_T_MAX, min(tbigger.x, min(tbigger.y, tbigger.z)));
+    float dst_near = max(tsmaller.x, max(tsmaller.y, tsmaller.z));
+    float dst_far = min(tbigger.x, min(tbigger.y, tbigger.z));
 
-    return (tmin < tmax) && (ray.t > tmin);
+    bool hit = dst_far >= dst_near && dst_far > 0.0f;
+    return hit;
+    //(dst_near < dst_far) && (p_ray.t > dst_near) && (dst_far > 0.0f);
 }
 
-// how to transform a ray?
 Ray TransformRay(in Ray p_ray, int p_mesh_id) {
     Matrix4x4f inversed = GlobalPtMeshes[p_mesh_id].transformInv;
     Ray ray;
     ray.origin = mul(inversed, Vector4f(p_ray.origin, 1.0f)).xyz;
     ray.direction = mul(inversed, Vector4f(p_ray.direction, 0.0f)).xyz;
+    ray.invDir = 1.0f / ray.direction;  
     ray.t = p_ray.t;
     return ray;
 }
@@ -166,7 +164,7 @@ HitResult HitScene(inout Ray p_ray) {
         int bvhIndex = 0;
         while (bvhIndex != -1) {
             GpuPtBvh bvh = GlobalRtBvhs[bvhIndex];
-            if (HitBvh(local_ray, bvh)) {
+            if (HitBvh(local_ray, bvh.min, bvh.max)) {
                 if (bvh.triangleIndex != -1) {
                     HitResult result = HitTriangle(local_ray, bvh.triangleIndex);
                     if (result.hitTriangleId != -1) {
@@ -195,17 +193,15 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
         HitResult result = HitScene(p_ray);
         if (result.hitMeshId != -1) {
             // @TODO: apply matrix
+            Matrix4x4f transform = GlobalPtMeshes[result.hitMeshId].transform;
+
             Vector3i indices = GlobalRtIndices[result.hitTriangleId];
-            Matrix4x4f T = GlobalPtMeshes[result.hitMeshId].transform;
-            Vector3f A = mul(T, Vector4f(GlobalRtVertices[indices.x].position, 1.0f)).xyz;
-            Vector3f B = mul(T, Vector4f(GlobalRtVertices[indices.y].position, 1.0f)).xyz;
-            Vector3f C = mul(T, Vector4f(GlobalRtVertices[indices.z].position, 1.0f)).xyz;
-
-            Vector3f AB = B - A;
-            Vector3f AC = C - A;
-
-            Vector3f normal = normalize(cross(AB, AC));
-            return 0.5f * Vector3f(normal) + 0.5f;
+            Vector3f n1 = GlobalRtVertices[indices.x].normal;
+            Vector3f n2 = GlobalRtVertices[indices.y].normal;
+            Vector3f n3 = GlobalRtVertices[indices.z].normal;
+            Vector3f n = n1 + result.uv.x * (n2 - n1) + result.uv.y * (n3 - n1);
+            n = normalize(mul(transform, Vector4f(n, 0.0f)).xyz);
+            return 0.5f * Vector3f(n) + 0.5f;
         }
     }
 

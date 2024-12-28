@@ -38,9 +38,10 @@ static void ConstructMesh(const MeshComponent& p_mesh, GpuScene& p_gpu_scene) {
     }
 
     p_mesh.bvh->FillGpuBvhAccel(0, p_gpu_scene.bvhs);
-    for (const auto& position : p_mesh.positions) {
-        p_gpu_scene.vertices.push_back({ position });
+    for (size_t i = 0; i < p_mesh.positions.size(); ++i) {
+        p_gpu_scene.vertices.push_back({ p_mesh.positions[i], p_mesh.normals[i] });
     }
+
     for (size_t i = 0; i < p_mesh.indices.size(); i += 3) {
         p_gpu_scene.indices.emplace_back(Vector3i(p_mesh.indices[i],
                                                   p_mesh.indices[i + 1],
@@ -129,10 +130,13 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
     GpuScene gpu_scene;
 
     for (auto [id, mesh] : p_scene.m_MeshComponents) {
+        const uint32_t bvh_offset = (uint32_t)gpu_scene.bvhs.size();
+        //GpuScene tmp_scene;
+
         auto it = m_lut.find(id);
         if (it == m_lut.end()) {
-            m_lut[id] = gpu_scene.meshes.size();
-
+            m_lut[id] = { bvh_offset };
+            // @TODO: merge bvh
             ConstructMesh(mesh, gpu_scene);
         }
     }

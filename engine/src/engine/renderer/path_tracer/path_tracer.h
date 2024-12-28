@@ -13,7 +13,6 @@ struct GpuScene {
     // @TODO: material
     std::vector<GpuPtBvh> bvhs;
     std::vector<GpuPtVertex> vertices;
-    std::vector<GpuPtMesh> meshes;
     std::vector<Vector3i> indices;
 };
 
@@ -39,8 +38,12 @@ private:
     std::shared_ptr<GpuStructuredBuffer> m_ptIndexBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_ptMeshBuffer;
 
+    struct BvhMeta {
+        uint32_t bvh_offset;
+    };
+
     // @TODO: rename
-    std::map<ecs::Entity, size_t> m_lut;
+    std::map<ecs::Entity, BvhMeta> m_lut;
 
     PathTracerMode m_mode{ PathTracerMode::NONE };
 };

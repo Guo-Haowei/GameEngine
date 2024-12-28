@@ -19,7 +19,7 @@
     uint seed = uint(uint(uv.x) * uint(1973) + uint(uv.y) * uint(9277) + uint(c_frameIndex) * uint(26699)) | uint(1);
 
     // [-0.5, 0.5]
-#if 1
+#if 0
     Vector2f jitter = Vector2f(0.0f, 0.0f);
 #else
     Vector2f jitter = Vector2f(Random(seed), Random(seed)) - 0.5;
@@ -36,7 +36,7 @@
         float aspectRatio = resolution.x / resolution.y;
         screen.y /= aspectRatio;
         float halfFov = c_cameraFovDegree;
-        float camDistance = tan(halfFov * PI / 180.0);
+        float camDistance = tan(halfFov * MY_PI / 180.0);
         rayDir = Vector3f(screen, camDistance);
         float3x3 mat = float3x3(c_cameraRight, c_cameraUp, c_cameraForward);
         rayDir = normalize(mul(rayDir, mat));
@@ -45,6 +45,7 @@
     Ray ray;
     ray.origin = c_cameraPosition;
     ray.direction = rayDir;
+    ray.invDir = 1.0f / ray.direction;
     ray.t = RAY_T_MAX;
 
     Vector3f radiance = RayColor(ray, seed);
