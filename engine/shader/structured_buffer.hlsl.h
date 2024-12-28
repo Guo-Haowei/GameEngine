@@ -21,7 +21,7 @@ struct ParticleCounter {
 };
 
 // Ray tracinge
-struct GpuBvhAccel {
+struct GpuPtBvh {
     Vector3f min;
     int missIdx;
     Vector3f max;
@@ -33,22 +33,27 @@ struct GpuBvhAccel {
     int _padding_1;
 };
 
-struct GpuTriangleVertex {
-    Vector3f vertex;
+struct GpuPtVertex {
+    Vector3f position;
 };
 
-struct GpuTriangleIndex {
-    Vector3i indices;
+struct GpuPtMesh {
+    Matrix4x4f transform;
+    Matrix4x4f transformInv;
+    // int bvhOffset;
+    // int vertexOffset;
+    // int indexOffset;
 };
 
-#define SBUFFER_LIST                                            \
-    SBUFFER(ParticleCounter, GlobalParticleCounter, 16, 511)    \
-    SBUFFER(int, GlobalDeadIndices, 17, 510)                    \
-    SBUFFER(int, GlobalAliveIndicesPreSim, 18, 509)             \
-    SBUFFER(int, GlobalAliveIndicesPostSim, 19, 508)            \
-    SBUFFER(Particle, GlobalParticleData, 20, 507)              \
-    SBUFFER(GpuTriangleVertex, GlobalTriangleVertices, 21, 506) \
-    SBUFFER(GpuTriangleIndex, GlobalTriangleIndices, 22, 505)   \
-    SBUFFER(GpuBvhAccel, GlobalBvhs, 23, 504)
+#define SBUFFER_LIST                                         \
+    SBUFFER(ParticleCounter, GlobalParticleCounter, 16, 511) \
+    SBUFFER(int, GlobalDeadIndices, 17, 510)                 \
+    SBUFFER(int, GlobalAliveIndicesPreSim, 18, 509)          \
+    SBUFFER(int, GlobalAliveIndicesPostSim, 19, 508)         \
+    SBUFFER(Particle, GlobalParticleData, 20, 507)           \
+    SBUFFER(GpuPtVertex, GlobalRtVertices, 21, 506)          \
+    SBUFFER(Vector3i, GlobalRtIndices, 22, 505)              \
+    SBUFFER(GpuPtBvh, GlobalRtBvhs, 23, 504)                 \
+    SBUFFER(GpuPtMesh, GlobalPtMeshes, 24, 503)
 
 #endif

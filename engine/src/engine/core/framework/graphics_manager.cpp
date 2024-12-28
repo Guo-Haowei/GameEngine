@@ -553,7 +553,7 @@ renderer::RenderGraph* GraphicsManager::GetActiveRenderGraph() {
 
 bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
     unused(p_method);
-    if (m_pathTracerVertexBuffer) {
+    if (m_ptVertexBuffer) {
         return true;
     }
 
@@ -568,36 +568,46 @@ bool GraphicsManager::StartPathTracer(PathTracerMethod p_method) {
         GpuScene gpu_scene;
         ConstructScene(*scene, gpu_scene);
 
-        const uint32_t triangle_count = (uint32_t)gpu_scene.triangles.size();
+        const uint32_t triangle_count = (uint32_t)gpu_scene.indices.size();
         const uint32_t vertex_count = (uint32_t)gpu_scene.vertices.size();
         const uint32_t bvh_count = (uint32_t)gpu_scene.bvhs.size();
+        const uint32_t mesh_count = (uint32_t)gpu_scene.meshes.size();
 
         {
             GpuBufferDesc desc{
-                .slot = GetGlobalBvhsSlot(),
-                .elementSize = sizeof(GpuBvhAccel),
+                .slot = GetGlobalPtMeshesSlot(),
+                .elementSize = sizeof(GpuPtMesh),
+                .elementCount = mesh_count,
+                .initialData = gpu_scene.meshes.data(),
+            };
+            m_ptMeshBuffer = *CreateStructuredBuffer(desc);
+        }
+        {
+            GpuBufferDesc desc{
+                .slot = GetGlobalRtBvhsSlot(),
+                .elementSize = sizeof(GpuPtBvh),
                 .elementCount = bvh_count,
                 .initialData = gpu_scene.bvhs.data(),
             };
-            m_pathTracerBvhBuffer = *CreateStructuredBuffer(desc);
+            m_ptBvhBuffer = *CreateStructuredBuffer(desc);
         }
         {
             GpuBufferDesc desc{
-                .slot = GetGlobalTriangleVerticesSlot(),
-                .elementSize = sizeof(GpuTriangleVertex),
+                .slot = GetGlobalRtVerticesSlot(),
+                .elementSize = sizeof(GpuPtVertex),
                 .elementCount = vertex_count,
                 .initialData = gpu_scene.vertices.data(),
             };
-            m_pathTracerVertexBuffer = *CreateStructuredBuffer(desc);
+            m_ptVertexBuffer = *CreateStructuredBuffer(desc);
         }
         {
             GpuBufferDesc desc{
-                .slot = GetGlobalTriangleIndicesSlot(),
-                .elementSize = sizeof(GpuTriangleIndex),
+                .slot = GetGlobalRtIndicesSlot(),
+                .elementSize = sizeof(Vector3i),
                 .elementCount = triangle_count,
-                .initialData = gpu_scene.triangles.data(),
+                .initialData = gpu_scene.indices.data(),
             };
-            m_pathTracerTriangleBuffer = *CreateStructuredBuffer(desc);
+            m_ptIndexBuffer = *CreateStructuredBuffer(desc);
         }
 
         LOG("Path tracer scene loaded in {}, contains {} triangles, {} BVH",

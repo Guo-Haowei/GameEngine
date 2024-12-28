@@ -1,6 +1,5 @@
 #pragma once
 #include "intersection.h"
-
 #include "matrix_transform.h"
 
 namespace my {

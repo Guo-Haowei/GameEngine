@@ -7,32 +7,6 @@
 // @NOTE: include this at last
 #include "path_tracer.hlsl.h"
 
-Vector3f RayColor(inout Ray ray, inout uint state) {
-    Vector3f radiance = Vector3f(0.0f, 0.0f, 0.0f);
-    Vector3f throughput = Vector3f(1.0f, 1.0f, 1.0f);
-
-    for (int i = 0; i < 1; ++i) {
-        bool any_hit = HitScene(ray);
-        if (any_hit) {
-            if (ray.hitIndex > -1) {
-                Vector3i indices = GlobalTriangleIndices[ray.hitIndex].indices;
-                Vector3f A = GlobalTriangleVertices[indices.x].vertex;
-                Vector3f B = GlobalTriangleVertices[indices.y].vertex;
-                Vector3f C = GlobalTriangleVertices[indices.z].vertex;
-
-                Vector3f AB = B - A;
-                Vector3f AC = C - A;
-
-                Vector3f normal = normalize(cross(AB, AC));
-                return 0.5f * Vector3f(normal) + 0.5f;
-            }
-            return throughput;
-        }
-    }
-    // return throughput;
-    return radiance;
-}
-
 [numthreads(16, 16, 1)] void main(uint3 p_dispatch_thread_id : SV_DISPATCHTHREADID) {
     // random seed
     // [0, width], [0, height]
@@ -72,8 +46,6 @@ Vector3f RayColor(inout Ray ray, inout uint state) {
     ray.origin = c_cameraPosition;
     ray.direction = rayDir;
     ray.t = RAY_T_MAX;
-    ray.hitIndex = -1;
-    ray.uv = Vector2f(0.0f, 0.0f);
 
     Vector3f radiance = RayColor(ray, seed);
 

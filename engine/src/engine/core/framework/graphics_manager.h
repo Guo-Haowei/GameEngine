@@ -206,9 +206,11 @@ public:
     std::shared_ptr<GpuMesh> m_boxBuffers;
     std::shared_ptr<GpuMesh> m_debugBuffers;
 
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerVertexBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerTriangleBuffer;
+    // @TODO: move the buffers outside graphics_manager
+    std::shared_ptr<GpuStructuredBuffer> m_ptBvhBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_ptVertexBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_ptIndexBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_ptMeshBuffer;
     bool m_bufferUpdated = false;
 
     const ImageAsset* m_brdfImage{ nullptr };

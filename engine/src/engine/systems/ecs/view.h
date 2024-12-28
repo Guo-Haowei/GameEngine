@@ -28,9 +28,9 @@ public:
     public:
         Iterator(const ViewContainer& p_container,
                  const ComponentManager<T>& p_manager,
-                 size_t p_index) : m_container(p_container),
-                                   m_manager(p_manager),
-                                   m_index(p_index) {}
+                 uint32_t p_index) : m_container(p_container),
+                                     m_manager(p_manager),
+                                     m_index(p_index) {}
 
         Self operator++(int) const {
             Self tmp = *this;
@@ -75,11 +75,11 @@ public:
         const ViewContainer& m_container;
         const ComponentManager<T>& m_manager;
 
-        size_t m_index{ 0 };
+        uint32_t m_index{ 0 };
     };
 #pragma endregion ITERATOR
 
-    View(const ComponentManager<T>& p_manager) : m_manager(p_manager), m_size(p_manager.GetCount()) {
+    View(const ComponentManager<T>& p_manager) : m_manager(p_manager), m_size(static_cast<uint32_t>(p_manager.GetCount())) {
         const int size = (int)p_manager.GetCount();
         for (int i = 0; i < size; ++i) {
             m_container.emplace_back(std::make_pair(m_manager.m_entityArray[i], i));
@@ -94,10 +94,12 @@ public:
     const_iter begin() const { return const_iter(m_container, m_manager, 0); }
     const_iter end() const { return const_iter(m_container, m_manager, m_size); }
 
+    uint32_t GetSize() const { return m_size; }
+
 private:
     ViewContainer m_container;
     const ComponentManager<T>& m_manager;
-    size_t m_size;
+    uint32_t m_size;
 };
 
 }  // namespace my::ecs

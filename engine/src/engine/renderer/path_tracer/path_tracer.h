@@ -7,10 +7,11 @@ namespace my {
 class Scene;
 
 struct GpuScene {
-    std::vector<GpuBvhAccel> bvhs;
-    std::vector<GpuTriangleVertex> vertices;
-    // @TODO rename
-    std::vector<GpuTriangleIndex> triangles;
+    // @TODO: material
+    std::vector<GpuPtBvh> bvhs;
+    std::vector<GpuPtVertex> vertices;
+    std::vector<GpuPtMesh> meshes;
+    std::vector<Vector3i> indices;
 };
 
 void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene);

@@ -12,28 +12,47 @@
 
 namespace my {
 
+static void ConstructMesh(const MeshComponent& p_mesh, GpuScene& p_gpu_scene) {
+
+    if (!p_mesh.bvh) {
+        p_mesh.bvh = BvhAccel::Construct(p_mesh.indices, p_mesh.positions);
+    }
+
+    p_mesh.bvh->FillGpuBvhAccel(0, p_gpu_scene.bvhs);
+    for (const auto& position : p_mesh.positions) {
+        p_gpu_scene.vertices.push_back({ position });
+    }
+    for (size_t i = 0; i < p_mesh.indices.size(); i += 3) {
+        p_gpu_scene.indices.emplace_back(Vector3i(p_mesh.indices[i],
+                                                  p_mesh.indices[i + 1],
+                                                  p_mesh.indices[i + 2]));
+    }
+}
+
 void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
-    for (auto [id, mesh] : p_scene.m_MeshComponents) {
-        if (!mesh.bvh) {
-            mesh.bvh = BvhAccel::Construct(mesh.indices, mesh.positions);
-        }
+    const auto view = p_scene.View<ObjectComponent>();
+    p_gpu_scene.meshes.reserve(view.GetSize());
+    DEV_ASSERT(view.GetSize() == 1);
 
-        mesh.bvh->FillGpuBvhAccel(0, p_gpu_scene.bvhs);
-        p_gpu_scene.vertices.reserve(mesh.positions.size());
-        p_gpu_scene.triangles.reserve(mesh.indices.size() / 3);
+    std::map<ecs::Entity, size_t> lut;
 
-        for (const auto& position : mesh.positions) {
-            p_gpu_scene.vertices.push_back({ position });
-        }
-        for (size_t i = 0; i < mesh.indices.size(); i += 3) {
-            p_gpu_scene.triangles.emplace_back(Vector3i(mesh.indices[i],
-                                                        mesh.indices[i + 1],
-                                                        mesh.indices[i + 2]));
-        }
+    for (auto [id, object] : view) {
+        auto transform = p_scene.GetComponent<TransformComponent>(id);
+        auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
+        if (DEV_VERIFY(transform && mesh)) {
+            GpuPtMesh gpu_pt_mesh;
+            gpu_pt_mesh.transform = transform->GetWorldMatrix();
+            gpu_pt_mesh.transformInv = glm::inverse(gpu_pt_mesh.transform);
 
-        // @HACK: only supports one mesh
-        if (id.IsValid()) {
-            break;
+            auto it = lut.find(object.meshId);
+            if (it == lut.end()) {
+                lut[object.meshId] = p_gpu_scene.meshes.size();
+
+                ConstructMesh(*mesh, p_gpu_scene);
+            } else {
+            }
+
+            p_gpu_scene.meshes.push_back(gpu_pt_mesh);
         }
     }
 

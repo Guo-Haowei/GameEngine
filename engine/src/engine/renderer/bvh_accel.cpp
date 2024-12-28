@@ -233,11 +233,11 @@ void BvhAccel::DiscoverIdx() {
     hitIndex = left ? left->index : missIndex;
 }
 
-void BvhAccel::FillGpuBvhAccel(int p_mesh_index, std::vector<GpuBvhAccel>& p_out) {
+void BvhAccel::FillGpuBvhAccel(int p_mesh_index, std::vector<GpuPtBvh>& p_out) {
     DiscoverIdx();
     DEV_ASSERT(aabb.IsValid());
 
-    GpuBvhAccel gpu_bvh;
+    GpuPtBvh gpu_bvh;
     gpu_bvh.min = aabb.GetMin();
     gpu_bvh.max = aabb.GetMax();
     gpu_bvh.hitIdx = hitIndex;
