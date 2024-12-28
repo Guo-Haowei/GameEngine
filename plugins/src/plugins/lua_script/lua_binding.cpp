@@ -66,7 +66,7 @@ end
 
 bool OpenMathLib(lua_State* L) {
     luabridge::getGlobalNamespace(L)
-        .beginClass<math::Vector2f>("Vector2")
+        .beginClass<Vector2f>("Vector2")
         .addConstructor<void (*)(float, float)>()
         .addProperty("x", &Vector2f::x)
         .addProperty("y", &Vector2f::y)
@@ -85,7 +85,7 @@ bool OpenMathLib(lua_State* L) {
         .endClass();
 
     luabridge::getGlobalNamespace(L)
-        .beginClass<math::Vector3f>("Vector3")
+        .beginClass<Vector3f>("Vector3")
         .addConstructor<void (*)(float, float, float)>()
         .addProperty("x", &Vector3f::x)
         .addProperty("y", &Vector3f::y)
@@ -103,7 +103,7 @@ bool OpenMathLib(lua_State* L) {
             return p_lhs / p_rhs;
         })
         .addFunction("normalize", [](Vector3f& p_self) {
-            p_self = math::normalize(p_self);
+            p_self = normalize(p_self);
         })
         .endClass();
 

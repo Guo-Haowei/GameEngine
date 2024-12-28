@@ -3,7 +3,7 @@
 // @TODO: remove this
 #include "engine/math/geomath.h"
 
-namespace my::math {
+namespace my {
 
 TEST(aabb, from_center_size) {
     AABB aabb = AABB::FromCenterSize(Vector3f(10, 8, 6), Vector3f(4));
@@ -13,4 +13,4 @@ TEST(aabb, from_center_size) {
     EXPECT_EQ(aabb.GetMax(), Vector3f(12, 10, 8));
 }
 
-}  // namespace my::math
+}  // namespace my

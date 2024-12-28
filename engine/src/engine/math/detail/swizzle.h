@@ -1,7 +1,7 @@
 #pragma once
 #include "forward.h"
 
-namespace my::math {
+namespace my {
 
 template<Arithmetic T, int N, int A, int B, int C, int D>
     requires(N >= 2) and (A < N) and (B < N) and (C == -1) and (D == -1)
@@ -45,7 +45,7 @@ struct Swizzle<T, 4, N, A, B, C, D> {
     }
 };
 
-}  // namespace my::math
+}  // namespace my
 
 // Swizzle2
 #pragma region SWIZZLE2

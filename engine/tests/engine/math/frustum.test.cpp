@@ -1,7 +1,7 @@
 #include "engine/math/frustum.h"
 
-namespace my::math {
+namespace my {
 
 // @TODO:
 
-}  // namespace my::math
+}  // namespace my

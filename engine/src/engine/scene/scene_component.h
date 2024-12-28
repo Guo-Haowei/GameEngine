@@ -3,7 +3,10 @@
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
 #include "engine/systems/ecs/entity.h"
+
+namespace my {
 #include "shader_defines.hlsl.h"
+}  // namespace my
 
 namespace YAML {
 class Node;
@@ -94,7 +97,7 @@ public:
 
     Matrix4x4f GetLocalMatrix() const;
 
-    void UpdateTransform();
+    bool UpdateTransform();
     void Scale(const Vector3f& p_scale);
     void Translate(const Vector3f& p_translation);
     void Rotate(const Vector3f& p_euler);
@@ -164,7 +167,7 @@ struct MeshComponent {
         ecs::Entity material_id;
         uint32_t index_offset = 0;
         uint32_t index_count = 0;
-        math::AABB local_bound;
+        AABB local_bound;
 
         static void RegisterClass();
     };
@@ -175,7 +178,7 @@ struct MeshComponent {
     // Non-serialized
     mutable std::shared_ptr<GpuMesh> gpuResource;
     mutable std::shared_ptr<BvhAccel> bvh;
-    math::AABB localBound;
+    AABB localBound;
 
     mutable std::vector<Vector3f> updatePositions;
     mutable std::vector<Vector3f> updateNormals;
@@ -321,7 +324,7 @@ public:
     static constexpr float DEFAULT_FAR = 1000.0f;
     static constexpr Degree DEFAULT_FOVY{ 50.0f };
 
-    void Update();
+    bool Update();
 
     void SetDimension(int p_width, int p_height);
 
@@ -576,7 +579,7 @@ struct VoxelGiComponent {
 
     uint32_t flags = 0;
     // Non-serialized
-    math::AABB region;
+    AABB region;
 
     bool Enabled() const { return flags & ENABLED; }
     bool ShowDebugBox() const { return flags & SHOW_DEBUG_BOX; }
@@ -732,7 +735,7 @@ public:
         static void RegisterClass();
     } m_atten;
 
-    math::AABB m_shadowRegion;
+    AABB m_shadowRegion;
 
     uint32_t m_flags = DIRTY;
     int m_type = LIGHT_TYPE_INFINITE;

@@ -47,16 +47,6 @@
 #define VCT_CONST const
 #endif
 
-#if defined(__cplusplus)
-#define BEGIN_NAME_SPACE(a) namespace a {
-#define END_NAME_SPACE(a)   }
-#else
-#define BEGIN_NAME_SPACE(a)
-#define END_NAME_SPACE(a)
-#endif
-
-BEGIN_NAME_SPACE(my)
-
 VCT_CONST float LUT_SIZE = 64.0;  // ltc_texture size
 VCT_CONST float LUT_SCALE = (LUT_SIZE - 1.0) / LUT_SIZE;
 VCT_CONST float LUT_BIAS = 0.5 / LUT_SIZE;
@@ -88,7 +78,5 @@ using uint = unsigned int;
 #else
 #error Unknown shading language
 #endif
-
-END_NAME_SPACE(my)
 
 #endif

@@ -1,12 +1,12 @@
 #include "engine/math/angle.h"
 
-namespace my::math {
+namespace my {
 
 // @TODO: add more tests
 TEST(Degree, constructor) {
     Degree a(90.0f);
     EXPECT_FLOAT_EQ(a.GetDegree(), 90.0f);
-    EXPECT_FLOAT_EQ(a.GetRadians(), math::HalfPi());
+    EXPECT_FLOAT_EQ(a.GetRadians(), HalfPi());
 }
 
 TEST(Degree, clamp) {
@@ -15,4 +15,4 @@ TEST(Degree, clamp) {
     EXPECT_FLOAT_EQ(a.GetDegree(), -180.0f);
 }
 
-}  // namespace my::math
+}  // namespace my

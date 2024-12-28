@@ -54,7 +54,9 @@ void RendererPanel::UpdateInternal(Scene&) {
         if (prev_selected != selected) {
             if (gm.SetActiveRenderGraph((RenderGraphName)selected)) {
                 if (selected == (int)RenderGraphName::PATHTRACER) {
-                    gm.StartPathTracer(PathTracerMethod::ACCUMULATIVE);
+                    renderer::SetPathTracerMode(PathTracerMode::INTERACTIVE);
+                } else {
+                    renderer::SetPathTracerMode(PathTracerMode::NONE);
                 }
             }
         }

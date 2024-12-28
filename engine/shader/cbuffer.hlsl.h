@@ -3,14 +3,6 @@
 #define CBUFFER_INCLUDED
 #include "shader_defines.hlsl.h"
 
-#ifdef __cplusplus
-#include <engine/math/geomath.h>
-
-#include <cstdint>
-#endif
-
-BEGIN_NAME_SPACE(my)
-
 // constant buffer
 #if defined(__cplusplus)
 using TextureHandle = uint64_t;
@@ -184,8 +176,10 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     //-----------------------------------------
 
-    Vector4f c_ambientColor;        // 16
-    Vector4f _per_frame_padding_4;  // 16
+    Vector4f c_ambientColor;  // 16
+
+    Vector3f _per_frame_padding_4;  // 16
+    int c_ptObjectCount;
 
     sampler2D c_SkyboxResidentHandle;
     sampler2D c_SkyboxHdrResidentHandle;  // 16
@@ -277,7 +271,5 @@ CBUFFER(PerSceneConstantBuffer, 7) {
 };
 
 #endif
-
-END_NAME_SPACE(my)
 
 #endif

@@ -6,10 +6,9 @@
 #include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/entity.h"
 
-// include this file the last
+namespace my {
 #include "cbuffer.hlsl.h"
 
-namespace my {
 class Scene;
 class PerspectiveCameraComponent;
 }  // namespace my
@@ -139,7 +138,7 @@ struct DrawData {
 
     struct DrawDebugContext {
         std::vector<Vector3f> positions;
-        std::vector<math::Color> colors;
+        std::vector<Color> colors;
         uint32_t drawCount;
     } drawDebugContext;
 

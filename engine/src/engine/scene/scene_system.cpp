@@ -20,7 +20,7 @@ void UpdateMeshEmitter(float p_timestep,
     }
 
     // 1. emit new particles
-    const int emission_count = math::min(p_emitter.emissionPerFrame, (int)p_emitter.deadList.size());
+    const int emission_count = min(p_emitter.emissionPerFrame, (int)p_emitter.deadList.size());
     p_emitter.aliveList.reserve(p_emitter.aliveList.size() + emission_count);
     const auto& position = p_transform.GetTranslation();
     for (int i = 0; i < emission_count; ++i) {
@@ -37,9 +37,9 @@ void UpdateMeshEmitter(float p_timestep,
         initial_speed.y += Random::Float(p_emitter.vyRange.x, p_emitter.vyRange.y);
         initial_speed.z += Random::Float(p_emitter.vzRange.x, p_emitter.vzRange.y);
         Vector3f initial_rotation{
-            Random::Float(-math::HalfPi(), math::HalfPi()),
-            Random::Float(-math::HalfPi(), math::HalfPi()),
-            Random::Float(-math::HalfPi(), math::HalfPi()),
+            Random::Float(-HalfPi(), HalfPi()),
+            Random::Float(-HalfPi(), HalfPi()),
+            Random::Float(-HalfPi(), HalfPi()),
         };
 
         p.Init(Random::Float(p_emitter.lifetimeRange.x, p_emitter.lifetimeRange.y),

@@ -1,7 +1,7 @@
 #include "engine/math/ray.h"
 
-namespace my::math {
+namespace my {
 
 // @TODO:
 
-}  // namespace my::math
+}  // namespace my

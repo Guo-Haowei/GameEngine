@@ -101,7 +101,7 @@ class RIDAllocator : public RIDAllocatorBase {
 public:
     RIDAllocator(uint32_t target_chunk_byte_size = 65536)
         : RIDAllocatorBase(
-              math::Align<uint32_t>(sizeof(T) + sizeof(RIDAllocatorBase::ElementBlock), 16),
+              Align<uint32_t>(sizeof(T) + sizeof(RIDAllocatorBase::ElementBlock), 16),
               uint32_t(sizeof(T) > target_chunk_byte_size ? 1 : (target_chunk_byte_size / sizeof(T)))) {
     }
 

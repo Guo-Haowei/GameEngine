@@ -174,7 +174,7 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
         } else {
             desired_size = Vector2i(m_specification.width, m_specification.height);
         }
-        desired_size = math::clamp(desired_size, min_size, max_size);
+        desired_size = clamp(desired_size, min_size, max_size);
         m_specification.width = desired_size.x;
         m_specification.height = desired_size.y;
     }
@@ -265,7 +265,7 @@ void Application::Run() {
 
         // @TODO: better elapsed time
         float timestep = static_cast<float>(timer.GetDuration().ToSecond());
-        timestep = math::min(timestep, 0.5f);
+        timestep = min(timestep, 0.5f);
         timer.Start();
 
         m_inputManager->GetEventQueue().FlushEvents();

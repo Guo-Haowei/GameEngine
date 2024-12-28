@@ -4,40 +4,224 @@
 
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
-#include "engine/renderer/bvh_accel.h"
+#include "engine/core/os/timer.h"
+#include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/scene/scene.h"
 
-// @TODO
+// @TODO: remove
 #include "engine/math/detail/matrix.h"
+
+// @TODO: refactor
+#include "engine/core/framework/graphics_manager.h"
+
+namespace my {
+#include "shader_resource_defines.hlsl.h"
+}  // namespace my
 
 namespace my {
 
-using math::Box3;
+template<typename T>
+static auto CreateBuffer(GraphicsManager* p_gm, uint32_t p_slot, const std::vector<T>& p_data) {
+    GpuBufferDesc desc{
+        .slot = p_slot,
+        .elementSize = sizeof(T),
+        .elementCount = static_cast<uint32_t>(p_data.size()),
+        .initialData = p_data.data(),
+    };
 
-void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
-    for (auto [id, mesh] : p_scene.m_MeshComponents) {
-        if (!mesh.bvh) {
-            mesh.bvh = BvhAccel::Construct(mesh.indices, mesh.positions);
-        }
+    return p_gm->CreateStructuredBuffer(desc);
+}
 
-        mesh.bvh->FillGpuBvhAccel(0, p_gpu_scene.bvhs);
-        p_gpu_scene.vertices.reserve(mesh.positions.size());
-        p_gpu_scene.triangles.reserve(mesh.indices.size() / 3);
+static void ConstructMesh(const MeshComponent& p_mesh, GpuScene& p_gpu_scene) {
+    if (!p_mesh.bvh) {
+        p_mesh.bvh = BvhAccel::Construct(p_mesh.indices, p_mesh.positions);
+    }
 
-        for (const auto& position : mesh.positions) {
-            p_gpu_scene.vertices.push_back({ position });
-        }
-        for (size_t i = 0; i < mesh.indices.size(); i += 3) {
-            p_gpu_scene.triangles.emplace_back(Vector3i(mesh.indices[i],
-                                                        mesh.indices[i + 1],
-                                                        mesh.indices[i + 2]));
-        }
+    p_mesh.bvh->FillGpuBvhAccel(p_gpu_scene.bvhs);
+    for (size_t i = 0; i < p_mesh.positions.size(); ++i) {
+        GpuPtVertex vertex;
+        vertex.position = p_mesh.positions[i];
+        vertex.normal = p_mesh.normals[i];
+        p_gpu_scene.vertices.emplace_back(vertex);
+    }
 
-        // @HACK: only supports one mesh
-        if (id.IsValid()) {
+    for (size_t i = 0; i < p_mesh.indices.size(); i += 3) {
+        GpuPtIndex index;
+        index.tri = Vector3i(p_mesh.indices[i],
+                             p_mesh.indices[i + 1],
+                             p_mesh.indices[i + 2]);
+        p_gpu_scene.indices.emplace_back(index);
+    }
+}
+
+void PathTracer::Update(const Scene& p_scene) {
+    switch (m_mode) {
+        case PathTracerMode::NONE:
+            return;
+        case PathTracerMode::TILED:
+            LOG_ERROR("Not implmeneted");
+            [[fallthrough]];
+        case PathTracerMode::INTERACTIVE:
             break;
+        default:
+            CRASH_NOW_MSG("Invalid mode");
+            return;
+    }
+
+    if (!m_ptIndexBuffer) {
+        CreateAccelStructure(p_scene);
+    }
+
+    std::vector<GpuPtMesh> meshes;
+    UpdateAccelStructure(p_scene);
+    // @TODO: update mesh buffers
+}
+
+static void AppendVertices(const std::vector<GpuPtVertex>& p_source, std::vector<GpuPtVertex>& p_dest) {
+#if USING(ENABLE_ASSERT)
+    const int offset = (int)p_dest.size();
+    const int count = (int)p_source.size();
+#endif
+
+    p_dest.insert(p_dest.end(), p_source.begin(), p_source.end());
+
+    DEV_ASSERT((int)p_dest.size() == offset + count);
+}
+
+static void AppendIndices(const std::vector<GpuPtIndex>& p_source, std::vector<GpuPtIndex>& p_dest, int p_vertex_count) {
+#if 0
+    const int offset = (int)p_dest.size();
+    const int count = (int)p_source.size();
+    p_dest.resize(offset + count);
+    for (int i = 0; i < count; ++i) {
+        const auto& source = p_source[i];
+        auto& dest = p_dest[i + offset];
+        dest.tri = source.tri + p_vertex_count;
+    }
+#else
+    for (auto index : p_source) {
+        index.tri += p_vertex_count;
+        index._padding1 = 0;
+        p_dest.emplace_back(index);
+    }
+#endif
+}
+
+static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtBvh>& p_dest, int p_index_offset) {
+    const int offset = (int)p_dest.size();
+    auto adjust_index = [offset](int& p_index) {
+        if (p_index < 0) {
+            return;
+        }
+
+        p_index += offset;
+    };
+
+#if 0
+    for (auto bvh : p_source) {
+        adjust_index(bvh.hitIdx);
+        adjust_index(bvh.missIdx);
+        bvh.triangleIndex += p_index_offset;
+        p_dest.emplace_back(bvh);
+    }
+#else
+    const int count = (int)p_source.size();
+    p_dest.resize(offset + count);
+
+    for (int i = 0; i < count; ++i) {
+        const auto& source = p_source[i];
+        auto& dest = p_dest[i + offset];
+        dest = source;
+
+        adjust_index(dest.hitIdx);
+        adjust_index(dest.missIdx);
+        dest.triangleIndex += p_index_offset;
+    }
+#endif
+}
+
+void PathTracer::UpdateAccelStructure(const Scene& p_scene) {
+    const auto view = p_scene.View<ObjectComponent>();
+
+    std::vector<GpuPtMesh> meshes;
+    meshes.reserve(view.GetSize());
+    for (auto [id, object] : view) {
+        auto transform = p_scene.GetComponent<TransformComponent>(id);
+        auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
+        if (DEV_VERIFY(transform && mesh)) {
+            auto it = m_lut.find(object.meshId);
+            if (it == m_lut.end()) {
+                LOG_WARN("mesh not found");
+                continue;
+            }
+
+            GpuPtMesh gpu_pt_mesh;
+            gpu_pt_mesh.transform = transform->GetWorldMatrix();
+            gpu_pt_mesh.transformInv = glm::inverse(gpu_pt_mesh.transform);
+            gpu_pt_mesh.rootBvhId = it->second.rootBvhId;
+
+            // @TODO: fill offsets
+            meshes.push_back(gpu_pt_mesh);
         }
     }
+
+    auto gm = GraphicsManager::GetSingletonPtr();
+
+    GpuBufferDesc desc{
+        .slot = GetGlobalPtMeshesSlot(),
+        .elementSize = sizeof(meshes[0]),
+        .elementCount = static_cast<uint32_t>(meshes.size()),
+        .initialData = meshes.data(),
+    };
+
+    // @TODO: only update when dirty performance
+    m_ptMeshBuffer = *gm->CreateStructuredBuffer(desc);
+}
+
+bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
+    DEV_ASSERT(m_ptVertexBuffer == nullptr);
+
+    auto gm = GraphicsManager::GetSingletonPtr();
+
+    Timer timer;
+    GpuScene gpu_scene;
+
+    for (auto [id, object] : p_scene.m_ObjectComponents) {
+        auto transform = p_scene.GetComponent<TransformComponent>(id);
+        auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
+        if (DEV_VERIFY(transform && mesh)) {
+            auto it = m_lut.find(object.meshId);
+            if (it != m_lut.end()) {
+                continue;
+            }
+
+            const int bvh_count = (int)gpu_scene.bvhs.size();
+            const int index_count = (int)gpu_scene.indices.size();
+            const int vertex_count = (int)gpu_scene.vertices.size();
+
+            BvhMeta meta{ .rootBvhId = bvh_count };
+            m_lut[object.meshId] = meta;
+
+            GpuScene tmp_scene;
+            ConstructMesh(*mesh, tmp_scene);
+
+            AppendVertices(tmp_scene.vertices, gpu_scene.vertices);
+            AppendIndices(tmp_scene.indices, gpu_scene.indices, vertex_count);
+            AppendBvhs(tmp_scene.bvhs, gpu_scene.bvhs, index_count);
+        }
+    }
+
+    const uint32_t triangle_count = (uint32_t)gpu_scene.indices.size();
+    const uint32_t bvh_count = (uint32_t)gpu_scene.bvhs.size();
+
+    m_ptBvhBuffer = *CreateBuffer(gm, GetGlobalRtBvhsSlot(), gpu_scene.bvhs);
+    m_ptVertexBuffer = *CreateBuffer(gm, GetGlobalRtVerticesSlot(), gpu_scene.vertices);
+    m_ptIndexBuffer = *CreateBuffer(gm, GetGlobalRtIndicesSlot(), gpu_scene.indices);
+
+    LOG("Path tracer scene loaded in {}, contains {} triangles, {} BVH",
+        timer.GetDurationString(),
+        triangle_count,
+        bvh_count);
 
     /// materials
 #if 0
@@ -114,9 +298,9 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
             triangle.uv1 = uvs[0];
             triangle.uv2 = uvs[1];
             triangle.uv3 = uvs[2];
-            triangle.normal1 = math::normalize(Vector3f(normals[0].xyz));
-            triangle.normal2 = math::normalize(Vector3f(normals[1].xyz));
-            triangle.normal3 = math::normalize(Vector3f(normals[2].xyz));
+            triangle.normal1 = normalize(Vector3f(normals[0].xyz));
+            triangle.normal2 = normalize(Vector3f(normals[1].xyz));
+            triangle.normal3 = normalize(Vector3f(normals[2].xyz));
             triangle.kind = gpu_geometry_t::Kind::Triangle;
             auto it = material_lut.find(p_mesh.subsets[0].material_id);
             DEV_ASSERT(it != material_lut.end());
@@ -140,7 +324,7 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
             auto transform = p_scene.GetComponent<TransformComponent>(entity);
             DEV_ASSERT(transform);
             Vector3f rotation = (transform->GetWorldMatrix() * Vector4f::UnitZ).xyz;
-            rotation = math::normalize(rotation);
+            rotation = normalize(rotation);
             float radius = 1000.0f;
 
             Vector3f tmp;
@@ -176,6 +360,35 @@ void ConstructScene(const Scene& p_scene, GpuScene& p_gpu_scene) {
         }
     }
 #endif
+
+    return true;
+}
+
+bool PathTracer::IsActive() const {
+    if (m_mode != PathTracerMode::INTERACTIVE) {
+        return false;
+    }
+
+    if (m_ptBvhBuffer == nullptr) {
+        return false;
+    }
+
+    return true;
+}
+
+void PathTracer::BindData(GraphicsManager& p_gm) {
+    // @TODO: check null
+    p_gm.BindStructuredBuffer(GetGlobalPtMeshesSlot(), m_ptMeshBuffer.get());
+    p_gm.BindStructuredBuffer(GetGlobalRtBvhsSlot(), m_ptBvhBuffer.get());
+    p_gm.BindStructuredBuffer(GetGlobalRtVerticesSlot(), m_ptVertexBuffer.get());
+    p_gm.BindStructuredBuffer(GetGlobalRtIndicesSlot(), m_ptIndexBuffer.get());
+}
+
+void PathTracer::UnbindData(GraphicsManager& p_gm) {
+    p_gm.UnbindStructuredBuffer(GetGlobalRtBvhsSlot());
+    p_gm.UnbindStructuredBuffer(GetGlobalRtVerticesSlot());
+    p_gm.UnbindStructuredBuffer(GetGlobalRtIndicesSlot());
+    p_gm.UnbindStructuredBuffer(GetGlobalPtMeshesSlot());
 }
 
 }  // namespace my

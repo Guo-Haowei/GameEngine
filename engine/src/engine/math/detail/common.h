@@ -9,7 +9,7 @@
 #undef max
 #endif
 
-namespace my::math {
+namespace my {
 
 template<typename T = float>
     requires std::is_floating_point_v<T>
@@ -67,4 +67,4 @@ constexpr inline T clamp(const T& p_value, const T& p_min, const T& p_max) {
     return max(p_min, min(p_value, p_max));
 }
 
-}  // namespace my::math
+}  // namespace my

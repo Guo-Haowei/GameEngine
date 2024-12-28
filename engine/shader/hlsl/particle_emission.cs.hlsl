@@ -5,9 +5,6 @@
 float Random(float3 co, uint index) {
     return frac(sin(dot(float4(co.xyz, float(index)), float4(12.9898, 78.233, 45.5432, 22.1458))) * 43758.5453);
 }
-// float Random(float3 co, uint index) {
-//     return frac(sin(dot(co.xyz, float3(12.9898, 78.233, 45.5432))) * 43758.5453);
-// }
 
 uint pop_dead_index() {
     int index;

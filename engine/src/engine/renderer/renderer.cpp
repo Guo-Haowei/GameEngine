@@ -5,6 +5,7 @@
 #include "engine/core/framework/scene_manager.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/draw_data.h"
+#include "engine/renderer/path_tracer/path_tracer.h"
 
 // @TODO: refactor
 #include "engine/math/detail/matrix.h"
@@ -25,6 +26,7 @@ enum class RenderState {
 static struct {
     DrawData* renderData;
     RenderState state;
+    PathTracer pt;
 } s_glob;
 
 // @TODO: fix this
@@ -91,6 +93,9 @@ void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
     RenderDataConfig config(p_scene);
     config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
     PrepareRenderData(p_camera, config, *s_glob.renderData);
+
+    // @TODO: refactor
+    s_glob.pt.Update(p_scene);
 }
 
 void RequestBakingIbl() {
@@ -105,8 +110,8 @@ const DrawData* GetRenderData() {
     return s_glob.renderData;
 }
 
-void AddDebugCube(const math::AABB& p_aabb,
-                  const math::Color& p_color,
+void AddDebugCube(const AABB& p_aabb,
+                  const Color& p_color,
                   const Matrix4x4f* p_transform) {
     ASSERT_CAN_RECORD();
 
@@ -165,6 +170,22 @@ void FreePointLightShadowMap(PointShadowHandle& p_handle) {
     DEV_ASSERT_INDEX(p_handle, MAX_POINT_LIGHT_SHADOW_COUNT);
     s_freePointLightShadows.push_back(p_handle);
     p_handle = INVALID_POINT_SHADOW_HANDLE;
+}
+
+void SetPathTracerMode(PathTracerMode p_mode) {
+    s_glob.pt.SetMode(p_mode);
+}
+
+bool IsPathTracerActive() {
+    return s_glob.pt.IsActive();
+}
+
+void BindPathTracerData(GraphicsManager& p_gm) {
+    s_glob.pt.BindData(p_gm);
+}
+
+void UnbindPathTracerData(GraphicsManager& p_gm) {
+    s_glob.pt.UnbindData(p_gm);
 }
 
 }  // namespace my::renderer

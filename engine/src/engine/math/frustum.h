@@ -1,8 +1,8 @@
 #pragma once
-#include "engine/math/geomath.h"
 #include "engine/math/plane.h"
+#include "matrix_transform.h"
 
-namespace my::math {
+namespace my {
 
 class AABB;
 
@@ -28,4 +28,4 @@ private:
     friend class IntersectionTest;
 };
 
-}  // namespace my::math
+}  // namespace my

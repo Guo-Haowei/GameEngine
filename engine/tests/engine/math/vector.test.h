@@ -20,7 +20,7 @@
         EXPECT_EQ((VEC).w, d);      \
     }
 
-namespace my::math {
+namespace my {
 
 static_assert(sizeof(Vector2f) == 8);
 static_assert(sizeof(Vector3f) == 12);
@@ -32,4 +32,4 @@ static_assert(sizeof(Vector2u) == 8);
 static_assert(sizeof(Vector3u) == 12);
 static_assert(sizeof(Vector4u) == 16);
 
-}  // namespace my::math
+}  // namespace my

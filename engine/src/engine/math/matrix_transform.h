@@ -187,10 +187,6 @@ inline std::array<Matrix4x4f, 6> BuildOpenGlCubeMapViewMatrices(const Vector3f& 
 }
 #endif
 
-}  // namespace my
-
-namespace my::math {
-
 static inline Matrix4x4f Translate(const Vector3f& p_vec) {
     return glm::translate(glm::vec3(p_vec.x, p_vec.y, p_vec.z));
 }
@@ -207,4 +203,4 @@ static inline Matrix4x4f Rotate(const Radian& p_radians, const Vector3f& p_axis)
     return glm::rotate(p_radians.GetRad(), glm::vec3(p_axis.x, p_axis.y, p_axis.z));
 }
 
-}  // namespace my::math
+}  // namespace my

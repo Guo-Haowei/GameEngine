@@ -11,8 +11,11 @@
 #include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
 
-// @TODO: refactor
+namespace my {
 #include "cbuffer.hlsl.h"
+}  // namespace my
+
+// @TODO: refactor
 struct MaterialConstantBuffer;
 using my::renderer::RenderPass;
 
@@ -39,11 +42,6 @@ enum class RenderGraphName : uint8_t {
 };
 
 const char* ToString(RenderGraphName p_name);
-
-enum class PathTracerMethod {
-    ACCUMULATIVE,
-    TILED,
-};
 
 struct FrameContext {
     std::shared_ptr<GpuConstantBuffer> batchCb;
@@ -156,7 +154,6 @@ public:
     bool SetActiveRenderGraph(RenderGraphName p_name);
     renderer::RenderGraph* GetActiveRenderGraph();
     const auto& GetRenderGraphs() const { return m_renderGraphs; }
-    bool StartPathTracer(PathTracerMethod p_method);
 
     FrameContext& GetCurrentFrame() { return *(m_frameContexts[m_frameIndex].get()); }
 
@@ -202,11 +199,6 @@ public:
     // @TODO: make private
     std::shared_ptr<GpuMesh> m_boxBuffers;
     std::shared_ptr<GpuMesh> m_debugBuffers;
-
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerBvhBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerVertexBuffer;
-    std::shared_ptr<GpuStructuredBuffer> m_pathTracerTriangleBuffer;
-    bool m_bufferUpdated = false;
 
     const ImageAsset* m_brdfImage{ nullptr };
 

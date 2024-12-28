@@ -6,7 +6,15 @@
 namespace my {
 class PerspectiveCameraComponent;
 class Scene;
+class GraphicsManager;
 struct GpuTexture;
+
+enum class PathTracerMode {
+    NONE,
+    INTERACTIVE,
+    TILED,
+};
+
 }  // namespace my
 
 namespace my::renderer {
@@ -22,8 +30,8 @@ void BeginFrame();
 
 void EndFrame();
 
-void AddDebugCube(const math::AABB& p_aabb,
-                  const math::Color& p_color,
+void AddDebugCube(const AABB& p_aabb,
+                  const Color& p_color,
                   const Matrix4x4f* p_transform = nullptr);
 
 void AddImage2D(GpuTexture* p_texture,
@@ -40,5 +48,11 @@ const DrawData* GetRenderData();
 PointShadowHandle AllocatePointLightShadowMap();
 
 void FreePointLightShadowMap(PointShadowHandle& p_handle);
+
+// path tracer
+void SetPathTracerMode(PathTracerMode p_mode);
+bool IsPathTracerActive();
+void BindPathTracerData(GraphicsManager& p_gm);
+void UnbindPathTracerData(GraphicsManager& p_gm);
 
 }  // namespace my::renderer

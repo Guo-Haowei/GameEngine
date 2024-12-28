@@ -11,13 +11,16 @@
 #include "engine/renderer/graphics_private.h"
 #include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
-#include "structured_buffer.hlsl.h"
 
 // @TODO: refactor
 #include "engine/renderer/render_graph/render_graph_builder.h"
 
 #define INCLUDE_AS_D3D12
 #include "engine/drivers/d3d_common/d3d_convert.h"
+
+namespace my {
+#include "structured_buffer.hlsl.h"
+}  // namespace my
 
 namespace my {
 
@@ -723,7 +726,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
             default:
                 break;
         }
-        const uint32_t upload_pitch = byte_width * math::Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+        const uint32_t upload_pitch = byte_width * Align(4 * static_cast<int>(p_texture_desc.width), D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
         const uint32_t upload_size = p_texture_desc.height * upload_pitch;
         texture_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
         texture_desc.Alignment = 0;

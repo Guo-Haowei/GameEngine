@@ -82,7 +82,8 @@ void ReportErrorIndexImpl(std::string_view p_function,
 // @TODO: use same crash handler
 // @TODO: flush
 
-#define ENABLE_CHECK USE_IF(USING(DEBUG_BUILD))
+#define ENABLE_CHECK  USE_IF(USING(DEBUG_BUILD))
+#define ENABLE_ASSERT IN_USE
 
 #define CRASH_NOW()                                                                              \
     do {                                                                                         \
@@ -110,6 +111,7 @@ void ReportErrorIndexImpl(std::string_view p_function,
     } else                                                                                                          \
         (void)0
 
+#if USING(ENABLE_ASSERT)
 #define DEV_ASSERT(EXPR)                                                                                    \
     if (auto _cond = !!(EXPR); !_cond) [[unlikely]] {                                                       \
         my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: DEV_ASSERT failed (" _STR(EXPR) ")"); \
@@ -131,6 +133,11 @@ void ReportErrorIndexImpl(std::string_view p_function,
         GENERATE_TRAP();                                                                                             \
     } else                                                                                                           \
         ((void)0)
+#else
+#define DEV_ASSERT(...)       ((void)0)
+#define DEV_ASSERT_MSG(...)   ((void)0)
+#define DEV_ASSERT_INDEX(...) ((void)0)
+#endif
 
 #define DEV_VERIFY_CHECK(EXPR) \
     ((EXPR) || (my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, "FATAL: Condition \"" _STR(EXPR) "\" is false."), false))

@@ -3,10 +3,10 @@
 #include "detail/matrix.h"
 #include "detail/vector_math.h"
 
-namespace my::math {
+namespace my {
 
 Vector3f Ray::Direction() const {
-    return math::normalize(m_end - m_start);
+    return normalize(m_end - m_start);
 }
 
 Ray Ray::Inverse(const Matrix4x4f& p_inverse_matrix) const {
@@ -17,4 +17,4 @@ Ray Ray::Inverse(const Matrix4x4f& p_inverse_matrix) const {
     return inversed_ray;
 }
 
-}  // namespace my::math
+}  // namespace my

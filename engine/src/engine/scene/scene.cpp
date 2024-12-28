@@ -10,8 +10,8 @@
 #include "engine/systems/job_system/job_system.h"
 
 // @TODO: refactor
-#include "engine/renderer/bvh_accel.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/path_tracer/bvh_accel.h"
 
 namespace my::ecs {
 
@@ -24,9 +24,7 @@ REGISTER_COMPONENT_LIST
 
 namespace my {
 
-using ::my::jobsystem::Context;
-using ::my::math::AABB;
-using ::my::math::Ray;
+using jobsystem::Context;
 
 static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
 
@@ -52,6 +50,7 @@ void Scene::Update(float p_time_step) {
     HBN_PROFILE_EVENT();
 
     m_timestep = p_time_step;
+    m_dirtyFlags.store(0);
 
     Context ctx;
     // animation
@@ -77,7 +76,9 @@ void Scene::Update(float p_time_step) {
 
     // @TODO: refactor
     for (auto [entity, camera] : m_PerspectiveCameraComponents) {
-        camera.Update();
+        if (camera.Update()) {
+            m_dirtyFlags.fetch_or(SCENE_DIRTY_CAMERA);
+        }
     }
 
     for (auto [entity, voxel_gi] : m_VoxelGiComponents) {
@@ -790,7 +791,11 @@ void Scene::RunLightUpdateSystem(Context& p_context) {
 
 void Scene::RunTransformationUpdateSystem(Context& p_context) {
     HBN_PROFILE_EVENT();
-    JS_PARALLEL_FOR(TransformComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, GetComponentByIndex<TransformComponent>(index).UpdateTransform());
+    JS_PARALLEL_FOR(TransformComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, {
+        if (GetComponentByIndex<TransformComponent>(index).UpdateTransform()) {
+            m_dirtyFlags.fetch_or(SCENE_DIRTY_WORLD);
+        }
+    });
 }
 
 void Scene::RunAnimationUpdateSystem(Context& p_context) {

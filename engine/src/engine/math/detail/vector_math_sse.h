@@ -6,7 +6,7 @@
 #include "vector3.h"
 #include "vector4.h"
 
-namespace my::math {
+namespace my {
 
 static_assert(alignof(__m128) == 16);
 
@@ -70,4 +70,4 @@ inline Vector<float, 4> operator/=(Vector<float, 4>& p_lhs, const Vector<float, 
     return p_lhs;
 }
 
-}  // namespace my::math
+}  // namespace my

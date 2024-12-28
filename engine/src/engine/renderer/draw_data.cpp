@@ -13,12 +13,12 @@
 #include "engine/core/framework/input_manager.h"
 #include "engine/math/detail/matrix.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/bvh_accel.h"
+#include "engine/renderer/path_tracer/bvh_accel.h"
 
 namespace my::renderer {
 
-using my::math::AABB;
-using my::math::Frustum;
+using my::AABB;
+using my::Frustum;
 
 using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
 using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
@@ -180,7 +180,7 @@ static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matri
 
     if (p_bvh->depth == p_level) {
         renderer::AddDebugCube(p_bvh->aabb,
-                               math::Color::HexRgba(0xFFFF0037),
+                               Color::HexRgba(0xFFFF0037),
                                p_matrix);
     }
 
@@ -198,6 +198,8 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     cache.c_debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
     cache.c_noTexture = DVAR_GET_BOOL(gfx_no_texture);
 
+    cache.c_ptObjectCount = (int)p_config.scene.m_ObjectComponents.GetCount();
+
     // Bloom
     cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
     cache.c_enableBloom = DVAR_GET_BOOL(gfx_enable_bloom);
@@ -212,8 +214,7 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     static int s_frameIndex = 0;
     cache.c_frameIndex = s_frameIndex++;
     // @TODO: fix this
-    // cache.c_sceneDirty = false;
-    cache.c_sceneDirty = true;
+    cache.c_sceneDirty = p_config.scene.GetDirtyFlags() != SCENE_DIRTY_NONE;
 
     // Force fields
 
@@ -280,8 +281,6 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
                 }
             }
         }
-        for (auto const [entity, mesh] : p_config.scene.m_MeshComponents) {
-        }
     }
 }
 
@@ -313,7 +312,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
             case LIGHT_TYPE_INFINITE: {
                 Matrix4x4f light_local_matrix = light_transform->GetLocalMatrix();
                 Vector3f light_dir((light_local_matrix * Vector4f::UnitZ).xyz);
-                light_dir = math::normalize(light_dir);
+                light_dir = normalize(light_dir);
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 
@@ -323,7 +322,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
                 Vector3f center = world_bound.Center();
                 Vector3f extents = world_bound.Size();
 
-                const float size = 0.7f * math::max(extents.x, math::max(extents.y, extents.z));
+                const float size = 0.7f * max(extents.x, max(extents.y, extents.z));
                 Vector3f tmp;
                 tmp.Set(&light_dir.x);
                 light.view_matrix = LookAtRh(center + tmp * size, center, Vector3f::UnitY);
@@ -428,7 +427,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     }
 
     if (show_debug) {
-        renderer::AddDebugCube(voxel_gi_bound, math::Color(0.5f, 0.3f, 0.6f, 0.5f));
+        renderer::AddDebugCube(voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
     }
 
     auto& cache = p_out_data.perFrameCache;
@@ -442,7 +441,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
 
     // @TODO: refactor the following
     const int voxel_texture_size = DVAR_GET_INT(gfx_voxel_size);
-    DEV_ASSERT(math::IsPowerOfTwo(voxel_texture_size));
+    DEV_ASSERT(IsPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
     const auto voxel_world_center = voxel_gi_bound.Center();
@@ -589,8 +588,8 @@ static void FillMeshEmitterBuffer(const RenderDataConfig& p_config,
             for (auto index : emitter.aliveList) {
                 const auto& p = emitter.particles[index.v];
 
-                Matrix4x4f translation = math::Translate(p.position);
-                Matrix4x4f scale = math::Scale(Vector3f(p.scale));
+                Matrix4x4f translation = Translate(p.position);
+                Matrix4x4f scale = Scale(Vector3f(p.scale));
                 Matrix4x4f rotation = glm::toMat4(glm::quat(glm::vec3(p.rotation.x, p.rotation.y, p.rotation.z)));
                 gpu_buffer.c_bones[i++] = translation * rotation * scale;
             }
@@ -666,7 +665,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.front = p_camera.GetFront();
         camera.right = p_camera.GetRight();
-        camera.up = math::cross(camera.front, camera.right);
+        camera.up = cross(camera.front, camera.right);
     }
 
     // @TODO: update soft body

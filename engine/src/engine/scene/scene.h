@@ -45,6 +45,14 @@ enum class PhysicsMode : uint8_t {
     COUNT,
 };
 
+enum SceneDirtyFlags : uint32_t {
+    SCENE_DIRTY_NONE = BIT(0),
+    SCENE_DIRTY_WORLD = BIT(1),
+    SCENE_DIRTY_CAMERA = BIT(2),
+    SCENE_DIRTY_LIGHT = BIT(3),
+};
+DEFINE_ENUM_BITWISE_OPERATIONS(SceneDirtyFlags);
+
 class Scene : public NonCopyable, public IAsset {
     ecs::ComponentLibrary m_componentLib;
 
@@ -239,10 +247,10 @@ public:
         ecs::Entity entity;
     };
 
-    RayIntersectionResult Intersects(math::Ray& p_ray);
-    bool RayObjectIntersect(ecs::Entity p_object_id, math::Ray& p_ray);
+    RayIntersectionResult Intersects(Ray& p_ray);
+    bool RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray);
 
-    const math::AABB& GetBound() const { return m_bound; }
+    const AABB& GetBound() const { return m_bound; }
 
     // @TODO: refactor
     ecs::Entity m_root;
@@ -255,6 +263,7 @@ public:
     mutable lua_State* L{ nullptr };
 
     const auto& GetLibraryEntries() const { return m_componentLib.m_entries; }
+    const SceneDirtyFlags GetDirtyFlags() const { return static_cast<SceneDirtyFlags>(m_dirtyFlags.load()); }
 
 private:
     void UpdateHierarchy(size_t p_index);
@@ -271,7 +280,9 @@ private:
     void RunMeshEmitterUpdateSystem(jobsystem::Context& p_context);
 
     // @TODO: refactor
-    math::AABB m_bound;
+    AABB m_bound;
+
+    std::atomic<uint32_t> m_dirtyFlags{ SCENE_DIRTY_NONE };
 };
 
 }  // namespace my
