@@ -39,13 +39,80 @@ static void ConstructMesh(const MeshComponent& p_mesh, GpuScene& p_gpu_scene) {
 
     p_mesh.bvh->FillGpuBvhAccel(p_gpu_scene.bvhs);
     for (size_t i = 0; i < p_mesh.positions.size(); ++i) {
-        p_gpu_scene.vertices.push_back({ p_mesh.positions[i], p_mesh.normals[i] });
+        GpuPtVertex vertex;
+        vertex.position = p_mesh.positions[i];
+        vertex.normal = p_mesh.normals[i];
+        p_gpu_scene.vertices.emplace_back(vertex);
     }
 
     for (size_t i = 0; i < p_mesh.indices.size(); i += 3) {
-        p_gpu_scene.indices.emplace_back(Vector3i(p_mesh.indices[i],
-                                                  p_mesh.indices[i + 1],
-                                                  p_mesh.indices[i + 2]));
+        GpuPtIndex index;
+        index.tri = Vector3i(p_mesh.indices[i],
+                             p_mesh.indices[i + 1],
+                             p_mesh.indices[i + 2]);
+        p_gpu_scene.indices.emplace_back(index);
+    }
+}
+
+void PathTracer::Update(const Scene& p_scene) {
+    switch (m_mode) {
+        case PathTracerMode::NONE:
+            return;
+        case PathTracerMode::TILED:
+            LOG_ERROR("Not implmeneted");
+            [[fallthrough]];
+        case PathTracerMode::INTERACTIVE:
+            break;
+        default:
+            CRASH_NOW_MSG("Invalid mode");
+            return;
+    }
+
+    if (!m_ptIndexBuffer) {
+        CreateAccelStructure(p_scene);
+    }
+
+    std::vector<GpuPtMesh> meshes;
+    UpdateAccelStructure(p_scene);
+    // @TODO: update mesh buffers
+}
+
+static void AppendVertices(const std::vector<GpuPtVertex>& p_source, std::vector<GpuPtVertex>& p_dest) {
+    p_dest.insert(p_dest.end(), p_source.begin(), p_source.end());
+}
+
+static void AppendIndices(const std::vector<GpuPtIndex>& p_source, std::vector<GpuPtIndex>& p_dest, int p_vertex_count) {
+    const int offset = (int)p_dest.size();
+    const int count = (int)p_source.size();
+    p_dest.resize(offset + count);
+    for (int i = 0; i < count; ++i) {
+        const auto& source = p_source[i];
+        auto& dest = p_dest[i + offset];
+        dest.tri = source.tri + p_vertex_count;
+    }
+}
+
+static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtBvh>& p_dest, int p_index_offset) {
+    const int offset = (int)p_dest.size();
+    const int count = (int)p_source.size();
+    p_dest.resize(offset + count);
+
+    auto adjust_index = [offset](int& p_index) {
+        if (p_index == -1) {
+            return;
+        }
+
+        p_index += offset;
+    };
+
+    for (int i = 0; i < count; ++i) {
+        const auto& source = p_source[i];
+        auto& dest = p_dest[i + offset];
+        dest = source;
+
+        adjust_index(dest.hitIdx);
+        adjust_index(dest.missIdx);
+        dest.triangleIndex += p_index_offset;
     }
 }
 
@@ -87,68 +154,6 @@ void PathTracer::UpdateAccelStructure(const Scene& p_scene) {
     m_ptMeshBuffer = *gm->CreateStructuredBuffer(desc);
 }
 
-void PathTracer::Update(const Scene& p_scene) {
-    switch (m_mode) {
-        case PathTracerMode::NONE:
-            return;
-        case PathTracerMode::TILED:
-            LOG_ERROR("Not implmeneted");
-            [[fallthrough]];
-        case PathTracerMode::INTERACTIVE:
-            break;
-        default:
-            CRASH_NOW_MSG("Invalid mode");
-            return;
-    }
-
-    if (!m_ptIndexBuffer) {
-        CreateAccelStructure(p_scene);
-    }
-
-    std::vector<GpuPtMesh> meshes;
-    UpdateAccelStructure(p_scene);
-    // @TODO: update mesh buffers
-}
-
-static void AppendVertices(const std::vector<GpuPtVertex>& p_source, std::vector<GpuPtVertex>& p_dest) {
-    p_dest.insert(p_dest.end(), p_source.begin(), p_source.end());
-}
-
-static void AppendIndices(const std::vector<Vector3i>& p_source, std::vector<Vector3i>& p_dest, int p_vertex_count) {
-    const int offset = (int)p_dest.size();
-    const int count = (int)p_source.size();
-    p_dest.resize(offset + count);
-    for (int i = 0; i < count; ++i) {
-        const auto& source = p_source[i];
-        auto& dest = p_dest[i + offset];
-        dest = source + p_vertex_count;
-    }
-}
-
-static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtBvh>& p_dest, int p_index_offset) {
-    const int offset = (int)p_dest.size();
-    const int count = (int)p_source.size();
-    p_dest.resize(offset + count);
-
-    auto adjust_index = [offset](int& p_index) {
-        if (p_index == -1) {
-            return;
-        }
-
-        p_index += offset;
-    };
-
-    for (int i = 0; i < count; ++i) {
-        const auto& source = p_source[i];
-        auto& dest = p_dest[i + offset];
-        dest = source;
-
-        adjust_index(dest.hitIdx);
-        adjust_index(dest.missIdx);
-        dest.triangleIndex += p_index_offset;
-    }
-}
-
 bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
     DEV_ASSERT(m_ptVertexBuffer == nullptr);
 
@@ -156,20 +161,25 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
 
     Timer timer;
     GpuScene gpu_scene;
-    for (auto [id, mesh] : p_scene.m_MeshComponents) {
-        const int bvh_count = (int)gpu_scene.bvhs.size();
-        const int index_count = (int)gpu_scene.indices.size();
-        const int vertex_count = (int)gpu_scene.vertices.size();
 
-        auto it = m_lut.find(id);
-        if (it == m_lut.end()) {
-            BvhMeta meta{
-                .rootBvhId = bvh_count
-            };
-            m_lut[id] = meta;
+    for (auto [id, object] : p_scene.m_ObjectComponents) {
+        auto transform = p_scene.GetComponent<TransformComponent>(id);
+        auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
+        if (DEV_VERIFY(transform && mesh)) {
+            auto it = m_lut.find(object.meshId);
+            if (it != m_lut.end()) {
+                continue;
+            }
+
+            const int bvh_count = (int)gpu_scene.bvhs.size();
+            const int index_count = (int)gpu_scene.indices.size();
+            const int vertex_count = (int)gpu_scene.vertices.size();
+
+            BvhMeta meta{ .rootBvhId = bvh_count };
+            m_lut[object.meshId] = meta;
 
             GpuScene tmp_scene;
-            ConstructMesh(mesh, tmp_scene);
+            ConstructMesh(*mesh, tmp_scene);
 
             AppendVertices(tmp_scene.vertices, gpu_scene.vertices);
             AppendIndices(tmp_scene.indices, gpu_scene.indices, vertex_count);

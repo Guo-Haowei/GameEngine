@@ -6,19 +6,60 @@ layout(rgba32f, binding = 2) uniform image2D u_PathTracerOutputImage;
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
+#include "../shared_path_tracer.h"
+
+void main() {
+    ivec2 iPixelCoords = ivec2(gl_GlobalInvocationID.xy);
+
+    vec2 fPixelCoords = vec2(float(iPixelCoords.x), float(iPixelCoords.y));
+    ivec2 dims = imageSize(u_PathTracerOutputImage);
+
+    uint seed = uint(uint(iPixelCoords.x) * uint(1973) + uint(iPixelCoords.y) * uint(9277) + uint(c_frameIndex) * uint(26699)) | uint(1);
+
+    // [-0.5, 0.5]
+    vec2 jitter = vec2(Random(seed), Random(seed)) - 0.5f;
+
+    vec3 rayDir;
+    {
+        // screen position from [-1, 1]
+        vec2 uvJitter = (fPixelCoords + jitter) / dims;
+        vec2 screen = 2.0 * uvJitter - 1.0;
+
+        // adjust for aspect ratio
+        vec2 resolution = vec2(float(dims.x), float(dims.y));
+        float aspectRatio = resolution.x / resolution.y;
+        screen.y /= aspectRatio;
+        float halfFov = c_cameraFovDegree;
+        float camDistance = tan(halfFov * MY_PI / 180.0);
+        rayDir = vec3(screen, camDistance);
+        rayDir = normalize(mat3(c_cameraRight, c_cameraUp, c_cameraForward) * rayDir);
+    }
+
+    Ray ray;
+    ray.origin = c_cameraPosition;
+    ray.direction = rayDir;
+    ray.invDir = 1.0f / ray.direction;
+    ray.t = RAY_T_MAX;
+
+    vec3 radiance = RayColor(ray, seed);
+
+    vec4 final_color = vec4(radiance, 1.0);
+    if (c_sceneDirty == 0) {
+        vec4 accumulated = imageLoad(u_PathTracerOutputImage, iPixelCoords);
+        float weight = accumulated.a;
+        vec3 new_color = radiance + weight * accumulated.rgb;
+        float new_weight = accumulated.a + 1.0;
+        new_color /= new_weight;
+        final_color = vec4(new_color, new_weight);
+    }
+
+    imageStore(u_PathTracerOutputImage, iPixelCoords, final_color);
+}
+
+#if 0
 //------------------------------------------------------------------------------
 // Definitions
 //------------------------------------------------------------------------------
-#ifndef PI
-#define PI            3.14159265359
-#define TWO_PI        6.28318530718
-#endif
-#define EPSILON       1e-6
-#define MAX_BOUNCE    10
-#define RAY_T_MIN     1e-6
-#define RAY_T_MAX     9999999.0
-#define TRIANGLE_KIND 1
-#define SPHERE_KIND   2
 
 struct Ray {
     vec3 origin;
@@ -258,51 +299,4 @@ vec3 RayColor(inout Ray ray, inout uint state) {
 }
 
 uint g_seed;
-
-void main() {
-    // random seed
-    // [0, width], [0, height]
-    ivec2 iPixelCoords = ivec2(gl_GlobalInvocationID.xy);
-    // iPixelCoords += tileOffset;
-    vec2 fPixelCoords = vec2(float(iPixelCoords.x), float(iPixelCoords.y));
-    ivec2 dims = imageSize(u_PathTracerOutputImage);
-    g_seed = uint(uint(iPixelCoords.x) * uint(1973) + uint(iPixelCoords.y) * uint(9277) + uint(c_frameIndex) * uint(26699)) | uint(1);
-
-    // [-0.5, 0.5]
-    vec2 jitter = vec2(Random(g_seed), Random(g_seed)) - 0.5;
-
-    vec3 rayDir;
-    {
-        // screen position from [-1, 1]
-        vec2 uvJitter = (fPixelCoords + jitter) / dims;
-        vec2 screen = 2.0 * uvJitter - 1.0;
-
-        // adjust for aspect ratio
-        vec2 resolution = vec2(float(dims.x), float(dims.y));
-        float aspectRatio = resolution.x / resolution.y;
-        screen.y /= aspectRatio;
-        float halfFov = c_cameraFovDegree;
-        float camDistance = tan(halfFov * PI / 180.0);
-        rayDir = vec3(screen, camDistance);
-        rayDir = normalize(mat3(c_cameraRight, c_cameraUp, c_cameraForward) * rayDir);
-    }
-
-    Ray ray;
-    ray.origin = c_cameraPosition;
-    ray.direction = rayDir;
-    ray.t = RAY_T_MAX;
-
-    vec3 radiance = RayColor(ray, g_seed);
-
-    vec4 final_color = vec4(radiance, 1.0);
-    if (c_sceneDirty == 0) {
-        vec4 accumulated = imageLoad(u_PathTracerOutputImage, iPixelCoords);
-        float weight = accumulated.a;
-        vec3 new_color = radiance + weight * accumulated.rgb;
-        float new_weight = accumulated.a + 1.0;
-        new_color /= new_weight;
-        final_color = vec4(new_color, new_weight);
-    }
-
-    imageStore(u_PathTracerOutputImage, iPixelCoords, final_color);
-}
+#endif

@@ -13,7 +13,7 @@ struct GpuScene {
     // @TODO: material
     std::vector<GpuPtBvh> bvhs;
     std::vector<GpuPtVertex> vertices;
-    std::vector<Vector3i> indices;
+    std::vector<GpuPtIndex> indices;
 };
 
 // @TODO: make it a layer?

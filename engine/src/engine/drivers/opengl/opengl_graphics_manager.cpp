@@ -1,5 +1,7 @@
 #include "opengl_graphics_manager.h"
 
+#include <imgui/backends/imgui_impl_opengl3.h>
+
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/asset_manager.h"
@@ -12,7 +14,6 @@
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/scene/scene.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
 #include "vsinput.glsl.h"
 
 // @NOTE: include GLFW after opengl
@@ -22,11 +23,15 @@
 #include "engine/renderer/ltc_matrix.h"
 #include "engine/renderer/render_graph/render_graph_builder.h"
 
-// @TODO: refactor
-using namespace my;
-using my::renderer::RenderGraph;
-using my::renderer::RenderPass;
+#define RESIDENT_TEXTURE USE_IF(USING(PLATFORM_WINDOWS))
 
+//-----------------------------------------------------------------------------------------------------------------
+
+namespace my {
+using renderer::RenderGraph;
+using renderer::RenderPass;
+
+// @TODO: refactor
 static unsigned int LoadMTexture(const float* matrixTable) {
     unsigned int texture = 0;
     glGenTextures(1, &texture);
@@ -40,15 +45,16 @@ static unsigned int LoadMTexture(const float* matrixTable) {
     return texture;
 }
 
-static uint64_t MakeTextureResident(uint32_t texture) {
-    uint64_t ret = glGetTextureHandleARB(texture);
+static uint64_t MakeTextureResident(uint32_t p_handle) {
+    unused(p_handle);
+#if USING(RESIDENT_TEXTURE)
+    uint64_t ret = glGetTextureHandleARB(p_handle);
     glMakeTextureHandleResidentARB(ret);
     return ret;
+#else
+    return 0;
+#endif
 }
-
-//-----------------------------------------------------------------------------------------------------------------
-
-namespace my {
 
 static void APIENTRY DebugCallback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
@@ -517,8 +523,12 @@ std::shared_ptr<GpuTexture> OpenGlGraphicsManager::CreateTextureImpl(const GpuTe
 
     glBindTexture(texture_type, 0);
 
+#if USING(RESIDENT_TEXTURE)
     GLuint64 resident_id = glGetTextureHandleARB(texture_id);
     glMakeTextureHandleResidentARB(resident_id);
+#else
+    GLuint64 resident_id = 0;
+#endif
 
     auto texture = std::make_shared<OpenGlGpuTexture>(p_texture_desc);
     texture->handle = texture_id;

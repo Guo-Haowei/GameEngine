@@ -5,7 +5,7 @@
 #include "unordered_access_defines.hlsl.h"
 
 // @NOTE: include this at last
-#include "path_tracer.hlsl.h"
+#include "shared_path_tracer.h"
 
 [numthreads(16, 16, 1)] void main(uint3 p_dispatch_thread_id : SV_DISPATCHTHREADID) {
     // random seed

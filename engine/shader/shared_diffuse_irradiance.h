@@ -1,4 +1,4 @@
-/// File: ibl_diffuse_irradiance.ps.hlsl.h
+/// File: shared_diffuse_irradiance.h
 #define SAMPLE_STEP 0.025f
 
 #if defined(GLSL_LANG)

@@ -1,4 +1,4 @@
-/// File: path_tracer.hlsl.h
+/// File: shared_path_tracer.h
 #if defined(__cplusplus)
 #include <engine/math/vector.h>
 
@@ -15,7 +15,7 @@ using std::sin;
 using std::sqrt;
 
 extern GpuPtVertex GlobalRtVertices[];
-extern Vector3i GlobalRtIndices[];
+extern GpuPtIndex GlobalRtIndices[];
 extern GpuPtBvh GlobalRtBvhs[];
 extern GpuPtMesh GlobalPtMeshes[];
 #endif
@@ -26,6 +26,10 @@ extern GpuPtMesh GlobalPtMeshes[];
 #define RAY_T_MAX     999999999.0
 #define TRIANGLE_KIND 1
 #define SPHERE_KIND   2
+
+#if defined(GLSL_LANG)
+#define mul(a, b) ((a) * (b))
+#endif
 
 struct Ray {
     Vector3f origin;
@@ -80,7 +84,7 @@ Vector3f RandomUnitVector(inout uint p_state) {
 HitResult HitTriangle(inout Ray p_ray, int p_triangle_id) {
     // P = A + u(B - A) + v(C - A) => O - A = -tD + u(B - A) + v(C - A)
     // -tD + uAB + vAC = AO
-    Vector3i indices = GlobalRtIndices[p_triangle_id];
+    Vector3i indices = GlobalRtIndices[p_triangle_id].tri;
     Vector3f A = GlobalRtVertices[indices.x].position;
     Vector3f B = GlobalRtVertices[indices.y].position;
     Vector3f C = GlobalRtVertices[indices.z].position;
@@ -147,7 +151,11 @@ HitResult HitScene(inout Ray p_ray) {
     bool anyHit = false;
 
     // check if it hits all the objects
+#if 0
+    for (int mesh_id = 0; mesh_id < 1; ++mesh_id) {
+#else
     for (int mesh_id = 0; mesh_id < c_ptObjectCount; ++mesh_id) {
+#endif
         GpuPtMesh mesh = GlobalPtMeshes[mesh_id];
         Matrix4x4f inversed = mesh.transformInv;
         Ray local_ray;
@@ -191,7 +199,7 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
             // @TODO: apply matrix
             Matrix4x4f transform = GlobalPtMeshes[result.hitMeshId].transform;
 
-            Vector3i indices = GlobalRtIndices[result.hitTriangleId];
+            Vector3i indices = GlobalRtIndices[result.hitTriangleId].tri;
             Vector3f n1 = GlobalRtVertices[indices.x].normal;
             Vector3f n2 = GlobalRtVertices[indices.y].normal;
             Vector3f n3 = GlobalRtVertices[indices.z].normal;

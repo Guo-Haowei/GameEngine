@@ -1,4 +1,4 @@
-/// File: ibl_prefilter.ps.hlsl.h
+/// File: shared_prefilter.h
 #define SAMPLE_COUNT 1024u
 
 #if defined(GLSL_LANG)

@@ -48,7 +48,7 @@ ps_output main(vsoutput_mesh input) {
 
     ps_output output;
     output.base_color = color;
-#if 1
+#if 0
     output.base_color = float4(0.5f * N + 0.5f, 1.0f);
 #endif
 
