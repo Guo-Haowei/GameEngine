@@ -28,9 +28,7 @@ struct GpuPtBvh {
     int hitIdx;
 
     int leaf;
-    int meshIndex;
     int triangleIndex;
-    int _padding_1;
 };
 
 struct GpuPtVertex {
@@ -41,7 +39,7 @@ struct GpuPtVertex {
 struct GpuPtMesh {
     Matrix4x4f transform;
     Matrix4x4f transformInv;
-    // int bvhOffset;
+    int rootBvhId;
     // int vertexOffset;
     // int indexOffset;
 };

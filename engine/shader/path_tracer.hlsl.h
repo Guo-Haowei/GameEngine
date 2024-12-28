@@ -137,16 +137,6 @@ bool HitBvh(in Ray p_ray, in Vector3f p_min, in Vector3f p_max) {
     //(dst_near < dst_far) && (p_ray.t > dst_near) && (dst_far > 0.0f);
 }
 
-Ray TransformRay(in Ray p_ray, int p_mesh_id) {
-    Matrix4x4f inversed = GlobalPtMeshes[p_mesh_id].transformInv;
-    Ray ray;
-    ray.origin = mul(inversed, Vector4f(p_ray.origin, 1.0f)).xyz;
-    ray.direction = mul(inversed, Vector4f(p_ray.direction, 0.0f)).xyz;
-    ray.invDir = 1.0f / ray.direction;  
-    ray.t = p_ray.t;
-    return ray;
-}
-
 // @TODO: hit result
 HitResult HitScene(inout Ray p_ray) {
     HitResult res;
@@ -157,11 +147,17 @@ HitResult HitScene(inout Ray p_ray) {
     bool anyHit = false;
 
     // check if it hits all the objects
-    for (int mesh_id = 0; mesh_id < 1; ++mesh_id) {
-        Ray local_ray = TransformRay(p_ray, mesh_id);
+    for (int mesh_id = 0; mesh_id < c_ptObjectCount; ++mesh_id) {
+        GpuPtMesh mesh = GlobalPtMeshes[mesh_id];
+        Matrix4x4f inversed = mesh.transformInv;
+        Ray local_ray;
+        local_ray.origin = mul(inversed, Vector4f(p_ray.origin, 1.0f)).xyz;
+        local_ray.direction = mul(inversed, Vector4f(p_ray.direction, 0.0f)).xyz;
+        local_ray.invDir = 1.0f / local_ray.direction;
+        local_ray.t = p_ray.t;
 
         // @TODO: bvh start, it should stored in mesh
-        int bvhIndex = 0;
+        int bvhIndex = mesh.rootBvhId;
         while (bvhIndex != -1) {
             GpuPtBvh bvh = GlobalRtBvhs[bvhIndex];
             if (HitBvh(local_ray, bvh.min, bvh.max)) {
@@ -170,6 +166,7 @@ HitResult HitScene(inout Ray p_ray) {
                     if (result.hitTriangleId != -1) {
                         res.hitTriangleId = result.hitTriangleId;
                         res.hitMeshId = mesh_id;
+                        p_ray.t = local_ray.t;
                         anyHit = true;
                     }
                 }
@@ -178,7 +175,6 @@ HitResult HitScene(inout Ray p_ray) {
                 bvhIndex = bvh.missIdx;
             }
         }
-        p_ray.t = local_ray.t;
     }
 
     return res;

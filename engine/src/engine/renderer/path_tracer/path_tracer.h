@@ -39,7 +39,7 @@ private:
     std::shared_ptr<GpuStructuredBuffer> m_ptMeshBuffer;
 
     struct BvhMeta {
-        uint32_t bvh_offset;
+        int rootBvhId;
     };
 
     // @TODO: rename

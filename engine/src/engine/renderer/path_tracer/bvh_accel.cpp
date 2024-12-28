@@ -233,7 +233,7 @@ void BvhAccel::DiscoverIdx() {
     hitIndex = left ? left->index : missIndex;
 }
 
-void BvhAccel::FillGpuBvhAccel(int p_mesh_index, std::vector<GpuPtBvh>& p_out) {
+void BvhAccel::FillGpuBvhAccel(std::vector<GpuPtBvh>& p_out) {
     DiscoverIdx();
     DEV_ASSERT(aabb.IsValid());
 
@@ -243,7 +243,6 @@ void BvhAccel::FillGpuBvhAccel(int p_mesh_index, std::vector<GpuPtBvh>& p_out) {
     gpu_bvh.hitIdx = hitIndex;
     gpu_bvh.missIdx = missIndex;
     gpu_bvh.leaf = !!isLeaf;
-    gpu_bvh.meshIndex = p_mesh_index;
     gpu_bvh.triangleIndex = -1;
     if (isLeaf) {
         DEV_ASSERT(triangleIndex != -1);
@@ -252,10 +251,10 @@ void BvhAccel::FillGpuBvhAccel(int p_mesh_index, std::vector<GpuPtBvh>& p_out) {
 
     p_out.push_back(gpu_bvh);
     if (left) {
-        left->FillGpuBvhAccel(p_mesh_index, p_out);
+        left->FillGpuBvhAccel(p_out);
     }
     if (right) {
-        right->FillGpuBvhAccel(p_mesh_index, p_out);
+        right->FillGpuBvhAccel(p_out);
     }
 }
 

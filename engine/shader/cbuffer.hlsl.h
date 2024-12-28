@@ -176,8 +176,10 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     //-----------------------------------------
 
-    Vector4f c_ambientColor;        // 16
-    Vector4f _per_frame_padding_4;  // 16
+    Vector4f c_ambientColor;  // 16
+
+    int c_ptObjectCount;
+    Vector3f _per_frame_padding_4;  // 16
 
     sampler2D c_SkyboxResidentHandle;
     sampler2D c_SkyboxHdrResidentHandle;  // 16

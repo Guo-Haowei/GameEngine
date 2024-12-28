@@ -33,7 +33,7 @@ struct BvhAccel {
     static Ref Construct(const std::vector<uint32_t>& p_indices,
                          const std::vector<Vector3f>& p_vertices);
 
-    void FillGpuBvhAccel(int p_mesh_index, std::vector<GpuPtBvh>& p_out);
+    void FillGpuBvhAccel(std::vector<GpuPtBvh>& p_out);
 };
 
 }  // namespace my

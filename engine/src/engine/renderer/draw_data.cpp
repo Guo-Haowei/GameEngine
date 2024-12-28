@@ -198,6 +198,8 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     cache.c_debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
     cache.c_noTexture = DVAR_GET_BOOL(gfx_no_texture);
 
+    cache.c_ptObjectCount = (int)p_config.scene.m_ObjectComponents.GetCount();
+
     // Bloom
     cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
     cache.c_enableBloom = DVAR_GET_BOOL(gfx_enable_bloom);
