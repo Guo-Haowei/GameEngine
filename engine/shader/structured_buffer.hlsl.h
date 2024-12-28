@@ -53,8 +53,16 @@ struct GpuPtMesh {
      Vector4f _padding2;
      Vector4f _padding3;
 #endif
-    Vector3f _padding4;
+    Vector2f _padding4;
     int rootBvhId;
+    int materialId;
+};
+
+struct GpuPtMaterial {
+    Vector3f baseColor;
+    float roughness;
+    Vector3f emissive;
+    float metallic;
 };
 
 #ifdef __cplusplus
@@ -62,6 +70,7 @@ static_assert(sizeof(GpuPtBvh) % sizeof(Vector4f) == 0);
 static_assert(sizeof(GpuPtVertex) % sizeof(Vector4f) == 0);
 static_assert(sizeof(GpuPtIndex) % sizeof(Vector4f) == 0);
 static_assert(sizeof(GpuPtMesh) % sizeof(Vector4f) == 0);
+static_assert(sizeof(GpuPtMaterial) % sizeof(Vector4f) == 0);
 #endif  // __cplusplus
 
 #define SBUFFER_LIST                                         \
@@ -70,9 +79,10 @@ static_assert(sizeof(GpuPtMesh) % sizeof(Vector4f) == 0);
     SBUFFER(int, GlobalAliveIndicesPreSim, 18, 509)          \
     SBUFFER(int, GlobalAliveIndicesPostSim, 19, 508)         \
     SBUFFER(Particle, GlobalParticleData, 20, 507)           \
-    SBUFFER(GpuPtVertex, GlobalRtVertices, 21, 506)          \
-    SBUFFER(GpuPtIndex, GlobalRtIndices, 22, 505)            \
-    SBUFFER(GpuPtBvh, GlobalRtBvhs, 23, 504)                 \
-    SBUFFER(GpuPtMesh, GlobalPtMeshes, 24, 503)
+    SBUFFER(GpuPtVertex, GlobalPtVertices, 21, 506)          \
+    SBUFFER(GpuPtIndex, GlobalPtIndices, 22, 505)            \
+    SBUFFER(GpuPtBvh, GlobalPtBvhs, 23, 504)                 \
+    SBUFFER(GpuPtMesh, GlobalPtMeshes, 24, 503)              \
+    SBUFFER(GpuPtMaterial, GlobalPtMaterials, 25, 502)
 
 #endif

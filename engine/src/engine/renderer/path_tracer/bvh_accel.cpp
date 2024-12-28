@@ -136,6 +136,7 @@ BvhAccel::Ref BvhBuilder::ConstructHelper(const BvhAccel* p_parent, const std::v
 
     // @TODO rework
     if (triangle_count <= 4 || parent_surface == 0.0f) {
+        DEV_ASSERT(parent_surface > 0.0f);
         SplitByAxis(bvh.get(), p_indices);
         return bvh;
     }
@@ -250,6 +251,9 @@ void BvhAccel::FillGpuBvhAccel(std::vector<GpuPtBvh>& p_out) {
     }
 
     p_out.push_back(gpu_bvh);
+    if (!isLeaf) {
+        DEV_ASSERT(left && right);
+    }
     if (left) {
         left->FillGpuBvhAccel(p_out);
     }

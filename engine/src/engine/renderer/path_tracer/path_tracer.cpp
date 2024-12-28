@@ -89,7 +89,6 @@ static void AppendVertices(const std::vector<GpuPtVertex>& p_source, std::vector
 }
 
 static void AppendIndices(const std::vector<GpuPtIndex>& p_source, std::vector<GpuPtIndex>& p_dest, int p_vertex_count) {
-#if 0
     const int offset = (int)p_dest.size();
     const int count = (int)p_source.size();
     p_dest.resize(offset + count);
@@ -98,13 +97,6 @@ static void AppendIndices(const std::vector<GpuPtIndex>& p_source, std::vector<G
         auto& dest = p_dest[i + offset];
         dest.tri = source.tri + p_vertex_count;
     }
-#else
-    for (auto index : p_source) {
-        index.tri += p_vertex_count;
-        index._padding1 = 0;
-        p_dest.emplace_back(index);
-    }
-#endif
 }
 
 static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtBvh>& p_dest, int p_index_offset) {
@@ -117,14 +109,6 @@ static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtB
         p_index += offset;
     };
 
-#if 0
-    for (auto bvh : p_source) {
-        adjust_index(bvh.hitIdx);
-        adjust_index(bvh.missIdx);
-        bvh.triangleIndex += p_index_offset;
-        p_dest.emplace_back(bvh);
-    }
-#else
     const int count = (int)p_source.size();
     p_dest.resize(offset + count);
 
@@ -135,47 +119,92 @@ static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtB
 
         adjust_index(dest.hitIdx);
         adjust_index(dest.missIdx);
-        dest.triangleIndex += p_index_offset;
+        if (dest.triangleIndex >= 0) {
+            dest.triangleIndex += p_index_offset;
+        }
     }
-#endif
 }
 
 void PathTracer::UpdateAccelStructure(const Scene& p_scene) {
-    const auto view = p_scene.View<ObjectComponent>();
+    const auto dirty_flag = p_scene.GetDirtyFlags();
+    auto gm = GraphicsManager::GetSingletonPtr();
 
-    std::vector<GpuPtMesh> meshes;
-    meshes.reserve(view.GetSize());
-    for (auto [id, object] : view) {
-        auto transform = p_scene.GetComponent<TransformComponent>(id);
-        auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
-        if (DEV_VERIFY(transform && mesh)) {
-            auto it = m_lut.find(object.meshId);
-            if (it == m_lut.end()) {
-                LOG_WARN("mesh not found");
+    std::map<ecs::Entity, int> materials_lookup;
+    {
+        std::vector<GpuPtMaterial> materials;
+        for (auto mesh_it : m_meshs) {
+            auto material_id = mesh_it.second.materialId;
+            auto mat_it = materials_lookup.find(material_id);
+            if (mat_it != materials_lookup.end()) {
                 continue;
             }
 
-            GpuPtMesh gpu_pt_mesh;
-            gpu_pt_mesh.transform = transform->GetWorldMatrix();
-            gpu_pt_mesh.transformInv = glm::inverse(gpu_pt_mesh.transform);
-            gpu_pt_mesh.rootBvhId = it->second.rootBvhId;
+            const auto material = p_scene.GetComponent<MaterialComponent>(material_id);
+            DEV_ASSERT(material);
 
-            // @TODO: fill offsets
-            meshes.push_back(gpu_pt_mesh);
+            materials_lookup[material_id] = (int)materials.size();
+
+            GpuPtMaterial gpu_mat;
+            gpu_mat.baseColor = material->baseColor.xyz;
+            gpu_mat.emissive = gpu_mat.baseColor * material->emissive;
+            gpu_mat.roughness = material->roughness;
+            gpu_mat.metallic = material->metallic;
+            materials.emplace_back(gpu_mat);
+        }
+
+        GpuBufferDesc desc{
+            .slot = GetGlobalPtMeshesSlot(),
+            .elementSize = sizeof(materials[0]),
+            .elementCount = static_cast<uint32_t>(materials.size()),
+            .initialData = materials.data(),
+        };
+
+        // @TODO: only change when material is dirty
+        if ((dirty_flag != SCENE_DIRTY_NONE) || m_ptMaterialBuffer == nullptr) {
+            m_ptMaterialBuffer = *gm->CreateStructuredBuffer(desc);
         }
     }
 
-    auto gm = GraphicsManager::GetSingletonPtr();
+    {
+        const auto view = p_scene.View<ObjectComponent>();
 
-    GpuBufferDesc desc{
-        .slot = GetGlobalPtMeshesSlot(),
-        .elementSize = sizeof(meshes[0]),
-        .elementCount = static_cast<uint32_t>(meshes.size()),
-        .initialData = meshes.data(),
-    };
+        std::vector<GpuPtMesh> meshes;
+        meshes.reserve(view.GetSize());
+        for (auto [id, object] : view) {
+            auto transform = p_scene.GetComponent<TransformComponent>(id);
+            auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
+            if (DEV_VERIFY(transform && mesh)) {
+                auto mesh_it = m_meshs.find(object.meshId);
+                if (mesh_it == m_meshs.end()) {
+                    CRASH_NOW_MSG("mesh not found");
+                    continue;
+                }
 
-    // @TODO: only update when dirty performance
-    m_ptMeshBuffer = *gm->CreateStructuredBuffer(desc);
+                GpuPtMesh gpu_pt_mesh;
+                gpu_pt_mesh.transform = transform->GetWorldMatrix();
+                gpu_pt_mesh.transformInv = glm::inverse(gpu_pt_mesh.transform);
+                const auto& cache = mesh_it->second;
+                gpu_pt_mesh.rootBvhId = cache.rootBvhId;
+                auto mat_it = materials_lookup.find(cache.materialId);
+                DEV_ASSERT(mat_it != materials_lookup.end());
+                gpu_pt_mesh.materialId = mat_it->second;
+
+                // @TODO: fill offsets
+                meshes.push_back(gpu_pt_mesh);
+            }
+        }
+
+        GpuBufferDesc desc{
+            .slot = GetGlobalPtMeshesSlot(),
+            .elementSize = sizeof(meshes[0]),
+            .elementCount = static_cast<uint32_t>(meshes.size()),
+            .initialData = meshes.data(),
+        };
+
+        if ((dirty_flag & SCENE_DIRTY_WORLD) || m_ptMeshBuffer == nullptr) {
+            m_ptMeshBuffer = *gm->CreateStructuredBuffer(desc);
+        }
+    }
 }
 
 bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
@@ -186,12 +215,13 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
     Timer timer;
     GpuScene gpu_scene;
 
+    // meshes
     for (auto [id, object] : p_scene.m_ObjectComponents) {
         auto transform = p_scene.GetComponent<TransformComponent>(id);
         auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
         if (DEV_VERIFY(transform && mesh)) {
-            auto it = m_lut.find(object.meshId);
-            if (it != m_lut.end()) {
+            auto it = m_meshs.find(object.meshId);
+            if (it != m_meshs.end()) {
                 continue;
             }
 
@@ -199,8 +229,11 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
             const int index_count = (int)gpu_scene.indices.size();
             const int vertex_count = (int)gpu_scene.vertices.size();
 
-            BvhMeta meta{ .rootBvhId = bvh_count };
-            m_lut[object.meshId] = meta;
+            MeshData meta{
+                .rootBvhId = bvh_count,
+                .materialId = mesh->subsets[0].material_id
+            };
+            m_meshs[object.meshId] = meta;
 
             GpuScene tmp_scene;
             ConstructMesh(*mesh, tmp_scene);
@@ -214,9 +247,9 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
     const uint32_t triangle_count = (uint32_t)gpu_scene.indices.size();
     const uint32_t bvh_count = (uint32_t)gpu_scene.bvhs.size();
 
-    m_ptBvhBuffer = *CreateBuffer(gm, GetGlobalRtBvhsSlot(), gpu_scene.bvhs);
-    m_ptVertexBuffer = *CreateBuffer(gm, GetGlobalRtVerticesSlot(), gpu_scene.vertices);
-    m_ptIndexBuffer = *CreateBuffer(gm, GetGlobalRtIndicesSlot(), gpu_scene.indices);
+    m_ptBvhBuffer = *CreateBuffer(gm, GetGlobalPtBvhsSlot(), gpu_scene.bvhs);
+    m_ptVertexBuffer = *CreateBuffer(gm, GetGlobalPtVerticesSlot(), gpu_scene.vertices);
+    m_ptIndexBuffer = *CreateBuffer(gm, GetGlobalPtIndicesSlot(), gpu_scene.indices);
 
     LOG("Path tracer scene loaded in {}, contains {} triangles, {} BVH",
         timer.GetDurationString(),
@@ -225,18 +258,7 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
 
     /// materials
 #if 0
-    using ecs::Entity;
-    std::map<Entity, int> material_lut;
-
-    [[maybe_unused]] const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-
-    p_out_scene.materials.clear();
     for (auto [entity, material] : p_scene.m_MaterialComponents) {
-        gpu_material_t gpu_mat;
-        gpu_mat.albedo = material.baseColor.xyz;
-        gpu_mat.emissive = material.emissive * gpu_mat.albedo;
-        gpu_mat.roughness = material.roughness;
-        gpu_mat.reflect_chance = material.metallic;
 
         auto fill_texture = [&](int p_index, int& p_out_enabled, sampler2D& p_out_handle) {
             const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(material.textures[p_index].path);
@@ -264,61 +286,8 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
         material_lut[entity] = static_cast<int>(p_out_scene.materials.size()) - 1;
     }
 
-    auto add_object = [&](const MeshComponent& p_mesh, const TransformComponent& p_transform) {
-        // Loop over shapes
-        Matrix4x4f transform = p_transform.GetWorldMatrix();
-
-        for (size_t index = 0; index < p_mesh.indices.size(); index += 3) {
-            const uint32_t index0 = p_mesh.indices[index];
-            const uint32_t index1 = p_mesh.indices[index + 1];
-            const uint32_t index2 = p_mesh.indices[index + 2];
-
-            Vector4f points[3] = {
-                transform * Vector4f(p_mesh.positions[index0], 1.0f),
-                transform * Vector4f(p_mesh.positions[index1], 1.0f),
-                transform * Vector4f(p_mesh.positions[index2], 1.0f),
-            };
-
-            Vector4f normals[3] = {
-                transform * Vector4f(p_mesh.normals[index0], 0.0f),
-                transform * Vector4f(p_mesh.normals[index1], 0.0f),
-                transform * Vector4f(p_mesh.normals[index2], 0.0f),
-            };
-
-            Vector2f uvs[3] = {
-                p_mesh.texcoords_0[index0],
-                p_mesh.texcoords_0[index1],
-                p_mesh.texcoords_0[index2],
-            };
-
-            // per-face material
-            gpu_geometry_t triangle(Vector3f(points[0].xyz),
-                                    Vector3f(points[1].xyz),
-                                    Vector3f(points[2].xyz), 0);
-            triangle.uv1 = uvs[0];
-            triangle.uv2 = uvs[1];
-            triangle.uv3 = uvs[2];
-            triangle.normal1 = normalize(Vector3f(normals[0].xyz));
-            triangle.normal2 = normalize(Vector3f(normals[1].xyz));
-            triangle.normal3 = normalize(Vector3f(normals[2].xyz));
-            triangle.kind = gpu_geometry_t::Kind::Triangle;
-            auto it = material_lut.find(p_mesh.subsets[0].material_id);
-            DEV_ASSERT(it != material_lut.end());
-            triangle.material_id = it->second;
-            tmp_gpu_objects.push_back(triangle);
-        }
-    };
-
     /// objects
     p_out_scene.geometries.clear();
-    for (auto [entity, object] : p_scene.m_ObjectComponents) {
-        // ObjectComponent
-        auto transform = p_scene.GetComponent<TransformComponent>(entity);
-        auto mesh = p_scene.GetComponent<MeshComponent>(object.meshId);
-        DEV_ASSERT(transform);
-        DEV_ASSERT(mesh);
-        add_object(*mesh, *transform);
-    }
     for (auto [entity, light] : p_scene.m_LightComponents) {
         if (light.GetType() == LIGHT_TYPE_INFINITE) {
             auto transform = p_scene.GetComponent<TransformComponent>(entity);
@@ -341,24 +310,6 @@ bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
             tmp_gpu_objects.push_back(sphere);
         }
     }
-
-    Timer timer;
-    /// construct bvh
-    Bvh root(tmp_gpu_objects);
-    root.CreateGpuBvh(p_out_scene.bvhs, p_out_scene.geometries);
-    LOG("[PathTracer] bvh created in {}", timer.GetDurationString());
-
-    p_out_scene.bbox = root.GetBox();
-
-    /// adjust bbox
-    for (gpu_bvh_t& bvh : p_out_scene.bvhs) {
-        for (int i = 0; i < 3; ++i) {
-            if (glm::abs(bvh.max[i] - bvh.min[i]) < 0.01f) {
-                bvh.min[i] -= Box3::BOX_MIN_SIZE;
-                bvh.max[i] += Box3::BOX_MIN_SIZE;
-            }
-        }
-    }
 #endif
 
     return true;
@@ -379,16 +330,18 @@ bool PathTracer::IsActive() const {
 void PathTracer::BindData(GraphicsManager& p_gm) {
     // @TODO: check null
     p_gm.BindStructuredBuffer(GetGlobalPtMeshesSlot(), m_ptMeshBuffer.get());
-    p_gm.BindStructuredBuffer(GetGlobalRtBvhsSlot(), m_ptBvhBuffer.get());
-    p_gm.BindStructuredBuffer(GetGlobalRtVerticesSlot(), m_ptVertexBuffer.get());
-    p_gm.BindStructuredBuffer(GetGlobalRtIndicesSlot(), m_ptIndexBuffer.get());
+    p_gm.BindStructuredBuffer(GetGlobalPtBvhsSlot(), m_ptBvhBuffer.get());
+    p_gm.BindStructuredBuffer(GetGlobalPtVerticesSlot(), m_ptVertexBuffer.get());
+    p_gm.BindStructuredBuffer(GetGlobalPtIndicesSlot(), m_ptIndexBuffer.get());
+    p_gm.BindStructuredBuffer(GetGlobalPtMaterialsSlot(), m_ptMaterialBuffer.get());
 }
 
 void PathTracer::UnbindData(GraphicsManager& p_gm) {
-    p_gm.UnbindStructuredBuffer(GetGlobalRtBvhsSlot());
-    p_gm.UnbindStructuredBuffer(GetGlobalRtVerticesSlot());
-    p_gm.UnbindStructuredBuffer(GetGlobalRtIndicesSlot());
+    p_gm.UnbindStructuredBuffer(GetGlobalPtBvhsSlot());
+    p_gm.UnbindStructuredBuffer(GetGlobalPtVerticesSlot());
+    p_gm.UnbindStructuredBuffer(GetGlobalPtIndicesSlot());
     p_gm.UnbindStructuredBuffer(GetGlobalPtMeshesSlot());
+    p_gm.UnbindStructuredBuffer(GetGlobalPtMaterialsSlot());
 }
 
 }  // namespace my

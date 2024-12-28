@@ -14,14 +14,15 @@ using std::cos;
 using std::sin;
 using std::sqrt;
 
-extern GpuPtVertex GlobalRtVertices[];
-extern GpuPtIndex GlobalRtIndices[];
-extern GpuPtBvh GlobalRtBvhs[];
+extern GpuPtVertex GlobalPtVertices[];
+extern GpuPtIndex GlobalPtIndices[];
+extern GpuPtBvh GlobalPtBvhs[];
 extern GpuPtMesh GlobalPtMeshes[];
+extern GpuPtMaterial GlobalPtMaterials[];
 #endif
 
 #define EPSILON       1.1920929e-7
-#define MAX_BOUNCE    1
+#define MAX_BOUNCE    5
 #define RAY_T_MIN     1e-6
 #define RAY_T_MAX     999999999.0
 #define TRIANGLE_KIND 1
@@ -42,9 +43,9 @@ struct Ray {
 };
 
 struct HitResult {
+    Vector2f uv;
     int hitTriangleId;  // @TODO: rename
     int hitMeshId;
-    Vector2f uv;
 };
 
 struct Sphere {
@@ -87,10 +88,10 @@ Vector3f RandomUnitVector(inout uint p_state) {
 HitResult HitTriangle(inout Ray p_ray, int p_triangle_id) {
     // P = A + u(B - A) + v(C - A) => O - A = -tD + u(B - A) + v(C - A)
     // -tD + uAB + vAC = AO
-    Vector3i indices = GlobalRtIndices[p_triangle_id].tri;
-    Vector3f A = GlobalRtVertices[indices.x].position;
-    Vector3f B = GlobalRtVertices[indices.y].position;
-    Vector3f C = GlobalRtVertices[indices.z].position;
+    Vector3i indices = GlobalPtIndices[p_triangle_id].tri;
+    Vector3f A = GlobalPtVertices[indices.x].position;
+    Vector3f B = GlobalPtVertices[indices.y].position;
+    Vector3f C = GlobalPtVertices[indices.z].position;
 
     Vector3f AB = B - A;
     Vector3f AC = C - A;
@@ -154,8 +155,6 @@ HitResult HitScene(inout Ray p_ray) {
     res.hitTriangleId = -1;
     res.uv = Vector2f(0.0f, 0.0f);
 
-    bool anyHit = false;
-
     // check if it hits all the objects
     for (int mesh_id = 0; mesh_id < c_ptObjectCount; ++mesh_id) {
         GpuPtMesh mesh = GlobalPtMeshes[mesh_id];
@@ -166,18 +165,17 @@ HitResult HitScene(inout Ray p_ray) {
         local_ray.invDir = 1.0f / local_ray.direction;
         local_ray.t = p_ray.t;
 
-        // @TODO: bvh start, it should stored in mesh
         int bvhIndex = mesh.rootBvhId;
-        while (bvhIndex != -1) {
-            GpuPtBvh bvh = GlobalRtBvhs[bvhIndex];
+        while (bvhIndex >= 0) {
+            GpuPtBvh bvh = GlobalPtBvhs[bvhIndex];
             if (HitBvh(local_ray, bvh.min, bvh.max)) {
                 if (bvh.triangleIndex != -1) {
                     HitResult result = HitTriangle(local_ray, bvh.triangleIndex);
                     if (result.hitTriangleId != -1) {
                         res.hitTriangleId = result.hitTriangleId;
                         res.hitMeshId = mesh_id;
+                        res.uv = result.uv;
                         p_ray.t = local_ray.t;
-                        anyHit = true;
                     }
                 }
                 bvhIndex = bvh.hitIdx;
@@ -194,26 +192,31 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
     Vector3f radiance = Vector3f(0, 0, 0);
     Vector3f throughput = Vector3f(1, 1, 1);
 
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < MAX_BOUNCE; ++i) {
         // check all objects
         HitResult result = HitScene(p_ray);
-        if (result.hitMeshId != -1) {
+        if (result.hitMeshId >= 0 && result.hitTriangleId >= 0) {
             p_ray.origin = p_ray.origin + p_ray.t * p_ray.direction;
             p_ray.t = RAY_T_MAX;
 
             // calculate normal
-            Matrix4x4f transform = GlobalPtMeshes[result.hitMeshId].transform;
+            GpuPtMesh mesh = GlobalPtMeshes[result.hitMeshId];
 
-            Vector3i indices = GlobalRtIndices[result.hitTriangleId].tri;
-            Vector3f n1 = GlobalRtVertices[indices.x].normal;
-            Vector3f n2 = GlobalRtVertices[indices.y].normal;
-            Vector3f n3 = GlobalRtVertices[indices.z].normal;
+            Vector3i indices = GlobalPtIndices[result.hitTriangleId].tri;
+            Vector3f n1 = GlobalPtVertices[indices.x].normal;
+            Vector3f n2 = GlobalPtVertices[indices.y].normal;
+            Vector3f n3 = GlobalPtVertices[indices.z].normal;
             Vector3f n = n1 + result.uv.x * (n2 - n1) + result.uv.y * (n3 - n1);
-            n = normalize(mul(transform, Vector4f(n, 0.0f)).xyz);
+            n = normalize(mul(mesh.transform, Vector4f(n, 0.0f)).xyz);
+#if 0
+            return 0.5f * n + 0.5f;
+#endif
 
-            Vector3f diffuse_color = Vector3f(1, 1, 1);
-            float metallic = 0.05f;
-            float roughness = 0.95f;
+            GpuPtMaterial material = GlobalPtMaterials[mesh.materialId];
+
+            Vector3f diffuse_color = material.baseColor;
+            float metallic = material.metallic;
+            float roughness = material.roughness;
 
             float reflect_chance = Random(state) > metallic ? 0.0 : 1.0;
 
@@ -224,10 +227,10 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
             p_ray.direction = normalize(lerp(diffuse_dir, reflect_dir, reflect_chance));
             p_ray.invDir = 1.0f / p_ray.direction;
 
-            radiance += 0.0f * throughput;
+            radiance += material.emissive * throughput;
             throughput *= diffuse_color;
         } else {
-            radiance += Vector3f(1, 1, 1) * throughput;
+            radiance += Vector3f(0.3f, 0.3f, 0.3f) * throughput;
             break;
         }
     }

@@ -37,13 +37,15 @@ private:
     std::shared_ptr<GpuStructuredBuffer> m_ptVertexBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_ptIndexBuffer;
     std::shared_ptr<GpuStructuredBuffer> m_ptMeshBuffer;
+    std::shared_ptr<GpuStructuredBuffer> m_ptMaterialBuffer;
 
-    struct BvhMeta {
+    struct MeshData {
         int rootBvhId;
+        ecs::Entity materialId;
     };
 
     // @TODO: rename
-    std::map<ecs::Entity, BvhMeta> m_lut;
+    std::map<ecs::Entity, MeshData> m_meshs;
 
     PathTracerMode m_mode{ PathTracerMode::NONE };
 };

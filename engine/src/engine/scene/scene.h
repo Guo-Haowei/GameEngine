@@ -263,7 +263,7 @@ public:
     mutable lua_State* L{ nullptr };
 
     const auto& GetLibraryEntries() const { return m_componentLib.m_entries; }
-    const SceneDirtyFlags GetDirtyFlags() const { return static_cast<SceneDirtyFlags>(m_dirtyFlags.load()); }
+    SceneDirtyFlags GetDirtyFlags() const { return static_cast<SceneDirtyFlags>(m_dirtyFlags.load()); }
 
 private:
     void UpdateHierarchy(size_t p_index);

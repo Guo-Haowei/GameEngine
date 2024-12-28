@@ -24,9 +24,9 @@ $ cmake --build . --config Debug
 
 ## Screenshots
 
-<img src="https://github.com/Guo-Haowei/GameEngine/blob/master/screenshots/editor.png" width="70%">
+<img src="https://github.com/Guo-Haowei/GameEngine/blob/master/documents/editor.png" width="70%">
 
-<img src="https://github.com/Guo-Haowei/GameEngine/blob/master/screenshots/path_tracer.png" width="70%">
+<img src="https://github.com/Guo-Haowei/GameEngine/blob/master/documents/breakfast_room.png" width="70%">
 
 ## Graphics APIs
 
