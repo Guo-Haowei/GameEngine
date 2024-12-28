@@ -112,6 +112,8 @@ void MeshComponent::CreateRenderData() {
 #pragma region CAMERA_COMPONENT
 bool PerspectiveCameraComponent::Update() {
     if (IsDirty()) {
+        SetDirty(false);
+
         m_front.x = m_yaw.Cos() * m_pitch.Cos();
         m_front.y = m_pitch.Sin();
         m_front.z = m_yaw.Sin() * m_pitch.Cos();
@@ -121,8 +123,6 @@ bool PerspectiveCameraComponent::Update() {
         m_viewMatrix = LookAtRh(m_position, m_position + m_front, Vector3f::UnitY);
         m_projectionMatrix = BuildOpenGlPerspectiveRH(m_fovy.GetRadians(), GetAspect(), m_near, m_far);
         m_projectionViewMatrix = m_projectionMatrix * m_viewMatrix;
-
-        SetDirty(false);
         return true;
     }
 

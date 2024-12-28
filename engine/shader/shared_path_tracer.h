@@ -130,18 +130,21 @@ HitResult HitTriangle(inout Ray p_ray, int p_triangle_id) {
 
 // https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
 bool HitBvh(in Ray p_ray, in Vector3f p_min, in Vector3f p_max) {
-    Vector3f t_min = (p_min - p_ray.origin) * p_ray.invDir;
-    Vector3f t_max = (p_max - p_ray.origin) * p_ray.invDir;
+    Vector3f t0s = (p_min - p_ray.origin) * p_ray.invDir;
+    Vector3f t1s = (p_max - p_ray.origin) * p_ray.invDir;
 
-    Vector3f tsmaller = min(t_min, t_max);
-    Vector3f tbigger = max(t_min, t_max);
+    Vector3f tsmaller = min(t0s, t1s);
+    Vector3f tbigger = max(t0s, t1s);
 
-    float dst_near = max(tsmaller.x, max(tsmaller.y, tsmaller.z));
-    float dst_far = min(tbigger.x, min(tbigger.y, tbigger.z));
+#if 0
+    float tmin = max(RAY_T_MIN, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
+    float tmax = min(RAY_T_MAX, min(tbigger.x, min(tbigger.y, tbigger.z)));
+#else
+    float tmin = max(tsmaller.x, max(tsmaller.y, tsmaller.z));
+    float tmax = min(tbigger.x, min(tbigger.y, tbigger.z));
+#endif
 
-    bool hit = dst_far >= dst_near && dst_far > 0.0f;
-    return hit;
-    //(dst_near < dst_far) && (p_ray.t > dst_near) && (dst_far > 0.0f);
+    return (tmin < tmax) && (p_ray.t > tmin);
 }
 
 // @TODO: hit result
