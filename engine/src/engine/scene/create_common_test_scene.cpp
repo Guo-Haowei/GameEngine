@@ -50,26 +50,25 @@ Scene* CreateBoxScene() {
     auto world = scene->CreateTransformEntity("world");
     scene->AttachChild(world, root);
 
-    auto white = scene->CreateMaterialEntity("white");
-    {
-        MaterialComponent* mat = scene->GetComponent<MaterialComponent>(white);
-        mat->metallic = 0.3f;
-        mat->roughness = 0.7f;
-    }
-    auto red = scene->CreateMaterialEntity("red");
-    {
-        MaterialComponent* mat = scene->GetComponent<MaterialComponent>(red);
-        mat->baseColor = Vector4f(1, 0, 0, 1);
-        mat->metallic = 0.3f;
-        mat->roughness = 0.7f;
-    }
-    auto green = scene->CreateMaterialEntity("green");
-    {
-        MaterialComponent* mat = scene->GetComponent<MaterialComponent>(green);
-        mat->baseColor = Vector4f(0, 1, 0, 1);
-        mat->metallic = 0.3f;
-        mat->roughness = 0.7f;
-    }
+    int mat_counter = 0;
+    auto create_material = [&](const std::string& p_name) {
+        auto id = scene->CreateMaterialEntity(std::format("{}_{}", "p_name", mat_counter++));
+        MaterialComponent* mat = scene->GetComponent<MaterialComponent>(id);
+        if (p_name == "white") {
+            mat->metallic = 0.3f;
+            mat->roughness = 0.7f;
+        } else if (p_name == "green") {
+            mat->baseColor = Vector4f(0, 1, 0, 1);
+            mat->metallic = 0.3f;
+            mat->roughness = 0.7f;
+        } else if (p_name == "red") {
+            mat->baseColor = Vector4f(1, 0, 0, 1);
+            mat->metallic = 0.3f;
+            mat->roughness = 0.7f;
+        }
+        return id;
+    };
+
     {
         constexpr float s = 5.0f;
         struct {
@@ -77,11 +76,11 @@ Scene* CreateBoxScene() {
             Matrix4x4f transform;
             ecs::Entity material;
         } wall_info[] = {
-            { "wall_up", Translate(Vector3f(0, s, 0)), white },
-            { "wall_down", Translate(Vector3f(0, -s, 0)), white },
-            { "wall_left", Rotate(Degree(+90.0f), Vector3f::UnitZ) * Translate(Vector3f(0, s, 0)), red },
-            { "wall_right", Rotate(Degree(+90.0f), Vector3f::UnitZ) * Translate(Vector3f(0, -s, 0)), green },
-            { "wall_back", Rotate(Degree(+90.0f), Vector3f::UnitX) * Translate(Vector3f(0, -s, 0)), white },
+            { "wall_up", Translate(Vector3f(0, s, 0)), create_material("white") },
+            { "wall_down", Translate(Vector3f(0, -s, 0)), create_material("white") },
+            { "wall_left", Rotate(Degree(+90.0f), Vector3f::UnitZ) * Translate(Vector3f(0, s, 0)), create_material("red") },
+            { "wall_right", Rotate(Degree(+90.0f), Vector3f::UnitZ) * Translate(Vector3f(0, -s, 0)), create_material("green") },
+            { "wall_back", Rotate(Degree(+90.0f), Vector3f::UnitX) * Translate(Vector3f(0, -s, 0)), create_material("white") },
         };
 
         for (int i = 0; i < array_length(wall_info); ++i) {

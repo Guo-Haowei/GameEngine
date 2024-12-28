@@ -44,7 +44,10 @@ void main() {
     vec3 radiance = RayColor(ray, seed);
 
     vec4 final_color = vec4(radiance, 1.0);
-    if (c_sceneDirty == 0) {
+
+#if FORCE_UPDATE == 0
+    if (c_sceneDirty == 0)
+    {
         vec4 accumulated = imageLoad(u_PathTracerOutputImage, iPixelCoords);
         float weight = accumulated.a;
         vec3 new_color = radiance + weight * accumulated.rgb;
@@ -52,6 +55,7 @@ void main() {
         new_color /= new_weight;
         final_color = vec4(new_color, new_weight);
     }
+#endif
 
     imageStore(u_PathTracerOutputImage, iPixelCoords, final_color);
 }
@@ -206,42 +210,6 @@ bool HitBvh(in Ray ray, in gpu_bvh_t bvh) {
     float tmax = min(RAY_T_MAX, min(tbigger.x, min(tbigger.y, tbigger.z)));
 
     return (tmin < tmax) && (ray.t > tmin);
-}
-
-bool HitScene(inout Ray ray) {
-    bool anyHit = false;
-
-    int bvhIdx = 0;
-    while (bvhIdx != -1) {
-        gpu_bvh_t bvh = GlobalBvhs[bvhIdx];
-        if (HitBvh(ray, bvh)) {
-            if (bvh.geomIdx != -1) {
-                gpu_geometry_t geom = GlobalGeometries[bvh.geomIdx];
-                if (geom.kind == TRIANGLE_KIND) {
-                    if (HitTriangle(ray, geom)) {
-                        anyHit = true;
-                    }
-                } else if (geom.kind == SPHERE_KIND) {
-                    if (HitSphere(ray, geom)) {
-                        anyHit = true;
-                    }
-                }
-            }
-            bvhIdx = bvh.hitIdx;
-        } else {
-            bvhIdx = bvh.missIdx;
-        }
-    }
-
-    return anyHit;
-}
-
-vec2 SampleSphericalMap(in vec3 v) {
-    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
-    uv *= vec2(0.1591, 0.3183);
-    uv += 0.5;
-    uv.y = 1.0 - uv.y;
-    return uv;
 }
 
 vec3 RayColor(inout Ray ray, inout uint state) {

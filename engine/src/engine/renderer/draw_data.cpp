@@ -214,8 +214,7 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     static int s_frameIndex = 0;
     cache.c_frameIndex = s_frameIndex++;
     // @TODO: fix this
-    // cache.c_sceneDirty = false;
-    cache.c_sceneDirty = true;
+    cache.c_sceneDirty = false;
 
     // Force fields
 

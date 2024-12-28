@@ -21,14 +21,17 @@ extern GpuPtMesh GlobalPtMeshes[];
 #endif
 
 #define EPSILON       1.1920929e-7
-#define MAX_BOUNCE    10
+#define MAX_BOUNCE    1
 #define RAY_T_MIN     1e-6
 #define RAY_T_MAX     999999999.0
 #define TRIANGLE_KIND 1
 #define SPHERE_KIND   2
 
+#define FORCE_UPDATE 0
+
 #if defined(GLSL_LANG)
 #define mul(a, b) ((a) * (b))
+#define lerp      mix
 #endif
 
 struct Ray {
@@ -151,11 +154,7 @@ HitResult HitScene(inout Ray p_ray) {
     bool anyHit = false;
 
     // check if it hits all the objects
-#if 0
-    for (int mesh_id = 0; mesh_id < 1; ++mesh_id) {
-#else
     for (int mesh_id = 0; mesh_id < c_ptObjectCount; ++mesh_id) {
-#endif
         GpuPtMesh mesh = GlobalPtMeshes[mesh_id];
         Matrix4x4f inversed = mesh.transformInv;
         Ray local_ray;
@@ -189,14 +188,17 @@ HitResult HitScene(inout Ray p_ray) {
 }
 
 Vector3f RayColor(inout Ray p_ray, inout uint state) {
-    Vector3f radiance = Vector3f(0.0f, 0.0f, 0.0f);
-    Vector3f throughput = Vector3f(1.0f, 1.0f, 1.0f);
+    Vector3f radiance = Vector3f(0, 0, 0);
+    Vector3f throughput = Vector3f(1, 1, 1);
 
-    for (int i = 0; i < 1; ++i) {
+    for (int i = 0; i < 4; ++i) {
         // check all objects
         HitResult result = HitScene(p_ray);
         if (result.hitMeshId != -1) {
-            // @TODO: apply matrix
+            p_ray.origin = p_ray.origin + p_ray.t * p_ray.direction;
+            p_ray.t = RAY_T_MAX;
+
+            // calculate normal
             Matrix4x4f transform = GlobalPtMeshes[result.hitMeshId].transform;
 
             Vector3i indices = GlobalRtIndices[result.hitTriangleId].tri;
@@ -205,12 +207,29 @@ Vector3f RayColor(inout Ray p_ray, inout uint state) {
             Vector3f n3 = GlobalRtVertices[indices.z].normal;
             Vector3f n = n1 + result.uv.x * (n2 - n1) + result.uv.y * (n3 - n1);
             n = normalize(mul(transform, Vector4f(n, 0.0f)).xyz);
-            return 0.5f * Vector3f(n) + 0.5f;
+
+            Vector3f diffuse_color = Vector3f(1, 1, 1);
+            float metallic = 0.05f;
+            float roughness = 0.95f;
+
+            float reflect_chance = Random(state) > metallic ? 0.0 : 1.0;
+
+            Vector3f diffuse_dir = normalize(n + RandomUnitVector(state));
+            Vector3f reflect_dir = reflect(p_ray.direction, n);
+            reflect_dir = normalize(lerp(reflect_dir, diffuse_dir, roughness * roughness));
+
+            p_ray.direction = normalize(lerp(diffuse_dir, reflect_dir, reflect_chance));
+            p_ray.invDir = 1.0f / p_ray.direction;
+
+            radiance += 0.0f * throughput;
+            throughput *= diffuse_color;
+        } else {
+            radiance += Vector3f(1, 1, 1) * throughput;
+            break;
         }
     }
 
-    return throughput;
-    // return radiance;
+    return radiance;
 }
 
 #if 0

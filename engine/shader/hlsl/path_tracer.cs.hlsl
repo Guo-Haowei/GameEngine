@@ -19,11 +19,7 @@
     uint seed = uint(uint(uv.x) * uint(1973) + uint(uv.y) * uint(9277) + uint(c_frameIndex) * uint(26699)) | uint(1);
 
     // [-0.5, 0.5]
-#if 0
-    Vector2f jitter = Vector2f(0.0f, 0.0f);
-#else
     Vector2f jitter = Vector2f(Random(seed), Random(seed)) - 0.5;
-#endif
 
     Vector3f rayDir;
     {
@@ -51,14 +47,15 @@
     Vector3f radiance = RayColor(ray, seed);
 
     Vector4f final_color = Vector4f(radiance, 1.0);
-#if 0
+
+#if FORCE_UPDATE == 0
     if (c_sceneDirty == 0) {
-        vec4 accumulated = imageLoad(u_PathTracerOutputImage, iPixelCoords);
+        Vector4f accumulated = u_PathTracerOutputImage[uv];
         float weight = accumulated.a;
-        vec3 new_color = radiance + weight * accumulated.rgb;
+        Vector3f new_color = radiance + weight * accumulated.rgb;
         float new_weight = accumulated.a + 1.0;
         new_color /= new_weight;
-        final_color = vec4(new_color, new_weight);
+        final_color = Vector4f(new_color, new_weight);
     }
 #endif
 
