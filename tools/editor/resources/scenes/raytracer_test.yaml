@@ -1,5 +1,5 @@
 version: 19
-seed: 26
+seed: 29
 root: 1
 binary: D:\workspace\GameEngine\tools\editor\resources\scenes\raytracer_test.yaml.bin
 physics_mode: 2
@@ -24,9 +24,9 @@ entities:
       far: 1000
       width: 1920
       height: 1080
-      pitch: -15.6211405
-      yaw: -90.0728073
-      position: [-0.589924037, 4.38459396, 18.5245514]
+      pitch: -10.5736885
+      yaw: -89.8882141
+      position: [-0.591176391, 2.47925615, 17.5389977]
   - id: 3
     NameComponent:
       name: main_camera
@@ -375,3 +375,47 @@ entities:
     ObjectComponent:
       flags: 1073741827
       mesh_id: 23
+  - id: 26
+    NameComponent:
+      name: Sphere-1:mat
+    MaterialComponent:
+      base_color: [1, 1, 1, 1]
+      roughness: 0.449999988
+      metallic: 0.800000012
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 27
+    NameComponent:
+      name: Sphere-1
+    TransformComponent:
+      flags: 0
+      translation: [1.99365163, 1.03289413, 0.131225601]
+      rotation: [0, 0, 0, 1]
+      scale: [2.38999987, 2.38999987, 2.38999987]
+    HierarchyComponent:
+      parent_id: 1
+    ObjectComponent:
+      flags: 3
+      mesh_id: 28
+  - id: 28
+    NameComponent:
+      name: Sphere-1:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 26, index_count: 21600, index_offset: 0, local_bound: {min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5]}}]
+      armature_id: 0
+      indices: {offset: 20747852, buffer_size: 86400}
+      positions: {offset: 20834268, buffer_size: 44652}
+      normals: {offset: 20878936, buffer_size: 44652}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 20923604, buffer_size: 29768}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
