@@ -1,4 +1,4 @@
-#include "draw_data.h"
+#include "render_data.h"
 
 #include "engine/core/base/random.h"
 #include "engine/math/frustum.h"
@@ -68,7 +68,7 @@ static void FillPass(const Scene& p_scene,
                      PassContext& p_pass,
                      FilterObjectFunc1 p_filter1,
                      FilterObjectFunc2 p_filter2,
-                     DrawData& p_out_render_data) {
+                     RenderData& p_out_render_data) {
 
     const bool is_opengl = p_out_render_data.options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
@@ -186,7 +186,7 @@ static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matri
     DebugDrawBVH(p_level, p_bvh->right.get(), p_matrix);
 };
 
-static void FillConstantBuffer(const Scene& p_scene, DrawData& p_out_data) {
+static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     const auto& options = p_out_data.options;
     auto& cache = p_out_data.perFrameCache;
 
@@ -281,7 +281,7 @@ static void FillConstantBuffer(const Scene& p_scene, DrawData& p_out_data) {
     }
 }
 
-static void FillLightBuffer(const Scene& p_scene, DrawData& p_out_data) {
+static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
 
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
@@ -405,7 +405,7 @@ static void FillLightBuffer(const Scene& p_scene, DrawData& p_out_data) {
 }
 
 static void FillVoxelPass(const Scene& p_scene,
-                          DrawData& p_out_data) {
+                          RenderData& p_out_data) {
     bool enabled = false;
     bool show_debug = false;
     AABB voxel_gi_bound;
@@ -465,7 +465,7 @@ static void FillVoxelPass(const Scene& p_scene,
 }
 
 static void FillMainPass(const Scene& p_scene,
-                         DrawData& p_out_data) {
+                         RenderData& p_out_data) {
     const auto& camera = p_out_data.mainCamera;
     Frustum camera_frustum(camera.projectionMatrixFrustum * camera.viewMatrix);
 
@@ -490,7 +490,7 @@ static void FillMainPass(const Scene& p_scene,
 }
 
 static void FillEnvConstants(const Scene&,
-                             DrawData& p_out_data) {
+                             RenderData& p_out_data) {
     // @TODO: return if necessary
 
     constexpr int count = IBL_MIP_CHAIN_MAX * 6;
@@ -509,7 +509,7 @@ static void FillEnvConstants(const Scene&,
 }
 
 static void FillBloomConstants(const Scene& p_config,
-                               DrawData& p_out_data) {
+                               RenderData& p_out_data) {
     unused(p_config);
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -545,7 +545,7 @@ static void FillBloomConstants(const Scene& p_config,
 }
 
 static void FillMeshEmitterBuffer(const Scene& p_scene,
-                                  DrawData& p_out_data) {
+                                  RenderData& p_out_data) {
     for (auto [id, emitter] : p_scene.m_MeshEmitterComponents) {
         auto transform = p_scene.GetComponent<TransformComponent>(id);
         auto mesh = p_scene.GetComponent<MeshComponent>(emitter.meshId);
@@ -593,7 +593,7 @@ static void FillMeshEmitterBuffer(const Scene& p_scene,
 }
 
 static void FillParticleEmitterBuffer(const Scene& p_scene,
-                                      DrawData& p_out_data) {
+                                      RenderData& p_out_data) {
     // @TODO: engine->get frame
     static int s_counter = -1;
     s_counter++;
@@ -627,7 +627,7 @@ static void FillParticleEmitterBuffer(const Scene& p_scene,
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        const Scene& p_scene,
-                       DrawData& p_out_data) {
+                       RenderData& p_out_data) {
     // fill camera
     {
         auto& camera = p_out_data.mainCamera;
@@ -663,7 +663,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     // @TODO: update soft body
     for (auto [entity, mesh] : p_scene.View<MeshComponent>()) {
         if (!mesh.updatePositions.empty()) {
-            p_out_data.updateBuffer.emplace_back(DrawData::UpdateBuffer{
+            p_out_data.updateBuffer.emplace_back(RenderData::UpdateBuffer{
                 .positions = std::move(mesh.updatePositions),
                 .normals = std::move(mesh.updateNormals),
                 .id = mesh.gpuResource.get(),

@@ -4,8 +4,8 @@
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/scene_manager.h"
 #include "engine/math/geometry.h"
-#include "engine/renderer/draw_data.h"
 #include "engine/renderer/path_tracer/path_tracer.h"
+#include "engine/renderer/render_data.h"
 
 // @TODO: refactor
 #include "engine/math/detail/matrix.h"
@@ -24,7 +24,7 @@ enum class RenderState {
 };
 
 static struct {
-    DrawData* renderData;
+    RenderData* renderData;
     RenderState state;
     PathTracer pt;
 } s_glob;
@@ -53,7 +53,7 @@ void BeginFrame() {
     options.debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
     options.voxelTextureSize = DVAR_GET_INT(gfx_voxel_size);
 
-    s_glob.renderData = new DrawData(options);
+    s_glob.renderData = new RenderData(options);
     s_glob.renderData->bakeIbl = false;
     s_glob.state = RenderState::RECORDING;
 }
@@ -113,7 +113,7 @@ void RequestBakingIbl() {
     }
 }
 
-const DrawData* GetRenderData() {
+const RenderData* GetRenderData() {
     return s_glob.renderData;
 }
 

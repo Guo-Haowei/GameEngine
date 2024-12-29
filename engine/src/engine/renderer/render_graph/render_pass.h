@@ -8,9 +8,9 @@ class GraphicsManager;
 
 namespace my::renderer {
 
-struct DrawData;
+struct RenderData;
 
-using DrawPassExecuteFunc = void (*)(const renderer::DrawData&, const Framebuffer*);
+using DrawPassExecuteFunc = void (*)(const renderer::RenderData&, const Framebuffer*);
 
 struct RenderPassDesc {
     RenderPassName name;
@@ -21,7 +21,7 @@ class RenderPass {
 public:
     void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_function);
 
-    void Execute(const renderer::DrawData& p_data, GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
 
     RenderPassName GetName() const { return m_name; }
     const char* GetNameString() const { return RenderPassNameToString(m_name); }

@@ -103,6 +103,7 @@ struct PipelineState {
     PSO_NAME(PSO_BLOOM_SETUP)            \
     PSO_NAME(PSO_BLOOM_DOWNSAMPLE)       \
     PSO_NAME(PSO_BLOOM_UPSAMPLE)         \
+    PSO_NAME(PSO_SSAO)                   \
     PSO_NAME(PSO_TONE)                   \
     PSO_NAME(PSO_DEBUG_VOXEL)            \
     PSO_NAME(PSO_ENV_SKYBOX_TO_CUBE_MAP) \

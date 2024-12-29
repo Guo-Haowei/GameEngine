@@ -9,7 +9,7 @@ class GraphicsManager;
 
 namespace my::renderer {
 
-struct DrawData;
+struct RenderData;
 
 class RenderGraph : public NonCopyable {
 public:
@@ -25,7 +25,7 @@ public:
 
     void Compile();
 
-    void Execute(const renderer::DrawData& p_data, GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
 
     const auto& GetGraph() const { return m_graph; }
 

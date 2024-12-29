@@ -5,8 +5,8 @@
 #include "engine/core/framework/display_manager.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/draw_data.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
@@ -38,7 +38,7 @@ struct RenderPassCreateInfo {
 };
 
 /// Gbuffer
-static void DrawBatchesGeometry(const DrawData& p_data, const std::vector<BatchContext>& p_batches) {
+static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches) {
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -74,7 +74,7 @@ static void DrawBatchesGeometry(const DrawData& p_data, const std::vector<BatchC
     }
 }
 
-static void DrawInstacedGeometry(const DrawData& p_data, const std::vector<InstanceContext>& p_instances) {
+static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<InstanceContext>& p_instances) {
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -107,7 +107,7 @@ static void DrawInstacedGeometry(const DrawData& p_data, const std::vector<Insta
     }
 }
 
-static void GbufferPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -150,7 +150,40 @@ void RenderGraphBuilder::AddGbufferPass() {
     CreateRenderPass(info);
 }
 
-static void HighlightPassFunc(const DrawData&, const Framebuffer* p_framebuffer) {
+static void SsaoPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+    if (!p_data.options.ssaoEnabled) {
+        return;
+    }
+
+    HBN_PROFILE_EVENT();
+
+    auto& gm = GraphicsManager::GetSingleton();
+    // auto& frame = gm.GetCurrentFrame();
+    const uint32_t width = p_framebuffer->desc.colorAttachments[0]->desc.width;
+    const uint32_t height = p_framebuffer->desc.colorAttachments[0]->desc.height;
+
+    gm.SetRenderTarget(p_framebuffer);
+    gm.SetViewport(Viewport(width, height));
+    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
+
+    gm.SetPipelineState(PSO_SSAO);
+    gm.DrawQuad();
+}
+
+void RenderGraphBuilder::AddSsaoPass() {
+    RenderPassCreateInfo info{
+        .name = RenderPassName::SSAO,
+        .dependencies = { RenderPassName::GBUFFER },
+        .drawPasses = {
+            { { { RESOURCE_SSAO } },
+              SsaoPassFunc },
+        },
+    };
+
+    CreateRenderPass(info);
+}
+
+static void HighlightPassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -181,7 +214,7 @@ void RenderGraphBuilder::AddHighlightPass() {
 }
 
 /// Shadow
-static void PointShadowPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -239,7 +272,7 @@ static void PointShadowPassFunc(const DrawData& p_data, const Framebuffer* p_fra
     }
 }
 
-static void ShadowPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void ShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -305,7 +338,7 @@ void RenderGraphBuilder::AddShadowPass() {
     pass->AddDrawPass(framebuffer, PointShadowPassFunc);
 }
 
-static void VoxelizationPassFunc(const DrawData& p_data, const Framebuffer*) {
+static void VoxelizationPassFunc(const RenderData& p_data, const Framebuffer*) {
     if (p_data.voxelPass.pass_idx < 0) {
         return;
     }
@@ -431,7 +464,7 @@ void RenderGraphBuilder::AddVoxelizationPass() {
 }
 
 /// Emitter
-static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void EmitterPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -497,7 +530,7 @@ static void EmitterPassFunc(const DrawData& p_data, const Framebuffer* p_framebu
 }
 
 /// Lighting
-static void LightingPassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -589,7 +622,10 @@ void RenderGraphBuilder::AddLightingPass() {
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
 
-    desc.dependencies = { RenderPassName::GBUFFER, RenderPassName::ENV };
+    desc.dependencies = { RenderPassName::GBUFFER,
+                          RenderPassName::ENV,
+                          RenderPassName::SSAO };
+
     if (m_config.enableShadow) {
         desc.dependencies.push_back(RenderPassName::SHADOW);
     }
@@ -628,7 +664,7 @@ void RenderGraphBuilder::AddLightingPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const DrawData& p_data, const Framebuffer*) {
+static void BloomSetupFunc(const RenderData& p_data, const Framebuffer*) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -653,7 +689,7 @@ static void BloomSetupFunc(const DrawData& p_data, const Framebuffer*) {
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void BloomDownSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -681,7 +717,7 @@ static void BloomDownSampleFunc(const DrawData& p_data, const Framebuffer* p_fra
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void BloomUpSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -795,7 +831,7 @@ void RenderGraphBuilder::AddBloomPass() {
     }
 }
 
-static void DebugVoxels(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void DebugVoxels(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -821,7 +857,7 @@ static void DebugVoxels(const DrawData& p_data, const Framebuffer* p_framebuffer
 
 /// Tone
 /// Change to post processing?
-static void TonePassFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void TonePassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -897,7 +933,7 @@ void RenderGraphBuilder::AddTonePass() {
 }
 
 // assume render target is setup
-void RenderGraphBuilder::DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager) {
+void RenderGraphBuilder::DrawDebugImages(const RenderData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager) {
     auto& frame = p_graphics_manager.GetCurrentFrame();
 
     p_graphics_manager.SetViewport(Viewport(p_width, p_height));
@@ -922,7 +958,7 @@ void RenderGraphBuilder::AddDebugImagePass() {
         .dependencies = { RenderPassName::TONE },
         .drawPasses = {
             { { { RESOURCE_FINAL } },
-              [](const DrawData& p_data, const Framebuffer* p_framebuffer) {
+              [](const RenderData& p_data, const Framebuffer* p_framebuffer) {
                   HBN_PROFILE_EVENT();
                   auto& gm = GraphicsManager::GetSingleton();
                   gm.SetRenderTarget(p_framebuffer);
@@ -938,7 +974,7 @@ void RenderGraphBuilder::AddDebugImagePass() {
     CreateRenderPass(info);
 }
 
-static void ConvertToCubemapFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void ConvertToCubemapFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT("hdr image to -> skybox");
     if (!p_data.bakeIbl) {
         return;
@@ -964,7 +1000,7 @@ static void ConvertToCubemapFunc(const DrawData& p_data, const Framebuffer* p_fr
     gm.GenerateMipmap(cube_map.get());
 }
 
-static void DiffuseIrradianceFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void DiffuseIrradianceFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     if (!p_data.bakeIbl) {
         return;
     }
@@ -989,7 +1025,7 @@ static void DiffuseIrradianceFunc(const DrawData& p_data, const Framebuffer* p_f
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
 }
 
-static void PrefilteredFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+static void PrefilteredFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     if (!p_data.bakeIbl) {
         return;
     }
@@ -1029,7 +1065,7 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
     CreateRenderPass(info);
 }
 
-static void PathTracerTonePassFunc(const DrawData&, const Framebuffer* p_framebuffer) {
+static void PathTracerTonePassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -1081,7 +1117,7 @@ void RenderGraphBuilder::AddPathTracerTonePass() {
     pass->AddDrawPass(framebuffer, PathTracerTonePassFunc);
 }
 
-static void PathTracerPassFunc(const DrawData&, const Framebuffer*) {
+static void PathTracerPassFunc(const RenderData&, const Framebuffer*) {
     // @TODO: refactor this part
     if (!renderer::IsPathTracerActive()) {
         return;
@@ -1219,9 +1255,10 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     auto graph = std::make_unique<RenderGraph>();
     RenderGraphBuilder creator(p_config, *graph.get());
 
+    creator.AddGbufferPass();
     creator.AddGenerateSkylightPass();
     creator.AddShadowPass();
-    creator.AddGbufferPass();
+    creator.AddSsaoPass();
     creator.AddHighlightPass();
     creator.AddVoxelizationPass();
     creator.AddLightingPass();

@@ -2,7 +2,7 @@
 #include "engine/renderer/gpu_resource.h"
 
 namespace my::renderer {
-struct DrawData;
+struct RenderData;
 }
 
 namespace my {

@@ -300,6 +300,17 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
                               });
 
+    CREATE_PSO(PSO_SSAO, {
+                             .vs = "screenspace_quad.vs",
+                             .ps = "ssao.ps",
+                             .rasterizerDesc = &s_rasterizerFrontFace,
+                             .depthStencilDesc = &s_depthStencilNoTest,
+                             .inputLayoutDesc = &s_inputLayoutPosition,
+                             .blendDesc = &s_blendStateDefault,
+                             .numRenderTargets = 1,
+                             .rtvFormats = { RT_FMT_SSAO },
+                         });
+
     CREATE_PSO(PSO_TONE, {
                              .vs = "screenspace_quad.vs",
                              .ps = "tone.ps",

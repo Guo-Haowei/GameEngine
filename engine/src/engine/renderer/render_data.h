@@ -88,7 +88,7 @@ struct BufferCache {
     }
 };
 
-struct DrawData {
+struct RenderData {
     struct Camera {
         Matrix4x4f viewMatrix;
         Matrix4x4f projectionMatrixRendering;
@@ -105,7 +105,7 @@ struct DrawData {
         Degree fovy;
     };
 
-    DrawData(const RenderOptions& p_options) : options(p_options) {
+    RenderData(const RenderOptions& p_options) : options(p_options) {
     }
 
     const RenderOptions options;
@@ -157,6 +157,6 @@ struct DrawData {
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        const Scene& p_config,
-                       DrawData& p_out_data);
+                       RenderData& p_out_data);
 
 }  // namespace my::renderer
