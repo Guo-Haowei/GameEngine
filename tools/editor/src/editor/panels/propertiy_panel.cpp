@@ -272,7 +272,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         }
         ImGui::EndDisabled();
         float near = p_camera.GetNear();
-        if (DrawDragFloat("near", near, 0.1f, 0.1f, 1.0f)) {
+        if (DrawDragFloat("near", near, 0.1f, 0.1f, 9.0f)) {
             p_camera.SetNear(near);
         }
         float far = p_camera.GetFar();

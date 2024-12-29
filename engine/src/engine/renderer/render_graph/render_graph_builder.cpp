@@ -624,6 +624,8 @@ void RenderGraphBuilder::AddLightingPass() {
                                                                              m_config.frameWidth, m_config.frameHeight),
                                                      PointClampSampler());
 
+    // @TODO: make this two passes, because lighting doesn't need depth buffer,
+    // we will use the depth buffer for reconstructing view position
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
 

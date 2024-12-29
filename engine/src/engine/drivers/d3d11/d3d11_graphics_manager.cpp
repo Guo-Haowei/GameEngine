@@ -712,7 +712,10 @@ void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_
     if (clear_flags) {
         // @TODO: better way?
         DEV_ASSERT_INDEX(p_index, framebuffer->dsvs.size());
-        m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
+        // @TODO: check out this
+        // https://tomhultonharrop.com/mathematics/graphics/2023/08/06/reverse-z.html
+        m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, 0.0f, 0);
+        // m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
     }
 }
 

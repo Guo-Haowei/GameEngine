@@ -46,11 +46,12 @@ static const RasterizerDesc s_rasterizerDoubleSided = {
 /// Depth stencil states
 static const DepthStencilDesc s_depthStencilDefault = {
     .depthEnabled = true,
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
+    .depthFunc = ComparisonFunc::GREATER_EQUAL,
+    //.depthFunc = ComparisonFunc::LESS_EQUAL,
     .stencilEnabled = false,
 };
 
-static const DepthStencilDesc s_noDepthStencil = {
+static const DepthStencilDesc s_depthStencilDisabled = {
     .depthEnabled = false,
     .depthFunc = ComparisonFunc::NEVER,
     .stencilEnabled = false,
@@ -67,18 +68,16 @@ static const DepthStencilDesc s_depthStencilHighlight = {
 
 static const DepthStencilDesc s_depthStencilGbuffer = {
     .depthEnabled = true,
+#if 0
     .depthFunc = ComparisonFunc::LESS_EQUAL,
+#else
+    .depthFunc = ComparisonFunc::GREATER_EQUAL,
+#endif
     .stencilEnabled = true,
     .frontFace = {
         .stencilPassOp = StencilOp::REPLACE,
         .stencilFunc = ComparisonFunc::ALWAYS,
     },
-};
-
-static const DepthStencilDesc s_depthStencilNoTest = {
-    .depthEnabled = false,
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
-    .stencilEnabled = false,
 };
 
 /// Blend states
@@ -251,7 +250,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                  .vs = "screenspace_quad.vs",
                                  .ps = "lighting.ps",
                                  .rasterizerDesc = &s_rasterizerFrontFace,
-                                 .depthStencilDesc = &s_noDepthStencil,
+                                 .depthStencilDesc = &s_depthStencilDisabled,
                                  .inputLayoutDesc = &s_inputLayoutPosition,
                                  .blendDesc = &s_blendStateDefault,
                                  .numRenderTargets = 1,
@@ -304,7 +303,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                              .vs = "screenspace_quad.vs",
                              .ps = "ssao.ps",
                              .rasterizerDesc = &s_rasterizerFrontFace,
-                             .depthStencilDesc = &s_depthStencilNoTest,
+                             .depthStencilDesc = &s_depthStencilDisabled,
                              .inputLayoutDesc = &s_inputLayoutPosition,
                              .blendDesc = &s_blendStateDefault,
                              .numRenderTargets = 1,
@@ -374,7 +373,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                       .vs = "debug_draw_texture.vs",
                                       .ps = "debug_draw_texture.ps",
                                       .rasterizerDesc = &s_rasterizerFrontFace,
-                                      .depthStencilDesc = &s_depthStencilNoTest,
+                                      .depthStencilDesc = &s_depthStencilDisabled,
                                       .inputLayoutDesc = &s_inputLayoutPosition,
                                       .blendDesc = &s_blendStateDefault,
                                       .numRenderTargets = 1,
@@ -403,7 +402,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                      .ps = "voxelization.ps",
                                      .gs = "voxelization.gs",
                                      .rasterizerDesc = &s_rasterizerDoubleSided,
-                                     .depthStencilDesc = &s_depthStencilNoTest,
+                                     .depthStencilDesc = &s_depthStencilDisabled,
                                      .blendDesc = &s_blendStateDisable,
                                  });
 

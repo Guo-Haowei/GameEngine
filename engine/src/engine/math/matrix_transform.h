@@ -37,7 +37,12 @@ inline Matrix4x4f BuildPerspectiveRH(float p_fovy, float p_aspect, float p_near,
     result[2][2] = -p_far / (p_far - p_near);
     result[2][3] = -1.0f;
     result[3][2] = -(p_far * p_near) / (p_far - p_near);
-    return result;
+
+    Matrix4x4f reverse_z{ 1.0f, 0.0f, 0.0f, 0.0f,
+                          0.0f, 1.0f, 0.0f, 0.0f,
+                          0.0f, 0.0f, -1.0f, 0.0f,
+                          0.0f, 0.0f, 1.0f, 1.0f };
+    return reverse_z * result;
 }
 
 inline Matrix4x4f BuildOpenGlPerspectiveRH(float p_fovy, float p_aspect, float p_near, float p_far) {
