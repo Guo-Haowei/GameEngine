@@ -72,7 +72,7 @@ static inline SamplerDesc PointClampSampler() {
     return desc;
 }
 
-static inline SamplerDesc PointRepeatSampler() {
+static inline SamplerDesc PointWrapSampler() {
     SamplerDesc desc(MinFilter::POINT, MagFilter::POINT, AddressMode::WRAP);
     return desc;
 }
