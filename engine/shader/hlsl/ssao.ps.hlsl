@@ -7,6 +7,13 @@
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
 
+Vector3f NdcToViewPos(Vector2f uv, float depth) {
+    Vector2f ndc = 2.0f * uv - 1.0f;
+    Vector4f viewPosH = mul(c_invProjection, Vector4f(ndc.x, ndc.y, depth, 1.0f));
+    Vector3f viewPos = viewPosH.xyz / viewPosH.w;
+    return viewPos;
+}
+
 float main(vsoutput_uv input) : SV_TARGET {
     const Vector2f uv = input.uv;
 
@@ -18,11 +25,14 @@ float main(vsoutput_uv input) : SV_TARGET {
     Vector3f N = TEXTURE_2D(GbufferNormalMap).Sample(s_pointClampSampler, uv).rgb;
     N = 2.0f * N - 1.0f;
 
+    // reconstruct view position
+    // https://stackoverflow.com/questions/11277501/how-to-recover-view-space-position-given-view-space-depth-value-and-ndc-xy
+    const float depth = TEXTURE_2D(GbufferDepth).Sample(s_pointClampSampler, uv).r;
+    const Vector3f origin = NdcToViewPos(uv, depth);
+
     Vector3f rvec = Vector3f(TEXTURE_2D(BaseColorMap).SampleLevel(s_pointWrapSampler, uv * noise_scale, 0.0f).xy, 0.0f);
     Vector3f tangent = normalize(rvec - N * dot(rvec, N));
     Vector3f bitangent = cross(N, tangent);
-
-    const Vector3f origin = TEXTURE_2D(GbufferPositionMap).Sample(s_pointClampSampler, uv).xyz;
 
     float3x3 TBN = float3x3(tangent, bitangent, N);
 
@@ -40,18 +50,19 @@ float main(vsoutput_uv input) : SV_TARGET {
         // project sample position (to sample texture) (to get position on screen/texture)
         Vector4f offset = Vector4f(samplePos, 1.0);
         offset = mul(c_projectionMatrix, offset);  // from view to clip-space
-        offset.xyz /= offset.w;                    // perspective divide
-        offset.y = -offset.y;
-        offset.xy = offset.xy * 0.5 + 0.5;  // transform to range 0.0 - 1.0
+        offset /= offset.w;                        // perspective divide
+        offset.xy = offset.xy * 0.5 + 0.5;         // transform to range 0.0 - 1.0
 
-        float sample_depth = TEXTURE_2D(GbufferPositionMap).Sample(s_pointClampSampler, offset.xy).z;
-        // return sample_depth;
+        const float depth2 = TEXTURE_2D(GbufferDepth).Sample(s_pointClampSampler, offset.xy).r;
+        const Vector3f sampleOcclusionPos = NdcToViewPos(offset.xy, depth2);
+        const float sample_depth = sampleOcclusionPos.z;
 
-        // const float range_check = smoothstep(0.0, 1.0, c_ssaoKernalRadius / abs(origin.z - sample_depth));
-        const float increment = (+(sample_depth - samplePos.z) <= SSAO_KERNEL_BIAS) ? 1.0f : 0.0f;
-        // const float increment = (sample_depth >= (samplePos.z + SSAO_KERNEL_BIAS)) ? 1.0f : 0.0f;
+        const float range_check = smoothstep(0.0, 1.0, c_ssaoKernalRadius / abs(origin.z - sample_depth));
+        const float increment = sample_depth - samplePos.z >= SSAO_KERNEL_BIAS ? 1.0f : 0.0f;
         occlusion += increment;
+        // occlusion += increment * range_check;
     }
 
+    occlusion = 1.0 - (occlusion / float(SSAO_KERNEL_SIZE));
     return occlusion;
 }

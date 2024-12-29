@@ -7,13 +7,13 @@
 #include "shader_resource_defines.hlsl.h"
 
 float4 main(vsoutput_uv input) : SV_TARGET {
-    const float2 texcoord = input.uv;
-    const float4 emissive_roughness_metallic = TEXTURE_2D(GbufferMaterialMap).Sample(s_linearMipWrapSampler, texcoord);
+    const float2 uv = input.uv;
+    const float4 emissive_roughness_metallic = TEXTURE_2D(GbufferMaterialMap).Sample(s_linearMipWrapSampler, uv);
     clip(emissive_roughness_metallic.a - 0.01f);
 
-    float3 base_color = TEXTURE_2D(GbufferBaseColorMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    float3 base_color = TEXTURE_2D(GbufferBaseColorMap).Sample(s_linearMipWrapSampler, uv).rgb;
 
-    const float4 view_position = float4(TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb, 1.0f);
+    const float4 view_position = float4(TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, uv).rgb, 1.0f);
     const float4 world_position = mul(c_invViewMatrix, view_position);
 
     float emissive = emissive_roughness_metallic.r;
@@ -24,7 +24,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
         return float4(emissive * base_color, 1.0);
     }
 
-    float3 N = TEXTURE_2D(GbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    float3 N = TEXTURE_2D(GbufferNormalMap).Sample(s_linearMipWrapSampler, uv).rgb;
     N = 2.0f * N - 1.0f;
 
     float3 color = compute_lighting(base_color,
@@ -33,5 +33,10 @@ float4 main(vsoutput_uv input) : SV_TARGET {
                                     metallic,
                                     roughness,
                                     emissive);
+    if (c_ssaoEnabled != 0) {
+        float ao = TEXTURE_2D(SsaoMap).Sample(s_pointClampSampler, uv).r;
+        color *= ao;
+    }
+
     return float4(color, 1.0f);
 }

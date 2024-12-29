@@ -335,6 +335,7 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
+                pass_constant.c_invProjection = glm::inverse(pass_constant.c_projectionMatrix);
                 p_out_data.shadowPasses[0].pass_idx = static_cast<int>(p_out_data.passCache.size());
                 p_out_data.passCache.emplace_back(pass_constant);
 
@@ -475,6 +476,7 @@ static void FillMainPass(const Scene& p_scene,
     PerPassConstantBuffer pass_constant;
     pass_constant.c_viewMatrix = camera.viewMatrix;
     pass_constant.c_projectionMatrix = camera.projectionMatrixRendering;
+    pass_constant.c_invProjection = glm::inverse(pass_constant.c_projectionMatrix);
 
     p_out_data.mainPass.pass_idx = static_cast<int>(p_out_data.passCache.size());
     p_out_data.passCache.emplace_back(pass_constant);

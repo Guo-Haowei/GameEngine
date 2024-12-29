@@ -7,6 +7,13 @@ layout(location = 0) out float out_color;
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
 
+Vector3f NdcToViewPos(Vector2f uv, float depth) {
+    Vector2f ndc = 2.0f * uv - 1.0f;
+    Vector4f viewPosH = c_invProjection * Vector4f(ndc.x, ndc.y, 2.0f * depth - 1.0f, 1.0f);
+    Vector3f viewPos = viewPosH.xyz / viewPosH.w;
+    return viewPos;
+}
+
 void main() {
     const Vector2f uv = pass_uv;
 
@@ -23,8 +30,10 @@ void main() {
 
     mat3 TBN = mat3(tangent, bitangent, N);
 
-    // @TODO: reconstruct depth from matrix
-    const Vector3f origin = texture(t_GbufferPositionMap, uv).xyz;
+    // Reconstruct view position
+    // https://stackoverflow.com/questions/11277501/how-to-recover-view-space-position-given-view-space-depth-value-and-ndc-xy
+    const float depth = texture(t_GbufferDepth, uv).r;
+    const Vector3f origin = NdcToViewPos(uv, depth);
 
 #if 0
     out_color = (TBN * Vector3f(0, 0, 1)).b;
@@ -40,15 +49,16 @@ void main() {
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);
         offset = c_projectionMatrix * offset;  // from view to clip-space
-        offset.xyz /= offset.w;                // perspective divide
+        offset /= offset.w;                // perspective divide
         offset.xy = offset.xy * 0.5 + 0.5;     // transform to range 0.0 - 1.0
 
-        float sample_depth = texture(t_GbufferPositionMap, offset.xy).z;
+        const float depth2 = texture(t_GbufferDepth, offset.xy).r;
+        const Vector3f sampleOcclusionPos = NdcToViewPos(offset.xy, depth2);
+        const float sample_depth = sampleOcclusionPos.z;
 
-        // const float range_check = smoothstep(0.0, 1.0, c_ssaoKernalRadius / abs(origin.z - sample_depth));
-        const float increment = (sample_depth >= (samplePos.z + SSAO_KERNEL_BIAS)) ? 1.0f : 0.0f;
-        occlusion += increment;
-        //occlusion += increment * range_check;
+        const float range_check = smoothstep(0.0, 1.0, c_ssaoKernalRadius / abs(origin.z - sample_depth));
+        const float increment = sample_depth - samplePos.z >= SSAO_KERNEL_BIAS ? 1.0f : 0.0f;
+        occlusion += increment * range_check;
     }
 
     occlusion = 1.0 - (occlusion / float(SSAO_KERNEL_SIZE));

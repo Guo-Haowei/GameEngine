@@ -100,7 +100,7 @@ CBUFFER(PerPassConstantBuffer, 1) {
     Matrix4x4f c_projectionMatrix;
 
     Matrix4x4f _per_pass_padding_0;
-    Matrix4x4f _per_pass_padding_1;
+    Matrix4x4f c_invProjection;
 };
 
 CBUFFER(MaterialConstantBuffer, 2) {

@@ -577,7 +577,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
             texture = FindTexture(RESOURCE_GBUFFER_NORMAL).get();
         } break;
         case RenderGraphName::DEFAULT: {
-#if 1
+#if 0
             // @TODO: debug panel
             texture = FindTexture(RESOURCE_SSAO).get();
 #else
