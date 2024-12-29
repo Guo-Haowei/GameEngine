@@ -628,7 +628,11 @@ void RenderGraphBuilder::AddLightingPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const DrawData&, const Framebuffer*) {
+static void BloomSetupFunc(const DrawData& p_data, const Framebuffer*) {
+    if (!p_data.options.bloomEnabled) {
+        return;
+    }
+
     HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();
@@ -649,7 +653,11 @@ static void BloomSetupFunc(const DrawData&, const Framebuffer*) {
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const DrawData&, const Framebuffer* p_framebuffer) {
+static void BloomDownSampleFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    if (!p_data.options.bloomEnabled) {
+        return;
+    }
+
     HBN_PROFILE_EVENT();
 
     const uint32_t pass_id = p_framebuffer->id;
@@ -673,7 +681,11 @@ static void BloomDownSampleFunc(const DrawData&, const Framebuffer* p_framebuffe
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const DrawData&, const Framebuffer* p_framebuffer) {
+static void BloomUpSampleFunc(const DrawData& p_data, const Framebuffer* p_framebuffer) {
+    if (!p_data.options.bloomEnabled) {
+        return;
+    }
+
     HBN_PROFILE_EVENT();
 
     GraphicsManager& gm = GraphicsManager::GetSingleton();

@@ -4,7 +4,6 @@
 #include "engine/math/frustum.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_defines.h"
-#include "engine/renderer/graphics_dvars.h"
 #include "engine/scene/scene.h"
 
 // @TODO: remove
@@ -65,16 +64,15 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
     cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
 };
 
-static void FillPass(const RenderDataConfig& p_config,
+static void FillPass(const Scene& p_scene,
                      PassContext& p_pass,
                      FilterObjectFunc1 p_filter1,
                      FilterObjectFunc2 p_filter2,
                      DrawData& p_out_render_data) {
-    const Scene& scene = p_config.scene;
 
-    const bool is_opengl = p_config.isOpengl;
-    for (auto [entity, obj] : scene.m_ObjectComponents) {
-        if (!scene.Contains<TransformComponent>(entity)) {
+    const bool is_opengl = p_out_render_data.options.isOpengl;
+    for (auto [entity, obj] : p_scene.m_ObjectComponents) {
+        if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
         }
 
@@ -84,10 +82,10 @@ static void FillPass(const RenderDataConfig& p_config,
             continue;
         }
 
-        const TransformComponent& transform = *scene.GetComponent<TransformComponent>(entity);
-        DEV_ASSERT(scene.Contains<MeshComponent>(obj.meshId));
+        const TransformComponent& transform = *p_scene.GetComponent<TransformComponent>(entity);
+        DEV_ASSERT(p_scene.Contains<MeshComponent>(obj.meshId));
 
-        const MeshComponent& mesh = *scene.GetComponent<MeshComponent>(obj.meshId);
+        const MeshComponent& mesh = *p_scene.GetComponent<MeshComponent>(obj.meshId);
         bool double_sided = mesh.flags & MeshComponent::DOUBLE_SIDED;
 
         const Matrix4x4f& world_matrix = transform.GetWorldMatrix();
@@ -103,13 +101,13 @@ static void FillPass(const RenderDataConfig& p_config,
 
         BatchContext draw;
         draw.flags = 0;
-        if (entity == scene.m_selected) {
+        if (entity == p_scene.m_selected) {
             draw.flags |= STENCIL_FLAG_SELECTED;
         }
 
         draw.batch_idx = p_out_render_data.batchCache.FindOrAdd(entity, batch_buffer);
         if (mesh.armatureId.IsValid()) {
-            auto& armature = *scene.GetComponent<ArmatureComponent>(mesh.armatureId);
+            auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armatureId);
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
 
             BoneConstantBuffer bone;
@@ -122,7 +120,7 @@ static void FillPass(const RenderDataConfig& p_config,
         }
 
         // HACK
-        const MeshComponent* cloth_mesh = scene.GetComponent<MeshComponent>(entity);
+        const MeshComponent* cloth_mesh = p_scene.GetComponent<MeshComponent>(entity);
         if (cloth_mesh && cloth_mesh->gpuResource) {
             draw.mesh_data = (GpuMesh*)cloth_mesh->gpuResource.get();
         } else {
@@ -140,7 +138,7 @@ static void FillPass(const RenderDataConfig& p_config,
                 continue;
             }
 
-            const MaterialComponent* material = scene.GetComponent<MaterialComponent>(subset.material_id);
+            const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
             MaterialConstantBuffer material_buffer;
             FillMaterialConstantBuffer(is_opengl, material, material_buffer);
 
@@ -188,21 +186,20 @@ static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matri
     DebugDrawBVH(p_level, p_bvh->right.get(), p_matrix);
 };
 
-static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out_data) {
+static void FillConstantBuffer(const Scene& p_scene, DrawData& p_out_data) {
+    const auto& options = p_out_data.options;
     auto& cache = p_out_data.perFrameCache;
 
     const auto& camera = p_out_data.mainCamera;
-    const auto& scene = p_config.scene;
 
     cache.c_cameraPosition = camera.position;
-    cache.c_debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
-    cache.c_noTexture = DVAR_GET_BOOL(gfx_no_texture);
-
-    cache.c_ptObjectCount = (int)p_config.scene.m_ObjectComponents.GetCount();
+    cache.c_debugVoxelId = options.debugVoxelId;
+    cache.c_enableSsao = options.ssaoEnabled;
+    cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
 
     // Bloom
-    cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
-    cache.c_enableBloom = DVAR_GET_BOOL(gfx_enable_bloom);
+    // cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
+    cache.c_enableBloom = options.bloomEnabled;
 
     cache.c_cameraFovDegree = camera.fovy.GetDegree();
     cache.c_cameraForward = camera.front;
@@ -214,14 +211,14 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     static int s_frameIndex = 0;
     cache.c_frameIndex = s_frameIndex++;
     // @TODO: fix this
-    cache.c_sceneDirty = p_config.scene.GetDirtyFlags() != SCENE_DIRTY_NONE;
+    cache.c_sceneDirty = p_scene.GetDirtyFlags() != SCENE_DIRTY_NONE;
 
     // Force fields
 
     int counter = 0;
-    for (auto [id, force_field_component] : scene.m_ForceFieldComponents) {
+    for (auto [id, force_field_component] : p_scene.m_ForceFieldComponents) {
         ForceField& force_field = cache.c_forceFields[counter++];
-        const TransformComponent& transform = *scene.GetComponent<TransformComponent>(id);
+        const TransformComponent& transform = *p_scene.GetComponent<TransformComponent>(id);
         force_field.position = transform.GetTranslation();
         force_field.strength = force_field_component.strength;
     }
@@ -252,7 +249,7 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
 
     // @TODO: fix
-    for (auto const [entity, environment] : p_config.scene.View<EnvironmentComponent>()) {
+    for (auto const [entity, environment] : p_scene.View<EnvironmentComponent>()) {
         cache.c_ambientColor = environment.ambient.color;
         if (!environment.sky.texturePath.empty()) {
             environment.sky.textureAsset = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(environment.sky.texturePath);
@@ -269,11 +266,11 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     }
 
     // @TODO:
-    const int level = DVAR_GET_INT(gfx_bvh_debug);
+    const int level = options.debugBvhDepth;
     if (level > -1) {
-        for (auto const [id, obj] : scene.m_ObjectComponents) {
-            const MeshComponent* mesh = scene.GetComponent<MeshComponent>(obj.meshId);
-            const TransformComponent* transform = scene.GetComponent<TransformComponent>(id);
+        for (auto const [id, obj] : p_scene.m_ObjectComponents) {
+            const MeshComponent* mesh = p_scene.GetComponent<MeshComponent>(obj.meshId);
+            const TransformComponent* transform = p_scene.GetComponent<TransformComponent>(id);
             if (mesh && transform) {
                 if (const auto& bvh = mesh->bvh; bvh) {
                     const auto& matrix = transform->GetWorldMatrix();
@@ -284,8 +281,7 @@ static void FillConstantBuffer(const RenderDataConfig& p_config, DrawData& p_out
     }
 }
 
-static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_data) {
-    const Scene& p_scene = p_config.scene;
+static void FillLightBuffer(const Scene& p_scene, DrawData& p_out_data) {
 
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
@@ -295,7 +291,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
     auto& point_shadow_cache = p_out_data.pointShadowCache;
 
     int idx = 0;
-    for (auto [light_entity, light_component] : p_config.scene.View<LightComponent>()) {
+    for (auto [light_entity, light_component] : p_scene.View<LightComponent>()) {
         const TransformComponent* light_transform = p_scene.GetComponent<TransformComponent>(light_entity);
         const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(light_entity);
 
@@ -327,7 +323,7 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
                 tmp.Set(&light_dir.x);
                 light.view_matrix = LookAtRh(center + tmp * size, center, Vector3f::UnitY);
 
-                if (p_config.isOpengl) {
+                if (p_out_data.options.isOpengl) {
                     light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
                     light.projection_matrix = BuildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
@@ -408,13 +404,13 @@ static void FillLightBuffer(const RenderDataConfig& p_config, DrawData& p_out_da
     }
 }
 
-static void FillVoxelPass(const RenderDataConfig& p_config,
+static void FillVoxelPass(const Scene& p_scene,
                           DrawData& p_out_data) {
     bool enabled = false;
     bool show_debug = false;
     AABB voxel_gi_bound;
     int counter = 0;
-    for (auto [entity, voxel_gi] : p_config.scene.m_VoxelGiComponents) {
+    for (auto [entity, voxel_gi] : p_scene.m_VoxelGiComponents) {
         voxel_gi_bound = voxel_gi.region;
         DEV_ASSERT(voxel_gi_bound.IsValid());
         if (!voxel_gi_bound.IsValid()) {
@@ -440,14 +436,12 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     p_out_data.voxelPass.pass_idx = 0;
 
     // @TODO: refactor the following
-    const int voxel_texture_size = DVAR_GET_INT(gfx_voxel_size);
+    const int voxel_texture_size = p_out_data.options.voxelTextureSize;
     DEV_ASSERT(IsPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
     const auto voxel_world_center = voxel_gi_bound.Center();
     auto voxel_world_size = voxel_gi_bound.Size().x;
-    const float max_world_size = DVAR_GET_FLOAT(gfx_vxgi_max_world_size);
-    voxel_world_size = glm::min(voxel_world_size, max_world_size);
 
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = voxel_world_size * texel_size;
@@ -459,7 +453,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
     cache.c_voxelSize = voxel_size;
 
     FillPass(
-        p_config,
+        p_scene,
         p_out_data.voxelPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::FLAG_RENDERABLE;
@@ -470,7 +464,7 @@ static void FillVoxelPass(const RenderDataConfig& p_config,
         p_out_data);
 }
 
-static void FillMainPass(const RenderDataConfig& p_config,
+static void FillMainPass(const Scene& p_scene,
                          DrawData& p_out_data) {
     const auto& camera = p_out_data.mainCamera;
     Frustum camera_frustum(camera.projectionMatrixFrustum * camera.viewMatrix);
@@ -484,7 +478,7 @@ static void FillMainPass(const RenderDataConfig& p_config,
     p_out_data.passCache.emplace_back(pass_constant);
 
     FillPass(
-        p_config.scene,
+        p_scene,
         p_out_data.mainPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::FLAG_RENDERABLE;
@@ -495,7 +489,7 @@ static void FillMainPass(const RenderDataConfig& p_config,
         p_out_data);
 }
 
-static void FillEnvConstants(const RenderDataConfig& p_config,
+static void FillEnvConstants(const Scene&,
                              DrawData& p_out_data) {
     // @TODO: return if necessary
 
@@ -504,7 +498,7 @@ static void FillEnvConstants(const RenderDataConfig& p_config,
         p_out_data.batchCache.buffer.resize(count);
     }
 
-    auto matrices = p_config.isOpengl ? BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0)) : BuildCubeMapViewProjectionMatrix(Vector3f(0));
+    auto matrices = p_out_data.options.isOpengl ? BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0)) : BuildCubeMapViewProjectionMatrix(Vector3f(0));
     for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx) {
         for (int face_id = 0; face_id < 6; ++face_id) {
             auto& batch = p_out_data.batchCache.buffer[mip_idx * 6 + face_id];
@@ -514,7 +508,7 @@ static void FillEnvConstants(const RenderDataConfig& p_config,
     }
 }
 
-static void FillBloomConstants(const RenderDataConfig& p_config,
+static void FillBloomConstants(const Scene& p_config,
                                DrawData& p_out_data) {
     unused(p_config);
 
@@ -550,12 +544,11 @@ static void FillBloomConstants(const RenderDataConfig& p_config,
     }
 }
 
-static void FillMeshEmitterBuffer(const RenderDataConfig& p_config,
+static void FillMeshEmitterBuffer(const Scene& p_scene,
                                   DrawData& p_out_data) {
-    const Scene& scene = p_config.scene;
-    for (auto [id, emitter] : scene.m_MeshEmitterComponents) {
-        auto transform = scene.GetComponent<TransformComponent>(id);
-        auto mesh = scene.GetComponent<MeshComponent>(emitter.meshId);
+    for (auto [id, emitter] : p_scene.m_MeshEmitterComponents) {
+        auto transform = p_scene.GetComponent<TransformComponent>(id);
+        auto mesh = p_scene.GetComponent<MeshComponent>(emitter.meshId);
         if (DEV_VERIFY(transform && mesh)) {
             PerBatchConstantBuffer batch_buffer;
             batch_buffer.c_worldMatrix = Matrix4x4f(1);
@@ -574,10 +567,10 @@ static void FillMeshEmitterBuffer(const RenderDataConfig& p_config,
             instance.batchIdx = p_out_data.batchCache.FindOrAdd(id, batch_buffer);
             instance.instanceBufferIndex = (int)position_buffer.size();
             auto material_id = mesh->subsets[0].material_id;
-            auto material = scene.GetComponent<MaterialComponent>(material_id);
+            auto material = p_scene.GetComponent<MaterialComponent>(material_id);
             DEV_ASSERT(material);
             MaterialConstantBuffer material_buffer;
-            FillMaterialConstantBuffer(p_config.isOpengl, material, material_buffer);
+            FillMaterialConstantBuffer(p_out_data.options.isOpengl, material, material_buffer);
             instance.materialIdx = p_out_data.materialCache.FindOrAdd(material_id, material_buffer);
 
             // @HACK: use bone cache
@@ -599,13 +592,12 @@ static void FillMeshEmitterBuffer(const RenderDataConfig& p_config,
     }
 }
 
-static void FillParticleEmitterBuffer(const RenderDataConfig& p_config,
+static void FillParticleEmitterBuffer(const Scene& p_scene,
                                       DrawData& p_out_data) {
     // @TODO: engine->get frame
     static int s_counter = -1;
     s_counter++;
 
-    const auto& p_scene = p_config.scene;
     const auto view = p_scene.View<ParticleEmitterComponent>();
     for (auto [id, emitter] : view) {
         const uint32_t pre_sim_idx = emitter.GetPreIndex();
@@ -634,7 +626,7 @@ static void FillParticleEmitterBuffer(const RenderDataConfig& p_config,
 }
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
-                       const RenderDataConfig& p_config,
+                       const Scene& p_scene,
                        DrawData& p_out_data) {
     // fill camera
     {
@@ -648,7 +640,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.viewMatrix = p_camera.GetViewMatrix();
         camera.projectionMatrixFrustum = p_camera.GetProjectionMatrix();
-        if (p_config.isOpengl) {
+        if (p_out_data.options.isOpengl) {
             camera.projectionMatrixRendering = BuildOpenGlPerspectiveRH(
                 camera.fovy.GetRadians(),
                 camera.aspectRatio,
@@ -669,7 +661,7 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     }
 
     // @TODO: update soft body
-    for (auto [entity, mesh] : p_config.scene.View<MeshComponent>()) {
+    for (auto [entity, mesh] : p_scene.View<MeshComponent>()) {
         if (!mesh.updatePositions.empty()) {
             p_out_data.updateBuffer.emplace_back(DrawData::UpdateBuffer{
                 .positions = std::move(mesh.updatePositions),
@@ -679,14 +671,14 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
         }
     }
 
-    FillConstantBuffer(p_config, p_out_data);
-    FillLightBuffer(p_config, p_out_data);
-    FillMainPass(p_config, p_out_data);
-    FillVoxelPass(p_config, p_out_data);
-    FillMeshEmitterBuffer(p_config, p_out_data);
-    FillBloomConstants(p_config, p_out_data);
-    FillEnvConstants(p_config, p_out_data);
-    FillParticleEmitterBuffer(p_config, p_out_data);
+    FillConstantBuffer(p_scene, p_out_data);
+    FillLightBuffer(p_scene, p_out_data);
+    FillMainPass(p_scene, p_out_data);
+    FillVoxelPass(p_scene, p_out_data);
+    FillMeshEmitterBuffer(p_scene, p_out_data);
+    FillBloomConstants(p_scene, p_out_data);
+    FillEnvConstants(p_scene, p_out_data);
+    FillParticleEmitterBuffer(p_scene, p_out_data);
 }
 
 }  // namespace my::renderer

@@ -24,10 +24,6 @@ void main() {
     float metallic = emissive_roughness_metallic.b;
 
     vec3 base_color = texture(t_GbufferBaseColorMap, texcoord).rgb;
-    if (c_noTexture != 0) {
-        base_color = vec3(0.6);
-    }
-
     if (emissive > 0.0) {
         out_color = vec4(emissive * base_color, 1.0);
         return;

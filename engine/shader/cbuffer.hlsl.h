@@ -170,7 +170,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     float c_bloomThreshold;  // 16
 
     int c_debugVoxelId;
-    int c_noTexture;
+    int c_enableSsao;
     int c_enableVxgi;
     float c_texelSize;  // 16
 

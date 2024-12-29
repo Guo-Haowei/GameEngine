@@ -1,4 +1,6 @@
 /// File: gbuffer.ps.glsl
+// @TODO: don't need vec4 to store the values
+// @TODO: can we reconstruct position from depth buffer?
 layout(location = 0) out vec4 out_base_color;
 layout(location = 1) out vec4 out_position;
 layout(location = 2) out vec4 out_normal;

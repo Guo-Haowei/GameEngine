@@ -13,14 +13,13 @@ DVAR_BOOL(gfx_gpu_validation, DVAR_FLAG_NONE, "Enable GPU validation", true);
 
 // Switches
 DVAR_BOOL(gfx_debug_shadow, DVAR_FLAG_CACHE, "Debug shadow", false);
-DVAR_BOOL(gfx_no_texture, DVAR_FLAG_CACHE, "No texture", false);
 DVAR_BOOL(gfx_enable_bloom, DVAR_FLAG_CACHE, "Enable Bloom", true);
+DVAR_BOOL(gfx_enable_ssao, DVAR_FLAG_CACHE, "Enable SSAO", true);
 
 // voxel GI
 DVAR_BOOL(gfx_debug_vxgi, DVAR_FLAG_NONE, "Debug VXGI", false);
 DVAR_INT(gfx_debug_vxgi_voxel, DVAR_FLAG_NONE, "Select which voxel texture to display", 0);
 DVAR_INT(gfx_voxel_size, DVAR_FLAG_NONE, "Voxel size", 64);
-DVAR_FLOAT(gfx_vxgi_max_world_size, DVAR_FLAG_NONE, "Maxium voxel size when using vxgi", 40.0f);
 
 // path tracer
 DVAR_BOOL(gfx_bvh_generate, DVAR_FLAG_NONE, "Generate BVH", false);

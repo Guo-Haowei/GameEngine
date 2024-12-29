@@ -43,9 +43,18 @@ void BeginFrame() {
         delete s_glob.renderData;
         s_glob.renderData = nullptr;
     }
-    s_glob.renderData = new DrawData();
-    s_glob.renderData->bakeIbl = false;
 
+    RenderOptions options;
+    // @TODO: name consistency
+    options.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
+    options.bloomEnabled = DVAR_GET_BOOL(gfx_enable_bloom);
+    options.ssaoEnabled = DVAR_GET_BOOL(gfx_enable_ssao);
+    options.debugBvhDepth = DVAR_GET_INT(gfx_bvh_debug);
+    options.debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
+    options.voxelTextureSize = DVAR_GET_INT(gfx_voxel_size);
+
+    s_glob.renderData = new DrawData(options);
+    s_glob.renderData->bakeIbl = false;
     s_glob.state = RenderState::RECORDING;
 }
 
@@ -90,9 +99,7 @@ void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
 
     ASSERT_CAN_RECORD();
 
-    RenderDataConfig config(p_scene);
-    config.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-    PrepareRenderData(p_camera, config, *s_glob.renderData);
+    PrepareRenderData(p_camera, p_scene, *s_glob.renderData);
 
     // @TODO: refactor
     s_glob.pt.Update(p_scene);

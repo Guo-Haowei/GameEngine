@@ -12,10 +12,6 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     clip(emissive_roughness_metallic.a - 0.01f);
 
     float3 base_color = TEXTURE_2D(GbufferBaseColorMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
-    if (c_noTexture != 0) {
-        base_color = float3(0.6, 0.6, 0.6);
-    }
-
     const float3 world_position = TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
 
     float emissive = emissive_roughness_metallic.r;
