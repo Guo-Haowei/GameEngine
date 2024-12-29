@@ -12,7 +12,9 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     clip(emissive_roughness_metallic.a - 0.01f);
 
     float3 base_color = TEXTURE_2D(GbufferBaseColorMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
-    const float3 world_position = TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+
+    const float4 view_position = float4(TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, texcoord).rgb, 1.0f);
+    const float4 world_position = mul(c_invViewMatrix, view_position);
 
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
@@ -26,7 +28,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     N = 2.0f * N - 1.0f;
 
     float3 color = compute_lighting(base_color,
-                                    world_position,
+                                    world_position.xyz,
                                     N,
                                     metallic,
                                     roughness,

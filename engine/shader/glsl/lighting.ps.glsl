@@ -18,7 +18,8 @@ void main() {
     vec3 N = texture(t_GbufferNormalMap, texcoord).rgb;
     N = 2.0f * N - 1.0f;
 
-    const vec3 world_position = texture(t_GbufferPositionMap, texcoord).rgb;
+    const vec3 view_position = texture(t_GbufferPositionMap, texcoord).rgb;
+    const vec3 world_position = (c_invViewMatrix * vec4(view_position, 1.0f)).xyz;
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;

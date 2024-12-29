@@ -124,7 +124,12 @@ vec3 area_light(mat3 Minv, vec3 N, vec3 V, vec3 world_position, vec4 p_t2, vec3 
     return (specular + kD * diffuse);
 }
 
-vec3 compute_lighting(vec3 base_color, vec3 world_position, vec3 N, float metallic, float roughness, float emissive) {
+vec3 compute_lighting(vec3 base_color,
+                      vec3 world_position,
+                      vec3 N,
+                      float metallic,
+                      float roughness,
+                      float emissive) {
     if (emissive > 0.0) {
         return vec3(emissive * base_color);
     }

@@ -166,6 +166,8 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     Vector4f c_ssaoKernel[MAX_SSAO_KERNEL];
 
     //-----------------------------------------
+    Matrix4x4f c_invViewMatrix;  // 64
+    //-----------------------------------------
     int c_lightCount;
     int c_enableBloom;
     int c_debugCsm;
@@ -176,32 +178,15 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_enableVxgi;
     float c_texelSize;  // 16
 
-    //-----------------------------------------
-
     Vector4f c_ambientColor;  // 16
 
     Vector3f _per_frame_padding_4;  // 16
     int c_ptObjectCount;
-
-    sampler2D c_SkyboxResidentHandle;
-    sampler2D c_SkyboxHdrResidentHandle;  // 16
-
+    //-----------------------------------------
     uint c_DiffuseIrradianceResidentHandle;
     uint c_PrefilteredResidentHandle;
     uint c_BrdfLutResidentHandle;
     int c_forceFieldsCount;  // 16
-
-    //-----------------------------------------
-
-    sampler2D c_GbufferBaseColorMapResidentHandle;
-    sampler2D c_GbufferPositionMapResidentHandle;  // 16
-
-    sampler2D c_GbufferNormalMapResidentHandle;
-    sampler2D c_GbufferMaterialMapResidentHandle;  // 16
-
-    //-----------------------------------------
-    sampler2D c_GbufferDepthResidentHandle;
-    sampler2D c_PointShadowArrayResidentHandle;  // 16
 
     sampler2D c_ShadowMapResidentHandle;
     sampler2D c_TextureHighlightSelectResidentHandle;  // 16
@@ -211,7 +196,6 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     Vector3f c_cameraPosition;
     float c_cameraFovDegree;  // 16
-
     //-----------------------------------------
     Vector3f c_voxelWorldCenter;
     float c_voxelWorldSizeHalf;  // 16
@@ -220,11 +204,11 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_frameIndex;  // 16
 
     Vector3f c_cameraRight;
-    float c_voxelSize;
+    float c_voxelSize;  // 16
 
     Vector3f c_cameraUp;
-    int c_sceneDirty;
-
+    int c_sceneDirty;  // 16
+    //-----------------------------------------
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
 

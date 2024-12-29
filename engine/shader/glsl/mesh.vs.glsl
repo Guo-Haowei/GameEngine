@@ -28,15 +28,16 @@ void main() {
         } break;
     }
 
-    vec4 world_position = world_matrix * vec4(in_position, 1.0);
+    // view space position
+    vec4 position = c_viewMatrix * (world_matrix * vec4(in_position, 1.0));
 
     vec3 T = normalize(world_matrix * vec4(in_tangent, 0.0)).xyz;
     vec3 N = normalize(world_matrix * vec4(in_normal, 0.0)).xyz;
     vec3 B = cross(N, T);
 
-    gl_Position = c_projectionMatrix * (c_viewMatrix * world_position);
+    gl_Position = c_projectionMatrix * position;
 
-    ps_in.position = world_position.xyz;
+    ps_in.position = position.xyz;
     ps_in.uv = in_uv;
     ps_in.T = T;
     ps_in.B = B;

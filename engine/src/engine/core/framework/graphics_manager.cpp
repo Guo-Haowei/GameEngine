@@ -573,19 +573,18 @@ std::shared_ptr<GpuTexture> GraphicsManager::FindTexture(RenderTargetResourceNam
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_activeRenderGraphName) {
-        case RenderGraphName::DUMMY:
+        case RenderGraphName::DUMMY: {
             texture = FindTexture(RESOURCE_GBUFFER_NORMAL).get();
-            break;
-        case RenderGraphName::DEFAULT:
-            texture = FindTexture(RESOURCE_SSAO).get();
-            // texture = FindTexture(RESOURCE_FINAL).get();
-            break;
-        case RenderGraphName::PATHTRACER:
+        } break;
+        case RenderGraphName::DEFAULT: {
+            texture = FindTexture(RESOURCE_FINAL).get();
+        } break;
+        case RenderGraphName::PATHTRACER: {
             texture = FindTexture(RESOURCE_PATH_TRACER).get();
-            break;
-        default:
+        } break;
+        default: {
             CRASH_NOW();
-            break;
+        } break;
     }
 
     if (texture) {

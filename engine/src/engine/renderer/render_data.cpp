@@ -190,21 +190,23 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     const auto& options = p_out_data.options;
     auto& cache = p_out_data.perFrameCache;
 
-    const auto& camera = p_out_data.mainCamera;
-
-    cache.c_cameraPosition = camera.position;
-    cache.c_debugVoxelId = options.debugVoxelId;
-    cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
+    // camera
+    {
+        const auto& camera = p_out_data.mainCamera;
+        cache.c_invViewMatrix = glm::inverse(camera.viewMatrix);
+        cache.c_cameraFovDegree = camera.fovy.GetDegree();
+        cache.c_cameraForward = camera.front;
+        cache.c_cameraRight = camera.right;
+        cache.c_cameraUp = camera.up;
+        cache.c_cameraPosition = camera.position;
+    }
 
     // Bloom
     // cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
     cache.c_enableBloom = options.bloomEnabled;
 
-    cache.c_cameraFovDegree = camera.fovy.GetDegree();
-    cache.c_cameraForward = camera.front;
-    cache.c_cameraRight = camera.right;
-    cache.c_cameraUp = camera.up;
-    cache.c_cameraPosition = camera.position;
+    cache.c_debugVoxelId = options.debugVoxelId;
+    cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
 
     // SSAO
     {
@@ -222,7 +224,6 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     cache.c_sceneDirty = p_scene.GetDirtyFlags() != SCENE_DIRTY_NONE;
 
     // Force fields
-
     int counter = 0;
     for (auto [id, force_field_component] : p_scene.m_ForceFieldComponents) {
         ForceField& force_field = cache.c_forceFields[counter++];
@@ -244,13 +245,6 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
         return static_cast<uint32_t>(resource->GetResidentHandle());
     };
 
-    cache.c_GbufferBaseColorMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_BASE_COLOR));
-    cache.c_GbufferPositionMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_POSITION));
-    cache.c_GbufferNormalMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_NORMAL));
-    cache.c_GbufferMaterialMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_MATERIAL));
-
-    cache.c_GbufferDepthResidentHandle.Set32(find_index(RESOURCE_GBUFFER_DEPTH));
-    cache.c_PointShadowArrayResidentHandle.Set32(find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY));
     cache.c_ShadowMapResidentHandle.Set32(find_index(RESOURCE_SHADOW_MAP));
 
     cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_OUTLINE_SELECT));
@@ -264,7 +258,6 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
         }
 
         if (auto asset = environment.sky.textureAsset; asset && asset->gpu_texture) {
-            cache.c_SkyboxHdrResidentHandle.Set32((uint32_t)asset->gpu_texture->GetResidentHandle());
             p_out_data.skyboxHdr = asset->gpu_texture;
 
             // @TODO: fix this
