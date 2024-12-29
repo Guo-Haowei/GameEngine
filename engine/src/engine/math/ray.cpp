@@ -1,7 +1,7 @@
 #include "ray.h"
 
-#include "detail/matrix.h"
-#include "detail/vector_math.h"
+#include "engine/math/matrix_transform.h"
+#include "engine/math/vector.h"
 
 namespace my {
 

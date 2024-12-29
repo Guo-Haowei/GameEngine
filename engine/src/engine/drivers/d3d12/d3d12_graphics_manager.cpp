@@ -1,6 +1,12 @@
 #include "d3d12_graphics_manager.h"
 
 #include <imgui/backends/imgui_impl_dx12.h>
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/imgui_manager.h"
@@ -8,6 +14,7 @@
 #include "engine/drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "engine/drivers/d3d_common/d3d_common.h"
 #include "engine/drivers/windows/win32_display_manager.h"
+#include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_private.h"
 #include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"

@@ -10,7 +10,6 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
-#include "engine/math/detail/matrix.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 
@@ -193,7 +192,7 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     // camera
     {
         const auto& camera = p_out_data.mainCamera;
-        cache.c_invViewMatrix = glm::inverse(camera.viewMatrix);
+        cache.c_invView = glm::inverse(camera.viewMatrix);
         cache.c_cameraFovDegree = camera.fovy.GetDegree();
         cache.c_cameraForward = camera.front;
         cache.c_cameraRight = camera.right;
@@ -660,11 +659,15 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                 camera.zNear,
                 camera.zFar);
         } else {
-            camera.projectionMatrixRendering = BuildPerspectiveRH(
-                camera.fovy.GetRadians(),
-                camera.aspectRatio,
-                camera.zNear,
-                camera.zFar);
+            constexpr Matrix4x4f reverse_z{ 1.0f, 0.0f, 0.0f, 0.0f,
+                                            0.0f, 1.0f, 0.0f, 0.0f,
+                                            0.0f, 0.0f, -1.0f, 0.0f,
+                                            0.0f, 0.0f, 1.0f, 1.0f };
+            camera.projectionMatrixRendering = reverse_z * BuildPerspectiveRH(
+                                                               camera.fovy.GetRadians(),
+                                                               camera.aspectRatio,
+                                                               camera.zNear,
+                                                               camera.zFar);
         }
         camera.position = p_camera.GetPosition();
 

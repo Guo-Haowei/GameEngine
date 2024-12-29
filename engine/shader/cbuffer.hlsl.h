@@ -100,7 +100,7 @@ CBUFFER(PerPassConstantBuffer, 1) {
     Matrix4x4f c_projectionMatrix;
 
     Matrix4x4f _per_pass_padding_0;
-    Matrix4x4f c_invProjection;
+    Matrix4x4f _per_pass_padding_1;
 };
 
 CBUFFER(MaterialConstantBuffer, 2) {
@@ -177,10 +177,10 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     Matrix4x4f _per_frame_padding_1;  // 64
     Matrix4x4f _per_frame_padding_2;  // 64
-    Matrix4x4f _per_frame_padding_3;  // 64
-
     //-----------------------------------------
-    Matrix4x4f c_invViewMatrix;  // 64
+    Matrix4x4f c_invProjection;  // 64
+    //-----------------------------------------
+    Matrix4x4f c_invView;  // 64
     //-----------------------------------------
     Vector4f c_ambientColor;  // 16
 

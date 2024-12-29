@@ -8,9 +8,6 @@
 #include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/scene/scene.h"
 
-// @TODO: remove
-#include "engine/math/detail/matrix.h"
-
 // @TODO: refactor
 #include "engine/core/framework/graphics_manager.h"
 

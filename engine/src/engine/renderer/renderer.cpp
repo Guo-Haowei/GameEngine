@@ -9,9 +9,6 @@
 #include "engine/renderer/render_data.h"
 #include "engine/renderer/sampler.h"
 
-// @TODO: refactor
-#include "engine/math/detail/matrix.h"
-
 #define DEFINE_DVAR
 #include "graphics_dvars.h"
 
