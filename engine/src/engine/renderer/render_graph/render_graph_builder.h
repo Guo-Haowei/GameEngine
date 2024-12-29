@@ -32,6 +32,7 @@ public:
                        RenderGraph& p_graph) : m_config(p_config),
                                                m_graph(p_graph) {}
 
+    // @TODO: make it more extendable
     static std::unique_ptr<RenderGraph> CreateDummy(RenderGraphBuilderConfig& p_config);
     static std::unique_ptr<RenderGraph> CreateDefault(RenderGraphBuilderConfig& p_config);
     static std::unique_ptr<RenderGraph> CreatePathTracer(RenderGraphBuilderConfig& p_config);
@@ -51,6 +52,7 @@ public:
     static void CreateResources();
 
 private:
+    void AddPrepass();
     void AddGbufferPass();
     void AddHighlightPass();
     void AddShadowPass();

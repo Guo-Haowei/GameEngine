@@ -88,7 +88,9 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
                 for (const auto& texture : framebuffer->desc.colorAttachments) {
                     add_image(flip_image, texture);
                 }
+#if 0
                 add_image(flip_image, framebuffer->desc.depthAttachment);
+#endif
             }
             ImNodes::EndStaticAttribute();
         }

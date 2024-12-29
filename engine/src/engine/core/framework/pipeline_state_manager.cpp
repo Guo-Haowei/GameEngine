@@ -75,6 +75,34 @@ auto PipelineStateManager::Initialize() -> Result<void> {
         if (auto res = Create(__VA_ARGS__); !res) return res; \
     } while (0)
 
+    CREATE_PSO(PSO_PREPASS,
+               {
+                   .vs = "mesh.vs",
+                   .rasterizerDesc = &s_rasterizerFrontFace,
+                   .depthStencilDesc = &s_depthReversedStencilEnabled,
+                   .inputLayoutDesc = &s_inputLayoutMesh,
+                   .blendDesc = &s_blendStateDefault,
+                   .numRenderTargets = 0,
+                   .rtvFormats = {},
+                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
+               });
+
+    CREATE_PSO(PSO_GBUFFER,
+               {
+                   .vs = "mesh.vs",
+                   .ps = "gbuffer.ps",
+                   .rasterizerDesc = &s_rasterizerFrontFace,
+                   .depthStencilDesc = &s_depthReversedStencilDisabled,
+                   .inputLayoutDesc = &s_inputLayoutMesh,
+                   .blendDesc = &s_blendStateDefault,
+                   .numRenderTargets = 4,
+                   .rtvFormats = { RT_FMT_GBUFFER_BASE_COLOR,
+                                   RT_FMT_GBUFFER_POSITION,
+                                   RT_FMT_GBUFFER_NORMAL,
+                                   RT_FMT_GBUFFER_MATERIAL },
+                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
+               });
+
     CREATE_PSO(PSO_DEBUG_DRAW,
                {
                    .vs = "debug_draw.vs",
@@ -89,28 +117,12 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                });
 
-    CREATE_PSO(PSO_GBUFFER,
-               {
-                   .vs = "mesh.vs",
-                   .ps = "gbuffer.ps",
-                   .rasterizerDesc = &s_rasterizerFrontFace,
-                   .depthStencilDesc = &s_depthReversedStencilEnabled,
-                   .inputLayoutDesc = &s_inputLayoutMesh,
-                   .blendDesc = &s_blendStateDefault,
-                   .numRenderTargets = 4,
-                   .rtvFormats = { RT_FMT_GBUFFER_BASE_COLOR,
-                                   RT_FMT_GBUFFER_POSITION,
-                                   RT_FMT_GBUFFER_NORMAL,
-                                   RT_FMT_GBUFFER_MATERIAL },
-                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
-               });
-
     CREATE_PSO(PSO_GBUFFER_DOUBLE_SIDED,
                {
                    .vs = "mesh.vs",
                    .ps = "gbuffer.ps",
                    .rasterizerDesc = &s_rasterizerDoubleSided,
-                   .depthStencilDesc = &s_depthReversedStencilEnabled,
+                   .depthStencilDesc = &s_depthReversedStencilDisabled,
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_blendStateDefault,
                    .numRenderTargets = 4,
@@ -126,7 +138,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .vs = "mesh.vs",
                    .ps = "forward.ps",
                    .rasterizerDesc = &s_rasterizerDoubleSided,
-                   .depthStencilDesc = &s_depthReversedStencilEnabled,
+                   .depthStencilDesc = &s_depthReversedStencilDisabled,
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,

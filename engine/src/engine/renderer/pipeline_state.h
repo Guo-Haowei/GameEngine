@@ -92,6 +92,7 @@ struct PipelineState {
 #define PSO_NAME_LIST                    \
     PSO_NAME(PSO_DPETH)                  \
     PSO_NAME(PSO_POINT_SHADOW)           \
+    PSO_NAME(PSO_PREPASS)                \
     PSO_NAME(PSO_GBUFFER)                \
     PSO_NAME(PSO_GBUFFER_DOUBLE_SIDED)   \
     PSO_NAME(PSO_FORWARD_TRANSPARENT)    \

@@ -858,13 +858,10 @@ void D3d11GraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
         return;
     }
 
-    if (pipeline->vertexShader) {
-        m_deviceContext->VSSetShader(pipeline->vertexShader.Get(), 0, 0);
-        m_deviceContext->IASetInputLayout(pipeline->inputLayout.Get());
-    }
-    if (pipeline->pixelShader) {
-        m_deviceContext->PSSetShader(pipeline->pixelShader.Get(), 0, 0);
-    }
+    m_deviceContext->VSSetShader(pipeline->vertexShader.Get(), 0, 0);
+    m_deviceContext->IASetInputLayout(pipeline->inputLayout.Get());
+    m_deviceContext->PSSetShader(pipeline->pixelShader.Get(), 0, 0);
+
     if (pipeline->rasterizerState.Get() != m_stateCache.rasterizer) {
         m_deviceContext->RSSetState(pipeline->rasterizerState.Get());
         m_stateCache.rasterizer = pipeline->rasterizerState.Get();
