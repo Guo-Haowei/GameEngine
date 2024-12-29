@@ -52,7 +52,7 @@ static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<Batc
 
         gm.SetMesh(draw.mesh_data);
 
-        if (p_is_prepass && draw.flags) {
+        if (p_is_prepass) {
             gm.SetStencilRef(draw.flags);
         }
 
@@ -68,14 +68,14 @@ static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<Batc
             }
             gm.DrawElements(subset.index_count, subset.index_offset);
         }
-
-        if (p_is_prepass) {
-            gm.SetStencilRef(0);
-        }
+    }
+    if (p_is_prepass) {
+        gm.SetStencilRef(0);
     }
 }
 
-static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<InstanceContext>& p_instances) {
+// @TODO: generalize this
+static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -87,9 +87,9 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
 
         gm.SetMesh(instance.gpuMesh);
 
-        // if (instance..flags) {
-        //     gm.SetStencilRef(draw.flags);
-        // }
+        if (p_is_prepass) {
+            gm.SetStencilRef(STENCIL_FLAG_OBJECT);
+        }
 
         const MaterialConstantBuffer& material = p_data.materialCache.buffer[instance.materialIdx];
         gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
@@ -101,10 +101,9 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
         gm.DrawElementsInstanced(instance.instanceCount,
                                  instance.indexCount,
                                  instance.indexOffset);
-
-        // if (draw.flags) {
-        //     gm.SetStencilRef(0);
-        // }
+    }
+    if (p_is_prepass) {
+        gm.SetStencilRef(0);
     }
 }
 
@@ -128,6 +127,7 @@ static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     gm.SetPipelineState(PSO_PREPASS);
     DrawBatchesGeometry(p_data, pass.opaque, true);
     DrawBatchesGeometry(p_data, pass.doubleSided, true);
+    DrawInstacedGeometry(p_data, p_data.instances, true);
 }
 
 void RenderGraphBuilder::AddPrepass() {
@@ -163,7 +163,7 @@ static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_frame
 
     gm.SetPipelineState(PSO_GBUFFER);
     DrawBatchesGeometry(p_data, pass.opaque, false);
-    DrawInstacedGeometry(p_data, p_data.instances);
+    DrawInstacedGeometry(p_data, p_data.instances, false);
     gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
     DrawBatchesGeometry(p_data, pass.doubleSided, false);
 }
@@ -244,7 +244,7 @@ static void HighlightPassFunc(const RenderData&, const Framebuffer* p_framebuffe
 void RenderGraphBuilder::AddHighlightPass() {
     RenderPassCreateInfo info{
         .name = RenderPassName::OUTLINE,
-        .dependencies = { RenderPassName::GBUFFER },
+        .dependencies = { RenderPassName::PREPASS },
         .drawPasses = {
             { { { RESOURCE_OUTLINE_SELECT },
                 RESOURCE_GBUFFER_DEPTH },
@@ -625,6 +625,7 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
 #endif
     // @TODO: fix skybox
     if (skybox) {
+        gm.SetStencilRef(0);
         gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.DrawSkybox();

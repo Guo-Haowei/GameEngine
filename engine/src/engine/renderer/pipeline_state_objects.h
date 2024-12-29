@@ -71,9 +71,18 @@ static const DepthStencilDesc s_depthReversedStencilEnabled = {
     },
 };
 
+static const DepthStencilDesc s_depthStencilSkybox = {
+    .depthEnabled = false,
+    .depthFunc = ComparisonFunc::ALWAYS,
+    .stencilEnabled = true,
+    .frontFace = {
+        .stencilFunc = ComparisonFunc::EQUAL,
+    },
+};
+
 static const DepthStencilDesc s_depthReversedStencilEnabledHighlight = {
     .depthEnabled = false,
-    .depthFunc = ComparisonFunc::GREATER_EQUAL,
+    .depthFunc = ComparisonFunc::ALWAYS,
     .stencilEnabled = true,
     .frontFace = {
         .stencilFunc = ComparisonFunc::EQUAL,
