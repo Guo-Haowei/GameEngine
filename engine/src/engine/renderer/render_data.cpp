@@ -246,6 +246,15 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
         return static_cast<uint32_t>(resource->GetResidentHandle());
     };
 
+    // @TODO: opengl doesn't really uses it, consider use 32 bit for handle
+    cache.c_GbufferBaseColorMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_BASE_COLOR));
+    cache.c_GbufferPositionMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_POSITION));
+    cache.c_GbufferNormalMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_NORMAL));
+    cache.c_GbufferMaterialMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_MATERIAL));
+    cache.c_GbufferDepthResidentHandle.Set32(find_index(RESOURCE_GBUFFER_DEPTH));
+    cache.c_PointShadowArrayResidentHandle.Set32(find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY));
+    cache.c_SsaoMapResidentHandle.Set32(find_index(RESOURCE_SSAO));
+
     cache.c_ShadowMapResidentHandle.Set32(find_index(RESOURCE_SHADOW_MAP));
 
     cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_OUTLINE_SELECT));

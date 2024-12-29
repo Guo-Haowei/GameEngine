@@ -188,7 +188,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
                    .rtvFormats = { RT_FMT_TONE },
-                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                });
 
     CREATE_PSO(PSO_GBUFFER,
@@ -204,7 +204,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    RT_FMT_GBUFFER_POSITION,
                                    RT_FMT_GBUFFER_NORMAL,
                                    RT_FMT_GBUFFER_MATERIAL },
-                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                });
 
     CREATE_PSO(PSO_GBUFFER_DOUBLE_SIDED,
@@ -220,7 +220,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    RT_FMT_GBUFFER_POSITION,
                                    RT_FMT_GBUFFER_NORMAL,
                                    RT_FMT_GBUFFER_MATERIAL },
-                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                });
 
     CREATE_PSO(PSO_FORWARD_TRANSPARENT,
@@ -233,7 +233,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
                    .rtvFormats = { RT_FMT_LIGHTING },
-                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                });
 
     CREATE_PSO(PSO_DPETH, {
@@ -256,7 +256,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                  .blendDesc = &s_blendStateDefault,
                                  .numRenderTargets = 1,
                                  .rtvFormats = { RT_FMT_LIGHTING },
-                                 .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
+                                 .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,
                              });
 
 #pragma region PSO_PARTICLE
@@ -273,7 +273,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .blendDesc = &s_transparent,
                                            .numRenderTargets = 1,
                                            .rtvFormats = { RT_FMT_LIGHTING },
-                                           .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                                           .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                                        });
 #pragma endregion PSO_PARTICLE
 
@@ -297,7 +297,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .blendDesc = &s_blendStateDefault,
                                   .numRenderTargets = 1,
                                   .rtvFormats = { RT_FMT_OUTLINE_SELECT },
-                                  .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                                  .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                               });
 
     CREATE_PSO(PSO_SSAO, {
@@ -320,7 +320,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                              .blendDesc = &s_blendStateDefault,
                              .numRenderTargets = 1,
                              .rtvFormats = { RT_FMT_TONE },
-                             .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,  // gbuffer
+                             .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
                          });
 
 #pragma region PSO_BLOOM
@@ -338,7 +338,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .blendDesc = &s_blendStateDefault,
                                    .numRenderTargets = 1,
                                    .rtvFormats = { RT_FMT_LIGHTING },
-                                   .dsvFormat = PixelFormat::D24_UNORM_S8_UINT,
+                                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,
                                });
 
 #pragma region PSO_ENV

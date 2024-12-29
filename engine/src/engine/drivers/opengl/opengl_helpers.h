@@ -166,6 +166,8 @@ inline GLuint ConvertFormat(PixelFormat p_format) {
         case PixelFormat::R24_UNORM_X8_TYPELESS:
         case PixelFormat::D24_UNORM_S8_UINT:
         case PixelFormat::X24_TYPELESS_G8_UINT:
+        case PixelFormat::R32G8X24_TYPELESS:
+        case PixelFormat::D32_FLOAT_S8X24_UINT:
             return GL_DEPTH_STENCIL;
         default:
             CRASH_NOW();
@@ -211,6 +213,9 @@ inline GLuint ConvertInternalFormat(PixelFormat p_format) {
         case PixelFormat::D24_UNORM_S8_UINT:
         case PixelFormat::X24_TYPELESS_G8_UINT:
             return GL_DEPTH24_STENCIL8;
+        case PixelFormat::R32G8X24_TYPELESS:
+        case PixelFormat::D32_FLOAT_S8X24_UINT:
+            return GL_DEPTH32F_STENCIL8;
         default:
             CRASH_NOW();
             return 0;
@@ -242,6 +247,9 @@ inline GLuint ConvertDataType(PixelFormat p_format) {
         case PixelFormat::D24_UNORM_S8_UINT:
         case PixelFormat::X24_TYPELESS_G8_UINT:
             return GL_UNSIGNED_INT_24_8;
+        case PixelFormat::R32G8X24_TYPELESS:
+        case PixelFormat::D32_FLOAT_S8X24_UINT:
+            return GL_FLOAT_32_UNSIGNED_INT_24_8_REV;
         default:
             CRASH_NOW();
             return 0;

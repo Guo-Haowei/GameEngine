@@ -386,17 +386,25 @@ std::shared_ptr<GpuTexture> D3d11GraphicsManager::CreateTextureImpl(const GpuTex
     }
 
     // @TODO: refactor this part
-    if (format == PixelFormat::D32_FLOAT) {
-        texture_format = DXGI_FORMAT_R32_TYPELESS;
-        srv_format = DXGI_FORMAT_R32_FLOAT;
-        gen_mip_map = false;
-    }
-    if (format == PixelFormat::D24_UNORM_S8_UINT) {
-        texture_format = DXGI_FORMAT_R24G8_TYPELESS;
-    }
-    if (format == PixelFormat::R24G8_TYPELESS) {
-        srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
-        gen_mip_map = false;
+    switch (format) {
+        case PixelFormat::D32_FLOAT: {
+            texture_format = DXGI_FORMAT_R32_TYPELESS;
+            srv_format = DXGI_FORMAT_R32_FLOAT;
+            gen_mip_map = false;
+        } break;
+        case PixelFormat::D24_UNORM_S8_UINT: {
+            texture_format = DXGI_FORMAT_R24G8_TYPELESS;
+        } break;
+        case PixelFormat::R24G8_TYPELESS: {
+            srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            gen_mip_map = false;
+        } break;
+        case PixelFormat::R32G8X24_TYPELESS: {
+            srv_format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+            gen_mip_map = false;
+        } break;
+        default:
+            break;
     }
 
 #if USING(DEBUG_BUILD)
@@ -592,7 +600,7 @@ std::shared_ptr<Framebuffer> D3d11GraphicsManager::CreateFramebuffer(const Frame
             case AttachmentType::DEPTH_STENCIL_2D: {
                 ComPtr<ID3D11DepthStencilView> dsv;
                 D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
-                dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
                 dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
                 dsv_desc.Texture2D.MipSlice = 0;
 
