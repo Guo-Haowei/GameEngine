@@ -27,6 +27,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     }
 
     float3 N = TEXTURE_2D(GbufferNormalMap).Sample(s_linearMipWrapSampler, texcoord).rgb;
+    N = 2.0f * N - 1.0f;
 
     float3 color = compute_lighting(base_color,
                                     world_position,

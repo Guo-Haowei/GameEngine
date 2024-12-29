@@ -574,7 +574,7 @@ uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
+            texture = FindTexture(RESOURCE_GBUFFER_NORMAL).get();
             break;
         case RenderGraphName::DEFAULT:
             texture = FindTexture(RESOURCE_FINAL).get();

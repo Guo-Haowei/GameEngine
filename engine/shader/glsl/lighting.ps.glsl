@@ -16,7 +16,7 @@ void main() {
     //gl_FragDepth = depth;
 
     vec3 N = texture(t_GbufferNormalMap, texcoord).rgb;
-    // N = (2.0 * N) - vec3(1.0);
+    N = 2.0f * N - 1.0f;
 
     const vec3 world_position = texture(t_GbufferPositionMap, texcoord).rgb;
     float emissive = emissive_roughness_metallic.r;
