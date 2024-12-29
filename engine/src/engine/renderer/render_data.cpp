@@ -193,6 +193,7 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     {
         const auto& camera = p_out_data.mainCamera;
         cache.c_invView = glm::inverse(camera.viewMatrix);
+        cache.c_invProjection = glm::inverse(camera.projectionMatrixRendering);
         cache.c_cameraFovDegree = camera.fovy.GetDegree();
         cache.c_cameraForward = camera.front;
         cache.c_cameraRight = camera.right;
@@ -343,7 +344,6 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
-                pass_constant.c_invProjection = glm::inverse(pass_constant.c_projectionMatrix);
                 p_out_data.shadowPasses[0].pass_idx = static_cast<int>(p_out_data.passCache.size());
                 p_out_data.passCache.emplace_back(pass_constant);
 
@@ -484,7 +484,6 @@ static void FillMainPass(const Scene& p_scene,
     PerPassConstantBuffer pass_constant;
     pass_constant.c_viewMatrix = camera.viewMatrix;
     pass_constant.c_projectionMatrix = camera.projectionMatrixRendering;
-    pass_constant.c_invProjection = glm::inverse(pass_constant.c_projectionMatrix);
 
     p_out_data.mainPass.pass_idx = static_cast<int>(p_out_data.passCache.size());
     p_out_data.passCache.emplace_back(pass_constant);
@@ -652,6 +651,8 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.viewMatrix = p_camera.GetViewMatrix();
         camera.projectionMatrixFrustum = p_camera.GetProjectionMatrix();
+        // @TODO: check out this
+        // https://tomhultonharrop.com/mathematics/graphics/2023/08/06/reverse-z.html
         if (p_out_data.options.isOpengl) {
             camera.projectionMatrixRendering = BuildOpenGlPerspectiveRH(
                 camera.fovy.GetRadians(),

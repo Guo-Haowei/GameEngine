@@ -25,7 +25,7 @@ public:
     void SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) final;
     void UnsetRenderTarget() final;
 
-    void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) final;
+    void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, float p_clear_depth, int p_index) final;
     void SetViewport(const Viewport& p_viewport) final;
 
     auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> final;

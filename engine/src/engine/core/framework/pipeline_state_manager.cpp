@@ -1,110 +1,9 @@
 #include "pipeline_state_manager.h"
 
 #include "engine/core/framework/graphics_manager.h"
+#include "engine/renderer/pipeline_state_objects.h"
 
 namespace my {
-
-// @TODO: make these class members
-/// input layouts
-static const InputLayoutDesc s_inputLayoutMesh = {
-    .elements = {
-        { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
-        { "NORMAL", 0, PixelFormat::R32G32B32_FLOAT, 1, 0, InputClassification::PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, PixelFormat::R32G32_FLOAT, 2, 0, InputClassification::PER_VERTEX_DATA, 0 },
-        { "TANGENT", 0, PixelFormat::R32G32B32_FLOAT, 3, 0, InputClassification::PER_VERTEX_DATA, 0 },
-        { "BONEINDEX", 0, PixelFormat::R32G32B32A32_SINT, 4, 0, InputClassification::PER_VERTEX_DATA, 0 },
-        { "BONEWEIGHT", 0, PixelFormat::R32G32B32A32_FLOAT, 5, 0, InputClassification::PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, PixelFormat::R32G32B32A32_FLOAT, 6, 0, InputClassification::PER_VERTEX_DATA, 0 },
-    }
-};
-
-static const InputLayoutDesc s_inputLayoutPosition = {
-    .elements = {
-        { "POSITION", 0, PixelFormat::R32G32B32_FLOAT, 0, 0, InputClassification::PER_VERTEX_DATA, 0 },
-    }
-};
-
-/// rasterizer states
-static const RasterizerDesc s_rasterizerFrontFace = {
-    .fillMode = FillMode::SOLID,
-    .cullMode = CullMode::BACK,
-    .frontCounterClockwise = true,
-};
-
-static const RasterizerDesc s_rasterizerBackFace = {
-    .fillMode = FillMode::SOLID,
-    .cullMode = CullMode::FRONT,
-    .frontCounterClockwise = true,
-};
-
-static const RasterizerDesc s_rasterizerDoubleSided = {
-    .fillMode = FillMode::SOLID,
-    .cullMode = CullMode::NONE,
-    .frontCounterClockwise = true,
-};
-
-/// Depth stencil states
-static const DepthStencilDesc s_depthStencilDefault = {
-    .depthEnabled = true,
-    .depthFunc = ComparisonFunc::GREATER_EQUAL,
-    //.depthFunc = ComparisonFunc::LESS_EQUAL,
-    .stencilEnabled = false,
-};
-
-static const DepthStencilDesc s_depthStencilDisabled = {
-    .depthEnabled = false,
-    .depthFunc = ComparisonFunc::NEVER,
-    .stencilEnabled = false,
-};
-
-static const DepthStencilDesc s_depthStencilHighlight = {
-    .depthEnabled = false,
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
-    .stencilEnabled = true,
-    .frontFace = {
-        .stencilFunc = ComparisonFunc::EQUAL,
-    },
-};
-
-static const DepthStencilDesc s_depthStencilGbuffer = {
-    .depthEnabled = true,
-#if 0
-    .depthFunc = ComparisonFunc::LESS_EQUAL,
-#else
-    .depthFunc = ComparisonFunc::GREATER_EQUAL,
-#endif
-    .stencilEnabled = true,
-    .frontFace = {
-        .stencilPassOp = StencilOp::REPLACE,
-        .stencilFunc = ComparisonFunc::ALWAYS,
-    },
-};
-
-/// Blend states
-static const BlendDesc s_blendStateDefault = {};
-
-static const BlendDesc s_transparent = {
-    .renderTargets = {
-        {
-            .blendEnabled = true,
-            .blendSrc = Blend::BLEND_SRC_ALPHA,
-            .blendDest = Blend::BLEND_INV_SRC_ALPHA,
-            .blendOp = BlendOp::BLEND_OP_ADD,
-        } }
-};
-
-static const BlendDesc s_blendStateDisable = {
-    .renderTargets = {
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-        { .colorWriteMask = COLOR_WRITE_ENABLE_NONE },
-    },
-};
 
 const BlendDesc& PipelineStateManager::GetBlendDescDefault() {
     return s_blendStateDefault;
@@ -182,7 +81,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .ps = "debug_draw.ps",
                    //.primitiveTopology = PrimitiveTopology::LINE,
                    .rasterizerDesc = &s_rasterizerDoubleSided,
-                   .depthStencilDesc = &s_depthStencilDefault,
+                   .depthStencilDesc = &s_depthReversedStencilDisabled,
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
@@ -195,7 +94,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .vs = "mesh.vs",
                    .ps = "gbuffer.ps",
                    .rasterizerDesc = &s_rasterizerFrontFace,
-                   .depthStencilDesc = &s_depthStencilGbuffer,
+                   .depthStencilDesc = &s_depthReversedStencilEnabled,
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_blendStateDefault,
                    .numRenderTargets = 4,
@@ -211,7 +110,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .vs = "mesh.vs",
                    .ps = "gbuffer.ps",
                    .rasterizerDesc = &s_rasterizerDoubleSided,
-                   .depthStencilDesc = &s_depthStencilGbuffer,
+                   .depthStencilDesc = &s_depthReversedStencilEnabled,
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_blendStateDefault,
                    .numRenderTargets = 4,
@@ -227,7 +126,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                    .vs = "mesh.vs",
                    .ps = "forward.ps",
                    .rasterizerDesc = &s_rasterizerDoubleSided,
-                   .depthStencilDesc = &s_depthStencilGbuffer,
+                   .depthStencilDesc = &s_depthReversedStencilEnabled,
                    .inputLayoutDesc = &s_inputLayoutMesh,
                    .blendDesc = &s_transparent,
                    .numRenderTargets = 1,
@@ -267,7 +166,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                            .vs = "particle_draw.vs",
                                            .ps = "particle_draw.ps",
                                            .rasterizerDesc = &s_rasterizerDoubleSided,
-                                           .depthStencilDesc = &s_depthStencilDefault,
+                                           .depthStencilDesc = &s_depthReversedStencilDisabled,
                                            .inputLayoutDesc = &s_inputLayoutMesh,
                                            .blendDesc = &s_transparent,
                                            .numRenderTargets = 1,
@@ -291,7 +190,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .vs = "screenspace_quad.vs",
                                   .ps = "highlight.ps",
                                   .rasterizerDesc = &s_rasterizerFrontFace,
-                                  .depthStencilDesc = &s_depthStencilHighlight,
+                                  .depthStencilDesc = &s_depthReversedStencilEnabledHighlight,
                                   .inputLayoutDesc = &s_inputLayoutPosition,
                                   .blendDesc = &s_blendStateDefault,
                                   .numRenderTargets = 1,
@@ -332,7 +231,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .vs = "skybox.vs",
                                    .ps = "skybox.ps",
                                    .rasterizerDesc = &s_rasterizerFrontFace,
-                                   .depthStencilDesc = &s_depthStencilDefault,
+                                   .depthStencilDesc = &s_depthReversedStencilDisabled,
                                    .inputLayoutDesc = &s_inputLayoutMesh,
                                    .blendDesc = &s_blendStateDefault,
                                    .numRenderTargets = 1,

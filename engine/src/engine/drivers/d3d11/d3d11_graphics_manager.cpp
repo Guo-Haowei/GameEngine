@@ -682,7 +682,11 @@ void D3d11GraphicsManager::UnsetRenderTarget() {
     m_deviceContext->OMSetRenderTargets(array_length(rtvs), rtvs, nullptr);
 }
 
-void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) {
+void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer,
+                                 ClearFlags p_flags,
+                                 const float* p_clear_color,
+                                 float p_clear_depth,
+                                 int p_index) {
     // @TODO: refactor
     const bool clear_color = p_flags & CLEAR_COLOR_BIT;
     const bool clear_depth = p_flags & CLEAR_DEPTH_BIT;
@@ -712,10 +716,7 @@ void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_
     if (clear_flags) {
         // @TODO: better way?
         DEV_ASSERT_INDEX(p_index, framebuffer->dsvs.size());
-        // @TODO: check out this
-        // https://tomhultonharrop.com/mathematics/graphics/2023/08/06/reverse-z.html
-        m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, 0.0f, 0);
-        // m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, 1.0f, 0);
+        m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, p_clear_depth, 0);
     }
 }
 

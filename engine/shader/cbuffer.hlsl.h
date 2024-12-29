@@ -164,7 +164,11 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
     Vector4f c_ssaoKernel[SSAO_KERNEL_SIZE];
-
+    //-----------------------------------------
+    Matrix4x4f c_invProjection;
+    Matrix4x4f c_invView;
+    Matrix4x4f _per_frame_padding_1;
+    Matrix4x4f _per_frame_padding_2;  // 256
     //-----------------------------------------
     sampler2D c_GbufferBaseColorMapResidentHandle;
     sampler2D c_GbufferPositionMapResidentHandle;  // 16
@@ -174,13 +178,6 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     sampler2D c_PointShadowArrayResidentHandle;  // 16
     sampler2D c_SsaoMapResidentHandle;
     sampler2D c_SkyboxResidentHandle;  // 16
-
-    Matrix4x4f _per_frame_padding_1;  // 64
-    Matrix4x4f _per_frame_padding_2;  // 64
-    //-----------------------------------------
-    Matrix4x4f c_invProjection;  // 64
-    //-----------------------------------------
-    Matrix4x4f c_invView;  // 64
     //-----------------------------------------
     Vector4f c_ambientColor;  // 16
 

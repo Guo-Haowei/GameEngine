@@ -119,7 +119,7 @@ static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_frame
     gm.SetViewport(Viewport(width, height));
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
+    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color, 0.0f);
 
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
@@ -264,7 +264,7 @@ static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_f
             gm.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
 
             gm.SetRenderTarget(p_framebuffer, slot);
-            gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT, nullptr, slot);
+            gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, slot);
 
             gm.SetViewport(Viewport(width, height));
 
@@ -586,7 +586,7 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
     auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
     constexpr int skybox_slot = GetSkyboxSlot();
 #endif
-    if (skybox) {
+    if (skybox && false) {
         gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.DrawSkybox();
@@ -848,6 +848,7 @@ static void DebugVoxels(const RenderData& p_data, const Framebuffer* p_framebuff
 
     // glEnable(GL_BLEND);
     gm.SetViewport(Viewport(width, height));
+    LOG_ERROR("CHECK IF CORRECT");
     gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT);
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
