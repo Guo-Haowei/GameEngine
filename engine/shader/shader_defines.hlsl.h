@@ -36,6 +36,9 @@
 #define MESH_HAS_BONE     (1)
 #define MESH_HAS_INSTANCE (2)
 
+// SSAO
+#define MAX_SSAO_KERNEL (64)
+
 // compute local sizes
 #define COMPUTE_LOCAL_SIZE_VOXEL 4
 

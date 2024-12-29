@@ -4,6 +4,7 @@
 #include "engine/math/vector.h"
 
 namespace my {
+
 class PerspectiveCameraComponent;
 class Scene;
 class GraphicsManager;
@@ -52,7 +53,16 @@ void FreePointLightShadowMap(PointShadowHandle& p_handle);
 // path tracer
 void SetPathTracerMode(PathTracerMode p_mode);
 bool IsPathTracerActive();
-void BindPathTracerData(GraphicsManager& p_gm);
-void UnbindPathTracerData(GraphicsManager& p_gm);
+void BindPathTracerData(GraphicsManager& p_graphics_manager);
+void UnbindPathTracerData(GraphicsManager& p_graphics_manager);
+
+// resources
+// @TODO: release resources
+using KernelData = std::array<Vector4f, 64>;
+
+Result<void> CreateResources(GraphicsManager& p_graphics_manager);
+
+const KernelData& GetKernelData();
+const GpuTexture* GetSsaoNoiseTexture();
 
 }  // namespace my::renderer

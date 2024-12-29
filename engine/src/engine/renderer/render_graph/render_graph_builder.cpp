@@ -158,7 +158,7 @@ static void SsaoPassFunc(const RenderData& p_data, const Framebuffer* p_framebuf
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
-    // auto& frame = gm.GetCurrentFrame();
+    auto& frame = gm.GetCurrentFrame();
     const uint32_t width = p_framebuffer->desc.colorAttachments[0]->desc.width;
     const uint32_t height = p_framebuffer->desc.colorAttachments[0]->desc.height;
 
@@ -166,6 +166,11 @@ static void SsaoPassFunc(const RenderData& p_data, const Framebuffer* p_framebuf
     gm.SetViewport(Viewport(width, height));
     gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
 
+    const PassContext& pass = p_data.mainPass;
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+
+    auto noise = renderer::GetSsaoNoiseTexture();
+    gm.BindTexture(Dimension::TEXTURE_2D, noise->GetHandle(), 0);
     gm.SetPipelineState(PSO_SSAO);
     gm.DrawQuad();
 }

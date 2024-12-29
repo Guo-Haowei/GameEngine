@@ -163,6 +163,8 @@ CBUFFER(PointShadowConstantBuffer, 4) {
 CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
+    Vector4f c_ssaoKernel[MAX_SSAO_KERNEL];
+
     //-----------------------------------------
     int c_lightCount;
     int c_enableBloom;
@@ -257,14 +259,12 @@ CBUFFER(EmitterConstantBuffer, 6) {
 // @TODO: merge it with per frame
 CBUFFER(PerSceneConstantBuffer, 7) {
     // @TODO: remove the following
-    sampler2D _per_scene_padding_0;
-    sampler2D c_finalBloom;
+    Vector4f _per_scene_padding_0;
+    Vector4f _per_scene_padding_1;
 
     sampler2D c_grassBaseColor;
     sampler2D c_hdrEnvMap;
 
-    sampler2D c_kernelNoiseMap;
-    sampler2D c_toneImage;
     // @TODO: unordered access
     sampler2D c_ltc1;
     sampler2D c_ltc2;

@@ -194,7 +194,6 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
 
     cache.c_cameraPosition = camera.position;
     cache.c_debugVoxelId = options.debugVoxelId;
-    cache.c_enableSsao = options.ssaoEnabled;
     cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
 
     // Bloom
@@ -206,6 +205,15 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     cache.c_cameraRight = camera.right;
     cache.c_cameraUp = camera.up;
     cache.c_cameraPosition = camera.position;
+
+    // SSAO
+    {
+        cache.c_enableSsao = options.ssaoEnabled;
+        const auto& kernel_data = renderer::GetKernelData();
+        constexpr size_t kernel_size = sizeof(renderer::KernelData);
+        static_assert(sizeof(cache.c_ssaoKernel) == kernel_size);
+        memcpy(cache.c_ssaoKernel, kernel_data.data(), kernel_size);
+    }
 
     // @TODO: refactor
     static int s_frameIndex = 0;
