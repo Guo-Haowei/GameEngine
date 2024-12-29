@@ -586,12 +586,13 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
     auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
     constexpr int skybox_slot = GetSkyboxSlot();
 #endif
-    if (skybox && false) {
+    // @TODO: fix skybox
+    if (skybox) {
         gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.DrawSkybox();
         gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
-    }
+    } 
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
@@ -848,8 +849,7 @@ static void DebugVoxels(const RenderData& p_data, const Framebuffer* p_framebuff
 
     // glEnable(GL_BLEND);
     gm.SetViewport(Viewport(width, height));
-    LOG_ERROR("CHECK IF CORRECT");
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT);
+    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, GraphicsManager::DEFAULT_CLEAR_COLOR, 0.0f);
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
 

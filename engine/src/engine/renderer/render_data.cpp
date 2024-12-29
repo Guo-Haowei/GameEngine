@@ -641,6 +641,21 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        RenderData& p_out_data) {
     // fill camera
     {
+        auto reverse_z = [](Matrix4x4f& p_perspective) {
+            constexpr Matrix4x4f matrix{ 1.0f, 0.0f, 0.0f, 0.0f,
+                                         0.0f, 1.0f, 0.0f, 0.0f,
+                                         0.0f, 0.0f, -1.0f, 0.0f,
+                                         0.0f, 0.0f, 1.0f, 1.0f };
+            p_perspective = matrix * p_perspective;
+        };
+        auto normalize_unit_range = [](Matrix4x4f& p_perspective) {
+            constexpr Matrix4x4f matrix{ 1.0f, 0.0f, 0.0f, 0.0f,
+                                         0.0f, 1.0f, 0.0f, 0.0f,
+                                         0.0f, 0.0f, 0.5f, 0.0f,
+                                         0.0f, 0.0f, 0.5f, 1.0f };
+            p_perspective = matrix * p_perspective;
+        };
+
         auto& camera = p_out_data.mainCamera;
         camera.sceenWidth = static_cast<float>(p_camera.GetWidth());
         camera.sceenHeight = static_cast<float>(p_camera.GetHeight());
@@ -659,16 +674,15 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                 camera.aspectRatio,
                 camera.zNear,
                 camera.zFar);
+            normalize_unit_range(camera.projectionMatrixRendering);
+            reverse_z(camera.projectionMatrixRendering);
         } else {
-            constexpr Matrix4x4f reverse_z{ 1.0f, 0.0f, 0.0f, 0.0f,
-                                            0.0f, 1.0f, 0.0f, 0.0f,
-                                            0.0f, 0.0f, -1.0f, 0.0f,
-                                            0.0f, 0.0f, 1.0f, 1.0f };
-            camera.projectionMatrixRendering = reverse_z * BuildPerspectiveRH(
-                                                               camera.fovy.GetRadians(),
-                                                               camera.aspectRatio,
-                                                               camera.zNear,
-                                                               camera.zFar);
+            camera.projectionMatrixRendering = BuildPerspectiveRH(
+                camera.fovy.GetRadians(),
+                camera.aspectRatio,
+                camera.zNear,
+                camera.zFar);
+            reverse_z(camera.projectionMatrixRendering);
         }
         camera.position = p_camera.GetPosition();
 

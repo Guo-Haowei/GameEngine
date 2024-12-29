@@ -231,7 +231,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                    .vs = "skybox.vs",
                                    .ps = "skybox.ps",
                                    .rasterizerDesc = &s_rasterizerFrontFace,
-                                   .depthStencilDesc = &s_depthReversedStencilDisabled,
+                                   .depthStencilDesc = &s_depthStencilDefault,
                                    .inputLayoutDesc = &s_inputLayoutMesh,
                                    .blendDesc = &s_blendStateDefault,
                                    .numRenderTargets = 1,
@@ -309,7 +309,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                     .vs = "visualization.vs",
                                     .ps = "visualization.ps",
                                     .rasterizerDesc = &s_rasterizerFrontFace,
-                                    .depthStencilDesc = &s_depthStencilDefault,
+                                    .depthStencilDesc = &s_depthReversedStencilDisabled,
                                     .blendDesc = &s_blendStateDefault,
                                 });
 #pragma endregion PSO_VOXEL
