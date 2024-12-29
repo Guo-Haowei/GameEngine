@@ -2,6 +2,8 @@
 
 DVAR_IVEC2(resolution, DVAR_FLAG_NONE, "Frame resolution", 1920, 1080);
 
+// @TODO: dvar range
+
 // General
 #if USING(PLATFORM_APPLE)
 DVAR_STRING(gfx_backend, DVAR_FLAG_NONE, "Renderer backend", "metal");
@@ -14,7 +16,10 @@ DVAR_BOOL(gfx_gpu_validation, DVAR_FLAG_NONE, "Enable GPU validation", true);
 // Switches
 DVAR_BOOL(gfx_debug_shadow, DVAR_FLAG_CACHE, "Debug shadow", false);
 DVAR_BOOL(gfx_enable_bloom, DVAR_FLAG_CACHE, "Enable Bloom", true);
-DVAR_BOOL(gfx_enable_ssao, DVAR_FLAG_CACHE, "Enable SSAO", true);
+
+// SSAO
+DVAR_BOOL(gfx_ssao_enabled, DVAR_FLAG_CACHE, "Enable SSAO", true);
+DVAR_FLOAT(gfx_ssao_radius, DVAR_FLAG_CACHE, "SSAO Radius", 0.5f);
 
 // voxel GI
 DVAR_BOOL(gfx_debug_vxgi, DVAR_FLAG_NONE, "Debug VXGI", false);

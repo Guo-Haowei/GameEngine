@@ -234,5 +234,6 @@ vec3 compute_lighting(vec3 base_color,
     }
 #endif
 
-    return Lo + ambient;
+    vec3 final_color = Lo + ambient;
+    return final_color;
 }

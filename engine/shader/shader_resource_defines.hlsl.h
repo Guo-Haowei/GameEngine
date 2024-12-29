@@ -30,7 +30,8 @@ DESCRIPTOR_SRV_LIST
     SRV(TextureCube, Skybox, 16, RESOURCE_ENV_SKYBOX_CUBE_MAP)                        \
     SRV(Texture2D, BrdfLut, 17, RESOURCE_NONE)                                        \
     SRV(TextureCube, DiffuseIrradiance, 18, RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP) \
-    SRV(TextureCube, Prefiltered, 19, RESOURCE_ENV_PREFILTER_CUBE_MAP)
+    SRV(TextureCube, Prefiltered, 19, RESOURCE_ENV_PREFILTER_CUBE_MAP)                \
+    SRV(Texture2D, SsaoMap, 20, RESOURCE_SSAO)
 
 #if defined(HLSL_LANG_D3D11)
 #define SRV(TYPE, NAME, SLOT, BINDING) TYPE t_##NAME : register(t##SLOT);

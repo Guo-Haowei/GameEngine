@@ -163,24 +163,25 @@ CBUFFER(PointShadowConstantBuffer, 4) {
 CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
-    Vector4f c_ssaoKernel[MAX_SSAO_KERNEL];
+    Vector4f c_ssaoKernel[SSAO_KERNEL_SIZE];
 
     //-----------------------------------------
     Matrix4x4f c_invViewMatrix;  // 64
     //-----------------------------------------
+    Vector4f c_ambientColor;  // 16
+
     int c_lightCount;
     int c_enableBloom;
     int c_debugCsm;
     float c_bloomThreshold;  // 16
 
     int c_debugVoxelId;
-    int c_enableSsao;
+    int c_ssaoEnabled;
     int c_enableVxgi;
     float c_texelSize;  // 16
 
-    Vector4f c_ambientColor;  // 16
-
-    Vector3f _per_frame_padding_4;  // 16
+    Vector2f _per_frame_padding_4;  // 16
+    float c_ssaoKernalRadius;
     int c_ptObjectCount;
     //-----------------------------------------
     uint c_DiffuseIrradianceResidentHandle;

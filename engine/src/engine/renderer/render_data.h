@@ -23,6 +23,7 @@ struct RenderOptions {
     int debugVoxelId{ 0 };
     int debugBvhDepth{ -1 };
     int voxelTextureSize{ 0 };
+    float ssaoKernelRadius{ 0.0f };
 };
 
 struct DrawContext {

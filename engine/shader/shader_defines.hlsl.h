@@ -37,7 +37,8 @@
 #define MESH_HAS_INSTANCE (2)
 
 // SSAO
-#define MAX_SSAO_KERNEL (64)
+#define SSAO_KERNEL_SIZE (64)
+#define SSAO_NOISE_SIZE  (4)
 
 // compute local sizes
 #define COMPUTE_LOCAL_SIZE_VOXEL 4

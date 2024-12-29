@@ -42,8 +42,8 @@ void RendererPanel::UpdateInternal(Scene&) {
     });
 
     CollapseWindow("SSAO", []() {
-        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_ssao));
-        ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);
+        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_ssao_enabled));
+        ImGui::DragFloat("kernel radius", (float*)DVAR_GET_POINTER(gfx_ssao_radius), 0.01f, 0.0f, 5.0f);
     });
 
     CollapseWindow("Path Tracer", []() {

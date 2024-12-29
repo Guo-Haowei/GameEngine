@@ -21,7 +21,7 @@ namespace my {
 
 namespace my::renderer {
 
-static_assert(sizeof(KernelData) == sizeof(Vector4f) * MAX_SSAO_KERNEL);
+static_assert(sizeof(KernelData) == sizeof(Vector4f) * SSAO_KERNEL_SIZE);
 
 #define ASSERT_CAN_RECORD() DEV_ASSERT(s_glob.state == RenderState::RECORDING)
 
@@ -55,14 +55,16 @@ void BeginFrame() {
         s_glob.renderData = nullptr;
     }
 
-    RenderOptions options;
-    // @TODO: name consistency
-    options.isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
-    options.bloomEnabled = DVAR_GET_BOOL(gfx_enable_bloom);
-    options.ssaoEnabled = DVAR_GET_BOOL(gfx_enable_ssao);
-    options.debugBvhDepth = DVAR_GET_INT(gfx_bvh_debug);
-    options.debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel);
-    options.voxelTextureSize = DVAR_GET_INT(gfx_voxel_size);
+    RenderOptions options = {
+        .isOpengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL,
+        .ssaoEnabled = DVAR_GET_BOOL(gfx_ssao_enabled),
+        .vxgiEnabled = false,
+        .bloomEnabled = DVAR_GET_BOOL(gfx_enable_bloom),
+        .debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel),
+        .debugBvhDepth = DVAR_GET_INT(gfx_bvh_debug),
+        .voxelTextureSize = DVAR_GET_INT(gfx_voxel_size),
+        .ssaoKernelRadius = DVAR_GET_FLOAT(gfx_ssao_radius),
+    };
 
     s_glob.renderData = new RenderData(options);
     s_glob.renderData->bakeIbl = false;
@@ -211,8 +213,7 @@ void UnbindPathTracerData(GraphicsManager& p_graphics_manager) {
 static void GenerateSsaoNoise(GraphicsManager& p_graphics_manager) {
     // generate noise texture
     std::vector<Vector3f> ssao_noise;
-    constexpr int size = 4;
-    for (int i = 0; i < size * size; ++i) {
+    for (int i = 0; i < (SSAO_NOISE_SIZE * SSAO_NOISE_SIZE); ++i) {
         Vector3f noise(Random::Float(-1.0f, 1.0f),
                        Random::Float(-1.0f, 1.0f),
                        0.0f);
@@ -222,8 +223,8 @@ static void GenerateSsaoNoise(GraphicsManager& p_graphics_manager) {
     GpuTextureDesc desc{
         .type = AttachmentType::NONE,
         .dimension = Dimension::TEXTURE_2D,
-        .width = size,
-        .height = size,
+        .width = SSAO_NOISE_SIZE,
+        .height = SSAO_NOISE_SIZE,
         .depth = 1,
         .mipLevels = 1,
         .arraySize = 1,

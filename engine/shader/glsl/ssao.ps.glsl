@@ -5,10 +5,7 @@ layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float out_color;
 
 // @TODO: fix HARD CODE
-#define SSAO_NOISE_SIZE    4
-#define SSAO_KERNEL_RADIUS 0.5f
-#define SSAO_KERNEL_BIAS   0.025f;
-#define SSAO_KERNEL_SIZE   64
+#define SSAO_KERNEL_BIAS 0.025f
 
 void main() {
     const Vector2f uv = pass_uv;
@@ -37,7 +34,7 @@ void main() {
     for (int i = 0; i < SSAO_KERNEL_SIZE; ++i) {
         // get sample position
         vec3 samplePos = TBN * c_ssaoKernel[i].xyz;  // from tangent to view-space
-        samplePos = origin.xyz + samplePos * SSAO_KERNEL_RADIUS;
+        samplePos = origin.xyz + samplePos * c_ssaoKernalRadius;
 
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);
@@ -45,14 +42,12 @@ void main() {
         offset.xyz /= offset.w;                // perspective divide
         offset.xy = offset.xy * 0.5 + 0.5;     // transform to range 0.0 - 1.0
 
-        Vector4f offsetPos = Vector4f(texture(t_GbufferPositionMap, offset.xy).xyz, 1.0f);
+        float sample_depth = texture(t_GbufferPositionMap, offset.xy).z;
 
         // range check & accumulate
-#if 0
-        float rangeCheck = smoothstep(0.0, 1.0, SSAO_KERNEL_RADIUS / abs(origin.z - sampleDepth));
-        occlusion += (sampleDepth >= samplePos.z + SSAO_KERNEL_BIAS ? 1.0 : 0.0) * rangeCheck;
-#endif
-        occlusion += (offsetPos.z >= samplePos.z ? 1.0 : 0.0);
+        float range_check = smoothstep(0.0, 1.0, c_ssaoKernalRadius / abs(origin.z - sample_depth));
+        float increment = (sample_depth >= (samplePos.z + SSAO_KERNEL_BIAS)) ? 1.0f : 0.0f;
+        occlusion += increment * range_check;
     }
 
     occlusion = 1.0 - (occlusion / float(SSAO_KERNEL_SIZE));

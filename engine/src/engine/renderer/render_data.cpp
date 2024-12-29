@@ -210,7 +210,8 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
 
     // SSAO
     {
-        cache.c_enableSsao = options.ssaoEnabled;
+        cache.c_ssaoEnabled = options.ssaoEnabled;
+        cache.c_ssaoKernalRadius = options.ssaoKernelRadius;
         const auto& kernel_data = renderer::GetKernelData();
         constexpr size_t kernel_size = sizeof(renderer::KernelData);
         static_assert(sizeof(cache.c_ssaoKernel) == kernel_size);

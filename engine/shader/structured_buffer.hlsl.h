@@ -48,11 +48,6 @@ struct GpuPtMesh {
     Matrix4x4f transform;
     Matrix4x4f transformInv;
 
-#if 0
-     Vector4f _padding1;
-     Vector4f _padding2;
-     Vector4f _padding3;
-#endif
     Vector2f _padding4;
     int rootBvhId;
     int materialId;
