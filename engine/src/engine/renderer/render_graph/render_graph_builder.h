@@ -9,7 +9,7 @@ class GraphicsManager;
 
 namespace my::renderer {
 
-struct DrawData;
+struct RenderData;
 struct RenderPassCreateInfo;
 class RenderGraph;
 
@@ -36,7 +36,7 @@ public:
     static std::unique_ptr<RenderGraph> CreateDefault(RenderGraphBuilderConfig& p_config);
     static std::unique_ptr<RenderGraph> CreatePathTracer(RenderGraphBuilderConfig& p_config);
 
-    static void DrawDebugImages(const DrawData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager);
+    static void DrawDebugImages(const RenderData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager);
 
     static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
                                                   PixelFormat p_format,
@@ -55,6 +55,7 @@ private:
     void AddHighlightPass();
     void AddShadowPass();
     void AddVoxelizationPass();
+    void AddSsaoPass();
     void AddLightingPass();
     void AddBloomPass();
     void AddTonePass();

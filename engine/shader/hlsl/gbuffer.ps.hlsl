@@ -54,7 +54,7 @@ ps_output main(vsoutput_mesh input) {
 
     output.position.xyz = input.world_position;
     output.position.a = 1.0f;
-    output.normal.xyz = N;
+    output.normal.xyz = 0.5f * N + 0.5f;
     output.normal.a = 1.0f;
 
     // [SCRUM-29] Generate this code with cross compiler

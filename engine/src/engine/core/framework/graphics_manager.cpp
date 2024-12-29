@@ -10,8 +10,8 @@
 #include "engine/math/frustum.h"
 #include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/draw_data.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/render_graph_builder.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer.h"
@@ -573,18 +573,23 @@ std::shared_ptr<GpuTexture> GraphicsManager::FindTexture(RenderTargetResourceNam
 uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_activeRenderGraphName) {
-        case RenderGraphName::DUMMY:
-            texture = FindTexture(RESOURCE_GBUFFER_BASE_COLOR).get();
-            break;
-        case RenderGraphName::DEFAULT:
+        case RenderGraphName::DUMMY: {
+            texture = FindTexture(RESOURCE_GBUFFER_NORMAL).get();
+        } break;
+        case RenderGraphName::DEFAULT: {
+#if 0
+            // @TODO: debug panel
+            texture = FindTexture(RESOURCE_SSAO).get();
+#else
             texture = FindTexture(RESOURCE_FINAL).get();
-            break;
-        case RenderGraphName::PATHTRACER:
+#endif
+        } break;
+        case RenderGraphName::PATHTRACER: {
             texture = FindTexture(RESOURCE_PATH_TRACER).get();
-            break;
-        default:
+        } break;
+        default: {
             CRASH_NOW();
-            break;
+        } break;
     }
 
     if (texture) {

@@ -31,7 +31,6 @@ void RendererPanel::UpdateInternal(Scene&) {
     ImGui::Text("Debug");
     ImGui::Text("Frame rate:%.2f", ImGui::GetIO().Framerate);
     ImGui::Checkbox("show editor", (bool*)DVAR_GET_POINTER(show_editor));
-    ImGui::Checkbox("no texture", (bool*)DVAR_GET_POINTER(gfx_no_texture));
 
     CollapseWindow("Shadow", []() {
         ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_shadow));
@@ -40,6 +39,11 @@ void RendererPanel::UpdateInternal(Scene&) {
     CollapseWindow("Bloom", []() {
         ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_bloom));
         ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);
+    });
+
+    CollapseWindow("SSAO", []() {
+        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_ssao_enabled));
+        ImGui::DragFloat("kernel radius", (float*)DVAR_GET_POINTER(gfx_ssao_radius), 0.01f, 0.0f, 5.0f);
     });
 
     CollapseWindow("Path Tracer", []() {

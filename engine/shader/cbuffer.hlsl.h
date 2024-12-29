@@ -100,7 +100,7 @@ CBUFFER(PerPassConstantBuffer, 1) {
     Matrix4x4f c_projectionMatrix;
 
     Matrix4x4f _per_pass_padding_0;
-    Matrix4x4f _per_pass_padding_1;
+    Matrix4x4f c_invProjection;
 };
 
 CBUFFER(MaterialConstantBuffer, 2) {
@@ -163,43 +163,31 @@ CBUFFER(PointShadowConstantBuffer, 4) {
 CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
+    Vector4f c_ssaoKernel[SSAO_KERNEL_SIZE];
+
     //-----------------------------------------
+    Matrix4x4f c_invViewMatrix;  // 64
+    //-----------------------------------------
+    Vector4f c_ambientColor;  // 16
+
     int c_lightCount;
     int c_enableBloom;
     int c_debugCsm;
     float c_bloomThreshold;  // 16
 
     int c_debugVoxelId;
-    int c_noTexture;
+    int c_ssaoEnabled;
     int c_enableVxgi;
     float c_texelSize;  // 16
 
-    //-----------------------------------------
-
-    Vector4f c_ambientColor;  // 16
-
-    Vector3f _per_frame_padding_4;  // 16
+    Vector2f _per_frame_padding_4;  // 16
+    float c_ssaoKernalRadius;
     int c_ptObjectCount;
-
-    sampler2D c_SkyboxResidentHandle;
-    sampler2D c_SkyboxHdrResidentHandle;  // 16
-
+    //-----------------------------------------
     uint c_DiffuseIrradianceResidentHandle;
     uint c_PrefilteredResidentHandle;
     uint c_BrdfLutResidentHandle;
     int c_forceFieldsCount;  // 16
-
-    //-----------------------------------------
-
-    sampler2D c_GbufferBaseColorMapResidentHandle;
-    sampler2D c_GbufferPositionMapResidentHandle;  // 16
-
-    sampler2D c_GbufferNormalMapResidentHandle;
-    sampler2D c_GbufferMaterialMapResidentHandle;  // 16
-
-    //-----------------------------------------
-    sampler2D c_GbufferDepthResidentHandle;
-    sampler2D c_PointShadowArrayResidentHandle;  // 16
 
     sampler2D c_ShadowMapResidentHandle;
     sampler2D c_TextureHighlightSelectResidentHandle;  // 16
@@ -209,7 +197,6 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     Vector3f c_cameraPosition;
     float c_cameraFovDegree;  // 16
-
     //-----------------------------------------
     Vector3f c_voxelWorldCenter;
     float c_voxelWorldSizeHalf;  // 16
@@ -218,11 +205,11 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_frameIndex;  // 16
 
     Vector3f c_cameraRight;
-    float c_voxelSize;
+    float c_voxelSize;  // 16
 
     Vector3f c_cameraUp;
-    int c_sceneDirty;
-
+    int c_sceneDirty;  // 16
+    //-----------------------------------------
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
 
@@ -257,14 +244,12 @@ CBUFFER(EmitterConstantBuffer, 6) {
 // @TODO: merge it with per frame
 CBUFFER(PerSceneConstantBuffer, 7) {
     // @TODO: remove the following
-    sampler2D _per_scene_padding_0;
-    sampler2D c_finalBloom;
+    Vector4f _per_scene_padding_0;
+    Vector4f _per_scene_padding_1;
 
     sampler2D c_grassBaseColor;
     sampler2D c_hdrEnvMap;
 
-    sampler2D c_kernelNoiseMap;
-    sampler2D c_toneImage;
     // @TODO: unordered access
     sampler2D c_ltc1;
     sampler2D c_ltc2;

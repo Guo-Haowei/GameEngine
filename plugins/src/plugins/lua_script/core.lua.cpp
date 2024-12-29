@@ -1,20 +1,22 @@
-const char* g_lua_always_load = R"(
-GameObject = {}
-GameObject.__index = GameObject
+#define LUA(str) (const char*)"\n" #str
 
-function GameObject.new(id)
-    local self = setmetatable({}, GameObject)
-    self.id = id
-    return self
-end
+// clang-format off
+const char* g_lua_always_load = LUA(
+    GameObject = {};
+    GameObject.__index = GameObject;
+    function GameObject.new(id)
+        local self = setmetatable({}, GameObject);
+        self.id = id;
+        return self;
+    end
+    function GameObject : OnUpdate(timestep)
+    end
+    function GameObject : OnCollision(other)
+    end
+    function math.clamp(value, min, max)
+        return math.max(min, math.min(max, value));
+    end
+);
+// clang-format on
 
-function GameObject:OnUpdate(timestep)
-end
-
-function GameObject:OnCollision(other)
-end
-
-function math.clamp(value, min, max)
-    return math.max(min, math.min(max, value))
-end
-)";
+#undef LUA

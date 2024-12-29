@@ -24,6 +24,8 @@ constexpr PixelFormat RT_FMT_GBUFFER_BASE_COLOR = PixelFormat::R16G16B16A16_FLOA
 constexpr PixelFormat RT_FMT_GBUFFER_POSITION = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_GBUFFER_NORMAL = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_GBUFFER_MATERIAL = PixelFormat::R16G16B16A16_FLOAT;
+// @TODO: debug
+constexpr PixelFormat RT_FMT_SSAO = PixelFormat::R32_FLOAT;
 constexpr PixelFormat RT_FMT_TONE = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_LIGHTING = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_OUTLINE_SELECT = PixelFormat::R8_UINT;
@@ -67,6 +69,13 @@ RG_RESOURCE(RESOURCE_GBUFFER_NORMAL,
 RG_RESOURCE(RESOURCE_GBUFFER_MATERIAL,
             PointClampSampler(),
             RT_FMT_GBUFFER_MATERIAL,
+            AttachmentType::COLOR_2D,
+            RESOURCE_SIZE_FRAME,
+            RESOURCE_SIZE_FRAME)
+
+RG_RESOURCE(RESOURCE_SSAO,
+            PointClampSampler(),
+            RT_FMT_SSAO,
             AttachmentType::COLOR_2D,
             RESOURCE_SIZE_FRAME,
             RESOURCE_SIZE_FRAME)

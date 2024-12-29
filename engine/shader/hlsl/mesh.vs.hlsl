@@ -27,13 +27,13 @@ vsoutput_mesh main(vsinput_mesh input,
 
     float4 position = float4(input.position, 1.0);
     position = mul(world_matrix, position);
-    float3 world_position = position.xyz;
     position = mul(c_viewMatrix, position);
+    float3 view_position = position.xyz;
     position = mul(c_projectionMatrix, position);
 
     vsoutput_mesh result;
     result.position = position;
-    result.world_position = world_position;
+    result.world_position = view_position;
     // @TODO: fix normal
     result.normal = N;
     result.T = T;

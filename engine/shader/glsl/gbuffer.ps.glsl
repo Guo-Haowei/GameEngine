@@ -1,7 +1,9 @@
 /// File: gbuffer.ps.glsl
+// @TODO: don't need vec4 to store the values
+// @TODO: can we reconstruct position from depth buffer?
 layout(location = 0) out vec4 out_base_color;
-layout(location = 1) out vec3 out_position;
-layout(location = 2) out vec3 out_normal;
+layout(location = 1) out vec4 out_position;
+layout(location = 2) out vec4 out_normal;
 layout(location = 3) out vec4 out_emissive_roughness_metallic;
 
 in struct PS_INPUT {
@@ -42,8 +44,10 @@ void main() {
     }
 
     out_base_color = albedo;
-    out_position = ps_in.position;
-    out_normal = N;
+    out_position.rgb = ps_in.position;
+    out_position.a = 1.0f;
+    out_normal.rgb = 0.5f * N + 0.5f;
+    out_normal.a = 1.0f;
 
     out_emissive_roughness_metallic.r = c_emissivePower;
     out_emissive_roughness_metallic.g = roughness;

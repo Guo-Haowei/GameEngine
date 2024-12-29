@@ -15,11 +15,15 @@ class PerspectiveCameraComponent;
 
 namespace my::renderer {
 
-struct RenderDataConfig {
-    RenderDataConfig(const Scene& p_scene) : scene(p_scene) {}
-
-    const Scene& scene;
+struct RenderOptions {
     bool isOpengl{ false };
+    bool ssaoEnabled{ false };
+    bool vxgiEnabled{ false };
+    bool bloomEnabled{ false };
+    int debugVoxelId{ 0 };
+    int debugBvhDepth{ -1 };
+    int voxelTextureSize{ 0 };
+    float ssaoKernelRadius{ 0.0f };
 };
 
 struct DrawContext {
@@ -85,7 +89,7 @@ struct BufferCache {
     }
 };
 
-struct DrawData {
+struct RenderData {
     struct Camera {
         Matrix4x4f viewMatrix;
         Matrix4x4f projectionMatrixRendering;
@@ -101,6 +105,11 @@ struct DrawData {
         float zFar;
         Degree fovy;
     };
+
+    RenderData(const RenderOptions& p_options) : options(p_options) {
+    }
+
+    const RenderOptions options;
 
     Camera mainCamera;
 
@@ -125,6 +134,7 @@ struct DrawData {
 
     std::vector<ParticleEmitterComponent> emitters;
 
+    // @TODO: refactor
     bool bakeIbl;
     std::shared_ptr<GpuTexture> skyboxHdr;
 
@@ -147,7 +157,7 @@ struct DrawData {
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
-                       const RenderDataConfig& p_config,
-                       DrawData& p_out_data);
+                       const Scene& p_config,
+                       RenderData& p_out_data);
 
 }  // namespace my::renderer

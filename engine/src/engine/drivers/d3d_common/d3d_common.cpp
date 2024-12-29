@@ -75,7 +75,7 @@ auto CompileShader(std::string_view p_path,
     D3DIncludeHandler include_handler;
 
     uint32_t flags = D3DCOMPILE_ENABLE_STRICTNESS;
-#if 0
+#if 1
 #if USING(DEBUG_BUILD)
     flags |= D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif
