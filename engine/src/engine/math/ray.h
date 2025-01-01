@@ -1,6 +1,6 @@
 #pragma once
-#include "intersection.h"
-#include "matrix_transform.h"
+#include "engine/math/intersection.h"
+#include "engine/math/matrix.h"
 
 namespace my {
 

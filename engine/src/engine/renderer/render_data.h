@@ -8,7 +8,7 @@
 
 namespace my {
 #include "cbuffer.hlsl.h"
-
+enum StencilFlags : uint8_t;
 class Scene;
 class PerspectiveCameraComponent;
 }  // namespace my
@@ -37,7 +37,7 @@ struct BatchContext {
     int batch_idx;
     const GpuMesh* mesh_data;
     std::vector<DrawContext> subsets;
-    uint32_t flags;
+    StencilFlags flags;
 };
 
 // @TODO: unify BatchContext and InstanceContext

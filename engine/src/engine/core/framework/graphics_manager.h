@@ -78,7 +78,12 @@ public:
     virtual void BeginDrawPass(const Framebuffer* p_framebuffer);
     virtual void EndDrawPass(const Framebuffer* p_framebuffer);
 
-    virtual void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color = DEFAULT_CLEAR_COLOR, int p_index = 0) = 0;
+    virtual void Clear(const Framebuffer* p_framebuffer,
+                       ClearFlags p_flags,
+                       const float* p_clear_color = DEFAULT_CLEAR_COLOR,
+                       float p_clear_depth = 1.0f,
+                       int p_index = 0) = 0;
+
     virtual void SetViewport(const Viewport& p_viewport) = 0;
 
     virtual auto CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> = 0;

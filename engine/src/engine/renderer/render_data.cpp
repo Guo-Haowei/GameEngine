@@ -10,7 +10,6 @@
 #include "engine/core/framework/asset_registry.h"
 #include "engine/core/framework/graphics_manager.h"
 #include "engine/core/framework/input_manager.h"
-#include "engine/math/detail/matrix.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 
@@ -100,7 +99,7 @@ static void FillPass(const Scene& p_scene,
         batch_buffer.c_meshFlag = mesh.armatureId.IsValid();
 
         BatchContext draw;
-        draw.flags = 0;
+        draw.flags = STENCIL_FLAG_OBJECT;
         if (entity == p_scene.m_selected) {
             draw.flags |= STENCIL_FLAG_SELECTED;
         }
@@ -193,7 +192,8 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     // camera
     {
         const auto& camera = p_out_data.mainCamera;
-        cache.c_invViewMatrix = glm::inverse(camera.viewMatrix);
+        cache.c_invView = glm::inverse(camera.viewMatrix);
+        cache.c_invProjection = glm::inverse(camera.projectionMatrixRendering);
         cache.c_cameraFovDegree = camera.fovy.GetDegree();
         cache.c_cameraForward = camera.front;
         cache.c_cameraRight = camera.right;
@@ -245,6 +245,15 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
 
         return static_cast<uint32_t>(resource->GetResidentHandle());
     };
+
+    // @TODO: opengl doesn't really uses it, consider use 32 bit for handle
+    cache.c_GbufferBaseColorMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_BASE_COLOR));
+    cache.c_GbufferPositionMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_POSITION));
+    cache.c_GbufferNormalMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_NORMAL));
+    cache.c_GbufferMaterialMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_MATERIAL));
+    cache.c_GbufferDepthResidentHandle.Set32(find_index(RESOURCE_GBUFFER_DEPTH));
+    cache.c_PointShadowArrayResidentHandle.Set32(find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY));
+    cache.c_SsaoMapResidentHandle.Set32(find_index(RESOURCE_SSAO));
 
     cache.c_ShadowMapResidentHandle.Set32(find_index(RESOURCE_SHADOW_MAP));
 
@@ -335,7 +344,6 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
-                pass_constant.c_invProjection = glm::inverse(pass_constant.c_projectionMatrix);
                 p_out_data.shadowPasses[0].pass_idx = static_cast<int>(p_out_data.passCache.size());
                 p_out_data.passCache.emplace_back(pass_constant);
 
@@ -476,7 +484,6 @@ static void FillMainPass(const Scene& p_scene,
     PerPassConstantBuffer pass_constant;
     pass_constant.c_viewMatrix = camera.viewMatrix;
     pass_constant.c_projectionMatrix = camera.projectionMatrixRendering;
-    pass_constant.c_invProjection = glm::inverse(pass_constant.c_projectionMatrix);
 
     p_out_data.mainPass.pass_idx = static_cast<int>(p_out_data.passCache.size());
     p_out_data.passCache.emplace_back(pass_constant);
@@ -559,7 +566,7 @@ static void FillMeshEmitterBuffer(const Scene& p_scene,
             batch_buffer.c_meshFlag = MESH_HAS_INSTANCE;
 
             BatchContext draw;
-            draw.flags = STENCIL_FLAG_SELECTED;
+            draw.flags = STENCIL_FLAG_OBJECT;
 
             auto& position_buffer = p_out_data.boneCache.buffer;
 
@@ -634,6 +641,21 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        RenderData& p_out_data) {
     // fill camera
     {
+        auto reverse_z = [](Matrix4x4f& p_perspective) {
+            constexpr Matrix4x4f matrix{ 1.0f, 0.0f, 0.0f, 0.0f,
+                                         0.0f, 1.0f, 0.0f, 0.0f,
+                                         0.0f, 0.0f, -1.0f, 0.0f,
+                                         0.0f, 0.0f, 1.0f, 1.0f };
+            p_perspective = matrix * p_perspective;
+        };
+        auto normalize_unit_range = [](Matrix4x4f& p_perspective) {
+            constexpr Matrix4x4f matrix{ 1.0f, 0.0f, 0.0f, 0.0f,
+                                         0.0f, 1.0f, 0.0f, 0.0f,
+                                         0.0f, 0.0f, 0.5f, 0.0f,
+                                         0.0f, 0.0f, 0.5f, 1.0f };
+            p_perspective = matrix * p_perspective;
+        };
+
         auto& camera = p_out_data.mainCamera;
         camera.sceenWidth = static_cast<float>(p_camera.GetWidth());
         camera.sceenHeight = static_cast<float>(p_camera.GetHeight());
@@ -644,18 +666,23 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.viewMatrix = p_camera.GetViewMatrix();
         camera.projectionMatrixFrustum = p_camera.GetProjectionMatrix();
+        // @TODO: check out this
+        // https://tomhultonharrop.com/mathematics/graphics/2023/08/06/reverse-z.html
         if (p_out_data.options.isOpengl) {
             camera.projectionMatrixRendering = BuildOpenGlPerspectiveRH(
                 camera.fovy.GetRadians(),
                 camera.aspectRatio,
                 camera.zNear,
                 camera.zFar);
+            normalize_unit_range(camera.projectionMatrixRendering);
+            reverse_z(camera.projectionMatrixRendering);
         } else {
             camera.projectionMatrixRendering = BuildPerspectiveRH(
                 camera.fovy.GetRadians(),
                 camera.aspectRatio,
                 camera.zNear,
                 camera.zFar);
+            reverse_z(camera.projectionMatrixRendering);
         }
         camera.position = p_camera.GetPosition();
 

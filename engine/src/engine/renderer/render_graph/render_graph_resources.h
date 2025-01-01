@@ -19,7 +19,8 @@ constexpr int RT_SIZE_IBL_CUBEMAP = 512;
 constexpr int RT_SIZE_IBL_IRRADIANCE_CUBEMAP = 32;
 constexpr int RT_SIZE_IBL_PREFILTERED_CUBEMAP = 512;
 // RT_FMT stands form RENDER_TARGET_FORMAT
-constexpr PixelFormat RT_FMT_GBUFFER_DEPTH = PixelFormat::R24G8_TYPELESS;
+constexpr PixelFormat RT_FMT_GBUFFER_DEPTH = PixelFormat::R32G8X24_TYPELESS;
+// constexpr PixelFormat RT_FMT_GBUFFER_DEPTH = PixelFormat::R24G8_TYPELESS;
 constexpr PixelFormat RT_FMT_GBUFFER_BASE_COLOR = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_GBUFFER_POSITION = PixelFormat::R16G16B16A16_FLOAT;
 constexpr PixelFormat RT_FMT_GBUFFER_NORMAL = PixelFormat::R16G16B16A16_FLOAT;

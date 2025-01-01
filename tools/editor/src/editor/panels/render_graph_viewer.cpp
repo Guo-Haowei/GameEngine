@@ -9,6 +9,9 @@
 
 namespace my {
 
+// @TODO: save the nodes position to disk
+// @TODO: find longese path, and arrange nodes
+
 RenderGraphViewer::RenderGraphViewer(EditorLayer& p_editor) : EditorWindow("RenderGraph", p_editor) {
 }
 
@@ -16,7 +19,6 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
     const auto& order = p_graph.GetSortedOrder();
     const auto& vertices = p_graph.GetVertices();
 
-    // @TODO: draw nodes without dependencies
     std::list<int> no_dependencies;
     std::list<int> with_dependencies;
     const auto& adj_list = p_graph.GetAdjList();
@@ -87,7 +89,9 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
                 for (const auto& texture : framebuffer->desc.colorAttachments) {
                     add_image(flip_image, texture);
                 }
-                // add_image(flip_image, framebuffer->desc.depthAttachment);
+#if 0
+                add_image(flip_image, framebuffer->desc.depthAttachment);
+#endif
             }
             ImNodes::EndStaticAttribute();
         }

@@ -11,11 +11,10 @@ WARNING_DISABLE(4201, "-Wunused-parameter")
 #include <glm/gtx/vector_angle.hpp>
 WARNING_POP()
 
-#include "vector.h"
+#include "engine/math/matrix.h"
+#include "engine/math/vector.h"
 
 namespace my {
-
-using Matrix4x4f = glm::mat4;
 
 using Quaternion = glm::quat;
 

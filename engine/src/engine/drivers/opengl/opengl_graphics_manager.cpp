@@ -201,7 +201,7 @@ void OpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     glUseProgram(pipeline->programId);
 }
 
-void OpenGlGraphicsManager::Clear(const Framebuffer*, ClearFlags p_flags, const float* p_clear_color, int) {
+void OpenGlGraphicsManager::Clear(const Framebuffer*, ClearFlags p_flags, const float* p_clear_color, float p_clear_depth, int) {
     if (p_flags == CLEAR_NONE) {
         return;
     }
@@ -221,6 +221,8 @@ void OpenGlGraphicsManager::Clear(const Framebuffer*, ClearFlags p_flags, const 
         flags |= GL_STENCIL_BUFFER_BIT;
     }
 
+    // @TODO: cache clear depth
+    glClearDepth(p_clear_depth);
     glClear(flags);
 }
 

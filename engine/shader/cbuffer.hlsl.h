@@ -100,7 +100,7 @@ CBUFFER(PerPassConstantBuffer, 1) {
     Matrix4x4f c_projectionMatrix;
 
     Matrix4x4f _per_pass_padding_0;
-    Matrix4x4f c_invProjection;
+    Matrix4x4f _per_pass_padding_1;
 };
 
 CBUFFER(MaterialConstantBuffer, 2) {
@@ -164,9 +164,20 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     Light c_lights[MAX_LIGHT_COUNT];
 
     Vector4f c_ssaoKernel[SSAO_KERNEL_SIZE];
-
     //-----------------------------------------
-    Matrix4x4f c_invViewMatrix;  // 64
+    Matrix4x4f c_invProjection;
+    Matrix4x4f c_invView;
+    Matrix4x4f _per_frame_padding_1;
+    Matrix4x4f _per_frame_padding_2;  // 256
+    //-----------------------------------------
+    sampler2D c_GbufferBaseColorMapResidentHandle;
+    sampler2D c_GbufferPositionMapResidentHandle;  // 16
+    sampler2D c_GbufferNormalMapResidentHandle;
+    sampler2D c_GbufferMaterialMapResidentHandle;  // 16
+    sampler2D c_GbufferDepthResidentHandle;
+    sampler2D c_PointShadowArrayResidentHandle;  // 16
+    sampler2D c_SsaoMapResidentHandle;
+    sampler2D c_SkyboxResidentHandle;  // 16
     //-----------------------------------------
     Vector4f c_ambientColor;  // 16
 
@@ -180,7 +191,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_enableVxgi;
     float c_texelSize;  // 16
 
-    Vector2f _per_frame_padding_4;  // 16
+    sampler2D c_SkyboxHdrResidentHandle;  // 16
     float c_ssaoKernalRadius;
     int c_ptObjectCount;
     //-----------------------------------------
@@ -210,6 +221,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     Vector3f c_cameraUp;
     int c_sceneDirty;  // 16
     //-----------------------------------------
+
     ForceField c_forceFields[MAX_FORCE_FIELD_COUNT];
 };
 

@@ -38,7 +38,7 @@ struct RenderPassCreateInfo {
 };
 
 /// Gbuffer
-static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches) {
+static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches, bool p_is_prepass) {
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -52,29 +52,30 @@ static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<Batc
 
         gm.SetMesh(draw.mesh_data);
 
-        if (draw.flags) {
+        if (p_is_prepass) {
             gm.SetStencilRef(draw.flags);
         }
 
         for (const auto& subset : draw.subsets) {
             // @TODO: fix this
-            const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
-            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
+            if (!p_is_prepass) {
+                const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
+                gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
+                gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
+                gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
 
-            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
+                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
+            }
             gm.DrawElements(subset.index_count, subset.index_offset);
         }
-
-        if (draw.flags) {
-            gm.SetStencilRef(0);
-        }
+    }
+    if (p_is_prepass) {
+        gm.SetStencilRef(0);
     }
 }
 
-static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<InstanceContext>& p_instances) {
+// @TODO: generalize this
+static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -86,9 +87,9 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
 
         gm.SetMesh(instance.gpuMesh);
 
-        // if (instance..flags) {
-        //     gm.SetStencilRef(draw.flags);
-        // }
+        if (p_is_prepass) {
+            gm.SetStencilRef(STENCIL_FLAG_OBJECT);
+        }
 
         const MaterialConstantBuffer& material = p_data.materialCache.buffer[instance.materialIdx];
         gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
@@ -100,11 +101,47 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
         gm.DrawElementsInstanced(instance.instanceCount,
                                  instance.indexCount,
                                  instance.indexOffset);
-
-        // if (draw.flags) {
-        //     gm.SetStencilRef(0);
-        // }
     }
+    if (p_is_prepass) {
+        gm.SetStencilRef(0);
+    }
+}
+
+static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+    HBN_PROFILE_EVENT();
+
+    auto& gm = GraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+    const uint32_t width = p_framebuffer->desc.depthAttachment->desc.width;
+    const uint32_t height = p_framebuffer->desc.depthAttachment->desc.height;
+
+    gm.SetRenderTarget(p_framebuffer);
+    gm.SetViewport(Viewport(width, height));
+
+    const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color, 0.0f);
+
+    const PassContext& pass = p_data.mainPass;
+    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+
+    gm.SetPipelineState(PSO_PREPASS);
+    DrawBatchesGeometry(p_data, pass.opaque, true);
+    DrawBatchesGeometry(p_data, pass.doubleSided, true);
+    DrawInstacedGeometry(p_data, p_data.instances, true);
+}
+
+void RenderGraphBuilder::AddPrepass() {
+    RenderPassCreateInfo info{
+        .name = RenderPassName::PREPASS,
+        .dependencies = {},
+        .drawPasses = {
+            { { {},
+                RESOURCE_GBUFFER_DEPTH },
+              PrepassFunc },
+        },
+    };
+
+    CreateRenderPass(info);
 }
 
 static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
@@ -119,22 +156,22 @@ static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_frame
     gm.SetViewport(Viewport(width, height));
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color);
+    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT, clear_color);
 
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     gm.SetPipelineState(PSO_GBUFFER);
-    DrawBatchesGeometry(p_data, pass.opaque);
-    DrawInstacedGeometry(p_data, p_data.instances);
+    DrawBatchesGeometry(p_data, pass.opaque, false);
+    DrawInstacedGeometry(p_data, p_data.instances, false);
     gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
-    DrawBatchesGeometry(p_data, pass.doubleSided);
+    DrawBatchesGeometry(p_data, pass.doubleSided, false);
 }
 
 void RenderGraphBuilder::AddGbufferPass() {
     RenderPassCreateInfo info{
         .name = RenderPassName::GBUFFER,
-        .dependencies = {},
+        .dependencies = { RenderPassName::PREPASS },
         .drawPasses = {
             { { {
                     RESOURCE_GBUFFER_BASE_COLOR,
@@ -207,7 +244,7 @@ static void HighlightPassFunc(const RenderData&, const Framebuffer* p_framebuffe
 void RenderGraphBuilder::AddHighlightPass() {
     RenderPassCreateInfo info{
         .name = RenderPassName::OUTLINE,
-        .dependencies = { RenderPassName::GBUFFER },
+        .dependencies = { RenderPassName::PREPASS },
         .drawPasses = {
             { { { RESOURCE_OUTLINE_SELECT },
                 RESOURCE_GBUFFER_DEPTH },
@@ -264,7 +301,7 @@ static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_f
             gm.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
 
             gm.SetRenderTarget(p_framebuffer, slot);
-            gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT, nullptr, slot);
+            gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, slot);
 
             gm.SetViewport(Viewport(width, height));
 
@@ -586,7 +623,9 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
     auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
     constexpr int skybox_slot = GetSkyboxSlot();
 #endif
+    // @TODO: fix skybox
     if (skybox) {
+        gm.SetStencilRef(0);
         gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.DrawSkybox();
@@ -595,7 +634,7 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
-    DrawBatchesGeometry(p_data, pass.transparent);
+    DrawBatchesGeometry(p_data, pass.transparent, false);
 
     auto& draw_context = p_data.drawDebugContext;
     if (gm.m_debugBuffers && draw_context.drawCount) {
@@ -624,6 +663,8 @@ void RenderGraphBuilder::AddLightingPass() {
                                                                              m_config.frameWidth, m_config.frameHeight),
                                                      PointClampSampler());
 
+    // @TODO: make this two passes, because lighting doesn't need depth buffer,
+    // we will use the depth buffer for reconstructing view position
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
 
@@ -846,7 +887,7 @@ static void DebugVoxels(const RenderData& p_data, const Framebuffer* p_framebuff
 
     // glEnable(GL_BLEND);
     gm.SetViewport(Viewport(width, height));
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT);
+    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, GraphicsManager::DEFAULT_CLEAR_COLOR, 0.0f);
 
     GraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
 
@@ -1192,6 +1233,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(RenderGraphBuilderC
     auto graph = std::make_unique<RenderGraph>();
     RenderGraphBuilder creator(p_config, *graph.get());
 
+    creator.AddPrepass();
     creator.AddGbufferPass();
 
     graph->Compile();
@@ -1260,6 +1302,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     auto graph = std::make_unique<RenderGraph>();
     RenderGraphBuilder creator(p_config, *graph.get());
 
+    creator.AddPrepass();
     creator.AddGbufferPass();
     creator.AddGenerateSkylightPass();
     creator.AddShadowPass();

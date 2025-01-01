@@ -20,7 +20,7 @@ public:
     void BeginDrawPass(const Framebuffer* p_framebuffer) override {}
     void EndDrawPass(const Framebuffer* p_framebuffer) override {}
 
-    void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) override {}
+    void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, float p_clear_depth, int p_index) override {}
     void SetViewport(const Viewport& p_viewport) override {}
 
     void DrawElements(uint32_t p_count, uint32_t p_offset) override {}

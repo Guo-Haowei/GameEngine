@@ -1,6 +1,12 @@
 #include "d3d12_graphics_manager.h"
 
 #include <imgui/backends/imgui_impl_dx12.h>
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
 
 #include "engine/core/framework/application.h"
 #include "engine/core/framework/imgui_manager.h"
@@ -8,6 +14,7 @@
 #include "engine/drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "engine/drivers/d3d_common/d3d_common.h"
 #include "engine/drivers/windows/win32_display_manager.h"
+#include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_private.h"
 #include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
@@ -371,7 +378,11 @@ void D3d12GraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     }
 }
 
-void D3d12GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, int p_index) {
+void D3d12GraphicsManager::Clear(const Framebuffer* p_framebuffer,
+                                 ClearFlags p_flags,
+                                 const float* p_clear_color,
+                                 float p_clear_depth,
+                                 int p_index) {
     auto framebuffer = reinterpret_cast<const D3d12Framebuffer*>(p_framebuffer);
 
     if (p_flags & CLEAR_COLOR_BIT) {
@@ -391,7 +402,7 @@ void D3d12GraphicsManager::Clear(const Framebuffer* p_framebuffer, ClearFlags p_
     if (clear_flags) {
         // @TODO: better way?
         DEV_ASSERT_INDEX(p_index, framebuffer->dsvs.size());
-        m_graphicsCommandList->ClearDepthStencilView(framebuffer->dsvs[p_index], clear_flags, 1.0f, 0, 0, nullptr);
+        m_graphicsCommandList->ClearDepthStencilView(framebuffer->dsvs[p_index], clear_flags, p_clear_depth, 0, 0, nullptr);
     }
 }
 
@@ -658,13 +669,23 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
     DXGI_FORMAT srv_format = d3d::Convert(format);
     D3D12_RESOURCE_STATES initial_state = D3D12_RESOURCE_STATE_COPY_DEST;
 
-    if (format == PixelFormat::D32_FLOAT) {
-        texture_format = DXGI_FORMAT_R32_TYPELESS;
-        srv_format = DXGI_FORMAT_R32_FLOAT;
-    } else if (format == PixelFormat::D24_UNORM_S8_UINT) {
-        texture_format = DXGI_FORMAT_R24G8_TYPELESS;
-    } else if (format == PixelFormat::R24G8_TYPELESS) {
-        srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+    // @TODO: refactor
+    switch (format) {
+        case PixelFormat::D32_FLOAT: {
+            texture_format = DXGI_FORMAT_R32_TYPELESS;
+            srv_format = DXGI_FORMAT_R32_FLOAT;
+        } break;
+        case PixelFormat::D24_UNORM_S8_UINT: {
+            texture_format = DXGI_FORMAT_R24G8_TYPELESS;
+        } break;
+        case PixelFormat::R24G8_TYPELESS: {
+            srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+        } break;
+        case PixelFormat::R32G8X24_TYPELESS: {
+            srv_format = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+        } break;
+        default:
+            break;
     }
     switch (p_texture_desc.type) {
         case AttachmentType::NONE:
@@ -942,7 +963,8 @@ std::shared_ptr<Framebuffer> D3d12GraphicsManager::CreateFramebuffer(const Frame
             } break;
             case AttachmentType::DEPTH_STENCIL_2D: {
                 D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
-                dsv_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+                // @TODO: fix hard code
+                dsv_desc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
                 dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
                 dsv_desc.Texture2D.MipSlice = 0;
                 auto handle = m_dsvDescHeap.AllocHandle();

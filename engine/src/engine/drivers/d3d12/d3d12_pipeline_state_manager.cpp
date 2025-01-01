@@ -92,7 +92,9 @@ auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc = {};
     pso_desc.pRootSignature = graphics_manager->GetRootSignature();
     pso_desc.VS = CD3DX12_SHADER_BYTECODE(vs_blob.Get());
-    pso_desc.PS = CD3DX12_SHADER_BYTECODE(ps_blob.Get());
+    if (ps_blob) {
+        pso_desc.PS = CD3DX12_SHADER_BYTECODE(ps_blob.Get());
+    }
     pso_desc.BlendState = d3d::Convert(p_desc.blendDesc);
     pso_desc.SampleMask = UINT_MAX;
     pso_desc.RasterizerState = rasterizer_desc;

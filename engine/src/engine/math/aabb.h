@@ -1,7 +1,7 @@
 #pragma once
-#include "box.h"
-#include "intersection.h"
-#include "matrix_transform.h"
+#include "engine/math/box.h"
+#include "engine/math/intersection.h"
+#include "engine/math/matrix.h"
 
 namespace my {
 

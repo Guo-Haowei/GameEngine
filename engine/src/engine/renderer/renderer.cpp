@@ -9,9 +9,6 @@
 #include "engine/renderer/render_data.h"
 #include "engine/renderer/sampler.h"
 
-// @TODO: refactor
-#include "engine/math/detail/matrix.h"
-
 #define DEFINE_DVAR
 #include "graphics_dvars.h"
 
@@ -244,7 +241,7 @@ static void GenerateSsaoKernel() {
 
     const int kernel_size = 32;
     const float inv_kernel_size = 1.0f / kernel_size;
-    for (int i = 0; i < s_glob.ssaoKernels.size(); ++i) {
+    for (int i = 0; i < (int)s_glob.ssaoKernels.size(); ++i) {
         // [-1, 1], [-1, 1], [0, 1]
         Vector3f sample(Random::Float(-1.0f, 1.0f),
                         Random::Float(-1.0f, 1.0f),

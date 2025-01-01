@@ -36,6 +36,9 @@ enum class PixelFormat {
     D24_UNORM_S8_UINT,
     X24_TYPELESS_G8_UINT,
 
+    R32G8X24_TYPELESS,
+    D32_FLOAT_S8X24_UINT,
+
     COUNT,
 };
 

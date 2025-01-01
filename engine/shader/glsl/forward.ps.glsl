@@ -41,7 +41,7 @@ void main() {
 
     const float emissive = c_emissivePower;
     const vec3 view_position = ps_in.position;
-    const vec3 world_position = (c_invViewMatrix * vec4(view_position, 1.0f)).xyz;
+    const vec3 world_position = (c_invView * vec4(view_position, 1.0f)).xyz;
 
     out_color.rgb = compute_lighting(base_color,
                                      world_position,
