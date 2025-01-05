@@ -101,6 +101,7 @@ struct PipelineState {
     PSO_NAME(PSO_VOXELIZATION_POST)      \
     PSO_NAME(PSO_HIGHLIGHT)              \
     PSO_NAME(PSO_LIGHTING)               \
+    PSO_NAME(PSO_SKY)                    \
     PSO_NAME(PSO_BLOOM_SETUP)            \
     PSO_NAME(PSO_BLOOM_DOWNSAMPLE)       \
     PSO_NAME(PSO_BLOOM_UPSAMPLE)         \
