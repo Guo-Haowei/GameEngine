@@ -6,9 +6,8 @@
 
 struct ps_output {
     float4 base_color : SV_TARGET0;
-    float4 position : SV_TARGET1;
-    float4 normal : SV_TARGET2;
-    float4 out_emissive_roughness_metallic : SV_TARGET3;
+    float4 normal : SV_TARGET1;
+    float4 out_emissive_roughness_metallic : SV_TARGET2;
 };
 
 ps_output main(vsoutput_mesh input) {
@@ -52,8 +51,6 @@ ps_output main(vsoutput_mesh input) {
     output.base_color = float4(0.5f * N + 0.5f, 1.0f);
 #endif
 
-    output.position.xyz = input.world_position;
-    output.position.a = 1.0f;
     output.normal.xyz = 0.5f * N + 0.5f;
     output.normal.a = 1.0f;
 

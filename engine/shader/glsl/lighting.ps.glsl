@@ -1,5 +1,6 @@
 /// File: lighting.ps.glsl
 #include "../cbuffer.hlsl.h"
+#include "../common.hlsl.h"
 
 layout(location = 0) out vec4 out_color;
 layout(location = 0) in vec2 pass_uv;
@@ -13,12 +14,11 @@ void main() {
         discard;
     }
 
-    //gl_FragDepth = depth;
-
     vec3 N = texture(t_GbufferNormalMap, uv).rgb;
     N = 2.0f * N - 1.0f;
 
-    const vec3 view_position = texture(t_GbufferPositionMap, uv).rgb;
+    const float depth = texture(t_GbufferDepth, uv).r;
+    const Vector3f view_position = NdcToViewPos(uv, depth);
     const vec3 world_position = (c_invView * vec4(view_position, 1.0f)).xyz;
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;

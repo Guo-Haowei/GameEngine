@@ -171,7 +171,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     Matrix4x4f _per_frame_padding_2;  // 256
     //-----------------------------------------
     sampler2D c_GbufferBaseColorMapResidentHandle;
-    sampler2D c_GbufferPositionMapResidentHandle;  // 16
+    sampler2D _per_frame_padding_3;  // 16
     sampler2D c_GbufferNormalMapResidentHandle;
     sampler2D c_GbufferMaterialMapResidentHandle;  // 16
     sampler2D c_GbufferDepthResidentHandle;

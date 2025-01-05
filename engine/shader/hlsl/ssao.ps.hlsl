@@ -1,18 +1,12 @@
 /// File: tone.ps.hlsl
 #include "cbuffer.hlsl.h"
+#include "common.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
-
-Vector3f NdcToViewPos(Vector2f uv, float depth) {
-    Vector2f ndc = 2.0f * uv - 1.0f;
-    Vector4f viewPosH = mul(c_invProjection, Vector4f(ndc.x, ndc.y, depth, 1.0f));
-    Vector3f viewPos = viewPosH.xyz / viewPosH.w;
-    return viewPos;
-}
 
 float main(vsoutput_uv input) : SV_TARGET {
     const Vector2f uv = input.uv;
