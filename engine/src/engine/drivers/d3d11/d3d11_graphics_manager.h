@@ -37,6 +37,7 @@ public:
                ClearFlags p_flags,
                const float* p_clear_color,
                float p_clear_depth,
+               uint8_t p_clear_stencil,
                int p_index) final;
 
     void SetViewport(const Viewport& p_viewport) final;
@@ -113,6 +114,7 @@ protected:
     struct {
         ID3D11RasterizerState* rasterizer = nullptr;
         ID3D11DepthStencilState* depthStencil = nullptr;
+        uint32_t stencilRef = 0xFFFFFFFF;
         ID3D11BlendState* blendState = nullptr;
     } m_stateCache;
 };

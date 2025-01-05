@@ -99,9 +99,8 @@ static void FillPass(const Scene& p_scene,
         batch_buffer.c_meshFlag = mesh.armatureId.IsValid();
 
         BatchContext draw;
-        draw.flags = STENCIL_FLAG_OBJECT;
         if (entity == p_scene.m_selected) {
-            draw.flags |= STENCIL_FLAG_SELECTED;
+            draw.flags = STENCIL_FLAG_SELECTED;
         }
 
         draw.batch_idx = p_out_render_data.batchCache.FindOrAdd(entity, batch_buffer);
@@ -566,7 +565,6 @@ static void FillMeshEmitterBuffer(const Scene& p_scene,
             batch_buffer.c_meshFlag = MESH_HAS_INSTANCE;
 
             BatchContext draw;
-            draw.flags = STENCIL_FLAG_OBJECT;
 
             auto& position_buffer = p_out_data.boneCache.buffer;
 
