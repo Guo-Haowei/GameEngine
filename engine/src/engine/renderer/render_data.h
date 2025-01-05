@@ -2,13 +2,13 @@
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
+#include "engine/renderer/graphics_defines.h"
 #include "engine/renderer/renderer.h"
 #include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/entity.h"
 
 namespace my {
 #include "cbuffer.hlsl.h"
-enum StencilFlags : uint8_t;
 class Scene;
 class PerspectiveCameraComponent;
 }  // namespace my
@@ -37,7 +37,7 @@ struct BatchContext {
     int batch_idx;
     const GpuMesh* mesh_data;
     std::vector<DrawContext> subsets;
-    StencilFlags flags;
+    StencilFlags flags = STENCIL_FLAG_NONE;
 };
 
 // @TODO: unify BatchContext and InstanceContext

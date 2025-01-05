@@ -59,6 +59,7 @@ private:
     void AddVoxelizationPass();
     void AddSsaoPass();
     void AddLightingPass();
+    void AddSkyPass();
     void AddBloomPass();
     void AddTonePass();
     void AddGenerateSkylightPass();

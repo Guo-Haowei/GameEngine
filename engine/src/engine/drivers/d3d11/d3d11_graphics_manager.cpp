@@ -96,7 +96,10 @@ void D3d11GraphicsManager::Present() {
 
 void D3d11GraphicsManager::SetStencilRef(uint32_t p_ref) {
     if (m_stateCache.depthStencil) {
-        m_deviceContext->OMSetDepthStencilState(m_stateCache.depthStencil, p_ref);
+        if (m_stateCache.stencilRef != p_ref) {
+            m_deviceContext->OMSetDepthStencilState(m_stateCache.depthStencil, p_ref);
+            m_stateCache.stencilRef = p_ref;
+        }
     }
 }
 
@@ -686,6 +689,7 @@ void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer,
                                  ClearFlags p_flags,
                                  const float* p_clear_color,
                                  float p_clear_depth,
+                                 uint8_t p_clear_stencil,
                                  int p_index) {
     // @TODO: refactor
     const bool clear_color = p_flags & CLEAR_COLOR_BIT;
@@ -716,7 +720,7 @@ void D3d11GraphicsManager::Clear(const Framebuffer* p_framebuffer,
     if (clear_flags) {
         // @TODO: better way?
         DEV_ASSERT_INDEX(p_index, framebuffer->dsvs.size());
-        m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, p_clear_depth, 0);
+        m_deviceContext->ClearDepthStencilView(framebuffer->dsvs[p_index].Get(), clear_flags, p_clear_depth, p_clear_stencil);
     }
 }
 

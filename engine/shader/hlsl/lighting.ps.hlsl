@@ -1,5 +1,6 @@
 /// File: lighting.ps.hlsl
 #include "cbuffer.hlsl.h"
+#include "common.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "hlsl/lighting.hlsl"
 #include "pbr.hlsl.h"
@@ -13,8 +14,9 @@ float4 main(vsoutput_uv input) : SV_TARGET {
 
     float3 base_color = TEXTURE_2D(GbufferBaseColorMap).Sample(s_linearMipWrapSampler, uv).rgb;
 
-    const float4 view_position = float4(TEXTURE_2D(GbufferPositionMap).Sample(s_linearMipWrapSampler, uv).rgb, 1.0f);
-    const float4 world_position = mul(c_invView, view_position);
+    const float depth = TEXTURE_2D(GbufferDepth).Sample(s_pointClampSampler, uv).r;
+    const Vector3f view_position = NdcToViewPos(float2(uv.x, 1.0f - uv.y), depth);
+    const float4 world_position = mul(c_invView, float4(view_position, 1.0f));
 
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;

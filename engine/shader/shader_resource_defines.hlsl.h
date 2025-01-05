@@ -22,7 +22,6 @@ DESCRIPTOR_SRV_LIST
     SRV(Texture2D, TextureHighlightSelect, 8, RESOURCE_OUTLINE_SELECT)                \
     SRV(Texture2D, GbufferDepth, 9, RESOURCE_GBUFFER_DEPTH)                           \
     SRV(Texture2D, GbufferBaseColorMap, 10, RESOURCE_GBUFFER_BASE_COLOR)              \
-    SRV(Texture2D, GbufferPositionMap, 11, RESOURCE_GBUFFER_POSITION)                 \
     SRV(Texture2D, GbufferNormalMap, 12, RESOURCE_GBUFFER_NORMAL)                     \
     SRV(Texture2D, GbufferMaterialMap, 13, RESOURCE_GBUFFER_MATERIAL)                 \
     SRV(Texture2D, TextureLighting, 14, RESOURCE_LIGHTING)                            \

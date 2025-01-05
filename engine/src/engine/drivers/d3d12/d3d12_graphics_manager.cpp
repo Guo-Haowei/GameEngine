@@ -382,6 +382,7 @@ void D3d12GraphicsManager::Clear(const Framebuffer* p_framebuffer,
                                  ClearFlags p_flags,
                                  const float* p_clear_color,
                                  float p_clear_depth,
+                                 uint8_t p_clear_stencil,
                                  int p_index) {
     auto framebuffer = reinterpret_cast<const D3d12Framebuffer*>(p_framebuffer);
 
@@ -402,7 +403,7 @@ void D3d12GraphicsManager::Clear(const Framebuffer* p_framebuffer,
     if (clear_flags) {
         // @TODO: better way?
         DEV_ASSERT_INDEX(p_index, framebuffer->dsvs.size());
-        m_graphicsCommandList->ClearDepthStencilView(framebuffer->dsvs[p_index], clear_flags, p_clear_depth, 0, 0, nullptr);
+        m_graphicsCommandList->ClearDepthStencilView(framebuffer->dsvs[p_index], clear_flags, p_clear_depth, p_clear_stencil, 0, nullptr);
     }
 }
 

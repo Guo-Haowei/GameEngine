@@ -24,7 +24,7 @@ public:
     void BeginDrawPass(const Framebuffer* p_framebuffer) override {}
     void EndDrawPass(const Framebuffer* p_framebuffer) override {}
 
-    void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, float p_clear_depth, int p_index) override {}
+    void Clear(const Framebuffer* p_framebuffer, ClearFlags p_flags, const float* p_clear_color, float p_clear_depth, uint8_t p_clear_stencil, int p_index) override {}
     void SetViewport(const Viewport& p_viewport) override {}
 
     auto CreateMeshImpl(const GpuMeshDesc& p_desc,

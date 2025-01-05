@@ -82,6 +82,7 @@ public:
                        ClearFlags p_flags,
                        const float* p_clear_color = DEFAULT_CLEAR_COLOR,
                        float p_clear_depth = 1.0f,
+                       uint8_t p_clear_stencil = 0,
                        int p_index = 0) = 0;
 
     virtual void SetViewport(const Viewport& p_viewport) = 0;

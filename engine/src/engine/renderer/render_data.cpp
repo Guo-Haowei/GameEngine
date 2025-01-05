@@ -99,9 +99,8 @@ static void FillPass(const Scene& p_scene,
         batch_buffer.c_meshFlag = mesh.armatureId.IsValid();
 
         BatchContext draw;
-        draw.flags = STENCIL_FLAG_OBJECT;
         if (entity == p_scene.m_selected) {
-            draw.flags |= STENCIL_FLAG_SELECTED;
+            draw.flags = STENCIL_FLAG_SELECTED;
         }
 
         draw.batch_idx = p_out_render_data.batchCache.FindOrAdd(entity, batch_buffer);
@@ -248,7 +247,6 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
 
     // @TODO: opengl doesn't really uses it, consider use 32 bit for handle
     cache.c_GbufferBaseColorMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_BASE_COLOR));
-    cache.c_GbufferPositionMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_POSITION));
     cache.c_GbufferNormalMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_NORMAL));
     cache.c_GbufferMaterialMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_MATERIAL));
     cache.c_GbufferDepthResidentHandle.Set32(find_index(RESOURCE_GBUFFER_DEPTH));
@@ -566,7 +564,6 @@ static void FillMeshEmitterBuffer(const Scene& p_scene,
             batch_buffer.c_meshFlag = MESH_HAS_INSTANCE;
 
             BatchContext draw;
-            draw.flags = STENCIL_FLAG_OBJECT;
 
             auto& position_buffer = p_out_data.boneCache.buffer;
 

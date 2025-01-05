@@ -39,6 +39,8 @@ struct RenderPassCreateInfo {
 
 /// Gbuffer
 static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches, bool p_is_prepass) {
+    HBN_PROFILE_EVENT();
+
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -52,7 +54,7 @@ static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<Batc
 
         gm.SetMesh(draw.mesh_data);
 
-        if (p_is_prepass) {
+        if (p_is_prepass && draw.flags) {
             gm.SetStencilRef(draw.flags);
         }
 
@@ -68,14 +70,19 @@ static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<Batc
             }
             gm.DrawElements(subset.index_count, subset.index_offset);
         }
-    }
-    if (p_is_prepass) {
-        gm.SetStencilRef(0);
+
+        if (p_is_prepass && draw.flags) {
+            gm.SetStencilRef(0);
+        }
     }
 }
 
 // @TODO: generalize this
 static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
+    unused(p_is_prepass);
+
+    HBN_PROFILE_EVENT();
+
     auto& gm = GraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
 
@@ -87,10 +94,6 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
 
         gm.SetMesh(instance.gpuMesh);
 
-        if (p_is_prepass) {
-            gm.SetStencilRef(STENCIL_FLAG_OBJECT);
-        }
-
         const MaterialConstantBuffer& material = p_data.materialCache.buffer[instance.materialIdx];
         gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
         gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
@@ -101,9 +104,6 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
         gm.DrawElementsInstanced(instance.instanceCount,
                                  instance.indexCount,
                                  instance.indexOffset);
-    }
-    if (p_is_prepass) {
-        gm.SetStencilRef(0);
     }
 }
 
@@ -119,7 +119,7 @@ static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     gm.SetViewport(Viewport(width, height));
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color, 0.0f);
+    gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color, 0.0f, STENCIL_FLAG_SKY);
 
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
@@ -175,7 +175,6 @@ void RenderGraphBuilder::AddGbufferPass() {
         .drawPasses = {
             { { {
                     RESOURCE_GBUFFER_BASE_COLOR,
-                    RESOURCE_GBUFFER_POSITION,
                     RESOURCE_GBUFFER_NORMAL,
                     RESOURCE_GBUFFER_MATERIAL,
                 },
@@ -301,7 +300,7 @@ static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_f
             gm.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
 
             gm.SetRenderTarget(p_framebuffer, slot);
-            gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, slot);
+            gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, 0, slot);
 
             gm.SetViewport(Viewport(width, height));
 
@@ -572,7 +571,7 @@ static void EmitterPassFunc(const RenderData& p_data, const Framebuffer* p_frame
 }
 
 /// Lighting
-static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void LightingPassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = GraphicsManager::GetSingleton();
@@ -611,6 +610,66 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
         gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelLightingSlot());
         gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelNormalSlot());
     }
+}
+
+void RenderGraphBuilder::AddLightingPass() {
+    GraphicsManager& manager = GraphicsManager::GetSingleton();
+
+    auto lighting_attachment = manager.FindTexture(RESOURCE_LIGHTING);
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::LIGHTING;
+
+    desc.dependencies = { RenderPassName::GBUFFER,
+                          RenderPassName::ENV,
+                          RenderPassName::SSAO };
+
+    if (m_config.enableShadow) {
+        desc.dependencies.push_back(RenderPassName::SHADOW);
+    }
+    if (m_config.enableVxgi) {
+        desc.dependencies.push_back(RenderPassName::VOXELIZATION);
+    }
+
+    auto pass = m_graph.CreatePass(desc);
+    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
+        .colorAttachments = { lighting_attachment },
+        .transitions = {
+            ResourceTransition{
+                .resource = manager.FindTexture(RESOURCE_SHADOW_MAP),
+                .slot = GetShadowMapSlot(),
+                .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                    GpuTexture* p_texture,
+                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_2D, p_texture->GetHandle(), p_slot); },
+                .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                  GpuTexture*,
+                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_2D, p_slot); },
+            },
+            ResourceTransition{
+                .resource = manager.FindTexture(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
+                .slot = GetPointShadowArraySlot(),
+                .beginPassFunc = [](GraphicsManager* p_graphics_manager,
+                                    GpuTexture* p_texture,
+                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_texture->GetHandle(), p_slot); },
+                .endPassFunc = [](GraphicsManager* p_graphics_manager,
+                                  GpuTexture*,
+                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_slot); },
+            },
+        },
+    });
+    pass->AddDrawPass(framebuffer, LightingPassFunc);
+}
+
+/// Transparent
+static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+    HBN_PROFILE_EVENT();
+
+    auto& gm = GraphicsManager::GetSingleton();
+    const auto [width, height] = p_framebuffer->GetBufferSize();
+
+    gm.SetRenderTarget(p_framebuffer);
+
+    gm.SetViewport(Viewport(width, height));
 
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
@@ -625,10 +684,11 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
 #endif
     // @TODO: fix skybox
     if (skybox) {
-        gm.SetStencilRef(0);
         gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
         gm.SetPipelineState(PSO_ENV_SKYBOX);
+        gm.SetStencilRef(STENCIL_FLAG_SKY);
         gm.DrawSkybox();
+        gm.SetStencilRef(0);
         gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
     }
 
@@ -652,32 +712,17 @@ static void LightingPassFunc(const RenderData& p_data, const Framebuffer* p_fram
     EmitterPassFunc(p_data, p_framebuffer);
 }
 
-void RenderGraphBuilder::AddLightingPass() {
+void RenderGraphBuilder::AddSkyPass() {
     GraphicsManager& manager = GraphicsManager::GetSingleton();
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
-    auto lighting_attachment = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_LIGHTING,
-                                                                             RT_FMT_LIGHTING,
-                                                                             AttachmentType::COLOR_2D,
-                                                                             m_config.frameWidth, m_config.frameHeight),
-                                                     PointClampSampler());
+    auto lighting_attachment = manager.FindTexture(RESOURCE_LIGHTING);
 
-    // @TODO: make this two passes, because lighting doesn't need depth buffer,
-    // we will use the depth buffer for reconstructing view position
     RenderPassDesc desc;
-    desc.name = RenderPassName::LIGHTING;
+    desc.name = RenderPassName::SKY;
 
-    desc.dependencies = { RenderPassName::GBUFFER,
-                          RenderPassName::ENV,
-                          RenderPassName::SSAO };
-
-    if (m_config.enableShadow) {
-        desc.dependencies.push_back(RenderPassName::SHADOW);
-    }
-    if (m_config.enableVxgi) {
-        desc.dependencies.push_back(RenderPassName::VOXELIZATION);
-    }
+    desc.dependencies = { RenderPassName::LIGHTING };
 
     auto pass = m_graph.CreatePass(desc);
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
@@ -706,7 +751,7 @@ void RenderGraphBuilder::AddLightingPass() {
             },
         },
     });
-    pass->AddDrawPass(framebuffer, LightingPassFunc);
+    pass->AddDrawPass(framebuffer, SkyPassFunc);
 }
 
 /// Bloom
@@ -795,7 +840,7 @@ void RenderGraphBuilder::AddBloomPass() {
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
-    desc.dependencies = { RenderPassName::LIGHTING };
+    desc.dependencies = { RenderPassName::SKY };
     auto render_pass = m_graph.CreatePass(desc);
 
     int width = m_config.frameWidth;
@@ -1310,6 +1355,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     creator.AddHighlightPass();
     creator.AddVoxelizationPass();
     creator.AddLightingPass();
+    creator.AddSkyPass();
     creator.AddBloomPass();
     creator.AddTonePass();
     creator.AddDebugImagePass();

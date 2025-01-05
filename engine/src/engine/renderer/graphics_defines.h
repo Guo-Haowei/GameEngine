@@ -39,10 +39,10 @@ enum ClearFlags : uint32_t {
 DEFINE_ENUM_BITWISE_OPERATIONS(ClearFlags);
 
 enum StencilFlags : uint8_t {
-    STENCIL_FLAG_OBJECT = BIT(1),
-    STENCIL_FLAG_SELECTED = STENCIL_FLAG_OBJECT | BIT(8),
+    STENCIL_FLAG_NONE = 0,
+    STENCIL_FLAG_SELECTED = 1,
+    STENCIL_FLAG_SKY = 255,
 };
-DEFINE_ENUM_BITWISE_OPERATIONS(StencilFlags);
 
 enum class MagFilter : uint8_t {
     POINT,

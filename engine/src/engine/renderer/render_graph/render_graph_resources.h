@@ -53,13 +53,6 @@ RG_RESOURCE(RESOURCE_GBUFFER_BASE_COLOR,
             RESOURCE_SIZE_FRAME,
             RESOURCE_SIZE_FRAME)
 
-RG_RESOURCE(RESOURCE_GBUFFER_POSITION,
-            PointClampSampler(),
-            RT_FMT_GBUFFER_POSITION,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
 RG_RESOURCE(RESOURCE_GBUFFER_NORMAL,
             PointClampSampler(),
             RT_FMT_GBUFFER_NORMAL,
@@ -77,6 +70,13 @@ RG_RESOURCE(RESOURCE_GBUFFER_MATERIAL,
 RG_RESOURCE(RESOURCE_SSAO,
             PointClampSampler(),
             RT_FMT_SSAO,
+            AttachmentType::COLOR_2D,
+            RESOURCE_SIZE_FRAME,
+            RESOURCE_SIZE_FRAME)
+
+RG_RESOURCE(RESOURCE_LIGHTING,
+            PointClampSampler(),
+            RT_FMT_LIGHTING,
             AttachmentType::COLOR_2D,
             RESOURCE_SIZE_FRAME,
             RESOURCE_SIZE_FRAME)

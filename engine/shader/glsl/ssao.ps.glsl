@@ -1,4 +1,5 @@
 #include "../cbuffer.hlsl.h"
+#include "../common.hlsl.h"
 #include "../shader_resource_defines.hlsl.h"
 
 layout(location = 0) in vec2 pass_uv;
@@ -6,13 +7,6 @@ layout(location = 0) out float out_color;
 
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
-
-Vector3f NdcToViewPos(Vector2f uv, float depth) {
-    Vector2f ndc = 2.0f * uv - 1.0f;
-    Vector4f viewPosH = c_invProjection * Vector4f(ndc.x, ndc.y, 2.0f * depth - 1.0f, 1.0f);
-    Vector3f viewPos = viewPosH.xyz / viewPosH.w;
-    return viewPos;
-}
 
 void main() {
     const Vector2f uv = pass_uv;
