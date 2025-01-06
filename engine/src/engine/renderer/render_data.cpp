@@ -201,11 +201,13 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     }
 
     // Bloom
-    // cache.c_bloomThreshold = DVAR_GET_FLOAT(gfx_bloom_threshold);
-    cache.c_enableBloom = options.bloomEnabled;
+    {
+        cache.c_bloomThreshold = 1.3f;
+        cache.c_enableBloom = options.bloomEnabled;
 
-    cache.c_debugVoxelId = options.debugVoxelId;
-    cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
+        cache.c_debugVoxelId = options.debugVoxelId;
+        cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
+    }
 
     // SSAO
     {
@@ -215,6 +217,10 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
         constexpr size_t kernel_size = sizeof(renderer::KernelData);
         static_assert(sizeof(cache.c_ssaoKernel) == kernel_size);
         memcpy(cache.c_ssaoKernel, kernel_data.data(), kernel_size);
+    }
+
+    // Sky
+    {
     }
 
     // @TODO: refactor
@@ -316,8 +322,9 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
         switch (light_component.GetType()) {
             case LIGHT_TYPE_INFINITE: {
                 Matrix4x4f light_local_matrix = light_transform->GetLocalMatrix();
-                Vector3f light_dir((light_local_matrix * Vector4f::UnitZ).xyz);
+                Vector3f light_dir((light_local_matrix * Vector4f(0, 0, 1, 1)).xyz);
                 light_dir = normalize(light_dir);
+                cache.c_sunPosition = light_dir;
                 light.cast_shadow = cast_shadow;
                 light.position = light_dir;
 

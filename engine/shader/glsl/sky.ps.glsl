@@ -1,8 +1,8 @@
+#include "../cbuffer.hlsl.h"
+
 in vec3 pass_pos;
-in vec3 pass_fsun;
 out vec4 out_color;
 
-uniform float time = 10.0;
 uniform float cirrus = 0.4;
 uniform float cumulus = 0.8;
 
@@ -47,6 +47,10 @@ void main() {
         discard;
     }
 
+    const vec3 pass_fsun = c_sunPosition;
+
+    float time = float(c_frameIndex) * 0.1f;
+
     // Atmosphere Scattering
     float mu = dot(normalize(pass_pos), normalize(pass_fsun));
     float rayleigh = 3.0 / (8.0 * 3.14) * (1.0 + mu * mu);
@@ -57,7 +61,7 @@ void main() {
     vec3 extinction = mix(day_extinction, night_extinction, -pass_fsun.y * 0.2 + 0.5);
     vec3 color = rayleigh * mie * extinction;
 
-#if 1
+#if 0
     // Cirrus Clouds
     float density = smoothstep(1.0 - cirrus, 1.0, fbm(pass_pos.xyz / pass_pos.y * 2.0 + time * 0.05)) * 0.3;
     color = mix(color.rgb, extinction * 4.0, density * max(pass_pos.y, 0.0));

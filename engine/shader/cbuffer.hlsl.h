@@ -167,17 +167,24 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     //-----------------------------------------
     Matrix4x4f c_invProjection;
     Matrix4x4f c_invView;
-    Matrix4x4f _per_frame_padding_1;
-    Matrix4x4f _per_frame_padding_2;  // 256
+
     //-----------------------------------------
     sampler2D c_GbufferBaseColorMapResidentHandle;
-    sampler2D _per_frame_padding_3;  // 16
+    sampler2D _per_frame_padding_0;  // 16
     sampler2D c_GbufferNormalMapResidentHandle;
     sampler2D c_GbufferMaterialMapResidentHandle;  // 16
     sampler2D c_GbufferDepthResidentHandle;
     sampler2D c_PointShadowArrayResidentHandle;  // 16
     sampler2D c_SsaoMapResidentHandle;
     sampler2D c_SkyboxResidentHandle;  // 16
+    //-----------------------------------------
+    Matrix4x4f _per_frame_padding_1;
+    //-----------------------------------------
+    Vector4f _per_frame_padding_2;
+    Vector4f _per_frame_padding_3;
+    Vector4f _per_frame_padding_4;
+    Vector3f c_sunPosition;
+    float _per_frame_padding_5;
     //-----------------------------------------
     Vector4f c_ambientColor;  // 16
 

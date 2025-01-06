@@ -20,6 +20,7 @@ struct RenderOptions {
     bool ssaoEnabled{ false };
     bool vxgiEnabled{ false };
     bool bloomEnabled{ false };
+    bool dynamicSky{ false };
     int debugVoxelId{ 0 };
     int debugBvhDepth{ -1 };
     int voxelTextureSize{ 0 };

@@ -675,31 +675,28 @@ static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-#if 0
-#if 0
-    auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
-    constexpr int skybox_slot = GetPrefilteredSlot();
-#else
-    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-    constexpr int skybox_slot = GetSkyboxSlot();
-#endif
-    if (skybox) {
-        gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
-        gm.SetPipelineState(PSO_ENV_SKYBOX);
-        gm.SetStencilRef(STENCIL_FLAG_SKY);
-        gm.DrawSkybox();
-        gm.SetStencilRef(0);
-        gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
-    }
-#else
-    {
+    if (p_data.options.dynamicSky) {
         gm.SetPipelineState(PSO_SKY);
         gm.SetStencilRef(STENCIL_FLAG_SKY);
-        // HACK
         gm.DrawQuad();
         gm.SetStencilRef(0);
-    }
+    } else {
+#if 0
+        auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
+        constexpr int skybox_slot = GetPrefilteredSlot();
+#else
+        auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+        constexpr int skybox_slot = GetSkyboxSlot();
 #endif
+        if (skybox) {
+            gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
+            gm.SetPipelineState(PSO_ENV_SKYBOX);
+            gm.SetStencilRef(STENCIL_FLAG_SKY);
+            gm.DrawSkybox();
+            gm.SetStencilRef(0);
+            gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
+        }
+    }
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
