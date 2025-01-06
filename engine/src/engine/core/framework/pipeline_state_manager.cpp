@@ -239,6 +239,18 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     CREATE_PSO(PSO_BLOOM_UPSAMPLE, { .type = PipelineStateType::COMPUTE, .cs = "bloom_upsample.cs" });
 #pragma endregion PSO_BLOOM
 
+    CREATE_PSO(PSO_SKY, {
+                            .vs = "sky.vs",
+                            .ps = "sky.ps",
+                            .rasterizerDesc = &s_rasterizerFrontFace,
+                            .depthStencilDesc = &s_depthStencilSkybox,
+                            .inputLayoutDesc = &s_inputLayoutMesh,
+                            .blendDesc = &s_blendStateDefault,
+                            .numRenderTargets = 1,
+                            .rtvFormats = { RT_FMT_LIGHTING },
+                            .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,
+                        });
+
     CREATE_PSO(PSO_ENV_SKYBOX, {
                                    .vs = "skybox.vs",
                                    .ps = "skybox.ps",
@@ -302,19 +314,6 @@ auto PipelineStateManager::Initialize() -> Result<void> {
     if (GraphicsManager::GetSingleton().GetBackend() != Backend::OPENGL) {
         return ok;
     }
-
-    // @TODO: d3d support
-    CREATE_PSO(PSO_SKY, {
-                            .vs = "sky.vs",
-                            .ps = "sky.ps",
-                            .rasterizerDesc = &s_rasterizerFrontFace,
-                            .depthStencilDesc = &s_depthStencilSkybox,
-                            .inputLayoutDesc = &s_inputLayoutMesh,
-                            .blendDesc = &s_blendStateDefault,
-                            .numRenderTargets = 1,
-                            .rtvFormats = { RT_FMT_LIGHTING },
-                            .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,
-                        });
 
 #pragma region PSO_VOXEL
     // Voxel

@@ -64,7 +64,7 @@ void BeginFrame() {
     };
 
     // @TODO: configure
-    options.dynamicSky = options.isOpengl;
+    options.dynamicSky = true;
 
     s_glob.renderData = new RenderData(options);
     s_glob.renderData->bakeIbl = false;
