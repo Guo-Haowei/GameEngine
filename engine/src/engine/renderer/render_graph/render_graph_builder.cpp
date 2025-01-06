@@ -634,6 +634,7 @@ void RenderGraphBuilder::AddLightingPass() {
     auto pass = m_graph.CreatePass(desc);
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
         .colorAttachments = { lighting_attachment },
+        // @TODO: refactor transitions
         .transitions = {
             ResourceTransition{
                 .resource = manager.FindTexture(RESOURCE_SHADOW_MAP),
@@ -660,7 +661,7 @@ void RenderGraphBuilder::AddLightingPass() {
     pass->AddDrawPass(framebuffer, LightingPassFunc);
 }
 
-/// Transparent
+/// Sky
 static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
@@ -674,22 +675,27 @@ static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    // DrawBatches
-#if 0
-    auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
-    constexpr int skybox_slot = GetPrefilteredSlot();
-#else
-    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-    constexpr int skybox_slot = GetSkyboxSlot();
-#endif
-    // @TODO: fix skybox
-    if (skybox) {
-        gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
-        gm.SetPipelineState(PSO_ENV_SKYBOX);
+    if (p_data.options.dynamicSky) {
+        gm.SetPipelineState(PSO_SKY);
         gm.SetStencilRef(STENCIL_FLAG_SKY);
-        gm.DrawSkybox();
+        gm.DrawQuad();
         gm.SetStencilRef(0);
-        gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
+    } else {
+#if 0
+        auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
+        constexpr int skybox_slot = GetPrefilteredSlot();
+#else
+        auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+        constexpr int skybox_slot = GetSkyboxSlot();
+#endif
+        if (skybox) {
+            gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
+            gm.SetPipelineState(PSO_ENV_SKYBOX);
+            gm.SetStencilRef(STENCIL_FLAG_SKY);
+            gm.DrawSkybox();
+            gm.SetStencilRef(0);
+            gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
+        }
     }
 
     // draw transparent objects
@@ -728,6 +734,7 @@ void RenderGraphBuilder::AddSkyPass() {
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
         .colorAttachments = { lighting_attachment },
         .depthAttachment = gbuffer_depth,
+        // @TODO: refactor transitions
         .transitions = {
             ResourceTransition{
                 .resource = manager.FindTexture(RESOURCE_SHADOW_MAP),
