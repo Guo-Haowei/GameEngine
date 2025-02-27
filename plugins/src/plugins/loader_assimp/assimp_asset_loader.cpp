@@ -1,7 +1,7 @@
 #include "assimp_asset_loader.h"
 
 #if USING(USING_ASSIMP)
-#include <assimp/GltfMaterial.h>
+// #include <assimp/GltfMaterial.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
@@ -71,11 +71,13 @@ void AssimpAssetLoader::ProcessMaterial(aiMaterial& p_material) {
         AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
 
+#if 0
     path = get_material_path(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE);
     if (!path.empty()) {
         materialComponent->textures[MaterialComponent::TEXTURE_METALLIC_ROUGHNESS].path = path;
         AssetRegistry::GetSingleton().RequestAssetSync(path);
     }
+#endif
 
     m_materials.emplace_back(material_id);
 }

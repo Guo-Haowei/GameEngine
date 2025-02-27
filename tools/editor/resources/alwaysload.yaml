@@ -6,8 +6,8 @@ files:
     type: Image
   - path: "@res://images/ibl/sky.hdr"
     type: Image
-  - path: "@res://images/ibl/night.hdr"
-    type: Image
+  # - path: "@res://images/ibl/night.hdr"
+  #   type: Image
   - path: "@res://fonts/DroidSans.ttf"
     type: Font
   - path: "@res://fonts/fa-solid-900.ttf"

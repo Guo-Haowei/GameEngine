@@ -202,7 +202,10 @@ void EditorLayer::DrawToolbar() {
     const auto& button_active = colors[ImGuiCol_ButtonActive];
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(button_active.x, button_active.y, button_active.z, 0.5f));
 
-    ImGuiWindowFlags toolbar_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
+    ImGuiWindowFlags toolbar_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
+#if 1
+    toolbar_flags |= ImGuiWindowFlags_NoDecoration;
+#endif
     ImGui::Begin("##toolbar", nullptr, toolbar_flags);
 
     bool toolbar_enabled = true;

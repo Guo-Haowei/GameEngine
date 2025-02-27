@@ -78,7 +78,7 @@ int main(int, const char**) {
     
     engine::InitializeCore();
 
-    WriteImageWrapper("aviator_sky.hdr", WriteAviatorSkyImage);
+    WriteImageWrapper("brdf.hdr", WriteBrdfImage);
 
     thread::RequestShutdown();
     engine::FinalizeCore();

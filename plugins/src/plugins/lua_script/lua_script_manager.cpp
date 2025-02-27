@@ -125,6 +125,7 @@ void LuaScriptManager::OnSimBegin(Scene& p_scene) {
     }
 
     // @TODO: call Game.new
+    // @TODO: do not call it
     const auto& meta = FindOrAdd(L, "@res://scripts/game.lua", "Game");
     m_gameRef = CreateInstance(meta, L);
     return;
