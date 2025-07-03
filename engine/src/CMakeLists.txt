@@ -37,10 +37,10 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/
-    ${PROJECT_SOURCE_DIR}/thirdparty/bullet3/src # TODO: move bullet3 to modules
     ${PROJECT_SOURCE_DIR}/engine/shader
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
+    ${PROJECT_SOURCE_DIR}/
     ${BULLET_INCLUDE_DIR}
     ${TINYGLTF_INCLUDE_DIRS}
     ${Stb_INCLUDE_DIR}
@@ -60,10 +60,6 @@ set(TARGET_LIBS
     yaml-cpp::yaml-cpp
     lua_script
 )
-
-if (USE_BULLET)
-    list(APPEND TARGET_LIBS ${BULLET_LIBS})
-endif()
 
 if(WIN32)
     list(APPEND TARGET_LIBS

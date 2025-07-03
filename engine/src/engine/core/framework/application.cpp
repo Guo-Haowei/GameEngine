@@ -110,7 +110,7 @@ auto Application::SetupModules() -> Result<void> {
         m_scriptManager = *res;
     }
     m_sceneManager = new SceneManager();
-    m_physicsManager = new PhysicsManager();
+    m_physicsManager = PhysicsManager::Create();
     m_displayServer = DisplayManager::Create();
     {
         auto res = CreateGraphicsManager();
