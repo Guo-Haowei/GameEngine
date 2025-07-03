@@ -62,7 +62,7 @@ set(TARGET_LIBS
 )
 
 if (USE_BULLET)
-    list(APPEND TARGET_LIBS BulletDynamics BulletCollision LinearMath BulletSoftBody)
+    list(APPEND TARGET_LIBS ${BULLET_LIBS})
 endif()
 
 if(WIN32)
