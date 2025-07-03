@@ -24,4 +24,16 @@ protected:
     friend class Application;
 };
 
+template<class T>
+class ModuleCreateRegistry {
+public:
+    using CreateFunc = T* (*)();
+
+    static void RegisterCreateFunc(CreateFunc p_func) {
+        s_createFunc = p_func;
+    }
+
+    inline static CreateFunc s_createFunc = nullptr;
+};
+
 }  // namespace my

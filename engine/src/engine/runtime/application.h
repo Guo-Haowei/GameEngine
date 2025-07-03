@@ -13,7 +13,7 @@ class DisplayManager;
 class GraphicsManager;
 class ImguiManager;
 class InputManager;
-class PhysicsManager;
+class IPhysicsManager;
 class SceneManager;
 class ScriptManager;
 
@@ -65,7 +65,7 @@ public:
     AssetManager* GetAssetManager() { return m_assetManager; }
     InputManager* GetInputManager() { return m_inputManager; }
     SceneManager* GetSceneManager() { return m_sceneManager; }
-    PhysicsManager* GetPhysicsManager() { return m_physicsManager; }
+    IPhysicsManager* GetPhysicsManager() { return m_physicsManager; }
     ScriptManager* GetScriptManager() { return m_scriptManager; }
     DisplayManager* GetDisplayServer() { return m_displayServer; }
     GraphicsManager* GetGraphicsManager() { return m_graphicsManager; }
@@ -113,7 +113,7 @@ protected:
     AssetRegistry* m_assetRegistry{ nullptr };
     AssetManager* m_assetManager{ nullptr };
     SceneManager* m_sceneManager{ nullptr };
-    PhysicsManager* m_physicsManager{ nullptr };
+    IPhysicsManager* m_physicsManager{ nullptr };
     DisplayManager* m_displayServer{ nullptr };
     GraphicsManager* m_graphicsManager{ nullptr };
     ImguiManager* m_imguiManager{ nullptr };

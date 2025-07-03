@@ -4,6 +4,8 @@
 #include "engine/runtime/entry_point.h"
 #include "engine/core/string/string_utils.h"
 
+#include "modules/bullet3/bullet3_physics_manager.h"
+
 #define DEFINE_DVAR
 #include "editor_dvars.h"
 #undef DEFINE_DVAR
@@ -89,5 +91,11 @@ Scene* Editor::CreateInitialScene() {
 }  // namespace my
 
 int main(int p_argc, const char** p_argv) {
-    return my::Main(p_argc, p_argv);
+    using namespace my;
+
+    IPhysicsManager::RegisterCreateFunc([]() -> IPhysicsManager* {
+        return new Bullet3PhysicsManager();
+    });
+
+    return Main(p_argc, p_argv);
 }

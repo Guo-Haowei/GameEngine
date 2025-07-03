@@ -12,7 +12,7 @@
 #include "engine/runtime/imgui_manager.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
-#include "engine/runtime/physics_manager.h"
+#include "engine/runtime/module_registry.h"
 #include "engine/runtime/scene_manager.h"
 #include "engine/runtime/script_manager.h"
 #include "engine/core/io/file_access.h"
@@ -110,7 +110,7 @@ auto Application::SetupModules() -> Result<void> {
         m_scriptManager = *res;
     }
     m_sceneManager = new SceneManager();
-    m_physicsManager = PhysicsManager::Create();
+    m_physicsManager = CreatePhysicsManager();
     m_displayServer = DisplayManager::Create();
     {
         auto res = CreateGraphicsManager();

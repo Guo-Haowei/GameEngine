@@ -5,9 +5,9 @@ namespace my {
 
 class Scene;
 
-class Bullet3PhysicsManager : public PhysicsManager {
+class Bullet3PhysicsManager : public IPhysicsManager {
 public:
-    Bullet3PhysicsManager() : PhysicsManager("Bullet3PhysicsManager") {}
+    Bullet3PhysicsManager() : IPhysicsManager("Bullet3PhysicsManager") {}
 
     void Update(Scene& p_scene) override;
 

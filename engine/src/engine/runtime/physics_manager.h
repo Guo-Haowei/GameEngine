@@ -5,19 +5,16 @@ namespace my {
 
 class Scene;
 
-class PhysicsManager : public Module {
+class IPhysicsManager : public Module, public ModuleCreateRegistry<IPhysicsManager> {
 public:
-    PhysicsManager(std::string_view p_name) : Module(p_name) {}
+    using CreateFunc = IPhysicsManager* (*)();
+
+    IPhysicsManager(std::string_view p_name) : Module(p_name) {}
 
     virtual void Update(Scene& p_scene) = 0;
 
     virtual void OnSimBegin(Scene& p_scene) = 0;
     virtual void OnSimEnd(Scene& p_scene) = 0;
-
-    static PhysicsManager* Create();
 };
 
 }  // namespace my
-
-extern "C" my::PhysicsManager* CreatePhysicsManager();
-
