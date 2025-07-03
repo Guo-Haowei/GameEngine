@@ -50,10 +50,10 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
     -DROOT_FOLDER="${PROJECT_SOURCE_DIR}/"
 )
 
-set(TARGET_LIBS 
+set(TARGET_LIBS
     imgui
     glfw
-    glad::glad
+    glad
     ${BULLET_LIBRARIES}
     glm::glm
     yaml-cpp::yaml-cpp

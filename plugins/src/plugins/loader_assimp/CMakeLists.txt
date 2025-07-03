@@ -9,8 +9,6 @@ add_library(${TARGET_NAME} STATIC ${SRC})
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/ FILES ${SRC})
 
-# find_package(assimp CONFIG REQUIRED)
-
 target_include_directories(${TARGET_NAME} PRIVATE
     ${VCPKG_INSTALLED_DIR}/x64-windows/include
     ${PROJECT_SOURCE_DIR}/engine/src

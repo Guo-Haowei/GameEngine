@@ -15,13 +15,26 @@ message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
 
 ################################################################################
 
-find_package(glfw3 REQUIRED)
-find_package(glad REQUIRED)
-find_package(glm REQUIRED)
-find_package(Bullet REQUIRED)
-find_path(TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
-find_package(Stb REQUIRED)
-find_package(yaml-cpp CONFIG REQUIRED)
+# GLFW
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(thirdparty/glfw)
+# GLAD
+add_subdirectory(thirdparty/glad)
+# GLM
+add_subdirectory(thirdparty/glm)
+# YAML-CPP
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests")
+add_subdirectory(thirdparty/yaml-cpp)
+
+# Bullet
+
+# (Bullet REQUIRED)
+# (TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
+# (Stb REQUIRED)
+# (yaml-cpp CONFIG REQUIRED)
 
 ################################################################################
 if(NOT APPLE)

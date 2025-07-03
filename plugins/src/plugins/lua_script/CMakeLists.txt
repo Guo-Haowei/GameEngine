@@ -12,8 +12,8 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/ FILES ${SRC})
 
 find_path(LUABRIDGE3_INCLUDE_DIRS "luabridge3/LuaBridge/Array.h")
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LuaJIT REQUIRED IMPORTED_TARGET luajit)
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(LuaJIT REQUIRED IMPORTED_TARGET luajit)
 
 target_include_directories(${TARGET_NAME} PRIVATE
     ${VCPKG_INSTALLED_DIR}/x64-windows/include
