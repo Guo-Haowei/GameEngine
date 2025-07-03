@@ -21,8 +21,7 @@ struct Quat {
 void SetPreloadFunc(lua_State* L) {
 
     lua_getglobal(L, "package");
-    lua_getfield(L, -1, "loaders");
-    int count = (int)lua_objlen(L, -1);
+    lua_getfield(L, -1, "searchers");
 
     lua_pushcfunction(L, [](lua_State* L) -> int {
         const char* path = luaL_checkstring(L, 1);
@@ -45,23 +44,7 @@ void SetPreloadFunc(lua_State* L) {
         lua_pushstring(L, error.c_str());
         return 1;
     });
-    lua_rawseti(L, -2, count + 1);
-    lua_pop(L, 2);
-
-    // @NOTE: turn on to see if loaders are appended correctly
-#if 0
-    const char* source = R"(
-require('ffi')
-for key, value in pairs(package.loaders) do
-    print('key: ' .. key)
-    print('type: ' .. type(value))
-end
-)";
-    int ok = luaL_dostring(L, source);
-    if (ok != LUA_OK) {
-        LOG_ERROR("{}", lua_tostring(L, -1));
-    }
-#endif
+    lua_rawseti(L, -2, 1);
 }
 
 bool OpenMathLib(lua_State* L) {

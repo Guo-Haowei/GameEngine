@@ -1,3 +1,5 @@
+#if 0
+
 #include "physics_manager.h"
 
 #include "engine/core/debugger/profiler.h"
@@ -420,3 +422,4 @@ void PhysicsManager::OnSimEnd(Scene&) {
 }
 
 }  // namespace my
+#endif

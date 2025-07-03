@@ -1,6 +1,10 @@
 #pragma once
 
-#include <luajit/lua.hpp>
+extern "C" {
+#include "lauxlib.h"
+#include "lua.h"
+#include "lualib.h"
+}
 
 #include "engine/systems/ecs/entity.h"
 
@@ -10,7 +14,7 @@ class Scene;
 
 namespace my::lua {
 
-#define LUA_GLOBAL_SCENE  "g_scene"
+#define LUA_GLOBAL_SCENE "g_scene"
 
 void SetPreloadFunc(lua_State* L);
 

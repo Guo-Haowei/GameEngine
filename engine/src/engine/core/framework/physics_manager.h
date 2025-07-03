@@ -2,6 +2,31 @@
 #include "engine/core/base/singleton.h"
 #include "engine/core/framework/module.h"
 
+namespace my {
+
+class Scene;
+
+class PhysicsManager : public Module {
+public:
+    PhysicsManager() : Module("PhysicsManager") {}
+
+    void Update(Scene&) {}
+
+    virtual void OnSimBegin(Scene&) {}
+    virtual void OnSimEnd(Scene&) {}
+
+protected:
+    auto InitializeImpl() -> Result<void> override { return Result<void>(); }
+    void FinalizeImpl() override {}
+
+    void UpdateCollision(Scene&) {}
+    void UpdateSimulation(Scene&) {}
+
+    void CreateWorld(Scene&) {}
+    void CleanWorld() {}
+};
+
+#if 0
 class btDefaultCollisionConfiguration;
 class btCollisionDispatcher;
 class btBroadphaseInterface;
@@ -46,5 +71,6 @@ protected:
     void CreateWorld(Scene& p_scene);
     void CleanWorld();
 };
+#endif
 
 }  // namespace my

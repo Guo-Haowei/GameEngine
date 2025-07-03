@@ -1,6 +1,6 @@
 #include "asset_loader.h"
 
-#include <stb_image.h>
+#include "tinygltf/stb_image.h"
 
 #include "engine/assets/asset.h"
 #include "engine/core/io/file_access.h"

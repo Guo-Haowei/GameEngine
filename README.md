@@ -4,35 +4,12 @@ Yet another game engine.
 
 ## Prerequisites
 
-## Build
-
-```
-# required vcpkg packages
-glfw3
-glad[extensions]
-glm
-bullet3
-stb
-yaml-cpp
-pkgconf
-luajit
-tinygltf
-luabridge3
-```
-
 ### Windows
 ```shell
 $ sh scripts/build_assimp.sh
 $ mkdir build && cd build
-$ cmake -DCMAKE_TOOLCHAIN_FILE=<path/to/vcpkg>/scripts/buildsystems/vcpkg.cmake ..
-$ cmake --build . --config Debug
-```
-
-### MacOS
-```shell
-$ mkdir build && cd build
-$ cmake -G Xcode -DCMAKE_TOOLCHAIN_FILE=<path/to/vcpkg>/scripts/buildsystems/vcpkg.cmake ..
-$ cmake --build . --config Debug
+$ cmake ..
+$ cmake --build .
 ```
 
 ## Screenshots

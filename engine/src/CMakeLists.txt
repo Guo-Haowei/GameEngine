@@ -34,7 +34,8 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/engine FILES ${FILTERED_SRC})
 target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/imgui
     ${PROJECT_SOURCE_DIR}/thirdparty/optick
-    ${PROJECT_SOURCE_DIR}/thirdparty/json/include
+    ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
+    ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/
     ${PROJECT_SOURCE_DIR}/engine/shader
     ${PROJECT_SOURCE_DIR}/engine/src
@@ -50,10 +51,10 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
     -DROOT_FOLDER="${PROJECT_SOURCE_DIR}/"
 )
 
-set(TARGET_LIBS 
+set(TARGET_LIBS
     imgui
     glfw
-    glad::glad
+    glad
     ${BULLET_LIBRARIES}
     glm::glm
     yaml-cpp::yaml-cpp
