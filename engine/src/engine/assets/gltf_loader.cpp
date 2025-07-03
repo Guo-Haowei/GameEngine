@@ -11,7 +11,7 @@
 WARNING_PUSH()
 WARNING_DISABLE(4018, "-Wconversion")
 WARNING_DISABLE(4267, "-Wconversion")
-#include <tiny_gltf.h>
+#include "tinygltf/tiny_gltf.h"
 WARNING_POP()
 
 namespace tinygltf {

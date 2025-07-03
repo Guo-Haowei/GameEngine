@@ -1,4 +1,4 @@
-add_subdirectory(src/plugins/lua_script)
+# add_subdirectory(src/plugins/lua_script)
 if(WIN32)
     add_subdirectory(src/plugins/loader_assimp)
 endif()
