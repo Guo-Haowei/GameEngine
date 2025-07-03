@@ -1,6 +1,6 @@
 #include "gltf_loader.h"
 
-#include "engine/core/framework/asset_registry.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/scene/scene.h"
 
 #define TINYGLTF_IMPLEMENTATION

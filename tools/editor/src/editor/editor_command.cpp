@@ -1,12 +1,12 @@
 #include "editor_command.h"
 
 #include "editor_layer.h"
-#include "engine/core/framework/common_dvars.h"
+#include "engine/runtime/common_dvars.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/drivers/windows/dialog.h"
 #include "engine/scene/scene_serialization.h"
 // @TODO: refactor
-#include "engine/core/framework/scene_manager.h"
+#include "engine/runtime/scene_manager.h"
 
 namespace my {
 

@@ -5,9 +5,9 @@
 
 #include <filesystem>
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/asset_manager.h"
-#include "engine/core/framework/asset_registry.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/asset_manager.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/core/string/string_utils.h"
 
 namespace my {

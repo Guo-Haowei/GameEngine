@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/framework/module.h"
+#include "engine/runtime/module.h"
 #include "engine/systems/ecs/entity.h"
 
 namespace my {

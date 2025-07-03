@@ -7,9 +7,9 @@
 #include "engine/scene/scene.h"
 
 // @TODO: remove
-#include "engine/core/framework/asset_registry.h"
-#include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/input_manager.h"
+#include "engine/runtime/asset_registry.h"
+#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/input_manager.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 

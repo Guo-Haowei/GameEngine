@@ -1,9 +1,9 @@
 #pragma once
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
-#include "engine/core/framework/event_queue.h"
-#include "engine/core/framework/module.h"
-#include "engine/core/framework/pipeline_state_manager.h"
+#include "engine/runtime/event_queue.h"
+#include "engine/runtime/module.h"
+#include "engine/runtime/pipeline_state_manager.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/pipeline_state.h"
 #include "engine/renderer/render_graph/framebuffer.h"

@@ -3,9 +3,9 @@
 #include <imgui/backends/imgui_impl_opengl3.h>
 
 #include "engine/core/debugger/profiler.h"
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/asset_manager.h"
-#include "engine/core/framework/imgui_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/asset_manager.h"
+#include "engine/runtime/imgui_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #include "engine/drivers/opengl/opengl_helpers.h"
 #include "engine/drivers/opengl/opengl_pipeline_state_manager.h"

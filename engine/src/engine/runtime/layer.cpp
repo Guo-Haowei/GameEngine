@@ -1,8 +1,8 @@
 #include "layer.h"
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/physics_manager.h"
-#include "engine/core/framework/script_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/physics_manager.h"
+#include "engine/runtime/script_manager.h"
 
 namespace my {
 

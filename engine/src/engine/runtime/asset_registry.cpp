@@ -4,8 +4,8 @@
 
 #include <fstream>
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/asset_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/asset_manager.h"
 
 namespace my {
 

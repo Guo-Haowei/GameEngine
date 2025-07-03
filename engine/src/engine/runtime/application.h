@@ -1,8 +1,8 @@
 #pragma once
 #include "engine/core/base/noncopyable.h"
-#include "engine/core/framework/event_queue.h"
-#include "engine/core/framework/layer.h"
-#include "engine/core/framework/module.h"
+#include "engine/runtime/event_queue.h"
+#include "engine/runtime/layer.h"
+#include "engine/runtime/module.h"
 #include "engine/renderer/graphics_defines.h"
 
 namespace my {

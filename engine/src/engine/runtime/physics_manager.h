@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/framework/module.h"
+#include "engine/runtime/module.h"
 
 namespace my {
 
@@ -18,4 +18,6 @@ public:
 };
 
 }  // namespace my
+
+extern "C" my::PhysicsManager* CreatePhysicsManager();
 

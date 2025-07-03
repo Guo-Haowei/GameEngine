@@ -2,8 +2,8 @@
 
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
-#include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/scene_manager.h"
+#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/scene_manager.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/path_tracer/path_tracer.h"
 #include "engine/renderer/render_data.h"

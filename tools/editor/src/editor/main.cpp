@@ -1,7 +1,7 @@
 #include <filesystem>
 
 #include "editor/editor_layer.h"
-#include "engine/core/framework/entry_point.h"
+#include "engine/runtime/entry_point.h"
 #include "engine/core/string/string_utils.h"
 
 #define DEFINE_DVAR

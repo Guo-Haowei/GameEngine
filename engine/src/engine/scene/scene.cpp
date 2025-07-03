@@ -1,7 +1,7 @@
 #include "scene.h"
 
 #include "engine/core/debugger/profiler.h"
-#include "engine/core/framework/asset_registry.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/renderer.h"

@@ -1,6 +1,6 @@
 #pragma once
 #include "empty_pipeline_state_manager.h"
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/runtime/graphics_manager.h"
 
 namespace my {
 

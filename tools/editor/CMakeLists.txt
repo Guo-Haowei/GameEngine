@@ -20,7 +20,7 @@ target_include_directories(${TARGET_NAME} PRIVATE
 
 target_link_libraries(${TARGET_NAME} PRIVATE
     engine
-    bullet_physics
+    bullet3
     the_aviator_lib
     imnodes
 )

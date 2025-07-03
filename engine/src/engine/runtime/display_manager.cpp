@@ -1,7 +1,7 @@
 #include "display_manager.h"
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/common_dvars.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/common_dvars.h"
 #include "engine/drivers/empty/empty_display_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #if USING(PLATFORM_WINDOWS)

@@ -1,6 +1,6 @@
 #pragma once
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/engine.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/engine.h"
 #include "engine/core/string/string_builder.h"
 
 namespace my {

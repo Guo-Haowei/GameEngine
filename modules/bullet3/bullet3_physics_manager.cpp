@@ -2,9 +2,9 @@
 #include "bullet_physics_manager.h"
 
 #include "engine/core/debugger/profiler.h"
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/script_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/script_manager.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
 

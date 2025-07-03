@@ -2,14 +2,14 @@
 
 #include <algorithm>
 
-#include "engine/core/framework/asset_registry.h"
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/runtime/asset_registry.h"
+#include "engine/runtime/graphics_manager.h"
 #include "engine/core/os/timer.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/scene/scene.h"
 
 // @TODO: refactor
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/runtime/graphics_manager.h"
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"

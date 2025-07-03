@@ -2,8 +2,8 @@
 
 #include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
-#include "engine/core/framework/display_manager.h"
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/runtime/display_manager.h"
+#include "engine/runtime/graphics_manager.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_data.h"
@@ -12,7 +12,7 @@
 #include "engine/renderer/sampler.h"
 
 // @TODO: remove
-#include "engine/core/framework/asset_registry.h"
+#include "engine/runtime/asset_registry.h"
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"

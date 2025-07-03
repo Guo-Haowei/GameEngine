@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/assets/asset.h"
 #include "engine/core/base/singleton.h"
-#include "engine/core/framework/module.h"
+#include "engine/runtime/module.h"
 #include "engine/core/io/file_path.h"
 
 namespace my {

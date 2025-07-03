@@ -2,10 +2,10 @@
 
 #include <filesystem>
 
-#include "engine/core/framework/common_dvars.h"
-#include "engine/core/framework/entry_point.h"
-#include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/layer.h"
+#include "engine/runtime/common_dvars.h"
+#include "engine/runtime/entry_point.h"
+#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/layer.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"

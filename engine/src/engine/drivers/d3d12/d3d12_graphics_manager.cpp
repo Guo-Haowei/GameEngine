@@ -8,8 +8,8 @@
 #undef max
 #endif
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/imgui_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/imgui_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "engine/drivers/d3d_common/d3d_common.h"

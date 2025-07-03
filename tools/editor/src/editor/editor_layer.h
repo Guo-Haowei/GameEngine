@@ -3,8 +3,8 @@
 #include "editor/editor_window.h"
 #include "editor/menu_bar.h"
 #include "engine/core/base/ring_buffer.h"
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/layer.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/layer.h"
 #include "engine/scene/scene.h"
 #include "engine/systems/undo_redo/undo_stack.h"
 

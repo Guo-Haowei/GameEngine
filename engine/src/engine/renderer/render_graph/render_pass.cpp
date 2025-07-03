@@ -1,6 +1,6 @@
 #include "render_pass.h"
 
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/runtime/graphics_manager.h"
 
 // @TODO: refactor
 #if 0

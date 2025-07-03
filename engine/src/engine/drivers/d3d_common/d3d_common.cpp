@@ -6,7 +6,7 @@
 
 #include <fstream>
 
-#include "engine/core/framework/asset_registry.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/core/string/string_builder.h"
 
 #if USING(USE_D3D_DEBUG_NAME)

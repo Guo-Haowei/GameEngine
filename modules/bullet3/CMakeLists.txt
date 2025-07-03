@@ -1,4 +1,4 @@
-set(TARGET_NAME bullet_physics)
+set(TARGET_NAME bullet3)
 
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"

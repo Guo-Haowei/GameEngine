@@ -1,7 +1,7 @@
 #pragma once
 
 #include "engine/core/base/rid_owner.h"
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/runtime/graphics_manager.h"
 #include "opengl_helpers_forward.h"
 
 struct GLFWwindow;

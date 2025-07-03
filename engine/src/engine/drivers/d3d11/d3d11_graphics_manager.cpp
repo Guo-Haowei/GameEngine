@@ -2,8 +2,8 @@
 
 #include <imgui/backends/imgui_impl_dx11.h>
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/imgui_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/imgui_manager.h"
 #include "engine/drivers/d3d11/d3d11_helpers.h"
 #include "engine/drivers/d3d11/d3d11_pipeline_state_manager.h"
 #include "engine/drivers/d3d11/d3d11_resources.h"

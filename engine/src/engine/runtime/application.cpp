@@ -4,17 +4,17 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/dynamic_variable/dynamic_variable_manager.h"
-#include "engine/core/framework/asset_manager.h"
-#include "engine/core/framework/asset_registry.h"
-#include "engine/core/framework/common_dvars.h"
-#include "engine/core/framework/display_manager.h"
-#include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/imgui_manager.h"
-#include "engine/core/framework/input_manager.h"
-#include "engine/core/framework/layer.h"
-#include "engine/core/framework/physics_manager.h"
-#include "engine/core/framework/scene_manager.h"
-#include "engine/core/framework/script_manager.h"
+#include "engine/runtime/asset_manager.h"
+#include "engine/runtime/asset_registry.h"
+#include "engine/runtime/common_dvars.h"
+#include "engine/runtime/display_manager.h"
+#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/imgui_manager.h"
+#include "engine/runtime/input_manager.h"
+#include "engine/runtime/layer.h"
+#include "engine/runtime/physics_manager.h"
+#include "engine/runtime/scene_manager.h"
+#include "engine/runtime/script_manager.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
@@ -24,7 +24,7 @@
 #include "engine/scene/scene.h"
 
 #define DEFINE_DVAR
-#include "engine/core/framework/common_dvars.h"
+#include "engine/runtime/common_dvars.h"
 #undef DEFINE_DVAR
 
 namespace my {
@@ -36,7 +36,7 @@ static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache"
 
 static void RegisterCommonDvars() {
 #define REGISTER_DVAR
-#include "engine/core/framework/common_dvars.h"
+#include "engine/runtime/common_dvars.h"
 #undef REGISTER_DVAR
 }
 

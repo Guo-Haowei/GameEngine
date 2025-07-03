@@ -1,6 +1,6 @@
 #include "pipeline_state_manager.h"
 
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/runtime/graphics_manager.h"
 #include "engine/renderer/pipeline_state_objects.h"
 
 namespace my {

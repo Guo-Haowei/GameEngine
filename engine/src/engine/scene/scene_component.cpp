@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "engine/core/framework/asset_registry.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/math/matrix_transform.h"
 

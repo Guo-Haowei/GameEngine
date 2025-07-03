@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
-#include "engine/core/framework/module.h"
+#include "engine/runtime/module.h"
 
 namespace my {
 
