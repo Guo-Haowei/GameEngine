@@ -21,20 +21,19 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(thirdparty/glfw)
+
 # GLAD
 add_subdirectory(thirdparty/glad)
+
 # GLM
 add_subdirectory(thirdparty/glm)
+
 # YAML-CPP
 set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests")
 add_subdirectory(thirdparty/yaml-cpp)
 
 # Bullet
-
-# (Bullet REQUIRED)
-# (TINYGLTF_INCLUDE_DIRS "tiny_gltf.h")
-# (Stb REQUIRED)
-# (yaml-cpp CONFIG REQUIRED)
+# @TODO
 
 ################################################################################
 if(NOT APPLE)
@@ -43,7 +42,7 @@ if(NOT APPLE)
     set_target_properties(optick PROPERTIES FOLDER thirdparty)
 endif()
 
-# include(cmake/build_lua.cmake)
+include(cmake/build_lua.cmake)
 include(cmake/build_imgui.cmake)
 include(cmake/build_imnodes.cmake)
 

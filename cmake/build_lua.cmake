@@ -1,4 +1,4 @@
-set(LUA_SOURCE_DIR ${PROJECT_SOURCE_DIR}/thirdparty/lua/include/lua)
+set(LUA_SOURCE_DIR ${PROJECT_SOURCE_DIR}/thirdparty/lua/)
 
 file(GLOB LUA_HEAD
     "${LUA_SOURCE_DIR}/*.h"

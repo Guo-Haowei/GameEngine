@@ -675,13 +675,8 @@ static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     const PassContext& pass = p_data.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    if (p_data.options.dynamicSky) {
-        gm.SetPipelineState(PSO_SKY);
-        gm.SetStencilRef(STENCIL_FLAG_SKY);
-        gm.DrawQuad();
-        gm.SetStencilRef(0);
-    } else {
-#if 0
+    {
+#if 1
         auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
         constexpr int skybox_slot = GetPrefilteredSlot();
 #else

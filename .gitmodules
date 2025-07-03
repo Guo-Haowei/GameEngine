@@ -28,3 +28,9 @@
 [submodule "thirdparty/tinygltf"]
 	path = thirdparty/tinygltf
 	url = https://github.com/syoyo/tinygltf
+[submodule "thirdparty/lua"]
+	path = thirdparty/lua
+	url = https://github.com/lua/lua.git
+[submodule "thirdparty/LuaBridge3"]
+	path = thirdparty/LuaBridge3
+	url = https://github.com/kunitoki/LuaBridge3.git

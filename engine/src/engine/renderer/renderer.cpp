@@ -63,9 +63,6 @@ void BeginFrame() {
         .ssaoKernelRadius = DVAR_GET_FLOAT(gfx_ssao_radius),
     };
 
-    // @TODO: configure
-    options.dynamicSky = true;
-
     s_glob.renderData = new RenderData(options);
     s_glob.renderData->bakeIbl = false;
     s_glob.state = RenderState::RECORDING;

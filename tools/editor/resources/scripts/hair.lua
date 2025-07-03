@@ -21,6 +21,5 @@ function Hair:OnUpdate(timestep)
     self.scale_y = new_scale
 
     local scale = transform:GetScale()
-    scale.y = new_scale
-    transform:SetScale(scale)
+    transform:SetScale(Vector3(scale.x, new_scale, scale.z))
 end
