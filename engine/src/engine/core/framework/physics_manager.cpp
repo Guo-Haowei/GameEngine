@@ -1,6 +1,7 @@
-#if 0
 
 #include "physics_manager.h"
+
+#if defined(USE_BULLET)
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/framework/application.h"
@@ -9,17 +10,29 @@
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"
 
-WARNING_PUSH()
-WARNING_DISABLE(4459, "-Wpedantic")
-WARNING_DISABLE(4201, "-Wunused-parameter")
+#pragma warning(push, 0)
+#include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletSoftBody/btSoftBody.h>
 #include <BulletSoftBody/btSoftBodyHelpers.h>
 #include <BulletSoftBody/btSoftRigidDynamicsWorld.h>
 #include <btBulletDynamicsCommon.h>
-WARNING_POP()
+#include <btBulletCollisionCommon.h>
+#pragma warning(pop)
 
 namespace my {
+
+struct PhysicsWorldContext {
+    // @TODO: free properly
+    btDefaultCollisionConfiguration* collisionConfig = nullptr;
+    btCollisionDispatcher* dispatcher = nullptr;
+    btBroadphaseInterface* broadphase = nullptr;
+    btSequentialImpulseConstraintSolver* solver = nullptr;
+    btSoftRigidDynamicsWorld* dynamicWorld = nullptr;
+    btSoftBodyWorldInfo* softBodyWorldInfo = nullptr;
+
+    std::vector<btCollisionObject*> ghostObjects;
+};
 
 static btTransform ConvertTransform(const TransformComponent& p_transform) {
     Matrix4x4f world_matrix = p_transform.GetWorldMatrix();
@@ -422,4 +435,5 @@ void PhysicsManager::OnSimEnd(Scene&) {
 }
 
 }  // namespace my
+
 #endif

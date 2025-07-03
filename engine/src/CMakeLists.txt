@@ -37,6 +37,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/
+    ${PROJECT_SOURCE_DIR}/thirdparty/bullet3/src # TODO: move bullet3 to modules
     ${PROJECT_SOURCE_DIR}/engine/shader
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
@@ -55,11 +56,14 @@ set(TARGET_LIBS
     imgui
     glfw
     glad
-    ${BULLET_LIBRARIES}
     glm::glm
     yaml-cpp::yaml-cpp
     lua_script
 )
+
+if (USE_BULLET)
+    list(APPEND TARGET_LIBS BulletDynamics BulletCollision LinearMath BulletSoftBody)
+endif()
 
 if(WIN32)
     list(APPEND TARGET_LIBS
