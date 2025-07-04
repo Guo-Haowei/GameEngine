@@ -1,3 +1,6 @@
 if (USE_BULLET)
     add_subdirectory(bullet3)
 endif()
+if (NOT EMSCRIPTEN)
+    add_subdirectory(tinygltf)
+endif()

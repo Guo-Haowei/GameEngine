@@ -50,7 +50,12 @@ protected:
     };
 
     using ElementBlock = IntrusiveListNode<ElementBlockMeta>;
+#if USING(PLATFORM_WASM)
+    static_assert(sizeof(ElementBlock) == 12);
+#else
     static_assert(sizeof(ElementBlock) == 16);
+#endif
+
 
     RIDAllocatorBase(uint32_t element_size, uint32_t elements_in_chunk)
         : m_element_size(element_size),

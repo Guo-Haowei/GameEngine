@@ -18,7 +18,7 @@ void StringUtils::ReplaceFirst(std::string& p_string, std::string_view p_pattern
 char* StringUtils::Strdup(const char* p_source) {
 #if USING(PLATFORM_WINDOWS)
     return _strdup(p_source);
-#elif USING(PLATFORM_APPLE)
+#elif USING(PLATFORM_APPLE) || USING(PLATFORM_WASM)
     return strdup(p_source);
 #else
 #error Platform not supported

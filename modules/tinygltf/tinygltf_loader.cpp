@@ -1,4 +1,4 @@
-#include "gltf_loader.h"
+#include "tinygltf_loader.h"
 
 #include "engine/runtime/asset_registry.h"
 #include "engine/scene/scene.h"
@@ -43,7 +43,7 @@ static bool DummyWriteImage(const std::string* /* basepath */,
 
 namespace my {
 
-void GltfLoader::ProcessNode(int p_node_index, ecs::Entity p_parent) {
+void TinyGLTFLoader::ProcessNode(int p_node_index, ecs::Entity p_parent) {
     if (p_node_index < 0 || m_entityMap.count(p_node_index)) {
         return;
     }
@@ -142,7 +142,7 @@ void GltfLoader::ProcessNode(int p_node_index, ecs::Entity p_parent) {
     }
 }
 
-auto GltfLoader::Load() -> Result<IAsset*> {
+auto TinyGLTFLoader::Load() -> Result<IAsset*> {
     m_scene = new Scene;
 
     tinygltf::TinyGLTF loader;
@@ -321,7 +321,7 @@ auto GltfLoader::Load() -> Result<IAsset*> {
     return m_scene;
 }
 
-void GltfLoader::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
+void TinyGLTFLoader::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
     ecs::Entity mesh_id = m_scene->CreateMeshEntity("Mesh::" + p_gltf_mesh.name);
     // m_scene->Component_Attach(mesh_id, state.rootEntity);
     MeshComponent& mesh = *m_scene->GetComponent<MeshComponent>(mesh_id);
@@ -586,7 +586,7 @@ void GltfLoader::ProcessMesh(const tinygltf::Mesh& p_gltf_mesh, int) {
     mesh.CreateRenderData();
 }
 
-void GltfLoader::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int) {
+void TinyGLTFLoader::ProcessAnimation(const tinygltf::Animation& p_gltf_anim, int) {
     static int s_counter = 0;
 
     std::string tag = p_gltf_anim.name;

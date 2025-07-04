@@ -2,7 +2,6 @@
 
 #include "engine/runtime/application.h"
 #include "engine/runtime/common_dvars.h"
-#include "engine/drivers/empty/empty_display_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #if USING(PLATFORM_WINDOWS)
 #include "engine/drivers/windows/win32_display_manager.h"
@@ -50,6 +49,7 @@ auto DisplayManager::InitializeImpl() -> Result<void> {
     return InitializeWindow(info);
 }
 
+// @TODO: fix this
 DisplayManager* DisplayManager::Create() {
     const std::string& backend = DVAR_GET_STRING(gfx_backend);
     // @TODO: cocoa display
@@ -59,6 +59,8 @@ DisplayManager* DisplayManager::Create() {
 
 #if USING(PLATFORM_WINDOWS)
     return new Win32DisplayManager();
+#elif USING(PLATFORM_WASM)
+    return new GlfwDisplayManager();
 #else
     return new EmptyDisplayManager();
 #endif

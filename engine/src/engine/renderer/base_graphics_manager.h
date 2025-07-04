@@ -121,7 +121,7 @@ protected:
     //std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
 protected:
-    void UpdateEmitters(const Scene& p_scene);
+    void UpdateEmitters(const Scene& p_scene) override;
 };
 
 }  // namespace my

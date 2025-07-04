@@ -22,6 +22,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     engine
     bullet3
     the_aviator_lib
+    tinygltf_loader
     imnodes
 )
 

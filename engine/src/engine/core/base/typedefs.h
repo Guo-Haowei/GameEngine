@@ -57,16 +57,14 @@
 #define WARNING_PUSH()        __pragma(warning(push))
 #define WARNING_POP()         __pragma(warning(pop))
 #define WARNING_DISABLE(a, b) __pragma(warning(disable : a))
-#elif defined(__clang__)
+#elif defined(__clang__) || defined(__MINGW32__) || defined(__MINGW64__)
 #define WARNING_PUSH()        _Pragma("clang diagnostic push")
 #define WARNING_POP()         _Pragma("clang diagnostic pop")
 #define DO_PRAGMA_(x)         _Pragma(#x)
 #define DO_PRAGMA(x)          DO_PRAGMA_(x)
 #define WARNING_DISABLE(a, b) DO_PRAGMA(clang diagnostic ignored b)
 #else
-#define WARNING_PUSH()
-#define WARNING_POP()
-#define WARNING_DISABLE(a, b)
+#error "Unknown compiler"
 #endif
 
 #if USING(PLATFORM_WINDOWS)

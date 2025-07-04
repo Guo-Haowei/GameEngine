@@ -12,12 +12,12 @@ namespace my {
 
 class Scene;
 
-class GltfLoader : public IAssetLoader {
+class TinyGLTFLoader : public IAssetLoader {
 public:
     using IAssetLoader::IAssetLoader;
 
     static std::unique_ptr<IAssetLoader> CreateLoader(const IAsset::Meta& p_meta) {
-        return std::make_unique<GltfLoader>(p_meta);
+        return std::make_unique<TinyGLTFLoader>(p_meta);
     }
 
     auto Load() -> Result<IAsset*> override;

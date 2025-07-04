@@ -47,9 +47,6 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
     ${PROJECT_SOURCE_DIR}/
-    ${BULLET_INCLUDE_DIR}
-    ${TINYGLTF_INCLUDE_DIRS}
-    ${Stb_INCLUDE_DIR}
     $ENV{VULKAN_SDK}/include
 )
 

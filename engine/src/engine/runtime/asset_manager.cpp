@@ -3,7 +3,6 @@
 #include <filesystem>
 
 #include "engine/assets/asset_loader.h"
-#include "engine/assets/gltf_loader.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/renderer/base_graphics_manager.h"
@@ -12,6 +11,23 @@
 #include "engine/core/os/timer.h"
 #include "engine/core/string/string_builder.h"
 #include "engine/scene/scene.h"
+
+#if USING(PLATFORM_WINDOWS)
+#define USE_TINYGLTF_LOADER IN_USE
+#define USE_ASSIMP_LOADER   IN_USE
+#elif USING(PLATFORM_APPLE)
+#define USE_TINYGLTF_LOADER IN_USE
+#define USE_ASSIMP_LOADER   NOT_IN_USE
+#elif USING(PLATFORM_WASM)
+#define USE_TINYGLTF_LOADER NOT_IN_USE
+#define USE_ASSIMP_LOADER   NOT_IN_USE
+#else
+#error "Platform not supported"
+#endif
+
+#if USING(USE_TINYGLTF_LOADER)
+#include "modules/tinygltf/tinygltf_loader.h"
+#endif
 
 // plugins
 #include "plugins/loader_assimp/assimp_asset_loader.h"
@@ -42,13 +58,12 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".yaml", TextSceneLoader::CreateLoader);
 
-    if constexpr (1) {
-        IAssetLoader::RegisterLoader(".gltf", GltfLoader::CreateLoader);
-    } else {
-#if USING(USING_ASSIMP)
-        IAssetLoader::RegisterLoader(".gltf", AssimpAssetLoader::CreateLoader);
+#if USING(USE_TINYGLTF_LOADER)
+    IAssetLoader::RegisterLoader(".gltf", TinyGLTFLoader::CreateLoader);
+#elif USING(USE_ASSIMP_LOADER)
+    IAssetLoader::RegisterLoader(".gltf", AssimpAssetLoader::CreateLoader);
 #endif
-    }
+
 #if USING(USING_ASSIMP)
     IAssetLoader::RegisterLoader(".obj", AssimpAssetLoader::CreateLoader);
 #endif
