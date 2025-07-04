@@ -65,13 +65,11 @@ if(WIN32)
     list(APPEND TARGET_LIBS
         glfw
         optick
-        d3d11.lib
-        d3d12.lib
-        dxgi.lib
-        d3dcompiler.lib
-        dxguid.lib
         loader_assimp
         opengl_4_backend
+        d3d11_backend
+        d3d12_backend
+        d3d_common
         $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
     )
 elseif (EMSCRIPTEN)

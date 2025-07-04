@@ -1,9 +1,9 @@
 #include "module_registry.h"
 
 #if USING(PLATFORM_WINDOWS)
-#include "engine/drivers/d3d11/d3d11_graphics_manager.h"
-#include "engine/drivers/d3d12/d3d12_graphics_manager.h"
-#include "engine/drivers/vk/vulkan_graphics_manager.h"
+#include "modules/d3d11/d3d11_graphics_manager.h"
+#include "modules/d3d12/d3d12_graphics_manager.h"
+//#include "modules/vk/vulkan_graphics_manager.h"
 #include "modules/opengl4/opengl4_graphics_manager.h"
 #elif USING(PLATFORM_APPLE)
 #include "engine/drivers/metal/metal_graphics_manager.h"

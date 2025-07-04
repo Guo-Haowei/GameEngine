@@ -1,9 +1,9 @@
 #include "d3d12_pipeline_state_manager.h"
 
-#include "engine/drivers/d3d12/d3d12_graphics_manager.h"
-#include "engine/drivers/d3d_common/d3d_common.h"
+#include "d3d12_graphics_manager.h"
+#include "../d3d_common/d3d_common.h"
 #define INCLUDE_AS_D3D12
-#include "engine/drivers/d3d_common/d3d_convert.h"
+#include "../d3d_common/d3d_convert.h"
 
 namespace my {
 

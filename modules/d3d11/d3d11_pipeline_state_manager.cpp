@@ -1,10 +1,10 @@
 #include "d3d11_pipeline_state_manager.h"
 
-#include "engine/drivers/d3d11/d3d11_graphics_manager.h"
-#include "engine/drivers/d3d11/d3d11_helpers.h"
-#include "engine/drivers/d3d_common/d3d_common.h"
+#include "d3d11_graphics_manager.h"
+#include "d3d11_helpers.h"
+#include "../d3d_common/d3d_common.h"
 #define INCLUDE_AS_D3D11
-#include "engine/drivers/d3d_common/d3d_convert.h"
+#include "../d3d_common/d3d_convert.h"
 
 namespace my {
 

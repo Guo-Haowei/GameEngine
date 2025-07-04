@@ -1,11 +1,14 @@
 add_subdirectory(opengl_common)
 if (WIN32)
     add_subdirectory(opengl4)
+    add_subdirectory(d3d_common)
+    add_subdirectory(d3d11)
+    add_subdirectory(d3d12)
 elseif (EMSCRIPTEN)
     add_subdirectory(opengles3)
 endif()
 
-if (BUILD_BULLET3)
+if (USE_BULLET)
     add_subdirectory(bullet3)
 endif()
 
