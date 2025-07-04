@@ -1,3 +1,4 @@
+#if 0
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
@@ -5,7 +6,7 @@
 #include "engine/core/os/timer.h"
 #include "engine/systems/job_system/job_system.h"
 #include "engine/math/geomath.h"
-#include "engine/core/framework/engine.h"
+#include "engine/runtime/engine.h"
 #include "engine/math/color.h"
 #include "engine/math/vector.h"
 
@@ -85,3 +86,5 @@ int main(int, const char**) {
 
     return 0;
 }
+#endif
+int main() {}

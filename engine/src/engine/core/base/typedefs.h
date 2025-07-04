@@ -18,9 +18,15 @@
 #if defined(WIN32) || defined(_WIN32)
 #define PLATFORM_WINDOWS IN_USE
 #define PLATFORM_APPLE   NOT_IN_USE
+#define PLATFORM_WASM    NOT_IN_USE
 #elif defined(__APPLE__)
 #define PLATFORM_WINDOWS NOT_IN_USE
 #define PLATFORM_APPLE   IN_USE
+#define PLATFORM_WASM    NOT_IN_USE
+#elif defined(__EMSCRIPTEN__)
+#define PLATFORM_WINDOWS NOT_IN_USE
+#define PLATFORM_APPLE   NOT_IN_USE
+#define PLATFORM_WASM    IN_USE
 #else
 #error Platform not supported!
 #endif
@@ -33,7 +39,8 @@
 #define ARCH_X64   NOT_IN_USE
 #define ARCH_ARM64 IN_USE
 #else
-#error Unknown architecture
+#define ARCH_X64   NOT_IN_USE
+#define ARCH_ARM64 NOT_IN_USE
 #endif
 
 /// Compiler
@@ -50,20 +57,23 @@
 #define WARNING_PUSH()        __pragma(warning(push))
 #define WARNING_POP()         __pragma(warning(pop))
 #define WARNING_DISABLE(a, b) __pragma(warning(disable : a))
-#elif defined(__clang__)
+#elif defined(__clang__) || defined(__MINGW32__) || defined(__MINGW64__)
 #define WARNING_PUSH()        _Pragma("clang diagnostic push")
 #define WARNING_POP()         _Pragma("clang diagnostic pop")
 #define DO_PRAGMA_(x)         _Pragma(#x)
 #define DO_PRAGMA(x)          DO_PRAGMA_(x)
 #define WARNING_DISABLE(a, b) DO_PRAGMA(clang diagnostic ignored b)
 #else
-#error Compiler not supported!
+#error "Unknown compiler"
 #endif
 
 #if USING(PLATFORM_WINDOWS)
 #define GENERATE_TRAP() __debugbreak()
 #elif USING(PLATFORM_APPLE)
 #define GENERATE_TRAP() __builtin_trap()
+#elif USING(PLATFORM_WASM)
+#include <emscripten/emscripten.h>
+#define GENERATE_TRAP() emscripten_run_script("debugger;")
 #else
 #error Platform not supported
 #endif

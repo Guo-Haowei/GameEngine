@@ -2,10 +2,10 @@
 
 #include <imgui/backends/imgui_impl_win32.h>
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/imgui_manager.h"
-#include "engine/core/framework/input_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/renderer/base_graphics_manager.h"
+#include "engine/runtime/imgui_manager.h"
+#include "engine/runtime/input_manager.h"
 
 namespace my {
 

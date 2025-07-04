@@ -1,0 +1,360 @@
+version: 19
+seed: 25
+root: 1
+binary: D:\workspace\GameEngine\tools\editor\vxgi.yaml.bin
+physics_mode: 2
+entities:
+  - id: 1
+    NameComponent:
+      name: root
+    TransformComponent:
+      flags: 0
+      translation: [0, 0, 0]
+      rotation: [0, 0, 0, 1]
+      scale: [1, 1, 1]
+  - id: 2
+    NameComponent:
+      name: editor_camera
+    HierarchyComponent:
+      parent_id: 1
+    PerspectiveCameraComponent:
+      flags: 2
+      fovy: 50
+      near: 0.1
+      far: 1000
+      width: 1920
+      height: 1080
+      pitch: -8.833691
+      yaw: -88.616714
+      position: [-0.2808747, 3.6615918, 18.308151]
+  - id: 3
+    NameComponent:
+      name: main_camera
+    HierarchyComponent:
+      parent_id: 1
+    PerspectiveCameraComponent:
+      flags: 4
+      fovy: 50
+      near: 0.1
+      far: 1000
+      width: 1920
+      height: 1080
+      pitch: -10
+      yaw: -90
+      position: [0, 4, 15]
+  - id: 4
+    NameComponent:
+      name: world
+    TransformComponent:
+      flags: 0
+      translation: [0, 0, 0]
+      rotation: [0, 0, 0, 1]
+      scale: [1, 1, 1]
+    HierarchyComponent:
+      parent_id: 1
+  - id: 5
+    NameComponent:
+      name: p_name_0
+    MaterialComponent:
+      base_color: [1, 1, 1, 1]
+      roughness: 0.7
+      metallic: 0.3
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 6
+    NameComponent:
+      name: p_name_1
+    MaterialComponent:
+      base_color: [1, 1, 1, 1]
+      roughness: 0.7
+      metallic: 0.3
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 7
+    NameComponent:
+      name: p_name_2
+    MaterialComponent:
+      base_color: [1, 0, 0, 1]
+      roughness: 0.7
+      metallic: 0.3
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 8
+    NameComponent:
+      name: p_name_3
+    MaterialComponent:
+      base_color: [0, 1, 0, 1]
+      roughness: 0.7
+      metallic: 0.3
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 9
+    NameComponent:
+      name: p_name_4
+    MaterialComponent:
+      base_color: [1, 1, 1, 1]
+      roughness: 0.7
+      metallic: 0.3
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 10
+    NameComponent:
+      name: wall_up
+    TransformComponent:
+      flags: 0
+      translation: [0, 5, 0]
+      rotation: [0, 0, 0, 1]
+      scale: [1, 1, 1]
+    HierarchyComponent:
+      parent_id: 4
+    ObjectComponent:
+      flags: 1073741827
+      mesh_id: 11
+  - id: 11
+    NameComponent:
+      name: wall_up:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 5, index_count: 36, index_offset: 0, local_bound: {min: [-5, -0.2, -5], max: [5, 0.2, 5]}}]
+      armature_id: 0
+      indices: {offset: 52, buffer_size: 144}
+      positions: {offset: 212, buffer_size: 288}
+      normals: {offset: 516, buffer_size: 288}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 820, buffer_size: 192}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 12
+    NameComponent:
+      name: wall_down
+    TransformComponent:
+      flags: 0
+      translation: [0, -5, 0]
+      rotation: [0, 0, 0, 1]
+      scale: [1, 1, 1]
+    HierarchyComponent:
+      parent_id: 4
+    ObjectComponent:
+      flags: 1073741827
+      mesh_id: 13
+  - id: 13
+    NameComponent:
+      name: wall_down:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 6, index_count: 36, index_offset: 0, local_bound: {min: [-5, -0.2, -5], max: [5, 0.2, 5]}}]
+      armature_id: 0
+      indices: {offset: 1028, buffer_size: 144}
+      positions: {offset: 1188, buffer_size: 288}
+      normals: {offset: 1492, buffer_size: 288}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 1796, buffer_size: 192}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 14
+    NameComponent:
+      name: wall_left
+    TransformComponent:
+      flags: 0
+      translation: [-5, -2.1855695e-07, 0]
+      rotation: [0, 0, 0.70710677, 0.70710677]
+      scale: [1, 1, 0.99999994]
+    HierarchyComponent:
+      parent_id: 4
+    ObjectComponent:
+      flags: 1073741827
+      mesh_id: 15
+  - id: 15
+    NameComponent:
+      name: wall_left:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 7, index_count: 36, index_offset: 0, local_bound: {min: [-5, -0.2, -5], max: [5, 0.2, 5]}}]
+      armature_id: 0
+      indices: {offset: 2004, buffer_size: 144}
+      positions: {offset: 2164, buffer_size: 288}
+      normals: {offset: 2468, buffer_size: 288}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 2772, buffer_size: 192}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 16
+    NameComponent:
+      name: wall_right
+    TransformComponent:
+      flags: 0
+      translation: [5, 2.1855695e-07, 0]
+      rotation: [0, 0, 0.70710677, 0.70710677]
+      scale: [1, 1, 0.99999994]
+    HierarchyComponent:
+      parent_id: 4
+    ObjectComponent:
+      flags: 1073741827
+      mesh_id: 17
+  - id: 17
+    NameComponent:
+      name: wall_right:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 8, index_count: 36, index_offset: 0, local_bound: {min: [-5, -0.2, -5], max: [5, 0.2, 5]}}]
+      armature_id: 0
+      indices: {offset: 2980, buffer_size: 144}
+      positions: {offset: 3140, buffer_size: 288}
+      normals: {offset: 3444, buffer_size: 288}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 3748, buffer_size: 192}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 18
+    NameComponent:
+      name: wall_back
+    TransformComponent:
+      flags: 0
+      translation: [0, 2.1855695e-07, -5]
+      rotation: [0.70710677, 0, 0, 0.70710677]
+      scale: [0.99999994, 1, 1]
+    HierarchyComponent:
+      parent_id: 4
+    ObjectComponent:
+      flags: 1073741827
+      mesh_id: 19
+  - id: 19
+    NameComponent:
+      name: wall_back:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 9, index_count: 36, index_offset: 0, local_bound: {min: [-5, -0.2, -5], max: [5, 0.2, 5]}}]
+      armature_id: 0
+      indices: {offset: 3956, buffer_size: 144}
+      positions: {offset: 4116, buffer_size: 288}
+      normals: {offset: 4420, buffer_size: 288}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 4724, buffer_size: 192}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 20
+    NameComponent:
+      name: InfiniteLight-1
+    TransformComponent:
+      flags: 0
+      translation: [0, 0, 0]
+      rotation: [-0.4281208, 0.053387396, 0.7639474, 0.47984034]
+      scale: [0.9999978, 0.9999986, 0.9999988]
+    HierarchyComponent:
+      parent_id: 1
+    MaterialComponent:
+      base_color: [1, 1, 1, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 5
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+    LightComponent:
+      flags: 2
+      type: 0
+      shadow_region: ~
+      attenuation:
+        constant: 1
+        linear: 0
+        quadratic: 0
+  - id: 21
+    NameComponent:
+      name: Cube-2:mat
+    MaterialComponent:
+      base_color: [1, 1, 1, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 22
+    NameComponent:
+      name: Cube-2
+    TransformComponent:
+      flags: 0
+      translation: [0.6783145, -1.995575, 0.8830568]
+      rotation: [0, 0, 0, 1]
+      scale: [2.7336252, 4.7960954, 3.8427377]
+    HierarchyComponent:
+      parent_id: 1
+    ObjectComponent:
+      flags: 3
+      mesh_id: 23
+  - id: 23
+    NameComponent:
+      name: Cube-2:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 21, index_count: 36, index_offset: 0, local_bound: {min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5]}}]
+      armature_id: 0
+      indices: {offset: 4932, buffer_size: 144}
+      positions: {offset: 5092, buffer_size: 288}
+      normals: {offset: 5396, buffer_size: 288}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 5700, buffer_size: 192}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 24
+    NameComponent:
+      name: VoxelGi-3
+    TransformComponent:
+      flags: 0
+      translation: [0, 0, 0]
+      rotation: [0, 0, 0, 1]
+      scale: [11.975599, 11.975599, 11.975599]
+    HierarchyComponent:
+      parent_id: 1
+    VoxelGiComponent:
+      flags: 1

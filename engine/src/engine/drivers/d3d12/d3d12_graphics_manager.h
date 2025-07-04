@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/core/base/rid_owner.h"
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/drivers/d3d12/d3d12_core.h"
 
 namespace my {
@@ -22,7 +22,7 @@ struct D3d12MeshBuffers : GpuMesh {
     D3D12_INDEX_BUFFER_VIEW ibv;
 };
 
-class D3d12GraphicsManager : public GraphicsManager {
+class D3d12GraphicsManager : public BaseGraphicsManager {
 public:
     D3d12GraphicsManager();
 
@@ -96,7 +96,7 @@ protected:
     void BeginFrame() final;
     void EndFrame() final;
     void MoveToNextFrame() final;
-    std::unique_ptr<FrameContext> CreateFrameContext() final;
+    std::shared_ptr<FrameContext> CreateFrameContext() final;
 
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) final;

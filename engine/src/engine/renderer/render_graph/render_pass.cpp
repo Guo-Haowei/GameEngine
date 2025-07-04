@@ -1,6 +1,6 @@
 #include "render_pass.h"
 
-#include "engine/core/framework/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 
 // @TODO: refactor
 #if 0
@@ -20,7 +20,7 @@ void RenderPass::CreateInternal(RenderPassDesc& p_desc) {
     m_inputs = std::move(p_desc.dependencies);
 }
 
-void RenderPass::Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager) {
+void RenderPass::Execute(const renderer::RenderData& p_data, BaseGraphicsManager& p_graphics_manager) {
     RT_DEBUG("-- Executing pass '{}'", RenderPassNameToString(m_name));
 
     for (auto& pass : m_drawPasses) {

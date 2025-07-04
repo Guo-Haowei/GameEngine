@@ -10,13 +10,13 @@
 #include "editor/panels/render_graph_viewer.h"
 #include "editor/panels/renderer_panel.h"
 #include "editor/panels/viewer.h"
-#include "engine/core/framework/asset_registry.h"
-#include "engine/core/framework/graphics_manager.h"
-#include "engine/core/framework/input_manager.h"
-#include "engine/core/framework/layer.h"
-#include "engine/core/framework/physics_manager.h"
-#include "engine/core/framework/scene_manager.h"
-#include "engine/core/framework/script_manager.h"
+#include "engine/runtime/asset_registry.h"
+#include "engine/renderer/base_graphics_manager.h"
+#include "engine/runtime/input_manager.h"
+#include "engine/runtime/layer.h"
+#include "engine/runtime/physics_manager.h"
+#include "engine/runtime/scene_manager.h"
+#include "engine/runtime/script_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/string/string_utils.h"
 
@@ -31,7 +31,9 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<HierarchyPanel>(*this));
     AddPanel(std::make_shared<PropertyPanel>(*this));
     AddPanel(std::make_shared<Viewer>(*this));
+#if !USING(PLATFORM_WASM)
     AddPanel(std::make_shared<ContentBrowser>(*this));
+#endif
     AddPanel(std::make_shared<RenderGraphViewer>(*this));
 
     m_menuBar = std::make_shared<MenuBar>(*this);

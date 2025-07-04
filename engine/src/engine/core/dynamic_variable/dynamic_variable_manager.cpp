@@ -1,5 +1,7 @@
 #include "dynamic_variable_manager.h"
 
+#if USING(ENABLE_DVAR)
+
 #include <sstream>
 
 #include "engine/core/io/archive.h"
@@ -281,3 +283,5 @@ bool DynamicVariableManager::Parse(const std::vector<std::string>& p_commands) {
 }
 
 }  // namespace my
+
+#endif

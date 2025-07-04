@@ -4,8 +4,22 @@
 #include "render_pass.h"
 
 namespace my {
-class GraphicsManager;
-}
+class BaseGraphicsManager;
+
+#define RENDER_GRAPH_LIST                    \
+    RENDER_GRAPH_DECLARE(EMPTY, "empty")     \
+    RENDER_GRAPH_DECLARE(DEFAULT, "default") \
+    RENDER_GRAPH_DECLARE(DUMMY, "dummy")     \
+    RENDER_GRAPH_DECLARE(PATHTRACER, "pathtracer")
+
+enum class RenderGraphName : uint8_t {
+#define RENDER_GRAPH_DECLARE(ENUM, ...) ENUM,
+    RENDER_GRAPH_LIST
+#undef RENDER_GRAPH_DECLARE
+        COUNT,
+};
+
+}  // namespace my
 
 namespace my::renderer {
 
@@ -25,7 +39,7 @@ public:
 
     void Compile();
 
-    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, BaseGraphicsManager& p_graphics_manager);
 
     const auto& GetGraph() const { return m_graph; }
 

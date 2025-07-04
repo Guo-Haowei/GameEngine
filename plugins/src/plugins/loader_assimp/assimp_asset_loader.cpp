@@ -6,7 +6,7 @@
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 
-#include "engine/core/framework/asset_registry.h"
+#include "engine/runtime/asset_registry.h"
 
 namespace my {
 

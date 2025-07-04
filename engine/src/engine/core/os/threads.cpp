@@ -4,10 +4,9 @@
 #include <thread>
 
 #include "engine/core/debugger/profiler.h"
-#include "engine/core/framework/asset_manager.h"
+#include "engine/runtime/asset_manager.h"
 #include "engine/core/io/print.h"
 #include "engine/drivers/windows/win32_prerequisites.h"
-#include "engine/systems/job_system/job_system.h"
 
 namespace my::thread {
 
@@ -24,9 +23,19 @@ static thread_local uint32_t g_threadId;
 static struct {
     std::atomic_bool shutdownRequested;
     std::array<ThreadObject, THREAD_MAX> threads = {
-#define THREAD_DEFINE(ENUM, FUNC) ThreadObject{ #ENUM, FUNC },
-        THREAD_LIST
-#undef THREAD_DEFINE
+        ThreadObject{ "THREAD_MAIN", []() {} },
+        ThreadObject{ "THREAD_ASSET_LOADER_1", AssetManager::WorkerMain },
+        //ThreadObject{ "THREAD_ASSET_LOADER_2", AssetManager::WorkerMain },
+#if USING(ENABLE_JOB_SYSTEM)
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_1", jobsystem::WorkerMain },
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_2", jobsystem::WorkerMain },
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_3", jobsystem::WorkerMain },
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_4", jobsystem::WorkerMain },
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_5", jobsystem::WorkerMain },
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_6", jobsystem::WorkerMain },
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_7", jobsystem::WorkerMain },
+        ThreadObject{ "THREAD_JOBSYSTEM_WORKER_8", jobsystem::WorkerMain },
+#endif
     };
 } s_threadGlob;
 
@@ -35,6 +44,7 @@ bool Initialize() {
 
     std::latch latch{ THREAD_MAX - 1 };
 
+    // skip main thread
     for (uint32_t id = THREAD_MAIN + 1; id < THREAD_MAX; ++id) {
         ThreadObject& thread = s_threadGlob.threads[id];
         thread.id = id;

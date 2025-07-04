@@ -39,12 +39,21 @@ constexpr PixelFormat DEFAULT_DEPTH_STENCIL_FORMAT = PixelFormat::D32_FLOAT;
 
 #endif  // !RG_RESOURCE
 
+RG_RESOURCE(RESOURCE_FINAL,
+            PointClampSampler(),
+            DEFAULT_SURFACE_FORMAT,
+            AttachmentType::COLOR_2D,
+            RESOURCE_SIZE_FRAME,
+            RESOURCE_SIZE_FRAME)
+
 RG_RESOURCE(RESOURCE_GBUFFER_DEPTH,
             PointClampSampler(),
             RT_FMT_GBUFFER_DEPTH,
             AttachmentType::DEPTH_STENCIL_2D,
             RESOURCE_SIZE_FRAME,
             RESOURCE_SIZE_FRAME)
+
+#if !USING(PLATFORM_WASM)
 
 RG_RESOURCE(RESOURCE_GBUFFER_BASE_COLOR,
             PointClampSampler(),
@@ -95,13 +104,6 @@ RG_RESOURCE(RESOURCE_OUTLINE_SELECT,
             RESOURCE_SIZE_FRAME,
             RESOURCE_SIZE_FRAME)
 
-RG_RESOURCE(RESOURCE_FINAL,
-            PointClampSampler(),
-            DEFAULT_SURFACE_FORMAT,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
 RG_RESOURCE(RESOURCE_ENV_SKYBOX_CUBE_MAP,
             CubemapSampler(),
             PixelFormat::R32G32B32A32_FLOAT,
@@ -131,3 +133,5 @@ RG_RESOURCE(RESOURCE_ENV_PREFILTER_CUBE_MAP,
             IBL_MIP_CHAIN_MAX)
 
 #undef RG_RESOURCE
+
+#endif

@@ -1,6 +1,7 @@
 #pragma once
 #include "dynamic_variable.h"
 
+#if USING(ENABLE_DVAR)
 namespace my {
 
 class DynamicVariableParser {
@@ -46,3 +47,4 @@ public:
 };
 
 }  // namespace my
+#endif

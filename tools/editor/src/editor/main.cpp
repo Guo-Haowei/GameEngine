@@ -1,8 +1,10 @@
 #include <filesystem>
 
 #include "editor/editor_layer.h"
-#include "engine/core/framework/entry_point.h"
 #include "engine/core/string/string_utils.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/runtime/entry_point.h"
+#include "modules/bullet3/bullet3_physics_manager.h"
 
 #define DEFINE_DVAR
 #include "editor_dvars.h"
@@ -49,6 +51,7 @@ Application* CreateApplication() {
     root = StringUtils::BasePath(root);
     root = StringUtils::BasePath(root);
 
+    // @TODO: virtual fs and mount
     auto res_path = fs::path{ root } / "resources";
     auto res_string = res_path.string();
     auto user_path = fs::path{ root } / "user";
@@ -89,5 +92,13 @@ Scene* Editor::CreateInitialScene() {
 }  // namespace my
 
 int main(int p_argc, const char** p_argv) {
-    return my::Main(p_argc, p_argv);
+    using namespace my;
+
+#if !USING(PLATFORM_WASM)
+    IPhysicsManager::RegisterCreateFunc([]() -> IPhysicsManager* {
+        return new Bullet3PhysicsManager();
+    });
+#endif
+
+    return Main(p_argc, p_argv);
 }

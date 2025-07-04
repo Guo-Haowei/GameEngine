@@ -40,13 +40,13 @@ public:
                                    m_sorted(p_sorted),
                                    m_index(p_index) {}
 
-        Self operator++(int) const {
+        Self operator++(int) {
             Self tmp = *this;
             ++m_index;
             return tmp;
         }
 
-        Self operator--(int) const {
+        Self operator--(int) {
             Self tmp = *this;
             --m_index;
             return tmp;

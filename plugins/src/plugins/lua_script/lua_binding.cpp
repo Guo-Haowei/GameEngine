@@ -1,8 +1,8 @@
 #include "lua_binding.h"
 
-#include "engine/core/framework/asset_registry.h"
-#include "engine/core/framework/display_manager.h"
-#include "engine/core/framework/input_manager.h"
+#include "engine/runtime/asset_registry.h"
+#include "engine/runtime/display_manager.h"
+#include "engine/runtime/input_manager.h"
 #include "engine/math/vector.h"
 #include "engine/scene/scene.h"
 #include "lua_bridge_include.h"

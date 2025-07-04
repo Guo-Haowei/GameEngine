@@ -22,6 +22,12 @@ foreach(file ${SRC})
         else()
             list(APPEND FILTERED_SRC ${file})
         endif()
+    elseif(EMSCRIPTEN)
+        if(file MATCHES "d3d" OR file MATCHES "windows" OR file MATCHES "vk" OR file MATCHES "metal")
+            # filtered
+        else()
+            list(APPEND FILTERED_SRC ${file})
+        endif()
     else()
         message(FATAL_ERROR "Platform not supported")
     endif()
@@ -34,15 +40,12 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/engine FILES ${FILTERED_SRC})
 target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/thirdparty/imgui
     ${PROJECT_SOURCE_DIR}/thirdparty/optick
-    ${PROJECT_SOURCE_DIR}/thirdparty/glad/include
     ${PROJECT_SOURCE_DIR}/thirdparty/glm
     ${PROJECT_SOURCE_DIR}/thirdparty/
     ${PROJECT_SOURCE_DIR}/engine/shader
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
-    ${BULLET_INCLUDE_DIR}
-    ${TINYGLTF_INCLUDE_DIRS}
-    ${Stb_INCLUDE_DIR}
+    ${PROJECT_SOURCE_DIR}/
     $ENV{VULKAN_SDK}/include
 )
 
@@ -53,9 +56,6 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
 
 set(TARGET_LIBS
     imgui
-    glfw
-    glad
-    ${BULLET_LIBRARIES}
     glm::glm
     yaml-cpp::yaml-cpp
     lua_script
@@ -63,6 +63,7 @@ set(TARGET_LIBS
 
 if(WIN32)
     list(APPEND TARGET_LIBS
+        glfw
         optick
         d3d11.lib
         d3d12.lib
@@ -70,7 +71,12 @@ if(WIN32)
         d3dcompiler.lib
         dxguid.lib
         loader_assimp
+        opengl_4_backend
         $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+    )
+elseif (EMSCRIPTEN)
+    list(APPEND TARGET_LIBS
+        opengles_3_backend
     )
 endif()
 

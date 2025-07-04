@@ -8,8 +8,8 @@
 #undef max
 #endif
 
-#include "engine/core/framework/application.h"
-#include "engine/core/framework/imgui_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/imgui_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/drivers/d3d12/d3d12_pipeline_state_manager.h"
 #include "engine/drivers/d3d_common/d3d_common.h"
@@ -101,7 +101,7 @@ struct D3d12FrameContext : FrameContext {
     uint64_t m_fenceValue = 0;
 };
 
-D3d12GraphicsManager::D3d12GraphicsManager() : GraphicsManager("D3d12GraphicsManager", Backend::D3D12, NUM_FRAMES_IN_FLIGHT) {
+D3d12GraphicsManager::D3d12GraphicsManager() : BaseGraphicsManager("D3d12GraphicsManager", Backend::D3D12, NUM_FRAMES_IN_FLIGHT) {
     m_pipelineStateManager = std::make_shared<D3d12PipelineStateManager>();
 }
 
@@ -297,7 +297,7 @@ void D3d12GraphicsManager::MoveToNextFrame() {
     m_frameIndex = (m_frameIndex + 1) % static_cast<uint32_t>(m_frameContexts.size());
 }
 
-std::unique_ptr<FrameContext> D3d12GraphicsManager::CreateFrameContext() {
+std::shared_ptr<FrameContext> D3d12GraphicsManager::CreateFrameContext() {
     return std::make_unique<D3d12FrameContext>();
 }
 

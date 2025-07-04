@@ -16,7 +16,7 @@ D3d12PipelineStateManager::D3d12PipelineStateManager() {
 }
 
 auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
-    auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
+    auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(BaseGraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
 
@@ -33,14 +33,14 @@ auto D3d12PipelineStateManager::CreateComputePipeline(const PipelineStateDesc& p
     pso_desc.pRootSignature = graphics_manager->GetRootSignature();
     pso_desc.CS = CD3DX12_SHADER_BYTECODE(cs_blob.Get());
 
-    ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr())->GetDevice();
+    ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(BaseGraphicsManager::GetSingletonPtr())->GetDevice();
     D3D_FAIL_V(device->CreateComputePipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), HBN_ERROR(ErrorCode::ERR_CANT_CREATE));
 
     return pipeline_state;
 }
 
 auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& p_desc) -> Result<std::shared_ptr<PipelineState>> {
-    auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr());
+    auto graphics_manager = reinterpret_cast<D3d12GraphicsManager*>(BaseGraphicsManager::GetSingletonPtr());
 
     auto pipeline_state = std::make_shared<D3d12PipelineState>(p_desc);
     ComPtr<ID3DBlob> vs_blob;
@@ -109,7 +109,7 @@ auto D3d12PipelineStateManager::CreateGraphicsPipeline(const PipelineStateDesc& 
     }
     pso_desc.DSVFormat = d3d::Convert(p_desc.dsvFormat);
 
-    ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(GraphicsManager::GetSingletonPtr())->GetDevice();
+    ID3D12Device4* device = reinterpret_cast<D3d12GraphicsManager*>(BaseGraphicsManager::GetSingletonPtr())->GetDevice();
     D3D_FAIL_V(device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pipeline_state->pso)), nullptr);
 
     return pipeline_state;

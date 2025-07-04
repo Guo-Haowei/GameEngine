@@ -1,5 +1,7 @@
 #include "dynamic_variable.h"
 
+#if USING(ENABLE_DVAR)
+
 namespace my {
 
 DynamicVariable::DynamicVariable(VariantType p_type, DvarFlags p_flags, const char* p_desc)
@@ -282,3 +284,5 @@ void DynamicVariable::RegisterDvar(std::string_view p_key, DynamicVariable* p_dv
 }
 
 }  // namespace my
+
+#endif

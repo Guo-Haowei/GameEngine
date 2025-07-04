@@ -4,8 +4,8 @@
 
 #include "editor/editor_layer.h"
 #include "editor/widget.h"
-#include "engine/core/framework/asset_registry.h"
-#include "engine/core/framework/scene_manager.h"
+#include "engine/runtime/asset_registry.h"
+#include "engine/runtime/scene_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
@@ -216,7 +216,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         DrawCheckBoxBitflag("enabled", p_voxel_gi.flags, VoxelGiComponent::ENABLED);
         DrawCheckBoxBitflag("show_debug_box", p_voxel_gi.flags, VoxelGiComponent::SHOW_DEBUG_BOX);
 
-        ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_vxgi));
+        ImGui::Checkbox("debug", (bool*)(DVAR_GET_POINTER(gfx_debug_vxgi)));
         int value = DVAR_GET_INT(gfx_debug_vxgi_voxel);
         ImGui::RadioButton("lighting", &value, 0);
         ImGui::SameLine();

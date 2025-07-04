@@ -1,5 +1,5 @@
 #pragma once
-#include "engine/core/framework/script_manager.h"
+#include "engine/runtime/script_manager.h"
 
 struct lua_State;
 

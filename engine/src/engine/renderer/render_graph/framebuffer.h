@@ -9,13 +9,13 @@ namespace my {
 
 struct Framebuffer;
 
-class GraphicsManager;
+class BaseGraphicsManager;
 
 struct ResourceTransition {
     std::shared_ptr<GpuTexture> resource;
     int slot;
-    std::function<void(GraphicsManager*, GpuTexture*, int)> beginPassFunc;
-    std::function<void(GraphicsManager*, GpuTexture*, int)> endPassFunc;
+    std::function<void(BaseGraphicsManager*, GpuTexture*, int)> beginPassFunc;
+    std::function<void(BaseGraphicsManager*, GpuTexture*, int)> endPassFunc;
 };
 
 struct FramebufferDesc {

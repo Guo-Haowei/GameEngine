@@ -4,7 +4,7 @@
 #include <imgui/imgui_internal.h>
 
 #include "editor/editor_layer.h"
-#include "engine/core/framework/scene_manager.h"
+#include "engine/runtime/scene_manager.h"
 
 namespace my {
 using ecs::Entity;
