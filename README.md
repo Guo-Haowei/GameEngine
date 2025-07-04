@@ -12,6 +12,15 @@ $ cmake ..
 $ cmake --build .
 ```
 
+### WASM
+```shell
+$ source /path/to/emsdk/emsdk_env.sh
+$ mkdir build-emscripten
+$ cd build-emscripten
+$ emcmake cmake .. -G "MinGW Makefiles"
+$ mingw32-make
+```
+
 ## Screenshots
 
 <img src="https://github.com/Guo-Haowei/GameEngine/blob/master/documents/editor.png" width="70%">

@@ -32,13 +32,13 @@ public:
                                      m_manager(p_manager),
                                      m_index(p_index) {}
 
-        Self operator++(int) const {
+        Self operator++(int) {
             Self tmp = *this;
             ++m_index;
             return tmp;
         }
 
-        Self operator--(int) const {
+        Self operator--(int) {
             Self tmp = *this;
             --m_index;
             return tmp;

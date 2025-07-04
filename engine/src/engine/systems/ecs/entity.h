@@ -8,7 +8,6 @@ namespace my::ecs {
 
 class Entity {
 public:
-    static constexpr size_t INVALID_INDEX = ~0llu;
     static constexpr uint32_t INVALID_ID = 0;
     static constexpr uint32_t MAX_ID = ~0u;
 

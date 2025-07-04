@@ -5,6 +5,7 @@
 # cmake
 CMakeFiles/
 build/
+build-emscripten/
 
 # shader
 *.air
