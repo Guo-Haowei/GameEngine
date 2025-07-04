@@ -1,6 +1,8 @@
 #include "opengl4_graphics_manager.h"
 
 #include "../opengl_common/opengl_prerequisites.h"
+#include "../opengl_common/opengl_helpers.h"
+#include "../opengl_common/opengl_resources.h"
 
 #include "engine/runtime/application.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
@@ -12,7 +14,7 @@ namespace my {
 
 static void APIENTRY DebugCallback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
-auto OpenGl4GraphicsManager::InitializeInternal() -> Result<void> {
+auto OpenGL4GraphicsManager::InitializeInternal() -> Result<void> {
     auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
     DEV_ASSERT(display_manager);
     if (!display_manager) {
@@ -57,6 +59,52 @@ auto OpenGl4GraphicsManager::InitializeInternal() -> Result<void> {
     }
 
     return Result<void>();
+}
+
+void OpenGL4GraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+#if USING(USE_GLES3)
+    unused(p_num_groups_x);
+    unused(p_num_groups_y);
+    unused(p_num_groups_z);
+    CRASH_NOW_MSG("compute shader not supported");
+#else
+    glDispatchCompute(p_num_groups_x, p_num_groups_y, p_num_groups_z);
+    // @TODO: this probably shouldn't be here
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
+#endif
+}
+
+void OpenGL4GraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+#if USING(USE_GLES3)
+    unused(p_slot);
+    unused(p_texture);
+    CRASH_NOW_MSG("compute shader not supported");
+#else
+    DEV_ASSERT(p_texture);
+    auto internal_format = gl::ConvertInternalFormat(p_texture->desc.format);
+    glBindImageTexture(p_slot, p_texture->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, internal_format);
+#endif
+}
+
+void OpenGL4GraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+#if USING(USE_GLES3)
+    unused(p_slot);
+    CRASH_NOW_MSG("compute shader not supported");
+#else
+    glBindImageTexture(p_slot, 0, 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
+#endif
+}
+
+void OpenGL4GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<const OpenGlStructuredBuffer*>(p_buffer);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, buffer->handle);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    return;
+}
+
+void OpenGL4GraphicsManager::UnbindStructuredBuffer(int p_slot) {
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, 0);
 }
 
 static void APIENTRY DebugCallback(GLenum p_source,

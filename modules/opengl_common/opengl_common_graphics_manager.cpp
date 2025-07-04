@@ -181,7 +181,7 @@ void CommonOpenGlGraphicsManager::Clear(const Framebuffer*,
     }
 
     // @TODO: cache clear depth
-    glClearDepth(p_clear_depth);
+    glClearDepthf(p_clear_depth);
     glClearStencil(p_clear_stencil);
     glClear(flags);
 }
@@ -200,15 +200,15 @@ void CommonOpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
 auto CommonOpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
     auto type = gl::Convert(p_desc.type);
 
-    const bool is_dynamic = p_desc.dynamic;
-
+    const GLenum usage = p_desc.dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
+        
     GLuint handle = 0;
     glGenBuffers(1, &handle);
     glBindBuffer(type, handle);
-    glNamedBufferStorage(handle,
-                         p_desc.elementCount * p_desc.elementSize,
-                         p_desc.initialData,
-                         is_dynamic ? GL_DYNAMIC_STORAGE_BIT : 0);
+    glBufferData(type, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
+    glBindBuffer(type, 0);
+
+    //glNamedBufferStorage(handle, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
 
     auto buffer = std::make_shared<OpenGlBuffer>(p_desc);
     buffer->handle = handle;
@@ -302,19 +302,21 @@ void CommonOpenGlGraphicsManager::DrawArraysInstanced(uint32_t p_instance_count,
 }
 
 void CommonOpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
-    glDispatchCompute(p_num_groups_x, p_num_groups_y, p_num_groups_z);
-    // @TODO: this probably shouldn't be here
-    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT);
+    unused(p_num_groups_x);
+    unused(p_num_groups_y);
+    unused(p_num_groups_z);
+    CRASH_NOW_MSG("compute shader not supported");
 }
 
 void CommonOpenGlGraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
-    DEV_ASSERT(p_texture);
-    auto internal_format = gl::ConvertInternalFormat(p_texture->desc.format);
-    glBindImageTexture(p_slot, p_texture->GetHandle32(), 0, GL_TRUE, 0, GL_READ_WRITE, internal_format);
+    unused(p_slot);
+    unused(p_texture);
+    CRASH_NOW_MSG("compute shader not supported");
 }
 
 void CommonOpenGlGraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
-    glBindImageTexture(p_slot, 0, 0, GL_TRUE, 0, GL_READ_WRITE, GL_R11F_G11F_B10F);
+    unused(p_slot);
+    CRASH_NOW_MSG("compute shader not supported");
 }
 
 void CommonOpenGlGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
@@ -325,10 +327,9 @@ void CommonOpenGlGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStru
     return;
 }
 
-// @TODO: refactor
 void CommonOpenGlGraphicsManager::UnbindStructuredBuffer(int p_slot) {
     unused(p_slot);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, 0);
+    CRASH_NOW_MSG("compute shader not supported");
 }
 
 void CommonOpenGlGraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {

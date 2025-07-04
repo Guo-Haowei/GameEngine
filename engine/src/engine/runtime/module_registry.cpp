@@ -201,9 +201,9 @@ static IGraphicsManager* SelectGraphicsManager(const std::string& p_backend) {
 
     if (p_backend == "opengl") {
 #if USING(PLATFORM_WINDOWS)
-        return new OpenGl4GraphicsManager;
+        return new OpenGL4GraphicsManager;
 #elif USING(PLATFORM_WASM)
-        return new OpenGlES3GraphicsManager;
+        return new OpenGLES3GraphicsManager;
 #else
         return nullptr;
 #endif

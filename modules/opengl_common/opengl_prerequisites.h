@@ -11,3 +11,5 @@
 #else
 #include <glad/glad.h>
 #endif
+
+#define USE_GLES3 USE_IF(USING(PLATFORM_WASM))

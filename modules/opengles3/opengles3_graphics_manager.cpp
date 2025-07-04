@@ -10,7 +10,7 @@
 
 namespace my {
 
-auto OpenGl3ESGraphicsManager::InitializeInternal() -> Result<void> {
+auto OpenGLES3GraphicsManager::InitializeInternal() -> Result<void> {
     auto display_manager = dynamic_cast<GlfwDisplayManager*>(m_app->GetDisplayServer());
     DEV_ASSERT(display_manager);
     if (!display_manager) {

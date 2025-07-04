@@ -120,15 +120,19 @@ static inline BLEND_OP Convert(BlendOp p_op) {
 }
 
 enum TOPOLOGY : uint32_t {
+#if !USING(PLATFORM_WASM)
     TOPOLOGY_POINT = GL_POINT,
+#endif
     TOPOLOGY_LINE = GL_LINES,
     TOPOLOGY_TRIANGLE = GL_TRIANGLES,
 };
 
 static inline TOPOLOGY Convert(PrimitiveTopology p_topology) {
     switch (p_topology) {
+#if !USING(PLATFORM_WASM)
         case PrimitiveTopology::POINT:
             return TOPOLOGY_POINT;
+#endif
         case PrimitiveTopology::LINE:
             return TOPOLOGY_LINE;
         case PrimitiveTopology::TRIANGLE:
@@ -288,8 +292,10 @@ inline GLenum ConvertAddressMode(AddressMode p_mode) {
             return GL_REPEAT;
         case AddressMode::CLAMP:
             return GL_CLAMP_TO_EDGE;
+#if !USING(PLATFORM_WASM)
         case AddressMode::BORDER:
             return GL_CLAMP_TO_BORDER;
+#endif
         default:
             CRASH_NOW();
             return 0;
@@ -307,7 +313,11 @@ inline void SetSampler(GLenum p_texture_type, const SamplerDesc& p_desc) {
     if (p_desc.addressU == AddressMode::BORDER ||
         p_desc.addressV == AddressMode::BORDER ||
         p_desc.addressW == AddressMode::BORDER) {
+#if !USING(PLATFORM_WASM)
         glTexParameterfv(p_texture_type, GL_TEXTURE_BORDER_COLOR, p_desc.border);
+#else
+        CRASH_NOW();
+#endif
     }
 }
 
@@ -321,8 +331,10 @@ inline GLenum ConvertDimension(Dimension p_dimension) {
             return GL_TEXTURE_2D_ARRAY;
         case Dimension::TEXTURE_CUBE:
             return GL_TEXTURE_CUBE_MAP;
+#if !USING(PLATFORM_WASM)
         case Dimension::TEXTURE_CUBE_ARRAY:
             return GL_TEXTURE_CUBE_MAP_ARRAY;
+#endif
         default:
             CRASH_NOW();
             return GL_TEXTURE_2D;

@@ -50,18 +50,18 @@ public:
     void DrawArrays(uint32_t p_count, uint32_t p_offset) final;
     void DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) final;
 
-    void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) final;
-    void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) final;
-    void UnbindUnorderedAccessView(uint32_t p_slot) final;
+    void Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) override;
+    void BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) override;
+    void UnbindUnorderedAccessView(uint32_t p_slot) override;
+
+    void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) override;
+    void UnbindStructuredBuffer(int p_slot) override;
+    void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) override;
+    void UnbindStructuredBufferSRV(int p_slot) override;
 
     auto CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> final;
     auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> final;
     void UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) final;
-
-    void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) final;
-    void UnbindStructuredBuffer(int p_slot) final;
-    void BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) final;
-    void UnbindStructuredBufferSRV(int p_slot) final;
 
     void UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) final;
     void BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) final;
