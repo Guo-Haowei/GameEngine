@@ -21,6 +21,7 @@ message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
 
 if (EMSCRIPTEN)
     set(BUILD_TINYGLTF_LOADER OFF CACHE BOOL "" FORCE)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
 endif ()
 
 if (NOT EMSCRIPTEN)
@@ -30,17 +31,23 @@ if (NOT EMSCRIPTEN)
     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
     set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
     add_subdirectory(thirdparty/glfw)
+    set_target_properties(glfw PROPERTIES FOLDER thirdparty)
+    set_target_properties(update_mappings PROPERTIES FOLDER thirdparty)
 
     # GLAD
     add_subdirectory(thirdparty/glad)
+    set_target_properties(glad PROPERTIES FOLDER thirdparty)
 endif()
 
 # GLM
 add_subdirectory(thirdparty/glm)
+set_target_properties(glm PROPERTIES FOLDER thirdparty)
 
 # YAML-CPP
-set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "Disable yaml-cpp tests")
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 add_subdirectory(thirdparty/yaml-cpp)
+set_target_properties(yaml-cpp PROPERTIES FOLDER thirdparty)
 
 include(cmake/build_bullet.cmake)
 include(cmake/build_lua.cmake)

@@ -107,6 +107,30 @@ void OpenGL4GraphicsManager::UnbindStructuredBuffer(int p_slot) {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, 0);
 }
 
+auto OpenGL4GraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
+    GLuint handle = 0;
+    glGenBuffers(1, &handle);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    auto buffer = std::make_shared<OpenGlStructuredBuffer>(p_desc);
+    buffer->handle = handle;
+    return buffer;
+}
+
+void OpenGL4GraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
+    auto buffer = reinterpret_cast<const OpenGlStructuredBuffer*>(p_buffer);
+    if (DEV_VERIFY(buffer)) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
+        float* ptr = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+        DEV_ASSERT(ptr);
+        memcpy(ptr + p_desc.offset, p_desc.initialData, p_desc.elementCount * p_desc.elementSize);
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    }
+}
+
 static void APIENTRY DebugCallback(GLenum p_source,
                                    GLenum p_type,
                                    uint32_t p_id,

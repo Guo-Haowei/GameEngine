@@ -320,11 +320,9 @@ void CommonOpenGlGraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
 }
 
 void CommonOpenGlGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
-    auto buffer = reinterpret_cast<const OpenGlStructuredBuffer*>(p_buffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, p_slot, buffer->handle);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    return;
+    unused(p_slot);
+    unused(p_buffer);
+    CRASH_NOW_MSG("compute shader not supported");
 }
 
 void CommonOpenGlGraphicsManager::UnbindStructuredBuffer(int p_slot) {
@@ -360,27 +358,15 @@ auto CommonOpenGlGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_de
 }
 
 auto CommonOpenGlGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
-    GLuint handle = 0;
-    glGenBuffers(1, &handle);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    auto buffer = std::make_shared<OpenGlStructuredBuffer>(p_desc);
-    buffer->handle = handle;
-    return buffer;
+    unused(p_desc);
+    CRASH_NOW();
+    return nullptr;
 }
 
 void CommonOpenGlGraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
-    auto buffer = reinterpret_cast<const OpenGlStructuredBuffer*>(p_buffer);
-    if (DEV_VERIFY(buffer)) {
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer->handle);
-        float* ptr = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
-        DEV_ASSERT(ptr);
-        memcpy(ptr + p_desc.offset, p_desc.initialData, p_desc.elementCount * p_desc.elementSize);
-        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-    }
+    unused(p_desc);
+    unused(p_buffer);
+    CRASH_NOW();
 }
 
 void CommonOpenGlGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
@@ -457,6 +443,7 @@ std::shared_ptr<GpuTexture> CommonOpenGlGraphicsManager::CreateTextureImpl(const
                              p_texture_desc.initialData);
             }
         } break;
+#if !USING(USE_GLES3)
         case GL_TEXTURE_CUBE_MAP_ARRAY: {
             glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY,
                          0,
@@ -466,6 +453,7 @@ std::shared_ptr<GpuTexture> CommonOpenGlGraphicsManager::CreateTextureImpl(const
                          p_texture_desc.arraySize,
                          0, format, data_type, p_texture_desc.initialData);
         } break;
+#endif
         case GL_TEXTURE_3D: {
             glTexStorage3D(GL_TEXTURE_3D,
                            p_texture_desc.mipLevels,
@@ -512,10 +500,14 @@ std::shared_ptr<Framebuffer> CommonOpenGlGraphicsManager::CreateFramebuffer(cons
     glGenFramebuffers(1, &fbo_handle);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_handle);
 
+#if !USING(USE_GLES3)
     if (!num_color_attachment) {
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
-    } else {
+    }
+    else
+#endif
+    {
         // create color attachments
         std::vector<GLuint> attachments;
         attachments.reserve(num_color_attachment);
@@ -542,7 +534,9 @@ std::shared_ptr<Framebuffer> CommonOpenGlGraphicsManager::CreateFramebuffer(cons
             }
         }
 
+#if !USING(USE_GLES3)
         glDrawBuffers(num_color_attachment, attachments.data());
+#endif
     }
 
     if (auto depth_attachment = p_desc.depthAttachment; depth_attachment) {
@@ -563,9 +557,11 @@ std::shared_ptr<Framebuffer> CommonOpenGlGraphicsManager::CreateFramebuffer(cons
                                        texture_handle,               // texture
                                        0);                           // level
             } break;
+#if !USING(USE_GLES3)
             case AttachmentType::SHADOW_CUBE_ARRAY: {
                 glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture_handle, 0);
             } break;
+#endif
             default:
                 CRASH_NOW();
                 break;

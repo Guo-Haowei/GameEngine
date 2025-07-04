@@ -187,10 +187,12 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
                     result = create_shader_helper(p_desc.vs, GL_VERTEX_SHADER);
                     if (!result) { break; }
                 }
+#if !USING(USE_GLES3)
                 if (!p_desc.gs.empty()) {
                     result = create_shader_helper(p_desc.gs, GL_GEOMETRY_SHADER);
                     if (!result) { break; }
                 }
+#endif
                 if (!p_desc.ps.empty()) {
                     result = create_shader_helper(p_desc.ps, GL_FRAGMENT_SHADER);
                     if (!result) { break; }
@@ -200,6 +202,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
                 return HBN_ERROR(result.error());
             }
         } break;
+#if !USING(USE_GLES3)
         case PipelineStateType::COMPUTE: {
             DEV_ASSERT(!p_desc.cs.empty());
             auto result = create_shader_helper(p_desc.cs, GL_COMPUTE_SHADER);
@@ -207,6 +210,7 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
                 return HBN_ERROR(result.error());
             }
         } break;
+#endif
         default:
             CRASH_NOW();
             break;

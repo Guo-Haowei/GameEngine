@@ -22,7 +22,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER modules)
 
-target_link_libraries(${TARGET_NAME} PRIVATE glad opengl_common)
+target_link_libraries(${TARGET_NAME} PRIVATE opengl_common)
 
 target_set_warning_level(${TARGET_NAME})
 

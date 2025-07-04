@@ -17,6 +17,9 @@ public:
     void BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) final;
     void UnbindStructuredBuffer(int p_slot) final;
 
+    auto CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> final;
+    void UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) final;
+
 protected:
     auto InitializeInternal() -> Result<void> final;
 };

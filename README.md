@@ -17,8 +17,9 @@ $ cmake --build .
 $ source /path/to/emsdk/emsdk_env.sh
 $ mkdir build-emscripten
 $ cd build-emscripten
-$ emcmake cmake .. -G "MinGW Makefiles" -DCMAKE_EXE_LINKER_FLAGS="-sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1"
+$ emcmake cmake .. -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXE_LINKER_FLAGS="-sUSE_GLFW=3 -sUSE_WEBGL2=1 -sFULL_ES3=1 -sUSE_PTHREADS=1 -sSHARED_MEMORY=1"
 $ mingw32-make
+$ cd bin && python -m http.server 8080
 ```
 
 ## Screenshots

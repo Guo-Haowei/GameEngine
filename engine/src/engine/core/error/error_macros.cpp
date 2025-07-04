@@ -54,7 +54,8 @@ void ReportErrorImpl(std::string_view p_function,
     if (auto os = OS::GetSingletonPtr(); os) {
         os->Print(LOG_LEVEL_ERROR, message);
     } else {
-        fprintf(stderr, "%s", message.c_str());
+        fprintf(stdout, "%s", message.c_str());
+        fflush(stdout);
     }
 
     GlobalLock();

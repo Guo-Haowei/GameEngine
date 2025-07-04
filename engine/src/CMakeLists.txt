@@ -76,7 +76,7 @@ if(WIN32)
     )
 elseif (EMSCRIPTEN)
     list(APPEND TARGET_LIBS
-        opengl_es_backend
+        opengles_3_backend
     )
 endif()
 
