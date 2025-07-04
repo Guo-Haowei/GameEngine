@@ -23,6 +23,7 @@ std::shared_ptr<RenderPass> RenderGraph::FindPass(RenderPassName p_name) const {
     return m_renderPasses[it->second];
 }
 
+// @TODO: toposort
 void RenderGraph::Compile() {
     const int num_passes = (int)m_renderPasses.size();
 
@@ -69,7 +70,7 @@ void RenderGraph::Compile() {
 #endif
 }
 
-void RenderGraph::Execute(const renderer::RenderData& p_data, BaseGraphicsManager& p_graphics_manager) {
+void RenderGraph::Execute(const renderer::RenderData& p_data, IGraphicsManager& p_graphics_manager) {
     for (auto pass : m_graph) {
         pass->Execute(p_data, p_graphics_manager);
     }

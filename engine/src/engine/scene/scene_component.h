@@ -291,6 +291,7 @@ struct ArmatureComponent {
 };
 #pragma endregion ARMATURE_COMPONENT
 
+// @TODO: rename it to MeshRenderer?
 #pragma region OBJECT_COMPONENT
 struct ObjectComponent : public ComponentFlagBase {
     enum : uint32_t {

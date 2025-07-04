@@ -2,26 +2,42 @@
 #include "engine/renderer/render_graph/framebuffer.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
+// clang-format off
+namespace my { class IGraphicsManager; }
+namespace my::renderer { struct DrawPass; }
+// clang-format on
+
 namespace my {
-class BaseGraphicsManager;
+// @TODO: split RHI and RenderCommandContext
+using IRenderCmdContext = IGraphicsManager;
 }  // namespace my
 
 namespace my::renderer {
 
 struct RenderData;
 
-using DrawPassExecuteFunc = void (*)(const renderer::RenderData&, const Framebuffer*);
-
 struct RenderPassDesc {
     RenderPassName name;
     std::vector<RenderPassName> dependencies;
 };
 
+using DrawPassExecuteFunc = void (*)(const renderer::RenderData&,
+                                     const Framebuffer*,
+                                     DrawPass&,
+                                     const IRenderCmdContext&);
+
+struct DrawPass {
+    std::shared_ptr<Framebuffer> m_framebuffer;
+    DrawPassExecuteFunc m_executor = nullptr;
+};
+
 class RenderPass {
 public:
-    void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_function);
+    void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_func) {
+        m_drawPasses.emplace_back(std::make_unique<DrawPass>(p_framebuffer, p_func));
+    }
 
-    void Execute(const renderer::RenderData& p_data, BaseGraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, IRenderCmdContext& p_cmd);
 
     RenderPassName GetName() const { return m_name; }
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
@@ -31,14 +47,9 @@ public:
 protected:
     void CreateInternal(RenderPassDesc& pass_desc);
 
-    struct DrawPass {
-        std::shared_ptr<Framebuffer> framebuffer;
-        DrawPassExecuteFunc executor;
-    };
-
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;
-    std::vector<DrawPass> m_drawPasses;
+    std::vector<std::unique_ptr<DrawPass>> m_drawPasses;
 
     friend class RenderGraph;
 };

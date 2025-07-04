@@ -5,8 +5,8 @@
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/renderer/render_system.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/display_manager.h"
@@ -107,7 +107,8 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
     }
 }
 
-static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                        const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -130,7 +131,8 @@ static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     DrawInstacedGeometry(p_data, p_data.instances, true);
 }
 
-static void ForwardPass(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void ForwardPass(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                        const IRenderCmdContext&) {
     unused(p_data);
     HBN_PROFILE_EVENT();
     auto& gm = IGraphicsManager::GetSingleton();
@@ -168,7 +170,8 @@ void RenderGraphBuilder::AddPrepass() {
     CreateRenderPass(info);
 }
 
-static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                            const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -210,7 +213,8 @@ void RenderGraphBuilder::AddGbufferPass() {
     CreateRenderPass(info);
 }
 
-static void SsaoPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void SsaoPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                         const IRenderCmdContext&) {
     if (!p_data.options.ssaoEnabled) {
         return;
     }
@@ -248,7 +252,8 @@ void RenderGraphBuilder::AddSsaoPass() {
     CreateRenderPass(info);
 }
 
-static void HighlightPassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
+static void HighlightPassFunc(const RenderData&, const Framebuffer* p_framebuffer, DrawPass&,
+                              const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -279,7 +284,8 @@ void RenderGraphBuilder::AddHighlightPass() {
 }
 
 /// Shadow
-static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                                const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -337,7 +343,8 @@ static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_f
     }
 }
 
-static void ShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void ShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                           const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -403,7 +410,8 @@ void RenderGraphBuilder::AddShadowPass() {
     pass->AddDrawPass(framebuffer, PointShadowPassFunc);
 }
 
-static void VoxelizationPassFunc(const RenderData& p_data, const Framebuffer*) {
+static void VoxelizationPassFunc(const RenderData& p_data, const Framebuffer*, DrawPass&,
+                                 const IRenderCmdContext&) {
     if (p_data.voxelPass.pass_idx < 0) {
         return;
     }
@@ -595,7 +603,8 @@ static void EmitterPassFunc(const RenderData& p_data, const Framebuffer* p_frame
 }
 
 /// Lighting
-static void LightingPassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
+static void LightingPassFunc(const RenderData&, const Framebuffer* p_framebuffer, DrawPass&,
+                             const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -686,7 +695,8 @@ void RenderGraphBuilder::AddLightingPass() {
 }
 
 /// Sky
-static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                        const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -781,7 +791,8 @@ void RenderGraphBuilder::AddSkyPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const RenderData& p_data, const Framebuffer*) {
+static void BloomSetupFunc(const RenderData& p_data, const Framebuffer*, DrawPass&,
+                           const IRenderCmdContext&) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -806,7 +817,8 @@ static void BloomSetupFunc(const RenderData& p_data, const Framebuffer*) {
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void BloomDownSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                                const IRenderCmdContext&) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -834,7 +846,8 @@ static void BloomDownSampleFunc(const RenderData& p_data, const Framebuffer* p_f
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void BloomUpSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                              const IRenderCmdContext&) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -974,7 +987,8 @@ static void DebugVoxels(const RenderData& p_data, const Framebuffer* p_framebuff
 
 /// Tone
 /// Change to post processing?
-static void TonePassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void TonePassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                         const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -1075,7 +1089,8 @@ void RenderGraphBuilder::AddDebugImagePass() {
         .dependencies = { RenderPassName::TONE },
         .drawPasses = {
             { { { RESOURCE_FINAL } },
-              [](const RenderData& p_data, const Framebuffer* p_framebuffer) {
+              [](const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                 const IRenderCmdContext&) {
                   HBN_PROFILE_EVENT();
                   auto& gm = IGraphicsManager::GetSingleton();
                   gm.SetRenderTarget(p_framebuffer);
@@ -1091,7 +1106,8 @@ void RenderGraphBuilder::AddDebugImagePass() {
     CreateRenderPass(info);
 }
 
-static void ConvertToCubemapFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void ConvertToCubemapFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                                 const IRenderCmdContext&) {
     HBN_PROFILE_EVENT("hdr image to -> skybox");
     if (!p_data.bakeIbl) {
         return;
@@ -1117,7 +1133,8 @@ static void ConvertToCubemapFunc(const RenderData& p_data, const Framebuffer* p_
     gm.GenerateMipmap(cube_map.get());
 }
 
-static void DiffuseIrradianceFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void DiffuseIrradianceFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                                  const IRenderCmdContext&) {
     if (!p_data.bakeIbl) {
         return;
     }
@@ -1142,7 +1159,8 @@ static void DiffuseIrradianceFunc(const RenderData& p_data, const Framebuffer* p
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
 }
 
-static void PrefilteredFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void PrefilteredFunc(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                            const IRenderCmdContext&) {
     if (!p_data.bakeIbl) {
         return;
     }
@@ -1182,7 +1200,8 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
     CreateRenderPass(info);
 }
 
-static void PathTracerTonePassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
+static void PathTracerTonePassFunc(const RenderData&, const Framebuffer* p_framebuffer, DrawPass&,
+                                   const IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -1234,7 +1253,8 @@ void RenderGraphBuilder::AddPathTracerTonePass() {
     pass->AddDrawPass(framebuffer, PathTracerTonePassFunc);
 }
 
-static void PathTracerPassFunc(const RenderData&, const Framebuffer*) {
+static void PathTracerPassFunc(const RenderData&, const Framebuffer*, DrawPass&,
+                               const IRenderCmdContext&) {
     // @TODO: refactor this part
     if (!renderer::IsPathTracerActive()) {
         return;
