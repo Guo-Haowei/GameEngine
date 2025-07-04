@@ -1,5 +1,9 @@
 add_subdirectory(opengl_common)
-add_subdirectory(opengl)
+if (WIN32)
+    add_subdirectory(opengl4)
+elseif (EMSCRIPTEN)
+    add_subdirectory(opengles3)
+endif()
 
 if (USE_BULLET)
     add_subdirectory(bullet3)

@@ -1,12 +1,14 @@
 #include "module_registry.h"
 
-#include "modules/opengl/opengl_graphics_manager.h"
 #if USING(PLATFORM_WINDOWS)
 #include "engine/drivers/d3d11/d3d11_graphics_manager.h"
 #include "engine/drivers/d3d12/d3d12_graphics_manager.h"
 #include "engine/drivers/vk/vulkan_graphics_manager.h"
+#include "modules/opengl4/opengl4_graphics_manager.h"
 #elif USING(PLATFORM_APPLE)
 #include "engine/drivers/metal/metal_graphics_manager.h"
+#elif USING(PLATFORM_WASM)
+#include "modules/opengles3/opengles3_graphics_manager.h"
 #endif
 
 #include "engine/renderer/graphics_dvars.h"
@@ -198,7 +200,13 @@ static IGraphicsManager* SelectGraphicsManager(const std::string& p_backend) {
     }
 
     if (p_backend == "opengl") {
+#if USING(PLATFORM_WINDOWS)
         return new OpenGl4GraphicsManager;
+#elif USING(PLATFORM_WASM)
+        return new OpenGlES3GraphicsManager;
+#else
+        return nullptr;
+#endif
     }
 
     if (p_backend == "vulkan") {

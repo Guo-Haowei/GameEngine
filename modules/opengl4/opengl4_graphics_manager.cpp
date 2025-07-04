@@ -1,4 +1,4 @@
-#include "opengl_graphics_manager.h"
+#include "opengl4_graphics_manager.h"
 
 #include "../opengl_common/opengl_prerequisites.h"
 
