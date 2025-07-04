@@ -130,6 +130,30 @@ static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     DrawInstacedGeometry(p_data, p_data.instances, true);
 }
 
+static void ForwardPass(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+    unused(p_data);
+    HBN_PROFILE_EVENT();
+    auto& gm = IGraphicsManager::GetSingleton();
+    gm.SetRenderTarget(p_framebuffer);
+    float clear_color[] = { 0.3f, 0.5f, 0.4f, 1.0f };
+    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
+}
+
+void RenderGraphBuilder::AddForward() {
+    RenderPassCreateInfo info{
+        .name = RenderPassName::FINAL,
+        .drawPasses = {
+            { {
+                  { RESOURCE_FINAL },
+                  RESOURCE_GBUFFER_DEPTH,
+              },
+              ForwardPass },
+        }
+    };
+
+    CreateRenderPass(info);
+}
+
 void RenderGraphBuilder::AddPrepass() {
     RenderPassCreateInfo info{
         .name = RenderPassName::PREPASS,
@@ -1272,6 +1296,20 @@ void RenderGraphBuilder::AddPathTracerPass() {
 }
 
 /// Create pre-defined passes
+std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateEmpty(RenderGraphBuilderConfig& p_config) {
+    p_config.enableBloom = false;
+    p_config.enableIbl = false;
+    p_config.enableVxgi = false;
+
+    auto graph = std::make_unique<RenderGraph>();
+    RenderGraphBuilder creator(p_config, *graph.get());
+
+    creator.AddForward();
+
+    graph->Compile();
+    return graph;
+}
+
 std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = false;
     p_config.enableIbl = false;

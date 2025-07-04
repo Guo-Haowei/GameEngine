@@ -429,6 +429,11 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
             break;
     }
 
+#if USING(PLATFORM_WASM)
+    m_activeRenderGraphName = RenderGraphName::EMPTY;
+#endif
+    m_activeRenderGraphName = RenderGraphName::EMPTY;
+
     renderer::RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     renderer::RenderGraphBuilderConfig config;
@@ -443,6 +448,9 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case RenderGraphName::DEFAULT:
             m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderGraphBuilder::CreateDefault(config);
             break;
+        case RenderGraphName::EMPTY:
+            m_renderGraphs[std::to_underlying(RenderGraphName::EMPTY)] = renderer::RenderGraphBuilder::CreateEmpty(config);
+            break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
             return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
@@ -451,7 +459,9 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
     switch (m_backend) {
         case Backend::OPENGL:
         case Backend::D3D11:
+#if !USING(PLATFORM_WASM)
             m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
+#endif
             break;
         default:
             break;
@@ -519,6 +529,9 @@ uint64_t BaseGraphicsManager::GetFinalImage() const {
         } break;
         case RenderGraphName::PATHTRACER: {
             texture = FindTexture(RESOURCE_PATH_TRACER).get();
+        } break;
+        case RenderGraphName::EMPTY: {
+            texture = FindTexture(RESOURCE_FINAL).get();
         } break;
         default: {
             CRASH_NOW();

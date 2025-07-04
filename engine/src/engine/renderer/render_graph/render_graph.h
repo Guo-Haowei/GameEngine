@@ -7,6 +7,7 @@ namespace my {
 class BaseGraphicsManager;
 
 #define RENDER_GRAPH_LIST                    \
+    RENDER_GRAPH_DECLARE(EMPTY, "empty")     \
     RENDER_GRAPH_DECLARE(DEFAULT, "default") \
     RENDER_GRAPH_DECLARE(DUMMY, "dummy")     \
     RENDER_GRAPH_DECLARE(PATHTRACER, "pathtracer")

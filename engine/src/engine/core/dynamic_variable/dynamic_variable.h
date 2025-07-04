@@ -1,6 +1,9 @@
 #pragma once
 #include "engine/math/vector.h"
 
+#define ENABLE_DVAR USE_IF(!USING(PLATFORM_WASM))
+
+#if USING(ENABLE_DVAR)
 enum DvarFlags : uint32_t {
     DVAR_FLAG_NONE = BIT(0),
     DVAR_FLAG_CACHE = BIT(1),
@@ -115,3 +118,30 @@ private:
 #define DVAR_SET_IVEC2(name, x, y)       (DVAR_##name).SetVector2i(x, y)
 #define DVAR_SET_IVEC3(name, x, y, z)    (DVAR_##name).SetVector3i(x, y, z)
 #define DVAR_SET_IVEC4(name, x, y, z, w) (DVAR_##name).SetVector4i(x, y, z, w)
+
+#else
+
+#define DVAR_GET_BOOL(name)    !!(DVAR_##name)
+#define DVAR_GET_INT(name)     (DVAR_##name)
+#define DVAR_GET_FLOAT(name)   (DVAR_##name)
+#define DVAR_GET_STRING(name)  (DVAR_##name)
+#define DVAR_GET_VEC2(name)    (DVAR_##name)
+#define DVAR_GET_VEC3(name)    (DVAR_##name)
+#define DVAR_GET_VEC4(name)    (DVAR_##name)
+#define DVAR_GET_IVEC2(name)   (DVAR_##name)
+#define DVAR_GET_IVEC3(name)   (DVAR_##name)
+#define DVAR_GET_IVEC4(name)   (DVAR_##name)
+#define DVAR_GET_POINTER(name) ((void*)&(DVAR_##name))
+
+#define DVAR_SET_BOOL(name, value)       ((void)0)
+#define DVAR_SET_INT(name, value)        ((void)0)
+#define DVAR_SET_FLOAT(name, value)      ((void)0)
+#define DVAR_SET_STRING(name, value)     ((void)0)
+#define DVAR_SET_VEC2(name, x, y)        ((void)0)
+#define DVAR_SET_VEC3(name, x, y, z)     ((void)0)
+#define DVAR_SET_VEC4(name, x, y, z, w)  ((void)0)
+#define DVAR_SET_IVEC2(name, x, y)       ((void)0)
+#define DVAR_SET_IVEC3(name, x, y, z)    ((void)0)
+#define DVAR_SET_IVEC4(name, x, y, z, w) ((void)0)
+
+#endif

@@ -179,50 +179,80 @@ inline GLuint ConvertFormat(PixelFormat p_format) {
     }
 }
 
-inline GLuint ConvertInternalFormat(PixelFormat p_format) {
+enum Format : uint32_t {
+    INVALID = 0,
+
+    RED = GL_RED,
+    R8 = GL_R8,
+
+    RG = GL_RG,
+    RG8 = GL_RG8,
+
+    RGB = GL_RGB,
+    RGB8 = GL_RGB8,
+
+    RGBA = GL_RGBA,
+    RGBA8 = GL_RGBA8,
+
+    R16F = GL_R16F,
+    RG16F = GL_RG16F,
+    RGB16F = GL_RGB16F,
+    RGBA16F = GL_RGBA16F,
+    R32F = GL_R32F,
+    RG32F = GL_RG32F,
+    RGB32F = GL_RGB32F,
+    RGBA32F = GL_RGBA32F,
+    R11F_G11F_B10F = GL_R11F_G11F_B10F,
+    RGB10_A2 = GL_RGB10_A2,
+    DEPTH_COMPONENT32F = GL_DEPTH_COMPONENT32F,
+    DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8,
+    DEPTH32F_STENCIL8 = GL_DEPTH32F_STENCIL8,
+};
+
+inline Format ConvertInternalFormat(PixelFormat p_format) {
     switch (p_format) {
         case PixelFormat::R8_UINT:
-            return GL_RED;
+            return R8;
         case PixelFormat::R8G8_UINT:
-            return GL_RG;
+            return RG8;
         case PixelFormat::R8G8B8_UINT:
-            return GL_RGB;
+            return RGB8;
         case PixelFormat::R8G8B8A8_UNORM:
         case PixelFormat::R8G8B8A8_UINT:
-            return GL_RGBA;
+            return RGBA8;
         case PixelFormat::R16_FLOAT:
-            return GL_R16F;
+            return R16F;
         case PixelFormat::R16G16_FLOAT:
-            return GL_RG16F;
+            return RG16F;
         case PixelFormat::R16G16B16_FLOAT:
-            return GL_RGB16F;
+            return RGB16F;
         case PixelFormat::R16G16B16A16_FLOAT:
-            return GL_RGBA16F;
+            return RGBA16F;
         case PixelFormat::R32_FLOAT:
-            return GL_R32F;
+            return R32F;
         case PixelFormat::R32G32_FLOAT:
-            return GL_RG32F;
+            return RG32F;
         case PixelFormat::R32G32B32_FLOAT:
-            return GL_RGB32F;
+            return RGB32F;
         case PixelFormat::R32G32B32A32_FLOAT:
-            return GL_RGBA32F;
+            return RGBA32F;
         case PixelFormat::R11G11B10_FLOAT:
-            return GL_R11F_G11F_B10F;
+            return R11F_G11F_B10F;
         case PixelFormat::R10G10B10A2_UINT:
-            return GL_RGB10_A2;
+            return RGB10_A2;
         case PixelFormat::D32_FLOAT:
-            return GL_DEPTH_COMPONENT32F;
+            return DEPTH_COMPONENT32F;
         case PixelFormat::R24G8_TYPELESS:
         case PixelFormat::R24_UNORM_X8_TYPELESS:
         case PixelFormat::D24_UNORM_S8_UINT:
         case PixelFormat::X24_TYPELESS_G8_UINT:
-            return GL_DEPTH24_STENCIL8;
+            return DEPTH24_STENCIL8;
         case PixelFormat::R32G8X24_TYPELESS:
         case PixelFormat::D32_FLOAT_S8X24_UINT:
-            return GL_DEPTH32F_STENCIL8;
+            return DEPTH32F_STENCIL8;
         default:
             CRASH_NOW();
-            return 0;
+            return INVALID;
     }
 }
 

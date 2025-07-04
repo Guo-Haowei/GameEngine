@@ -149,9 +149,11 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
     SaveCommandLine(p_argc, p_argv);
 
     RegisterDvars();
+#if USING(ENABLE_DVAR)
     DynamicVariableManager::Deserialize(DVAR_CACHE_FILE);
     // parse happens after deserialization, so command line will override cache
     DynamicVariableManager::Parse(m_commandLine);
+#endif
 
     // select window size
     {
@@ -233,7 +235,9 @@ void Application::Finalize() {
         LOG_VERBOSE("module '{}' finalized", module->GetName());
     }
 
+#if USING(ENABLE_DVAR)
     DynamicVariableManager::Serialize(DVAR_CACHE_FILE);
+#endif
 }
 
 void Application::Run() {

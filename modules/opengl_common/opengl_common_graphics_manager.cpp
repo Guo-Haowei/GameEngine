@@ -29,6 +29,16 @@
 
 //-----------------------------------------------------------------------------------------------------------------
 
+// @TODO: wrap this
+#define GL_CHECK(stmt)                                                                                                   \
+    do {                                                                                                                 \
+        stmt;                                                                                                            \
+        GLenum err = glGetError();                                                                                       \
+        if (err != GL_NO_ERROR) {                                                                                        \
+            ::my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, std::format("OpenGL Error (0x{:0>8X}): " #stmt, err)); \
+        }                                                                                                                \
+    } while (0)
+
 namespace my {
 using renderer::RenderGraph;
 using renderer::RenderPass;
@@ -419,48 +429,47 @@ std::shared_ptr<GpuTexture> CommonOpenGlGraphicsManager::CreateTextureImpl(const
 
     switch (texture_type) {
         case GL_TEXTURE_2D: {
-            glTexImage2D(GL_TEXTURE_2D,
-                         0,
-                         internal_format,
-                         p_texture_desc.width,
-                         p_texture_desc.height,
-                         0,
-                         format,
-                         data_type,
-                         p_texture_desc.initialData);
+            GL_CHECK(glTexImage2D(GL_TEXTURE_2D,
+                                  0,
+                                  internal_format,
+                                  p_texture_desc.width,
+                                  p_texture_desc.height,
+                                  0,
+                                  format,
+                                  data_type,
+                                  p_texture_desc.initialData));
         } break;
-        // @TODO: same
         case GL_TEXTURE_CUBE_MAP: {
             for (int i = 0; i < 6; ++i) {
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
-                             0,
-                             internal_format,
-                             p_texture_desc.width,
-                             p_texture_desc.height,
-                             0,
-                             format,
-                             data_type,
-                             p_texture_desc.initialData);
+                GL_CHECK(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                                      0,
+                                      internal_format,
+                                      p_texture_desc.width,
+                                      p_texture_desc.height,
+                                      0,
+                                      format,
+                                      data_type,
+                                      p_texture_desc.initialData));
             }
         } break;
 #if !USING(USE_GLES3)
         case GL_TEXTURE_CUBE_MAP_ARRAY: {
-            glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY,
-                         0,
-                         internal_format,
-                         p_texture_desc.width,
-                         p_texture_desc.height,
-                         p_texture_desc.arraySize,
-                         0, format, data_type, p_texture_desc.initialData);
+            GL_CHECK(glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY,
+                                  0,
+                                  internal_format,
+                                  p_texture_desc.width,
+                                  p_texture_desc.height,
+                                  p_texture_desc.arraySize,
+                                  0, format, data_type, p_texture_desc.initialData));
         } break;
 #endif
         case GL_TEXTURE_3D: {
-            glTexStorage3D(GL_TEXTURE_3D,
-                           p_texture_desc.mipLevels,
-                           internal_format,
-                           p_texture_desc.width,
-                           p_texture_desc.height,
-                           p_texture_desc.depth);
+            GL_CHECK(glTexStorage3D(GL_TEXTURE_3D,
+                                    p_texture_desc.mipLevels,
+                                    internal_format,
+                                    p_texture_desc.width,
+                                    p_texture_desc.height,
+                                    p_texture_desc.depth));
         } break;
         default:
             CRASH_NOW();
