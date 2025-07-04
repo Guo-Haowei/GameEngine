@@ -1,7 +1,7 @@
 #include "d3d12_core.h"
 
-#include "d3d12_graphics_manager.h"
 #include "../d3d_common/d3d_common.h"
+#include "d3d12_graphics_manager.h"
 
 namespace my {
 

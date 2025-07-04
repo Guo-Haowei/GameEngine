@@ -2,10 +2,10 @@
 
 #include <algorithm>
 
-#include "engine/runtime/asset_registry.h"
-#include "engine/renderer/base_graphics_manager.h"
 #include "engine/core/os/timer.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/scene/scene.h"
 
 // @TODO: refactor

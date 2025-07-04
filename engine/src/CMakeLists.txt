@@ -46,7 +46,6 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
     ${PROJECT_SOURCE_DIR}/
-    $ENV{VULKAN_SDK}/include
 )
 
 target_compile_definitions(${TARGET_NAME} PUBLIC
@@ -69,8 +68,7 @@ if(WIN32)
         opengl_4_backend
         d3d11_backend
         d3d12_backend
-        d3d_common
-        $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+        vk_backend
     )
 elseif (EMSCRIPTEN)
     list(APPEND TARGET_LIBS

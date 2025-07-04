@@ -2,7 +2,6 @@
 
 #include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
-#include "engine/runtime/display_manager.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
@@ -10,6 +9,7 @@
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
+#include "engine/runtime/display_manager.h"
 
 // @TODO: remove
 #include "engine/runtime/asset_registry.h"

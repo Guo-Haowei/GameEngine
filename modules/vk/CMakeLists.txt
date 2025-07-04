@@ -1,4 +1,4 @@
-set(TARGET_NAME d3d12_backend)
+set(TARGET_NAME vk_backend)
 
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
@@ -10,9 +10,11 @@ add_library(${TARGET_NAME} STATIC ${SRC})
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SRC})
 
 target_include_directories(${TARGET_NAME} PUBLIC
+    $ENV{VULKAN_SDK}/include
     ${PROJECT_SOURCE_DIR}/thirdparty/optick
     ${PROJECT_SOURCE_DIR}/thirdparty/imgui
     ${PROJECT_SOURCE_DIR}/thirdparty/glm
+    ${PROJECT_SOURCE_DIR}/thirdparty/glfw/include
     ${PROJECT_SOURCE_DIR}/thirdparty/
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/engine/shader
@@ -20,10 +22,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER modules)
 
-target_link_libraries(${TARGET_NAME} PRIVATE
-    d3d12.lib
-    d3d_common
-)
+target_link_libraries(${TARGET_NAME} PRIVATE $ENV{VULKAN_SDK}/Lib/vulkan-1.lib)
 
 target_set_warning_level(${TARGET_NAME})
 

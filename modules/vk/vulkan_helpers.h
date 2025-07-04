@@ -1,5 +1,5 @@
 #pragma once
-#include "vulkan/vulkan.h"
+#include <vulkan/vulkan.h>
 
 #define VK_OP(EXPR) ReportVkErrorIfFailed((EXPR), __FUNCTION__, __FILE__, __LINE__, #EXPR)
 #define VK_CHECK_ERROR(EXPR, CODE)                                                   \

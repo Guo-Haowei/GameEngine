@@ -2,10 +2,10 @@
 
 #include <fstream>
 
-#include "engine/runtime/asset_registry.h"
 #include "engine/core/io/archive.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/string/string_utils.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/scene/scene.h"
 #include "engine/systems/serialization/serialization.h"
 

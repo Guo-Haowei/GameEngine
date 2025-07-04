@@ -4,9 +4,9 @@
 #include <thread>
 
 #include "engine/core/debugger/profiler.h"
-#include "engine/runtime/asset_manager.h"
 #include "engine/core/io/print.h"
 #include "engine/drivers/windows/win32_prerequisites.h"
+#include "engine/runtime/asset_manager.h"
 
 namespace my::thread {
 
@@ -25,7 +25,7 @@ static struct {
     std::array<ThreadObject, THREAD_MAX> threads = {
         ThreadObject{ "THREAD_MAIN", []() {} },
         ThreadObject{ "THREAD_ASSET_LOADER_1", AssetManager::WorkerMain },
-        //ThreadObject{ "THREAD_ASSET_LOADER_2", AssetManager::WorkerMain },
+    // ThreadObject{ "THREAD_ASSET_LOADER_2", AssetManager::WorkerMain },
 #if USING(ENABLE_JOB_SYSTEM)
         ThreadObject{ "THREAD_JOBSYSTEM_WORKER_1", jobsystem::WorkerMain },
         ThreadObject{ "THREAD_JOBSYSTEM_WORKER_2", jobsystem::WorkerMain },

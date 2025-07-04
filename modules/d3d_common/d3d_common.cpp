@@ -6,8 +6,8 @@
 
 #include <fstream>
 
-#include "engine/runtime/asset_registry.h"
 #include "engine/core/string/string_builder.h"
+#include "engine/runtime/asset_registry.h"
 
 #if USING(USE_D3D_DEBUG_NAME)
 #pragma comment(lib, "dxguid.lib")

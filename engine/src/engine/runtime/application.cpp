@@ -336,7 +336,8 @@ void Application::Run(Application* p_app) {
     s_app = p_app;
     emscripten_set_main_loop([]() {
         s_app->MainLoop();
-    }, -1, 1);
+    },
+                             -1, 1);
 #else
     while (p_app->MainLoop());
 #endif

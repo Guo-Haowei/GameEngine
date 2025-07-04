@@ -26,4 +26,3 @@ protected:
 };
 
 }  // namespace my
-

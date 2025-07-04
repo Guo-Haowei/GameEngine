@@ -8,7 +8,7 @@ namespace my {
 
 class OpenGLES3GraphicsManager : public CommonOpenGlGraphicsManager {
 public:
-    OpenGLES3GraphicsManager(): CommonOpenGlGraphicsManager() {}
+    OpenGLES3GraphicsManager() : CommonOpenGlGraphicsManager() {}
 
 protected:
     auto InitializeInternal() -> Result<void> final;

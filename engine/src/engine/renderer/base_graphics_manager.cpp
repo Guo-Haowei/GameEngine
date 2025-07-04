@@ -3,8 +3,6 @@
 #include "engine/assets/asset.h"
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
-#include "engine/runtime/application.h"
-#include "engine/runtime/asset_registry.h"
 #include "engine/math/frustum.h"
 #include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
@@ -15,6 +13,8 @@
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/scene/scene.h"
 
 namespace my {
@@ -157,7 +157,6 @@ void BaseGraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
         OnWindowResize(e->GetWidth(), e->GetHeight());
     }
 }
-
 
 void BaseGraphicsManager::SetPipelineState(PipelineStateName p_name) {
     SetPipelineStateImpl(p_name);
@@ -423,8 +422,8 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::VULKAN:
         case Backend::EMPTY:
         case Backend::METAL:
-            m_activeRenderGraphName = RenderGraphName::DUMMY;
-            break;
+            m_activeRenderGraphName = RenderGraphName::EMPTY;
+            return Result<void>();
         default:
             break;
     }

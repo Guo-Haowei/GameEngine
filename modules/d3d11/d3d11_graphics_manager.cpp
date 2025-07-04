@@ -1,20 +1,19 @@
 #include "d3d11_graphics_manager.h"
 
+#include <imgui/backends/imgui_impl_dx11.h>
+
+#include "../d3d_common/d3d_common.h"
 #include "d3d11_helpers.h"
 #include "d3d11_pipeline_state_manager.h"
 #include "d3d11_resources.h"
-#include "../d3d_common/d3d_common.h"
-
-#include <imgui/backends/imgui_impl_dx11.h>
-
-#include "engine/runtime/application.h"
-#include "engine/runtime/imgui_manager.h"
 #include "engine/drivers/windows/win32_display_manager.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/graphics_private.h"
 #include "engine/renderer/render_graph/render_graph.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/sampler.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/imgui_manager.h"
 #include "engine/scene/scene.h"
 
 // @TODO: remove the following

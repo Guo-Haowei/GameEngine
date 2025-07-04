@@ -10,4 +10,4 @@ IGraphicsManager* CreateGraphicsManager();
 
 IPhysicsManager* CreatePhysicsManager();
 
-}
+}  // namespace my

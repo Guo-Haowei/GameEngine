@@ -1,20 +1,19 @@
 #include "opengl_common_graphics_manager.h"
 
-#include "opengl_helpers.h"
-#include "opengl_pipeline_state_manager.h"
-#include "opengl_resources.h"
-
 #include <imgui/backends/imgui_impl_opengl3.h>
 
 #include "engine/core/debugger/profiler.h"
-#include "engine/runtime/application.h"
-#include "engine/runtime/asset_manager.h"
-#include "engine/runtime/imgui_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/asset_manager.h"
+#include "engine/runtime/imgui_manager.h"
 #include "engine/scene/scene.h"
+#include "opengl_helpers.h"
+#include "opengl_pipeline_state_manager.h"
+#include "opengl_resources.h"
 #include "vsinput.glsl.h"
 
 // @NOTE: include GLFW after opengl
@@ -30,13 +29,13 @@
 //-----------------------------------------------------------------------------------------------------------------
 
 // @TODO: wrap this
-#define GL_CHECK(stmt)                                                                                                   \
-    do {                                                                                                                 \
-        stmt;                                                                                                            \
-        GLenum err = glGetError();                                                                                       \
-        if (err != GL_NO_ERROR) {                                                                                        \
+#define GL_CHECK(stmt)                                                                                                     \
+    do {                                                                                                                   \
+        stmt;                                                                                                              \
+        GLenum err = glGetError();                                                                                         \
+        if (err != GL_NO_ERROR) {                                                                                          \
             ::my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, std::format("OpenGL Error (0x{:0>8X}): " #stmt, err)); \
-        }                                                                                                                \
+        }                                                                                                                  \
     } while (0)
 
 namespace my {
@@ -71,7 +70,6 @@ static uint64_t MakeTextureResident(uint32_t p_handle) {
 CommonOpenGlGraphicsManager::CommonOpenGlGraphicsManager() : BaseGraphicsManager("CommonOpenGlGraphicsManager", Backend::OPENGL, 1) {
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
-
 
 void CommonOpenGlGraphicsManager::FinalizeImpl() {
     m_pipelineStateManager->Finalize();
@@ -166,11 +164,11 @@ void CommonOpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name)
 }
 
 void CommonOpenGlGraphicsManager::Clear(const Framebuffer*,
-                                  ClearFlags p_flags,
-                                  const float* p_clear_color,
-                                  float p_clear_depth,
-                                  uint8_t p_clear_stencil,
-                                  int) {
+                                        ClearFlags p_flags,
+                                        const float* p_clear_color,
+                                        float p_clear_depth,
+                                        uint8_t p_clear_stencil,
+                                        int) {
     if (p_flags == CLEAR_NONE) {
         return;
     }
@@ -211,14 +209,14 @@ auto CommonOpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> R
     auto type = gl::Convert(p_desc.type);
 
     const GLenum usage = p_desc.dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
-        
+
     GLuint handle = 0;
     glGenBuffers(1, &handle);
     glBindBuffer(type, handle);
     glBufferData(type, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
     glBindBuffer(type, 0);
 
-    //glNamedBufferStorage(handle, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
+    // glNamedBufferStorage(handle, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
 
     auto buffer = std::make_shared<OpenGlBuffer>(p_desc);
     buffer->handle = handle;
@@ -227,9 +225,9 @@ auto CommonOpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> R
 }
 
 auto CommonOpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                           uint32_t p_count,
-                                           const GpuBufferDesc* p_vb_descs,
-                                           const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
+                                                 uint32_t p_count,
+                                                 const GpuBufferDesc* p_vb_descs,
+                                                 const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
     // create VAO
     uint32_t vao;
     glGenVertexArrays(1, &vao);
@@ -513,8 +511,7 @@ std::shared_ptr<Framebuffer> CommonOpenGlGraphicsManager::CreateFramebuffer(cons
     if (!num_color_attachment) {
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
-    }
-    else
+    } else
 #endif
     {
         // create color attachments

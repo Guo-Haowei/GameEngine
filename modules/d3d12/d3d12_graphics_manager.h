@@ -1,6 +1,5 @@
 #pragma once
 #include "d3d12_core.h"
-
 #include "engine/core/base/rid_owner.h"
 #include "engine/renderer/base_graphics_manager.h"
 

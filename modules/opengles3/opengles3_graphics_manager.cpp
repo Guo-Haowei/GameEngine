@@ -1,12 +1,11 @@
 #include "opengles3_graphics_manager.h"
 
-#include "../opengl_common/opengl_prerequisites.h"
-
-#include "engine/runtime/application.h"
-#include "engine/drivers/glfw/glfw_display_manager.h"
-#include "engine/runtime/imgui_manager.h"
-
 #include <imgui/backends/imgui_impl_opengl3.h>
+
+#include "../opengl_common/opengl_prerequisites.h"
+#include "engine/drivers/glfw/glfw_display_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/imgui_manager.h"
 
 namespace my {
 

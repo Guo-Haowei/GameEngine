@@ -134,9 +134,9 @@ public:
     virtual uint64_t GetFinalImage() const = 0;
 
     // @TODO: thread safety ?
-    virtual void EventReceived(std::shared_ptr<IEvent> p_event) =0;
+    virtual void EventReceived(std::shared_ptr<IEvent> p_event) = 0;
 
-    //static auto Create() -> Result<GraphicsManager*>;
+    // static auto Create() -> Result<GraphicsManager*>;
 
     virtual Backend GetBackend() const = 0;
 

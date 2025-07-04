@@ -1,14 +1,14 @@
 #pragma once
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
-#include "engine/runtime/graphics_manager.h"
-#include "engine/runtime/pipeline_state_manager.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/pipeline_state.h"
 #include "engine/renderer/render_graph/framebuffer.h"
 #include "engine/renderer/render_graph/render_graph.h"
 #include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
+#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/pipeline_state_manager.h"
 
 namespace my {
 #include "cbuffer.hlsl.h"
@@ -65,7 +65,6 @@ public:
 
     void SetPipelineState(PipelineStateName p_name) override;
 
-
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override;
     std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const override;
 
@@ -74,7 +73,7 @@ public:
     // @TODO: move to renderer
     uint64_t GetFinalImage() const override;
 
-    //static auto Create() -> Result<BaseGraphicsManager*>;
+    // static auto Create() -> Result<BaseGraphicsManager*>;
 
     Backend GetBackend() const override { return m_backend; }
 
@@ -117,8 +116,8 @@ protected:
     std::shared_ptr<GpuMesh> m_screenQuadBuffers;
     std::shared_ptr<GpuMesh> m_skyboxBuffers;
 
-    //auto InitializeInternal() -> Result<void> final;
-    //std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
+    // auto InitializeInternal() -> Result<void> final;
+    // std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
 protected:
     void UpdateEmitters(const Scene& p_scene) override;
