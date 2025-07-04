@@ -1,5 +1,9 @@
 #include "opengl_graphics_manager.h"
 
+#include "opengl_helpers.h"
+#include "opengl_pipeline_state_manager.h"
+#include "opengl_resources.h"
+
 #include <imgui/backends/imgui_impl_opengl3.h>
 
 #include "engine/core/debugger/profiler.h"
@@ -7,9 +11,6 @@
 #include "engine/runtime/asset_manager.h"
 #include "engine/runtime/imgui_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
-#include "engine/drivers/opengl/opengl_helpers.h"
-#include "engine/drivers/opengl/opengl_pipeline_state_manager.h"
-#include "engine/drivers/opengl/opengl_resources.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
@@ -17,6 +18,7 @@
 #include "vsinput.glsl.h"
 
 // @NOTE: include GLFW after opengl
+// @TODO: opengl shouldn't know about glfw
 #include <GLFW/glfw3.h>
 
 // @TODO: remove the following

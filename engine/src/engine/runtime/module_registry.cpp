@@ -1,6 +1,6 @@
 #include "module_registry.h"
 
-#include "engine/drivers/opengl/opengl_graphics_manager.h"
+#include "modules/opengl/opengl_graphics_manager.h"
 #if USING(PLATFORM_WINDOWS)
 #include "engine/drivers/d3d11/d3d11_graphics_manager.h"
 #include "engine/drivers/d3d12/d3d12_graphics_manager.h"
