@@ -20,7 +20,9 @@ struct WindowSpecfication {
     bool enableImgui;
 };
 
-class DisplayManager : public Singleton<DisplayManager>, public Module {
+class DisplayManager : public Singleton<DisplayManager>,
+                       public Module,
+                       public ModuleCreateRegistry<DisplayManager> {
 public:
     DisplayManager() : Module("DisplayManager") {}
 

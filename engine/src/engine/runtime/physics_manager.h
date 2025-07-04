@@ -5,7 +5,8 @@ namespace my {
 
 class Scene;
 
-class IPhysicsManager : public Module, public ModuleCreateRegistry<IPhysicsManager> {
+class IPhysicsManager : public Module,
+                        public ModuleCreateRegistry<IPhysicsManager> {
 public:
     using CreateFunc = IPhysicsManager* (*)();
 

@@ -1,6 +1,6 @@
 #include "pipeline_state_manager.h"
 
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/pipeline_state_objects.h"
 
 namespace my {
@@ -61,7 +61,7 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
 
 auto PipelineStateManager::Initialize() -> Result<void> {
     auto ok = Result<void>();
-    switch (GraphicsManager::GetSingleton().GetBackend()) {
+    switch (IGraphicsManager::GetSingleton().GetBackend()) {
         case Backend::EMPTY:
         case Backend::METAL:
         case Backend::VULKAN:
@@ -292,14 +292,14 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   });
 
     // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
+    if (IGraphicsManager::GetSingleton().GetBackend() == Backend::D3D12) {
         return ok;
     }
 
     CREATE_PSO(PSO_PATH_TRACER, { .type = PipelineStateType::COMPUTE, .cs = "path_tracer.cs" });
 
     // @HACK: only support this many shaders
-    if (GraphicsManager::GetSingleton().GetBackend() != Backend::OPENGL) {
+    if (IGraphicsManager::GetSingleton().GetBackend() != Backend::OPENGL) {
         return ok;
     }
 

@@ -11,6 +11,7 @@
 #include "engine/drivers/windows/win32_display_manager.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/graphics_private.h"
+#include "engine/renderer/render_graph/render_graph.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/sampler.h"
 #include "engine/scene/scene.h"
@@ -25,7 +26,7 @@ namespace my {
 
 using Microsoft::WRL::ComPtr;
 
-D3d11GraphicsManager::D3d11GraphicsManager() : GraphicsManager("D3d11GraphicsManager", Backend::D3D11, 1) {
+D3d11GraphicsManager::D3d11GraphicsManager() : BaseGraphicsManager("D3d11GraphicsManager", Backend::D3D11, 1) {
     m_pipelineStateManager = std::make_shared<D3d11PipelineStateManager>();
 }
 

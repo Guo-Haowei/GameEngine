@@ -58,7 +58,7 @@ static uint64_t MakeTextureResident(uint32_t p_handle) {
 
 static void APIENTRY DebugCallback(GLenum, GLenum, unsigned int, GLenum, GLsizei, const char*, const void*);
 
-OpenGlGraphicsManager::OpenGlGraphicsManager() : GraphicsManager("OpenGlGraphicsManager", Backend::OPENGL, 1) {
+OpenGlGraphicsManager::OpenGlGraphicsManager() : BaseGraphicsManager("OpenGlGraphicsManager", Backend::OPENGL, 1) {
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 

@@ -3,7 +3,7 @@
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
 namespace my {
-class GraphicsManager;
+class BaseGraphicsManager;
 }  // namespace my
 
 namespace my::renderer {
@@ -21,7 +21,7 @@ class RenderPass {
 public:
     void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_function);
 
-    void Execute(const renderer::RenderData& p_data, GraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderData& p_data, BaseGraphicsManager& p_graphics_manager);
 
     RenderPassName GetName() const { return m_name; }
     const char* GetNameString() const { return RenderPassNameToString(m_name); }

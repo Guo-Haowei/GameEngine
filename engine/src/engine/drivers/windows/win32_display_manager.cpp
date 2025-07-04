@@ -3,7 +3,7 @@
 #include <imgui/backends/imgui_impl_win32.h>
 
 #include "engine/runtime/application.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/runtime/imgui_manager.h"
 #include "engine/runtime/input_manager.h"
 

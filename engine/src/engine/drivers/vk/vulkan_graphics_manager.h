@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 
 struct GLFWwindow;
 
@@ -10,7 +10,7 @@ namespace my {
 WARNING_PUSH()
 WARNING_DISABLE(4100, "-Wunused-parameter")
 
-class VulkanGraphicsManager : public GraphicsManager {
+class VulkanGraphicsManager : public BaseGraphicsManager {
 public:
     VulkanGraphicsManager();
 

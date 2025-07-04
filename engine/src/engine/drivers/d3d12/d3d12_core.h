@@ -7,7 +7,7 @@
 #include <mutex>
 
 #include "descriptor_table_defines.hlsl.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/drivers/d3d_common/d3d_common.h"
 
 namespace my {

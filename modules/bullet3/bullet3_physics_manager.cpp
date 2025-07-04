@@ -14,8 +14,8 @@
 #include <BulletSoftBody/btSoftBody.h>
 #include <BulletSoftBody/btSoftBodyHelpers.h>
 #include <BulletSoftBody/btSoftRigidDynamicsWorld.h>
-#include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 #pragma warning(pop)
 
 namespace my {
@@ -419,7 +419,7 @@ void Bullet3PhysicsManager::OnSimBegin(Scene& p_scene) {
 
                 mesh.CreateRenderData();
                 mesh.flags |= MeshComponent::DYNAMIC | MeshComponent::DOUBLE_SIDED;
-                mesh.gpuResource = *GraphicsManager::GetSingleton().CreateMesh(mesh);
+                mesh.gpuResource = *IGraphicsManager::GetSingleton().CreateMesh(mesh);
             }
 
             context.dynamicWorld->addSoftBody(cloth);
@@ -433,4 +433,3 @@ void Bullet3PhysicsManager::OnSimEnd(Scene&) {
 }
 
 }  // namespace my
-

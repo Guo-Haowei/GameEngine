@@ -3,13 +3,13 @@
 #include <algorithm>
 
 #include "engine/runtime/asset_registry.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/core/os/timer.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/scene/scene.h"
 
 // @TODO: refactor
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"
@@ -18,7 +18,7 @@ namespace my {
 namespace my {
 
 template<typename T>
-static auto CreateBuffer(GraphicsManager* p_gm, uint32_t p_slot, const std::vector<T>& p_data) {
+static auto CreateBuffer(IGraphicsManager* p_gm, uint32_t p_slot, const std::vector<T>& p_data) {
     GpuBufferDesc desc{
         .slot = p_slot,
         .elementSize = sizeof(T),
@@ -124,7 +124,7 @@ static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtB
 
 void PathTracer::UpdateAccelStructure(const Scene& p_scene) {
     const auto dirty_flag = p_scene.GetDirtyFlags();
-    auto gm = GraphicsManager::GetSingletonPtr();
+    auto gm = BaseGraphicsManager::GetSingletonPtr();
 
     std::map<ecs::Entity, int> materials_lookup;
     {
@@ -207,7 +207,7 @@ void PathTracer::UpdateAccelStructure(const Scene& p_scene) {
 bool PathTracer::CreateAccelStructure(const Scene& p_scene) {
     DEV_ASSERT(m_ptVertexBuffer == nullptr);
 
-    auto gm = GraphicsManager::GetSingletonPtr();
+    auto gm = IGraphicsManager::GetSingletonPtr();
 
     Timer timer;
     GpuScene gpu_scene;
@@ -324,7 +324,7 @@ bool PathTracer::IsActive() const {
     return true;
 }
 
-void PathTracer::BindData(GraphicsManager& p_gm) {
+void PathTracer::BindData(IGraphicsManager& p_gm) {
     // @TODO: check null
     p_gm.BindStructuredBuffer(GetGlobalPtMeshesSlot(), m_ptMeshBuffer.get());
     p_gm.BindStructuredBuffer(GetGlobalPtBvhsSlot(), m_ptBvhBuffer.get());
@@ -333,7 +333,7 @@ void PathTracer::BindData(GraphicsManager& p_gm) {
     p_gm.BindStructuredBuffer(GetGlobalPtMaterialsSlot(), m_ptMaterialBuffer.get());
 }
 
-void PathTracer::UnbindData(GraphicsManager& p_gm) {
+void PathTracer::UnbindData(IGraphicsManager& p_gm) {
     p_gm.UnbindStructuredBuffer(GetGlobalPtBvhsSlot());
     p_gm.UnbindStructuredBuffer(GetGlobalPtVerticesSlot());
     p_gm.UnbindStructuredBuffer(GetGlobalPtIndicesSlot());

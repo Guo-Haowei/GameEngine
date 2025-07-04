@@ -6,7 +6,7 @@
 #include "engine/assets/gltf_loader.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_registry.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/os/timer.h"
@@ -101,7 +101,7 @@ auto AssetManager::LoadAssetSync(AssetRegistryHandle* p_handle) -> Result<IAsset
         ImageAsset* image = dynamic_cast<ImageAsset*>(asset);
 
         // @TODO: based on render, create asset on work threads
-        GraphicsManager::GetSingleton().RequestTexture(image);
+        IGraphicsManager::GetSingleton().RequestTexture(image);
     }
 
     LOG_VERBOSE("asset {} loaded", asset->meta.path);

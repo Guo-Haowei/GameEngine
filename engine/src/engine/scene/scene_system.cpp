@@ -1,7 +1,7 @@
 #include "scene_system.h"
 
 #include "engine/core/base/random.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/renderer.h"
 
@@ -122,7 +122,7 @@ void UpdateLight(float p_timestep,
                 case LIGHT_TYPE_POINT: {
                     constexpr float near_plane = LIGHT_SHADOW_MIN_DISTANCE;
                     const float far_plane = p_light.m_maxDistance;
-                    const bool is_opengl = GraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
+                    const bool is_opengl = IGraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
                     auto matrices = is_opengl ? BuildOpenGlPointLightCubeMapViewProjectionMatrix(p_light.m_position, near_plane, far_plane)
                                               : BuildPointLightCubeMapViewProjectionMatrix(p_light.m_position, near_plane, far_plane);
 

@@ -4,7 +4,7 @@
 
 #include "editor/editor_layer.h"
 #include "engine/runtime/application.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "editor/editor_layer.h"
 
 namespace my {

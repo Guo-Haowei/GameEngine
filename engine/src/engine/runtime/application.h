@@ -10,7 +10,7 @@ namespace my {
 class AssetManager;
 class AssetRegistry;
 class DisplayManager;
-class GraphicsManager;
+class IGraphicsManager;
 class ImguiManager;
 class InputManager;
 class IPhysicsManager;
@@ -68,7 +68,7 @@ public:
     IPhysicsManager* GetPhysicsManager() { return m_physicsManager; }
     ScriptManager* GetScriptManager() { return m_scriptManager; }
     DisplayManager* GetDisplayServer() { return m_displayServer; }
-    GraphicsManager* GetGraphicsManager() { return m_graphicsManager; }
+    IGraphicsManager* GetGraphicsManager() { return m_graphicsManager; }
     ImguiManager* GetImguiManager() { return m_imguiManager; }
 
     const ApplicationSpec& GetSpecification() const { return m_specification; }
@@ -93,7 +93,6 @@ protected:
     virtual void InitLayers() {}
     // @TODO: add CreateXXXManager for all managers
     virtual Result<ImguiManager*> CreateImguiManager();
-    virtual Result<GraphicsManager*> CreateGraphicsManager();
     virtual Result<ScriptManager*> CreateScriptManager();
 
     void SaveCommandLine(int p_argc, const char** p_argv);
@@ -115,7 +114,7 @@ protected:
     SceneManager* m_sceneManager{ nullptr };
     IPhysicsManager* m_physicsManager{ nullptr };
     DisplayManager* m_displayServer{ nullptr };
-    GraphicsManager* m_graphicsManager{ nullptr };
+    IGraphicsManager* m_graphicsManager{ nullptr };
     ImguiManager* m_imguiManager{ nullptr };
     ScriptManager* m_scriptManager{ nullptr };
     InputManager* m_inputManager{ nullptr };

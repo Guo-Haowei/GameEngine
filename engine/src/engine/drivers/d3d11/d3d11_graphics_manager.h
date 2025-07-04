@@ -3,7 +3,7 @@
 #include <wrl/client.h>
 
 #include "engine/core/base/rid_owner.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 
 namespace my {
 
@@ -21,7 +21,7 @@ struct D3d11MeshBuffers : GpuMesh {
     using GpuMesh::GpuMesh;
 };
 
-class D3d11GraphicsManager : public GraphicsManager {
+class D3d11GraphicsManager : public BaseGraphicsManager {
 public:
     D3d11GraphicsManager();
 
@@ -84,11 +84,11 @@ public:
     Microsoft::WRL::ComPtr<ID3D11DeviceContext>& GetD3dContext() { return m_deviceContext; }
 
 protected:
-    auto InitializeInternal() -> Result<void> final;
-    std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
+    virtual auto InitializeInternal() -> Result<void> final;
+    virtual std::shared_ptr<GpuTexture> CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) final;
 
-    void Render() final;
-    void Present() final;
+    virtual void Render() final;
+    virtual void Present() final;
 
     void OnWindowResize(int p_width, int p_height) final;
     void SetPipelineStateImpl(PipelineStateName p_name) final;

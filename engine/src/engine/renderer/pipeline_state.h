@@ -121,7 +121,7 @@ struct PipelineState {
     PSO_NAME(PSO_PARTICLE_RENDERING)     \
     PSO_NAME(PSO_DEBUG_DRAW)
 
-enum PipelineStateName {
+enum PipelineStateName : uint8_t {
 #define PSO_NAME(ENUM) ENUM,
     PSO_NAME_LIST
 #undef PSO_NAME

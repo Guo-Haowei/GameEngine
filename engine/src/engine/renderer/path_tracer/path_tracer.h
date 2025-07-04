@@ -25,9 +25,9 @@ public:
 
     bool IsActive() const;
 
-    void BindData(GraphicsManager& p_gm);
+    void BindData(IGraphicsManager& p_gm);
 
-    void UnbindData(GraphicsManager& p_gm);
+    void UnbindData(IGraphicsManager& p_gm);
 
 private:
     bool CreateAccelStructure(const Scene& p_scene);

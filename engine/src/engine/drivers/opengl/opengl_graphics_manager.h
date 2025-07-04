@@ -1,7 +1,7 @@
 #pragma once
 
 #include "engine/core/base/rid_owner.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "opengl_helpers_forward.h"
 
 struct GLFWwindow;
@@ -15,7 +15,7 @@ struct OpenGlMeshBuffers : GpuMesh {
     uint32_t vao{ 0 };
 };
 
-class OpenGlGraphicsManager : public GraphicsManager {
+class OpenGlGraphicsManager : public BaseGraphicsManager {
 public:
     OpenGlGraphicsManager();
 

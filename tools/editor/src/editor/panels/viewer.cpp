@@ -6,7 +6,7 @@
 #include "editor/utility/imguizmo.h"
 #include "engine/runtime/common_dvars.h"
 #include "engine/runtime/display_manager.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/scene_manager.h"
 #include "engine/core/io/input_event.h"
@@ -81,7 +81,7 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     ImVec2 bottom_right(top_left.x + m_canvasSize.x, top_left.y + m_canvasSize.y);
 
     // @TODO: fix this
-    const auto& gm = GraphicsManager::GetSingleton();
+    const auto& gm = IGraphicsManager::GetSingleton();
     uint64_t handle = gm.GetFinalImage();
 
     switch (gm.GetBackend()) {

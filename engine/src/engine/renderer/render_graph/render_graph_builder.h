@@ -4,7 +4,7 @@
 
 namespace my {
 struct Framebuffer;
-class GraphicsManager;
+class IGraphicsManager;
 }  // namespace my
 
 namespace my::renderer {
@@ -37,7 +37,7 @@ public:
     static std::unique_ptr<RenderGraph> CreateDefault(RenderGraphBuilderConfig& p_config);
     static std::unique_ptr<RenderGraph> CreatePathTracer(RenderGraphBuilderConfig& p_config);
 
-    static void DrawDebugImages(const RenderData& p_data, int p_width, int p_height, GraphicsManager& p_graphics_manager);
+    static void DrawDebugImages(const RenderData& p_data, int p_width, int p_height, IGraphicsManager& p_graphics_manager);
 
     static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
                                                   PixelFormat p_format,

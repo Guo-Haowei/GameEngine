@@ -8,7 +8,7 @@
 
 // @TODO: remove
 #include "engine/runtime/asset_registry.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
@@ -243,7 +243,7 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     // @TODO: cache the slots
     // Texture indices
     auto find_index = [](RenderTargetResourceName p_name) -> uint32_t {
-        std::shared_ptr<GpuTexture> resource = GraphicsManager::GetSingleton().FindTexture(p_name);
+        std::shared_ptr<GpuTexture> resource = IGraphicsManager::GetSingleton().FindTexture(p_name);
         if (!resource) {
             return 0;
         }
@@ -528,7 +528,7 @@ static void FillBloomConstants(const Scene& p_config,
                                RenderData& p_out_data) {
     unused(p_config);
 
-    auto& gm = GraphicsManager::GetSingleton();
+    auto& gm = IGraphicsManager::GetSingleton();
     auto image = gm.FindTexture(RESOURCE_BLOOM_0).get();
     if (!image) {
         return;

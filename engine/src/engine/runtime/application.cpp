@@ -8,7 +8,7 @@
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/common_dvars.h"
 #include "engine/runtime/display_manager.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/runtime/imgui_manager.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
@@ -90,10 +90,6 @@ Result<ImguiManager*> Application::CreateImguiManager() {
     return new ImguiManager();
 }
 
-Result<GraphicsManager*> Application::CreateGraphicsManager() {
-    return GraphicsManager::Create();
-}
-
 Result<ScriptManager*> Application::CreateScriptManager() {
     return ScriptManager::Create();
 }
@@ -111,14 +107,8 @@ auto Application::SetupModules() -> Result<void> {
     }
     m_sceneManager = new SceneManager();
     m_physicsManager = CreatePhysicsManager();
+    m_graphicsManager = CreateGraphicsManager();
     m_displayServer = DisplayManager::Create();
-    {
-        auto res = CreateGraphicsManager();
-        if (!res) {
-            return HBN_ERROR(res.error());
-        }
-        m_graphicsManager = *res;
-    }
     m_inputManager = new InputManager();
 
     RegisterModule(m_assetManager);
