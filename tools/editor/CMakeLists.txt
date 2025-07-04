@@ -20,10 +20,13 @@ target_include_directories(${TARGET_NAME} PRIVATE
 
 set(TARGET_LIBS
     engine
-    bullet3
     the_aviator_lib
     imnodes
 )
+
+if (BUILD_BULLET3)
+    list(APPEND TARGET_LIBS bullet3)
+endif()
 
 if (BUILD_TINYGLTF_LOADER)
     list(APPEND TARGET_LIBS tinygltf_loader)

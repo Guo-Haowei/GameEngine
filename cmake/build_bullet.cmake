@@ -1,6 +1,10 @@
-option(USE_BULLET "Enable Bullet Physics Engine" ON)
+option(BUILD_BULLET3 "Enable Bullet Physics Engine" ON)
 
-if (USE_BULLET)
+if (EMSCRIPTEN)
+    set(BUILD_BULLET3 OFF CACHE BOOL "" FORCE)
+endif()
+
+if (BUILD_BULLET3)
     set(BUILD_BULLET2_DEMOS OFF CACHE BOOL "" FORCE)
     set(BUILD_CPU_DEMOS OFF CACHE BOOL "" FORCE)
     set(BUILD_EXTRAS OFF CACHE BOOL "" FORCE)

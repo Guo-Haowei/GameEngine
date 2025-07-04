@@ -22,22 +22,28 @@ message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
 if (EMSCRIPTEN)
     set(BUILD_TINYGLTF_LOADER OFF CACHE BOOL "" FORCE)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
+
+    set(EM_FLAGS "-sUSE_PTHREADS=1 -sSHARED_MEMORY=1")
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${EM_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${EM_FLAGS}")
+
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EM_FLAGS}")
+
+    # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${EM_FLAGS}")
 endif ()
 
 if (NOT EMSCRIPTEN)
-    # GLFW
-    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
-    add_subdirectory(thirdparty/glfw)
-    set_target_properties(glfw PROPERTIES FOLDER thirdparty)
-    set_target_properties(update_mappings PROPERTIES FOLDER thirdparty)
-
     # GLAD
     add_subdirectory(thirdparty/glad)
     set_target_properties(glad PROPERTIES FOLDER thirdparty)
 endif()
+
+include(cmake/build_glfw.cmake)
+include(cmake/build_bullet.cmake)
+include(cmake/build_lua.cmake)
+include(cmake/build_imgui.cmake)
+include(cmake/build_imnodes.cmake)
 
 # GLM
 add_subdirectory(thirdparty/glm)
@@ -48,11 +54,6 @@ set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
 add_subdirectory(thirdparty/yaml-cpp)
 set_target_properties(yaml-cpp PROPERTIES FOLDER thirdparty)
-
-include(cmake/build_bullet.cmake)
-include(cmake/build_lua.cmake)
-include(cmake/build_imgui.cmake)
-include(cmake/build_imnodes.cmake)
 
 if(WIN32)
     message(STATUS "Configuring optick...")

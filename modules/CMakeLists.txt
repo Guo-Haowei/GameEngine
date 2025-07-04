@@ -5,7 +5,7 @@ elseif (EMSCRIPTEN)
     add_subdirectory(opengles3)
 endif()
 
-if (USE_BULLET)
+if (BUILD_BULLET3)
     add_subdirectory(bullet3)
 endif()
 

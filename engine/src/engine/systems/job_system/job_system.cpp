@@ -14,6 +14,15 @@ static struct
     ThreadSafeRingBuffer<Job, 128> jobQueue;
 } s_glob;
 
+bool Initialize() {
+    return true;
+}
+
+void Finalize() {
+    s_glob.wakeCondition.notify_all();
+}
+
+#if USING(ENABLE_JOB_SYSTEM)
 static bool DoWork() {
     Job job;
     if (!s_glob.jobQueue.pop_front(job)) {
@@ -43,14 +52,6 @@ void WorkerMain() {
             s_glob.wakeCondition.wait(lock);
         }
     }
-}
-
-bool Initialize() {
-    return true;
-}
-
-void Finalize() {
-    s_glob.wakeCondition.notify_all();
 }
 
 void Context::Dispatch(uint32_t p_job_count, uint32_t p_group_size, const std::function<void(JobArgs)>& p_task) {
@@ -92,5 +93,6 @@ void Context::Wait() {
         DoWork();
     }
 }
+#endif
 
 }  // namespace my::jobsystem

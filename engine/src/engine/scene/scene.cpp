@@ -40,7 +40,7 @@ static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
         BODY;                                                   \
     }
 
-#if 1
+#if USING(ENABLE_JOB_SYSTEM)
 #define JS_PARALLEL_FOR JS_FORCE_PARALLEL_FOR
 #else
 #define JS_PARALLEL_FOR JS_NO_PARALLEL_FOR

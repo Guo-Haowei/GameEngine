@@ -94,9 +94,11 @@ Scene* Editor::CreateInitialScene() {
 int main(int p_argc, const char** p_argv) {
     using namespace my;
 
+#if !USING(PLATFORM_WASM)
     IPhysicsManager::RegisterCreateFunc([]() -> IPhysicsManager* {
         return new Bullet3PhysicsManager();
     });
+#endif
 
     return Main(p_argc, p_argv);
 }
