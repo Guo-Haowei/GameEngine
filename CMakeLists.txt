@@ -10,18 +10,18 @@ if(APPLE)
 endif()
 
 option(USE_EMSCRIPTEN "Build for Emscripten/WebAssembly" OFF)
+option(BUILD_TINYGLTF_LOADER "Build tinygltf_loader" ON)
 option(BUILD_UNIT_TESTS "Build Tests" OFF)
-
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten")
-    message(STATUS "Compiling with Emscripten")
-    set(USING_EMSCRIPTEN TRUE)
-endif()
 
 message("***********************************************************************")
 message(STATUS "CMAKE_CXX_COMPILER_ID   : ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
 
 ################################################################################
+
+if (EMSCRIPTEN)
+    set(BUILD_TINYGLTF_LOADER OFF CACHE BOOL "" FORCE)
+endif ()
 
 if (NOT EMSCRIPTEN)
     # GLFW

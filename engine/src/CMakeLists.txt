@@ -56,7 +56,6 @@ target_compile_definitions(${TARGET_NAME} PUBLIC
 
 set(TARGET_LIBS
     imgui
-    glfw
     glm::glm
     yaml-cpp::yaml-cpp
     lua_script
@@ -64,6 +63,7 @@ set(TARGET_LIBS
 
 if(WIN32)
     list(APPEND TARGET_LIBS
+        glfw
         optick
         d3d11.lib
         d3d12.lib
@@ -71,8 +71,12 @@ if(WIN32)
         d3dcompiler.lib
         dxguid.lib
         loader_assimp
-        opengl_backend
+        opengl_4_backend
         $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+    )
+elseif (EMSCRIPTEN)
+    list(APPEND TARGET_LIBS
+        opengl_es_backend
     )
 endif()
 

@@ -5,4 +5,9 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+
+#if USING(PLATFORM_WASM)
+#include <GLES3/gl3.h>
+#else
 #include <glad/glad.h>
+#endif

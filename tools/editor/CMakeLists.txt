@@ -18,13 +18,18 @@ target_include_directories(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(${TARGET_NAME} PRIVATE
+set(TARGET_LIBS
     engine
     bullet3
     the_aviator_lib
-    tinygltf_loader
     imnodes
 )
+
+if (BUILD_TINYGLTF_LOADER)
+    list(APPEND TARGET_LIBS tinygltf_loader)
+endif()
+
+target_link_libraries(${TARGET_NAME} PRIVATE ${TARGET_LIBS})
 
 set_target_properties(${TARGET_NAME}
     PROPERTIES

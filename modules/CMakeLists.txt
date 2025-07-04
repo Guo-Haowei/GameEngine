@@ -1,7 +1,10 @@
+add_subdirectory(opengl_common)
+add_subdirectory(opengl)
+
 if (USE_BULLET)
     add_subdirectory(bullet3)
 endif()
-if (NOT EMSCRIPTEN)
+
+if (BUILD_TINYGLTF_LOADER)
     add_subdirectory(tinygltf)
-    add_subdirectory(opengl)
 endif()

@@ -198,7 +198,7 @@ static IGraphicsManager* SelectGraphicsManager(const std::string& p_backend) {
     }
 
     if (p_backend == "opengl") {
-        return new OpenGlGraphicsManager;
+        return new OpenGl4GraphicsManager;
     }
 
     if (p_backend == "vulkan") {
