@@ -4,35 +4,39 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/dynamic_variable/dynamic_variable_manager.h"
+#include "engine/core/io/file_access.h"
+#include "engine/core/os/threads.h"
+#include "engine/core/string/string_utils.h"
+#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/renderer.h"
 #include "engine/runtime/asset_manager.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/common_dvars.h"
 #include "engine/runtime/display_manager.h"
-#include "engine/renderer/base_graphics_manager.h"
 #include "engine/runtime/imgui_manager.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
 #include "engine/runtime/module_registry.h"
 #include "engine/runtime/scene_manager.h"
 #include "engine/runtime/script_manager.h"
-#include "engine/core/io/file_access.h"
-#include "engine/core/os/threads.h"
-#include "engine/core/os/timer.h"
-#include "engine/core/string/string_utils.h"
-#include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/renderer.h"
 #include "engine/scene/scene.h"
 
 #define DEFINE_DVAR
 #include "engine/runtime/common_dvars.h"
 #undef DEFINE_DVAR
 
+#if USING(PLATFORM_WASM)
+#include <emscripten/html5.h>
+static my::Application* s_app = nullptr;
+#endif
+
 namespace my {
 
 namespace fs = std::filesystem;
 
 // @TODO: refactor
-static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
+[[maybe_unused]] static constexpr const char* DVAR_CACHE_FILE = "@user://dynamic_variables.cache";
 
 static void RegisterCommonDvars() {
 #define REGISTER_DVAR
@@ -240,95 +244,108 @@ void Application::Finalize() {
 #endif
 }
 
-void Application::Run() {
+bool Application::MainLoop() {
+    HBN_PROFILE_FRAME("MainThread");
+
+    m_displayServer->BeginFrame();
+    if (m_displayServer->ShouldClose()) {
+        return false;
+    }
+
+    renderer::BeginFrame();
+
+    m_inputManager->BeginFrame();
+
+    // @TODO: better elapsed time
+    float timestep = static_cast<float>(m_timer.GetDuration().ToSecond());
+    timestep = min(timestep, 0.5f);
+    m_timer.Start();
+
+    m_inputManager->GetEventQueue().FlushEvents();
+
+    // 1. scene manager checks for update, and if it's necessary to swap scene
+    // 2. renderer builds render data
+    // 3. editor modifies scene
+    // 4. script manager updates logic
+    // 5. phyiscs manager updates physics
+    // 6. graphcs manager renders (optional: on another thread)
+    m_sceneManager->Update();
+
+    // layer should set active scene
+    // update layers from back to front
+    for (int i = (int)m_layers.size() - 1; i >= 0; --i) {
+        m_layers[i]->OnUpdate(timestep);
+    }
+
+    m_activeScene->Update(timestep);
+    ecs::Entity camera;
+    switch (m_state) {
+        case Application::State::EDITING:
+            camera = m_activeScene->GetEditorCamera();
+            break;
+        case Application::State::SIM:
+            camera = m_activeScene->GetMainCamera();
+            break;
+        case Application::State::BEGIN_SIM:
+            break;
+        case Application::State::END_SIM:
+            break;
+        default:
+            break;
+    }
+    PerspectiveCameraComponent* perspective_camera = nullptr;
+    if (camera.IsValid()) {
+        perspective_camera = m_activeScene->GetComponent<PerspectiveCameraComponent>(camera);
+    } else {
+        CRASH_NOW();
+    }
+    renderer::RequestScene(*perspective_camera, *m_activeScene);
+
+    // @TODO: refactor this
+    if (m_imguiManager) {
+        HBN_PROFILE_EVENT("Application::ImGui");
+        m_imguiManager->BeginFrame();
+
+        for (int i = (int)m_layers.size() - 1; i >= 0; --i) {
+            m_layers[i]->OnImGuiRender();
+        }
+
+        ImGui::Render();
+    }
+
+    if (m_state == State::SIM) {
+        m_scriptManager->Update(*m_activeScene);
+        m_physicsManager->Update(*m_activeScene);
+    }
+
+    renderer::EndFrame();
+
+    m_graphicsManager->Update(*m_activeScene);
+
+    m_inputManager->EndFrame();
+    return true;
+}
+
+void Application::Run(Application* p_app) {
     LOG_WARN("TODO: reverse z");
 
     LOG("\n********************************************************************************"
         "\nMain Loop"
         "\n********************************************************************************");
 
-    // @TODO: add frame count, timestep time, etc
-    Timer timer;
-    do {
-        HBN_PROFILE_FRAME("MainThread");
-
-        m_displayServer->BeginFrame();
-        if (m_displayServer->ShouldClose()) {
-            break;
-        }
-
-        renderer::BeginFrame();
-
-        m_inputManager->BeginFrame();
-
-        // @TODO: better elapsed time
-        float timestep = static_cast<float>(timer.GetDuration().ToSecond());
-        timestep = min(timestep, 0.5f);
-        timer.Start();
-
-        m_inputManager->GetEventQueue().FlushEvents();
-
-        // 1. scene manager checks for update, and if it's necessary to swap scene
-        // 2. renderer builds render data
-        // 3. editor modifies scene
-        // 4. script manager updates logic
-        // 5. phyiscs manager updates physics
-        // 6. graphcs manager renders (optional: on another thread)
-        m_sceneManager->Update();
-
-        // layer should set active scene
-        // update layers from back to front
-        for (int i = (int)m_layers.size() - 1; i >= 0; --i) {
-            m_layers[i]->OnUpdate(timestep);
-        }
-
-        m_activeScene->Update(timestep);
-        ecs::Entity camera;
-        switch (m_state) {
-            case Application::State::EDITING:
-                camera = m_activeScene->GetEditorCamera();
-                break;
-            case Application::State::SIM:
-                camera = m_activeScene->GetMainCamera();
-                break;
-            case Application::State::BEGIN_SIM:
-                break;
-            case Application::State::END_SIM:
-                break;
-            default:
-                break;
-        }
-        PerspectiveCameraComponent* perspective_camera = nullptr;
-        if (camera.IsValid()) {
-            perspective_camera = m_activeScene->GetComponent<PerspectiveCameraComponent>(camera);
-        } else {
-            CRASH_NOW();
-        }
-        renderer::RequestScene(*perspective_camera, *m_activeScene);
-
-        // @TODO: refactor this
-        if (m_imguiManager) {
-            HBN_PROFILE_EVENT("Application::ImGui");
-            m_imguiManager->BeginFrame();
-
-            for (int i = (int)m_layers.size() - 1; i >= 0; --i) {
-                m_layers[i]->OnImGuiRender();
-            }
-
-            ImGui::Render();
-        }
-
-        if (m_state == State::SIM) {
-            m_scriptManager->Update(*m_activeScene);
-            m_physicsManager->Update(*m_activeScene);
-        }
-
-        renderer::EndFrame();
-
-        m_graphicsManager->Update(*m_activeScene);
-
-        m_inputManager->EndFrame();
-    } while (true);
+#if USING(PLATFORM_WASM)
+    s_app = p_app;
+    //emscripten_request_animation_frame_loop([](double time, void* userData) -> bool {
+    //    s_app->MainLoop();
+    //    return true;
+    //},
+    //                                        0);
+    emscripten_set_main_loop([]() {
+        s_app->MainLoop();
+    }, -1, 1);
+#else
+    while (p_app->MainLoop());
+#endif
 
     LOG("\n********************************************************************************"
         "\nMain Loop"

@@ -31,7 +31,9 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<HierarchyPanel>(*this));
     AddPanel(std::make_shared<PropertyPanel>(*this));
     AddPanel(std::make_shared<Viewer>(*this));
+#if !USING(PLATFORM_WASM)
     AddPanel(std::make_shared<ContentBrowser>(*this));
+#endif
     AddPanel(std::make_shared<RenderGraphViewer>(*this));
 
     m_menuBar = std::make_shared<MenuBar>(*this);

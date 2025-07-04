@@ -19,7 +19,7 @@ int Main(int p_argc, const char** p_argv) {
             builder << res.error();
             LOG_ERROR("{}", builder.ToString());
         } else {
-            app->Run();
+            Application::Run(app);
         }
 
         app->Finalize();

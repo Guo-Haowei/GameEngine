@@ -432,7 +432,6 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
 #if USING(PLATFORM_WASM)
     m_activeRenderGraphName = RenderGraphName::EMPTY;
 #endif
-    m_activeRenderGraphName = RenderGraphName::EMPTY;
 
     renderer::RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);

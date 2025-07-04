@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/core/base/noncopyable.h"
+#include "engine/core/os/timer.h"
 #include "engine/runtime/event_queue.h"
 #include "engine/runtime/layer.h"
 #include "engine/runtime/module.h"
@@ -52,7 +53,7 @@ public:
 
     auto Initialize(int p_argc, const char** p_argv) -> Result<void>;
     void Finalize();
-    void Run();
+    static void Run(Application* p_app);
 
     void AttachLayer(Layer* p_layer);
     void DetachLayer(Layer* p_layer);
@@ -89,6 +90,8 @@ public:
 protected:
     [[nodiscard]] auto SetupModules() -> Result<void>;
 
+    bool MainLoop();
+
     virtual void RegisterDvars();
     virtual void InitLayers() {}
     // @TODO: add CreateXXXManager for all managers
@@ -124,6 +127,8 @@ protected:
     const Type m_type;
     State m_state{ State::EDITING };
     Scene* m_activeScene{ nullptr };
+
+    Timer m_timer;
 };
 
 }  // namespace my

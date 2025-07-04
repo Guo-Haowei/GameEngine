@@ -61,6 +61,9 @@ auto PipelineStateManager::Create(PipelineStateName p_name, const PipelineStateD
 
 auto PipelineStateManager::Initialize() -> Result<void> {
     auto ok = Result<void>();
+    if constexpr (USING(PLATFORM_WASM)) {
+        return ok;
+    }
     switch (IGraphicsManager::GetSingleton().GetBackend()) {
         case Backend::EMPTY:
         case Backend::METAL:
