@@ -85,7 +85,6 @@ static void FillPass(const Scene& p_scene,
         DEV_ASSERT(p_scene.Contains<MeshComponent>(obj.meshId));
 
         const MeshComponent& mesh = *p_scene.GetComponent<MeshComponent>(obj.meshId);
-        bool double_sided = mesh.flags & MeshComponent::DOUBLE_SIDED;
 
         const Matrix4x4f& world_matrix = transform.GetWorldMatrix();
         AABB aabb = mesh.localBound;
@@ -118,16 +117,8 @@ static void FillPass(const Scene& p_scene,
         }
 
         // HACK
-        const MeshComponent* cloth_mesh = p_scene.GetComponent<MeshComponent>(entity);
-        if (cloth_mesh && cloth_mesh->gpuResource) {
-            draw.mesh_data = (GpuMesh*)cloth_mesh->gpuResource.get();
-        } else {
-            draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
-        }
-
-        if (!draw.mesh_data) {
-            continue;
-        }
+        draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
+        DEV_ASSERT(draw.mesh_data);
 
         for (const auto& subset : mesh.subsets) {
             aabb = subset.local_bound;
@@ -142,16 +133,6 @@ static void FillPass(const Scene& p_scene,
 
             DrawContext sub_mesh;
 
-            // THIS IS HACKY
-            if (cloth_mesh) {
-                sub_mesh.index_count = draw.mesh_data->desc.drawCount;
-                sub_mesh.index_offset = 0;
-                sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
-                draw.subsets.emplace_back(std::move(sub_mesh));
-                double_sided = true;
-                break;
-            }
-
             sub_mesh.index_count = subset.index_count;
             sub_mesh.index_offset = subset.index_offset;
             sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
@@ -161,8 +142,6 @@ static void FillPass(const Scene& p_scene,
 
         if (is_transparent) {
             p_pass.transparent.emplace_back(std::move(draw));
-        } else if (double_sided) {
-            p_pass.doubleSided.emplace_back(std::move(draw));
         } else {
             p_pass.opaque.emplace_back(std::move(draw));
         }

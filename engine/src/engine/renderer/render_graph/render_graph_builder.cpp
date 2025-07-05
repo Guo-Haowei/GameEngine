@@ -127,7 +127,6 @@ static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
 
     gm.SetPipelineState(PSO_PREPASS);
     DrawBatchesGeometry(p_data, pass.opaque, true);
-    DrawBatchesGeometry(p_data, pass.doubleSided, true);
     DrawInstacedGeometry(p_data, p_data.instances, true);
 }
 
@@ -192,7 +191,6 @@ static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_frame
     DrawBatchesGeometry(p_data, pass.opaque, false);
     DrawInstacedGeometry(p_data, p_data.instances, false);
     gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
-    DrawBatchesGeometry(p_data, pass.doubleSided, false);
 }
 
 void RenderGraphBuilder::AddGbufferPass() {
@@ -338,7 +336,6 @@ static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_f
             draw_batches(pass.opaque);
             draw_batches(pass.transparent);
             // @TODO: double side
-            draw_batches(pass.doubleSided);
         }
     }
 }
@@ -376,7 +373,6 @@ static void ShadowPassFunc(const RenderData& p_data, const Framebuffer* p_frameb
     gm.SetPipelineState(PSO_DPETH);
     draw_batches(pass.opaque);
     draw_batches(pass.transparent);
-    draw_batches(pass.doubleSided);
 }
 
 void RenderGraphBuilder::AddShadowPass() {
@@ -481,7 +477,6 @@ static void VoxelizationPassFunc(const RenderData& p_data, const Framebuffer*, D
         gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
         draw_batches(pass.opaque);
         draw_batches(pass.transparent);
-        draw_batches(pass.doubleSided);
 
         // glSubpixelPrecisionBiasNV(0, 0);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);

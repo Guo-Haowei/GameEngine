@@ -1,4 +1,6 @@
 #pragma once
+#include "render_command.h"
+
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
@@ -56,7 +58,6 @@ struct PassContext {
 
     std::vector<BatchContext> opaque;
     std::vector<BatchContext> transparent;
-    std::vector<BatchContext> doubleSided;
 };
 
 struct ImageDrawContext {

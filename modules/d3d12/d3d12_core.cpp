@@ -38,7 +38,9 @@ auto DescriptorHeapBase::Initialize(int p_count, D3D12_DESCRIPTOR_HEAP_TYPE p_ty
 
     m_incrementSize = p_device->GetDescriptorHandleIncrementSize(p_type);
     m_startCpu = m_heap->GetCPUDescriptorHandleForHeapStart();
-    m_startGpu = m_heap->GetGPUDescriptorHandleForHeapStart();
+    if (p_shader_visible) {
+        m_startGpu = m_heap->GetGPUDescriptorHandleForHeapStart();
+    }
 
     return Result<void>();
 }

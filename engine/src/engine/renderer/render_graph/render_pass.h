@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/renderer/render_command.h"
 #include "engine/renderer/render_graph/framebuffer.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 
@@ -28,13 +29,19 @@ using DrawPassExecuteFunc = void (*)(const renderer::RenderData&,
 
 struct DrawPass {
     std::shared_ptr<Framebuffer> framebuffer;
-    DrawPassExecuteFunc executor = nullptr;
+    DrawPassExecuteFunc executor;
+
+    std::vector<RenderCommand> commnads;
+
+    void AddCommand(const RenderCommand& cmd) {
+        commnads.emplace_back(cmd);
+    }
 };
 
 class RenderPass {
 public:
     void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_func) {
-        m_drawPasses.emplace_back(DrawPass{ p_framebuffer, p_func });
+        m_drawPasses.emplace_back(DrawPass{ p_framebuffer, p_func, {} });
     }
 
     void Execute(const renderer::RenderData& p_data, IRenderCmdContext& p_cmd);
