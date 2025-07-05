@@ -6,9 +6,9 @@ struct GLFWwindow;
 
 namespace my {
 
-class OpenGLES3GraphicsManager : public CommonOpenGlGraphicsManager {
+class OpenGLES3GraphicsManager : public CommonOpenGLGraphicsManager {
 public:
-    OpenGLES3GraphicsManager() : CommonOpenGlGraphicsManager() {}
+    OpenGLES3GraphicsManager() : CommonOpenGLGraphicsManager() {}
 
 protected:
     auto InitializeInternal() -> Result<void> final;

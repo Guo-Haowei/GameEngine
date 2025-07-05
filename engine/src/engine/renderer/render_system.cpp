@@ -695,17 +695,6 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
         camera.up = cross(camera.front, camera.right);
     }
 
-    // @TODO: update soft body
-    for (auto [entity, mesh] : p_scene.View<MeshComponent>()) {
-        if (!mesh.updatePositions.empty()) {
-            p_out_data.updateBuffer.emplace_back(RenderData::UpdateBuffer{
-                .positions = std::move(mesh.updatePositions),
-                .normals = std::move(mesh.updateNormals),
-                .id = mesh.gpuResource.get(),
-            });
-        }
-    }
-
     FillConstantBuffer(p_scene, p_out_data);
     FillLightBuffer(p_scene, p_out_data);
     FillMainPass(p_scene, p_out_data);

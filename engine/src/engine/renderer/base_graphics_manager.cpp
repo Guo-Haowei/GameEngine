@@ -302,14 +302,6 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
 
         auto data = renderer::GetRenderData();
 
-        for (const auto& update_buffer : data->updateBuffer) {
-            GpuMesh* mesh = (GpuMesh*)update_buffer.id;
-            if (mesh) {
-                UpdateBuffer(renderer::CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
-                UpdateBuffer(renderer::CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
-            }
-        }
-
         // @TODO: remove this
         UpdateEmitters(p_scene);
 

@@ -15,9 +15,9 @@ struct OpenGlMeshBuffers : GpuMesh {
     uint32_t vao{ 0 };
 };
 
-class CommonOpenGlGraphicsManager : public BaseGraphicsManager {
+class CommonOpenGLGraphicsManager : public BaseGraphicsManager {
 public:
-    CommonOpenGlGraphicsManager();
+    CommonOpenGLGraphicsManager();
 
     void FinalizeImpl() override;
 

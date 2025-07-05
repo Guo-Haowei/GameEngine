@@ -144,8 +144,6 @@ struct RenderData {
         const void* id;
     };
 
-    std::vector<UpdateBuffer> updateBuffer;
-
     struct DrawDebugContext {
         std::vector<Vector3f> positions;
         std::vector<Color> colors;
