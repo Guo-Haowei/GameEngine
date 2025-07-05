@@ -421,7 +421,6 @@ void RenderData::FillVoxelPass(const Scene& p_scene) {
     int counter = 0;
     for (auto [entity, voxel_gi] : p_scene.m_VoxelGiComponents) {
         voxel_gi_bound = voxel_gi.region;
-        DEV_ASSERT(voxel_gi_bound.IsValid());
         if (!voxel_gi_bound.IsValid()) {
             return;
         }
@@ -568,12 +567,12 @@ void RenderData::FillMainPass(const Scene& p_scene) {
         }
 
         if (is_transparent) {
-            //add_to_pass(g_transparent, filter_main, false);
+            // add_to_pass(g_transparent, filter_main, false);
         }
 
-        if (voxelization_pass) {
+        if (voxelization_pass && this->voxel_gi_bound.IsValid()) {
             FilterFunc gi_filter = [&](const AABB& p_aabb) -> bool { return this->voxel_gi_bound.Intersects(p_aabb); };
-            add_to_pass(gbuffer_pass, gi_filter, true);
+            add_to_pass(voxelization_pass, gi_filter, false);
         }
     }
 }
@@ -771,8 +770,8 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     FillConstantBuffer(p_scene, p_out_data);
     p_out_data.FillLightBuffer(p_scene);
     p_out_data.FillVoxelPass(p_scene);
-
     p_out_data.FillMainPass(p_scene);
+
     FillMeshEmitterBuffer(p_scene, p_out_data);
     FillBloomConstants(p_scene, p_out_data);
     FillEnvConstants(p_scene, p_out_data);

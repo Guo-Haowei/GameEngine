@@ -82,7 +82,6 @@ static void ExecuteDrawCommands(const RenderData& p_data, const DrawPass& p_draw
 
     auto& gm = IGraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
-
     for (const RenderCommand& cmd : p_draw_pass.commands) {
         if (cmd.type != RenderCommandType::Draw) continue;
         const DrawCommand& draw = cmd.draw;
@@ -216,6 +215,7 @@ void RenderGraphBuilder::AddGbufferPass() {
     auto depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
     RenderPassDesc desc;
+    desc.dependencies = { RenderPassName::PREPASS },
     desc.name = RenderPassName::GBUFFER;
     auto pass = m_graph.CreatePass(desc);
 
@@ -446,25 +446,6 @@ static void VoxelizationPassFunc(const RenderData& p_data, const Framebuffer*, D
 
     // @TODO: hack
     if (gm.GetBackend() == Backend::OPENGL) {
-        auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
-            for (const auto& draw : p_batches) {
-                const bool has_bone = draw.bone_idx >= 0;
-                if (has_bone) {
-                    gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-                }
-
-                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-                gm.SetMesh(draw.mesh_data);
-
-                for (const auto& subset : draw.subsets) {
-                    gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-                    gm.DrawElements(subset.index_count, subset.index_offset);
-                }
-            }
-        };
-
         gm.SetViewport(Viewport(voxel_size, voxel_size));
         gm.SetPipelineState(PSO_VOXELIZATION);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
