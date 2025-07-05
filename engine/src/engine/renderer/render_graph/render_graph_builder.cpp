@@ -16,6 +16,7 @@
 
 // @TODO: refactor
 #define GBUFFER_PASS_NAME                "GbufferDrawPass"
+#define FORWARD_PASS_NAME                "ForwardDrawPass"
 #define VOXELIZATION_PASS_NAME           "VoxelizationDrawPass"
 #define EARLY_Z_PASS_NAME                "EarlyZDrawPass"
 #define SHADOW_DRAW_PASS_NAME            "ShadowDrawPass"
@@ -140,8 +141,8 @@ static void PrepassFunc(const RenderData& p_data, const Framebuffer*, DrawPass& 
     ExecuteDrawCommands(p_data, p_pass, true);
 }
 
-static void ForwardPass(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                        IRenderCmdContext&) {
+static void EmptyPass(const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                      IRenderCmdContext&) {
     unused(p_data);
     HBN_PROFILE_EVENT();
     auto& gm = IGraphicsManager::GetSingleton();
@@ -150,7 +151,7 @@ static void ForwardPass(const RenderData& p_data, const Framebuffer* p_framebuff
     gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
 }
 
-void RenderGraphBuilder::AddForward() {
+void RenderGraphBuilder::AddEmpty() {
     RenderPassCreateInfo info{
         .name = RenderPassName::FINAL,
         .drawPasses = {
@@ -158,7 +159,7 @@ void RenderGraphBuilder::AddForward() {
                   { RESOURCE_FINAL },
                   RESOURCE_GBUFFER_DEPTH,
               },
-              ForwardPass },
+              EmptyPass },
         }
     };
 
@@ -663,8 +664,8 @@ void RenderGraphBuilder::AddLightingPass() {
 }
 
 /// Sky
-static void SkyPassFunc(const RenderData& p_data, const Framebuffer*, DrawPass& p_pass,
-                        IRenderCmdContext& p_cmd) {
+static void ForwardPassFunc(const RenderData& p_data, const Framebuffer*, DrawPass& p_pass,
+                            IRenderCmdContext& p_cmd) {
     HBN_PROFILE_EVENT();
 
     auto& gm = p_cmd;
@@ -697,8 +698,6 @@ static void SkyPassFunc(const RenderData& p_data, const Framebuffer*, DrawPass& 
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
-
-    // @TODO: this is hacky...
     ExecuteDrawCommands(p_data, p_pass);
 
     auto& draw_context = p_data.drawDebugContext;
@@ -717,7 +716,7 @@ static void SkyPassFunc(const RenderData& p_data, const Framebuffer*, DrawPass& 
     EmitterPassFunc(p_data, p_pass.framebuffer.get());
 }
 
-void RenderGraphBuilder::AddSkyPass() {
+void RenderGraphBuilder::AddForwardPass() {
     auto& manager = IGraphicsManager::GetSingleton();
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
@@ -725,7 +724,7 @@ void RenderGraphBuilder::AddSkyPass() {
     auto lighting_attachment = manager.FindTexture(RESOURCE_LIGHTING);
 
     RenderPassDesc desc;
-    desc.name = RenderPassName::SKY;
+    desc.name = RenderPassName::FORWARD;
 
     desc.dependencies = { RenderPassName::LIGHTING };
 
@@ -759,7 +758,7 @@ void RenderGraphBuilder::AddSkyPass() {
     });
 
     // @TODO: refactor
-    pass->AddDrawPass("SkyDrawPass", framebuffer, SkyPassFunc);
+    pass->AddDrawPass(FORWARD_PASS_NAME, framebuffer, ForwardPassFunc);
 }
 
 /// Bloom
@@ -851,7 +850,7 @@ void RenderGraphBuilder::AddBloomPass() {
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
-    desc.dependencies = { RenderPassName::SKY };
+    desc.dependencies = { RenderPassName::FORWARD };
     auto render_pass = m_graph.CreatePass(desc);
 
     int width = m_config.frameWidth;
@@ -1296,7 +1295,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateEmpty(RenderGraphBuilderC
     auto graph = std::make_unique<RenderGraph>();
     RenderGraphBuilder creator(p_config, *graph.get());
 
-    creator.AddForward();
+    creator.AddEmpty();
 
     graph->Compile();
     return graph;
@@ -1387,7 +1386,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     creator.AddHighlightPass();
     creator.AddVoxelizationPass();
     creator.AddLightingPass();
-    creator.AddSkyPass();
+    creator.AddForwardPass();
     creator.AddBloomPass();
     creator.AddTonePass();
     creator.AddDebugImagePass();

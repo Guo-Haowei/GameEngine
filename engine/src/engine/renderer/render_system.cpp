@@ -79,9 +79,6 @@ void RenderData::FillPass(const Scene& p_scene,
             continue;
         }
 
-        // @TODO: transparent should be passed in as filter
-        // const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
-
         if (!p_filter1(obj)) {
             continue;
         }
@@ -479,6 +476,9 @@ void RenderData::FillMainPass(const Scene& p_scene) {
     DrawPass* voxelization_pass = tmp ? *tmp->FindDrawPass("VoxelizationDrawPass") : nullptr;
     tmp = m_renderGraph->FindPass(RenderPassName::PREPASS);
     DrawPass* early_z_pass = tmp ? *tmp->FindDrawPass("EarlyZDrawPass") : nullptr;
+    tmp = m_renderGraph->FindPass(RenderPassName::FORWARD);
+    // @TODO: should separate it from forward?
+    DrawPass* transparent_pass = tmp ? *tmp->FindDrawPass("ForwardDrawPass") : nullptr;
 
     using FilterFunc = std::function<bool(const AABB&)>;
     FilterFunc filter_main = [&](const AABB& p_aabb) -> bool { return camera_frustum.Intersects(p_aabb); };
@@ -488,6 +488,7 @@ void RenderData::FillMainPass(const Scene& p_scene) {
         const bool is_renderable = obj.flags & ObjectComponent::FLAG_RENDERABLE;
         const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
         const bool is_opaque = is_renderable && !is_transparent;
+
         // @TODO: cast shadow
 
         const TransformComponent& transform = *p_scene.GetComponent<TransformComponent>(entity);
@@ -504,7 +505,7 @@ void RenderData::FillMainPass(const Scene& p_scene) {
         batch_buffer.c_meshFlag = mesh.armatureId.IsValid();
 
         DrawCommand draw;
-        // @TODO: refactor this part
+        // @TODO: refactor the stencil part
         if (entity == p_scene.m_selected) {
             draw.flags = STENCIL_FLAG_SELECTED;
         }
@@ -566,8 +567,8 @@ void RenderData::FillMainPass(const Scene& p_scene) {
             add_to_pass(gbuffer_pass, filter_main, false);
         }
 
-        if (is_transparent) {
-            // add_to_pass(g_transparent, filter_main, false);
+        if (is_transparent && transparent_pass) {
+            add_to_pass(transparent_pass, filter_main, false);
         }
 
         if (voxelization_pass && this->voxel_gi_bound.IsValid()) {

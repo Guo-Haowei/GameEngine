@@ -53,7 +53,7 @@ public:
     static void CreateResources();
 
 private:
-    void AddForward();
+    void AddEmpty();
 
     void AddPrepass();
     void AddGbufferPass();
@@ -62,7 +62,7 @@ private:
     void AddVoxelizationPass();
     void AddSsaoPass();
     void AddLightingPass();
-    void AddSkyPass();
+    void AddForwardPass();
     void AddBloomPass();
     void AddTonePass();
     void AddGenerateSkylightPass();
