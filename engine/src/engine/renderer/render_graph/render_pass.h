@@ -27,14 +27,14 @@ using DrawPassExecuteFunc = void (*)(const renderer::RenderData&,
                                      const IRenderCmdContext&);
 
 struct DrawPass {
-    std::shared_ptr<Framebuffer> m_framebuffer;
-    DrawPassExecuteFunc m_executor = nullptr;
+    std::shared_ptr<Framebuffer> framebuffer;
+    DrawPassExecuteFunc executor = nullptr;
 };
 
 class RenderPass {
 public:
     void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_func) {
-        m_drawPasses.emplace_back(std::make_unique<DrawPass>(p_framebuffer, p_func));
+        m_drawPasses.emplace_back(DrawPass{ p_framebuffer, p_func });
     }
 
     void Execute(const renderer::RenderData& p_data, IRenderCmdContext& p_cmd);
@@ -49,7 +49,7 @@ protected:
 
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;
-    std::vector<std::unique_ptr<DrawPass>> m_drawPasses;
+    std::vector<DrawPass> m_drawPasses;
 
     friend class RenderGraph;
 };

@@ -20,9 +20,9 @@ void RenderPass::Execute(const renderer::RenderData& p_data, IRenderCmdContext& 
     RT_DEBUG("-- Executing pass '{}'", RenderPassNameToString(m_name));
 
     for (auto& pass : m_drawPasses) {
-        auto framebuffer = pass->m_framebuffer.get();
+        auto framebuffer = pass.framebuffer.get();
         p_cmd.BeginDrawPass(framebuffer);
-        pass->m_executor(p_data, framebuffer, *pass.get(), p_cmd);
+        pass.executor(p_data, framebuffer, pass, p_cmd);
         p_cmd.EndDrawPass(framebuffer);
     }
 
