@@ -13,7 +13,7 @@ namespace my::renderer {
 
 void RenderPass::AddDrawPass(std::string_view p_name,
                              std::shared_ptr<Framebuffer> p_framebuffer,
-                             DrawPassExecuteFunc p_func) {
+                             ExecuteFunc p_func) {
     m_lookup.insert(std::make_pair(p_name, static_cast<uint32_t>(m_drawPasses.size())));
 
     m_drawPasses.emplace_back(DrawPass{ std::string(p_name), p_framebuffer, p_func, {} });

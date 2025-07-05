@@ -3,10 +3,6 @@
 #include "engine/core/base/noncopyable.h"
 #include "render_pass.h"
 
-// clang-format off
-namespace my { class IGraphicsManager; }
-// clang-format on
-
 namespace my {
 
 #define RENDER_GRAPH_LIST                    \

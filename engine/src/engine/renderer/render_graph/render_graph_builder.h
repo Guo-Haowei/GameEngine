@@ -1,11 +1,12 @@
 #pragma once
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/pixel_format.h"
+#include "render_pass_builder.h"
 
-namespace my {
-struct Framebuffer;
-class IGraphicsManager;
-}  // namespace my
+// clang-format off
+namespace my { struct Framebuffer; }
+namespace my { class IGraphicsManager; }
+// clang-format on
 
 namespace my::renderer {
 
@@ -52,10 +53,14 @@ public:
     // @TODO: refactor
     static void CreateResources();
 
+    RenderPassBuilder& AddPass(std::string_view p_name);
+
+    auto Compile() -> Result<void>;
+
 private:
     void AddEmpty();
 
-    void AddPrepass();
+    void AddEarlyZPass();
     void AddGbufferPass();
     void AddHighlightPass();
     void AddShadowPass();
@@ -74,6 +79,8 @@ private:
 
     RenderGraphBuilderConfig m_config;
     RenderGraph& m_graph;
+
+    std::vector<RenderPassBuilder> m_passes;
 };
 
 }  // namespace my::renderer

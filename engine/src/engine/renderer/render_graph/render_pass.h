@@ -29,12 +29,13 @@ struct RenderPassExcutionContext {
     IRenderCmdContext& cmd;
 };
 
-using DrawPassExecuteFunc = void (*)(RenderPassExcutionContext& ctx);
+using ExecuteFunc = void (*)(RenderPassExcutionContext& ctx);
 
 struct DrawPass {
+
     std::string name;
     std::shared_ptr<Framebuffer> framebuffer;
-    DrawPassExecuteFunc executor;
+    ExecuteFunc executor;
 
     std::vector<RenderCommand> commands;
 
@@ -45,7 +46,7 @@ struct DrawPass {
 
 class RenderPass {
 public:
-    void AddDrawPass(std::string_view p_name, std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_func);
+    void AddDrawPass(std::string_view p_name, std::shared_ptr<Framebuffer> p_framebuffer, ExecuteFunc p_func);
 
     void Execute(const renderer::RenderSystem& p_data, IRenderCmdContext& p_cmd);
 

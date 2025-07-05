@@ -5,11 +5,12 @@
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_system.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/display_manager.h"
+#include "render_graph_defines.h"
+#include "render_pass_builder.h"
 
 // @TODO: remove
 #include "engine/runtime/asset_registry.h"
@@ -21,6 +22,20 @@
 #define EARLY_Z_PASS_NAME                "EarlyZDrawPass"
 #define SHADOW_DRAW_PASS_NAME            "ShadowDrawPass"
 #define POINT_SHADOW_DRAW_PASS_NAME(IDX) "ShadowDrawPass" #IDX
+
+// @TODO: refactor
+#define RG_PASS_EARLY_Z      "p:early_z"
+#define RG_PASS_SHADOW       "p:shadow"
+#define RG_PASS_GBUFFER      "p:gbuffer"
+#define RG_PASS_VOXELIZATION "p:voxelization"
+
+#define RG_RES_DEPTH          "r:depth"
+#define RG_RES_SHADOW_MAP     "r:shadow"
+#define RG_RES_GBUFFER_COLOR0 "r:gbuffer0"
+#define RG_RES_GBUFFER_COLOR1 "r:gbuffer1"
+#define RG_RES_GBUFFER_COLOR2 "r:gbuffer2"
+#define RG_RES_VOXEL_LIGHTING "r:voxel_lighting"
+#define RG_RES_VOXEL_NORMAL   "r:voxel_normal"
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"
@@ -36,7 +51,7 @@ struct FramebufferCreateInfo {
 
 struct DrawPassCreateInfo {
     FramebufferCreateInfo framebuffer;
-    DrawPassExecuteFunc func{ nullptr };
+    ExecuteFunc func{ nullptr };
 };
 
 struct RenderPassCreateInfo {
@@ -118,7 +133,7 @@ static void ExecuteDrawCommands(const RenderSystem& p_data, const DrawPass& p_dr
     }
 }
 
-static void PrepassFunc(RenderPassExcutionContext& p_ctx) {
+static void EarlyZPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
     Framebuffer* fb = p_ctx.framebuffer;
@@ -163,38 +178,23 @@ void RenderGraphBuilder::AddEmpty() {
     CreateRenderPass(info);
 }
 
-// class RenderPassBuilder {
-// public:
-//     ResourceHandle Read(const std::string& name);
-//     ResourceHandle Write(const std::string& name);
-//     ResourceHandle Create(const std::string& name, const TextureDesc& desc);
-//
-//     void SetExecuteFunc(std::function<void(RenderContext&)> func);
-//
-// private:
-//     RenderPass* pass;
-//     RenderGraph* graph;
-// };
-
-// graph.AddPass("GBuffer", [&](RenderPassBuilder& builder) {
-//     // Declare output GBuffer textures
-//     auto albedo = builder.Create("GBuffer_Albedo", TextureDesc::RGBA8(size));
-//     auto normal = builder.Create("GBuffer_Normal", TextureDesc::RGBA16F(size));
-//     auto position = builder.Create("GBuffer_Position", TextureDesc::RGBA16F(size));
-//
-//     builder.Write(albedo);
-//     builder.Write(normal);
-//     builder.Write(position);
-//
-//     builder.SetExecuteFunc([=](RenderContext& ctx) {
-//         // Submit draw calls using ctx that writes to those buffers
-//     });
-// });
-
-void RenderGraphBuilder::AddPrepass() {
+void RenderGraphBuilder::AddEarlyZPass() {
     auto& manager = IGraphicsManager::GetSingleton();
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
 
-    auto depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
+    std::shared_ptr<GpuTexture> depth;
+    {
+        auto desc = BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
+                                            RT_FMT_GBUFFER_DEPTH,
+                                            AttachmentType::DEPTH_STENCIL_2D,
+                                            frame_size.x, frame_size.y);
+
+        depth = manager.CreateTexture(desc, PointClampSampler());
+
+        AddPass(RG_PASS_EARLY_Z)
+            .Create(RG_RES_DEPTH, desc)
+            .SetExecuteFunc(EarlyZPassFunc);
+    }
 
     RenderPassDesc desc;
     desc.name = RenderPassName::PREPASS;
@@ -204,7 +204,7 @@ void RenderGraphBuilder::AddPrepass() {
     fb_desc.depthAttachment = depth;
 
     auto framebuffer = manager.CreateFramebuffer(fb_desc);
-    pass->AddDrawPass(EARLY_Z_PASS_NAME, framebuffer, PrepassFunc);
+    pass->AddDrawPass(EARLY_Z_PASS_NAME, framebuffer, EarlyZPassFunc);
 }
 
 static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
@@ -233,6 +233,15 @@ static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddGbufferPass() {
+    GpuTextureDesc dummy{};
+
+    AddPass(RG_PASS_GBUFFER)
+        .Read(RG_RES_DEPTH)
+        .Create(RG_RES_GBUFFER_COLOR0, dummy)
+        .Create(RG_RES_GBUFFER_COLOR1, dummy)
+        .Create(RG_RES_GBUFFER_COLOR2, dummy)
+        .SetExecuteFunc(GbufferPassFunc);
+
     auto& manager = IGraphicsManager::GetSingleton();
 
     auto color0 = manager.FindTexture(RESOURCE_GBUFFER_BASE_COLOR);
@@ -400,6 +409,12 @@ void RenderGraphBuilder::AddShadowPass() {
     const int point_shadow_res = DVAR_GET_INT(gfx_point_shadow_res);
     DEV_ASSERT(IsPowerOfTwo(point_shadow_res));
 
+    GpuTextureDesc dummy{};
+
+    AddPass(RG_PASS_SHADOW)
+        .Create(RG_RES_SHADOW_MAP, dummy)
+        .SetExecuteFunc(ShadowPassFunc);
+
     auto shadow_map = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
                                                                     PixelFormat::D32_FLOAT,
                                                                     AttachmentType::SHADOW_2D,
@@ -518,6 +533,15 @@ void RenderGraphBuilder::AddVoxelizationPass() {
         desc.name = RESOURCE_VOXEL_NORMAL;
         auto voxel_normal = manager.CreateTexture(desc, sampler);
     }
+
+    GpuTextureDesc dummy{};
+    AddPass(RG_PASS_VOXELIZATION)
+        .Read(RG_RES_SHADOW_MAP)
+        .Create(RG_RES_VOXEL_LIGHTING, dummy)
+        .Create(RG_RES_VOXEL_NORMAL, dummy)
+        .SetExecuteFunc(VoxelizationPassFunc);
+
+    // @TODO: ? build
 
     RenderPassDesc desc;
     desc.name = RenderPassName::VOXELIZATION;
@@ -1331,7 +1355,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(RenderGraphBuilderC
     auto graph = std::make_unique<RenderGraph>();
     RenderGraphBuilder creator(p_config, *graph.get());
 
-    creator.AddPrepass();
+    creator.AddEarlyZPass();
     creator.AddGbufferPass();
 
     graph->Compile();
@@ -1400,7 +1424,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     auto graph = std::make_unique<RenderGraph>();
     RenderGraphBuilder creator(p_config, *graph.get());
 
-    creator.AddPrepass();
+    creator.AddEarlyZPass();
     creator.AddGbufferPass();
     creator.AddGenerateSkylightPass();
     creator.AddShadowPass();
@@ -1412,6 +1436,8 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     creator.AddBloomPass();
     creator.AddTonePass();
     creator.AddDebugImagePass();
+
+    creator.Compile();
 
     graph->Compile();
     return graph;
@@ -1478,5 +1504,31 @@ GpuTextureDesc RenderGraphBuilder::BuildDefaultTextureDesc(RenderTargetResourceN
     }
     return desc;
 };
+
+///////////////////////////
+
+RenderPassBuilder& RenderGraphBuilder::AddPass(std::string_view p_pass_name) {
+    RenderPassBuilder builder{ p_pass_name };
+    m_passes.push_back(builder);
+    return m_passes.back();
+}
+
+auto RenderGraphBuilder::Compile() -> Result<void> {
+    LOG_WARN("dbg");
+    for (const auto& pass : m_passes) {
+        LOG_OK("found pass: {}", pass.GetName());
+        LOG_OK("  it reads:");
+        for (const auto& read : pass.m_reads) {
+            LOG_OK("  -- {}", read);
+        }
+        LOG_OK("  it writes:");
+        for (const auto& write : pass.m_writes) {
+            LOG_OK("  -- {}", write);
+        }
+    }
+    LOG_WARN("dbg");
+
+    return Result<void>();
+}
 
 }  // namespace my::renderer
