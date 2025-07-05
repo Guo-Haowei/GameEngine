@@ -1,5 +1,6 @@
 #include "render_graph_builder.h"
 
+#include "engine/algorithm/algorithm.h"
 #include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/matrix_transform.h"
@@ -1534,7 +1535,7 @@ auto RenderGraphBuilder::Compile() -> Result<void> {
     std::unordered_map<std::string_view, int> outputs;
 
     const int N = static_cast<int>(m_passes.size());
-    std::vector<std::vector<int>> edges(N);
+    std::vector<std::pair<int, int>> edges;
 
     for (int i = 0; i < N; ++i) {
         for (const auto& read : m_passes[i].m_reads) {
@@ -1554,11 +1555,13 @@ auto RenderGraphBuilder::Compile() -> Result<void> {
         const int from = it->second;
         LOG_OK("edge found from {} to {}", from, to);
 
-        edges[from].push_back(to);
+        edges.push_back(std::make_pair(from, to));
     }
 
+    auto sorted = topological_sort(N, edges);
     // @TODO: toposort
     // @TODO: add to algorithm/
+    LOG_OK("{}", sorted);
 
     return Result<void>();
 }

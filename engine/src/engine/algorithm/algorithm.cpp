@@ -2,13 +2,13 @@
 
 namespace my {
 
-std::vector<int> topological_sort(int N, const std::vector<std::vector<int>>& p_edges) {
+std::vector<int> topological_sort(int N, const std::vector<std::pair<int, int>>& p_edges) {
     std::vector<int> indegree(N, 0);
     std::vector<int> sorted;
     std::vector<std::vector<int>> adj(N);
     for (const auto& edge : p_edges) {
-        const int from = edge[0];
-        const int to = edge[1];
+        const int from = edge.first;
+        const int to = edge.second;
         adj[from].push_back(to);
         indegree[to] += 1;
     }
