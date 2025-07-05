@@ -3,10 +3,10 @@
 namespace my::detail {
 
 TEST(vector, vector2_constructor) {
-    CHECK_VEC2(Vector2u::Zero, 0, 0);
-    CHECK_VEC2(Vector2u::UnitX, 1, 0);
-    CHECK_VEC2(Vector2u::UnitY, 0, 1);
-    CHECK_VEC2(Vector2u::One, 1, 1);
+    CHECK_VEC2(Vector2u::Zero, 0u, 0u);
+    CHECK_VEC2(Vector2u::UnitX, 1u, 0u);
+    CHECK_VEC2(Vector2u::UnitY, 0u, 1u);
+    CHECK_VEC2(Vector2u::One, 1u, 1u);
     {
         Vector2f vec(1.0, 2.0f);
         CHECK_VEC2(vec, 1, 2);
@@ -14,10 +14,10 @@ TEST(vector, vector2_constructor) {
 }
 
 TEST(vector, vector3_constructor) {
-    CHECK_VEC3(Vector3u::Zero, 0, 0, 0);
-    CHECK_VEC3(Vector3u::UnitX, 1, 0, 0);
-    CHECK_VEC3(Vector3u::UnitZ, 0, 0, 1);
-    CHECK_VEC3(Vector3u::One, 1, 1, 1);
+    CHECK_VEC3(Vector3u::Zero, 0u, 0u, 0u);
+    CHECK_VEC3(Vector3u::UnitX, 1u, 0u, 0u);
+    CHECK_VEC3(Vector3u::UnitZ, 0u, 0u, 1u);
+    CHECK_VEC3(Vector3u::One, 1u, 1u, 1u);
     {
         Vector3f vec(1, 2, 3);
         CHECK_VEC3(vec, 1, 2, 3);

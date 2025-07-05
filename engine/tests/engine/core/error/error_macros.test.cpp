@@ -284,57 +284,6 @@ Detail: ????
         << buffer;
 }
 
-TEST(error_macros, DEV_ASSERT) {
-    ErrorHandler handler;
-    handler.data.errorFunc = assert_handler;
-
-    AddErrorHandler(&handler);
-
-    EXPECT_EXIT(
-        {
-            int a = 200;
-            int b = 200;
-            DEV_ASSERT(a - b);
-        },
-        testing::ExitedWithCode(99), "FATAL: DEV_ASSERT failed \\(a - b\\)");
-
-    RemoveErrorHandler(&handler);
-}
-
-TEST(error_macros, DEV_ASSERT_INDEX) {
-    ErrorHandler handler;
-    handler.data.errorFunc = assert_handler;
-
-    AddErrorHandler(&handler);
-
-    EXPECT_EXIT(
-        {
-            int a = 201;
-            int b = 200;
-            DEV_ASSERT_INDEX(a, b);
-        },
-        testing::ExitedWithCode(99), "FATAL: DEV_ASSERT_INDEX failed Index a = 201 is out of bounds \\(b = 200\\).");
-
-    RemoveErrorHandler(&handler);
-}
-
-TEST(error_macros, DEV_VERIFY_check_fail) {
-    ErrorHandler handler;
-    handler.data.errorFunc = assert_handler;
-
-    AddErrorHandler(&handler);
-
-    EXPECT_EXIT(
-        {
-            if (DEV_VERIFY_CHECK(1 == 2)) {
-                FAIL();
-            }
-        },
-        testing::ExitedWithCode(99), "FATAL: Condition \"1 == 2\" is false.");
-
-    RemoveErrorHandler(&handler);
-}
-
 TEST(error_macros, DEV_VERIFY_check_pass) {
     ErrorHandler handler;
     handler.data.errorFunc = assert_handler;

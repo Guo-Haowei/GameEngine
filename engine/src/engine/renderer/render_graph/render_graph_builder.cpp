@@ -1534,6 +1534,8 @@ auto RenderGraphBuilder::Compile() -> Result<void> {
     std::unordered_map<std::string_view, int> outputs;
 
     const int N = static_cast<int>(m_passes.size());
+    std::vector<std::vector<int>> edges(N);
+
     for (int i = 0; i < N; ++i) {
         for (const auto& read : m_passes[i].m_reads) {
             inputs.insert(std::make_pair(read, i));
@@ -1551,7 +1553,12 @@ auto RenderGraphBuilder::Compile() -> Result<void> {
 
         const int from = it->second;
         LOG_OK("edge found from {} to {}", from, to);
+
+        edges[from].push_back(to);
     }
+
+    // @TODO: toposort
+    // @TODO: add to algorithm/
 
     return Result<void>();
 }
