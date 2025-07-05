@@ -135,6 +135,7 @@ void RenderGraphViewer::UpdateInternal(Scene&) {
     }
 
     switch (graphics_manager->GetBackend()) {
+        case Backend::VULKAN:
         case Backend::METAL:
             return;
         default:

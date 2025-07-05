@@ -2,17 +2,25 @@
 
 #include "engine/assets/asset.h"
 #include "engine/core/debugger/profiler.h"
-#include "engine/runtime/display_manager.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/renderer/render_system.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
+#include "engine/runtime/display_manager.h"
 
 // @TODO: remove
 #include "engine/runtime/asset_registry.h"
+
+// @TODO: refactor
+#define GBUFFER_PASS_NAME                "GbufferDrawPass"
+#define FORWARD_PASS_NAME                "ForwardDrawPass"
+#define VOXELIZATION_PASS_NAME           "VoxelizationDrawPass"
+#define EARLY_Z_PASS_NAME                "EarlyZDrawPass"
+#define SHADOW_DRAW_PASS_NAME            "ShadowDrawPass"
+#define POINT_SHADOW_DRAW_PASS_NAME(IDX) "ShadowDrawPass" #IDX
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"
@@ -38,47 +46,9 @@ struct RenderPassCreateInfo {
 };
 
 /// Gbuffer
-static void DrawBatchesGeometry(const RenderData& p_data, const std::vector<BatchContext>& p_batches, bool p_is_prepass) {
-    HBN_PROFILE_EVENT();
-
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-
-    for (const auto& draw : p_batches) {
-        const bool has_bone = draw.bone_idx >= 0;
-        if (has_bone) {
-            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-        }
-
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-        gm.SetMesh(draw.mesh_data);
-
-        if (p_is_prepass && draw.flags) {
-            gm.SetStencilRef(draw.flags);
-        }
-
-        for (const auto& subset : draw.subsets) {
-            // @TODO: fix this
-            if (!p_is_prepass) {
-                const MaterialConstantBuffer& material = p_data.materialCache.buffer[subset.material_idx];
-                gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
-                gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
-                gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
-
-                gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-            }
-            gm.DrawElements(subset.index_count, subset.index_offset);
-        }
-
-        if (p_is_prepass && draw.flags) {
-            gm.SetStencilRef(0);
-        }
-    }
-}
 
 // @TODO: generalize this
-static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
+static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
     unused(p_is_prepass);
 
     HBN_PROFILE_EVENT();
@@ -107,9 +77,52 @@ static void DrawInstacedGeometry(const RenderData& p_data, const std::vector<Ins
     }
 }
 
-static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void ExecuteDrawCommands(const RenderSystem& p_data, const DrawPass& p_draw_pass, bool p_is_prepass = false) {
+
     HBN_PROFILE_EVENT();
 
+    auto& gm = IGraphicsManager::GetSingleton();
+    auto& frame = gm.GetCurrentFrame();
+    for (const RenderCommand& cmd : p_draw_pass.commands) {
+        if (cmd.type != RenderCommandType::Draw) continue;
+        const DrawCommand& draw = cmd.draw;
+
+        const bool has_bone = draw.bone_idx >= 0;
+        if (has_bone) {
+            gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+        }
+
+        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+
+        gm.SetMesh(draw.mesh_data);
+
+        // @TODO: instead of dowing this,
+        // set flag directly from draw.flags
+        if (p_is_prepass && draw.flags) {
+            gm.SetStencilRef(draw.flags);
+        }
+
+        if (draw.mat_idx != -1) {
+            const MaterialConstantBuffer& material = p_data.materialCache.buffer[draw.mat_idx];
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_baseColorMapHandle, GetBaseColorMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_normalMapHandle, GetNormalMapSlot());
+            gm.BindTexture(Dimension::TEXTURE_2D, material.c_materialMapHandle, GetMaterialMapSlot());
+
+            gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), draw.mat_idx);
+        }
+        gm.DrawElements(draw.indexCount, draw.indexOffset);
+
+        if (p_is_prepass && draw.flags) {
+            gm.SetStencilRef(0);
+        }
+    }
+}
+
+static void PrepassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
+                        IRenderCmdContext&) {
+    HBN_PROFILE_EVENT();
+
+    Framebuffer* p_framebuffer = p_pass.framebuffer.get();
     auto& gm = IGraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
     const uint32_t width = p_framebuffer->desc.depthAttachment->desc.width;
@@ -125,12 +138,11 @@ static void PrepassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     gm.SetPipelineState(PSO_PREPASS);
-    DrawBatchesGeometry(p_data, pass.opaque, true);
-    DrawBatchesGeometry(p_data, pass.doubleSided, true);
-    DrawInstacedGeometry(p_data, p_data.instances, true);
+    ExecuteDrawCommands(p_data, p_pass, true);
 }
 
-static void ForwardPass(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void EmptyPass(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                      IRenderCmdContext&) {
     unused(p_data);
     HBN_PROFILE_EVENT();
     auto& gm = IGraphicsManager::GetSingleton();
@@ -139,7 +151,7 @@ static void ForwardPass(const RenderData& p_data, const Framebuffer* p_framebuff
     gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
 }
 
-void RenderGraphBuilder::AddForward() {
+void RenderGraphBuilder::AddEmpty() {
     RenderPassCreateInfo info{
         .name = RenderPassName::FINAL,
         .drawPasses = {
@@ -147,7 +159,7 @@ void RenderGraphBuilder::AddForward() {
                   { RESOURCE_FINAL },
                   RESOURCE_GBUFFER_DEPTH,
               },
-              ForwardPass },
+              EmptyPass },
         }
     };
 
@@ -155,62 +167,71 @@ void RenderGraphBuilder::AddForward() {
 }
 
 void RenderGraphBuilder::AddPrepass() {
-    RenderPassCreateInfo info{
-        .name = RenderPassName::PREPASS,
-        .dependencies = {},
-        .drawPasses = {
-            { { {},
-                RESOURCE_GBUFFER_DEPTH },
-              PrepassFunc },
-        },
-    };
+    auto& manager = IGraphicsManager::GetSingleton();
 
-    CreateRenderPass(info);
+    auto depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::PREPASS;
+    auto pass = m_graph.CreatePass(desc);
+
+    FramebufferDesc fb_desc;
+    fb_desc.depthAttachment = depth;
+
+    auto framebuffer = manager.CreateFramebuffer(fb_desc);
+    pass->AddDrawPass(EARLY_Z_PASS_NAME, framebuffer, PrepassFunc);
 }
 
-static void GbufferPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void GbufferPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
+                            IRenderCmdContext& p_cmd) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-    const uint32_t width = p_framebuffer->desc.depthAttachment->desc.width;
-    const uint32_t height = p_framebuffer->desc.depthAttachment->desc.height;
+    const Framebuffer* framebuffer = p_pass.framebuffer.get();
 
-    gm.SetRenderTarget(p_framebuffer);
-    gm.SetViewport(Viewport(width, height));
+    const auto& frame = p_cmd.GetCurrentFrame();
+    const uint32_t width = framebuffer->desc.depthAttachment->desc.width;
+    const uint32_t height = framebuffer->desc.depthAttachment->desc.height;
+
+    p_cmd.SetRenderTarget(framebuffer);
+    p_cmd.SetViewport(Viewport(width, height));
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT, clear_color);
+    p_cmd.Clear(framebuffer, CLEAR_COLOR_BIT, clear_color);
 
     const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+    p_cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PSO_GBUFFER);
-    DrawBatchesGeometry(p_data, pass.opaque, false);
+    p_cmd.SetPipelineState(PSO_GBUFFER);
+    ExecuteDrawCommands(p_data, p_pass, false);
     DrawInstacedGeometry(p_data, p_data.instances, false);
-    gm.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
-    DrawBatchesGeometry(p_data, pass.doubleSided, false);
+    p_cmd.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
 }
 
 void RenderGraphBuilder::AddGbufferPass() {
-    RenderPassCreateInfo info{
-        .name = RenderPassName::GBUFFER,
-        .dependencies = { RenderPassName::PREPASS },
-        .drawPasses = {
-            { { {
-                    RESOURCE_GBUFFER_BASE_COLOR,
-                    RESOURCE_GBUFFER_NORMAL,
-                    RESOURCE_GBUFFER_MATERIAL,
-                },
-                RESOURCE_GBUFFER_DEPTH },
-              GbufferPassFunc },
-        },
-    };
+    auto& manager = IGraphicsManager::GetSingleton();
 
-    CreateRenderPass(info);
+    auto color0 = manager.FindTexture(RESOURCE_GBUFFER_BASE_COLOR);
+    auto color1 = manager.FindTexture(RESOURCE_GBUFFER_NORMAL);
+    auto color2 = manager.FindTexture(RESOURCE_GBUFFER_MATERIAL);
+    auto depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
+
+    RenderPassDesc desc;
+    desc.dependencies = { RenderPassName::PREPASS },
+    desc.name = RenderPassName::GBUFFER;
+    auto pass = m_graph.CreatePass(desc);
+
+    FramebufferDesc fb_desc;
+    fb_desc.colorAttachments.emplace_back(color0);
+    fb_desc.colorAttachments.emplace_back(color1);
+    fb_desc.colorAttachments.emplace_back(color2);
+    fb_desc.depthAttachment = depth;
+
+    auto framebuffer = manager.CreateFramebuffer(fb_desc);
+    pass->AddDrawPass(GBUFFER_PASS_NAME, framebuffer, GbufferPassFunc);
 }
 
-static void SsaoPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void SsaoPassFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                         IRenderCmdContext&) {
     if (!p_data.options.ssaoEnabled) {
         return;
     }
@@ -248,7 +269,8 @@ void RenderGraphBuilder::AddSsaoPass() {
     CreateRenderPass(info);
 }
 
-static void HighlightPassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
+static void HighlightPassFunc(const RenderSystem&, const Framebuffer* p_framebuffer, DrawPass&,
+                              IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -279,28 +301,17 @@ void RenderGraphBuilder::AddHighlightPass() {
 }
 
 /// Shadow
-static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+// @TODO: make multiple
+static void PointShadowPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
+                                IRenderCmdContext& p_cmd) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
+    auto& gm = p_cmd;
+    const Framebuffer* framebuffer = p_pass.framebuffer.get();
     auto& frame = gm.GetCurrentFrame();
 
     // prepare render data
-    const auto [width, height] = p_framebuffer->GetBufferSize();
-
-    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
-        for (const auto& draw : p_batches) {
-            const bool has_bone = draw.bone_idx >= 0;
-            if (has_bone) {
-                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-            }
-
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-            gm.SetMesh(draw.mesh_data);
-            gm.DrawElements(draw.mesh_data->desc.drawCount);
-        }
-    };
+    const auto [width, height] = framebuffer->GetBufferSize();
 
     for (int pass_id = 0; pass_id < MAX_POINT_LIGHT_SHADOW_COUNT; ++pass_id) {
         auto& pass_ptr = p_data.pointShadowPasses[pass_id];
@@ -308,45 +319,33 @@ static void PointShadowPassFunc(const RenderData& p_data, const Framebuffer* p_f
             continue;
         }
 
-        const PassContext& pass = *pass_ptr.get();
         for (int face_id = 0; face_id < 6; ++face_id) {
-#if USING(USE_PROFILER)
-            const auto event_name = std::format("point_shadow_pass_{}_{}", pass_id, face_id);
-            auto desc = Optick::CreateDescription(OPTICK_FUNC,
-                                                  __FILE__,
-                                                  __LINE__,
-                                                  event_name.c_str(),
-                                                  Optick::Category::None,
-                                                  Optick::EventDescription::COPY_NAME_STRING);
-            Optick::Event event(*desc);
-#endif
             const uint32_t slot = pass_id * 6 + face_id;
             gm.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
 
-            gm.SetRenderTarget(p_framebuffer, slot);
-            gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, 0, slot);
+            gm.SetRenderTarget(framebuffer, slot);
+            gm.Clear(framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, 0, slot);
 
             gm.SetViewport(Viewport(width, height));
 
             gm.SetPipelineState(PSO_POINT_SHADOW);
-            draw_batches(pass.opaque);
-            draw_batches(pass.transparent);
-            // @TODO: double side
-            draw_batches(pass.doubleSided);
+            ExecuteDrawCommands(p_data, p_pass, false);
         }
     }
 }
 
-static void ShadowPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void ShadowPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
+                           IRenderCmdContext& p_cmd) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
+    const Framebuffer* framebuffer = p_pass.framebuffer.get();
+    auto& gm = p_cmd;
+    const auto& frame = gm.GetCurrentFrame();
 
-    gm.SetRenderTarget(p_framebuffer);
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    gm.SetRenderTarget(framebuffer);
+    const auto [width, height] = framebuffer->GetBufferSize();
 
-    gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT);
+    gm.Clear(framebuffer, CLEAR_DEPTH_BIT);
 
     gm.SetViewport(Viewport(width, height));
 
@@ -367,9 +366,7 @@ static void ShadowPassFunc(const RenderData& p_data, const Framebuffer* p_frameb
         }
     };
     gm.SetPipelineState(PSO_DPETH);
-    draw_batches(pass.opaque);
-    draw_batches(pass.transparent);
-    draw_batches(pass.doubleSided);
+    ExecuteDrawCommands(p_data, p_pass);
 }
 
 void RenderGraphBuilder::AddShadowPass() {
@@ -390,7 +387,7 @@ void RenderGraphBuilder::AddShadowPass() {
     auto pass = m_graph.CreatePass(desc);
     {
         auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = shadow_map });
-        pass->AddDrawPass(framebuffer, ShadowPassFunc);
+        pass->AddDrawPass(SHADOW_DRAW_PASS_NAME, framebuffer, ShadowPassFunc);
     }
 
     auto point_shadowMap = manager.CreateTexture(BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
@@ -400,17 +397,18 @@ void RenderGraphBuilder::AddShadowPass() {
                                                  ShadowMapSampler());
 
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = point_shadowMap });
-    pass->AddDrawPass(framebuffer, PointShadowPassFunc);
+    pass->AddDrawPass(POINT_SHADOW_DRAW_PASS_NAME(0), framebuffer, PointShadowPassFunc);
 }
 
-static void VoxelizationPassFunc(const RenderData& p_data, const Framebuffer*) {
+static void VoxelizationPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
+                                 IRenderCmdContext& p_cmd) {
     if (p_data.voxelPass.pass_idx < 0) {
         return;
     }
 
     HBN_PROFILE_EVENT();
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
+    auto& gm = p_cmd;
+    const auto& frame = gm.GetCurrentFrame();
 
     auto voxel_lighting = gm.FindTexture(RESOURCE_VOXEL_LIGHTING);
     auto voxel_normal = gm.FindTexture(RESOURCE_VOXEL_NORMAL);
@@ -449,31 +447,10 @@ static void VoxelizationPassFunc(const RenderData& p_data, const Framebuffer*) {
 
     // @TODO: hack
     if (gm.GetBackend() == Backend::OPENGL) {
-        auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
-            for (const auto& draw : p_batches) {
-                const bool has_bone = draw.bone_idx >= 0;
-                if (has_bone) {
-                    gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-                }
-
-                gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-                gm.SetMesh(draw.mesh_data);
-
-                for (const auto& subset : draw.subsets) {
-                    gm.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), subset.material_idx);
-
-                    gm.DrawElements(subset.index_count, subset.index_offset);
-                }
-            }
-        };
-
         gm.SetViewport(Viewport(voxel_size, voxel_size));
         gm.SetPipelineState(PSO_VOXELIZATION);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
-        draw_batches(pass.opaque);
-        draw_batches(pass.transparent);
-        draw_batches(pass.doubleSided);
+        ExecuteDrawCommands(p_data, p_pass);
 
         // glSubpixelPrecisionBiasNV(0, 0);
         gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
@@ -525,11 +502,11 @@ void RenderGraphBuilder::AddVoxelizationPass() {
     desc.dependencies = { RenderPassName::SHADOW };
     auto pass = m_graph.CreatePass(desc);
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{});
-    pass->AddDrawPass(framebuffer, VoxelizationPassFunc);
+    pass->AddDrawPass(VOXELIZATION_PASS_NAME, framebuffer, VoxelizationPassFunc);
 }
 
 /// Emitter
-static void EmitterPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void EmitterPassFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -595,7 +572,8 @@ static void EmitterPassFunc(const RenderData& p_data, const Framebuffer* p_frame
 }
 
 /// Lighting
-static void LightingPassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
+static void LightingPassFunc(const RenderSystem&, const Framebuffer* p_framebuffer, DrawPass&,
+                             IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -682,17 +660,18 @@ void RenderGraphBuilder::AddLightingPass() {
             },
         },
     });
-    pass->AddDrawPass(framebuffer, LightingPassFunc);
+    pass->AddDrawPass("LightingDrawPass", framebuffer, LightingPassFunc);
 }
 
 /// Sky
-static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void ForwardPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
+                            IRenderCmdContext& p_cmd) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    auto& gm = p_cmd;
+    const auto [width, height] = p_pass.framebuffer->GetBufferSize();
 
-    gm.SetRenderTarget(p_framebuffer);
+    gm.SetRenderTarget(p_pass.framebuffer.get());
 
     gm.SetViewport(Viewport(width, height));
 
@@ -719,7 +698,7 @@ static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
-    DrawBatchesGeometry(p_data, pass.transparent, false);
+    ExecuteDrawCommands(p_data, p_pass);
 
     auto& draw_context = p_data.drawDebugContext;
     if (gm.m_debugBuffers && draw_context.drawCount) {
@@ -734,10 +713,10 @@ static void SkyPassFunc(const RenderData& p_data, const Framebuffer* p_framebuff
         gm.DrawArrays(draw_context.drawCount);
     }
 
-    EmitterPassFunc(p_data, p_framebuffer);
+    EmitterPassFunc(p_data, p_pass.framebuffer.get());
 }
 
-void RenderGraphBuilder::AddSkyPass() {
+void RenderGraphBuilder::AddForwardPass() {
     auto& manager = IGraphicsManager::GetSingleton();
 
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
@@ -745,7 +724,7 @@ void RenderGraphBuilder::AddSkyPass() {
     auto lighting_attachment = manager.FindTexture(RESOURCE_LIGHTING);
 
     RenderPassDesc desc;
-    desc.name = RenderPassName::SKY;
+    desc.name = RenderPassName::FORWARD;
 
     desc.dependencies = { RenderPassName::LIGHTING };
 
@@ -777,11 +756,14 @@ void RenderGraphBuilder::AddSkyPass() {
             },
         },
     });
-    pass->AddDrawPass(framebuffer, SkyPassFunc);
+
+    // @TODO: refactor
+    pass->AddDrawPass(FORWARD_PASS_NAME, framebuffer, ForwardPassFunc);
 }
 
 /// Bloom
-static void BloomSetupFunc(const RenderData& p_data, const Framebuffer*) {
+static void BloomSetupFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass&,
+                           IRenderCmdContext&) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -806,7 +788,8 @@ static void BloomSetupFunc(const RenderData& p_data, const Framebuffer*) {
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void BloomDownSampleFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                                IRenderCmdContext&) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -834,7 +817,8 @@ static void BloomDownSampleFunc(const RenderData& p_data, const Framebuffer* p_f
     gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void BloomUpSampleFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                              IRenderCmdContext&) {
     if (!p_data.options.bloomEnabled) {
         return;
     }
@@ -866,7 +850,7 @@ void RenderGraphBuilder::AddBloomPass() {
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
-    desc.dependencies = { RenderPassName::SKY };
+    desc.dependencies = { RenderPassName::FORWARD };
     auto render_pass = m_graph.CreatePass(desc);
 
     int width = m_config.frameWidth;
@@ -902,7 +886,7 @@ void RenderGraphBuilder::AddBloomPass() {
                                       int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
                 } },
         });
-        render_pass->AddDrawPass(pass, BloomSetupFunc);
+        render_pass->AddDrawPass("BloomSetupComputePass", pass, BloomSetupFunc);
     }
 
     // Down Sample
@@ -923,7 +907,7 @@ void RenderGraphBuilder::AddBloomPass() {
                 } },
         });
         pass->id = i;
-        render_pass->AddDrawPass(pass, BloomDownSampleFunc);
+        render_pass->AddDrawPass("BloomDownSampleComputePass", pass, BloomDownSampleFunc);
     }
 
     // Up Sample
@@ -944,11 +928,11 @@ void RenderGraphBuilder::AddBloomPass() {
                 } },
         });
         pass->id = i;
-        render_pass->AddDrawPass(pass, BloomUpSampleFunc);
+        render_pass->AddDrawPass("BloomUpSampleComputePass", pass, BloomUpSampleFunc);
     }
 }
 
-static void DebugVoxels(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void DebugVoxels(const RenderSystem& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -974,7 +958,8 @@ static void DebugVoxels(const RenderData& p_data, const Framebuffer* p_framebuff
 
 /// Tone
 /// Change to post processing?
-static void TonePassFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void TonePassFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                         IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -1032,7 +1017,7 @@ void RenderGraphBuilder::CreateRenderPass(RenderPassCreateInfo& p_info) {
         }
 
         auto framebuffer = gm.CreateFramebuffer(framebuffer_desc);
-        pass->AddDrawPass(framebuffer, info.func);
+        pass->AddDrawPass("xxxx", framebuffer, info.func);
     }
 }
 
@@ -1050,7 +1035,7 @@ void RenderGraphBuilder::AddTonePass() {
 }
 
 // assume render target is setup
-void RenderGraphBuilder::DrawDebugImages(const RenderData& p_data, int p_width, int p_height, IGraphicsManager& p_graphics_manager) {
+void RenderGraphBuilder::DrawDebugImages(const RenderSystem& p_data, int p_width, int p_height, IGraphicsManager& p_graphics_manager) {
     auto& frame = p_graphics_manager.GetCurrentFrame();
 
     p_graphics_manager.SetViewport(Viewport(p_width, p_height));
@@ -1075,7 +1060,8 @@ void RenderGraphBuilder::AddDebugImagePass() {
         .dependencies = { RenderPassName::TONE },
         .drawPasses = {
             { { { RESOURCE_FINAL } },
-              [](const RenderData& p_data, const Framebuffer* p_framebuffer) {
+              [](const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                 IRenderCmdContext&) {
                   HBN_PROFILE_EVENT();
                   auto& gm = IGraphicsManager::GetSingleton();
                   gm.SetRenderTarget(p_framebuffer);
@@ -1091,7 +1077,8 @@ void RenderGraphBuilder::AddDebugImagePass() {
     CreateRenderPass(info);
 }
 
-static void ConvertToCubemapFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void ConvertToCubemapFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                                 IRenderCmdContext&) {
     HBN_PROFILE_EVENT("hdr image to -> skybox");
     if (!p_data.bakeIbl) {
         return;
@@ -1117,7 +1104,8 @@ static void ConvertToCubemapFunc(const RenderData& p_data, const Framebuffer* p_
     gm.GenerateMipmap(cube_map.get());
 }
 
-static void DiffuseIrradianceFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void DiffuseIrradianceFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                                  IRenderCmdContext&) {
     if (!p_data.bakeIbl) {
         return;
     }
@@ -1142,7 +1130,8 @@ static void DiffuseIrradianceFunc(const RenderData& p_data, const Framebuffer* p
     gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
 }
 
-static void PrefilteredFunc(const RenderData& p_data, const Framebuffer* p_framebuffer) {
+static void PrefilteredFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+                            IRenderCmdContext&) {
     if (!p_data.bakeIbl) {
         return;
     }
@@ -1182,7 +1171,8 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
     CreateRenderPass(info);
 }
 
-static void PathTracerTonePassFunc(const RenderData&, const Framebuffer* p_framebuffer) {
+static void PathTracerTonePassFunc(const RenderSystem&, const Framebuffer* p_framebuffer, DrawPass&,
+                                   IRenderCmdContext&) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -1231,10 +1221,11 @@ void RenderGraphBuilder::AddPathTracerTonePass() {
 
     auto framebuffer = gm.CreateFramebuffer(framebuffer_desc);
 
-    pass->AddDrawPass(framebuffer, PathTracerTonePassFunc);
+    pass->AddDrawPass("PathTracerDrawPass", framebuffer, PathTracerTonePassFunc);
 }
 
-static void PathTracerPassFunc(const RenderData&, const Framebuffer*) {
+static void PathTracerPassFunc(const RenderSystem&, const Framebuffer*, DrawPass&,
+                               IRenderCmdContext&) {
     // @TODO: refactor this part
     if (!renderer::IsPathTracerActive()) {
         return;
@@ -1292,7 +1283,7 @@ void RenderGraphBuilder::AddPathTracerPass() {
                                   int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
             } },
     });
-    render_pass->AddDrawPass(pass, PathTracerPassFunc);
+    render_pass->AddDrawPass("PassTracerComputePass", pass, PathTracerPassFunc);
 }
 
 /// Create pre-defined passes
@@ -1304,7 +1295,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateEmpty(RenderGraphBuilderC
     auto graph = std::make_unique<RenderGraph>();
     RenderGraphBuilder creator(p_config, *graph.get());
 
-    creator.AddForward();
+    creator.AddEmpty();
 
     graph->Compile();
     return graph;
@@ -1395,7 +1386,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     creator.AddHighlightPass();
     creator.AddVoxelizationPass();
     creator.AddLightingPass();
-    creator.AddSkyPass();
+    creator.AddForwardPass();
     creator.AddBloomPass();
     creator.AddTonePass();
     creator.AddDebugImagePass();

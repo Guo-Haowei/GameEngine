@@ -3,8 +3,11 @@
 #include "engine/core/base/noncopyable.h"
 #include "render_pass.h"
 
+// clang-format off
+namespace my { class IGraphicsManager; }
+// clang-format on
+
 namespace my {
-class BaseGraphicsManager;
 
 #define RENDER_GRAPH_LIST                    \
     RENDER_GRAPH_DECLARE(EMPTY, "empty")     \
@@ -23,7 +26,7 @@ enum class RenderGraphName : uint8_t {
 
 namespace my::renderer {
 
-struct RenderData;
+struct RenderSystem;
 
 class RenderGraph : public NonCopyable {
 public:
@@ -39,7 +42,7 @@ public:
 
     void Compile();
 
-    void Execute(const renderer::RenderData& p_data, BaseGraphicsManager& p_graphics_manager);
+    void Execute(const renderer::RenderSystem& p_data, IGraphicsManager& p_graphics_manager);
 
     const auto& GetGraph() const { return m_graph; }
 

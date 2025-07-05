@@ -1,10 +1,10 @@
 #include "metal_graphics_manager.h"
 #include <imgui/backends/imgui_impl_metal.h>
 
-#include "engine/runtime/application.h"
-#include "engine/runtime/imgui_manager.h"
 #include "engine/drivers/empty/empty_pipeline_state_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/imgui_manager.h"
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_EXPOSE_NATIVE_COCOA

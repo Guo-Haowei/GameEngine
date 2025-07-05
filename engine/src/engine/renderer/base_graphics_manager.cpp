@@ -3,18 +3,18 @@
 #include "engine/assets/asset.h"
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
-#include "engine/runtime/application.h"
-#include "engine/runtime/asset_registry.h"
 #include "engine/math/frustum.h"
 #include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_data.h"
 #include "engine/renderer/render_graph/render_graph_builder.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/renderer/render_system.h"
 #include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/scene/scene.h"
 
 namespace my {
@@ -157,7 +157,6 @@ void BaseGraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
         OnWindowResize(e->GetWidth(), e->GetHeight());
     }
 }
-
 
 void BaseGraphicsManager::SetPipelineState(PipelineStateName p_name) {
     SetPipelineStateImpl(p_name);
@@ -303,14 +302,6 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
 
         auto data = renderer::GetRenderData();
 
-        for (const auto& update_buffer : data->updateBuffer) {
-            GpuMesh* mesh = (GpuMesh*)update_buffer.id;
-            if (mesh) {
-                UpdateBuffer(renderer::CreateDesc(update_buffer.positions), mesh->vertexBuffers[0].get());
-                UpdateBuffer(renderer::CreateDesc(update_buffer.normals), mesh->vertexBuffers[1].get());
-            }
-        }
-
         // @TODO: remove this
         UpdateEmitters(p_scene);
 
@@ -423,8 +414,8 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::VULKAN:
         case Backend::EMPTY:
         case Backend::METAL:
-            m_activeRenderGraphName = RenderGraphName::DUMMY;
-            break;
+            m_activeRenderGraphName = RenderGraphName::EMPTY;
+            return Result<void>();
         default:
             break;
     }

@@ -46,7 +46,6 @@ target_include_directories(${TARGET_NAME} PUBLIC
     ${PROJECT_SOURCE_DIR}/engine/src
     ${PROJECT_SOURCE_DIR}/plugins/src
     ${PROJECT_SOURCE_DIR}/
-    $ENV{VULKAN_SDK}/include
 )
 
 target_compile_definitions(${TARGET_NAME} PUBLIC
@@ -65,14 +64,11 @@ if(WIN32)
     list(APPEND TARGET_LIBS
         glfw
         optick
-        d3d11.lib
-        d3d12.lib
-        dxgi.lib
-        d3dcompiler.lib
-        dxguid.lib
         loader_assimp
         opengl_4_backend
-        $ENV{VULKAN_SDK}/Lib/vulkan-1.lib
+        d3d11_backend
+        d3d12_backend
+        vk_backend
     )
 elseif (EMSCRIPTEN)
     list(APPEND TARGET_LIBS

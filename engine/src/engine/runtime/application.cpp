@@ -27,7 +27,6 @@
 #undef DEFINE_DVAR
 
 #if USING(PLATFORM_WASM)
-#include <emscripten/html5.h>
 static my::Application* s_app = nullptr;
 #endif
 
@@ -335,14 +334,10 @@ void Application::Run(Application* p_app) {
 
 #if USING(PLATFORM_WASM)
     s_app = p_app;
-    //emscripten_request_animation_frame_loop([](double time, void* userData) -> bool {
-    //    s_app->MainLoop();
-    //    return true;
-    //},
-    //                                        0);
     emscripten_set_main_loop([]() {
         s_app->MainLoop();
-    }, -1, 1);
+    },
+                             -1, 1);
 #else
     while (p_app->MainLoop());
 #endif

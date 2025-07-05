@@ -2,12 +2,12 @@
 
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
-#include "engine/renderer/base_graphics_manager.h"
-#include "engine/runtime/scene_manager.h"
 #include "engine/math/geometry.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/path_tracer/path_tracer.h"
-#include "engine/renderer/render_data.h"
+#include "engine/renderer/render_system.h"
 #include "engine/renderer/sampler.h"
+#include "engine/runtime/scene_manager.h"
 
 #define DEFINE_DVAR
 #include "graphics_dvars.h"
@@ -29,7 +29,7 @@ enum class RenderState {
 };
 
 static struct {
-    RenderData* renderData;
+    RenderSystem* renderData;
     RenderState state;
     PathTracer pt;
     // @TODO: refactor
@@ -63,7 +63,7 @@ void BeginFrame() {
         .ssaoKernelRadius = DVAR_GET_FLOAT(gfx_ssao_radius),
     };
 
-    s_glob.renderData = new RenderData(options);
+    s_glob.renderData = new RenderSystem(options);
     s_glob.renderData->bakeIbl = false;
     s_glob.state = RenderState::RECORDING;
 }
@@ -123,7 +123,7 @@ void RequestBakingIbl() {
     }
 }
 
-const RenderData* GetRenderData() {
+const RenderSystem* GetRenderData() {
     return s_glob.renderData;
 }
 

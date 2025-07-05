@@ -1,7 +1,7 @@
 #pragma once
+#include "engine/core/string/string_builder.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/engine.h"
-#include "engine/core/string/string_builder.h"
 
 namespace my {
 

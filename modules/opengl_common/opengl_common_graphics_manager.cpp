@@ -1,20 +1,19 @@
 #include "opengl_common_graphics_manager.h"
 
-#include "opengl_helpers.h"
-#include "opengl_pipeline_state_manager.h"
-#include "opengl_resources.h"
-
 #include <imgui/backends/imgui_impl_opengl3.h>
 
 #include "engine/core/debugger/profiler.h"
-#include "engine/runtime/application.h"
-#include "engine/runtime/asset_manager.h"
-#include "engine/runtime/imgui_manager.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #include "engine/math/geometry.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/runtime/application.h"
+#include "engine/runtime/asset_manager.h"
+#include "engine/runtime/imgui_manager.h"
 #include "engine/scene/scene.h"
+#include "opengl_helpers.h"
+#include "opengl_pipeline_state_manager.h"
+#include "opengl_resources.h"
 #include "vsinput.glsl.h"
 
 // @NOTE: include GLFW after opengl
@@ -30,13 +29,13 @@
 //-----------------------------------------------------------------------------------------------------------------
 
 // @TODO: wrap this
-#define GL_CHECK(stmt)                                                                                                   \
-    do {                                                                                                                 \
-        stmt;                                                                                                            \
-        GLenum err = glGetError();                                                                                       \
-        if (err != GL_NO_ERROR) {                                                                                        \
+#define GL_CHECK(stmt)                                                                                                     \
+    do {                                                                                                                   \
+        stmt;                                                                                                              \
+        GLenum err = glGetError();                                                                                         \
+        if (err != GL_NO_ERROR) {                                                                                          \
             ::my::ReportErrorImpl(__FUNCTION__, __FILE__, __LINE__, std::format("OpenGL Error (0x{:0>8X}): " #stmt, err)); \
-        }                                                                                                                \
+        }                                                                                                                  \
     } while (0)
 
 namespace my {
@@ -68,16 +67,15 @@ static uint64_t MakeTextureResident(uint32_t p_handle) {
 #endif
 }
 
-CommonOpenGlGraphicsManager::CommonOpenGlGraphicsManager() : BaseGraphicsManager("CommonOpenGlGraphicsManager", Backend::OPENGL, 1) {
+CommonOpenGLGraphicsManager::CommonOpenGLGraphicsManager() : BaseGraphicsManager("CommonOpenGLGraphicsManager", Backend::OPENGL, 1) {
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
 }
 
-
-void CommonOpenGlGraphicsManager::FinalizeImpl() {
+void CommonOpenGLGraphicsManager::FinalizeImpl() {
     m_pipelineStateManager->Finalize();
 }
 
-void CommonOpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
+void CommonOpenGLGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name) {
     auto pipeline = reinterpret_cast<OpenGlPipelineState*>(m_pipelineStateManager->Find(p_name));
 
     if (pipeline->desc.rasterizerDesc) {
@@ -165,12 +163,12 @@ void CommonOpenGlGraphicsManager::SetPipelineStateImpl(PipelineStateName p_name)
     glUseProgram(pipeline->programId);
 }
 
-void CommonOpenGlGraphicsManager::Clear(const Framebuffer*,
-                                  ClearFlags p_flags,
-                                  const float* p_clear_color,
-                                  float p_clear_depth,
-                                  uint8_t p_clear_stencil,
-                                  int) {
+void CommonOpenGLGraphicsManager::Clear(const Framebuffer*,
+                                        ClearFlags p_flags,
+                                        const float* p_clear_color,
+                                        float p_clear_depth,
+                                        uint8_t p_clear_stencil,
+                                        int) {
     if (p_flags == CLEAR_NONE) {
         return;
     }
@@ -196,7 +194,7 @@ void CommonOpenGlGraphicsManager::Clear(const Framebuffer*,
     glClear(flags);
 }
 
-void CommonOpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
+void CommonOpenGLGraphicsManager::SetViewport(const Viewport& p_viewport) {
     if (p_viewport.topLeftY) {
         LOG_FATAL("TODO: adjust to bottom left y");
     }
@@ -207,18 +205,18 @@ void CommonOpenGlGraphicsManager::SetViewport(const Viewport& p_viewport) {
                p_viewport.height);
 }
 
-auto CommonOpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
+auto CommonOpenGLGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuBuffer>> {
     auto type = gl::Convert(p_desc.type);
 
     const GLenum usage = p_desc.dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
-        
+
     GLuint handle = 0;
     glGenBuffers(1, &handle);
     glBindBuffer(type, handle);
     glBufferData(type, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
     glBindBuffer(type, 0);
 
-    //glNamedBufferStorage(handle, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
+    // glNamedBufferStorage(handle, p_desc.elementCount * p_desc.elementSize, p_desc.initialData, usage);
 
     auto buffer = std::make_shared<OpenGlBuffer>(p_desc);
     buffer->handle = handle;
@@ -226,10 +224,10 @@ auto CommonOpenGlGraphicsManager::CreateBuffer(const GpuBufferDesc& p_desc) -> R
     return buffer;
 }
 
-auto CommonOpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
-                                           uint32_t p_count,
-                                           const GpuBufferDesc* p_vb_descs,
-                                           const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
+auto CommonOpenGLGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
+                                                 uint32_t p_count,
+                                                 const GpuBufferDesc* p_vb_descs,
+                                                 const GpuBufferDesc* p_ib_desc) -> Result<std::shared_ptr<GpuMesh>> {
     // create VAO
     uint32_t vao;
     glGenVertexArrays(1, &vao);
@@ -278,13 +276,13 @@ auto CommonOpenGlGraphicsManager::CreateMeshImpl(const GpuMeshDesc& p_desc,
     return ret;
 }
 
-void CommonOpenGlGraphicsManager::SetMesh(const GpuMesh* p_mesh) {
+void CommonOpenGLGraphicsManager::SetMesh(const GpuMesh* p_mesh) {
     auto mesh = reinterpret_cast<const OpenGlMeshBuffers*>(p_mesh);
     DEV_ASSERT(mesh && mesh->vao);
     glBindVertexArray(mesh->vao);
 }
 
-void CommonOpenGlGraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+void CommonOpenGLGraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
     DEV_ASSERT(p_desc.elementSize == p_buffer->desc.elementSize);
     if (DEV_VERIFY(p_buffer->desc.elementCount >= p_desc.elementCount)) {
         const uint32_t size_in_byte = p_desc.elementCount * p_desc.elementSize;
@@ -295,60 +293,60 @@ void CommonOpenGlGraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuB
     }
 }
 
-void CommonOpenGlGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
+void CommonOpenGLGraphicsManager::DrawElements(uint32_t p_count, uint32_t p_offset) {
     glDrawElements(m_stateCache.topology, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)));
 }
 
-void CommonOpenGlGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+void CommonOpenGLGraphicsManager::DrawElementsInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
     glDrawElementsInstanced(m_stateCache.topology, p_count, GL_UNSIGNED_INT, (void*)(p_offset * sizeof(uint32_t)), p_instance_count);
 }
 
-void CommonOpenGlGraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
+void CommonOpenGLGraphicsManager::DrawArrays(uint32_t p_count, uint32_t p_offset) {
     glDrawArrays(m_stateCache.topology, p_offset, p_count);
 }
 
-void CommonOpenGlGraphicsManager::DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
+void CommonOpenGLGraphicsManager::DrawArraysInstanced(uint32_t p_instance_count, uint32_t p_count, uint32_t p_offset) {
     glDrawArraysInstanced(m_stateCache.topology, p_offset, p_count, p_instance_count);
 }
 
-void CommonOpenGlGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
+void CommonOpenGLGraphicsManager::Dispatch(uint32_t p_num_groups_x, uint32_t p_num_groups_y, uint32_t p_num_groups_z) {
     unused(p_num_groups_x);
     unused(p_num_groups_y);
     unused(p_num_groups_z);
     CRASH_NOW_MSG("compute shader not supported");
 }
 
-void CommonOpenGlGraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
+void CommonOpenGLGraphicsManager::BindUnorderedAccessView(uint32_t p_slot, GpuTexture* p_texture) {
     unused(p_slot);
     unused(p_texture);
     CRASH_NOW_MSG("compute shader not supported");
 }
 
-void CommonOpenGlGraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
+void CommonOpenGLGraphicsManager::UnbindUnorderedAccessView(uint32_t p_slot) {
     unused(p_slot);
     CRASH_NOW_MSG("compute shader not supported");
 }
 
-void CommonOpenGlGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
+void CommonOpenGLGraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {
     unused(p_slot);
     unused(p_buffer);
     CRASH_NOW_MSG("compute shader not supported");
 }
 
-void CommonOpenGlGraphicsManager::UnbindStructuredBuffer(int p_slot) {
+void CommonOpenGLGraphicsManager::UnbindStructuredBuffer(int p_slot) {
     unused(p_slot);
     CRASH_NOW_MSG("compute shader not supported");
 }
 
-void CommonOpenGlGraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
+void CommonOpenGLGraphicsManager::BindStructuredBufferSRV(int p_slot, const GpuStructuredBuffer* p_buffer) {
     BindStructuredBuffer(p_slot, p_buffer);
 }
 
-void CommonOpenGlGraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
+void CommonOpenGLGraphicsManager::UnbindStructuredBufferSRV(int p_slot) {
     UnbindStructuredBuffer(p_slot);
 }
 
-auto CommonOpenGlGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> {
+auto CommonOpenGLGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuConstantBuffer>> {
     GLuint handle = 0;
 
     glGenBuffers(1, &handle);
@@ -367,32 +365,32 @@ auto CommonOpenGlGraphicsManager::CreateConstantBuffer(const GpuBufferDesc& p_de
     return buffer;
 }
 
-auto CommonOpenGlGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
+auto CommonOpenGLGraphicsManager::CreateStructuredBuffer(const GpuBufferDesc& p_desc) -> Result<std::shared_ptr<GpuStructuredBuffer>> {
     unused(p_desc);
     CRASH_NOW();
     return nullptr;
 }
 
-void CommonOpenGlGraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
+void CommonOpenGLGraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
     unused(p_desc);
     unused(p_buffer);
     CRASH_NOW();
 }
 
-void CommonOpenGlGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
+void CommonOpenGLGraphicsManager::UpdateConstantBuffer(const GpuConstantBuffer* p_buffer, const void* p_data, size_t p_size) {
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
     glBindBuffer(GL_UNIFORM_BUFFER, buffer->handle);
     glBufferData(GL_UNIFORM_BUFFER, p_size, p_data, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void CommonOpenGlGraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
+void CommonOpenGLGraphicsManager::BindConstantBufferRange(const GpuConstantBuffer* p_buffer, uint32_t p_size, uint32_t p_offset) {
     auto buffer = reinterpret_cast<const OpenGlUniformBuffer*>(p_buffer);
     DEV_ASSERT(p_size + p_offset <= buffer->capacity);
     glBindBufferRange(GL_UNIFORM_BUFFER, p_buffer->GetSlot(), buffer->handle, p_offset, p_size);
 }
 
-void CommonOpenGlGraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
+void CommonOpenGLGraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) {
     if (p_handle == 0) {
         return;
     }
@@ -402,21 +400,21 @@ void CommonOpenGlGraphicsManager::BindTexture(Dimension p_dimension, uint64_t p_
     glBindTexture(texture_type, static_cast<GLuint>(p_handle));
 }
 
-void CommonOpenGlGraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
+void CommonOpenGLGraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
     const GLuint texture_type = gl::ConvertDimension(p_dimension);
 
     glActiveTexture(GL_TEXTURE0 + p_slot);
     glBindTexture(texture_type, 0);
 }
 
-void CommonOpenGlGraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
+void CommonOpenGLGraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
     auto dimension = gl::ConvertDimension(p_texture->desc.dimension);
     glBindTexture(dimension, p_texture->GetHandle32());
     glGenerateMipmap(dimension);
     glBindTexture(dimension, 0);
 }
 
-std::shared_ptr<GpuTexture> CommonOpenGlGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuTexture> CommonOpenGLGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
 
@@ -496,7 +494,7 @@ std::shared_ptr<GpuTexture> CommonOpenGlGraphicsManager::CreateTextureImpl(const
     return texture;
 }
 
-std::shared_ptr<Framebuffer> CommonOpenGlGraphicsManager::CreateFramebuffer(const FramebufferDesc& p_desc) {
+std::shared_ptr<Framebuffer> CommonOpenGLGraphicsManager::CreateFramebuffer(const FramebufferDesc& p_desc) {
     auto framebuffer = std::make_shared<OpenGlFramebuffer>(p_desc);
     GLuint fbo_handle = 0;
 
@@ -513,8 +511,7 @@ std::shared_ptr<Framebuffer> CommonOpenGlGraphicsManager::CreateFramebuffer(cons
     if (!num_color_attachment) {
         glDrawBuffer(GL_NONE);
         glReadBuffer(GL_NONE);
-    }
-    else
+    } else
 #endif
     {
         // create color attachments
@@ -585,11 +582,11 @@ std::shared_ptr<Framebuffer> CommonOpenGlGraphicsManager::CreateFramebuffer(cons
     return framebuffer;
 }
 
-void CommonOpenGlGraphicsManager::SetStencilRef(uint32_t p_ref) {
+void CommonOpenGLGraphicsManager::SetStencilRef(uint32_t p_ref) {
     glStencilFunc(gl::Convert(m_stateCache.stencilFunc), p_ref, 0xFF);
 }
 
-void CommonOpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
+void CommonOpenGLGraphicsManager::SetBlendState(const BlendDesc& p_desc, const float* p_factor, uint32_t p_mask) {
     unused(p_factor);
     unused(p_mask);
 
@@ -616,7 +613,7 @@ void CommonOpenGlGraphicsManager::SetBlendState(const BlendDesc& p_desc, const f
     glBlendFunc(src_blend, dest_blend);
 }
 
-void CommonOpenGlGraphicsManager::SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) {
+void CommonOpenGLGraphicsManager::SetRenderTarget(const Framebuffer* p_framebuffer, int p_index, int p_mip_level) {
     DEV_ASSERT(p_framebuffer);
     if (p_framebuffer->desc.type == FramebufferDesc::SCREEN) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -653,11 +650,11 @@ void CommonOpenGlGraphicsManager::SetRenderTarget(const Framebuffer* p_framebuff
     return;
 }
 
-void CommonOpenGlGraphicsManager::UnsetRenderTarget() {
+void CommonOpenGLGraphicsManager::UnsetRenderTarget() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void CommonOpenGlGraphicsManager::CreateGpuResources() {
+void CommonOpenGLGraphicsManager::CreateGpuResources() {
     // @TODO: move to renderer
     auto& cache = g_constantCache.cache;
     // @TODO: refactor!
@@ -669,7 +666,7 @@ void CommonOpenGlGraphicsManager::CreateGpuResources() {
     g_constantCache.update();
 }
 
-void CommonOpenGlGraphicsManager::Render() {
+void CommonOpenGLGraphicsManager::Render() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -686,7 +683,7 @@ void CommonOpenGlGraphicsManager::Render() {
     }
 }
 
-void CommonOpenGlGraphicsManager::Present() {
+void CommonOpenGLGraphicsManager::Present() {
     HBN_PROFILE_EVENT();
 
     if (m_app->GetSpecification().enableImgui) {

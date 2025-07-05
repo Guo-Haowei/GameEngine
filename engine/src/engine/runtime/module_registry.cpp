@@ -1,10 +1,10 @@
 #include "module_registry.h"
 
 #if USING(PLATFORM_WINDOWS)
-#include "engine/drivers/d3d11/d3d11_graphics_manager.h"
-#include "engine/drivers/d3d12/d3d12_graphics_manager.h"
-#include "engine/drivers/vk/vulkan_graphics_manager.h"
+#include "modules/d3d11/d3d11_graphics_manager.h"
+#include "modules/d3d12/d3d12_graphics_manager.h"
 #include "modules/opengl4/opengl4_graphics_manager.h"
+#include "modules/vk/vulkan_graphics_manager.h"
 #elif USING(PLATFORM_APPLE)
 #include "engine/drivers/metal/metal_graphics_manager.h"
 #elif USING(PLATFORM_WASM)
@@ -185,7 +185,7 @@ IPhysicsManager* CreatePhysicsManager() {
 static IGraphicsManager* SelectGraphicsManager(const std::string& p_backend) {
     if (p_backend == "d3d11") {
 #if USING(PLATFORM_WINDOWS)
-        return new D3d11GraphicsManager();
+        return new D3d11GraphicsManager;
 #else
         return nullptr;
 #endif
@@ -210,16 +210,15 @@ static IGraphicsManager* SelectGraphicsManager(const std::string& p_backend) {
     }
 
     if (p_backend == "vulkan") {
-        return nullptr;
+        return new VulkanGraphicsManager;
     }
 
     if (p_backend == "metal") {
         return nullptr;
     }
 
-    return nullptr;
+    return new NullGraphicsManager;
 }
-
 
 IGraphicsManager* CreateGraphicsManager() {
     if (IGraphicsManager::s_createFunc) {

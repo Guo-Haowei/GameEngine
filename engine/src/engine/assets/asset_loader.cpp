@@ -1,13 +1,12 @@
 #include "asset_loader.h"
 
-#include "tinygltf/stb_image.h"
-
 #include "engine/assets/asset.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/pixel_format.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scene_serialization.h"
+#include "tinygltf/stb_image.h"
 
 namespace my {
 

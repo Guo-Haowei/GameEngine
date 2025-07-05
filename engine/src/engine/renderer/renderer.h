@@ -20,7 +20,7 @@ enum class PathTracerMode {
 
 namespace my::renderer {
 
-struct RenderData;
+struct RenderSystem;
 
 using PointShadowHandle = int;
 constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;
@@ -44,7 +44,7 @@ void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
 
 void RequestBakingIbl();
 
-const RenderData* GetRenderData();
+const RenderSystem* GetRenderData();
 
 PointShadowHandle AllocatePointLightShadowMap();
 

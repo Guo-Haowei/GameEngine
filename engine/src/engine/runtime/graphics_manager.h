@@ -134,9 +134,9 @@ public:
     virtual uint64_t GetFinalImage() const = 0;
 
     // @TODO: thread safety ?
-    virtual void EventReceived(std::shared_ptr<IEvent> p_event) =0;
+    virtual void EventReceived(std::shared_ptr<IEvent> p_event) = 0;
 
-    //static auto Create() -> Result<GraphicsManager*>;
+    // static auto Create() -> Result<GraphicsManager*>;
 
     virtual Backend GetBackend() const = 0;
 
@@ -145,6 +145,7 @@ public:
     virtual renderer::RenderGraph* GetActiveRenderGraph() = 0;
 
     virtual FrameContext& GetCurrentFrame() = 0;
+    const FrameContext& GetCurrentFrame() const { return GetCurrentFrame(); }
 
     virtual void DrawQuad() = 0;
     virtual void DrawQuadInstanced(uint32_t p_instance_count) = 0;

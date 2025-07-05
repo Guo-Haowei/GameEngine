@@ -56,7 +56,6 @@ protected:
     static_assert(sizeof(ElementBlock) == 16);
 #endif
 
-
     RIDAllocatorBase(uint32_t element_size, uint32_t elements_in_chunk)
         : m_element_size(element_size),
           m_elements_in_chunk(elements_in_chunk) {
