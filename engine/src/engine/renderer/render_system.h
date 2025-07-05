@@ -91,7 +91,7 @@ struct BufferCache {
     }
 };
 
-struct RenderData {
+struct RenderSystem {
     struct Camera {
         Matrix4x4f viewMatrix;
         Matrix4x4f projectionMatrixRendering;
@@ -108,7 +108,7 @@ struct RenderData {
         Degree fovy;
     };
 
-    RenderData(const RenderOptions& p_options);
+    RenderSystem(const RenderOptions& p_options);
 
     const RenderOptions options;
 
@@ -177,6 +177,6 @@ private:
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        const Scene& p_config,
-                       RenderData& p_out_data);
+                       RenderSystem& p_out_data);
 
 }  // namespace my::renderer

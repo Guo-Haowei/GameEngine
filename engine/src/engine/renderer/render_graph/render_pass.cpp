@@ -38,7 +38,7 @@ void RenderPass::CreateInternal(RenderPassDesc& p_desc) {
     m_inputs = std::move(p_desc.dependencies);
 }
 
-void RenderPass::Execute(const renderer::RenderData& p_data, IRenderCmdContext& p_cmd) {
+void RenderPass::Execute(const renderer::RenderSystem& p_data, IRenderCmdContext& p_cmd) {
     RT_DEBUG("-- Executing pass '{}'", RenderPassNameToString(m_name));
 
     for (auto& pass : m_drawPasses) {

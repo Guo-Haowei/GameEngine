@@ -29,7 +29,7 @@ enum class RenderState {
 };
 
 static struct {
-    RenderData* renderData;
+    RenderSystem* renderData;
     RenderState state;
     PathTracer pt;
     // @TODO: refactor
@@ -63,7 +63,7 @@ void BeginFrame() {
         .ssaoKernelRadius = DVAR_GET_FLOAT(gfx_ssao_radius),
     };
 
-    s_glob.renderData = new RenderData(options);
+    s_glob.renderData = new RenderSystem(options);
     s_glob.renderData->bakeIbl = false;
     s_glob.state = RenderState::RECORDING;
 }
@@ -123,7 +123,7 @@ void RequestBakingIbl() {
     }
 }
 
-const RenderData* GetRenderData() {
+const RenderSystem* GetRenderData() {
     return s_glob.renderData;
 }
 

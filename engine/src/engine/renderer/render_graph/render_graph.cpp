@@ -70,7 +70,7 @@ void RenderGraph::Compile() {
 #endif
 }
 
-void RenderGraph::Execute(const renderer::RenderData& p_data, IGraphicsManager& p_graphics_manager) {
+void RenderGraph::Execute(const renderer::RenderSystem& p_data, IGraphicsManager& p_graphics_manager) {
     for (auto pass : m_graph) {
         pass->Execute(p_data, p_graphics_manager);
     }

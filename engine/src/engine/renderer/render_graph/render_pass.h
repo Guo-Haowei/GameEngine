@@ -15,14 +15,14 @@ using IRenderCmdContext = IGraphicsManager;
 
 namespace my::renderer {
 
-struct RenderData;
+struct RenderSystem;
 
 struct RenderPassDesc {
     RenderPassName name;
     std::vector<RenderPassName> dependencies;
 };
 
-using DrawPassExecuteFunc = void (*)(const renderer::RenderData&,
+using DrawPassExecuteFunc = void (*)(const renderer::RenderSystem&,
                                      const Framebuffer*,
                                      DrawPass&,
                                      IRenderCmdContext&);
@@ -43,7 +43,7 @@ class RenderPass {
 public:
     void AddDrawPass(std::string_view p_name, std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_func);
 
-    void Execute(const renderer::RenderData& p_data, IRenderCmdContext& p_cmd);
+    void Execute(const renderer::RenderSystem& p_data, IRenderCmdContext& p_cmd);
 
     RenderPassName GetName() const { return m_name; }
 

@@ -19,7 +19,7 @@ namespace my::renderer {
 using my::AABB;
 using my::Frustum;
 
-RenderData::RenderData(const RenderOptions& p_options) : options(p_options) {
+RenderSystem::RenderSystem(const RenderOptions& p_options) : options(p_options) {
     m_renderGraph = IGraphicsManager::GetSingleton().GetActiveRenderGraph();
     DEV_ASSERT(m_renderGraph);
 }
@@ -66,12 +66,12 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
     cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
 };
 
-void RenderData::FillPass(const Scene& p_scene,
-                          PassContext&,
-                          FilterObjectFunc1 p_filter1,
-                          FilterObjectFunc2 p_filter2,
-                          DrawPass* p_draw_pass,
-                          bool p_use_material) {
+void RenderSystem::FillPass(const Scene& p_scene,
+                            PassContext&,
+                            FilterObjectFunc1 p_filter1,
+                            FilterObjectFunc2 p_filter2,
+                            DrawPass* p_draw_pass,
+                            bool p_use_material) {
 
     const bool is_opengl = this->options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
@@ -166,7 +166,7 @@ static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matri
     DebugDrawBVH(p_level, p_bvh->right.get(), p_matrix);
 };
 
-static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
+static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
     const auto& options = p_out_data.options;
     auto& cache = p_out_data.perFrameCache;
 
@@ -278,7 +278,7 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     }
 }
 
-void RenderData::FillLightBuffer(const Scene& p_scene) {
+void RenderSystem::FillLightBuffer(const Scene& p_scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
     auto& cache = this->perFrameCache;
@@ -411,7 +411,7 @@ void RenderData::FillLightBuffer(const Scene& p_scene) {
     }
 }
 
-void RenderData::FillVoxelPass(const Scene& p_scene) {
+void RenderSystem::FillVoxelPass(const Scene& p_scene) {
     bool enabled = false;
     bool show_debug = false;
     voxel_gi_bound.MakeInvalid();
@@ -458,7 +458,7 @@ void RenderData::FillVoxelPass(const Scene& p_scene) {
     cache.c_voxelSize = voxel_size;
 }
 
-void RenderData::FillMainPass(const Scene& p_scene) {
+void RenderSystem::FillMainPass(const Scene& p_scene) {
     const auto& camera = this->mainCamera;
     Frustum camera_frustum(camera.projectionMatrixFrustum * camera.viewMatrix);
 
@@ -579,7 +579,7 @@ void RenderData::FillMainPass(const Scene& p_scene) {
 }
 
 static void FillEnvConstants(const Scene&,
-                             RenderData& p_out_data) {
+                             RenderSystem& p_out_data) {
     // @TODO: return if necessary
 
     constexpr int count = IBL_MIP_CHAIN_MAX * 6;
@@ -598,7 +598,7 @@ static void FillEnvConstants(const Scene&,
 }
 
 static void FillBloomConstants(const Scene& p_config,
-                               RenderData& p_out_data) {
+                               RenderSystem& p_out_data) {
     unused(p_config);
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -634,7 +634,7 @@ static void FillBloomConstants(const Scene& p_config,
 }
 
 static void FillMeshEmitterBuffer(const Scene& p_scene,
-                                  RenderData& p_out_data) {
+                                  RenderSystem& p_out_data) {
     for (auto [id, emitter] : p_scene.m_MeshEmitterComponents) {
         auto transform = p_scene.GetComponent<TransformComponent>(id);
         auto mesh = p_scene.GetComponent<MeshComponent>(emitter.meshId);
@@ -681,7 +681,7 @@ static void FillMeshEmitterBuffer(const Scene& p_scene,
 }
 
 static void FillParticleEmitterBuffer(const Scene& p_scene,
-                                      RenderData& p_out_data) {
+                                      RenderSystem& p_out_data) {
     // @TODO: engine->get frame
     static int s_counter = -1;
     s_counter++;
@@ -715,7 +715,7 @@ static void FillParticleEmitterBuffer(const Scene& p_scene,
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        const Scene& p_scene,
-                       RenderData& p_out_data) {
+                       RenderSystem& p_out_data) {
     // fill camera
     {
         auto reverse_z = [](Matrix4x4f& p_perspective) {

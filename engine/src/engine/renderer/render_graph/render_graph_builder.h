@@ -9,7 +9,7 @@ class IGraphicsManager;
 
 namespace my::renderer {
 
-struct RenderData;
+struct RenderSystem;
 struct RenderPassCreateInfo;
 class RenderGraph;
 
@@ -38,7 +38,7 @@ public:
     static std::unique_ptr<RenderGraph> CreateDefault(RenderGraphBuilderConfig& p_config);
     static std::unique_ptr<RenderGraph> CreatePathTracer(RenderGraphBuilderConfig& p_config);
 
-    static void DrawDebugImages(const RenderData& p_data, int p_width, int p_height, IGraphicsManager& p_graphics_manager);
+    static void DrawDebugImages(const RenderSystem& p_data, int p_width, int p_height, IGraphicsManager& p_graphics_manager);
 
     static GpuTextureDesc BuildDefaultTextureDesc(RenderTargetResourceName p_name,
                                                   PixelFormat p_format,
