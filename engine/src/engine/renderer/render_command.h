@@ -1,4 +1,4 @@
-//#pragma once
+#pragma once
 
 // clang-format off
 namespace my { enum StencilFlags : uint8_t; }
@@ -20,14 +20,15 @@ struct DrawCommand {
     // uint32_t objectCBufferOffset;  // offset into dynamic buffer, if needed
 
     uint32_t indexCount;
-    uint32_t vertexOffset;
-    uint32_t indexOffset;
+    uint32_t vertexOffset = 0;
+    uint32_t indexOffset = 0;
 
     uint32_t instanceCount = 1;
     uint32_t instanceOffset = 0;
 
     int batch_idx;
 
+    const GpuMesh* mesh_data;
     int bone_idx = -1;
     int mat_idx = -1;
 
@@ -46,6 +47,14 @@ struct RenderCommand {
         DrawCommand draw;
         ComputeCommand compute;
     };
+
+    static RenderCommand from(const DrawCommand& p_draw) {
+        return { RenderCommandType::Draw, { .draw = p_draw } };
+    }
+
+    static RenderCommand from(const ComputeCommand& p_compute) {
+        return { RenderCommandType::Compute, { .compute = p_compute } };
+    }
 };
 
 }  // namespace my

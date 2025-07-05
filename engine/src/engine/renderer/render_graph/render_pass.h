@@ -25,38 +25,42 @@ struct RenderPassDesc {
 using DrawPassExecuteFunc = void (*)(const renderer::RenderData&,
                                      const Framebuffer*,
                                      DrawPass&,
-                                     const IRenderCmdContext&);
+                                     IRenderCmdContext&);
 
 struct DrawPass {
+    std::string name;
     std::shared_ptr<Framebuffer> framebuffer;
     DrawPassExecuteFunc executor;
 
-    std::vector<RenderCommand> commnads;
+    std::vector<RenderCommand> commands;
 
     void AddCommand(const RenderCommand& cmd) {
-        commnads.emplace_back(cmd);
+        commands.emplace_back(cmd);
     }
 };
 
 class RenderPass {
 public:
-    void AddDrawPass(std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_func) {
-        m_drawPasses.emplace_back(DrawPass{ p_framebuffer, p_func, {} });
-    }
+    void AddDrawPass(std::string_view p_name, std::shared_ptr<Framebuffer> p_framebuffer, DrawPassExecuteFunc p_func);
 
     void Execute(const renderer::RenderData& p_data, IRenderCmdContext& p_cmd);
 
     RenderPassName GetName() const { return m_name; }
+
     const char* GetNameString() const { return RenderPassNameToString(m_name); }
 
     const auto& GetDrawPasses() const { return m_drawPasses; }
+
+    [[nodiscard]] auto FindDrawPass(const std::string& p_name) -> Result<DrawPass*>;
 
 protected:
     void CreateInternal(RenderPassDesc& pass_desc);
 
     RenderPassName m_name;
     std::vector<RenderPassName> m_inputs;
+
     std::vector<DrawPass> m_drawPasses;
+    std::unordered_map<std::string, uint32_t> m_lookup;
 
     friend class RenderGraph;
 };

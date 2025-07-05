@@ -1,6 +1,4 @@
 #pragma once
-#include "render_command.h"
-
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
@@ -8,11 +6,17 @@
 #include "engine/renderer/renderer.h"
 #include "engine/scene/scene_component.h"
 #include "engine/systems/ecs/entity.h"
+#include "render_command.h"
+
+// clang-format off
+namespace my { class Scene; }
+namespace my { class PerspectiveCameraComponent; }
+namespace my::renderer { struct DrawPass; }
+namespace my::renderer { class RenderGraph; }
+// clang-format on
 
 namespace my {
 #include "cbuffer.hlsl.h"
-class Scene;
-class PerspectiveCameraComponent;
 }  // namespace my
 
 namespace my::renderer {
@@ -55,9 +59,6 @@ struct InstanceContext {
 
 struct PassContext {
     int pass_idx{ 0 };
-
-    std::vector<BatchContext> opaque;
-    std::vector<BatchContext> transparent;
 };
 
 struct ImageDrawContext {
@@ -107,8 +108,7 @@ struct RenderData {
         Degree fovy;
     };
 
-    RenderData(const RenderOptions& p_options) : options(p_options) {
-    }
+    RenderData(const RenderOptions& p_options);
 
     const RenderOptions options;
 
@@ -153,6 +153,25 @@ struct RenderData {
 
     std::vector<ImageDrawContext> drawImageContext;
     uint32_t drawImageOffset;
+
+    ///////////////////////
+
+    void FillLightBuffer(const Scene& p_scene);
+    void FillVoxelPass(const Scene& p_scene);
+    void FillMainPass(const Scene& p_scene);
+
+private:
+    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
+    using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
+
+    void FillPass(const Scene& p_scene,
+                  PassContext& p_pass,
+                  FilterObjectFunc1 p_filter1,
+                  FilterObjectFunc2 p_filter2,
+                  DrawPass* p_draw_pass,
+                  bool p_use_material);
+
+    RenderGraph* m_renderGraph = nullptr;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

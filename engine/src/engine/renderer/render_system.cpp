@@ -4,10 +4,11 @@
 #include "engine/math/frustum.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_defines.h"
+#include "engine/renderer/render_graph/render_graph.h"
 #include "engine/scene/scene.h"
 
 // @TODO: remove
-#include "engine/math/matrix_transform.h"
+// #include "engine/math/matrix_transform.h"
 #include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/runtime/asset_registry.h"
@@ -18,8 +19,10 @@ namespace my::renderer {
 using my::AABB;
 using my::Frustum;
 
-using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
-using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
+RenderData::RenderData(const RenderOptions& p_options) : options(p_options) {
+    m_renderGraph = IGraphicsManager::GetSingleton().GetActiveRenderGraph();
+    DEV_ASSERT(m_renderGraph);
+}
 
 static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent* p_material, MaterialConstantBuffer& cb) {
     cb.c_baseColor = p_material->baseColor;
@@ -63,19 +66,21 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
     cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
 };
 
-static void FillPass(const Scene& p_scene,
-                     PassContext& p_pass,
-                     FilterObjectFunc1 p_filter1,
-                     FilterObjectFunc2 p_filter2,
-                     RenderData& p_out_render_data) {
+void RenderData::FillPass(const Scene& p_scene,
+                          PassContext&,
+                          FilterObjectFunc1 p_filter1,
+                          FilterObjectFunc2 p_filter2,
+                          DrawPass* p_draw_pass,
+                          bool p_use_material) {
 
-    const bool is_opengl = p_out_render_data.options.isOpengl;
+    const bool is_opengl = this->options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
         }
 
-        const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
+        // @TODO: transparent should be passed in as filter
+        // const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
 
         if (!p_filter1(obj)) {
             continue;
@@ -97,12 +102,12 @@ static void FillPass(const Scene& p_scene,
         batch_buffer.c_worldMatrix = world_matrix;
         batch_buffer.c_meshFlag = mesh.armatureId.IsValid();
 
-        BatchContext draw;
+        DrawCommand draw;
         if (entity == p_scene.m_selected) {
             draw.flags = STENCIL_FLAG_SELECTED;
         }
 
-        draw.batch_idx = p_out_render_data.batchCache.FindOrAdd(entity, batch_buffer);
+        draw.batch_idx = this->batchCache.FindOrAdd(entity, batch_buffer);
         if (mesh.armatureId.IsValid()) {
             auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armatureId);
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
@@ -111,7 +116,7 @@ static void FillPass(const Scene& p_scene,
             memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(Matrix4x4f) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
-            draw.bone_idx = p_out_render_data.boneCache.FindOrAdd(mesh.armatureId, bone);
+            draw.bone_idx = this->boneCache.FindOrAdd(mesh.armatureId, bone);
         } else {
             draw.bone_idx = -1;
         }
@@ -120,30 +125,30 @@ static void FillPass(const Scene& p_scene,
         draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
         DEV_ASSERT(draw.mesh_data);
 
-        for (const auto& subset : mesh.subsets) {
-            aabb = subset.local_bound;
-            aabb.ApplyMatrix(world_matrix);
-            if (!p_filter2(aabb)) {
-                continue;
-            }
-
-            const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
-            MaterialConstantBuffer material_buffer;
-            FillMaterialConstantBuffer(is_opengl, material, material_buffer);
-
-            DrawContext sub_mesh;
-
-            sub_mesh.index_count = subset.index_count;
-            sub_mesh.index_offset = subset.index_offset;
-            sub_mesh.material_idx = p_out_render_data.materialCache.FindOrAdd(subset.material_id, material_buffer);
-
-            draw.subsets.emplace_back(std::move(sub_mesh));
-        }
-
-        if (is_transparent) {
-            p_pass.transparent.emplace_back(std::move(draw));
+        if (!p_use_material) {
+            draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
+            p_draw_pass->AddCommand(RenderCommand::from(draw));
+            // @TODO: add to pass
         } else {
-            p_pass.opaque.emplace_back(std::move(draw));
+            for (const auto& subset : mesh.subsets) {
+                aabb = subset.local_bound;
+                aabb.ApplyMatrix(world_matrix);
+                if (!p_filter2(aabb)) {
+                    continue;
+                }
+
+                const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
+                MaterialConstantBuffer material_buffer;
+                FillMaterialConstantBuffer(is_opengl, material, material_buffer);
+
+                // Draw submesh if pass cares about material
+                DrawCommand draw2 = draw;
+                draw2.indexCount = subset.index_count;
+                draw2.indexOffset = subset.index_offset;
+                draw2.mat_idx = this->materialCache.FindOrAdd(subset.material_id, material_buffer);
+
+                p_draw_pass->AddCommand(RenderCommand::from(draw2));
+            }
         }
     }
 }
@@ -275,14 +280,13 @@ static void FillConstantBuffer(const Scene& p_scene, RenderData& p_out_data) {
     }
 }
 
-static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
-
+void RenderData::FillLightBuffer(const Scene& p_scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
-    auto& cache = p_out_data.perFrameCache;
+    auto& cache = this->perFrameCache;
     cache.c_lightCount = light_count;
 
-    auto& point_shadow_cache = p_out_data.pointShadowCache;
+    [[maybe_unused]] auto& point_shadow_cache = this->pointShadowCache;
 
     int idx = 0;
     for (auto [light_entity, light_component] : p_scene.View<LightComponent>()) {
@@ -318,7 +322,7 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                 tmp.Set(&light_dir.x);
                 light.view_matrix = LookAtRh(center + tmp * size, center, Vector3f::UnitY);
 
-                if (p_out_data.options.isOpengl) {
+                if (this->options.isOpengl) {
                     light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
                     light.projection_matrix = BuildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
@@ -328,23 +332,30 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
-                p_out_data.shadowPasses[0].pass_idx = static_cast<int>(p_out_data.passCache.size());
-                p_out_data.passCache.emplace_back(pass_constant);
+                this->shadowPasses[0].pass_idx = static_cast<int>(this->passCache.size());
+                this->passCache.emplace_back(pass_constant);
+
+                auto pass = m_renderGraph->FindPass(RenderPassName::SHADOW);
+                if (!pass) {
+                    continue;
+                }
+                auto res = pass->FindDrawPass("ShadowDrawPass");
+                DEV_ASSERT(res.has_value());
 
                 Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
                     p_scene,
-                    p_out_data.shadowPasses[0],
+                    this->shadowPasses[0],
                     [](const ObjectComponent& p_object) {
                         return p_object.flags & ObjectComponent::FLAG_CAST_SHADOW;
                     },
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
                     },
-                    p_out_data);
+                    *res, false);
             } break;
             case LIGHT_TYPE_POINT: {
-                const int shadow_map_index = light_component.GetShadowMapIndex();
+                [[maybe_unused]] const int shadow_map_index = light_component.GetShadowMapIndex();
                 // @TODO: there's a bug in shadow map allocation
                 light.atten_constant = light_component.m_atten.constant;
                 light.atten_linear = light_component.m_atten.linear;
@@ -352,6 +363,8 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                 light.position = light_component.GetPosition();
                 light.cast_shadow = cast_shadow;
                 light.max_distance = light_component.GetMaxDistance();
+                LOG_WARN("TODO: fix light");
+#if 0
                 if (cast_shadow && shadow_map_index != -1) {
                     light.shadow_map_index = shadow_map_index;
 
@@ -367,7 +380,7 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                         [&](const AABB& p_aabb) {
                             return p_aabb.Intersects(aabb);
                         },
-                        p_out_data);
+                        p_out_data, false);
 
                     DEV_ASSERT_INDEX(shadow_map_index, MAX_POINT_LIGHT_SHADOW_COUNT);
                     const auto& light_matrices = light_component.GetMatrices();
@@ -382,6 +395,7 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
                 } else {
                     light.shadow_map_index = -1;
                 }
+#endif
             } break;
             case LIGHT_TYPE_AREA: {
                 Matrix4x4f transform = light_transform->GetWorldMatrix();
@@ -399,8 +413,7 @@ static void FillLightBuffer(const Scene& p_scene, RenderData& p_out_data) {
     }
 }
 
-static void FillVoxelPass(const Scene& p_scene,
-                          RenderData& p_out_data) {
+void RenderData::FillVoxelPass(const Scene& p_scene) {
     bool enabled = false;
     bool show_debug = false;
     AABB voxel_gi_bound;
@@ -421,17 +434,17 @@ static void FillVoxelPass(const Scene& p_scene,
         renderer::AddDebugCube(voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
     }
 
-    auto& cache = p_out_data.perFrameCache;
+    auto& cache = this->perFrameCache;
     cache.c_enableVxgi = enabled;
     // @HACK: DONT use pass_idx
     if (!enabled) {
-        p_out_data.voxelPass.pass_idx = -1;
+        this->voxelPass.pass_idx = -1;
         return;
     }
-    p_out_data.voxelPass.pass_idx = 0;
+    this->voxelPass.pass_idx = 0;
 
     // @TODO: refactor the following
-    const int voxel_texture_size = p_out_data.options.voxelTextureSize;
+    const int voxel_texture_size = this->options.voxelTextureSize;
     DEV_ASSERT(IsPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
@@ -447,21 +460,23 @@ static void FillVoxelPass(const Scene& p_scene,
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
 
+    auto res = m_renderGraph->FindPass(RenderPassName::VOXELIZATION)->FindDrawPass("VoxelizationPass");
+    DEV_ASSERT(res.has_value());
+
     FillPass(
         p_scene,
-        p_out_data.voxelPass,
+        this->voxelPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::FLAG_RENDERABLE;
         },
         [&](const AABB& p_aabb) {
             return voxel_gi_bound.Intersects(p_aabb);
         },
-        p_out_data);
+        *res, true);
 }
 
-static void FillMainPass(const Scene& p_scene,
-                         RenderData& p_out_data) {
-    const auto& camera = p_out_data.mainCamera;
+void RenderData::FillMainPass(const Scene& p_scene) {
+    const auto& camera = this->mainCamera;
     Frustum camera_frustum(camera.projectionMatrixFrustum * camera.viewMatrix);
 
     // main pass
@@ -469,19 +484,22 @@ static void FillMainPass(const Scene& p_scene,
     pass_constant.c_viewMatrix = camera.viewMatrix;
     pass_constant.c_projectionMatrix = camera.projectionMatrixRendering;
 
-    p_out_data.mainPass.pass_idx = static_cast<int>(p_out_data.passCache.size());
-    p_out_data.passCache.emplace_back(pass_constant);
+    this->mainPass.pass_idx = static_cast<int>(this->passCache.size());
+    this->passCache.emplace_back(pass_constant);
+
+    auto res = m_renderGraph->FindPass(RenderPassName::GBUFFER)->FindDrawPass("GbufferDrawPass");
+    DEV_ASSERT(res.has_value());
 
     FillPass(
         p_scene,
-        p_out_data.mainPass,
+        this->mainPass,
         [](const ObjectComponent& object) {
             return object.flags & ObjectComponent::FLAG_RENDERABLE;
         },
         [&](const AABB& aabb) {
             return camera_frustum.Intersects(aabb);
         },
-        p_out_data);
+        *res, true);
 }
 
 static void FillEnvConstants(const Scene&,
@@ -675,9 +693,9 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     }
 
     FillConstantBuffer(p_scene, p_out_data);
-    FillLightBuffer(p_scene, p_out_data);
-    FillMainPass(p_scene, p_out_data);
-    FillVoxelPass(p_scene, p_out_data);
+    p_out_data.FillLightBuffer(p_scene);
+    p_out_data.FillMainPass(p_scene);
+    p_out_data.FillVoxelPass(p_scene);
     FillMeshEmitterBuffer(p_scene, p_out_data);
     FillBloomConstants(p_scene, p_out_data);
     FillEnvConstants(p_scene, p_out_data);
