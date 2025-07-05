@@ -42,9 +42,16 @@ void RenderPass::Execute(const renderer::RenderSystem& p_data, IRenderCmdContext
     RT_DEBUG("-- Executing pass '{}'", RenderPassNameToString(m_name));
 
     for (auto& pass : m_drawPasses) {
+        RenderPassExcutionContext ctx{
+            .render_system = p_data,
+            .framebuffer = pass.framebuffer.get(),
+            .pass = pass,
+            .cmd = p_cmd,
+        };
+
         auto framebuffer = pass.framebuffer.get();
         p_cmd.BeginDrawPass(framebuffer);
-        pass.executor(p_data, framebuffer, pass, p_cmd);
+        pass.executor(ctx);
         p_cmd.EndDrawPass(framebuffer);
 
         pass.commands.clear();

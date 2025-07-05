@@ -118,37 +118,34 @@ static void ExecuteDrawCommands(const RenderSystem& p_data, const DrawPass& p_dr
     }
 }
 
-static void PrepassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
-                        IRenderCmdContext&) {
+static void PrepassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    Framebuffer* p_framebuffer = p_pass.framebuffer.get();
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-    const uint32_t width = p_framebuffer->desc.depthAttachment->desc.width;
-    const uint32_t height = p_framebuffer->desc.depthAttachment->desc.height;
+    Framebuffer* fb = p_ctx.framebuffer;
+    auto& cmd = p_ctx.cmd;
+    auto& frame = cmd.GetCurrentFrame();
+    const uint32_t width = fb->desc.depthAttachment->desc.width;
+    const uint32_t height = fb->desc.depthAttachment->desc.height;
 
-    gm.SetRenderTarget(p_framebuffer);
-    gm.SetViewport(Viewport(width, height));
+    cmd.SetRenderTarget(fb);
+    cmd.SetViewport(Viewport(width, height));
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    gm.Clear(p_framebuffer, CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color, 0.0f, STENCIL_FLAG_SKY);
+    cmd.Clear(fb, CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color, 0.0f, STENCIL_FLAG_SKY);
 
-    const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+    const PassContext& pass = p_ctx.render_system.mainPass;
+    cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PSO_PREPASS);
-    ExecuteDrawCommands(p_data, p_pass, true);
+    cmd.SetPipelineState(PSO_PREPASS);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, true);
 }
 
-static void EmptyPass(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                      IRenderCmdContext&) {
-    unused(p_data);
+static void EmptyPass(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
-    auto& gm = IGraphicsManager::GetSingleton();
-    gm.SetRenderTarget(p_framebuffer);
+    auto& cmd = p_ctx.cmd;
+    cmd.SetRenderTarget(p_ctx.framebuffer);
     float clear_color[] = { 0.3f, 0.5f, 0.4f, 1.0f };
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
+    cmd.Clear(p_ctx.framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
 }
 
 void RenderGraphBuilder::AddEmpty() {
@@ -166,6 +163,34 @@ void RenderGraphBuilder::AddEmpty() {
     CreateRenderPass(info);
 }
 
+// class RenderPassBuilder {
+// public:
+//     ResourceHandle Read(const std::string& name);
+//     ResourceHandle Write(const std::string& name);
+//     ResourceHandle Create(const std::string& name, const TextureDesc& desc);
+//
+//     void SetExecuteFunc(std::function<void(RenderContext&)> func);
+//
+// private:
+//     RenderPass* pass;
+//     RenderGraph* graph;
+// };
+
+// graph.AddPass("GBuffer", [&](RenderPassBuilder& builder) {
+//     // Declare output GBuffer textures
+//     auto albedo = builder.Create("GBuffer_Albedo", TextureDesc::RGBA8(size));
+//     auto normal = builder.Create("GBuffer_Normal", TextureDesc::RGBA16F(size));
+//     auto position = builder.Create("GBuffer_Position", TextureDesc::RGBA16F(size));
+//
+//     builder.Write(albedo);
+//     builder.Write(normal);
+//     builder.Write(position);
+//
+//     builder.SetExecuteFunc([=](RenderContext& ctx) {
+//         // Submit draw calls using ctx that writes to those buffers
+//     });
+// });
+
 void RenderGraphBuilder::AddPrepass() {
     auto& manager = IGraphicsManager::GetSingleton();
 
@@ -182,29 +207,29 @@ void RenderGraphBuilder::AddPrepass() {
     pass->AddDrawPass(EARLY_Z_PASS_NAME, framebuffer, PrepassFunc);
 }
 
-static void GbufferPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
-                            IRenderCmdContext& p_cmd) {
+static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    const Framebuffer* framebuffer = p_pass.framebuffer.get();
+    const Framebuffer* fb = p_ctx.framebuffer;
+    auto& cmd = p_ctx.cmd;
 
-    const auto& frame = p_cmd.GetCurrentFrame();
-    const uint32_t width = framebuffer->desc.depthAttachment->desc.width;
-    const uint32_t height = framebuffer->desc.depthAttachment->desc.height;
+    const auto& frame = cmd.GetCurrentFrame();
+    const uint32_t width = fb->desc.depthAttachment->desc.width;
+    const uint32_t height = fb->desc.depthAttachment->desc.height;
 
-    p_cmd.SetRenderTarget(framebuffer);
-    p_cmd.SetViewport(Viewport(width, height));
+    cmd.SetRenderTarget(fb);
+    cmd.SetViewport(Viewport(width, height));
 
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    p_cmd.Clear(framebuffer, CLEAR_COLOR_BIT, clear_color);
+    cmd.Clear(fb, CLEAR_COLOR_BIT, clear_color);
 
-    const PassContext& pass = p_data.mainPass;
-    p_cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+    const PassContext& pass = p_ctx.render_system.mainPass;
+    cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    p_cmd.SetPipelineState(PSO_GBUFFER);
-    ExecuteDrawCommands(p_data, p_pass, false);
-    DrawInstacedGeometry(p_data, p_data.instances, false);
-    p_cmd.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
+    cmd.SetPipelineState(PSO_GBUFFER);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, false);
+    DrawInstacedGeometry(p_ctx.render_system, p_ctx.render_system.instances, false);
+    cmd.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
 }
 
 void RenderGraphBuilder::AddGbufferPass() {
@@ -230,30 +255,30 @@ void RenderGraphBuilder::AddGbufferPass() {
     pass->AddDrawPass(GBUFFER_PASS_NAME, framebuffer, GbufferPassFunc);
 }
 
-static void SsaoPassFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                         IRenderCmdContext&) {
-    if (!p_data.options.ssaoEnabled) {
+static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
+    if (!p_ctx.render_system.options.ssaoEnabled) {
         return;
     }
 
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-    const uint32_t width = p_framebuffer->desc.colorAttachments[0]->desc.width;
-    const uint32_t height = p_framebuffer->desc.colorAttachments[0]->desc.height;
+    auto& cmd = p_ctx.cmd;
+    auto& frame = cmd.GetCurrentFrame();
+    auto fb = p_ctx.framebuffer;
+    const uint32_t width = fb->desc.colorAttachments[0]->desc.width;
+    const uint32_t height = fb->desc.colorAttachments[0]->desc.height;
 
-    gm.SetRenderTarget(p_framebuffer);
-    gm.SetViewport(Viewport(width, height));
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
+    cmd.SetRenderTarget(fb);
+    cmd.SetViewport(Viewport(width, height));
+    cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-    const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+    const PassContext& pass = p_ctx.render_system.mainPass;
+    cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     auto noise = renderer::GetSsaoNoiseTexture();
-    gm.BindTexture(Dimension::TEXTURE_2D, noise->GetHandle(), 0);
-    gm.SetPipelineState(PSO_SSAO);
-    gm.DrawQuad();
+    cmd.BindTexture(Dimension::TEXTURE_2D, noise->GetHandle(), 0);
+    cmd.SetPipelineState(PSO_SSAO);
+    cmd.DrawQuad();
 }
 
 void RenderGraphBuilder::AddSsaoPass() {
@@ -269,21 +294,21 @@ void RenderGraphBuilder::AddSsaoPass() {
     CreateRenderPass(info);
 }
 
-static void HighlightPassFunc(const RenderSystem&, const Framebuffer* p_framebuffer, DrawPass&,
-                              IRenderCmdContext&) {
+static void HighlightPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    gm.SetRenderTarget(p_framebuffer);
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    auto fb = p_ctx.framebuffer;
+    auto& cmd = p_ctx.cmd;
+    cmd.SetRenderTarget(fb);
+    const auto [width, height] = fb->GetBufferSize();
 
-    gm.SetViewport(Viewport(width, height));
+    cmd.SetViewport(Viewport(width, height));
 
-    gm.SetPipelineState(PSO_HIGHLIGHT);
-    gm.SetStencilRef(STENCIL_FLAG_SELECTED);
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
-    gm.DrawQuad();
-    gm.SetStencilRef(0);
+    cmd.SetPipelineState(PSO_HIGHLIGHT);
+    cmd.SetStencilRef(STENCIL_FLAG_SELECTED);
+    cmd.Clear(fb, CLEAR_COLOR_BIT);
+    cmd.DrawQuad();
+    cmd.SetStencilRef(0);
 }
 
 void RenderGraphBuilder::AddHighlightPass() {
@@ -301,72 +326,70 @@ void RenderGraphBuilder::AddHighlightPass() {
 }
 
 /// Shadow
-// @TODO: make multiple
-static void PointShadowPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
-                                IRenderCmdContext& p_cmd) {
+static void PointShadowPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = p_cmd;
-    const Framebuffer* framebuffer = p_pass.framebuffer.get();
-    auto& frame = gm.GetCurrentFrame();
+    auto& cmd = p_ctx.cmd;
+    auto framebuffer = p_ctx.framebuffer;
+
+    auto& frame = cmd.GetCurrentFrame();
 
     // prepare render data
     const auto [width, height] = framebuffer->GetBufferSize();
 
     for (int pass_id = 0; pass_id < MAX_POINT_LIGHT_SHADOW_COUNT; ++pass_id) {
-        auto& pass_ptr = p_data.pointShadowPasses[pass_id];
+        auto& pass_ptr = p_ctx.render_system.pointShadowPasses[pass_id];
         if (!pass_ptr) {
             continue;
         }
 
         for (int face_id = 0; face_id < 6; ++face_id) {
             const uint32_t slot = pass_id * 6 + face_id;
-            gm.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
+            cmd.BindConstantBufferSlot<PointShadowConstantBuffer>(frame.pointShadowCb.get(), slot);
 
-            gm.SetRenderTarget(framebuffer, slot);
-            gm.Clear(framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, 0, slot);
+            cmd.SetRenderTarget(framebuffer, slot);
+            cmd.Clear(framebuffer, CLEAR_DEPTH_BIT, nullptr, 1.0f, 0, slot);
 
-            gm.SetViewport(Viewport(width, height));
+            cmd.SetViewport(Viewport(width, height));
 
-            gm.SetPipelineState(PSO_POINT_SHADOW);
-            ExecuteDrawCommands(p_data, p_pass, false);
+            cmd.SetPipelineState(PSO_POINT_SHADOW);
+            ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, false);
         }
     }
 }
 
-static void ShadowPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
-                           IRenderCmdContext& p_cmd) {
+static void ShadowPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    const Framebuffer* framebuffer = p_pass.framebuffer.get();
-    auto& gm = p_cmd;
-    const auto& frame = gm.GetCurrentFrame();
+    const Framebuffer* framebuffer = p_ctx.framebuffer;
+    auto& cmd = p_ctx.cmd;
+    const auto& frame = cmd.GetCurrentFrame();
 
-    gm.SetRenderTarget(framebuffer);
+    cmd.SetRenderTarget(framebuffer);
     const auto [width, height] = framebuffer->GetBufferSize();
 
-    gm.Clear(framebuffer, CLEAR_DEPTH_BIT);
+    cmd.Clear(framebuffer, CLEAR_DEPTH_BIT);
 
-    gm.SetViewport(Viewport(width, height));
+    cmd.SetViewport(Viewport(width, height));
 
-    const PassContext& pass = p_data.shadowPasses[0];
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+    const PassContext& pass = p_ctx.render_system.shadowPasses[0];
+    cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
         for (const auto& draw : p_batches) {
             const bool has_bone = draw.bone_idx >= 0;
             if (has_bone) {
-                gm.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
+                cmd.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
             }
 
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+            cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
 
-            gm.SetMesh(draw.mesh_data);
-            gm.DrawElements(draw.mesh_data->desc.drawCount);
+            cmd.SetMesh(draw.mesh_data);
+            cmd.DrawElements(draw.mesh_data->desc.drawCount);
         }
     };
-    gm.SetPipelineState(PSO_DPETH);
-    ExecuteDrawCommands(p_data, p_pass);
+    cmd.SetPipelineState(PSO_DPETH);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
 }
 
 void RenderGraphBuilder::AddShadowPass() {
@@ -400,29 +423,28 @@ void RenderGraphBuilder::AddShadowPass() {
     pass->AddDrawPass(POINT_SHADOW_DRAW_PASS_NAME(0), framebuffer, PointShadowPassFunc);
 }
 
-static void VoxelizationPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
-                                 IRenderCmdContext& p_cmd) {
-    if (p_data.voxelPass.pass_idx < 0) {
+static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
+    if (p_ctx.render_system.voxelPass.pass_idx < 0) {
         return;
     }
 
     HBN_PROFILE_EVENT();
-    auto& gm = p_cmd;
-    const auto& frame = gm.GetCurrentFrame();
+    auto& cmd = p_ctx.cmd;
+    const auto& frame = cmd.GetCurrentFrame();
 
-    auto voxel_lighting = gm.FindTexture(RESOURCE_VOXEL_LIGHTING);
-    auto voxel_normal = gm.FindTexture(RESOURCE_VOXEL_NORMAL);
+    auto voxel_lighting = cmd.FindTexture(RESOURCE_VOXEL_LIGHTING);
+    auto voxel_normal = cmd.FindTexture(RESOURCE_VOXEL_NORMAL);
     DEV_ASSERT(voxel_lighting && voxel_normal);
 
     // @TODO: refactor pass to auto bind resources,
     // and make it a class so don't do a map search every frame
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
+        std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
         if (!resource) {
             return;
         }
 
-        gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
+        cmd.BindTexture(p_dimension, resource->GetHandle(), p_slot);
     };
 
     // bind common textures
@@ -431,44 +453,44 @@ static void VoxelizationPassFunc(const RenderSystem& p_data, const Framebuffer*,
 
     const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
-    gm.BindUnorderedAccessView(IMAGE_VOXEL_ALBEDO_SLOT, voxel_lighting.get());
-    gm.BindUnorderedAccessView(IMAGE_VOXEL_NORMAL_SLOT, voxel_normal.get());
+    cmd.BindUnorderedAccessView(IMAGE_VOXEL_ALBEDO_SLOT, voxel_lighting.get());
+    cmd.BindUnorderedAccessView(IMAGE_VOXEL_NORMAL_SLOT, voxel_normal.get());
 
     // post process
     const uint32_t group_size = voxel_size / COMPUTE_LOCAL_SIZE_VOXEL;
-    gm.SetPipelineState(PSO_VOXELIZATION_PRE);
-    gm.Dispatch(group_size, group_size, group_size);
+    cmd.SetPipelineState(PSO_VOXELIZATION_PRE);
+    cmd.Dispatch(group_size, group_size, group_size);
 
-    const PassContext& pass = p_data.voxelPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+    const PassContext& pass = p_ctx.render_system.voxelPass;
+    cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     // glSubpixelPrecisionBiasNV(1, 1);
     // glSubpixelPrecisionBiasNV(8, 8);
 
     // @TODO: hack
-    if (gm.GetBackend() == Backend::OPENGL) {
-        gm.SetViewport(Viewport(voxel_size, voxel_size));
-        gm.SetPipelineState(PSO_VOXELIZATION);
-        gm.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
-        ExecuteDrawCommands(p_data, p_pass);
+    if (cmd.GetBackend() == Backend::OPENGL) {
+        cmd.SetViewport(Viewport(voxel_size, voxel_size));
+        cmd.SetPipelineState(PSO_VOXELIZATION);
+        cmd.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
+        ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
 
         // glSubpixelPrecisionBiasNV(0, 0);
-        gm.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
+        cmd.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
     }
 
     // post process
-    gm.SetPipelineState(PSO_VOXELIZATION_POST);
-    gm.Dispatch(group_size, group_size, group_size);
+    cmd.SetPipelineState(PSO_VOXELIZATION_POST);
+    cmd.Dispatch(group_size, group_size, group_size);
 
-    gm.GenerateMipmap(voxel_lighting.get());
-    gm.GenerateMipmap(voxel_normal.get());
+    cmd.GenerateMipmap(voxel_lighting.get());
+    cmd.GenerateMipmap(voxel_normal.get());
 
     // unbind stuff
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, GetPointShadowArraySlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, GetPointShadowArraySlot());
 
     // @TODO: [SCRUM-28] refactor
-    gm.UnsetRenderTarget();
+    cmd.UnsetRenderTarget();
 }
 
 void RenderGraphBuilder::AddVoxelizationPass() {
@@ -506,111 +528,113 @@ void RenderGraphBuilder::AddVoxelizationPass() {
 }
 
 /// Emitter
-static void EmitterPassFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer) {
+static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
+    auto& render_system = p_ctx.render_system;
+    auto& frame = cmd.GetCurrentFrame();
+    const auto [width, height] = fb->GetBufferSize();
 
-    gm.SetRenderTarget(p_framebuffer);
-    gm.SetViewport(Viewport(width, height));
+    cmd.SetRenderTarget(fb);
+    cmd.SetViewport(Viewport(width, height));
 
-    const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
+    const PassContext& pass = render_system.mainPass;
+    cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     int particle_idx = 0;
-    for (const auto& emitter : p_data.emitters) {
+    for (const auto& emitter : render_system.emitters) {
         if (!emitter.particleBuffer) {
             continue;
         }
 
-        gm.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
+        cmd.BindConstantBufferSlot<EmitterConstantBuffer>(frame.emitterCb.get(), particle_idx);
         ++particle_idx;
 
-        gm.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
-        gm.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+        cmd.BindStructuredBuffer(GetGlobalParticleCounterSlot(), emitter.counterBuffer.get());
+        cmd.BindStructuredBuffer(GetGlobalDeadIndicesSlot(), emitter.deadBuffer.get());
+        cmd.BindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot(), emitter.aliveBuffer[emitter.GetPreIndex()].get());
+        cmd.BindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot(), emitter.aliveBuffer[emitter.GetPostIndex()].get());
+        cmd.BindStructuredBuffer(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
 
-        gm.SetPipelineState(PSO_PARTICLE_KICKOFF);
-        gm.Dispatch(1, 1, 1);
+        cmd.SetPipelineState(PSO_PARTICLE_KICKOFF);
+        cmd.Dispatch(1, 1, 1);
 
-        gm.SetPipelineState(PSO_PARTICLE_EMIT);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+        cmd.SetPipelineState(PSO_PARTICLE_EMIT);
+        cmd.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
 
-        gm.SetPipelineState(PSO_PARTICLE_SIM);
-        gm.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
+        cmd.SetPipelineState(PSO_PARTICLE_SIM);
+        cmd.Dispatch(MAX_PARTICLE_COUNT / PARTICLE_LOCAL_SIZE, 1, 1);
 
-        gm.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
-        gm.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
-        gm.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
+        cmd.UnbindStructuredBuffer(GetGlobalParticleCounterSlot());
+        cmd.UnbindStructuredBuffer(GetGlobalDeadIndicesSlot());
+        cmd.UnbindStructuredBuffer(GetGlobalAliveIndicesPreSimSlot());
+        cmd.UnbindStructuredBuffer(GetGlobalAliveIndicesPostSimSlot());
+        cmd.UnbindStructuredBuffer(GetGlobalParticleDataSlot());
 
         // Renderering
-        gm.SetPipelineState(PSO_PARTICLE_RENDERING);
+        cmd.SetPipelineState(PSO_PARTICLE_RENDERING);
 
         bool use_texture = false;
         if (!emitter.texture.empty()) {
             const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(emitter.texture);
             if (image && image->gpu_texture) {
-                gm.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
+                cmd.BindTexture(Dimension::TEXTURE_2D, image->gpu_texture->GetHandle(), GetBaseColorMapSlot());
                 use_texture = true;
             }
         }
 
-        gm.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
-        gm.DrawQuadInstanced(MAX_PARTICLE_COUNT);
-        gm.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
+        cmd.BindStructuredBufferSRV(GetGlobalParticleDataSlot(), emitter.particleBuffer.get());
+        cmd.DrawQuadInstanced(MAX_PARTICLE_COUNT);
+        cmd.UnbindStructuredBufferSRV(GetGlobalParticleDataSlot());
 
         if (use_texture) {
-            gm.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
+            cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
         }
     }
 }
 
 /// Lighting
-static void LightingPassFunc(const RenderSystem&, const Framebuffer* p_framebuffer, DrawPass&,
-                             IRenderCmdContext&) {
+static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
+    const auto [width, height] = fb->GetBufferSize();
 
-    gm.SetRenderTarget(p_framebuffer);
+    cmd.SetRenderTarget(fb);
 
-    gm.SetViewport(Viewport(width, height));
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
-    gm.SetPipelineState(PSO_LIGHTING);
+    cmd.SetViewport(Viewport(width, height));
+    cmd.Clear(fb, CLEAR_COLOR_BIT);
+    cmd.SetPipelineState(PSO_LIGHTING);
 
-    const auto brdf = gm.m_brdfImage->gpu_texture;
-    auto diffuse_iraddiance = gm.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
-    auto prefiltered = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
+    const auto brdf = cmd.m_brdfImage->gpu_texture;
+    auto diffuse_iraddiance = cmd.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
+    auto prefiltered = cmd.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
     DEV_ASSERT(brdf && diffuse_iraddiance && prefiltered);
 
     // @TODO: fix
-    auto voxel_lighting = gm.FindTexture(RESOURCE_VOXEL_LIGHTING);
-    auto voxel_normal = gm.FindTexture(RESOURCE_VOXEL_NORMAL);
+    auto voxel_lighting = cmd.FindTexture(RESOURCE_VOXEL_LIGHTING);
+    auto voxel_normal = cmd.FindTexture(RESOURCE_VOXEL_NORMAL);
     if (voxel_lighting && voxel_normal) {
-        gm.BindTexture(Dimension::TEXTURE_3D, voxel_lighting->GetHandle(), GetVoxelLightingSlot());
-        gm.BindTexture(Dimension::TEXTURE_3D, voxel_normal->GetHandle(), GetVoxelNormalSlot());
+        cmd.BindTexture(Dimension::TEXTURE_3D, voxel_lighting->GetHandle(), GetVoxelLightingSlot());
+        cmd.BindTexture(Dimension::TEXTURE_3D, voxel_normal->GetHandle(), GetVoxelNormalSlot());
     }
 
-    gm.BindTexture(Dimension::TEXTURE_2D, brdf->GetHandle(), GetBrdfLutSlot());
-    gm.BindTexture(Dimension::TEXTURE_CUBE, diffuse_iraddiance->GetHandle(), GetDiffuseIrradianceSlot());
-    gm.BindTexture(Dimension::TEXTURE_CUBE, prefiltered->GetHandle(), GetPrefilteredSlot());
+    cmd.BindTexture(Dimension::TEXTURE_2D, brdf->GetHandle(), GetBrdfLutSlot());
+    cmd.BindTexture(Dimension::TEXTURE_CUBE, diffuse_iraddiance->GetHandle(), GetDiffuseIrradianceSlot());
+    cmd.BindTexture(Dimension::TEXTURE_CUBE, prefiltered->GetHandle(), GetPrefilteredSlot());
 
-    gm.DrawQuad();
+    cmd.DrawQuad();
 
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBrdfLutSlot());
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetDiffuseIrradianceSlot());
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetPrefilteredSlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBrdfLutSlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetDiffuseIrradianceSlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetPrefilteredSlot());
 
     if (voxel_lighting && voxel_normal) {
-        gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelLightingSlot());
-        gm.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelNormalSlot());
+        cmd.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelLightingSlot());
+        cmd.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelNormalSlot());
     }
 }
 
@@ -664,18 +688,19 @@ void RenderGraphBuilder::AddLightingPass() {
 }
 
 /// Sky
-static void ForwardPassFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass& p_pass,
-                            IRenderCmdContext& p_cmd) {
+static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = p_cmd;
-    const auto [width, height] = p_pass.framebuffer->GetBufferSize();
+    auto& gm = p_ctx.cmd;
 
-    gm.SetRenderTarget(p_pass.framebuffer.get());
+    auto fb = p_ctx.framebuffer;
+    const auto [width, height] = fb->GetBufferSize();
+
+    gm.SetRenderTarget(fb);
 
     gm.SetViewport(Viewport(width, height));
 
-    const PassContext& pass = p_data.mainPass;
+    const PassContext& pass = p_ctx.render_system.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     {
@@ -698,9 +723,9 @@ static void ForwardPassFunc(const RenderSystem& p_data, const Framebuffer*, Draw
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
-    ExecuteDrawCommands(p_data, p_pass);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
 
-    auto& draw_context = p_data.drawDebugContext;
+    auto& draw_context = p_ctx.render_system.drawDebugContext;
     if (gm.m_debugBuffers && draw_context.drawCount) {
         gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
         gm.SetPipelineState(PSO_DEBUG_DRAW);
@@ -713,7 +738,7 @@ static void ForwardPassFunc(const RenderSystem& p_data, const Framebuffer*, Draw
         gm.DrawArrays(draw_context.drawCount);
     }
 
-    EmitterPassFunc(p_data, p_pass.framebuffer.get());
+    EmitterPassFunc(p_ctx);
 }
 
 void RenderGraphBuilder::AddForwardPass() {
@@ -762,46 +787,44 @@ void RenderGraphBuilder::AddForwardPass() {
 }
 
 /// Bloom
-static void BloomSetupFunc(const RenderSystem& p_data, const Framebuffer*, DrawPass&,
-                           IRenderCmdContext&) {
-    if (!p_data.options.bloomEnabled) {
+static void BloomSetupFunc(RenderPassExcutionContext& p_ctx) {
+    if (!p_ctx.render_system.options.bloomEnabled) {
         return;
     }
 
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
+    auto& cmd = p_ctx.cmd;
+    auto& frame = cmd.GetCurrentFrame();
 
-    gm.SetPipelineState(PSO_BLOOM_SETUP);
-    auto input = gm.FindTexture(RESOURCE_LIGHTING);
+    cmd.SetPipelineState(PSO_BLOOM_SETUP);
+    auto input = cmd.FindTexture(RESOURCE_LIGHTING);
 
     const uint32_t width = input->desc.width;
     const uint32_t height = input->desc.height;
     const uint32_t work_group_x = CeilingDivision(width, 16);
     const uint32_t work_group_y = CeilingDivision(height, 16);
 
-    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
+    cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
 
-    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
-    gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    cmd.Dispatch(work_group_x, work_group_y, 1);
+    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomDownSampleFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                                IRenderCmdContext&) {
-    if (!p_data.options.bloomEnabled) {
+static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
+    if (!p_ctx.render_system.options.bloomEnabled) {
         return;
     }
 
     HBN_PROFILE_EVENT();
 
-    const uint32_t pass_id = p_framebuffer->id;
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto& frame = gm.GetCurrentFrame();
+    const uint32_t pass_id = p_ctx.framebuffer->id;
+    auto& cmd = p_ctx.cmd;
+    auto& frame = cmd.GetCurrentFrame();
 
-    gm.SetPipelineState(PSO_BLOOM_DOWNSAMPLE);
-    auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
+    cmd.SetPipelineState(PSO_BLOOM_DOWNSAMPLE);
+    auto input = cmd.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
 
     DEV_ASSERT(input);
 
@@ -810,39 +833,38 @@ static void BloomDownSampleFunc(const RenderSystem& p_data, const Framebuffer* p
     const uint32_t work_group_x = CeilingDivision(width, 16);
     const uint32_t work_group_y = CeilingDivision(height, 16);
 
-    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + 1);
+    cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + 1);
 
-    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
-    gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    cmd.Dispatch(work_group_x, work_group_y, 1);
+    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
-static void BloomUpSampleFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                              IRenderCmdContext&) {
-    if (!p_data.options.bloomEnabled) {
+static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
+    if (!p_ctx.render_system.options.bloomEnabled) {
         return;
     }
 
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    const uint32_t pass_id = p_framebuffer->id;
-    auto& frame = gm.GetCurrentFrame();
+    auto& cmd = p_ctx.cmd;
+    const uint32_t pass_id = p_ctx.framebuffer->id;
+    auto& frame = cmd.GetCurrentFrame();
 
-    gm.SetPipelineState(PSO_BLOOM_UPSAMPLE);
-    auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
-    auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id - 1));
+    cmd.SetPipelineState(PSO_BLOOM_UPSAMPLE);
+    auto input = cmd.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
+    auto output = cmd.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id - 1));
 
     const uint32_t width = output->desc.width;
     const uint32_t height = output->desc.height;
     const uint32_t work_group_x = CeilingDivision(width, 16);
     const uint32_t work_group_y = CeilingDivision(height, 16);
 
-    gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + BLOOM_MIP_CHAIN_MAX);
+    cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + BLOOM_MIP_CHAIN_MAX);
 
-    gm.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
-    gm.Dispatch(work_group_x, work_group_y, 1);
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    cmd.Dispatch(work_group_x, work_group_y, 1);
+    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 void RenderGraphBuilder::AddBloomPass() {
@@ -958,44 +980,44 @@ static void DebugVoxels(const RenderSystem& p_data, const Framebuffer* p_framebu
 
 /// Tone
 /// Change to post processing?
-static void TonePassFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                         IRenderCmdContext&) {
+static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    gm.SetRenderTarget(p_framebuffer);
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
+    cmd.SetRenderTarget(fb);
 
-    auto depth_buffer = p_framebuffer->desc.depthAttachment;
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    auto depth_buffer = fb->desc.depthAttachment;
+    const auto [width, height] = fb->GetBufferSize();
 
     // draw billboards
 
     // @HACK:
-    if (DVAR_GET_BOOL(gfx_debug_vxgi) && gm.GetBackend() == Backend::OPENGL) {
+    if (DVAR_GET_BOOL(gfx_debug_vxgi) && cmd.GetBackend() == Backend::OPENGL) {
         // @TODO: remove
-        DebugVoxels(p_data, p_framebuffer);
+        DebugVoxels(p_ctx.render_system, fb);
     } else {
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-            std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
+            std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
             if (!resource) {
                 return;
             }
 
-            gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
+            cmd.BindTexture(p_dimension, resource->GetHandle(), p_slot);
         };
         bind_slot(RESOURCE_LIGHTING, GetTextureLightingSlot());
         bind_slot(RESOURCE_OUTLINE_SELECT, GetTextureHighlightSelectSlot());
         bind_slot(RESOURCE_BLOOM_0, GetBloomInputTextureSlot());
 
-        gm.SetViewport(Viewport(width, height));
-        gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
+        cmd.SetViewport(Viewport(width, height));
+        cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-        gm.SetPipelineState(PSO_TONE);
-        gm.DrawQuad();
+        cmd.SetPipelineState(PSO_TONE);
+        cmd.DrawQuad();
 
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureLightingSlot());
-        gm.UnbindTexture(Dimension::TEXTURE_2D, GetTextureHighlightSelectSlot());
+        cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+        cmd.UnbindTexture(Dimension::TEXTURE_2D, GetTextureLightingSlot());
+        cmd.UnbindTexture(Dimension::TEXTURE_2D, GetTextureHighlightSelectSlot());
     }
 }
 
@@ -1060,16 +1082,16 @@ void RenderGraphBuilder::AddDebugImagePass() {
         .dependencies = { RenderPassName::TONE },
         .drawPasses = {
             { { { RESOURCE_FINAL } },
-              [](const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                 IRenderCmdContext&) {
+              [](RenderPassExcutionContext& p_ctx) {
                   HBN_PROFILE_EVENT();
-                  auto& gm = IGraphicsManager::GetSingleton();
-                  gm.SetRenderTarget(p_framebuffer);
-                  gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
+                  auto fb = p_ctx.framebuffer;
+                  auto& cmd = p_ctx.cmd;
+                  cmd.SetRenderTarget(fb);
+                  cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-                  const int width = p_framebuffer->desc.colorAttachments[0]->desc.width;
-                  const int height = p_framebuffer->desc.colorAttachments[0]->desc.height;
-                  DrawDebugImages(p_data, width, height, gm);
+                  const int width = fb->desc.colorAttachments[0]->desc.width;
+                  const int height = fb->desc.colorAttachments[0]->desc.height;
+                  DrawDebugImages(p_ctx.render_system, width, height, cmd);
               } },
         },
     };
@@ -1077,85 +1099,86 @@ void RenderGraphBuilder::AddDebugImagePass() {
     CreateRenderPass(info);
 }
 
-static void ConvertToCubemapFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                                 IRenderCmdContext&) {
+static void ConvertToCubemapFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT("hdr image to -> skybox");
-    if (!p_data.bakeIbl) {
+    if (!p_ctx.render_system.bakeIbl) {
         return;
     }
 
-    auto& gm = IGraphicsManager::GetSingleton();
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
 
-    gm.SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
-    auto cube_map = p_framebuffer->desc.colorAttachments[0];
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    cmd.SetPipelineState(PSO_ENV_SKYBOX_TO_CUBE_MAP);
+    auto cube_map = fb->desc.colorAttachments[0];
+    const auto [width, height] = fb->GetBufferSize();
 
-    auto& frame = gm.GetCurrentFrame();
-    gm.BindTexture(Dimension::TEXTURE_2D, p_data.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
+    auto& frame = cmd.GetCurrentFrame();
+    cmd.BindTexture(Dimension::TEXTURE_2D, p_ctx.render_system.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
     for (int i = 0; i < 6; ++i) {
-        gm.SetRenderTarget(p_framebuffer, i);
+        cmd.SetRenderTarget(fb, i);
 
-        gm.SetViewport(Viewport(width, height));
+        cmd.SetViewport(Viewport(width, height));
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
-        gm.DrawSkybox();
+        cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+        cmd.DrawSkybox();
     }
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
-    gm.GenerateMipmap(cube_map.get());
+    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
+    cmd.GenerateMipmap(cube_map.get());
 }
 
-static void DiffuseIrradianceFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                                  IRenderCmdContext&) {
-    if (!p_data.bakeIbl) {
+static void DiffuseIrradianceFunc(RenderPassExcutionContext& p_ctx) {
+    if (!p_ctx.render_system.bakeIbl) {
         return;
     }
     HBN_PROFILE_EVENT("bake diffuse irradiance");
 
-    auto& gm = IGraphicsManager::GetSingleton();
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
 
-    gm.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    cmd.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
+    const auto [width, height] = fb->GetBufferSize();
 
-    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+    auto skybox = cmd.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
     DEV_ASSERT(skybox);
-    gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
-    auto& frame = gm.GetCurrentFrame();
+    cmd.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+    auto& frame = cmd.GetCurrentFrame();
     for (int i = 0; i < 6; ++i) {
-        gm.SetRenderTarget(p_framebuffer, i);
-        gm.SetViewport(Viewport(width, height));
+        cmd.SetRenderTarget(fb, i);
+        cmd.SetViewport(Viewport(width, height));
 
-        gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
-        gm.DrawSkybox();
+        cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
+        cmd.DrawSkybox();
     }
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
 }
 
-static void PrefilteredFunc(const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
-                            IRenderCmdContext&) {
-    if (!p_data.bakeIbl) {
+static void PrefilteredFunc(RenderPassExcutionContext& p_ctx) {
+    if (!p_ctx.render_system.bakeIbl) {
         return;
     }
     HBN_PROFILE_EVENT("bake prefiltered");
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    gm.SetPipelineState(PSO_PREFILTER);
-    auto [width, height] = p_framebuffer->GetBufferSize();
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
 
-    auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
+    cmd.SetPipelineState(PSO_PREFILTER);
+    auto [width, height] = fb->GetBufferSize();
+
+    auto skybox = cmd.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
     DEV_ASSERT(skybox);
-    gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
-    auto& frame = gm.GetCurrentFrame();
+    cmd.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
+    auto& frame = cmd.GetCurrentFrame();
     for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
             const int index = mip_idx * 6 + face_id;
-            gm.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), index);
+            cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), index);
 
-            gm.SetRenderTarget(p_framebuffer, face_id, mip_idx);
-            gm.SetViewport(Viewport(width, height));
-            gm.DrawSkybox();
+            cmd.SetRenderTarget(fb, face_id, mip_idx);
+            cmd.SetViewport(Viewport(width, height));
+            cmd.DrawSkybox();
         }
     }
-    gm.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
 }
 
 void RenderGraphBuilder::AddGenerateSkylightPass() {
@@ -1171,33 +1194,33 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
     CreateRenderPass(info);
 }
 
-static void PathTracerTonePassFunc(const RenderSystem&, const Framebuffer* p_framebuffer, DrawPass&,
-                                   IRenderCmdContext&) {
+static void PathTracerTonePassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
-    gm.SetRenderTarget(p_framebuffer);
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
+    cmd.SetRenderTarget(fb);
 
-    auto depth_buffer = p_framebuffer->desc.depthAttachment;
-    const auto [width, height] = p_framebuffer->GetBufferSize();
+    auto depth_buffer = fb->desc.depthAttachment;
+    const auto [width, height] = fb->GetBufferSize();
 
     auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = gm.FindTexture(p_name);
+        std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
         if (!resource) {
             return;
         }
 
-        gm.BindTexture(p_dimension, resource->GetHandle(), p_slot);
+        cmd.BindTexture(p_dimension, resource->GetHandle(), p_slot);
     };
     bind_slot(RESOURCE_PATH_TRACER, GetBloomInputTextureSlot());
 
-    gm.SetViewport(Viewport(width, height));
-    gm.Clear(p_framebuffer, CLEAR_COLOR_BIT);
+    cmd.SetViewport(Viewport(width, height));
+    cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-    gm.SetPipelineState(PSO_TONE);
-    gm.DrawQuad();
+    cmd.SetPipelineState(PSO_TONE);
+    cmd.DrawQuad();
 
-    gm.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 void RenderGraphBuilder::AddPathTracerTonePass() {
@@ -1224,17 +1247,16 @@ void RenderGraphBuilder::AddPathTracerTonePass() {
     pass->AddDrawPass("PathTracerDrawPass", framebuffer, PathTracerTonePassFunc);
 }
 
-static void PathTracerPassFunc(const RenderSystem&, const Framebuffer*, DrawPass&,
-                               IRenderCmdContext&) {
+static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
     // @TODO: refactor this part
     if (!renderer::IsPathTracerActive()) {
         return;
     }
 
-    auto& gm = IGraphicsManager::GetSingleton();
+    auto& cmd = p_ctx.cmd;
 
-    gm.SetPipelineState(PSO_PATH_TRACER);
-    auto input = gm.FindTexture(RESOURCE_PATH_TRACER);
+    cmd.SetPipelineState(PSO_PATH_TRACER);
+    auto input = cmd.FindTexture(RESOURCE_PATH_TRACER);
 
     DEV_ASSERT(input);
 
@@ -1244,11 +1266,11 @@ static void PathTracerPassFunc(const RenderSystem&, const Framebuffer*, DrawPass
     const uint32_t work_group_y = CeilingDivision(height, 16);
 
     // @TODO: transition
-    renderer::BindPathTracerData(gm);
+    renderer::BindPathTracerData(cmd);
 
-    gm.Dispatch(work_group_x, work_group_y, 1);
+    cmd.Dispatch(work_group_x, work_group_y, 1);
 
-    renderer::UnbindPathTracerData(gm);
+    renderer::UnbindPathTracerData(cmd);
 }
 
 void RenderGraphBuilder::AddPathTracerPass() {

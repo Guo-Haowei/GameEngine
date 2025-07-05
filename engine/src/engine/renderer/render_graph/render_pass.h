@@ -22,10 +22,14 @@ struct RenderPassDesc {
     std::vector<RenderPassName> dependencies;
 };
 
-using DrawPassExecuteFunc = void (*)(const renderer::RenderSystem&,
-                                     const Framebuffer*,
-                                     DrawPass&,
-                                     IRenderCmdContext&);
+struct RenderPassExcutionContext {
+    const RenderSystem& render_system;
+    Framebuffer* framebuffer;
+    DrawPass& pass;
+    IRenderCmdContext& cmd;
+};
+
+using DrawPassExecuteFunc = void (*)(RenderPassExcutionContext& ctx);
 
 struct DrawPass {
     std::string name;
