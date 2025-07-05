@@ -1514,19 +1514,44 @@ RenderPassBuilder& RenderGraphBuilder::AddPass(std::string_view p_pass_name) {
 }
 
 auto RenderGraphBuilder::Compile() -> Result<void> {
-    LOG_WARN("dbg");
-    for (const auto& pass : m_passes) {
-        LOG_OK("found pass: {}", pass.GetName());
-        LOG_OK("  it reads:");
-        for (const auto& read : pass.m_reads) {
-            LOG_OK("  -- {}", read);
-        }
-        LOG_OK("  it writes:");
-        for (const auto& write : pass.m_writes) {
-            LOG_OK("  -- {}", write);
+    {
+        LOG_WARN("dbg");
+        int id = 0;
+        for (const auto& pass : m_passes) {
+            LOG_OK("found pass: {} (id: {})", pass.GetName(), id++);
+            LOG_OK("  it reads:");
+            for (const auto& read : pass.m_reads) {
+                LOG_OK("  -- {}", read);
+            }
+            LOG_OK("  it writes:");
+            for (const auto& write : pass.m_writes) {
+                LOG_OK("  -- {}", write);
+            }
         }
     }
-    LOG_WARN("dbg");
+
+    std::unordered_map<std::string_view, int> inputs;
+    std::unordered_map<std::string_view, int> outputs;
+
+    const int N = static_cast<int>(m_passes.size());
+    for (int i = 0; i < N; ++i) {
+        for (const auto& read : m_passes[i].m_reads) {
+            inputs.insert(std::make_pair(read, i));
+        }
+        for (const auto& write : m_passes[i].m_writes) {
+            outputs.insert(std::make_pair(write, i));
+        }
+    }
+
+    // @TODO: figure out dependencies
+    // @TODO: validate the graph (duplicate pass? duplicate create? circle?)
+    for (const auto& [name, to] : inputs) {
+        auto it = outputs.find(name);
+        if (it == outputs.end()) continue;
+
+        const int from = it->second;
+        LOG_OK("edge found from {} to {}", from, to);
+    }
 
     return Result<void>();
 }
