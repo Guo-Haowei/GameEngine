@@ -123,6 +123,7 @@ void RenderData::FillPass(const Scene& p_scene,
 
         // HACK
         draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
+        draw.mat_idx = -1;
         DEV_ASSERT(draw.mesh_data);
 
         if (!p_use_material) {
@@ -416,7 +417,7 @@ void RenderData::FillLightBuffer(const Scene& p_scene) {
 void RenderData::FillVoxelPass(const Scene& p_scene) {
     bool enabled = false;
     bool show_debug = false;
-    AABB voxel_gi_bound;
+    voxel_gi_bound.MakeInvalid();
     int counter = 0;
     for (auto [entity, voxel_gi] : p_scene.m_VoxelGiComponents) {
         voxel_gi_bound = voxel_gi.region;
@@ -459,20 +460,6 @@ void RenderData::FillVoxelPass(const Scene& p_scene) {
     cache.c_voxelWorldSizeHalf = 0.5f * voxel_world_size;
     cache.c_texelSize = texel_size;
     cache.c_voxelSize = voxel_size;
-
-    auto res = m_renderGraph->FindPass(RenderPassName::VOXELIZATION)->FindDrawPass("VoxelizationPass");
-    DEV_ASSERT(res.has_value());
-
-    FillPass(
-        p_scene,
-        this->voxelPass,
-        [](const ObjectComponent& object) {
-            return object.flags & ObjectComponent::FLAG_RENDERABLE;
-        },
-        [&](const AABB& p_aabb) {
-            return voxel_gi_bound.Intersects(p_aabb);
-        },
-        *res, true);
 }
 
 void RenderData::FillMainPass(const Scene& p_scene) {
@@ -487,19 +474,108 @@ void RenderData::FillMainPass(const Scene& p_scene) {
     this->mainPass.pass_idx = static_cast<int>(this->passCache.size());
     this->passCache.emplace_back(pass_constant);
 
-    auto res = m_renderGraph->FindPass(RenderPassName::GBUFFER)->FindDrawPass("GbufferDrawPass");
-    DEV_ASSERT(res.has_value());
+    auto tmp = m_renderGraph->FindPass(RenderPassName::GBUFFER);
+    DrawPass* gbuffer_pass = tmp ? *tmp->FindDrawPass("GbufferDrawPass") : nullptr;
+    tmp = m_renderGraph->FindPass(RenderPassName::VOXELIZATION);
+    DrawPass* voxelization_pass = tmp ? *tmp->FindDrawPass("VoxelizationDrawPass") : nullptr;
+    tmp = m_renderGraph->FindPass(RenderPassName::PREPASS);
+    DrawPass* early_z_pass = tmp ? *tmp->FindDrawPass("EarlyZDrawPass") : nullptr;
 
-    FillPass(
-        p_scene,
-        this->mainPass,
-        [](const ObjectComponent& object) {
-            return object.flags & ObjectComponent::FLAG_RENDERABLE;
-        },
-        [&](const AABB& aabb) {
-            return camera_frustum.Intersects(aabb);
-        },
-        *res, true);
+    using FilterFunc = std::function<bool(const AABB&)>;
+    FilterFunc filter_main = [&](const AABB& p_aabb) -> bool { return camera_frustum.Intersects(p_aabb); };
+
+    const bool is_opengl = this->options.isOpengl;
+    for (auto [entity, obj] : p_scene.m_ObjectComponents) {
+        const bool is_renderable = obj.flags & ObjectComponent::FLAG_RENDERABLE;
+        const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
+        const bool is_opaque = is_renderable && !is_transparent;
+        // @TODO: cast shadow
+
+        const TransformComponent& transform = *p_scene.GetComponent<TransformComponent>(entity);
+        DEV_ASSERT(p_scene.Contains<TransformComponent>(entity));
+        const MeshComponent& mesh = *p_scene.GetComponent<MeshComponent>(obj.meshId);
+        DEV_ASSERT(p_scene.Contains<MeshComponent>(obj.meshId));
+
+        const Matrix4x4f& world_matrix = transform.GetWorldMatrix();
+        AABB aabb = mesh.localBound;
+        aabb.ApplyMatrix(world_matrix);
+
+        PerBatchConstantBuffer batch_buffer;
+        batch_buffer.c_worldMatrix = world_matrix;
+        batch_buffer.c_meshFlag = mesh.armatureId.IsValid();
+
+        DrawCommand draw;
+        // @TODO: refactor this part
+        if (entity == p_scene.m_selected) {
+            draw.flags = STENCIL_FLAG_SELECTED;
+        }
+
+        if (mesh.armatureId.IsValid()) {
+            auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armatureId);
+            DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
+
+            BoneConstantBuffer bone;
+            memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(Matrix4x4f) * armature.boneTransforms.size());
+
+            // @TODO: better memory usage
+            draw.bone_idx = this->boneCache.FindOrAdd(mesh.armatureId, bone);
+        } else {
+            draw.bone_idx = -1;
+        }
+
+        draw.mat_idx = -1;
+        draw.batch_idx = this->batchCache.FindOrAdd(entity, batch_buffer);
+        draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
+        draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
+        DEV_ASSERT(draw.mesh_data);
+
+        auto add_to_pass = [&](DrawPass* p_pass, FilterFunc& p_filter, bool p_model_only) {
+            if (!p_filter(aabb)) {
+                return;
+            }
+
+            DrawCommand drawCmd = draw;
+            if (p_model_only) {
+                p_pass->AddCommand(RenderCommand::from(drawCmd));
+                return;
+            }
+
+            for (const auto& subset : mesh.subsets) {
+                AABB aabb2 = subset.local_bound;
+                aabb2.ApplyMatrix(world_matrix);
+                if (!p_filter(aabb2)) {
+                    continue;
+                }
+
+                const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
+                MaterialConstantBuffer material_buffer;
+                FillMaterialConstantBuffer(is_opengl, material, material_buffer);
+
+                drawCmd.indexCount = subset.index_count;
+                drawCmd.indexOffset = subset.index_offset;
+                drawCmd.mat_idx = this->materialCache.FindOrAdd(subset.material_id, material_buffer);
+
+                p_pass->AddCommand(RenderCommand::from(drawCmd));
+            }
+        };
+
+        if (is_opaque && early_z_pass) {
+            add_to_pass(early_z_pass, filter_main, true);
+        }
+
+        if (is_opaque && gbuffer_pass) {
+            add_to_pass(gbuffer_pass, filter_main, false);
+        }
+
+        if (is_transparent) {
+            //add_to_pass(g_transparent, filter_main, false);
+        }
+
+        if (voxelization_pass) {
+            FilterFunc gi_filter = [&](const AABB& p_aabb) -> bool { return this->voxel_gi_bound.Intersects(p_aabb); };
+            add_to_pass(gbuffer_pass, gi_filter, true);
+        }
+    }
 }
 
 static void FillEnvConstants(const Scene&,
@@ -694,8 +770,9 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
     FillConstantBuffer(p_scene, p_out_data);
     p_out_data.FillLightBuffer(p_scene);
-    p_out_data.FillMainPass(p_scene);
     p_out_data.FillVoxelPass(p_scene);
+
+    p_out_data.FillMainPass(p_scene);
     FillMeshEmitterBuffer(p_scene, p_out_data);
     FillBloomConstants(p_scene, p_out_data);
     FillEnvConstants(p_scene, p_out_data);

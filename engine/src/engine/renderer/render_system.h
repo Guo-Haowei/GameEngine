@@ -172,6 +172,7 @@ private:
                   bool p_use_material);
 
     RenderGraph* m_renderGraph = nullptr;
+    AABB voxel_gi_bound;
 };
 
 void PrepareRenderData(const PerspectiveCameraComponent& p_camera,

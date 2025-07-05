@@ -15,10 +15,11 @@
 #include "engine/runtime/asset_registry.h"
 
 // @TODO: refactor
-#define SHADOW_DRAW_PASS_NAME            "ShadowDrawPass"
-#define POINT_SHADOW_DRAW_PASS_NAME(IDX) "ShadowDrawPass" #IDX
 #define GBUFFER_PASS_NAME                "GbufferDrawPass"
 #define VOXELIZATION_PASS_NAME           "VoxelizationDrawPass"
+#define EARLY_Z_PASS_NAME                "EarlyZDrawPass"
+#define SHADOW_DRAW_PASS_NAME            "ShadowDrawPass"
+#define POINT_SHADOW_DRAW_PASS_NAME(IDX) "ShadowDrawPass" #IDX
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"
@@ -166,17 +167,19 @@ void RenderGraphBuilder::AddForward() {
 }
 
 void RenderGraphBuilder::AddPrepass() {
-    RenderPassCreateInfo info{
-        .name = RenderPassName::PREPASS,
-        .dependencies = {},
-        .drawPasses = {
-            { { {},
-                RESOURCE_GBUFFER_DEPTH },
-              PrepassFunc },
-        },
-    };
+    auto& manager = IGraphicsManager::GetSingleton();
 
-    CreateRenderPass(info);
+    auto depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
+
+    RenderPassDesc desc;
+    desc.name = RenderPassName::PREPASS;
+    auto pass = m_graph.CreatePass(desc);
+
+    FramebufferDesc fb_desc;
+    fb_desc.depthAttachment = depth;
+
+    auto framebuffer = manager.CreateFramebuffer(fb_desc);
+    pass->AddDrawPass(EARLY_Z_PASS_NAME, framebuffer, PrepassFunc);
 }
 
 static void GbufferPassFunc(const RenderData& p_data, const Framebuffer*, DrawPass& p_pass,

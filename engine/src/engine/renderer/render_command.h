@@ -19,16 +19,16 @@ struct DrawCommand {
     // BufferHandle objectCBuffer;    // per-object constants (e.g., model matrix)
     // uint32_t objectCBufferOffset;  // offset into dynamic buffer, if needed
 
-    uint32_t indexCount;
+    uint32_t indexCount = 0;
     uint32_t vertexOffset = 0;
     uint32_t indexOffset = 0;
 
     uint32_t instanceCount = 1;
     uint32_t instanceOffset = 0;
 
-    int batch_idx;
+    int batch_idx = -1;
 
-    const GpuMesh* mesh_data;
+    const GpuMesh* mesh_data = nullptr;
     int bone_idx = -1;
     int mat_idx = -1;
 
