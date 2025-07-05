@@ -1060,7 +1060,7 @@ void RenderGraphBuilder::AddDebugImagePass() {
         .dependencies = { RenderPassName::TONE },
         .drawPasses = {
             { { { RESOURCE_FINAL } },
-              [](const RenderData& p_data, const Framebuffer* p_framebuffer, DrawPass&,
+              [](const RenderSystem& p_data, const Framebuffer* p_framebuffer, DrawPass&,
                  IRenderCmdContext&) {
                   HBN_PROFILE_EVENT();
                   auto& gm = IGraphicsManager::GetSingleton();
