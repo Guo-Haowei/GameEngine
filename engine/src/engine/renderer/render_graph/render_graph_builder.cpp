@@ -75,6 +75,17 @@ struct DrawPassCreateInfo {
 
 /// Gbuffer
 
+RenderGraphBuilder::RenderGraphBuilder(const RenderGraphBuilderConfig& p_config,
+                                       RenderGraph& p_graph)
+    : m_config(p_config),
+      m_graph(p_graph),
+      m_graphicsManager(IGraphicsManager::GetSingleton()) {
+
+    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
+    m_frameWidth = frame_size.x;
+    m_frameHeight = frame_size.y;
+}
+
 // @TODO: generalize this
 static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
     unused(p_is_prepass);
@@ -178,7 +189,7 @@ static void EmptyPass(RenderPassExcutionContext& p_ctx) {
 
 void RenderGraphBuilder::AddEmpty() {
     {
-
+        CRASH_NOW_MSG("TODO");
     }
 
     auto& manager = IGraphicsManager::GetSingleton();
@@ -198,21 +209,15 @@ void RenderGraphBuilder::AddEmpty() {
 }
 
 void RenderGraphBuilder::AddEarlyZPass() {
-    auto& manager = IGraphicsManager::GetSingleton();
-    std::shared_ptr<GpuTexture> depth;
-    {
-    const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-        auto desc = BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
-                                            RT_FMT_GBUFFER_DEPTH,
-                                            AttachmentType::DEPTH_STENCIL_2D,
-                                            frame_size.x, frame_size.y);
+    auto buffer_desc = BuildDefaultTextureDesc(RESOURCE_GBUFFER_DEPTH,
+                                               RT_FMT_GBUFFER_DEPTH,
+                                               AttachmentType::DEPTH_STENCIL_2D);
 
-        depth = manager.CreateTexture(desc, PointClampSampler());
+    auto& pass = AddPass(RG_PASS_EARLY_Z);
+    pass.Create(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL, { buffer_desc })
+        .SetExecuteFunc(EarlyZPassFunc);
 
-        auto& pass = AddPass(RG_PASS_EARLY_Z);
-        pass.Create(RG_RES_DEPTH_STENCIL, desc)
-            .SetExecuteFunc(EarlyZPassFunc);
-    }
+#if 0
 
     RenderPassDesc desc;
     desc.name = RenderPassName::PREPASS;
@@ -223,6 +228,7 @@ void RenderGraphBuilder::AddEarlyZPass() {
 
     auto framebuffer = manager.CreateFramebuffer(fb_desc);
     pass->AddDrawPass(EARLY_Z_PASS_NAME, framebuffer, EarlyZPassFunc);
+#endif
 }
 
 static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
@@ -251,16 +257,26 @@ static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddGbufferPass() {
-    {
-        GpuTextureDesc dummy{};
+    auto color0_desc = BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
+                                               RT_FMT_GBUFFER_BASE_COLOR,
+                                               AttachmentType::COLOR_2D);
 
-        auto& pass = AddPass(RG_PASS_GBUFFER);
-        pass.Read(RG_RES_DEPTH_STENCIL)
-            .Create(RG_RES_GBUFFER_COLOR0, dummy)
-            .Create(RG_RES_GBUFFER_COLOR1, dummy)
-            .Create(RG_RES_GBUFFER_COLOR2, dummy)
-            .SetExecuteFunc(GbufferPassFunc);
-    }
+    auto color1_desc = BuildDefaultTextureDesc(RESOURCE_GBUFFER_BASE_COLOR,
+                                               RT_FMT_GBUFFER_NORMAL,
+                                               AttachmentType::COLOR_2D);
+
+    auto color2_desc = BuildDefaultTextureDesc(RESOURCE_GBUFFER_MATERIAL,
+                                               RT_FMT_GBUFFER_MATERIAL,
+                                               AttachmentType::COLOR_2D);
+
+    auto& pass = AddPass(RG_PASS_GBUFFER);
+    pass.Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+        .Create(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR0, { color0_desc })
+        .Create(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR1, { color1_desc })
+        .Create(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR2, { color2_desc })
+        .SetExecuteFunc(GbufferPassFunc);
+
+#if 0
 
     auto& manager = IGraphicsManager::GetSingleton();
 
@@ -282,6 +298,7 @@ void RenderGraphBuilder::AddGbufferPass() {
 
     auto framebuffer = manager.CreateFramebuffer(fb_desc);
     pass->AddDrawPass(GBUFFER_PASS_NAME, framebuffer, GbufferPassFunc);
+#endif
 }
 
 static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
@@ -304,6 +321,7 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
     const PassContext& pass = p_ctx.render_system.mainPass;
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
+    // @TODO: external texture
     auto noise = renderer::GetSsaoNoiseTexture();
     cmd.BindTexture(Dimension::TEXTURE_2D, noise->GetHandle(), 0);
     cmd.SetPipelineState(PSO_SSAO);
@@ -311,17 +329,17 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddSsaoPass() {
-    {
-        GpuTextureDesc dummy{};
+    auto color0_desc = BuildDefaultTextureDesc(RESOURCE_SSAO,
+                                               RT_FMT_SSAO,
+                                               AttachmentType::COLOR_2D);
 
-        auto& pass = AddPass(RG_PASS_SSAO);
-        pass.Create(RG_RES_SSAO, dummy)
-            .Read(RG_RES_GBUFFER_COLOR1)
-            .Read(RG_RES_DEPTH_STENCIL);
-    }
+    auto& pass = AddPass(RG_PASS_SSAO);
+    pass.Create(ResourceAccess::RTV, RG_RES_SSAO, { color0_desc })
+        .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
+        .Read(ResourceAccess::SRV, RG_RES_DEPTH_STENCIL)
+        .SetExecuteFunc(SsaoPassFunc);
 
-    auto& gm = IGraphicsManager::GetSingleton();
-
+#if 0
     RenderPassDesc desc;
     desc.name = RenderPassName::SSAO;
     desc.dependencies = { RenderPassName::GBUFFER };
@@ -334,6 +352,7 @@ void RenderGraphBuilder::AddSsaoPass() {
 
     auto framebuffer = gm.CreateFramebuffer(fb_desc);
     pass->AddDrawPass("SsaoDrawPass", framebuffer, SsaoPassFunc);
+#endif
 }
 
 static void HighlightPassFunc(RenderPassExcutionContext& p_ctx) {
@@ -354,14 +373,16 @@ static void HighlightPassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddHighlightPass() {
-    {
-        GpuTextureDesc dummy{};
+    auto color0_desc = BuildDefaultTextureDesc(RESOURCE_OUTLINE_SELECT,
+                                               RT_FMT_OUTLINE_SELECT,
+                                               AttachmentType::COLOR_2D);
 
-        auto& pass = AddPass(RG_PASS_OUTLINE);
-        pass.Create(RG_RES_OUTLINE, dummy)
-            .Read(RG_RES_DEPTH_STENCIL);
-    }
+    auto& pass = AddPass(RG_PASS_OUTLINE);
+    pass.Create(ResourceAccess::RTV, RG_RES_OUTLINE, { color0_desc })
+        .Read(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+        .SetExecuteFunc(HighlightPassFunc);
 
+#if 0
     auto& gm = IGraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
@@ -378,10 +399,11 @@ void RenderGraphBuilder::AddHighlightPass() {
 
     auto framebuffer = gm.CreateFramebuffer(fb_desc);
     pass->AddDrawPass("SsaoDrawPass", framebuffer, HighlightPassFunc);
+#endif
 }
 
 /// Shadow
-static void PointShadowPassFunc(RenderPassExcutionContext& p_ctx) {
+[[maybe_unused]] static void PointShadowPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
     auto& cmd = p_ctx.cmd;
@@ -448,19 +470,20 @@ static void ShadowPassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddShadowPass() {
-    IGraphicsManager& manager = IGraphicsManager::GetSingleton();
-
     const int shadow_res = DVAR_GET_INT(gfx_shadow_res);
     DEV_ASSERT(IsPowerOfTwo(shadow_res));
+
+    GpuTextureDesc shadow_map_desc = BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
+                                                             PixelFormat::D32_FLOAT,
+                                                             AttachmentType::SHADOW_2D,
+                                                             1 * shadow_res, shadow_res);
+    auto& pass = AddPass(RG_PASS_SHADOW);
+    pass.Create(ResourceAccess::DSV, RG_RES_SHADOW_MAP, { shadow_map_desc, ShadowMapSampler() })
+        .SetExecuteFunc(ShadowPassFunc);
+
+#if 0
     const int point_shadow_res = DVAR_GET_INT(gfx_point_shadow_res);
     DEV_ASSERT(IsPowerOfTwo(point_shadow_res));
-
-    {
-        GpuTextureDesc dummy{};
-        auto& pass = AddPass(RG_PASS_SHADOW);
-        pass.Create(RG_RES_SHADOW_MAP, dummy)
-            .SetExecuteFunc(ShadowPassFunc);
-    }
 
     auto shadow_map = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
                                                                     PixelFormat::D32_FLOAT,
@@ -483,6 +506,7 @@ void RenderGraphBuilder::AddShadowPass() {
 
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = point_shadowMap });
     pass->AddDrawPass(POINT_SHADOW_DRAW_PASS_NAME(0), framebuffer, PointShadowPassFunc);
+#endif
 }
 
 static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
@@ -561,43 +585,37 @@ void RenderGraphBuilder::AddVoxelizationPass() {
         return;
     }
 
-    {
-        const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
-        GpuTextureDesc desc = BuildDefaultTextureDesc(RESOURCE_VOXEL_LIGHTING,
-                                                      PixelFormat::R16G16B16A16_FLOAT,
-                                                      AttachmentType::RW_TEXTURE,
-                                                      voxel_size, voxel_size);
-        desc.dimension = Dimension::TEXTURE_3D;
-        desc.mipLevels = LogTwo(voxel_size);
-        desc.depth = voxel_size;
-        desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
-        desc.bindFlags |= BIND_RENDER_TARGET | BIND_SHADER_RESOURCE | BIND_UNORDERED_ACCESS;
+    const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
+    GpuTextureDesc desc = BuildDefaultTextureDesc(RESOURCE_VOXEL_LIGHTING,
+                                                  PixelFormat::R16G16B16A16_FLOAT,
+                                                  AttachmentType::RW_TEXTURE,
+                                                  voxel_size, voxel_size);
+    desc.dimension = Dimension::TEXTURE_3D;
+    desc.mipLevels = LogTwo(voxel_size);
+    desc.depth = voxel_size;
+    desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
+    desc.bindFlags |= BIND_RENDER_TARGET | BIND_SHADER_RESOURCE | BIND_UNORDERED_ACCESS;
 
-        SamplerDesc sampler(MinFilter::LINEAR_MIPMAP_LINEAR, MagFilter::POINT, AddressMode::BORDER);
+    SamplerDesc sampler(MinFilter::LINEAR_MIPMAP_LINEAR, MagFilter::POINT, AddressMode::BORDER);
 
-        auto voxel_lighting = manager.CreateTexture(desc, sampler);
+    auto desc2 = desc;
+    desc2.name = RESOURCE_VOXEL_NORMAL;
 
-        desc.name = RESOURCE_VOXEL_NORMAL;
-        auto voxel_normal = manager.CreateTexture(desc, sampler);
-    }
+    GpuTextureDesc dummy{};
+    auto& pass = AddPass(RG_PASS_VOXELIZATION);
+    pass.Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
+        .Create(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING, { desc, sampler })
+        .Create(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL, { desc2, sampler })
+        .SetExecuteFunc(VoxelizationPassFunc);
 
-    {
-        GpuTextureDesc dummy{};
-        auto& pass = AddPass(RG_PASS_VOXELIZATION);
-        pass.Read(RG_RES_SHADOW_MAP)
-            .Create(RG_RES_VOXEL_LIGHTING, dummy)
-            .Create(RG_RES_VOXEL_NORMAL, dummy)
-            .SetExecuteFunc(VoxelizationPassFunc);
-    }
-
-    // @TODO: ? build
-
+#if 0
     RenderPassDesc desc;
     desc.name = RenderPassName::VOXELIZATION;
     desc.dependencies = { RenderPassName::SHADOW };
     auto pass = m_graph.CreatePass(desc);
     auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{});
     pass->AddDrawPass(VOXELIZATION_PASS_NAME, framebuffer, VoxelizationPassFunc);
+#endif
 }
 
 /// Emitter
@@ -716,23 +734,25 @@ void RenderGraphBuilder::AddLightingPass() {
 
     auto lighting_attachment = manager.FindTexture(RESOURCE_LIGHTING);
 
-    {
-        GpuTextureDesc dummy{};
-        auto& pass = AddPass(RG_PASS_LIGHTING);
-        pass.Create(RG_RES_LIGHTING, dummy)
-            .Read(RG_RES_GBUFFER_COLOR0)
-            .Read(RG_RES_GBUFFER_COLOR1)
-            .Read(RG_RES_GBUFFER_COLOR2)
-            .SetExecuteFunc(LightingPassFunc);
-        if (m_config.enableShadow) {
-            pass.Read(RG_RES_SHADOW_MAP);
-        }
-        if (m_config.enableVxgi) {
-            pass.Read(RG_RES_VOXEL_LIGHTING)
-                .Read(RG_RES_VOXEL_NORMAL);
-        }
+    auto lighting_desc = BuildDefaultTextureDesc(RESOURCE_LIGHTING,
+                                                 RT_FMT_LIGHTING,
+                                                 AttachmentType::COLOR_2D);
+
+    auto& pass = AddPass(RG_PASS_LIGHTING);
+    pass.Create(ResourceAccess::RTV, RG_RES_LIGHTING, { lighting_desc })
+        .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR0)
+        .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
+        .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR2)
+        .SetExecuteFunc(LightingPassFunc);
+    if (m_config.enableShadow) {
+        pass.Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP);
+    }
+    if (m_config.enableVxgi) {
+        pass.Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
+            .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL);
     }
 
+#if 0
     RenderPassDesc desc;
     desc.name = RenderPassName::LIGHTING;
 
@@ -776,6 +796,7 @@ void RenderGraphBuilder::AddLightingPass() {
     });
 
     pass->AddDrawPass("LightingDrawPass", framebuffer, LightingPassFunc);
+#endif
 }
 
 /// Sky
@@ -833,17 +854,13 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddForwardPass() {
-    auto& manager = IGraphicsManager::GetSingleton();
-
-    {
-        GpuTextureDesc dummy{};
-        auto& pass = AddPass(RG_PASS_FORWARD);
-        // AddDependency(RG_PASS_LIGHTING, RG_PASS_FORWARD);
-        pass.Read(RG_RES_DEPTH_STENCIL)
-            .Write(RG_RES_LIGHTING)
-            .SetExecuteFunc(ForwardPassFunc);
-    }
-
+    GpuTextureDesc dummy{};
+    auto& pass = AddPass(RG_PASS_FORWARD);
+    // AddDependency(RG_PASS_LIGHTING, RG_PASS_FORWARD);
+    pass.Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+        .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
+        .SetExecuteFunc(ForwardPassFunc);
+#if 0
     auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
     auto lighting_attachment = manager.FindTexture(RESOURCE_LIGHTING);
@@ -884,6 +901,7 @@ void RenderGraphBuilder::AddForwardPass() {
 
     // @TODO: refactor
     pass->AddDrawPass(FORWARD_PASS_NAME, framebuffer, ForwardPassFunc);
+#endif
 }
 
 /// Bloom
@@ -968,15 +986,13 @@ static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddBloomPass() {
+#if 0
     auto& gm = IGraphicsManager::GetSingleton();
 
     RenderPassDesc desc;
     desc.name = RenderPassName::BLOOM;
     desc.dependencies = { RenderPassName::FORWARD };
     auto render_pass = m_graph.CreatePass(desc);
-
-    int width = m_config.frameWidth;
-    int height = m_config.frameHeight;
     for (int i = 0; i < BLOOM_MIP_CHAIN_MAX; ++i, width /= 2, height /= 2) {
         DEV_ASSERT(width > 1);
         DEV_ASSERT(height > 1);
@@ -990,17 +1006,20 @@ void RenderGraphBuilder::AddBloomPass() {
         texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
         auto attachment = gm.CreateTexture(texture_desc, LinearClampSampler());
     }
+#endif
 
     // Setup
     {
-        {
-            GpuTextureDesc dummy{};
-            auto& pass = AddPass(RG_PASS_BLOOM_SETUP);
-            pass.Create(RG_RES_BLOOM_DOWN "0", dummy)
-                .Read(RG_RES_LIGHTING)
-                .SetExecuteFunc(BloomSetupFunc);
-        }
+        auto desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0),
+                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            AttachmentType::COLOR_2D);
 
+        auto& pass = AddPass(RG_PASS_BLOOM_SETUP);
+        pass.Create(ResourceAccess::UAV, RG_RES_BLOOM_DOWN "0", { desc, LinearClampSampler() })
+            .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
+            .SetExecuteFunc(BloomSetupFunc);
+
+#if 0
         auto output = gm.FindTexture(RESOURCE_BLOOM_0);
         DEV_ASSERT(output);
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
@@ -1017,20 +1036,27 @@ void RenderGraphBuilder::AddBloomPass() {
                 } },
         });
         render_pass->AddDrawPass("BloomSetupComputePass", pass, BloomSetupFunc);
+#endif
     }
 
+    const int width = m_config.frameWidth;
+    const int height = m_config.frameHeight;
+
     // Down Sample
-    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
-        {
-            GpuTextureDesc dummy{};
-            std::string pass_name = std::format(RG_PASS_BLOOM_DOWN "{}", i);
-            std::string input = std::format(RG_RES_BLOOM_DOWN "{}", i);
-            std::string output = std::format(RG_RES_BLOOM_DOWN "{}", i + 1);
-            auto& pass = AddPass(pass_name);
-            pass.Create(output, dummy)
-                .Read(input)
-                .SetExecuteFunc(BloomDownSampleFunc);
-        }
+    for (int i = 1, w = width / 2, h = height / 2; i < BLOOM_MIP_CHAIN_MAX; ++i, w /= 2, h /= 2) {
+        auto desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
+                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            AttachmentType::COLOR_2D,
+                                            w, h);
+
+        std::string pass_name = std::format(RG_PASS_BLOOM_DOWN "{}", i - 1);
+        std::string input = std::format(RG_RES_BLOOM_DOWN "{}", i - 1);
+        std::string output = std::format(RG_RES_BLOOM_DOWN "{}", i);
+        auto& pass = AddPass(pass_name);
+        pass.Create(ResourceAccess::UAV, output, { desc, LinearClampSampler() })
+            .Read(ResourceAccess::UAV, input)
+            .SetExecuteFunc(BloomDownSampleFunc);
+#if 0
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
         DEV_ASSERT(output);
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
@@ -1048,23 +1074,25 @@ void RenderGraphBuilder::AddBloomPass() {
         });
         pass->id = i;
         render_pass->AddDrawPass("BloomDownSampleComputePass", pass, BloomDownSampleFunc);
+#endif
     }
 
     // Up Sample
-    bool first = true;
-    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        {
-            GpuTextureDesc dummy{};
-            std::string pass_name = std::format(RG_PASS_BLOOM_UP "{}", i - 1);
-            std::string input = first ? std::format(RG_RES_BLOOM_DOWN "{}", i) : std::format(RG_RES_BLOOM_UP "{}", i);
-            first = false;
-            std::string output = std::format(RG_RES_BLOOM_UP "{}", i - 1);
-            auto& pass = AddPass(pass_name);
-            pass.Create(output, dummy)
-                .Read(input)
-                .SetExecuteFunc(BloomUpSampleFunc);
-        }
+    for (int i = 1, w = width / 2, h = height / 2; i < BLOOM_MIP_CHAIN_MAX; ++i, w /= 2, h /= 2) {
+        auto desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
+                                            PixelFormat::R16G16B16A16_FLOAT,
+                                            AttachmentType::COLOR_2D,
+                                            w, h);
 
+        std::string pass_name = std::format(RG_PASS_BLOOM_UP "{}", i - 1);
+        std::string input = (i == BLOOM_MIP_CHAIN_MAX - 1) ? std::format(RG_RES_BLOOM_DOWN "{}", i) : std::format(RG_RES_BLOOM_UP "{}", i);
+        std::string output = std::format(RG_RES_BLOOM_UP "{}", i - 1);
+        auto& pass = AddPass(pass_name);
+        pass.Create(ResourceAccess::UAV, output, { desc })
+            .Read(ResourceAccess::UAV, input)
+            .SetExecuteFunc(BloomUpSampleFunc);
+
+#if 0
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
         DEV_ASSERT(output);
         auto pass = gm.CreateFramebuffer(FramebufferDesc{
@@ -1082,6 +1110,7 @@ void RenderGraphBuilder::AddBloomPass() {
         });
         pass->id = i;
         render_pass->AddDrawPass("BloomUpSampleComputePass", pass, BloomUpSampleFunc);
+#endif
     }
 }
 
@@ -1153,17 +1182,19 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddTonePass() {
-    {
-        GpuTextureDesc dummy{};
-        auto& pass = AddPass(RG_PASS_POST_PROCESS);
-        pass.Create(RG_RES_POST_PROCESS, dummy)
-            .Read(RG_RES_BLOOM_UP "0")
-            .Read(RG_RES_LIGHTING)
-            .Read(RG_RES_OUTLINE)
-            .Write(RG_RES_DEPTH_STENCIL)
-            .SetExecuteFunc(TonePassFunc);
-    }
+    auto desc = BuildDefaultTextureDesc(RESOURCE_TONE,
+                                        RT_FMT_TONE,
+                                        AttachmentType::COLOR_2D);
 
+    auto& pass = AddPass(RG_PASS_POST_PROCESS);
+    pass.Create(ResourceAccess::RTV, RG_RES_POST_PROCESS, { desc })
+        .Read(ResourceAccess::SRV, RG_RES_BLOOM_UP "0")
+        .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
+        .Read(ResourceAccess::SRV, RG_RES_OUTLINE)
+        .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+        .SetExecuteFunc(TonePassFunc);
+
+#if 0
     auto& manager = IGraphicsManager::GetSingleton();
     RenderPassDesc desc;
     desc.name = RenderPassName::TONE;
@@ -1181,6 +1212,7 @@ void RenderGraphBuilder::AddTonePass() {
     });
 
     pass->AddDrawPass("ToneDrawPass", framebuffer, TonePassFunc);
+#endif
 }
 
 // assume render target is setup
@@ -1216,14 +1248,16 @@ void RenderGraphBuilder::AddDebugImagePass() {
         return;
     }
 
-    {
-        GpuTextureDesc dummy{};
-        auto& pass = AddPass(RG_PASS_OVERLAY);
-        pass.Create(RG_RES_OVERLAY, dummy)
-            .Read(RG_RES_POST_PROCESS)
-            .SetExecuteFunc(DebugImagesFunc);
-    }
+    auto desc = BuildDefaultTextureDesc(RESOURCE_FINAL,
+                                        DEFAULT_SURFACE_FORMAT,
+                                        AttachmentType::COLOR_2D);
 
+    auto& pass = AddPass(RG_PASS_OVERLAY);
+    pass.Create(ResourceAccess::RTV, RG_RES_OVERLAY, { desc })
+        .Read(ResourceAccess::SRV, RG_RES_POST_PROCESS)
+        .SetExecuteFunc(DebugImagesFunc);
+
+#if 0
     auto& manager = IGraphicsManager::GetSingleton();
     RenderPassDesc desc;
     desc.name = RenderPassName::FINAL;
@@ -1238,6 +1272,7 @@ void RenderGraphBuilder::AddDebugImagePass() {
     });
 
     pass->AddDrawPass("DebugImagePass", framebuffer, DebugImagesFunc);
+#endif
 }
 
 #if 0
@@ -1500,6 +1535,7 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreatePathTracer(RenderGraphBui
     return graph;
 }
 
+#if 0
 static void RgCreateResource(IGraphicsManager& p_manager,
                              const SamplerDesc& p_sampler,
                              RenderTargetResourceName p_name,
@@ -1537,6 +1573,7 @@ void RenderGraphBuilder::CreateResources() {
     RgCreateResource(manager, SAMPLER, NAME, FORMAT, TYPE, W, __VA_ARGS__);
 #include "engine/renderer/render_graph/render_graph_resources.h"
 }
+#endif
 
 std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilderConfig& p_config) {
     p_config.enableBloom = true;
@@ -1722,7 +1759,7 @@ auto RenderGraphBuilder::Compile() -> Result<void> {
         }
         if (auto it = outputs.find(name); it != outputs.end()) {
             for (auto from : it->second) {
-                // LOG_OK("edge found from {} to {}", m_passes[from].GetName(), m_passes[to].GetName());
+                LOG_OK("edge found from {} to {}", m_passes[from].GetName(), m_passes[to].GetName());
                 edges.push_back(std::make_pair(from, to));
             }
         }

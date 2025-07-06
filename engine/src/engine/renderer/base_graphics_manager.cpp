@@ -424,7 +424,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
     m_activeRenderGraphName = RenderGraphName::EMPTY;
 #endif
 
-    renderer::RenderGraphBuilder::CreateResources();
+    // renderer::RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     renderer::RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;

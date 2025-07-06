@@ -2,19 +2,24 @@
 
 namespace my::renderer {
 
-RenderPassBuilder& RenderPassBuilder::Create(std::string_view p_name, GpuTextureDesc p_desc) {
-    //Write(p_name);
+RenderPassBuilder& RenderPassBuilder::Create(ResourceAccess p_access, std::string_view p_name, const RenderGraphResourceCreateInfo& p_desc) {
+    unused(p_access);
+    // Write(p_name);
     m_creates.push_back({ std::string(p_name), p_desc });
     return *this;
 }
 
-RenderPassBuilder& RenderPassBuilder::Read(std::string_view p_name) {
+RenderPassBuilder& RenderPassBuilder::Read(ResourceAccess p_access, std::string_view p_name) {
+    unused(p_access);
     m_reads.emplace_back(p_name);
     return *this;
 }
 
-RenderPassBuilder& RenderPassBuilder::Write(std::string_view p_name) {
-    m_writes.emplace_back(p_name);
+RenderPassBuilder& RenderPassBuilder::Write(ResourceAccess p_access, std::string_view p_name) {
+    // ignore DSV write?
+    if (p_access != ResourceAccess::DSV) {
+        m_writes.emplace_back(p_name);
+    }
     return *this;
 }
 

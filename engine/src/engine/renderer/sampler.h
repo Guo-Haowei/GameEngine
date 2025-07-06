@@ -4,15 +4,15 @@
 namespace my {
 
 struct SamplerDesc {
-    SamplerDesc(MinFilter p_min_filter = MinFilter::POINT,
-                MagFilter p_mag_filter = MagFilter::POINT,
-                AddressMode p_address_mode = AddressMode::WRAP,
-                StaticBorderColor p_border_color = StaticBorderColor::TRANSPARENT_BLACK,
-                float p_min_lod_bias = 0.0f,
-                uint32_t p_max_anisotropy = 1.0f,
-                ComparisonFunc p_func = ComparisonFunc::LESS_EQUAL,
-                float p_min_lod = 0.0f,
-                float p_max_lod = 3.402823466e+38f) {
+    constexpr SamplerDesc(MinFilter p_min_filter = MinFilter::POINT,
+                          MagFilter p_mag_filter = MagFilter::POINT,
+                          AddressMode p_address_mode = AddressMode::WRAP,
+                          StaticBorderColor p_border_color = StaticBorderColor::TRANSPARENT_BLACK,
+                          float p_min_lod_bias = 0.0f,
+                          uint32_t p_max_anisotropy = 1.0f,
+                          ComparisonFunc p_func = ComparisonFunc::LESS_EQUAL,
+                          float p_min_lod = 0.0f,
+                          float p_max_lod = 3.402823466e+38f) {
         minFilter = p_min_filter;
         magFilter = p_mag_filter;
         addressU = p_address_mode;
@@ -67,22 +67,22 @@ struct SamplerDesc {
     float maxLod;
 };
 
-static inline SamplerDesc PointClampSampler() {
+static constexpr inline SamplerDesc PointClampSampler() {
     SamplerDesc desc(MinFilter::POINT, MagFilter::POINT, AddressMode::CLAMP);
     return desc;
 }
 
-static inline SamplerDesc PointWrapSampler() {
+static constexpr inline SamplerDesc PointWrapSampler() {
     SamplerDesc desc(MinFilter::POINT, MagFilter::POINT, AddressMode::WRAP);
     return desc;
 }
 
-static inline SamplerDesc LinearClampSampler() {
+static constexpr inline SamplerDesc LinearClampSampler() {
     SamplerDesc desc(MinFilter::LINEAR, MagFilter::LINEAR, AddressMode::CLAMP);
     return desc;
 }
 
-static inline SamplerDesc LinearWrapSampler() {
+static constexpr inline SamplerDesc LinearWrapSampler() {
     SamplerDesc desc(MinFilter::LINEAR, MagFilter::LINEAR, AddressMode::WRAP);
     return desc;
 }
