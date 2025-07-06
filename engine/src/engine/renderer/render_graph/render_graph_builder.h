@@ -54,8 +54,9 @@ public:
     static void CreateResources();
 
     RenderPassBuilder& AddPass(std::string_view p_name);
+    void AddDependency(std::string_view p_from, std::string_view p_to);
 
-    auto Compile() -> Result<void>;
+    [[nodiscard]] auto Compile() -> Result<void>;
 
 private:
     void AddEmpty();
@@ -81,6 +82,7 @@ private:
     RenderGraph& m_graph;
 
     std::vector<RenderPassBuilder> m_passes;
+    std::vector<std::pair<std::string_view, std::string_view>> m_dependencies;
 };
 
 }  // namespace my::renderer

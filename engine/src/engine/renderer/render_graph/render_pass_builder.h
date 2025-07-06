@@ -15,10 +15,10 @@ public:
 private:
     RenderPassBuilder(std::string_view p_name) : m_name{ p_name } {}
 
-    std::string_view m_name;
-    std::vector<std::pair<std::string_view, GpuTextureDesc>> m_creates;
-    std::vector<std::string_view> m_reads;
-    std::vector<std::string_view> m_writes;
+    std::string m_name;
+    std::vector<std::pair<std::string, GpuTextureDesc>> m_creates;
+    std::vector<std::string> m_reads;
+    std::vector<std::string> m_writes;
     ExecuteFunc m_func;
 
     friend class RenderGraphBuilder;

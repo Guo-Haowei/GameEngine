@@ -3,8 +3,8 @@
 namespace my::renderer {
 
 RenderPassBuilder& RenderPassBuilder::Create(std::string_view p_name, GpuTextureDesc p_desc) {
-    Write(p_name);
-    m_creates.push_back({ p_name, p_desc });
+    //Write(p_name);
+    m_creates.push_back({ std::string(p_name), p_desc });
     return *this;
 }
 
