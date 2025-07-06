@@ -6,13 +6,11 @@
 // clang-format off
 namespace my { struct Framebuffer; }
 namespace my { class IGraphicsManager; }
+namespace my::renderer { class RenderGraph; }
+namespace my::renderer { struct RenderSystem; }
 // clang-format on
 
 namespace my::renderer {
-
-struct RenderSystem;
-struct RenderPassCreateInfo;
-class RenderGraph;
 
 struct RenderGraphBuilderConfig {
     bool enableShadow = true;
@@ -71,12 +69,13 @@ private:
     void AddForwardPass();
     void AddBloomPass();
     void AddTonePass();
+    void AddDebugImagePass();
+
+#if 0
     void AddGenerateSkylightPass();
     void AddPathTracerPass();
     void AddPathTracerTonePass();
-    void AddDebugImagePass();
-
-    void CreateRenderPass(RenderPassCreateInfo& p_info);
+#endif
 
     RenderGraphBuilderConfig m_config;
     RenderGraph& m_graph;

@@ -450,7 +450,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::OPENGL:
         case Backend::D3D11:
 #if !USING(PLATFORM_WASM)
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            // m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
 #endif
             break;
         default:
