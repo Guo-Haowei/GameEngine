@@ -86,7 +86,7 @@ private:
     IGraphicsManager& m_graphicsManager;
 
     std::vector<RenderPassBuilder> m_passes;
-    std::vector<std::pair<std::string_view, std::string_view>> m_dependencies;
+    std::vector<std::pair<std::string, std::string>> m_dependencies;
     uint32_t m_frameWidth;
     uint32_t m_frameHeight;
 };

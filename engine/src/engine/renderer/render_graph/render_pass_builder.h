@@ -24,7 +24,12 @@ enum class ResourceAccess : uint8_t {
 
 class RenderPassBuilder {
 public:
-    RenderPassBuilder& Create(ResourceAccess p_access, std::string_view p_name, const RenderGraphResourceCreateInfo& p_desc);
+    struct Resource {
+        std::string name;
+        ResourceAccess access;
+    };
+
+    RenderPassBuilder& Create(std::string_view p_name, const RenderGraphResourceCreateInfo& p_desc);
     RenderPassBuilder& Read(ResourceAccess p_access, std::string_view p_name);
     RenderPassBuilder& Write(ResourceAccess p_access, std::string_view p_name);
     RenderPassBuilder& SetExecuteFunc(ExecuteFunc p_func);
@@ -36,8 +41,8 @@ private:
 
     std::string m_name;
     std::vector<std::pair<std::string, RenderGraphResourceCreateInfo>> m_creates;
-    std::vector<std::string> m_reads;
-    std::vector<std::string> m_writes;
+    std::vector<Resource> m_reads;
+    std::vector<Resource> m_writes;
     ExecuteFunc m_func;
 
     friend class RenderGraphBuilder;

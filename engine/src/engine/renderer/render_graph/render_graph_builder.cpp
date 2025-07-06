@@ -25,36 +25,34 @@
 #define SHADOW_DRAW_PASS_NAME            "ShadowDrawPass"
 #define POINT_SHADOW_DRAW_PASS_NAME(IDX) "ShadowDrawPass" #IDX
 
-// @TODO: refactor
-// @TODO: make variable instead
-#define RG_PASS_EARLY_Z      "p:early_z"
-#define RG_PASS_SHADOW       "p:shadow"
-#define RG_PASS_GBUFFER      "p:gbuffer"
-#define RG_PASS_VOXELIZATION "p:voxelization"
-#define RG_PASS_LIGHTING     "p:lighting"
-#define RG_PASS_FORWARD      "p:forward"  // transparent, skybox, etc
-#define RG_PASS_BLOOM_SETUP  "p:bloom_setup"
-#define RG_PASS_BLOOM_DOWN   "p:bloom_downsample_"
-#define RG_PASS_BLOOM_UP     "p:bloom_upsample_"
-#define RG_PASS_POST_PROCESS "p:post_process"
-#define RG_PASS_OVERLAY      "p:overlay"
-#define RG_PASS_SSAO         "p:ssao"
-#define RG_PASS_OUTLINE      "p:outline"
+static constexpr const char RG_PASS_EARLY_Z[] = "p:early_z";
+static constexpr const char RG_PASS_SHADOW[] = "p:shadow";
+static constexpr const char RG_PASS_GBUFFER[] = "p:gbuffer";
+static constexpr const char RG_PASS_VOXELIZATION[] = "p:voxelization";
+static constexpr const char RG_PASS_LIGHTING[] = "p:lighting";
+static constexpr const char RG_PASS_FORWARD[] = "p:forward";
+static constexpr const char RG_PASS_BLOOM_SETUP[] = "p:bloom_setup";
+static constexpr const char RG_PASS_POST_PROCESS[] = "p:post_process";
+static constexpr const char RG_PASS_OVERLAY[] = "p:overlay";
+static constexpr const char RG_PASS_SSAO[] = "p:ssao";
+static constexpr const char RG_PASS_OUTLINE[] = "p:outline";
 
-#define RG_RES_DEPTH_STENCIL  "r:depth"
-#define RG_RES_SHADOW_MAP     "r:shadow"
-#define RG_RES_GBUFFER_COLOR0 "r:gbuffer0"
-#define RG_RES_GBUFFER_COLOR1 "r:gbuffer1"
-#define RG_RES_GBUFFER_COLOR2 "r:gbuffer2"
-#define RG_RES_SSAO           "r:ssao"
-#define RG_RES_LIGHTING       "r:lighting"
-#define RG_RES_BLOOM_DOWN     "r:bloomdown_"
-#define RG_RES_BLOOM_UP       "r:bloomup_"
-#define RG_RES_POST_PROCESS   "r:post_process"
-#define RG_RES_OVERLAY        "r:overlay"
-#define RG_RES_VOXEL_LIGHTING "r:voxel_lighting"
-#define RG_RES_VOXEL_NORMAL   "r:voxel_normal"
-#define RG_RES_OUTLINE        "r:outline"
+static constexpr const char RG_RES_DEPTH_STENCIL[] = "r:depth";
+static constexpr const char RG_RES_SHADOW_MAP[] = "r:shadow";
+static constexpr const char RG_RES_GBUFFER_COLOR0[] = "r:gbuffer0";
+static constexpr const char RG_RES_GBUFFER_COLOR1[] = "r:gbuffer1";
+static constexpr const char RG_RES_GBUFFER_COLOR2[] = "r:gbuffer2";
+static constexpr const char RG_RES_SSAO[] = "r:ssao";
+static constexpr const char RG_RES_LIGHTING[] = "r:lighting";
+static constexpr const char RG_RES_POST_PROCESS[] = "r:post_process";
+static constexpr const char RG_RES_OVERLAY[] = "r:overlay";
+static constexpr const char RG_RES_VOXEL_LIGHTING[] = "r:voxel_lighting";
+static constexpr const char RG_RES_VOXEL_NORMAL[] = "r:voxel_normal";
+static constexpr const char RG_RES_OUTLINE[] = "r:outline";
+
+#define RG_PASS_BLOOM_DOWN_PREFIX "p:bloom_downsample_"
+#define RG_PASS_BLOOM_UP_PREFIX   "p:bloom_upsample_"
+#define RG_RES_BLOOM_PREFIX       "r:bloom_"
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"
@@ -214,7 +212,8 @@ void RenderGraphBuilder::AddEarlyZPass() {
                                                AttachmentType::DEPTH_STENCIL_2D);
 
     auto& pass = AddPass(RG_PASS_EARLY_Z);
-    pass.Create(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL, { buffer_desc })
+    pass.Create(RG_RES_DEPTH_STENCIL, { buffer_desc })
+        .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(EarlyZPassFunc);
 
 #if 0
@@ -270,10 +269,13 @@ void RenderGraphBuilder::AddGbufferPass() {
                                                AttachmentType::COLOR_2D);
 
     auto& pass = AddPass(RG_PASS_GBUFFER);
-    pass.Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
-        .Create(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR0, { color0_desc })
-        .Create(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR1, { color1_desc })
-        .Create(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR2, { color2_desc })
+    pass.Create(RG_RES_GBUFFER_COLOR0, { color0_desc })
+        .Create(RG_RES_GBUFFER_COLOR1, { color1_desc })
+        .Create(RG_RES_GBUFFER_COLOR2, { color2_desc })
+        .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+        .Write(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR0)
+        .Write(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR1)
+        .Write(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR2)
         .SetExecuteFunc(GbufferPassFunc);
 
 #if 0
@@ -334,7 +336,8 @@ void RenderGraphBuilder::AddSsaoPass() {
                                                AttachmentType::COLOR_2D);
 
     auto& pass = AddPass(RG_PASS_SSAO);
-    pass.Create(ResourceAccess::RTV, RG_RES_SSAO, { color0_desc })
+    pass.Create(RG_RES_SSAO, { color0_desc })
+        .Write(ResourceAccess::RTV, RG_RES_SSAO)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
         .Read(ResourceAccess::SRV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(SsaoPassFunc);
@@ -378,7 +381,8 @@ void RenderGraphBuilder::AddHighlightPass() {
                                                AttachmentType::COLOR_2D);
 
     auto& pass = AddPass(RG_PASS_OUTLINE);
-    pass.Create(ResourceAccess::RTV, RG_RES_OUTLINE, { color0_desc })
+    pass.Create(RG_RES_OUTLINE, { color0_desc })
+        .Write(ResourceAccess::RTV, RG_RES_OUTLINE)
         .Read(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(HighlightPassFunc);
 
@@ -478,7 +482,8 @@ void RenderGraphBuilder::AddShadowPass() {
                                                              AttachmentType::SHADOW_2D,
                                                              1 * shadow_res, shadow_res);
     auto& pass = AddPass(RG_PASS_SHADOW);
-    pass.Create(ResourceAccess::DSV, RG_RES_SHADOW_MAP, { shadow_map_desc, ShadowMapSampler() })
+    pass.Create(RG_RES_SHADOW_MAP, { shadow_map_desc, ShadowMapSampler() })
+        .Write(ResourceAccess::DSV, RG_RES_SHADOW_MAP)
         .SetExecuteFunc(ShadowPassFunc);
 
 #if 0
@@ -603,9 +608,11 @@ void RenderGraphBuilder::AddVoxelizationPass() {
 
     GpuTextureDesc dummy{};
     auto& pass = AddPass(RG_PASS_VOXELIZATION);
-    pass.Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
-        .Create(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING, { desc, sampler })
-        .Create(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL, { desc2, sampler })
+    pass.Create(RG_RES_VOXEL_LIGHTING, { desc, sampler })
+        .Create(RG_RES_VOXEL_NORMAL, { desc2, sampler })
+        .Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
+        .Write(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
+        .Write(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL)
         .SetExecuteFunc(VoxelizationPassFunc);
 
 #if 0
@@ -739,11 +746,13 @@ void RenderGraphBuilder::AddLightingPass() {
                                                  AttachmentType::COLOR_2D);
 
     auto& pass = AddPass(RG_PASS_LIGHTING);
-    pass.Create(ResourceAccess::RTV, RG_RES_LIGHTING, { lighting_desc })
+    pass.Create(RG_RES_LIGHTING, { lighting_desc })
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR0)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR2)
+        .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(LightingPassFunc);
+
     if (m_config.enableShadow) {
         pass.Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP);
     }
@@ -856,7 +865,7 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
 void RenderGraphBuilder::AddForwardPass() {
     GpuTextureDesc dummy{};
     auto& pass = AddPass(RG_PASS_FORWARD);
-    // AddDependency(RG_PASS_LIGHTING, RG_PASS_FORWARD);
+    AddDependency(RG_PASS_LIGHTING, RG_PASS_FORWARD);
     pass.Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(ForwardPassFunc);
@@ -999,25 +1008,39 @@ void RenderGraphBuilder::AddBloomPass() {
 
         LOG_WARN("bloom size {}x{}", width, height);
 
-        GpuTextureDesc texture_desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
-                                                              PixelFormat::R16G16B16A16_FLOAT,
-                                                              AttachmentType::COLOR_2D,
-                                                              width, height);
-        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
         auto attachment = gm.CreateTexture(texture_desc, LinearClampSampler());
     }
 #endif
 
-    // Setup
-    {
-        auto desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0),
-                                            PixelFormat::R16G16B16A16_FLOAT,
-                                            AttachmentType::COLOR_2D);
+    // Setup pass
+    const int width = m_config.frameWidth;
+    const int height = m_config.frameHeight;
 
-        auto& pass = AddPass(RG_PASS_BLOOM_SETUP);
-        pass.Create(ResourceAccess::UAV, RG_RES_BLOOM_DOWN "0", { desc, LinearClampSampler() })
-            .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
-            .SetExecuteFunc(BloomSetupFunc);
+    auto& setup_pass = AddPass(RG_PASS_BLOOM_SETUP);
+    SamplerDesc sampler = LinearClampSampler();
+
+    // @TODO: use mips instead of generate this many resources
+    for (int i = 0, w = width, h = height; i < BLOOM_MIP_CHAIN_MAX; ++i, w /= 2, h /= 2) {
+        DEV_ASSERT(width > 1);
+        DEV_ASSERT(height > 1);
+
+        auto texture_desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
+                                                    PixelFormat::R16G16B16A16_FLOAT,
+                                                    AttachmentType::COLOR_2D,
+                                                    w, h);
+        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
+
+        auto res_name = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
+        setup_pass.Create(res_name, { texture_desc, sampler });
+    }
+
+    auto bloom_res = std::format(RG_RES_BLOOM_PREFIX "{}x{}", width, height);
+
+    AddDependency(RG_PASS_FORWARD, RG_PASS_BLOOM_SETUP);
+    setup_pass
+        .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
+        .Write(ResourceAccess::UAV, bloom_res)
+        .SetExecuteFunc(BloomSetupFunc);
 
 #if 0
         auto output = gm.FindTexture(RESOURCE_BLOOM_0);
@@ -1037,25 +1060,22 @@ void RenderGraphBuilder::AddBloomPass() {
         });
         render_pass->AddDrawPass("BloomSetupComputePass", pass, BloomSetupFunc);
 #endif
-    }
-
-    const int width = m_config.frameWidth;
-    const int height = m_config.frameHeight;
 
     // Down Sample
-    for (int i = 1, w = width / 2, h = height / 2; i < BLOOM_MIP_CHAIN_MAX; ++i, w /= 2, h /= 2) {
-        auto desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
-                                            PixelFormat::R16G16B16A16_FLOAT,
-                                            AttachmentType::COLOR_2D,
-                                            w, h);
-
-        std::string pass_name = std::format(RG_PASS_BLOOM_DOWN "{}", i - 1);
-        std::string input = std::format(RG_RES_BLOOM_DOWN "{}", i - 1);
-        std::string output = std::format(RG_RES_BLOOM_DOWN "{}", i);
+    for (int i = 0, w = width, h = height; i < BLOOM_MIP_CHAIN_MAX - 1; ++i, w /= 2, h /= 2) {
+        auto pass_name = std::format(RG_PASS_BLOOM_DOWN_PREFIX "{}", i);
+        auto input = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
+        auto output = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w / 2, h / 2);
         auto& pass = AddPass(pass_name);
-        pass.Create(ResourceAccess::UAV, output, { desc, LinearClampSampler() })
-            .Read(ResourceAccess::UAV, input)
+        pass.Read(ResourceAccess::UAV, input)
+            .Write(ResourceAccess::UAV, output)
             .SetExecuteFunc(BloomDownSampleFunc);
+        if (i == 0) {
+            AddDependency(RG_PASS_BLOOM_SETUP, pass_name);
+        } else {
+            std::string prev_pass = std::format(RG_PASS_BLOOM_DOWN_PREFIX "{}", i - 1);
+            AddDependency(prev_pass, pass_name);
+        }
 #if 0
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
         DEV_ASSERT(output);
@@ -1078,20 +1098,25 @@ void RenderGraphBuilder::AddBloomPass() {
     }
 
     // Up Sample
-    for (int i = 1, w = width / 2, h = height / 2; i < BLOOM_MIP_CHAIN_MAX; ++i, w /= 2, h /= 2) {
-        auto desc = BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i),
-                                            PixelFormat::R16G16B16A16_FLOAT,
-                                            AttachmentType::COLOR_2D,
-                                            w, h);
+    for (int i = 0, w = width, h = height; i < BLOOM_MIP_CHAIN_MAX - 1; ++i, w /= 2, h /= 2) {
+        auto pass_name = std::format(RG_PASS_BLOOM_UP_PREFIX "{}", i);
+        auto input1 = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w / 2, h / 2);
+        auto input2 = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
+        auto output = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
 
-        std::string pass_name = std::format(RG_PASS_BLOOM_UP "{}", i - 1);
-        std::string input = (i == BLOOM_MIP_CHAIN_MAX - 1) ? std::format(RG_RES_BLOOM_DOWN "{}", i) : std::format(RG_RES_BLOOM_UP "{}", i);
-        std::string output = std::format(RG_RES_BLOOM_UP "{}", i - 1);
         auto& pass = AddPass(pass_name);
-        pass.Create(ResourceAccess::UAV, output, { desc })
-            .Read(ResourceAccess::UAV, input)
+        pass.Read(ResourceAccess::UAV, input1)
+            .Read(ResourceAccess::UAV, input2)
+            .Write(ResourceAccess::UAV, output)
             .SetExecuteFunc(BloomUpSampleFunc);
 
+        if (i == BLOOM_MIP_CHAIN_MAX - 2) {
+            auto down_sample_pass = std::format(RG_PASS_BLOOM_DOWN_PREFIX "{}", BLOOM_MIP_CHAIN_MAX - 2);
+            AddDependency(down_sample_pass, pass_name);
+        } else {
+            auto prev_pass = std::format(RG_PASS_BLOOM_UP_PREFIX "{}", i + 1);
+            AddDependency(prev_pass, pass_name);
+        }
 #if 0
         auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
         DEV_ASSERT(output);
@@ -1186,11 +1211,15 @@ void RenderGraphBuilder::AddTonePass() {
                                         RT_FMT_TONE,
                                         AttachmentType::COLOR_2D);
 
+    auto bloom_res = std::format(RG_RES_BLOOM_PREFIX "{}x{}", m_config.frameWidth, m_config.frameHeight);
+
+    AddDependency(RG_PASS_BLOOM_UP_PREFIX "0", RG_PASS_POST_PROCESS);
     auto& pass = AddPass(RG_PASS_POST_PROCESS);
-    pass.Create(ResourceAccess::RTV, RG_RES_POST_PROCESS, { desc })
-        .Read(ResourceAccess::SRV, RG_RES_BLOOM_UP "0")
+    pass.Create(RG_RES_POST_PROCESS, { desc })
+        .Read(ResourceAccess::SRV, bloom_res)
         .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
         .Read(ResourceAccess::SRV, RG_RES_OUTLINE)
+        .Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(TonePassFunc);
 
@@ -1253,8 +1282,9 @@ void RenderGraphBuilder::AddDebugImagePass() {
                                         AttachmentType::COLOR_2D);
 
     auto& pass = AddPass(RG_PASS_OVERLAY);
-    pass.Create(ResourceAccess::RTV, RG_RES_OVERLAY, { desc })
+    pass.Create(RG_RES_OVERLAY, { desc })
         .Read(ResourceAccess::SRV, RG_RES_POST_PROCESS)
+        .Write(ResourceAccess::RTV, RG_RES_OVERLAY)
         .SetExecuteFunc(DebugImagesFunc);
 
 #if 0
@@ -1581,28 +1611,28 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDefault(RenderGraphBuilde
     p_config.enableVxgi = IGraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;
 
     auto graph = std::make_unique<RenderGraph>();
-    RenderGraphBuilder creator(p_config, *graph.get());
+    RenderGraphBuilder builder(p_config, *graph.get());
 
-    creator.AddEarlyZPass();
-    creator.AddGbufferPass();
+    builder.AddEarlyZPass();
+    builder.AddGbufferPass();
 #if 0
     creator.AddGenerateSkylightPass();
 #endif
-    creator.AddShadowPass();
-    creator.AddSsaoPass();
-    creator.AddHighlightPass();
-    creator.AddVoxelizationPass();
-    creator.AddLightingPass();
-    creator.AddForwardPass();
-    creator.AddBloomPass();
-    creator.AddTonePass();
-    creator.AddDebugImagePass();
+    builder.AddShadowPass();
+    builder.AddSsaoPass();
+    builder.AddHighlightPass();
+    builder.AddVoxelizationPass();
+    builder.AddLightingPass();
+    builder.AddForwardPass();
+    builder.AddBloomPass();
+    builder.AddTonePass();
+    builder.AddDebugImagePass();
 
-    auto res = creator.Compile();
+    auto res = builder.Compile();
     if (!res) {
-        StringStreamBuilder builder;
-        builder << res.error();
-        LOG_ERROR("{}", builder.ToString());
+        StringStreamBuilder string_builder;
+        string_builder << res.error();
+        LOG_ERROR("{}", string_builder.ToString());
     }
 
     graph->Compile();
@@ -1685,49 +1715,56 @@ void RenderGraphBuilder::AddDependency(std::string_view p_from, std::string_view
 
 auto RenderGraphBuilder::Compile() -> Result<void> {
     {
-        LOG_WARN("dbg");
         int id = 0;
         for (const auto& pass : m_passes) {
             LOG_OK("found pass: {} (id: {})", pass.GetName(), id++);
-            LOG_OK("  it reads:");
-            for (const auto& read : pass.m_reads) {
-                LOG_OK("  -- {}", read);
-            }
             LOG_OK("  it creates:");
             for (const auto& create : pass.m_creates) {
                 LOG_OK("  -- {}", create.first);
             }
+            LOG_OK("  it reads:");
+            for (const auto& read : pass.m_reads) {
+                LOG_OK("  -- {}", read.name);
+            }
             LOG_OK("  it writes:");
             for (const auto& write : pass.m_writes) {
-                LOG_OK("  -- {}", write);
+                LOG_OK("  -- {}", write.name);
             }
         }
     }
 
-    std::vector<std::pair<std::string_view, int>> inputs;
-    std::unordered_map<std::string_view, std::vector<int>> outputs;
-    std::unordered_map<std::string_view, std::vector<int>> creates;
-
     std::unordered_map<std::string_view, int> lookup;
+
+    std::vector<std::pair<std::string_view, int>> reads;
+    std::vector<std::pair<std::string_view, int>> writes;
+
+    std::unordered_map<std::string_view, int> creates;
 
     const int N = static_cast<int>(m_passes.size());
     DEV_ASSERT(N);
 
     for (int i = 0; i < N; ++i) {
         const auto& pass = m_passes[i];
-        auto [_, inserted] = lookup.try_emplace(pass.m_name, i);
-        if (!inserted) {
-            return HBN_ERROR(ErrorCode::ERR_ALREADY_EXISTS, "pass '{}' already exists", pass.m_name);
+        {
+            auto [_, inserted] = lookup.try_emplace(pass.m_name, i);
+            if (!inserted) {
+                return HBN_ERROR(ErrorCode::ERR_ALREADY_EXISTS, "pass '{}' already exists", pass.m_name);
+            }
         }
 
+        for (const auto& create : pass.m_creates) {
+            auto [_, inserted] = creates.try_emplace(std::string_view(create.first), i);
+            if (!inserted) {
+                return HBN_ERROR(ErrorCode::ERR_ALREADY_EXISTS, "resource '{}' is created multiple times", create.first);
+            }
+        }
+
+        // @TODO: figure out what access to give to resource
         for (const auto& read : pass.m_reads) {
-            inputs.push_back(std::make_pair(std::string_view(read), i));
+            reads.push_back(std::make_pair(std::string_view(read.name), i));
         }
         for (const auto& write : pass.m_writes) {
-            outputs[std::string_view(write)].push_back(i);
-        }
-        for (const auto& create : pass.m_creates) {
-            creates[std::string_view(create.first)].push_back(i);
+            writes.push_back(std::make_pair(std::string_view(write.name), i));
         }
     }
 
@@ -1748,30 +1785,24 @@ auto RenderGraphBuilder::Compile() -> Result<void> {
         edges.push_back({ from_idx, to_idx });
     }
 
-    // @TODO: figure out dependencies
-    // @TODO: validate the graph (duplicate pass? duplicate create? circle?)
-    for (const auto& [name, to] : inputs) {
+    for (const auto& [name, to] : reads) {
         if (auto it = creates.find(name); it != creates.end()) {
-            for (auto from : it->second) {
-                LOG_OK("edge found from {} to {}", m_passes[from].GetName(), m_passes[to].GetName());
-                edges.push_back(std::make_pair(from, to));
-            }
-        }
-        if (auto it = outputs.find(name); it != outputs.end()) {
-            for (auto from : it->second) {
-                LOG_OK("edge found from {} to {}", m_passes[from].GetName(), m_passes[to].GetName());
-                edges.push_back(std::make_pair(from, to));
-            }
+            const int from = it->second;
+            LOG_OK("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
+            edges.push_back(std::make_pair(from, to));
+        } else {
+            return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
         }
     }
-    for (const auto& [name, dests] : outputs) {
-        for (auto to : dests) {
-            if (auto it = creates.find(name); it != creates.end()) {
-                for (auto from : it->second) {
-                    LOG_OK("edge found from {} to {}", m_passes[from].GetName(), m_passes[to].GetName());
-                    edges.push_back(std::make_pair(from, to));
-                }
-            }
+
+    for (const auto& [name, to] : writes) {
+        if (auto it = creates.find(name); it != creates.end()) {
+            const int from = it->second;
+            if (from == to) continue;  // remove passes that create and write the same buffer
+            LOG_OK("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
+            edges.push_back(std::make_pair(from, to));
+        } else {
+            return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
         }
     }
 
