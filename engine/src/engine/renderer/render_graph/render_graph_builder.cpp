@@ -8,7 +8,7 @@
 #include "render_graph_defines.h"
 #include "render_pass_builder.h"
 
-namespace my::renderer {
+namespace my {
 
 RenderGraphBuilder::RenderGraphBuilder(const RenderGraphBuilderConfig& p_config)
     : m_config(p_config),
@@ -213,4 +213,4 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
     return Result<std::shared_ptr<RenderGraph>>(render_graph);
 }
 
-}  // namespace my::renderer
+}  // namespace my

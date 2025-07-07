@@ -74,7 +74,7 @@ void D3d11GraphicsManager::Render() {
 
     if (m_app->IsRuntime()) {
         CRASH_NOW();
-        // renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+        // RenderGraphBuilder::DrawDebugImages(*GetRenderData(),
         //                                               width,
         //                                               height,
         //                                               *this);

@@ -131,7 +131,7 @@ public:
 
     RenderGraphName GetActiveRenderGraphName() const override { return static_cast<RenderGraphName>(0); }
     bool SetActiveRenderGraph(RenderGraphName p_name) override { return true; }
-    renderer::RenderGraph* GetActiveRenderGraph() override { return nullptr; }
+    RenderGraph* GetActiveRenderGraph() override { return nullptr; }
 
     FrameContext& GetCurrentFrame() override {
         FrameContext* context = nullptr;

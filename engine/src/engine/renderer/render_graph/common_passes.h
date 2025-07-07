@@ -35,7 +35,7 @@ constexpr const char RG_RES_PATHTRACER[] = "r:pathtracer";
 #define RG_PASS_BLOOM_UP_PREFIX   "p:bloom_upsample_"
 #define RG_RES_BLOOM_PREFIX       "r:bloom_"
 
-namespace my::renderer {
+namespace my {
 
 class RenderGraphBuilderExt : public RenderGraphBuilder {
 public:
@@ -100,4 +100,4 @@ private:
 #endif
 };
 
-}  // namespace my::renderer
+}  // namespace my

@@ -20,7 +20,7 @@ namespace my {
 #include "shader_resource_defines.hlsl.h"
 }  // namespace my
 
-namespace my::renderer {
+namespace my {
 
 // @TODO: generalize this
 static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
@@ -629,9 +629,9 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
         gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
         gm.SetPipelineState(PSO_DEBUG_DRAW);
 
-        gm.UpdateBuffer(renderer::CreateDesc(draw_context.positions),
+        gm.UpdateBuffer(CreateDesc(draw_context.positions),
                         gm.m_debugBuffers->vertexBuffers[0].get());
-        gm.UpdateBuffer(renderer::CreateDesc(draw_context.colors),
+        gm.UpdateBuffer(CreateDesc(draw_context.colors),
                         gm.m_debugBuffers->vertexBuffers[6].get());
         gm.SetMesh(gm.m_debugBuffers.get());
         gm.DrawArrays(draw_context.drawCount);
@@ -1195,4 +1195,4 @@ GpuTextureDesc RenderGraphBuilderExt::BuildDefaultTextureDesc(RenderTargetResour
     return desc;
 };
 
-}  // namespace my::renderer
+}  // namespace my

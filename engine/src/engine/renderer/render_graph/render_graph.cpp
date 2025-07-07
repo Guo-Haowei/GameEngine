@@ -1,6 +1,6 @@
 #include "render_graph.h"
 
-namespace my::renderer {
+namespace my {
 
 #if 0
 void RenderGraph::Compile() {
@@ -58,10 +58,10 @@ RenderPass* RenderGraph::FindPass(const std::string& p_name) {
     return m_renderPasses[it->second].get();
 }
 
-void RenderGraph::Execute(const renderer::RenderSystem& p_data, IGraphicsManager& p_graphics_manager) {
+void RenderGraph::Execute(const RenderSystem& p_data, IGraphicsManager& p_graphics_manager) {
     for (auto pass : m_renderPasses) {
         pass->Execute(p_data, p_graphics_manager);
     }
 }
 
-}  // namespace my::renderer
+}  // namespace my

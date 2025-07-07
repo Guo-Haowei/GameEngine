@@ -3,7 +3,7 @@
 #include "engine/core/base/graph.h"
 #include "engine/renderer/graphics_defines.h"
 
-namespace my::renderer {
+namespace my {
 class RenderGraph;
 }
 
@@ -15,7 +15,7 @@ public:
 
 protected:
     void UpdateInternal(Scene& p_scene) override;
-    void DrawNodes(const renderer::RenderGraph& p_graph);
+    void DrawNodes(const RenderGraph& p_graph);
 
     bool m_firstFrame{ true };
     Backend m_backend{ Backend::COUNT };

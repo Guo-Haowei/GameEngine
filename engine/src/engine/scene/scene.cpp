@@ -543,7 +543,7 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
     LightComponent* light = GetComponent<LightComponent>(p_entity);
     if (light) {
         auto shadow_handle = light->GetShadowMapIndex();
-        if (shadow_handle != renderer::INVALID_POINT_SHADOW_HANDLE) {
+        if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
             renderer::FreePointLightShadowMap(shadow_handle);
         }
         m_LightComponents.Remove(p_entity);

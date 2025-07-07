@@ -8,7 +8,7 @@ namespace my { struct Framebuffer; }
 namespace my { class IGraphicsManager; }
 // clang-format on
 
-namespace my::renderer {
+namespace my {
 
 class RenderGraph;
 struct RenderSystem;
@@ -42,4 +42,4 @@ protected:
     std::vector<std::pair<std::string, std::string>> m_dependencies;
 };
 
-}  // namespace my::renderer
+}  // namespace my

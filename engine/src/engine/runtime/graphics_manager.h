@@ -6,7 +6,7 @@
 // @TODO: refactor
 struct MaterialConstantBuffer;
 
-namespace my::renderer {
+namespace my {
 class RenderGraph;
 }
 
@@ -145,7 +145,7 @@ public:
 
     virtual RenderGraphName GetActiveRenderGraphName() const = 0;
     virtual bool SetActiveRenderGraph(RenderGraphName p_name) = 0;
-    virtual renderer::RenderGraph* GetActiveRenderGraph() = 0;
+    virtual RenderGraph* GetActiveRenderGraph() = 0;
 
     virtual FrameContext& GetCurrentFrame() = 0;
     const FrameContext& GetCurrentFrame() const { return GetCurrentFrame(); }

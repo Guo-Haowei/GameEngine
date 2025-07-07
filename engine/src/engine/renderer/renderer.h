@@ -9,6 +9,7 @@ class PerspectiveCameraComponent;
 class Scene;
 class IGraphicsManager;
 struct GpuTexture;
+struct RenderSystem;
 
 enum class PathTracerMode {
     NONE,
@@ -16,14 +17,12 @@ enum class PathTracerMode {
     TILED,
 };
 
+using PointShadowHandle = int;
+constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;
+
 }  // namespace my
 
 namespace my::renderer {
-
-struct RenderSystem;
-
-using PointShadowHandle = int;
-constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;
 
 void RegisterDvars();
 

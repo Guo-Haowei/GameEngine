@@ -39,8 +39,6 @@
     } while (0)
 
 namespace my {
-using renderer::RenderGraph;
-using renderer::RenderPass;
 
 // @TODO: refactor
 static unsigned int LoadMTexture(const float* matrixTable) {
@@ -674,7 +672,7 @@ void CommonOpenGLGraphicsManager::Render() {
     const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
     if (m_app->IsRuntime()) {
         CRASH_NOW();
-        // renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+        // RenderGraphBuilder::DrawDebugImages(*GetRenderData(),
         //                                               width,
         //                                               height,
         //                                               *this);

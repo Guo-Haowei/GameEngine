@@ -416,26 +416,26 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
     m_activeRenderGraphName = RenderGraphName::EMPTY;
 #endif
 
-    // renderer::RenderGraphBuilder::CreateResources();
+    // RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    renderer::RenderGraphBuilderConfig config;
+    RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;
     config.frameHeight = frame_size.y;
     config.is_runtime = m_app->IsRuntime();
 
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            // m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderGraphBuilder::CreateDummy(config);
+            // m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = RenderGraphBuilder::CreateDummy(config);
             break;
         case RenderGraphName::DEFAULT: {
-            auto res = renderer::RenderGraphBuilderExt::CreateDefault(config);
+            auto res = RenderGraphBuilderExt::CreateDefault(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
             m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = *res;
         } break;
         case RenderGraphName::EMPTY: {
-            auto res = renderer::RenderGraphBuilderExt::CreateEmpty(config);
+            auto res = RenderGraphBuilderExt::CreateEmpty(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
@@ -450,7 +450,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::OPENGL:
         case Backend::D3D11: {
 #if !USING(PLATFORM_WASM)
-            auto res = renderer::RenderGraphBuilderExt::CreatePathTracer(config);
+            auto res = RenderGraphBuilderExt::CreatePathTracer(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
@@ -479,7 +479,7 @@ bool BaseGraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
     return true;
 }
 
-renderer::RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
+RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
     const int index = std::to_underlying(m_activeRenderGraphName);
     ERR_FAIL_INDEX_V(index, RenderGraphName::COUNT, nullptr);
     DEV_ASSERT(m_renderGraphs[index] != nullptr);

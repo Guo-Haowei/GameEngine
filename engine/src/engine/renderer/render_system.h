@@ -8,18 +8,16 @@
 #include "engine/systems/ecs/entity.h"
 #include "render_command.h"
 
-// clang-format off
-namespace my { class Scene; }
-namespace my { class PerspectiveCameraComponent; }
-namespace my::renderer { class RenderPass; }
-namespace my::renderer { class RenderGraph; }
-// clang-format on
-
 namespace my {
 #include "cbuffer.hlsl.h"
 }  // namespace my
 
-namespace my::renderer {
+namespace my {
+
+class Scene;
+class PerspectiveCameraComponent;
+class RenderPass;
+class RenderGraph;
 
 struct RenderOptions {
     bool isOpengl{ false };
@@ -179,4 +177,4 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
                        const Scene& p_config,
                        RenderSystem& p_out_data);
 
-}  // namespace my::renderer
+}  // namespace my

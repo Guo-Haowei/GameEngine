@@ -15,10 +15,10 @@ namespace my {
 
 // @TODO: refactor
 struct MaterialConstantBuffer;
-using my::renderer::RenderPass;
+using my::RenderPass;
 
 // clang-format off
-namespace my::renderer { class RenderGraph; }
+namespace my { class RenderGraph; }
 // clang-format on
 
 namespace my {
@@ -86,7 +86,7 @@ public:
     [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
     RenderGraphName GetActiveRenderGraphName() const override { return m_activeRenderGraphName; }
     bool SetActiveRenderGraph(RenderGraphName p_name) override;
-    renderer::RenderGraph* GetActiveRenderGraph() override;
+    RenderGraph* GetActiveRenderGraph() override;
     FrameContext& GetCurrentFrame() override { return *(m_frameContexts[m_frameIndex].get()); }
 
     void DrawQuad() override;
@@ -108,7 +108,7 @@ protected:
     RenderGraphName m_activeRenderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
-    std::array<std::shared_ptr<renderer::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
+    std::array<std::shared_ptr<RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
 
     std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 

@@ -14,7 +14,7 @@
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/input_manager.h"
 
-namespace my::renderer {
+namespace my {
 
 using my::AABB;
 using my::Frustum;
@@ -774,4 +774,4 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     FillParticleEmitterBuffer(p_scene, p_out_data);
 }
 
-}  // namespace my::renderer
+}  // namespace my

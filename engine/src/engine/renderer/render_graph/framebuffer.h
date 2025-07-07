@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/renderer/gpu_resource.h"
 
-namespace my::renderer {
+namespace my {
 struct RenderSystem;
 }
 

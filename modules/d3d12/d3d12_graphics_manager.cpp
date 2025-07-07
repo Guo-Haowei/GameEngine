@@ -233,7 +233,7 @@ void D3d12GraphicsManager::Render() {
     // @TODO: refactor this
     if (m_app->IsRuntime()) {
         CRASH_NOW();
-        // renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
+        // RenderGraphBuilder::DrawDebugImages(*GetRenderData(),
         //                                               width,
         //                                               height,
         //                                               *this);

@@ -15,7 +15,7 @@ namespace my {
 RenderGraphViewer::RenderGraphViewer(EditorLayer& p_editor) : EditorWindow("RenderGraph", p_editor) {
 }
 
-void RenderGraphViewer::DrawNodes(const renderer::RenderGraph& p_graph) {
+void RenderGraphViewer::DrawNodes(const RenderGraph& p_graph) {
     const auto& passes = p_graph.GetRenderPasses();
 
     auto draw_node = [&passes, this](int id, float x, float y) {
