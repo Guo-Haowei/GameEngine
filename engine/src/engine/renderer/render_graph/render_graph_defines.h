@@ -3,6 +3,7 @@
 #include "engine/renderer/render_graph/render_graph_resources.h"
 
 // @TODO: move to shader_defines
+// @TODO: refactor this shit
 constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
 constexpr int IMAGE_VOXEL_NORMAL_SLOT = 1;
 constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;

@@ -7,7 +7,7 @@
 #include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/render_graph_builder.h"
+#include "engine/renderer/render_graph/common_passes.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_system.h"
 #include "engine/renderer/renderer.h"
@@ -428,14 +428,14 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
             // m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderGraphBuilder::CreateDummy(config);
             break;
         case RenderGraphName::DEFAULT: {
-            auto res = renderer::RenderGraphBuilder::CreateDefault(config);
+            auto res = renderer::RenderGraphBuilderExt::CreateDefault(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
             m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = *res;
         } break;
         case RenderGraphName::EMPTY: {
-            auto res = renderer::RenderGraphBuilder::CreateEmpty(config);
+            auto res = renderer::RenderGraphBuilderExt::CreateEmpty(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
@@ -450,7 +450,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::OPENGL:
         case Backend::D3D11: {
 #if !USING(PLATFORM_WASM)
-            auto res = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            auto res = renderer::RenderGraphBuilderExt::CreatePathTracer(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }

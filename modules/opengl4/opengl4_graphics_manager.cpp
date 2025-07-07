@@ -112,6 +112,14 @@ void OpenGL4GraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const
     }
 }
 
+void OpenGL4GraphicsManager::BeginEvent(std::string_view p_event) {
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, p_event.data());
+}
+
+void OpenGL4GraphicsManager::EndEvent() {
+    glPopDebugGroup();
+}
+
 static void APIENTRY DebugCallback(GLenum p_source,
                                    GLenum p_type,
                                    uint32_t p_id,
