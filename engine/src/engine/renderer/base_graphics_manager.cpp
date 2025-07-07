@@ -448,11 +448,15 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
 
     switch (m_backend) {
         case Backend::OPENGL:
-        case Backend::D3D11:
+        case Backend::D3D11: {
 #if !USING(PLATFORM_WASM)
-            // m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            auto res = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = *res;
 #endif
-            break;
+        } break;
         default:
             break;
     }
@@ -521,7 +525,7 @@ uint64_t BaseGraphicsManager::GetFinalImage() const {
 #endif
         } break;
         case RenderGraphName::PATHTRACER: {
-            texture = FindTexture(RESOURCE_PATH_TRACER).get();
+            texture = FindTexture(RESOURCE_TONE).get();
         } break;
         case RenderGraphName::EMPTY: {
             texture = FindTexture(RESOURCE_FINAL).get();

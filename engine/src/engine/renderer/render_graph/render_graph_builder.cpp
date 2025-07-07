@@ -28,6 +28,8 @@ static constexpr const char RG_PASS_POST_PROCESS[] = "p:post_process";
 static constexpr const char RG_PASS_OVERLAY[] = "p:overlay";
 static constexpr const char RG_PASS_SSAO[] = "p:ssao";
 static constexpr const char RG_PASS_OUTLINE[] = "p:outline";
+static constexpr const char RG_PASS_PATHTRACER[] = "p:pathtracer";
+static constexpr const char RG_PASS_PATHTRACER_PRESENT[] = "p:pathtracer_present";
 
 static constexpr const char RG_RES_DEPTH_STENCIL[] = "r:depth";
 static constexpr const char RG_RES_SHADOW_MAP[] = "r:shadow";
@@ -42,6 +44,7 @@ static constexpr const char RG_RES_OVERLAY[] = "r:overlay";
 static constexpr const char RG_RES_VOXEL_LIGHTING[] = "r:voxel_lighting";
 static constexpr const char RG_RES_VOXEL_NORMAL[] = "r:voxel_normal";
 static constexpr const char RG_RES_OUTLINE[] = "r:outline";
+static constexpr const char RG_RES_PATHTRACER[] = "r:pathtracer";
 
 #define RG_PASS_BLOOM_DOWN_PREFIX "p:bloom_downsample_"
 #define RG_PASS_BLOOM_UP_PREFIX   "p:bloom_upsample_"
@@ -49,7 +52,6 @@ static constexpr const char RG_RES_OUTLINE[] = "r:outline";
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"
-#include "unordered_access_defines.hlsl.h"
 }  // namespace my
 
 namespace my::renderer {
@@ -893,34 +895,17 @@ void RenderGraphBuilder::AddTonePass() {
     pass.Create(RG_RES_POST_PROCESS, { desc })
         .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
         .Read(ResourceAccess::SRV, RG_RES_OUTLINE)
-        .Read(ResourceAccess::SRV, bloom_res)
+        .Read(ResourceAccess::SRV, bloom_res);
+
+    if (m_config.enableVxgi) {
         // @TODO: move the debug to somewhere else
-        .Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
-        .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL)
-        // @TODO: move the debug to somewhere else
-        .Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
+        pass.Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
+            .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL);
+    }
+
+    pass.Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(TonePassFunc);
-
-#if 0
-    auto& manager = IGraphicsManager::GetSingleton();
-    RenderPassDesc desc;
-    desc.name = RenderPassName::TONE;
-
-    desc.dependencies = { RenderPassName::BLOOM,
-                          RenderPassName::OUTLINE };
-
-    auto output = manager.FindTexture(RESOURCE_TONE);
-    auto depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
-
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { output },
-        .depthAttachment = depth,
-    });
-
-    pass->AddDrawPass("ToneDrawPass", framebuffer, TonePassFunc);
-#endif
 }
 
 // assume render target is setup
@@ -1062,59 +1047,7 @@ void RenderGraphBuilder::AddGenerateSkylightPass() {
 
     CreateRenderPass(info);
 }
-
-static void PathTracerTonePassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
-
-    auto& cmd = p_ctx.cmd;
-    auto fb = p_ctx.framebuffer;
-    cmd.SetRenderTarget(fb);
-
-    auto depth_buffer = fb->desc.depthAttachment;
-    const auto [width, height] = fb->GetBufferSize();
-
-    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
-        if (!resource) {
-            return;
-        }
-
-        cmd.BindTexture(p_dimension, resource->GetHandle(), p_slot);
-    };
-    bind_slot(RESOURCE_PATH_TRACER, GetBloomInputTextureSlot());
-
-    cmd.SetViewport(Viewport(width, height));
-    cmd.Clear(fb, CLEAR_COLOR_BIT);
-
-    cmd.SetPipelineState(PSO_POST_PROCESS);
-    cmd.DrawQuad();
-
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
-}
-
-void RenderGraphBuilder::AddPathTracerTonePass() {
-    auto& gm = IGraphicsManager::GetSingleton();
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::TONE;
-
-    desc.dependencies = { RenderPassName::PATH_TRACER };
-
-    auto pass = m_graph.CreatePass(desc);
-
-    auto attachment = gm.FindTexture(RESOURCE_TONE);
-
-    FramebufferDesc framebuffer_desc{ .colorAttachments = { attachment } };
-
-    if (m_config.enableHighlight) {
-        auto gbuffer_depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
-        framebuffer_desc.depthAttachment = gbuffer_depth;
-    }
-
-    auto framebuffer = gm.CreateFramebuffer(framebuffer_desc);
-
-    pass->AddDrawPass("PathTracerDrawPass", framebuffer, PathTracerTonePassFunc);
-}
+#endif
 
 static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
     // @TODO: refactor this part
@@ -1143,40 +1076,45 @@ static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddPathTracerPass() {
-    auto& gm = IGraphicsManager::GetSingleton();
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::PATH_TRACER;
-    desc.dependencies = {};
-    auto render_pass = m_graph.CreatePass(desc);
-
-    const int width = m_config.frameWidth;
-    const int height = m_config.frameHeight;
-
     GpuTextureDesc texture_desc = BuildDefaultTextureDesc(RESOURCE_PATH_TRACER,
                                                           PixelFormat::R32G32B32A32_FLOAT,
-                                                          AttachmentType::COLOR_2D,
-                                                          width, height);
+                                                          AttachmentType::COLOR_2D);
     texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
 
-    auto resource = gm.CreateTexture(texture_desc, LinearClampSampler());
-
-    auto pass = gm.CreateFramebuffer(FramebufferDesc{
-        .transitions = {
-            ResourceTransition{
-                .resource = resource,
-                .slot = GetUavSlotPathTracerOutputImage(),
-                .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                    GpuTexture* p_texture,
-                                    int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
-                .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                  GpuTexture*,
-                                  int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
-            } },
-    });
-    render_pass->AddDrawPass("PassTracerComputePass", pass, PathTracerPassFunc);
+    auto& pass = AddPass(RG_PASS_PATHTRACER);
+    pass.Create(RG_RES_PATHTRACER, { texture_desc, LinearClampSampler() })
+        .Read(ResourceAccess::UAV, RG_RES_PATHTRACER)
+        .SetExecuteFunc(PathTracerPassFunc);
 }
-#endif
+
+static void PathTracerTonePassFunc(RenderPassExcutionContext& p_ctx) {
+    HBN_PROFILE_EVENT();
+
+    auto& cmd = p_ctx.cmd;
+    auto fb = p_ctx.framebuffer;
+    cmd.SetRenderTarget(fb);
+
+    auto depth_buffer = fb->desc.depthAttachment;
+    const auto [width, height] = fb->GetBufferSize();
+
+    cmd.SetViewport(Viewport(width, height));
+    cmd.Clear(fb, CLEAR_COLOR_BIT);
+
+    cmd.SetPipelineState(PSO_POST_PROCESS);
+    cmd.DrawQuad();
+}
+
+void RenderGraphBuilder::AddPathTracerTonePass() {
+    auto& pass = AddPass(RG_PASS_PATHTRACER_PRESENT);
+
+    pass.Import(RG_RES_POST_PROCESS, []() {
+            return IGraphicsManager::GetSingleton().FindTexture(RESOURCE_TONE);
+        })
+        .Read(ResourceAccess::SRV, RG_RES_PATHTRACER)
+        .Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
+        .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+        .SetExecuteFunc(PathTracerTonePassFunc);
+}
 
 /// Create pre-defined passes
 auto RenderGraphBuilder::CreateEmpty(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
@@ -1205,64 +1143,6 @@ std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(RenderGraphBuilderC
     return graph;
 }
 
-std::unique_ptr<RenderGraph> RenderGraphBuilder::CreatePathTracer(RenderGraphBuilderConfig& p_config) {
-    p_config.enableBloom = false;
-    p_config.enableIbl = false;
-    p_config.enableVxgi = false;
-    p_config.enableHighlight = false;
-
-    auto graph = std::make_unique<RenderGraph>();
-    RenderGraphBuilder creator(p_config, *graph.get());
-
-    LOG_ERROR("TODO: fix this");
-#if 0
-    creator.AddPathTracerPass();
-    creator.AddPathTracerTonePass();
-#endif
-
-    graph->Compile();
-    return graph;
-}
-#endif
-
-#if 0
-static void RgCreateResource(IGraphicsManager& p_manager,
-                             const SamplerDesc& p_sampler,
-                             RenderTargetResourceName p_name,
-                             PixelFormat p_format,
-                             AttachmentType p_type,
-                             int p_width,
-                             int p_height,
-                             int p_depth = 1,
-                             ResourceMiscFlags p_misc_flag = RESOURCE_MISC_NONE,
-                             uint32_t p_mips_level = 0) {
-    int width = p_width;
-    int height = p_height;
-    if (p_width < 0) {
-        switch (p_width) {
-            case RESOURCE_SIZE_FRAME: {
-                const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-                width = frame_size.x;
-                height = frame_size.y;
-            } break;
-            default: {
-                CRASH_NOW();
-            } break;
-        }
-    }
-    DEV_ASSERT(width > 0 && height > 0);
-
-    auto desc = RenderGraphBuilder::BuildDefaultTextureDesc(p_name, p_format, p_type, width, height, p_depth, p_misc_flag, p_mips_level);
-    [[maybe_unused]] auto ret = p_manager.CreateTexture(desc, p_sampler);
-    DEV_ASSERT(ret);
-}
-
-void RenderGraphBuilder::CreateResources() {
-    auto& manager = IGraphicsManager::GetSingleton();
-#define RG_RESOURCE(NAME, SAMPLER, FORMAT, TYPE, W, ...) \
-    RgCreateResource(manager, SAMPLER, NAME, FORMAT, TYPE, W, __VA_ARGS__);
-#include "engine/renderer/render_graph/render_graph_resources.h"
-}
 #endif
 
 auto RenderGraphBuilder::CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
@@ -1288,6 +1168,20 @@ auto RenderGraphBuilder::CreateDefault(RenderGraphBuilderConfig& p_config) -> Re
     builder.AddDebugImagePass();
 
     return builder.Compile();
+}
+
+auto RenderGraphBuilder::CreatePathTracer(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
+    p_config.enableBloom = false;
+    p_config.enableIbl = false;
+    p_config.enableVxgi = false;
+    p_config.enableHighlight = false;
+
+    RenderGraphBuilder creator(p_config);
+
+    creator.AddPathTracerPass();
+    creator.AddPathTracerTonePass();
+
+    return creator.Compile();
 }
 
 GpuTextureDesc RenderGraphBuilder::BuildDefaultTextureDesc(RenderTargetResourceName p_name,

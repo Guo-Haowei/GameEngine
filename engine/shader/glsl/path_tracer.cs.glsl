@@ -2,7 +2,7 @@
 #include "../cbuffer.hlsl.h"
 #include "../shader_resource_defines.hlsl.h"
 
-layout(rgba32f, binding = 2) uniform image2D u_PathTracerOutputImage;
+layout(rgba32f, binding = 0) uniform image2D u_PathTracerOutputImage;
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
