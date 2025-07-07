@@ -17,11 +17,12 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
 
     glfwSetErrorCallback([](int code, const char* desc) { LOG_FATAL("[glfw] error({}): {}", code, desc); });
 
+    // @TODO: resizable
+    // @TODO: fullscreen
     glfwInit();
 
     glfwWindowHint(GLFW_DECORATED, p_spec.decorated);
-    // @TODO: resizable
-    // @TODO: fullscreen
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_FALSE);
 
     switch (m_backend) {
         case Backend::OPENGL:

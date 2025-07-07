@@ -4,19 +4,19 @@ namespace my::detail {
 
 TEST(Swizzle4, vector4_swizzle4_read) {
     {
-        Vector4u vec = Vector4u(10, 14, 6, 2).wzyx;
+        Vector4i vec = Vector4i(10, 14, 6, 2).wzyx;
         CHECK_VEC4(vec, 2, 6, 14, 10);
     }
     {
-        Vector4u vec = Vector4u(10, 14, 6, 2).xxxx;
+        Vector4i vec = Vector4i(10, 14, 6, 2).xxxx;
         CHECK_VEC4(vec, 10, 10, 10, 10);
     }
     {
-        Vector4u vec = Vector4u(10, 14, 6, 2).yyww;
+        Vector4i vec = Vector4i(10, 14, 6, 2).yyww;
         CHECK_VEC4(vec, 14, 14, 2, 2);
     }
     {
-        Vector4u vec = Vector4u(10, 14, 6, 2).xyzz;
+        Vector4i vec = Vector4i(10, 14, 6, 2).xyzz;
         CHECK_VEC4(vec, 10, 14, 6, 6);
     }
 }

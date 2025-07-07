@@ -4,24 +4,24 @@ namespace my::detail {
 
 TEST(Swizzle3, vector3_swizzle3_read) {
     {
-        Vector3u vec = Vector3u(10, 14, 6).yxz;
+        Vector3i vec = Vector3i(10, 14, 6).yxz;
         EXPECT_EQ(vec.x, 14);
         EXPECT_EQ(vec.y, 10);
         EXPECT_EQ(vec.z, 6);
     }
 
-    const Vector3u vec3(1, 2, 3);
+    const Vector3i vec3(1, 2, 3);
     // clang-format off
     #define TEST_HELPER(V, C) \
-        { Vector3u vec = vec3.C##xx; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 1); EXPECT_EQ(vec.z, 1); } \
-        { Vector3u vec = vec3.C##xy; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 1); EXPECT_EQ(vec.z, 2); } \
-        { Vector3u vec = vec3.C##xz; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 1); EXPECT_EQ(vec.z, 3); } \
-        { Vector3u vec = vec3.C##yx; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 2); EXPECT_EQ(vec.z, 1); } \
-        { Vector3u vec = vec3.C##yy; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 2); EXPECT_EQ(vec.z, 2); } \
-        { Vector3u vec = vec3.C##yz; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 2); EXPECT_EQ(vec.z, 3); } \
-        { Vector3u vec = vec3.C##zx; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 3); EXPECT_EQ(vec.z, 1); } \
-        { Vector3u vec = vec3.C##zy; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 3); EXPECT_EQ(vec.z, 2); } \
-        { Vector3u vec = vec3.C##zz; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 3); EXPECT_EQ(vec.z, 3); }
+        { Vector3i vec = vec3.C##xx; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 1); EXPECT_EQ(vec.z, 1); } \
+        { Vector3i vec = vec3.C##xy; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 1); EXPECT_EQ(vec.z, 2); } \
+        { Vector3i vec = vec3.C##xz; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 1); EXPECT_EQ(vec.z, 3); } \
+        { Vector3i vec = vec3.C##yx; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 2); EXPECT_EQ(vec.z, 1); } \
+        { Vector3i vec = vec3.C##yy; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 2); EXPECT_EQ(vec.z, 2); } \
+        { Vector3i vec = vec3.C##yz; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 2); EXPECT_EQ(vec.z, 3); } \
+        { Vector3i vec = vec3.C##zx; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 3); EXPECT_EQ(vec.z, 1); } \
+        { Vector3i vec = vec3.C##zy; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 3); EXPECT_EQ(vec.z, 2); } \
+        { Vector3i vec = vec3.C##zz; EXPECT_EQ(vec.x, V); EXPECT_EQ(vec.y, 3); EXPECT_EQ(vec.z, 3); }
     // clang-format on
 
     TEST_HELPER(1, x);
@@ -31,33 +31,33 @@ TEST(Swizzle3, vector3_swizzle3_read) {
 }
 
 TEST(Swizzle3, vector4_swizzle3_read) {
-    const Vector4u vec4(7, 8, 9, 10);
+    const Vector4i vec4(7, 8, 9, 10);
     {
-        Vector3u vec = vec4.yzx;
+        Vector3i vec = vec4.yzx;
         EXPECT_EQ(vec.x, 8);
         EXPECT_EQ(vec.y, 9);
         EXPECT_EQ(vec.z, 7);
     }
     {
-        Vector3u vec = vec4.xxx;
+        Vector3i vec = vec4.xxx;
         EXPECT_EQ(vec.x, 7);
         EXPECT_EQ(vec.y, 7);
         EXPECT_EQ(vec.z, 7);
     }
     {
-        Vector3u vec = vec4.xyw;
+        Vector3i vec = vec4.xyw;
         EXPECT_EQ(vec.x, 7);
         EXPECT_EQ(vec.y, 8);
         EXPECT_EQ(vec.z, 10);
     }
     {
-        Vector3u vec = vec4.ywz;
+        Vector3i vec = vec4.ywz;
         EXPECT_EQ(vec.x, 8);
         EXPECT_EQ(vec.y, 10);
         EXPECT_EQ(vec.z, 9);
     }
     {
-        Vector3u vec = vec4.wzy;
+        Vector3i vec = vec4.wzy;
         EXPECT_EQ(vec.x, 10);
         EXPECT_EQ(vec.y, 9);
         EXPECT_EQ(vec.z, 8);

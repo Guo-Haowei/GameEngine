@@ -210,7 +210,11 @@ static IGraphicsManager* SelectGraphicsManager(const std::string& p_backend) {
     }
 
     if (p_backend == "vulkan") {
+#if USING(PLATFORM_WINDOWS)
         return new VulkanGraphicsManager;
+#else
+        return nullptr;
+#endif
     }
 
     if (p_backend == "metal") {

@@ -70,7 +70,7 @@ void RenderSystem::FillPass(const Scene& p_scene,
                             PassContext&,
                             FilterObjectFunc1 p_filter1,
                             FilterObjectFunc2 p_filter2,
-                            DrawPass* p_draw_pass,
+                            RenderPass* p_draw_pass,
                             bool p_use_material) {
 
     const bool is_opengl = this->options.isOpengl;
@@ -333,12 +333,11 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
                 this->shadowPasses[0].pass_idx = static_cast<int>(this->passCache.size());
                 this->passCache.emplace_back(pass_constant);
 
-                auto pass = m_renderGraph->FindPass(RenderPassName::SHADOW);
+                // @TODO: fix
+                auto pass = m_renderGraph->FindPass("p:shadow" /* RenderPassName::SHADOW */);
                 if (!pass) {
                     continue;
                 }
-                auto res = pass->FindDrawPass("ShadowDrawPass");
-                DEV_ASSERT(res.has_value());
 
                 Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
@@ -350,7 +349,7 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
                     },
-                    *res, false);
+                    pass, false);
             } break;
             case LIGHT_TYPE_POINT: {
                 [[maybe_unused]] const int shadow_map_index = light_component.GetShadowMapIndex();
@@ -470,15 +469,11 @@ void RenderSystem::FillMainPass(const Scene& p_scene) {
     this->mainPass.pass_idx = static_cast<int>(this->passCache.size());
     this->passCache.emplace_back(pass_constant);
 
-    auto tmp = m_renderGraph->FindPass(RenderPassName::GBUFFER);
-    DrawPass* gbuffer_pass = tmp ? *tmp->FindDrawPass("GbufferDrawPass") : nullptr;
-    tmp = m_renderGraph->FindPass(RenderPassName::VOXELIZATION);
-    DrawPass* voxelization_pass = tmp ? *tmp->FindDrawPass("VoxelizationDrawPass") : nullptr;
-    tmp = m_renderGraph->FindPass(RenderPassName::PREPASS);
-    DrawPass* early_z_pass = tmp ? *tmp->FindDrawPass("EarlyZDrawPass") : nullptr;
-    tmp = m_renderGraph->FindPass(RenderPassName::FORWARD);
+    auto gbuffer_pass = m_renderGraph->FindPass("p:gbuffer");
+    auto voxelization_pass = m_renderGraph->FindPass("p:voxelization");
+    auto early_z_pass = m_renderGraph->FindPass("p:early_z");
     // @TODO: should separate it from forward?
-    DrawPass* transparent_pass = tmp ? *tmp->FindDrawPass("ForwardDrawPass") : nullptr;
+    auto transparent_pass = m_renderGraph->FindPass("p:forward");
 
     using FilterFunc = std::function<bool(const AABB&)>;
     FilterFunc filter_main = [&](const AABB& p_aabb) -> bool { return camera_frustum.Intersects(p_aabb); };
@@ -529,7 +524,7 @@ void RenderSystem::FillMainPass(const Scene& p_scene) {
         draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
         DEV_ASSERT(draw.mesh_data);
 
-        auto add_to_pass = [&](DrawPass* p_pass, FilterFunc& p_filter, bool p_model_only) {
+        auto add_to_pass = [&](RenderPass* p_pass, FilterFunc& p_filter, bool p_model_only) {
             if (!p_filter(aabb)) {
                 return;
             }

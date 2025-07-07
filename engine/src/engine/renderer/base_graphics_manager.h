@@ -5,7 +5,6 @@
 #include "engine/renderer/pipeline_state.h"
 #include "engine/renderer/render_graph/framebuffer.h"
 #include "engine/renderer/render_graph/render_graph.h"
-#include "engine/renderer/render_graph/render_pass.h"
 #include "engine/renderer/renderer.h"
 #include "engine/runtime/graphics_manager.h"
 #include "engine/runtime/pipeline_state_manager.h"
@@ -17,6 +16,10 @@ namespace my {
 // @TODO: refactor
 struct MaterialConstantBuffer;
 using my::renderer::RenderPass;
+
+// clang-format off
+namespace my::renderer { class RenderGraph; }
+// clang-format on
 
 namespace my {
 
@@ -102,7 +105,7 @@ protected:
     RenderGraphName m_activeRenderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
-    std::array<std::unique_ptr<renderer::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
+    std::array<std::shared_ptr<renderer::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
 
     std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
 

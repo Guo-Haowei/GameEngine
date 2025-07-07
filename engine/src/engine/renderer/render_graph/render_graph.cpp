@@ -1,29 +1,8 @@
 #include "render_graph.h"
 
-#define RENDER_GRAPH_DEBUG_PRINT IN_USE
-
 namespace my::renderer {
 
-std::shared_ptr<RenderPass> RenderGraph::CreatePass(RenderPassDesc& p_desc) {
-    std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPass>();
-    render_pass->CreateInternal(p_desc);
-    m_renderPasses.emplace_back(render_pass);
-
-    DEV_ASSERT(m_renderPassLookup.find(render_pass->m_name) == m_renderPassLookup.end());
-    m_renderPassLookup[render_pass->m_name] = (int)m_renderPasses.size() - 1;
-    return render_pass;
-}
-
-std::shared_ptr<RenderPass> RenderGraph::FindPass(RenderPassName p_name) const {
-    auto it = m_renderPassLookup.find(p_name);
-    if (it == m_renderPassLookup.end()) {
-        return nullptr;
-    }
-
-    return m_renderPasses[it->second];
-}
-
-// @TODO: toposort
+#if 0
 void RenderGraph::Compile() {
     const int num_passes = (int)m_renderPasses.size();
 
@@ -46,32 +25,41 @@ void RenderGraph::Compile() {
     if (!m_graph.Compile()) {
         CRASH_NOW_MSG("render graph has cycle");
     }
-
-#if 0
-    for (int i = 1; i < (int)m_levels.size(); ++i) {
-        for (int from : m_levels[i - 1]) {
-            for (int to : m_levels[i]) {
-                if (graph.has_edge(from, to)) {
-                    const RenderPass* a = m_renderPasses[from].get();
-                    const RenderPass* b = m_renderPasses[to].get();
-                    LOG_VERBOSE("[render graph] dependency from '{}' to '{}'", a->GetNameString(), b->GetNameString());
-                    m_links.push_back({ from, to });
-                }
-            }
-        }
-    }
-
-    int i = 0;
-    for (int index : m_sortedOrder) {
-        auto& pass = m_renderPasses[index];
-        ++i;
-        LOG_VERBOSE("Excuting order {}: '{}'", i, pass->GetNameString());
-    }
+}
 #endif
+
+void RenderGraph::AddResource(const std::string& p_name, const std::shared_ptr<GpuTexture>& p_resource) {
+    const int idx = static_cast<int>(m_resources.size());
+    m_resources.push_back(p_resource);
+    m_resourceLookup.insert({ p_name, idx });
+}
+
+std::shared_ptr<GpuTexture> RenderGraph::FindResource(const std::string& p_name) {
+    auto it = m_resourceLookup.find(p_name);
+    if (it == m_resourceLookup.end()) {
+        return nullptr;
+    }
+
+    return m_resources[it->second];
+}
+
+void RenderGraph::AddPass(const std::string& p_name, const std::shared_ptr<RenderPass>& p_pass) {
+    const int idx = static_cast<int>(m_renderPasses.size());
+    m_renderPasses.push_back(p_pass);
+    m_renderPassLookup.insert({ p_name, idx });
+}
+
+RenderPass* RenderGraph::FindPass(const std::string& p_name) {
+    auto it = m_renderPassLookup.find(p_name);
+    if (it == m_renderPassLookup.end()) {
+        return nullptr;
+    }
+
+    return m_renderPasses[it->second].get();
 }
 
 void RenderGraph::Execute(const renderer::RenderSystem& p_data, IGraphicsManager& p_graphics_manager) {
-    for (auto pass : m_graph) {
+    for (auto pass : m_renderPasses) {
         pass->Execute(p_data, p_graphics_manager);
     }
 }

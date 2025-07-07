@@ -18,6 +18,7 @@ RenderGraphViewer::RenderGraphViewer(EditorLayer& p_editor) : EditorWindow("Rend
 void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
     const auto& order = p_graph.GetSortedOrder();
     const auto& vertices = p_graph.GetVertices();
+    unused(vertices);
 
     std::list<int> no_dependencies;
     std::list<int> with_dependencies;
@@ -47,6 +48,7 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
     }
 #endif
 
+    #if 0
     auto draw_node = [&vertices, this](int id, float x, float y) {
         const auto pass = vertices[id];
 
@@ -126,6 +128,7 @@ void RenderGraphViewer::DrawNodes(const Graph<RenderPass*> p_graph) {
             ImNodes::Link(id, from << 24, to << 16);
         }
     }
+    #endif
 }
 
 void RenderGraphViewer::UpdateInternal(Scene&) {

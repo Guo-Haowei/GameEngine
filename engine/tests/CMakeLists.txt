@@ -19,7 +19,16 @@ set_target_properties(${TARGET_NAME}
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
 )
 
-target_link_libraries(${TARGET_NAME} PRIVATE gtest_main engine)
+set(TARGET_LIBS
+    engine
+    gtest_main
+)
+
+if (BUILD_TINYGLTF_LOADER)
+    list(APPEND TARGET_LIBS tinygltf_loader)
+endif()
+
+target_link_libraries(${TARGET_NAME} PRIVATE ${TARGET_LIBS})
 
 target_precompile_headers(${TARGET_NAME} PRIVATE pch.h)
 

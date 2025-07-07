@@ -424,7 +424,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
     m_activeRenderGraphName = RenderGraphName::EMPTY;
 #endif
 
-    renderer::RenderGraphBuilder::CreateResources();
+    // renderer::RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     renderer::RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;
@@ -433,14 +433,22 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
 
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderGraphBuilder::CreateDummy(config);
+            // m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderGraphBuilder::CreateDummy(config);
             break;
-        case RenderGraphName::DEFAULT:
-            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = renderer::RenderGraphBuilder::CreateDefault(config);
-            break;
-        case RenderGraphName::EMPTY:
-            m_renderGraphs[std::to_underlying(RenderGraphName::EMPTY)] = renderer::RenderGraphBuilder::CreateEmpty(config);
-            break;
+        case RenderGraphName::DEFAULT: {
+            auto res = renderer::RenderGraphBuilder::CreateDefault(config);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = *res;
+        } break;
+        case RenderGraphName::EMPTY: {
+            auto res = renderer::RenderGraphBuilder::CreateEmpty(config);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+            m_renderGraphs[std::to_underlying(RenderGraphName::EMPTY)] = *res;
+        } break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
             return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
@@ -450,7 +458,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::OPENGL:
         case Backend::D3D11:
 #if !USING(PLATFORM_WASM)
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            // m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
 #endif
             break;
         default:
@@ -485,7 +493,10 @@ renderer::RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
 std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     auto texture = CreateTextureImpl(p_texture_desc, p_sampler_desc);
     if (p_texture_desc.type != AttachmentType::NONE) {
-        DEV_ASSERT(m_resourceLookup.find(p_texture_desc.name) == m_resourceLookup.end());
+        auto [_, inserted] = m_resourceLookup.try_emplace(p_texture_desc.name, texture);
+        if (!inserted) {
+            CRASH_NOW();
+        }
         m_resourceLookup[p_texture_desc.name] = texture;
     }
     return texture;

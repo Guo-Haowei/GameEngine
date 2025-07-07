@@ -39,70 +39,7 @@ constexpr PixelFormat DEFAULT_DEPTH_STENCIL_FORMAT = PixelFormat::D32_FLOAT;
 
 #endif  // !RG_RESOURCE
 
-RG_RESOURCE(RESOURCE_FINAL,
-            PointClampSampler(),
-            DEFAULT_SURFACE_FORMAT,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
-RG_RESOURCE(RESOURCE_GBUFFER_DEPTH,
-            PointClampSampler(),
-            RT_FMT_GBUFFER_DEPTH,
-            AttachmentType::DEPTH_STENCIL_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
 #if !USING(PLATFORM_WASM)
-
-RG_RESOURCE(RESOURCE_GBUFFER_BASE_COLOR,
-            PointClampSampler(),
-            RT_FMT_GBUFFER_BASE_COLOR,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
-RG_RESOURCE(RESOURCE_GBUFFER_NORMAL,
-            PointClampSampler(),
-            RT_FMT_GBUFFER_NORMAL,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
-RG_RESOURCE(RESOURCE_GBUFFER_MATERIAL,
-            PointClampSampler(),
-            RT_FMT_GBUFFER_MATERIAL,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
-RG_RESOURCE(RESOURCE_SSAO,
-            PointClampSampler(),
-            RT_FMT_SSAO,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
-RG_RESOURCE(RESOURCE_LIGHTING,
-            PointClampSampler(),
-            RT_FMT_LIGHTING,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
-RG_RESOURCE(RESOURCE_TONE,
-            PointClampSampler(),
-            RT_FMT_TONE,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
-
-RG_RESOURCE(RESOURCE_OUTLINE_SELECT,
-            PointClampSampler(),
-            RT_FMT_OUTLINE_SELECT,
-            AttachmentType::COLOR_2D,
-            RESOURCE_SIZE_FRAME,
-            RESOURCE_SIZE_FRAME)
 
 RG_RESOURCE(RESOURCE_ENV_SKYBOX_CUBE_MAP,
             CubemapSampler(),

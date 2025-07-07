@@ -9,9 +9,8 @@ if(APPLE)
     enable_language(OBJCXX)
 endif()
 
-option(USE_EMSCRIPTEN "Build for Emscripten/WebAssembly" OFF)
 option(BUILD_TINYGLTF_LOADER "Build tinygltf_loader" ON)
-option(BUILD_UNIT_TESTS "Build Tests" OFF)
+option(BUILD_UNIT_TESTS "Build Tests" ON)
 
 message("***********************************************************************")
 message(STATUS "CMAKE_CXX_COMPILER_ID   : ${CMAKE_CXX_COMPILER_ID}")
@@ -21,6 +20,8 @@ message(STATUS "CMAKE_BUILD_TOOL        : ${CMAKE_BUILD_TOOL}")
 
 if (EMSCRIPTEN)
     set(BUILD_TINYGLTF_LOADER OFF CACHE BOOL "" FORCE)
+    set(BUILD_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
 
     set(EM_FLAGS "-sUSE_PTHREADS=1 -sSHARED_MEMORY=1")
@@ -64,7 +65,7 @@ endif()
 ################################################################################
 
 # gtest
-if (BUILD_UNIT_TESTS)
+if (NOT EMSCRIPTEN)
     enable_testing()
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     set(BUILD_GMOCK OFF CACHE BOOL "" FORCE)
