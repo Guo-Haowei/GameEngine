@@ -35,6 +35,7 @@ static constexpr const char RG_RES_GBUFFER_COLOR0[] = "r:gbuffer0";
 static constexpr const char RG_RES_GBUFFER_COLOR1[] = "r:gbuffer1";
 static constexpr const char RG_RES_GBUFFER_COLOR2[] = "r:gbuffer2";
 static constexpr const char RG_RES_SSAO[] = "r:ssao";
+static constexpr const char RG_RES_SSAO_NOISE[] = "r:ssao_noise";
 static constexpr const char RG_RES_LIGHTING[] = "r:lighting";
 static constexpr const char RG_RES_POST_PROCESS[] = "r:post_process";
 static constexpr const char RG_RES_OVERLAY[] = "r:overlay";
@@ -280,7 +281,8 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
     auto& cmd = p_ctx.cmd;
-    auto& frame = cmd.GetCurrentFrame();
+
+    cmd.BeginEvent("SSAO");
     auto fb = p_ctx.framebuffer;
     const uint32_t width = fb->desc.colorAttachments[0]->desc.width;
     const uint32_t height = fb->desc.colorAttachments[0]->desc.height;
@@ -289,16 +291,10 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetViewport(Viewport(width, height));
     cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-    const PassContext& pass = p_ctx.render_system.mainPass;
-    cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
-
-    // @TODO: external texture
-    auto noise = renderer::GetSsaoNoiseTexture();
-    // @TODO: import it
-
-    cmd.BindTexture(Dimension::TEXTURE_2D, noise->GetHandle(), 0);
     cmd.SetPipelineState(PSO_SSAO);
     cmd.DrawQuad();
+
+    cmd.EndEvent();
 }
 
 void RenderGraphBuilder::AddSsaoPass() {
@@ -308,9 +304,13 @@ void RenderGraphBuilder::AddSsaoPass() {
 
     auto& pass = AddPass(RG_PASS_SSAO);
     pass.Create(RG_RES_SSAO, { color0_desc })
+        .Import(RG_RES_SSAO_NOISE, []() {
+            return renderer::GetSsaoNoiseTexture();
+        })
         .Write(ResourceAccess::RTV, RG_RES_SSAO)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
         .Read(ResourceAccess::SRV, RG_RES_DEPTH_STENCIL)
+        .Read(ResourceAccess::SRV, RG_RES_SSAO_NOISE)
         .SetExecuteFunc(SsaoPassFunc);
 }
 
@@ -1459,7 +1459,7 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         edges.push_back({ from_idx, to_idx });
     }
 
-    auto add_edges = [&creates, &edges](const std::vector<std::pair<std::string_view, int>>& p_res) -> Result<void> {
+    auto add_edges = [&creates, &edges](const std::vector<std::pair<std::string_view, int>>& p_res) {
         for (const auto& [name, to] : p_res) {
             if (auto it = creates.find(name); it != creates.end()) {
                 const int from = it->second;
@@ -1468,19 +1468,14 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
                 // DEBUG_PRINT("edge found from {} (create) to {}", m_passes[from].GetName(), m_passes[to].GetName());
                 edges.push_back(std::make_pair(from, to));
             } else {
-                return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
+                // if not found, it's possible the resource is imported
+                // return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
             }
         }
-
-        return Result<void>();
     };
 
-    if (auto res = add_edges(reads); !res) {
-        return HBN_ERROR(res.error());
-    }
-    if (auto res = add_edges(writes); !res) {
-        return HBN_ERROR(res.error());
-    }
+    add_edges(reads);
+    add_edges(writes);
 
     auto sorted = topological_sort(N, edges);
     if (static_cast<int>(sorted.size()) != N) {
@@ -1495,7 +1490,7 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
 
     auto render_graph = std::make_shared<RenderGraph>();
 
-    // 1. Create resources
+    // 1. Create/Import resources
     for (const auto& pass : m_passes) {
         for (const auto& create : pass.m_creates) {
             const auto& name = create.first;
@@ -1503,32 +1498,43 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
             auto texture = m_graphicsManager.CreateTexture(create_info.resourceDesc, create_info.samplerDesc);
             render_graph->AddResource(name, texture);
         }
+        for (const auto& import : pass.m_imports) {
+            const auto& name = import.first;
+            auto texture = import.second();
+            render_graph->AddResource(name, texture);
+        }
     }
 
     // 2. Create framebuffer (should only create it for opengl)
     for (int idx : sorted) {
         const auto& pass = m_passes[idx];
-        FramebufferDesc info;
+
+        std::vector<std::shared_ptr<GpuTexture>> srvs;
+        std::vector<std::shared_ptr<GpuTexture>> uavs;
+        std::vector<std::shared_ptr<GpuTexture>> rtvs;
+        std::shared_ptr<GpuTexture> dsv;
 
         for (const auto& write : pass.m_writes) {
             switch (write.access) {
                 case ResourceAccess::DSV: {
-                    auto depth = render_graph->FindResource(write.name);
-                    DEV_ASSERT(depth && info.depthAttachment == nullptr);
-                    info.depthAttachment = depth;
+                    DEV_ASSERT(dsv == nullptr);
+                    dsv = render_graph->FindResource(write.name);
                 } break;
                 case ResourceAccess::RTV: {
-                    auto color = render_graph->FindResource(write.name);
-                    DEV_ASSERT(color);
-                    info.colorAttachments.emplace_back(color);
+                    auto rtv = render_graph->FindResource(write.name);
+                    DEV_ASSERT(rtv);
+                    rtvs.emplace_back(rtv);
                 } break;
                 default:
                     break;
             }
         }
 
-        std::vector<std::shared_ptr<GpuTexture>> srvs;
-        std::vector<std::shared_ptr<GpuTexture>> uavs;
+        FramebufferDesc info{
+            .colorAttachments = rtvs,
+            .depthAttachment = dsv,
+        };
+
         for (const auto& read : pass.m_reads) {
             switch (read.access) {
                 case ResourceAccess::SRV: {
@@ -1553,6 +1559,8 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
 
         render_pass->m_srvs = std::move(srvs);
         render_pass->m_uavs = std::move(uavs);
+        render_pass->m_rtvs = std::move(rtvs);
+        render_pass->m_dsv = std::move(dsv);
 
         render_graph->AddPass(pass.m_name, render_pass);
     }

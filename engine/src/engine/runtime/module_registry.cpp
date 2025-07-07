@@ -118,6 +118,9 @@ public:
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
 
+    void BeginEvent(std::string_view p_event) override {}
+    void EndEvent() override {}
+
     void GenerateMipmap(const GpuTexture* p_texture) override {}
 
     void RequestTexture(ImageAsset* p_image) override {}

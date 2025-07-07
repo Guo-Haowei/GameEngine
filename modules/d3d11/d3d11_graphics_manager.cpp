@@ -161,6 +161,9 @@ auto D3d11GraphicsManager::CreateDevice() -> Result<void> {
     D3D_FAIL(m_dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)m_dxgiFactory.GetAddressOf()),
              "Failed to query IDXGIFactory");
 
+    D3D_FAIL(m_deviceContext->QueryInterface(__uuidof(ID3DUserDefinedAnnotation), (void**)m_annotation.GetAddressOf()),
+             "Failed to query ID3DUserDefinedAnnotation");
+
     return Result<void>();
 }
 
@@ -346,6 +349,19 @@ void D3d11GraphicsManager::UnbindTexture(Dimension p_dimension, int p_slot) {
 void D3d11GraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
     auto texture = reinterpret_cast<const D3d11GpuTexture*>(p_texture);
     m_deviceContext->GenerateMips(texture->srv.Get());
+}
+
+void D3d11GraphicsManager::BeginEvent(std::string_view p_event) {
+    if (m_annotation) {
+        std::wstring wideStr(p_event.begin(), p_event.end());
+        m_annotation->BeginEvent(wideStr.c_str());
+    }
+}
+
+void D3d11GraphicsManager::EndEvent() {
+    if (m_annotation) {
+        m_annotation->EndEvent();
+    }
 }
 
 void D3d11GraphicsManager::BindStructuredBuffer(int p_slot, const GpuStructuredBuffer* p_buffer) {

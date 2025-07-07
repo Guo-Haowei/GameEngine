@@ -268,8 +268,8 @@ const KernelData& GetKernelData() {
     return s_glob.ssaoKernels;
 }
 
-const GpuTexture* GetSsaoNoiseTexture() {
-    return s_glob.ssaoNoiseTexture.get();
+std::shared_ptr<GpuTexture> GetSsaoNoiseTexture() {
+    return s_glob.ssaoNoiseTexture;
 }
 
 }  // namespace my::renderer

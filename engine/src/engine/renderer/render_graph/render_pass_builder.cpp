@@ -7,6 +7,11 @@ RenderPassBuilder& RenderPassBuilder::Create(std::string_view p_name, const Rend
     return *this;
 }
 
+RenderPassBuilder& RenderPassBuilder::Import(std::string_view p_name, ImportFunc&& p_func) {
+    m_imports.push_back({ std::string(p_name), std::move(p_func) });
+    return *this;
+}
+
 RenderPassBuilder& RenderPassBuilder::Read(ResourceAccess p_access, std::string_view p_name) {
     m_reads.emplace_back(Resource{ std::string(p_name), p_access });
     return *this;

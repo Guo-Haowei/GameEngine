@@ -3,10 +3,10 @@
 #include "common.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "sampler.hlsl.h"
-#include "shader_resource_defines.hlsl.h"
 
 Texture2D t_GbufferNormalMap : register(t0);
 Texture2D t_GbufferDepth : register(t1);
+Texture2D t_NoiseTexture : register(t2);
 
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
@@ -27,7 +27,7 @@ float main(vsoutput_uv input) : SV_TARGET {
     const float depth = t_GbufferDepth.Sample(s_pointClampSampler, uv).r;
     const Vector3f origin = NdcToViewPos(uv, depth);
 
-    Vector3f rvec = Vector3f(TEXTURE_2D(BaseColorMap).SampleLevel(s_pointWrapSampler, uv * noise_scale, 0.0f).xy, 0.0f);
+    Vector3f rvec = Vector3f(t_NoiseTexture.SampleLevel(s_pointWrapSampler, uv * noise_scale, 0.0f).xy, 0.0f);
     Vector3f tangent = normalize(rvec - N * dot(rvec, N));
     Vector3f bitangent = cross(N, tangent);
 

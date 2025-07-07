@@ -2,6 +2,10 @@
 #include "engine/renderer/sampler.h"
 #include "render_pass.h"
 
+// clang-format off
+namespace my { struct GpuTexture; }
+// clang-format on
+
 namespace my::renderer {
 
 struct RenderGraphResourceCreateInfo {
@@ -24,12 +28,16 @@ enum class ResourceAccess : uint8_t {
 
 class RenderPassBuilder {
 public:
+    using ImportFunc = std::function<std::shared_ptr<GpuTexture>()>;
+
     struct Resource {
         std::string name;
         ResourceAccess access;
     };
 
     RenderPassBuilder& Create(std::string_view p_name, const RenderGraphResourceCreateInfo& p_desc);
+    RenderPassBuilder& Import(std::string_view p_name, ImportFunc&& p_func);
+
     RenderPassBuilder& Read(ResourceAccess p_access, std::string_view p_name);
     RenderPassBuilder& Write(ResourceAccess p_access, std::string_view p_name);
     RenderPassBuilder& SetExecuteFunc(ExecuteFunc p_func);
@@ -41,6 +49,7 @@ private:
 
     std::string m_name;
     std::vector<std::pair<std::string, RenderGraphResourceCreateInfo>> m_creates;
+    std::vector<std::pair<std::string, ImportFunc>> m_imports;
     std::vector<Resource> m_reads;
     std::vector<Resource> m_writes;
     ExecuteFunc m_func;

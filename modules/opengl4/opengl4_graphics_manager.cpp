@@ -167,11 +167,9 @@ static void APIENTRY DebugCallback(GLenum p_source,
             type = "GL_DEBUG_TYPE_MARKER";
             break;
         case GL_DEBUG_TYPE_PUSH_GROUP:
-            type = "GL_DEBUG_TYPE_PUSH_GROUP";
-            break;
+            [[fallthrough]];
         case GL_DEBUG_TYPE_POP_GROUP:
-            type = "GL_DEBUG_TYPE_POP_GROUP";
-            break;
+            return;
         default:
             break;
     }

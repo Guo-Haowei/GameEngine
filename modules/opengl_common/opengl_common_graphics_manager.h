@@ -71,6 +71,9 @@ public:
 
     void GenerateMipmap(const GpuTexture* p_texture) override;
 
+    void BeginEvent(std::string_view p_event) override;
+    void EndEvent() override;
+
     std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc& p_desc) override;
 
 protected:

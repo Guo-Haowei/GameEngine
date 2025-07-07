@@ -85,6 +85,10 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
         return Result<void>();
     }
 
+    if (auto res = renderer::CreateResources(*this); !res) {
+        return HBN_ERROR(res.error());
+    }
+
     if (auto res = SelectRenderGraph(); !res) {
         return HBN_ERROR(res.error());
     }
@@ -368,12 +372,6 @@ void BaseGraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
-
-    for (auto& transition : p_framebuffer->desc.transitions) {
-        if (transition.beginPassFunc) {
-            transition.beginPassFunc(this, transition.resource.get(), transition.slot);
-        }
-    }
 }
 
 void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
@@ -382,12 +380,6 @@ void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
         if (texture->slot >= 0) {
             BindTexture(texture->desc.dimension, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
-        }
-    }
-
-    for (auto& transition : p_framebuffer->desc.transitions) {
-        if (transition.endPassFunc) {
-            transition.endPassFunc(this, transition.resource.get(), transition.slot);
         }
     }
 }

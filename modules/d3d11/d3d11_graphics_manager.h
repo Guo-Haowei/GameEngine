@@ -1,5 +1,5 @@
 #pragma once
-#include <d3d11.h>
+#include <d3d11_1.h>
 #include <wrl/client.h>
 
 #include "engine/core/base/rid_owner.h"
@@ -77,6 +77,9 @@ public:
 
     void GenerateMipmap(const GpuTexture* p_texture) final;
 
+    void BeginEvent(std::string_view p_event) final;
+    void EndEvent() final;
+
     std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc&) final;
 
     // For fast and dirty access to device and device context, try not to use it
@@ -106,6 +109,7 @@ protected:
     Microsoft::WRL::ComPtr<IDXGIDevice> m_dxgiDevice;
     Microsoft::WRL::ComPtr<IDXGIAdapter> m_dxgiAdapter;
     Microsoft::WRL::ComPtr<IDXGIFactory> m_dxgiFactory;
+    Microsoft::WRL::ComPtr<ID3DUserDefinedAnnotation> m_annotation;
     std::vector<Microsoft::WRL::ComPtr<ID3D11SamplerState>> m_samplers;
 
     RIDAllocator<D3d11MeshBuffers> m_meshes;
