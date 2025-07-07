@@ -25,7 +25,6 @@ struct FramebufferDesc {
     } type{ TEXTURE };
     std::vector<std::shared_ptr<GpuTexture>> colorAttachments;
     std::shared_ptr<GpuTexture> depthAttachment;
-    std::vector<ResourceTransition> transitions;
 };
 
 struct Framebuffer {

@@ -37,7 +37,6 @@ input_shaders = [
     'skybox.vs',
     'skybox.ps',
     'shadow.vs',
-    'tone.ps',
     # 'voxelization_post.cs',
     # 'voxelization_pre.cs',
 ]

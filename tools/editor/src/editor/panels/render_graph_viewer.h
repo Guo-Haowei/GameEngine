@@ -4,7 +4,7 @@
 #include "engine/renderer/graphics_defines.h"
 
 namespace my::renderer {
-class RenderPass;
+class RenderGraph;
 }
 
 namespace my {
@@ -15,7 +15,7 @@ public:
 
 protected:
     void UpdateInternal(Scene& p_scene) override;
-    void DrawNodes(const Graph<renderer::RenderPass*> p_graph);
+    void DrawNodes(const renderer::RenderGraph& p_graph);
 
     bool m_firstFrame{ true };
     Backend m_backend{ Backend::COUNT };

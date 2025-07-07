@@ -73,6 +73,9 @@ public:
 
     void RequestTexture(ImageAsset* p_image) override;
 
+    void BeginEvent(std::string_view p_event) override { unused(p_event); }
+    void EndEvent() override {}
+
     // @TODO: move to renderer
     uint64_t GetFinalImage() const override;
 

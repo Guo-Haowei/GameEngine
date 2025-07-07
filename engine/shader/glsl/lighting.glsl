@@ -124,7 +124,9 @@ vec3 area_light(mat3 Minv, vec3 N, vec3 V, vec3 world_position, vec4 p_t2, vec3 
     return (specular + kD * diffuse);
 }
 
-vec3 compute_lighting(vec3 base_color,
+vec3 compute_lighting(sampler2D shadow_map,
+                      sampler3D voxel,
+                      vec3 base_color,
                       vec3 world_position,
                       vec3 N,
                       float metallic,
@@ -172,7 +174,7 @@ vec3 compute_lighting(vec3 base_color,
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, world_position, NdotL);
+                    shadow = shadowTest(shadow_map, light, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;
@@ -206,13 +208,20 @@ vec3 compute_lighting(vec3 base_color,
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
+#if 0
     vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
     vec3 diffuse = irradiance * base_color.rgb;
+#endif
+    vec3 irradiance = vec3(0);
+    vec3 diffuse = vec3(0);
 
+#if 0
     vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf_uv = vec2(NdotV, 1.0 - roughness);
     vec2 brdf = texture(t_BrdfLut, brdf_uv).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+#endif
+    vec3 specular = vec3(0);
 
     const float ao = 1.0;
     vec3 ambient = (kD * diffuse + specular) * ao;
@@ -224,12 +233,12 @@ vec3 compute_lighting(vec3 base_color,
         const vec3 kD = (1.0 - kS) * (1.0 - metallic);
 
         // indirect diffuse
-        vec3 diffuse = base_color.rgb * cone_diffuse(world_position, N);
+        vec3 diffuse = base_color.rgb * cone_diffuse(voxel, world_position, N);
 
         // specular cone
         vec3 coneDirection = reflect(-V, N);
         vec3 specular = vec3(0);
-        specular = metallic * cone_specular(world_position, coneDirection, roughness);
+        specular = metallic * cone_specular(voxel, world_position, coneDirection, roughness);
         Lo += (kD * diffuse + specular) * ao;
     }
 #endif

@@ -253,6 +253,15 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
         }
     }
 
+    // engine reserved
+    for (int i = 0; i < 15; ++i) {
+        auto name = std::format("u_Texture{}", i);
+        const int location = glGetUniformLocation(program_id, name.c_str());
+        if (location != -1) {
+            glUniform1i(location, i);
+        }
+    }
+
     // Setup texture locations
     auto set_location = [&](const char *p_name, int p_slot) {
         const int location = glGetUniformLocation(program_id, p_name);
@@ -265,14 +274,9 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
 #endif
         glUniform1i(location, p_slot);
     };
-    set_location("SPIRV_Cross_Combinedt_BloomInputTextureSPIRV_Cross_DummySampler", GetBloomInputTextureSlot());
-    set_location("SPIRV_Cross_Combinedt_BloomInputTextures_linearClampSampler", GetBloomInputTextureSlot());
-    set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", GetTextureLightingSlot());
-    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
-    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
-    set_location("SPIRV_Cross_Combinedt_SkyboxHdrs_linearClampSampler", GetSkyboxHdrSlot());
-    set_location("SPIRV_Cross_Combinedt_Skyboxs_cubemapClampSampler", GetSkyboxSlot());
-    set_location("SPIRV_Cross_Combinedt_BaseColorMaps_linearClampSampler", GetBaseColorMapSlot());
+    set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", 0);
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextureSPIRV_Cross_DummySampler", 0);
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextures_linearClampSampler", 0);
     glUseProgram(0);
 
     return program;

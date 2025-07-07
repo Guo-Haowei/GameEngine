@@ -204,10 +204,6 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
         LOG("module '{}' initialized\n", module->GetName());
     }
 
-    if (auto res = renderer::CreateResources(*m_graphicsManager); !res) {
-        return HBN_ERROR(res.error());
-    }
-
     InitLayers();
     for (auto& layer : m_layers) {
         layer->m_app = this;

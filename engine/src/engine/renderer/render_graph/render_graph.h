@@ -1,5 +1,4 @@
 #pragma once
-#include "engine/core/base/graph.h"
 #include "engine/core/base/noncopyable.h"
 #include "render_pass.h"
 
@@ -39,11 +38,9 @@ public:
 
     void Execute(const renderer::RenderSystem& p_data, IGraphicsManager& p_graphics_manager);
 
-    const auto& GetGraph() const { return m_graph; }
+    const auto& GetRenderPasses() const { return m_renderPasses; }
 
 private:
-    Graph<RenderPass*> m_graph;
-
     std::vector<std::shared_ptr<RenderPass>> m_renderPasses;
     std::map<std::string, int> m_renderPassLookup;
 

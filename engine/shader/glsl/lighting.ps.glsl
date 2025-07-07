@@ -5,6 +5,22 @@
 layout(location = 0) out vec4 out_color;
 layout(location = 0) in vec2 pass_uv;
 
+uniform sampler2D u_Texture0;
+uniform sampler2D u_Texture1;
+uniform sampler2D u_Texture2;
+uniform sampler2D u_Texture3;
+uniform sampler2D u_Texture4;
+uniform sampler2D u_Texture5;
+uniform sampler3D u_Texture6;
+
+#define t_GbufferBaseColorMap u_Texture0
+#define t_GbufferNormalMap    u_Texture1
+#define t_GbufferMaterialMap  u_Texture2
+#define t_GbufferDepth        u_Texture3
+#define t_SsaoMap             u_Texture4
+#define t_ShadowMap           u_Texture5
+#define t_VoxelLighting       u_Texture6
+
 #include "lighting.glsl"
 
 void main() {
@@ -30,7 +46,9 @@ void main() {
         return;
     }
 
-    vec3 color = compute_lighting(base_color,
+    vec3 color = compute_lighting(t_ShadowMap,
+                                  t_VoxelLighting,
+                                  base_color,
                                   world_position,
                                   N,
                                   metallic,

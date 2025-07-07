@@ -1,9 +1,12 @@
-/// File: tone.ps.hlsl
+/// File: ssao.ps.hlsl
 #include "cbuffer.hlsl.h"
 #include "common.hlsl.h"
 #include "hlsl/input_output.hlsl"
 #include "sampler.hlsl.h"
-#include "shader_resource_defines.hlsl.h"
+
+Texture2D t_GbufferNormalMap : register(t0);
+Texture2D t_GbufferDepth : register(t1);
+Texture2D t_NoiseTexture : register(t2);
 
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
@@ -12,19 +15,19 @@ float main(vsoutput_uv input) : SV_TARGET {
     const Vector2f uv = input.uv;
 
     Vector2i texture_size;
-    TEXTURE_2D(GbufferNormalMap).GetDimensions(texture_size.x, texture_size.y);
+    t_GbufferNormalMap.GetDimensions(texture_size.x, texture_size.y);
     Vector2f noise_scale = Vector2f(texture_size);
     noise_scale *= (1.0f / SSAO_NOISE_SIZE);
 
-    Vector3f N = TEXTURE_2D(GbufferNormalMap).Sample(s_pointClampSampler, uv).rgb;
+    Vector3f N = t_GbufferNormalMap.Sample(s_pointClampSampler, uv).rgb;
     N = 2.0f * N - 1.0f;
 
     // reconstruct view position
     // https://stackoverflow.com/questions/11277501/how-to-recover-view-space-position-given-view-space-depth-value-and-ndc-xy
-    const float depth = TEXTURE_2D(GbufferDepth).Sample(s_pointClampSampler, uv).r;
+    const float depth = t_GbufferDepth.Sample(s_pointClampSampler, uv).r;
     const Vector3f origin = NdcToViewPos(uv, depth);
 
-    Vector3f rvec = Vector3f(TEXTURE_2D(BaseColorMap).SampleLevel(s_pointWrapSampler, uv * noise_scale, 0.0f).xy, 0.0f);
+    Vector3f rvec = Vector3f(t_NoiseTexture.SampleLevel(s_pointWrapSampler, uv * noise_scale, 0.0f).xy, 0.0f);
     Vector3f tangent = normalize(rvec - N * dot(rvec, N));
     Vector3f bitangent = cross(N, tangent);
 
@@ -47,7 +50,7 @@ float main(vsoutput_uv input) : SV_TARGET {
         offset /= offset.w;                        // perspective divide
         offset.xy = offset.xy * 0.5 + 0.5;         // transform to range 0.0 - 1.0
 
-        const float depth2 = TEXTURE_2D(GbufferDepth).Sample(s_pointClampSampler, offset.xy).r;
+        const float depth2 = t_GbufferDepth.Sample(s_pointClampSampler, offset.xy).r;
         const Vector3f sampleOcclusionPos = NdcToViewPos(offset.xy, depth2);
         const float sample_depth = sampleOcclusionPos.z;
 

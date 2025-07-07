@@ -63,6 +63,6 @@ using KernelData = std::array<Vector4f, 64>;
 Result<void> CreateResources(IGraphicsManager& p_graphics_manager);
 
 const KernelData& GetKernelData();
-const GpuTexture* GetSsaoNoiseTexture();
+std::shared_ptr<GpuTexture> GetSsaoNoiseTexture();
 
 }  // namespace my::renderer

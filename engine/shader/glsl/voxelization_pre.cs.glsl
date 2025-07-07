@@ -12,4 +12,3 @@ void main() {
     imageStore(u_albedo_texture, uvw, clear_color);
     imageStore(u_normal_texture, uvw, clear_color);
 }
-

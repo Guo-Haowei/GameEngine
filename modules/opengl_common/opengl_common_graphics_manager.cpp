@@ -414,6 +414,14 @@ void CommonOpenGLGraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
     glBindTexture(dimension, 0);
 }
 
+void CommonOpenGLGraphicsManager::BeginEvent(std::string_view p_event) {
+    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, p_event.data());
+}
+
+void CommonOpenGLGraphicsManager::EndEvent() {
+    glPopDebugGroup();
+}
+
 std::shared_ptr<GpuTexture> CommonOpenGLGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);

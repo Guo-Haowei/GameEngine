@@ -2,10 +2,11 @@
 #include "cbuffer.hlsl.h"
 #include "shader_defines.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
-#include "unordered_access_defines.hlsl.h"
 
 // @NOTE: include this at last
 #include "shared_path_tracer.h"
+
+RWTexture2D<float4> u_PathTracerOutputImage : register(u0);
 
 [numthreads(16, 16, 1)] void main(uint3 p_dispatch_thread_id : SV_DISPATCHTHREADID) {
     // random seed

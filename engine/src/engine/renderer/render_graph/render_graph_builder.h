@@ -13,7 +13,6 @@ namespace my::renderer { struct RenderSystem; }
 namespace my::renderer {
 
 struct RenderGraphBuilderConfig {
-    bool enableShadow = true;
     bool enablePointShadow = true;
     bool enableVxgi = true;
     bool enableIbl = true;
@@ -65,11 +64,14 @@ public:
 // @TODO: make it more extendable
 #if 0
     static std::unique_ptr<RenderGraph> CreateDummy(RenderGraphBuilderConfig& p_config);
-    static std::unique_ptr<RenderGraph> CreatePathTracer(RenderGraphBuilderConfig& p_config);
 #endif
+
+    // @TODO: create 2D
+    // @TODO: create 3D cel
 
     [[nodiscard]] static auto CreateEmpty(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
     [[nodiscard]] static auto CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
+    [[nodiscard]] static auto CreatePathTracer(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
 
 private:
     void AddEmpty();
@@ -86,10 +88,11 @@ private:
     void AddTonePass();
     void AddDebugImagePass();
 
-#if 0
-    void AddGenerateSkylightPass();
     void AddPathTracerPass();
     void AddPathTracerTonePass();
+
+#if 0
+    void AddGenerateSkylightPass();
 #endif
 
     RenderGraphBuilderConfig m_config;

@@ -17,5 +17,5 @@ void main() {
         out_color.rgb = color;
     }
     out_color.a = pass_color.a;
-    //out_color.a = 1.0;
+    // out_color.a = 1.0;
 }

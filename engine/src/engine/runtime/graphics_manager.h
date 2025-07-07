@@ -128,6 +128,9 @@ public:
 
     virtual void GenerateMipmap(const GpuTexture* p_texture) = 0;
 
+    virtual void BeginEvent(std::string_view p_event) = 0;
+    virtual void EndEvent() = 0;
+
     virtual void RequestTexture(ImageAsset* p_image) = 0;
 
     // @TODO: move to renderer

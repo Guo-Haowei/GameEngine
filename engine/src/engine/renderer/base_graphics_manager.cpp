@@ -85,6 +85,10 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
         return Result<void>();
     }
 
+    if (auto res = renderer::CreateResources(*this); !res) {
+        return HBN_ERROR(res.error());
+    }
+
     if (auto res = SelectRenderGraph(); !res) {
         return HBN_ERROR(res.error());
     }
@@ -368,12 +372,6 @@ void BaseGraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
             // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
-
-    for (auto& transition : p_framebuffer->desc.transitions) {
-        if (transition.beginPassFunc) {
-            transition.beginPassFunc(this, transition.resource.get(), transition.slot);
-        }
-    }
 }
 
 void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
@@ -382,12 +380,6 @@ void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
         if (texture->slot >= 0) {
             BindTexture(texture->desc.dimension, texture->GetHandle(), texture->slot);
             // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
-        }
-    }
-
-    for (auto& transition : p_framebuffer->desc.transitions) {
-        if (transition.endPassFunc) {
-            transition.endPassFunc(this, transition.resource.get(), transition.slot);
         }
     }
 }
@@ -456,11 +448,15 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
 
     switch (m_backend) {
         case Backend::OPENGL:
-        case Backend::D3D11:
+        case Backend::D3D11: {
 #if !USING(PLATFORM_WASM)
-            // m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            auto res = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            if (!res) {
+                return HBN_ERROR(res.error());
+            }
+            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = *res;
 #endif
-            break;
+        } break;
         default:
             break;
     }
@@ -529,7 +525,7 @@ uint64_t BaseGraphicsManager::GetFinalImage() const {
 #endif
         } break;
         case RenderGraphName::PATHTRACER: {
-            texture = FindTexture(RESOURCE_PATH_TRACER).get();
+            texture = FindTexture(RESOURCE_TONE).get();
         } break;
         case RenderGraphName::EMPTY: {
             texture = FindTexture(RESOURCE_FINAL).get();
@@ -582,6 +578,7 @@ void BaseGraphicsManager::UpdateEmitters(const Scene& p_scene) {
     }
 }
 
+// @TODO: embed draw buffer in shader
 void BaseGraphicsManager::DrawQuad() {
     SetMesh(m_screenQuadBuffers.get());
     DrawElements(m_screenQuadBuffers->desc.drawCount);
