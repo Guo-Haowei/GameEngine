@@ -13,8 +13,10 @@ in struct PS_INPUT {
 #include "lighting.glsl"
 
 uniform sampler2D u_Texture0;
+uniform sampler3D u_Texture1;
 
-#define t_ShadowMap u_Texture0
+#define t_ShadowMap     u_Texture0
+#define t_VoxelLighting u_Texture1
 
 void main() {
     vec3 base_color = c_baseColor.rgb;
@@ -48,6 +50,7 @@ void main() {
     const vec3 world_position = (c_invView * vec4(view_position, 1.0f)).xyz;
 
     out_color.rgb = compute_lighting(t_ShadowMap,
+                                     t_VoxelLighting,
                                      base_color,
                                      world_position,
                                      N,

@@ -1,7 +1,4 @@
 /// File: voxelization.ps.glsl
-layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;
-layout(rgba16f, binding = 1) uniform image3D u_normal_texture;
-
 #include "../cbuffer.hlsl.h"
 
 in vec3 pass_position;
@@ -10,8 +7,10 @@ in vec2 pass_uv;
 
 #include "lighting.glsl"
 
-uniform sampler2D u_Texture0;
+layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;
+layout(rgba16f, binding = 1) uniform image3D u_normal_texture;
 
+uniform sampler2D u_Texture0;
 #define t_ShadowMap u_Texture0
 
 void main() {

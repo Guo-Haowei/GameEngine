@@ -13,7 +13,6 @@ namespace my::renderer { struct RenderSystem; }
 namespace my::renderer {
 
 struct RenderGraphBuilderConfig {
-    bool enableShadow = true;
     bool enablePointShadow = true;
     bool enableVxgi = true;
     bool enableIbl = true;

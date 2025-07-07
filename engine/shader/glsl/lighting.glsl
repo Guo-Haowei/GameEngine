@@ -2,9 +2,9 @@
 #include "../pbr.hlsl.h"
 #include "shadow.glsl"
 
-#define ENABLE_VXGI 0
+#define ENABLE_VXGI 1
 #if ENABLE_VXGI
-// #include "vxgi.glsl"
+#include "vxgi.glsl"
 #endif
 
 // @TODO: refactor
@@ -125,6 +125,7 @@ vec3 area_light(mat3 Minv, vec3 N, vec3 V, vec3 world_position, vec4 p_t2, vec3 
 }
 
 vec3 compute_lighting(sampler2D shadow_map,
+                      sampler3D voxel,
                       vec3 base_color,
                       vec3 world_position,
                       vec3 N,
@@ -232,12 +233,12 @@ vec3 compute_lighting(sampler2D shadow_map,
         const vec3 kD = (1.0 - kS) * (1.0 - metallic);
 
         // indirect diffuse
-        vec3 diffuse = base_color.rgb * cone_diffuse(world_position, N);
+        vec3 diffuse = base_color.rgb * cone_diffuse(voxel, world_position, N);
 
         // specular cone
         vec3 coneDirection = reflect(-V, N);
         vec3 specular = vec3(0);
-        specular = metallic * cone_specular(world_position, coneDirection, roughness);
+        specular = metallic * cone_specular(voxel, world_position, coneDirection, roughness);
         Lo += (kD * diffuse + specular) * ao;
     }
 #endif

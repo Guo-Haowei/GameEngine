@@ -294,6 +294,8 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
 
     // @TODO: external texture
     auto noise = renderer::GetSsaoNoiseTexture();
+    // @TODO: import it
+
     cmd.BindTexture(Dimension::TEXTURE_2D, noise->GetHandle(), 0);
     cmd.SetPipelineState(PSO_SSAO);
     cmd.DrawQuad();
@@ -310,21 +312,6 @@ void RenderGraphBuilder::AddSsaoPass() {
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
         .Read(ResourceAccess::SRV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(SsaoPassFunc);
-
-#if 0
-    RenderPassDesc desc;
-    desc.name = RenderPassName::SSAO;
-    desc.dependencies = { RenderPassName::GBUFFER };
-    auto pass = m_graph.CreatePass(desc);
-
-    auto attachment = gm.FindTexture(RESOURCE_SSAO);
-
-    FramebufferDesc fb_desc;
-    fb_desc.colorAttachments.emplace_back(attachment);
-
-    auto framebuffer = gm.CreateFramebuffer(fb_desc);
-    pass->AddDrawPass("SsaoDrawPass", framebuffer, SsaoPassFunc);
-#endif
 }
 
 static void HighlightPassFunc(RenderPassExcutionContext& p_ctx) {
@@ -354,25 +341,6 @@ void RenderGraphBuilder::AddHighlightPass() {
         .Write(ResourceAccess::RTV, RG_RES_OUTLINE)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(HighlightPassFunc);
-
-#if 0
-    auto& gm = IGraphicsManager::GetSingleton();
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::OUTLINE;
-    desc.dependencies = { RenderPassName::PREPASS };
-    auto pass = m_graph.CreatePass(desc);
-
-    auto color0 = gm.FindTexture(RESOURCE_OUTLINE_SELECT);
-    auto depth = gm.FindTexture(RESOURCE_GBUFFER_DEPTH);
-
-    FramebufferDesc fb_desc;
-    fb_desc.colorAttachments.emplace_back(color0);
-    fb_desc.depthAttachment = depth;
-
-    auto framebuffer = gm.CreateFramebuffer(fb_desc);
-    pass->AddDrawPass("SsaoDrawPass", framebuffer, HighlightPassFunc);
-#endif
 }
 
 /// Shadow
@@ -550,15 +518,6 @@ void RenderGraphBuilder::AddVoxelizationPass() {
         .Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
         .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL)
         .SetExecuteFunc(VoxelizationPassFunc);
-
-#if 0
-    RenderPassDesc desc;
-    desc.name = RenderPassName::VOXELIZATION;
-    desc.dependencies = { RenderPassName::SHADOW };
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{});
-    pass->AddDrawPass(VOXELIZATION_PASS_NAME, framebuffer, VoxelizationPassFunc);
-#endif
 }
 
 /// Emitter
@@ -691,56 +650,10 @@ void RenderGraphBuilder::AddLightingPass() {
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(LightingPassFunc);
 
-    if (m_config.enableShadow) {
-        pass.Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP);
-    }
     if (m_config.enableVxgi) {
-        pass.Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
-            .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL);
+        pass.Read(ResourceAccess::SRV, RG_RES_VOXEL_LIGHTING)
+            .Read(ResourceAccess::SRV, RG_RES_VOXEL_NORMAL);
     }
-
-#if 0
-    RenderPassDesc desc;
-    desc.name = RenderPassName::LIGHTING;
-
-    desc.dependencies = { RenderPassName::GBUFFER,
-                          // RenderPassName::ENV,
-                          RenderPassName::SSAO };
-
-    if (m_config.enableShadow) {
-        desc.dependencies.push_back(RenderPassName::SHADOW);
-    }
-    if (m_config.enableVxgi) {
-        desc.dependencies.push_back(RenderPassName::VOXELIZATION);
-    }
-
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { lighting_attachment },
-        // @TODO: refactor transitions
-        .transitions = {
-            ResourceTransition{
-                .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                    GpuTexture* p_texture,
-                .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                  GpuTexture*,
-                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_2D, p_slot); },
-            },
-            ResourceTransition{
-                .resource = manager.FindTexture(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
-                .slot = GetPointShadowArraySlot(),
-                .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                    GpuTexture* p_texture,
-                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_texture->GetHandle(), p_slot); },
-                .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                  GpuTexture*,
-                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_slot); },
-            },
-        },
-    });
-
-    pass->AddDrawPass("LightingDrawPass", framebuffer, LightingPassFunc);
-#endif
 }
 
 /// Sky
@@ -803,48 +716,11 @@ void RenderGraphBuilder::AddForwardPass() {
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(ForwardPassFunc);
-#if 0
-    auto gbuffer_depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
 
-    auto lighting_attachment = manager.FindTexture(RESOURCE_LIGHTING);
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::FORWARD;
-
-    desc.dependencies = { RenderPassName::LIGHTING };
-
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { lighting_attachment },
-        .depthAttachment = gbuffer_depth,
-        // @TODO: refactor transitions
-        .transitions = {
-            ResourceTransition{
-                .resource = manager.FindTexture(RESOURCE_SHADOW_MAP),
-                .slot = GetShadowMapSlot(),
-                .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                    GpuTexture* p_texture,
-                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_2D, p_texture->GetHandle(), p_slot); },
-                .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                  GpuTexture*,
-                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_2D, p_slot); },
-            },
-            ResourceTransition{
-                .resource = manager.FindTexture(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
-                .slot = GetPointShadowArraySlot(),
-                .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                    GpuTexture* p_texture,
-                                    int p_slot) { p_graphics_manager->BindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_texture->GetHandle(), p_slot); },
-                .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                  GpuTexture*,
-                                  int p_slot) { p_graphics_manager->UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, p_slot); },
-            },
-        },
-    });
-
-    // @TODO: refactor
-    pass->AddDrawPass(FORWARD_PASS_NAME, framebuffer, ForwardPassFunc);
-#endif
+    if (m_config.enableVxgi) {
+        pass.Read(ResourceAccess::SRV, RG_RES_VOXEL_LIGHTING)
+            .Read(ResourceAccess::SRV, RG_RES_VOXEL_NORMAL);
+    }
 }
 
 /// Bloom
@@ -906,23 +782,6 @@ static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 void RenderGraphBuilder::AddBloomPass() {
-#if 0
-    auto& gm = IGraphicsManager::GetSingleton();
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::BLOOM;
-    desc.dependencies = { RenderPassName::FORWARD };
-    auto render_pass = m_graph.CreatePass(desc);
-    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX; ++i, width /= 2, height /= 2) {
-        DEV_ASSERT(width > 1);
-        DEV_ASSERT(height > 1);
-
-        LOG_WARN("bloom size {}x{}", width, height);
-
-        auto attachment = gm.CreateTexture(texture_desc, LinearClampSampler());
-    }
-#endif
-
     // Setup pass
     const int width = m_config.frameWidth;
     const int height = m_config.frameHeight;
@@ -988,25 +847,6 @@ void RenderGraphBuilder::AddBloomPass() {
             auto prev_pass = std::format(RG_PASS_BLOOM_UP_PREFIX "{}", i + 1);
             AddDependency(prev_pass, pass_name);
         }
-#if 0
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-        DEV_ASSERT(output);
-        auto pass = gm.CreateFramebuffer(FramebufferDesc{
-            .transitions = {
-                ResourceTransition{
-                    .resource = output,
-                    .slot = GetUavSlotBloomOutputImage(),
-                    .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                        GpuTexture* p_texture,
-                                        int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
-                    .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                      GpuTexture*,
-                                      int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
-                } },
-        });
-        pass->id = i;
-        render_pass->AddDrawPass("BloomUpSampleComputePass", pass, BloomUpSampleFunc);
-#endif
     }
 }
 
@@ -1050,23 +890,9 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
 
     // @HACK:
     if (DVAR_GET_BOOL(gfx_debug_vxgi) && cmd.GetBackend() == Backend::OPENGL) {
-        // @TODO: remove
+        // @TODO: add to forward pass
         DebugVoxels(p_ctx.render_system, fb);
     } else {
-#if 0
-        auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-            std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
-            if (!resource) {
-                return;
-            }
-
-            cmd.BindTexture(p_dimension, resource->GetHandle(), p_slot);
-        };
-        bind_slot(RESOURCE_LIGHTING, GetTextureLightingSlot());
-        bind_slot(RESOURCE_OUTLINE_SELECT, GetTextureHighlightSelectSlot());
-        bind_slot(RESOURCE_BLOOM_0, GetBloomInputTextureSlot());
-#endif
-
         cmd.SetViewport(Viewport(width, height));
         cmd.Clear(fb, CLEAR_COLOR_BIT);
 
@@ -1155,23 +981,6 @@ void RenderGraphBuilder::AddDebugImagePass() {
         .Read(ResourceAccess::SRV, RG_RES_POST_PROCESS)
         .Write(ResourceAccess::RTV, RG_RES_OVERLAY)
         .SetExecuteFunc(DebugImagesFunc);
-
-#if 0
-    auto& manager = IGraphicsManager::GetSingleton();
-    RenderPassDesc desc;
-    desc.name = RenderPassName::FINAL;
-
-    desc.dependencies = { RenderPassName::TONE };
-
-    auto output = manager.FindTexture(RESOURCE_FINAL);
-
-    auto pass = m_graph.CreatePass(desc);
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{
-        .colorAttachments = { output },
-    });
-
-    pass->AddDrawPass("DebugImagePass", framebuffer, DebugImagesFunc);
-#endif
 }
 
 #if 0
@@ -1573,7 +1382,7 @@ void RenderGraphBuilder::AddDependency(std::string_view p_from, std::string_view
 
 auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
 
-#define DEBUG_BUILDER IN_USE
+#define DEBUG_BUILDER NOT_IN_USE
 #if USING(DEBUG_BUILDER)
 #define DEBUG_PRINT(...) LOG_OK(__VA_ARGS__)
 #else
@@ -1680,6 +1489,7 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
 
     DEBUG_PRINT("sorted:");
     for (auto i : sorted) {
+        unused(i);
         DEBUG_PRINT("{}", m_passes[i].GetName());
     }
 

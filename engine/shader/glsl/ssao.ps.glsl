@@ -1,6 +1,5 @@
 #include "../cbuffer.hlsl.h"
 #include "../common.hlsl.h"
-#include "../shader_resource_defines.hlsl.h"
 
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float out_color;
@@ -10,6 +9,8 @@ uniform sampler2D u_Texture1;
 
 #define t_GbufferNormalMap u_Texture0
 #define t_GbufferDepth     u_Texture1
+
+#define t_NoiseTexture     u_Texture1
 
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
@@ -25,7 +26,7 @@ void main() {
     N = 2.0f * N - 1.0f;
 
     // @TODO: ?
-    Vector3f rvec = Vector3f(texture(t_BaseColorMap, uv * noise_scale).xy, 0.0f);
+    Vector3f rvec = Vector3f(texture(t_NoiseTexture, uv * noise_scale).xy, 0.0f);
     Vector3f tangent = normalize(rvec - N * dot(rvec, N));
     Vector3f bitangent = cross(N, tangent);
 
