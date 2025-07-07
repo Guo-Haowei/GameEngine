@@ -224,17 +224,17 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                              .rtvFormats = { RT_FMT_SSAO },
                          });
 
-    CREATE_PSO(PSO_TONE, {
-                             .vs = "screenspace_quad.vs",
-                             .ps = "tone.ps",
-                             .rasterizerDesc = &s_rasterizerFrontFace,
-                             .depthStencilDesc = &s_depthStencilDisabled,
-                             .inputLayoutDesc = &s_inputLayoutPosition,
-                             .blendDesc = &s_blendStateDefault,
-                             .numRenderTargets = 1,
-                             .rtvFormats = { RT_FMT_TONE },
-                             .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
-                         });
+    CREATE_PSO(PSO_POST_PROCESS, {
+                                     .vs = "screenspace_quad.vs",
+                                     .ps = "post_process.ps",
+                                     .rasterizerDesc = &s_rasterizerFrontFace,
+                                     .depthStencilDesc = &s_depthStencilDisabled,
+                                     .inputLayoutDesc = &s_inputLayoutPosition,
+                                     .blendDesc = &s_blendStateDefault,
+                                     .numRenderTargets = 1,
+                                     .rtvFormats = { RT_FMT_TONE },
+                                     .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
+                                 });
 
 #pragma region PSO_BLOOM
     CREATE_PSO(PSO_BLOOM_SETUP, { .type = PipelineStateType::COMPUTE, .cs = "bloom_setup.cs" });

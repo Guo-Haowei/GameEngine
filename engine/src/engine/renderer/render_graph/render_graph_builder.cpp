@@ -670,8 +670,8 @@ static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.Clear(fb, CLEAR_COLOR_BIT);
     cmd.SetPipelineState(PSO_LIGHTING);
 
-    // @TODO: fix
-    #if 0
+// @TODO: fix
+#if 0
     const auto brdf = cmd.m_brdfImage->gpu_texture;
     auto diffuse_iraddiance = cmd.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
     auto prefiltered = cmd.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
@@ -907,9 +907,9 @@ static void BloomSetupFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
 
-    //cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    // cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    //cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    // cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
@@ -935,9 +935,9 @@ static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + 1);
 
-    //cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    // cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    //cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    // cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
@@ -962,9 +962,9 @@ static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + BLOOM_MIP_CHAIN_MAX);
 
-    //cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    // cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    //cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    // cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 void RenderGraphBuilder::AddBloomPass() {
@@ -1155,7 +1155,7 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
         // @TODO: remove
         DebugVoxels(p_ctx.render_system, fb);
     } else {
-        #if 0
+#if 0
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
             std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
             if (!resource) {
@@ -1167,12 +1167,12 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
         bind_slot(RESOURCE_LIGHTING, GetTextureLightingSlot());
         bind_slot(RESOURCE_OUTLINE_SELECT, GetTextureHighlightSelectSlot());
         bind_slot(RESOURCE_BLOOM_0, GetBloomInputTextureSlot());
-        #endif
+#endif
 
         cmd.SetViewport(Viewport(width, height));
         cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-        cmd.SetPipelineState(PSO_TONE);
+        cmd.SetPipelineState(PSO_POST_PROCESS);
         cmd.DrawQuad();
     }
 }
@@ -1395,7 +1395,7 @@ static void PathTracerTonePassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetViewport(Viewport(width, height));
     cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-    cmd.SetPipelineState(PSO_TONE);
+    cmd.SetPipelineState(PSO_POST_PROCESS);
     cmd.DrawQuad();
 
     cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
@@ -1801,7 +1801,6 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
     for (int idx : sorted) {
         const auto& pass = m_passes[idx];
         FramebufferDesc info;
-
 
         for (const auto& write : pass.m_writes) {
             switch (write.access) {

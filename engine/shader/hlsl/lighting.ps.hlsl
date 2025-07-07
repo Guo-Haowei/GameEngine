@@ -13,7 +13,7 @@ Texture2D t_GbufferMaterialMap : register(t2);
 Texture2D t_GbufferDepth : register(t3);
 Texture2D t_SsaoMap : register(t4);
 Texture2D t_ShadowMap : register(t5);
-//Texture2D t_PointShadowArray : register(t1);
+// Texture2D t_PointShadowArray : register(t6);
 
 float4 main(vsoutput_uv input) : SV_TARGET {
     const float2 uv = input.uv;
@@ -38,7 +38,7 @@ float4 main(vsoutput_uv input) : SV_TARGET {
     N = 2.0f * N - 1.0f;
 
     float3 color = compute_lighting(t_ShadowMap,
-    base_color,
+                                    base_color,
                                     world_position.xyz,
                                     N,
                                     metallic,

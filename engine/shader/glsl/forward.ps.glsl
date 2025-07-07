@@ -12,6 +12,10 @@ in struct PS_INPUT {
 #include "../cbuffer.hlsl.h"
 #include "lighting.glsl"
 
+uniform sampler2D u_Texture0;
+
+#define t_ShadowMap u_Texture0
+
 void main() {
     vec3 base_color = c_baseColor.rgb;
     out_color.a = c_baseColor.a;
@@ -43,7 +47,8 @@ void main() {
     const vec3 view_position = ps_in.position;
     const vec3 world_position = (c_invView * vec4(view_position, 1.0f)).xyz;
 
-    out_color.rgb = compute_lighting(base_color,
+    out_color.rgb = compute_lighting(t_ShadowMap,
+                                     base_color,
                                      world_position,
                                      N,
                                      metallic,

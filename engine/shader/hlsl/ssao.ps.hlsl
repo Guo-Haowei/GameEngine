@@ -1,4 +1,4 @@
-/// File: tone.ps.hlsl
+/// File: ssao.ps.hlsl
 #include "cbuffer.hlsl.h"
 #include "common.hlsl.h"
 #include "hlsl/input_output.hlsl"

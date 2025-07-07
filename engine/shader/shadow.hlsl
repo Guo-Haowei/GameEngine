@@ -22,7 +22,7 @@ int2 textureSizeTexture2D(Texture2D p_texture) {
 #define Vector3f       vec3
 #define Vector4f       vec4
 #define Multiply(a, b) ((a) * (b))
-ivec2 textureSizeTexture2D(Texture2D textureObject) {
+ivec2 textureSizeTexture2D(sampler2D textureObject) {
     return textureSize(textureObject, 0);
 }
 
@@ -34,7 +34,13 @@ vec4 sampleShadow(Texture2D textureObject, vec2 offset) {
 #error "Unknown shading language"
 #endif
 
-float shadowTest(Texture2D shadowMap, Light light, Vector3f worldPos, float NdotL) {
+float shadowTest(
+#if defined(HLSL_LANG)
+    Texture2D shadowMap,
+#else
+    sampler2D shadowMap,
+#endif
+    Light light, Vector3f worldPos, float NdotL) {
     Vector4f lightSpacePos = Multiply(light.view_matrix, Vector4f(worldPos, 1.0));
     lightSpacePos = Multiply(light.projection_matrix, lightSpacePos);
     lightSpacePos /= lightSpacePos.w;
@@ -49,11 +55,7 @@ float shadowTest(Texture2D shadowMap, Light light, Vector3f worldPos, float Ndot
     float currentDepth = lightSpacePos.z;
 
     float shadow = 0.0;
-#if defined(GLSL_LANG)
-    Vector2f texelSize = 1.0 / Vector2f(textureSizeTexture2D(t_ShadowMap));
-#else
     Vector2f texelSize = 1.0 / Vector2f(textureSizeTexture2D(shadowMap));
-#endif
 
     // @TODO: better bias
     float bias = max(0.005 * (1.0 - NdotL), 0.0005);
@@ -64,7 +66,7 @@ float shadowTest(Texture2D shadowMap, Light light, Vector3f worldPos, float Ndot
         int y = SAMPLE % 2;
         Vector2f offset = Vector2f(x, y) * texelSize;
 #if defined(GLSL_LANG)
-        float closestDepth = texture(t_ShadowMap, lightSpacePos.xy + offset).r;
+        float closestDepth = texture(shadowMap, lightSpacePos.xy + offset).r;
 #else
         float closestDepth = shadowMap.Sample(s_shadowSampler, lightSpacePos.xy + offset).r;
 #endif

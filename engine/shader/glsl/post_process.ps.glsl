@@ -1,28 +1,28 @@
-/// File: tone.ps.hlsl
-#include "cbuffer.hlsl.h"
-#include "hlsl/input_output.hlsl"
-#include "sampler.hlsl.h"
-#include "shader_resource_defines.hlsl.h"
+/// File: post_process.ps.hlsl
+// #include "cbuffer.hlsl.h"
+// #include "hlsl/input_output.hlsl"
+// #include "sampler.hlsl.h"
+// #include "shader_resource_defines.hlsl.h"
 
-Texture2D t_TextureLighting : register(t0);
-Texture2D t_TextureHighlightSelect : register(t1);
-Texture2D t_BloomInputTexture : register(t2);
+uniform sampler2D t_Texture0;  // Texture for lighting
+uniform sampler2D t_Texture1;  // Texture for highlight selection
+uniform sampler2D t_Texture2;  // Texture for bloom input
 
 #if 1
-static const float3x3 sx = float3x3(
+static const mat3 sx = mat3(
     1.0, 2.0, 1.0,
     0.0, 0.0, 0.0,
     -1.0, -2.0, -1.0);
-static const float3x3 sy = float3x3(
+static const mat3 sy = mat3(
     1.0, 0.0, -1.0,
     2.0, 0.0, -2.0,
     1.0, 0.0, -1.0);
 #else
-static const float3x3 sx = float3x3(
+static const mat3 sx = mat3(
     1.0, 0.0, -1.0,
     2.0, 0.0, -2.0,
     1.0, 0.0, -1.0);
-static const float3x3 sy = float3x3(
+static const mat3 sy = mat3(
     1.0, 2.0, 1.0,
     0.0, 0.0, 0.0,
     -1.0, -2.0, -1.0);

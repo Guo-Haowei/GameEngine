@@ -7,6 +7,21 @@ layout(location = 0) in vec2 pass_uv;
 
 #include "lighting.glsl"
 
+uniform sampler2D u_Texture0;
+uniform sampler2D u_Texture1;
+uniform sampler2D u_Texture2;
+uniform sampler2D u_Texture3;
+uniform sampler2D u_Texture4;
+uniform sampler2D u_Texture5;
+
+#define t_GbufferBaseColorMap u_Texture0
+#define t_GbufferNormalMap    u_Texture1
+#define t_GbufferMaterialMap  u_Texture2
+#define t_GbufferDepth        u_Texture3
+#define t_SsaoMap             u_Texture4
+#define t_ShadowMap           u_Texture5
+// #define t_PointShadowArray
+
 void main() {
     const vec2 uv = pass_uv;
     const vec4 emissive_roughness_metallic = texture(t_GbufferMaterialMap, uv);

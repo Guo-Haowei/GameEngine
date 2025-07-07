@@ -2,9 +2,9 @@
 #include "../pbr.hlsl.h"
 #include "shadow.glsl"
 
-#define ENABLE_VXGI 1
+#define ENABLE_VXGI 0
 #if ENABLE_VXGI
-#include "vxgi.glsl"
+// #include "vxgi.glsl"
 #endif
 
 // @TODO: refactor
@@ -124,7 +124,8 @@ vec3 area_light(mat3 Minv, vec3 N, vec3 V, vec3 world_position, vec4 p_t2, vec3 
     return (specular + kD * diffuse);
 }
 
-vec3 compute_lighting(vec3 base_color,
+vec3 compute_lighting(sampler2D shadow_map,
+                      vec3 base_color,
                       vec3 world_position,
                       vec3 N,
                       float metallic,
@@ -172,7 +173,7 @@ vec3 compute_lighting(vec3 base_color,
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, world_position, NdotL);
+                    shadow = shadowTest(shadow_map, light, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;
@@ -206,13 +207,20 @@ vec3 compute_lighting(vec3 base_color,
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
+#if 0
     vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
     vec3 diffuse = irradiance * base_color.rgb;
+#endif
+    vec3 irradiance = vec3(0);
+    vec3 diffuse = vec3(0);
 
+#if 0
     vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf_uv = vec2(NdotV, 1.0 - roughness);
     vec2 brdf = texture(t_BrdfLut, brdf_uv).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+#endif
+    vec3 specular = vec3(0);
 
     const float ao = 1.0;
     vec3 ambient = (kD * diffuse + specular) * ao;

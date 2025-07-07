@@ -10,6 +10,10 @@ in vec2 pass_uv;
 
 #include "lighting.glsl"
 
+uniform sampler2D u_Texture0;
+
+#define t_ShadowMap u_Texture0
+
 void main() {
     vec4 base_color = c_baseColor;
     if (c_hasBaseColorMap != 0) {
@@ -49,7 +53,7 @@ void main() {
                 direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color.rgb);
                 if (light.cast_shadow == 1) {
                     const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, world_position, NdotL);
+                    shadow = shadowTest(t_ShadowMap, light, world_position, NdotL);
                     direct_lighting *= (1.0 - shadow);
                 }
             } break;
@@ -80,7 +84,7 @@ void main() {
 
     // write lighting information to texel
     vec3 voxel = (pass_position - c_voxelWorldCenter) / c_voxelWorldSizeHalf;  // normalize it to [-1, 1]
-    voxel = 0.5 * voxel + vec3(0.5);                                    // normalize to [0, 1]
+    voxel = 0.5 * voxel + vec3(0.5);                                           // normalize to [0, 1]
     ivec3 dim = imageSize(u_albedo_texture);
     ivec3 coord = ivec3(dim * voxel);
 

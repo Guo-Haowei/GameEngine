@@ -1,6 +1,6 @@
 /// File: path_tracer.cs.glsl
-#include "../shader_resource_defines.hlsl.h"
 #include "../cbuffer.hlsl.h"
+#include "../shader_resource_defines.hlsl.h"
 
 layout(rgba32f, binding = 2) uniform image2D u_PathTracerOutputImage;
 
@@ -46,8 +46,7 @@ void main() {
     vec4 final_color = vec4(radiance, 1.0);
 
 #if FORCE_UPDATE == 0
-    if (c_sceneDirty == 0)
-    {
+    if (c_sceneDirty == 0) {
         vec4 accumulated = imageLoad(u_PathTracerOutputImage, iPixelCoords);
         float weight = accumulated.a;
         vec3 new_color = radiance + weight * accumulated.rgb;

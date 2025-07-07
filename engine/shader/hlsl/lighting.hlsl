@@ -90,7 +90,7 @@ float3 lighting(float3 N, float3 L, float3 V, float3 radiance, float3 F0, float 
 }
 
 float3 compute_lighting(Texture2D shadowMap,
-float3 base_color,
+                        float3 base_color,
                         float3 world_position,
                         float3 N,
                         float metallic,
@@ -114,20 +114,18 @@ float3 base_color,
         float shadow = 0.0;
         const float3 radiance = light.color;
         switch (light.type) {
-            case LIGHT_TYPE_INFINITE:{
-                    float3 L = light.position;
-                    float atten = 1.0;
-                    const float3 H = normalize(V + L);
-                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
-                    if (light.cast_shadow == 1)
-                    {
-                        const float NdotL = max(dot(N, L), 0.0);
-                        shadow = shadowTest(shadowMap, light, world_position, NdotL);
-                        direct_lighting *= (1.0 - shadow);
-                    }
+            case LIGHT_TYPE_INFINITE: {
+                float3 L = light.position;
+                float atten = 1.0;
+                const float3 H = normalize(V + L);
+                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
+                if (light.cast_shadow == 1) {
+                    const float NdotL = max(dot(N, L), 0.0);
+                    shadow = shadowTest(shadowMap, light, world_position, NdotL);
+                    direct_lighting *= (1.0 - shadow);
                 }
-                break;
-            case LIGHT_TYPE_POINT:{
+            } break;
+            case LIGHT_TYPE_POINT: {
 #if 0
                 float3 delta = -world_position + light.position;
                 float dist = length(delta);
@@ -144,7 +142,7 @@ float3 base_color,
                     }
                 }
 #endif
-                } break;
+            } break;
             default:
                 break;
         }
@@ -155,8 +153,8 @@ float3 base_color,
     float3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
     float3 kS = F;
     float3 kD = 1.0 - kS;
-    // kD *= 1.0 - metallic;
-    #if 0
+// kD *= 1.0 - metallic;
+#if 0
     float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).Sample(s_cubemapClampSampler, N).rgb;
     float3 diffuse = irradiance * base_color.rgb;
 #endif
@@ -164,7 +162,7 @@ float3 base_color,
     float3 diffuse = float3(0, 0, 0);
     // HACK
 
-    #if 0
+#if 0
     float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampLodSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
     float2 brdf_uv = float2(NdotV, roughness);
     float2 brdf = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, brdf_uv).rg;

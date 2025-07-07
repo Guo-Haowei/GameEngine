@@ -45,7 +45,7 @@ float4 main(vsoutput_mesh input) : SV_TARGET {
     }
 
     float3 color = compute_lighting(t_ShadowMap,
-    base_color,
+                                    base_color,
                                     world_position.xyz,
                                     N,
                                     metallic,

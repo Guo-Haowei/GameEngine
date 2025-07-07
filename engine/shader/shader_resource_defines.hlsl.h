@@ -10,10 +10,10 @@ DESCRIPTOR_SRV_LIST
 #undef DESCRIPTOR_SRV
 #else  // #if defined(HLSL_LANG_D3D12)
 
-#define SRV_DEFINES                                                                   \
-    SRV(Texture2D, BaseColorMap, 30, RESOURCE_NONE)                                   \
-    SRV(Texture2D, NormalMap, 31, RESOURCE_NONE)                                      \
-    SRV(Texture2D, MaterialMap, 32, RESOURCE_NONE)                                     
+#define SRV_DEFINES                                 \
+    SRV(Texture2D, BaseColorMap, 30, RESOURCE_NONE) \
+    SRV(Texture2D, NormalMap, 31, RESOURCE_NONE)    \
+    SRV(Texture2D, MaterialMap, 32, RESOURCE_NONE)
 
 #if defined(HLSL_LANG_D3D11)
 #define SRV(TYPE, NAME, SLOT, BINDING) TYPE t_##NAME : register(t##SLOT);
