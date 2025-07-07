@@ -291,6 +291,13 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetViewport(Viewport(width, height));
     cmd.Clear(fb, CLEAR_COLOR_BIT);
 
+    {
+        // @TODO: get rid of this
+        // should not use this, instead, save projection view matrices in framecb
+        const PassContext& pass = p_ctx.render_system.mainPass;
+        cmd.BindConstantBufferSlot<PerPassConstantBuffer>(cmd.GetCurrentFrame().passCb.get(), pass.pass_idx);
+    }
+
     cmd.SetPipelineState(PSO_SSAO);
     cmd.DrawQuad();
 
@@ -409,33 +416,6 @@ void RenderGraphBuilder::AddShadowPass() {
     pass.Create(RG_RES_SHADOW_MAP, { shadow_map_desc, ShadowMapSampler() })
         .Write(ResourceAccess::DSV, RG_RES_SHADOW_MAP)
         .SetExecuteFunc(ShadowPassFunc);
-
-#if 0
-    const int point_shadow_res = DVAR_GET_INT(gfx_point_shadow_res);
-    DEV_ASSERT(IsPowerOfTwo(point_shadow_res));
-
-    auto shadow_map = manager.CreateTexture(BuildDefaultTextureDesc(RESOURCE_SHADOW_MAP,
-                                                                    PixelFormat::D32_FLOAT,
-                                                                    AttachmentType::SHADOW_2D,
-                                                                    1 * shadow_res, shadow_res),
-                                            ShadowMapSampler());
-    RenderPassDesc desc;
-    desc.name = RenderPassName::SHADOW;
-    auto pass = m_graph.CreatePass(desc);
-    {
-        auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = shadow_map });
-        pass->AddDrawPass(SHADOW_DRAW_PASS_NAME, framebuffer, ShadowPassFunc);
-    }
-
-    auto point_shadowMap = manager.CreateTexture(BuildDefaultTextureDesc(static_cast<RenderTargetResourceName>(RESOURCE_POINT_SHADOW_CUBE_ARRAY),
-                                                                         PixelFormat::D32_FLOAT,
-                                                                         AttachmentType::SHADOW_CUBE_ARRAY,
-                                                                         point_shadow_res, point_shadow_res, 6 * MAX_POINT_LIGHT_SHADOW_COUNT),
-                                                 ShadowMapSampler());
-
-    auto framebuffer = manager.CreateFramebuffer(FramebufferDesc{ .depthAttachment = point_shadowMap });
-    pass->AddDrawPass(POINT_SHADOW_DRAW_PASS_NAME(0), framebuffer, PointShadowPassFunc);
-#endif
 }
 
 static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {

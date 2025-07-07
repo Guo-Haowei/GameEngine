@@ -69,11 +69,16 @@ void RenderGraphViewer::DrawNodes(const renderer::RenderGraph& p_graph) {
             ImGui::Indent(120.f + ImGui::CalcTextSize("value").x - text_width);
             ImGui::TextUnformatted("output");
 
+            ImNodes::EndOutputAttribute();
+        }
+        ImGui::Spacing();
+        {
+            ImNodes::BeginInputAttribute(id);
+
             for (const auto& rtv : pass->GetRtvs()) {
                 add_image(flip_image, rtv);
             }
-
-            ImNodes::EndOutputAttribute();
+            ImNodes::EndInputAttribute();
         }
 
         ImNodes::EndNode();
