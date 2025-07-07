@@ -8,7 +8,6 @@ Texture2D t_TextureLighting : register(t0);
 Texture2D t_TextureHighlightSelect : register(t1);
 Texture2D t_BloomInputTexture : register(t2);
 
-#if 1
 static const float3x3 sx = float3x3(
     1.0, 2.0, 1.0,
     0.0, 0.0, 0.0,
@@ -17,16 +16,6 @@ static const float3x3 sy = float3x3(
     1.0, 0.0, -1.0,
     2.0, 0.0, -2.0,
     1.0, 0.0, -1.0);
-#else
-static const float3x3 sx = float3x3(
-    1.0, 0.0, -1.0,
-    2.0, 0.0, -2.0,
-    1.0, 0.0, -1.0);
-static const float3x3 sy = float3x3(
-    1.0, 2.0, 1.0,
-    0.0, 0.0, 0.0,
-    -1.0, -2.0, -1.0);
-#endif
 
 float4 main(vsoutput_uv input) : SV_TARGET {
     float2 uv = input.uv;

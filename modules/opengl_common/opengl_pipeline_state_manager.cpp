@@ -253,6 +253,15 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
         }
     }
 
+    // engine reserved
+    for (int i = 0; i < 15; ++i) {
+        auto name = std::format("u_Texture{}", i);
+        const int location = glGetUniformLocation(program_id, name.c_str());
+        if (location != -1) {
+            glUniform1i(location, i);
+        }
+    }
+
     // Setup texture locations
     auto set_location = [&](const char *p_name, int p_slot) {
         const int location = glGetUniformLocation(program_id, p_name);

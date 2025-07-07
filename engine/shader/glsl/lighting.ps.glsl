@@ -45,7 +45,8 @@ void main() {
         return;
     }
 
-    vec3 color = compute_lighting(base_color,
+    vec3 color = compute_lighting(t_ShadowMap,
+                                  base_color,
                                   world_position,
                                   N,
                                   metallic,

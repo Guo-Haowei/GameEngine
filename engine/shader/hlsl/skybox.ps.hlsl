@@ -4,7 +4,7 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
-Texture2D t_Skybox : register(t0);
+TextureCube t_Skybox : register(t0);
 
 #if 0
 float2 sample_spherical_map(float3 v) {

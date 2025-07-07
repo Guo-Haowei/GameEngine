@@ -1,48 +1,53 @@
 /// File: post_process.ps.hlsl
-// #include "cbuffer.hlsl.h"
-// #include "hlsl/input_output.hlsl"
-// #include "sampler.hlsl.h"
-// #include "shader_resource_defines.hlsl.h"
+#include "../cbuffer.hlsl.h"
 
-uniform sampler2D t_Texture0;  // Texture for lighting
-uniform sampler2D t_Texture1;  // Texture for highlight selection
-uniform sampler2D t_Texture2;  // Texture for bloom input
+uniform sampler2D u_Texture0;
+uniform sampler2D u_Texture1;
+uniform sampler2D u_Texture2;
 
-#if 1
-static const mat3 sx = mat3(
+#define t_TextureLighting        u_Texture0
+#define t_TextureHighlightSelect u_Texture1
+#define t_BloomInputTexture      u_Texture2
+
+layout(location = 0) in vec2 pass_uv;
+layout(location = 0) out vec4 out_color;
+
+const mat3 sx = mat3(
     1.0, 2.0, 1.0,
     0.0, 0.0, 0.0,
     -1.0, -2.0, -1.0);
-static const mat3 sy = mat3(
+const mat3 sy = mat3(
     1.0, 0.0, -1.0,
     2.0, 0.0, -2.0,
     1.0, 0.0, -1.0);
-#else
-static const mat3 sx = mat3(
+
+#if 0
+static const float3x3 sx = float3x3(
     1.0, 0.0, -1.0,
     2.0, 0.0, -2.0,
     1.0, 0.0, -1.0);
-static const mat3 sy = mat3(
+static const float3x3 sy = float3x3(
     1.0, 2.0, 1.0,
     0.0, 0.0, 0.0,
     -1.0, -2.0, -1.0);
 #endif
 
-float4 main(vsoutput_uv input) : SV_TARGET {
-    float2 uv = input.uv;
+void main() {
+    vec2 uv = pass_uv;
     // flip uv
     // uv.y = 1 - uv.y;
     // Edge detection
-    int width, height;
-    t_TextureHighlightSelect.GetDimensions(width, height);
-    float2 texel_size = float2(width, height);
+    ivec2 dim = textureSize(t_TextureHighlightSelect, 0);
+    int width = dim.x;
+    int height = dim.y;
+    vec2 texel_size = vec2(width, height);
     texel_size = 1.0 / texel_size;
 
-    float3x3 I;
+    mat3 I;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            float2 offset = uv + texel_size * float2(i - 1, j - 1);
-            I[i][j] = t_TextureHighlightSelect.Sample(s_linearClampSampler, offset).r;
+            vec2 offset = uv + texel_size * vec2(i - 1, j - 1);
+            I[i][j] = texture(t_TextureHighlightSelect, offset).r;
         }
     }
 
@@ -51,23 +56,24 @@ float4 main(vsoutput_uv input) : SV_TARGET {
 
     float g = sqrt(pow(gx, 2.0) + pow(gy, 2.0));
     if (g > 0.0) {
-        return float4(0.98, 0.64, 0.0, 1.0);
+        out_color = vec4(0.98, 0.64, 0.0, 1.0);
+        return;
     }
 
-    float3 color = t_TextureLighting.Sample(s_linearClampSampler, uv).rgb;
+    vec3 color = texture(t_TextureLighting, uv).rgb;
 
     // Bloom
 
     if (c_enableBloom == 1) {
-        float3 bloom = t_BloomInputTexture.Sample(s_linearClampSampler, uv).rgb;
+        vec3 bloom = texture(t_BloomInputTexture, uv).rgb;
         color += bloom;
     }
 
     // Gamma correction
     // HDR tonemapping
-    color = color / (color + float3(1.0f, 1.0f, 1.0f));
+    color = color / (color + vec3(1.0f, 1.0f, 1.0f));
     const float gamma = 2.2f;
-    color = pow(color, 1.0f / float3(gamma, gamma, gamma));
+    color = pow(color, 1.0f / vec3(gamma, gamma, gamma));
 
-    return float4(color, 1.0);
+    out_color = vec4(color, 1.0);
 }

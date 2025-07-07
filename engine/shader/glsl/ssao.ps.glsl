@@ -2,10 +2,14 @@
 #include "../common.hlsl.h"
 #include "../shader_resource_defines.hlsl.h"
 
-Texture2D t_GbufferNormalMap : register(t0);
-
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float out_color;
+
+uniform sampler2D u_Texture0;
+uniform sampler2D u_Texture1;
+
+#define t_GbufferNormalMap u_Texture0
+#define t_GbufferDepth     u_Texture1
 
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
