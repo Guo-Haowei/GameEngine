@@ -894,6 +894,10 @@ void RenderGraphBuilder::AddTonePass() {
         .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
         .Read(ResourceAccess::SRV, RG_RES_OUTLINE)
         .Read(ResourceAccess::SRV, bloom_res)
+        // @TODO: move the debug to somewhere else
+        .Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
+        .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL)
+        // @TODO: move the debug to somewhere else
         .Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(TonePassFunc);
