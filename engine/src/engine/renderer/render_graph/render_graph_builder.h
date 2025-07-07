@@ -68,8 +68,8 @@ public:
     static std::unique_ptr<RenderGraph> CreatePathTracer(RenderGraphBuilderConfig& p_config);
 #endif
 
-    static [[nodiscard]] auto CreateEmpty(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
-    static [[nodiscard]] auto CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
+    [[nodiscard]] static auto CreateEmpty(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
+    [[nodiscard]] static auto CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
 
 private:
     void AddEmpty();

@@ -438,19 +438,6 @@ static void ShadowPassFunc(RenderPassExcutionContext& p_ctx) {
     const PassContext& pass = p_ctx.render_system.shadowPasses[0];
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    auto draw_batches = [&](const std::vector<BatchContext>& p_batches) {
-        for (const auto& draw : p_batches) {
-            const bool has_bone = draw.bone_idx >= 0;
-            if (has_bone) {
-                cmd.BindConstantBufferSlot<BoneConstantBuffer>(frame.boneCb.get(), draw.bone_idx);
-            }
-
-            cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
-
-            cmd.SetMesh(draw.mesh_data);
-            cmd.DrawElements(draw.mesh_data->desc.drawCount);
-        }
-    };
     cmd.SetPipelineState(PSO_DPETH);
     ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
 }
@@ -1688,21 +1675,28 @@ void RenderGraphBuilder::AddDependency(std::string_view p_from, std::string_view
 }
 
 auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
-    {
+
+#define DEBUG_BUILDER IN_USE
+#if USING(DEBUG_BUILDER)
+#define DEBUG_PRINT(...) LOG_OK(__VA_ARGS__)
+#else
+#define DEBUG_PRINT(...) ((void)0)
+#endif
+    if constexpr (USING(DEBUG_BUILDER)) {
         int id = 0;
         for (const auto& pass : m_passes) {
-            LOG_OK("found pass: {} (id: {})", pass.GetName(), id++);
-            LOG_OK("  it creates:");
+            DEBUG_PRINT("found pass: {} (id: {})", pass.GetName(), id++);
+            DEBUG_PRINT("  it creates:");
             for (const auto& create : pass.m_creates) {
-                LOG_OK("  -- {}", create.first);
+                DEBUG_PRINT("  -- {}", create.first);
             }
-            LOG_OK("  it reads:");
+            DEBUG_PRINT("  it reads:");
             for (const auto& read : pass.m_reads) {
-                LOG_OK("  -- {}", read.name);
+                DEBUG_PRINT("  -- {}", read.name);
             }
-            LOG_OK("  it writes:");
+            DEBUG_PRINT("  it writes:");
             for (const auto& write : pass.m_writes) {
-                LOG_OK("  -- {}", write.name);
+                DEBUG_PRINT("  -- {}", write.name);
             }
         }
     }
@@ -1762,7 +1756,7 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
     for (const auto& [name, to] : reads) {
         if (auto it = creates.find(name); it != creates.end()) {
             const int from = it->second;
-            LOG_OK("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
+            // DEBUG_PRINT("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
             edges.push_back(std::make_pair(from, to));
         } else {
             return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
@@ -1773,7 +1767,7 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         if (auto it = creates.find(name); it != creates.end()) {
             const int from = it->second;
             if (from == to) continue;  // remove passes that create and write the same buffer
-            LOG_OK("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
+            // DEBUG_PRINT("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
             edges.push_back(std::make_pair(from, to));
         } else {
             return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
@@ -1787,9 +1781,9 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         return HBN_ERROR(ErrorCode::ERR_CYCLIC_LINK);
     }
 
-    LOG_OK("sorted:");
+    DEBUG_PRINT("sorted:");
     for (auto i : sorted) {
-        LOG_OK("{}", m_passes[i].GetName());
+        DEBUG_PRINT("{}", m_passes[i].GetName());
     }
 
     auto render_graph = std::make_shared<RenderGraph>();

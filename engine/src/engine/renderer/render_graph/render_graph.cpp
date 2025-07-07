@@ -1,30 +1,8 @@
 #include "render_graph.h"
 
-#define RENDER_GRAPH_DEBUG_PRINT IN_USE
-
 namespace my::renderer {
 
 #if 0
-std::shared_ptr<RenderPass> RenderGraph::CreatePass(RenderPassDesc& p_desc) {
-    std::shared_ptr<RenderPass> render_pass = std::make_shared<RenderPass>();
-    render_pass->CreateInternal(p_desc);
-    m_renderPasses.emplace_back(render_pass);
-
-    DEV_ASSERT(m_renderPassLookup.find(render_pass->m_name) == m_renderPassLookup.end());
-    m_renderPassLookup[render_pass->m_name] = (int)m_renderPasses.size() - 1;
-    return render_pass;
-}
-
-std::shared_ptr<RenderPass> RenderGraph::FindPass(RenderPassName p_name) const {
-    auto it = m_renderPassLookup.find(p_name);
-    if (it == m_renderPassLookup.end()) {
-        return nullptr;
-    }
-
-    return m_renderPasses[it->second];
-}
-
-// @TODO: toposort
 void RenderGraph::Compile() {
     const int num_passes = (int)m_renderPasses.size();
 
