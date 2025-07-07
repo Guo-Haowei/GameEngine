@@ -365,7 +365,7 @@ void RenderGraphBuilder::AddHighlightPass() {
     auto& pass = AddPass(RG_PASS_OUTLINE);
     pass.Create(RG_RES_OUTLINE, { color0_desc })
         .Write(ResourceAccess::RTV, RG_RES_OUTLINE)
-        .Read(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+        .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(HighlightPassFunc);
 
 #if 0
