@@ -11,7 +11,7 @@
 // clang-format off
 namespace my { class Scene; }
 namespace my { class PerspectiveCameraComponent; }
-namespace my::renderer { struct DrawPass; }
+namespace my::renderer { class RenderPass; }
 namespace my::renderer { class RenderGraph; }
 // clang-format on
 
@@ -168,7 +168,7 @@ private:
                   PassContext& p_pass,
                   FilterObjectFunc1 p_filter1,
                   FilterObjectFunc2 p_filter2,
-                  DrawPass* p_draw_pass,
+                  RenderPass* p_render_pass,
                   bool p_use_material);
 
     RenderGraph* m_renderGraph = nullptr;

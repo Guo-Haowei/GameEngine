@@ -14,9 +14,7 @@ RenderPassBuilder& RenderPassBuilder::Read(ResourceAccess p_access, std::string_
 
 RenderPassBuilder& RenderPassBuilder::Write(ResourceAccess p_access, std::string_view p_name) {
     // ignore DSV write?
-    if (p_access != ResourceAccess::DSV) {
-        m_writes.emplace_back(Resource{ std::string(p_name), p_access });
-    }
+    m_writes.emplace_back(Resource{ std::string(p_name), p_access });
     return *this;
 }
 

@@ -5,7 +5,8 @@
 
 // clang-format off
 namespace my { class IGraphicsManager; }
-namespace my::renderer { struct DrawPass; }
+namespace my { struct GpuTexture; }
+namespace my::renderer { class RenderPass; }
 // clang-format on
 
 namespace my {
@@ -17,56 +18,40 @@ namespace my::renderer {
 
 struct RenderSystem;
 
-struct RenderPassDesc {
-    RenderPassName name;
-    std::vector<RenderPassName> dependencies;
-};
-
 struct RenderPassExcutionContext {
     const RenderSystem& render_system;
     Framebuffer* framebuffer;
-    DrawPass& pass;
+    RenderPass& pass;
     IRenderCmdContext& cmd;
 };
 
 using ExecuteFunc = void (*)(RenderPassExcutionContext& ctx);
 
-struct DrawPass {
-
-    std::string name;
-    std::shared_ptr<Framebuffer> framebuffer;
-    ExecuteFunc executor;
-
-    std::vector<RenderCommand> commands;
-
-    void AddCommand(const RenderCommand& cmd) {
-        commands.emplace_back(cmd);
-    }
-};
-
 class RenderPass {
 public:
-    void AddDrawPass(std::string_view p_name, std::shared_ptr<Framebuffer> p_framebuffer, ExecuteFunc p_func);
-
     void Execute(const renderer::RenderSystem& p_data, IRenderCmdContext& p_cmd);
 
-    RenderPassName GetName() const { return m_name; }
+    void AddCommand(const RenderCommand& cmd) { m_commands.emplace_back(cmd); }
+    const auto& GetCommands() const { return m_commands; }
 
-    const char* GetNameString() const { return RenderPassNameToString(m_name); }
-
-    const auto& GetDrawPasses() const { return m_drawPasses; }
-
-    [[nodiscard]] auto FindDrawPass(const std::string& p_name) -> Result<DrawPass*>;
+    std::string_view GetName() const { return m_name; }
 
 protected:
-    void CreateInternal(RenderPassDesc& pass_desc);
+    std::string m_name;
 
-    RenderPassName m_name;
-    std::vector<RenderPassName> m_inputs;
+    std::vector<std::shared_ptr<GpuTexture>> m_rtvs;
+    std::shared_ptr<GpuTexture> m_dsv;
 
-    std::vector<DrawPass> m_drawPasses;
-    std::unordered_map<std::string, uint32_t> m_lookup;
+    std::vector<std::shared_ptr<GpuTexture>> m_uavs;
+    std::vector<std::shared_ptr<GpuTexture>> m_srvs;
 
+    std::shared_ptr<Framebuffer> m_framebuffer;
+
+    std::vector<RenderCommand> m_commands;
+    ExecuteFunc m_executor;
+
+    friend class RenderPassBuilder;
+    friend class RenderGraphBuilder;
     friend class RenderGraph;
 };
 
