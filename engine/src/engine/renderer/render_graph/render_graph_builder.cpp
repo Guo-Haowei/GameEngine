@@ -547,8 +547,8 @@ void RenderGraphBuilder::AddVoxelizationPass() {
     pass.Create(RG_RES_VOXEL_LIGHTING, { desc, sampler })
         .Create(RG_RES_VOXEL_NORMAL, { desc2, sampler })
         .Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
-        .Write(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
-        .Write(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL)
+        .Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
+        .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL)
         .SetExecuteFunc(VoxelizationPassFunc);
 
 #if 0
@@ -669,18 +669,6 @@ static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
 #endif
 
     cmd.DrawQuad();
-
-#if 0
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBrdfLutSlot());
-    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetDiffuseIrradianceSlot());
-    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetPrefilteredSlot());
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
-
-    if (voxel_lighting && voxel_normal) {
-        cmd.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelLightingSlot());
-        cmd.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelNormalSlot());
-    }
-#endif
 }
 
 void RenderGraphBuilder::AddLightingPass() {
@@ -868,21 +856,15 @@ static void BloomSetupFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
     auto& cmd = p_ctx.cmd;
-    auto& frame = cmd.GetCurrentFrame();
+
+    auto uav = p_ctx.pass.GetUavs()[0];
 
     cmd.SetPipelineState(PSO_BLOOM_SETUP);
-    auto input = cmd.FindTexture(RESOURCE_LIGHTING);
 
-    const uint32_t width = input->desc.width;
-    const uint32_t height = input->desc.height;
-    const uint32_t work_group_x = CeilingDivision(width, 16);
-    const uint32_t work_group_y = CeilingDivision(height, 16);
+    const uint32_t work_group_x = CeilingDivision(uav->desc.width, 16);
+    const uint32_t work_group_y = CeilingDivision(uav->desc.height, 16);
 
-    cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
-
-    // cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    // cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
@@ -892,25 +874,16 @@ static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
 
     HBN_PROFILE_EVENT();
 
-    const uint32_t pass_id = p_ctx.framebuffer->id;
     auto& cmd = p_ctx.cmd;
-    auto& frame = cmd.GetCurrentFrame();
 
     cmd.SetPipelineState(PSO_BLOOM_DOWNSAMPLE);
-    auto input = cmd.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
 
-    DEV_ASSERT(input);
+    auto uav = p_ctx.pass.GetUavs()[0];
 
-    const uint32_t width = input->desc.width;
-    const uint32_t height = input->desc.height;
-    const uint32_t work_group_x = CeilingDivision(width, 16);
-    const uint32_t work_group_y = CeilingDivision(height, 16);
+    const uint32_t work_group_x = CeilingDivision(uav->desc.width, 16);
+    const uint32_t work_group_y = CeilingDivision(uav->desc.height, 16);
 
-    cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + 1);
-
-    // cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    // cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
@@ -921,23 +894,15 @@ static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
     auto& cmd = p_ctx.cmd;
-    const uint32_t pass_id = p_ctx.framebuffer->id;
-    auto& frame = cmd.GetCurrentFrame();
+
+    auto uav = p_ctx.pass.GetUavs()[0];
 
     cmd.SetPipelineState(PSO_BLOOM_UPSAMPLE);
-    auto input = cmd.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id));
-    auto output = cmd.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + pass_id - 1));
 
-    const uint32_t width = output->desc.width;
-    const uint32_t height = output->desc.height;
-    const uint32_t work_group_x = CeilingDivision(width, 16);
-    const uint32_t work_group_y = CeilingDivision(height, 16);
+    const uint32_t work_group_x = CeilingDivision(uav->desc.width, 16);
+    const uint32_t work_group_y = CeilingDivision(uav->desc.height, 16);
 
-    cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + BLOOM_MIP_CHAIN_MAX);
-
-    // cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    // cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 void RenderGraphBuilder::AddBloomPass() {
@@ -985,36 +950,17 @@ void RenderGraphBuilder::AddBloomPass() {
     AddDependency(RG_PASS_FORWARD, RG_PASS_BLOOM_SETUP);
     setup_pass
         .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
-        .Write(ResourceAccess::UAV, bloom_res)
+        .Read(ResourceAccess::UAV, bloom_res)
         .SetExecuteFunc(BloomSetupFunc);
-
-#if 0
-        auto output = gm.FindTexture(RESOURCE_BLOOM_0);
-        DEV_ASSERT(output);
-        auto pass = gm.CreateFramebuffer(FramebufferDesc{
-            .transitions = {
-                ResourceTransition{
-                    .resource = output,
-                    .slot = GetUavSlotBloomOutputImage(),
-                    .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                        GpuTexture* p_texture,
-                                        int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
-                    .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                      GpuTexture*,
-                                      int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
-                } },
-        });
-        render_pass->AddDrawPass("BloomSetupComputePass", pass, BloomSetupFunc);
-#endif
 
     // Down Sample
     for (int i = 0, w = width, h = height; i < BLOOM_MIP_CHAIN_MAX - 1; ++i, w /= 2, h /= 2) {
         auto pass_name = std::format(RG_PASS_BLOOM_DOWN_PREFIX "{}", i);
         auto input = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
-        auto output = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w / 2, h / 2);
+        auto inout = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w / 2, h / 2);
         auto& pass = AddPass(pass_name);
-        pass.Read(ResourceAccess::UAV, input)
-            .Write(ResourceAccess::UAV, output)
+        pass.Read(ResourceAccess::SRV, input)
+            .Read(ResourceAccess::UAV, inout)
             .SetExecuteFunc(BloomDownSampleFunc);
         if (i == 0) {
             AddDependency(RG_PASS_BLOOM_SETUP, pass_name);
@@ -1022,38 +968,17 @@ void RenderGraphBuilder::AddBloomPass() {
             std::string prev_pass = std::format(RG_PASS_BLOOM_DOWN_PREFIX "{}", i - 1);
             AddDependency(prev_pass, pass_name);
         }
-#if 0
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
-        DEV_ASSERT(output);
-        auto pass = gm.CreateFramebuffer(FramebufferDesc{
-            .transitions = {
-                ResourceTransition{
-                    .resource = output,
-                    .slot = GetUavSlotBloomOutputImage(),
-                    .beginPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                        GpuTexture* p_texture,
-                                        int p_slot) { p_graphics_manager->BindUnorderedAccessView(p_slot, p_texture); },
-                    .endPassFunc = [](IGraphicsManager* p_graphics_manager,
-                                      GpuTexture*,
-                                      int p_slot) { p_graphics_manager->UnbindUnorderedAccessView(p_slot); },
-                } },
-        });
-        pass->id = i;
-        render_pass->AddDrawPass("BloomDownSampleComputePass", pass, BloomDownSampleFunc);
-#endif
     }
 
     // Up Sample
     for (int i = 0, w = width, h = height; i < BLOOM_MIP_CHAIN_MAX - 1; ++i, w /= 2, h /= 2) {
         auto pass_name = std::format(RG_PASS_BLOOM_UP_PREFIX "{}", i);
-        auto input1 = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w / 2, h / 2);
-        auto input2 = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
-        auto output = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
+        auto mip_low = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w / 2, h / 2);
+        auto mip = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
 
         auto& pass = AddPass(pass_name);
-        pass.Read(ResourceAccess::UAV, input1)
-            .Read(ResourceAccess::UAV, input2)
-            .Write(ResourceAccess::UAV, output)
+        pass.Read(ResourceAccess::UAV, mip)
+            .Read(ResourceAccess::SRV, mip_low)
             .SetExecuteFunc(BloomUpSampleFunc);
 
         if (i == BLOOM_MIP_CHAIN_MAX - 2) {
@@ -1725,28 +1650,28 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         edges.push_back({ from_idx, to_idx });
     }
 
-    for (const auto& [name, to] : reads) {
-        if (auto it = creates.find(name); it != creates.end()) {
-            const int from = it->second;
-            // DEBUG_PRINT("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
-            edges.push_back(std::make_pair(from, to));
-        } else {
-            return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
+    auto add_edges = [&creates, &edges](const std::vector<std::pair<std::string_view, int>>& p_res) -> Result<void> {
+        for (const auto& [name, to] : p_res) {
+            if (auto it = creates.find(name); it != creates.end()) {
+                const int from = it->second;
+                // remove passes that create and write the same buffer
+                if (from == to) continue;
+                // DEBUG_PRINT("edge found from {} (create) to {}", m_passes[from].GetName(), m_passes[to].GetName());
+                edges.push_back(std::make_pair(from, to));
+            } else {
+                return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
+            }
         }
-    }
 
-    for (const auto& [name, to] : writes) {
-        if (auto it = creates.find(name); it != creates.end()) {
-            const int from = it->second;
-            if (from == to) continue;  // remove passes that create and write the same buffer
-            // DEBUG_PRINT("edge found from {} (create) to {} (output)", m_passes[from].GetName(), m_passes[to].GetName());
-            edges.push_back(std::make_pair(from, to));
-        } else {
-            return HBN_ERROR(ErrorCode::ERR_DOES_NOT_EXIST, "resource '{}' not found", name);
-        }
-    }
+        return Result<void>();
+    };
 
-    // @TODO: remove duplicates?
+    if (auto res = add_edges(reads); !res) {
+        return HBN_ERROR(res.error());
+    }
+    if (auto res = add_edges(writes); !res) {
+        return HBN_ERROR(res.error());
+    }
 
     auto sorted = topological_sort(N, edges);
     if (static_cast<int>(sorted.size()) != N) {
@@ -1793,12 +1718,18 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         }
 
         std::vector<std::shared_ptr<GpuTexture>> srvs;
+        std::vector<std::shared_ptr<GpuTexture>> uavs;
         for (const auto& read : pass.m_reads) {
             switch (read.access) {
                 case ResourceAccess::SRV: {
                     auto srv = render_graph->FindResource(read.name);
                     DEV_ASSERT(srv);
                     srvs.emplace_back(srv);
+                } break;
+                case ResourceAccess::UAV: {
+                    auto uav = render_graph->FindResource(read.name);
+                    DEV_ASSERT(uav);
+                    uavs.emplace_back(uav);
                 } break;
                 default:
                     break;
@@ -1811,6 +1742,7 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         render_pass->m_executor = pass.m_func;
 
         render_pass->m_srvs = std::move(srvs);
+        render_pass->m_uavs = std::move(uavs);
 
         render_graph->AddPass(pass.m_name, render_pass);
     }

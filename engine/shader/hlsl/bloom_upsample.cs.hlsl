@@ -1,16 +1,14 @@
 /// File: bloom_upsample.cs.hlsl
-#include "cbuffer.hlsl.h"
 #include "sampler.hlsl.h"
-#include "shader_resource_defines.hlsl.h"
-#include "unordered_access_defines.hlsl.h"
 
 Texture2D t_BloomInputTexture : register(t0);
+RWTexture2D<float3> u_BloomOutputImage : register(u0);
 
 [numthreads(16, 16, 1)] void main(uint3 dispatch_thread_id : SV_DISPATCHTHREADID) {
     const uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;
-    RW_TEXTURE_2D(BloomOutputImage).GetDimensions(width, height);
+    u_BloomOutputImage.GetDimensions(width, height);
     float2 output_image_size = float2(width, height);
 
     float2 uv = float2(output_coord.x / output_image_size.x,
@@ -53,8 +51,7 @@ Texture2D t_BloomInputTexture : register(t0);
     upsample += (a + c + g + i);
     upsample *= 1.0 / 16.0;
 
-    float3 final_color = RW_TEXTURE_2D(BloomOutputImage).Load(output_coord).rgb;
+    float3 final_color = u_BloomOutputImage.Load(output_coord).rgb;
     final_color = lerp(final_color, upsample, 0.6);
-    RW_TEXTURE_2D(BloomOutputImage)
-    [output_coord] = float4(final_color, 1.0);
+    u_BloomOutputImage[output_coord] = float4(final_color, 1.0);
 }

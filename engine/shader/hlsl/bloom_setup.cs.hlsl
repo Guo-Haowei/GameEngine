@@ -1,10 +1,8 @@
 /// File: bloom_setup.cs.hlsl
-#include "cbuffer.hlsl.h"
 #include "sampler.hlsl.h"
-#include "shader_resource_defines.hlsl.h"
-#include "unordered_access_defines.hlsl.h"
 
 Texture2D t_TextureLighting : register(t0);
+RWTexture2D<float3> u_BloomOutputImage : register(u0);
 
 float rgb_to_luma(float3 rgb) {
     return sqrt(dot(rgb, float3(0.299, 0.587, 0.114)));
@@ -14,7 +12,7 @@ float rgb_to_luma(float3 rgb) {
     uint2 output_coord = dispatch_thread_id.xy;
 
     uint width, height;
-    RW_TEXTURE_2D(BloomOutputImage).GetDimensions(width, height);
+    u_BloomOutputImage.GetDimensions(width, height);
     float2 output_image_size = float2(width, height);
     float2 uv = float2(output_coord.x / output_image_size.x,
                        output_coord.y / output_image_size.y);
@@ -28,6 +26,5 @@ float rgb_to_luma(float3 rgb) {
     }
 
     // @TODO: fix bloom
-    RW_TEXTURE_2D(BloomOutputImage)
-    [output_coord] = float4(color, 1.0);
+    u_BloomOutputImage[output_coord] = float4(color, 1.0);
 }

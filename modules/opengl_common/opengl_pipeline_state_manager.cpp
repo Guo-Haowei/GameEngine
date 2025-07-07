@@ -274,6 +274,9 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
 #endif
         glUniform1i(location, p_slot);
     };
+    set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", 0);
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextureSPIRV_Cross_DummySampler", 0);
+    set_location("SPIRV_Cross_Combinedt_BloomInputTextures_linearClampSampler", 0);
     glUseProgram(0);
 
     return program;

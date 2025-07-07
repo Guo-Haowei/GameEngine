@@ -36,6 +36,8 @@ public:
 
     std::string_view GetName() const { return m_name; }
 
+    const auto& GetUavs() const { return m_uavs; }
+
 protected:
     std::string m_name;
 
