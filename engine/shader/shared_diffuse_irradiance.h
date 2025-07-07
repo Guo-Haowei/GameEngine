@@ -24,7 +24,7 @@ float4 main(vsoutput_position input) : SV_TARGET {
 #if defined(GLSL_LANG)
             irradiance += textureLod(t_Skybox, sample_dir, 0.0).rgb * cos(theta) * sin(theta);
 #else
-            irradiance += TEXTURE_CUBE(Skybox).SampleLevel(s_cubemapClampSampler, sample_dir, 0.0).rgb * cos(theta) * sin(theta);
+            irradiance += t_Skybox.SampleLevel(s_cubemapClampSampler, sample_dir, 0.0).rgb * cos(theta) * sin(theta);
 #endif
             samples += 1.0;
         }

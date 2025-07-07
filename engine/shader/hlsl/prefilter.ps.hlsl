@@ -5,5 +5,7 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
+Texture2D t_Skybox : register(t0);
+
 // include implementation
 #include "shared_prefilter.h"

@@ -508,8 +508,7 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
     };
 
     // bind common textures
-    bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
-    bind_slot(RESOURCE_POINT_SHADOW_CUBE_ARRAY, GetPointShadowArraySlot(), Dimension::TEXTURE_CUBE_ARRAY);
+    // bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
 
     const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
@@ -544,10 +543,6 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.GenerateMipmap(voxel_lighting.get());
     cmd.GenerateMipmap(voxel_normal.get());
-
-    // unbind stuff
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetShadowMapSlot());
-    cmd.UnbindTexture(Dimension::TEXTURE_CUBE_ARRAY, GetPointShadowArraySlot());
 
     // @TODO: [SCRUM-28] refactor
     cmd.UnsetRenderTarget();
@@ -675,12 +670,12 @@ static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.Clear(fb, CLEAR_COLOR_BIT);
     cmd.SetPipelineState(PSO_LIGHTING);
 
+    // @TODO: fix
+    #if 0
     const auto brdf = cmd.m_brdfImage->gpu_texture;
     auto diffuse_iraddiance = cmd.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
     auto prefiltered = cmd.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
     const bool has_env = brdf && diffuse_iraddiance && prefiltered;
-
-    // @TODO: fix
     auto voxel_lighting = cmd.FindTexture(RESOURCE_VOXEL_LIGHTING);
     auto voxel_normal = cmd.FindTexture(RESOURCE_VOXEL_NORMAL);
     if (voxel_lighting && voxel_normal) {
@@ -698,9 +693,11 @@ static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
     if (shadow_map) {
         cmd.BindTexture(Dimension::TEXTURE_2D, shadow_map->GetHandle(), GetShadowMapSlot());
     }
+#endif
 
     cmd.DrawQuad();
 
+#if 0
     cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBrdfLutSlot());
     cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetDiffuseIrradianceSlot());
     cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetPrefilteredSlot());
@@ -710,6 +707,7 @@ static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
         cmd.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelLightingSlot());
         cmd.UnbindTexture(Dimension::TEXTURE_3D, GetVoxelNormalSlot());
     }
+#endif
 }
 
 void RenderGraphBuilder::AddLightingPass() {
@@ -726,6 +724,9 @@ void RenderGraphBuilder::AddLightingPass() {
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR0)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR2)
+        .Read(ResourceAccess::SRV, RG_RES_DEPTH_STENCIL)
+        .Read(ResourceAccess::SRV, RG_RES_SSAO)
+        .Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(LightingPassFunc);
 
@@ -798,13 +799,11 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     {
-#if 1
+#if 0
         auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
         constexpr int skybox_slot = GetPrefilteredSlot();
-#else
         auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
         constexpr int skybox_slot = GetSkyboxSlot();
-#endif
         if (skybox) {
             gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
             gm.SetPipelineState(PSO_ENV_SKYBOX);
@@ -813,6 +812,7 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
             gm.SetStencilRef(0);
             gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
         }
+#endif
     }
 
     // draw transparent objects
@@ -838,7 +838,8 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
 void RenderGraphBuilder::AddForwardPass() {
     auto& pass = AddPass(RG_PASS_FORWARD);
     AddDependency(RG_PASS_LIGHTING, RG_PASS_FORWARD);
-    pass.Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
+    pass.Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
+        .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(ForwardPassFunc);
 #if 0
@@ -906,9 +907,9 @@ static void BloomSetupFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), 0);
 
-    cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    //cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    //cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
@@ -934,9 +935,9 @@ static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + 1);
 
-    cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    //cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    //cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
@@ -961,9 +962,9 @@ static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), pass_id + BLOOM_MIP_CHAIN_MAX);
 
-    cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
+    //cmd.BindTexture(Dimension::TEXTURE_2D, input->GetHandle(), GetBloomInputTextureSlot());
     cmd.Dispatch(work_group_x, work_group_y, 1);
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
+    //cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
 }
 
 void RenderGraphBuilder::AddBloomPass() {
@@ -1154,6 +1155,7 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
         // @TODO: remove
         DebugVoxels(p_ctx.render_system, fb);
     } else {
+        #if 0
         auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
             std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
             if (!resource) {
@@ -1165,16 +1167,13 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
         bind_slot(RESOURCE_LIGHTING, GetTextureLightingSlot());
         bind_slot(RESOURCE_OUTLINE_SELECT, GetTextureHighlightSelectSlot());
         bind_slot(RESOURCE_BLOOM_0, GetBloomInputTextureSlot());
+        #endif
 
         cmd.SetViewport(Viewport(width, height));
         cmd.Clear(fb, CLEAR_COLOR_BIT);
 
         cmd.SetPipelineState(PSO_TONE);
         cmd.DrawQuad();
-
-        cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBloomInputTextureSlot());
-        cmd.UnbindTexture(Dimension::TEXTURE_2D, GetTextureLightingSlot());
-        cmd.UnbindTexture(Dimension::TEXTURE_2D, GetTextureHighlightSelectSlot());
     }
 }
 
@@ -1188,9 +1187,9 @@ void RenderGraphBuilder::AddTonePass() {
     AddDependency(RG_PASS_BLOOM_UP_PREFIX "0", RG_PASS_POST_PROCESS);
     auto& pass = AddPass(RG_PASS_POST_PROCESS);
     pass.Create(RG_RES_POST_PROCESS, { desc })
-        .Read(ResourceAccess::SRV, bloom_res)
         .Read(ResourceAccess::SRV, RG_RES_LIGHTING)
         .Read(ResourceAccess::SRV, RG_RES_OUTLINE)
+        .Read(ResourceAccess::SRV, bloom_res)
         .Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(TonePassFunc);
@@ -1803,17 +1802,31 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         const auto& pass = m_passes[idx];
         FramebufferDesc info;
 
-        for (const auto& output : pass.m_writes) {
-            switch (output.access) {
+
+        for (const auto& write : pass.m_writes) {
+            switch (write.access) {
                 case ResourceAccess::DSV: {
-                    auto depth = render_graph->FindResource(output.name);
+                    auto depth = render_graph->FindResource(write.name);
                     DEV_ASSERT(depth && info.depthAttachment == nullptr);
                     info.depthAttachment = depth;
                 } break;
                 case ResourceAccess::RTV: {
-                    auto color = render_graph->FindResource(output.name);
+                    auto color = render_graph->FindResource(write.name);
                     DEV_ASSERT(color);
                     info.colorAttachments.emplace_back(color);
+                } break;
+                default:
+                    break;
+            }
+        }
+
+        std::vector<std::shared_ptr<GpuTexture>> srvs;
+        for (const auto& read : pass.m_reads) {
+            switch (read.access) {
+                case ResourceAccess::SRV: {
+                    auto srv = render_graph->FindResource(read.name);
+                    DEV_ASSERT(srv);
+                    srvs.emplace_back(srv);
                 } break;
                 default:
                     break;
@@ -1824,6 +1837,8 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         render_pass->m_name = pass.m_name;
         render_pass->m_framebuffer = m_graphicsManager.CreateFramebuffer(info);
         render_pass->m_executor = pass.m_func;
+
+        render_pass->m_srvs = std::move(srvs);
 
         render_graph->AddPass(pass.m_name, render_pass);
     }

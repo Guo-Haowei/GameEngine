@@ -2,6 +2,8 @@
 #include "../common.hlsl.h"
 #include "../shader_resource_defines.hlsl.h"
 
+Texture2D t_GbufferNormalMap : register(t0);
+
 layout(location = 0) in vec2 pass_uv;
 layout(location = 0) out float out_color;
 
@@ -18,6 +20,7 @@ void main() {
     Vector3f N = texture(t_GbufferNormalMap, uv).rgb;
     N = 2.0f * N - 1.0f;
 
+    // @TODO: ?
     Vector3f rvec = Vector3f(texture(t_BaseColorMap, uv * noise_scale).xy, 0.0f);
     Vector3f tangent = normalize(rvec - N * dot(rvec, N));
     Vector3f bitangent = cross(N, tangent);

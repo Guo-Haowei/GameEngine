@@ -265,14 +265,6 @@ auto OpenGlPipelineStateManager::CreatePipelineImpl(const PipelineStateDesc &p_d
 #endif
         glUniform1i(location, p_slot);
     };
-    set_location("SPIRV_Cross_Combinedt_BloomInputTextureSPIRV_Cross_DummySampler", GetBloomInputTextureSlot());
-    set_location("SPIRV_Cross_Combinedt_BloomInputTextures_linearClampSampler", GetBloomInputTextureSlot());
-    set_location("SPIRV_Cross_Combinedt_TextureLightings_linearClampSampler", GetTextureLightingSlot());
-    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelectSPIRV_Cross_DummySampler", GetTextureHighlightSelectSlot());
-    set_location("SPIRV_Cross_Combinedt_TextureHighlightSelects_linearClampSampler", GetTextureHighlightSelectSlot());
-    set_location("SPIRV_Cross_Combinedt_SkyboxHdrs_linearClampSampler", GetSkyboxHdrSlot());
-    set_location("SPIRV_Cross_Combinedt_Skyboxs_cubemapClampSampler", GetSkyboxSlot());
-    set_location("SPIRV_Cross_Combinedt_BaseColorMaps_linearClampSampler", GetBaseColorMapSlot());
     glUseProgram(0);
 
     return program;

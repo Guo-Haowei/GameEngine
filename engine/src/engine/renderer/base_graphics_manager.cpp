@@ -582,6 +582,7 @@ void BaseGraphicsManager::UpdateEmitters(const Scene& p_scene) {
     }
 }
 
+// @TODO: embed draw buffer in shader
 void BaseGraphicsManager::DrawQuad() {
     SetMesh(m_screenQuadBuffers.get());
     DrawElements(m_screenQuadBuffers->desc.drawCount);

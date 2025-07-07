@@ -11,26 +11,9 @@ DESCRIPTOR_SRV_LIST
 #else  // #if defined(HLSL_LANG_D3D12)
 
 #define SRV_DEFINES                                                                   \
-    SRV(Texture2D, BaseColorMap, 0, RESOURCE_NONE)                                    \
-    SRV(Texture2D, NormalMap, 1, RESOURCE_NONE)                                       \
-    SRV(Texture2D, MaterialMap, 2, RESOURCE_NONE)                                     \
-    SRV(Texture2D, BloomInputTexture, 3, RESOURCE_NONE)                               \
-    SRV(Texture3D, VoxelLighting, 4, RESOURCE_VOXEL_LIGHTING)                         \
-    SRV(Texture3D, VoxelNormal, 5, RESOURCE_VOXEL_NORMAL)                             \
-    SRV(Texture2D, ShadowMap, 6, RESOURCE_NONE)                                       \
-    SRV(TextureCubeArray, PointShadowArray, 7, RESOURCE_NONE)                         \
-    SRV(Texture2D, TextureHighlightSelect, 8, RESOURCE_OUTLINE_SELECT)                \
-    SRV(Texture2D, GbufferDepth, 9, RESOURCE_GBUFFER_DEPTH)                           \
-    SRV(Texture2D, GbufferBaseColorMap, 10, RESOURCE_GBUFFER_BASE_COLOR)              \
-    SRV(Texture2D, GbufferNormalMap, 12, RESOURCE_GBUFFER_NORMAL)                     \
-    SRV(Texture2D, GbufferMaterialMap, 13, RESOURCE_GBUFFER_MATERIAL)                 \
-    SRV(Texture2D, TextureLighting, 14, RESOURCE_LIGHTING)                            \
-    SRV(Texture2D, SkyboxHdr, 15, RESOURCE_NONE)                                      \
-    SRV(TextureCube, Skybox, 16, RESOURCE_ENV_SKYBOX_CUBE_MAP)                        \
-    SRV(Texture2D, BrdfLut, 17, RESOURCE_NONE)                                        \
-    SRV(TextureCube, DiffuseIrradiance, 18, RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP) \
-    SRV(TextureCube, Prefiltered, 19, RESOURCE_ENV_PREFILTER_CUBE_MAP)                \
-    SRV(Texture2D, SsaoMap, 20, RESOURCE_SSAO)
+    SRV(Texture2D, BaseColorMap, 30, RESOURCE_NONE)                                   \
+    SRV(Texture2D, NormalMap, 31, RESOURCE_NONE)                                      \
+    SRV(Texture2D, MaterialMap, 32, RESOURCE_NONE)                                     
 
 #if defined(HLSL_LANG_D3D11)
 #define SRV(TYPE, NAME, SLOT, BINDING) TYPE t_##NAME : register(t##SLOT);

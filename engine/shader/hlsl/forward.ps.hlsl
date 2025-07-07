@@ -5,6 +5,8 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
+Texture2D t_ShadowMap : register(t0);
+
 float4 main(vsoutput_mesh input) : SV_TARGET {
     const float2 texcoord = input.uv;
     const float4 world_position = mul(c_invView, float4(input.world_position, 1.0f));
@@ -42,7 +44,8 @@ float4 main(vsoutput_mesh input) : SV_TARGET {
         N = normalize(input.normal);
     }
 
-    float3 color = compute_lighting(base_color,
+    float3 color = compute_lighting(t_ShadowMap,
+    base_color,
                                     world_position.xyz,
                                     N,
                                     metallic,

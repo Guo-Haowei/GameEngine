@@ -41,14 +41,14 @@ float point_shadow_calculation(Light p_light, float3 p_frag_pos, float3 p_eye) {
 
     float shadow = 0.0;
 
-#if 1
+#if 0
     float4 uv = float4(frag_to_light, (float)p_light.shadow_map_index);
     float closest_depth = TEXTURE_CUBE_ARRAY(PointShadowArray).SampleLevel(s_shadowSampler, uv, 0).r;
     closest_depth *= light_far;
     if (current_depth - bias > closest_depth) {
         shadow += 1.0;
     }
-#else
+    ///
     for (int i = 0; i < NUM_POINT_SHADOW_SAMPLES; ++i) {
         float4 uv = float4(frag_to_light + POINT_LIGHT_SHADOW_SAMPLE_OFFSET[i] * disk_radius, (float)p_light.shadow_map_index);
         float closest_depth = TEXTURE_CUBE_ARRAY(pointShadowArray).SampleLevel(s_shadowSampler, uv, 0).r;
@@ -89,7 +89,8 @@ float3 lighting(float3 N, float3 L, float3 V, float3 radiance, float3 F0, float 
     return direct_lighting;
 }
 
-float3 compute_lighting(float3 base_color,
+float3 compute_lighting(Texture2D shadowMap,
+float3 base_color,
                         float3 world_position,
                         float3 N,
                         float metallic,
@@ -113,18 +114,21 @@ float3 compute_lighting(float3 base_color,
         float shadow = 0.0;
         const float3 radiance = light.color;
         switch (light.type) {
-            case LIGHT_TYPE_INFINITE: {
-                float3 L = light.position;
-                float atten = 1.0;
-                const float3 H = normalize(V + L);
-                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
-                if (light.cast_shadow == 1) {
-                    const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(light, world_position, NdotL);
-                    direct_lighting *= (1.0 - shadow);
+            case LIGHT_TYPE_INFINITE:{
+                    float3 L = light.position;
+                    float atten = 1.0;
+                    const float3 H = normalize(V + L);
+                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
+                    if (light.cast_shadow == 1)
+                    {
+                        const float NdotL = max(dot(N, L), 0.0);
+                        shadow = shadowTest(shadowMap, light, world_position, NdotL);
+                        direct_lighting *= (1.0 - shadow);
+                    }
                 }
-            } break;
-            case LIGHT_TYPE_POINT: {
+                break;
+            case LIGHT_TYPE_POINT:{
+#if 0
                 float3 delta = -world_position + light.position;
                 float dist = length(delta);
                 float atten = (light.atten_constant + light.atten_linear * dist +
@@ -139,7 +143,8 @@ float3 compute_lighting(float3 base_color,
                         shadow = point_shadow_calculation(light, world_position, c_cameraPosition);
                     }
                 }
-            } break;
+#endif
+                } break;
             default:
                 break;
         }
@@ -151,15 +156,21 @@ float3 compute_lighting(float3 base_color,
     float3 kS = F;
     float3 kD = 1.0 - kS;
     // kD *= 1.0 - metallic;
+    #if 0
     float3 irradiance = TEXTURE_CUBE(DiffuseIrradiance).Sample(s_cubemapClampSampler, N).rgb;
     float3 diffuse = irradiance * base_color.rgb;
+#endif
+    float3 irradiance = float3(0, 0, 0);
+    float3 diffuse = float3(0, 0, 0);
     // HACK
-    // diffuse = base_color.rgb * c_ambientColor.rgb;
 
+    #if 0
     float3 prefilteredColor = TEXTURE_CUBE(Prefiltered).SampleLevel(s_cubemapClampLodSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
     float2 brdf_uv = float2(NdotV, roughness);
     float2 brdf = TEXTURE_2D(BrdfLut).Sample(s_linearClampSampler, brdf_uv).rg;
     float3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+#endif
+    float3 specular = float3(0, 0, 0);
 
     const float ao = 1.0;
     float3 ambient = (kD * diffuse + specular) * ao;
