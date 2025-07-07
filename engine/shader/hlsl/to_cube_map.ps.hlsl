@@ -4,7 +4,7 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
-TextureCube t_SkyboxHdr : register(t0);
+Texture2D t_SkyboxHdr : register(t0);
 
 float2 sample_spherical_map(float3 v) {
     const float2 inv_atan = float2(0.1591, 0.3183);

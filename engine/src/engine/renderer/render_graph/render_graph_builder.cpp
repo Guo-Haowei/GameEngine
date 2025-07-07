@@ -197,19 +197,6 @@ void RenderGraphBuilder::AddEarlyZPass() {
     pass.Create(RG_RES_DEPTH_STENCIL, { buffer_desc })
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(EarlyZPassFunc);
-
-#if 0
-
-    RenderPassDesc desc;
-    desc.name = RenderPassName::PREPASS;
-    auto pass = m_graph.CreatePass(desc);
-
-    FramebufferDesc fb_desc;
-    fb_desc.depthAttachment = depth;
-
-    auto framebuffer = manager.CreateFramebuffer(fb_desc);
-    pass->AddDrawPass(EARLY_Z_PASS_NAME, framebuffer, EarlyZPassFunc);
-#endif
 }
 
 static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
@@ -495,20 +482,6 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
     auto voxel_lighting = cmd.FindTexture(RESOURCE_VOXEL_LIGHTING);
     auto voxel_normal = cmd.FindTexture(RESOURCE_VOXEL_NORMAL);
     DEV_ASSERT(voxel_lighting && voxel_normal);
-
-    // @TODO: refactor pass to auto bind resources,
-    // and make it a class so don't do a map search every frame
-    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot, Dimension p_dimension = Dimension::TEXTURE_2D) {
-        std::shared_ptr<GpuTexture> resource = cmd.FindTexture(p_name);
-        if (!resource) {
-            return;
-        }
-
-        cmd.BindTexture(p_dimension, resource->GetHandle(), p_slot);
-    };
-
-    // bind common textures
-    // bind_slot(RESOURCE_SHADOW_MAP, GetShadowMapSlot());
 
     const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
