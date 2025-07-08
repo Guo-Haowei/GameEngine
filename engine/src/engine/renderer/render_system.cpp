@@ -24,6 +24,7 @@ RenderSystem::RenderSystem(const RenderOptions& p_options) : options(p_options) 
     DEV_ASSERT(m_renderGraph);
 }
 
+// @TODO: fix this function OMG
 static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent* p_material, MaterialConstantBuffer& cb) {
     cb.c_baseColor = p_material->baseColor;
     cb.c_metallic = p_material->metallic;

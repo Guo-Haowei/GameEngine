@@ -1,11 +1,15 @@
 /// File: forward.ps.hlsl
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
-#include "hlsl/lighting.hlsl"
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
 Texture2D t_ShadowMap : register(t0);
+TextureCube t_DiffuseIrradiance : register(t1);
+TextureCube t_Prefiltered : register(t2);
+Texture2D t_BrdfLut : register(t3);
+
+#include "hlsl/lighting.hlsl"
 
 float4 main(vsoutput_mesh input) : SV_TARGET {
     const float2 texcoord = input.uv;

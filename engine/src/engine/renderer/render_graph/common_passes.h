@@ -58,9 +58,7 @@ private:
     void AddPathTracerPass();
     void AddPathTracerTonePass();
 
-#if 0
     void AddGenerateSkylightPass();
-#endif
 };
 
 }  // namespace my

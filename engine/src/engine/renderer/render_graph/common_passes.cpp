@@ -891,12 +891,12 @@ void RenderGraphBuilderExt::AddDebugImagePass() {
         .SetExecuteFunc(DebugImagesFunc);
 }
 
-#if 0
 static void ConvertToCubemapFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT("hdr image to -> skybox");
     if (!p_ctx.render_system.bakeIbl) {
         return;
     }
+
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
     auto fb = p_ctx.framebuffer;
@@ -906,7 +906,6 @@ static void ConvertToCubemapFunc(RenderPassExcutionContext& p_ctx) {
     const auto [width, height] = fb->GetBufferSize();
 
     auto& frame = cmd.GetCurrentFrame();
-    cmd.BindTexture(Dimension::TEXTURE_2D, p_ctx.render_system.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
     for (int i = 0; i < 6; ++i) {
         cmd.SetRenderTarget(fb, i);
 
@@ -915,7 +914,6 @@ static void ConvertToCubemapFunc(RenderPassExcutionContext& p_ctx) {
         cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
         cmd.DrawSkybox();
     }
-    cmd.UnbindTexture(Dimension::TEXTURE_2D, GetSkyboxHdrSlot());
     cmd.GenerateMipmap(cube_map.get());
 }
 
@@ -923,7 +921,8 @@ static void DiffuseIrradianceFunc(RenderPassExcutionContext& p_ctx) {
     if (!p_ctx.render_system.bakeIbl) {
         return;
     }
-    HBN_PROFILE_EVENT("bake diffuse irradiance");
+
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
     auto fb = p_ctx.framebuffer;
@@ -931,9 +930,6 @@ static void DiffuseIrradianceFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetPipelineState(PSO_DIFFUSE_IRRADIANCE);
     const auto [width, height] = fb->GetBufferSize();
 
-    auto skybox = cmd.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-    DEV_ASSERT(skybox);
-    cmd.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
     auto& frame = cmd.GetCurrentFrame();
     for (int i = 0; i < 6; ++i) {
         cmd.SetRenderTarget(fb, i);
@@ -942,14 +938,14 @@ static void DiffuseIrradianceFunc(RenderPassExcutionContext& p_ctx) {
         cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), i);
         cmd.DrawSkybox();
     }
-    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
 }
 
 static void PrefilteredFunc(RenderPassExcutionContext& p_ctx) {
     if (!p_ctx.render_system.bakeIbl) {
         return;
     }
-    HBN_PROFILE_EVENT("bake prefiltered");
+
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
     auto fb = p_ctx.framebuffer;
@@ -957,9 +953,6 @@ static void PrefilteredFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetPipelineState(PSO_PREFILTER);
     auto [width, height] = fb->GetBufferSize();
 
-    auto skybox = cmd.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-    DEV_ASSERT(skybox);
-    cmd.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), GetSkyboxSlot());
     auto& frame = cmd.GetCurrentFrame();
     for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx, width /= 2, height /= 2) {
         for (int face_id = 0; face_id < 6; ++face_id) {
@@ -971,22 +964,52 @@ static void PrefilteredFunc(RenderPassExcutionContext& p_ctx) {
             cmd.DrawSkybox();
         }
     }
-    cmd.UnbindTexture(Dimension::TEXTURE_CUBE, GetSkyboxSlot());
 }
 
-void RenderGraphBuilder::AddGenerateSkylightPass() {
-    RenderPassCreateInfo info{
-        .name = RenderPassName::ENV,
-        .drawPasses = {
-            { { { RESOURCE_ENV_SKYBOX_CUBE_MAP } }, ConvertToCubemapFunc },
-            { { { RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP } }, DiffuseIrradianceFunc },
-            { { { RESOURCE_ENV_PREFILTER_CUBE_MAP } }, PrefilteredFunc },
-        },
-    };
+void RenderGraphBuilderExt::AddGenerateSkylightPass() {
+    {
+        GpuTextureDesc desc = BuildDefaultTextureDesc(PixelFormat::R32G32B32A32_FLOAT,
+                                                      AttachmentType::COLOR_CUBE,
+                                                      RT_SIZE_IBL_CUBEMAP,
+                                                      RT_SIZE_IBL_CUBEMAP,
+                                                      6,
+                                                      RESOURCE_MISC_GENERATE_MIPS,
+                                                      IBL_MIP_CHAIN_MAX);
 
-    CreateRenderPass(info);
+        // @TODO: import
+        // cmd.BindTexture(Dimension::TEXTURE_2D, p_ctx.render_system.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
+        auto& pass = AddPass(RG_PASS_BAKE_SKYBOX);
+        pass.Create(RG_RES_ENV_SKYBOX_CUBE, { desc, CubemapSampler() })
+            //.Read(ResourceAccess::UAV, RG_RES_PATHTRACER)
+            .SetExecuteFunc(ConvertToCubemapFunc);
+    }
+    {
+        GpuTextureDesc desc = BuildDefaultTextureDesc(PixelFormat::R32G32B32A32_FLOAT,
+                                                      AttachmentType::COLOR_CUBE,
+                                                      RT_SIZE_IBL_IRRADIANCE_CUBEMAP,
+                                                      RT_SIZE_IBL_IRRADIANCE_CUBEMAP,
+                                                      6);
+
+        auto& pass = AddPass(RG_PASS_BAKE_DIFFUSE);
+        pass.Create(RG_RES_ENV_DIFFUSE_CUBE, { desc, CubemapNoMipSampler() })
+            .Read(ResourceAccess::SRV, RG_RES_ENV_SKYBOX_CUBE)
+            .SetExecuteFunc(DiffuseIrradianceFunc);
+    }
+    {
+        GpuTextureDesc desc = BuildDefaultTextureDesc(PixelFormat::R32G32B32A32_FLOAT,
+                                                      AttachmentType::COLOR_CUBE,
+                                                      RT_SIZE_IBL_PREFILTERED_CUBEMAP,
+                                                      RT_SIZE_IBL_PREFILTERED_CUBEMAP,
+                                                      6,
+                                                      RESOURCE_MISC_GENERATE_MIPS,
+                                                      IBL_MIP_CHAIN_MAX);
+
+        auto& pass = AddPass(RG_PASS_BAKE_PREFILTERED);
+        pass.Create(RG_RES_ENV_PREFILTERED_CUBE, { desc, CubemapLodSampler() })
+            .Read(ResourceAccess::SRV, RG_RES_ENV_SKYBOX_CUBE)
+            .SetExecuteFunc(PrefilteredFunc);
+    }
 }
-#endif
 
 static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
     // @TODO: refactor this part
@@ -1092,9 +1115,7 @@ auto RenderGraphBuilderExt::CreateDefault(RenderGraphBuilderConfig& p_config) ->
 
     builder.AddEarlyZPass();
     builder.AddGbufferPass();
-#if 0
-    creator.AddGenerateSkylightPass();
-#endif
+    builder.AddGenerateSkylightPass();
     builder.AddShadowPass();
     builder.AddSsaoPass();
     builder.AddHighlightPass();
