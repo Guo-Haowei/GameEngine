@@ -149,9 +149,9 @@ void RenderGraphBuilderExt::AddEmpty() {
                                               AttachmentType::DEPTH_STENCIL_2D);
 
     auto& pass = AddPass(RG_PASS_EMPTY);
-    pass.Create(RG_RES_OVERLAY, { color_desc })
+    pass.Create(RG_RES_POST_PROCESS, { color_desc })
         .Create(RG_RES_DEPTH_STENCIL, { depth_desc })
-        .Write(ResourceAccess::RTV, RG_RES_OVERLAY)
+        .Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(EmptyPass);
 }
@@ -846,9 +846,10 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
     }
 }
 
-void RenderGraphBuilderExt::AddTonePass() {
+void RenderGraphBuilderExt::AddPostProcessPass() {
     auto desc = BuildDefaultTextureDesc(RT_FMT_TONE,
                                         AttachmentType::COLOR_2D);
+    desc.bindFlags |= BIND_SHADER_RESOURCE;
 
     auto bloom_res = std::format(RG_RES_BLOOM_PREFIX "{}x{}", m_config.frameWidth, m_config.frameHeight);
 
@@ -868,50 +869,6 @@ void RenderGraphBuilderExt::AddTonePass() {
     pass.Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .SetExecuteFunc(TonePassFunc);
-}
-
-// assume render target is setup
-static void DrawDebugImages(const RenderSystem& p_data, int p_width, int p_height, IGraphicsManager& p_graphics_manager) {
-    auto& frame = p_graphics_manager.GetCurrentFrame();
-
-    p_graphics_manager.SetViewport(Viewport(p_width, p_height));
-    p_graphics_manager.SetPipelineState(PSO_RW_TEXTURE_2D);
-
-    uint32_t offset = p_data.drawImageOffset;
-    for (const auto& draw_context : p_data.drawImageContext) {
-        p_graphics_manager.BindTexture(Dimension::TEXTURE_2D, draw_context.handle, GetBaseColorMapSlot());
-        p_graphics_manager.BindConstantBufferSlot<MaterialConstantBuffer>(frame.materialCb.get(), offset++);
-        p_graphics_manager.DrawQuad();
-        p_graphics_manager.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
-    }
-}
-
-static void DebugImagesFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
-    auto fb = p_ctx.framebuffer;
-    auto& cmd = p_ctx.cmd;
-    cmd.SetRenderTarget(fb);
-    cmd.Clear(fb, CLEAR_COLOR_BIT);
-
-    const int width = fb->desc.colorAttachments[0]->desc.width;
-    const int height = fb->desc.colorAttachments[0]->desc.height;
-    DrawDebugImages(p_ctx.render_system, width, height, cmd);
-}
-
-void RenderGraphBuilderExt::AddDebugImagePass() {
-    if (m_config.is_runtime) {
-        return;
-    }
-
-    auto desc = BuildDefaultTextureDesc(DEFAULT_SURFACE_FORMAT,
-                                        AttachmentType::COLOR_2D);
-    desc.bindFlags |= BIND_SHADER_RESOURCE;
-
-    auto& pass = AddPass(RG_PASS_OVERLAY);
-    pass.Create(RG_RES_OVERLAY, { desc })
-        .Read(ResourceAccess::SRV, RG_RES_POST_PROCESS)
-        .Write(ResourceAccess::RTV, RG_RES_OVERLAY)
-        .SetExecuteFunc(DebugImagesFunc);
 }
 
 static void ConvertToCubemapFunc(RenderPassExcutionContext& p_ctx) {
@@ -1135,8 +1092,7 @@ auto RenderGraphBuilderExt::CreateDefault(RenderGraphBuilderConfig& p_config) ->
     builder.AddLightingPass();
     builder.AddForwardPass();
     builder.AddBloomPass();
-    builder.AddTonePass();
-    builder.AddDebugImagePass();
+    builder.AddPostProcessPass();
 
     return builder.Compile();
 }
