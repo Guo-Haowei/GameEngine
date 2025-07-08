@@ -24,6 +24,7 @@ struct RenderOptions {
     bool ssaoEnabled{ false };
     bool vxgiEnabled{ false };
     bool bloomEnabled{ false };
+    bool iblEnabled{ false };
     int debugVoxelId{ 0 };
     int debugBvhDepth{ -1 };
     int voxelTextureSize{ 0 };

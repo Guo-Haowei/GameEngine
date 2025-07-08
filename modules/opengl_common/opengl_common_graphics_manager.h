@@ -82,8 +82,6 @@ protected:
     void OnWindowResize(int, int) override {}
     void SetPipelineStateImpl(PipelineStateName p_name) override;
 
-    void CreateGpuResources();
-
     // @TODO: rename
     RIDAllocator<OpenGlMeshBuffers> m_meshes;
 

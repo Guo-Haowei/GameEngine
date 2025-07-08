@@ -223,6 +223,11 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
         cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
     }
 
+    // IBL
+    {
+        cache.c_iblEnabled = options.iblEnabled;
+    }
+
     // SSAO
     {
         static auto kernel_data = GenerateSsaoKernel();

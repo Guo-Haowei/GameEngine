@@ -12,7 +12,6 @@ constexpr const char RG_PASS_LIGHTING[] = "p:lighting";
 constexpr const char RG_PASS_FORWARD[] = "p:forward";
 constexpr const char RG_PASS_BLOOM_SETUP[] = "p:bloom_setup";
 constexpr const char RG_PASS_POST_PROCESS[] = "p:post_process";
-constexpr const char RG_PASS_OVERLAY[] = "p:overlay";
 constexpr const char RG_PASS_SSAO[] = "p:ssao";
 constexpr const char RG_PASS_OUTLINE[] = "p:outline";
 constexpr const char RG_PASS_PATHTRACER[] = "p:pathtracer";
@@ -29,7 +28,6 @@ constexpr const char RG_RES_GBUFFER_COLOR2[] = "r:gbuffer2";
 constexpr const char RG_RES_SSAO[] = "r:ssao";
 constexpr const char RG_RES_LIGHTING[] = "r:lighting";
 constexpr const char RG_RES_POST_PROCESS[] = "r:post_process";
-constexpr const char RG_RES_OVERLAY[] = "r:overlay";
 constexpr const char RG_RES_VOXEL_LIGHTING[] = "r:voxel_lighting";
 constexpr const char RG_RES_VOXEL_NORMAL[] = "r:voxel_normal";
 constexpr const char RG_RES_OUTLINE[] = "r:outline";
@@ -41,6 +39,8 @@ constexpr const char RG_RES_ENV_PREFILTERED_CUBE[] = "r:prefiltered_cube";
 constexpr const char RG_RES_SSAO_NOISE[] = "r:ssao_noise";
 constexpr const char RG_RES_BRDF[] = "r:ssao_brdf";
 constexpr const char RG_RES_IBL[] = "r:ibl";
+constexpr const char RG_RES_LTC1[] = "r:ltc1";
+constexpr const char RG_RES_LTC2[] = "r:ltc2";
 
 #define RG_PASS_BLOOM_DOWN_PREFIX "p:bloom_downsample_"
 #define RG_PASS_BLOOM_UP_PREFIX   "p:bloom_upsample_"

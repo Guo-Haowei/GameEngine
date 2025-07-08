@@ -4,8 +4,10 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
+Texture2D t_Texture0 : register(t0);
+
 float4 main(vsoutput_uv input) : SV_TARGET {
-    float4 color = TEXTURE_2D(BaseColorMap).SampleLevel(s_linearClampSampler, input.uv, 0.0f);
+    float4 color = t_Texture0.SampleLevel(s_linearClampSampler, input.uv, 0.0f);
 
     switch (c_displayChannel) {
         case DISPLAY_CHANNEL_RRR:

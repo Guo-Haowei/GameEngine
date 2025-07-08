@@ -13,18 +13,20 @@ struct RenderGraphResourceCreateInfo {
     SamplerDesc samplerDesc = PointClampSampler();
 };
 
-// @TODO: move to somewhere else
 enum class ResourceAccess : uint8_t {
-    SRV,
-    UAV,
-    RTV,
-    DSV,
-    Present,
-    CopySrc,
-    CopyDst,
-    DepthRead,
-    DepthWrite,
+    NONE = BIT(0),
+    SRV = BIT(1),
+    UAV = BIT(2),
+    RTV = BIT(3),
+    DSV = BIT(4),
+    // Present,
+    // CopySrc,
+    // CopyDst,
+    // DepthRead,
+    // DepthWrite,
 };
+
+DEFINE_ENUM_BITWISE_OPERATIONS(ResourceAccess)
 
 class RenderPassBuilder {
 public:

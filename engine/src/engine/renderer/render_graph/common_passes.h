@@ -45,8 +45,7 @@ private:
     void AddLightingPass();
     void AddForwardPass();
     void AddBloomPass();
-    void AddTonePass();
-    void AddDebugImagePass();
+    void AddPostProcessPass();
 
     void AddPathTracerPass();
     void AddPathTracerTonePass();

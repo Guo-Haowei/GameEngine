@@ -29,9 +29,6 @@ struct SamplerDesc;
 class Scene;
 struct GpuConstantBuffer;
 
-// @TODO: refactor
-extern ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
-
 const char* ToString(RenderGraphName p_name);
 
 struct FrameContext {

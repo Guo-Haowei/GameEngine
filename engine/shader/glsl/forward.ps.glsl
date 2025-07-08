@@ -12,16 +12,20 @@ in struct PS_INPUT {
 #include "../cbuffer.hlsl.h"
 
 uniform sampler2D u_Texture0;
-uniform sampler3D u_Texture1;
+uniform samplerCube u_Texture1;
 uniform samplerCube u_Texture2;
-uniform samplerCube u_Texture3;
+uniform sampler2D u_Texture3;
 uniform sampler2D u_Texture4;
+uniform sampler2D u_Texture5;
+uniform sampler3D u_Texture6;
 
 #define t_ShadowMap         u_Texture0
-#define t_VoxelLighting     u_Texture1
-#define t_DiffuseIrradiance u_Texture2
-#define t_Prefiltered       u_Texture3
-#define t_BrdfLut           u_Texture4
+#define t_DiffuseIrradiance u_Texture1
+#define t_Prefiltered       u_Texture2
+#define t_BrdfLut           u_Texture3
+#define t_LTC1              u_Texture4
+#define t_LTC2              u_Texture5
+#define t_VoxelLighting     u_Texture6
 
 #include "lighting.glsl"
 
@@ -57,7 +61,6 @@ void main() {
     const vec3 world_position = (c_invView * vec4(view_position, 1.0f)).xyz;
 
     out_color.rgb = compute_lighting(t_ShadowMap,
-                                     t_VoxelLighting,
                                      base_color,
                                      world_position,
                                      N,

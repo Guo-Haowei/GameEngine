@@ -16,6 +16,7 @@ DVAR_BOOL(gfx_gpu_validation, DVAR_FLAG_NONE, "Enable GPU validation", true);
 // Switches
 DVAR_BOOL(gfx_debug_shadow, DVAR_FLAG_CACHE, "Debug shadow", false);
 DVAR_BOOL(gfx_enable_bloom, DVAR_FLAG_CACHE, "Enable Bloom", true);
+DVAR_BOOL(gfx_enable_ibl, DVAR_FLAG_CACHE, "Enable IBL", false);
 
 // SSAO
 DVAR_BOOL(gfx_ssao_enabled, DVAR_FLAG_CACHE, "Enable SSAO", true);

@@ -36,6 +36,10 @@ void RendererPanel::UpdateInternal(Scene&) {
         ImGui::Checkbox("debug", (bool*)DVAR_GET_POINTER(gfx_debug_shadow));
     });
 
+    CollapseWindow("IBL", []() {
+        ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_ibl));
+    });
+
     CollapseWindow("Bloom", []() {
         ImGui::Checkbox("enable", (bool*)DVAR_GET_POINTER(gfx_enable_bloom));
         ImGui::DragFloat("threshold", (float*)DVAR_GET_POINTER(gfx_bloom_threshold), 0.01f, 0.0f, 3.0f);

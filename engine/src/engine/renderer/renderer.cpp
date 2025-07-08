@@ -52,6 +52,7 @@ void BeginFrame() {
         .ssaoEnabled = DVAR_GET_BOOL(gfx_ssao_enabled),
         .vxgiEnabled = false,
         .bloomEnabled = DVAR_GET_BOOL(gfx_enable_bloom),
+        .iblEnabled = DVAR_GET_BOOL(gfx_enable_ibl),
         .debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel),
         .debugBvhDepth = DVAR_GET_INT(gfx_bvh_debug),
         .voxelTextureSize = DVAR_GET_INT(gfx_voxel_size),

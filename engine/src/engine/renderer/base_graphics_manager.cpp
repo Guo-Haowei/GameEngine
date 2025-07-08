@@ -57,8 +57,6 @@ static auto CreateUniformCheckSize(BaseGraphicsManager& p_graphics_manager, uint
     return p_graphics_manager.CreateConstantBuffer(buffer_desc);
 }
 
-ConstantBuffer<PerSceneConstantBuffer> g_constantCache;
-
 // @TODO: refactor this
 template<typename T>
 static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
@@ -99,9 +97,6 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
         frame_context.pointShadowCb = *::my::CreateUniformCheckSize<PointShadowConstantBuffer>(*this, 6 * MAX_POINT_LIGHT_SHADOW_COUNT);
         frame_context.perFrameCb = *::my::CreateUniformCheckSize<PerFrameConstantBuffer>(*this, 1);
     }
-
-    // @TODO: refactor
-    CreateUniformBuffer<PerSceneConstantBuffer>(g_constantCache);
 
     DEV_ASSERT(m_pipelineStateManager);
 
@@ -506,19 +501,10 @@ uint64_t BaseGraphicsManager::GetFinalImage() const {
         case RenderGraphName::DUMMY: {
             texture = FindTexture(RG_RES_GBUFFER_COLOR1).get();
         } break;
-        case RenderGraphName::DEFAULT: {
-#if 0
-            // @TODO: debug panel
-            texture = FindTexture(RESOURCE_SSAO).get();
-#else
-            texture = FindTexture(RG_RES_OVERLAY).get();
-#endif
-        } break;
-        case RenderGraphName::PATHTRACER: {
-            texture = FindTexture(RG_RES_POST_PROCESS).get();
-        } break;
+        case RenderGraphName::DEFAULT:
+        case RenderGraphName::PATHTRACER:
         case RenderGraphName::EMPTY: {
-            texture = FindTexture(RG_RES_OVERLAY).get();
+            texture = FindTexture(RG_RES_POST_PROCESS).get();
         } break;
         default: {
             CRASH_NOW();
@@ -594,8 +580,6 @@ void BaseGraphicsManager::OnSceneChange(const Scene& p_scene) {
 
         CreateMesh(mesh);
     }
-
-    g_constantCache.update();
 }
 
 }  // namespace my

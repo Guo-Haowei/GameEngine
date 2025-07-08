@@ -41,8 +41,6 @@ auto OpenGL4GraphicsManager::InitializeInternal() -> Result<void> {
         }
     }
 
-    CreateGpuResources();
-
     m_meshes.set_description("GPU-Mesh-Allocator");
 
     auto imgui = m_app->GetImguiManager();
