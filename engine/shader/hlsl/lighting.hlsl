@@ -153,15 +153,20 @@ float3 compute_lighting(Texture2D shadowMap,
     float3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
     float3 kS = F;
     float3 kD = 1.0 - kS;
-    // kD *= 1.0 - metallic;
-    float3 irradiance = t_DiffuseIrradiance.Sample(s_cubemapClampSampler, N).rgb;
-    float3 diffuse = irradiance * base_color.rgb;
-    // HACK
+    kD *= 1.0 - metallic;
 
-    float3 prefilteredColor = t_Prefiltered.SampleLevel(s_cubemapClampLodSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
-    float2 brdf_uv = float2(NdotV, roughness);
-    float2 brdf = t_BrdfLut.Sample(s_linearClampSampler, brdf_uv).rg;
-    float3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+    float3 irradiance = float3(0.0, 0.0, 0.0);
+    float3 diffuse = float3(0.0, 0.0, 0.0);
+    float3 specular = float3(0.0, 0.0, 0.0);
+    if (c_iblEnabled != 0) {
+        irradiance = t_DiffuseIrradiance.Sample(s_cubemapClampSampler, N).rgb;
+        diffuse = irradiance * base_color.rgb;
+
+        float3 prefilteredColor = t_Prefiltered.SampleLevel(s_cubemapClampLodSampler, R, roughness * MAX_REFLECTION_LOD).rgb;
+        float2 brdf_uv = float2(NdotV, roughness);
+        float2 brdf = t_BrdfLut.Sample(s_linearClampSampler, brdf_uv).rg;
+        specular = prefilteredColor * (F * brdf.x + brdf.y);
+    }
 
     const float ao = 1.0;
     float3 ambient = (kD * diffuse + specular) * ao;

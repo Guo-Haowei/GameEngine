@@ -176,7 +176,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     Vector4f _per_frame_padding_3;
     Vector4f _per_frame_padding_4;
     Vector3f c_sunPosition;
-    float _per_frame_padding_5;
+    int c_iblEnabled;
     //-----------------------------------------
     Vector4f c_ambientColor;  // 16
 

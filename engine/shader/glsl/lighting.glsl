@@ -10,8 +10,7 @@
 #ifdef DISABLE_IBL
 #define ENABLE_IBL 0
 #else
-// #define ENABLE_IBL 1
-#define ENABLE_IBL 0
+#define ENABLE_IBL 1
 #endif
 
 // @TODO: refactor
@@ -215,21 +214,21 @@ vec3 compute_lighting(sampler2D shadow_map,
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
-#if ENABLE_IBL == 1
-    vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
-    vec3 diffuse = irradiance * base_color.rgb;
-#else
+
     vec3 irradiance = vec3(0);
     vec3 diffuse = vec3(0);
-#endif
+    vec3 specular = vec3(0);
 
 #if ENABLE_IBL == 1
-    vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 brdf_uv = vec2(NdotV, 1.0 - roughness);
-    vec2 brdf = texture(t_BrdfLut, brdf_uv).rg;
-    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
-#else
-    vec3 specular = vec3(0);
+    if (c_iblEnabled != 0) {
+        irradiance = texture(t_DiffuseIrradiance, N).rgb;
+        diffuse = irradiance * base_color.rgb;
+
+        vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
+        vec2 brdf_uv = vec2(NdotV, 1.0 - roughness);
+        vec2 brdf = texture(t_BrdfLut, brdf_uv).rg;
+        specular = prefilteredColor * (F * brdf.x + brdf.y);
+    }
 #endif
 
     const float ao = 1.0;
