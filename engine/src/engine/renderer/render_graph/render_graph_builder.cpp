@@ -62,6 +62,8 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
     const int N = static_cast<int>(m_passes.size());
     DEV_ASSERT(N);
 
+    std::unordered_map<std::string_view, ResourceAccess> accesses;
+
     for (int i = 0; i < N; ++i) {
         const auto& pass = m_passes[i];
         {
@@ -81,9 +83,11 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         // @TODO: figure out what access to give to resource
         for (const auto& read : pass.m_reads) {
             reads.push_back(std::make_pair(std::string_view(read.name), i));
+            accesses[read.name] |= read.access;
         }
         for (const auto& write : pass.m_writes) {
             writes.push_back(std::make_pair(std::string_view(write.name), i));
+            accesses[write.name] |= write.access;
         }
     }
 
@@ -141,8 +145,25 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
             const auto& name = create.first;
             const auto& create_info = create.second;
             GpuTextureDesc desc = create_info.resourceDesc;
-            // @TODO: move desc
             desc.name = name;
+            const auto it = accesses.find(name);
+            if (it == accesses.end()) {
+                return HBN_ERROR(ErrorCode::ERR_INVALID_DATA, "bad resource '{}'", name);
+            }
+            ResourceAccess access = it->second;
+            if ((access & ResourceAccess::RTV) != ResourceAccess::NONE) {
+                desc.bindFlags |= BIND_RENDER_TARGET;
+            }
+            if ((access & ResourceAccess::DSV) != ResourceAccess::NONE) {
+                desc.bindFlags |= BIND_DEPTH_STENCIL;
+            }
+            if ((access & ResourceAccess::SRV) != ResourceAccess::NONE) {
+                desc.bindFlags |= BIND_SHADER_RESOURCE;
+            }
+            if ((access & ResourceAccess::UAV) != ResourceAccess::NONE) {
+                desc.bindFlags |= BIND_UNORDERED_ACCESS;
+            }
+
             auto texture = m_graphicsManager.CreateTexture(desc, create_info.samplerDesc);
             render_graph->AddResource(name, texture);
         }

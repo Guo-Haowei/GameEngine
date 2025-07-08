@@ -436,7 +436,6 @@ void RenderGraphBuilderExt::AddVoxelizationPass() {
     desc.mipLevels = LogTwo(voxel_size);
     desc.depth = voxel_size;
     desc.miscFlags |= RESOURCE_MISC_GENERATE_MIPS;
-    desc.bindFlags |= BIND_RENDER_TARGET | BIND_SHADER_RESOURCE | BIND_UNORDERED_ACCESS;
 
     SamplerDesc sampler(MinFilter::LINEAR_MIPMAP_LINEAR, MagFilter::POINT, AddressMode::BORDER);
 
@@ -708,7 +707,6 @@ void RenderGraphBuilderExt::AddBloomPass() {
         auto texture_desc = BuildDefaultTextureDesc(PixelFormat::R16G16B16A16_FLOAT,
                                                     AttachmentType::COLOR_2D,
                                                     w, h);
-        texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
 
         auto res_name = std::format(RG_RES_BLOOM_PREFIX "{}x{}", w, h);
         setup_pass.Create(res_name, { texture_desc, sampler });
@@ -870,6 +868,7 @@ void RenderGraphBuilderExt::AddDebugImagePass() {
 
     auto desc = BuildDefaultTextureDesc(DEFAULT_SURFACE_FORMAT,
                                         AttachmentType::COLOR_2D);
+    desc.bindFlags |= BIND_SHADER_RESOURCE;
 
     auto& pass = AddPass(RG_PASS_OVERLAY);
     pass.Create(RG_RES_OVERLAY, { desc })
@@ -1035,7 +1034,6 @@ static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
 void RenderGraphBuilderExt::AddPathTracerPass() {
     GpuTextureDesc texture_desc = BuildDefaultTextureDesc(PixelFormat::R32G32B32A32_FLOAT,
                                                           AttachmentType::COLOR_2D);
-    texture_desc.bindFlags |= BIND_UNORDERED_ACCESS;
 
     auto& pass = AddPass(RG_PASS_PATHTRACER);
     pass.Create(RG_RES_PATHTRACER, { texture_desc, LinearClampSampler() })
@@ -1159,22 +1157,6 @@ GpuTextureDesc RenderGraphBuilderExt::BuildDefaultTextureDesc(PixelFormat p_form
             break;
         default:
             CRASH_NOW();
-            break;
-    }
-    switch (p_type) {
-        case AttachmentType::COLOR_2D:
-        case AttachmentType::COLOR_CUBE:
-            desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_RENDER_TARGET;
-            break;
-        case AttachmentType::SHADOW_2D:
-        case AttachmentType::SHADOW_CUBE_ARRAY:
-            desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
-            break;
-        case AttachmentType::DEPTH_2D:
-        case AttachmentType::DEPTH_STENCIL_2D:
-            desc.bindFlags |= BIND_SHADER_RESOURCE | BIND_DEPTH_STENCIL;
-            break;
-        default:
             break;
     }
     return desc;

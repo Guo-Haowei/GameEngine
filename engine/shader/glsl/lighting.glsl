@@ -10,7 +10,8 @@
 #ifdef DISABLE_IBL
 #define ENABLE_IBL 0
 #else
-#define ENABLE_IBL 1
+// #define ENABLE_IBL 1
+#define ENABLE_IBL 0
 #endif
 
 // @TODO: refactor
