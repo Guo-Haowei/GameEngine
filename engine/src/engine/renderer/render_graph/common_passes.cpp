@@ -94,8 +94,24 @@ static void ExecuteDrawCommands(const RenderSystem& p_data, const RenderPass& p_
     }
 }
 
-static void EarlyZPassFunc(RenderPassExcutionContext& p_ctx) {
+struct ScopedEvent {
+    IRenderCmdContext& m_ctx;
+
+    ScopedEvent(IRenderCmdContext& p_ctx, std::string_view p_name) : m_ctx(p_ctx) {
+        m_ctx.BeginEvent(p_name);
+    }
+
+    ~ScopedEvent() {
+        m_ctx.EndEvent();
+    }
+};
+
+#define RENDER_PASS_FUNC()                                \
+    ScopedEvent _scoped(p_ctx.cmd, p_ctx.pass.GetName()); \
     HBN_PROFILE_EVENT();
+
+static void EarlyZPassFunc(RenderPassExcutionContext& p_ctx) {
+    RENDER_PASS_FUNC();
 
     Framebuffer* fb = p_ctx.framebuffer;
     auto& cmd = p_ctx.cmd;
@@ -150,7 +166,7 @@ void RenderGraphBuilderExt::AddEarlyZPass() {
 }
 
 static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     const Framebuffer* fb = p_ctx.framebuffer;
     auto& cmd = p_ctx.cmd;
@@ -228,11 +244,10 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
         return;
     }
 
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
 
-    cmd.BeginEvent("SSAO");
     auto fb = p_ctx.framebuffer;
     const uint32_t width = fb->desc.colorAttachments[0]->desc.width;
     const uint32_t height = fb->desc.colorAttachments[0]->desc.height;
@@ -250,8 +265,6 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.SetPipelineState(PSO_SSAO);
     cmd.DrawQuad();
-
-    cmd.EndEvent();
 }
 
 void RenderGraphBuilderExt::AddSsaoPass() {
@@ -271,7 +284,7 @@ void RenderGraphBuilderExt::AddSsaoPass() {
 }
 
 static void HighlightPassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto fb = p_ctx.framebuffer;
     auto& cmd = p_ctx.cmd;
@@ -300,9 +313,10 @@ void RenderGraphBuilderExt::AddHighlightPass() {
 
 /// Shadow
 [[maybe_unused]] static void PointShadowPassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
+
     auto framebuffer = p_ctx.framebuffer;
 
     auto& frame = cmd.GetCurrentFrame();
@@ -332,10 +346,11 @@ void RenderGraphBuilderExt::AddHighlightPass() {
 }
 
 static void ShadowPassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
+
+    auto& cmd = p_ctx.cmd;
 
     const Framebuffer* framebuffer = p_ctx.framebuffer;
-    auto& cmd = p_ctx.cmd;
     const auto& frame = cmd.GetCurrentFrame();
 
     cmd.SetRenderTarget(framebuffer);
@@ -370,13 +385,9 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
         return;
     }
 
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
     auto& cmd = p_ctx.cmd;
     const auto& frame = cmd.GetCurrentFrame();
-
-    // auto voxel_lighting = cmd.FindTexture(RESOURCE_VOXEL_LIGHTING);
-    // auto voxel_normal = cmd.FindTexture(RESOURCE_VOXEL_NORMAL);
-    // DEV_ASSERT(voxel_lighting && voxel_normal);
 
     const int voxel_size = DVAR_GET_INT(gfx_voxel_size);
 
@@ -387,9 +398,6 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
 
     const PassContext& pass = p_ctx.render_system.voxelPass;
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
-
-    // glSubpixelPrecisionBiasNV(1, 1);
-    // glSubpixelPrecisionBiasNV(8, 8);
 
     // @TODO: hack
     if (cmd.GetBackend() == Backend::OPENGL) {
@@ -406,10 +414,9 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetPipelineState(PSO_VOXELIZATION_POST);
     cmd.Dispatch(group_size, group_size, group_size);
 
-    // @TODO: fix this
-    CRASH_NOW();
-    // cmd.GenerateMipmap(voxel_lighting.get());
-    // cmd.GenerateMipmap(voxel_normal.get());
+    for (auto& uav : p_ctx.pass.GetUavs()) {
+        cmd.GenerateMipmap(uav.get());
+    }
 
     // @TODO: [SCRUM-28] refactor
     cmd.UnsetRenderTarget();
@@ -444,7 +451,7 @@ void RenderGraphBuilderExt::AddVoxelizationPass() {
 
 /// Emitter
 static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
     auto fb = p_ctx.framebuffer;
@@ -512,7 +519,7 @@ static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
 
 /// Lighting
 static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
     auto fb = p_ctx.framebuffer;
@@ -575,7 +582,7 @@ void RenderGraphBuilderExt::AddLightingPass() {
 
 /// Sky
 static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& gm = p_ctx.cmd;
 
@@ -646,7 +653,7 @@ static void BloomSetupFunc(RenderPassExcutionContext& p_ctx) {
         return;
     }
 
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
 
@@ -665,7 +672,7 @@ static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
         return;
     }
 
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
 
@@ -684,7 +691,7 @@ static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
         return;
     }
 
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
 
@@ -793,7 +800,7 @@ static void DebugVoxels(const RenderSystem& p_data, const Framebuffer* p_framebu
 /// Tone
 /// Change to post processing?
 static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
     auto fb = p_ctx.framebuffer;
@@ -1019,7 +1026,7 @@ void RenderGraphBuilderExt::AddPathTracerPass() {
 }
 
 static void PathTracerTonePassFunc(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
+    RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
     auto fb = p_ctx.framebuffer;

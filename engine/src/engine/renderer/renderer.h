@@ -17,6 +17,7 @@ enum class PathTracerMode {
     TILED,
 };
 
+// @TODO: [SCRUM-178] shadow atlas
 using PointShadowHandle = int;
 constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;
 
