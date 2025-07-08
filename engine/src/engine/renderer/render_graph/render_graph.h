@@ -5,9 +5,8 @@
 namespace my {
 
 #define RENDER_GRAPH_LIST                    \
-    RENDER_GRAPH_DECLARE(EMPTY, "empty")     \
-    RENDER_GRAPH_DECLARE(DEFAULT, "default") \
-    RENDER_GRAPH_DECLARE(DUMMY, "dummy")     \
+    RENDER_GRAPH_DECLARE(SCENE2D, "scene2d") \
+    RENDER_GRAPH_DECLARE(SCENE3D, "scene3d") \
     RENDER_GRAPH_DECLARE(PATHTRACER, "pathtracer")
 
 enum class RenderGraphName : uint8_t {

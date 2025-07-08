@@ -9,6 +9,7 @@
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_viewer.h"
 #include "editor/panels/renderer_panel.h"
+#include "editor/panels/tilemap_panel.h"
 #include "editor/panels/viewer.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/renderer/base_graphics_manager.h"
@@ -31,6 +32,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<HierarchyPanel>(*this));
     AddPanel(std::make_shared<PropertyPanel>(*this));
     AddPanel(std::make_shared<Viewer>(*this));
+    AddPanel(std::make_shared<TileMapPanel>(*this));
 #if !USING(PLATFORM_WASM)
     AddPanel(std::make_shared<ContentBrowser>(*this));
 #endif
