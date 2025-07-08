@@ -3,8 +3,6 @@
 
 namespace my {
 
-enum RenderTargetResourceName : uint8_t;
-
 enum class BufferUsage {
     DEFAULT = 0,
     IMMUTABLE = 1,
@@ -93,8 +91,7 @@ struct GpuTextureDesc {
     BindFlags bindFlags;
     ResourceMiscFlags miscFlags;
     const void* initialData;
-    // @TODO: refactor
-    RenderTargetResourceName name;
+    std::string name;
 };
 
 enum class GpuBufferType : uint8_t {

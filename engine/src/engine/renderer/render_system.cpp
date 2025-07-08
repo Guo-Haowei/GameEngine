@@ -166,6 +166,37 @@ static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matri
     DebugDrawBVH(p_level, p_bvh->right.get(), p_matrix);
 };
 
+using KernelData = std::array<Vector4f, 64>;
+
+static_assert(sizeof(KernelData) == sizeof(Vector4f) * SSAO_KERNEL_SIZE);
+
+static KernelData GenerateSsaoKernel() {
+    auto lerp = [](float a, float b, float f) {
+        return a + f * (b - a);
+    };
+
+    KernelData kernel;
+
+    const int kernel_size = 32;
+    const float inv_kernel_size = 1.0f / kernel_size;
+    for (int i = 0; i < kernel.size(); ++i) {
+        // [-1, 1], [-1, 1], [0, 1]
+        Vector3f sample(Random::Float(-1.0f, 1.0f),
+                        Random::Float(-1.0f, 1.0f),
+                        Random::Float());
+
+        sample = normalize(sample);
+        sample *= Random::Float();
+        float scale = i * inv_kernel_size;
+
+        scale = lerp(0.1f, 1.0f, scale * scale);
+        sample *= scale;
+        kernel[i].xyz = sample;
+    }
+
+    return kernel;
+}
+
 static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
     const auto& options = p_out_data.options;
     auto& cache = p_out_data.perFrameCache;
@@ -193,10 +224,10 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
 
     // SSAO
     {
+        static auto kernel_data = GenerateSsaoKernel();
         cache.c_ssaoEnabled = options.ssaoEnabled;
         cache.c_ssaoKernalRadius = options.ssaoKernelRadius;
-        const auto& kernel_data = renderer::GetKernelData();
-        constexpr size_t kernel_size = sizeof(renderer::KernelData);
+        constexpr size_t kernel_size = sizeof(kernel_data);
         static_assert(sizeof(cache.c_ssaoKernel) == kernel_size);
         memcpy(cache.c_ssaoKernel, kernel_data.data(), kernel_size);
     }
@@ -221,17 +252,6 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
     }
 
     cache.c_forceFieldsCount = counter;
-
-    // @TODO: cache the slots
-    // Texture indices
-    auto find_index = [](RenderTargetResourceName p_name) -> uint32_t {
-        std::shared_ptr<GpuTexture> resource = IGraphicsManager::GetSingleton().FindTexture(p_name);
-        if (!resource) {
-            return 0;
-        }
-
-        return static_cast<uint32_t>(resource->GetResidentHandle());
-    };
 
 // @TODO: opengl doesn't really uses it, consider use 32 bit for handle
 #if 0
@@ -336,7 +356,7 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
                 this->passCache.emplace_back(pass_constant);
 
                 // @TODO: fix
-                auto pass = m_renderGraph->FindPass("p:shadow" /* RenderPassName::SHADOW */);
+                auto pass = m_renderGraph->FindPass("p:shadow");
                 if (!pass) {
                     continue;
                 }

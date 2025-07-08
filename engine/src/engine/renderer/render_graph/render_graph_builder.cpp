@@ -140,7 +140,10 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
         for (const auto& create : pass.m_creates) {
             const auto& name = create.first;
             const auto& create_info = create.second;
-            auto texture = m_graphicsManager.CreateTexture(create_info.resourceDesc, create_info.samplerDesc);
+            GpuTextureDesc desc = create_info.resourceDesc;
+            // @TODO: move desc
+            desc.name = name;
+            auto texture = m_graphicsManager.CreateTexture(desc, create_info.samplerDesc);
             render_graph->AddResource(name, texture);
         }
         for (const auto& import : pass.m_imports) {

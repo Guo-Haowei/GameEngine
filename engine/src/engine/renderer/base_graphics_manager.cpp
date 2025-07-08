@@ -85,10 +85,6 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
         return Result<void>();
     }
 
-    if (auto res = renderer::CreateResources(*this); !res) {
-        return HBN_ERROR(res.error());
-    }
-
     if (auto res = SelectRenderGraph(); !res) {
         return HBN_ERROR(res.error());
     }
@@ -112,19 +108,6 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
     if (auto res = m_pipelineStateManager->Initialize(); !res) {
         return HBN_ERROR(res.error());
     }
-
-    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot) {
-        std::shared_ptr<GpuTexture> texture = FindTexture(p_name);
-        if (!texture) {
-            return;
-        }
-
-        DEV_ASSERT(p_slot >= 0);
-        texture->slot = p_slot;
-    };
-#define SRV(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
-    SRV_DEFINES
-#undef SRV
 
     // create meshes
     m_screenQuadBuffers = *CreateMesh(MakePlaneMesh(Vector3f(1)));
@@ -369,7 +352,6 @@ void BaseGraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
     for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             UnbindTexture(texture->desc.dimension, texture->slot);
-            // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 }
@@ -379,7 +361,6 @@ void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             BindTexture(texture->desc.dimension, texture->GetHandle(), texture->slot);
-            // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 }
@@ -489,7 +470,7 @@ RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
 std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     auto texture = CreateTextureImpl(p_texture_desc, p_sampler_desc);
     if (p_texture_desc.type != AttachmentType::NONE) {
-        auto [_, inserted] = m_resourceLookup.try_emplace(p_texture_desc.name, texture);
+        auto [_, inserted] = m_resourceLookup.try_emplace(texture->desc.name, texture);
         if (!inserted) {
             CRASH_NOW();
         }
@@ -498,7 +479,7 @@ std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(const GpuTextureD
     return texture;
 }
 
-std::shared_ptr<GpuTexture> BaseGraphicsManager::FindTexture(RenderTargetResourceName p_name) const {
+std::shared_ptr<GpuTexture> BaseGraphicsManager::FindTexture(std::string_view p_name) const {
     if (m_resourceLookup.empty()) {
         return nullptr;
     }
@@ -514,21 +495,21 @@ uint64_t BaseGraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY: {
-            texture = FindTexture(RESOURCE_GBUFFER_NORMAL).get();
+            texture = FindTexture(RG_RES_GBUFFER_COLOR1).get();
         } break;
         case RenderGraphName::DEFAULT: {
 #if 0
             // @TODO: debug panel
             texture = FindTexture(RESOURCE_SSAO).get();
 #else
-            texture = FindTexture(RESOURCE_FINAL).get();
+            texture = FindTexture(RG_RES_OVERLAY).get();
 #endif
         } break;
         case RenderGraphName::PATHTRACER: {
-            texture = FindTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RG_RES_POST_PROCESS).get();
         } break;
         case RenderGraphName::EMPTY: {
-            texture = FindTexture(RESOURCE_FINAL).get();
+            texture = FindTexture(RG_RES_OVERLAY).get();
         } break;
         default: {
             CRASH_NOW();

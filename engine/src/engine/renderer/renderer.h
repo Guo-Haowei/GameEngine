@@ -55,13 +55,4 @@ bool IsPathTracerActive();
 void BindPathTracerData(IGraphicsManager& p_graphics_manager);
 void UnbindPathTracerData(IGraphicsManager& p_graphics_manager);
 
-// resources
-// @TODO: release resources
-using KernelData = std::array<Vector4f, 64>;
-
-Result<void> CreateResources(IGraphicsManager& p_graphics_manager);
-
-const KernelData& GetKernelData();
-std::shared_ptr<GpuTexture> GetSsaoNoiseTexture();
-
 }  // namespace my::renderer

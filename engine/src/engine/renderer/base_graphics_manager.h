@@ -69,7 +69,7 @@ public:
     void SetPipelineState(PipelineStateName p_name) override;
 
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override;
-    std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const override;
+    std::shared_ptr<GpuTexture> FindTexture(std::string_view p_name) const override;
 
     void RequestTexture(ImageAsset* p_image) override;
 
@@ -78,8 +78,6 @@ public:
 
     // @TODO: move to renderer
     uint64_t GetFinalImage() const override;
-
-    // static auto Create() -> Result<BaseGraphicsManager*>;
 
     Backend GetBackend() const override { return m_backend; }
 
@@ -110,7 +108,7 @@ protected:
 
     std::array<std::shared_ptr<RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
 
-    std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
+    std::unordered_map<std::string_view, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
     ConcurrentQueue<ImageAsset*> m_loadedImages;
 

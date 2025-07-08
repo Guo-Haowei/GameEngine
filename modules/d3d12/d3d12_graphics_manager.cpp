@@ -898,7 +898,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
     }
 
     gpu_texture->texture = ComPtr<ID3D12Resource>(texture_ptr);
-    SetDebugName(texture_ptr, RenderTargetResourceNameToString(p_texture_desc.name));
+    SetDebugName(texture_ptr, p_texture_desc.name);
     return gpu_texture;
 }
 
