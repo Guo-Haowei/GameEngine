@@ -41,6 +41,8 @@ constexpr const char RG_RES_ENV_PREFILTERED_CUBE[] = "r:prefiltered_cube";
 constexpr const char RG_RES_SSAO_NOISE[] = "r:ssao_noise";
 constexpr const char RG_RES_BRDF[] = "r:ssao_brdf";
 constexpr const char RG_RES_IBL[] = "r:ibl";
+constexpr const char RG_RES_LTC1[] = "r:ltc1";
+constexpr const char RG_RES_LTC2[] = "r:ltc2";
 
 #define RG_PASS_BLOOM_DOWN_PREFIX "p:bloom_downsample_"
 #define RG_PASS_BLOOM_UP_PREFIX   "p:bloom_upsample_"

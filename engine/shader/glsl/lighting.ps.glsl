@@ -14,7 +14,9 @@ uniform sampler2D u_Texture5;
 uniform samplerCube u_Texture6;
 uniform samplerCube u_Texture7;
 uniform sampler2D u_Texture8;
-uniform sampler3D u_Texture9;
+uniform sampler2D u_Texture9;
+uniform sampler2D u_Texture10;
+uniform sampler3D u_Texture11;
 
 #define t_GbufferBaseColorMap u_Texture0
 #define t_GbufferNormalMap    u_Texture1
@@ -25,7 +27,9 @@ uniform sampler3D u_Texture9;
 #define t_DiffuseIrradiance   u_Texture6
 #define t_Prefiltered         u_Texture7
 #define t_BrdfLut             u_Texture8
-#define t_VoxelLighting       u_Texture9
+#define t_LTC1                u_Texture9
+#define t_LTC2                u_Texture10
+#define t_VoxelLighting       u_Texture11
 
 #include "lighting.glsl"
 
@@ -53,7 +57,6 @@ void main() {
     }
 
     vec3 color = compute_lighting(t_ShadowMap,
-                                  t_VoxelLighting,
                                   base_color,
                                   world_position,
                                   N,

@@ -2,8 +2,13 @@
 #include "../pbr.hlsl.h"
 #include "shadow.glsl"
 
+#ifdef DISABLE_VXGI
+#define ENABLE_VXGI 0
+#else
 #define ENABLE_VXGI 1
-#if ENABLE_VXGI
+#endif
+
+#if ENABLE_VXGI == 1
 #include "vxgi.glsl"
 #endif
 
@@ -108,7 +113,7 @@ vec3 LTC_Evaluate(vec3 N, vec3 V, vec3 P, mat3 Minv, vec4 points[4]) {
     texcoord = texcoord * LUT_SCALE + LUT_BIAS;
 
     // Fetch the form factor for horizon clipping
-    float scale = texture(c_ltc2, texcoord).w;
+    float scale = texture(t_LTC2, texcoord).w;
 
     float sum = len * scale;
     if (!behind)
@@ -131,7 +136,6 @@ vec3 area_light(mat3 Minv, vec3 N, vec3 V, vec3 world_position, vec4 p_t2, vec3 
 }
 
 vec3 compute_lighting(sampler2D shadow_map,
-                      sampler3D voxel,
                       vec3 base_color,
                       vec3 world_position,
                       vec3 N,
@@ -155,10 +159,10 @@ vec3 compute_lighting(sampler2D shadow_map,
     uv = uv * LUT_SCALE + LUT_BIAS;
 
     // get 4 parameters for inverse_M
-    vec4 t1 = texture(c_ltc1, uv);
+    vec4 t1 = texture(t_LTC1, uv);
 
     // Get 2 parameters for Fresnel calculation
-    vec4 t2 = texture(c_ltc2, uv);
+    vec4 t2 = texture(t_LTC2, uv);
 
     mat3 Minv = mat3(
         vec3(t1.x, 0, t1.y),
@@ -191,12 +195,14 @@ vec3 compute_lighting(sampler2D shadow_map,
                                light.atten_quadratic * (dist * dist));
                 atten = 1.0 / atten;
                 if (atten > 0.01) {
+#if 0
                     vec3 L = normalize(delta);
                     const vec3 H = normalize(V + L);
                     direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color);
                     if (light.cast_shadow == 1) {
                         shadow = point_shadow_calculation(light, world_position, c_cameraPosition);
                     }
+#endif
                 }
             } break;
             case LIGHT_TYPE_AREA: {
@@ -241,12 +247,12 @@ vec3 compute_lighting(sampler2D shadow_map,
         const vec3 kD = (1.0 - kS) * (1.0 - metallic);
 
         // indirect diffuse
-        vec3 diffuse = base_color.rgb * cone_diffuse(voxel, world_position, N);
+        vec3 diffuse = base_color.rgb * cone_diffuse(t_VoxelLighting, world_position, N);
 
         // specular cone
         vec3 coneDirection = reflect(-V, N);
         vec3 specular = vec3(0);
-        specular = metallic * cone_specular(voxel, world_position, coneDirection, roughness);
+        specular = metallic * cone_specular(t_VoxelLighting, world_position, coneDirection, roughness);
         Lo += (kD * diffuse + specular) * ao;
     }
 #endif

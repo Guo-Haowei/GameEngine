@@ -15,6 +15,7 @@
 #include "render_pass_builder.h"
 
 // @TODO: remove
+#include "engine/renderer/ltc_matrix.h"
 #include "engine/runtime/asset_registry.h"
 
 namespace my {
@@ -443,6 +444,8 @@ void RenderGraphBuilderExt::AddVoxelizationPass() {
     pass.Create(RG_RES_VOXEL_LIGHTING, { desc, sampler })
         .Create(RG_RES_VOXEL_NORMAL, { desc, sampler })
         .Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
+        //.Read(ResourceAccess::SRV, RG_RES_LTC1)
+        //.Read(ResourceAccess::SRV, RG_RES_LTC2)
         .Read(ResourceAccess::UAV, RG_RES_VOXEL_LIGHTING)
         .Read(ResourceAccess::UAV, RG_RES_VOXEL_NORMAL)
         .SetExecuteFunc(VoxelizationPassFunc);
@@ -530,32 +533,63 @@ static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.Clear(fb, CLEAR_COLOR_BIT);
     cmd.SetPipelineState(PSO_LIGHTING);
 
-#if 0
-    auto diffuse_iraddiance = cmd.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
-    auto prefiltered = cmd.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
-    const bool has_env = brdf && diffuse_iraddiance && prefiltered;
-    auto voxel_lighting = cmd.FindTexture(RESOURCE_VOXEL_LIGHTING);
-    auto voxel_normal = cmd.FindTexture(RESOURCE_VOXEL_NORMAL);
-
-        cmd.BindTexture(Dimension::TEXTURE_2D, brdf->GetHandle(), GetBrdfLutSlot());
-        cmd.BindTexture(Dimension::TEXTURE_CUBE, diffuse_iraddiance->GetHandle(), GetDiffuseIrradianceSlot());
-        cmd.BindTexture(Dimension::TEXTURE_CUBE, prefiltered->GetHandle(), GetPrefilteredSlot());
-#endif
-
     cmd.DrawQuad();
 }
+
+static std::shared_ptr<GpuTexture> GenerateLTC(std::string_view p_name, const float* p_matrix_table) {
+    constexpr int LTC_SIZE = 64;
+    GpuTextureDesc desc{
+        .type = AttachmentType::NONE,
+        .dimension = Dimension::TEXTURE_2D,
+        .width = LTC_SIZE,
+        .height = LTC_SIZE,
+        .depth = 1,
+        .mipLevels = 1,
+        .arraySize = 1,
+        .format = PixelFormat::R32G32B32A32_FLOAT,
+        .bindFlags = BIND_SHADER_RESOURCE,
+        .miscFlags = RESOURCE_MISC_NONE,
+        .initialData = p_matrix_table,
+        .name = std::string(p_name),
+    };
+
+    return IGraphicsManager::GetSingleton().CreateTexture(desc, PointClampSampler());
+}
+
+// @TODO: refactor
+#if 0
+static unsigned int LoadMTexture(const float* matrixTable) {
+    unsigned int texture = 0;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_FLOAT, matrixTable);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texture;
+}
+#endif
 
 void RenderGraphBuilderExt::AddLightingPass() {
     auto lighting_desc = BuildDefaultTextureDesc(RT_FMT_LIGHTING,
                                                  AttachmentType::COLOR_2D);
 
     auto& pass = AddPass(RG_PASS_LIGHTING);
+    // @TODO: dynamic
     pass.Import(RG_RES_BRDF, []() {
-            // @TODO: dynamic
             auto image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
             return IGraphicsManager::GetSingleton().CreateTexture(const_cast<ImageAsset*>(image));
         })
+        .Import(RG_RES_LTC1, []() {
+            return GenerateLTC(RG_RES_LTC1, LTC1);
+        })
+        .Import(RG_RES_LTC2, []() {
+            return GenerateLTC(RG_RES_LTC2, LTC2);
+        })
         .Create(RG_RES_LIGHTING, { lighting_desc })
+        .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR0)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR2)
@@ -565,7 +599,8 @@ void RenderGraphBuilderExt::AddLightingPass() {
         .Read(ResourceAccess::SRV, RG_RES_ENV_DIFFUSE_CUBE)
         .Read(ResourceAccess::SRV, RG_RES_ENV_PREFILTERED_CUBE)
         .Read(ResourceAccess::SRV, RG_RES_BRDF)
-        .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
+        .Read(ResourceAccess::SRV, RG_RES_LTC1)
+        .Read(ResourceAccess::SRV, RG_RES_LTC2)
         .SetExecuteFunc(LightingPassFunc);
 
     if (m_config.enableVxgi) {
@@ -623,6 +658,8 @@ void RenderGraphBuilderExt::AddForwardPass() {
         .Read(ResourceAccess::SRV, RG_RES_ENV_DIFFUSE_CUBE)
         .Read(ResourceAccess::SRV, RG_RES_ENV_PREFILTERED_CUBE)
         .Read(ResourceAccess::SRV, RG_RES_BRDF)
+        .Read(ResourceAccess::SRV, RG_RES_LTC1)
+        .Read(ResourceAccess::SRV, RG_RES_LTC2)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(ForwardPassFunc);

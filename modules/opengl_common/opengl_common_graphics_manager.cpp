@@ -21,7 +21,6 @@
 #include <GLFW/glfw3.h>
 
 // @TODO: remove the following
-#include "engine/renderer/ltc_matrix.h"
 #include "engine/renderer/render_graph/render_graph_builder.h"
 
 #define RESIDENT_TEXTURE USE_IF(USING(PLATFORM_WINDOWS))
@@ -39,31 +38,6 @@
     } while (0)
 
 namespace my {
-
-// @TODO: refactor
-static unsigned int LoadMTexture(const float* matrixTable) {
-    unsigned int texture = 0;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_FLOAT, matrixTable);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    return texture;
-}
-
-static uint64_t MakeTextureResident(uint32_t p_handle) {
-    unused(p_handle);
-#if USING(RESIDENT_TEXTURE)
-    uint64_t ret = glGetTextureHandleARB(p_handle);
-    glMakeTextureHandleResidentARB(ret);
-    return ret;
-#else
-    return 0;
-#endif
-}
 
 CommonOpenGLGraphicsManager::CommonOpenGLGraphicsManager() : BaseGraphicsManager("CommonOpenGLGraphicsManager", Backend::OPENGL, 1) {
     m_pipelineStateManager = std::make_shared<OpenGlPipelineStateManager>();
@@ -650,18 +624,6 @@ void CommonOpenGLGraphicsManager::SetRenderTarget(const Framebuffer* p_framebuff
 
 void CommonOpenGLGraphicsManager::UnsetRenderTarget() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void CommonOpenGLGraphicsManager::CreateGpuResources() {
-    // @TODO: move to renderer
-    auto& cache = g_constantCache.cache;
-    // @TODO: refactor!
-    unsigned int m1 = LoadMTexture(LTC1);
-    unsigned int m2 = LoadMTexture(LTC2);
-    cache.c_ltc1.handle_gl = MakeTextureResident(m1);
-    cache.c_ltc2.handle_gl = MakeTextureResident(m2);
-
-    g_constantCache.update();
 }
 
 void CommonOpenGLGraphicsManager::Render() {

@@ -247,20 +247,4 @@ CBUFFER(EmitterConstantBuffer, 6) {
     Matrix4x4f _emitter_padding_5;
 };
 
-#if defined(HLSL_LANG_D3D11) || defined(__cplusplus) || defined(GLSL_LANG)
-
-// @TODO: merge it with per frame
-CBUFFER(PerSceneConstantBuffer, 7) {
-    // @TODO: remove the following
-    Vector4f _per_scene_padding_0;
-    Vector4f _per_scene_padding_1;
-    Vector4f _per_scene_padding_2;
-
-    // @TODO: unordered access
-    sampler2D c_ltc1;
-    sampler2D c_ltc2;
-};
-
-#endif
-
 #endif

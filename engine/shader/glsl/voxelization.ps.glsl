@@ -5,14 +5,20 @@ in vec3 pass_position;
 in vec3 pass_normal;
 in vec2 pass_uv;
 
+uniform sampler2D u_Texture0;
+uniform sampler2D u_Texture1;
+uniform sampler2D u_Texture2;
+
+#define t_ShadowMap u_Texture0
+#define t_LTC1      u_Texture1
+#define t_LTC2      u_Texture2
+
 #define DISABLE_IBL
+#define DISABLE_VXGI
 #include "lighting.glsl"
 
 layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;
 layout(rgba16f, binding = 1) uniform image3D u_normal_texture;
-
-uniform sampler2D u_Texture0;
-#define t_ShadowMap u_Texture0
 
 void main() {
     vec4 base_color = c_baseColor;
@@ -34,53 +40,16 @@ void main() {
 
     vec3 world_position = pass_position;
 
+    const float emissive = c_emissivePower;
     const vec3 N = normalize(pass_normal);
-    const vec3 V = normalize(c_cameraPosition - world_position);
-    const float NdotV = max(dot(N, V), 0.0);
-    vec3 Lo = vec3(0.0);
-    vec3 F0 = mix(vec3(0.04), base_color.rgb, metallic);
-    for (int light_idx = 0; light_idx < c_lightCount; ++light_idx) {
-        Light light = c_lights[light_idx];
-        int light_type = c_lights[light_idx].type;
-        vec3 direct_lighting = vec3(0.0);
-        float shadow = 0.0;
-        const vec3 radiance = light.color;
-        switch (light.type) {
-            case LIGHT_TYPE_INFINITE: {
-                vec3 L = light.position;
-                float atten = 1.0;
-                const vec3 H = normalize(V + L);
-                direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color.rgb);
-                if (light.cast_shadow == 1) {
-                    const float NdotL = max(dot(N, L), 0.0);
-                    shadow = shadowTest(t_ShadowMap, light, world_position, NdotL);
-                    direct_lighting *= (1.0 - shadow);
-                }
-            } break;
-            case LIGHT_TYPE_POINT: {
-                vec3 delta = -world_position + light.position;
-                float dist = length(delta);
-                float atten = (light.atten_constant + light.atten_linear * dist +
-                               light.atten_quadratic * (dist * dist));
-                atten = 1.0 / atten;
-                if (atten > 0.01) {
-                    vec3 L = normalize(delta);
-                    const vec3 H = normalize(V + L);
-                    direct_lighting = atten * lighting(N, L, V, radiance, F0, roughness, metallic, base_color.rgb);
-                    if (light.cast_shadow == 1) {
-                        shadow = point_shadow_calculation(light, world_position, c_cameraPosition);
-                    }
-                }
-            } break;
-            default:
-                break;
-        }
-        Lo += (1.0 - shadow) * direct_lighting;
-    }
-    // dummy ambient
-    vec3 color = Lo;
 
-    ///////////////////////////////////////////////////////////////////////////
+    vec3 color = compute_lighting(t_ShadowMap,
+                                  base_color.rgb,
+                                  world_position,
+                                  N,
+                                  metallic,
+                                  roughness,
+                                  emissive);
 
     // write lighting information to texel
     vec3 voxel = (pass_position - c_voxelWorldCenter) / c_voxelWorldSizeHalf;  // normalize it to [-1, 1]
