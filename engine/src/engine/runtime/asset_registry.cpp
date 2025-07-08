@@ -45,7 +45,9 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
 
         AssetManager* asset_manager = m_app->GetAssetManager();
         for (auto& [key, stub] : m_lookup) {
-            asset_manager->LoadAssetAsync(stub, nullptr, nullptr);
+            if (auto res = asset_manager->LoadAssetSync(stub); !res) {
+                return HBN_ERROR(res.error());
+            }
         }
     }
     return Result<void>();

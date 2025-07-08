@@ -110,13 +110,13 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
     }
 
     // create meshes
+    // @TODO: refactor
     m_screenQuadBuffers = *CreateMesh(MakePlaneMesh(Vector3f(1)));
     m_skyboxBuffers = *CreateMesh(MakeSkyBoxMesh());
     m_boxBuffers = *CreateMesh(MakeBoxMesh());
 
-    m_brdfImage = m_app->GetAssetRegistry()->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
-
     // @TODO: refactor
+    // for debug buffer?
     {
         constexpr int max_count = 4096 * 128;
         MeshComponent mesh;
@@ -265,6 +265,17 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
     }
 }
 
+std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(ImageAsset* p_image) {
+    DEV_ASSERT(p_image);
+
+    GpuTextureDesc texture_desc{};
+    SamplerDesc sampler_desc{};
+    FillTextureAndSamplerDesc(p_image, texture_desc, sampler_desc);
+
+    p_image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
+    return p_image->gpu_texture;
+}
+
 void BaseGraphicsManager::Update(Scene& p_scene) {
     HBN_PROFILE_EVENT();
 
@@ -276,11 +287,9 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
         ImageAsset* image = task;
         DEV_ASSERT(image);
 
-        GpuTextureDesc texture_desc{};
-        SamplerDesc sampler_desc{};
-        FillTextureAndSamplerDesc(image, texture_desc, sampler_desc);
-
-        image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
+        if (!image->gpu_texture) {
+            CreateTexture(image);
+        }
     }
 
     {

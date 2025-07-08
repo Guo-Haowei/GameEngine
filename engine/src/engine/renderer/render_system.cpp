@@ -275,14 +275,6 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
         if (!environment.sky.texturePath.empty()) {
             environment.sky.textureAsset = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(environment.sky.texturePath);
         }
-
-        if (auto asset = environment.sky.textureAsset; asset && asset->gpu_texture) {
-            p_out_data.skyboxHdr = asset->gpu_texture;
-
-            // @TODO: fix this
-            g_constantCache.cache.c_hdrEnvMap.Set64(asset->gpu_texture->GetResidentHandle());
-            g_constantCache.update();
-        }
     }
 
     // @TODO:

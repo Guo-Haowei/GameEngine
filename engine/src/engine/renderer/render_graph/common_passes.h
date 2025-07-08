@@ -5,14 +5,7 @@ namespace my {
 
 class RenderGraphBuilderExt : public RenderGraphBuilder {
 public:
-// @TODO: make it more extendable
-#if 0
-    static std::unique_ptr<RenderGraph> CreateDummy(RenderGraphBuilderConfig& p_config);
-#endif
-
     // @TODO: create 2D
-    // @TODO: create 3D cel
-
     [[nodiscard]] static auto CreateEmpty(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
     [[nodiscard]] static auto CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
     [[nodiscard]] static auto CreatePathTracer(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;

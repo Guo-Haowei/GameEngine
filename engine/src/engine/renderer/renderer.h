@@ -42,8 +42,6 @@ void AddImage2D(GpuTexture* p_texture,
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
 
-void RequestBakingIbl();
-
 const RenderSystem* GetRenderData();
 
 PointShadowHandle AllocatePointLightShadowMap();

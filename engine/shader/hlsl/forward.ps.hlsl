@@ -4,10 +4,11 @@
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
 
-Texture2D t_ShadowMap : register(t0);
-TextureCube t_DiffuseIrradiance : register(t1);
-TextureCube t_Prefiltered : register(t2);
-Texture2D t_BrdfLut : register(t3);
+TextureCube t_Skybox : register(t0);
+Texture2D t_ShadowMap : register(t1);
+TextureCube t_DiffuseIrradiance : register(t2);
+TextureCube t_Prefiltered : register(t3);
+Texture2D t_BrdfLut : register(t4);
 
 #include "hlsl/lighting.hlsl"
 

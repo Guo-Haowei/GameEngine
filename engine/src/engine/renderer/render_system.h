@@ -135,7 +135,6 @@ struct RenderSystem {
 
     // @TODO: refactor
     bool bakeIbl;
-    std::shared_ptr<GpuTexture> skyboxHdr;
 
     struct UpdateBuffer {
         std::vector<Vector3f> positions;

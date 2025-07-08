@@ -27,7 +27,6 @@ constexpr const char RG_RES_GBUFFER_COLOR0[] = "r:gbuffer0";
 constexpr const char RG_RES_GBUFFER_COLOR1[] = "r:gbuffer1";
 constexpr const char RG_RES_GBUFFER_COLOR2[] = "r:gbuffer2";
 constexpr const char RG_RES_SSAO[] = "r:ssao";
-constexpr const char RG_RES_SSAO_NOISE[] = "r:ssao_noise";
 constexpr const char RG_RES_LIGHTING[] = "r:lighting";
 constexpr const char RG_RES_POST_PROCESS[] = "r:post_process";
 constexpr const char RG_RES_OVERLAY[] = "r:overlay";
@@ -38,6 +37,10 @@ constexpr const char RG_RES_PATHTRACER[] = "r:pathtracer";
 constexpr const char RG_RES_ENV_SKYBOX_CUBE[] = "r:env_cube";
 constexpr const char RG_RES_ENV_DIFFUSE_CUBE[] = "r:diffuse_cube";
 constexpr const char RG_RES_ENV_PREFILTERED_CUBE[] = "r:prefiltered_cube";
+// external resources
+constexpr const char RG_RES_SSAO_NOISE[] = "r:ssao_noise";
+constexpr const char RG_RES_BRDF[] = "r:ssao_brdf";
+constexpr const char RG_RES_IBL[] = "r:ibl";
 
 #define RG_PASS_BLOOM_DOWN_PREFIX "p:bloom_downsample_"
 #define RG_PASS_BLOOM_UP_PREFIX   "p:bloom_upsample_"

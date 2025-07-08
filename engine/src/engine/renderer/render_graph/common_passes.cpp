@@ -531,29 +531,16 @@ static void LightingPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.Clear(fb, CLEAR_COLOR_BIT);
     cmd.SetPipelineState(PSO_LIGHTING);
 
-// @TODO: fix
 #if 0
-    const auto brdf = cmd.m_brdfImage->gpu_texture;
     auto diffuse_iraddiance = cmd.FindTexture(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP);
     auto prefiltered = cmd.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
     const bool has_env = brdf && diffuse_iraddiance && prefiltered;
     auto voxel_lighting = cmd.FindTexture(RESOURCE_VOXEL_LIGHTING);
     auto voxel_normal = cmd.FindTexture(RESOURCE_VOXEL_NORMAL);
-    if (voxel_lighting && voxel_normal) {
-        cmd.BindTexture(Dimension::TEXTURE_3D, voxel_lighting->GetHandle(), GetVoxelLightingSlot());
-        cmd.BindTexture(Dimension::TEXTURE_3D, voxel_normal->GetHandle(), GetVoxelNormalSlot());
-    }
 
-    if (has_env) {
         cmd.BindTexture(Dimension::TEXTURE_2D, brdf->GetHandle(), GetBrdfLutSlot());
         cmd.BindTexture(Dimension::TEXTURE_CUBE, diffuse_iraddiance->GetHandle(), GetDiffuseIrradianceSlot());
         cmd.BindTexture(Dimension::TEXTURE_CUBE, prefiltered->GetHandle(), GetPrefilteredSlot());
-    }
-
-    auto shadow_map = cmd.FindTexture(RESOURCE_SHADOW_MAP);
-    if (shadow_map) {
-        cmd.BindTexture(Dimension::TEXTURE_2D, shadow_map->GetHandle(), GetShadowMapSlot());
-    }
 #endif
 
     cmd.DrawQuad();
@@ -564,13 +551,21 @@ void RenderGraphBuilderExt::AddLightingPass() {
                                                  AttachmentType::COLOR_2D);
 
     auto& pass = AddPass(RG_PASS_LIGHTING);
-    pass.Create(RG_RES_LIGHTING, { lighting_desc })
+    pass.Import(RG_RES_BRDF, []() {
+            // @TODO: dynamic
+            auto image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
+            return IGraphicsManager::GetSingleton().CreateTexture(const_cast<ImageAsset*>(image));
+        })
+        .Create(RG_RES_LIGHTING, { lighting_desc })
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR0)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR1)
         .Read(ResourceAccess::SRV, RG_RES_GBUFFER_COLOR2)
         .Read(ResourceAccess::SRV, RG_RES_DEPTH_STENCIL)
         .Read(ResourceAccess::SRV, RG_RES_SSAO)
         .Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
+        .Read(ResourceAccess::SRV, RG_RES_ENV_DIFFUSE_CUBE)
+        .Read(ResourceAccess::SRV, RG_RES_ENV_PREFILTERED_CUBE)
+        .Read(ResourceAccess::SRV, RG_RES_BRDF)
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(LightingPassFunc);
 
@@ -596,22 +591,10 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
     const PassContext& pass = p_ctx.render_system.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    {
-#if 0
-        auto skybox = gm.FindTexture(RESOURCE_ENV_PREFILTER_CUBE_MAP);
-        constexpr int skybox_slot = GetPrefilteredSlot();
-        auto skybox = gm.FindTexture(RESOURCE_ENV_SKYBOX_CUBE_MAP);
-        constexpr int skybox_slot = GetSkyboxSlot();
-        if (skybox) {
-            gm.BindTexture(Dimension::TEXTURE_CUBE, skybox->GetHandle(), skybox_slot);
-            gm.SetPipelineState(PSO_ENV_SKYBOX);
-            gm.SetStencilRef(STENCIL_FLAG_SKY);
-            gm.DrawSkybox();
-            gm.SetStencilRef(0);
-            gm.UnbindTexture(Dimension::TEXTURE_CUBE, skybox_slot);
-        }
-#endif
-    }
+    gm.SetPipelineState(PSO_ENV_SKYBOX);
+    gm.SetStencilRef(STENCIL_FLAG_SKY);
+    gm.DrawSkybox();
+    gm.SetStencilRef(0);
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
@@ -636,7 +619,11 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
 void RenderGraphBuilderExt::AddForwardPass() {
     auto& pass = AddPass(RG_PASS_FORWARD);
     AddDependency(RG_PASS_LIGHTING, RG_PASS_FORWARD);
-    pass.Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
+    pass.Read(ResourceAccess::SRV, RG_RES_ENV_SKYBOX_CUBE)
+        .Read(ResourceAccess::SRV, RG_RES_SHADOW_MAP)
+        .Read(ResourceAccess::SRV, RG_RES_ENV_DIFFUSE_CUBE)
+        .Read(ResourceAccess::SRV, RG_RES_ENV_PREFILTERED_CUBE)
+        .Read(ResourceAccess::SRV, RG_RES_BRDF)
         .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
         .Write(ResourceAccess::RTV, RG_RES_LIGHTING)
         .SetExecuteFunc(ForwardPassFunc);
@@ -976,11 +963,15 @@ void RenderGraphBuilderExt::AddGenerateSkylightPass() {
                                                       RESOURCE_MISC_GENERATE_MIPS,
                                                       IBL_MIP_CHAIN_MAX);
 
-        // @TODO: import
-        // cmd.BindTexture(Dimension::TEXTURE_2D, p_ctx.render_system.skyboxHdr->GetHandle(), GetSkyboxHdrSlot());
         auto& pass = AddPass(RG_PASS_BAKE_SKYBOX);
-        pass.Create(RG_RES_ENV_SKYBOX_CUBE, { desc, CubemapSampler() })
-            //.Read(ResourceAccess::UAV, RG_RES_PATHTRACER)
+        pass.Import(RG_RES_IBL, []() {
+                AssetHandle handle{ "@res://images/ibl/circus.hdr" };
+                auto image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(handle);
+                return IGraphicsManager::GetSingleton().CreateTexture(const_cast<ImageAsset*>(image));
+            })
+            .Create(RG_RES_ENV_SKYBOX_CUBE, { desc, CubemapSampler() })
+            .Read(ResourceAccess::SRV, RG_RES_IBL)
+            .Write(ResourceAccess::RTV, RG_RES_ENV_SKYBOX_CUBE)
             .SetExecuteFunc(ConvertToCubemapFunc);
     }
     {
@@ -993,6 +984,7 @@ void RenderGraphBuilderExt::AddGenerateSkylightPass() {
         auto& pass = AddPass(RG_PASS_BAKE_DIFFUSE);
         pass.Create(RG_RES_ENV_DIFFUSE_CUBE, { desc, CubemapNoMipSampler() })
             .Read(ResourceAccess::SRV, RG_RES_ENV_SKYBOX_CUBE)
+            .Write(ResourceAccess::RTV, RG_RES_ENV_DIFFUSE_CUBE)
             .SetExecuteFunc(DiffuseIrradianceFunc);
     }
     {
@@ -1007,7 +999,10 @@ void RenderGraphBuilderExt::AddGenerateSkylightPass() {
         auto& pass = AddPass(RG_PASS_BAKE_PREFILTERED);
         pass.Create(RG_RES_ENV_PREFILTERED_CUBE, { desc, CubemapLodSampler() })
             .Read(ResourceAccess::SRV, RG_RES_ENV_SKYBOX_CUBE)
+            .Write(ResourceAccess::RTV, RG_RES_ENV_PREFILTERED_CUBE)
             .SetExecuteFunc(PrefilteredFunc);
+
+        AddDependency(RG_PASS_BAKE_PREFILTERED, RG_PASS_EARLY_Z);
     }
 }
 
@@ -1087,24 +1082,6 @@ auto RenderGraphBuilderExt::CreateEmpty(RenderGraphBuilderConfig& p_config) -> R
     builder.AddEmpty();
     return builder.Compile();
 }
-
-#if 0
-std::unique_ptr<RenderGraph> RenderGraphBuilder::CreateDummy(RenderGraphBuilderConfig& p_config) {
-    p_config.enableBloom = false;
-    p_config.enableIbl = false;
-    p_config.enableVxgi = false;
-
-    auto graph = std::make_unique<RenderGraph>();
-    RenderGraphBuilder creator(p_config, *graph.get());
-
-    creator.AddEarlyZPass();
-    creator.AddGbufferPass();
-
-    graph->Compile();
-    return graph;
-}
-
-#endif
 
 auto RenderGraphBuilderExt::CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
     p_config.enableBloom = true;

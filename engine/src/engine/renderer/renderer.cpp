@@ -59,7 +59,9 @@ void BeginFrame() {
     };
 
     s_glob.renderData = new RenderSystem(options);
-    s_glob.renderData->bakeIbl = false;
+    static bool firstFrame = true;
+    s_glob.renderData->bakeIbl = firstFrame;
+    firstFrame = false;
     s_glob.state = RenderState::RECORDING;
 }
 
@@ -108,14 +110,6 @@ void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
 
     // @TODO: refactor
     s_glob.pt.Update(p_scene);
-}
-
-void RequestBakingIbl() {
-    ASSERT_CAN_RECORD();
-
-    if (DEV_VERIFY(s_glob.renderData)) {
-        s_glob.renderData->bakeIbl = true;
-    }
 }
 
 const RenderSystem* GetRenderData() {
