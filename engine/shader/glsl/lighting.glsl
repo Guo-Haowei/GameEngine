@@ -7,6 +7,12 @@
 #include "vxgi.glsl"
 #endif
 
+#ifdef DISABLE_IBL
+#define ENABLE_IBL 0
+#else
+#define ENABLE_IBL 1
+#endif
+
 // @TODO: refactor
 vec3 lighting(vec3 N, vec3 L, vec3 V, vec3 radiance, vec3 F0, float roughness, float metallic, vec3 p_base_color) {
     vec3 Lo = vec3(0.0, 0.0, 0.0);
@@ -208,20 +214,22 @@ vec3 compute_lighting(sampler2D shadow_map,
     vec3 kS = F;
     vec3 kD = 1.0 - kS;
     kD *= 1.0 - metallic;
-#if 0
+#if ENABLE_IBL == 1
     vec3 irradiance = texture(t_DiffuseIrradiance, N).rgb;
     vec3 diffuse = irradiance * base_color.rgb;
-#endif
+#else
     vec3 irradiance = vec3(0);
     vec3 diffuse = vec3(0);
+#endif
 
-#if 0
+#if ENABLE_IBL == 1
     vec3 prefilteredColor = textureLod(t_Prefiltered, R, roughness * MAX_REFLECTION_LOD).rgb;
     vec2 brdf_uv = vec2(NdotV, 1.0 - roughness);
     vec2 brdf = texture(t_BrdfLut, brdf_uv).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
-#endif
+#else
     vec3 specular = vec3(0);
+#endif
 
     const float ao = 1.0;
     vec3 ambient = (kD * diffuse + specular) * ao;

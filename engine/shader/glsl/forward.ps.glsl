@@ -10,13 +10,20 @@ in struct PS_INPUT {
 } ps_in;
 
 #include "../cbuffer.hlsl.h"
-#include "lighting.glsl"
 
 uniform sampler2D u_Texture0;
 uniform sampler3D u_Texture1;
+uniform samplerCube u_Texture2;
+uniform samplerCube u_Texture3;
+uniform sampler2D u_Texture4;
 
-#define t_ShadowMap     u_Texture0
-#define t_VoxelLighting u_Texture1
+#define t_ShadowMap         u_Texture0
+#define t_VoxelLighting     u_Texture1
+#define t_DiffuseIrradiance u_Texture2
+#define t_Prefiltered       u_Texture3
+#define t_BrdfLut           u_Texture4
+
+#include "lighting.glsl"
 
 void main() {
     vec3 base_color = c_baseColor.rgb;
