@@ -41,7 +41,7 @@ float4 main(vsoutput_position input) : SV_TARGET {
 #if defined(GLSL_LANG)
             prefilteredColor += textureLod(t_Skybox, L, mipLevel).rgb * NdotL;
 #else
-            prefilteredColor += TEXTURE_CUBE(Skybox).SampleLevel(s_cubemapClampSampler, L, mipLevel).rgb * NdotL;
+            prefilteredColor += t_Skybox.SampleLevel(s_cubemapClampSampler, L, mipLevel).rgb * NdotL;
 #endif
             totalWeight += NdotL;
         }

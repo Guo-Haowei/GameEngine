@@ -114,7 +114,8 @@ public:
     std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc& p_desc) override { return nullptr; }
 
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override { return nullptr; }
-    std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const override { return nullptr; }
+    std::shared_ptr<GpuTexture> CreateTexture(ImageAsset* p_image) override { return nullptr; }
+    std::shared_ptr<GpuTexture> FindTexture(std::string_view p_name) const override { return nullptr; }
     void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) override {}
     void UnbindTexture(Dimension p_dimension, int p_slot) override {}
 
@@ -131,7 +132,7 @@ public:
 
     RenderGraphName GetActiveRenderGraphName() const override { return static_cast<RenderGraphName>(0); }
     bool SetActiveRenderGraph(RenderGraphName p_name) override { return true; }
-    renderer::RenderGraph* GetActiveRenderGraph() override { return nullptr; }
+    RenderGraph* GetActiveRenderGraph() override { return nullptr; }
 
     FrameContext& GetCurrentFrame() override {
         FrameContext* context = nullptr;

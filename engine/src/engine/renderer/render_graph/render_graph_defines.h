@@ -1,97 +1,71 @@
 #pragma once
 #include "engine/renderer/pixel_format.h"
-#include "engine/renderer/render_graph/render_graph_resources.h"
-
-// @TODO: move to shader_defines
-constexpr int IMAGE_VOXEL_ALBEDO_SLOT = 0;
-constexpr int IMAGE_VOXEL_NORMAL_SLOT = 1;
-constexpr int IMAGE_BLOOM_DOWNSAMPLE_INPUT_SLOT = 2;
-
-#define RENDER_PASS_NAME_LIST      \
-    RENDER_PASS_NAME(FORWARD)      \
-    RENDER_PASS_NAME(PREPASS)      \
-    RENDER_PASS_NAME(SHADOW)       \
-    RENDER_PASS_NAME(GBUFFER)      \
-    RENDER_PASS_NAME(SSAO)         \
-    RENDER_PASS_NAME(LIGHTING)     \
-    RENDER_PASS_NAME(BLOOM)        \
-    RENDER_PASS_NAME(ENV)          \
-    RENDER_PASS_NAME(OUTLINE)      \
-    RENDER_PASS_NAME(VOXELIZATION) \
-    RENDER_PASS_NAME(TONE)         \
-    RENDER_PASS_NAME(PATH_TRACER)  \
-    RENDER_PASS_NAME(FINAL)
-
-// @TODO: RESOURCE_SHADOW_MAP same as spot shadow, maybe make it shadow atlas?
-#define RENDER_TARGET_RESOURCE_NAME_LIST                                  \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_NONE)                            \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_SHADOW_MAP)                      \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_POINT_SHADOW_CUBE_ARRAY)         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_GBUFFER_NORMAL)                  \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_GBUFFER_BASE_COLOR)              \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_GBUFFER_MATERIAL)                \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_GBUFFER_DEPTH)                   \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_SSAO)                            \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_OUTLINE_SELECT)                  \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_ENV_SKYBOX_CUBE_MAP)             \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_ENV_DIFFUSE_IRRADIANCE_CUBE_MAP) \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_ENV_PREFILTER_CUBE_MAP)          \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_BLOOM_0)                         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_BLOOM_1)                         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_BLOOM_2)                         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_BLOOM_3)                         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_BLOOM_4)                         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_BLOOM_5)                         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_BLOOM_6)                         \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_LIGHTING)                        \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_TONE)                            \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_VOXEL_LIGHTING)                  \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_VOXEL_NORMAL)                    \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_PATH_TRACER)                     \
-    RENDER_TARGET_RESOURCE_NAME(RESOURCE_FINAL)
 
 namespace my {
 
-enum class RenderPassName {
-#define RENDER_PASS_NAME(name) name,
-    RENDER_PASS_NAME_LIST
-#undef RENDER_PASS_NAME
-        COUNT,
-};
+constexpr const char RG_PASS_EMPTY[] = "p:empty";
+constexpr const char RG_PASS_EARLY_Z[] = "p:early_z";
+constexpr const char RG_PASS_SHADOW[] = "p:shadow";
+constexpr const char RG_PASS_GBUFFER[] = "p:gbuffer";
+constexpr const char RG_PASS_VOXELIZATION[] = "p:voxelization";
+constexpr const char RG_PASS_LIGHTING[] = "p:lighting";
+constexpr const char RG_PASS_FORWARD[] = "p:forward";
+constexpr const char RG_PASS_BLOOM_SETUP[] = "p:bloom_setup";
+constexpr const char RG_PASS_POST_PROCESS[] = "p:post_process";
+constexpr const char RG_PASS_OVERLAY[] = "p:overlay";
+constexpr const char RG_PASS_SSAO[] = "p:ssao";
+constexpr const char RG_PASS_OUTLINE[] = "p:outline";
+constexpr const char RG_PASS_PATHTRACER[] = "p:pathtracer";
+constexpr const char RG_PASS_PATHTRACER_PRESENT[] = "p:pathtracer_present";
+constexpr const char RG_PASS_BAKE_SKYBOX[] = "p:env_skybox";
+constexpr const char RG_PASS_BAKE_DIFFUSE[] = "p:diffuse";
+constexpr const char RG_PASS_BAKE_PREFILTERED[] = "p:prefiltered";
 
-enum RenderTargetResourceName : uint8_t {
-#define RENDER_TARGET_RESOURCE_NAME(Name) Name,
-    RENDER_TARGET_RESOURCE_NAME_LIST
-#undef RENDER_TARGET_RESOURCE_NAME
+constexpr const char RG_RES_DEPTH_STENCIL[] = "r:depth";
+constexpr const char RG_RES_SHADOW_MAP[] = "r:shadow";
+constexpr const char RG_RES_GBUFFER_COLOR0[] = "r:gbuffer0";
+constexpr const char RG_RES_GBUFFER_COLOR1[] = "r:gbuffer1";
+constexpr const char RG_RES_GBUFFER_COLOR2[] = "r:gbuffer2";
+constexpr const char RG_RES_SSAO[] = "r:ssao";
+constexpr const char RG_RES_LIGHTING[] = "r:lighting";
+constexpr const char RG_RES_POST_PROCESS[] = "r:post_process";
+constexpr const char RG_RES_OVERLAY[] = "r:overlay";
+constexpr const char RG_RES_VOXEL_LIGHTING[] = "r:voxel_lighting";
+constexpr const char RG_RES_VOXEL_NORMAL[] = "r:voxel_normal";
+constexpr const char RG_RES_OUTLINE[] = "r:outline";
+constexpr const char RG_RES_PATHTRACER[] = "r:pathtracer";
+constexpr const char RG_RES_ENV_SKYBOX_CUBE[] = "r:env_cube";
+constexpr const char RG_RES_ENV_DIFFUSE_CUBE[] = "r:diffuse_cube";
+constexpr const char RG_RES_ENV_PREFILTERED_CUBE[] = "r:prefiltered_cube";
+// external resources
+constexpr const char RG_RES_SSAO_NOISE[] = "r:ssao_noise";
+constexpr const char RG_RES_BRDF[] = "r:ssao_brdf";
+constexpr const char RG_RES_IBL[] = "r:ibl";
 
-        COUNT,
+#define RG_PASS_BLOOM_DOWN_PREFIX "p:bloom_downsample_"
+#define RG_PASS_BLOOM_UP_PREFIX   "p:bloom_upsample_"
+#define RG_RES_BLOOM_PREFIX       "r:bloom_"
 
-    RESOURCE_BLOOM_MIN = RESOURCE_BLOOM_0,
-    RESOURCE_BLOOM_MAX = RESOURCE_BLOOM_6,
-};
+constexpr int BLOOM_MIP_CHAIN_MAX = 7;
+constexpr int IBL_MIP_CHAIN_MAX = 7;
 
-static_assert(RESOURCE_BLOOM_MAX - RESOURCE_BLOOM_MIN + 1 == BLOOM_MIP_CHAIN_MAX);
-
-static inline const char* RenderPassNameToString(RenderPassName p_name) {
-    DEV_ASSERT_INDEX(p_name, RenderPassName::COUNT);
-
-    static const char* s_names[static_cast<int>(RenderPassName::COUNT)] = {
-#define RENDER_PASS_NAME(name) #name,
-        RENDER_PASS_NAME_LIST
-#undef RENDER_PASS_NAME
-    };
-    return s_names[static_cast<int>(p_name)];
-}
-
-static inline const char* RenderTargetResourceNameToString(RenderTargetResourceName p_name) {
-    DEV_ASSERT_INDEX(p_name, RenderTargetResourceName::COUNT);
-
-    static const char* s_names[static_cast<int>(RenderTargetResourceName::COUNT)] = {
-#define RENDER_TARGET_RESOURCE_NAME(name) #name,
-        RENDER_TARGET_RESOURCE_NAME_LIST
-#undef RENDER_TARGET_RESOURCE_NAME
-    };
-    return s_names[static_cast<int>(p_name)];
-}
+constexpr int RT_SIZE_IBL_CUBEMAP = 512;
+constexpr int RT_SIZE_IBL_IRRADIANCE_CUBEMAP = 32;
+constexpr int RT_SIZE_IBL_PREFILTERED_CUBEMAP = 512;
+// RT_FMT stands form RENDER_TARGET_FORMAT
+constexpr PixelFormat RT_FMT_GBUFFER_DEPTH = PixelFormat::R32G8X24_TYPELESS;
+// constexpr PixelFormat RT_FMT_GBUFFER_DEPTH = PixelFormat::R24G8_TYPELESS;
+constexpr PixelFormat RT_FMT_GBUFFER_BASE_COLOR = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RT_FMT_GBUFFER_POSITION = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RT_FMT_GBUFFER_NORMAL = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RT_FMT_GBUFFER_MATERIAL = PixelFormat::R16G16B16A16_FLOAT;
+// @TODO: debug
+constexpr PixelFormat RT_FMT_SSAO = PixelFormat::R32_FLOAT;
+constexpr PixelFormat RT_FMT_TONE = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RT_FMT_LIGHTING = PixelFormat::R16G16B16A16_FLOAT;
+constexpr PixelFormat RT_FMT_OUTLINE_SELECT = PixelFormat::R8_UINT;
+// @TODO: rename
+constexpr PixelFormat DEFAULT_SURFACE_FORMAT = PixelFormat::R8G8B8A8_UNORM;
+constexpr PixelFormat DEFAULT_DEPTH_STENCIL_FORMAT = PixelFormat::D32_FLOAT;
 
 }  // namespace my

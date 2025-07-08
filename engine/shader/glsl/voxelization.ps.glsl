@@ -5,6 +5,7 @@ in vec3 pass_position;
 in vec3 pass_normal;
 in vec2 pass_uv;
 
+#define DISABLE_IBL
 #include "lighting.glsl"
 
 layout(rgba16f, binding = 0) uniform image3D u_albedo_texture;

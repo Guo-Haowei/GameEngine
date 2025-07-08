@@ -9,9 +9,9 @@
 #define RT_DEBUG(...)
 #endif
 
-namespace my::renderer {
+namespace my {
 
-void RenderPass::Execute(const renderer::RenderSystem& p_data, IRenderCmdContext& p_cmd) {
+void RenderPass::Execute(const RenderSystem& p_data, IRenderCmdContext& p_cmd) {
     RT_DEBUG("-- Executing pass '{}'", m_name);
 
     auto framebuffer = m_framebuffer.get();
@@ -55,4 +55,4 @@ void RenderPass::Execute(const renderer::RenderSystem& p_data, IRenderCmdContext
     RT_DEBUG("-------");
 }
 
-}  // namespace my::renderer
+}  // namespace my

@@ -11,7 +11,10 @@ uniform sampler2D u_Texture2;
 uniform sampler2D u_Texture3;
 uniform sampler2D u_Texture4;
 uniform sampler2D u_Texture5;
-uniform sampler3D u_Texture6;
+uniform samplerCube u_Texture6;
+uniform samplerCube u_Texture7;
+uniform sampler2D u_Texture8;
+uniform sampler3D u_Texture9;
 
 #define t_GbufferBaseColorMap u_Texture0
 #define t_GbufferNormalMap    u_Texture1
@@ -19,7 +22,10 @@ uniform sampler3D u_Texture6;
 #define t_GbufferDepth        u_Texture3
 #define t_SsaoMap             u_Texture4
 #define t_ShadowMap           u_Texture5
-#define t_VoxelLighting       u_Texture6
+#define t_DiffuseIrradiance   u_Texture6
+#define t_Prefiltered         u_Texture7
+#define t_BrdfLut             u_Texture8
+#define t_VoxelLighting       u_Texture9
 
 #include "lighting.glsl"
 

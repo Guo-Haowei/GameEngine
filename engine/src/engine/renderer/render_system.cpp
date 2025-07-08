@@ -14,7 +14,7 @@
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/input_manager.h"
 
-namespace my::renderer {
+namespace my {
 
 using my::AABB;
 using my::Frustum;
@@ -24,6 +24,7 @@ RenderSystem::RenderSystem(const RenderOptions& p_options) : options(p_options) 
     DEV_ASSERT(m_renderGraph);
 }
 
+// @TODO: fix this function OMG
 static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent* p_material, MaterialConstantBuffer& cb) {
     cb.c_baseColor = p_material->baseColor;
     cb.c_metallic = p_material->metallic;
@@ -166,6 +167,37 @@ static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matri
     DebugDrawBVH(p_level, p_bvh->right.get(), p_matrix);
 };
 
+using KernelData = std::array<Vector4f, 64>;
+
+static_assert(sizeof(KernelData) == sizeof(Vector4f) * SSAO_KERNEL_SIZE);
+
+static KernelData GenerateSsaoKernel() {
+    auto lerp = [](float a, float b, float f) {
+        return a + f * (b - a);
+    };
+
+    KernelData kernel;
+
+    const int kernel_size = 32;
+    const float inv_kernel_size = 1.0f / kernel_size;
+    for (int i = 0; i < kernel.size(); ++i) {
+        // [-1, 1], [-1, 1], [0, 1]
+        Vector3f sample(Random::Float(-1.0f, 1.0f),
+                        Random::Float(-1.0f, 1.0f),
+                        Random::Float());
+
+        sample = normalize(sample);
+        sample *= Random::Float();
+        float scale = i * inv_kernel_size;
+
+        scale = lerp(0.1f, 1.0f, scale * scale);
+        sample *= scale;
+        kernel[i].xyz = sample;
+    }
+
+    return kernel;
+}
+
 static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
     const auto& options = p_out_data.options;
     auto& cache = p_out_data.perFrameCache;
@@ -193,10 +225,10 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
 
     // SSAO
     {
+        static auto kernel_data = GenerateSsaoKernel();
         cache.c_ssaoEnabled = options.ssaoEnabled;
         cache.c_ssaoKernalRadius = options.ssaoKernelRadius;
-        const auto& kernel_data = renderer::GetKernelData();
-        constexpr size_t kernel_size = sizeof(renderer::KernelData);
+        constexpr size_t kernel_size = sizeof(kernel_data);
         static_assert(sizeof(cache.c_ssaoKernel) == kernel_size);
         memcpy(cache.c_ssaoKernel, kernel_data.data(), kernel_size);
     }
@@ -222,43 +254,11 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
 
     cache.c_forceFieldsCount = counter;
 
-    // @TODO: cache the slots
-    // Texture indices
-    auto find_index = [](RenderTargetResourceName p_name) -> uint32_t {
-        std::shared_ptr<GpuTexture> resource = IGraphicsManager::GetSingleton().FindTexture(p_name);
-        if (!resource) {
-            return 0;
-        }
-
-        return static_cast<uint32_t>(resource->GetResidentHandle());
-    };
-
-    // @TODO: opengl doesn't really uses it, consider use 32 bit for handle
-    cache.c_GbufferBaseColorMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_BASE_COLOR));
-    cache.c_GbufferNormalMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_NORMAL));
-    cache.c_GbufferMaterialMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_MATERIAL));
-    cache.c_GbufferDepthResidentHandle.Set32(find_index(RESOURCE_GBUFFER_DEPTH));
-    cache.c_PointShadowArrayResidentHandle.Set32(find_index(RESOURCE_POINT_SHADOW_CUBE_ARRAY));
-    cache.c_SsaoMapResidentHandle.Set32(find_index(RESOURCE_SSAO));
-
-    cache.c_ShadowMapResidentHandle.Set32(find_index(RESOURCE_SHADOW_MAP));
-
-    cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_OUTLINE_SELECT));
-    cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
-
     // @TODO: fix
     for (auto const [entity, environment] : p_scene.View<EnvironmentComponent>()) {
         cache.c_ambientColor = environment.ambient.color;
         if (!environment.sky.texturePath.empty()) {
             environment.sky.textureAsset = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(environment.sky.texturePath);
-        }
-
-        if (auto asset = environment.sky.textureAsset; asset && asset->gpu_texture) {
-            p_out_data.skyboxHdr = asset->gpu_texture;
-
-            // @TODO: fix this
-            g_constantCache.cache.c_hdrEnvMap.Set64(asset->gpu_texture->GetResidentHandle());
-            g_constantCache.update();
         }
     }
 
@@ -334,7 +334,7 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
                 this->passCache.emplace_back(pass_constant);
 
                 // @TODO: fix
-                auto pass = m_renderGraph->FindPass("p:shadow" /* RenderPassName::SHADOW */);
+                auto pass = m_renderGraph->FindPass("p:shadow");
                 if (!pass) {
                     continue;
                 }
@@ -592,42 +592,6 @@ static void FillEnvConstants(const Scene&,
     }
 }
 
-static void FillBloomConstants(const Scene& p_config,
-                               RenderSystem& p_out_data) {
-    unused(p_config);
-
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto image = gm.FindTexture(RESOURCE_BLOOM_0).get();
-    if (!image) {
-        return;
-    }
-    constexpr int count = BLOOM_MIP_CHAIN_MAX * 2 - 1;
-    if (p_out_data.batchCache.buffer.size() < count) {
-        p_out_data.batchCache.buffer.resize(count);
-    }
-
-    int offset = 0;
-    p_out_data.batchCache.buffer[offset++].c_BloomOutputImageResidentHandle.Set32((uint)image->GetUavHandle());
-
-    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
-        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
-
-        p_out_data.batchCache.buffer[i + offset].c_BloomInputTextureResidentHandle.Set32((uint)input->GetResidentHandle());
-        p_out_data.batchCache.buffer[i + offset].c_BloomOutputImageResidentHandle.Set32((uint)output->GetUavHandle());
-    }
-
-    offset += BLOOM_MIP_CHAIN_MAX - 1;
-
-    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-
-        p_out_data.batchCache.buffer[i - 1 + offset].c_BloomInputTextureResidentHandle.Set32((uint)input->GetResidentHandle());
-        p_out_data.batchCache.buffer[i - 1 + offset].c_BloomOutputImageResidentHandle.Set32((uint)output->GetUavHandle());
-    }
-}
-
 static void FillMeshEmitterBuffer(const Scene& p_scene,
                                   RenderSystem& p_out_data) {
     for (auto [id, emitter] : p_scene.m_MeshEmitterComponents) {
@@ -769,9 +733,8 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     p_out_data.FillMainPass(p_scene);
 
     FillMeshEmitterBuffer(p_scene, p_out_data);
-    FillBloomConstants(p_scene, p_out_data);
     FillEnvConstants(p_scene, p_out_data);
     FillParticleEmitterBuffer(p_scene, p_out_data);
 }
 
-}  // namespace my::renderer
+}  // namespace my

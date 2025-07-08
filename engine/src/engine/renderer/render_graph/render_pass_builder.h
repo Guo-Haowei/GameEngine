@@ -6,7 +6,7 @@
 namespace my { struct GpuTexture; }
 // clang-format on
 
-namespace my::renderer {
+namespace my {
 
 struct RenderGraphResourceCreateInfo {
     GpuTextureDesc resourceDesc;
@@ -57,4 +57,4 @@ private:
     friend class RenderGraphBuilder;
 };
 
-}  // namespace my::renderer
+}  // namespace my

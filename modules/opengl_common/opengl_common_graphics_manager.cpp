@@ -39,8 +39,6 @@
     } while (0)
 
 namespace my {
-using renderer::RenderGraph;
-using renderer::RenderPass;
 
 // @TODO: refactor
 static unsigned int LoadMTexture(const float* matrixTable) {
@@ -414,14 +412,6 @@ void CommonOpenGLGraphicsManager::GenerateMipmap(const GpuTexture* p_texture) {
     glBindTexture(dimension, 0);
 }
 
-void CommonOpenGLGraphicsManager::BeginEvent(std::string_view p_event) {
-    glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, p_event.data());
-}
-
-void CommonOpenGLGraphicsManager::EndEvent() {
-    glPopDebugGroup();
-}
-
 std::shared_ptr<GpuTexture> CommonOpenGLGraphicsManager::CreateTextureImpl(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     GLuint texture_id = 0;
     glGenTextures(1, &texture_id);
@@ -680,11 +670,13 @@ void CommonOpenGLGraphicsManager::Render() {
 
     // @TODO: refactor this
     const auto [width, height] = m_app->GetDisplayServer()->GetWindowSize();
-    if (m_app->IsRuntime())
-        renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
-                                                      width,
-                                                      height,
-                                                      *this);
+    if (m_app->IsRuntime()) {
+        CRASH_NOW();
+        // RenderGraphBuilder::DrawDebugImages(*GetRenderData(),
+        //                                               width,
+        //                                               height,
+        //                                               *this);
+    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

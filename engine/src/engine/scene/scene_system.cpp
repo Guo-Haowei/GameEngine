@@ -107,11 +107,11 @@ void UpdateLight(float p_timestep,
         // update shadow map
         if (p_light.CastShadow()) {
             // @TODO: get rid of the
-            if (p_light.m_shadowMapIndex == renderer::INVALID_POINT_SHADOW_HANDLE) {
+            if (p_light.m_shadowMapIndex == INVALID_POINT_SHADOW_HANDLE) {
                 p_light.m_shadowMapIndex = renderer::AllocatePointLightShadowMap();
             }
         } else {
-            if (p_light.m_shadowMapIndex != renderer::INVALID_POINT_SHADOW_HANDLE) {
+            if (p_light.m_shadowMapIndex != INVALID_POINT_SHADOW_HANDLE) {
                 renderer::FreePointLightShadowMap(p_light.m_shadowMapIndex);
             }
         }

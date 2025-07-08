@@ -1,6 +1,6 @@
 #include "render_pass_builder.h"
 
-namespace my::renderer {
+namespace my {
 
 RenderPassBuilder& RenderPassBuilder::Create(std::string_view p_name, const RenderGraphResourceCreateInfo& p_desc) {
     m_creates.push_back({ std::string(p_name), p_desc });
@@ -28,4 +28,4 @@ RenderPassBuilder& RenderPassBuilder::SetExecuteFunc(ExecuteFunc p_func) {
     return *this;
 }
 
-}  // namespace my::renderer
+}  // namespace my

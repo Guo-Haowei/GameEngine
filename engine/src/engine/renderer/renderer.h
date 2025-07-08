@@ -9,6 +9,7 @@ class PerspectiveCameraComponent;
 class Scene;
 class IGraphicsManager;
 struct GpuTexture;
+struct RenderSystem;
 
 enum class PathTracerMode {
     NONE,
@@ -16,14 +17,13 @@ enum class PathTracerMode {
     TILED,
 };
 
+// @TODO: [SCRUM-178] shadow atlas
+using PointShadowHandle = int;
+constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;
+
 }  // namespace my
 
 namespace my::renderer {
-
-struct RenderSystem;
-
-using PointShadowHandle = int;
-constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;
 
 void RegisterDvars();
 
@@ -42,8 +42,6 @@ void AddImage2D(GpuTexture* p_texture,
 
 void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
 
-void RequestBakingIbl();
-
 const RenderSystem* GetRenderData();
 
 PointShadowHandle AllocatePointLightShadowMap();
@@ -55,14 +53,5 @@ void SetPathTracerMode(PathTracerMode p_mode);
 bool IsPathTracerActive();
 void BindPathTracerData(IGraphicsManager& p_graphics_manager);
 void UnbindPathTracerData(IGraphicsManager& p_graphics_manager);
-
-// resources
-// @TODO: release resources
-using KernelData = std::array<Vector4f, 64>;
-
-Result<void> CreateResources(IGraphicsManager& p_graphics_manager);
-
-const KernelData& GetKernelData();
-std::shared_ptr<GpuTexture> GetSsaoNoiseTexture();
 
 }  // namespace my::renderer

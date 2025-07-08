@@ -15,10 +15,10 @@ namespace my {
 
 // @TODO: refactor
 struct MaterialConstantBuffer;
-using my::renderer::RenderPass;
+using my::RenderPass;
 
 // clang-format off
-namespace my::renderer { class RenderGraph; }
+namespace my { class RenderGraph; }
 // clang-format on
 
 namespace my {
@@ -69,7 +69,8 @@ public:
     void SetPipelineState(PipelineStateName p_name) override;
 
     std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) override;
-    std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const override;
+    std::shared_ptr<GpuTexture> CreateTexture(ImageAsset* p_image) override;
+    std::shared_ptr<GpuTexture> FindTexture(std::string_view p_name) const override;
 
     void RequestTexture(ImageAsset* p_image) override;
 
@@ -79,14 +80,12 @@ public:
     // @TODO: move to renderer
     uint64_t GetFinalImage() const override;
 
-    // static auto Create() -> Result<BaseGraphicsManager*>;
-
     Backend GetBackend() const override { return m_backend; }
 
     [[nodiscard]] auto SelectRenderGraph() -> Result<void>;
     RenderGraphName GetActiveRenderGraphName() const override { return m_activeRenderGraphName; }
     bool SetActiveRenderGraph(RenderGraphName p_name) override;
-    renderer::RenderGraph* GetActiveRenderGraph() override;
+    RenderGraph* GetActiveRenderGraph() override;
     FrameContext& GetCurrentFrame() override { return *(m_frameContexts[m_frameIndex].get()); }
 
     void DrawQuad() override;
@@ -108,9 +107,9 @@ protected:
     RenderGraphName m_activeRenderGraphName{ RenderGraphName::DEFAULT };
     bool m_enableValidationLayer;
 
-    std::array<std::shared_ptr<renderer::RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
+    std::array<std::shared_ptr<RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;
 
-    std::map<RenderTargetResourceName, std::shared_ptr<GpuTexture>> m_resourceLookup;
+    std::unordered_map<std::string_view, std::shared_ptr<GpuTexture>> m_resourceLookup;
 
     ConcurrentQueue<ImageAsset*> m_loadedImages;
 

@@ -27,7 +27,7 @@ public:
         auto graphics_manager = m_app->GetGraphicsManager();
         auto resolution = DVAR_GET_IVEC2(resolution);
         if (auto image = graphics_manager->FindTexture(RESOURCE_TONE); image) {
-            renderer::AddImage2D(image.get(), Vector2f(resolution));
+            AddImage2D(image.get(), Vector2f(resolution));
         }
     }
 };

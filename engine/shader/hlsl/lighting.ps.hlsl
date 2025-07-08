@@ -2,7 +2,6 @@
 #include "cbuffer.hlsl.h"
 #include "common.hlsl.h"
 #include "hlsl/input_output.hlsl"
-#include "hlsl/lighting.hlsl"
 #include "pbr.hlsl.h"
 #include "sampler.hlsl.h"
 #include "shader_resource_defines.hlsl.h"
@@ -13,7 +12,11 @@ Texture2D t_GbufferMaterialMap : register(t2);
 Texture2D t_GbufferDepth : register(t3);
 Texture2D t_SsaoMap : register(t4);
 Texture2D t_ShadowMap : register(t5);
-// Texture2D t_PointShadowArray : register(t6);
+TextureCube t_DiffuseIrradiance : register(t6);
+TextureCube t_Prefiltered : register(t7);
+Texture2D t_BrdfLut : register(t8);
+
+#include "hlsl/lighting.hlsl"
 
 float4 main(vsoutput_uv input) : SV_TARGET {
     const float2 uv = input.uv;

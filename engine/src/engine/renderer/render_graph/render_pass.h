@@ -6,7 +6,7 @@
 // clang-format off
 namespace my { class IGraphicsManager; }
 namespace my { struct GpuTexture; }
-namespace my::renderer { class RenderPass; }
+namespace my { class RenderPass; }
 // clang-format on
 
 namespace my {
@@ -14,7 +14,7 @@ namespace my {
 using IRenderCmdContext = IGraphicsManager;
 }  // namespace my
 
-namespace my::renderer {
+namespace my {
 
 struct RenderSystem;
 
@@ -29,7 +29,7 @@ using ExecuteFunc = void (*)(RenderPassExcutionContext& ctx);
 
 class RenderPass {
 public:
-    void Execute(const renderer::RenderSystem& p_data, IRenderCmdContext& p_cmd);
+    void Execute(const RenderSystem& p_data, IRenderCmdContext& p_cmd);
 
     void AddCommand(const RenderCommand& cmd) { m_commands.emplace_back(cmd); }
     const auto& GetCommands() const { return m_commands; }
@@ -60,4 +60,4 @@ protected:
     friend class RenderGraph;
 };
 
-}  // namespace my::renderer
+}  // namespace my

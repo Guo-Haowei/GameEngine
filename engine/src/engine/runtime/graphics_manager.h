@@ -6,7 +6,7 @@
 // @TODO: refactor
 struct MaterialConstantBuffer;
 
-namespace my::renderer {
+namespace my {
 class RenderGraph;
 }
 
@@ -17,7 +17,6 @@ enum ClearFlags : uint32_t;
 enum class Dimension : uint32_t;
 enum class RenderGraphName : uint8_t;
 enum PipelineStateName : uint8_t;
-enum RenderTargetResourceName : uint8_t;
 
 class Scene;
 struct MeshComponent;
@@ -122,7 +121,8 @@ public:
     virtual std::shared_ptr<Framebuffer> CreateFramebuffer(const FramebufferDesc& p_desc) = 0;
 
     virtual std::shared_ptr<GpuTexture> CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) = 0;
-    virtual std::shared_ptr<GpuTexture> FindTexture(RenderTargetResourceName p_name) const = 0;
+    virtual std::shared_ptr<GpuTexture> CreateTexture(ImageAsset* p_image) = 0;
+    virtual std::shared_ptr<GpuTexture> FindTexture(std::string_view p_name) const = 0;
     virtual void BindTexture(Dimension p_dimension, uint64_t p_handle, int p_slot) = 0;
     virtual void UnbindTexture(Dimension p_dimension, int p_slot) = 0;
 
@@ -145,7 +145,7 @@ public:
 
     virtual RenderGraphName GetActiveRenderGraphName() const = 0;
     virtual bool SetActiveRenderGraph(RenderGraphName p_name) = 0;
-    virtual renderer::RenderGraph* GetActiveRenderGraph() = 0;
+    virtual RenderGraph* GetActiveRenderGraph() = 0;
 
     virtual FrameContext& GetCurrentFrame() = 0;
     const FrameContext& GetCurrentFrame() const { return GetCurrentFrame(); }
@@ -173,8 +173,6 @@ public:
     // @TODO: make private
     std::shared_ptr<GpuMesh> m_boxBuffers;
     std::shared_ptr<GpuMesh> m_debugBuffers;
-
-    const ImageAsset* m_brdfImage{ nullptr };
 
 protected:
     virtual void UpdateEmitters(const Scene& p_scene) = 0;

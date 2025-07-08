@@ -231,11 +231,13 @@ void D3d12GraphicsManager::Render() {
     cmd_list->ClearDepthStencilView(dsv_handle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
     // @TODO: refactor this
-    if (m_app->IsRuntime())
-        renderer::RenderGraphBuilder::DrawDebugImages(*renderer::GetRenderData(),
-                                                      width,
-                                                      height,
-                                                      *this);
+    if (m_app->IsRuntime()) {
+        CRASH_NOW();
+        // RenderGraphBuilder::DrawDebugImages(*GetRenderData(),
+        //                                               width,
+        //                                               height,
+        //                                               *this);
+    }
 
     if (m_app->GetSpecification().enableImgui) {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmd_list);
@@ -884,6 +886,7 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
 
     if (p_texture_desc.bindFlags & BIND_UNORDERED_ACCESS) {
         LOG_ERROR("@TODO: fix hard code");
+#if 0
         D3D12_UNORDERED_ACCESS_VIEW_DESC uav_desc{};
         uav_desc.Format = texture_format;
         uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
@@ -891,10 +894,11 @@ std::shared_ptr<GpuTexture> D3d12GraphicsManager::CreateTextureImpl(const GpuTex
         auto uav_handle = m_srvDescHeap.AllocBindlessHandle(DescriptorResourceType::RWTexture2D);
         m_device->CreateUnorderedAccessView(texture_ptr, nullptr, &uav_desc, uav_handle.cpuHandle);
         gpu_texture->uavHandle = uav_handle;
+#endif
     }
 
     gpu_texture->texture = ComPtr<ID3D12Resource>(texture_ptr);
-    SetDebugName(texture_ptr, RenderTargetResourceNameToString(p_texture_desc.name));
+    SetDebugName(texture_ptr, p_texture_desc.name);
     return gpu_texture;
 }
 
@@ -1310,51 +1314,39 @@ void D3d12GraphicsManager::InitStaticSamplers() {
 }
 
 auto D3d12GraphicsManager::CreateRootSignature() -> Result<void> {
-    // Create a root signature consisting of a descriptor table with a single CBV.
+    // @TODO: Order from most frequent to least frequent.
+    CD3DX12_ROOT_PARAMETER params[16]{};
+    int idx = 0;
 
-    int descriptor_counter = 0;
-    CD3DX12_DESCRIPTOR_RANGE descriptor_table[64];
-    auto reg_srv_uav = [&](D3D12_DESCRIPTOR_RANGE_TYPE p_type, uint32_t p_count, uint32_t p_space, uint32_t p_offset) {
-        descriptor_table[descriptor_counter++].Init(p_type, p_count, 0, p_space, p_offset);
-    };
+    params[idx++].InitAsConstantBufferView(0);
+    params[idx++].InitAsConstantBufferView(1);
+    params[idx++].InitAsConstantBufferView(2);
+    params[idx++].InitAsConstantBufferView(3);
+    params[idx++].InitAsConstantBufferView(4);
+    params[idx++].InitAsConstantBufferView(5);
+    params[idx++].InitAsConstantBufferView(6);
 
-#define DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, TYPE) \
-    reg_srv_uav(D3D12_DESCRIPTOR_RANGE_TYPE_##TYPE, ENUM##_MAX_COUNT, SPACE, ENUM##_START);
-#define DESCRIPTOR_SRV(ENUM, NUM, PREV, SPACE)      DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, SRV)
-#define DESCRIPTOR_UAV(ENUM, NUM, PREV, SPACE, ...) DESCRIPTOR_INIT(ENUM, NUM, PREV, SPACE, UAV)
-    DESCRIPTOR_TABLE
-#undef DESCRIPTOR_SRV
-#undef DESCRIPTOR_UAV
-#undef DESCRIPTOR_INIT
+    CD3DX12_DESCRIPTOR_RANGE srvRange0;
+    srvRange0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 32, 0, 0);  // t0..t31 space0
 
-    auto reg_sbuffer = [&](int p_space, int p_offset) {
-        // root_parameters[param_count++].InitAsUnorderedAccessView(p_space);
-        descriptor_table[descriptor_counter++].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, p_offset, p_space, p_offset);
-    };
-#define SBUFFER(DATA_TYPE, NAME, REG, REG2) reg_sbuffer(REG, REG2);
-    SBUFFER_LIST
-#undef SBUFFER
+    CD3DX12_DESCRIPTOR_RANGE uavRange0;
+    uavRange0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 16, 0, 0);  // u0..u15 space0
 
-    // TODO: Order from most frequent to least frequent.
-    CD3DX12_ROOT_PARAMETER root_parameters[16]{};
-    int param_count = 0;
+    CD3DX12_DESCRIPTOR_RANGE srvRangeBindless;
+    srvRangeBindless.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 512, 0, 1);  // t0..t511 space1
 
-    // @TODO: fix this
-    root_parameters[param_count++].InitAsConstantBufferView(0);
-    root_parameters[param_count++].InitAsConstantBufferView(1);
-    root_parameters[param_count++].InitAsConstantBufferView(2);
-    root_parameters[param_count++].InitAsConstantBufferView(3);
-    root_parameters[param_count++].InitAsConstantBufferView(4);
-    root_parameters[param_count++].InitAsConstantBufferView(5);
-    root_parameters[param_count++].InitAsConstantBufferView(6);
+    CD3DX12_DESCRIPTOR_RANGE uavRangeBindless;
+    uavRangeBindless.Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 64, 0, 1);  // u0..u63 space1
 
-    root_parameters[param_count++].InitAsDescriptorTable(descriptor_counter, descriptor_table);
+    params[idx++].InitAsDescriptorTable(1, &srvRange0);         // Fixed SRVs
+    params[idx++].InitAsDescriptorTable(1, &uavRange0);         // Fixed UAVs
+    params[idx++].InitAsDescriptorTable(1, &srvRangeBindless);  // Bindless SRVs
+    params[idx++].InitAsDescriptorTable(1, &uavRangeBindless);  // Bindless UAVs
 
     InitStaticSamplers();
 
-    // A root signature is an array of root parameters.
-    CD3DX12_ROOT_SIGNATURE_DESC root_signature_desc(param_count,
-                                                    root_parameters,
+    CD3DX12_ROOT_SIGNATURE_DESC root_signature_desc(idx,
+                                                    params,
                                                     (uint32_t)m_staticSamplers.size(),
                                                     m_staticSamplers.data(),
                                                     D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);

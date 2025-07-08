@@ -7,7 +7,7 @@
 #include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/render_graph_builder.h"
+#include "engine/renderer/render_graph/common_passes.h"
 #include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_system.h"
 #include "engine/renderer/renderer.h"
@@ -85,10 +85,6 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
         return Result<void>();
     }
 
-    if (auto res = renderer::CreateResources(*this); !res) {
-        return HBN_ERROR(res.error());
-    }
-
     if (auto res = SelectRenderGraph(); !res) {
         return HBN_ERROR(res.error());
     }
@@ -113,27 +109,14 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
         return HBN_ERROR(res.error());
     }
 
-    auto bind_slot = [&](RenderTargetResourceName p_name, int p_slot) {
-        std::shared_ptr<GpuTexture> texture = FindTexture(p_name);
-        if (!texture) {
-            return;
-        }
-
-        DEV_ASSERT(p_slot >= 0);
-        texture->slot = p_slot;
-    };
-#define SRV(TYPE, NAME, SLOT, BINDING) bind_slot(BINDING, SLOT);
-    SRV_DEFINES
-#undef SRV
-
     // create meshes
+    // @TODO: refactor
     m_screenQuadBuffers = *CreateMesh(MakePlaneMesh(Vector3f(1)));
     m_skyboxBuffers = *CreateMesh(MakeSkyBoxMesh());
     m_boxBuffers = *CreateMesh(MakeBoxMesh());
 
-    m_brdfImage = m_app->GetAssetRegistry()->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/brdf.hdr" });
-
     // @TODO: refactor
+    // for debug buffer?
     {
         constexpr int max_count = 4096 * 128;
         MeshComponent mesh;
@@ -282,6 +265,17 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
     }
 }
 
+std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(ImageAsset* p_image) {
+    DEV_ASSERT(p_image);
+
+    GpuTextureDesc texture_desc{};
+    SamplerDesc sampler_desc{};
+    FillTextureAndSamplerDesc(p_image, texture_desc, sampler_desc);
+
+    p_image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
+    return p_image->gpu_texture;
+}
+
 void BaseGraphicsManager::Update(Scene& p_scene) {
     HBN_PROFILE_EVENT();
 
@@ -293,11 +287,9 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
         ImageAsset* image = task;
         DEV_ASSERT(image);
 
-        GpuTextureDesc texture_desc{};
-        SamplerDesc sampler_desc{};
-        FillTextureAndSamplerDesc(image, texture_desc, sampler_desc);
-
-        image->gpu_texture = CreateTexture(texture_desc, sampler_desc);
+        if (!image->gpu_texture) {
+            CreateTexture(image);
+        }
     }
 
     {
@@ -369,7 +361,6 @@ void BaseGraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
     for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             UnbindTexture(texture->desc.dimension, texture->slot);
-            // RT_DEBUG("  -- unbound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 }
@@ -379,7 +370,6 @@ void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             BindTexture(texture->desc.dimension, texture->GetHandle(), texture->slot);
-            // RT_DEBUG("  -- bound resource '{}'({})", RenderTargetResourceNameToString(it->desc.name), it->slot);
         }
     }
 }
@@ -416,26 +406,26 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
     m_activeRenderGraphName = RenderGraphName::EMPTY;
 #endif
 
-    // renderer::RenderGraphBuilder::CreateResources();
+    // RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
-    renderer::RenderGraphBuilderConfig config;
+    RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;
     config.frameHeight = frame_size.y;
     config.is_runtime = m_app->IsRuntime();
 
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY:
-            // m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = renderer::RenderGraphBuilder::CreateDummy(config);
+            // m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = RenderGraphBuilder::CreateDummy(config);
             break;
         case RenderGraphName::DEFAULT: {
-            auto res = renderer::RenderGraphBuilder::CreateDefault(config);
+            auto res = RenderGraphBuilderExt::CreateDefault(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
             m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = *res;
         } break;
         case RenderGraphName::EMPTY: {
-            auto res = renderer::RenderGraphBuilder::CreateEmpty(config);
+            auto res = RenderGraphBuilderExt::CreateEmpty(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
@@ -450,7 +440,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::OPENGL:
         case Backend::D3D11: {
 #if !USING(PLATFORM_WASM)
-            auto res = renderer::RenderGraphBuilder::CreatePathTracer(config);
+            auto res = RenderGraphBuilderExt::CreatePathTracer(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
@@ -479,7 +469,7 @@ bool BaseGraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
     return true;
 }
 
-renderer::RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
+RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
     const int index = std::to_underlying(m_activeRenderGraphName);
     ERR_FAIL_INDEX_V(index, RenderGraphName::COUNT, nullptr);
     DEV_ASSERT(m_renderGraphs[index] != nullptr);
@@ -489,7 +479,7 @@ renderer::RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
 std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     auto texture = CreateTextureImpl(p_texture_desc, p_sampler_desc);
     if (p_texture_desc.type != AttachmentType::NONE) {
-        auto [_, inserted] = m_resourceLookup.try_emplace(p_texture_desc.name, texture);
+        auto [_, inserted] = m_resourceLookup.try_emplace(texture->desc.name, texture);
         if (!inserted) {
             CRASH_NOW();
         }
@@ -498,7 +488,7 @@ std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(const GpuTextureD
     return texture;
 }
 
-std::shared_ptr<GpuTexture> BaseGraphicsManager::FindTexture(RenderTargetResourceName p_name) const {
+std::shared_ptr<GpuTexture> BaseGraphicsManager::FindTexture(std::string_view p_name) const {
     if (m_resourceLookup.empty()) {
         return nullptr;
     }
@@ -514,21 +504,21 @@ uint64_t BaseGraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = nullptr;
     switch (m_activeRenderGraphName) {
         case RenderGraphName::DUMMY: {
-            texture = FindTexture(RESOURCE_GBUFFER_NORMAL).get();
+            texture = FindTexture(RG_RES_GBUFFER_COLOR1).get();
         } break;
         case RenderGraphName::DEFAULT: {
 #if 0
             // @TODO: debug panel
             texture = FindTexture(RESOURCE_SSAO).get();
 #else
-            texture = FindTexture(RESOURCE_FINAL).get();
+            texture = FindTexture(RG_RES_OVERLAY).get();
 #endif
         } break;
         case RenderGraphName::PATHTRACER: {
-            texture = FindTexture(RESOURCE_TONE).get();
+            texture = FindTexture(RG_RES_POST_PROCESS).get();
         } break;
         case RenderGraphName::EMPTY: {
-            texture = FindTexture(RESOURCE_FINAL).get();
+            texture = FindTexture(RG_RES_OVERLAY).get();
         } break;
         default: {
             CRASH_NOW();
