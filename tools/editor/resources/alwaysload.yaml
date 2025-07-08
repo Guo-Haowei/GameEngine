@@ -1,5 +1,7 @@
 # TODO: auto generate alwaysload
 files:
+  - path: "@res://images/checkerboard.jpg"
+    type: Image
   - path: "@res://images/tiles.png"
     type: Image
   - path: "@res://images/brdf.hdr"

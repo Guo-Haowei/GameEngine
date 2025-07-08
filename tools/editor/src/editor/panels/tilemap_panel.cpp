@@ -11,68 +11,99 @@ TileMapPanel::TileMapPanel(EditorLayer& p_editor) : EditorWindow("Tile Map", p_e
 void TileMapPanel::OnAttach() {
     auto asset_registry = m_editor.GetApplication()->GetAssetRegistry();
     m_tileset = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/tiles.png" });
+    m_checkerboard = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/checkerboard.jpg" });
 }
 
 void TileMapPanel::TilePaint() {
-    const auto texture = m_tileset->gpu_texture;
-    if (!texture) {
+    const auto tileset = m_tileset->gpu_texture;
+    const auto checker = m_checkerboard->gpu_texture;
+    if (!tileset || !checker) {
         return;
     }
 
-    const auto handle = texture->GetHandle();
-    ImVec2 imageSize((float)texture->desc.width, (float)texture->desc.height);
+    const float grid_size = 64.f;
 
+    const int gridX = 3;
+    const int gridY = 2;
+
+    ImDrawList* draw_list = ImGui::GetWindowDrawList();
     ImVec2 cursor = ImGui::GetCursorScreenPos();
-    ImGui::Image(handle, imageSize);
+    ImVec2 tile_size((float)tileset->desc.width, (float)tileset->desc.height);
 
-    ImDrawList* drawList = ImGui::GetWindowDrawList();
-    int gridX = 3;
-    int gridY = 2;
+    ImGui::InvisibleButton("tile_clickable", tile_size);  // enables interaction
+    bool hovered = ImGui::IsItemHovered();
+    bool clicked = ImGui::IsItemClicked();
+
+    // Draw checker board
+    {
+        // @TODO: adjust size based on tile size
+        constexpr float CHECKER_SIZE = 2048;
+        ImVec2 desired_size = ImVec2(grid_size * gridX, grid_size * gridY);
+        const float ratio = (2.0f / CHECKER_SIZE);
+        ImVec2 uv = desired_size;
+        uv.x *= ratio;
+        uv.y *= ratio;
+
+        draw_list->AddImage(
+            checker->GetHandle(),
+            cursor,
+            cursor + desired_size,
+            ImVec2(0, 0), uv,
+            IM_COL32(255, 255, 255, 255)
+        );
+    }
+
+    // Draw tileset
+    {
+        draw_list->AddImage(
+            tileset->GetHandle(),
+            cursor,
+            cursor + tile_size,
+            ImVec2(0, 0), ImVec2(1, 1),
+            IM_COL32(255, 255, 255, 255));
+    }
 
     // Input
-    ImVec2 mousePos = ImGui::GetMousePos();
-    bool isHovered = ImGui::IsItemHovered();
-    bool isClicked = ImGui::IsItemClicked();
-
     static int selectedX = -1, selectedY = -1;
+    if (hovered && clicked) {
+        ImVec2 mouse_pos = ImGui::GetMousePos();
+        float cellWidth = tile_size.x / gridX;
+        float cellHeight = tile_size.y / gridY;
 
-    if (isHovered && isClicked) {
-        float cellWidth = imageSize.x / gridX;
-        float cellHeight = imageSize.y / gridY;
-
-        int localX = (int)((mousePos.x - cursor.x) / cellWidth);
-        int localY = (int)((mousePos.y - cursor.y) / cellHeight);
+        int localX = (int)((mouse_pos.x - cursor.x) / cellWidth);
+        int localY = (int)((mouse_pos.y - cursor.y) / cellHeight);
 
         // Clamp to valid range
         if (localX >= 0 && localX < gridX && localY >= 0 && localY < gridY) {
             selectedX = localX;
             selectedY = localY;
+            LOG_ERROR("????");
         }
     }
 
     for (int i = 1; i < gridY; ++i) {
-        float y = cursor.y + i * (imageSize.y / gridY);
-        drawList->AddLine(ImVec2(cursor.x, y),
-                          ImVec2(cursor.x + imageSize.x, y),
+        float y = cursor.y + i * (tile_size.y / gridY);
+        draw_list->AddLine(ImVec2(cursor.x, y),
+                          ImVec2(cursor.x + tile_size.x, y),
                           IM_COL32(255, 255, 255, 255));
     }
 
     for (int j = 1; j < gridX; ++j) {
-        float x = cursor.x + j * (imageSize.x / gridX);
-        drawList->AddLine(ImVec2(x, cursor.y),
-                          ImVec2(x, cursor.y + imageSize.y),
+        float x = cursor.x + j * (tile_size.x / gridX);
+        draw_list->AddLine(ImVec2(x, cursor.y),
+                          ImVec2(x, cursor.y + tile_size.y),
                           IM_COL32(255, 255, 255, 255));
     }
 
     if (selectedX >= 0 && selectedY >= 0) {
-        float cellW = imageSize.x / gridX;
-        float cellH = imageSize.y / gridY;
+        float cellW = tile_size.x / gridX;
+        float cellH = tile_size.y / gridY;
 
         ImVec2 pMin = ImVec2(cursor.x + selectedX * cellW, cursor.y + selectedY * cellH);
         ImVec2 pMax = ImVec2(pMin.x + cellW, pMin.y + cellH);
 
-        drawList->AddRectFilled(pMin, pMax, IM_COL32(0, 255, 0, 100));  // green transparent overlay
-        drawList->AddRect(pMin, pMax, IM_COL32(0, 255, 0, 255));        // solid border
+        draw_list->AddRectFilled(pMin, pMax, IM_COL32(0, 255, 0, 100));  // green transparent overlay
+        draw_list->AddRect(pMin, pMax, IM_COL32(0, 255, 0, 255));        // solid border
     }
 }
 

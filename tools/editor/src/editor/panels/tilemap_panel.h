@@ -19,6 +19,7 @@ protected:
     void TilePaint();
 
     const ImageAsset* m_tileset{ nullptr };
+    const ImageAsset* m_checkerboard{ nullptr };
 };
 
 }  // namespace my

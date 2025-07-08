@@ -626,10 +626,12 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
     const PassContext& pass = p_ctx.render_system.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PSO_ENV_SKYBOX);
-    gm.SetStencilRef(STENCIL_FLAG_SKY);
-    gm.DrawSkybox();
-    gm.SetStencilRef(0);
+    if (p_ctx.render_system.options.iblEnabled) {
+        gm.SetPipelineState(PSO_ENV_SKYBOX);
+        gm.SetStencilRef(STENCIL_FLAG_SKY);
+        gm.DrawSkybox();
+        gm.SetStencilRef(0);
+    }
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
