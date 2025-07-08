@@ -81,8 +81,7 @@ CBUFFER(PerBatchConstantBuffer, 0) {
     Matrix4x4f c_worldMatrix;
 
     // reuse per batch buffer for bloom
-    sampler2D c_BloomInputTextureResidentHandle;
-    sampler2D c_BloomOutputImageResidentHandle;
+    Vector4f _dummy;
 
     Vector2f _per_batch_padding_0;
     float c_envPassRoughness;  // for environment map

@@ -199,29 +199,6 @@ void RenderGraphBuilderExt::AddGbufferPass() {
         .Write(ResourceAccess::RTV, RG_RES_GBUFFER_COLOR2)
         .SetExecuteFunc(GbufferPassFunc);
 
-#if 0
-
-    auto& manager = IGraphicsManager::GetSingleton();
-
-    auto color0 = manager.FindTexture(RESOURCE_GBUFFER_BASE_COLOR);
-    auto color1 = manager.FindTexture(RESOURCE_GBUFFER_NORMAL);
-    auto color2 = manager.FindTexture(RESOURCE_GBUFFER_MATERIAL);
-    auto depth = manager.FindTexture(RESOURCE_GBUFFER_DEPTH);
-
-    RenderPassDesc desc;
-    desc.dependencies = { RenderPassName::PREPASS },
-    desc.name = RenderPassName::GBUFFER;
-    auto pass = m_graph.CreatePass(desc);
-
-    FramebufferDesc fb_desc;
-    fb_desc.colorAttachments.emplace_back(color0);
-    fb_desc.colorAttachments.emplace_back(color1);
-    fb_desc.colorAttachments.emplace_back(color2);
-    fb_desc.depthAttachment = depth;
-
-    auto framebuffer = manager.CreateFramebuffer(fb_desc);
-    pass->AddDrawPass(GBUFFER_PASS_NAME, framebuffer, GbufferPassFunc);
-#endif
 }
 
 static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {

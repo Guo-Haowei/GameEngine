@@ -10,10 +10,10 @@
 #define Vector3f       float3
 #define Vector4f       float4
 #define Multiply(a, b) mul((a), (b))
-int2 textureSizeTexture2D(Texture2D p_texture) {
-    int width, height;
+uint2 textureSizeTexture2D(Texture2D p_texture) {
+    uint width, height;
     p_texture.GetDimensions(width, height);
-    return int2(width, height);
+    return uint2(width, height);
 }
 
 #elif defined(GLSL_LANG)
@@ -22,7 +22,7 @@ int2 textureSizeTexture2D(Texture2D p_texture) {
 #define Vector3f       vec3
 #define Vector4f       vec4
 #define Multiply(a, b) ((a) * (b))
-ivec2 textureSizeTexture2D(sampler2D textureObject) {
+uvec2 textureSizeTexture2D(sampler2D textureObject) {
     return textureSize(textureObject, 0);
 }
 
@@ -61,9 +61,9 @@ float shadowTest(
     float bias = max(0.005 * (1.0 - NdotL), 0.0005);
 
     // @TODO: refactor
-    for (int SAMPLE = 0; SAMPLE < 4; ++SAMPLE) {
-        int x = SAMPLE / 2;
-        int y = SAMPLE % 2;
+    for (uint SAMPLE = 0; SAMPLE < 4; ++SAMPLE) {
+        uint x = SAMPLE / 2;
+        uint y = SAMPLE % 2;
         Vector2f offset = Vector2f(x, y) * texelSize;
 #if defined(GLSL_LANG)
         float closestDepth = texture(shadowMap, lightSpacePos.xy + offset).r;

@@ -233,7 +233,8 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
         return static_cast<uint32_t>(resource->GetResidentHandle());
     };
 
-    // @TODO: opengl doesn't really uses it, consider use 32 bit for handle
+// @TODO: opengl doesn't really uses it, consider use 32 bit for handle
+#if 0
     cache.c_GbufferBaseColorMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_BASE_COLOR));
     cache.c_GbufferNormalMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_NORMAL));
     cache.c_GbufferMaterialMapResidentHandle.Set32(find_index(RESOURCE_GBUFFER_MATERIAL));
@@ -245,6 +246,7 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
 
     cache.c_TextureHighlightSelectResidentHandle.Set32(find_index(RESOURCE_OUTLINE_SELECT));
     cache.c_TextureLightingResidentHandle.Set32(find_index(RESOURCE_LIGHTING));
+#endif
 
     // @TODO: fix
     for (auto const [entity, environment] : p_scene.View<EnvironmentComponent>()) {
@@ -592,42 +594,6 @@ static void FillEnvConstants(const Scene&,
     }
 }
 
-static void FillBloomConstants(const Scene& p_config,
-                               RenderSystem& p_out_data) {
-    unused(p_config);
-
-    auto& gm = IGraphicsManager::GetSingleton();
-    auto image = gm.FindTexture(RESOURCE_BLOOM_0).get();
-    if (!image) {
-        return;
-    }
-    constexpr int count = BLOOM_MIP_CHAIN_MAX * 2 - 1;
-    if (p_out_data.batchCache.buffer.size() < count) {
-        p_out_data.batchCache.buffer.resize(count);
-    }
-
-    int offset = 0;
-    p_out_data.batchCache.buffer[offset++].c_BloomOutputImageResidentHandle.Set32((uint)image->GetUavHandle());
-
-    for (int i = 0; i < BLOOM_MIP_CHAIN_MAX - 1; ++i) {
-        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i + 1));
-
-        p_out_data.batchCache.buffer[i + offset].c_BloomInputTextureResidentHandle.Set32((uint)input->GetResidentHandle());
-        p_out_data.batchCache.buffer[i + offset].c_BloomOutputImageResidentHandle.Set32((uint)output->GetUavHandle());
-    }
-
-    offset += BLOOM_MIP_CHAIN_MAX - 1;
-
-    for (int i = BLOOM_MIP_CHAIN_MAX - 1; i > 0; --i) {
-        auto input = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i));
-        auto output = gm.FindTexture(static_cast<RenderTargetResourceName>(RESOURCE_BLOOM_0 + i - 1));
-
-        p_out_data.batchCache.buffer[i - 1 + offset].c_BloomInputTextureResidentHandle.Set32((uint)input->GetResidentHandle());
-        p_out_data.batchCache.buffer[i - 1 + offset].c_BloomOutputImageResidentHandle.Set32((uint)output->GetUavHandle());
-    }
-}
-
 static void FillMeshEmitterBuffer(const Scene& p_scene,
                                   RenderSystem& p_out_data) {
     for (auto [id, emitter] : p_scene.m_MeshEmitterComponents) {
@@ -769,7 +735,6 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
     p_out_data.FillMainPass(p_scene);
 
     FillMeshEmitterBuffer(p_scene, p_out_data);
-    FillBloomConstants(p_scene, p_out_data);
     FillEnvConstants(p_scene, p_out_data);
     FillParticleEmitterBuffer(p_scene, p_out_data);
 }
