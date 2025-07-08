@@ -329,6 +329,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                 });
 #pragma endregion PSO_VOXEL
 
+#if 0
     CREATE_PSO(PSO_BILLBOARD, {
                                   .vs = "billboard.vs",
                                   .ps = "texture.ps",
@@ -336,6 +337,7 @@ auto PipelineStateManager::Initialize() -> Result<void> {
                                   .depthStencilDesc = &s_depthStencilDefault,
                                   .blendDesc = &s_blendStateDefault,
                               });
+#endif
 
 #undef CREATE_PSO
 

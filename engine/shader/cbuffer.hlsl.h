@@ -168,14 +168,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     Matrix4x4f c_invView;
 
     //-----------------------------------------
-    sampler2D c_GbufferBaseColorMapResidentHandle;
-    sampler2D _per_frame_padding_0;  // 16
-    sampler2D c_GbufferNormalMapResidentHandle;
-    sampler2D c_GbufferMaterialMapResidentHandle;  // 16
-    sampler2D c_GbufferDepthResidentHandle;
-    sampler2D c_PointShadowArrayResidentHandle;  // 16
-    sampler2D c_SsaoMapResidentHandle;
-    sampler2D c_SkyboxResidentHandle;  // 16
+    Matrix4x4f _per_frame_padding_0;  // 16
     //-----------------------------------------
     Matrix4x4f _per_frame_padding_1;
     //-----------------------------------------
@@ -197,7 +190,7 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     int c_enableVxgi;
     float c_texelSize;  // 16
 
-    sampler2D c_SkyboxHdrResidentHandle;  // 16
+    Vector2i c_tileOffset;
     float c_ssaoKernalRadius;
     int c_ptObjectCount;
     //-----------------------------------------
@@ -206,11 +199,8 @@ CBUFFER(PerFrameConstantBuffer, 5) {
     uint c_BrdfLutResidentHandle;
     int c_forceFieldsCount;  // 16
 
-    sampler2D c_ShadowMapResidentHandle;
-    sampler2D c_TextureHighlightSelectResidentHandle;  // 16
-
-    Vector2i c_tileOffset;
-    sampler2D c_TextureLightingResidentHandle;  // 16
+    Vector4f _c_SkyboxHdrResidentHandle;  // 16
+    Vector4f _c_ShadowMapResidentHandle;
 
     Vector3f c_cameraPosition;
     float c_cameraFovDegree;  // 16
@@ -264,9 +254,7 @@ CBUFFER(PerSceneConstantBuffer, 7) {
     // @TODO: remove the following
     Vector4f _per_scene_padding_0;
     Vector4f _per_scene_padding_1;
-
-    sampler2D c_grassBaseColor;
-    sampler2D c_hdrEnvMap;
+    Vector4f _per_scene_padding_2;
 
     // @TODO: unordered access
     sampler2D c_ltc1;
