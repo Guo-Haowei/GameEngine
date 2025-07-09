@@ -24,7 +24,7 @@ Scene* CreateBoxScene() {
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
+        auto camera = scene->GetComponent<CameraComponent>(editor_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 4, 15));
         camera->SetEditorCamera();
@@ -33,7 +33,7 @@ Scene* CreateBoxScene() {
     // main camera
     {
         auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
+        auto camera = scene->GetComponent<CameraComponent>(main_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 4, 15));
         camera->SetPrimary();
@@ -106,7 +106,7 @@ Scene* CreatePhysicsTestScene() {
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
+        auto camera = scene->GetComponent<CameraComponent>(editor_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 5, 12));
         camera->SetEditorCamera();
@@ -115,7 +115,7 @@ Scene* CreatePhysicsTestScene() {
     // main camera
     {
         auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
+        auto camera = scene->GetComponent<CameraComponent>(main_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 5, 12));
         camera->SetPrimary();
@@ -212,7 +212,7 @@ Scene* CreatePbrTestScene() {
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
+        auto camera = scene->GetComponent<CameraComponent>(editor_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 4, 10));
         camera->SetEditorCamera();
@@ -221,7 +221,7 @@ Scene* CreatePbrTestScene() {
     // main camera
     {
         auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
+        auto camera = scene->GetComponent<CameraComponent>(main_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0, 4, 10));
         camera->SetPrimary();

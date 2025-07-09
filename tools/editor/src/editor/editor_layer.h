@@ -6,6 +6,7 @@
 #include "engine/runtime/application.h"
 #include "engine/runtime/layer.h"
 #include "engine/scene/scene.h"
+#include "engine/scene/scene_component.h"
 #include "engine/systems/undo_redo/undo_stack.h"
 
 namespace my {
@@ -21,6 +22,24 @@ enum {
     SHORT_CUT_UNDO,
     SHORT_CUT_REDO,
     SHORT_CUT_MAX,
+};
+
+enum EditorCameraType : uint8_t {
+    CAMERA_2D = 0,
+    CAMERA_3D,
+    CAMERA_MAX,
+};
+
+struct EditorContext {
+    EditorCameraType cameraType{ CAMERA_3D };
+    CameraComponent cameras[CAMERA_MAX];
+
+    const ImageAsset* playButtonImage{ nullptr };
+    const ImageAsset* pauseButtonImage{ nullptr };
+
+    CameraComponent& GetActiveCamera() {
+        return cameras[cameraType];
+    }
 };
 
 class EditorLayer : public Layer, public EventListener {
@@ -60,9 +79,12 @@ public:
 
     auto& GetUnhandledEvents() { return m_unhandledEvents; }
 
+    CameraComponent& GetActiveCamera();
+
+    EditorContext context;
+
 private:
     void DockSpace(Scene& p_scene);
-    void DrawToolbar();
     void AddPanel(std::shared_ptr<EditorItem> p_panel);
 
     void FlushCommand(Scene& p_scene);
@@ -91,9 +113,6 @@ private:
 
     std::array<ShortcutDesc, SHORT_CUT_MAX> m_shortcuts;
     std::vector<std::shared_ptr<IEvent>> m_unhandledEvents;
-
-    const ImageAsset* m_playButtonImage{ nullptr };
-    const ImageAsset* m_pauseButtonImage{ nullptr };
 };
 
 }  // namespace my

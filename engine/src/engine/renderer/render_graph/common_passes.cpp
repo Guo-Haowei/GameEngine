@@ -137,13 +137,14 @@ static void EmptyPass(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
     auto& cmd = p_ctx.cmd;
     cmd.SetRenderTarget(p_ctx.framebuffer);
-    float clear_color[] = { 0.3f, 0.5f, 0.4f, 1.0f };
+    float clear_color[] = { 0.4f, 0.4f, 0.4f, 1.0f };
     cmd.Clear(p_ctx.framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
 }
 
 void RenderGraphBuilderExt::AddEmpty() {
     auto color_desc = BuildDefaultTextureDesc(DEFAULT_SURFACE_FORMAT,
                                               AttachmentType::COLOR_2D);
+    color_desc.bindFlags |= BIND_SHADER_RESOURCE;
 
     auto depth_desc = BuildDefaultTextureDesc(RT_FMT_GBUFFER_DEPTH,
                                               AttachmentType::DEPTH_STENCIL_2D);
@@ -625,10 +626,12 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
     const PassContext& pass = p_ctx.render_system.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    gm.SetPipelineState(PSO_ENV_SKYBOX);
-    gm.SetStencilRef(STENCIL_FLAG_SKY);
-    gm.DrawSkybox();
-    gm.SetStencilRef(0);
+    if (p_ctx.render_system.options.iblEnabled) {
+        gm.SetPipelineState(PSO_ENV_SKYBOX);
+        gm.SetStencilRef(STENCIL_FLAG_SKY);
+        gm.DrawSkybox();
+        gm.SetStencilRef(0);
+    }
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
@@ -1065,7 +1068,7 @@ void RenderGraphBuilderExt::AddPathTracerTonePass() {
 }
 
 /// Create pre-defined passes
-auto RenderGraphBuilderExt::CreateEmpty(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
+auto RenderGraphBuilderExt::Create2D(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
     p_config.enableBloom = false;
     p_config.enableIbl = false;
     p_config.enableVxgi = false;
@@ -1075,7 +1078,7 @@ auto RenderGraphBuilderExt::CreateEmpty(RenderGraphBuilderConfig& p_config) -> R
     return builder.Compile();
 }
 
-auto RenderGraphBuilderExt::CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
+auto RenderGraphBuilderExt::Create3D(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
     p_config.enableBloom = true;
     p_config.enableIbl = false;
     p_config.enableVxgi = IGraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL;

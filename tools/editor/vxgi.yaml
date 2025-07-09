@@ -17,22 +17,23 @@ entities:
       name: editor_camera
     HierarchyComponent:
       parent_id: 1
-    PerspectiveCameraComponent:
+    CameraComponent:
       flags: 2
       fovy: 50
       near: 0.1
       far: 1000
       width: 1920
       height: 1080
-      pitch: -12.154746
-      yaw: -89.859436
-      position: [-1.4915991, 3.360397, 18.538292]
+      pitch: -19.087095
+      yaw: -73.10217
+      position: [-3.983704, 4.081436, 16.115372]
+      ortho_height: 10
   - id: 3
     NameComponent:
       name: main_camera
     HierarchyComponent:
       parent_id: 1
-    PerspectiveCameraComponent:
+    CameraComponent:
       flags: 4
       fovy: 50
       near: 0.1
@@ -42,9 +43,10 @@ entities:
       pitch: -10
       yaw: -90
       position: [0, 4, 15]
+      ortho_height: 10
   - id: 4
     NameComponent:
-      name: world
+      name: box
     TransformComponent:
       flags: 0
       translation: [0, 0, 0]
@@ -72,8 +74,8 @@ entities:
       name: p_name_1
     MaterialComponent:
       base_color: [1, 1, 1, 1]
-      roughness: 0.06
-      metallic: 0.65
+      roughness: 0.08
+      metallic: 0.91
       emissive: 0
       textures:
         - path: ""
@@ -225,7 +227,7 @@ entities:
     HierarchyComponent:
       parent_id: 4
     ObjectComponent:
-      flags: 3
+      flags: 1073741827
       mesh_id: 17
   - id: 17
     NameComponent:
@@ -254,7 +256,7 @@ entities:
     HierarchyComponent:
       parent_id: 4
     ObjectComponent:
-      flags: 3
+      flags: 1073741827
       mesh_id: 19
   - id: 19
     NameComponent:
@@ -274,19 +276,19 @@ entities:
       color_0: {offset: 0, buffer_size: 0}
   - id: 20
     NameComponent:
-      name: InfiniteLight-1
+      name: AreaLight-1
     TransformComponent:
       flags: 0
-      translation: [0, 0, 0]
-      rotation: [-0.2215802, -0.5623073, -0.58209586, 0.54394585]
-      scale: [1.0000054, 1.0000019, 1.0000005]
+      translation: [0, 4.6711774, 0]
+      rotation: [0.70710564, 0, 0, 0.7071079]
+      scale: [4, 3.9999812, 4]
     HierarchyComponent:
       parent_id: 1
     MaterialComponent:
       base_color: [1, 1, 1, 1]
       roughness: 1
       metallic: 0
-      emissive: 5
+      emissive: 1.2
       textures:
         - path: ""
           enabled: true
@@ -294,1113 +296,44 @@ entities:
           enabled: true
         - path: ""
           enabled: true
+    ObjectComponent:
+      flags: 1
+      mesh_id: 21
     LightComponent:
-      flags: 2
-      type: 0
+      flags: 0
+      type: 3
       shadow_region: ~
       attenuation:
-        constant: 1
+        constant: 0
         linear: 0
         quadratic: 0
   - id: 21
     NameComponent:
-      name: Cube-2:mat
-    MaterialComponent:
-      base_color: [1, 1, 1, 1]
-      roughness: 0.21
-      metallic: 0.11
-      emissive: 0
-      textures:
-        - path: ""
-          enabled: true
-        - path: ""
-          enabled: true
-        - path: ""
-          enabled: true
-  - id: 22
-    NameComponent:
-      name: Cube-2
-    TransformComponent:
-      flags: 0
-      translation: [1.9165348, -0.9469913, 3.6398551]
-      rotation: [0, 0, 0, 1]
-      scale: [2, 4.7960954, 2]
-    HierarchyComponent:
-      parent_id: 1
-    ObjectComponent:
-      flags: 3
-      mesh_id: 23
-  - id: 23
-    NameComponent:
-      name: Cube-2:mesh
+      name: AreaLight-1:mesh
     MeshComponent:
       flags: 1
-      subsets: [{material_id: 21, index_count: 36, index_offset: 0, local_bound: {min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5]}}]
+      subsets: [{material_id: 20, index_count: 6, index_offset: 0, local_bound: {min: [-0.5, -0.5, -0.0001], max: [0.5, 0.5, 0.0001]}}]
       armature_id: 0
-      indices: {offset: 4932, buffer_size: 144}
-      positions: {offset: 5092, buffer_size: 288}
-      normals: {offset: 5396, buffer_size: 288}
+      indices: {offset: 4932, buffer_size: 24}
+      positions: {offset: 4972, buffer_size: 48}
+      normals: {offset: 5036, buffer_size: 48}
       tangents: {offset: 0, buffer_size: 0}
-      texcoords_0: {offset: 5700, buffer_size: 192}
+      texcoords_0: {offset: 5100, buffer_size: 32}
       texcoords_1: {offset: 0, buffer_size: 0}
       joints_0: {offset: 0, buffer_size: 0}
       weights_0: {offset: 0, buffer_size: 0}
       color_0: {offset: 0, buffer_size: 0}
-  - id: 24
-    NameComponent:
-      name: VoxelGi-3
-    TransformComponent:
-      flags: 0
-      translation: [0, 0, 0]
-      rotation: [0, 0, 0, 1]
-      scale: [11.975599, 11.975599, 11.975599]
-    HierarchyComponent:
-      parent_id: 1
-    VoxelGiComponent:
-      flags: 0
-  - id: 25
-    NameComponent:
-      name: Sponza.gltf
-    TransformComponent:
-      flags: 0
-      translation: [0, -5.8481007, -18.030571]
-      rotation: [0, 0, 0, 1]
-      scale: [1, 1, 1]
-    HierarchyComponent:
-      parent_id: 1
-  - id: 26
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/5061699253647017043.png
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8773302468495022225.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11872827283454512094.jpg
-          enabled: true
-  - id: 27
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7268504077753552595.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4477655471536070370.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8503262930880235456.jpg
-          enabled: true
-  - id: 28
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/white.png
-          enabled: true
-        - path: ""
-          enabled: true
-        - path: ""
-          enabled: true
-  - id: 29
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8006627369776289000.png
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/12501374198249454378.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/715093869573992647.jpg
-          enabled: true
-  - id: 30
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8750083169368950601.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/13982482287905699490.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/16885566240357350108.jpg
-          enabled: true
-  - id: 31
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/5792855332885324923.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/16299174074766089871.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11968150294050148237.jpg
-          enabled: true
-  - id: 32
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14650633544276105767.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2051777328469649772.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4871783166746854860.jpg
-          enabled: true
-  - id: 33
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/15295713303328085182.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/10388182081421875623.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/9916269861720640319.jpg
-          enabled: true
-  - id: 34
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6047387724914829168.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/15722799267630235092.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8051790464816141987.jpg
-          enabled: true
-  - id: 35
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/5823059166183034438.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14267839433702832875.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/13824894030729245199.jpg
-          enabled: true
-  - id: 36
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7441062115984513793.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6667038893015345571.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8114461559286000061.jpg
-          enabled: true
-  - id: 37
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11490520546946913238.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3628158980083700836.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3455394979645218238.jpg
-          enabled: true
-  - id: 38
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6151467286084645207.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7645212358685992005.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8783994986360286082.jpg
-          enabled: true
-  - id: 39
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4975155472559461469.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2299742237651021498.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3371964815757888145.jpg
-          enabled: true
-  - id: 40
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4675343432951571524.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7056944414013900257.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7815564343179553343.jpg
-          enabled: true
-  - id: 41
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2775690330959970771.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2374361008830720677.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7815564343179553343.jpg
-          enabled: true
-  - id: 42
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2185409758123873465.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/332936164838540657.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7815564343179553343.jpg
-          enabled: true
-  - id: 43
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/17876391417123941155.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6593109234861095314.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/466164707995436622.jpg
-          enabled: true
-  - id: 44
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11474523244911310074.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4601176305987539675.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/466164707995436622.jpg
-          enabled: true
-  - id: 45
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/9288698199695299068.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4910669866631290573.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/466164707995436622.jpg
-          enabled: true
-  - id: 46
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/16275776544635328252.png
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14170708867020035030.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/1219024358953944284.jpg
-          enabled: true
-  - id: 47
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/755318871556304029.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3827035219084910048.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2411100444841994089.jpg
-          enabled: true
-  - id: 48
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8481240838833932244.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/10381718147657362067.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/17556969131407844942.jpg
-          enabled: true
-  - id: 49
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6772804448157695701.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/759203620573749278.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/13196865903111448057.jpg
-          enabled: true
-  - id: 50
-    NameComponent:
-      name: ""
-    MaterialComponent:
-      base_color: [0.588, 0.588, 0.588, 1]
-      roughness: 1
-      metallic: 0
-      emissive: 0
-      textures:
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2969916736137545357.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14118779221266351425.jpg
-          enabled: true
-        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8747919177698443163.jpg
-          enabled: true
-  - id: 51
-    NameComponent:
-      name: "Mesh::"
-    MeshComponent:
-      flags: 1
-      subsets:
-        - material_id: 26
-          index_count: 10920
-          index_offset: 0
-          local_bound:
-            min: [449.5629, 85.3714, 152.0907]
-            max: [540.9965, 210.9434, 244.898]
-        - material_id: 29
-          index_count: 1404
-          index_offset: 10920
-          local_bound:
-            min: [-277.3556, 46.0815, -252.9986]
-            max: [-209.1302, 73.1236, -189.0428]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 12324
-          local_bound:
-            min: [-271.2546, -0.1401, -250.777]
-            max: [-219.3237, 56.1995, -198.788]
-        - material_id: 30
-          index_count: 4086
-          index_offset: 18957
-          local_bound:
-            min: [-1424.6638, 493.0472, -163.3865]
-            max: [-1401.6799, 758.5531, 85.7051]
-        - material_id: 31
-          index_count: 324
-          index_offset: 23043
-          local_bound:
-            min: [-1045.741, 221.4877, -310.1346]
-            max: [914.8008, 495.6896, 238.6795]
-        - material_id: 32
-          index_count: 840
-          index_offset: 23367
-          local_bound:
-            min: [-1048.308, 492.9888, -318.106]
-            max: [917.6837, 507.8032, 243.5581]
-        - material_id: 33
-          index_count: 6996
-          index_offset: 24207
-          local_bound:
-            min: [-1429.4524, 215.8036, -645.1483]
-            max: [1302.2017, 383.988, 574.9027]
-        - material_id: 34
-          index_count: 4368
-          index_offset: 31203
-          local_bound:
-            min: [-658.5948, -2.4607, -316.8692]
-            max: [528.9411, 220.9971, 244.5701]
-        - material_id: 32
-          index_count: 8688
-          index_offset: 35571
-          local_bound:
-            min: [-1041.229, 211.3955, -305.5379]
-            max: [912.8481, 410.4053, 233.3264]
-        - material_id: 35
-          index_count: 48
-          index_offset: 44259
-          local_bound:
-            min: [-1432.2244, 415.5302, -645.431]
-            max: [1302.221, 415.5304, 574.1852]
-        - material_id: 33
-          index_count: 6996
-          index_offset: 44307
-          local_bound:
-            min: [-1429.4524, 694.4673, -645.1483]
-            max: [1302.2017, 862.6516, 574.9027]
-        - material_id: 32
-          index_count: 3288
-          index_offset: 51303
-          local_bound:
-            min: [-1029.1833, 695.7373, -241.119]
-            max: [897.2501, 820.1328, 171.4547]
-        - material_id: 36
-          index_count: 11040
-          index_offset: 54591
-          local_bound:
-            min: [-1046.292, 507.1398, -315.4476]
-            max: [917.5026, 695.3228, 243.3501]
-        - material_id: 31
-          index_count: 612
-          index_offset: 65631
-          local_bound:
-            min: [-1002.3635, 693.7668, -259.3258]
-            max: [868.6472, 921.7285, 185.9673]
-        - material_id: 33
-          index_count: 612
-          index_offset: 66243
-          local_bound:
-            min: [-1022.5669, 693.7668, -295.4941]
-            max: [892.6568, 921.7285, 225.2953]
-        - material_id: 31
-          index_count: 444
-          index_offset: 66855
-          local_bound:
-            min: [-1002.3765, 921.7285, -253.5486]
-            max: [868.5942, 1296.7107, 181.2987]
-        - material_id: 32
-          index_count: 480
-          index_offset: 67299
-          local_bound:
-            min: [478.4944, 1215.9016, -263.6248]
-            max: [535.9614, 1273.4875, -243.1332]
-        - material_id: 33
-          index_count: 336
-          index_offset: 67779
-          local_bound:
-            min: [489.5545, 1226.9846, -271.4642]
-            max: [524.9012, 1262.4043, -255.9671]
-        - material_id: 32
-          index_count: 480
-          index_offset: 68115
-          local_bound:
-            min: [108.3681, 1215.9016, -263.6248]
-            max: [165.8351, 1273.4875, -243.1332]
-        - material_id: 33
-          index_count: 336
-          index_offset: 68595
-          local_bound:
-            min: [119.4282, 1226.9846, -271.4642]
-            max: [154.7749, 1262.4043, -255.9671]
-        - material_id: 32
-          index_count: 480
-          index_offset: 68931
-          local_bound:
-            min: [-293.3323, 1215.9016, -263.6248]
-            max: [-235.8653, 1273.4875, -243.1332]
-        - material_id: 33
-          index_count: 336
-          index_offset: 69411
-          local_bound:
-            min: [-282.2722, 1226.9846, -271.4642]
-            max: [-246.9255, 1262.4043, -255.9671]
-        - material_id: 32
-          index_count: 480
-          index_offset: 69747
-          local_bound:
-            min: [-663.5581, 1215.9016, -263.6248]
-            max: [-606.0911, 1273.4875, -243.1332]
-        - material_id: 33
-          index_count: 336
-          index_offset: 70227
-          local_bound:
-            min: [-652.4979, 1226.9846, -271.4642]
-            max: [-617.1514, 1262.4043, -255.9671]
-        - material_id: 32
-          index_count: 480
-          index_offset: 70563
-          local_bound:
-            min: [-1012.6072, 1217.4253, -63.705]
-            max: [-992.1155, 1275.0112, -6.2381]
-        - material_id: 33
-          index_count: 336
-          index_offset: 71043
-          local_bound:
-            min: [-1020.4465, 1228.5083, -52.645]
-            max: [-1004.9495, 1263.928, -17.2983]
-        - material_id: 32
-          index_count: 480
-          index_offset: 71379
-          local_bound:
-            min: [478.4944, 1215.9016, 169.437]
-            max: [535.9614, 1273.4875, 189.9285]
-        - material_id: 33
-          index_count: 336
-          index_offset: 71859
-          local_bound:
-            min: [489.5545, 1226.9846, 182.2709]
-            max: [524.9012, 1262.4043, 197.768]
-        - material_id: 32
-          index_count: 480
-          index_offset: 72195
-          local_bound:
-            min: [108.3681, 1215.9016, 169.437]
-            max: [165.8351, 1273.4875, 189.9285]
-        - material_id: 33
-          index_count: 336
-          index_offset: 72675
-          local_bound:
-            min: [119.4282, 1226.9846, 182.2709]
-            max: [154.7749, 1262.4043, 197.768]
-        - material_id: 32
-          index_count: 480
-          index_offset: 73011
-          local_bound:
-            min: [-293.3323, 1215.9016, 169.437]
-            max: [-235.8653, 1273.4875, 189.9285]
-        - material_id: 33
-          index_count: 336
-          index_offset: 73491
-          local_bound:
-            min: [-282.2722, 1226.9846, 182.2709]
-            max: [-246.9255, 1262.4043, 197.7679]
-        - material_id: 32
-          index_count: 480
-          index_offset: 73827
-          local_bound:
-            min: [-663.5581, 1215.9016, 169.437]
-            max: [-606.0911, 1273.4875, 189.9285]
-        - material_id: 33
-          index_count: 336
-          index_offset: 74307
-          local_bound:
-            min: [-652.498, 1226.9846, 182.2709]
-            max: [-617.1514, 1262.4043, 197.7679]
-        - material_id: 32
-          index_count: 1320
-          index_offset: 74643
-          local_bound:
-            min: [-1030.054, 921.7285, -274.7777]
-            max: [721.8198, 1014.4711, 202.7871]
-        - material_id: 31
-          index_count: 96
-          index_offset: 75963
-          local_bound:
-            min: [-1086.4229, 907.7441, -408.1468]
-            max: [997.5962, 1314.4902, 318.9008]
-        - material_id: 32
-          index_count: 840
-          index_offset: 76059
-          local_bound:
-            min: [-1048.308, 915.4514, -318.106]
-            max: [917.6837, 930.2659, 243.5581]
-        - material_id: 31
-          index_count: 162
-          index_offset: 76899
-          local_bound:
-            min: [-1431.2, -2.6201, -644.3114]
-            max: [1302.2208, 867.3871, 574.7062]
-        - material_id: 37
-          index_count: 726
-          index_offset: 77061
-          local_bound:
-            min: [-509.6833, -2.1349, 554.2698]
-            max: [41.1111, 289.3175, 605.0136]
-        - material_id: 31
-          index_count: 72
-          index_offset: 77787
-          local_bound:
-            min: [-509.6835, 119.8051, 573.1039]
-            max: [-357.1276, 289.3175, 583.6721]
-        - material_id: 37
-          index_count: 246
-          index_offset: 77859
-          local_bound:
-            min: [231.5654, 119.8051, 573.104]
-            max: [384.1212, 289.3176, 589.7529]
-        - material_id: 31
-          index_count: 72
-          index_offset: 78105
-          local_bound:
-            min: [231.5654, 119.8051, 573.104]
-            max: [384.1213, 289.3176, 583.6722]
-        - material_id: 37
-          index_count: 1668
-          index_offset: 78177
-          local_bound:
-            min: [-140.4469, -2.2155, -651.5385]
-            max: [1315.5244, 716.8506, 42.592]
-        - material_id: 31
-          index_count: 150
-          index_offset: 79845
-          local_bound:
-            min: [-1431.8987, 415.4614, -641.6024]
-            max: [1302.1907, 424.4659, 575.3004]
-        - material_id: 36
-          index_count: 10224
-          index_offset: 79995
-          local_bound:
-            min: [-1430.3052, 182.6523, -646.9679]
-            max: [1303.272, 695.3227, 575.7255]
-        - material_id: 31
-          index_count: 150
-          index_offset: 90219
-          local_bound:
-            min: [-1428.5198, -3.3794, -644.3114]
-            max: [1302.1906, 5.6251, 574.0297]
-        - material_id: 35
-          index_count: 15
-          index_offset: 90369
-          local_bound:
-            min: [-1428.5198, -2.5063, -644.3114]
-            max: [1302.1906, -2.5061002, 574.0297]
-        - material_id: 34
-          index_count: 4080
-          index_offset: 90384
-          local_bound:
-            min: [-1057.2202, -2.4607, -316.8692]
-            max: [925.6038, 220.9971, 246.6149]
-        - material_id: 32
-          index_count: 11208
-          index_offset: 94464
-          local_bound:
-            min: [-1052.8757, 413.9111, -317.2693]
-            max: [921.9355, 823.3442, 245.8142]
-        - material_id: 38
-          index_count: 69624
-          index_offset: 105672
-          local_bound:
-            min: [-1037.6516, 506.6332, -309.7055]
-            max: [907.4069, 699.6118, 234.7734]
-        - material_id: 28
-          index_count: 54
-          index_offset: 175296
-          local_bound:
-            min: [-119.4073, 256.731, 568.6584]
-            max: [-8.2629, 348.1974, 575.5052]
-        - material_id: 31
-          index_count: 192
-          index_offset: 175350
-          local_bound:
-            min: [-1086.4229, 907.7441, -408.1468]
-            max: [997.5962, 1330.7693, 318.9008]
-        - material_id: 39
-          index_count: 16368
-          index_offset: 175542
-          local_bound:
-            min: [-628.6536, 828.8109, -270.8304]
-            max: [503.1986, 886.139, 199.3907]
-        - material_id: 26
-          index_count: 83388
-          index_offset: 191910
-          local_bound:
-            min: [-680.2642, -28.0496, -341.1362]
-            max: [551.2264, 225.1021, 266.4423]
-        - material_id: 40
-          index_count: 16512
-          index_offset: 275298
-          local_bound:
-            min: [-783.7942, 339.443, 157.1643]
-            max: [-453.8621, 520.5939, 252.2858]
-        - material_id: 41
-          index_count: 16512
-          index_offset: 291810
-          local_bound:
-            min: [-415.188, 339.443, 157.1642]
-            max: [-85.256, 520.5939, 252.2857]
-        - material_id: 42
-          index_count: 16512
-          index_offset: 308322
-          local_bound:
-            min: [-46.5819, 339.443, 157.1642]
-            max: [283.3502, 520.5939, 252.2856]
-        - material_id: 40
-          index_count: 16512
-          index_offset: 324834
-          local_bound:
-            min: [322.0242, 339.443, 157.1641]
-            max: [651.9562, 520.5939, 252.2856]
-        - material_id: 41
-          index_count: 16512
-          index_offset: 341346
-          local_bound:
-            min: [318.9197, 339.443, -324.5262]
-            max: [648.8517, 520.5939, -229.4048]
-        - material_id: 40
-          index_count: 16512
-          index_offset: 357858
-          local_bound:
-            min: [-49.6864, 339.443, -324.5262]
-            max: [280.2456, 520.5939, -229.4048]
-        - material_id: 42
-          index_count: 16512
-          index_offset: 374370
-          local_bound:
-            min: [-418.2926, 339.443, -324.5262]
-            max: [-88.3605, 520.5939, -229.4048]
-        - material_id: 41
-          index_count: 16512
-          index_offset: 390882
-          local_bound:
-            min: [-786.8987, 339.443, -324.5262]
-            max: [-456.9666, 520.5939, -229.4048]
-        - material_id: 39
-          index_count: 33120
-          index_offset: 407394
-          local_bound:
-            min: [-958.6978, 274.9596, -289.7036]
-            max: [830.2939, 294.114, 209.115]
-        - material_id: 43
-          index_count: 14592
-          index_offset: 440514
-          local_bound:
-            min: [-204.9374, 0.1305, 188.9018]
-            max: [82.3598, 283.0153, 213.4825]
-        - material_id: 44
-          index_count: 13824
-          index_offset: 455106
-          local_bound:
-            min: [-577.6202, -0.3089, 182.9043]
-            max: [-290.577, 283.681, 208.2124]
-        - material_id: 45
-          index_count: 14592
-          index_offset: 468930
-          local_bound:
-            min: [-946.2379, 0.1305, 188.9018]
-            max: [-658.9407, 283.0153, 213.4825]
-        - material_id: 44
-          index_count: 14592
-          index_offset: 483522
-          local_bound:
-            min: [-946.2379, 0.1305, -289.2569]
-            max: [-658.9407, 283.0153, -264.6762]
-        - material_id: 45
-          index_count: 13824
-          index_offset: 498114
-          local_bound:
-            min: [160.9905, -0.3089, 182.9043]
-            max: [448.0338, 283.681, 208.2124]
-        - material_id: 44
-          index_count: 14592
-          index_offset: 511938
-          local_bound:
-            min: [532.8768, 0.1305, 188.9018]
-            max: [820.174, 283.0153, 213.4825]
-        - material_id: 43
-          index_count: 13824
-          index_offset: 526530
-          local_bound:
-            min: [-577.6202, -0.3089, -295.2544]
-            max: [-290.577, 283.681, -269.9463]
-        - material_id: 45
-          index_count: 14592
-          index_offset: 540354
-          local_bound:
-            min: [-204.9374, 0.1305, -289.2569]
-            max: [82.3598, 283.0153, -264.6762]
-        - material_id: 44
-          index_count: 13824
-          index_offset: 554946
-          local_bound:
-            min: [160.9905, -0.3089, -295.2544]
-            max: [448.0338, 283.681, -269.9463]
-        - material_id: 43
-          index_count: 14592
-          index_offset: 568770
-          local_bound:
-            min: [532.8768, 0.1305, -289.2569]
-            max: [820.174, 283.0153, -264.6762]
-        - material_id: 46
-          index_count: 24
-          index_offset: 583362
-          local_bound:
-            min: [461.903, 133.7213, -221.4872]
-            max: [513.3057, 214.3549, -217.9138]
-        - material_id: 47
-          index_count: 14871
-          index_offset: 583386
-          local_bound:
-            min: [452.6522, 98.6729, -246.8345]
-            max: [522.6115, 216.9513, -194.325]
-        - material_id: 46
-          index_count: 24
-          index_offset: 598257
-          local_bound:
-            min: [-644.9331, 133.7213, -221.4872]
-            max: [-593.5303, 214.3549, -217.9138]
-        - material_id: 47
-          index_count: 14871
-          index_offset: 598281
-          local_bound:
-            min: [-654.1838, 98.6729, -246.8345]
-            max: [-584.2246, 216.9513, -194.325]
-        - material_id: 46
-          index_count: 24
-          index_offset: 613152
-          local_bound:
-            min: [-644.8781, 133.7213, 141.555]
-            max: [-593.4753, 214.3549, 145.1284]
-        - material_id: 47
-          index_count: 14871
-          index_offset: 613176
-          local_bound:
-            min: [-654.1838, 98.6729, 117.9662]
-            max: [-584.2244, 216.9513, 170.4758]
-        - material_id: 46
-          index_count: 24
-          index_offset: 628047
-          local_bound:
-            min: [461.958, 133.7213, 141.5548]
-            max: [513.3608, 214.3549, 145.1283]
-        - material_id: 47
-          index_count: 14871
-          index_offset: 628071
-          local_bound:
-            min: [452.6523, 98.6729, 117.966]
-            max: [522.6116, 216.9513, 170.4756]
-        - material_id: 29
-          index_count: 1404
-          index_offset: 642942
-          local_bound:
-            min: [-992.9604, 46.0815, -261.8365]
-            max: [-929.0048, 73.1236, -193.6112]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 644346
-          local_bound:
-            min: [-990.7389, -0.1401, -251.6431]
-            max: [-938.7499, 56.1995, -199.7122]
-        - material_id: 29
-          index_count: 1404
-          index_offset: 650979
-          local_bound:
-            min: [-992.9604, 42.3191, 115.0579]
-            max: [-929.0048, 69.3612, 183.2832]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 652383
-          local_bound:
-            min: [-990.7389, -3.9025, 125.2513]
-            max: [-938.7499, 52.4371, 177.1822]
-        - material_id: 29
-          index_count: 1404
-          index_offset: 659016
-          local_bound:
-            min: [-277.3556, 42.3191, 123.8958]
-            max: [-209.1302, 69.3612, 187.8516]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 660420
-          local_bound:
-            min: [-271.2546, -3.9025, 126.1174]
-            max: [-219.3237, 52.4371, 178.1064]
-        - material_id: 29
-          index_count: 1200
-          index_offset: 667053
-          local_bound:
-            min: [91.807, 43.8723, 126.1538]
-            max: [147.3344, 67.0677, 183.3375]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 668253
-          local_bound:
-            min: [92.7551, -4.0307, 127.3799]
-            max: [144.7441, 52.3089, 179.3108]
-        - material_id: 29
-          index_count: 1200
-          index_offset: 674886
-          local_bound:
-            min: [806.3584, 44.424, 126.1538]
-            max: [861.8858, 67.6194, 183.3375]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 676086
-          local_bound:
-            min: [807.3065, -3.479, 127.3799]
-            max: [859.2955, 52.8606, 179.3108]
-        - material_id: 29
-          index_count: 1200
-          index_offset: 682719
-          local_bound:
-            min: [806.3584, 47.7629, -250.7406]
-            max: [861.8858, 70.9582, -193.5569]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 683919
-          local_bound:
-            min: [807.3065, -0.1401, -249.5145]
-            max: [859.2955, 56.1995, -197.5836]
-        - material_id: 29
-          index_count: 1200
-          index_offset: 690552
-          local_bound:
-            min: [91.807, 47.7629, -250.7406]
-            max: [147.3344, 70.9582, -193.5569]
-        - material_id: 27
-          index_count: 6633
-          index_offset: 691752
-          local_bound:
-            min: [92.7551, -0.1401, -249.5145]
-            max: [144.7441, 56.1995, -197.5836]
-        - material_id: 48
-          index_count: 27552
-          index_offset: 698385
-          local_bound:
-            min: [-1276.6733, -0.6934, -523.4996]
-            max: [1194.1705, 133.0168, 478.2618]
-        - material_id: 49
-          index_count: 4563
-          index_offset: 725937
-          local_bound:
-            min: [1224.0483, 79.9048, -114.6915]
-            max: [1299.0264, 264.7612, 41.4676]
-        - material_id: 30
-          index_count: 4086
-          index_offset: 730500
-          local_bound:
-            min: [1277.0227, 40.8186, -160.465]
-            max: [1299.8668, 306.3246, 88.6266]
-        - material_id: 49
-          index_count: 4563
-          index_offset: 734586
-          local_bound:
-            min: [-1427.4343, 79.9048, -113.3057]
-            max: [-1352.4563, 264.7612, 42.8534]
-        - material_id: 30
-          index_count: 4086
-          index_offset: 739149
-          local_bound:
-            min: [-1428.2749, 40.8186, -160.4646]
-            max: [-1405.4307, 306.3246, 88.6269]
-        - material_id: 31
-          index_count: 84
-          index_offset: 743235
-          local_bound:
-            min: [-1866.9829, -126.4425, -1139.0305]
-            max: [1746.6929, 1347.1958, 1039.7112]
-        - material_id: 50
-          index_count: 43452
-          index_offset: 743319
-          local_bound:
-            min: [-1920.9459, 1280.5134, -1182.8071]
-            max: [1799.9081, 1429.4332, 1105.426]
-        - material_id: 31
-          index_count: 30
-          index_offset: 786771
-          local_bound:
-            min: [-1504.4683, -115.9791, -782.5203]
-            max: [1380.6034, 1271.0371, 674.7568]
-      armature_id: 0
-      indices: {offset: 5908, buffer_size: 3147204}
-      positions: {offset: 3153128, buffer_size: 2309952}
-      normals: {offset: 5463096, buffer_size: 2309952}
-      tangents: {offset: 7773064, buffer_size: 2309952}
-      texcoords_0: {offset: 10083032, buffer_size: 1539968}
-      texcoords_1: {offset: 0, buffer_size: 0}
-      joints_0: {offset: 0, buffer_size: 0}
-      weights_0: {offset: 0, buffer_size: 0}
-      color_0: {offset: 0, buffer_size: 0}
-  - id: 52
-    NameComponent:
-      name: "Object::"
-    TransformComponent:
-      flags: 0
-      translation: [0, 0, 0]
-      rotation: [0, 0, 0, 1]
-      scale: [0.008, 0.008, 0.008]
-    HierarchyComponent:
-      parent_id: 25
-    ObjectComponent:
-      flags: 3
-      mesh_id: 51
-  - id: 53
+  - id: 22
     NameComponent:
       name: CesiumMan.gltf
     TransformComponent:
       flags: 0
-      translation: [-0.88312155, -4.599406, 2.6539042]
-      rotation: [0, 0, 0, 1]
-      scale: [3.24, 3.24, 3.24]
+      translation: [-2.5703235, -4.814246, 2.8027506]
+      rotation: [0, 0.24091709, 0, 0.9705457]
+      scale: [3.2775002, 3.2775, 3.2775002]
     HierarchyComponent:
       parent_id: 1
-  - id: 54
+  - id: 23
     NameComponent:
       name: Cesium_Man-effect
     MaterialComponent:
@@ -1415,23 +348,23 @@ entities:
           enabled: true
         - path: ""
           enabled: true
-  - id: 55
+  - id: 24
     NameComponent:
       name: Mesh::Cesium_Man
     MeshComponent:
       flags: 1
-      subsets: [{material_id: 54, index_count: 14016, index_offset: 0, local_bound: {min: [-0.13100001, -0.5691371, 0], max: [0.180954, 0.5691369, 1.50655]}}]
-      armature_id: 56
-      indices: {offset: 11623016, buffer_size: 56064}
-      positions: {offset: 11679096, buffer_size: 39276}
-      normals: {offset: 11718388, buffer_size: 39276}
+      subsets: [{material_id: 23, index_count: 14016, index_offset: 0, local_bound: {min: [-0.13100001, -0.5691371, 0], max: [0.180954, 0.5691369, 1.50655]}}]
+      armature_id: 25
+      indices: {offset: 5148, buffer_size: 56064}
+      positions: {offset: 61228, buffer_size: 39276}
+      normals: {offset: 100520, buffer_size: 39276}
       tangents: {offset: 0, buffer_size: 0}
-      texcoords_0: {offset: 11757680, buffer_size: 26184}
+      texcoords_0: {offset: 139812, buffer_size: 26184}
       texcoords_1: {offset: 0, buffer_size: 0}
-      joints_0: {offset: 11783880, buffer_size: 52368}
-      weights_0: {offset: 11836264, buffer_size: 52368}
+      joints_0: {offset: 166012, buffer_size: 52368}
+      weights_0: {offset: 218396, buffer_size: 52368}
       color_0: {offset: 0, buffer_size: 0}
-  - id: 56
+  - id: 25
     NameComponent:
       name: Armature
     TransformComponent:
@@ -1440,11 +373,11 @@ entities:
       rotation: [0, 0, 0, 1]
       scale: [1, 1, 1]
     HierarchyComponent:
-      parent_id: 58
+      parent_id: 27
     ArmatureComponent:
-      bone_collection: {offset: 11888648, buffer_size: 76}
-      inverse_matrices: {offset: 11888740, buffer_size: 1216}
-  - id: 57
+      bone_collection: {offset: 270780, buffer_size: 76}
+      inverse_matrices: {offset: 270872, buffer_size: 1216}
+  - id: 26
     NameComponent:
       name: Transform::Z_UP
     TransformComponent:
@@ -1453,8 +386,8 @@ entities:
       rotation: [-0.70710677, 0, 0, 0.70710677]
       scale: [1, 1, 1]
     HierarchyComponent:
-      parent_id: 53
-  - id: 58
+      parent_id: 22
+  - id: 27
     NameComponent:
       name: Transform::Armature
     TransformComponent:
@@ -1463,198 +396,198 @@ entities:
       rotation: [0, 0, -0.70710677, 0.70710677]
       scale: [1, 1, 1]
     HierarchyComponent:
-      parent_id: 57
-  - id: 59
+      parent_id: 26
+  - id: 28
     NameComponent:
       name: Transform::Skeleton_torso_joint_1
     TransformComponent:
       flags: 0
-      translation: [2.9934476e-08, -0.02000012, 0.69322276]
-      rotation: [-0.00448976, -0.02999324, -0.00042543543, -0.99953926]
-      scale: [1.0000002, 1, 1]
+      translation: [1.523644e-08, -0.030000124, 0.70299375]
+      rotation: [-0.011463233, -0.041348495, -0.0032390964, -0.99907327]
+      scale: [1.0000002, 1, 0.99999976]
     HierarchyComponent:
-      parent_id: 58
-  - id: 60
+      parent_id: 27
+  - id: 29
     NameComponent:
       name: Transform::Skeleton_torso_joint_2
     TransformComponent:
       flags: 0
-      translation: [1.3479994e-05, 0.0009866048, 0.14541695]
-      rotation: [0.0019600168, -0.72612023, -0.00028945407, -0.6875647]
-      scale: [1.0000002, 1, 0.9999992]
+      translation: [1.3471619e-05, 0.0009866059, 0.1454169]
+      rotation: [0.0028172222, -0.71888864, -0.013732287, -0.69497323]
+      scale: [1.0000005, 1.0000001, 0.9999994]
     HierarchyComponent:
-      parent_id: 59
-  - id: 61
+      parent_id: 28
+  - id: 30
     NameComponent:
       name: Transform::torso_joint_3
     TransformComponent:
       flags: 0
-      translation: [-0.2505167, 5.71076e-07, -7.282945e-05]
-      rotation: [0.022849806, 0.62656677, -0.0035853246, -0.77901244]
-      scale: [1.0000005, 1, 0.99999964]
+      translation: [-0.25051677, 5.716082e-07, -7.282051e-05]
+      rotation: [-0.044875138, 0.6229466, -0.033506118, -0.78024524]
+      scale: [1.0000007, 1.0000001, 0.99999964]
     HierarchyComponent:
-      parent_id: 60
-  - id: 62
+      parent_id: 29
+  - id: 31
     NameComponent:
       name: Transform::Skeleton_neck_joint_1
     TransformComponent:
       flags: 0
-      translation: [-2.4303213e-06, 2.4128713e-06, 0.064838424]
-      rotation: [-0.003054434, -0.6373906, -0.004485611, -0.77050763]
-      scale: [0.9999998, 1, 0.99999994]
+      translation: [-2.499411e-06, 2.4216238e-06, 0.064838514]
+      rotation: [0.030884782, -0.6591982, 0.035179038, -0.7505007]
+      scale: [0.99999994, 0.9999999, 0.99999976]
     HierarchyComponent:
-      parent_id: 61
-  - id: 63
+      parent_id: 30
+  - id: 32
     NameComponent:
       name: Transform::Skeleton_neck_joint_2
     TransformComponent:
       flags: 0
-      translation: [-0.052039742, -1.4523115e-08, -2.5987379e-06]
-      rotation: [-0.006463423, 0.99711686, 0.00011330645, 0.07531176]
-      scale: [1.0000001, 0.99999994, 1.0000005]
+      translation: [-0.052039713, -1.0990107e-08, -2.6126158e-06]
+      rotation: [0.021912254, 0.9985966, 0.0004020147, 0.04694785]
+      scale: [0.9999999, 0.9999999, 1.0000005]
     HierarchyComponent:
-      parent_id: 62
-  - id: 64
+      parent_id: 31
+  - id: 33
     NameComponent:
       name: Transform::Skeleton_arm_joint_L__4_
     TransformComponent:
       flags: 0
-      translation: [-3.752694e-05, 0.08800012, -5.9000973e-05]
-      rotation: [0.17167117, 0.888534, -0.3610015, 0.22392115]
-      scale: [1.0000001, 0.99999994, 1]
+      translation: [-3.7555405e-05, 0.088000074, -5.911217e-05]
+      rotation: [0.17988044, 0.85405225, -0.43629378, 0.21822965]
+      scale: [1.0000002, 1, 1.0000002]
     HierarchyComponent:
-      parent_id: 61
-  - id: 65
+      parent_id: 30
+  - id: 34
     NameComponent:
       name: Transform::Skeleton_arm_joint_L__3_
     TransformComponent:
       flags: 0
-      translation: [0.013221748, 0.21549955, 0.10933226]
-      rotation: [-0.054978646, -0.16676891, 0.110668205, -0.9781649]
-      scale: [0.9999995, 0.99999946, 0.9999995]
+      translation: [0.01322173, 0.21549955, 0.10933213]
+      rotation: [0.009051353, -0.14661545, 0.15793324, -0.97643477]
+      scale: [0.99999964, 0.9999996, 0.9999996]
     HierarchyComponent:
-      parent_id: 64
-  - id: 66
+      parent_id: 33
+  - id: 35
     NameComponent:
       name: Transform::Skeleton_arm_joint_L__2_
     TransformComponent:
       flags: 0
-      translation: [-0.09332462, 0.14299996, 0.07814781]
-      rotation: [0.033720773, 0.0026474465, 0.003784925, -0.99942076]
-      scale: [1.0000005, 1.0000002, 1.0000005]
+      translation: [-0.09332464, 0.1429999, 0.07814786]
+      rotation: [0.015499797, -0.10259984, 0.17977037, -0.9781982]
+      scale: [1.0000005, 1.0000002, 1.0000006]
     HierarchyComponent:
-      parent_id: 65
-  - id: 67
+      parent_id: 34
+  - id: 36
     NameComponent:
       name: Transform::Skeleton_arm_joint_R
     TransformComponent:
       flags: 0
-      translation: [-3.9189337e-05, -0.08799994, -5.9282356e-05]
-      rotation: [-0.018100567, 0.94074625, 0.33718404, 0.0018824926]
-      scale: [0.99999994, 1, 0.9999999]
+      translation: [-3.907256e-05, -0.087999985, -5.9490678e-05]
+      rotation: [-0.11955003, 0.9292785, 0.34907198, -0.004805926]
+      scale: [1.0000001, 1, 1]
     HierarchyComponent:
-      parent_id: 61
-  - id: 68
+      parent_id: 30
+  - id: 37
     NameComponent:
       name: Transform::Skeleton_arm_joint_R__2_
     TransformComponent:
       flags: 0
-      translation: [-0.035546273, -0.21549897, 0.1042331]
-      rotation: [-0.14053033, 0.9301162, -0.03845706, 0.33706024]
-      scale: [1.0000002, 1, 0.99999994]
+      translation: [-0.035546258, -0.21549891, 0.10423316]
+      rotation: [-0.094810136, 0.9191563, -0.034729958, 0.3802765]
+      scale: [1.0000004, 0.9999999, 0.9999999]
     HierarchyComponent:
-      parent_id: 67
-  - id: 69
+      parent_id: 36
+  - id: 38
     NameComponent:
       name: Transform::Skeleton_arm_joint_R__3_
     TransformComponent:
       flags: 0
-      translation: [0.031370368, -0.14300095, -0.11761164]
-      rotation: [0.12085019, 0.2957158, 0.08649343, -0.9436375]
-      scale: [1.0000001, 1.0000004, 1.0000002]
+      translation: [0.031370383, -0.1430009, -0.11761166]
+      rotation: [0.059456028, 0.3897609, -0.012005266, -0.918914]
+      scale: [1, 0.99999994, 1]
     HierarchyComponent:
-      parent_id: 68
-  - id: 70
+      parent_id: 37
+  - id: 39
     NameComponent:
       name: Transform::leg_joint_L_1
     TransformComponent:
       flags: 0
-      translation: [0.028520122, 0.0676218, -0.062959954]
-      rotation: [0.0042157304, -0.2857425, 0.0009083345, -0.9575355]
-      scale: [0.9999998, 1.0000004, 0.9999999]
+      translation: [0.028520113, 0.06762175, -0.062960014]
+      rotation: [-0.0033216486, -0.52854085, -0.023911882, -0.84855765]
+      scale: [0.99999976, 1.0000002, 0.99999976]
     HierarchyComponent:
-      parent_id: 59
-  - id: 71
+      parent_id: 28
+  - id: 40
     NameComponent:
       name: Transform::leg_joint_L_2
     TransformComponent:
       flags: 0
-      translation: [0.20916393, 0.00905549, -0.16426976]
-      rotation: [-0.006375565, -0.95072377, -0.020745248, -0.3063742]
-      scale: [0.99999994, 0.99999905, 0.99999976]
+      translation: [0.209164, 0.00905548, -0.1642697]
+      rotation: [0.009099684, -0.33202362, 0.00058656884, -0.943041]
+      scale: [0.99999964, 0.99999917, 0.9999999]
     HierarchyComponent:
-      parent_id: 70
-  - id: 72
+      parent_id: 39
+  - id: 41
     NameComponent:
       name: Transform::leg_joint_L_3
     TransformComponent:
       flags: 0
-      translation: [0.27578995, 0.0013972677, 0.004122465]
-      rotation: [-0.03819935, -0.9160743, 0.029694114, -0.3977456]
-      scale: [1.0000005, 1.0000007, 1.0000002]
+      translation: [0.27578992, 0.0013972551, 0.00412247]
+      rotation: [-0.033078946, -0.89705276, 0.016406104, -0.44014144]
+      scale: [1.0000006, 1.0000006, 1]
     HierarchyComponent:
-      parent_id: 71
-  - id: 73
+      parent_id: 40
+  - id: 42
     NameComponent:
       name: Transform::leg_joint_L_5
     TransformComponent:
       flags: 0
-      translation: [-0.065583825, 0.001090594, 0.029291317]
-      rotation: [0.020576678, 0.30655015, -0.045196697, -0.9505287]
-      scale: [1.0000005, 0.9999999, 0.9999999]
+      translation: [-0.06558383, 0.001090595, 0.029291324]
+      rotation: [0.013627257, 0.38994, -0.044858076, -0.9194697]
+      scale: [1.0000005, 0.9999999, 0.99999976]
     HierarchyComponent:
-      parent_id: 72
-  - id: 74
+      parent_id: 41
+  - id: 43
     NameComponent:
       name: Transform::leg_joint_R_1
     TransformComponent:
       flags: 0
-      translation: [0.028557172, -0.06845433, -0.06295866]
-      rotation: [-0.004259133, -0.8209171, 0.0038753054, -0.5700625]
-      scale: [0.99999964, 1.0000002, 1.0000002]
+      translation: [0.028557178, -0.06845435, -0.06295864]
+      rotation: [0.027702723, -0.44275537, -0.003736088, -0.89543843]
+      scale: [0.9999999, 1.0000002, 1]
     HierarchyComponent:
-      parent_id: 59
-  - id: 75
+      parent_id: 28
+  - id: 44
     NameComponent:
       name: Transform::leg_joint_R_2
     TransformComponent:
       flags: 0
-      translation: [0.26089072, -0.009026051, 0.05167085]
-      rotation: [-0.0010252538, 0.1664787, -0.006555778, -0.9857695]
-      scale: [1, 1.0000004, 1]
+      translation: [0.26089084, -0.009026043, 0.051670983]
+      rotation: [-0.0059876037, -0.7775028, -0.016742863, -0.628587]
+      scale: [0.99999964, 1.0000002, 1.0000006]
     HierarchyComponent:
-      parent_id: 74
-  - id: 76
+      parent_id: 43
+  - id: 45
     NameComponent:
       name: Transform::leg_joint_R_3
     TransformComponent:
       flags: 0
-      translation: [0.2754603, -0.0014317168, -0.014104813]
-      rotation: [-0.00031462975, 0.89702106, 0.0023906012, 0.44197923]
-      scale: [0.99999964, 0.9999995, 1]
+      translation: [0.2754603, -0.0014317152, -0.014104797]
+      rotation: [0.008831558, 0.9382902, 0.02625632, 0.34471023]
+      scale: [0.99999946, 0.9999994, 0.99999976]
     HierarchyComponent:
-      parent_id: 75
-  - id: 77
+      parent_id: 44
+  - id: 46
     NameComponent:
       name: Transform::leg_joint_R_5
     TransformComponent:
       flags: 0
-      translation: [-0.06681976, -0.001072159, 0.026351305]
-      rotation: [-0.00036670102, 0.33392897, -0.0009005556, -0.9425951]
-      scale: [0.9999999, 0.9999994, 0.9999988]
+      translation: [-0.06681973, -0.0010721679, 0.026351325]
+      rotation: [-0.018586978, 0.28277, 0.09826708, -0.95392764]
+      scale: [1, 0.9999994, 0.9999989]
     HierarchyComponent:
-      parent_id: 76
-  - id: 78
+      parent_id: 45
+  - id: 47
     NameComponent:
       name: Animated::Cesium_Man
     TransformComponent:
@@ -1663,193 +596,193 @@ entities:
       rotation: [0, 0, 0, 1]
       scale: [1, 1, 1]
     HierarchyComponent:
-      parent_id: 56
+      parent_id: 25
     ObjectComponent:
       flags: 1073741827
-      mesh_id: 55
-  - id: 79
+      mesh_id: 24
+  - id: 48
     NameComponent:
       name: CesiumMan.gltf::animation_1
     HierarchyComponent:
-      parent_id: 53
+      parent_id: 22
     AnimationComponent:
       flags: 3
       start: 0
       end: 2
-      timer: 0.25052908
+      timer: 1.3665391
       amount: 1
       speed: 1
       channels:
         - path: 0
-          target_id: 59
+          target_id: 28
           sampler_idx: 0
         - path: 1
-          target_id: 59
+          target_id: 28
           sampler_idx: 1
         - path: 2
-          target_id: 59
+          target_id: 28
           sampler_idx: 2
         - path: 0
-          target_id: 60
+          target_id: 29
           sampler_idx: 3
         - path: 1
-          target_id: 60
+          target_id: 29
           sampler_idx: 4
         - path: 2
-          target_id: 60
+          target_id: 29
           sampler_idx: 5
         - path: 0
-          target_id: 61
+          target_id: 30
           sampler_idx: 6
         - path: 1
-          target_id: 61
+          target_id: 30
           sampler_idx: 7
         - path: 2
-          target_id: 61
+          target_id: 30
           sampler_idx: 8
         - path: 0
-          target_id: 62
+          target_id: 31
           sampler_idx: 9
         - path: 1
-          target_id: 62
+          target_id: 31
           sampler_idx: 10
         - path: 2
-          target_id: 62
+          target_id: 31
           sampler_idx: 11
         - path: 0
-          target_id: 63
+          target_id: 32
           sampler_idx: 12
         - path: 1
-          target_id: 63
+          target_id: 32
           sampler_idx: 13
         - path: 2
-          target_id: 63
+          target_id: 32
           sampler_idx: 14
         - path: 0
-          target_id: 64
+          target_id: 33
           sampler_idx: 15
         - path: 1
-          target_id: 64
+          target_id: 33
           sampler_idx: 16
         - path: 2
-          target_id: 64
+          target_id: 33
           sampler_idx: 17
         - path: 0
-          target_id: 65
+          target_id: 34
           sampler_idx: 18
         - path: 1
-          target_id: 65
+          target_id: 34
           sampler_idx: 19
         - path: 2
-          target_id: 65
+          target_id: 34
           sampler_idx: 20
         - path: 0
-          target_id: 66
+          target_id: 35
           sampler_idx: 21
         - path: 1
-          target_id: 66
+          target_id: 35
           sampler_idx: 22
         - path: 2
-          target_id: 66
+          target_id: 35
           sampler_idx: 23
         - path: 0
-          target_id: 67
+          target_id: 36
           sampler_idx: 24
         - path: 1
-          target_id: 67
+          target_id: 36
           sampler_idx: 25
         - path: 2
-          target_id: 67
+          target_id: 36
           sampler_idx: 26
         - path: 0
-          target_id: 68
+          target_id: 37
           sampler_idx: 27
         - path: 1
-          target_id: 68
+          target_id: 37
           sampler_idx: 28
         - path: 2
-          target_id: 68
+          target_id: 37
           sampler_idx: 29
         - path: 0
-          target_id: 69
+          target_id: 38
           sampler_idx: 30
         - path: 1
-          target_id: 69
+          target_id: 38
           sampler_idx: 31
         - path: 2
-          target_id: 69
+          target_id: 38
           sampler_idx: 32
         - path: 0
-          target_id: 70
+          target_id: 39
           sampler_idx: 33
         - path: 1
-          target_id: 70
+          target_id: 39
           sampler_idx: 34
         - path: 2
-          target_id: 70
+          target_id: 39
           sampler_idx: 35
         - path: 0
-          target_id: 71
+          target_id: 40
           sampler_idx: 36
         - path: 1
-          target_id: 71
+          target_id: 40
           sampler_idx: 37
         - path: 2
-          target_id: 71
+          target_id: 40
           sampler_idx: 38
         - path: 0
-          target_id: 72
+          target_id: 41
           sampler_idx: 39
         - path: 1
-          target_id: 72
+          target_id: 41
           sampler_idx: 40
         - path: 2
-          target_id: 72
+          target_id: 41
           sampler_idx: 41
         - path: 0
-          target_id: 73
+          target_id: 42
           sampler_idx: 42
         - path: 1
-          target_id: 73
+          target_id: 42
           sampler_idx: 43
         - path: 2
-          target_id: 73
+          target_id: 42
           sampler_idx: 44
         - path: 0
-          target_id: 74
+          target_id: 43
           sampler_idx: 45
         - path: 1
-          target_id: 74
+          target_id: 43
           sampler_idx: 46
         - path: 2
-          target_id: 74
+          target_id: 43
           sampler_idx: 47
         - path: 0
-          target_id: 75
+          target_id: 44
           sampler_idx: 48
         - path: 1
-          target_id: 75
+          target_id: 44
           sampler_idx: 49
         - path: 2
-          target_id: 75
+          target_id: 44
           sampler_idx: 50
         - path: 0
-          target_id: 76
+          target_id: 45
           sampler_idx: 51
         - path: 1
-          target_id: 76
+          target_id: 45
           sampler_idx: 52
         - path: 2
-          target_id: 76
+          target_id: 45
           sampler_idx: 53
         - path: 0
-          target_id: 77
+          target_id: 46
           sampler_idx: 54
         - path: 1
-          target_id: 77
+          target_id: 46
           sampler_idx: 55
         - path: 2
-          target_id: 77
+          target_id: 46
           sampler_idx: 56
       samplers:
         - key_frames.data:
@@ -13822,14 +12755,1102 @@ entities:
             - 1.916667
             - 1.958333
             - 2
-  - id: 80
+  - id: 49
     NameComponent:
-      name: AreaLight-1
+      name: Cube-2:mat
+    MaterialComponent:
+      base_color: [1, 1, 1, 1]
+      roughness: 0.14
+      metallic: 0.32
+      emissive: 0
+      textures:
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 50
+    NameComponent:
+      name: Cube-2
     TransformComponent:
       flags: 0
-      translation: [0, 3.3835802, 0]
-      rotation: [0.58511746, 0, 0, 0.81094855]
-      scale: [2.88, 2.8800013, 2.88]
+      translation: [2.0431364, -1.7180882, 2.1801]
+      rotation: [0, 0.08990447, 0, 0.99595034]
+      scale: [3.0000017, 6, 3.0000026]
+    HierarchyComponent:
+      parent_id: 1
+    ObjectComponent:
+      flags: 3
+      mesh_id: 51
+  - id: 51
+    NameComponent:
+      name: Cube-2:mesh
+    MeshComponent:
+      flags: 1
+      subsets: [{material_id: 49, index_count: 36, index_offset: 0, local_bound: {min: [-0.5, -0.5, -0.5], max: [0.5, 0.5, 0.5]}}]
+      armature_id: 0
+      indices: {offset: 272104, buffer_size: 144}
+      positions: {offset: 272264, buffer_size: 288}
+      normals: {offset: 272568, buffer_size: 288}
+      tangents: {offset: 0, buffer_size: 0}
+      texcoords_0: {offset: 272872, buffer_size: 192}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 52
+    NameComponent:
+      name: VoxelGi-3
+    TransformComponent:
+      flags: 0
+      translation: [0, 0, 0]
+      rotation: [0, 0, 0, 1]
+      scale: [10.771198, 10.771198, 10.771198]
+    HierarchyComponent:
+      parent_id: 1
+    VoxelGiComponent:
+      flags: 1
+  - id: 53
+    NameComponent:
+      name: Sponza.gltf
+    TransformComponent:
+      flags: 0
+      translation: [0, -4.3161044, -14.072857]
+      rotation: [0, 0, 0, 1]
+      scale: [1, 1, 1]
+    HierarchyComponent:
+      parent_id: 1
+  - id: 54
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/5061699253647017043.png
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8773302468495022225.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11872827283454512094.jpg
+          enabled: true
+  - id: 55
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7268504077753552595.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4477655471536070370.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8503262930880235456.jpg
+          enabled: true
+  - id: 56
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/white.png
+          enabled: true
+        - path: ""
+          enabled: true
+        - path: ""
+          enabled: true
+  - id: 57
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8006627369776289000.png
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/12501374198249454378.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/715093869573992647.jpg
+          enabled: true
+  - id: 58
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8750083169368950601.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/13982482287905699490.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/16885566240357350108.jpg
+          enabled: true
+  - id: 59
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/5792855332885324923.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/16299174074766089871.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11968150294050148237.jpg
+          enabled: true
+  - id: 60
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14650633544276105767.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2051777328469649772.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4871783166746854860.jpg
+          enabled: true
+  - id: 61
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/15295713303328085182.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/10388182081421875623.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/9916269861720640319.jpg
+          enabled: true
+  - id: 62
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6047387724914829168.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/15722799267630235092.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8051790464816141987.jpg
+          enabled: true
+  - id: 63
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/5823059166183034438.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14267839433702832875.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/13824894030729245199.jpg
+          enabled: true
+  - id: 64
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7441062115984513793.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6667038893015345571.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8114461559286000061.jpg
+          enabled: true
+  - id: 65
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11490520546946913238.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3628158980083700836.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3455394979645218238.jpg
+          enabled: true
+  - id: 66
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6151467286084645207.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7645212358685992005.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8783994986360286082.jpg
+          enabled: true
+  - id: 67
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4975155472559461469.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2299742237651021498.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3371964815757888145.jpg
+          enabled: true
+  - id: 68
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4675343432951571524.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7056944414013900257.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7815564343179553343.jpg
+          enabled: true
+  - id: 69
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2775690330959970771.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2374361008830720677.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7815564343179553343.jpg
+          enabled: true
+  - id: 70
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2185409758123873465.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/332936164838540657.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/7815564343179553343.jpg
+          enabled: true
+  - id: 71
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/17876391417123941155.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6593109234861095314.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/466164707995436622.jpg
+          enabled: true
+  - id: 72
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/11474523244911310074.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4601176305987539675.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/466164707995436622.jpg
+          enabled: true
+  - id: 73
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/9288698199695299068.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/4910669866631290573.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/466164707995436622.jpg
+          enabled: true
+  - id: 74
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/16275776544635328252.png
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14170708867020035030.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/1219024358953944284.jpg
+          enabled: true
+  - id: 75
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/755318871556304029.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/3827035219084910048.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2411100444841994089.jpg
+          enabled: true
+  - id: 76
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8481240838833932244.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/10381718147657362067.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/17556969131407844942.jpg
+          enabled: true
+  - id: 77
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/6772804448157695701.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/759203620573749278.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/13196865903111448057.jpg
+          enabled: true
+  - id: 78
+    NameComponent:
+      name: ""
+    MaterialComponent:
+      base_color: [0.588, 0.588, 0.588, 1]
+      roughness: 1
+      metallic: 0
+      emissive: 0
+      textures:
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/2969916736137545357.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/14118779221266351425.jpg
+          enabled: true
+        - path: D:/workspace/assets/glTF-Sample-Models/2.0/Sponza/glTF/8747919177698443163.jpg
+          enabled: true
+  - id: 79
+    NameComponent:
+      name: "Mesh::"
+    MeshComponent:
+      flags: 1
+      subsets:
+        - material_id: 54
+          index_count: 10920
+          index_offset: 0
+          local_bound:
+            min: [449.5629, 85.3714, 152.0907]
+            max: [540.9965, 210.9434, 244.898]
+        - material_id: 57
+          index_count: 1404
+          index_offset: 10920
+          local_bound:
+            min: [-277.3556, 46.0815, -252.9986]
+            max: [-209.1302, 73.1236, -189.0428]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 12324
+          local_bound:
+            min: [-271.2546, -0.1401, -250.777]
+            max: [-219.3237, 56.1995, -198.788]
+        - material_id: 58
+          index_count: 4086
+          index_offset: 18957
+          local_bound:
+            min: [-1424.6638, 493.0472, -163.3865]
+            max: [-1401.6799, 758.5531, 85.7051]
+        - material_id: 59
+          index_count: 324
+          index_offset: 23043
+          local_bound:
+            min: [-1045.741, 221.4877, -310.1346]
+            max: [914.8008, 495.6896, 238.6795]
+        - material_id: 60
+          index_count: 840
+          index_offset: 23367
+          local_bound:
+            min: [-1048.308, 492.9888, -318.106]
+            max: [917.6837, 507.8032, 243.5581]
+        - material_id: 61
+          index_count: 6996
+          index_offset: 24207
+          local_bound:
+            min: [-1429.4524, 215.8036, -645.1483]
+            max: [1302.2017, 383.988, 574.9027]
+        - material_id: 62
+          index_count: 4368
+          index_offset: 31203
+          local_bound:
+            min: [-658.5948, -2.4607, -316.8692]
+            max: [528.9411, 220.9971, 244.5701]
+        - material_id: 60
+          index_count: 8688
+          index_offset: 35571
+          local_bound:
+            min: [-1041.229, 211.3955, -305.5379]
+            max: [912.8481, 410.4053, 233.3264]
+        - material_id: 63
+          index_count: 48
+          index_offset: 44259
+          local_bound:
+            min: [-1432.2244, 415.5302, -645.431]
+            max: [1302.221, 415.5304, 574.1852]
+        - material_id: 61
+          index_count: 6996
+          index_offset: 44307
+          local_bound:
+            min: [-1429.4524, 694.4673, -645.1483]
+            max: [1302.2017, 862.6516, 574.9027]
+        - material_id: 60
+          index_count: 3288
+          index_offset: 51303
+          local_bound:
+            min: [-1029.1833, 695.7373, -241.119]
+            max: [897.2501, 820.1328, 171.4547]
+        - material_id: 64
+          index_count: 11040
+          index_offset: 54591
+          local_bound:
+            min: [-1046.292, 507.1398, -315.4476]
+            max: [917.5026, 695.3228, 243.3501]
+        - material_id: 59
+          index_count: 612
+          index_offset: 65631
+          local_bound:
+            min: [-1002.3635, 693.7668, -259.3258]
+            max: [868.6472, 921.7285, 185.9673]
+        - material_id: 61
+          index_count: 612
+          index_offset: 66243
+          local_bound:
+            min: [-1022.5669, 693.7668, -295.4941]
+            max: [892.6568, 921.7285, 225.2953]
+        - material_id: 59
+          index_count: 444
+          index_offset: 66855
+          local_bound:
+            min: [-1002.3765, 921.7285, -253.5486]
+            max: [868.5942, 1296.7107, 181.2987]
+        - material_id: 60
+          index_count: 480
+          index_offset: 67299
+          local_bound:
+            min: [478.4944, 1215.9016, -263.6248]
+            max: [535.9614, 1273.4875, -243.1332]
+        - material_id: 61
+          index_count: 336
+          index_offset: 67779
+          local_bound:
+            min: [489.5545, 1226.9846, -271.4642]
+            max: [524.9012, 1262.4043, -255.9671]
+        - material_id: 60
+          index_count: 480
+          index_offset: 68115
+          local_bound:
+            min: [108.3681, 1215.9016, -263.6248]
+            max: [165.8351, 1273.4875, -243.1332]
+        - material_id: 61
+          index_count: 336
+          index_offset: 68595
+          local_bound:
+            min: [119.4282, 1226.9846, -271.4642]
+            max: [154.7749, 1262.4043, -255.9671]
+        - material_id: 60
+          index_count: 480
+          index_offset: 68931
+          local_bound:
+            min: [-293.3323, 1215.9016, -263.6248]
+            max: [-235.8653, 1273.4875, -243.1332]
+        - material_id: 61
+          index_count: 336
+          index_offset: 69411
+          local_bound:
+            min: [-282.2722, 1226.9846, -271.4642]
+            max: [-246.9255, 1262.4043, -255.9671]
+        - material_id: 60
+          index_count: 480
+          index_offset: 69747
+          local_bound:
+            min: [-663.5581, 1215.9016, -263.6248]
+            max: [-606.0911, 1273.4875, -243.1332]
+        - material_id: 61
+          index_count: 336
+          index_offset: 70227
+          local_bound:
+            min: [-652.4979, 1226.9846, -271.4642]
+            max: [-617.1514, 1262.4043, -255.9671]
+        - material_id: 60
+          index_count: 480
+          index_offset: 70563
+          local_bound:
+            min: [-1012.6072, 1217.4253, -63.705]
+            max: [-992.1155, 1275.0112, -6.2381]
+        - material_id: 61
+          index_count: 336
+          index_offset: 71043
+          local_bound:
+            min: [-1020.4465, 1228.5083, -52.645]
+            max: [-1004.9495, 1263.928, -17.2983]
+        - material_id: 60
+          index_count: 480
+          index_offset: 71379
+          local_bound:
+            min: [478.4944, 1215.9016, 169.437]
+            max: [535.9614, 1273.4875, 189.9285]
+        - material_id: 61
+          index_count: 336
+          index_offset: 71859
+          local_bound:
+            min: [489.5545, 1226.9846, 182.2709]
+            max: [524.9012, 1262.4043, 197.768]
+        - material_id: 60
+          index_count: 480
+          index_offset: 72195
+          local_bound:
+            min: [108.3681, 1215.9016, 169.437]
+            max: [165.8351, 1273.4875, 189.9285]
+        - material_id: 61
+          index_count: 336
+          index_offset: 72675
+          local_bound:
+            min: [119.4282, 1226.9846, 182.2709]
+            max: [154.7749, 1262.4043, 197.768]
+        - material_id: 60
+          index_count: 480
+          index_offset: 73011
+          local_bound:
+            min: [-293.3323, 1215.9016, 169.437]
+            max: [-235.8653, 1273.4875, 189.9285]
+        - material_id: 61
+          index_count: 336
+          index_offset: 73491
+          local_bound:
+            min: [-282.2722, 1226.9846, 182.2709]
+            max: [-246.9255, 1262.4043, 197.7679]
+        - material_id: 60
+          index_count: 480
+          index_offset: 73827
+          local_bound:
+            min: [-663.5581, 1215.9016, 169.437]
+            max: [-606.0911, 1273.4875, 189.9285]
+        - material_id: 61
+          index_count: 336
+          index_offset: 74307
+          local_bound:
+            min: [-652.498, 1226.9846, 182.2709]
+            max: [-617.1514, 1262.4043, 197.7679]
+        - material_id: 60
+          index_count: 1320
+          index_offset: 74643
+          local_bound:
+            min: [-1030.054, 921.7285, -274.7777]
+            max: [721.8198, 1014.4711, 202.7871]
+        - material_id: 59
+          index_count: 96
+          index_offset: 75963
+          local_bound:
+            min: [-1086.4229, 907.7441, -408.1468]
+            max: [997.5962, 1314.4902, 318.9008]
+        - material_id: 60
+          index_count: 840
+          index_offset: 76059
+          local_bound:
+            min: [-1048.308, 915.4514, -318.106]
+            max: [917.6837, 930.2659, 243.5581]
+        - material_id: 59
+          index_count: 162
+          index_offset: 76899
+          local_bound:
+            min: [-1431.2, -2.6201, -644.3114]
+            max: [1302.2208, 867.3871, 574.7062]
+        - material_id: 65
+          index_count: 726
+          index_offset: 77061
+          local_bound:
+            min: [-509.6833, -2.1349, 554.2698]
+            max: [41.1111, 289.3175, 605.0136]
+        - material_id: 59
+          index_count: 72
+          index_offset: 77787
+          local_bound:
+            min: [-509.6835, 119.8051, 573.1039]
+            max: [-357.1276, 289.3175, 583.6721]
+        - material_id: 65
+          index_count: 246
+          index_offset: 77859
+          local_bound:
+            min: [231.5654, 119.8051, 573.104]
+            max: [384.1212, 289.3176, 589.7529]
+        - material_id: 59
+          index_count: 72
+          index_offset: 78105
+          local_bound:
+            min: [231.5654, 119.8051, 573.104]
+            max: [384.1213, 289.3176, 583.6722]
+        - material_id: 65
+          index_count: 1668
+          index_offset: 78177
+          local_bound:
+            min: [-140.4469, -2.2155, -651.5385]
+            max: [1315.5244, 716.8506, 42.592]
+        - material_id: 59
+          index_count: 150
+          index_offset: 79845
+          local_bound:
+            min: [-1431.8987, 415.4614, -641.6024]
+            max: [1302.1907, 424.4659, 575.3004]
+        - material_id: 64
+          index_count: 10224
+          index_offset: 79995
+          local_bound:
+            min: [-1430.3052, 182.6523, -646.9679]
+            max: [1303.272, 695.3227, 575.7255]
+        - material_id: 59
+          index_count: 150
+          index_offset: 90219
+          local_bound:
+            min: [-1428.5198, -3.3794, -644.3114]
+            max: [1302.1906, 5.6251, 574.0297]
+        - material_id: 63
+          index_count: 15
+          index_offset: 90369
+          local_bound:
+            min: [-1428.5198, -2.5063, -644.3114]
+            max: [1302.1906, -2.5061002, 574.0297]
+        - material_id: 62
+          index_count: 4080
+          index_offset: 90384
+          local_bound:
+            min: [-1057.2202, -2.4607, -316.8692]
+            max: [925.6038, 220.9971, 246.6149]
+        - material_id: 60
+          index_count: 11208
+          index_offset: 94464
+          local_bound:
+            min: [-1052.8757, 413.9111, -317.2693]
+            max: [921.9355, 823.3442, 245.8142]
+        - material_id: 66
+          index_count: 69624
+          index_offset: 105672
+          local_bound:
+            min: [-1037.6516, 506.6332, -309.7055]
+            max: [907.4069, 699.6118, 234.7734]
+        - material_id: 56
+          index_count: 54
+          index_offset: 175296
+          local_bound:
+            min: [-119.4073, 256.731, 568.6584]
+            max: [-8.2629, 348.1974, 575.5052]
+        - material_id: 59
+          index_count: 192
+          index_offset: 175350
+          local_bound:
+            min: [-1086.4229, 907.7441, -408.1468]
+            max: [997.5962, 1330.7693, 318.9008]
+        - material_id: 67
+          index_count: 16368
+          index_offset: 175542
+          local_bound:
+            min: [-628.6536, 828.8109, -270.8304]
+            max: [503.1986, 886.139, 199.3907]
+        - material_id: 54
+          index_count: 83388
+          index_offset: 191910
+          local_bound:
+            min: [-680.2642, -28.0496, -341.1362]
+            max: [551.2264, 225.1021, 266.4423]
+        - material_id: 68
+          index_count: 16512
+          index_offset: 275298
+          local_bound:
+            min: [-783.7942, 339.443, 157.1643]
+            max: [-453.8621, 520.5939, 252.2858]
+        - material_id: 69
+          index_count: 16512
+          index_offset: 291810
+          local_bound:
+            min: [-415.188, 339.443, 157.1642]
+            max: [-85.256, 520.5939, 252.2857]
+        - material_id: 70
+          index_count: 16512
+          index_offset: 308322
+          local_bound:
+            min: [-46.5819, 339.443, 157.1642]
+            max: [283.3502, 520.5939, 252.2856]
+        - material_id: 68
+          index_count: 16512
+          index_offset: 324834
+          local_bound:
+            min: [322.0242, 339.443, 157.1641]
+            max: [651.9562, 520.5939, 252.2856]
+        - material_id: 69
+          index_count: 16512
+          index_offset: 341346
+          local_bound:
+            min: [318.9197, 339.443, -324.5262]
+            max: [648.8517, 520.5939, -229.4048]
+        - material_id: 68
+          index_count: 16512
+          index_offset: 357858
+          local_bound:
+            min: [-49.6864, 339.443, -324.5262]
+            max: [280.2456, 520.5939, -229.4048]
+        - material_id: 70
+          index_count: 16512
+          index_offset: 374370
+          local_bound:
+            min: [-418.2926, 339.443, -324.5262]
+            max: [-88.3605, 520.5939, -229.4048]
+        - material_id: 69
+          index_count: 16512
+          index_offset: 390882
+          local_bound:
+            min: [-786.8987, 339.443, -324.5262]
+            max: [-456.9666, 520.5939, -229.4048]
+        - material_id: 67
+          index_count: 33120
+          index_offset: 407394
+          local_bound:
+            min: [-958.6978, 274.9596, -289.7036]
+            max: [830.2939, 294.114, 209.115]
+        - material_id: 71
+          index_count: 14592
+          index_offset: 440514
+          local_bound:
+            min: [-204.9374, 0.1305, 188.9018]
+            max: [82.3598, 283.0153, 213.4825]
+        - material_id: 72
+          index_count: 13824
+          index_offset: 455106
+          local_bound:
+            min: [-577.6202, -0.3089, 182.9043]
+            max: [-290.577, 283.681, 208.2124]
+        - material_id: 73
+          index_count: 14592
+          index_offset: 468930
+          local_bound:
+            min: [-946.2379, 0.1305, 188.9018]
+            max: [-658.9407, 283.0153, 213.4825]
+        - material_id: 72
+          index_count: 14592
+          index_offset: 483522
+          local_bound:
+            min: [-946.2379, 0.1305, -289.2569]
+            max: [-658.9407, 283.0153, -264.6762]
+        - material_id: 73
+          index_count: 13824
+          index_offset: 498114
+          local_bound:
+            min: [160.9905, -0.3089, 182.9043]
+            max: [448.0338, 283.681, 208.2124]
+        - material_id: 72
+          index_count: 14592
+          index_offset: 511938
+          local_bound:
+            min: [532.8768, 0.1305, 188.9018]
+            max: [820.174, 283.0153, 213.4825]
+        - material_id: 71
+          index_count: 13824
+          index_offset: 526530
+          local_bound:
+            min: [-577.6202, -0.3089, -295.2544]
+            max: [-290.577, 283.681, -269.9463]
+        - material_id: 73
+          index_count: 14592
+          index_offset: 540354
+          local_bound:
+            min: [-204.9374, 0.1305, -289.2569]
+            max: [82.3598, 283.0153, -264.6762]
+        - material_id: 72
+          index_count: 13824
+          index_offset: 554946
+          local_bound:
+            min: [160.9905, -0.3089, -295.2544]
+            max: [448.0338, 283.681, -269.9463]
+        - material_id: 71
+          index_count: 14592
+          index_offset: 568770
+          local_bound:
+            min: [532.8768, 0.1305, -289.2569]
+            max: [820.174, 283.0153, -264.6762]
+        - material_id: 74
+          index_count: 24
+          index_offset: 583362
+          local_bound:
+            min: [461.903, 133.7213, -221.4872]
+            max: [513.3057, 214.3549, -217.9138]
+        - material_id: 75
+          index_count: 14871
+          index_offset: 583386
+          local_bound:
+            min: [452.6522, 98.6729, -246.8345]
+            max: [522.6115, 216.9513, -194.325]
+        - material_id: 74
+          index_count: 24
+          index_offset: 598257
+          local_bound:
+            min: [-644.9331, 133.7213, -221.4872]
+            max: [-593.5303, 214.3549, -217.9138]
+        - material_id: 75
+          index_count: 14871
+          index_offset: 598281
+          local_bound:
+            min: [-654.1838, 98.6729, -246.8345]
+            max: [-584.2246, 216.9513, -194.325]
+        - material_id: 74
+          index_count: 24
+          index_offset: 613152
+          local_bound:
+            min: [-644.8781, 133.7213, 141.555]
+            max: [-593.4753, 214.3549, 145.1284]
+        - material_id: 75
+          index_count: 14871
+          index_offset: 613176
+          local_bound:
+            min: [-654.1838, 98.6729, 117.9662]
+            max: [-584.2244, 216.9513, 170.4758]
+        - material_id: 74
+          index_count: 24
+          index_offset: 628047
+          local_bound:
+            min: [461.958, 133.7213, 141.5548]
+            max: [513.3608, 214.3549, 145.1283]
+        - material_id: 75
+          index_count: 14871
+          index_offset: 628071
+          local_bound:
+            min: [452.6523, 98.6729, 117.966]
+            max: [522.6116, 216.9513, 170.4756]
+        - material_id: 57
+          index_count: 1404
+          index_offset: 642942
+          local_bound:
+            min: [-992.9604, 46.0815, -261.8365]
+            max: [-929.0048, 73.1236, -193.6112]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 644346
+          local_bound:
+            min: [-990.7389, -0.1401, -251.6431]
+            max: [-938.7499, 56.1995, -199.7122]
+        - material_id: 57
+          index_count: 1404
+          index_offset: 650979
+          local_bound:
+            min: [-992.9604, 42.3191, 115.0579]
+            max: [-929.0048, 69.3612, 183.2832]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 652383
+          local_bound:
+            min: [-990.7389, -3.9025, 125.2513]
+            max: [-938.7499, 52.4371, 177.1822]
+        - material_id: 57
+          index_count: 1404
+          index_offset: 659016
+          local_bound:
+            min: [-277.3556, 42.3191, 123.8958]
+            max: [-209.1302, 69.3612, 187.8516]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 660420
+          local_bound:
+            min: [-271.2546, -3.9025, 126.1174]
+            max: [-219.3237, 52.4371, 178.1064]
+        - material_id: 57
+          index_count: 1200
+          index_offset: 667053
+          local_bound:
+            min: [91.807, 43.8723, 126.1538]
+            max: [147.3344, 67.0677, 183.3375]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 668253
+          local_bound:
+            min: [92.7551, -4.0307, 127.3799]
+            max: [144.7441, 52.3089, 179.3108]
+        - material_id: 57
+          index_count: 1200
+          index_offset: 674886
+          local_bound:
+            min: [806.3584, 44.424, 126.1538]
+            max: [861.8858, 67.6194, 183.3375]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 676086
+          local_bound:
+            min: [807.3065, -3.479, 127.3799]
+            max: [859.2955, 52.8606, 179.3108]
+        - material_id: 57
+          index_count: 1200
+          index_offset: 682719
+          local_bound:
+            min: [806.3584, 47.7629, -250.7406]
+            max: [861.8858, 70.9582, -193.5569]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 683919
+          local_bound:
+            min: [807.3065, -0.1401, -249.5145]
+            max: [859.2955, 56.1995, -197.5836]
+        - material_id: 57
+          index_count: 1200
+          index_offset: 690552
+          local_bound:
+            min: [91.807, 47.7629, -250.7406]
+            max: [147.3344, 70.9582, -193.5569]
+        - material_id: 55
+          index_count: 6633
+          index_offset: 691752
+          local_bound:
+            min: [92.7551, -0.1401, -249.5145]
+            max: [144.7441, 56.1995, -197.5836]
+        - material_id: 76
+          index_count: 27552
+          index_offset: 698385
+          local_bound:
+            min: [-1276.6733, -0.6934, -523.4996]
+            max: [1194.1705, 133.0168, 478.2618]
+        - material_id: 77
+          index_count: 4563
+          index_offset: 725937
+          local_bound:
+            min: [1224.0483, 79.9048, -114.6915]
+            max: [1299.0264, 264.7612, 41.4676]
+        - material_id: 58
+          index_count: 4086
+          index_offset: 730500
+          local_bound:
+            min: [1277.0227, 40.8186, -160.465]
+            max: [1299.8668, 306.3246, 88.6266]
+        - material_id: 77
+          index_count: 4563
+          index_offset: 734586
+          local_bound:
+            min: [-1427.4343, 79.9048, -113.3057]
+            max: [-1352.4563, 264.7612, 42.8534]
+        - material_id: 58
+          index_count: 4086
+          index_offset: 739149
+          local_bound:
+            min: [-1428.2749, 40.8186, -160.4646]
+            max: [-1405.4307, 306.3246, 88.6269]
+        - material_id: 59
+          index_count: 84
+          index_offset: 743235
+          local_bound:
+            min: [-1866.9829, -126.4425, -1139.0305]
+            max: [1746.6929, 1347.1958, 1039.7112]
+        - material_id: 78
+          index_count: 43452
+          index_offset: 743319
+          local_bound:
+            min: [-1920.9459, 1280.5134, -1182.8071]
+            max: [1799.9081, 1429.4332, 1105.426]
+        - material_id: 59
+          index_count: 30
+          index_offset: 786771
+          local_bound:
+            min: [-1504.4683, -115.9791, -782.5203]
+            max: [1380.6034, 1271.0371, 674.7568]
+      armature_id: 0
+      indices: {offset: 273080, buffer_size: 3147204}
+      positions: {offset: 3420300, buffer_size: 2309952}
+      normals: {offset: 5730268, buffer_size: 2309952}
+      tangents: {offset: 8040236, buffer_size: 2309952}
+      texcoords_0: {offset: 10350204, buffer_size: 1539968}
+      texcoords_1: {offset: 0, buffer_size: 0}
+      joints_0: {offset: 0, buffer_size: 0}
+      weights_0: {offset: 0, buffer_size: 0}
+      color_0: {offset: 0, buffer_size: 0}
+  - id: 80
+    NameComponent:
+      name: "Object::"
+    TransformComponent:
+      flags: 0
+      translation: [0, 0, 0]
+      rotation: [0, 0, 0, 1]
+      scale: [0.008, 0.008, 0.008]
+    HierarchyComponent:
+      parent_id: 53
+    ObjectComponent:
+      flags: 1073741827
+      mesh_id: 79
+  - id: 81
+    NameComponent:
+      name: sun
+    TransformComponent:
+      flags: 0
+      translation: [0, 0, 0]
+      rotation: [-0.46704608, 0.14745274, 0.090562075, 0.8671356]
+      scale: [0.9999975, 0.9999981, 0.99999833]
     HierarchyComponent:
       parent_id: 1
     MaterialComponent:
@@ -13844,30 +13865,11 @@ entities:
           enabled: true
         - path: ""
           enabled: true
-    ObjectComponent:
-      flags: 1
-      mesh_id: 81
     LightComponent:
-      flags: 0
-      type: 3
+      flags: 2
+      type: 0
       shadow_region: ~
       attenuation:
-        constant: 0
+        constant: 1
         linear: 0
         quadratic: 0
-  - id: 81
-    NameComponent:
-      name: AreaLight-1:mesh
-    MeshComponent:
-      flags: 1
-      subsets: [{material_id: 80, index_count: 6, index_offset: 0, local_bound: {min: [-0.5, -0.5, -0.0001], max: [0.5, 0.5, 0.0001]}}]
-      armature_id: 0
-      indices: {offset: 11889972, buffer_size: 24}
-      positions: {offset: 11890012, buffer_size: 48}
-      normals: {offset: 11890076, buffer_size: 48}
-      tangents: {offset: 0, buffer_size: 0}
-      texcoords_0: {offset: 11890140, buffer_size: 32}
-      texcoords_1: {offset: 0, buffer_size: 0}
-      joints_0: {offset: 0, buffer_size: 0}
-      weights_0: {offset: 0, buffer_size: 0}
-      color_0: {offset: 0, buffer_size: 0}

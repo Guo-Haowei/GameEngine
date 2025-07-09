@@ -6,61 +6,43 @@
 
 namespace my {
 
-void EditorCameraController::OnCreate() {
-}
+void CameraController2DEditor::Update(CameraComponent& p_camera,
+                                      const CameraInputState& p_state) {
+    const bool moved = p_state.move.x || p_state.move.y;
+    if (moved) {
+        p_camera.m_position.x += p_state.move.x;
+        p_camera.m_position.y += p_state.move.y;
 
-void EditorCameraController::OnUpdate(float p_timestep) {
-    PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
+        p_camera.SetDirty();
+    }
 
-    if (DEV_VERIFY(camera)) {
-        InputManager& input_manager = InputManager::GetSingleton();
-        const int dx = input_manager.IsKeyDown(KeyCode::KEY_D) -
-                       input_manager.IsKeyDown(KeyCode::KEY_A);
-        const int dy = input_manager.IsKeyDown(KeyCode::KEY_E) -
-                       input_manager.IsKeyDown(KeyCode::KEY_Q);
-        const int dz = input_manager.IsKeyDown(KeyCode::KEY_W) -
-                       input_manager.IsKeyDown(KeyCode::KEY_S);
+    if (p_state.zoomDelta != 0.0f) {
+        p_camera.m_orthoHeight += p_state.zoomDelta * 4.0f;
 
-        Vector3i delta(dx, dy, dz);
-        Vector2f rotation(0);
-        if (input_manager.IsButtonDown(MouseButton::MIDDLE)) {
-            rotation = input_manager.MouseMove();
-        }
-
-        Context context{
-            .timestep = p_timestep,
-            .scroll = input_manager.GetWheel().y,
-            .camera = camera,
-            .move = delta,
-            .rotation = rotation,
-        };
-
-        Move(context);
+        p_camera.m_orthoHeight = glm::clamp(p_camera.m_orthoHeight, 0.1f, 100.0f);
+        p_camera.SetDirty();
     }
 }
 
-void EditorCameraController::Move(const Context& p_context) {
-    // @TODO: smooth movement
-    // @TODO: get rid off the magic numbers
-    const bool moved = p_context.move.x || p_context.move.y || p_context.move.z || p_context.scroll != 0.0f;
-    const float timestep = p_context.timestep;
-    auto& camera = p_context.camera;
-    if (moved) {
-        const float move_speed = m_moveSpeed * timestep;
-        const float dx = (float)p_context.move.x;
-        const float dy = (float)p_context.move.y;
+void CameraControllerFPS::Update(CameraComponent& p_camera,
+                                 const CameraInputState& p_state) {
 
-        float dz = (float)p_context.move.z;
-        const float scroll = m_scrollSpeed * p_context.scroll;
-        if (glm::abs(scroll) > glm::abs(dz)) {
-            dz = scroll;
+    const bool moved = p_state.move.x || p_state.move.y || p_state.move.z || p_state.zoomDelta != 0.0f;
+    if (moved) {
+        const float dx = p_state.move.x;
+        const float dy = p_state.move.y;
+
+        float dz = p_state.move.z;
+        const float scroll_z = m_scrollSpeed * p_state.zoomDelta;
+        if (glm::abs(scroll_z) > glm::abs(dz)) {
+            dz = scroll_z;
         }
         if (dx || dz) {
-            Vector3f delta = (move_speed * dz) * camera->GetFront() + (move_speed * dx) * camera->GetRight();
-            camera->m_position += delta;
+            Vector3f delta = (m_moveSpeed * dz) * p_camera.GetFront() + (m_moveSpeed * dx) * p_camera.GetRight();
+            p_camera.m_position += delta;
         }
         if (dy) {
-            camera->m_position += Vector3f(0, move_speed * dy, 0);
+            p_camera.m_position += Vector3f(0, m_moveSpeed * dy, 0);
         }
     }
 
@@ -68,8 +50,8 @@ void EditorCameraController::Move(const Context& p_context) {
         float rotate_x = 0.0f;
         float rotate_y = 0.0f;
 
-        Vector2f movement = p_context.rotation;
-        movement = m_rotateSpeed * timestep * movement;
+        Vector2f movement = p_state.rotation;
+        movement = m_rotateSpeed * movement;
         if (glm::abs(movement.x) > glm::abs(movement.y)) {
             rotate_y = movement.x;
         } else {
@@ -78,19 +60,19 @@ void EditorCameraController::Move(const Context& p_context) {
 
         // @TODO: DPI
         if (rotate_y) {
-            camera->m_yaw += Degree(rotate_y);
+            p_camera.m_yaw += Degree(rotate_y);
         }
 
         if (rotate_x) {
-            camera->m_pitch += Degree(rotate_x);
-            camera->m_pitch.Clamp(-85.0f, 85.0f);
+            p_camera.m_pitch += Degree(rotate_x);
+            p_camera.m_pitch.Clamp(-85.0f, 85.0f);
         }
 
         return rotate_x != 0.0f || rotate_y != 0.0f;
     };
 
     if (moved || rotate_camera()) {
-        camera->SetDirty();
+        p_camera.SetDirty();
     }
 }
 

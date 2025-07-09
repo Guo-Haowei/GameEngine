@@ -588,7 +588,7 @@ void ObjectComponent::RegisterClass() {
     END_REGISTRY(ObjectComponent);
 }
 
-void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
+void CameraComponent::Serialize(Archive& p_archive, uint32_t) {
     p_archive.ArchiveValue(flags);
     p_archive.ArchiveValue(m_near);
     p_archive.ArchiveValue(m_far);
@@ -598,20 +598,22 @@ void PerspectiveCameraComponent::Serialize(Archive& p_archive, uint32_t) {
     p_archive.ArchiveValue(m_pitch);
     p_archive.ArchiveValue(m_yaw);
     p_archive.ArchiveValue(m_position);
+    p_archive.ArchiveValue(m_orthoHeight);
 }
 
-void PerspectiveCameraComponent::RegisterClass() {
-    BEGIN_REGISTRY(PerspectiveCameraComponent);
-    REGISTER_FIELD(PerspectiveCameraComponent, "flags", flags);
-    REGISTER_FIELD(PerspectiveCameraComponent, "fovy", m_fovy);
-    REGISTER_FIELD(PerspectiveCameraComponent, "near", m_near);
-    REGISTER_FIELD(PerspectiveCameraComponent, "far", m_far);
-    REGISTER_FIELD(PerspectiveCameraComponent, "width", m_width);
-    REGISTER_FIELD(PerspectiveCameraComponent, "height", m_height);
-    REGISTER_FIELD(PerspectiveCameraComponent, "pitch", m_pitch);
-    REGISTER_FIELD(PerspectiveCameraComponent, "yaw", m_yaw);
-    REGISTER_FIELD(PerspectiveCameraComponent, "position", m_position);
-    END_REGISTRY(PerspectiveCameraComponent);
+void CameraComponent::RegisterClass() {
+    BEGIN_REGISTRY(CameraComponent);
+    REGISTER_FIELD(CameraComponent, "flags", flags);
+    REGISTER_FIELD(CameraComponent, "fovy", m_fovy);
+    REGISTER_FIELD(CameraComponent, "near", m_near);
+    REGISTER_FIELD(CameraComponent, "far", m_far);
+    REGISTER_FIELD(CameraComponent, "width", m_width);
+    REGISTER_FIELD(CameraComponent, "height", m_height);
+    REGISTER_FIELD(CameraComponent, "pitch", m_pitch);
+    REGISTER_FIELD(CameraComponent, "yaw", m_yaw);
+    REGISTER_FIELD(CameraComponent, "position", m_position);
+    REGISTER_FIELD(CameraComponent, "ortho_height", m_orthoHeight);
+    END_REGISTRY(CameraComponent);
 }
 
 void LuaScriptComponent::Serialize(Archive& p_archive, uint32_t) {

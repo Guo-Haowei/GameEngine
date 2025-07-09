@@ -3,16 +3,17 @@
 #include <imgui/imgui_internal.h>
 
 #include "editor/editor_layer.h"
+#include "editor/widget.h"
 #include "editor/utility/imguizmo.h"
-#include "engine/runtime/common_dvars.h"
-#include "engine/runtime/display_manager.h"
-#include "engine/renderer/base_graphics_manager.h"
-#include "engine/runtime/input_manager.h"
-#include "engine/runtime/scene_manager.h"
 #include "engine/core/io/input_event.h"
 #include "engine/math/ray.h"
+#include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
+#include "engine/runtime/common_dvars.h"
+#include "engine/runtime/display_manager.h"
+#include "engine/runtime/input_manager.h"
+#include "engine/runtime/scene_manager.h"
 
 namespace my {
 
@@ -37,7 +38,7 @@ void Viewer::UpdateData() {
     m_focused = ImGui::IsWindowHovered();
 }
 
-void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_camera) {
+void Viewer::SelectEntity(Scene& p_scene, const CameraComponent& p_camera) {
     if (!m_focused) {
         return;
     }
@@ -66,7 +67,7 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
     }
 }
 
-void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
+void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
     const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
     const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
 
@@ -109,8 +110,20 @@ void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
     bool show_editor = DVAR_GET_BOOL(show_editor);
     if (show_editor) {
         Matrix4x4f identity(1.0f);
-        ImGuizmo::DrawGrid(p_camera.GetProjectionViewMatrix(), identity, 10.0f);
+        auto plane = m_editor.context.cameraType == CAMERA_2D ? ImGuizmo::GridPlane::XY : ImGuizmo::GridPlane::XZ;
+        ImGuizmo::DrawGrid(p_camera.GetProjectionViewMatrix(), identity, 10.0f, plane);
     }
+
+#if 0 // debug code
+    {
+        static uint8_t dummy = 0;
+        if (dummy % 128 == 0) {
+            const auto& pos = p_camera.GetPosition();
+            LOG_OK("Camera at {} {} {}", pos.x, pos.y, pos.z);
+        }
+        dummy++;
+    }
+#endif
 
     ecs::Entity id = m_editor.GetSelectedEntity();
     TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
@@ -179,11 +192,8 @@ void Viewer::UpdateInternal(Scene& p_scene) {
         default:
             break;
     }
-    PerspectiveCameraComponent* camera = nullptr;
-    if (camera_id.IsValid()) {
-        camera = p_scene.GetComponent<PerspectiveCameraComponent>(camera_id);
-    }
-    DEV_ASSERT(camera);
+
+    CameraComponent& camera = m_editor.context.GetActiveCamera();
 
     ImGui::Dummy(ImGui::GetContentRegionAvail());
     if (ImGui::BeginDragDropTarget()) {
@@ -207,7 +217,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     UpdateData();
 
-    Vector3i delta_camera(0);
+    int dx = 0, dy = 0, dz = 0;
     auto& events = m_editor.GetUnhandledEvents();
     bool selected = m_editor.GetSelectedEntity().IsValid();
     float mouse_scroll = 0.0f;
@@ -238,22 +248,22 @@ void Viewer::UpdateInternal(Scene& p_scene) {
             } else if (e->IsHolding()) {
                 switch (e->GetKey()) {
                     case KeyCode::KEY_D:
-                        ++delta_camera.x;
+                        ++dx;
                         break;
                     case KeyCode::KEY_A:
-                        --delta_camera.x;
+                        --dx;
                         break;
                     case KeyCode::KEY_E:
-                        ++delta_camera.y;
+                        ++dy;
                         break;
                     case KeyCode::KEY_Q:
-                        --delta_camera.y;
+                        --dy;
                         break;
                     case KeyCode::KEY_W:
-                        ++delta_camera.z;
+                        ++dz;
                         break;
                     case KeyCode::KEY_S:
-                        --delta_camera.z;
+                        --dz;
                         break;
                     default:
                         break;
@@ -273,19 +283,97 @@ void Viewer::UpdateInternal(Scene& p_scene) {
     }
 
     if (m_focused && mode == Application::State::EDITING) {
-        EditorCameraController::Context context{
-            .timestep = p_scene.m_timestep,
-            .scroll = mouse_scroll,
-            .camera = camera,
-            .move = delta_camera,
-            .rotation = mouse_move,
-        };
-        m_cameraController.Move(context);
+        const float dt = p_scene.m_timestep;
+        switch (m_editor.context.cameraType) {
+            case CAMERA_2D: {
+                CameraInputState state {
+                    .move = dt * Vector3f(-mouse_move.x, mouse_move.y, 0.0f),
+                    .zoomDelta = -dt * mouse_scroll,
+                };
+                m_cameraController2D.Update(camera, state);
+            } break;
+            case CAMERA_3D: {
+                CameraInputState state{
+                    .move = dt * Vector3f(dx, dy, dz),
+                    .zoomDelta = dt * mouse_scroll,
+                    .rotation = dt * mouse_move,
+                };
+                m_cameraController3D.Update(camera, state);
+            } break;
+            default:
+                CRASH_NOW();
+                break;
+        }
+        camera.Update();
     }
 
-    SelectEntity(p_scene, *camera);
+    SelectEntity(p_scene, camera);
 
-    DrawGui(p_scene, *camera);
+    DrawGui(p_scene, camera);
+
+    DrawToolBar();
+}
+
+void Viewer::DrawToolBar() {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    auto& colors = ImGui::GetStyle().Colors;
+    const auto& button_hovered = colors[ImGuiCol_ButtonHovered];
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(button_hovered.x, button_hovered.y, button_hovered.z, 0.5f));
+    const auto& button_active = colors[ImGuiCol_ButtonActive];
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(button_active.x, button_active.y, button_active.z, 0.5f));
+
+    ImGuiWindowFlags toolbar_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoDocking;
+#if 0
+    toolbar_flags |= ImGuiWindowFlags_NoDecoration;
+#endif
+    ImGui::Begin("##toolbar", nullptr, toolbar_flags);
+
+    bool toolbar_enabled = true;
+    ImVec4 tint_color = ImVec4(1, 1, 1, 1);
+    if (!toolbar_enabled) {
+        tint_color.w = 0.5f;
+    }
+
+    float size = ImGui::GetWindowHeight() - 4.0f;
+    ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
+
+    auto& context = m_editor.context;
+    auto app = m_editor.GetApplication();
+    auto app_state = app->GetState();
+
+    if (auto image = context.playButtonImage; image && image->gpu_texture) {
+        ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
+        bool disable = app_state != Application::State::EDITING;
+        ImGui::BeginDisabled(disable);
+        if (ImGui::ImageButton("play", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
+            m_editor.GetApplication()->SetState(Application::State::BEGIN_SIM);
+        }
+        ImGui::EndDisabled();
+    }
+    ImGui::SameLine();
+    if (auto image = context.pauseButtonImage; image && image->gpu_texture) {
+        ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
+        bool disable = app_state != Application::State::SIM;
+        ImGui::BeginDisabled(disable);
+        if (ImGui::ImageButton("pause", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
+            m_editor.GetApplication()->SetState(Application::State::END_SIM);
+        }
+        ImGui::EndDisabled();
+    }
+
+    ImGui::SameLine();
+    ImGui::Text("2D View");
+    ImGui::SameLine();
+
+    bool is_2d = context.cameraType == CAMERA_2D;
+    ToggleButton("XXX", &is_2d);
+    context.cameraType = is_2d ? CAMERA_2D : CAMERA_3D;
+
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(3);
+    ImGui::End();
 }
 
 }  // namespace my

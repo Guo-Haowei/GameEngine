@@ -181,13 +181,13 @@ bool OpenSceneLib(lua_State* L) {
         .addFunction("SetScale", &TransformComponent::SetScale)
         .endClass();
 
-    // PerspectiveCameraComponent
+    // CameraComponent
     luabridge::getGlobalNamespace(L)
-        .beginClass<PerspectiveCameraComponent>("PerspectiveCameraComponent")
-        .addFunction("GetFovy", [](PerspectiveCameraComponent* p_camera) -> float {
+        .beginClass<CameraComponent>("CameraComponent")
+        .addFunction("GetFovy", [](CameraComponent* p_camera) -> float {
             return p_camera->GetFovy().GetDegree();
         })
-        .addFunction("SetFovy", [](PerspectiveCameraComponent* p_camera, float p_degree) {
+        .addFunction("SetFovy", [](CameraComponent* p_camera, float p_degree) {
             p_camera->SetFovy(Degree(p_degree));
         })
         .endClass();
@@ -236,7 +236,7 @@ bool OpenSceneLib(lua_State* L) {
             return p_scene->GetComponent<TransformComponent>(ecs::Entity(p_entity));
         })
         .addFunction("GetPerspectiveCamera", [](Scene* p_scene, uint32_t p_entity) {
-            return p_scene->GetComponent<PerspectiveCameraComponent>(ecs::Entity(p_entity));
+            return p_scene->GetComponent<CameraComponent>(ecs::Entity(p_entity));
         })
         .addFunction("GetRigidBody", [](Scene* p_scene, uint32_t p_entity) {
             return p_scene->GetComponent<RigidBodyComponent>(ecs::Entity(p_entity));

@@ -6,8 +6,8 @@ namespace my {
 class RenderGraphBuilderExt : public RenderGraphBuilder {
 public:
     // @TODO: create 2D
-    [[nodiscard]] static auto CreateEmpty(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
-    [[nodiscard]] static auto CreateDefault(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
+    [[nodiscard]] static auto Create2D(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
+    [[nodiscard]] static auto Create3D(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
     [[nodiscard]] static auto CreatePathTracer(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>>;
 
     GpuTextureDesc BuildDefaultTextureDesc(PixelFormat p_format,

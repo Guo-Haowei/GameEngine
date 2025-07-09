@@ -314,9 +314,10 @@ struct ObjectComponent : public ComponentFlagBase {
 #pragma endregion OBJECT_COMPONENT
 
 #pragma region CAMERA_COMPONENT
-class PerspectiveCameraComponent : public ComponentFlagBase {
+class CameraComponent : public ComponentFlagBase {
 public:
     enum : uint32_t {
+        IS_ORTHO = BIT(1),
         EDITOR = BIT(2),
         PRIMARY = BIT(3),
     };
@@ -361,11 +362,20 @@ public:
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }
     float GetAspect() const { return (float)m_width / m_height; }
+
+    float GetOrthoHeight() const { return m_orthoHeight; }
+    void SetOrthoHeight(float p_height) { m_orthoHeight = p_height; }
+
     const Matrix4x4f& GetViewMatrix() const { return m_viewMatrix; }
     const Matrix4x4f& GetProjectionMatrix() const { return m_projectionMatrix; }
     const Matrix4x4f& GetProjectionViewMatrix() const { return m_projectionViewMatrix; }
     const Vector3f& GetRight() const { return m_right; }
     const Vector3f GetFront() const { return m_front; }
+
+    Matrix4x4f CalcProjection() const;
+    Matrix4x4f CalcProjectionGL() const;
+    bool IsOrtho() const { return flags & IS_ORTHO; }
+    void SetOrtho(bool p_flag = true);
 
     void Serialize(Archive& p_archive, uint32_t p_version);
 
@@ -377,8 +387,10 @@ private:
     float m_far{ DEFAULT_FAR };
     int m_width{ 0 };
     int m_height{ 0 };
-    Degree m_pitch;  // x-axis
-    Degree m_yaw;    // y-axis
+    float m_orthoHeight{ 10 };
+    Degree m_pitch{};  // x-axis
+    Degree m_yaw{};    // y-axis
+
     Vector3f m_position{ 0 };
 
     // Non-serlialized
@@ -390,7 +402,8 @@ private:
     Matrix4x4f m_projectionViewMatrix;
 
     friend class Scene;
-    friend class EditorCameraController;
+    friend class CameraControllerFPS;
+    friend class CameraController2DEditor;
 };
 #pragma endregion CAMERA_COMPONENT
 

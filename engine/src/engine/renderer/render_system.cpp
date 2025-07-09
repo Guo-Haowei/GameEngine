@@ -677,7 +677,7 @@ static void FillParticleEmitterBuffer(const Scene& p_scene,
     }
 }
 
-void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
+void PrepareRenderData(const CameraComponent& p_camera,
                        const Scene& p_scene,
                        RenderSystem& p_out_data) {
     // fill camera
@@ -707,22 +707,15 @@ void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
 
         camera.viewMatrix = p_camera.GetViewMatrix();
         camera.projectionMatrixFrustum = p_camera.GetProjectionMatrix();
-        // @TODO: check out this
         // https://tomhultonharrop.com/mathematics/graphics/2023/08/06/reverse-z.html
         if (p_out_data.options.isOpengl) {
-            camera.projectionMatrixRendering = BuildOpenGlPerspectiveRH(
-                camera.fovy.GetRadians(),
-                camera.aspectRatio,
-                camera.zNear,
-                camera.zFar);
+            // since we use opengl matrix for frustum culling,
+            // we can use the same matrix for rendering
+            camera.projectionMatrixRendering = camera.projectionMatrixFrustum;
             normalize_unit_range(camera.projectionMatrixRendering);
             reverse_z(camera.projectionMatrixRendering);
         } else {
-            camera.projectionMatrixRendering = BuildPerspectiveRH(
-                camera.fovy.GetRadians(),
-                camera.aspectRatio,
-                camera.zNear,
-                camera.zFar);
+            camera.projectionMatrixRendering = p_camera.CalcProjection();
             reverse_z(camera.projectionMatrixRendering);
         }
         camera.position = p_camera.GetPosition();

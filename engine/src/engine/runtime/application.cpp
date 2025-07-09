@@ -273,28 +273,10 @@ bool Application::MainLoop() {
     }
 
     m_activeScene->Update(timestep);
-    ecs::Entity camera;
-    switch (m_state) {
-        case Application::State::EDITING:
-            camera = m_activeScene->GetEditorCamera();
-            break;
-        case Application::State::SIM:
-            camera = m_activeScene->GetMainCamera();
-            break;
-        case Application::State::BEGIN_SIM:
-            break;
-        case Application::State::END_SIM:
-            break;
-        default:
-            break;
-    }
-    PerspectiveCameraComponent* perspective_camera = nullptr;
-    if (camera.IsValid()) {
-        perspective_camera = m_activeScene->GetComponent<PerspectiveCameraComponent>(camera);
-    } else {
-        CRASH_NOW();
-    }
-    renderer::RequestScene(*perspective_camera, *m_activeScene);
+
+    CameraComponent* camera = GetActiveCamera();
+    DEV_ASSERT(camera);
+    renderer::RequestScene(*camera, *m_activeScene);
 
     // @TODO: refactor this
     if (m_imguiManager) {
@@ -355,6 +337,7 @@ void Application::DetachGameLayer() {
     }
 }
 
+// @TODO: refactor this
 void Application::SetState(State p_state) {
     switch (p_state) {
         case State::BEGIN_SIM: {
@@ -392,13 +375,6 @@ Scene* Application::CreateInitialScene() {
 
     auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;
-
-    auto camera_id = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
-    auto camera = scene->GetComponent<PerspectiveCameraComponent>(camera_id);
-    DEV_ASSERT(camera);
-    camera->SetPosition(Vector3f(0, 4, 10));
-    camera->SetEditorCamera();
-    scene->AttachChild(camera_id, root);
 
     return scene;
 }

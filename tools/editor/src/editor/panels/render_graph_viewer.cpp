@@ -43,6 +43,7 @@ void RenderGraphViewer::DrawNodes(const RenderGraph& p_graph) {
         }
 
         auto add_image = [](bool p_flip, const std::shared_ptr<GpuTexture>& p_texture) {
+            ImGui::Text("%s", p_texture->desc.name.c_str());
             if (p_texture && p_texture->desc.dimension == Dimension::TEXTURE_2D) {
                 ImVec2 size(180 * 3, 120 * 3);
                 if (p_flip) {

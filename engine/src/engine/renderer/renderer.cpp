@@ -102,7 +102,7 @@ void EndFrame() {
     s_glob.state = RenderState::SUBMITTING;
 }
 
-void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene) {
+void RequestScene(const CameraComponent& p_camera, Scene& p_scene) {
     HBN_PROFILE_EVENT();
 
     ASSERT_CAN_RECORD();

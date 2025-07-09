@@ -101,7 +101,7 @@ protected:
     void OnSceneChange(const Scene& p_scene) override;
 
     const Backend m_backend;
-    RenderGraphName m_activeRenderGraphName{ RenderGraphName::DEFAULT };
+    RenderGraphName m_activeRenderGraphName{ RenderGraphName::SCENE3D };
     bool m_enableValidationLayer;
 
     std::array<std::shared_ptr<RenderGraph>, std::to_underlying(RenderGraphName::COUNT)> m_renderGraphs;

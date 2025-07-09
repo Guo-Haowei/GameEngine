@@ -391,7 +391,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
         case Backend::VULKAN:
         case Backend::EMPTY:
         case Backend::METAL:
-            m_activeRenderGraphName = RenderGraphName::EMPTY;
+            m_activeRenderGraphName = RenderGraphName::SCENE2D;
             return Result<void>();
         default:
             break;
@@ -409,41 +409,34 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
     config.is_runtime = m_app->IsRuntime();
 
     switch (m_activeRenderGraphName) {
-        case RenderGraphName::DUMMY:
-            // m_renderGraphs[std::to_underlying(RenderGraphName::DUMMY)] = RenderGraphBuilder::CreateDummy(config);
-            break;
-        case RenderGraphName::DEFAULT: {
-            auto res = RenderGraphBuilderExt::CreateDefault(config);
+        case RenderGraphName::SCENE2D: {
+            auto res = RenderGraphBuilderExt::Create2D(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }
-            m_renderGraphs[std::to_underlying(RenderGraphName::DEFAULT)] = *res;
+            m_renderGraphs[std::to_underlying(m_activeRenderGraphName)] = *res;
         } break;
-        case RenderGraphName::EMPTY: {
-            auto res = RenderGraphBuilderExt::CreateEmpty(config);
-            if (!res) {
-                return HBN_ERROR(res.error());
+        case RenderGraphName::SCENE3D: {
+            {
+                auto res = RenderGraphBuilderExt::Create3D(config);
+                if (!res) {
+                    return HBN_ERROR(res.error());
+                }
+                m_renderGraphs[std::to_underlying(m_activeRenderGraphName)] = *res;
             }
-            m_renderGraphs[std::to_underlying(RenderGraphName::EMPTY)] = *res;
+            if constexpr (!USING(PLATFORM_WASM)) {
+                if (m_backend == Backend::OPENGL || m_backend == Backend::D3D11) {
+                    auto res = RenderGraphBuilderExt::CreatePathTracer(config);
+                    if (!res) {
+                        return HBN_ERROR(res.error());
+                    }
+                    m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = *res;
+                }
+            }
         } break;
         default:
             DEV_ASSERT(0 && "Should not reach here");
             return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER, "unknown render graph '{}'", method);
-    }
-
-    switch (m_backend) {
-        case Backend::OPENGL:
-        case Backend::D3D11: {
-#if !USING(PLATFORM_WASM)
-            auto res = RenderGraphBuilderExt::CreatePathTracer(config);
-            if (!res) {
-                return HBN_ERROR(res.error());
-            }
-            m_renderGraphs[std::to_underlying(RenderGraphName::PATHTRACER)] = *res;
-#endif
-        } break;
-        default:
-            break;
     }
 
     return Result<void>();
@@ -496,20 +489,7 @@ std::shared_ptr<GpuTexture> BaseGraphicsManager::FindTexture(std::string_view p_
 }
 
 uint64_t BaseGraphicsManager::GetFinalImage() const {
-    const GpuTexture* texture = nullptr;
-    switch (m_activeRenderGraphName) {
-        case RenderGraphName::DUMMY: {
-            texture = FindTexture(RG_RES_GBUFFER_COLOR1).get();
-        } break;
-        case RenderGraphName::DEFAULT:
-        case RenderGraphName::PATHTRACER:
-        case RenderGraphName::EMPTY: {
-            texture = FindTexture(RG_RES_POST_PROCESS).get();
-        } break;
-        default: {
-            CRASH_NOW();
-        } break;
-    }
+    const GpuTexture* texture = FindTexture(RG_RES_POST_PROCESS).get();
 
     if (texture) {
         return texture->GetHandle();
