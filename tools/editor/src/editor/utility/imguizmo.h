@@ -102,9 +102,14 @@ IMGUI_API void SetOrthographic(bool isOrthographic);
 
 // Render a cube with face color corresponding to face normal. Usefull for debug/tests
 IMGUI_API void DrawCubes(const float* view, const float* projection, const float* matrices, int matrixCount);
-// @TODO: fix interfaces
 
-IMGUI_API void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix, const float p_grid_size);
+enum class GridPlane {
+    XZ,
+    XY,
+    YZ,
+};
+
+IMGUI_API void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix, const float p_grid_size, GridPlane p_plane);
 IMGUI_API void DrawBox(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix);
 IMGUI_API void DrawCone(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix);
 

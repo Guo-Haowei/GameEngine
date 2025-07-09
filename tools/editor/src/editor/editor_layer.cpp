@@ -11,15 +11,16 @@
 #include "editor/panels/renderer_panel.h"
 #include "editor/panels/tilemap_panel.h"
 #include "editor/panels/viewer.h"
-#include "engine/runtime/asset_registry.h"
+#include "editor/widget.h"
+#include "engine/core/io/input_event.h"
+#include "engine/core/string/string_utils.h"
 #include "engine/renderer/base_graphics_manager.h"
+#include "engine/runtime/asset_registry.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
 #include "engine/runtime/physics_manager.h"
 #include "engine/runtime/scene_manager.h"
 #include "engine/runtime/script_manager.h"
-#include "engine/core/io/input_event.h"
-#include "engine/core/string/string_utils.h"
 
 // @NOTE: include dvars at last
 #include "engine/renderer/graphics_dvars.h"
@@ -27,6 +28,27 @@
 namespace my {
 
 EditorLayer::EditorLayer() : Layer("EditorLayer") {
+    const auto res = DVAR_GET_IVEC2(resolution);
+    {
+        CameraComponent& camera = context.cameras[CAMERA_3D];
+        camera.SetDimension(res.x, res.y);
+        camera.SetNear(1.0f);
+        camera.SetFar(100.0f);
+        camera.SetPosition(Vector3f(0, 4, 10));
+        camera.SetDirty();
+        camera.Update();
+    }
+    {
+        CameraComponent& camera = context.cameras[CAMERA_2D];
+        camera.SetOrtho();
+        camera.SetDimension(res.x, res.y);
+        camera.SetNear(1.0f);
+        camera.SetFar(100.0f);
+        camera.SetPosition(Vector3f(0, 0, 10));
+        camera.SetDirty();
+        camera.Update();
+    }
+
     AddPanel(std::make_shared<LogPanel>(*this));
     AddPanel(std::make_shared<RendererPanel>(*this));
     AddPanel(std::make_shared<HierarchyPanel>(*this));
@@ -127,8 +149,9 @@ void EditorLayer::OnAttach() {
     ImNodes::CreateContext();
 
     auto asset_registry = m_app->GetAssetRegistry();
-    m_playButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/play.png" });
-    m_pauseButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/pause.png" });
+
+    context.playButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/play.png" });
+    context.pauseButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/pause.png" });
 
     m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
 
@@ -196,57 +219,6 @@ void EditorLayer::DockSpace(Scene& p_scene) {
     return;
 }
 
-void EditorLayer::DrawToolbar() {
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    auto& colors = ImGui::GetStyle().Colors;
-    const auto& button_hovered = colors[ImGuiCol_ButtonHovered];
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(button_hovered.x, button_hovered.y, button_hovered.z, 0.5f));
-    const auto& button_active = colors[ImGuiCol_ButtonActive];
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(button_active.x, button_active.y, button_active.z, 0.5f));
-
-    ImGuiWindowFlags toolbar_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDocking;
-#if 1
-    toolbar_flags |= ImGuiWindowFlags_NoDecoration;
-#endif
-    ImGui::Begin("##toolbar", nullptr, toolbar_flags);
-
-    bool toolbar_enabled = true;
-    ImVec4 tint_color = ImVec4(1, 1, 1, 1);
-    if (!toolbar_enabled) {
-        tint_color.w = 0.5f;
-    }
-
-    float size = ImGui::GetWindowHeight() - 4.0f;
-    ImGui::SetCursorPosX((ImGui::GetWindowContentRegionMax().x * 0.5f) - (size * 0.5f));
-
-    auto app_state = m_app->GetState();
-    if (auto image = m_playButtonImage; image && image->gpu_texture) {
-        ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
-        bool disable = app_state != Application::State::EDITING;
-        ImGui::BeginDisabled(disable);
-        if (ImGui::ImageButton("play", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
-            m_app->SetState(Application::State::BEGIN_SIM);
-        }
-        ImGui::EndDisabled();
-    }
-    ImGui::SameLine();
-    if (auto image = m_pauseButtonImage; image && image->gpu_texture) {
-        ImVec2 image_size(static_cast<float>(image->width), static_cast<float>(image->height));
-        bool disable = app_state != Application::State::SIM;
-        ImGui::BeginDisabled(disable);
-        if (ImGui::ImageButton("pause", (ImTextureID)image->gpu_texture->GetHandle(), image_size)) {
-            m_app->SetState(Application::State::END_SIM);
-        }
-        ImGui::EndDisabled();
-    }
-
-    ImGui::PopStyleVar(2);
-    ImGui::PopStyleColor(3);
-    ImGui::End();
-}
-
 void EditorLayer::OnUpdate(float) {
     Scene* scene = SceneManager::GetSingleton().GetScenePtr();
     switch (m_app->GetState()) {
@@ -309,7 +281,6 @@ void EditorLayer::OnImGuiRender() {
     for (auto& it : m_panels) {
         it->Update(*scene);
     }
-    DrawToolbar();
     FlushCommand(*scene);
 
     m_unhandledEvents.clear();
@@ -386,6 +357,10 @@ void EditorLayer::FlushCommand(Scene& p_scene) {
         }
         task->Execute(p_scene);
     }
+}
+
+CameraComponent& EditorLayer::GetActiveCamera() {
+    return context.GetActiveCamera();
 }
 
 }  // namespace my

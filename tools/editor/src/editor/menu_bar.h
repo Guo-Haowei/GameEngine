@@ -9,6 +9,10 @@ public:
     MenuBar(EditorLayer& p_editor) : EditorItem(p_editor) {}
 
     void Update(Scene& p_scene) override;
+
+private:
+    void MainMenuBar();
+    void ViewerBar();
 };
 
 }  // namespace my

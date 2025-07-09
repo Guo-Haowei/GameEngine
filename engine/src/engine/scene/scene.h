@@ -143,13 +143,6 @@ public:
                                               float p_far_plane = CameraComponent::DEFAULT_FAR,
                                               Degree p_fovy = CameraComponent::DEFAULT_FOVY);
 
-    ecs::Entity CreateOrthographicCameraEntity(const std::string& p_name,
-                                               int p_width,
-                                               int p_height,
-                                               float p_near_plane = CameraComponent::DEFAULT_NEAR,
-                                               float p_far_plane = CameraComponent::DEFAULT_FAR,
-                                               Degree p_fovy = CameraComponent::DEFAULT_FOVY);
-
     ecs::Entity CreateNameEntity(const std::string& p_name);
     ecs::Entity CreateTransformEntity(const std::string& p_name);
     ecs::Entity CreateObjectEntity(const std::string& p_name);

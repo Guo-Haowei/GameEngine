@@ -6,15 +6,33 @@
 
 namespace my {
 
+void CameraController2DEditor::Update(CameraComponent& p_camera,
+                                      const CameraInputState& p_state) {
+    const bool moved = p_state.move.x || p_state.move.y;
+    if (moved) {
+        p_camera.m_position.x += p_state.move.x;
+        p_camera.m_position.y += p_state.move.y;
+
+        p_camera.SetDirty();
+    }
+
+    if (p_state.zoomDelta != 0.0f) {
+        p_camera.m_orthoHeight += p_state.zoomDelta * 4.0f;
+
+        p_camera.m_orthoHeight = glm::clamp(p_camera.m_orthoHeight, 0.1f, 100.0f);
+        p_camera.SetDirty();
+    }
+}
+
 void CameraControllerFPS::Update(CameraComponent& p_camera,
                                  const CameraInputState& p_state) {
 
     const bool moved = p_state.move.x || p_state.move.y || p_state.move.z || p_state.zoomDelta != 0.0f;
     if (moved) {
-        const float dx = (float)p_state.move.x;
-        const float dy = (float)p_state.move.y;
+        const float dx = p_state.move.x;
+        const float dy = p_state.move.y;
 
-        float dz = (float)p_state.move.z;
+        float dz = p_state.move.z;
         const float scroll_z = m_scrollSpeed * p_state.zoomDelta;
         if (glm::abs(scroll_z) > glm::abs(dz)) {
             dz = scroll_z;

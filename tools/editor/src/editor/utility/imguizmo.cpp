@@ -2493,17 +2493,42 @@ static bool ClipLine(vec_t& a, vec_t& b, vec_t frustum[6]) {
     return true;
 }
 
-void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix, const float p_grid_size) {
+void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matrix, const float p_grid_size, GridPlane p_plane) {
     matrix_t view_projection = *(matrix_t*)glm::value_ptr(p_projection_view_matrix);
 
     vec_t frustum[6];
     ComputeFrustumPlanes(frustum, view_projection.m16);
     matrix_t res = view_projection;
 
-    for (float f = -p_grid_size; f <= p_grid_size; f += 1.f) {
-        for (int dir = 0; dir < 2; dir++) {
-            glm::vec4 point_0 = p_matrix * glm::vec4(dir ? -p_grid_size : f, 0.f, dir ? f : -p_grid_size, 0.0f);
-            glm::vec4 point_1 = p_matrix * glm::vec4(dir ? p_grid_size : f, 0.f, dir ? f : p_grid_size, 0.0f);
+    enum Dir : uint8_t {
+        X = 1,
+        Y = 2,
+        Z = 4,
+    };
+
+    auto draw_grid = [&](Dir dir, uint8_t mask) {
+        const bool not_x = !(dir & X);
+        const bool not_y = !(dir & Y);
+        const bool not_z = !(dir & Z);
+        for (float f = -p_grid_size; f <= p_grid_size; f += 1.f) {
+            const float x0 = not_x ? -p_grid_size : f;
+            const float x1 = not_x ? p_grid_size : f;
+            const float y0 = not_y ? -p_grid_size : f;
+            const float y1 = not_y ? p_grid_size : f;
+            const float z0 = not_z ? -p_grid_size : f;
+            const float z1 = not_z ? p_grid_size : f;
+            glm::vec4 point_0;
+            glm::vec4 point_1;
+            if (mask == (X | Z)) {
+                point_0 = p_matrix * glm::vec4(x0, 0.f, z0, 0.0f);
+                point_1 = p_matrix * glm::vec4(x1, 0.f, z1, 0.0f);
+            } else if (mask == (X | Y)) {
+                point_0 = p_matrix * glm::vec4(x0, y0, 0.0f, 0.0f);
+                point_1 = p_matrix * glm::vec4(x1, y1, 0.0f, 0.0f);
+            } else {
+                point_0 = p_matrix * glm::vec4(0.0f, y0, z0, 0.0f);
+                point_1 = p_matrix * glm::vec4(0.0f, y1, z1, 0.0f);
+            }
             vec_t point_a = makeVect(point_0.x, point_0.y, point_0.z);
             vec_t point_b = makeVect(point_1.x, point_1.y, point_1.z);
 
@@ -2514,9 +2539,12 @@ void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matr
             ImU32 color = IM_COL32(0x80, 0x80, 0x80, 0xFF);
             color = (fmodf(fabsf(f), 10.f) < FLT_EPSILON) ? IM_COL32(0x90, 0x90, 0x90, 0xFF) : color;
             color = (fabsf(f) < FLT_EPSILON) ? IM_COL32(0x40, 0x40, 0x40, 0xFF) : color;
+
             if (f == 0.0f) {
-                if (dir == 1) {
+                if ((mask & X) && (dir != X)) {
                     color = IM_COL32(0x90, 0x30, 0x30, 0xFF);
+                } else if ((mask & Y) && (dir != Y)) {
+                    color = IM_COL32(0x30, 0x90, 0x30, 0xFF);
                 } else {
                     color = IM_COL32(0x30, 0x30, 0x90, 0xFF);
                 }
@@ -2528,6 +2556,17 @@ void DrawGrid(const glm::mat4& p_projection_view_matrix, const glm::mat4& p_matr
 
             gContext.mDrawList->AddLine(worldToPos(point_a, res), worldToPos(point_b, res), color, thickness);
         }
+    };
+
+    if (p_plane == GridPlane::XY) {
+        draw_grid(X, X | Y);
+        draw_grid(Y, X | Y);
+    } else if (p_plane == GridPlane::XZ) {
+        draw_grid(X, X | Z);
+        draw_grid(Z, X | Z);
+    } else {
+        draw_grid(Y, Y | Z);
+        draw_grid(Z, Y | Z);
     }
 }
 

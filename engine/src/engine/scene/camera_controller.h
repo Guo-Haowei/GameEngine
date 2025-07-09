@@ -12,6 +12,11 @@ struct CameraInputState {
     Vector2f rotation{ 0, 0 };
 };
 
+class CameraController2DEditor {
+public:
+    void Update(CameraComponent& p_camera, const CameraInputState& p_state);
+};
+
 class CameraControllerFPS {
 public:
     void Update(CameraComponent& p_camera, const CameraInputState& p_state);
@@ -19,11 +24,6 @@ public:
     float m_moveSpeed{ 10.0f };
     float m_rotateSpeed{ 10.0f };
     float m_scrollSpeed{ 2.0f };
-};
-
-class CameraController2DEditor {
-public:
-    // @TODO: implement
 };
 
 // class EditorCameraController : public ScriptableEntity {

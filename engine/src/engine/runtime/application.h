@@ -17,6 +17,7 @@ class InputManager;
 class IPhysicsManager;
 class SceneManager;
 class ScriptManager;
+class CameraComponent;
 
 class Scene;
 
@@ -86,6 +87,8 @@ public:
     bool IsEditor() const { return m_type == Type::EDITOR; }
 
     virtual Scene* CreateInitialScene();
+
+    virtual CameraComponent* GetActiveCamera() = 0;
 
 protected:
     [[nodiscard]] auto SetupModules() -> Result<void>;

@@ -388,8 +388,8 @@ private:
     int m_width{ 0 };
     int m_height{ 0 };
     float m_orthoHeight{ 10 };
-    Degree m_pitch;  // x-axis
-    Degree m_yaw;    // y-axis
+    Degree m_pitch{};  // x-axis
+    Degree m_yaw{};    // y-axis
 
     Vector3f m_position{ 0 };
 

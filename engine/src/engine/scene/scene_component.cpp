@@ -142,9 +142,9 @@ bool CameraComponent::Update() {
     if (IsDirty()) {
         SetDirty(false);
 
-        m_front.x = m_yaw.Cos() * m_pitch.Cos();
+        m_front.x = m_yaw.Sin() * m_pitch.Cos();
         m_front.y = m_pitch.Sin();
-        m_front.z = m_yaw.Sin() * m_pitch.Cos();
+        m_front.z = m_yaw.Cos() * -m_pitch.Cos();
 
         m_right = cross(m_front, Vector3f::UnitY);
 

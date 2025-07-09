@@ -19,6 +19,8 @@ extern Scene* CreateBoxScene();
 extern Scene* CreatePbrTestScene();
 extern Scene* CreatePhysicsTestScene();
 
+// @TODO: EditorContext
+
 class Editor : public Application {
 public:
     Editor(const ApplicationSpec& p_spec) : Application(p_spec, Application::Type::EDITOR) {}
@@ -32,6 +34,10 @@ public:
     }
 
     Scene* CreateInitialScene() override;
+
+    CameraComponent* GetActiveCamera() override {
+        return &m_editorLayer->GetActiveCamera();
+    }
 
 private:
     void RegisterDvars() override;
