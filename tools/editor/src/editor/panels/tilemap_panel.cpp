@@ -1,6 +1,7 @@
 #include "tilemap_panel.h"
 
 #include "editor/editor_layer.h"
+#include "editor/widget.h"
 #include "engine/runtime/asset_registry.h"
 
 namespace my {
@@ -21,11 +22,6 @@ void TileMapPanel::TilePaint() {
         return;
     }
 
-    const float grid_size = 64.f;
-
-    const int gridX = 3;
-    const int gridY = 2;
-
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
     ImVec2 cursor = ImGui::GetCursorScreenPos();
     ImVec2 tile_size((float)tileset->desc.width, (float)tileset->desc.height);
@@ -38,7 +34,7 @@ void TileMapPanel::TilePaint() {
     {
         // @TODO: adjust size based on tile size
         constexpr float CHECKER_SIZE = 2048;
-        ImVec2 desired_size = ImVec2(grid_size * gridX, grid_size * gridY);
+        ImVec2 desired_size = tile_size;
         const float ratio = (2.0f / CHECKER_SIZE);
         ImVec2 uv = desired_size;
         uv.x *= ratio;
@@ -63,41 +59,44 @@ void TileMapPanel::TilePaint() {
             IM_COL32(255, 255, 255, 255));
     }
 
-    // Input
+    if (m_sep.x <= 0 || m_sep.y <= 0) {
+        return;
+    }
+
+    const int num_col = static_cast<int>(tile_size.x / m_sep.x);
+    const int num_row = static_cast<int>(tile_size.y / m_sep.y);
+
     static int selectedX = -1, selectedY = -1;
     if (hovered && clicked) {
         ImVec2 mouse_pos = ImGui::GetMousePos();
-        float cellWidth = tile_size.x / gridX;
-        float cellHeight = tile_size.y / gridY;
+        float cellWidth = tile_size.x / num_col;
+        float cellHeight = tile_size.y / num_row;
 
         int localX = (int)((mouse_pos.x - cursor.x) / cellWidth);
         int localY = (int)((mouse_pos.y - cursor.y) / cellHeight);
 
         // Clamp to valid range
-        if (localX >= 0 && localX < gridX && localY >= 0 && localY < gridY) {
+        if (localX >= 0 && localX < num_col && localY >= 0 && localY < num_row) {
             selectedX = localX;
             selectedY = localY;
-            LOG_ERROR("????");
         }
     }
 
-    for (int i = 1; i < gridY; ++i) {
-        float y = cursor.y + i * (tile_size.y / gridY);
-        draw_list->AddLine(ImVec2(cursor.x, y),
-                          ImVec2(cursor.x + tile_size.x, y),
+    for (int dx = m_sep.x; dx < tile_size.x; dx += m_sep.x) {
+        draw_list->AddLine(ImVec2(cursor.x + dx, cursor.y),
+                          ImVec2(cursor.x + dx, cursor.y + tile_size.y),
                           IM_COL32(255, 255, 255, 255));
     }
 
-    for (int j = 1; j < gridX; ++j) {
-        float x = cursor.x + j * (tile_size.x / gridX);
-        draw_list->AddLine(ImVec2(x, cursor.y),
-                          ImVec2(x, cursor.y + tile_size.y),
+    for (int dy = m_sep.y; dy < tile_size.y; dy += m_sep.y) {
+        draw_list->AddLine(ImVec2(cursor.x, cursor.y + dy),
+                          ImVec2(cursor.x + tile_size.x, cursor.y + dy),
                           IM_COL32(255, 255, 255, 255));
     }
 
     if (selectedX >= 0 && selectedY >= 0) {
-        float cellW = tile_size.x / gridX;
-        float cellH = tile_size.y / gridY;
+        float cellW = tile_size.x / num_col;
+        float cellH = tile_size.y / num_row;
 
         ImVec2 pMin = ImVec2(cursor.x + selectedX * cellW, cursor.y + selectedY * cellH);
         ImVec2 pMax = ImVec2(pMin.x + cellW, pMin.y + cellH);
@@ -111,16 +110,11 @@ void TileMapPanel::TileSetup() {
     // Tabs: Setup | Select | Paint
     if (ImGui::BeginTabBar("TileSetModes")) {
         if (ImGui::BeginTabItem("Setup")) {
-            // Margin/Separation etc.
-            static int margin_x = 0, margin_y = 0;
-            static int sep_x = 0, sep_y = 0;
 
             ImGui::Text("Texture:");
             // ImGui::Image(myTexID, ImVec2(64, 64));
-            ImGui::InputInt("Margin X", &margin_x);
-            ImGui::InputInt("Margin Y", &margin_y);
-            ImGui::InputInt("Separation X", &sep_x);
-            ImGui::InputInt("Separation Y", &sep_y);
+            ImGui::InputInt("Separation X", &m_sep.x);
+            ImGui::InputInt("Separation Y", &m_sep.y);
 
             // ImGui::Checkbox("Use Texture Region", &use_region);
             ImGui::EndTabItem();
@@ -156,6 +150,11 @@ void TileMapPanel::UpdateInternal(Scene&) {
     ImGui::Text("TileSet");
 
     TilePaint();
+
+    {
+        static bool toggle = false;
+        ToggleButton("my toggle", &toggle);
+    }
 
     ImGui::EndChild();
 }

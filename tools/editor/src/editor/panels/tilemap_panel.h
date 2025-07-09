@@ -20,6 +20,8 @@ protected:
 
     const ImageAsset* m_tileset{ nullptr };
     const ImageAsset* m_checkerboard{ nullptr };
+
+    Vector2i m_sep{ 64, 64 };
 };
 
 }  // namespace my

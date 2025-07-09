@@ -43,4 +43,6 @@ bool DrawColorPicker3(const char* p_label,
                       float* p_out,
                       float p_column_width = DEFAULT_COLUMN_WIDTH);
 
+void ToggleButton(const char* p_str_id, bool* p_value);
+
 }  // namespace my
