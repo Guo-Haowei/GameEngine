@@ -207,7 +207,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     UpdateData();
 
-    Vector3i delta_camera(0);
+    int dx = 0, dy = 0, dz = 0;
     auto& events = m_editor.GetUnhandledEvents();
     bool selected = m_editor.GetSelectedEntity().IsValid();
     float mouse_scroll = 0.0f;
@@ -238,22 +238,22 @@ void Viewer::UpdateInternal(Scene& p_scene) {
             } else if (e->IsHolding()) {
                 switch (e->GetKey()) {
                     case KeyCode::KEY_D:
-                        ++delta_camera.x;
+                        ++dx;
                         break;
                     case KeyCode::KEY_A:
-                        --delta_camera.x;
+                        --dx;
                         break;
                     case KeyCode::KEY_E:
-                        ++delta_camera.y;
+                        ++dy;
                         break;
                     case KeyCode::KEY_Q:
-                        --delta_camera.y;
+                        --dy;
                         break;
                     case KeyCode::KEY_W:
-                        ++delta_camera.z;
+                        ++dz;
                         break;
                     case KeyCode::KEY_S:
-                        --delta_camera.z;
+                        --dz;
                         break;
                     default:
                         break;
@@ -272,15 +272,18 @@ void Viewer::UpdateInternal(Scene& p_scene) {
         }
     }
 
+    const bool is_3d = true;
+
     if (m_focused && mode == Application::State::EDITING) {
-        EditorCameraController::Context context{
-            .timestep = p_scene.m_timestep,
-            .scroll = mouse_scroll,
-            .camera = camera,
-            .move = delta_camera,
-            .rotation = mouse_move,
-        };
-        m_cameraController.Move(context);
+        if (is_3d) {
+            const float dt = p_scene.m_timestep;
+            CameraInputState state{
+                .move = dt * Vector3f(dx, dy, dz),
+                .zoomDelta = dt * mouse_scroll,
+                .rotation = dt * mouse_move,
+            };
+            m_cameraController3D.Update(*camera, state);
+        }
     }
 
     SelectEntity(p_scene, *camera);
