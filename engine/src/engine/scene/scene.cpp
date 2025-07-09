@@ -16,7 +16,7 @@
 namespace my::ecs {
 
 // instantiate ComponentManagers
-#define REGISTER_COMPONENT(TYPE, ...) template class ComponentManager<TYPE>;
+#define REGISTER_COMPONENT(TYPE, ...) template class ComponentManager<::my::TYPE>;
 REGISTER_COMPONENT_LIST
 #undef REGISTER_COMPONENT
 

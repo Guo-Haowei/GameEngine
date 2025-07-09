@@ -270,4 +270,37 @@ void MeshEmitterComponent::UpdateParticle(Index p_index, float p_timestep) {
 #pragma region ENVIRONMENT_COMPONENT
 #pragma endregion ENVIRONMENT_COMPONENT
 
+#pragma region TILE_MAP_COMPONENT
+void TileMapComponent::FromArray(const std::vector<std::vector<int>>& p_data) {
+    m_width = static_cast<int>(p_data[0].size());
+    m_height = static_cast<int>(p_data.size());
+
+    m_tiles.resize(m_width * m_height);
+    for (int y = 0; y < m_height; ++y) {
+        for (int x = 0; x < m_width; ++x) {
+            m_tiles[y * m_width + x] = p_data[y][x];
+        }
+    }
+}
+
+void TileMapComponent::SetTile(int p_x, int p_y, int p_tile_id) {
+    if (p_x >= 0 && p_x < m_width && p_y >= 0 && p_y < m_height) {
+        m_tiles[p_y * m_width + p_x] = p_tile_id;
+    }
+}
+
+int TileMapComponent::GetTile(int p_x, int p_y) const {
+    if (p_x >= 0 && p_x < m_width && p_y >= 0 && p_y < m_height) {
+        return m_tiles[p_y * m_width + p_x];
+    }
+    return 0;
+}
+
+void TileMapComponent::SetDimensions(int p_width, int p_height) {
+    m_width = p_width;
+    m_height = p_height;
+    m_tiles.resize(p_width * p_height);
+}
+#pragma endregion TILE_MAP_COMPONENT
+
 }  // namespace my

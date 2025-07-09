@@ -33,7 +33,8 @@ namespace my {
     REGISTER_COMPONENT(RigidBodyComponent, "World::RigidBodyComponent", 0)             \
     REGISTER_COMPONENT(ClothComponent, "World::ClothComponent", 0)                     \
     REGISTER_COMPONENT(VoxelGiComponent, "World::VoxelGiComponent", 0)                 \
-    REGISTER_COMPONENT(EnvironmentComponent, "World::EnvironmentComponent", 0)
+    REGISTER_COMPONENT(EnvironmentComponent, "World::EnvironmentComponent", 0)         \
+    REGISTER_COMPONENT(TileMapComponent, "World::TileMapComponent", 0)
 
 // @TODO: refactor
 struct PhysicsWorldContext;

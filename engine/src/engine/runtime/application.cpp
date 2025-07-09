@@ -376,6 +376,15 @@ Scene* Application::CreateInitialScene() {
     auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;
 
+    // test code, remember to take out
+
+    {
+        auto id = scene->CreateNameEntity("test tile map");
+        [[maybe_unused]] TileMapComponent& tilemap = scene->Create<TileMapComponent>(id);
+    }
+
+    // test code, remember to take out
+
     return scene;
 }
 

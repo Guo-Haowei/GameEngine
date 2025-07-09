@@ -763,6 +763,19 @@ void VoxelGiComponent::RegisterClass() {
     REGISTER_FIELD_2(VoxelGiComponent, flags);
     END_REGISTRY(VoxelGiComponent);
 }
+
+void TileMapComponent::Serialize(Archive& p_archive, uint32_t p_version) {
+    unused(p_archive);
+    unused(p_version);
+    CRASH_NOW();
+}
+
+void TileMapComponent::RegisterClass() {
+    // @TODO: serialization
+    BEGIN_REGISTRY(TileMapComponent);
+    END_REGISTRY(TileMapComponent);
+}
+
 #pragma endregion SCENE_COMPONENT_SERIALIZATION
 
 }  // namespace my
