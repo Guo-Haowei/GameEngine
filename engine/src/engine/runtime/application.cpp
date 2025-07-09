@@ -288,9 +288,9 @@ bool Application::MainLoop() {
         default:
             break;
     }
-    PerspectiveCameraComponent* perspective_camera = nullptr;
+    CameraComponent* perspective_camera = nullptr;
     if (camera.IsValid()) {
-        perspective_camera = m_activeScene->GetComponent<PerspectiveCameraComponent>(camera);
+        perspective_camera = m_activeScene->GetComponent<CameraComponent>(camera);
     } else {
         CRASH_NOW();
     }
@@ -394,7 +394,7 @@ Scene* Application::CreateInitialScene() {
     scene->m_root = root;
 
     auto camera_id = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
-    auto camera = scene->GetComponent<PerspectiveCameraComponent>(camera_id);
+    auto camera = scene->GetComponent<CameraComponent>(camera_id);
     DEV_ASSERT(camera);
     camera->SetPosition(Vector3f(0, 4, 10));
     camera->SetEditorCamera();

@@ -110,7 +110,35 @@ void MeshComponent::CreateRenderData() {
 #pragma endregion MATERIAL_COMPONENT
 
 #pragma region CAMERA_COMPONENT
-bool PerspectiveCameraComponent::Update() {
+Matrix4x4f CameraComponent::CalcProjection() const {
+    if (IsOrtho()) {
+        const float half_height = m_orthoHeight * 0.5f;
+        const float half_width = half_height * GetAspect();
+        return BuildOrthoRH(-half_width,
+                            half_width,
+                            -half_height,
+                            half_height,
+                            m_near,
+                            m_far);
+    }
+    return BuildPerspectiveRH(m_fovy.GetRadians(), GetAspect(), m_near, m_far);
+}
+
+Matrix4x4f CameraComponent::CalcProjectionGL() const {
+    if (IsOrtho()) {
+        const float half_height = m_orthoHeight * 0.5f;
+        const float half_width = half_height * GetAspect();
+        return BuildOpenGlOrthoRH(-half_width,
+                                  half_width,
+                                  -half_height,
+                                  half_height,
+                                  m_near,
+                                  m_far);
+    }
+    return BuildOpenGlPerspectiveRH(m_fovy.GetRadians(), GetAspect(), m_near, m_far);
+}
+
+bool CameraComponent::Update() {
     if (IsDirty()) {
         SetDirty(false);
 
@@ -121,7 +149,9 @@ bool PerspectiveCameraComponent::Update() {
         m_right = cross(m_front, Vector3f::UnitY);
 
         m_viewMatrix = LookAtRh(m_position, m_position + m_front, Vector3f::UnitY);
-        m_projectionMatrix = BuildOpenGlPerspectiveRH(m_fovy.GetRadians(), GetAspect(), m_near, m_far);
+
+        // use gl matrix for frustum culling
+        m_projectionMatrix = CalcProjectionGL();
         m_projectionViewMatrix = m_projectionMatrix * m_viewMatrix;
         return true;
     }
@@ -129,10 +159,18 @@ bool PerspectiveCameraComponent::Update() {
     return false;
 }
 
-void PerspectiveCameraComponent::SetDimension(int p_width, int p_height) {
+void CameraComponent::SetDimension(int p_width, int p_height) {
     if (m_width != p_width || m_height != p_height) {
         m_width = p_width;
         m_height = p_height;
+        SetDirty();
+    }
+}
+
+void CameraComponent::SetOrtho(bool p_flag) {
+    const bool has_flag = flags & IS_ORTHO;
+    if (has_flag != p_flag) {
+        p_flag ? flags |= IS_ORTHO : flags &= ~IS_ORTHO;
         SetDirty();
     }
 }

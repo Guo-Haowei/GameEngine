@@ -106,7 +106,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
     MeshEmitterComponent* mesh_emitter_component = p_scene.GetComponent<MeshEmitterComponent>(id);
     ForceFieldComponent* force_field_component = p_scene.GetComponent<ForceFieldComponent>(id);
     LuaScriptComponent* script_component = p_scene.GetComponent<LuaScriptComponent>(id);
-    PerspectiveCameraComponent* perspective_camera = p_scene.GetComponent<PerspectiveCameraComponent>(id);
+    CameraComponent* camera_component = p_scene.GetComponent<CameraComponent>(id);
     EnvironmentComponent* environment_component = p_scene.GetComponent<EnvironmentComponent>(id);
     VoxelGiComponent* voxel_gi_component = p_scene.GetComponent<VoxelGiComponent>(id);
 
@@ -260,7 +260,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         }
     });
 
-    DrawComponent("PerspectiveCamera", perspective_camera, [&](PerspectiveCameraComponent& p_camera) {
+    DrawComponent("Camera", camera_component, [&](CameraComponent& p_camera) {
         const bool is_editor = p_camera.IsEditorCamera();
         bool is_main = p_camera.IsPrimary();
         ImGui::BeginDisabled(is_editor);
@@ -268,6 +268,12 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
             p_camera.SetPrimary(is_main);
         }
         ImGui::EndDisabled();
+
+        bool is_ortho = p_camera.IsOrtho();
+        if (ToggleButton("ortho", &is_ortho)) {
+            p_camera.SetOrtho(is_ortho);
+        }
+
         float near = p_camera.GetNear();
         if (DrawDragFloat("near", near, 0.1f, 0.1f, 9.0f)) {
             p_camera.SetNear(near);

@@ -75,7 +75,7 @@ void Scene::Update(float p_time_step) {
     RunObjectUpdateSystem(ctx);
 
     // @TODO: refactor
-    for (auto [entity, camera] : m_PerspectiveCameraComponents) {
+    for (auto [entity, camera] : m_CameraComponents) {
         if (camera.Update()) {
             m_dirtyFlags.fetch_or(SCENE_DIRTY_CAMERA);
         }
@@ -128,7 +128,7 @@ void Scene::Merge(Scene& p_other) {
 }
 
 ecs::Entity Scene::GetMainCamera() {
-    for (auto [entity, camera] : m_PerspectiveCameraComponents) {
+    for (auto [entity, camera] : m_CameraComponents) {
         if (camera.IsPrimary()) {
             return entity;
         }
@@ -138,7 +138,7 @@ ecs::Entity Scene::GetMainCamera() {
 }
 
 ecs::Entity Scene::GetEditorCamera() {
-    for (auto [entity, camera] : m_PerspectiveCameraComponents) {
+    for (auto [entity, camera] : m_CameraComponents) {
         if (camera.IsEditorCamera()) {
             return entity;
         }
@@ -154,7 +154,7 @@ ecs::Entity Scene::CreatePerspectiveCameraEntity(const std::string& p_name,
                                                  float p_far_plane,
                                                  Degree p_fovy) {
     auto entity = CreateNameEntity(p_name);
-    PerspectiveCameraComponent& camera = Create<PerspectiveCameraComponent>(entity);
+    CameraComponent& camera = Create<CameraComponent>(entity);
 
     camera.m_width = p_width;
     camera.m_height = p_height;

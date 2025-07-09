@@ -10,7 +10,7 @@ void EditorCameraController::OnCreate() {
 }
 
 void EditorCameraController::OnUpdate(float p_timestep) {
-    PerspectiveCameraComponent* camera = GetComponent<PerspectiveCameraComponent>();
+    CameraComponent* camera = GetComponent<CameraComponent>();
 
     if (DEV_VERIFY(camera)) {
         InputManager& input_manager = InputManager::GetSingleton();

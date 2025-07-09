@@ -118,7 +118,7 @@ Scene* SceneCreator::CreateScene() {
     // editor camera
     {
         auto editor_camera = scene->CreatePerspectiveCameraEntity("editor_camera", frame_size.x, frame_size.y);
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(editor_camera);
+        auto camera = scene->GetComponent<CameraComponent>(editor_camera);
         DEV_ASSERT(camera);
         camera->SetPosition(Vector3f(0.0f, plane_height + 10.0f, 50.0f));
         camera->SetEditorCamera();
@@ -129,7 +129,7 @@ Scene* SceneCreator::CreateScene() {
         auto main_camera = scene->CreatePerspectiveCameraEntity("main_camera", frame_size.x, frame_size.y);
         scene->AttachChild(main_camera, root);
 
-        auto camera = scene->GetComponent<PerspectiveCameraComponent>(main_camera);
+        auto camera = scene->GetComponent<CameraComponent>(main_camera);
         DEV_ASSERT(camera);
 
 #if USING(USE_DEBUG_CAMERA)

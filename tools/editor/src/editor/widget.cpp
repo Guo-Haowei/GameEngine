@@ -199,7 +199,7 @@ bool DrawColorPicker3(const char* p_label,
     return dirty;
 }
 
-void ToggleButton(const char* p_str_id, bool* p_value) {
+bool ToggleButton(const char* p_str_id, bool* p_value) {
     ImVec2 p = ImGui::GetCursorScreenPos();
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
@@ -207,9 +207,12 @@ void ToggleButton(const char* p_str_id, bool* p_value) {
     float width = height * 1.55f;
     float radius = height * 0.50f;
 
+    bool toggled = false;
+
     ImGui::InvisibleButton(p_str_id, ImVec2(width, height));
     if (ImGui::IsItemClicked()) {
         *p_value = !*p_value;
+        toggled = true;
     }
 
     float t = *p_value ? 1.0f : 0.0f;
@@ -231,6 +234,8 @@ void ToggleButton(const char* p_str_id, bool* p_value) {
 
     draw_list->AddRectFilled(p, ImVec2(p.x + width, p.y + height), col_bg, height * 0.5f);
     draw_list->AddCircleFilled(ImVec2(p.x + radius + t * (width - radius * 2.0f), p.y + radius), radius - 1.5f, IM_COL32(255, 255, 255, 255));
+
+    return toggled;
 }
 
 }  // namespace my

@@ -151,11 +151,6 @@ void TileMapPanel::UpdateInternal(Scene&) {
 
     TilePaint();
 
-    {
-        static bool toggle = false;
-        ToggleButton("my toggle", &toggle);
-    }
-
     ImGui::EndChild();
 }
 

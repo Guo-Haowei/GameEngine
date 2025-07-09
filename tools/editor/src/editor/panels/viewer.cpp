@@ -37,7 +37,7 @@ void Viewer::UpdateData() {
     m_focused = ImGui::IsWindowHovered();
 }
 
-void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_camera) {
+void Viewer::SelectEntity(Scene& p_scene, const CameraComponent& p_camera) {
     if (!m_focused) {
         return;
     }
@@ -66,7 +66,7 @@ void Viewer::SelectEntity(Scene& p_scene, const PerspectiveCameraComponent& p_ca
     }
 }
 
-void Viewer::DrawGui(Scene& p_scene, PerspectiveCameraComponent& p_camera) {
+void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
     const Matrix4x4f view_matrix = p_camera.GetViewMatrix();
     const Matrix4x4f proj_matrix = p_camera.GetProjectionMatrix();
 
@@ -179,9 +179,9 @@ void Viewer::UpdateInternal(Scene& p_scene) {
         default:
             break;
     }
-    PerspectiveCameraComponent* camera = nullptr;
+    CameraComponent* camera = nullptr;
     if (camera_id.IsValid()) {
-        camera = p_scene.GetComponent<PerspectiveCameraComponent>(camera_id);
+        camera = p_scene.GetComponent<CameraComponent>(camera_id);
     }
     DEV_ASSERT(camera);
 

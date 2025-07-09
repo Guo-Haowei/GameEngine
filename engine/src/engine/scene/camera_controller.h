@@ -4,14 +4,14 @@
 
 namespace my {
 
-class PerspectiveCameraComponent;
+class CameraComponent;
 
 class EditorCameraController : public ScriptableEntity {
 public:
     struct Context {
         float timestep;
         float scroll;
-        PerspectiveCameraComponent* camera;
+        CameraComponent* camera;
         Vector3i move;
         Vector2f rotation;
     };

@@ -5,7 +5,7 @@
 
 namespace my {
 
-class PerspectiveCameraComponent;
+class CameraComponent;
 class Scene;
 class IGraphicsManager;
 struct GpuTexture;
@@ -40,7 +40,7 @@ void AddImage2D(GpuTexture* p_texture,
                 const Vector2f& p_position = Vector2f::Zero,
                 int p_mode = 0);
 
-void RequestScene(const PerspectiveCameraComponent& p_camera, Scene& p_scene);
+void RequestScene(const CameraComponent& p_camera, Scene& p_scene);
 
 const RenderSystem* GetRenderData();
 

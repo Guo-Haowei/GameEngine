@@ -15,7 +15,7 @@ namespace my {
 namespace my {
 
 class Scene;
-class PerspectiveCameraComponent;
+class CameraComponent;
 class RenderPass;
 class RenderGraph;
 
@@ -173,7 +173,7 @@ private:
     AABB voxel_gi_bound;
 };
 
-void PrepareRenderData(const PerspectiveCameraComponent& p_camera,
+void PrepareRenderData(const CameraComponent& p_camera,
                        const Scene& p_config,
                        RenderSystem& p_out_data);
 
