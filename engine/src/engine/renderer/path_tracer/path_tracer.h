@@ -1,9 +1,9 @@
 #pragma once
+#include "engine/ecs/entity.h"
 #include "engine/math/box.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/renderer/renderer.h"
-#include "engine/systems/ecs/entity.h"
 
 namespace my {
 

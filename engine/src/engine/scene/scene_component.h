@@ -1,8 +1,8 @@
 #pragma once
+#include "engine/ecs/entity.h"
 #include "engine/math/aabb.h"
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
-#include "engine/systems/ecs/entity.h"
 
 namespace my {
 #include "shader_defines.hlsl.h"
@@ -765,7 +765,6 @@ public:
 #pragma region TILE_MAP_COMPONENT
 class TileMapComponent {
 public:
-
     void FromArray(const std::vector<std::vector<int>>& p_data);
 
     void SetTile(int p_x, int p_y, int p_tile_id);
@@ -788,6 +787,21 @@ public:
     int m_width{ 0 };
     int m_height{ 0 };
     std::vector<int> m_tiles;
+};
+
+struct TileMapVertex {
+    Vector2f position;
+    Vector2f uv;
+};
+
+struct TileMapRendererComponent {
+    // @TODO: tileset
+    // @TODO: GPU buffers?
+
+    // Non-serialized
+    std::vector<TileMapVertex> vertices;
+    // GPU buffers
+    // Textures
 };
 #pragma endregion TILE_MAP_COMPONENT
 

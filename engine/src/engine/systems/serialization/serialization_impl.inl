@@ -3,9 +3,9 @@
 
 #include "engine/core/io/file_access.h"
 #include "engine/core/string/string_utils.h"
+#include "engine/ecs/entity.h"
 #include "engine/math/aabb.h"
 #include "engine/math/angle.h"
-#include "engine/systems/ecs/entity.h"
 
 namespace my::serialize {
 

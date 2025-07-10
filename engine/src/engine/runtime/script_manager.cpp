@@ -13,7 +13,7 @@ auto ScriptManager::InitializeImpl() -> Result<void> {
 void ScriptManager::FinalizeImpl() {
 }
 
-void ScriptManager::Update(Scene& p_scene) {
+void ScriptManager::Update(Scene& p_scene, float p_timestep) {
     for (auto [entity, script] : p_scene.View<NativeScriptComponent>()) {
         // @HACK: if OnCreate() creates new NativeScriptComponents
         // the component array will be resized and invalidated
@@ -34,7 +34,7 @@ void ScriptManager::Update(Scene& p_scene) {
         }
 
         if (instance) {
-            instance->OnUpdate(p_scene.m_timestep);
+            instance->OnUpdate(p_timestep);
         }
     }
 }

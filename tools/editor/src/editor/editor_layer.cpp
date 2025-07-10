@@ -222,7 +222,9 @@ void EditorLayer::DockSpace(Scene& p_scene) {
     return;
 }
 
-void EditorLayer::OnUpdate(float) {
+void EditorLayer::OnUpdate(float p_timestep) {
+    context.timestep = p_timestep;
+
     Scene* scene = SceneManager::GetSingleton().GetScenePtr();
     switch (m_app->GetState()) {
         case Application::State::EDITING: {

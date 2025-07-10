@@ -9,7 +9,7 @@ class Bullet3PhysicsManager : public IPhysicsManager {
 public:
     Bullet3PhysicsManager() : IPhysicsManager("Bullet3PhysicsManager") {}
 
-    void Update(Scene& p_scene) override;
+    void Update(Scene& p_scene, float p_timestep) override;
 
     void OnSimBegin(Scene& p_scene) override;
     void OnSimEnd(Scene& p_scene) override;
@@ -19,7 +19,7 @@ protected:
     void FinalizeImpl() override;
 
     void UpdateCollision(Scene& p_scene);
-    void UpdateSimulation(Scene& p_scene);
+    void UpdateSimulation(Scene& p_scene, float p_timestep);
 
     void CreateWorld(Scene& p_scene);
     void CleanWorld();

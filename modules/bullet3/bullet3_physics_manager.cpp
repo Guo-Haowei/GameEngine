@@ -103,10 +103,8 @@ void Bullet3PhysicsManager::FinalizeImpl() {
     LOG_WARN("PhysicsManager:: unload world properly");
 }
 
-void Bullet3PhysicsManager::UpdateSimulation(Scene& p_scene) {
+void Bullet3PhysicsManager::UpdateSimulation(Scene& p_scene, float p_timestep) {
     HBN_PROFILE_EVENT();
-
-    const float delta_time = p_scene.m_timestep;
 
     PhysicsWorldContext& context = *p_scene.m_physicsWorld;
 
@@ -123,7 +121,7 @@ void Bullet3PhysicsManager::UpdateSimulation(Scene& p_scene) {
         }
     }
 
-    context.dynamicWorld->stepSimulation(delta_time, 10);
+    context.dynamicWorld->stepSimulation(p_timestep, 10);
 
     for (int j = context.dynamicWorld->getNumCollisionObjects() - 1; j >= 0; j--) {
         btCollisionObject* collision_object = context.dynamicWorld->getCollisionObjectArray()[j];
@@ -249,10 +247,10 @@ void Bullet3PhysicsManager::UpdateCollision(Scene& p_scene) {
     }
 }
 
-void Bullet3PhysicsManager::Update(Scene& p_scene) {
+void Bullet3PhysicsManager::Update(Scene& p_scene, float p_timestep) {
     switch (p_scene.m_physicsMode) {
         case PhysicsMode::SIMULATION: {
-            UpdateSimulation(p_scene);
+            UpdateSimulation(p_scene, p_timestep);
         } break;
         case PhysicsMode::COLLISION_DETECTION: {
             UpdateCollision(p_scene);

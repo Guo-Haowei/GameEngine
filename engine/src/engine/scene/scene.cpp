@@ -2,11 +2,11 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/io/archive.h"
+#include "engine/ecs/component_manager.inl"
 #include "engine/math/geometry.h"
 #include "engine/renderer/renderer.h"
 #include "engine/runtime/asset_registry.h"
-#include "engine/scene/scene_system.h"
-#include "engine/systems/ecs/component_manager.inl"
+#include "engine/systems/ecs_systems.h"
 #include "engine/systems/job_system/job_system.h"
 
 // @TODO: refactor
@@ -24,55 +24,32 @@ REGISTER_COMPONENT_LIST
 
 namespace my {
 
-using jobsystem::Context;
-
-static constexpr uint32_t SMALL_SUBTASK_GROUP_SIZE = 64;
-
-#define JS_FORCE_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY) \
-    CTX.Dispatch(                                               \
-        static_cast<uint32_t>(GetCount<TYPE>()),                \
-        SUBCOUNT,                                               \
-        [&](jobsystem::JobArgs args) { const uint32_t INDEX = args.jobIndex; do { BODY; } while(0); })
-
-#define JS_NO_PARALLEL_FOR(TYPE, CTX, INDEX, SUBCOUNT, BODY)    \
-    (void)(CTX);                                                \
-    for (size_t INDEX = 0; INDEX < GetCount<TYPE>(); ++INDEX) { \
-        BODY;                                                   \
-    }
-
-#if USING(ENABLE_JOB_SYSTEM)
-#define JS_PARALLEL_FOR JS_FORCE_PARALLEL_FOR
-#else
-#define JS_PARALLEL_FOR JS_NO_PARALLEL_FOR
-#endif
-
-void Scene::Update(float p_time_step) {
+void Scene::Update(float p_timestep) {
     HBN_PROFILE_EVENT();
 
-    m_timestep = p_time_step;
     m_dirtyFlags.store(0);
 
-    Context ctx;
+    jobsystem::Context ctx;
     // animation
-    RunLightUpdateSystem(ctx);
-    RunAnimationUpdateSystem(ctx);
+    RunLightUpdateSystem(*this, ctx, p_timestep);
+    RunAnimationUpdateSystem(*this, ctx, p_timestep);
     ctx.Wait();
     // transform, update local matrix from position, rotation and scale
-    RunTransformationUpdateSystem(ctx);
+    RunTransformationUpdateSystem(*this, ctx, p_timestep);
     ctx.Wait();
     // hierarchy, update world matrix based on hierarchy
-    RunHierarchyUpdateSystem(ctx);
+    RunHierarchyUpdateSystem(*this, ctx, p_timestep);
     ctx.Wait();
     // mesh particles
-    RunMeshEmitterUpdateSystem(ctx);
+    RunMeshEmitterUpdateSystem(*this, ctx, p_timestep);
     // particle
-    RunParticleEmitterUpdateSystem(ctx);
+    RunParticleEmitterUpdateSystem(*this, ctx, p_timestep);
     // armature
-    RunArmatureUpdateSystem(ctx);
+    RunArmatureUpdateSystem(*this, ctx, p_timestep);
     ctx.Wait();
 
     // update bounding box
-    RunObjectUpdateSystem(ctx);
+    RunObjectUpdateSystem(*this, ctx, p_timestep);
 
     // @TODO: refactor
     for (auto [entity, camera] : m_CameraComponents) {
@@ -111,7 +88,6 @@ void Scene::Copy(Scene& p_other) {
 
     m_root = p_other.m_root;
     m_bound = p_other.m_bound;
-    m_timestep = p_other.m_timestep;
     m_physicsMode = p_other.m_physicsMode;
 }
 
@@ -553,178 +529,6 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
     m_NameComponents.Remove(p_entity);
 }
 
-void Scene::UpdateAnimation(size_t p_index) {
-    AnimationComponent& animation = GetComponentByIndex<AnimationComponent>(p_index);
-
-    if (!animation.IsPlaying()) {
-        return;
-    }
-
-    for (const AnimationComponent::Channel& channel : animation.channels) {
-        if (channel.path == AnimationComponent::Channel::PATH_UNKNOWN) {
-            continue;
-        }
-        DEV_ASSERT(channel.samplerIndex < (int)animation.samplers.size());
-        const AnimationComponent::Sampler& sampler = animation.samplers[channel.samplerIndex];
-
-        int key_left = 0;
-        int key_right = 0;
-        float time_first = std::numeric_limits<float>::min();
-        float time_last = std::numeric_limits<float>::min();
-        float time_left = std::numeric_limits<float>::min();
-        float time_right = std::numeric_limits<float>::max();
-
-        for (int k = 0; k < (int)sampler.keyframeTimes.size(); ++k) {
-            const float time = sampler.keyframeTimes[k];
-            if (time < time_first) {
-                time_first = time;
-            }
-            if (time > time_last) {
-                time_last = time;
-            }
-            if (time <= animation.timer && time > time_left) {
-                time_left = time;
-                key_left = k;
-            }
-            if (time >= animation.timer && time < time_right) {
-                time_right = time;
-                key_right = k;
-            }
-        }
-
-        if (animation.timer < time_first) {
-            continue;
-        }
-
-        const float left = sampler.keyframeTimes[key_left];
-        const float right = sampler.keyframeTimes[key_right];
-
-        float t = 0;
-        if (key_left != key_right) {
-            t = (animation.timer - left) / (right - left);
-        }
-        t = Saturate(t);
-
-        TransformComponent* targetTransform = GetComponent<TransformComponent>(channel.targetId);
-        DEV_ASSERT(targetTransform);
-        auto dummy_mix = [](const Vector3f& a, const Vector3f& b, float t) {
-            glm::vec3 tmp = glm::mix(glm::vec3(a.x, a.y, a.z), glm::vec3(b.x, b.y, b.z), t);
-            return Vector3f(tmp.x, tmp.y, tmp.z);
-        };
-        auto dummy_mix_4 = [](const Vector4f& a, const Vector4f& b, float t) {
-            glm::vec4 tmp = glm::mix(glm::vec4(a.x, a.y, a.z, a.w), glm::vec4(b.x, b.y, b.z, b.w), t);
-            return Vector4f(tmp.x, tmp.y, tmp.z, tmp.w);
-        };
-        switch (channel.path) {
-            case AnimationComponent::Channel::PATH_SCALE: {
-                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTimes.size() * 3);
-                const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
-                const Vector3f& vLeft = data[key_left];
-                const Vector3f& vRight = data[key_right];
-                targetTransform->SetScale(dummy_mix(vLeft, vRight, t));
-                break;
-            }
-            case AnimationComponent::Channel::PATH_TRANSLATION: {
-                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTimes.size() * 3);
-                const Vector3f* data = (const Vector3f*)sampler.keyframeData.data();
-                const Vector3f& vLeft = data[key_left];
-                const Vector3f& vRight = data[key_right];
-                targetTransform->SetTranslation(dummy_mix(vLeft, vRight, t));
-                break;
-            }
-            case AnimationComponent::Channel::PATH_ROTATION: {
-                DEV_ASSERT(sampler.keyframeData.size() == sampler.keyframeTimes.size() * 4);
-                const Vector4f* data = (const Vector4f*)sampler.keyframeData.data();
-                const Vector4f& vLeft = data[key_left];
-                const Vector4f& vRight = data[key_right];
-                targetTransform->SetRotation(dummy_mix_4(vLeft, vRight, t));
-                break;
-            }
-            default:
-                CRASH_NOW();
-                break;
-        }
-        targetTransform->SetDirty();
-    }
-
-    if (animation.IsLooped() && animation.timer > animation.end) {
-        animation.timer = animation.start;
-    }
-
-    if (animation.IsPlaying()) {
-        animation.timer += m_timestep * animation.speed;
-    }
-}
-
-void Scene::UpdateHierarchy(size_t p_index) {
-    ecs::Entity self_id = GetEntityByIndex<HierarchyComponent>(p_index);
-    TransformComponent* self_transform = GetComponent<TransformComponent>(self_id);
-
-    if (!self_transform) {
-        return;
-    }
-
-    Matrix4x4f world_matrix = self_transform->GetLocalMatrix();
-    const HierarchyComponent* hierarchy = &GetComponentByIndex<HierarchyComponent>(p_index);
-    ecs::Entity parent = hierarchy->m_parentId;
-
-    while (parent.IsValid()) {
-        TransformComponent* parent_transform = GetComponent<TransformComponent>(parent);
-        if (DEV_VERIFY(parent_transform)) {
-            world_matrix = parent_transform->GetLocalMatrix() * world_matrix;
-
-            if ((hierarchy = GetComponent<HierarchyComponent>(parent)) != nullptr) {
-                parent = hierarchy->m_parentId;
-                DEV_ASSERT(parent.IsValid());
-            } else {
-                parent.MakeInvalid();
-            }
-        } else {
-            break;
-        }
-    }
-
-    self_transform->SetWorldMatrix(world_matrix);
-    self_transform->SetDirty(false);
-}
-
-void Scene::UpdateArmature(size_t p_index) {
-    TransformComponent* transform = GetComponent<TransformComponent>(GetEntityByIndex<ArmatureComponent>(p_index));
-    DEV_ASSERT(transform);
-
-    // The transform world matrices are in world space, but skinning needs them in armature-local space,
-    //	so that the skin is reusable for instanced meshes.
-    //	We remove the armature's world matrix from the bone world matrix to obtain the bone local transform
-    //	These local bone matrices will only be used for skinning, the actual transform components for the bones
-    //	remain unchanged.
-    //
-    //	This is useful for an other thing too:
-    //	If a whole transform tree is transformed by some parent (even gltf import does that to convert from RH
-    // to LH space) 	then the inverseBindMatrices are not reflected in that because they are not contained in
-    // the hierarchy system. 	But this will correct them too.
-
-    ArmatureComponent& armature = GetComponentByIndex<ArmatureComponent>(p_index);
-    const Matrix4x4f R = glm::inverse(transform->GetWorldMatrix());
-    const size_t numBones = armature.boneCollection.size();
-    if (armature.boneTransforms.size() != numBones) {
-        armature.boneTransforms.resize(numBones);
-    }
-
-    int idx = 0;
-    for (ecs::Entity boneID : armature.boneCollection) {
-        const TransformComponent* boneTransform = GetComponent<TransformComponent>(boneID);
-        DEV_ASSERT(boneTransform);
-
-        const Matrix4x4f& B = armature.inverseBindMatrices[idx];
-        const Matrix4x4f& W = boneTransform->GetWorldMatrix();
-        const Matrix4x4f M = R * W * B;
-        armature.boneTransforms[idx] = M;
-        ++idx;
-
-        // @TODO: armature animation
-    }
-};
-
 bool Scene::RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray) {
     ObjectComponent* object = GetComponent<ObjectComponent>(p_object_id);
     MeshComponent* mesh = GetComponent<MeshComponent>(object->meshId);
@@ -772,85 +576,6 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
     }
 
     return result;
-}
-
-void Scene::RunLightUpdateSystem(Context& p_context) {
-    HBN_PROFILE_EVENT();
-    unused(p_context);
-
-    for (auto [id, light] : m_LightComponents) {
-        const TransformComponent* transform = GetComponent<TransformComponent>(id);
-        if (DEV_VERIFY(transform)) {
-            UpdateLight(m_timestep, *transform, light);
-        }
-    }
-}
-
-void Scene::RunTransformationUpdateSystem(Context& p_context) {
-    HBN_PROFILE_EVENT();
-    JS_PARALLEL_FOR(TransformComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, {
-        if (GetComponentByIndex<TransformComponent>(index).UpdateTransform()) {
-            m_dirtyFlags.fetch_or(SCENE_DIRTY_WORLD);
-        }
-    });
-}
-
-void Scene::RunAnimationUpdateSystem(Context& p_context) {
-    HBN_PROFILE_EVENT();
-    JS_PARALLEL_FOR(AnimationComponent, p_context, index, 1, UpdateAnimation(index));
-}
-
-void Scene::RunArmatureUpdateSystem(Context& p_context) {
-    HBN_PROFILE_EVENT();
-    JS_PARALLEL_FOR(ArmatureComponent, p_context, index, 1, UpdateArmature(index));
-}
-
-void Scene::RunHierarchyUpdateSystem(Context& p_context) {
-    HBN_PROFILE_EVENT();
-    JS_PARALLEL_FOR(HierarchyComponent, p_context, index, SMALL_SUBTASK_GROUP_SIZE, UpdateHierarchy(index));
-}
-
-void Scene::RunObjectUpdateSystem(jobsystem::Context& p_context) {
-    HBN_PROFILE_EVENT();
-    unused(p_context);
-
-    m_bound.MakeInvalid();
-
-    for (auto [entity, obj] : m_ObjectComponents) {
-        if (!Contains<TransformComponent>(entity)) {
-            continue;
-        }
-
-        const TransformComponent& transform = *GetComponent<TransformComponent>(entity);
-        DEV_ASSERT(Contains<MeshComponent>(obj.meshId));
-        const MeshComponent& mesh = *GetComponent<MeshComponent>(obj.meshId);
-
-        Matrix4x4f M = transform.GetWorldMatrix();
-        AABB aabb = mesh.localBound;
-        aabb.ApplyMatrix(M);
-        m_bound.UnionBox(aabb);
-    }
-}
-
-void Scene::RunParticleEmitterUpdateSystem(jobsystem::Context& p_context) {
-    HBN_PROFILE_EVENT();
-    unused(p_context);
-
-    for (auto [entity, emitter] : m_ParticleEmitterComponents) {
-        emitter.aliveBufferIndex = 1 - emitter.aliveBufferIndex;
-    }
-}
-
-void Scene::RunMeshEmitterUpdateSystem(jobsystem::Context& p_context) {
-    HBN_PROFILE_EVENT();
-
-    unused(p_context);
-    for (auto [id, emitter] : m_MeshEmitterComponents) {
-        const TransformComponent* transform = GetComponent<TransformComponent>(id);
-        if (DEV_VERIFY(transform)) {
-            UpdateMeshEmitter(m_timestep, *transform, emitter);
-        }
-    }
 }
 
 }  // namespace my

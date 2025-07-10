@@ -141,12 +141,12 @@ void LuaScriptManager::OnSimEnd(Scene& p_scene) {
     m_gameRef = 0;
 }
 
-void LuaScriptManager::Update(Scene& p_scene) {
+void LuaScriptManager::Update(Scene& p_scene, float p_timestep) {
     HBN_PROFILE_EVENT();
 
     if (DEV_VERIFY(p_scene.L)) {
         lua_State* L = p_scene.L;
-        const lua_Number timestep = p_scene.m_timestep;
+        const lua_Number timestep = p_timestep;
 
         EntityCall(L, m_gameRef, "OnUpdate", timestep);
 
@@ -161,7 +161,7 @@ void LuaScriptManager::Update(Scene& p_scene) {
         }
     }
 
-    ScriptManager::Update(p_scene);
+    ScriptManager::Update(p_scene, p_timestep);
 }
 
 void LuaScriptManager::OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2) {

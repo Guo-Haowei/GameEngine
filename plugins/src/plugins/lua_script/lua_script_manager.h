@@ -16,7 +16,7 @@ class LuaScriptManager : public ScriptManager {
 public:
     LuaScriptManager() : ScriptManager("LuaScriptManager") {}
 
-    void Update(Scene& p_scene) override;
+    void Update(Scene& p_scene, float p_timestep) override;
     void OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2) override;
 
     void OnSimBegin(Scene& p_scene) override;

@@ -242,6 +242,7 @@ void Application::Finalize() {
 bool Application::MainLoop() {
     HBN_PROFILE_FRAME("MainThread");
 
+    // === Begin Frame ===
     m_displayServer->BeginFrame();
     if (m_displayServer->ShouldClose()) {
         return false;
@@ -250,6 +251,8 @@ bool Application::MainLoop() {
     renderer::BeginFrame();
 
     m_inputManager->BeginFrame();
+
+    // === Update Phase ===
 
     // @TODO: better elapsed time
     float timestep = static_cast<float>(m_timer.GetDuration().ToSecond());
@@ -291,14 +294,16 @@ bool Application::MainLoop() {
     }
 
     if (m_state == State::SIM) {
-        m_scriptManager->Update(*m_activeScene);
-        m_physicsManager->Update(*m_activeScene);
+        m_scriptManager->Update(*m_activeScene, timestep);
+        m_physicsManager->Update(*m_activeScene, timestep);
     }
 
     renderer::EndFrame();
 
+    // === Rendering Phase ===
     m_graphicsManager->Update(*m_activeScene);
 
+    // === End Frame ===
     m_inputManager->EndFrame();
     return true;
 }

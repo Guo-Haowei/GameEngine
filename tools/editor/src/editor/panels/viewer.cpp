@@ -283,7 +283,7 @@ void Viewer::UpdateInternal(Scene& p_scene) {
     }
 
     if (m_focused && mode == Application::State::EDITING) {
-        const float dt = p_scene.m_timestep;
+        const float dt = m_editor.context.timestep;
         switch (m_editor.context.cameraType) {
             case CAMERA_2D: {
                 CameraInputState state {

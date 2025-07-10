@@ -31,6 +31,7 @@ enum EditorCameraType : uint8_t {
 };
 
 struct EditorContext {
+    float timestep{ 0 };
     EditorCameraType cameraType{ CAMERA_3D };
     CameraComponent cameras[CAMERA_MAX];
 
