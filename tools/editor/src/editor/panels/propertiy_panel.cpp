@@ -8,7 +8,6 @@
 #include "engine/runtime/scene_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/renderer.h"
 
 namespace my {
 
