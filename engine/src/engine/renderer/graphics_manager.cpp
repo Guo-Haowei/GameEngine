@@ -15,6 +15,7 @@
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_registry.h"
+#include "engine/runtime/render_system.h"
 #include "engine/scene/scene.h"
 
 namespace my {
@@ -291,7 +292,7 @@ void GraphicsManager::Update(Scene& p_scene) {
         HBN_PROFILE_EVENT("Render");
         BeginFrame();
 
-        auto data = renderer::GetRenderData();
+        auto data = m_app->GetRenderSystem()->GetFrameData();
 
         // @TODO: remove this
         UpdateEmitters(p_scene);

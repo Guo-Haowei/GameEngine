@@ -257,8 +257,7 @@ bool Application::MainLoop() {
         return false;
     }
 
-    renderer::BeginFrame();
-
+    m_renderSystem->BeginFrame();
     m_inputManager->BeginFrame();
 
     // === Update Phase ===

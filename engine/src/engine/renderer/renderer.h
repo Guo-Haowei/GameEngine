@@ -24,13 +24,7 @@ namespace my::renderer {
 
 void RegisterDvars();
 
-void BeginFrame();
-
-void EndFrame();
-
 void RequestScene(const CameraComponent& p_camera, Scene& p_scene);
-
-FrameData* GetRenderData();
 
 // path tracer
 void SetPathTracerMode(PathTracerMode p_mode);

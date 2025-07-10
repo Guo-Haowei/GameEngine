@@ -5,8 +5,10 @@
 #include "engine/math/matrix_transform.h"
 #include "engine/render_graph/render_graph_defines.h"
 #include "engine/renderer/frame_data.h"
+#include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
 #include "engine/runtime/application.h"
+#include "engine/runtime/graphics_manager_interface.h"
 #include "engine/scene/scene.h"
 
 namespace my {
@@ -170,11 +172,37 @@ static void FillEnvConstants(const Scene&,
     }
 }
 
+void RenderSystem::BeginFrame() {
+    if (m_frameData) {
+        delete m_frameData;
+        m_frameData = nullptr;
+    }
+
+    RenderOptions options = {
+        .isOpengl = m_app->GetGraphicsManager()->GetBackend() == Backend::OPENGL,
+        .ssaoEnabled = DVAR_GET_BOOL(gfx_ssao_enabled),
+        .vxgiEnabled = false,
+        .bloomEnabled = DVAR_GET_BOOL(gfx_enable_bloom),
+        .iblEnabled = DVAR_GET_BOOL(gfx_enable_ibl),
+        .debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel),
+        .debugBvhDepth = DVAR_GET_INT(gfx_bvh_debug),
+        .voxelTextureSize = DVAR_GET_INT(gfx_voxel_size),
+        .ssaoKernelRadius = DVAR_GET_FLOAT(gfx_ssao_radius),
+    };
+
+    // @HACK
+    m_frameData = new FrameData(options);
+    static bool s_firstFrame = true;
+    m_frameData->bakeIbl = s_firstFrame;
+    s_firstFrame = false;
+}
+
 void RenderSystem::RenderFrame(Scene& p_scene) {
     HBN_PROFILE_EVENT();
     CameraComponent& camera = *m_app->GetActiveCamera();
 
-    FrameData& framedata = *renderer::GetRenderData();
+    DEV_ASSERT(m_frameData);
+    FrameData& framedata = *m_frameData;
 
     FillCameraData(camera, framedata);
     FillConstantBuffer(p_scene, framedata);
@@ -192,7 +220,8 @@ void RenderSystem::RenderFrame(Scene& p_scene) {
 
     renderer::RequestScene(camera, p_scene);
 
-    renderer::EndFrame();
+    auto& context = m_frameData->drawDebugContext;
+    context.drawCount = (uint32_t)context.positions.size();
 }
 
 void RenderSystem::RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata) {

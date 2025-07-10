@@ -17,19 +17,8 @@ namespace my {
 
 namespace my::renderer {
 
-#define ASSERT_CAN_RECORD() DEV_ASSERT(s_glob.state == RenderState::RECORDING)
-
-enum class RenderState {
-    UNINITIALIZED = 0,
-    RECORDING,
-    SUBMITTING,
-};
-
 static struct {
-    FrameData* renderData;
-    RenderState state;
     PathTracer pt;
-    // @TODO: refactor
 } s_glob;
 
 void RegisterDvars() {
@@ -37,50 +26,9 @@ void RegisterDvars() {
 #include "graphics_dvars.h"
 }
 
-void BeginFrame() {
-    // @TODO: there should be a better way
-    if (s_glob.renderData) {
-        delete s_glob.renderData;
-        s_glob.renderData = nullptr;
-    }
-
-    RenderOptions options = {
-        .isOpengl = IGraphicsManager::GetSingleton().GetBackend() == Backend::OPENGL,
-        .ssaoEnabled = DVAR_GET_BOOL(gfx_ssao_enabled),
-        .vxgiEnabled = false,
-        .bloomEnabled = DVAR_GET_BOOL(gfx_enable_bloom),
-        .iblEnabled = DVAR_GET_BOOL(gfx_enable_ibl),
-        .debugVoxelId = DVAR_GET_INT(gfx_debug_vxgi_voxel),
-        .debugBvhDepth = DVAR_GET_INT(gfx_bvh_debug),
-        .voxelTextureSize = DVAR_GET_INT(gfx_voxel_size),
-        .ssaoKernelRadius = DVAR_GET_FLOAT(gfx_ssao_radius),
-    };
-
-    s_glob.renderData = new FrameData(options);
-    static bool firstFrame = true;
-    s_glob.renderData->bakeIbl = firstFrame;
-    firstFrame = false;
-    s_glob.state = RenderState::RECORDING;
-}
-
-static void PrepareDebugDraws() {
-    auto& context = s_glob.renderData->drawDebugContext;
-    context.drawCount = (uint32_t)context.positions.size();
-}
-
-void EndFrame() {
-    PrepareDebugDraws();
-
-    s_glob.state = RenderState::SUBMITTING;
-}
-
 void RequestScene(const CameraComponent&, Scene& p_scene) {
     // @TODO: refactor
     s_glob.pt.Update(p_scene);
-}
-
-FrameData* GetRenderData() {
-    return s_glob.renderData;
 }
 
 // path tracer
