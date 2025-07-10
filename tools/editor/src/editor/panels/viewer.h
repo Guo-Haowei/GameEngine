@@ -12,7 +12,6 @@ protected:
     void UpdateInternal(Scene& p_scene) override;
 
 private:
-    void DrawToolBar();
     void UpdateData();
     void SelectEntity(Scene& p_scene, const CameraComponent& p_camera);
     void DrawGui(Scene& p_scene, CameraComponent& p_camera);

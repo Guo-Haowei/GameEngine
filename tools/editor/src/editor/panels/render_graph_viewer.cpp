@@ -3,8 +3,8 @@
 #include <imnodes/imnodes.h>
 
 #include "editor/editor_layer.h"
-#include "engine/renderer/base_graphics_manager.h"
-#include "engine/renderer/render_graph/render_graph.h"
+#include "engine/renderer/graphics_manager.h"
+#include "engine/render_graph/render_graph.h"
 #include "engine/runtime/application.h"
 
 namespace my {

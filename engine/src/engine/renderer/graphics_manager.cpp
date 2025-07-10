@@ -1,4 +1,4 @@
-#include "base_graphics_manager.h"
+#include "graphics_manager.h"
 
 #include "engine/assets/asset.h"
 #include "engine/core/base/random.h"
@@ -6,15 +6,15 @@
 #include "engine/math/frustum.h"
 #include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
+#include "engine/render_graph/common_passes.h"
+#include "engine/render_graph/render_graph_defines.h"
+#include "engine/renderer/frame_data.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/common_passes.h"
-#include "engine/renderer/render_graph/render_graph_defines.h"
-#include "engine/renderer/render_system.h"
-#include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_registry.h"
+#include "engine/runtime/render_system.h"
 #include "engine/scene/scene.h"
 
 namespace my {
@@ -48,7 +48,7 @@ const char* ToString(RenderGraphName p_name) {
 }
 
 template<typename T>
-static auto CreateUniformCheckSize(BaseGraphicsManager& p_graphics_manager, uint32_t p_max_count) {
+static auto CreateUniformCheckSize(GraphicsManager& p_graphics_manager, uint32_t p_max_count) {
     static_assert(sizeof(T) % 256 == 0);
     GpuBufferDesc buffer_desc{};
     buffer_desc.slot = T::GetUniformBufferSlot();
@@ -67,7 +67,7 @@ static void CreateUniformBuffer(ConstantBuffer<T>& p_buffer) {
     p_buffer.buffer = *IGraphicsManager::GetSingleton().CreateConstantBuffer(buffer_desc);
 }
 
-auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
+auto GraphicsManager::InitializeImpl() -> Result<void> {
     m_enableValidationLayer = DVAR_GET_BOOL(gfx_gpu_validation);
 
     const int num_frames = (GetBackend() == Backend::D3D12) ? NUM_FRAMES_IN_FLIGHT : 1;
@@ -131,7 +131,7 @@ auto BaseGraphicsManager::InitializeImpl() -> Result<void> {
     return Result<void>();
 }
 
-void BaseGraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
+void GraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     if (SceneChangeEvent* e = dynamic_cast<SceneChangeEvent*>(p_event.get()); e) {
         OnSceneChange(*e->GetScene());
     }
@@ -140,21 +140,21 @@ void BaseGraphicsManager::EventReceived(std::shared_ptr<IEvent> p_event) {
     }
 }
 
-void BaseGraphicsManager::SetPipelineState(PipelineStateName p_name) {
+void GraphicsManager::SetPipelineState(PipelineStateName p_name) {
     SetPipelineStateImpl(p_name);
 }
 
-void BaseGraphicsManager::RequestTexture(ImageAsset* p_image) {
+void GraphicsManager::RequestTexture(ImageAsset* p_image) {
     m_loadedImages.push(p_image);
 }
 
-void BaseGraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
+void GraphicsManager::UpdateBuffer(const GpuBufferDesc& p_desc, GpuBuffer* p_buffer) {
     unused(p_desc);
     unused(p_buffer);
     CRASH_NOW();
 }
 
-auto BaseGraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>> {
+auto GraphicsManager::CreateMesh(const MeshComponent& p_mesh) -> Result<std::shared_ptr<GpuMesh>> {
     constexpr uint32_t count = std::to_underlying(VertexAttributeName::COUNT);
     std::array<VertexAttributeName, count> attribs = {
         VertexAttributeName::POSITION,
@@ -260,7 +260,7 @@ static void FillTextureAndSamplerDesc(const ImageAsset* p_image, GpuTextureDesc&
     }
 }
 
-std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(ImageAsset* p_image) {
+std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(ImageAsset* p_image) {
     DEV_ASSERT(p_image);
 
     GpuTextureDesc texture_desc{};
@@ -271,7 +271,7 @@ std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(ImageAsset* p_ima
     return p_image->gpu_texture;
 }
 
-void BaseGraphicsManager::Update(Scene& p_scene) {
+void GraphicsManager::Update(Scene& p_scene) {
     HBN_PROFILE_EVENT();
 
     // @TODO: make it a function
@@ -291,7 +291,7 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
         HBN_PROFILE_EVENT("Render");
         BeginFrame();
 
-        auto data = renderer::GetRenderData();
+        auto data = m_app->GetRenderSystem()->GetFrameData();
 
         // @TODO: remove this
         UpdateEmitters(p_scene);
@@ -302,7 +302,7 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
             UpdateConstantBuffer(frame.materialCb.get(), data->materialCache.buffer);
             UpdateConstantBuffer(frame.boneCb.get(), data->boneCache.buffer);
             UpdateConstantBuffer(frame.passCb.get(), data->passCache);
-            UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
+            // UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
 
             UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(
                 frame.pointShadowCb.get(),
@@ -334,25 +334,25 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
     }
 }
 
-void BaseGraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
+void GraphicsManager::UpdateBufferData(const GpuBufferDesc& p_desc, const GpuStructuredBuffer* p_buffer) {
     unused(p_desc);
     unused(p_buffer);
 }
 
-void BaseGraphicsManager::BeginFrame() {
+void GraphicsManager::BeginFrame() {
 }
 
-void BaseGraphicsManager::EndFrame() {
+void GraphicsManager::EndFrame() {
 }
 
-void BaseGraphicsManager::MoveToNextFrame() {
+void GraphicsManager::MoveToNextFrame() {
 }
 
-std::shared_ptr<FrameContext> BaseGraphicsManager::CreateFrameContext() {
+std::shared_ptr<FrameContext> GraphicsManager::CreateFrameContext() {
     return std::make_unique<FrameContext>();
 }
 
-void BaseGraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
+void GraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
     for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
             UnbindTexture(texture->desc.dimension, texture->slot);
@@ -360,7 +360,7 @@ void BaseGraphicsManager::BeginDrawPass(const Framebuffer* p_framebuffer) {
     }
 }
 
-void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
+void GraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     UnsetRenderTarget();
     for (auto& texture : p_framebuffer->outSrvs) {
         if (texture->slot >= 0) {
@@ -369,7 +369,7 @@ void BaseGraphicsManager::EndDrawPass(const Framebuffer* p_framebuffer) {
     }
 }
 
-auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
+auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     std::string method(DVAR_GET_STRING(gfx_render_graph));
     static const std::map<std::string, RenderGraphName> lookup = {
 #define RENDER_GRAPH_DECLARE(ENUM, STR) \
@@ -442,7 +442,7 @@ auto BaseGraphicsManager::SelectRenderGraph() -> Result<void> {
     return Result<void>();
 }
 
-bool BaseGraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
+bool GraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
     ERR_FAIL_INDEX_V(p_name, RenderGraphName::COUNT, false);
     const int index = std::to_underlying(p_name);
     if (!m_renderGraphs[index]) {
@@ -457,14 +457,14 @@ bool BaseGraphicsManager::SetActiveRenderGraph(RenderGraphName p_name) {
     return true;
 }
 
-RenderGraph* BaseGraphicsManager::GetActiveRenderGraph() {
+RenderGraph* GraphicsManager::GetActiveRenderGraph() {
     const int index = std::to_underlying(m_activeRenderGraphName);
     ERR_FAIL_INDEX_V(index, RenderGraphName::COUNT, nullptr);
     DEV_ASSERT(m_renderGraphs[index] != nullptr);
     return m_renderGraphs[index].get();
 }
 
-std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
+std::shared_ptr<GpuTexture> GraphicsManager::CreateTexture(const GpuTextureDesc& p_texture_desc, const SamplerDesc& p_sampler_desc) {
     auto texture = CreateTextureImpl(p_texture_desc, p_sampler_desc);
     if (p_texture_desc.type != AttachmentType::NONE) {
         auto [_, inserted] = m_resourceLookup.try_emplace(texture->desc.name, texture);
@@ -476,7 +476,7 @@ std::shared_ptr<GpuTexture> BaseGraphicsManager::CreateTexture(const GpuTextureD
     return texture;
 }
 
-std::shared_ptr<GpuTexture> BaseGraphicsManager::FindTexture(std::string_view p_name) const {
+std::shared_ptr<GpuTexture> GraphicsManager::FindTexture(std::string_view p_name) const {
     if (m_resourceLookup.empty()) {
         return nullptr;
     }
@@ -488,7 +488,7 @@ std::shared_ptr<GpuTexture> BaseGraphicsManager::FindTexture(std::string_view p_
     return it->second;
 }
 
-uint64_t BaseGraphicsManager::GetFinalImage() const {
+uint64_t GraphicsManager::GetFinalImage() const {
     const GpuTexture* texture = FindTexture(RG_RES_POST_PROCESS).get();
 
     if (texture) {
@@ -498,7 +498,7 @@ uint64_t BaseGraphicsManager::GetFinalImage() const {
     return 0;
 }
 
-void BaseGraphicsManager::UpdateEmitters(const Scene& p_scene) {
+void GraphicsManager::UpdateEmitters(const Scene& p_scene) {
     for (auto [id, emitter] : p_scene.m_ParticleEmitterComponents) {
         if (!emitter.particleBuffer) {
             // create buffer
@@ -535,22 +535,22 @@ void BaseGraphicsManager::UpdateEmitters(const Scene& p_scene) {
 }
 
 // @TODO: embed draw buffer in shader
-void BaseGraphicsManager::DrawQuad() {
+void GraphicsManager::DrawQuad() {
     SetMesh(m_screenQuadBuffers.get());
     DrawElements(m_screenQuadBuffers->desc.drawCount);
 }
 
-void BaseGraphicsManager::DrawQuadInstanced(uint32_t p_instance_count) {
+void GraphicsManager::DrawQuadInstanced(uint32_t p_instance_count) {
     SetMesh(m_screenQuadBuffers.get());
     DrawElementsInstanced(p_instance_count, m_screenQuadBuffers->desc.drawCount, 0);
 }
 
-void BaseGraphicsManager::DrawSkybox() {
+void GraphicsManager::DrawSkybox() {
     SetMesh(m_skyboxBuffers.get());
     DrawElements(m_skyboxBuffers->desc.drawCount);
 }
 
-void BaseGraphicsManager::OnSceneChange(const Scene& p_scene) {
+void GraphicsManager::OnSceneChange(const Scene& p_scene) {
     for (auto [entity, mesh] : p_scene.m_MeshComponents) {
         if (mesh.gpuResource != nullptr) {
             const NameComponent& name = *p_scene.GetComponent<NameComponent>(entity);

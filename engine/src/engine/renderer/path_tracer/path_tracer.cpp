@@ -3,13 +3,13 @@
 #include <algorithm>
 
 #include "engine/core/os/timer.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/scene/scene.h"
 
 // @TODO: refactor
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 
 namespace my {
 #include "shader_resource_defines.hlsl.h"
@@ -124,7 +124,7 @@ static void AppendBvhs(const std::vector<GpuPtBvh>& p_source, std::vector<GpuPtB
 
 void PathTracer::UpdateAccelStructure(const Scene& p_scene) {
     const auto dirty_flag = p_scene.GetDirtyFlags();
-    auto gm = BaseGraphicsManager::GetSingletonPtr();
+    auto gm = GraphicsManager::GetSingletonPtr();
 
     std::map<ecs::Entity, int> materials_lookup;
     {

@@ -1,6 +1,6 @@
 #pragma once
+#include "engine/ecs/entity.h"
 #include "engine/runtime/module.h"
-#include "engine/systems/ecs/entity.h"
 
 namespace my {
 
@@ -27,7 +27,7 @@ public:
     virtual void OnSimBegin(Scene&) {}
     virtual void OnSimEnd(Scene&) {}
 
-    virtual void Update(Scene& p_scene);
+    virtual void Update(Scene& p_scene, float p_timestep);
     virtual void OnCollision(Scene& p_scene, ecs::Entity p_entity_1, ecs::Entity p_entity_2);
 
     static Result<ScriptManager*> Create();

@@ -172,7 +172,7 @@ public:
     virtual auto InitializeImpl() -> Result<void> { return Result<void>(); }
     virtual void FinalizeImpl() {}
 
-    virtual void Update(Scene&) {}
+    virtual void Update(Scene&, float) {}
 
     virtual void OnSimBegin(Scene&) {}
     virtual void OnSimEnd(Scene&) {}

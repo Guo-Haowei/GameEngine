@@ -12,7 +12,7 @@ public:
 
     IPhysicsManager(std::string_view p_name) : Module(p_name) {}
 
-    virtual void Update(Scene& p_scene) = 0;
+    virtual void Update(Scene& p_scene, float p_timestep) = 0;
 
     virtual void OnSimBegin(Scene& p_scene) = 0;
     virtual void OnSimEnd(Scene& p_scene) = 0;

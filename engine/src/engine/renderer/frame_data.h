@@ -1,11 +1,11 @@
 #pragma once
+#include "engine/ecs/entity.h"
+#include "engine/math/aabb.h"
 #include "engine/math/angle.h"
+#include "engine/math/color.h"
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/graphics_defines.h"
-#include "engine/renderer/renderer.h"
-#include "engine/scene/scene_component.h"
-#include "engine/systems/ecs/entity.h"
 #include "render_command.h"
 
 namespace my {
@@ -15,9 +15,6 @@ namespace my {
 namespace my {
 
 class Scene;
-class CameraComponent;
-class RenderPass;
-class RenderGraph;
 
 struct RenderOptions {
     bool isOpengl{ false };
@@ -31,40 +28,8 @@ struct RenderOptions {
     float ssaoKernelRadius{ 0.0f };
 };
 
-struct DrawContext {
-    uint32_t index_count;
-    uint32_t index_offset;
-    int material_idx;
-};
-
-struct BatchContext {
-    int bone_idx;
-    int batch_idx;
-    const GpuMesh* mesh_data;
-    std::vector<DrawContext> subsets;
-    StencilFlags flags = STENCIL_FLAG_NONE;
-};
-
-// @TODO: unify BatchContext and InstanceContext
-struct InstanceContext {
-    const GpuMesh* gpuMesh;
-    uint32_t indexCount;
-    uint32_t indexOffset;
-    uint32_t instanceCount;
-    int batchIdx;
-    int materialIdx;
-    int instanceBufferIndex;
-};
-
 struct PassContext {
     int pass_idx{ 0 };
-};
-
-struct ImageDrawContext {
-    int mode;
-    uint64_t handle;
-    Vector2f size;
-    Vector2f position;
 };
 
 template<typename BUFFER>
@@ -90,7 +55,7 @@ struct BufferCache {
     }
 };
 
-struct RenderSystem {
+struct FrameData {
     struct Camera {
         Matrix4x4f viewMatrix;
         Matrix4x4f projectionMatrixRendering;
@@ -107,7 +72,8 @@ struct RenderSystem {
         Degree fovy;
     };
 
-    RenderSystem(const RenderOptions& p_options);
+    FrameData(const RenderOptions& p_options) : options(p_options) {
+    }
 
     const RenderOptions options;
 
@@ -121,7 +87,7 @@ struct RenderSystem {
     std::vector<PerPassConstantBuffer> passCache;
     std::array<PointShadowConstantBuffer, MAX_POINT_LIGHT_SHADOW_COUNT * 6> pointShadowCache;
     BufferCache<BoneConstantBuffer> boneCache;
-    std::vector<EmitterConstantBuffer> emitterCache;
+    // std::vector<EmitterConstantBuffer> emitterCache;
 
     // @TODO: rename
     std::array<std::unique_ptr<PassContext>, MAX_POINT_LIGHT_SHADOW_COUNT> pointShadowPasses;
@@ -130,9 +96,15 @@ struct RenderSystem {
     PassContext voxelPass;
     PassContext mainPass;
 
-    std::vector<InstanceContext> instances;
+    std::vector<RenderCommand> shadow_pass_commands;
+    std::vector<RenderCommand> prepass_commands;
+    std::vector<RenderCommand> gbuffer_commands;
+    std::vector<RenderCommand> transparent_commands;
+    std::vector<RenderCommand> voxelization_commands;
 
-    std::vector<ParticleEmitterComponent> emitters;
+    // std::vector<InstanceContext> instances;
+
+    // std::vector<ParticleEmitterComponent> emitters;
 
     // @TODO: refactor
     bool bakeIbl;
@@ -149,32 +121,7 @@ struct RenderSystem {
         uint32_t drawCount;
     } drawDebugContext;
 
-    std::vector<ImageDrawContext> drawImageContext;
-    uint32_t drawImageOffset;
-
-    ///////////////////////
-
-    void FillLightBuffer(const Scene& p_scene);
-    void FillVoxelPass(const Scene& p_scene);
-    void FillMainPass(const Scene& p_scene);
-
-private:
-    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
-    using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
-
-    void FillPass(const Scene& p_scene,
-                  PassContext& p_pass,
-                  FilterObjectFunc1 p_filter1,
-                  FilterObjectFunc2 p_filter2,
-                  RenderPass* p_render_pass,
-                  bool p_use_material);
-
-    RenderGraph* m_renderGraph = nullptr;
     AABB voxel_gi_bound;
 };
-
-void PrepareRenderData(const CameraComponent& p_camera,
-                       const Scene& p_config,
-                       RenderSystem& p_out_data);
 
 }  // namespace my

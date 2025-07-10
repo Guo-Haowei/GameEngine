@@ -5,9 +5,10 @@
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/frame_data.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_system.h"
+#include "engine/renderer/graphics_manager.h"
+#include "engine/renderer/path_tracer_render_system.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/display_manager.h"
@@ -25,6 +26,7 @@ namespace my {
 namespace my {
 
 // @TODO: generalize this
+#if 0
 static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
     unused(p_is_prepass);
 
@@ -53,14 +55,15 @@ static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<I
                                  instance.indexOffset);
     }
 }
+#endif
 
-static void ExecuteDrawCommands(const RenderSystem& p_data, const RenderPass& p_draw_pass, bool p_is_prepass = false) {
+static void ExecuteDrawCommands(const FrameData& p_data, const std::vector<RenderCommand>& p_commands, bool p_is_prepass = false) {
 
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
-    for (const RenderCommand& cmd : p_draw_pass.GetCommands()) {
+    for (const RenderCommand& cmd : p_commands) {
         if (cmd.type != RenderCommandType::Draw) continue;
         const DrawCommand& draw = cmd.draw;
 
@@ -126,11 +129,11 @@ static void EarlyZPassFunc(RenderPassExcutionContext& p_ctx) {
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     cmd.Clear(fb, CLEAR_DEPTH_BIT | CLEAR_STENCIL_BIT, clear_color, 0.0f, STENCIL_FLAG_SKY);
 
-    const PassContext& pass = p_ctx.render_system.mainPass;
+    const PassContext& pass = p_ctx.frameData.mainPass;
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     cmd.SetPipelineState(PSO_PREPASS);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, true);
+    ExecuteDrawCommands(p_ctx.frameData, p_ctx.frameData.prepass_commands, true);
 }
 
 static void EmptyPass(RenderPassExcutionContext& p_ctx) {
@@ -183,12 +186,12 @@ static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
     const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     cmd.Clear(fb, CLEAR_COLOR_BIT, clear_color);
 
-    const PassContext& pass = p_ctx.render_system.mainPass;
+    const PassContext& pass = p_ctx.frameData.mainPass;
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     cmd.SetPipelineState(PSO_GBUFFER);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, false);
-    DrawInstacedGeometry(p_ctx.render_system, p_ctx.render_system.instances, false);
+    ExecuteDrawCommands(p_ctx.frameData, p_ctx.frameData.gbuffer_commands, false);
+    // DrawInstacedGeometry(p_ctx.render_system, p_ctx.render_system.instances, false);
     cmd.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
 }
 
@@ -242,7 +245,7 @@ static std::shared_ptr<GpuTexture> GenerateSsaoNoise() {
 }
 
 static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
-    if (!p_ctx.render_system.options.ssaoEnabled) {
+    if (!p_ctx.frameData.options.ssaoEnabled) {
         return;
     }
 
@@ -261,7 +264,7 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
     {
         // @TODO: get rid of this
         // should not use this, instead, save projection view matrices in framecb
-        const PassContext& pass = p_ctx.render_system.mainPass;
+        const PassContext& pass = p_ctx.frameData.mainPass;
         cmd.BindConstantBufferSlot<PerPassConstantBuffer>(cmd.GetCurrentFrame().passCb.get(), pass.pass_idx);
     }
 
@@ -317,6 +320,8 @@ void RenderGraphBuilderExt::AddHighlightPass() {
 [[maybe_unused]] static void PointShadowPassFunc(RenderPassExcutionContext& p_ctx) {
     RENDER_PASS_FUNC();
 
+    CRASH_NOW();
+
     auto& cmd = p_ctx.cmd;
 
     auto framebuffer = p_ctx.framebuffer;
@@ -327,7 +332,7 @@ void RenderGraphBuilderExt::AddHighlightPass() {
     const auto [width, height] = framebuffer->GetBufferSize();
 
     for (int pass_id = 0; pass_id < MAX_POINT_LIGHT_SHADOW_COUNT; ++pass_id) {
-        auto& pass_ptr = p_ctx.render_system.pointShadowPasses[pass_id];
+        auto& pass_ptr = p_ctx.frameData.pointShadowPasses[pass_id];
         if (!pass_ptr) {
             continue;
         }
@@ -342,7 +347,7 @@ void RenderGraphBuilderExt::AddHighlightPass() {
             cmd.SetViewport(Viewport(width, height));
 
             cmd.SetPipelineState(PSO_POINT_SHADOW);
-            ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, false);
+            ExecuteDrawCommands(p_ctx.frameData, p_ctx.frameData.shadow_pass_commands, false);
         }
     }
 }
@@ -362,11 +367,11 @@ static void ShadowPassFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.SetViewport(Viewport(width, height));
 
-    const PassContext& pass = p_ctx.render_system.shadowPasses[0];
+    const PassContext& pass = p_ctx.frameData.shadowPasses[0];
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     cmd.SetPipelineState(PSO_DPETH);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
+    ExecuteDrawCommands(p_ctx.frameData, p_ctx.frameData.shadow_pass_commands);
 }
 
 void RenderGraphBuilderExt::AddShadowPass() {
@@ -383,7 +388,7 @@ void RenderGraphBuilderExt::AddShadowPass() {
 }
 
 static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
-    if (p_ctx.render_system.voxelPass.pass_idx < 0) {
+    if (p_ctx.frameData.voxelPass.pass_idx < 0) {
         return;
     }
 
@@ -398,7 +403,7 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetPipelineState(PSO_VOXELIZATION_PRE);
     cmd.Dispatch(group_size, group_size, group_size);
 
-    const PassContext& pass = p_ctx.render_system.voxelPass;
+    const PassContext& pass = p_ctx.frameData.voxelPass;
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     // @TODO: hack
@@ -406,7 +411,7 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
         cmd.SetViewport(Viewport(voxel_size, voxel_size));
         cmd.SetPipelineState(PSO_VOXELIZATION);
         cmd.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
-        ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
+        ExecuteDrawCommands(p_ctx.frameData, p_ctx.frameData.voxelization_commands);
 
         // glSubpixelPrecisionBiasNV(0, 0);
         cmd.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
@@ -454,6 +459,8 @@ void RenderGraphBuilderExt::AddVoxelizationPass() {
 
 /// Emitter
 static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
+    unused(p_ctx);
+#if 0
     RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
@@ -518,6 +525,7 @@ static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
             cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
         }
     }
+#endif
 }
 
 /// Lighting
@@ -623,10 +631,10 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
 
     gm.SetViewport(Viewport(width, height));
 
-    const PassContext& pass = p_ctx.render_system.mainPass;
+    const PassContext& pass = p_ctx.frameData.mainPass;
     gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
-    if (p_ctx.render_system.options.iblEnabled) {
+    if (p_ctx.frameData.options.iblEnabled) {
         gm.SetPipelineState(PSO_ENV_SKYBOX);
         gm.SetStencilRef(STENCIL_FLAG_SKY);
         gm.DrawSkybox();
@@ -635,9 +643,9 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
+    ExecuteDrawCommands(p_ctx.frameData, p_ctx.frameData.transparent_commands);
 
-    auto& draw_context = p_ctx.render_system.drawDebugContext;
+    auto& draw_context = p_ctx.frameData.drawDebugContext;
     if (gm.m_debugBuffers && draw_context.drawCount) {
         gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
         gm.SetPipelineState(PSO_DEBUG_DRAW);
@@ -675,7 +683,7 @@ void RenderGraphBuilderExt::AddForwardPass() {
 
 /// Bloom
 static void BloomSetupFunc(RenderPassExcutionContext& p_ctx) {
-    if (!p_ctx.render_system.options.bloomEnabled) {
+    if (!p_ctx.frameData.options.bloomEnabled) {
         return;
     }
 
@@ -694,7 +702,7 @@ static void BloomSetupFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
-    if (!p_ctx.render_system.options.bloomEnabled) {
+    if (!p_ctx.frameData.options.bloomEnabled) {
         return;
     }
 
@@ -713,7 +721,7 @@ static void BloomDownSampleFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 static void BloomUpSampleFunc(RenderPassExcutionContext& p_ctx) {
-    if (!p_ctx.render_system.options.bloomEnabled) {
+    if (!p_ctx.frameData.options.bloomEnabled) {
         return;
     }
 
@@ -798,7 +806,7 @@ void RenderGraphBuilderExt::AddBloomPass() {
     }
 }
 
-static void DebugVoxels(const RenderSystem& p_data, const Framebuffer* p_framebuffer) {
+static void DebugVoxels(const FrameData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -839,7 +847,7 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
     // @HACK:
     if (DVAR_GET_BOOL(gfx_debug_vxgi) && cmd.GetBackend() == Backend::OPENGL) {
         // @TODO: add to forward pass
-        DebugVoxels(p_ctx.render_system, fb);
+        DebugVoxels(p_ctx.frameData, fb);
     } else {
         cmd.SetViewport(Viewport(width, height));
         cmd.Clear(fb, CLEAR_COLOR_BIT);
@@ -875,7 +883,7 @@ void RenderGraphBuilderExt::AddPostProcessPass() {
 }
 
 static void ConvertToCubemapFunc(RenderPassExcutionContext& p_ctx) {
-    if (!p_ctx.render_system.bakeIbl) {
+    if (!p_ctx.frameData.bakeIbl) {
         return;
     }
 
@@ -901,7 +909,7 @@ static void ConvertToCubemapFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 static void DiffuseIrradianceFunc(RenderPassExcutionContext& p_ctx) {
-    if (!p_ctx.render_system.bakeIbl) {
+    if (!p_ctx.frameData.bakeIbl) {
         return;
     }
 
@@ -924,7 +932,7 @@ static void DiffuseIrradianceFunc(RenderPassExcutionContext& p_ctx) {
 }
 
 static void PrefilteredFunc(RenderPassExcutionContext& p_ctx) {
-    if (!p_ctx.render_system.bakeIbl) {
+    if (!p_ctx.frameData.bakeIbl) {
         return;
     }
 
@@ -1004,7 +1012,7 @@ void RenderGraphBuilderExt::AddGenerateSkylightPass() {
 
 static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
     // @TODO: refactor this part
-    if (!renderer::IsPathTracerActive()) {
+    if (!IsPathTracerActive()) {
         return;
     }
 
@@ -1021,11 +1029,9 @@ static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
     const uint32_t work_group_y = CeilingDivision(height, 16);
 
     // @TODO: transition
-    renderer::BindPathTracerData(cmd);
-
+    BindPathTracerData(cmd);
     cmd.Dispatch(work_group_x, work_group_y, 1);
-
-    renderer::UnbindPathTracerData(cmd);
+    UnbindPathTracerData(cmd);
 }
 
 void RenderGraphBuilderExt::AddPathTracerPass() {

@@ -2,10 +2,11 @@
 
 #include <imgui/imgui_internal.h>
 
-#include "engine/runtime/common_dvars.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/render_graph/render_graph_defines.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/render_graph_defines.h"
+#include "engine/renderer/graphics_manager.h"
+#include "engine/renderer/path_tracer_render_system.h"
+#include "engine/runtime/common_dvars.h"
 #include "engine/scene/scene.h"
 
 namespace my {
@@ -62,9 +63,9 @@ void RendererPanel::UpdateInternal(Scene&) {
         if (prev_selected != selected) {
             if (gm.SetActiveRenderGraph((RenderGraphName)selected)) {
                 if (selected == (int)RenderGraphName::PATHTRACER) {
-                    renderer::SetPathTracerMode(PathTracerMode::INTERACTIVE);
+                    SetPathTracerMode(PathTracerMode::INTERACTIVE);
                 } else {
-                    renderer::SetPathTracerMode(PathTracerMode::NONE);
+                    SetPathTracerMode(PathTracerMode::NONE);
                 }
             }
         }

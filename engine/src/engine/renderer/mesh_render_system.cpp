@@ -1,28 +1,14 @@
-#include "render_system.h"
-
-#include "engine/core/base/random.h"
 #include "engine/math/frustum.h"
+#include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/graphics_defines.h"
-#include "engine/renderer/render_graph/render_graph.h"
-#include "engine/scene/scene.h"
-
-// @TODO: remove
-// #include "engine/math/matrix_transform.h"
-#include "engine/renderer/base_graphics_manager.h"
-#include "engine/renderer/path_tracer/bvh_accel.h"
+#include "engine/renderer/frame_data.h"
 #include "engine/runtime/asset_registry.h"
-#include "engine/runtime/input_manager.h"
+#include "engine/scene/scene.h"
 
 namespace my {
 
-using my::AABB;
-using my::Frustum;
-
-RenderSystem::RenderSystem(const RenderOptions& p_options) : options(p_options) {
-    m_renderGraph = IGraphicsManager::GetSingleton().GetActiveRenderGraph();
-    DEV_ASSERT(m_renderGraph);
-}
+using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
+using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
 // @TODO: fix this function OMG
 static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent* p_material, MaterialConstantBuffer& cb) {
@@ -41,6 +27,7 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
             return false;
         }
 
+        // @TODO: at least fix this
         const ImageAsset* image = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(p_material->textures[p_idx].path);
         if (!image) {
             return false;
@@ -67,14 +54,14 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
     cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
 };
 
-void RenderSystem::FillPass(const Scene& p_scene,
-                            PassContext&,
-                            FilterObjectFunc1 p_filter1,
-                            FilterObjectFunc2 p_filter2,
-                            RenderPass* p_draw_pass,
-                            bool p_use_material) {
+static void FillPass(const Scene& p_scene,
+                     FilterObjectFunc1 p_filter1,
+                     FilterObjectFunc2 p_filter2,
+                     std::vector<RenderCommand>& p_commands,
+                     bool p_use_material,
+                     FrameData& p_framedata) {
 
-    const bool is_opengl = this->options.isOpengl;
+    const bool is_opengl = p_framedata.options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
@@ -105,7 +92,7 @@ void RenderSystem::FillPass(const Scene& p_scene,
             draw.flags = STENCIL_FLAG_SELECTED;
         }
 
-        draw.batch_idx = this->batchCache.FindOrAdd(entity, batch_buffer);
+        draw.batch_idx = p_framedata.batchCache.FindOrAdd(entity, batch_buffer);
         if (mesh.armatureId.IsValid()) {
             auto& armature = *p_scene.GetComponent<ArmatureComponent>(mesh.armatureId);
             DEV_ASSERT(armature.boneTransforms.size() <= MAX_BONE_COUNT);
@@ -114,182 +101,50 @@ void RenderSystem::FillPass(const Scene& p_scene,
             memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(Matrix4x4f) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
-            draw.bone_idx = this->boneCache.FindOrAdd(mesh.armatureId, bone);
+            draw.bone_idx = p_framedata.boneCache.FindOrAdd(mesh.armatureId, bone);
         } else {
             draw.bone_idx = -1;
         }
 
-        // HACK
         draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
         draw.mat_idx = -1;
         DEV_ASSERT(draw.mesh_data);
 
         if (!p_use_material) {
             draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
-            p_draw_pass->AddCommand(RenderCommand::from(draw));
-            // @TODO: add to pass
-        } else {
-            for (const auto& subset : mesh.subsets) {
-                aabb = subset.local_bound;
-                aabb.ApplyMatrix(world_matrix);
-                if (!p_filter2(aabb)) {
-                    continue;
-                }
+            p_commands.emplace_back(RenderCommand::from(draw));
+            continue;
+        }
 
-                const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
-                MaterialConstantBuffer material_buffer;
-                FillMaterialConstantBuffer(is_opengl, material, material_buffer);
-
-                // Draw submesh if pass cares about material
-                DrawCommand draw2 = draw;
-                draw2.indexCount = subset.index_count;
-                draw2.indexOffset = subset.index_offset;
-                draw2.mat_idx = this->materialCache.FindOrAdd(subset.material_id, material_buffer);
-
-                p_draw_pass->AddCommand(RenderCommand::from(draw2));
+        for (const auto& subset : mesh.subsets) {
+            aabb = subset.local_bound;
+            aabb.ApplyMatrix(world_matrix);
+            if (!p_filter2(aabb)) {
+                continue;
             }
+
+            const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
+            MaterialConstantBuffer material_buffer;
+            FillMaterialConstantBuffer(is_opengl, material, material_buffer);
+
+            // Draw submesh if pass cares about material
+            DrawCommand draw2 = draw;
+            draw2.indexCount = subset.index_count;
+            draw2.indexOffset = subset.index_offset;
+            draw2.mat_idx = p_framedata.materialCache.FindOrAdd(subset.material_id, material_buffer);
+
+            p_commands.emplace_back(RenderCommand::from(draw2));
         }
     }
 }
 
-static void DebugDrawBVH(int p_level, BvhAccel* p_bvh, const Matrix4x4f* p_matrix) {
-    if (!p_bvh || p_bvh->depth > p_level) {
-        return;
-    }
-
-    if (p_bvh->depth == p_level) {
-        renderer::AddDebugCube(p_bvh->aabb,
-                               Color::HexRgba(0xFFFF0037),
-                               p_matrix);
-    }
-
-    DebugDrawBVH(p_level, p_bvh->left.get(), p_matrix);
-    DebugDrawBVH(p_level, p_bvh->right.get(), p_matrix);
-};
-
-using KernelData = std::array<Vector4f, 64>;
-
-static_assert(sizeof(KernelData) == sizeof(Vector4f) * SSAO_KERNEL_SIZE);
-
-static KernelData GenerateSsaoKernel() {
-    auto lerp = [](float a, float b, float f) {
-        return a + f * (b - a);
-    };
-
-    KernelData kernel;
-
-    const int kernel_size = 32;
-    const float inv_kernel_size = 1.0f / kernel_size;
-    for (int i = 0; i < kernel.size(); ++i) {
-        // [-1, 1], [-1, 1], [0, 1]
-        Vector3f sample(Random::Float(-1.0f, 1.0f),
-                        Random::Float(-1.0f, 1.0f),
-                        Random::Float());
-
-        sample = normalize(sample);
-        sample *= Random::Float();
-        float scale = i * inv_kernel_size;
-
-        scale = lerp(0.1f, 1.0f, scale * scale);
-        sample *= scale;
-        kernel[i].xyz = sample;
-    }
-
-    return kernel;
-}
-
-static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
-    const auto& options = p_out_data.options;
-    auto& cache = p_out_data.perFrameCache;
-
-    // camera
-    {
-        const auto& camera = p_out_data.mainCamera;
-        cache.c_invView = glm::inverse(camera.viewMatrix);
-        cache.c_invProjection = glm::inverse(camera.projectionMatrixRendering);
-        cache.c_cameraFovDegree = camera.fovy.GetDegree();
-        cache.c_cameraForward = camera.front;
-        cache.c_cameraRight = camera.right;
-        cache.c_cameraUp = camera.up;
-        cache.c_cameraPosition = camera.position;
-    }
-
-    // Bloom
-    {
-        cache.c_bloomThreshold = 1.3f;
-        cache.c_enableBloom = options.bloomEnabled;
-
-        cache.c_debugVoxelId = options.debugVoxelId;
-        cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
-    }
-
-    // IBL
-    {
-        cache.c_iblEnabled = options.iblEnabled;
-    }
-
-    // SSAO
-    {
-        static auto kernel_data = GenerateSsaoKernel();
-        cache.c_ssaoEnabled = options.ssaoEnabled;
-        cache.c_ssaoKernalRadius = options.ssaoKernelRadius;
-        constexpr size_t kernel_size = sizeof(kernel_data);
-        static_assert(sizeof(cache.c_ssaoKernel) == kernel_size);
-        memcpy(cache.c_ssaoKernel, kernel_data.data(), kernel_size);
-    }
-
-    // Sky
-    {
-    }
-
-    // @TODO: refactor
-    static int s_frameIndex = 0;
-    cache.c_frameIndex = s_frameIndex++;
-    // @TODO: fix this
-    cache.c_sceneDirty = p_scene.GetDirtyFlags() != SCENE_DIRTY_NONE;
-
-    // Force fields
-    int counter = 0;
-    for (auto [id, force_field_component] : p_scene.m_ForceFieldComponents) {
-        ForceField& force_field = cache.c_forceFields[counter++];
-        const TransformComponent& transform = *p_scene.GetComponent<TransformComponent>(id);
-        force_field.position = transform.GetTranslation();
-        force_field.strength = force_field_component.strength;
-    }
-
-    cache.c_forceFieldsCount = counter;
-
-    // @TODO: fix
-    for (auto const [entity, environment] : p_scene.View<EnvironmentComponent>()) {
-        cache.c_ambientColor = environment.ambient.color;
-        if (!environment.sky.texturePath.empty()) {
-            environment.sky.textureAsset = AssetRegistry::GetSingleton().GetAssetByHandle<ImageAsset>(environment.sky.texturePath);
-        }
-    }
-
-    // @TODO:
-    const int level = options.debugBvhDepth;
-    if (level > -1) {
-        for (auto const [id, obj] : p_scene.m_ObjectComponents) {
-            const MeshComponent* mesh = p_scene.GetComponent<MeshComponent>(obj.meshId);
-            const TransformComponent* transform = p_scene.GetComponent<TransformComponent>(id);
-            if (mesh && transform) {
-                if (const auto& bvh = mesh->bvh; bvh) {
-                    const auto& matrix = transform->GetWorldMatrix();
-                    DebugDrawBVH(level, bvh.get(), &matrix);
-                }
-            }
-        }
-    }
-}
-
-void RenderSystem::FillLightBuffer(const Scene& p_scene) {
+static void FillLightBuffer(const Scene& p_scene, FrameData& p_framedata) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
-    auto& cache = this->perFrameCache;
+    auto& cache = p_framedata.perFrameCache;
     cache.c_lightCount = light_count;
 
-    [[maybe_unused]] auto& point_shadow_cache = this->pointShadowCache;
+    [[maybe_unused]] auto& point_shadow_cache = p_framedata.pointShadowCache;
 
     int idx = 0;
     for (auto [light_entity, light_component] : p_scene.View<LightComponent>()) {
@@ -325,7 +180,7 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
                 tmp.Set(&light_dir.x);
                 light.view_matrix = LookAtRh(center + tmp * size, center, Vector3f::UnitY);
 
-                if (this->options.isOpengl) {
+                if (p_framedata.options.isOpengl) {
                     light.projection_matrix = BuildOpenGlOrthoRH(-size, size, -size, size, -size, 3.0f * size);
                 } else {
                     light.projection_matrix = BuildOrthoRH(-size, size, -size, size, -size, 3.0f * size);
@@ -335,26 +190,21 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
                 // @TODO: Build correct matrices
                 pass_constant.c_projectionMatrix = light.projection_matrix;
                 pass_constant.c_viewMatrix = light.view_matrix;
-                this->shadowPasses[0].pass_idx = static_cast<int>(this->passCache.size());
-                this->passCache.emplace_back(pass_constant);
+                p_framedata.shadowPasses[0].pass_idx = static_cast<int>(p_framedata.passCache.size());
+                p_framedata.passCache.emplace_back(pass_constant);
 
                 // @TODO: fix
-                auto pass = m_renderGraph->FindPass("p:shadow");
-                if (!pass) {
-                    continue;
-                }
-
                 Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
                     p_scene,
-                    this->shadowPasses[0],
                     [](const ObjectComponent& p_object) {
                         return p_object.flags & ObjectComponent::FLAG_CAST_SHADOW;
                     },
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
                     },
-                    pass, false);
+                    p_framedata.shadow_pass_commands, false,
+                    p_framedata);
             } break;
             case LIGHT_TYPE_POINT: {
                 [[maybe_unused]] const int shadow_map_index = light_component.GetShadowMapIndex();
@@ -415,14 +265,39 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
     }
 }
 
-void RenderSystem::FillVoxelPass(const Scene& p_scene) {
+static void AddDebugCube(FrameData& p_framedata,
+                         const AABB& p_aabb,
+                         const Color& p_color,
+                         const Matrix4x4f* p_transform = nullptr) {
+
+    const auto& min = p_aabb.GetMin();
+    const auto& max = p_aabb.GetMax();
+
+    std::vector<Vector3f> positions;
+    std::vector<uint32_t> indices;
+    BoxWireFrameHelper(min, max, positions, indices);
+
+    auto& context = p_framedata.drawDebugContext;
+    for (const auto& i : indices) {
+        const Vector3f& pos = positions[i];
+        if (p_transform) {
+            const auto tmp = *p_transform * Vector4f(pos, 1.0f);
+            context.positions.emplace_back(Vector3f(tmp.xyz));
+        } else {
+            context.positions.emplace_back(Vector3f(pos));
+        }
+        context.colors.emplace_back(p_color);
+    }
+}
+
+static void FillVoxelPass(const Scene& p_scene, FrameData& p_framedata) {
     bool enabled = false;
     bool show_debug = false;
-    voxel_gi_bound.MakeInvalid();
+    p_framedata.voxel_gi_bound.MakeInvalid();
     int counter = 0;
     for (auto [entity, voxel_gi] : p_scene.m_VoxelGiComponents) {
-        voxel_gi_bound = voxel_gi.region;
-        if (!voxel_gi_bound.IsValid()) {
+        p_framedata.voxel_gi_bound = voxel_gi.region;
+        if (!p_framedata.voxel_gi_bound.IsValid()) {
             return;
         }
 
@@ -432,25 +307,25 @@ void RenderSystem::FillVoxelPass(const Scene& p_scene) {
     }
 
     if (show_debug) {
-        renderer::AddDebugCube(voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
+        AddDebugCube(p_framedata, p_framedata.voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
     }
 
-    auto& cache = this->perFrameCache;
+    auto& cache = p_framedata.perFrameCache;
     cache.c_enableVxgi = enabled;
     // @HACK: DONT use pass_idx
     if (!enabled) {
-        this->voxelPass.pass_idx = -1;
+        p_framedata.voxelPass.pass_idx = -1;
         return;
     }
-    this->voxelPass.pass_idx = 0;
+    p_framedata.voxelPass.pass_idx = 0;
 
     // @TODO: refactor the following
-    const int voxel_texture_size = this->options.voxelTextureSize;
+    const int voxel_texture_size = p_framedata.options.voxelTextureSize;
     DEV_ASSERT(IsPowerOfTwo(voxel_texture_size));
     DEV_ASSERT(voxel_texture_size <= 256);
 
-    const auto voxel_world_center = voxel_gi_bound.Center();
-    auto voxel_world_size = voxel_gi_bound.Size().x;
+    const auto voxel_world_center = p_framedata.voxel_gi_bound.Center();
+    auto voxel_world_size = p_framedata.voxel_gi_bound.Size().x;
 
     const float texel_size = 1.0f / static_cast<float>(voxel_texture_size);
     const float voxel_size = voxel_world_size * texel_size;
@@ -462,8 +337,8 @@ void RenderSystem::FillVoxelPass(const Scene& p_scene) {
     cache.c_voxelSize = voxel_size;
 }
 
-void RenderSystem::FillMainPass(const Scene& p_scene) {
-    const auto& camera = this->mainCamera;
+static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
+    const auto& camera = p_framedata.mainCamera;
     Frustum camera_frustum(camera.projectionMatrixFrustum * camera.viewMatrix);
 
     // main pass
@@ -471,19 +346,13 @@ void RenderSystem::FillMainPass(const Scene& p_scene) {
     pass_constant.c_viewMatrix = camera.viewMatrix;
     pass_constant.c_projectionMatrix = camera.projectionMatrixRendering;
 
-    this->mainPass.pass_idx = static_cast<int>(this->passCache.size());
-    this->passCache.emplace_back(pass_constant);
-
-    auto gbuffer_pass = m_renderGraph->FindPass("p:gbuffer");
-    auto voxelization_pass = m_renderGraph->FindPass("p:voxelization");
-    auto early_z_pass = m_renderGraph->FindPass("p:early_z");
-    // @TODO: should separate it from forward?
-    auto transparent_pass = m_renderGraph->FindPass("p:forward");
+    p_framedata.mainPass.pass_idx = static_cast<int>(p_framedata.passCache.size());
+    p_framedata.passCache.emplace_back(pass_constant);
 
     using FilterFunc = std::function<bool(const AABB&)>;
     FilterFunc filter_main = [&](const AABB& p_aabb) -> bool { return camera_frustum.Intersects(p_aabb); };
 
-    const bool is_opengl = this->options.isOpengl;
+    const bool is_opengl = p_framedata.options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
         const bool is_renderable = obj.flags & ObjectComponent::FLAG_RENDERABLE;
         const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
@@ -518,25 +387,25 @@ void RenderSystem::FillMainPass(const Scene& p_scene) {
             memcpy(bone.c_bones, armature.boneTransforms.data(), sizeof(Matrix4x4f) * armature.boneTransforms.size());
 
             // @TODO: better memory usage
-            draw.bone_idx = this->boneCache.FindOrAdd(mesh.armatureId, bone);
+            draw.bone_idx = p_framedata.boneCache.FindOrAdd(mesh.armatureId, bone);
         } else {
             draw.bone_idx = -1;
         }
 
         draw.mat_idx = -1;
-        draw.batch_idx = this->batchCache.FindOrAdd(entity, batch_buffer);
+        draw.batch_idx = p_framedata.batchCache.FindOrAdd(entity, batch_buffer);
         draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
         draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
         DEV_ASSERT(draw.mesh_data);
 
-        auto add_to_pass = [&](RenderPass* p_pass, FilterFunc& p_filter, bool p_model_only) {
+        auto add_to_pass = [&](std::vector<RenderCommand>& p_commands, FilterFunc& p_filter, bool p_model_only) {
             if (!p_filter(aabb)) {
                 return;
             }
 
             DrawCommand drawCmd = draw;
             if (p_model_only) {
-                p_pass->AddCommand(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::from(drawCmd));
                 return;
             }
 
@@ -553,50 +422,39 @@ void RenderSystem::FillMainPass(const Scene& p_scene) {
 
                 drawCmd.indexCount = subset.index_count;
                 drawCmd.indexOffset = subset.index_offset;
-                drawCmd.mat_idx = this->materialCache.FindOrAdd(subset.material_id, material_buffer);
+                drawCmd.mat_idx = p_framedata.materialCache.FindOrAdd(subset.material_id, material_buffer);
 
-                p_pass->AddCommand(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::from(drawCmd));
             }
         };
 
-        if (is_opaque && early_z_pass) {
-            add_to_pass(early_z_pass, filter_main, true);
+        if (is_opaque) {
+            add_to_pass(p_framedata.prepass_commands, filter_main, true);
         }
 
-        if (is_opaque && gbuffer_pass) {
-            add_to_pass(gbuffer_pass, filter_main, false);
+        if (is_opaque) {
+            add_to_pass(p_framedata.gbuffer_commands, filter_main, false);
         }
 
-        if (is_transparent && transparent_pass) {
-            add_to_pass(transparent_pass, filter_main, false);
+        if (is_transparent) {
+            add_to_pass(p_framedata.transparent_commands, filter_main, false);
         }
 
-        if (voxelization_pass && this->voxel_gi_bound.IsValid()) {
-            FilterFunc gi_filter = [&](const AABB& p_aabb) -> bool { return this->voxel_gi_bound.Intersects(p_aabb); };
-            add_to_pass(voxelization_pass, gi_filter, false);
-        }
-    }
-}
-
-static void FillEnvConstants(const Scene&,
-                             RenderSystem& p_out_data) {
-    // @TODO: return if necessary
-
-    constexpr int count = IBL_MIP_CHAIN_MAX * 6;
-    if (p_out_data.batchCache.buffer.size() < count) {
-        p_out_data.batchCache.buffer.resize(count);
-    }
-
-    auto matrices = p_out_data.options.isOpengl ? BuildOpenGlCubeMapViewProjectionMatrix(Vector3f(0)) : BuildCubeMapViewProjectionMatrix(Vector3f(0));
-    for (int mip_idx = 0; mip_idx < IBL_MIP_CHAIN_MAX; ++mip_idx) {
-        for (int face_id = 0; face_id < 6; ++face_id) {
-            auto& batch = p_out_data.batchCache.buffer[mip_idx * 6 + face_id];
-            batch.c_cubeProjectionViewMatrix = matrices[face_id];
-            batch.c_envPassRoughness = (float)mip_idx / (float)(IBL_MIP_CHAIN_MAX - 1);
+        if (p_framedata.voxel_gi_bound.IsValid()) {
+            FilterFunc gi_filter = [&](const AABB& p_aabb) -> bool { return p_framedata.voxel_gi_bound.Intersects(p_aabb); };
+            add_to_pass(p_framedata.voxelization_commands, gi_filter, false);
         }
     }
 }
 
+void RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata) {
+    FillLightBuffer(p_scene, p_framedata);
+    FillVoxelPass(p_scene, p_framedata);
+    FillMainPass(p_scene, p_framedata);
+}
+
+// @TODO: fix emitter
+#if 0
 static void FillMeshEmitterBuffer(const Scene& p_scene,
                                   RenderSystem& p_out_data) {
     for (auto [id, emitter] : p_scene.m_MeshEmitterComponents) {
@@ -676,63 +534,6 @@ static void FillParticleEmitterBuffer(const Scene& p_scene,
         p_out_data.emitters.emplace_back(emitter);
     }
 }
-
-void PrepareRenderData(const CameraComponent& p_camera,
-                       const Scene& p_scene,
-                       RenderSystem& p_out_data) {
-    // fill camera
-    {
-        auto reverse_z = [](Matrix4x4f& p_perspective) {
-            constexpr Matrix4x4f matrix{ 1.0f, 0.0f, 0.0f, 0.0f,
-                                         0.0f, 1.0f, 0.0f, 0.0f,
-                                         0.0f, 0.0f, -1.0f, 0.0f,
-                                         0.0f, 0.0f, 1.0f, 1.0f };
-            p_perspective = matrix * p_perspective;
-        };
-        auto normalize_unit_range = [](Matrix4x4f& p_perspective) {
-            constexpr Matrix4x4f matrix{ 1.0f, 0.0f, 0.0f, 0.0f,
-                                         0.0f, 1.0f, 0.0f, 0.0f,
-                                         0.0f, 0.0f, 0.5f, 0.0f,
-                                         0.0f, 0.0f, 0.5f, 1.0f };
-            p_perspective = matrix * p_perspective;
-        };
-
-        auto& camera = p_out_data.mainCamera;
-        camera.sceenWidth = static_cast<float>(p_camera.GetWidth());
-        camera.sceenHeight = static_cast<float>(p_camera.GetHeight());
-        camera.aspectRatio = camera.sceenWidth / camera.sceenHeight;
-        camera.fovy = p_camera.GetFovy();
-        camera.zNear = p_camera.GetNear();
-        camera.zFar = p_camera.GetFar();
-
-        camera.viewMatrix = p_camera.GetViewMatrix();
-        camera.projectionMatrixFrustum = p_camera.GetProjectionMatrix();
-        // https://tomhultonharrop.com/mathematics/graphics/2023/08/06/reverse-z.html
-        if (p_out_data.options.isOpengl) {
-            // since we use opengl matrix for frustum culling,
-            // we can use the same matrix for rendering
-            camera.projectionMatrixRendering = camera.projectionMatrixFrustum;
-            normalize_unit_range(camera.projectionMatrixRendering);
-            reverse_z(camera.projectionMatrixRendering);
-        } else {
-            camera.projectionMatrixRendering = p_camera.CalcProjection();
-            reverse_z(camera.projectionMatrixRendering);
-        }
-        camera.position = p_camera.GetPosition();
-
-        camera.front = p_camera.GetFront();
-        camera.right = p_camera.GetRight();
-        camera.up = cross(camera.front, camera.right);
-    }
-
-    FillConstantBuffer(p_scene, p_out_data);
-    p_out_data.FillLightBuffer(p_scene);
-    p_out_data.FillVoxelPass(p_scene);
-    p_out_data.FillMainPass(p_scene);
-
-    FillMeshEmitterBuffer(p_scene, p_out_data);
-    FillEnvConstants(p_scene, p_out_data);
-    FillParticleEmitterBuffer(p_scene, p_out_data);
-}
+#endif
 
 }  // namespace my

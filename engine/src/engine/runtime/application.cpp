@@ -7,9 +7,8 @@
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/string/string_utils.h"
-#include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/renderer.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/runtime/asset_manager.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/common_dvars.h"
@@ -18,10 +17,14 @@
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
 #include "engine/runtime/module_registry.h"
+#include "engine/runtime/render_system.h"
 #include "engine/runtime/scene_manager.h"
 #include "engine/runtime/script_manager.h"
 #include "engine/scene/scene.h"
 
+#define DEFINE_DVAR
+#include "engine/renderer/graphics_dvars.h"
+#undef DEFINE_DVAR
 #define DEFINE_DVAR
 #include "engine/runtime/common_dvars.h"
 #undef DEFINE_DVAR
@@ -40,6 +43,12 @@ namespace fs = std::filesystem;
 static void RegisterCommonDvars() {
 #define REGISTER_DVAR
 #include "engine/runtime/common_dvars.h"
+#undef REGISTER_DVAR
+}
+
+static void RegisterRenderDvars() {
+#define REGISTER_DVAR
+#include "engine/renderer/graphics_dvars.h"
 #undef REGISTER_DVAR
 }
 
@@ -113,6 +122,7 @@ auto Application::SetupModules() -> Result<void> {
     m_graphicsManager = CreateGraphicsManager();
     m_displayServer = DisplayManager::Create();
     m_inputManager = new InputManager();
+    m_renderSystem = new RenderSystem();
 
     RegisterModule(m_assetManager);
     RegisterModule(m_assetRegistry);
@@ -121,6 +131,7 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_physicsManager);
     RegisterModule(m_displayServer);
     RegisterModule(m_graphicsManager);
+    RegisterModule(m_renderSystem);
     RegisterModule(m_inputManager);
 
     if (m_specification.enableImgui) {
@@ -142,7 +153,7 @@ extern void RegisterClasses();
 
 void Application::RegisterDvars() {
     RegisterCommonDvars();
-    renderer::RegisterDvars();
+    RegisterRenderDvars();
 }
 
 auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
@@ -239,22 +250,26 @@ void Application::Finalize() {
 #endif
 }
 
+float Application::UpdateTime() {
+    float timestep = static_cast<float>(m_timer.GetDuration().ToSecond());
+    m_timer.Start();
+    return min(timestep, 0.5f);
+}
+
 bool Application::MainLoop() {
     HBN_PROFILE_FRAME("MainThread");
 
+    // === Begin Frame ===
     m_displayServer->BeginFrame();
     if (m_displayServer->ShouldClose()) {
         return false;
     }
 
-    renderer::BeginFrame();
-
+    m_renderSystem->BeginFrame();
     m_inputManager->BeginFrame();
 
-    // @TODO: better elapsed time
-    float timestep = static_cast<float>(m_timer.GetDuration().ToSecond());
-    timestep = min(timestep, 0.5f);
-    m_timer.Start();
+    // === Update Phase ===
+    const float timestep = UpdateTime();
 
     m_inputManager->GetEventQueue().FlushEvents();
 
@@ -274,9 +289,7 @@ bool Application::MainLoop() {
 
     m_activeScene->Update(timestep);
 
-    CameraComponent* camera = GetActiveCamera();
-    DEV_ASSERT(camera);
-    renderer::RequestScene(*camera, *m_activeScene);
+    m_renderSystem->RenderFrame(*m_activeScene);
 
     // @TODO: refactor this
     if (m_imguiManager) {
@@ -291,14 +304,14 @@ bool Application::MainLoop() {
     }
 
     if (m_state == State::SIM) {
-        m_scriptManager->Update(*m_activeScene);
-        m_physicsManager->Update(*m_activeScene);
+        m_scriptManager->Update(*m_activeScene, timestep);
+        m_physicsManager->Update(*m_activeScene, timestep);
     }
 
-    renderer::EndFrame();
-
+    // === Rendering Phase ===
     m_graphicsManager->Update(*m_activeScene);
 
+    // === End Frame ===
     m_inputManager->EndFrame();
     return true;
 }
@@ -375,6 +388,15 @@ Scene* Application::CreateInitialScene() {
 
     auto root = scene->CreateTransformEntity("world");
     scene->m_root = root;
+
+    // test code, remember to take out
+
+    {
+        auto id = scene->CreateNameEntity("test tile map");
+        [[maybe_unused]] TileMapComponent& tilemap = scene->Create<TileMapComponent>(id);
+    }
+
+    // test code, remember to take out
 
     return scene;
 }

@@ -8,7 +8,7 @@
 
 #include "../d3d_common/d3d_common.h"
 #include "descriptor_table_defines.hlsl.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 
 namespace my {
 

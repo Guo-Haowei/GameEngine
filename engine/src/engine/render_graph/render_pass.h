@@ -1,7 +1,7 @@
 #pragma once
+#include "engine/render_graph/framebuffer.h"
+#include "engine/render_graph/render_graph_defines.h"
 #include "engine/renderer/render_command.h"
-#include "engine/renderer/render_graph/framebuffer.h"
-#include "engine/renderer/render_graph/render_graph_defines.h"
 
 // clang-format off
 namespace my { class IGraphicsManager; }
@@ -16,10 +16,10 @@ using IRenderCmdContext = IGraphicsManager;
 
 namespace my {
 
-struct RenderSystem;
+struct FrameData;
 
 struct RenderPassExcutionContext {
-    const RenderSystem& render_system;
+    const FrameData& frameData;
     Framebuffer* framebuffer;
     RenderPass& pass;
     IRenderCmdContext& cmd;
@@ -29,10 +29,7 @@ using ExecuteFunc = void (*)(RenderPassExcutionContext& ctx);
 
 class RenderPass {
 public:
-    void Execute(const RenderSystem& p_data, IRenderCmdContext& p_cmd);
-
-    void AddCommand(const RenderCommand& cmd) { m_commands.emplace_back(cmd); }
-    const auto& GetCommands() const { return m_commands; }
+    void Execute(const FrameData& p_data, IRenderCmdContext& p_cmd);
 
     std::string_view GetName() const { return m_name; }
 
@@ -52,7 +49,6 @@ protected:
 
     std::shared_ptr<Framebuffer> m_framebuffer;
 
-    std::vector<RenderCommand> m_commands;
     ExecuteFunc m_executor;
 
     friend class RenderPassBuilder;

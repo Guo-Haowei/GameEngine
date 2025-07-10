@@ -6,7 +6,7 @@ extern "C" {
 #include "lualib.h"
 }
 
-#include "engine/systems/ecs/entity.h"
+#include "engine/ecs/entity.h"
 
 namespace my {
 class Scene;

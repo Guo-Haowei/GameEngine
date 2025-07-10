@@ -2,20 +2,20 @@
 #include "engine/renderer/gpu_resource.h"
 
 namespace my {
-struct RenderSystem;
+struct FrameData;
 }
 
 namespace my {
 
 struct Framebuffer;
 
-class BaseGraphicsManager;
+class GraphicsManager;
 
 struct ResourceTransition {
     std::shared_ptr<GpuTexture> resource;
     int slot;
-    std::function<void(BaseGraphicsManager*, GpuTexture*, int)> beginPassFunc;
-    std::function<void(BaseGraphicsManager*, GpuTexture*, int)> endPassFunc;
+    std::function<void(GraphicsManager*, GpuTexture*, int)> beginPassFunc;
+    std::function<void(GraphicsManager*, GpuTexture*, int)> endPassFunc;
 };
 
 struct FramebufferDesc {

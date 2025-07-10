@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/assets/asset_loader.h"
-#include "engine/systems/ecs/entity.h"
+#include "engine/ecs/entity.h"
 
 namespace tinygltf {
 class Model;

@@ -1,10 +1,10 @@
 #pragma once
 #include "engine/assets/asset.h"
 #include "engine/core/base/noncopyable.h"
+#include "engine/ecs/component_manager.h"
+#include "engine/ecs/view.h"
 #include "engine/math/ray.h"
 #include "engine/scene/scene_component.h"
-#include "engine/systems/ecs/component_manager.h"
-#include "engine/systems/ecs/view.h"
 
 struct lua_State;
 
@@ -33,7 +33,8 @@ namespace my {
     REGISTER_COMPONENT(RigidBodyComponent, "World::RigidBodyComponent", 0)             \
     REGISTER_COMPONENT(ClothComponent, "World::ClothComponent", 0)                     \
     REGISTER_COMPONENT(VoxelGiComponent, "World::VoxelGiComponent", 0)                 \
-    REGISTER_COMPONENT(EnvironmentComponent, "World::EnvironmentComponent", 0)
+    REGISTER_COMPONENT(EnvironmentComponent, "World::EnvironmentComponent", 0)         \
+    REGISTER_COMPONENT(TileMapComponent, "World::TileMapComponent", 0)
 
 // @TODO: refactor
 struct PhysicsWorldContext;
@@ -255,8 +256,11 @@ public:
     // @TODO: refactor
     ecs::Entity m_root;
     ecs::Entity m_selected;
-    float m_timestep = 0.0f;
     bool m_replace = false;
+
+    std::atomic<uint32_t> m_dirtyFlags{ SCENE_DIRTY_NONE };
+    // @TODO: refactor
+    AABB m_bound;
 
     PhysicsMode m_physicsMode{ PhysicsMode::NONE };
     mutable PhysicsWorldContext* m_physicsWorld{ nullptr };
@@ -264,25 +268,6 @@ public:
 
     const auto& GetLibraryEntries() const { return m_componentLib.m_entries; }
     SceneDirtyFlags GetDirtyFlags() const { return static_cast<SceneDirtyFlags>(m_dirtyFlags.load()); }
-
-private:
-    void UpdateHierarchy(size_t p_index);
-    void UpdateAnimation(size_t p_index);
-    void UpdateArmature(size_t p_index);
-
-    void RunLightUpdateSystem(jobsystem::Context& p_context);
-    void RunTransformationUpdateSystem(jobsystem::Context& p_context);
-    void RunHierarchyUpdateSystem(jobsystem::Context& p_context);
-    void RunAnimationUpdateSystem(jobsystem::Context& p_context);
-    void RunArmatureUpdateSystem(jobsystem::Context& p_context);
-    void RunObjectUpdateSystem(jobsystem::Context& p_context);
-    void RunParticleEmitterUpdateSystem(jobsystem::Context& p_context);
-    void RunMeshEmitterUpdateSystem(jobsystem::Context& p_context);
-
-    // @TODO: refactor
-    AABB m_bound;
-
-    std::atomic<uint32_t> m_dirtyFlags{ SCENE_DIRTY_NONE };
 };
 
 }  // namespace my

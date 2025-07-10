@@ -6,15 +6,17 @@
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"
+#include "editor/panels/menu_bar.h"
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_viewer.h"
 #include "editor/panels/renderer_panel.h"
 #include "editor/panels/tilemap_panel.h"
+#include "editor/panels/tool_bar.h"
 #include "editor/panels/viewer.h"
 #include "editor/widget.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/string/string_utils.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
@@ -61,6 +63,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<RenderGraphViewer>(*this));
 
     m_menuBar = std::make_shared<MenuBar>(*this);
+    m_toolBar = std::make_shared<ToolBar>(*this);
 
     m_shortcuts[SHORT_CUT_SAVE_AS] = {
         "Save As..",
@@ -219,7 +222,9 @@ void EditorLayer::DockSpace(Scene& p_scene) {
     return;
 }
 
-void EditorLayer::OnUpdate(float) {
+void EditorLayer::OnUpdate(float p_timestep) {
+    context.timestep = p_timestep;
+
     Scene* scene = SceneManager::GetSingleton().GetScenePtr();
     switch (m_app->GetState()) {
         case Application::State::EDITING: {
@@ -256,20 +261,6 @@ void EditorLayer::OnUpdate(float) {
             CRASH_NOW();
             break;
     }
-
-    // request images
-    auto graphics_manager = m_app->GetGraphicsManager();
-    auto resolution = DVAR_GET_IVEC2(resolution);
-    {
-        if (auto image = graphics_manager->FindTexture(RG_RES_POST_PROCESS); image) {
-            renderer::AddImage2D(image.get(), Vector2f(resolution));
-        }
-    }
-    if (DVAR_GET_BOOL(gfx_debug_shadow)) {
-        if (auto image = graphics_manager->FindTexture(RG_RES_SHADOW_MAP); image) {
-            renderer::AddImage2D(image.get(), Vector2f(300), Vector2f(1000), DISPLAY_CHANNEL_RRR);
-        }
-    }
 }
 
 void EditorLayer::OnImGuiRender() {
@@ -281,6 +272,7 @@ void EditorLayer::OnImGuiRender() {
     for (auto& it : m_panels) {
         it->Update(*scene);
     }
+    m_toolBar->Update(*scene);
     FlushCommand(*scene);
 
     m_unhandledEvents.clear();

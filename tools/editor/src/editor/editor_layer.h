@@ -1,7 +1,6 @@
 #pragma once
 #include "editor/editor_command.h"
 #include "editor/editor_window.h"
-#include "editor/menu_bar.h"
 #include "engine/core/base/ring_buffer.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/layer.h"
@@ -12,7 +11,8 @@
 namespace my {
 
 struct ImageAsset;
-
+class MenuBar;
+class ToolBar;
 enum class KeyCode : uint16_t;
 
 enum {
@@ -31,6 +31,7 @@ enum EditorCameraType : uint8_t {
 };
 
 struct EditorContext {
+    float timestep{ 0 };
     EditorCameraType cameraType{ CAMERA_3D };
     CameraComponent cameras[CAMERA_MAX];
 
@@ -90,6 +91,7 @@ private:
     void FlushCommand(Scene& p_scene);
 
     std::shared_ptr<MenuBar> m_menuBar;
+    std::shared_ptr<ToolBar> m_toolBar;
     std::vector<std::shared_ptr<EditorItem>> m_panels;
     ecs::Entity m_selected;
     State m_state{ STATE_TRANSLATE };

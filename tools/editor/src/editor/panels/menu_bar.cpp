@@ -2,7 +2,7 @@
 
 #include "editor/editor_layer.h"
 #include "editor/widget.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/runtime/input_manager.h"
 
 namespace my {
