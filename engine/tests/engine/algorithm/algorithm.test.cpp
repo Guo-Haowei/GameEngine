@@ -3,7 +3,7 @@
 namespace my {
 
 TEST(topological_sort, test1) {
-    std::vector<std::vector<int>> edges = { { 1, 0 } };
+    std::vector<std::pair<int, int>> edges = { { 1, 0 } };
 
     auto sorted = topological_sort(2, edges);
 
@@ -12,7 +12,7 @@ TEST(topological_sort, test1) {
 }
 
 TEST(topological_sort, test2) {
-    std::vector<std::vector<int>> edges = {
+    std::vector<std::pair<int, int>> edges = {
         { 0, 1 },
         { 0, 2 },
         { 1, 3 },
