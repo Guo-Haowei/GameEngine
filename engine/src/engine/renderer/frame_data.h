@@ -72,7 +72,8 @@ struct FrameData {
         Degree fovy;
     };
 
-    FrameData(const RenderOptions& p_options);
+    FrameData(const RenderOptions& p_options) : options(p_options) {
+    }
 
     const RenderOptions options;
 
@@ -119,22 +120,6 @@ struct FrameData {
         std::vector<Color> colors;
         uint32_t drawCount;
     } drawDebugContext;
-
-    ///////////////////////
-
-    void FillLightBuffer(const Scene& p_scene);
-    void FillVoxelPass(const Scene& p_scene);
-    void FillMainPass(const Scene& p_scene);
-
-private:
-    using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
-    using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
-
-    void FillPass(const Scene& p_scene,
-                  FilterObjectFunc1 p_filter1,
-                  FilterObjectFunc2 p_filter2,
-                  std::vector<RenderCommand>& p_commands,
-                  bool p_use_material);
 
     AABB voxel_gi_bound;
 };
