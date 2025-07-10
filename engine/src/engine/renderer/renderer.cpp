@@ -38,7 +38,7 @@ void RegisterDvars() {
 }
 
 void BeginFrame() {
-    // @TODO: should be a better way
+    // @TODO: there should be a better way
     if (s_glob.renderData) {
         delete s_glob.renderData;
         s_glob.renderData = nullptr;

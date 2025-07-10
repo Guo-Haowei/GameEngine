@@ -15,9 +15,6 @@ namespace my {
 namespace my {
 
 class Scene;
-class CameraComponent;
-class RenderPass;
-class RenderGraph;
 
 struct RenderOptions {
     bool isOpengl{ false };
@@ -98,6 +95,12 @@ struct FrameData {
     PassContext voxelPass;
     PassContext mainPass;
 
+    std::vector<RenderCommand> shadow_pass_commands;
+    std::vector<RenderCommand> prepass_commands;
+    std::vector<RenderCommand> gbuffer_commands;
+    std::vector<RenderCommand> transparent_commands;
+    std::vector<RenderCommand> voxelization_commands;
+
     // std::vector<InstanceContext> instances;
 
     // std::vector<ParticleEmitterComponent> emitters;
@@ -130,10 +133,9 @@ private:
     void FillPass(const Scene& p_scene,
                   FilterObjectFunc1 p_filter1,
                   FilterObjectFunc2 p_filter2,
-                  RenderPass* p_render_pass,
+                  std::vector<RenderCommand>& p_commands,
                   bool p_use_material);
 
-    RenderGraph* m_renderGraph = nullptr;
     AABB voxel_gi_bound;
 };
 

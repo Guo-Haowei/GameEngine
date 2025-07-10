@@ -2,8 +2,7 @@
 
 #include "engine/math/frustum.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/render_graph/render_graph.h"
-#include "engine/renderer/graphics_defines.h"
+// #include "engine/renderer/graphics_defines.h"
 #include "engine/scene/scene.h"
 
 // @TODO: remove
@@ -22,8 +21,6 @@ namespace my {
 // 4. TileMapRenderSystem
 
 FrameData::FrameData(const RenderOptions& p_options) : options(p_options) {
-    m_renderGraph = IGraphicsManager::GetSingleton().GetActiveRenderGraph();
-    DEV_ASSERT(m_renderGraph);
 }
 
 // @TODO: fix this function OMG
@@ -72,7 +69,7 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
 void FrameData::FillPass(const Scene& p_scene,
                          FilterObjectFunc1 p_filter1,
                          FilterObjectFunc2 p_filter2,
-                         RenderPass* p_draw_pass,
+                         std::vector<RenderCommand>& p_commands,
                          bool p_use_material) {
 
     const bool is_opengl = this->options.isOpengl;
@@ -120,35 +117,34 @@ void FrameData::FillPass(const Scene& p_scene,
             draw.bone_idx = -1;
         }
 
-        // HACK
         draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
         draw.mat_idx = -1;
         DEV_ASSERT(draw.mesh_data);
 
         if (!p_use_material) {
             draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
-            p_draw_pass->AddCommand(RenderCommand::from(draw));
-            // @TODO: add to pass
-        } else {
-            for (const auto& subset : mesh.subsets) {
-                aabb = subset.local_bound;
-                aabb.ApplyMatrix(world_matrix);
-                if (!p_filter2(aabb)) {
-                    continue;
-                }
+            p_commands.emplace_back(RenderCommand::from(draw));
+            continue;
+        }
 
-                const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
-                MaterialConstantBuffer material_buffer;
-                FillMaterialConstantBuffer(is_opengl, material, material_buffer);
-
-                // Draw submesh if pass cares about material
-                DrawCommand draw2 = draw;
-                draw2.indexCount = subset.index_count;
-                draw2.indexOffset = subset.index_offset;
-                draw2.mat_idx = this->materialCache.FindOrAdd(subset.material_id, material_buffer);
-
-                p_draw_pass->AddCommand(RenderCommand::from(draw2));
+        for (const auto& subset : mesh.subsets) {
+            aabb = subset.local_bound;
+            aabb.ApplyMatrix(world_matrix);
+            if (!p_filter2(aabb)) {
+                continue;
             }
+
+            const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
+            MaterialConstantBuffer material_buffer;
+            FillMaterialConstantBuffer(is_opengl, material, material_buffer);
+
+            // Draw submesh if pass cares about material
+            DrawCommand draw2 = draw;
+            draw2.indexCount = subset.index_count;
+            draw2.indexOffset = subset.index_offset;
+            draw2.mat_idx = this->materialCache.FindOrAdd(subset.material_id, material_buffer);
+
+            p_commands.emplace_back(RenderCommand::from(draw2));
         }
     }
 }
@@ -209,11 +205,6 @@ void FrameData::FillLightBuffer(const Scene& p_scene) {
                 this->passCache.emplace_back(pass_constant);
 
                 // @TODO: fix
-                auto pass = m_renderGraph->FindPass("p:shadow");
-                if (!pass) {
-                    continue;
-                }
-
                 Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
                     p_scene,
@@ -223,7 +214,7 @@ void FrameData::FillLightBuffer(const Scene& p_scene) {
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
                     },
-                    pass, false);
+                    shadow_pass_commands, false);
             } break;
             case LIGHT_TYPE_POINT: {
                 [[maybe_unused]] const int shadow_map_index = light_component.GetShadowMapIndex();
@@ -343,12 +334,6 @@ void FrameData::FillMainPass(const Scene& p_scene) {
     this->mainPass.pass_idx = static_cast<int>(this->passCache.size());
     this->passCache.emplace_back(pass_constant);
 
-    auto gbuffer_pass = m_renderGraph->FindPass("p:gbuffer");
-    auto voxelization_pass = m_renderGraph->FindPass("p:voxelization");
-    auto early_z_pass = m_renderGraph->FindPass("p:early_z");
-    // @TODO: should separate it from forward?
-    auto transparent_pass = m_renderGraph->FindPass("p:forward");
-
     using FilterFunc = std::function<bool(const AABB&)>;
     FilterFunc filter_main = [&](const AABB& p_aabb) -> bool { return camera_frustum.Intersects(p_aabb); };
 
@@ -398,14 +383,14 @@ void FrameData::FillMainPass(const Scene& p_scene) {
         draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
         DEV_ASSERT(draw.mesh_data);
 
-        auto add_to_pass = [&](RenderPass* p_pass, FilterFunc& p_filter, bool p_model_only) {
+        auto add_to_pass = [&](std::vector<RenderCommand>& p_commands, FilterFunc& p_filter, bool p_model_only) {
             if (!p_filter(aabb)) {
                 return;
             }
 
             DrawCommand drawCmd = draw;
             if (p_model_only) {
-                p_pass->AddCommand(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::from(drawCmd));
                 return;
             }
 
@@ -424,29 +409,28 @@ void FrameData::FillMainPass(const Scene& p_scene) {
                 drawCmd.indexOffset = subset.index_offset;
                 drawCmd.mat_idx = this->materialCache.FindOrAdd(subset.material_id, material_buffer);
 
-                p_pass->AddCommand(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::from(drawCmd));
             }
         };
 
-        if (is_opaque && early_z_pass) {
-            add_to_pass(early_z_pass, filter_main, true);
+        if (is_opaque) {
+            add_to_pass(this->prepass_commands, filter_main, true);
         }
 
-        if (is_opaque && gbuffer_pass) {
-            add_to_pass(gbuffer_pass, filter_main, false);
+        if (is_opaque) {
+            add_to_pass(this->gbuffer_commands, filter_main, false);
         }
 
-        if (is_transparent && transparent_pass) {
-            add_to_pass(transparent_pass, filter_main, false);
+        if (is_transparent) {
+            add_to_pass(this->transparent_commands, filter_main, false);
         }
 
-        if (voxelization_pass && this->voxel_gi_bound.IsValid()) {
+        if (this->voxel_gi_bound.IsValid()) {
             FilterFunc gi_filter = [&](const AABB& p_aabb) -> bool { return this->voxel_gi_bound.Intersects(p_aabb); };
-            add_to_pass(voxelization_pass, gi_filter, false);
+            add_to_pass(this->voxelization_commands, gi_filter, false);
         }
     }
 }
-
 
 #if 0
 static void FillMeshEmitterBuffer(const Scene& p_scene,

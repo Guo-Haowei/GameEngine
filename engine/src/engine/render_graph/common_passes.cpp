@@ -56,13 +56,13 @@ static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<I
 }
 #endif
 
-static void ExecuteDrawCommands(const FrameData& p_data, const RenderPass& p_draw_pass, bool p_is_prepass = false) {
+static void ExecuteDrawCommands(const FrameData& p_data, const std::vector<RenderCommand>& p_commands, bool p_is_prepass = false) {
 
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
     auto& frame = gm.GetCurrentFrame();
-    for (const RenderCommand& cmd : p_draw_pass.GetCommands()) {
+    for (const RenderCommand& cmd : p_commands) {
         if (cmd.type != RenderCommandType::Draw) continue;
         const DrawCommand& draw = cmd.draw;
 
@@ -132,7 +132,7 @@ static void EarlyZPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     cmd.SetPipelineState(PSO_PREPASS);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, true);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.render_system.prepass_commands, true);
 }
 
 static void EmptyPass(RenderPassExcutionContext& p_ctx) {
@@ -189,7 +189,7 @@ static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     cmd.SetPipelineState(PSO_GBUFFER);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, false);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.render_system.gbuffer_commands, false);
     // DrawInstacedGeometry(p_ctx.render_system, p_ctx.render_system.instances, false);
     cmd.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
 }
@@ -319,6 +319,8 @@ void RenderGraphBuilderExt::AddHighlightPass() {
 [[maybe_unused]] static void PointShadowPassFunc(RenderPassExcutionContext& p_ctx) {
     RENDER_PASS_FUNC();
 
+    CRASH_NOW();
+
     auto& cmd = p_ctx.cmd;
 
     auto framebuffer = p_ctx.framebuffer;
@@ -344,7 +346,7 @@ void RenderGraphBuilderExt::AddHighlightPass() {
             cmd.SetViewport(Viewport(width, height));
 
             cmd.SetPipelineState(PSO_POINT_SHADOW);
-            ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, false);
+            ExecuteDrawCommands(p_ctx.render_system, p_ctx.render_system.shadow_pass_commands, false);
         }
     }
 }
@@ -368,7 +370,7 @@ static void ShadowPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
     cmd.SetPipelineState(PSO_DPETH);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.render_system.shadow_pass_commands);
 }
 
 void RenderGraphBuilderExt::AddShadowPass() {
@@ -408,7 +410,7 @@ static void VoxelizationPassFunc(RenderPassExcutionContext& p_ctx) {
         cmd.SetViewport(Viewport(voxel_size, voxel_size));
         cmd.SetPipelineState(PSO_VOXELIZATION);
         cmd.SetBlendState(PipelineStateManager::GetBlendDescDisable(), nullptr, 0xFFFFFFFF);
-        ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
+        ExecuteDrawCommands(p_ctx.render_system, p_ctx.render_system.voxelization_commands);
 
         // glSubpixelPrecisionBiasNV(0, 0);
         cmd.SetBlendState(PipelineStateManager::GetBlendDescDefault(), nullptr, 0xFFFFFFFF);
@@ -640,7 +642,7 @@ static void ForwardPassFunc(RenderPassExcutionContext& p_ctx) {
 
     // draw transparent objects
     gm.SetPipelineState(PSO_FORWARD_TRANSPARENT);
-    ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass);
+    ExecuteDrawCommands(p_ctx.render_system, p_ctx.render_system.transparent_commands);
 
     auto& draw_context = p_ctx.render_system.drawDebugContext;
     if (gm.m_debugBuffers && draw_context.drawCount) {

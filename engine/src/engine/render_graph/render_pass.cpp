@@ -49,9 +49,6 @@ void RenderPass::Execute(const FrameData& p_data, IRenderCmdContext& p_cmd) {
         p_cmd.UnbindUnorderedAccessView(i);
     }
 
-    // clear command buffer
-    m_commands.clear();
-
     RT_DEBUG("-------");
 }
 

@@ -31,9 +31,6 @@ class RenderPass {
 public:
     void Execute(const FrameData& p_data, IRenderCmdContext& p_cmd);
 
-    void AddCommand(const RenderCommand& cmd) { m_commands.emplace_back(cmd); }
-    const auto& GetCommands() const { return m_commands; }
-
     std::string_view GetName() const { return m_name; }
 
     const auto& GetUavs() const { return m_uavs; }
@@ -52,7 +49,6 @@ protected:
 
     std::shared_ptr<Framebuffer> m_framebuffer;
 
-    std::vector<RenderCommand> m_commands;
     ExecuteFunc m_executor;
 
     friend class RenderPassBuilder;
