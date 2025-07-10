@@ -83,31 +83,6 @@ FrameData* GetRenderData() {
     return s_glob.renderData;
 }
 
-void AddDebugCube(const AABB& p_aabb,
-                  const Color& p_color,
-                  const Matrix4x4f* p_transform) {
-    ASSERT_CAN_RECORD();
-
-    const auto& min = p_aabb.GetMin();
-    const auto& max = p_aabb.GetMax();
-
-    std::vector<Vector3f> positions;
-    std::vector<uint32_t> indices;
-    BoxWireFrameHelper(min, max, positions, indices);
-
-    auto& context = s_glob.renderData->drawDebugContext;
-    for (const auto& i : indices) {
-        const Vector3f& pos = positions[i];
-        if (p_transform) {
-            const auto tmp = *p_transform * Vector4f(pos, 1.0f);
-            context.positions.emplace_back(Vector3f(tmp.xyz));
-        } else {
-            context.positions.emplace_back(Vector3f(pos));
-        }
-        context.colors.emplace_back(p_color);
-    }
-}
-
 // path tracer
 void SetPathTracerMode(PathTracerMode p_mode) {
     s_glob.pt.SetMode(p_mode);

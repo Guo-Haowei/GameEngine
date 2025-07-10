@@ -19,6 +19,7 @@ enum class PathTracerMode {
 
 }  // namespace my
 
+// @TODO: refactor
 namespace my::renderer {
 
 void RegisterDvars();
@@ -26,10 +27,6 @@ void RegisterDvars();
 void BeginFrame();
 
 void EndFrame();
-
-void AddDebugCube(const AABB& p_aabb,
-                  const Color& p_color,
-                  const Matrix4x4f* p_transform = nullptr);
 
 void RequestScene(const CameraComponent& p_camera, Scene& p_scene);
 

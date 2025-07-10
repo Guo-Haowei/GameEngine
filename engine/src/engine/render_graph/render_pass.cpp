@@ -16,7 +16,7 @@ void RenderPass::Execute(const FrameData& p_data, IRenderCmdContext& p_cmd) {
 
     auto framebuffer = m_framebuffer.get();
     RenderPassExcutionContext ctx{
-        .render_system = p_data,
+        .frameData = p_data,
         .framebuffer = framebuffer,
         .pass = *this,
         .cmd = p_cmd,

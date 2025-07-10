@@ -180,6 +180,9 @@ void RenderSystem::RenderFrame(Scene& p_scene) {
     FillConstantBuffer(p_scene, framedata);
 
     RunMeshRenderSystem(p_scene, framedata);
+
+    // @TODO: RunSprite
+    // @TODO: RunTileMap
 #if 0
     FillMeshEmitterBuffer(p_scene, p_out_data);
     FillParticleEmitterBuffer(p_scene, p_out_data);

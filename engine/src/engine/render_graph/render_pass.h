@@ -19,7 +19,7 @@ namespace my {
 struct FrameData;
 
 struct RenderPassExcutionContext {
-    const FrameData& render_system;
+    const FrameData& frameData;
     Framebuffer* framebuffer;
     RenderPass& pass;
     IRenderCmdContext& cmd;

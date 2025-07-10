@@ -1,11 +1,11 @@
 #pragma once
 #include "engine/ecs/entity.h"
+#include "engine/math/aabb.h"
 #include "engine/math/angle.h"
+#include "engine/math/color.h"
 #include "engine/math/geomath.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/graphics_defines.h"
-#include "engine/renderer/renderer.h"
-#include "engine/scene/scene_component.h"
 #include "render_command.h"
 
 namespace my {

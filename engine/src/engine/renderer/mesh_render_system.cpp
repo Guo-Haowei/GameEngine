@@ -1,4 +1,5 @@
 #include "engine/math/frustum.h"
+#include "engine/math/geometry.h"
 #include "engine/math/matrix_transform.h"
 #include "engine/renderer/frame_data.h"
 #include "engine/runtime/asset_registry.h"
@@ -264,6 +265,31 @@ static void FillLightBuffer(const Scene& p_scene, FrameData& p_framedata) {
     }
 }
 
+static void AddDebugCube(FrameData& p_framedata,
+                         const AABB& p_aabb,
+                         const Color& p_color,
+                         const Matrix4x4f* p_transform = nullptr) {
+
+    const auto& min = p_aabb.GetMin();
+    const auto& max = p_aabb.GetMax();
+
+    std::vector<Vector3f> positions;
+    std::vector<uint32_t> indices;
+    BoxWireFrameHelper(min, max, positions, indices);
+
+    auto& context = p_framedata.drawDebugContext;
+    for (const auto& i : indices) {
+        const Vector3f& pos = positions[i];
+        if (p_transform) {
+            const auto tmp = *p_transform * Vector4f(pos, 1.0f);
+            context.positions.emplace_back(Vector3f(tmp.xyz));
+        } else {
+            context.positions.emplace_back(Vector3f(pos));
+        }
+        context.colors.emplace_back(p_color);
+    }
+}
+
 static void FillVoxelPass(const Scene& p_scene, FrameData& p_framedata) {
     bool enabled = false;
     bool show_debug = false;
@@ -281,7 +307,7 @@ static void FillVoxelPass(const Scene& p_scene, FrameData& p_framedata) {
     }
 
     if (show_debug) {
-        renderer::AddDebugCube(p_framedata.voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
+        AddDebugCube(p_framedata, p_framedata.voxel_gi_bound, Color(0.5f, 0.3f, 0.6f, 0.5f));
     }
 
     auto& cache = p_framedata.perFrameCache;
