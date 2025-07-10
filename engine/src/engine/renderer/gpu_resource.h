@@ -106,7 +106,7 @@ struct GpuBufferDesc {
     GpuBufferType type{ GpuBufferType::UNKNOWN };
     // @TODO: need better flags than this
     bool dynamic{ false };
-    uint32_t slot{ 0 };
+    uint32_t slot{ 0 };  // remove this if possible
     uint32_t elementSize{ 0 };
     uint32_t elementCount{ 0 };
     uint32_t offset{ 0 };

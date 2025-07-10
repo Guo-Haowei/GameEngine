@@ -795,7 +795,6 @@ public:
 
     // Non-serialized
     // @TODO: texture?
-    std::vector<TileMapVertex> m_vertices;
     mutable const ImageAsset* textureAsset;
 };
 

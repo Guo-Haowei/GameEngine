@@ -237,4 +237,49 @@ auto RenderGraphBuilder::Compile() -> Result<std::shared_ptr<RenderGraph>> {
     return Result<std::shared_ptr<RenderGraph>>(render_graph);
 }
 
+///  @TODO: remove this
+GpuTextureDesc RenderGraphBuilder::BuildDefaultTextureDesc(PixelFormat p_format,
+                                                           AttachmentType p_type,
+                                                           uint32_t p_width,
+                                                           uint32_t p_height,
+                                                           uint32_t p_array_size,
+                                                           ResourceMiscFlags p_misc_flag,
+                                                           uint32_t p_mips_level) {
+    GpuTextureDesc desc{};
+    desc.type = p_type;
+    desc.format = p_format;
+    desc.arraySize = p_array_size;
+    desc.dimension = Dimension::TEXTURE_2D;
+    desc.width = p_width;
+    desc.height = p_height;
+    desc.mipLevels = p_mips_level ? p_mips_level : 1;
+    desc.miscFlags = p_misc_flag;
+    desc.initialData = nullptr;
+
+    switch (p_type) {
+        case AttachmentType::COLOR_2D:
+        case AttachmentType::DEPTH_2D:
+        case AttachmentType::DEPTH_STENCIL_2D:
+        case AttachmentType::SHADOW_2D:
+            desc.dimension = Dimension::TEXTURE_2D;
+            break;
+        case AttachmentType::COLOR_CUBE:
+            desc.dimension = Dimension::TEXTURE_CUBE;
+            desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
+            DEV_ASSERT(p_array_size == 6);
+            break;
+        case AttachmentType::SHADOW_CUBE_ARRAY:
+            desc.dimension = Dimension::TEXTURE_CUBE_ARRAY;
+            desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
+            DEV_ASSERT(p_array_size / 6 > 0);
+            break;
+        case AttachmentType::RW_TEXTURE:
+            break;
+        default:
+            CRASH_NOW();
+            break;
+    }
+    return desc;
+};
+
 }  // namespace my

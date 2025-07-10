@@ -34,7 +34,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         CameraComponent& camera = context.cameras[CAMERA_3D];
         camera.SetDimension(res.x, res.y);
         camera.SetNear(1.0f);
-        camera.SetFar(100.0f);
+        camera.SetFar(1000.0f);
         camera.SetPosition(Vector3f(0, 4, 10));
         camera.SetDirty();
         camera.Update();
@@ -44,7 +44,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         camera.SetOrtho();
         camera.SetDimension(res.x, res.y);
         camera.SetNear(1.0f);
-        camera.SetFar(100.0f);
+        camera.SetFar(1000.0f);
         camera.SetPosition(Vector3f(0, 0, 10));
         camera.SetDirty();
         camera.Update();

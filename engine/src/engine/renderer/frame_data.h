@@ -15,6 +15,8 @@ namespace my {
 namespace my {
 
 class Scene;
+// @TODO: get rid of this
+class TileMapComponent;
 
 struct RenderOptions {
     bool isOpengl{ false };
@@ -102,6 +104,9 @@ struct FrameData {
     std::vector<RenderCommand> gbuffer_commands;
     std::vector<RenderCommand> transparent_commands;
     std::vector<RenderCommand> voxelization_commands;
+
+    // @TODO: refactor
+    std::shared_ptr<TileMapComponent> tiles;
 
     // std::vector<InstanceContext> instances;
 
