@@ -184,11 +184,10 @@ struct ToolBarButtonDesc {
     const char* display{ nullptr };
     const char* tooltip{ nullptr };
     std::function<void()> func;
+    std::function<bool()> enabledFunc;
 };
 
 void Viewer::DrawToolBar() {
-    // ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
-    // ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
     auto& colors = ImGui::GetStyle().Colors;
     const auto& button_hovered = colors[ImGuiCol_ButtonHovered];
@@ -201,42 +200,37 @@ void Viewer::DrawToolBar() {
     auto& context = m_editor.context;
 
     static const ToolBarButtonDesc s_buttons[] = {
-        { ICON_FA_HAND, "Enter gizmo mode", [&]() {
-         } },
-        { ICON_FA_CAMERA_ROTATE, "Toggle 2D/3D view", [&]() {
-             bool is_2d = context.cameraType == CAMERA_2D;
-             context.cameraType = is_2d ? CAMERA_3D : CAMERA_2D;
-         } },
-        { ICON_FA_BRUSH, "TileMap editor mode", [&]() {
-         } },
+        { ICON_FA_PLAY, "Run Project",
+          [&]() { app->SetState(Application::State::BEGIN_SIM); },
+          [&]() { return app_state != Application::State::SIM; } },
+        { ICON_FA_PAUSE, "Pause Running Project",
+          [&]() { app->SetState(Application::State::END_SIM); },
+          [&]() { return app_state != Application::State::EDITING; } },
+        { ICON_FA_HAND, "Enter gizmo mode",
+          [&]() {} },
+        { ICON_FA_CAMERA_ROTATE, "Toggle 2D/3D view",
+          [&]() {
+              bool is_2d = context.cameraType == CAMERA_2D;
+              context.cameraType = is_2d ? CAMERA_3D : CAMERA_2D;
+          } },
+        { ICON_FA_BRUSH, "TileMap editor mode",
+          [&]() {} },
     };
-
-    const bool editing = app_state == Application::State::EDITING;
-    if (editing) {
-        if (ImGui::Button(ICON_FA_PLAY " ")) {
-            m_editor.GetApplication()->SetState(Application::State::BEGIN_SIM);
-            if (ImGui::IsItemHovered()) {
-                ImGui::BeginTooltip();
-                ImGui::Text("play");
-                ImGui::EndTooltip();
-            }
-        }
-    } else {
-        if (ImGui::Button(ICON_FA_PAUSE " ")) {
-            m_editor.GetApplication()->SetState(Application::State::END_SIM);
-            if (ImGui::IsItemHovered()) {
-                ImGui::BeginTooltip();
-                ImGui::Text("pause");
-                ImGui::EndTooltip();
-            }
-        }
-    }
-    ImGui::SameLine();
 
     for (int i = 0; i < array_length(s_buttons); ++i) {
         const auto& desc = s_buttons[i];
-        if (ImGui::Button(desc.display)) {
+        const bool enabled = desc.enabledFunc ? desc.enabledFunc() : true;
+
+        if (!enabled) {
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.5f);
+        }
+
+        if (ImGui::Button(desc.display) && enabled) {
             desc.func();
+        }
+
+        if (!enabled) {
+            ImGui::PopStyleVar();
         }
 
         if (ImGui::IsItemHovered()) {
@@ -244,6 +238,7 @@ void Viewer::DrawToolBar() {
             ImGui::Text(desc.tooltip);
             ImGui::EndTooltip();
         }
+
         ImGui::SameLine();
     }
 

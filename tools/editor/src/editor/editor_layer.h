@@ -34,9 +34,6 @@ struct EditorContext {
     EditorCameraType cameraType{ CAMERA_3D };
     CameraComponent cameras[CAMERA_MAX];
 
-    const ImageAsset* playButtonImage{ nullptr };
-    const ImageAsset* pauseButtonImage{ nullptr };
-
     CameraComponent& GetActiveCamera() {
         return cameras[cameraType];
     }

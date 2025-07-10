@@ -149,10 +149,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 void EditorLayer::OnAttach() {
     ImNodes::CreateContext();
 
-    auto asset_registry = m_app->GetAssetRegistry();
-
-    context.playButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/play.png" });
-    context.pauseButtonImage = asset_registry->GetAssetByHandle<ImageAsset>(AssetHandle{ "@res://images/icons/pause.png" });
+    [[maybe_unused]] auto asset_registry = m_app->GetAssetRegistry();
 
     m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
 
