@@ -5,8 +5,8 @@
 #include "engine/core/debugger/profiler.h"
 #include "engine/drivers/glfw/glfw_display_manager.h"
 #include "engine/math/geometry.h"
+#include "engine/render_graph/render_graph_defines.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/render_graph/render_graph_defines.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/asset_manager.h"
 #include "engine/runtime/imgui_manager.h"
@@ -21,7 +21,7 @@
 #include <GLFW/glfw3.h>
 
 // @TODO: remove the following
-#include "engine/renderer/render_graph/render_graph_builder.h"
+#include "engine/render_graph/render_graph_builder.h"
 
 #define RESIDENT_TEXTURE USE_IF(USING(PLATFORM_WINDOWS))
 
