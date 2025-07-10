@@ -15,7 +15,6 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-
 namespace my {
 
 auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> Result<void> {

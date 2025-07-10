@@ -20,8 +20,6 @@ auto OpenGLES3GraphicsManager::InitializeInternal() -> Result<void> {
     LOG_VERBOSE("[opengl] renderer: {}", (const char*)glGetString(GL_RENDERER));
     LOG_VERBOSE("[opengl] version: {}", (const char*)glGetString(GL_VERSION));
 
-    CreateGpuResources();
-
     m_meshes.set_description("GPU-Mesh-Allocator");
 
     auto imgui = m_app->GetImguiManager();

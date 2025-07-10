@@ -398,7 +398,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     }
 
 #if USING(PLATFORM_WASM)
-    m_activeRenderGraphName = RenderGraphName::EMPTY;
+    m_activeRenderGraphName = RenderGraphName::SCENE2D;
 #endif
 
     // RenderGraphBuilder::CreateResources();
