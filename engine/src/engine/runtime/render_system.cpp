@@ -14,6 +14,7 @@
 namespace my {
 
 extern void RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata);
+extern void RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata);
 
 auto RenderSystem::InitializeImpl() -> Result<void> {
     return Result<void>();
@@ -223,6 +224,8 @@ void RenderSystem::RenderFrame(Scene& p_scene) {
 
     RunMeshRenderSystem(p_scene, framedata);
 
+    RunTileMapRenderSystem(p_scene, framedata);
+
     // @TODO: RunSprite
     // @TODO: RunTileMap
 #if 0
@@ -236,16 +239,6 @@ void RenderSystem::RenderFrame(Scene& p_scene) {
 
     auto& context = m_frameData->drawDebugContext;
     context.drawCount = (uint32_t)context.positions.size();
-}
-
-void RenderSystem::RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata) {
-    unused(p_scene);
-    unused(p_framedata);
-}
-
-void RenderSystem::RunSpriteRenderSystem(Scene& p_scene, FrameData& p_framedata) {
-    unused(p_scene);
-    unused(p_framedata);
 }
 
 void RenderSystem::FillCameraData(const CameraComponent& p_camera, FrameData& p_framedata) {

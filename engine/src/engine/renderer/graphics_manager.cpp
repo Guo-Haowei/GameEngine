@@ -401,7 +401,6 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     m_activeRenderGraphName = RenderGraphName::SCENE2D;
 #endif
 
-    // RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;

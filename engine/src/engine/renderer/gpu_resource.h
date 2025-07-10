@@ -130,9 +130,6 @@ struct GpuConstantBuffer {
 
     virtual ~GpuConstantBuffer() = default;
 
-    // @TODO: remove this
-    void update(const void* p_data, size_t p_size);
-
     int GetSlot() const { return desc.slot; }
 
     const GpuBufferDesc desc;

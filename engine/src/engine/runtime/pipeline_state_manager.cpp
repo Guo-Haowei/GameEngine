@@ -78,6 +78,19 @@ auto PipelineStateManager::Initialize() -> Result<void> {
         if (auto res = Create(__VA_ARGS__); !res) return res; \
     } while (0)
 
+    CREATE_PSO(PSO_SPRITE,
+               {
+                   .vs = "sprite.vs",
+                   .ps = "sprite.ps",
+                   .rasterizerDesc = &s_rasterizerDoubleSided,
+                   .depthStencilDesc = &s_depthReversedStencilDisabled,
+                   .inputLayoutDesc = &s_inputLayoutSprite,
+                   .blendDesc = &s_transparent,
+                   .numRenderTargets = 1,
+                   .rtvFormats = { RT_FMT_TONE },
+                   .dsvFormat = PixelFormat::D32_FLOAT_S8X24_UINT,  // gbuffer
+               });
+
     CREATE_PSO(PSO_PREPASS,
                {
                    .vs = "mesh.vs",
