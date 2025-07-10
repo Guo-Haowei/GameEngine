@@ -12,7 +12,6 @@ namespace my {
 
 struct ImageAsset;
 class MenuBar;
-class ToolBar;
 enum class KeyCode : uint16_t;
 
 enum {
@@ -91,7 +90,6 @@ private:
     void FlushCommand(Scene& p_scene);
 
     std::shared_ptr<MenuBar> m_menuBar;
-    std::shared_ptr<ToolBar> m_toolBar;
     std::vector<std::shared_ptr<EditorItem>> m_panels;
     ecs::Entity m_selected;
     State m_state{ STATE_TRANSLATE };

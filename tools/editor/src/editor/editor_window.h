@@ -13,6 +13,7 @@ protected:
     virtual void UpdateInternal(Scene&) = 0;
 
     std::string m_name;
+    int m_flags{ 0 };
 };
 
 }  // namespace my

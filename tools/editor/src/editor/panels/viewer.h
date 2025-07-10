@@ -6,7 +6,7 @@ namespace my {
 
 class Viewer : public EditorWindow {
 public:
-    Viewer(EditorLayer& p_editor) : EditorWindow("Viewer", p_editor) {}
+    Viewer(EditorLayer& p_editor);
 
 protected:
     void UpdateInternal(Scene& p_scene) override;
@@ -14,6 +14,7 @@ protected:
 private:
     void UpdateData();
     void SelectEntity(Scene& p_scene, const CameraComponent& p_camera);
+    void DrawToolBar();
     void DrawGui(Scene& p_scene, CameraComponent& p_camera);
 
     Vector2f m_canvasMin;

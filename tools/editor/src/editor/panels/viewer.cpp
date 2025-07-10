@@ -1,20 +1,25 @@
 #include "viewer.h"
 
+#include <IconsFontAwesome/IconsFontAwesome6.h>
 #include <imgui/imgui_internal.h>
 
 #include "editor/editor_layer.h"
-#include "editor/widget.h"
 #include "editor/utility/imguizmo.h"
+#include "editor/widget.h"
 #include "engine/core/io/input_event.h"
 #include "engine/math/ray.h"
-#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/runtime/common_dvars.h"
 #include "engine/runtime/display_manager.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/scene_manager.h"
 
 namespace my {
+
+Viewer::Viewer(EditorLayer& p_editor) : EditorWindow("Viewer", p_editor) {
+    // m_flags = ImGuiWindowFlags_MenuBar;
+}
 
 void Viewer::UpdateData() {
     Vector2i frame_size = DVAR_GET_IVEC2(resolution);
@@ -32,7 +37,8 @@ void Viewer::UpdateData() {
     ImGuiWindow* window = ImGui::FindWindowByName(m_name.c_str());
     DEV_ASSERT(window);
     m_canvasMin.x = window->ContentRegionRect.Min.x;
-    m_canvasMin.y = window->ContentRegionRect.Min.y;
+    // @TODO: fix hard code
+    m_canvasMin.y = 40 + window->ContentRegionRect.Min.y;
 
     m_focused = ImGui::IsWindowHovered();
 }
@@ -174,7 +180,96 @@ void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
     }
 }
 
+struct ToolBarButtonDesc {
+    const char* display{ nullptr };
+    const char* tooltip{ nullptr };
+    std::function<void()> func;
+};
+
+void Viewer::DrawToolBar() {
+    // ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 2));
+    // ImGui::PushStyleVar(ImGuiStyleVar_ItemInnerSpacing, ImVec2(0, 0));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    auto& colors = ImGui::GetStyle().Colors;
+    const auto& button_hovered = colors[ImGuiCol_ButtonHovered];
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(button_hovered.x, button_hovered.y, button_hovered.z, 0.5f));
+    const auto& button_active = colors[ImGuiCol_ButtonActive];
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(button_active.x, button_active.y, button_active.z, 0.5f));
+
+    auto app = m_editor.GetApplication();
+    auto app_state = app->GetState();
+    auto& context = m_editor.context;
+
+    static const ToolBarButtonDesc s_buttons[] = {
+        { ICON_FA_HAND, "Enter gizmo mode", [&]() {
+         } },
+        { ICON_FA_CAMERA_ROTATE, "Toggle 2D/3D view", [&]() {
+             bool is_2d = context.cameraType == CAMERA_2D;
+             context.cameraType = is_2d ? CAMERA_3D : CAMERA_2D;
+         } },
+        { ICON_FA_BRUSH, "TileMap editor mode", [&]() {
+         } },
+    };
+
+    const bool editing = app_state == Application::State::EDITING;
+    if (editing) {
+        if (ImGui::Button(ICON_FA_PLAY " ")) {
+            m_editor.GetApplication()->SetState(Application::State::BEGIN_SIM);
+            if (ImGui::IsItemHovered()) {
+                ImGui::BeginTooltip();
+                ImGui::Text("play");
+                ImGui::EndTooltip();
+            }
+        }
+    } else {
+        if (ImGui::Button(ICON_FA_PAUSE " ")) {
+            m_editor.GetApplication()->SetState(Application::State::END_SIM);
+            if (ImGui::IsItemHovered()) {
+                ImGui::BeginTooltip();
+                ImGui::Text("pause");
+                ImGui::EndTooltip();
+            }
+        }
+    }
+    ImGui::SameLine();
+
+    for (int i = 0; i < array_length(s_buttons); ++i) {
+        const auto& desc = s_buttons[i];
+        if (ImGui::Button(desc.display)) {
+            desc.func();
+        }
+
+        if (ImGui::IsItemHovered()) {
+            ImGui::BeginTooltip();
+            ImGui::Text(desc.tooltip);
+            ImGui::EndTooltip();
+        }
+        ImGui::SameLine();
+    }
+
+    #if 0
+    ImGui::Button(ICON_FA_PAUSE " ");
+    ImGui::SameLine();
+    ImGui::Button(ICON_FA_PEN " ");
+    ImGui::SameLine();
+    ImGui::Button(ICON_FA_CAMERA " ");
+    ImGui::SameLine();
+    ImGui::Button(ICON_FA_CAMERA_RETRO " ");
+    ImGui::SameLine();
+    ImGui::Button(ICON_FA_PAINT_ROLLER " ");
+    ImGui::SameLine();
+    ImGui::Button(ICON_FA_PAINTBRUSH " ");
+    ImGui::SameLine();
+    ImGui::Button(ICON_FA_BRUSH " ");
+    #endif
+
+    // ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor(3);
+}
+
 void Viewer::UpdateInternal(Scene& p_scene) {
+    DrawToolBar();
+
     const auto mode = m_editor.GetApplication()->GetState();
     ecs::Entity camera_id;
     switch (mode) {
