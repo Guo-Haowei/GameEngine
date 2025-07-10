@@ -456,6 +456,8 @@ void RenderGraphBuilderExt::AddVoxelizationPass() {
 
 /// Emitter
 static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
+    unused(p_ctx);
+#if 0
     RENDER_PASS_FUNC();
 
     auto& cmd = p_ctx.cmd;
@@ -520,6 +522,7 @@ static void EmitterPassFunc(RenderPassExcutionContext& p_ctx) {
             cmd.UnbindTexture(Dimension::TEXTURE_2D, GetBaseColorMapSlot());
         }
     }
+#endif
 }
 
 /// Lighting

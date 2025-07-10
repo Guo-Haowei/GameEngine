@@ -302,7 +302,7 @@ void BaseGraphicsManager::Update(Scene& p_scene) {
             UpdateConstantBuffer(frame.materialCb.get(), data->materialCache.buffer);
             UpdateConstantBuffer(frame.boneCb.get(), data->boneCache.buffer);
             UpdateConstantBuffer(frame.passCb.get(), data->passCache);
-            UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
+            // UpdateConstantBuffer(frame.emitterCb.get(), data->emitterCache);
 
             UpdateConstantBuffer<PointShadowConstantBuffer, 6 * MAX_POINT_LIGHT_SHADOW_COUNT>(
                 frame.pointShadowCb.get(),

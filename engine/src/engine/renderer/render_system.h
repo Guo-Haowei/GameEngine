@@ -89,7 +89,7 @@ struct RenderSystem {
     std::vector<PerPassConstantBuffer> passCache;
     std::array<PointShadowConstantBuffer, MAX_POINT_LIGHT_SHADOW_COUNT * 6> pointShadowCache;
     BufferCache<BoneConstantBuffer> boneCache;
-    std::vector<EmitterConstantBuffer> emitterCache;
+    // std::vector<EmitterConstantBuffer> emitterCache;
 
     // @TODO: rename
     std::array<std::unique_ptr<PassContext>, MAX_POINT_LIGHT_SHADOW_COUNT> pointShadowPasses;
@@ -100,7 +100,7 @@ struct RenderSystem {
 
     // std::vector<InstanceContext> instances;
 
-    std::vector<ParticleEmitterComponent> emitters;
+    // std::vector<ParticleEmitterComponent> emitters;
 
     // @TODO: refactor
     bool bakeIbl;
@@ -116,8 +116,6 @@ struct RenderSystem {
         std::vector<Color> colors;
         uint32_t drawCount;
     } drawDebugContext;
-
-    uint32_t drawImageOffset;
 
     ///////////////////////
 

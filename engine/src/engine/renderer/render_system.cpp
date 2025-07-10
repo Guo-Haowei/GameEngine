@@ -644,7 +644,6 @@ static void FillMeshEmitterBuffer(const Scene& p_scene,
         }
     }
 }
-#endif
 
 static void FillParticleEmitterBuffer(const Scene& p_scene,
                                       RenderSystem& p_out_data) {
@@ -678,6 +677,7 @@ static void FillParticleEmitterBuffer(const Scene& p_scene,
         p_out_data.emitters.emplace_back(emitter);
     }
 }
+#endif
 
 void PrepareRenderData(const CameraComponent& p_camera,
                        const Scene& p_scene,
@@ -734,9 +734,9 @@ void PrepareRenderData(const CameraComponent& p_camera,
 
 #if 0
     FillMeshEmitterBuffer(p_scene, p_out_data);
+    FillParticleEmitterBuffer(p_scene, p_out_data);
 #endif
     FillEnvConstants(p_scene, p_out_data);
-    FillParticleEmitterBuffer(p_scene, p_out_data);
 }
 
 }  // namespace my
