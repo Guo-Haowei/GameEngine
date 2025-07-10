@@ -6,10 +6,12 @@
 #include "editor/panels/content_browser.h"
 #include "editor/panels/hierarchy_panel.h"
 #include "editor/panels/log_panel.h"
+#include "editor/panels/menu_bar.h"
 #include "editor/panels/propertiy_panel.h"
 #include "editor/panels/render_graph_viewer.h"
 #include "editor/panels/renderer_panel.h"
 #include "editor/panels/tilemap_panel.h"
+#include "editor/panels/tool_bar.h"
 #include "editor/panels/viewer.h"
 #include "editor/widget.h"
 #include "engine/core/io/input_event.h"
@@ -61,6 +63,7 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
     AddPanel(std::make_shared<RenderGraphViewer>(*this));
 
     m_menuBar = std::make_shared<MenuBar>(*this);
+    m_toolBar = std::make_shared<ToolBar>(*this);
 
     m_shortcuts[SHORT_CUT_SAVE_AS] = {
         "Save As..",
@@ -281,6 +284,7 @@ void EditorLayer::OnImGuiRender() {
     for (auto& it : m_panels) {
         it->Update(*scene);
     }
+    m_toolBar->Update(*scene);
     FlushCommand(*scene);
 
     m_unhandledEvents.clear();
