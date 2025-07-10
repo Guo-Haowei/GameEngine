@@ -2,7 +2,7 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/geometry.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/path_tracer/path_tracer.h"
 #include "engine/renderer/render_system.h"
 #include "engine/renderer/sampler.h"
@@ -26,7 +26,7 @@ enum class RenderState {
 };
 
 static struct {
-    RenderSystem* renderData;
+    FrameData* renderData;
     RenderState state;
     PathTracer pt;
     // @TODO: refactor
@@ -56,7 +56,7 @@ void BeginFrame() {
         .ssaoKernelRadius = DVAR_GET_FLOAT(gfx_ssao_radius),
     };
 
-    s_glob.renderData = new RenderSystem(options);
+    s_glob.renderData = new FrameData(options);
     static bool firstFrame = true;
     s_glob.renderData->bakeIbl = firstFrame;
     firstFrame = false;
@@ -85,7 +85,7 @@ void RequestScene(const CameraComponent& p_camera, Scene& p_scene) {
     s_glob.pt.Update(p_scene);
 }
 
-const RenderSystem* GetRenderData() {
+const FrameData* GetRenderData() {
     return s_glob.renderData;
 }
 

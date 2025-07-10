@@ -3,7 +3,7 @@
 #include <wrl/client.h>
 
 #include "engine/core/base/rid_owner.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 
 namespace my {
 
@@ -21,7 +21,7 @@ struct D3d11MeshBuffers : GpuMesh {
     using GpuMesh::GpuMesh;
 };
 
-class D3d11GraphicsManager : public BaseGraphicsManager {
+class D3d11GraphicsManager : public GraphicsManager {
 public:
     D3d11GraphicsManager();
 

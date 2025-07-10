@@ -6,7 +6,7 @@
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/pipeline_state.h"
 #include "engine/renderer/renderer.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/graphics_manager_interface.h"
 #include "engine/runtime/pipeline_state_manager.h"
 
 namespace my {
@@ -41,11 +41,11 @@ struct FrameContext {
     std::shared_ptr<GpuConstantBuffer> perFrameCb;
 };
 
-class BaseGraphicsManager : public IGraphicsManager {
+class GraphicsManager : public IGraphicsManager {
 public:
     // @TODO: rename to RenderTarget
 
-    BaseGraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
+    GraphicsManager(std::string_view p_name, Backend p_backend, int p_frame_count)
         : IGraphicsManager(p_name),
           m_backend(p_backend),
           m_frameCount(p_frame_count) {}

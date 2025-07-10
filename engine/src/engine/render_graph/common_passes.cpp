@@ -5,8 +5,8 @@
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/matrix_transform.h"
-#include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/render_system.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
@@ -56,7 +56,7 @@ static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<I
 }
 #endif
 
-static void ExecuteDrawCommands(const RenderSystem& p_data, const RenderPass& p_draw_pass, bool p_is_prepass = false) {
+static void ExecuteDrawCommands(const FrameData& p_data, const RenderPass& p_draw_pass, bool p_is_prepass = false) {
 
     HBN_PROFILE_EVENT();
 
@@ -803,7 +803,7 @@ void RenderGraphBuilderExt::AddBloomPass() {
     }
 }
 
-static void DebugVoxels(const RenderSystem& p_data, const Framebuffer* p_framebuffer) {
+static void DebugVoxels(const FrameData& p_data, const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();

@@ -7,7 +7,7 @@
 #include "editor/utility/imguizmo.h"
 #include "engine/core/io/input_event.h"
 #include "engine/math/ray.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer.h"
 #include "engine/runtime/common_dvars.h"

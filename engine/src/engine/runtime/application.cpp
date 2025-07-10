@@ -7,8 +7,8 @@
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
 #include "engine/core/string/string_utils.h"
-#include "engine/renderer/base_graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/renderer.h"
 #include "engine/runtime/asset_manager.h"
 #include "engine/runtime/asset_registry.h"
@@ -280,6 +280,7 @@ bool Application::MainLoop() {
     CameraComponent* camera = GetActiveCamera();
     DEV_ASSERT(camera);
     renderer::RequestScene(*camera, *m_activeScene);
+    renderer::EndFrame();
 
     // @TODO: refactor this
     if (m_imguiManager) {
@@ -297,8 +298,6 @@ bool Application::MainLoop() {
         m_scriptManager->Update(*m_activeScene, timestep);
         m_physicsManager->Update(*m_activeScene, timestep);
     }
-
-    renderer::EndFrame();
 
     // === Rendering Phase ===
     m_graphicsManager->Update(*m_activeScene);

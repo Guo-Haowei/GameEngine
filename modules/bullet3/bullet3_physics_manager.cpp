@@ -3,7 +3,7 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/runtime/application.h"
-#include "engine/runtime/graphics_manager.h"
+#include "engine/runtime/graphics_manager_interface.h"
 #include "engine/runtime/script_manager.h"
 #include "engine/scene/scene.h"
 #include "engine/scene/scriptable_entity.h"

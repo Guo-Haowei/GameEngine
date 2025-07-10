@@ -16,10 +16,10 @@ using IRenderCmdContext = IGraphicsManager;
 
 namespace my {
 
-struct RenderSystem;
+struct FrameData;
 
 struct RenderPassExcutionContext {
-    const RenderSystem& render_system;
+    const FrameData& render_system;
     Framebuffer* framebuffer;
     RenderPass& pass;
     IRenderCmdContext& cmd;
@@ -29,7 +29,7 @@ using ExecuteFunc = void (*)(RenderPassExcutionContext& ctx);
 
 class RenderPass {
 public:
-    void Execute(const RenderSystem& p_data, IRenderCmdContext& p_cmd);
+    void Execute(const FrameData& p_data, IRenderCmdContext& p_cmd);
 
     void AddCommand(const RenderCommand& cmd) { m_commands.emplace_back(cmd); }
     const auto& GetCommands() const { return m_commands; }

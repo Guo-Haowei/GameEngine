@@ -1,7 +1,7 @@
 #pragma once
 #include "d3d12_core.h"
 #include "engine/core/base/rid_owner.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 
 namespace my {
 
@@ -22,7 +22,7 @@ struct D3d12MeshBuffers : GpuMesh {
     D3D12_INDEX_BUFFER_VIEW ibv;
 };
 
-class D3d12GraphicsManager : public BaseGraphicsManager {
+class D3d12GraphicsManager : public GraphicsManager {
 public:
     D3d12GraphicsManager();
 

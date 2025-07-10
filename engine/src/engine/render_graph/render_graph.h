@@ -20,7 +20,7 @@ enum class RenderGraphName : uint8_t {
 
 namespace my {
 
-struct RenderSystem;
+struct FrameData;
 
 class RenderGraph : public NonCopyable {
 public:
@@ -35,7 +35,7 @@ public:
     void AddPass(const std::string& p_name, const std::shared_ptr<RenderPass>& p_pass);
     RenderPass* FindPass(const std::string& p_name);
 
-    void Execute(const RenderSystem& p_data, IGraphicsManager& p_graphics_manager);
+    void Execute(const FrameData& p_data, IGraphicsManager& p_graphics_manager);
 
     const auto& GetRenderPasses() const { return m_renderPasses; }
 

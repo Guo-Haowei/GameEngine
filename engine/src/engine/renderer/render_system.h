@@ -58,7 +58,7 @@ struct BufferCache {
     }
 };
 
-struct RenderSystem {
+struct FrameData {
     struct Camera {
         Matrix4x4f viewMatrix;
         Matrix4x4f projectionMatrixRendering;
@@ -75,7 +75,7 @@ struct RenderSystem {
         Degree fovy;
     };
 
-    RenderSystem(const RenderOptions& p_options);
+    FrameData(const RenderOptions& p_options);
 
     const RenderOptions options;
 
@@ -140,6 +140,18 @@ private:
 
 void PrepareRenderData(const CameraComponent& p_camera,
                        const Scene& p_config,
-                       RenderSystem& p_out_data);
+                       FrameData& p_out_data);
+
+class RenderSystem {
+public:
+    void RenderFrame(const CameraComponent& p_camera, Scene& p_scene);
+
+private:
+    void RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata);
+
+    void RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata);
+
+    void RunSpriteRenderSystem(Scene& p_scene, FrameData& p_framedata);
+};
 
 }  // namespace my

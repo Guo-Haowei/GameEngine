@@ -763,7 +763,12 @@ public:
 #pragma endregion LIGHT_COMPONENT
 
 #pragma region TILE_MAP_COMPONENT
-class TileMapComponent {
+struct TileMapVertex {
+    Vector2f position;
+    Vector2f uv;
+};
+
+class TileMapComponent : public ComponentFlagBase {
 public:
     void FromArray(const std::vector<std::vector<int>>& p_data);
 
@@ -787,22 +792,13 @@ public:
     int m_width{ 0 };
     int m_height{ 0 };
     std::vector<int> m_tiles;
-};
-
-struct TileMapVertex {
-    Vector2f position;
-    Vector2f uv;
-};
-
-struct TileMapRendererComponent {
-    // @TODO: tileset
-    // @TODO: GPU buffers?
 
     // Non-serialized
-    std::vector<TileMapVertex> vertices;
-    // GPU buffers
-    // Textures
+    // @TODO: texture?
+    std::vector<TileMapVertex> m_vertices;
+    mutable const ImageAsset* textureAsset;
 };
+
 #pragma endregion TILE_MAP_COMPONENT
 
 // #pragma region _COMPONENT

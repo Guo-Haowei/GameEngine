@@ -1,6 +1,6 @@
 #include "render_pass.h"
 
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 
 // @TODO: refactor
 #if 0
@@ -11,7 +11,7 @@
 
 namespace my {
 
-void RenderPass::Execute(const RenderSystem& p_data, IRenderCmdContext& p_cmd) {
+void RenderPass::Execute(const FrameData& p_data, IRenderCmdContext& p_cmd) {
     RT_DEBUG("-- Executing pass '{}'", m_name);
 
     auto framebuffer = m_framebuffer.get();

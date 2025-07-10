@@ -1,6 +1,6 @@
 #include "gpu_resource.h"
 
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 
 namespace my {
 

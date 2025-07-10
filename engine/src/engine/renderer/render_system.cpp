@@ -9,7 +9,7 @@
 
 // @TODO: remove
 // #include "engine/math/matrix_transform.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/input_manager.h"
@@ -19,7 +19,7 @@ namespace my {
 using my::AABB;
 using my::Frustum;
 
-RenderSystem::RenderSystem(const RenderOptions& p_options) : options(p_options) {
+FrameData::FrameData(const RenderOptions& p_options) : options(p_options) {
     m_renderGraph = IGraphicsManager::GetSingleton().GetActiveRenderGraph();
     DEV_ASSERT(m_renderGraph);
 }
@@ -67,12 +67,12 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
     cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
 };
 
-void RenderSystem::FillPass(const Scene& p_scene,
-                            PassContext&,
-                            FilterObjectFunc1 p_filter1,
-                            FilterObjectFunc2 p_filter2,
-                            RenderPass* p_draw_pass,
-                            bool p_use_material) {
+void FrameData::FillPass(const Scene& p_scene,
+                         PassContext&,
+                         FilterObjectFunc1 p_filter1,
+                         FilterObjectFunc2 p_filter2,
+                         RenderPass* p_draw_pass,
+                         bool p_use_material) {
 
     const bool is_opengl = this->options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
@@ -198,7 +198,7 @@ static KernelData GenerateSsaoKernel() {
     return kernel;
 }
 
-static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
+static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
     const auto& options = p_out_data.options;
     auto& cache = p_out_data.perFrameCache;
 
@@ -283,7 +283,7 @@ static void FillConstantBuffer(const Scene& p_scene, RenderSystem& p_out_data) {
     }
 }
 
-void RenderSystem::FillLightBuffer(const Scene& p_scene) {
+void FrameData::FillLightBuffer(const Scene& p_scene) {
     const uint32_t light_count = glm::min<uint32_t>((uint32_t)p_scene.GetCount<LightComponent>(), MAX_LIGHT_COUNT);
 
     auto& cache = this->perFrameCache;
@@ -415,7 +415,7 @@ void RenderSystem::FillLightBuffer(const Scene& p_scene) {
     }
 }
 
-void RenderSystem::FillVoxelPass(const Scene& p_scene) {
+void FrameData::FillVoxelPass(const Scene& p_scene) {
     bool enabled = false;
     bool show_debug = false;
     voxel_gi_bound.MakeInvalid();
@@ -462,7 +462,7 @@ void RenderSystem::FillVoxelPass(const Scene& p_scene) {
     cache.c_voxelSize = voxel_size;
 }
 
-void RenderSystem::FillMainPass(const Scene& p_scene) {
+void FrameData::FillMainPass(const Scene& p_scene) {
     const auto& camera = this->mainCamera;
     Frustum camera_frustum(camera.projectionMatrixFrustum * camera.viewMatrix);
 
@@ -579,7 +579,7 @@ void RenderSystem::FillMainPass(const Scene& p_scene) {
 }
 
 static void FillEnvConstants(const Scene&,
-                             RenderSystem& p_out_data) {
+                             FrameData& p_out_data) {
     // @TODO: return if necessary
 
     constexpr int count = IBL_MIP_CHAIN_MAX * 6;
@@ -681,7 +681,7 @@ static void FillParticleEmitterBuffer(const Scene& p_scene,
 
 void PrepareRenderData(const CameraComponent& p_camera,
                        const Scene& p_scene,
-                       RenderSystem& p_out_data) {
+                       FrameData& p_out_data) {
     // fill camera
     {
         auto reverse_z = [](Matrix4x4f& p_perspective) {
@@ -737,6 +737,26 @@ void PrepareRenderData(const CameraComponent& p_camera,
     FillParticleEmitterBuffer(p_scene, p_out_data);
 #endif
     FillEnvConstants(p_scene, p_out_data);
+}
+
+///////////////////////////////////////////////////////////////////////////
+void RenderSystem::RenderFrame(const CameraComponent& p_camera, Scene& p_scene) {
+    renderer::RequestScene(p_camera, p_scene);
+}
+
+void RenderSystem::RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata) {
+    unused(p_scene);
+    unused(p_framedata);
+}
+
+void RenderSystem::RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata) {
+    unused(p_scene);
+    unused(p_framedata);
+}
+
+void RenderSystem::RunSpriteRenderSystem(Scene& p_scene, FrameData& p_framedata) {
+    unused(p_scene);
+    unused(p_framedata);
 }
 
 }  // namespace my

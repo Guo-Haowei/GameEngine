@@ -11,7 +11,7 @@ namespace my { class IGraphicsManager; }
 namespace my {
 
 class RenderGraph;
-struct RenderSystem;
+struct FrameData;
 
 struct RenderGraphBuilderConfig {
     bool enablePointShadow = true;

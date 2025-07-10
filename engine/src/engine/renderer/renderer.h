@@ -9,7 +9,7 @@ class CameraComponent;
 class Scene;
 class IGraphicsManager;
 struct GpuTexture;
-struct RenderSystem;
+struct FrameData;
 
 enum class PathTracerMode {
     NONE,
@@ -33,7 +33,7 @@ void AddDebugCube(const AABB& p_aabb,
 
 void RequestScene(const CameraComponent& p_camera, Scene& p_scene);
 
-const RenderSystem* GetRenderData();
+const FrameData* GetRenderData();
 
 // path tracer
 void SetPathTracerMode(PathTracerMode p_mode);

@@ -16,7 +16,7 @@
 #include "editor/widget.h"
 #include "engine/core/io/input_event.h"
 #include "engine/core/string/string_utils.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"

@@ -3,7 +3,7 @@
 #include <imgui/imgui_internal.h>
 
 #include "engine/runtime/common_dvars.h"
-#include "engine/renderer/base_graphics_manager.h"
+#include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/render_graph/render_graph_defines.h"
 #include "engine/scene/scene.h"
