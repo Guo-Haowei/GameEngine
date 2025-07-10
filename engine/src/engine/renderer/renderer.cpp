@@ -74,18 +74,12 @@ void EndFrame() {
     s_glob.state = RenderState::SUBMITTING;
 }
 
-void RequestScene(const CameraComponent& p_camera, Scene& p_scene) {
-    HBN_PROFILE_EVENT();
-
-    ASSERT_CAN_RECORD();
-
-    PrepareRenderData(p_camera, p_scene, *s_glob.renderData);
-
+void RequestScene(const CameraComponent&, Scene& p_scene) {
     // @TODO: refactor
     s_glob.pt.Update(p_scene);
 }
 
-const FrameData* GetRenderData() {
+FrameData* GetRenderData() {
     return s_glob.renderData;
 }
 

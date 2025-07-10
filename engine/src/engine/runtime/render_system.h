@@ -17,11 +17,10 @@ protected:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    void RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata);
-
     void RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata);
-
     void RunSpriteRenderSystem(Scene& p_scene, FrameData& p_framedata);
+
+    void FillCameraData(const CameraComponent& p_camera, FrameData& p_framedata);
 };
 
 }  // namespace my

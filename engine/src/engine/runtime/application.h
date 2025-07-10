@@ -96,6 +96,8 @@ protected:
 
     bool MainLoop();
 
+    float UpdateTime();
+
     virtual void RegisterDvars();
     virtual void InitLayers() {}
     // @TODO: add CreateXXXManager for all managers

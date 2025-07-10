@@ -242,6 +242,12 @@ void Application::Finalize() {
 #endif
 }
 
+float Application::UpdateTime() {
+    float timestep = static_cast<float>(m_timer.GetDuration().ToSecond());
+    m_timer.Start();
+    return min(timestep, 0.5f);
+}
+
 bool Application::MainLoop() {
     HBN_PROFILE_FRAME("MainThread");
 
@@ -256,11 +262,7 @@ bool Application::MainLoop() {
     m_inputManager->BeginFrame();
 
     // === Update Phase ===
-
-    // @TODO: better elapsed time
-    float timestep = static_cast<float>(m_timer.GetDuration().ToSecond());
-    timestep = min(timestep, 0.5f);
-    m_timer.Start();
+    const float timestep = UpdateTime();
 
     m_inputManager->GetEventQueue().FlushEvents();
 

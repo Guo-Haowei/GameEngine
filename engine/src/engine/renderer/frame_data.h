@@ -128,7 +128,6 @@ private:
     using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
     void FillPass(const Scene& p_scene,
-                  PassContext& p_pass,
                   FilterObjectFunc1 p_filter1,
                   FilterObjectFunc2 p_filter2,
                   RenderPass* p_render_pass,
@@ -137,9 +136,5 @@ private:
     RenderGraph* m_renderGraph = nullptr;
     AABB voxel_gi_bound;
 };
-
-void PrepareRenderData(const CameraComponent& p_camera,
-                       const Scene& p_config,
-                       FrameData& p_out_data);
 
 }  // namespace my
