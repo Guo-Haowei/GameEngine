@@ -14,7 +14,7 @@ Vector3f NdcToViewPos(Vector2f uv, float depth) {
 #else
     Vector4f screen_pos = Vector4f(ndc.x, ndc.y, depth, 1.0f);
 #endif
-    Vector4f viewPosH = MUL(c_invProjection, screen_pos);
+    Vector4f viewPosH = MUL(c_invCamProj, screen_pos);
     Vector3f viewPos = viewPosH.xyz / viewPosH.w;
     return viewPos;
 }

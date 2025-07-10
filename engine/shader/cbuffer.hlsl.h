@@ -164,14 +164,11 @@ CBUFFER(PerFrameConstantBuffer, 5) {
 
     Vector4f c_ssaoKernel[SSAO_KERNEL_SIZE];
     //-----------------------------------------
-    Matrix4x4f c_invProjection;
-    Matrix4x4f c_invView;
+    Matrix4x4f c_camProj;
+    Matrix4x4f c_camView;
+    Matrix4x4f c_invCamProj;
+    Matrix4x4f c_invCamView;
 
-    //-----------------------------------------
-    Matrix4x4f _per_frame_padding_0;  // 16
-    //-----------------------------------------
-    Matrix4x4f _per_frame_padding_1;
-    //-----------------------------------------
     Vector4f _per_frame_padding_2;
     Vector4f _per_frame_padding_3;
     Vector4f _per_frame_padding_4;

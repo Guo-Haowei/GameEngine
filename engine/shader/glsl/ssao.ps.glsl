@@ -50,9 +50,9 @@ void main() {
 
         // project sample position (to sample texture) (to get position on screen/texture)
         vec4 offset = vec4(samplePos, 1.0);
-        offset = c_projectionMatrix * offset;  // from view to clip-space
-        offset /= offset.w;                    // perspective divide
-        offset.xy = offset.xy * 0.5 + 0.5;     // transform to range 0.0 - 1.0
+        offset = c_camProj * offset;        // from view to clip-space
+        offset /= offset.w;                 // perspective divide
+        offset.xy = offset.xy * 0.5 + 0.5;  // transform to range 0.0 - 1.0
 
         const float depth2 = texture(t_GbufferDepth, offset.xy).r;
         const Vector3f sampleOcclusionPos = NdcToViewPos(offset.xy, depth2);

@@ -261,13 +261,6 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetViewport(Viewport(width, height));
     cmd.Clear(fb, CLEAR_COLOR_BIT);
 
-    {
-        // @TODO: get rid of this
-        // should not use this, instead, save projection view matrices in framecb
-        const PassContext& pass = p_ctx.frameData.mainPass;
-        cmd.BindConstantBufferSlot<PerPassConstantBuffer>(cmd.GetCurrentFrame().passCb.get(), pass.pass_idx);
-    }
-
     cmd.SetPipelineState(PSO_SSAO);
     cmd.DrawQuad();
 }
@@ -806,7 +799,7 @@ void RenderGraphBuilderExt::AddBloomPass() {
     }
 }
 
-static void DebugVoxels(const FrameData& p_data, const Framebuffer* p_framebuffer) {
+static void DebugVoxels(const Framebuffer* p_framebuffer) {
     HBN_PROFILE_EVENT();
 
     auto& gm = IGraphicsManager::GetSingleton();
@@ -819,9 +812,6 @@ static void DebugVoxels(const FrameData& p_data, const Framebuffer* p_framebuffe
     gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, IGraphicsManager::DEFAULT_CLEAR_COLOR, 0.0f);
 
     IGraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
-
-    const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     gm.SetMesh(gm.m_boxBuffers.get());
     const uint32_t size = DVAR_GET_INT(gfx_voxel_size);
@@ -847,7 +837,7 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
     // @HACK:
     if (DVAR_GET_BOOL(gfx_debug_vxgi) && cmd.GetBackend() == Backend::OPENGL) {
         // @TODO: add to forward pass
-        DebugVoxels(p_ctx.frameData, fb);
+        DebugVoxels(fb);
     } else {
         cmd.SetViewport(Viewport(width, height));
         cmd.Clear(fb, CLEAR_COLOR_BIT);

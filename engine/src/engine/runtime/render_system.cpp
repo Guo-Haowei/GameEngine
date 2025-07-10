@@ -77,8 +77,10 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
     // camera
     {
         const auto& camera = p_out_data.mainCamera;
-        cache.c_invView = glm::inverse(camera.viewMatrix);
-        cache.c_invProjection = glm::inverse(camera.projectionMatrixRendering);
+        cache.c_camView = camera.viewMatrix;
+        cache.c_camProj = camera.projectionMatrixRendering;
+        cache.c_invCamView = glm::inverse(camera.viewMatrix);
+        cache.c_invCamProj = glm::inverse(camera.projectionMatrixRendering);
         cache.c_cameraFovDegree = camera.fovy.GetDegree();
         cache.c_cameraForward = camera.front;
         cache.c_cameraRight = camera.right;
