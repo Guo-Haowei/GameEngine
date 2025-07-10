@@ -10,16 +10,16 @@ namespace my {
 
 class AssetManager;
 class AssetRegistry;
+class CameraComponent;
 class DisplayManager;
 class IGraphicsManager;
 class ImguiManager;
 class InputManager;
 class IPhysicsManager;
+class RenderSystem;
+class Scene;
 class SceneManager;
 class ScriptManager;
-class CameraComponent;
-
-class Scene;
 
 struct ApplicationSpec {
     std::string_view resourceFolder;
@@ -72,6 +72,7 @@ public:
     DisplayManager* GetDisplayServer() { return m_displayServer; }
     IGraphicsManager* GetGraphicsManager() { return m_graphicsManager; }
     ImguiManager* GetImguiManager() { return m_imguiManager; }
+    RenderSystem* GetRenderSystem() { return m_renderSystem; }
 
     const ApplicationSpec& GetSpecification() const { return m_specification; }
     const std::string& GetUserFolder() const { return m_userFolder; }
@@ -123,6 +124,7 @@ protected:
     IGraphicsManager* m_graphicsManager{ nullptr };
     ImguiManager* m_imguiManager{ nullptr };
     ScriptManager* m_scriptManager{ nullptr };
+    RenderSystem* m_renderSystem{ nullptr };
     InputManager* m_inputManager{ nullptr };
 
     std::vector<Module*> m_modules;

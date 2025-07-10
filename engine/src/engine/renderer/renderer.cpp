@@ -2,9 +2,9 @@
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/geometry.h"
+#include "engine/renderer/frame_data.h"
 #include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/path_tracer/path_tracer.h"
-#include "engine/renderer/render_system.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/scene_manager.h"
 

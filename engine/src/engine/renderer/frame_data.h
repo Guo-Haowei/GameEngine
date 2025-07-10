@@ -142,16 +142,4 @@ void PrepareRenderData(const CameraComponent& p_camera,
                        const Scene& p_config,
                        FrameData& p_out_data);
 
-class RenderSystem {
-public:
-    void RenderFrame(const CameraComponent& p_camera, Scene& p_scene);
-
-private:
-    void RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata);
-
-    void RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata);
-
-    void RunSpriteRenderSystem(Scene& p_scene, FrameData& p_framedata);
-};
-
 }  // namespace my

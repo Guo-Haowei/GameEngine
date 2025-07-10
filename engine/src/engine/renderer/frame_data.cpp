@@ -1,4 +1,4 @@
-#include "render_system.h"
+#include "frame_data.h"
 
 #include "engine/core/base/random.h"
 #include "engine/math/frustum.h"
@@ -737,26 +737,6 @@ void PrepareRenderData(const CameraComponent& p_camera,
     FillParticleEmitterBuffer(p_scene, p_out_data);
 #endif
     FillEnvConstants(p_scene, p_out_data);
-}
-
-///////////////////////////////////////////////////////////////////////////
-void RenderSystem::RenderFrame(const CameraComponent& p_camera, Scene& p_scene) {
-    renderer::RequestScene(p_camera, p_scene);
-}
-
-void RenderSystem::RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata) {
-    unused(p_scene);
-    unused(p_framedata);
-}
-
-void RenderSystem::RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata) {
-    unused(p_scene);
-    unused(p_framedata);
-}
-
-void RenderSystem::RunSpriteRenderSystem(Scene& p_scene, FrameData& p_framedata) {
-    unused(p_scene);
-    unused(p_framedata);
 }
 
 }  // namespace my

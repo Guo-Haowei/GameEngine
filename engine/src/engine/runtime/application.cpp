@@ -18,6 +18,7 @@
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
 #include "engine/runtime/module_registry.h"
+#include "engine/runtime/render_system.h"
 #include "engine/runtime/scene_manager.h"
 #include "engine/runtime/script_manager.h"
 #include "engine/scene/scene.h"
@@ -113,6 +114,7 @@ auto Application::SetupModules() -> Result<void> {
     m_graphicsManager = CreateGraphicsManager();
     m_displayServer = DisplayManager::Create();
     m_inputManager = new InputManager();
+    m_renderSystem = new RenderSystem();
 
     RegisterModule(m_assetManager);
     RegisterModule(m_assetRegistry);
@@ -121,6 +123,7 @@ auto Application::SetupModules() -> Result<void> {
     RegisterModule(m_physicsManager);
     RegisterModule(m_displayServer);
     RegisterModule(m_graphicsManager);
+    RegisterModule(m_renderSystem);
     RegisterModule(m_inputManager);
 
     if (m_specification.enableImgui) {
@@ -277,10 +280,7 @@ bool Application::MainLoop() {
 
     m_activeScene->Update(timestep);
 
-    CameraComponent* camera = GetActiveCamera();
-    DEV_ASSERT(camera);
-    renderer::RequestScene(*camera, *m_activeScene);
-    renderer::EndFrame();
+    m_renderSystem->RenderFrame(*m_activeScene);
 
     // @TODO: refactor this
     if (m_imguiManager) {
