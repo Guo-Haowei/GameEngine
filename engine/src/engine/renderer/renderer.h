@@ -17,10 +17,6 @@ enum class PathTracerMode {
     TILED,
 };
 
-// @TODO: [SCRUM-178] shadow atlas
-using PointShadowHandle = int;
-constexpr PointShadowHandle INVALID_POINT_SHADOW_HANDLE = -1;
-
 }  // namespace my
 
 namespace my::renderer {
@@ -35,18 +31,9 @@ void AddDebugCube(const AABB& p_aabb,
                   const Color& p_color,
                   const Matrix4x4f* p_transform = nullptr);
 
-void AddImage2D(GpuTexture* p_texture,
-                const Vector2f& p_size,
-                const Vector2f& p_position = Vector2f::Zero,
-                int p_mode = 0);
-
 void RequestScene(const CameraComponent& p_camera, Scene& p_scene);
 
 const RenderSystem* GetRenderData();
-
-PointShadowHandle AllocatePointLightShadowMap();
-
-void FreePointLightShadowMap(PointShadowHandle& p_handle);
 
 // path tracer
 void SetPathTracerMode(PathTracerMode p_mode);

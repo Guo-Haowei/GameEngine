@@ -31,40 +31,8 @@ struct RenderOptions {
     float ssaoKernelRadius{ 0.0f };
 };
 
-struct DrawContext {
-    uint32_t index_count;
-    uint32_t index_offset;
-    int material_idx;
-};
-
-struct BatchContext {
-    int bone_idx;
-    int batch_idx;
-    const GpuMesh* mesh_data;
-    std::vector<DrawContext> subsets;
-    StencilFlags flags = STENCIL_FLAG_NONE;
-};
-
-// @TODO: unify BatchContext and InstanceContext
-struct InstanceContext {
-    const GpuMesh* gpuMesh;
-    uint32_t indexCount;
-    uint32_t indexOffset;
-    uint32_t instanceCount;
-    int batchIdx;
-    int materialIdx;
-    int instanceBufferIndex;
-};
-
 struct PassContext {
     int pass_idx{ 0 };
-};
-
-struct ImageDrawContext {
-    int mode;
-    uint64_t handle;
-    Vector2f size;
-    Vector2f position;
 };
 
 template<typename BUFFER>
@@ -130,7 +98,7 @@ struct RenderSystem {
     PassContext voxelPass;
     PassContext mainPass;
 
-    std::vector<InstanceContext> instances;
+    // std::vector<InstanceContext> instances;
 
     std::vector<ParticleEmitterComponent> emitters;
 
@@ -149,7 +117,6 @@ struct RenderSystem {
         uint32_t drawCount;
     } drawDebugContext;
 
-    std::vector<ImageDrawContext> drawImageContext;
     uint32_t drawImageOffset;
 
     ///////////////////////

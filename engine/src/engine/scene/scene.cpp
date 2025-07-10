@@ -542,10 +542,7 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
 
     LightComponent* light = GetComponent<LightComponent>(p_entity);
     if (light) {
-        auto shadow_handle = light->GetShadowMapIndex();
-        if (shadow_handle != INVALID_POINT_SHADOW_HANDLE) {
-            renderer::FreePointLightShadowMap(shadow_handle);
-        }
+        // @TODO: shadow atlas
         m_LightComponents.Remove(p_entity);
     }
     m_HierarchyComponents.Remove(p_entity);

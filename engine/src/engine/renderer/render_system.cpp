@@ -597,6 +597,7 @@ static void FillEnvConstants(const Scene&,
     }
 }
 
+#if 0
 static void FillMeshEmitterBuffer(const Scene& p_scene,
                                   RenderSystem& p_out_data) {
     for (auto [id, emitter] : p_scene.m_MeshEmitterComponents) {
@@ -643,6 +644,7 @@ static void FillMeshEmitterBuffer(const Scene& p_scene,
         }
     }
 }
+#endif
 
 static void FillParticleEmitterBuffer(const Scene& p_scene,
                                       RenderSystem& p_out_data) {
@@ -730,7 +732,9 @@ void PrepareRenderData(const CameraComponent& p_camera,
     p_out_data.FillVoxelPass(p_scene);
     p_out_data.FillMainPass(p_scene);
 
+#if 0
     FillMeshEmitterBuffer(p_scene, p_out_data);
+#endif
     FillEnvConstants(p_scene, p_out_data);
     FillParticleEmitterBuffer(p_scene, p_out_data);
 }

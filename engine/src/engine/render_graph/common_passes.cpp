@@ -25,6 +25,7 @@ namespace my {
 namespace my {
 
 // @TODO: generalize this
+#if 0
 static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<InstanceContext>& p_instances, bool p_is_prepass) {
     unused(p_is_prepass);
 
@@ -53,6 +54,7 @@ static void DrawInstacedGeometry(const RenderSystem& p_data, const std::vector<I
                                  instance.indexOffset);
     }
 }
+#endif
 
 static void ExecuteDrawCommands(const RenderSystem& p_data, const RenderPass& p_draw_pass, bool p_is_prepass = false) {
 
@@ -188,7 +190,7 @@ static void GbufferPassFunc(RenderPassExcutionContext& p_ctx) {
 
     cmd.SetPipelineState(PSO_GBUFFER);
     ExecuteDrawCommands(p_ctx.render_system, p_ctx.pass, false);
-    DrawInstacedGeometry(p_ctx.render_system, p_ctx.render_system.instances, false);
+    // DrawInstacedGeometry(p_ctx.render_system, p_ctx.render_system.instances, false);
     cmd.SetPipelineState(PSO_GBUFFER_DOUBLE_SIDED);
 }
 
