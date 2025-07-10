@@ -18,6 +18,7 @@ public:
 
     void BeginFrame() final;
 
+    void* GetNativeWindow() final;
     GLFWwindow* GetGlfwWindow() const { return m_window; }
 
 private:

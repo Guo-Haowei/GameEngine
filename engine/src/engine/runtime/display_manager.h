@@ -32,6 +32,7 @@ public:
 
     virtual std::tuple<int, int> GetWindowSize() = 0;
     virtual std::tuple<int, int> GetWindowPos() = 0;
+    virtual void* GetNativeWindow() = 0;
 
     virtual void BeginFrame() = 0;
 

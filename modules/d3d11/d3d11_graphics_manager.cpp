@@ -6,13 +6,13 @@
 #include "d3d11_helpers.h"
 #include "d3d11_pipeline_state_manager.h"
 #include "d3d11_resources.h"
-#include "engine/drivers/windows/win32_display_manager.h"
 #include "engine/render_graph/render_graph.h"
 #include "engine/render_graph/render_graph_defines.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/graphics_private.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/application.h"
+#include "engine/runtime/display_manager.h"
 #include "engine/runtime/imgui_manager.h"
 #include "engine/scene/scene.h"
 
@@ -171,8 +171,8 @@ auto D3d11GraphicsManager::CreateDevice() -> Result<void> {
 }
 
 auto D3d11GraphicsManager::CreateSwapChain() -> Result<void> {
-    auto display_manager = dynamic_cast<Win32DisplayManager*>(DisplayManager::GetSingletonPtr());
-    DEV_ASSERT(display_manager);
+    void* hwnd = m_app->GetDisplayServer()->GetNativeWindow();
+    DEV_ASSERT(hwnd);
 
     DXGI_MODE_DESC buffer_desc{};
     buffer_desc.Width = 0;
@@ -187,7 +187,7 @@ auto D3d11GraphicsManager::CreateSwapChain() -> Result<void> {
     swap_chain_desc.BufferCount = 2;
     swap_chain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
     swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swap_chain_desc.OutputWindow = display_manager->GetHwnd();
+    swap_chain_desc.OutputWindow = reinterpret_cast<HWND>(hwnd);
     swap_chain_desc.Windowed = true;
     swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 

@@ -37,6 +37,7 @@ public:
     }
 
     void BeginFrame() override {}
+    void* GetNativeWindow() override { return nullptr; }
 
 protected:
     auto InitializeWindow(const WindowSpecfication&) -> Result<void> override {

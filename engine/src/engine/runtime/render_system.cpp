@@ -201,6 +201,17 @@ void RenderSystem::BeginFrame() {
 }
 
 void RenderSystem::RenderFrame(Scene& p_scene) {
+    // HACK
+    auto backend = m_app->GetGraphicsManager()->GetBackend();
+    switch (backend) {
+        case my::Backend::OPENGL:
+        case my::Backend::D3D11:
+        case my::Backend::D3D12:
+            break;
+        default:
+            return;
+    }
+
     HBN_PROFILE_EVENT();
     CameraComponent& camera = *m_app->GetActiveCamera();
 

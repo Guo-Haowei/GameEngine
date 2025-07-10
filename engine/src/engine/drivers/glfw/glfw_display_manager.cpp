@@ -10,6 +10,12 @@
 #include "engine/runtime/imgui_manager.h"
 #include "engine/runtime/input_manager.h"
 
+#if USING(PLATFORM_WINDOWS)
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
+#endif
+
+
 namespace my {
 
 auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> Result<void> {
@@ -32,13 +38,9 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
                 glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
             }
             break;
-        case Backend::VULKAN:
-        case Backend::METAL:
-        case Backend::EMPTY:
+        default:
             glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
             break;
-        default:
-            return HBN_ERROR(ErrorCode::ERR_INVALID_PARAMETER);
     }
 
     m_window = glfwCreateWindow(p_spec.width,
@@ -61,6 +63,8 @@ auto GlfwDisplayManager::InitializeWindow(const WindowSpecfication& p_spec) -> R
             }
             break;
         case Backend::METAL:
+        case Backend::D3D11:
+        case Backend::D3D12:
             break;
         default:
             return HBN_ERROR(ErrorCode::ERR_CANT_CREATE, "backend '{}' not supported by glfw", ToString(m_backend));
@@ -115,6 +119,14 @@ bool GlfwDisplayManager::ShouldClose() {
 void GlfwDisplayManager::BeginFrame() {
     glfwPollEvents();
     glfwGetWindowPos(m_window, &m_windowPos.x, &m_windowPos.y);
+}
+
+void* GlfwDisplayManager::GetNativeWindow() {
+#if USING(PLATFORM_WINDOWS)
+    return glfwGetWin32Window(m_window);
+#else
+    return nullptr;
+#endif
 }
 
 std::tuple<int, int> GlfwDisplayManager::GetWindowSize() { return std::tuple<int, int>(m_frameSize.x, m_frameSize.y); }
