@@ -8,6 +8,7 @@
 #include "engine/renderer/frame_data.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/graphics_manager.h"
+#include "engine/renderer/path_tracer_render_system.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/display_manager.h"
@@ -1011,7 +1012,7 @@ void RenderGraphBuilderExt::AddGenerateSkylightPass() {
 
 static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
     // @TODO: refactor this part
-    if (!renderer::IsPathTracerActive()) {
+    if (!IsPathTracerActive()) {
         return;
     }
 
@@ -1028,11 +1029,9 @@ static void PathTracerPassFunc(RenderPassExcutionContext& p_ctx) {
     const uint32_t work_group_y = CeilingDivision(height, 16);
 
     // @TODO: transition
-    renderer::BindPathTracerData(cmd);
-
+    BindPathTracerData(cmd);
     cmd.Dispatch(work_group_x, work_group_y, 1);
-
-    renderer::UnbindPathTracerData(cmd);
+    UnbindPathTracerData(cmd);
 }
 
 void RenderGraphBuilderExt::AddPathTracerPass() {

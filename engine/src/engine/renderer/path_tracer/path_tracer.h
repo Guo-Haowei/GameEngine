@@ -3,7 +3,8 @@
 #include "engine/math/box.h"
 #include "engine/renderer/gpu_resource.h"
 #include "engine/renderer/path_tracer/bvh_accel.h"
-#include "engine/renderer/renderer.h"
+// @TODO: refactor
+#include "engine/renderer/path_tracer_render_system.h"
 
 namespace my {
 

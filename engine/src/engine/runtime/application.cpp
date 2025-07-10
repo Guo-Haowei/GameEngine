@@ -9,7 +9,6 @@
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/graphics_manager.h"
-#include "engine/renderer/renderer.h"
 #include "engine/runtime/asset_manager.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/common_dvars.h"
@@ -23,6 +22,9 @@
 #include "engine/runtime/script_manager.h"
 #include "engine/scene/scene.h"
 
+#define DEFINE_DVAR
+#include "engine/renderer/graphics_dvars.h"
+#undef DEFINE_DVAR
 #define DEFINE_DVAR
 #include "engine/runtime/common_dvars.h"
 #undef DEFINE_DVAR
@@ -41,6 +43,12 @@ namespace fs = std::filesystem;
 static void RegisterCommonDvars() {
 #define REGISTER_DVAR
 #include "engine/runtime/common_dvars.h"
+#undef REGISTER_DVAR
+}
+
+static void RegisterRenderDvars() {
+#define REGISTER_DVAR
+#include "engine/renderer/graphics_dvars.h"
 #undef REGISTER_DVAR
 }
 
@@ -145,7 +153,7 @@ extern void RegisterClasses();
 
 void Application::RegisterDvars() {
     RegisterCommonDvars();
-    renderer::RegisterDvars();
+    RegisterRenderDvars();
 }
 
 auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {

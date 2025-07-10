@@ -10,7 +10,6 @@
 #include "engine/render_graph/render_graph_defines.h"
 #include "engine/renderer/frame_data.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/renderer.h"
 #include "engine/renderer/renderer_misc.h"
 #include "engine/renderer/sampler.h"
 #include "engine/runtime/application.h"

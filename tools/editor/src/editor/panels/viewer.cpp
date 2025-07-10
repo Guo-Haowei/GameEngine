@@ -9,7 +9,6 @@
 #include "engine/math/ray.h"
 #include "engine/renderer/graphics_manager.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/renderer.h"
 #include "engine/runtime/common_dvars.h"
 #include "engine/runtime/display_manager.h"
 #include "engine/runtime/input_manager.h"

@@ -6,7 +6,7 @@
 #include "engine/render_graph/render_graph_defines.h"
 #include "engine/renderer/frame_data.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/renderer.h"
+#include "engine/renderer/path_tracer_render_system.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/graphics_manager_interface.h"
 #include "engine/scene/scene.h"
@@ -102,6 +102,7 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
 
     // SSAO
     {
+        // @TODO: do this properly
         static auto kernel_data = GenerateSsaoKernel();
         cache.c_ssaoEnabled = options.ssaoEnabled;
         cache.c_ssaoKernalRadius = options.ssaoKernelRadius;
@@ -218,7 +219,7 @@ void RenderSystem::RenderFrame(Scene& p_scene) {
 
     FillEnvConstants(p_scene, framedata);
 
-    renderer::RequestScene(camera, p_scene);
+    RequestPathTracerUpdate(camera, p_scene);
 
     auto& context = m_frameData->drawDebugContext;
     context.drawCount = (uint32_t)context.positions.size();
