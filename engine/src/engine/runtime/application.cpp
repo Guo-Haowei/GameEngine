@@ -271,8 +271,6 @@ bool Application::MainLoop() {
     // === Update Phase ===
     const float timestep = UpdateTime();
 
-    m_inputManager->GetEventQueue().FlushEvents();
-
     // 1. scene manager checks for update, and if it's necessary to swap scene
     // 2. renderer builds render data
     // 3. editor modifies scene

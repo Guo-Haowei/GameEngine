@@ -13,10 +13,9 @@
 #include "editor/panels/tilemap_panel.h"
 #include "editor/panels/viewer.h"
 #include "editor/widget.h"
-#include "engine/core/io/input_event.h"
+#include "engine/core/input/input_event.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_manager.h"
-#include "engine/runtime/asset_registry.h"
 #include "engine/runtime/input_manager.h"
 #include "engine/runtime/layer.h"
 #include "engine/runtime/physics_manager.h"
@@ -50,18 +49,19 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
         camera.Update();
     }
 
+    m_menuBar = std::make_shared<MenuBar>(*this);
+    m_viewer = std::make_shared<Viewer>(*this);
+
     AddPanel(std::make_shared<LogPanel>(*this));
     AddPanel(std::make_shared<RendererPanel>(*this));
     AddPanel(std::make_shared<HierarchyPanel>(*this));
     AddPanel(std::make_shared<PropertyPanel>(*this));
-    AddPanel(std::make_shared<Viewer>(*this));
+    AddPanel(m_viewer);
     AddPanel(std::make_shared<TileMapPanel>(*this));
     AddPanel(std::make_shared<RenderGraphViewer>(*this));
 #if !USING(PLATFORM_WASM)
     AddPanel(std::make_shared<ContentBrowser>(*this));
 #endif
-
-    m_menuBar = std::make_shared<MenuBar>(*this);
 
     m_shortcuts[SHORT_CUT_SAVE_AS] = {
         "Save As..",
@@ -149,9 +149,8 @@ EditorLayer::EditorLayer() : Layer("EditorLayer") {
 void EditorLayer::OnAttach() {
     ImNodes::CreateContext();
 
-    [[maybe_unused]] auto asset_registry = m_app->GetAssetRegistry();
-
-    m_app->GetInputManager()->GetEventQueue().RegisterListener(this);
+    m_app->GetInputManager()->PushInputHandler(this);
+    m_app->GetInputManager()->PushInputHandler(m_viewer.get());
 
     for (auto& panel : m_panels) {
         panel->OnAttach();
@@ -159,7 +158,10 @@ void EditorLayer::OnAttach() {
 }
 
 void EditorLayer::OnDetach() {
-    m_app->GetInputManager()->GetEventQueue().UnregisterListener(this);
+    auto handler = m_app->GetInputManager()->PopInputHandler();
+    DEV_ASSERT(handler == m_viewer.get());
+    handler = m_app->GetInputManager()->PopInputHandler();
+    DEV_ASSERT(handler == this);
 
     ImNodes::DestroyContext();
 }
@@ -268,13 +270,12 @@ void EditorLayer::OnImGuiRender() {
         it->Update(*scene);
     }
     FlushCommand(*scene);
-
-    m_unhandledEvents.clear();
 }
 
-void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
+bool EditorLayer::HandleInput(std::shared_ptr<InputEvent> p_input_event) {
     bool handled = false;
-    if (InputEventKey* e = dynamic_cast<InputEventKey*>(p_event.get()); e) {
+    InputEvent* event = p_input_event.get();
+    if (auto e = dynamic_cast<InputEventKey*>(event); e) {
         for (auto shortcut : m_shortcuts) {
             // @TODO: refactor this
             auto is_key_handled = [&]() {
@@ -303,12 +304,7 @@ void EditorLayer::EventReceived(std::shared_ptr<IEvent> p_event) {
         }
     }
 
-    if (!handled) {
-        if (!handled) {
-            // save unhandled events
-            m_unhandledEvents.emplace_back(p_event);
-        }
-    }
+    return handled;
 }
 
 void EditorLayer::BufferCommand(std::shared_ptr<EditorCommandBase>&& p_command) {

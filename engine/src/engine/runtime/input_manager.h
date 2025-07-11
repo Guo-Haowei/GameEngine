@@ -1,8 +1,7 @@
 #pragma once
 #include "engine/core/base/singleton.h"
-#include "engine/core/io/input_event.h"
+#include "engine/core/input/input_router.h"
 #include "engine/math/vector.h"
-#include "engine/runtime/event_queue.h"
 #include "engine/runtime/module.h"
 
 namespace my {
@@ -21,25 +20,22 @@ public:
     void BeginFrame();
     void EndFrame();
 
+    void PushInputHandler(IInputHandler* p_input_handler);
+    IInputHandler* PopInputHandler();
+
+    // try not to use the following methods, the input should be routered
+
+    Vector2f MouseMove();
     bool IsKeyDown(KeyCode p_key);
     bool IsKeyPressed(KeyCode p_key);
     bool IsKeyReleased(KeyCode p_key);
-
-    Vector2f MouseMove();
-
-    void SetKey(KeyCode p_key, bool p_pressed);
-
-    void SetCursor(float p_x, float p_y);
-
+    Vector2f GetWheel() const;
     const Vector2f& GetCursor() const { return m_cursor; }
 
-    EventQueue& GetEventQueue() { return m_inputEventQueue; }
-
-    void SetWheel(double p_x, double p_y);
-    Vector2f GetWheel() const;
-
 protected:
-    EventQueue m_inputEventQueue;
+    void SetKey(KeyCode p_key, bool p_pressed);
+    void SetCursor(float p_x, float p_y);
+    void SetWheel(double p_x, double p_y);
 
     KeyArray m_keys;
     KeyArray m_prevKeys;
@@ -51,6 +47,11 @@ protected:
     double m_wheelY{ 0 };
 
     bool m_mouseMoved{ false };
+
+    InputRouter m_router;
+
+    friend class GlfwDisplayManager;
+    friend class Win32DisplayManager;
 };
 
 };  // namespace my

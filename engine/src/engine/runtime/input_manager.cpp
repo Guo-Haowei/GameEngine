@@ -1,6 +1,6 @@
 #include "input_manager.h"
 
-#include "engine/core/io/input_event.h"
+#include "engine/core/input/input_event.h"
 
 namespace my {
 
@@ -45,7 +45,8 @@ void InputManager::BeginFrame() {
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
-        m_inputEventQueue.EnqueueEvent(e);
+
+        m_router.Route(e);
     }
 
     // Send mouse wheel events
@@ -56,7 +57,8 @@ void InputManager::BeginFrame() {
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
-        m_inputEventQueue.EnqueueEvent(e);
+
+        m_router.Route(e);
     }
 
     // Send mouse moved event
@@ -67,7 +69,8 @@ void InputManager::BeginFrame() {
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
-        m_inputEventQueue.EnqueueEvent(e);
+
+        m_router.Route(e);
     }
 }
 
@@ -80,6 +83,14 @@ void InputManager::EndFrame() {
     m_wheelY = 0;
 
     m_mouseMoved = false;
+}
+
+void InputManager::PushInputHandler(IInputHandler* p_input_handler) {
+    m_router.PushHandler(p_input_handler);
+}
+
+IInputHandler* InputManager::PopInputHandler() {
+    return m_router.PopHandler();
 }
 
 bool InputManager::IsKeyDown(KeyCode p_key) {

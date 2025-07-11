@@ -6,7 +6,7 @@
 #include "editor/editor_layer.h"
 #include "editor/utility/imguizmo.h"
 #include "editor/widget.h"
-#include "engine/core/io/input_event.h"
+#include "engine/core/input/input_event.h"
 #include "engine/math/ray.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/graphics_manager.h"
@@ -119,7 +119,7 @@ void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
         ImGuizmo::DrawGrid(p_camera.GetProjectionViewMatrix(), identity, 10.0f, plane);
     }
 
-#if 0 // debug code
+#if 0  // debug code
     {
         static uint8_t dummy = 0;
         if (dummy % 128 == 0) {
@@ -242,7 +242,7 @@ void Viewer::DrawToolBar() {
         ImGui::SameLine();
     }
 
-    #if 0
+#if 0
     ImGui::Button(ICON_FA_PAUSE " ");
     ImGui::SameLine();
     ImGui::Button(ICON_FA_PEN " ");
@@ -256,10 +256,79 @@ void Viewer::DrawToolBar() {
     ImGui::Button(ICON_FA_PAINTBRUSH " ");
     ImGui::SameLine();
     ImGui::Button(ICON_FA_BRUSH " ");
-    #endif
+#endif
 
     // ImGui::PopStyleVar(2);
     ImGui::PopStyleColor(3);
+}
+
+bool Viewer::HandleInput(std::shared_ptr<InputEvent> p_input_event) {
+    // @TODO: split to gizmo translate, gizmo rotate, etc
+    InputEvent* event = p_input_event.get();
+    if (auto e = dynamic_cast<InputEventKey*>(event); e) {
+#if 0
+        if (e->IsPressed()) {
+            switch (e->GetKey()) {
+                case KeyCode::KEY_Z: {
+                    m_editor.SetState(EditorLayer::STATE_TRANSLATE);
+                } break;
+                case KeyCode::KEY_X: {
+                    m_editor.SetState(EditorLayer::STATE_ROTATE);
+                } break;
+                case KeyCode::KEY_C: {
+                    m_editor.SetState(EditorLayer::STATE_SCALE);
+                } break;
+                default:
+                    break;
+            }
+            return true;
+        }
+#endif
+
+        if (e->IsHolding() && !e->IsModiferPressed()) {
+            bool handled = true;
+            switch (e->GetKey()) {
+                case KeyCode::KEY_D:
+                    ++m_inputState.dx;
+                    break;
+                case KeyCode::KEY_A:
+                    --m_inputState.dx;
+                    break;
+                case KeyCode::KEY_E:
+                    ++m_inputState.dy;
+                    break;
+                case KeyCode::KEY_Q:
+                    --m_inputState.dy;
+                    break;
+                case KeyCode::KEY_W:
+                    ++m_inputState.dz;
+                    break;
+                case KeyCode::KEY_S:
+                    --m_inputState.dz;
+                    break;
+                default:
+                    handled = false;
+                    break;
+            }
+            return handled;
+        }
+    }
+
+    if (auto e = dynamic_cast<InputEventMouseWheel*>(event); e) {
+        if (!e->IsModiferPressed()) {
+            m_inputState.scroll += 3.0f * e->GetWheelY();
+            return true;
+        }
+    }
+
+    if (auto e = dynamic_cast<InputEventMouseMove*>(event); e) {
+        if (!e->IsModiferPressed() && e->IsButtonDown(MouseButton::MIDDLE)) {
+            m_inputState.mouse_move += e->GetDelta();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Viewer::UpdateInternal(Scene& p_scene) {
@@ -306,86 +375,23 @@ void Viewer::UpdateInternal(Scene& p_scene) {
 
     UpdateData();
 
-    int dx = 0, dy = 0, dz = 0;
-    auto& events = m_editor.GetUnhandledEvents();
-    bool selected = m_editor.GetSelectedEntity().IsValid();
-    float mouse_scroll = 0.0f;
-    Vector2f mouse_move(0);
-
-    for (auto& event : events) {
-        if (InputEventKey* e = dynamic_cast<InputEventKey*>(event.get()); e) {
-            if (e->IsPressed()) {
-                switch (e->GetKey()) {
-                    case KeyCode::KEY_Z: {
-                        if (selected) {
-                            m_editor.SetState(EditorLayer::STATE_TRANSLATE);
-                        }
-                    } break;
-                    case KeyCode::KEY_X: {
-                        if (selected) {
-                            m_editor.SetState(EditorLayer::STATE_ROTATE);
-                        }
-                    } break;
-                    case KeyCode::KEY_C: {
-                        if (selected) {
-                            m_editor.SetState(EditorLayer::STATE_SCALE);
-                        }
-                    } break;
-                    default:
-                        break;
-                }
-            } else if (e->IsHolding()) {
-                switch (e->GetKey()) {
-                    case KeyCode::KEY_D:
-                        ++dx;
-                        break;
-                    case KeyCode::KEY_A:
-                        --dx;
-                        break;
-                    case KeyCode::KEY_E:
-                        ++dy;
-                        break;
-                    case KeyCode::KEY_Q:
-                        --dy;
-                        break;
-                    case KeyCode::KEY_W:
-                        ++dz;
-                        break;
-                    case KeyCode::KEY_S:
-                        --dz;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        if (InputEventMouseWheel* e = dynamic_cast<InputEventMouseWheel*>(event.get()); e) {
-            if (!e->IsModiferPressed()) {
-                mouse_scroll = 3.0f * e->GetWheelY();
-            }
-        }
-        if (InputEventMouseMove* e = dynamic_cast<InputEventMouseMove*>(event.get()); e) {
-            if (!e->IsModiferPressed() && e->IsButtonDown(MouseButton::MIDDLE)) {
-                mouse_move = e->GetDelta();
-            }
-        }
-    }
-
     if (m_focused && mode == Application::State::EDITING) {
         const float dt = m_editor.context.timestep;
+        const auto& move = m_inputState.mouse_move;
+        const auto& scroll = m_inputState.scroll;
         switch (m_editor.context.cameraType) {
             case CAMERA_2D: {
-                CameraInputState state {
-                    .move = dt * Vector3f(-mouse_move.x, mouse_move.y, 0.0f),
-                    .zoomDelta = -dt * mouse_scroll,
+                CameraInputState state{
+                    .move = dt * Vector3f(-move.x, move.y, 0.0f),
+                    .zoomDelta = -dt * scroll,
                 };
                 m_cameraController2D.Update(camera, state);
             } break;
             case CAMERA_3D: {
                 CameraInputState state{
-                    .move = dt * Vector3f(dx, dy, dz),
-                    .zoomDelta = dt * mouse_scroll,
-                    .rotation = dt * mouse_move,
+                    .move = dt * Vector3f(m_inputState.dx, m_inputState.dy, m_inputState.dz),
+                    .zoomDelta = dt * scroll,
+                    .rotation = dt * move,
                 };
                 m_cameraController3D.Update(camera, state);
             } break;
@@ -399,6 +405,8 @@ void Viewer::UpdateInternal(Scene& p_scene) {
     SelectEntity(p_scene, camera);
 
     DrawGui(p_scene, camera);
+
+    m_inputState.Reset();
 }
 
 }  // namespace my
