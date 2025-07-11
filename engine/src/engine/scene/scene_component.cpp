@@ -288,7 +288,11 @@ void TileMapComponent::FromArray(const std::vector<std::vector<int>>& p_data) {
 
 void TileMapComponent::SetTile(int p_x, int p_y, int p_tile_id) {
     if (p_x >= 0 && p_x < m_width && p_y >= 0 && p_y < m_height) {
-        m_tiles[p_y * m_width + p_x] = p_tile_id;
+        int& old = m_tiles[p_y * m_width + p_x];
+        if (old != p_tile_id) {
+            old = p_tile_id;
+            SetDirty();
+        }
     }
 }
 
