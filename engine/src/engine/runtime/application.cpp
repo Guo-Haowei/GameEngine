@@ -428,9 +428,9 @@ Scene* Application::CreateInitialScene() {
         for (int y = 0; y < grid_y; ++y) {
             for (int x = 0; x < grid_x; ++x) {
                 const float u0 = x * dx;
-                const float v0 = y * dy;
+                const float v0 = (y + 1) * dy;
                 const float u1 = (x + 1) * dx;
-                const float v1 = (y + 1) * dy;
+                const float v1 = y * dy;
 
                 sprite.frames.push_back(Rect(Vector2f(u0, v0), Vector2f(u1, v1)));
             }

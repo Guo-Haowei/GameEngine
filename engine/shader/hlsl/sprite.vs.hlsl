@@ -7,8 +7,6 @@ VS_OUTPUT_UV main(VS_INPUT_SPRITE input) {
     position = mul(c_worldMatrix, position);
     position = mul(c_viewMatrix, position);
     position = mul(c_projectionMatrix, position);
-    // position = mul(c_camView, position);
-    // position = mul(c_camProj, position);
     VS_OUTPUT_UV output;
     output.position = position;
     output.uv = input.uv;
