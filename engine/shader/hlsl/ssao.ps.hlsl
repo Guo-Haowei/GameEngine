@@ -11,7 +11,7 @@ Texture2D t_NoiseTexture : register(t2);
 // @TODO: fix HARD CODE
 #define SSAO_KERNEL_BIAS 0.025f
 
-float main(vsoutput_uv input) : SV_TARGET {
+float main(VS_OUTPUT_UV input) : SV_TARGET {
     const Vector2f uv = input.uv;
 
     Vector2i texture_size;
