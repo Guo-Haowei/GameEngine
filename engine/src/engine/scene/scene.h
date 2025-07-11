@@ -20,7 +20,7 @@ namespace my {
     REGISTER_COMPONENT(HierarchyComponent, "World::HierarchyComponent", 0)             \
     REGISTER_COMPONENT(MaterialComponent, "World::MaterialComponent", 0)               \
     REGISTER_COMPONENT(MeshComponent, "World::MeshComponent", 0)                       \
-    REGISTER_COMPONENT(ObjectComponent, "World::ObjectComponent", 0)                   \
+    REGISTER_COMPONENT(MeshRendererComponent, "World::ObjectComponent", 0)             \
     REGISTER_COMPONENT(LightComponent, "World::LightComponent", 0)                     \
     REGISTER_COMPONENT(ArmatureComponent, "World::ArmatureComponent", 0)               \
     REGISTER_COMPONENT(AnimationComponent, "World::AnimationComponent", 0)             \

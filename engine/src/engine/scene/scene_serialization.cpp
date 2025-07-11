@@ -576,16 +576,16 @@ void LightComponent::RegisterClass() {
     END_REGISTRY(LightComponent);
 }
 
-void ObjectComponent::Serialize(Archive& p_archive, uint32_t) {
+void MeshRendererComponent::Serialize(Archive& p_archive, uint32_t) {
     p_archive.ArchiveValue(flags);
     p_archive.ArchiveValue(meshId);
 }
 
-void ObjectComponent::RegisterClass() {
-    BEGIN_REGISTRY(ObjectComponent);
-    REGISTER_FIELD(ObjectComponent, "flags", flags);
-    REGISTER_FIELD(ObjectComponent, "mesh_id", meshId);
-    END_REGISTRY(ObjectComponent);
+void MeshRendererComponent::RegisterClass() {
+    BEGIN_REGISTRY(MeshRendererComponent);
+    REGISTER_FIELD(MeshRendererComponent, "flags", flags);
+    REGISTER_FIELD(MeshRendererComponent, "mesh_id", meshId);
+    END_REGISTRY(MeshRendererComponent);
 }
 
 void CameraComponent::Serialize(Archive& p_archive, uint32_t) {

@@ -292,8 +292,8 @@ struct ArmatureComponent {
 #pragma endregion ARMATURE_COMPONENT
 
 // @TODO: rename it to MeshRenderer?
-#pragma region OBJECT_COMPONENT
-struct ObjectComponent : public ComponentFlagBase {
+#pragma region MESH_RENDERER_COMPONENT
+struct MeshRendererComponent : public ComponentFlagBase {
     enum : uint32_t {
         FLAG_RENDERABLE = BIT(1),
         FLAG_CAST_SHADOW = BIT(2),
@@ -302,7 +302,7 @@ struct ObjectComponent : public ComponentFlagBase {
 
     ecs::Entity meshId;
 
-    ObjectComponent() {
+    MeshRendererComponent() {
         flags |= FLAG_RENDERABLE | FLAG_CAST_SHADOW;
     }
 
@@ -311,7 +311,7 @@ struct ObjectComponent : public ComponentFlagBase {
 
     static void RegisterClass();
 };
-#pragma endregion OBJECT_COMPONENT
+#pragma endregion MESH_RENDERER_COMPONENT
 
 #pragma region CAMERA_COMPONENT
 class CameraComponent : public ComponentFlagBase {

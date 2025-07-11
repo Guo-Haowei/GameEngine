@@ -156,7 +156,7 @@ ecs::Entity Scene::CreateTransformEntity(const std::string& p_name) {
 
 ecs::Entity Scene::CreateObjectEntity(const std::string& p_name) {
     auto entity = CreateNameEntity(p_name);
-    Create<ObjectComponent>(entity);
+    Create<MeshRendererComponent>(entity);
     Create<TransformComponent>(entity);
     return entity;
 }
@@ -190,13 +190,13 @@ ecs::Entity Scene::CreatePointLightEntity(const std::string& p_name,
     material.emissive = p_emissive;
 
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
     transform.SetTranslation(p_position);
     transform.SetDirty();
 
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
-    object.flags = ObjectComponent::FLAG_RENDERABLE;
+    object.flags = MeshRendererComponent::FLAG_RENDERABLE;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = MakeSphereMesh(0.1f, 40, 40);
@@ -221,11 +221,11 @@ ecs::Entity Scene::CreateAreaLightEntity(const std::string& p_name,
     material.baseColor = Vector4f(p_color, 1.0f);
     material.emissive = p_emissive;
 
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
 
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
-    object.flags = ObjectComponent::FLAG_RENDERABLE;
+    object.flags = MeshRendererComponent::FLAG_RENDERABLE;
 
     MeshComponent& mesh = *GetComponent<MeshComponent>(mesh_id);
     mesh = MakePlaneMesh();
@@ -278,7 +278,7 @@ ecs::Entity Scene::CreatePlaneEntity(const std::string& p_name,
                                      const Matrix4x4f& p_transform) {
     auto entity = CreateObjectEntity(p_name);
     TransformComponent& trans = *GetComponent<TransformComponent>(entity);
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
     trans.MatrixTransform(p_transform);
 
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
@@ -304,7 +304,7 @@ ecs::Entity Scene::CreateCubeEntity(const std::string& p_name,
                                     const Matrix4x4f& p_transform) {
     auto entity = CreateObjectEntity(p_name);
     TransformComponent& trans = *GetComponent<TransformComponent>(entity);
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
     trans.MatrixTransform(p_transform);
 
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
@@ -321,7 +321,7 @@ ecs::Entity Scene::CreateMeshEntity(const std::string& p_name,
                                     ecs::Entity p_material_id,
                                     MeshComponent&& p_mesh) {
     auto entity = CreateObjectEntity(p_name);
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
 
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
@@ -347,7 +347,7 @@ ecs::Entity Scene::CreateSphereEntity(const std::string& p_name,
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);
 
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
@@ -375,7 +375,7 @@ ecs::Entity Scene::CreateCylinderEntity(const std::string& p_name,
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);
 
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
@@ -407,7 +407,7 @@ ecs::Entity Scene::CreateTorusEntity(const std::string& p_name,
     TransformComponent& transform = *GetComponent<TransformComponent>(entity);
     transform.MatrixTransform(p_transform);
 
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
@@ -452,7 +452,7 @@ ecs::Entity Scene::CreateClothEntity(const std::string& p_name,
     cloth.res = p_res;
     cloth.fixedFlags = p_fixed_flags;
 
-    ObjectComponent& object = *GetComponent<ObjectComponent>(entity);
+    MeshRendererComponent& object = *GetComponent<MeshRendererComponent>(entity);
     auto mesh_id = CreateMeshEntity(p_name + ":mesh");
     object.meshId = mesh_id;
 
@@ -539,7 +539,7 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
 }
 
 bool Scene::RayObjectIntersect(ecs::Entity p_object_id, Ray& p_ray) {
-    ObjectComponent* object = GetComponent<ObjectComponent>(p_object_id);
+    MeshRendererComponent* object = GetComponent<MeshRendererComponent>(p_object_id);
     MeshComponent* mesh = GetComponent<MeshComponent>(object->meshId);
     TransformComponent* transform = GetComponent<TransformComponent>(p_object_id);
     DEV_ASSERT(mesh && transform);
@@ -577,8 +577,8 @@ Scene::RayIntersectionResult Scene::Intersects(Ray& p_ray) {
     RayIntersectionResult result;
 
     // @TODO: box collider
-    for (size_t object_idx = 0; object_idx < GetCount<ObjectComponent>(); ++object_idx) {
-        ecs::Entity entity = GetEntity<ObjectComponent>(object_idx);
+    for (size_t object_idx = 0; object_idx < GetCount<MeshRendererComponent>(); ++object_idx) {
+        ecs::Entity entity = GetEntity<MeshRendererComponent>(object_idx);
         if (RayObjectIntersect(entity, p_ray)) {
             result.entity = entity;
         }

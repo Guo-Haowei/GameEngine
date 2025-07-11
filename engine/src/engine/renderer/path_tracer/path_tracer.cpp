@@ -163,7 +163,7 @@ void PathTracer::UpdateAccelStructure(const Scene& p_scene) {
     }
 
     {
-        const auto view = p_scene.View<ObjectComponent>();
+        const auto view = p_scene.View<MeshRendererComponent>();
 
         std::vector<GpuPtMesh> meshes;
         meshes.reserve(view.GetSize());

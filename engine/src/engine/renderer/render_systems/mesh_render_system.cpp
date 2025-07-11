@@ -7,7 +7,7 @@
 
 namespace my {
 
-using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
+using FilterObjectFunc1 = std::function<bool(const MeshRendererComponent& p_object)>;
 using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
 // @TODO: fix this function OMG
@@ -173,8 +173,8 @@ static void FillLightBuffer(const Scene& p_scene, FrameData& p_framedata) {
                 Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
                     p_scene,
-                    [](const ObjectComponent& p_object) {
-                        return p_object.flags & ObjectComponent::FLAG_CAST_SHADOW;
+                    [](const MeshRendererComponent& p_object) {
+                        return p_object.flags & MeshRendererComponent::FLAG_CAST_SHADOW;
                     },
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
@@ -330,8 +330,8 @@ static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
 
     const bool is_opengl = p_framedata.options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
-        const bool is_renderable = obj.flags & ObjectComponent::FLAG_RENDERABLE;
-        const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
+        const bool is_renderable = obj.flags & MeshRendererComponent::FLAG_RENDERABLE;
+        const bool is_transparent = obj.flags & MeshRendererComponent::FLAG_TRANSPARENT;
         const bool is_opaque = is_renderable && !is_transparent;
 
         // @TODO: cast shadow
