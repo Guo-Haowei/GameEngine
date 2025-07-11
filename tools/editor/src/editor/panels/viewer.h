@@ -5,21 +5,18 @@
 
 namespace my {
 
-enum class ViewerTool {
-    GizmoEditing,
-    TileMapPainting,
+// @TODO: maybe move it to top level
+enum class EditorToolType {
+    Gizmo,
+    TileMapEditor,
+    Count,
 };
 
-enum class GizmoState {
-    Translating,
-    Rotating,
-    Scaling,
-};
+class IEditorTool;
 
 class Viewer : public EditorWindow, public IInputHandler {
 public:
-    Viewer(EditorLayer& p_editor) : EditorWindow("Viewer", p_editor) {
-    }
+    Viewer(EditorLayer& p_editor);
 
     bool HandleInput(std::shared_ptr<InputEvent> p_input_event) override;
 
@@ -32,11 +29,9 @@ protected:
     void DrawGui(Scene& p_scene, CameraComponent& p_camera);
 
     void UpdateData();
-    void SelectEntity(Scene& p_scene, const CameraComponent& p_camera);
-    void EditTileMap(Scene& p_scene, const CameraComponent& p_camera);
-    bool HandleTileMapPainting(std::shared_ptr<InputEvent> p_input_event);
-    bool HandleGizmoEditing(std::shared_ptr<InputEvent> p_input_event);
     bool HandleInputCamera(std::shared_ptr<InputEvent> p_input_event);
+
+    IEditorTool* GetActiveTool() { return m_tools[std::to_underlying(m_active)].get(); }
 
     Vector2f m_canvasMin;
     Vector2f m_canvasSize;
@@ -63,8 +58,12 @@ protected:
         }
     } m_inputState;
 
-    ViewerTool m_activeTool{ ViewerTool::GizmoEditing };
-    GizmoState m_gizmoState{ GizmoState::Translating };
+    // ViewerTool m_activeTool{ ViewerTool::GizmoEditing };
+    std::array<std::shared_ptr<IEditorTool>, std::to_underlying(EditorToolType::Count)> m_tools;
+    EditorToolType m_active{ EditorToolType::Gizmo };
+
+    friend class Gizmo;
+    friend class TileMapEditor;
 };
 
 }  // namespace my

@@ -18,6 +18,12 @@ namespace my {
 
 static constexpr float TOOL_BAR_OFFSET = 40.0f;
 
+class IEditorTool {
+public:
+    virtual bool HandleInput(std::shared_ptr<InputEvent> p_input_event) = 0;
+    virtual void Process(Scene& p_scene, const CameraComponent& p_camera) = 0;
+};
+
 void Viewer::UpdateData() {
     Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     int frame_width = frame_size.x;
@@ -37,52 +43,6 @@ void Viewer::UpdateData() {
     m_canvasMin.y = TOOL_BAR_OFFSET + window->ContentRegionRect.Min.y;
 
     m_focused = ImGui::IsWindowHovered();
-}
-
-void Viewer::EditTileMap(Scene& p_scene, const CameraComponent& p_camera) {
-    if (!m_focused || !m_inputState.ndc) {
-        return;
-    }
-
-    Vector2f ndc_2 = *m_inputState.ndc;
-
-    auto selected = m_editor.GetSelectedEntity();
-    TileMapComponent* tile_map = p_scene.GetComponent<TileMapComponent>(selected);
-
-    if (!tile_map) {
-        return;
-    }
-
-    Vector4f ndc{ ndc_2.x, ndc_2.y, 0.0f, 1.0f };
-    const auto inv_proj_view = glm::inverse(p_camera.GetProjectionViewMatrix());
-    Vector4f position = inv_proj_view * ndc;
-    position /= position.w;
-
-    int tile_x = static_cast<int>(position.x);
-    int tile_y = static_cast<int>(position.y);
-
-    // erase if right button down
-    const int value = m_inputState.buttons[std::to_underlying(MouseButton::RIGHT)] ? 0 : 1;
-    tile_map->SetTile(tile_x, tile_y, value);
-}
-
-void Viewer::SelectEntity(Scene& p_scene, const CameraComponent& p_camera) {
-    if (!m_focused || !m_inputState.ndc) {
-        return;
-    }
-
-    Vector2f clicked = *m_inputState.ndc;
-
-    const Matrix4x4f inversed_projection_view = glm::inverse(p_camera.GetProjectionViewMatrix());
-
-    const Vector3f ray_start = p_camera.GetPosition();
-    const Vector3f direction = normalize(Vector3f((inversed_projection_view * Vector4f(clicked, 1.0f, 1.0f)).xyz));
-    const Vector3f ray_end = ray_start + direction * p_camera.GetFar();
-    Ray ray(ray_start, ray_end);
-
-    const auto result = p_scene.Intersects(ray);
-
-    m_editor.SelectEntity(result.entity);
 }
 
 void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
@@ -160,7 +120,10 @@ void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
         }
     };
 
-    if (m_activeTool == ViewerTool::GizmoEditing) {
+    if (m_active == EditorToolType::Gizmo) {
+        draw_gizmo(ImGuizmo::TRANSLATE, COMMAND_TYPE_ENTITY_TRANSLATE);
+        // @TODO: fix
+#if 0
         switch (m_gizmoState) {
             case GizmoState::Translating:
                 draw_gizmo(ImGuizmo::TRANSLATE, COMMAND_TYPE_ENTITY_TRANSLATE);
@@ -174,6 +137,7 @@ void Viewer::DrawGui(Scene& p_scene, CameraComponent& p_camera) {
             default:
                 break;
         }
+#endif
     }
 
     if (show_editor) {
@@ -210,7 +174,7 @@ void Viewer::DrawToolBar() {
           [&]() { return app_state != Application::State::EDITING; } },
         { ICON_FA_HAND, "Enter gizmo mode",
           [&]() {
-              m_activeTool = ViewerTool::GizmoEditing;
+              m_active = EditorToolType::Gizmo;
           } },
         { ICON_FA_CAMERA_ROTATE, "Toggle 2D/3D view",
           [&]() {
@@ -219,7 +183,7 @@ void Viewer::DrawToolBar() {
           } },
         { ICON_FA_BRUSH, "TileMap editor mode",
           [&]() {
-              m_activeTool = ViewerTool::TileMapPainting;
+              m_active = EditorToolType::TileMapEditor;
           } },
     };
 
@@ -269,42 +233,11 @@ void Viewer::DrawToolBar() {
 }
 
 bool Viewer::HandleInput(std::shared_ptr<InputEvent> p_input_event) {
-    bool handled = false;
-    switch (m_activeTool) {
-        case my::ViewerTool::GizmoEditing:
-            handled = HandleGizmoEditing(p_input_event);
-            break;
-        case my::ViewerTool::TileMapPainting:
-            handled = HandleTileMapPainting(p_input_event);
-            break;
-        default:
-            break;
-    }
-
-    if (handled) {
-        return handled;
+    if (GetActiveTool()->HandleInput(p_input_event)) {
+        return true;
     }
 
     return HandleInputCamera(p_input_event);
-}
-
-bool Viewer::HandleTileMapPainting(std::shared_ptr<InputEvent> p_input_event) {
-    InputEvent* event = p_input_event.get();
-    if (auto e = dynamic_cast<InputEventMouse*>(event); e) {
-        if (!e->IsModiferPressed()) {
-            if (e->IsButtonDown(MouseButton::LEFT)) {
-                m_inputState.ndc = CursorToNDC(e->GetPos());
-                m_inputState.buttons[std::to_underlying(MouseButton::LEFT)] = true;
-                return true;
-            }
-            if (e->IsButtonDown(MouseButton::RIGHT)) {
-                m_inputState.ndc = CursorToNDC(e->GetPos());
-                m_inputState.buttons[std::to_underlying(MouseButton::RIGHT)] = true;
-                return true;
-            }
-        }
-    }
-    return false;
 }
 
 std::optional<Vector2f> Viewer::CursorToNDC(Vector2f p_point) const {
@@ -320,42 +253,6 @@ std::optional<Vector2f> Viewer::CursorToNDC(Vector2f p_point) const {
     }
 
     return std::nullopt;
-}
-
-bool Viewer::HandleGizmoEditing(std::shared_ptr<InputEvent> p_input_event) {
-    // change gizmo state
-    InputEvent* event = p_input_event.get();
-    if (auto e = dynamic_cast<InputEventKey*>(event); e) {
-        if (e->IsPressed() && !e->IsModiferPressed()) {
-            bool handled = true;
-            switch (e->GetKey()) {
-                case KeyCode::KEY_Z: {
-                    m_gizmoState = GizmoState::Translating;
-                } break;
-                case KeyCode::KEY_X: {
-                    m_gizmoState = GizmoState::Rotating;
-                } break;
-                case KeyCode::KEY_C: {
-                    m_gizmoState = GizmoState::Scaling;
-                } break;
-                default:
-                    handled = false;
-                    break;
-            }
-            return handled;
-        }
-    }
-
-    // select
-    if (auto e = dynamic_cast<InputEventMouse*>(event); e) {
-        if (e->IsButtonPressed(MouseButton::RIGHT)) {
-            Vector2f clicked = e->GetPos();
-            m_inputState.ndc = CursorToNDC(clicked);
-            return true;
-        }
-    }
-
-    return false;
 }
 
 bool Viewer::HandleInputCamera(std::shared_ptr<InputEvent> p_input_event) {
@@ -463,20 +360,139 @@ void Viewer::UpdateInternal(Scene& p_scene) {
         }
     }
 
-    switch (m_activeTool) {
-        case my::ViewerTool::GizmoEditing: {
-            SelectEntity(p_scene, camera);
-        } break;
-        case my::ViewerTool::TileMapPainting: {
-            EditTileMap(p_scene, camera);
-        } break;
-        default:
-            break;
-    }
+    GetActiveTool()->Process(p_scene, camera);
 
     DrawGui(p_scene, camera);
 
     m_inputState.Reset();
+}
+
+class Gizmo : public IEditorTool {
+public:
+    Gizmo(Viewer& p_viewer) : m_viewer(p_viewer) {}
+
+    bool HandleInput(std::shared_ptr<InputEvent> p_input_event) override {
+        // change gizmo state
+        InputEvent* event = p_input_event.get();
+        if (auto e = dynamic_cast<InputEventKey*>(event); e) {
+            if (e->IsPressed() && !e->IsModiferPressed()) {
+                bool handled = true;
+                switch (e->GetKey()) {
+                    case KeyCode::KEY_Z: {
+                        m_state = GizmoState::Translating;
+                    } break;
+                    case KeyCode::KEY_X: {
+                        m_state = GizmoState::Rotating;
+                    } break;
+                    case KeyCode::KEY_C: {
+                        m_state = GizmoState::Scaling;
+                    } break;
+                    default:
+                        handled = false;
+                        break;
+                }
+                return handled;
+            }
+        }
+
+        // select
+        if (auto e = dynamic_cast<InputEventMouse*>(event); e) {
+            if (e->IsButtonPressed(MouseButton::RIGHT)) {
+                Vector2f clicked = e->GetPos();
+                m_viewer.m_inputState.ndc = m_viewer.CursorToNDC(clicked);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void Process(Scene& p_scene, const CameraComponent& p_camera) override {
+        if (!m_viewer.m_focused || !m_viewer.m_inputState.ndc) {
+            return;
+        }
+
+        Vector2f clicked = *m_viewer.m_inputState.ndc;
+
+        const Matrix4x4f inversed_projection_view = glm::inverse(p_camera.GetProjectionViewMatrix());
+
+        const Vector3f ray_start = p_camera.GetPosition();
+        const Vector3f direction = normalize(Vector3f((inversed_projection_view * Vector4f(clicked, 1.0f, 1.0f)).xyz));
+        const Vector3f ray_end = ray_start + direction * p_camera.GetFar();
+        Ray ray(ray_start, ray_end);
+
+        const auto result = p_scene.Intersects(ray);
+
+        m_viewer.m_editor.SelectEntity(result.entity);
+    }
+
+protected:
+    enum class GizmoState {
+        Translating,
+        Rotating,
+        Scaling,
+    } m_state{ GizmoState::Translating };
+    Viewer& m_viewer;
+};
+
+class TileMapEditor : public IEditorTool {
+public:
+    TileMapEditor(Viewer& p_viewer) : m_viewer(p_viewer) {}
+
+    bool HandleInput(std::shared_ptr<InputEvent> p_input_event) override {
+        InputEvent* event = p_input_event.get();
+        if (auto e = dynamic_cast<InputEventMouse*>(event); e) {
+            if (!e->IsModiferPressed()) {
+                if (e->IsButtonDown(MouseButton::LEFT)) {
+                    m_viewer.m_inputState.ndc = m_viewer.CursorToNDC(e->GetPos());
+                    m_viewer.m_inputState.buttons[std::to_underlying(MouseButton::LEFT)] = true;
+                    return true;
+                }
+                if (e->IsButtonDown(MouseButton::RIGHT)) {
+                    m_viewer.m_inputState.ndc = m_viewer.CursorToNDC(e->GetPos());
+                    m_viewer.m_inputState.buttons[std::to_underlying(MouseButton::RIGHT)] = true;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    void Process(Scene& p_scene, const CameraComponent& p_camera) override {
+
+        if (!m_viewer.m_focused || !m_viewer.m_inputState.ndc) {
+            return;
+        }
+
+        Vector2f ndc_2 = *m_viewer.m_inputState.ndc;
+
+        auto selected = m_viewer.m_editor.GetSelectedEntity();
+        TileMapComponent* tile_map = p_scene.GetComponent<TileMapComponent>(selected);
+
+        if (!tile_map) {
+            return;
+        }
+
+        Vector4f ndc{ ndc_2.x, ndc_2.y, 0.0f, 1.0f };
+        const auto inv_proj_view = glm::inverse(p_camera.GetProjectionViewMatrix());
+        Vector4f position = inv_proj_view * ndc;
+        position /= position.w;
+
+        int tile_x = static_cast<int>(position.x);
+        int tile_y = static_cast<int>(position.y);
+
+        // erase if right button down
+        const int value = m_viewer.m_inputState.buttons[std::to_underlying(MouseButton::RIGHT)] ? 0 : 1;
+        tile_map->SetTile(tile_x, tile_y, value);
+    }
+
+protected:
+    Viewer& m_viewer;
+};
+
+Viewer::Viewer(EditorLayer& p_editor) : EditorWindow("Viewer", p_editor) {
+    m_tools[std::to_underlying(EditorToolType::Gizmo)] = std::make_shared<Gizmo>(*this);
+    m_tools[std::to_underlying(EditorToolType::TileMapEditor)] = std::make_shared<TileMapEditor>(*this);
 }
 
 }  // namespace my
