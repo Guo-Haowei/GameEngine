@@ -7,7 +7,7 @@
 
 namespace my {
 
-using FilterObjectFunc1 = std::function<bool(const ObjectComponent& p_object)>;
+using FilterObjectFunc1 = std::function<bool(const MeshRendererComponent& p_object)>;
 using FilterObjectFunc2 = std::function<bool(const AABB& p_object_aabb)>;
 
 // @TODO: fix this function OMG
@@ -54,15 +54,14 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
     cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
 };
 
+// @TODO: refactor this
 static void FillPass(const Scene& p_scene,
                      FilterObjectFunc1 p_filter1,
                      FilterObjectFunc2 p_filter2,
                      std::vector<RenderCommand>& p_commands,
-                     bool p_use_material,
                      FrameData& p_framedata) {
 
-    const bool is_opengl = p_framedata.options.isOpengl;
-    for (auto [entity, obj] : p_scene.m_ObjectComponents) {
+    for (auto [entity, obj] : p_scene.m_MeshRendererComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
         }
@@ -106,35 +105,12 @@ static void FillPass(const Scene& p_scene,
             draw.bone_idx = -1;
         }
 
-        draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
+        draw.mesh_data = mesh.gpuResource.get();
         draw.mat_idx = -1;
         DEV_ASSERT(draw.mesh_data);
 
-        if (!p_use_material) {
-            draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
-            p_commands.emplace_back(RenderCommand::from(draw));
-            continue;
-        }
-
-        for (const auto& subset : mesh.subsets) {
-            aabb = subset.local_bound;
-            aabb.ApplyMatrix(world_matrix);
-            if (!p_filter2(aabb)) {
-                continue;
-            }
-
-            const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
-            MaterialConstantBuffer material_buffer;
-            FillMaterialConstantBuffer(is_opengl, material, material_buffer);
-
-            // Draw submesh if pass cares about material
-            DrawCommand draw2 = draw;
-            draw2.indexCount = subset.index_count;
-            draw2.indexOffset = subset.index_offset;
-            draw2.mat_idx = p_framedata.materialCache.FindOrAdd(subset.material_id, material_buffer);
-
-            p_commands.emplace_back(RenderCommand::from(draw2));
-        }
+        draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
+        p_commands.emplace_back(RenderCommand::From(draw));
     }
 }
 
@@ -197,13 +173,13 @@ static void FillLightBuffer(const Scene& p_scene, FrameData& p_framedata) {
                 Frustum light_frustum(light.projection_matrix * light.view_matrix);
                 FillPass(
                     p_scene,
-                    [](const ObjectComponent& p_object) {
-                        return p_object.flags & ObjectComponent::FLAG_CAST_SHADOW;
+                    [](const MeshRendererComponent& p_object) {
+                        return p_object.flags & MeshRendererComponent::FLAG_CAST_SHADOW;
                     },
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
                     },
-                    p_framedata.shadow_pass_commands, false,
+                    p_framedata.shadow_pass_commands,
                     p_framedata);
             } break;
             case LIGHT_TYPE_POINT: {
@@ -353,9 +329,9 @@ static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
     FilterFunc filter_main = [&](const AABB& p_aabb) -> bool { return camera_frustum.Intersects(p_aabb); };
 
     const bool is_opengl = p_framedata.options.isOpengl;
-    for (auto [entity, obj] : p_scene.m_ObjectComponents) {
-        const bool is_renderable = obj.flags & ObjectComponent::FLAG_RENDERABLE;
-        const bool is_transparent = obj.flags & ObjectComponent::FLAG_TRANSPARENT;
+    for (auto [entity, obj] : p_scene.m_MeshRendererComponents) {
+        const bool is_renderable = obj.flags & MeshRendererComponent::FLAG_RENDERABLE;
+        const bool is_transparent = obj.flags & MeshRendererComponent::FLAG_TRANSPARENT;
         const bool is_opaque = is_renderable && !is_transparent;
 
         // @TODO: cast shadow
@@ -405,7 +381,7 @@ static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
 
             DrawCommand drawCmd = draw;
             if (p_model_only) {
-                p_commands.emplace_back(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::From(drawCmd));
                 return;
             }
 
@@ -424,7 +400,7 @@ static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
                 drawCmd.indexOffset = subset.index_offset;
                 drawCmd.mat_idx = p_framedata.materialCache.FindOrAdd(subset.material_id, material_buffer);
 
-                p_commands.emplace_back(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::From(drawCmd));
             }
         };
 

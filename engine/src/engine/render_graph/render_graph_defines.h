@@ -3,7 +3,7 @@
 
 namespace my {
 
-constexpr const char RG_PASS_EMPTY[] = "p:empty";
+constexpr const char RG_PASS_2D[] = "p:2d";
 constexpr const char RG_PASS_EARLY_Z[] = "p:early_z";
 constexpr const char RG_PASS_SHADOW[] = "p:shadow";
 constexpr const char RG_PASS_GBUFFER[] = "p:gbuffer";

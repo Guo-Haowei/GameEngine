@@ -226,7 +226,7 @@ Scene* SceneCreator::CreateScene() {
         scene->AttachChild(generator, earth);
         for (int i = 0; i < ROCK_POOL_SIZE; ++i) {
             auto id = scene->CreateObjectEntity(std::format("rock_{}", i));
-            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            MeshRendererComponent* object = scene->GetComponent<MeshRendererComponent>(id);
             object->meshId = mesh_rock;
             auto& rigid_body = scene->Create<RigidBodyComponent>(id)
                                    .InitSphere(0.5f * ROCK_SIZE);
@@ -241,7 +241,7 @@ Scene* SceneCreator::CreateScene() {
 
         for (int i = 0; i < BATTERY_POOL_SIZE; ++i) {
             auto id = scene->CreateObjectEntity(std::format("battery_{}", i));
-            ObjectComponent* object = scene->GetComponent<ObjectComponent>(id);
+            MeshRendererComponent* object = scene->GetComponent<MeshRendererComponent>(id);
             object->meshId = mesh_battery;
             auto& rigid_body = scene->Create<RigidBodyComponent>(id)
                                    .InitSphere(0.5f * ROCK_SIZE);
@@ -470,7 +470,7 @@ void SceneCreator::CreateOcean(Scene* p_scene, ecs::Entity p_earth) {
         };
 
         void OnCreate() override {
-            const ObjectComponent* object = GetComponent<ObjectComponent>();
+            const MeshRendererComponent* object = GetComponent<MeshRendererComponent>();
             DEV_ASSERT(object);
             const MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(object->meshId);
             DEV_ASSERT(mesh);
@@ -495,7 +495,7 @@ void SceneCreator::CreateOcean(Scene* p_scene, ecs::Entity p_earth) {
         }
 
         void OnUpdate(float p_timestep) override {
-            const ObjectComponent* object = GetComponent<ObjectComponent>();
+            const MeshRendererComponent* object = GetComponent<MeshRendererComponent>();
             DEV_ASSERT(object);
             const MeshComponent* mesh = m_scene->GetComponent<MeshComponent>(object->meshId);
             DEV_ASSERT(mesh);
@@ -534,7 +534,7 @@ void SceneCreator::CreateOcean(Scene* p_scene, ecs::Entity p_earth) {
     };
 
     auto ocean = p_scene->CreateMeshEntity("ocean", material_blue_transparent, MakeOceanMesh(OCEAN_RADIUS, 320.0f, 60, 16));
-    ObjectComponent* object = p_scene->GetComponent<ObjectComponent>(ocean);
+    MeshRendererComponent* object = p_scene->GetComponent<MeshRendererComponent>(ocean);
     // object->flags |= ObjectComponent::FLAG_TRANSPARENT;
 
     DEV_ASSERT(object);
@@ -603,8 +603,8 @@ void SceneCreator::CreatePlane(Scene* p_scene) {
                                                      material_white_transparent,
                                                      Vector3f(0.15f, 0.75f, 1.0f),
                                                      Translate(Vector3f(1.8f, 2.7f, 0.0f)));
-        ObjectComponent* obj = p_scene->GetComponent<ObjectComponent>(wind_shield);
-        obj->flags |= ObjectComponent::FLAG_TRANSPARENT;
+        MeshRendererComponent* obj = p_scene->GetComponent<MeshRendererComponent>(wind_shield);
+        obj->flags |= MeshRendererComponent::FLAG_TRANSPARENT;
         p_scene->AttachChild(wind_shield, plane);
     }
     {

@@ -4,6 +4,11 @@ struct vsinput_position {
     float3 position : POSITION;
 };
 
+struct VS_INPUT_SPRITE {
+    float2 position : POSITION;
+    float2 uv : TEXCOORD;
+};
+
 struct vsinput_mesh {
     float3 position : POSITION;
     float3 normal : NORMAL;

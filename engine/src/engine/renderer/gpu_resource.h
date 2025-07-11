@@ -106,7 +106,7 @@ struct GpuBufferDesc {
     GpuBufferType type{ GpuBufferType::UNKNOWN };
     // @TODO: need better flags than this
     bool dynamic{ false };
-    uint32_t slot{ 0 };
+    uint32_t slot{ 0 };  // remove this if possible
     uint32_t elementSize{ 0 };
     uint32_t elementCount{ 0 };
     uint32_t offset{ 0 };
@@ -129,9 +129,6 @@ struct GpuConstantBuffer {
     GpuConstantBuffer(const GpuBufferDesc& p_desc) : desc(p_desc), capacity(desc.elementCount * desc.elementSize) {}
 
     virtual ~GpuConstantBuffer() = default;
-
-    // @TODO: remove this
-    void update(const void* p_data, size_t p_size);
 
     int GetSlot() const { return desc.slot; }
 
@@ -157,7 +154,7 @@ struct GpuMeshDesc {
         uint32_t offsetInByte{ 0 };
     };
 
-    uint32_t drawCount{ 0 };
+    uint32_t drawCount{ 0 };  // draw count
     uint32_t enabledVertexCount{ 0 };
     VertexLayout vertexLayout[MESH_MAX_VERTEX_BUFFER_COUNT];
 };

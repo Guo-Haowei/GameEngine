@@ -148,7 +148,6 @@ public:
     virtual RenderGraph* GetActiveRenderGraph() = 0;
 
     virtual FrameContext& GetCurrentFrame() = 0;
-    const FrameContext& GetCurrentFrame() const { return GetCurrentFrame(); }
 
     virtual void DrawQuad() = 0;
     virtual void DrawQuadInstanced(uint32_t p_instance_count) = 0;

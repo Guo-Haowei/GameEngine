@@ -46,9 +46,9 @@ float main(vsoutput_uv input) : SV_TARGET {
 
         // project sample position (to sample texture) (to get position on screen/texture)
         Vector4f offset = Vector4f(samplePos, 1.0);
-        offset = mul(c_projectionMatrix, offset);  // from view to clip-space
-        offset /= offset.w;                        // perspective divide
-        offset.xy = offset.xy * 0.5 + 0.5;         // transform to range 0.0 - 1.0
+        offset = mul(c_camProj, offset);    // from view to clip-space
+        offset /= offset.w;                 // perspective divide
+        offset.xy = offset.xy * 0.5 + 0.5;  // transform to range 0.0 - 1.0
 
         const float depth2 = t_GbufferDepth.Sample(s_pointClampSampler, offset.xy).r;
         const Vector3f sampleOcclusionPos = NdcToViewPos(offset.xy, depth2);

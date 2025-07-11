@@ -136,30 +136,6 @@ static void EarlyZPassFunc(RenderPassExcutionContext& p_ctx) {
     ExecuteDrawCommands(p_ctx.frameData, p_ctx.frameData.prepass_commands, true);
 }
 
-static void EmptyPass(RenderPassExcutionContext& p_ctx) {
-    HBN_PROFILE_EVENT();
-    auto& cmd = p_ctx.cmd;
-    cmd.SetRenderTarget(p_ctx.framebuffer);
-    float clear_color[] = { 0.4f, 0.4f, 0.4f, 1.0f };
-    cmd.Clear(p_ctx.framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, clear_color);
-}
-
-void RenderGraphBuilderExt::AddEmpty() {
-    auto color_desc = BuildDefaultTextureDesc(DEFAULT_SURFACE_FORMAT,
-                                              AttachmentType::COLOR_2D);
-    color_desc.bindFlags |= BIND_SHADER_RESOURCE;
-
-    auto depth_desc = BuildDefaultTextureDesc(RT_FMT_GBUFFER_DEPTH,
-                                              AttachmentType::DEPTH_STENCIL_2D);
-
-    auto& pass = AddPass(RG_PASS_EMPTY);
-    pass.Create(RG_RES_POST_PROCESS, { color_desc })
-        .Create(RG_RES_DEPTH_STENCIL, { depth_desc })
-        .Write(ResourceAccess::RTV, RG_RES_POST_PROCESS)
-        .Write(ResourceAccess::DSV, RG_RES_DEPTH_STENCIL)
-        .SetExecuteFunc(EmptyPass);
-}
-
 void RenderGraphBuilderExt::AddEarlyZPass() {
     auto buffer_desc = BuildDefaultTextureDesc(RT_FMT_GBUFFER_DEPTH,
                                                AttachmentType::DEPTH_STENCIL_2D);
@@ -260,13 +236,6 @@ static void SsaoPassFunc(RenderPassExcutionContext& p_ctx) {
     cmd.SetRenderTarget(fb);
     cmd.SetViewport(Viewport(width, height));
     cmd.Clear(fb, CLEAR_COLOR_BIT);
-
-    {
-        // @TODO: get rid of this
-        // should not use this, instead, save projection view matrices in framecb
-        const PassContext& pass = p_ctx.frameData.mainPass;
-        cmd.BindConstantBufferSlot<PerPassConstantBuffer>(cmd.GetCurrentFrame().passCb.get(), pass.pass_idx);
-    }
 
     cmd.SetPipelineState(PSO_SSAO);
     cmd.DrawQuad();
@@ -806,10 +775,12 @@ void RenderGraphBuilderExt::AddBloomPass() {
     }
 }
 
-static void DebugVoxels(const FrameData& p_data, const Framebuffer* p_framebuffer) {
+// @TODO: get rid off this!
+static void DebugVoxels(RenderPassExcutionContext& p_ctx) {
     HBN_PROFILE_EVENT();
 
-    auto& gm = IGraphicsManager::GetSingleton();
+    auto& gm = p_ctx.cmd;
+    auto p_framebuffer = p_ctx.framebuffer;
     gm.SetRenderTarget(p_framebuffer);
     auto depth_buffer = p_framebuffer->desc.depthAttachment;
     const auto [width, height] = p_framebuffer->GetBufferSize();
@@ -819,9 +790,6 @@ static void DebugVoxels(const FrameData& p_data, const Framebuffer* p_framebuffe
     gm.Clear(p_framebuffer, CLEAR_COLOR_BIT | CLEAR_DEPTH_BIT, IGraphicsManager::DEFAULT_CLEAR_COLOR, 0.0f);
 
     IGraphicsManager::GetSingleton().SetPipelineState(PSO_DEBUG_VOXEL);
-
-    const PassContext& pass = p_data.mainPass;
-    gm.BindConstantBufferSlot<PerPassConstantBuffer>(gm.GetCurrentFrame().passCb.get(), pass.pass_idx);
 
     gm.SetMesh(gm.m_boxBuffers.get());
     const uint32_t size = DVAR_GET_INT(gfx_voxel_size);
@@ -847,7 +815,7 @@ static void TonePassFunc(RenderPassExcutionContext& p_ctx) {
     // @HACK:
     if (DVAR_GET_BOOL(gfx_debug_vxgi) && cmd.GetBackend() == Backend::OPENGL) {
         // @TODO: add to forward pass
-        DebugVoxels(p_ctx.frameData, fb);
+        DebugVoxels(p_ctx);
     } else {
         cmd.SetViewport(Viewport(width, height));
         cmd.Clear(fb, CLEAR_COLOR_BIT);
@@ -1074,16 +1042,6 @@ void RenderGraphBuilderExt::AddPathTracerTonePass() {
 }
 
 /// Create pre-defined passes
-auto RenderGraphBuilderExt::Create2D(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
-    p_config.enableBloom = false;
-    p_config.enableIbl = false;
-    p_config.enableVxgi = false;
-
-    RenderGraphBuilderExt builder(p_config);
-    builder.AddEmpty();
-    return builder.Compile();
-}
-
 auto RenderGraphBuilderExt::Create3D(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {
     p_config.enableBloom = true;
     p_config.enableIbl = false;
@@ -1119,49 +1077,5 @@ auto RenderGraphBuilderExt::CreatePathTracer(RenderGraphBuilderConfig& p_config)
 
     return creator.Compile();
 }
-
-GpuTextureDesc RenderGraphBuilderExt::BuildDefaultTextureDesc(PixelFormat p_format,
-                                                              AttachmentType p_type,
-                                                              uint32_t p_width,
-                                                              uint32_t p_height,
-                                                              uint32_t p_array_size,
-                                                              ResourceMiscFlags p_misc_flag,
-                                                              uint32_t p_mips_level) {
-    GpuTextureDesc desc{};
-    desc.type = p_type;
-    desc.format = p_format;
-    desc.arraySize = p_array_size;
-    desc.dimension = Dimension::TEXTURE_2D;
-    desc.width = p_width;
-    desc.height = p_height;
-    desc.mipLevels = p_mips_level ? p_mips_level : 1;
-    desc.miscFlags = p_misc_flag;
-    desc.initialData = nullptr;
-
-    switch (p_type) {
-        case AttachmentType::COLOR_2D:
-        case AttachmentType::DEPTH_2D:
-        case AttachmentType::DEPTH_STENCIL_2D:
-        case AttachmentType::SHADOW_2D:
-            desc.dimension = Dimension::TEXTURE_2D;
-            break;
-        case AttachmentType::COLOR_CUBE:
-            desc.dimension = Dimension::TEXTURE_CUBE;
-            desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
-            DEV_ASSERT(p_array_size == 6);
-            break;
-        case AttachmentType::SHADOW_CUBE_ARRAY:
-            desc.dimension = Dimension::TEXTURE_CUBE_ARRAY;
-            desc.miscFlags |= RESOURCE_MISC_TEXTURECUBE;
-            DEV_ASSERT(p_array_size / 6 > 0);
-            break;
-        case AttachmentType::RW_TEXTURE:
-            break;
-        default:
-            CRASH_NOW();
-            break;
-    }
-    return desc;
-};
 
 }  // namespace my

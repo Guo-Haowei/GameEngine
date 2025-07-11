@@ -2,6 +2,7 @@
 #include "editor/editor_command.h"
 #include "editor/editor_window.h"
 #include "engine/core/base/ring_buffer.h"
+#include "engine/input/input_router.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/layer.h"
 #include "engine/scene/scene.h"
@@ -12,8 +13,8 @@ namespace my {
 
 struct ImageAsset;
 class MenuBar;
-class ToolBar;
 enum class KeyCode : uint16_t;
+class Viewer;
 
 enum {
     SHORT_CUT_SAVE_AS = 0,
@@ -35,23 +36,22 @@ struct EditorContext {
     EditorCameraType cameraType{ CAMERA_3D };
     CameraComponent cameras[CAMERA_MAX];
 
-    const ImageAsset* playButtonImage{ nullptr };
-    const ImageAsset* pauseButtonImage{ nullptr };
-
     CameraComponent& GetActiveCamera() {
         return cameras[cameraType];
     }
 };
 
-class EditorLayer : public Layer, public EventListener {
-public:
-    enum State {
-        STATE_TRANSLATE,
-        STATE_ROTATE,
-        STATE_SCALE,
-    };
+enum class EditorState {
+    TileMapEditing,
+    Translating,
+    Rotating,
+    Scaling,
+};
 
+class EditorLayer : public Layer, public IInputHandler {
+public:
     EditorLayer();
+    virtual ~EditorLayer() = default;
 
     void OnAttach() override;
     void OnDetach() override;
@@ -61,8 +61,6 @@ public:
 
     void SelectEntity(ecs::Entity p_selected);
     ecs::Entity GetSelectedEntity() const { return m_selected; }
-    State GetState() const { return m_state; }
-    void SetState(State p_state) { m_state = p_state; }
 
     uint64_t GetDisplayedImage() const { return m_displayedImage; }
     void SetDisplayedImage(uint64_t p_image) { m_displayedImage = p_image; }
@@ -74,11 +72,9 @@ public:
 
     UndoStack& GetUndoStack() { return m_undoStack; }
 
-    void EventReceived(std::shared_ptr<IEvent> p_event) override;
+    bool HandleInput(std::shared_ptr<InputEvent> p_input_event) override;
 
     const auto& GetShortcuts() const { return m_shortcuts; }
-
-    auto& GetUnhandledEvents() { return m_unhandledEvents; }
 
     CameraComponent& GetActiveCamera();
 
@@ -91,10 +87,10 @@ private:
     void FlushCommand(Scene& p_scene);
 
     std::shared_ptr<MenuBar> m_menuBar;
-    std::shared_ptr<ToolBar> m_toolBar;
+    std::shared_ptr<Viewer> m_viewer;
+
     std::vector<std::shared_ptr<EditorItem>> m_panels;
     ecs::Entity m_selected;
-    State m_state{ STATE_TRANSLATE };
     Scene* m_simScene{ nullptr };
 
     uint64_t m_displayedImage = 0;
@@ -114,7 +110,6 @@ private:
     };
 
     std::array<ShortcutDesc, SHORT_CUT_MAX> m_shortcuts;
-    std::vector<std::shared_ptr<IEvent>> m_unhandledEvents;
 };
 
 }  // namespace my

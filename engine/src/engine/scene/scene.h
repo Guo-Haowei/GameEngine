@@ -20,7 +20,7 @@ namespace my {
     REGISTER_COMPONENT(HierarchyComponent, "World::HierarchyComponent", 0)             \
     REGISTER_COMPONENT(MaterialComponent, "World::MaterialComponent", 0)               \
     REGISTER_COMPONENT(MeshComponent, "World::MeshComponent", 0)                       \
-    REGISTER_COMPONENT(ObjectComponent, "World::ObjectComponent", 0)                   \
+    REGISTER_COMPONENT(MeshRendererComponent, "World::MeshRendererComponent", 0)       \
     REGISTER_COMPONENT(LightComponent, "World::LightComponent", 0)                     \
     REGISTER_COMPONENT(ArmatureComponent, "World::ArmatureComponent", 0)               \
     REGISTER_COMPONENT(AnimationComponent, "World::AnimationComponent", 0)             \
@@ -219,6 +219,8 @@ public:
                                   float p_radius = 0.5f,
                                   float p_tube_radius = 0.2f,
                                   const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
+
+    ecs::Entity CreateTileMapEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
     ecs::Entity CreateClothEntity(const std::string& p_name,
                                   ecs::Entity p_material_id,

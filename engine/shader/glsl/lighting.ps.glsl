@@ -45,7 +45,7 @@ void main() {
 
     const float depth = texture(t_GbufferDepth, uv).r;
     const Vector3f view_position = NdcToViewPos(uv, depth);
-    const vec3 world_position = (c_invView * vec4(view_position, 1.0f)).xyz;
+    const vec3 world_position = (c_invCamView * vec4(view_position, 1.0f)).xyz;
     float emissive = emissive_roughness_metallic.r;
     float roughness = emissive_roughness_metallic.g;
     float metallic = emissive_roughness_metallic.b;

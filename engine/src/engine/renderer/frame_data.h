@@ -15,6 +15,8 @@ namespace my {
 namespace my {
 
 class Scene;
+// @TODO: get rid of this
+class TileMapComponent;
 
 struct RenderOptions {
     bool isOpengl{ false };
@@ -32,6 +34,7 @@ struct PassContext {
     int pass_idx{ 0 };
 };
 
+// @TODO: refactor this
 template<typename BUFFER>
 struct BufferCache {
     std::vector<BUFFER> buffer;
@@ -101,6 +104,7 @@ struct FrameData {
     std::vector<RenderCommand> gbuffer_commands;
     std::vector<RenderCommand> transparent_commands;
     std::vector<RenderCommand> voxelization_commands;
+    std::vector<RenderCommand> tile_maps;
 
     // std::vector<InstanceContext> instances;
 

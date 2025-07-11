@@ -4,8 +4,8 @@
 
 vsoutput_color main(vsinput_color input) {
     float4 position = float4(input.position, 1.0);
-    position = mul(c_viewMatrix, position);
-    position = mul(c_projectionMatrix, position);
+    position = mul(c_camView, position);
+    position = mul(c_camProj, position);
     vsoutput_color output;
     output.color = input.color;
     output.position = position;

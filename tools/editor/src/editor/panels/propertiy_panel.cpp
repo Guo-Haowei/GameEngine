@@ -8,7 +8,6 @@
 #include "engine/runtime/scene_manager.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_dvars.h"
-#include "engine/renderer/renderer.h"
 
 namespace my {
 
@@ -97,7 +96,7 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
 
     TransformComponent* transform_component = p_scene.GetComponent<TransformComponent>(id);
     LightComponent* light_component = p_scene.GetComponent<LightComponent>(id);
-    ObjectComponent* object_component = p_scene.GetComponent<ObjectComponent>(id);
+    MeshRendererComponent* object_component = p_scene.GetComponent<MeshRendererComponent>(id);
     MeshComponent* mesh_component = object_component ? p_scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
     MaterialComponent* material_component = p_scene.GetComponent<MaterialComponent>(id);
     RigidBodyComponent* rigid_body_component = p_scene.GetComponent<RigidBodyComponent>(id);
@@ -288,13 +287,13 @@ void PropertyPanel::UpdateInternal(Scene& p_scene) {
         }
     });
 
-    DrawComponent("Object", object_component, [&](ObjectComponent& p_object) {
-        bool hide = !(p_object.flags & ObjectComponent::FLAG_RENDERABLE);
-        bool cast_shadow = p_object.flags & ObjectComponent::FLAG_CAST_SHADOW;
+    DrawComponent("Object", object_component, [&](MeshRendererComponent& p_object) {
+        bool hide = !(p_object.flags & MeshRendererComponent::FLAG_RENDERABLE);
+        bool cast_shadow = p_object.flags & MeshRendererComponent::FLAG_CAST_SHADOW;
         ImGui::Checkbox("Hide", &hide);
         ImGui::Checkbox("Cast shadow", &cast_shadow);
-        p_object.flags = (hide ? 0 : ObjectComponent::FLAG_RENDERABLE);
-        p_object.flags |= (cast_shadow ? ObjectComponent::FLAG_CAST_SHADOW : 0);
+        p_object.flags = (hide ? 0 : MeshRendererComponent::FLAG_RENDERABLE);
+        p_object.flags |= (cast_shadow ? MeshRendererComponent::FLAG_CAST_SHADOW : 0);
     });
 
     DrawComponent("Mesh", mesh_component, [&](MeshComponent& mesh) {

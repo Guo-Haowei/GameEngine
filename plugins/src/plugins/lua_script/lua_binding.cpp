@@ -98,13 +98,17 @@ bool OpenMathLib(lua_State* L) {
 }
 
 bool OpenInputLib(lua_State* L) {
+    // @TODO: route the input
     luabridge::getGlobalNamespace(L)
         .beginNamespace("input")
         .addFunction("GetMouseMove", []() {
-            return InputManager::GetSingleton().MouseMove();
+            CRASH_NOW();
+            //return InputManager::GetSingleton().MouseMove();
         })
         .addFunction("GetCursor", []() -> Vector2f {
-            return InputManager::GetSingleton().GetCursor();
+            CRASH_NOW();
+            //return InputManager::GetSingleton().GetCursor();
+            return Vector2f::Zero;
         })
         .endNamespace();
     return true;

@@ -85,7 +85,7 @@ static bool TreeNodeHelper(const Scene& p_scene,
 void HierarchyCreator::DrawNode(const Scene& p_scene, HierarchyNode* p_hier, ImGuiTreeNodeFlags p_flags) {
     DEV_ASSERT(p_hier);
     Entity id = p_hier->entity;
-    const ObjectComponent* object_component = p_scene.GetComponent<ObjectComponent>(id);
+    const MeshRendererComponent* object_component = p_scene.GetComponent<MeshRendererComponent>(id);
     const MeshComponent* mesh_component = object_component ? p_scene.GetComponent<MeshComponent>(object_component->meshId) : nullptr;
 
     p_flags |= (p_hier->children.empty() && !mesh_component) ? ImGuiTreeNodeFlags_Leaf : 0;

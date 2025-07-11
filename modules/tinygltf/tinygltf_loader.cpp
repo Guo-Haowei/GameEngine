@@ -70,12 +70,12 @@ void TinyGLTFLoader::ProcessNode(int p_node_index, ecs::Entity p_parent) {
 
             // the object component will use an identity transform but will be parented to the armature
             ecs::Entity objectID = m_scene->CreateObjectEntity("Animated::" + node.name);
-            ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(objectID);
+            MeshRendererComponent& object = *m_scene->GetComponent<MeshRendererComponent>(objectID);
             object.meshId = mesh_id;
             m_scene->AttachChild(objectID, entity);
         } else {  // this node is a mesh instance
             entity = m_scene->CreateObjectEntity("Object::" + node.name);
-            ObjectComponent& object = *m_scene->GetComponent<ObjectComponent>(entity);
+            MeshRendererComponent& object = *m_scene->GetComponent<MeshRendererComponent>(entity);
             object.meshId = m_scene->GetEntity<MeshComponent>(node.mesh);
         }
     } else if (node.camera >= 0) {

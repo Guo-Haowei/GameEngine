@@ -1,6 +1,6 @@
 #include "input_manager.h"
 
-#include "engine/core/io/input_event.h"
+#include "engine/input/input_event.h"
 
 namespace my {
 
@@ -26,7 +26,7 @@ void InputManager::BeginFrame() {
             if (value == true && prev_value == false) {
                 return InputState::PRESSED;
             }
-            if (value == false && prev_value != true) {
+            if (value == false && prev_value == true) {
                 return InputState::RELEASED;
             }
             if (value == true && !modifier_pressed) {
@@ -45,29 +45,31 @@ void InputManager::BeginFrame() {
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
-        m_inputEventQueue.EnqueueEvent(e);
+
+        m_router.Route(e);
     }
 
     // Send mouse wheel events
     if (m_wheelX != 0 || m_wheelY != 0) {
         auto e = std::make_shared<InputEventMouseWheel>(m_buttons,
                                                         m_prevButtons,
+                                                        m_cursor,
                                                         Vector2f(static_cast<float>(m_wheelX), static_cast<float>(m_wheelY)));
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
-        m_inputEventQueue.EnqueueEvent(e);
+
+        m_router.Route(e);
     }
 
     // Send mouse moved event
     if (m_mouseMoved) {
-        auto e = std::make_shared<InputEventMouseMove>(m_buttons, m_prevButtons);
-        e->m_pos = m_cursor;
-        e->m_prevPos = m_prevCursor;
+        auto e = std::make_shared<InputEventMouseMove>(m_buttons, m_prevButtons, m_cursor, m_prevCursor);
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
-        m_inputEventQueue.EnqueueEvent(e);
+
+        m_router.Route(e);
     }
 }
 
@@ -80,6 +82,14 @@ void InputManager::EndFrame() {
     m_wheelY = 0;
 
     m_mouseMoved = false;
+}
+
+void InputManager::PushInputHandler(IInputHandler* p_input_handler) {
+    m_router.PushHandler(p_input_handler);
+}
+
+IInputHandler* InputManager::PopInputHandler() {
+    return m_router.PopHandler();
 }
 
 bool InputManager::IsKeyDown(KeyCode p_key) {

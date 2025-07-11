@@ -58,7 +58,7 @@ DisplayManager* DisplayManager::Create() {
     }
 
 #if USING(PLATFORM_WINDOWS)
-    return new Win32DisplayManager();
+    return new GlfwDisplayManager();
 #elif USING(PLATFORM_WASM)
     return new GlfwDisplayManager();
 #else

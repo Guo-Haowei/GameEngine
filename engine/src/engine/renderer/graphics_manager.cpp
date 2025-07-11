@@ -8,6 +8,7 @@
 #include "engine/math/matrix_transform.h"
 #include "engine/render_graph/common_passes.h"
 #include "engine/render_graph/render_graph_defines.h"
+#include "engine/render_graph/render_graph_predefined.h"
 #include "engine/renderer/frame_data.h"
 #include "engine/renderer/graphics_dvars.h"
 #include "engine/renderer/renderer_misc.h"
@@ -398,10 +399,9 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
     }
 
 #if USING(PLATFORM_WASM)
-    m_activeRenderGraphName = RenderGraphName::EMPTY;
+    m_activeRenderGraphName = RenderGraphName::SCENE2D;
 #endif
 
-    // RenderGraphBuilder::CreateResources();
     const Vector2i frame_size = DVAR_GET_IVEC2(resolution);
     RenderGraphBuilderConfig config;
     config.frameWidth = frame_size.x;
@@ -410,7 +410,7 @@ auto GraphicsManager::SelectRenderGraph() -> Result<void> {
 
     switch (m_activeRenderGraphName) {
         case RenderGraphName::SCENE2D: {
-            auto res = RenderGraphBuilderExt::Create2D(config);
+            auto res = RenderGraph2D(config);
             if (!res) {
                 return HBN_ERROR(res.error());
             }

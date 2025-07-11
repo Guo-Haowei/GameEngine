@@ -361,7 +361,7 @@ void Bullet3PhysicsManager::OnSimBegin(Scene& p_scene) {
             continue;
         }
 
-        const ObjectComponent* object = p_scene.GetComponent<ObjectComponent>(id);
+        const MeshRendererComponent* object = p_scene.GetComponent<MeshRendererComponent>(id);
         if (DEV_VERIFY(object && object->meshId.IsValid())) {
             Vector4f a = transform_component->GetLocalMatrix() * Vector4f(component.point_0, 1.0f);
             Vector4f b = transform_component->GetLocalMatrix() * Vector4f(component.point_1, 1.0f);

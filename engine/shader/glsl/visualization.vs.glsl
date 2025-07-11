@@ -31,7 +31,7 @@ void main() {
         coord_pos = 2.0 * coord_pos - vec3(1.0);                                          // [-1, 1]
         vec3 offset = c_voxelWorldSizeHalf * coord_pos + c_voxelWorldCenter + 0.5 * vec3(voxel_size);
         vec3 world_position = voxel_size * in_position + offset;
-        gl_Position = c_projectionMatrix * c_viewMatrix * vec4(world_position, 1.0);
+        gl_Position = c_camProj * c_camView * vec4(world_position, 1.0);
 
         pass_color = color;
     }

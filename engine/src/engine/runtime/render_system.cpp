@@ -14,6 +14,7 @@
 namespace my {
 
 extern void RunMeshRenderSystem(Scene& p_scene, FrameData& p_framedata);
+extern void RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata);
 
 auto RenderSystem::InitializeImpl() -> Result<void> {
     return Result<void>();
@@ -77,8 +78,10 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
     // camera
     {
         const auto& camera = p_out_data.mainCamera;
-        cache.c_invView = glm::inverse(camera.viewMatrix);
-        cache.c_invProjection = glm::inverse(camera.projectionMatrixRendering);
+        cache.c_camView = camera.viewMatrix;
+        cache.c_camProj = camera.projectionMatrixRendering;
+        cache.c_invCamView = glm::inverse(camera.viewMatrix);
+        cache.c_invCamProj = glm::inverse(camera.projectionMatrixRendering);
         cache.c_cameraFovDegree = camera.fovy.GetDegree();
         cache.c_cameraForward = camera.front;
         cache.c_cameraRight = camera.right;
@@ -92,7 +95,7 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
         cache.c_enableBloom = options.bloomEnabled;
 
         cache.c_debugVoxelId = options.debugVoxelId;
-        cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
+        cache.c_ptObjectCount = (int)p_scene.m_MeshRendererComponents.GetCount();
     }
 
     // IBL
@@ -140,7 +143,7 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
     // @TODO:
     const int level = options.debugBvhDepth;
     if (level > -1) {
-        for (auto const [id, obj] : p_scene.m_ObjectComponents) {
+        for (auto const [id, obj] : p_scene.m_MeshRendererComponents) {
             const MeshComponent* mesh = p_scene.GetComponent<MeshComponent>(obj.meshId);
             const TransformComponent* transform = p_scene.GetComponent<TransformComponent>(id);
             if (mesh && transform) {
@@ -199,6 +202,17 @@ void RenderSystem::BeginFrame() {
 }
 
 void RenderSystem::RenderFrame(Scene& p_scene) {
+    // HACK
+    auto backend = m_app->GetGraphicsManager()->GetBackend();
+    switch (backend) {
+        case my::Backend::OPENGL:
+        case my::Backend::D3D11:
+        case my::Backend::D3D12:
+            break;
+        default:
+            return;
+    }
+
     HBN_PROFILE_EVENT();
     CameraComponent& camera = *m_app->GetActiveCamera();
 
@@ -209,6 +223,8 @@ void RenderSystem::RenderFrame(Scene& p_scene) {
     FillConstantBuffer(p_scene, framedata);
 
     RunMeshRenderSystem(p_scene, framedata);
+
+    RunTileMapRenderSystem(p_scene, framedata);
 
     // @TODO: RunSprite
     // @TODO: RunTileMap
@@ -223,16 +239,6 @@ void RenderSystem::RenderFrame(Scene& p_scene) {
 
     auto& context = m_frameData->drawDebugContext;
     context.drawCount = (uint32_t)context.positions.size();
-}
-
-void RenderSystem::RunTileMapRenderSystem(Scene& p_scene, FrameData& p_framedata) {
-    unused(p_scene);
-    unused(p_framedata);
-}
-
-void RenderSystem::RunSpriteRenderSystem(Scene& p_scene, FrameData& p_framedata) {
-    unused(p_scene);
-    unused(p_framedata);
 }
 
 void RenderSystem::FillCameraData(const CameraComponent& p_camera, FrameData& p_framedata) {
