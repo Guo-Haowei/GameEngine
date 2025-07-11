@@ -154,7 +154,7 @@ struct GpuMeshDesc {
         uint32_t offsetInByte{ 0 };
     };
 
-    uint32_t drawCount{ 0 };
+    uint32_t drawCount{ 0 };  // draw count
     uint32_t enabledVertexCount{ 0 };
     VertexLayout vertexLayout[MESH_MAX_VERTEX_BUFFER_COUNT];
 };

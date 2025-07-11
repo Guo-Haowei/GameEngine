@@ -781,6 +781,8 @@ public:
     int GetWidth() const { return m_width; }
     int GetHeight() const { return m_height; }
 
+    void CreateRenderData();
+
     void Serialize(Archive& p_archive, uint32_t p_version);
 
     void OnDeserialized() {}
@@ -794,8 +796,8 @@ public:
     std::vector<int> m_tiles;
 
     // Non-serialized
-    // @TODO: texture?
     mutable const ImageAsset* textureAsset;
+    mutable std::shared_ptr<GpuMesh> m_mesh;
 };
 
 #pragma endregion TILE_MAP_COMPONENT

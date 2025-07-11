@@ -106,7 +106,7 @@ struct FrameData {
     std::vector<RenderCommand> voxelization_commands;
 
     // @TODO: refactor
-    std::shared_ptr<TileMapComponent> tiles;
+    std::shared_ptr<GpuMesh> tiles;
 
     // std::vector<InstanceContext> instances;
 
