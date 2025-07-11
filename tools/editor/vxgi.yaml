@@ -139,7 +139,7 @@ entities:
       scale: [1, 1, 1]
     HierarchyComponent:
       parent_id: 4
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 1073741827
       mesh_id: 11
   - id: 11
@@ -168,7 +168,7 @@ entities:
       scale: [1, 1, 1]
     HierarchyComponent:
       parent_id: 4
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 3
       mesh_id: 13
   - id: 13
@@ -197,7 +197,7 @@ entities:
       scale: [1, 1, 0.99999994]
     HierarchyComponent:
       parent_id: 4
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 1073741827
       mesh_id: 15
   - id: 15
@@ -226,7 +226,7 @@ entities:
       scale: [1, 1, 0.99999994]
     HierarchyComponent:
       parent_id: 4
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 1073741827
       mesh_id: 17
   - id: 17
@@ -255,7 +255,7 @@ entities:
       scale: [0.99999994, 1, 1]
     HierarchyComponent:
       parent_id: 4
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 1073741827
       mesh_id: 19
   - id: 19
@@ -296,7 +296,7 @@ entities:
           enabled: true
         - path: ""
           enabled: true
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 1
       mesh_id: 21
     LightComponent:
@@ -597,7 +597,7 @@ entities:
       scale: [1, 1, 1]
     HierarchyComponent:
       parent_id: 25
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 1073741827
       mesh_id: 24
   - id: 48
@@ -12780,7 +12780,7 @@ entities:
       scale: [3.0000017, 6, 3.0000026]
     HierarchyComponent:
       parent_id: 1
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 3
       mesh_id: 51
   - id: 51
@@ -13840,7 +13840,7 @@ entities:
       scale: [0.008, 0.008, 0.008]
     HierarchyComponent:
       parent_id: 53
-    ObjectComponent:
+    MeshRendererComponent:
       flags: 1073741827
       mesh_id: 79
   - id: 81

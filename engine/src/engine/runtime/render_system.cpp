@@ -95,7 +95,7 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
         cache.c_enableBloom = options.bloomEnabled;
 
         cache.c_debugVoxelId = options.debugVoxelId;
-        cache.c_ptObjectCount = (int)p_scene.m_ObjectComponents.GetCount();
+        cache.c_ptObjectCount = (int)p_scene.m_MeshRendererComponents.GetCount();
     }
 
     // IBL
@@ -143,7 +143,7 @@ static void FillConstantBuffer(const Scene& p_scene, FrameData& p_out_data) {
     // @TODO:
     const int level = options.debugBvhDepth;
     if (level > -1) {
-        for (auto const [id, obj] : p_scene.m_ObjectComponents) {
+        for (auto const [id, obj] : p_scene.m_MeshRendererComponents) {
             const MeshComponent* mesh = p_scene.GetComponent<MeshComponent>(obj.meshId);
             const TransformComponent* transform = p_scene.GetComponent<TransformComponent>(id);
             if (mesh && transform) {

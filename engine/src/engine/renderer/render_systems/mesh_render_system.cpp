@@ -61,7 +61,7 @@ static void FillPass(const Scene& p_scene,
                      std::vector<RenderCommand>& p_commands,
                      FrameData& p_framedata) {
 
-    for (auto [entity, obj] : p_scene.m_ObjectComponents) {
+    for (auto [entity, obj] : p_scene.m_MeshRendererComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
         }
@@ -329,7 +329,7 @@ static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
     FilterFunc filter_main = [&](const AABB& p_aabb) -> bool { return camera_frustum.Intersects(p_aabb); };
 
     const bool is_opengl = p_framedata.options.isOpengl;
-    for (auto [entity, obj] : p_scene.m_ObjectComponents) {
+    for (auto [entity, obj] : p_scene.m_MeshRendererComponents) {
         const bool is_renderable = obj.flags & MeshRendererComponent::FLAG_RENDERABLE;
         const bool is_transparent = obj.flags & MeshRendererComponent::FLAG_TRANSPARENT;
         const bool is_opaque = is_renderable && !is_transparent;

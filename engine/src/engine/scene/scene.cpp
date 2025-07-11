@@ -532,7 +532,7 @@ void Scene::RemoveEntity(ecs::Entity p_entity) {
     }
     m_HierarchyComponents.Remove(p_entity);
     m_TransformComponents.Remove(p_entity);
-    m_ObjectComponents.Remove(p_entity);
+    m_MeshRendererComponents.Remove(p_entity);
     m_ParticleEmitterComponents.Remove(p_entity);
     m_ForceFieldComponents.Remove(p_entity);
     m_NameComponents.Remove(p_entity);
