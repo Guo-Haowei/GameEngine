@@ -25,10 +25,15 @@ static void Pass2DDrawFunc(RenderPassExcutionContext& p_ctx) {
     const PassContext& pass = p_ctx.frameData.mainPass;
     cmd.BindConstantBufferSlot<PerPassConstantBuffer>(frame.passCb.get(), pass.pass_idx);
 
-    const auto& tile = p_ctx.frameData.tiles;
-    cmd.SetMesh(tile.get());
     cmd.SetPipelineState(PSO_SPRITE);
-    cmd.DrawElementsInstanced(1, tile->desc.drawCount);
+
+    for (const RenderCommand& render_cmd : p_ctx.frameData.tile_maps) {
+        const DrawCommand& draw = render_cmd.draw;
+        const auto tile = draw.mesh_data;
+        cmd.SetMesh(tile);
+        cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
+        cmd.DrawElementsInstanced(1, draw.indexCount);
+    }
 }
 
 auto RenderGraph2D(RenderGraphBuilderConfig& p_config) -> Result<std::shared_ptr<RenderGraph>> {

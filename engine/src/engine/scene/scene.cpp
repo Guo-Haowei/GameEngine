@@ -418,6 +418,16 @@ ecs::Entity Scene::CreateTorusEntity(const std::string& p_name,
     return entity;
 }
 
+ecs::Entity Scene::CreateTileMapEntity(const std::string& p_name, const Matrix4x4f& p_transform) {
+    auto entity = CreateNameEntity(p_name);
+
+    TransformComponent& transform = Create<TransformComponent>(entity);
+    transform.MatrixTransform(p_transform);
+
+    Create<TileMapComponent>(entity);
+    return entity;
+}
+
 ecs::Entity Scene::CreateClothEntity(const std::string& p_name,
                                      ecs::Entity p_material_id,
                                      const Vector3f& p_point_0,

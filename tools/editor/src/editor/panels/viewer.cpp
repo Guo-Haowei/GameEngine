@@ -248,9 +248,7 @@ void Viewer::DrawToolBar() {
 }
 
 bool Viewer::HandleInput(std::shared_ptr<InputEvent> p_input_event) {
-    // @TODO: handle tool event
     bool handled = false;
-
     switch (m_activeTool) {
         case my::ViewerTool::GizmoEditing:
             handled = HandleGizmoEditing(p_input_event);
@@ -270,7 +268,19 @@ bool Viewer::HandleInput(std::shared_ptr<InputEvent> p_input_event) {
 }
 
 bool Viewer::HandleTileMapPainting(std::shared_ptr<InputEvent> p_input_event) {
-    unused(p_input_event);
+    InputEvent* event = p_input_event.get();
+    if (auto e = dynamic_cast<InputEventMouse*>(event); e) {
+        if (!e->IsModiferPressed()) {
+            if (e->IsButtonDown(MouseButton::LEFT)) {
+                LOG_OK("PAINTING");
+                return true;
+            }
+            if (e->IsButtonDown(MouseButton::RIGHT)) {
+                LOG_OK("ERASING");
+                return true;
+            }
+        }
+    }
     return false;
 }
 

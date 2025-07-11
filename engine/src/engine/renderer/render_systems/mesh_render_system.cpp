@@ -54,14 +54,13 @@ static void FillMaterialConstantBuffer(bool p_is_opengl, const MaterialComponent
     cb.c_hasMaterialMap = set_texture(MaterialComponent::TEXTURE_METALLIC_ROUGHNESS, cb.c_materialMapHandle, cb.c_MaterialMapResidentHandle);
 };
 
+// @TODO: refactor this
 static void FillPass(const Scene& p_scene,
                      FilterObjectFunc1 p_filter1,
                      FilterObjectFunc2 p_filter2,
                      std::vector<RenderCommand>& p_commands,
-                     bool p_use_material,
                      FrameData& p_framedata) {
 
-    const bool is_opengl = p_framedata.options.isOpengl;
     for (auto [entity, obj] : p_scene.m_ObjectComponents) {
         if (!p_scene.Contains<TransformComponent>(entity)) {
             continue;
@@ -106,35 +105,12 @@ static void FillPass(const Scene& p_scene,
             draw.bone_idx = -1;
         }
 
-        draw.mesh_data = (GpuMesh*)mesh.gpuResource.get();
+        draw.mesh_data = mesh.gpuResource.get();
         draw.mat_idx = -1;
         DEV_ASSERT(draw.mesh_data);
 
-        if (!p_use_material) {
-            draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
-            p_commands.emplace_back(RenderCommand::from(draw));
-            continue;
-        }
-
-        for (const auto& subset : mesh.subsets) {
-            aabb = subset.local_bound;
-            aabb.ApplyMatrix(world_matrix);
-            if (!p_filter2(aabb)) {
-                continue;
-            }
-
-            const MaterialComponent* material = p_scene.GetComponent<MaterialComponent>(subset.material_id);
-            MaterialConstantBuffer material_buffer;
-            FillMaterialConstantBuffer(is_opengl, material, material_buffer);
-
-            // Draw submesh if pass cares about material
-            DrawCommand draw2 = draw;
-            draw2.indexCount = subset.index_count;
-            draw2.indexOffset = subset.index_offset;
-            draw2.mat_idx = p_framedata.materialCache.FindOrAdd(subset.material_id, material_buffer);
-
-            p_commands.emplace_back(RenderCommand::from(draw2));
-        }
+        draw.indexCount = static_cast<uint32_t>(mesh.indices.size());
+        p_commands.emplace_back(RenderCommand::From(draw));
     }
 }
 
@@ -203,7 +179,7 @@ static void FillLightBuffer(const Scene& p_scene, FrameData& p_framedata) {
                     [&](const AABB& p_aabb) {
                         return light_frustum.Intersects(p_aabb);
                     },
-                    p_framedata.shadow_pass_commands, false,
+                    p_framedata.shadow_pass_commands,
                     p_framedata);
             } break;
             case LIGHT_TYPE_POINT: {
@@ -405,7 +381,7 @@ static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
 
             DrawCommand drawCmd = draw;
             if (p_model_only) {
-                p_commands.emplace_back(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::From(drawCmd));
                 return;
             }
 
@@ -424,7 +400,7 @@ static void FillMainPass(const Scene& p_scene, FrameData& p_framedata) {
                 drawCmd.indexOffset = subset.index_offset;
                 drawCmd.mat_idx = p_framedata.materialCache.FindOrAdd(subset.material_id, material_buffer);
 
-                p_commands.emplace_back(RenderCommand::from(drawCmd));
+                p_commands.emplace_back(RenderCommand::From(drawCmd));
             }
         };
 

@@ -388,8 +388,6 @@ Scene* Application::CreateInitialScene() {
     scene->m_root = root;
 
     {
-        // test code, remember to take out
-        auto id = scene->CreateNameEntity("tile_map");
 
         const std::vector<std::vector<int>> data = {
             { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -407,8 +405,13 @@ Scene* Application::CreateInitialScene() {
             { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
             { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
         };
-        TileMapComponent& tileMap = scene->Create<TileMapComponent>(id);
-        tileMap.FromArray(data);
+
+        // test code, remember to take out
+        auto id = scene->CreateTileMapEntity("tile_map");
+        scene->AttachChild(id);
+
+        TileMapComponent* tileMap = scene->GetComponent<TileMapComponent>(id);
+        tileMap->FromArray(data);
     }
 
     // test code, remember to take out

@@ -220,6 +220,8 @@ public:
                                   float p_tube_radius = 0.2f,
                                   const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
 
+    ecs::Entity CreateTileMapEntity(const std::string& p_name, const Matrix4x4f& p_transform = Matrix4x4f(1.0f));
+
     ecs::Entity CreateClothEntity(const std::string& p_name,
                                   ecs::Entity p_material_id,
                                   const Vector3f& p_point_0,

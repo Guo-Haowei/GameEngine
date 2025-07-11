@@ -48,11 +48,11 @@ struct RenderCommand {
         ComputeCommand compute;
     };
 
-    static RenderCommand from(const DrawCommand& p_draw) {
+    static RenderCommand From(const DrawCommand& p_draw) {
         return { RenderCommandType::Draw, { .draw = p_draw } };
     }
 
-    static RenderCommand from(const ComputeCommand& p_compute) {
+    static RenderCommand From(const ComputeCommand& p_compute) {
         return { RenderCommandType::Compute, { .compute = p_compute } };
     }
 };

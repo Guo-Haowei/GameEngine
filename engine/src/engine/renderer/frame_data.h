@@ -104,9 +104,7 @@ struct FrameData {
     std::vector<RenderCommand> gbuffer_commands;
     std::vector<RenderCommand> transparent_commands;
     std::vector<RenderCommand> voxelization_commands;
-
-    // @TODO: refactor
-    std::shared_ptr<GpuMesh> tiles;
+    std::vector<RenderCommand> tile_maps;
 
     // std::vector<InstanceContext> instances;
 
