@@ -12,8 +12,8 @@ SBUFFER_LIST
 #include "shader_resource_defines.hlsl.h"
 #endif
 
-vsoutput_uv main(vsinput_position input, uint instance_id : SV_INSTANCEID) {
-    vsoutput_uv output;
+VS_OUTPUT_UV main(VS_INPUT_POS input, uint instance_id : SV_INSTANCEID) {
+    VS_OUTPUT_UV output;
 
     Particle particle = GlobalParticleData[instance_id];
     if (particle.lifeRemaining <= 0.0) {

@@ -3,6 +3,7 @@
 #include "engine/math/aabb.h"
 #include "engine/math/angle.h"
 #include "engine/math/geomath.h"
+#include "scene_component_base.h"
 
 namespace my {
 #include "shader_defines.hlsl.h"
@@ -24,19 +25,6 @@ class Archive;
 class FileAccess;
 class Scene;
 class ScriptableEntity;
-
-struct ComponentFlagBase {
-    enum : uint32_t {
-        FLAG_NONE = BIT(0),
-        FLAG_DIRTY = BIT(31),
-    };
-
-    uint32_t flags = FLAG_DIRTY;
-
-    bool IsDirty() const { return flags & FLAG_DIRTY; }
-    void SetDirty(bool p_dirty = true) { p_dirty ? flags |= FLAG_DIRTY : flags &= ~FLAG_DIRTY; }
-    void OnDeserialized() { flags |= FLAG_DIRTY; }
-};
 
 #pragma region NAME_COMPONENT
 class NameComponent {
@@ -761,46 +749,6 @@ public:
     std::array<Matrix4x4f, 6> m_lightSpaceMatrices;
 };
 #pragma endregion LIGHT_COMPONENT
-
-#pragma region TILE_MAP_COMPONENT
-struct TileMapVertex {
-    Vector2f position;
-    Vector2f uv;
-};
-
-class TileMapComponent : public ComponentFlagBase {
-public:
-    void FromArray(const std::vector<std::vector<int>>& p_data);
-
-    void SetTile(int p_x, int p_y, int p_tile_id);
-
-    int GetTile(int p_x, int p_y) const;
-
-    void SetDimensions(int p_width, int p_height);
-
-    int GetWidth() const { return m_width; }
-    int GetHeight() const { return m_height; }
-
-    void CreateRenderData();
-
-    void Serialize(Archive& p_archive, uint32_t p_version);
-
-    void OnDeserialized() {}
-
-    static void RegisterClass();
-
-    // @TODO: change to private
-public:
-    int m_width{ 0 };
-    int m_height{ 0 };
-    std::vector<int> m_tiles;
-
-    // Non-serialized
-    mutable const ImageAsset* textureAsset;
-    mutable std::shared_ptr<GpuMesh> m_mesh;
-};
-
-#pragma endregion TILE_MAP_COMPONENT
 
 // #pragma region _COMPONENT
 // #pragma endregion _COMPONENT

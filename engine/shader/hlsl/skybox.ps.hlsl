@@ -17,7 +17,7 @@ float2 sample_spherical_map(float3 v) {
 }
 #endif
 
-float4 main(vsoutput_position input) : SV_TARGET {
+float4 main(VS_OUTPUT_POSITION input) : SV_TARGET {
     float3 uvw = input.world_position;
 #if !defined(HLSL_2_GLSL)
     uvw.y = -uvw.y;

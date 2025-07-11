@@ -18,10 +18,14 @@ protected:
     void TileSetup();
     void TilePaint();
 
+    // @TODO: refactor
     const ImageAsset* m_tileset{ nullptr };
     const ImageAsset* m_checkerboard{ nullptr };
 
     Vector2i m_sep{ 64, 64 };
+
+    int m_selected_x = -1;
+    int m_selected_y = -1;
 };
 
 }  // namespace my

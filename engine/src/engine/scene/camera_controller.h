@@ -26,21 +26,4 @@ public:
     float m_scrollSpeed{ 2.0f };
 };
 
-// class EditorCameraController : public ScriptableEntity {
-// public:
-//     void Move(const CameraInputState& p_context);
-//
-//     void SetMoveSpeed(float p_speed) { m_moveSpeed = p_speed; }
-//
-//     void SetRotateSpeed(float p_speed) { m_rotateSpeed = p_speed; }
-//
-//     void SetScrollSpeed(float p_speed) { m_scrollSpeed = p_speed; }
-//
-// private:
-//     void OnCreate() override;
-//
-//     void OnUpdate(float p_timestep) override;
-//
-// };
-
 }  // namespace my

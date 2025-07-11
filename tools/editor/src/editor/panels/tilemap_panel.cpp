@@ -66,19 +66,18 @@ void TileMapPanel::TilePaint() {
     const int num_col = static_cast<int>(tile_size.x / m_sep.x);
     const int num_row = static_cast<int>(tile_size.y / m_sep.y);
 
-    static int selectedX = -1, selectedY = -1;
     if (hovered && clicked) {
         ImVec2 mouse_pos = ImGui::GetMousePos();
         float cellWidth = tile_size.x / num_col;
         float cellHeight = tile_size.y / num_row;
 
-        int localX = (int)((mouse_pos.x - cursor.x) / cellWidth);
-        int localY = (int)((mouse_pos.y - cursor.y) / cellHeight);
+        int local_x = (int)((mouse_pos.x - cursor.x) / cellWidth);
+        int local_y = (int)((mouse_pos.y - cursor.y) / cellHeight);
 
         // Clamp to valid range
-        if (localX >= 0 && localX < num_col && localY >= 0 && localY < num_row) {
-            selectedX = localX;
-            selectedY = localY;
+        if (local_x >= 0 && local_x < num_col && local_y >= 0 && local_y < num_row) {
+            m_selected_x = local_x;
+            m_selected_y = local_y;
         }
     }
 
@@ -94,15 +93,19 @@ void TileMapPanel::TilePaint() {
                           IM_COL32(255, 255, 255, 255));
     }
 
-    if (selectedX >= 0 && selectedY >= 0) {
+    if (m_selected_x >= 0 && m_selected_y >= 0) {
         float cellW = tile_size.x / num_col;
         float cellH = tile_size.y / num_row;
 
-        ImVec2 pMin = ImVec2(cursor.x + selectedX * cellW, cursor.y + selectedY * cellH);
+        ImVec2 pMin = ImVec2(cursor.x + m_selected_x * cellW, cursor.y + m_selected_y * cellH);
         ImVec2 pMax = ImVec2(pMin.x + cellW, pMin.y + cellH);
 
         draw_list->AddRectFilled(pMin, pMax, IM_COL32(0, 255, 0, 100));  // green transparent overlay
         draw_list->AddRect(pMin, pMax, IM_COL32(0, 255, 0, 255));        // solid border
+
+        m_editor.context.selected_tile = m_selected_x + m_selected_y * 3 + 1;
+    } else {
+        m_editor.context.selected_tile = -1;
     }
 }
 

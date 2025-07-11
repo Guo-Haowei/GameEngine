@@ -2,8 +2,8 @@
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 
-vsoutput_mesh main(vsinput_mesh input,
-                   uint instance_id : SV_InstanceID) {
+VS_OUTPUT_MESH main(VS_INPUT_MESH input,
+                    uint instance_id : SV_InstanceID) {
     float4x4 world_matrix;
     switch (c_meshFlag) {
         case MESH_HAS_BONE: {
@@ -31,7 +31,7 @@ vsoutput_mesh main(vsinput_mesh input,
     float3 view_position = position.xyz;
     position = mul(c_projectionMatrix, position);
 
-    vsoutput_mesh result;
+    VS_OUTPUT_MESH result;
     result.position = position;
     result.world_position = view_position;
     // @TODO: fix normal

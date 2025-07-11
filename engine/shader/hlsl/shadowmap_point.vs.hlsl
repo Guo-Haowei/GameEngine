@@ -2,8 +2,8 @@
 #include "cbuffer.hlsl.h"
 #include "hlsl/input_output.hlsl"
 
-vsoutput_position main(vsinput_mesh input,
-                       uint instance_id : SV_InstanceID) {
+VS_OUTPUT_POSITION main(VS_INPUT_MESH input,
+                        uint instance_id : SV_InstanceID) {
     float4x4 world_matrix;
     switch (c_meshFlag) {
         case MESH_HAS_BONE: {
@@ -22,7 +22,7 @@ vsoutput_position main(vsinput_mesh input,
     }
 
     float4 position = mul(world_matrix, float4(input.position, 1.0));
-    vsoutput_position output;
+    VS_OUTPUT_POSITION output;
     output.world_position = position.xyz;
     output.position = mul(c_pointLightMatrix, position);
     return output;

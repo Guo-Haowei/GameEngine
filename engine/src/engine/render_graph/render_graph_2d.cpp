@@ -30,6 +30,9 @@ static void Pass2DDrawFunc(RenderPassExcutionContext& p_ctx) {
     for (const RenderCommand& render_cmd : p_ctx.frameData.tile_maps) {
         const DrawCommand& draw = render_cmd.draw;
         const auto tile = draw.mesh_data;
+        if (draw.texture) {
+            cmd.BindTexture(Dimension::TEXTURE_2D, draw.texture->GetHandle(), 0);
+        }
         cmd.SetMesh(tile);
         cmd.BindConstantBufferSlot<PerBatchConstantBuffer>(frame.batchCb.get(), draw.batch_idx);
         cmd.DrawElementsInstanced(1, draw.indexCount);

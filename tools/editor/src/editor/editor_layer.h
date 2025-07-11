@@ -36,6 +36,10 @@ struct EditorContext {
     EditorCameraType cameraType{ CAMERA_3D };
     CameraComponent cameras[CAMERA_MAX];
 
+    // for tile map editor
+    // need to refactor
+    int selected_tile = -1;
+
     CameraComponent& GetActiveCamera() {
         return cameras[cameraType];
     }

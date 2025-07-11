@@ -482,7 +482,13 @@ public:
         int tile_y = static_cast<int>(position.y);
 
         // erase if right button down
-        const int value = m_viewer.m_inputState.buttons[std::to_underlying(MouseButton::RIGHT)] ? 0 : 1;
+        int value = 0;
+        if (m_viewer.m_inputState.buttons[std::to_underlying(MouseButton::LEFT)]) {
+            value = m_viewer.m_editor.context.selected_tile;
+            if (value < 0 || value > 5) {
+                value = 0;
+            }
+        }
         tile_map->SetTile(tile_x, tile_y, value);
     }
 

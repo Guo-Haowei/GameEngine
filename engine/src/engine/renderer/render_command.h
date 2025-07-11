@@ -3,6 +3,7 @@
 // clang-format off
 namespace my { enum StencilFlags : uint8_t; }
 namespace my { struct GpuMesh; }
+namespace my { struct GpuTexture; }
 // clang-format on
 
 namespace my {
@@ -13,12 +14,6 @@ enum class RenderCommandType {
 };
 
 struct DrawCommand {
-    // PipelineHandle pipeline;       // PSO: shaders, depth, blend, layout
-    // MeshHandle mesh;               // geometry
-    // MaterialHandle material;       // texture + uniform refs
-    // BufferHandle objectCBuffer;    // per-object constants (e.g., model matrix)
-    // uint32_t objectCBufferOffset;  // offset into dynamic buffer, if needed
-
     uint32_t indexCount = 0;
     uint32_t vertexOffset = 0;
     uint32_t indexOffset = 0;
@@ -29,6 +24,8 @@ struct DrawCommand {
     int batch_idx = -1;
 
     const GpuMesh* mesh_data = nullptr;
+    const GpuTexture* texture = nullptr;
+
     int bone_idx = -1;
     int mat_idx = -1;
 

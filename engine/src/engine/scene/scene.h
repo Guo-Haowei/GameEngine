@@ -5,6 +5,7 @@
 #include "engine/ecs/view.h"
 #include "engine/math/ray.h"
 #include "engine/scene/scene_component.h"
+#include "engine/scene/scene_component_2d.h"
 
 struct lua_State;
 
