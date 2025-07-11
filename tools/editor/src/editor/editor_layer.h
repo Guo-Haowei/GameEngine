@@ -50,12 +50,6 @@ enum class EditorState {
 
 class EditorLayer : public Layer, public IInputHandler {
 public:
-    enum State {
-        STATE_TRANSLATE,
-        STATE_ROTATE,
-        STATE_SCALE,
-    };
-
     EditorLayer();
     virtual ~EditorLayer() = default;
 
@@ -67,8 +61,6 @@ public:
 
     void SelectEntity(ecs::Entity p_selected);
     ecs::Entity GetSelectedEntity() const { return m_selected; }
-    State GetState() const { return m_state; }
-    void SetState(State p_state) { m_state = p_state; }
 
     uint64_t GetDisplayedImage() const { return m_displayedImage; }
     void SetDisplayedImage(uint64_t p_image) { m_displayedImage = p_image; }
@@ -99,7 +91,6 @@ private:
 
     std::vector<std::shared_ptr<EditorItem>> m_panels;
     ecs::Entity m_selected;
-    State m_state{ STATE_TRANSLATE };
     Scene* m_simScene{ nullptr };
 
     uint64_t m_displayedImage = 0;

@@ -26,7 +26,7 @@ void InputManager::BeginFrame() {
             if (value == true && prev_value == false) {
                 return InputState::PRESSED;
             }
-            if (value == false && prev_value != true) {
+            if (value == false && prev_value == true) {
                 return InputState::RELEASED;
             }
             if (value == true && !modifier_pressed) {
@@ -53,6 +53,7 @@ void InputManager::BeginFrame() {
     if (m_wheelX != 0 || m_wheelY != 0) {
         auto e = std::make_shared<InputEventMouseWheel>(m_buttons,
                                                         m_prevButtons,
+                                                        m_cursor,
                                                         Vector2f(static_cast<float>(m_wheelX), static_cast<float>(m_wheelY)));
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
@@ -63,9 +64,7 @@ void InputManager::BeginFrame() {
 
     // Send mouse moved event
     if (m_mouseMoved) {
-        auto e = std::make_shared<InputEventMouseMove>(m_buttons, m_prevButtons);
-        e->m_pos = m_cursor;
-        e->m_prevPos = m_prevCursor;
+        auto e = std::make_shared<InputEventMouseMove>(m_buttons, m_prevButtons, m_cursor, m_prevCursor);
         e->m_altPressed = alt;
         e->m_ctrlPressed = ctrl;
         e->m_shiftPressed = shift;
