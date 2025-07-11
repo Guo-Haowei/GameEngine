@@ -1,6 +1,6 @@
 #pragma once
 #include "editor/editor_window.h"
-#include "engine/core/input/input_router.h"
+#include "engine/input/input_router.h"
 #include "engine/scene/camera_controller.h"
 
 namespace my {

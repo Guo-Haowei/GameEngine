@@ -13,7 +13,7 @@
 #include "editor/panels/tilemap_panel.h"
 #include "editor/panels/viewer.h"
 #include "editor/widget.h"
-#include "engine/core/input/input_event.h"
+#include "engine/input/input_event.h"
 #include "engine/core/string/string_utils.h"
 #include "engine/renderer/graphics_manager.h"
 #include "engine/runtime/input_manager.h"

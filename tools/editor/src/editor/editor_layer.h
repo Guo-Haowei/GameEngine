@@ -2,7 +2,7 @@
 #include "editor/editor_command.h"
 #include "editor/editor_window.h"
 #include "engine/core/base/ring_buffer.h"
-#include "engine/core/input/input_router.h"
+#include "engine/input/input_router.h"
 #include "engine/runtime/application.h"
 #include "engine/runtime/layer.h"
 #include "engine/scene/scene.h"

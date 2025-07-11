@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/core/base/singleton.h"
-#include "engine/core/input/input_router.h"
+#include "engine/input/input_router.h"
 #include "engine/math/vector.h"
 #include "engine/runtime/module.h"
 
