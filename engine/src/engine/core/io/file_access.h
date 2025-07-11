@@ -61,8 +61,11 @@ public:
     AccessType GetAccessType() const { return m_accessType; }
     ModeFlags GetOpenMode() const { return m_openMode; }
 
-    static void SetFolderCallback(GetUserFolderFunc p_user_func, GetResourceFolderFunc p_resource_func) {
+    static void SetUserFolderCallback(GetUserFolderFunc p_user_func) {
         s_getUserFolderFunc = p_user_func;
+    }
+
+    static void SetResFolderCallback(GetResourceFolderFunc p_resource_func) {
         s_getResourceFolderFunc = p_resource_func;
     }
 

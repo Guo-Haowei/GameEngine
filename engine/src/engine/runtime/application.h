@@ -22,7 +22,6 @@ class SceneManager;
 class ScriptManager;
 
 struct ApplicationSpec {
-    std::string_view resourceFolder;
     std::string_view userFolder;
     std::string_view name;
     int width;
@@ -114,6 +113,7 @@ protected:
     std::string m_appName;
     std::string m_userFolder;
     std::string m_resourceFolder;
+    std::string m_projectFolder;
     ApplicationSpec m_specification;
 
     EventQueue m_eventQueue;

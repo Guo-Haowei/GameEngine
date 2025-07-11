@@ -19,7 +19,7 @@ auto SceneManager::InitializeImpl() -> Result<void> {
     m_scene = m_app->CreateInitialScene();
     BumpRevision();
 
-    const std::string& path = DVAR_GET_STRING(project);
+    const std::string& path = DVAR_GET_STRING(scene);
     if (!path.empty()) {
         RequestScene(path);
     }

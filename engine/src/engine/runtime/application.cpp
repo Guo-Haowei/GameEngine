@@ -1,6 +1,8 @@
 #include "application.h"
 
+#include <fstream>
 #include <imgui/imgui.h>
+#include <yaml-cpp/yaml.h>
 
 #include "engine/core/debugger/profiler.h"
 #include "engine/core/dynamic_variable/dynamic_variable_manager.h"
@@ -56,11 +58,7 @@ Application::Application(const ApplicationSpec& p_spec, Type p_type) : m_specifi
     // select work directory
     m_userFolder = std::string{ m_specification.userFolder };
 
-    m_resourceFolder = std::string{ m_specification.resourceFolder };
-
-    FileAccess::SetFolderCallback(
-        [&]() { return m_userFolder.c_str(); },
-        [&]() { return m_resourceFolder.c_str(); });
+    FileAccess::SetUserFolderCallback([&]() { return m_userFolder.c_str(); });
 }
 
 void Application::AttachLayer(Layer* p_layer) {
@@ -169,6 +167,27 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
     DynamicVariableManager::Parse(m_commandLine);
 #endif
 
+    // @TODO: initialize stuff
+    {
+        m_projectFolder = DVAR_GET_STRING(project);
+        fs::path resource_folder = fs::path(m_projectFolder) / "resources";
+        m_resourceFolder = resource_folder.string();
+
+        FileAccess::SetResFolderCallback([&]() { return m_resourceFolder.c_str(); });
+
+        fs::path project_setting = fs::path(m_projectFolder) / "project.yaml";
+
+        std::ifstream file(project_setting.string());
+        if (!file.is_open()) {
+            return HBN_ERROR(ErrorCode::ERR_FILE_NOT_FOUND, "failed to open project '{}'", project_setting.string());
+        }
+
+        YAML::Node node = YAML::Load(file);
+
+        bool is_2d = node["2d"].as<bool>();
+        DEV_ASSERT(is_2d);
+    }
+
     // select window size
     {
         const Vector2i resolution{ DVAR_GET_IVEC2(window_resolution) };
@@ -227,8 +246,10 @@ auto Application::Initialize(int p_argc, const char** p_argv) -> Result<void> {
 
 void Application::Finalize() {
     // @TODO: fix
-    auto [w, h] = m_displayServer->GetWindowSize();
-    DVAR_SET_IVEC2(window_resolution, w, h);
+    if (m_displayServer) {
+        auto [w, h] = m_displayServer->GetWindowSize();
+        DVAR_SET_IVEC2(window_resolution, w, h);
+    }
 
     for (auto& layer : m_layers) {
         layer->OnDetach();

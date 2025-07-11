@@ -70,17 +70,17 @@ void OpenProjectCommand::Execute(Scene&) {
     }
 
     // @TODO: validate
-    DVAR_SET_STRING(project, path);
+    DVAR_SET_STRING(scene, path);
 
     SceneManager::GetSingleton().RequestScene(path);
 }
 
 /// SaveProjectCommand
 void SaveProjectCommand::Execute(Scene& p_scene) {
-    const std::string& project = DVAR_GET_STRING(project);
+    const std::string& scene = DVAR_GET_STRING(scene);
 
-    std::filesystem::path path{ project.empty() ? "untitled.scene" : project.c_str() };
-    if (m_openDialog || project.empty()) {
+    std::filesystem::path path{ scene.empty() ? "untitled.scene" : scene.c_str() };
+    if (m_openDialog || scene.empty()) {
 // @TODO: implement
 #if USING(PLATFORM_WINDOWS)
         if (!OpenSaveDialog(path)) {
@@ -92,7 +92,7 @@ void SaveProjectCommand::Execute(Scene& p_scene) {
     }
 
     auto path_string = path.string();
-    DVAR_SET_STRING(project, path_string);
+    DVAR_SET_STRING(scene, path_string);
 
     const auto extension = StringUtils::Extension(path_string);
     if (extension == ".scene") {
