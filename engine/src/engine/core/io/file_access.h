@@ -1,5 +1,4 @@
 #pragma once
-#include "file_path.h"
 
 namespace my {
 
@@ -78,9 +77,6 @@ public:
     static auto CreateForPath(std::string_view p_path) -> std::shared_ptr<FileAccess>;
 
     static auto Open(std::string_view p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>>;
-    static auto Open(const FilePath& p_path, ModeFlags p_mode_flags) -> Result<std::shared_ptr<FileAccess>> {
-        return Open(p_path.StringView(), p_mode_flags);
-    }
 
     template<typename T>
     static void MakeDefault(AccessType p_access_type) {

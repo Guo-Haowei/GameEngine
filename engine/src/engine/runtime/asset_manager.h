@@ -2,12 +2,12 @@
 #include "engine/assets/asset_interface.h"
 #include "engine/core/base/concurrent_queue.h"
 #include "engine/core/base/singleton.h"
-#include "engine/core/io/file_path.h"
 #include "engine/runtime/module.h"
 
 namespace my {
 
 class AssetEntry;
+class AssetType;
 class Scene;
 
 class AssetManager : public Singleton<AssetManager>, public Module {
@@ -20,7 +20,9 @@ public:
     auto InitializeImpl() -> Result<void> override;
     void FinalizeImpl() override;
 
-    auto LoadFileSync(const FilePath& p_path) -> Result<AssetRef>;
+    void CreateAsset(const AssetType& p_type, const std::filesystem::path& p_folder, const char* p_name = nullptr);
+
+    std::string ResolvePath(const std::filesystem::path& p_path);
 
     static void WorkerMain();
     static void RequestShutdown();
@@ -33,7 +35,9 @@ private:
 
     void EnqueueLoadTask(LoadTask& p_task);
 
+    uint32_t m_counter{ 0 };
     std::mutex m_assetLock;
+    std::filesystem::path m_assets_root;
 
     friend class AssetRegistry;
 };

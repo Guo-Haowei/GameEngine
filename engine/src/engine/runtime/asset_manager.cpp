@@ -1,8 +1,9 @@
 #include "asset_manager.h"
 
 #include <filesystem>
+#include <fstream>
 
-#include "engine/assets/asset.h"
+#include "engine/assets/assets.h"
 #include "engine/assets/asset_loader.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/os/threads.h"
@@ -36,6 +37,7 @@
 namespace my {
 
 namespace fs = std::filesystem;
+using AssetCreateFunc = AssetRef (*)(void);
 
 struct AssetManager::LoadTask {
     AssetEntry* handle;
@@ -51,9 +53,13 @@ static struct {
     // @TODO: better thread safe queue
     ConcurrentQueue<AssetManager::LoadTask> jobQueue;
     std::atomic_int runningWorkers;
+
+    AssetCreateFunc createFuncs[AssetType::Count];
 } s_assetManagerGlob;
 
 auto AssetManager::InitializeImpl() -> Result<void> {
+    m_assets_root = fs::path{ m_app->GetResourceFolder() };
+
     IAssetLoader::RegisterLoader(".scene", SceneLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".yaml", TextSceneLoader::CreateLoader);
 
@@ -79,7 +85,66 @@ auto AssetManager::InitializeImpl() -> Result<void> {
     IAssetLoader::RegisterLoader(".jpg", ImageAssetLoader::CreateLoader);
     IAssetLoader::RegisterLoader(".hdr", ImageAssetLoader::CreateLoaderF);
 
+    s_assetManagerGlob.createFuncs[AssetType::SpriteSheet] = []() {
+        SpriteSheetAsset* sprite = new SpriteSheetAsset;
+
+        sprite->frames.push_back({ Vector2f::Zero, Vector2f::One });
+
+        return AssetRef(sprite);
+    };
+
     return Result<void>();
+}
+
+void AssetManager::CreateAsset(const AssetType& p_type,
+                               const fs::path& p_folder,
+                               const char* p_name) {
+    DEV_ASSERT(p_type == AssetType::SpriteSheet);
+    // 1. Creates both meta and file
+    fs::path new_file = p_folder;
+    if (p_name) {
+        new_file = new_file / p_name;
+    } else {
+        // @TODO: extension
+        new_file = new_file / std::format("untitled{}.sprite", ++m_counter);
+    }
+
+    DEV_ASSERT(s_assetManagerGlob.createFuncs[p_type.GetData()]);
+    AssetRef asset = s_assetManagerGlob.createFuncs[p_type.GetData()]();
+
+    if (fs::exists(new_file)) {
+        fs::remove(new_file);
+    }
+    std::ofstream file(new_file);
+    asset->Serialize(file);
+
+    std::string meta_file = new_file.string();
+    meta_file.append(".meta");
+
+    auto short_path = ResolvePath(new_file);
+    auto _meta = AssetMetaData::CreateMeta(short_path);
+    DEV_ASSERT(_meta);
+    if (!_meta) {
+        return;
+    }
+    auto meta = std::move(_meta.value());
+
+    if (fs::exists(meta_file)) {
+        fs::remove(meta_file);
+    }
+
+    auto res = meta.SaveMeta(meta_file);
+    if (!res) {
+        return;
+    }
+
+    // 2. Update AssetRegistry when done
+    m_app->GetAssetRegistry()->StartAsyncLoad(std::move(meta), nullptr, nullptr);
+}
+
+std::string AssetManager::ResolvePath(const fs::path& p_path) {
+    fs::path relative = fs::relative(p_path, m_assets_root);
+    return std::format("@res://{}", relative.generic_string());
 }
 
 auto AssetManager::LoadAssetSync(const AssetEntry* p_entry) -> Result<AssetRef> {

@@ -29,6 +29,8 @@ public:
         return m_type == p_rhs.m_type;
     }
 
+    uint8_t GetData() const { return m_type; }
+
 private:
     Type m_type;
 };

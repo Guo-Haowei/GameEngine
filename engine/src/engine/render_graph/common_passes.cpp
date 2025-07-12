@@ -1,7 +1,7 @@
 #include "common_passes.h"
 
 #include "engine/algorithm/algorithm.h"
-#include "engine/assets/asset.h"
+#include "engine/assets/assets.h"
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/matrix_transform.h"

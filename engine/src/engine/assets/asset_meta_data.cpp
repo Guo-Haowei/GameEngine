@@ -2,7 +2,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "engine/assets/asset.h"
+#include "engine/assets/assets.h"
 #include "engine/core/io/file_access.h"
 #include "engine/core/string/string_utils.h"
 
@@ -79,6 +79,8 @@ auto AssetMetaData::CreateMeta(std::string_view p_path) -> std::optional<AssetMe
         type = AssetType::Image;
     } else if (extension == ".ttf") {
         type = AssetType::Binary;
+    } else if (extension == ".sprite") {
+        type = AssetType::SpriteSheet;
     } else {
         return std::nullopt;
     }

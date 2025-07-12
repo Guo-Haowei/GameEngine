@@ -1,10 +1,10 @@
 #include "file_system_panel.h"
 
 #include <IconsFontAwesome/IconsFontAwesome6.h>
-#include <fstream>
 
-#include "engine/assets/asset.h"
+#include "engine/assets/assets.h"
 #include "editor/editor_layer.h"
+#include "engine/runtime/asset_manager.h"
 #include "engine/runtime/asset_registry.h"
 #include "engine/runtime/common_dvars.h"
 #include "engine/core/string/string_utils.h"
@@ -52,23 +52,17 @@ void FileSystemPanel::ShowResourceToolTip(const std::string& p_path) {
 }
 
 void FileSystemPanel::FolderPopup(const std::filesystem::path& p_path, bool p_is_dir) {
-    // @TODO: fix this
-    static int s_counter = 0;
-
     if (ImGui::MenuItem("Rename")) {
         m_renaming = p_path;
     }
     if (p_is_dir) {
+        auto asset_manager = m_editor.GetApplication()->GetAssetManager();
         if (ImGui::BeginMenu("Add")) {
             if (ImGui::MenuItem("SpriteSheet")) {
-                // @TODO: let asset manager creates the asset + meta
-                // then notify asset registry to load
-                auto name = std::format("untitled{}.sprite", ++s_counter);
-                fs::path path = p_path / name;
-                LOG_OK("Create {}", path.string());
-                std::ofstream file(path);
-                if (file) {
-                }
+                asset_manager->CreateAsset(AssetType::SpriteSheet, p_path);
+            }
+            if (ImGui::MenuItem("xxxx")) {
+
             }
             ImGui::EndMenu();
         }
@@ -102,8 +96,8 @@ void FileSystemPanel::ListFile(const std::filesystem::path& p_path, const char* 
 
     const bool node_open = ImGui::TreeNodeEx(id.c_str(), flags);
 
-    fs::path relative = fs::relative(p_path, m_root);
-    std::string short_path = std::format("@res://{}", relative.generic_string());
+    std::string short_path =
+        m_editor.GetApplication()->GetAssetManager()->ResolvePath(p_path);
 
     if (ImGui::BeginPopupContextItem()) {
         FolderPopup(p_path, is_dir);

@@ -25,7 +25,7 @@
 #include "engine/scene/scene.h"
 
 // @TODO: remove
-#include "engine/assets/asset.h"
+#include "engine/assets/assets.h"
 
 #define DEFINE_DVAR
 #include "engine/renderer/graphics_dvars.h"

@@ -25,8 +25,7 @@ auto AssetRegistry::InitializeImpl() -> Result<void> {
     // go through all files, create meta if not exists
     for (const auto& entry : fs::recursive_directory_iterator(assets_root)) {
         if (entry.is_regular_file()) {
-            fs::path relative = fs::relative(entry.path(), assets_root);
-            std::string short_path = std::format("@res://{}", relative.generic_string());
+            std::string short_path = m_app->GetAssetManager()->ResolvePath(entry.path());
 
             auto ext = StringUtils::Extension(short_path);
             if (ext == ".meta") {
@@ -95,20 +94,21 @@ void AssetRegistry::FinalizeImpl() {
     // @TODO: clean up all the stuff
 }
 
-AssetHandle AssetRegistry::StartAsyncLoad(AssetMetaData&& p_meta,
-                                          OnAssetLoadSuccessFunc p_on_success,
-                                          void* p_userdata) {
+bool AssetRegistry::StartAsyncLoad(AssetMetaData&& p_meta,
+                                   OnAssetLoadSuccessFunc p_on_success,
+                                   void* p_userdata) {
 
     auto entry = std::make_shared<AssetEntry>(std::move(p_meta));
+    bool ok = true;
     {
-        std::lock_guard lock(registry_mutex);
-        bool ok = true;
+        std::lock_guard<std::mutex> lock(registry_mutex);
         ok = ok && m_guid_map.try_emplace(entry->metadata.guid, entry).second;
         ok = ok && m_path_map.try_emplace(entry->metadata.path, entry->metadata.guid).second;
     }
-
-    m_app->GetAssetManager()->LoadAssetAsync(entry.get(), p_on_success, p_userdata);
-    return { entry->metadata.guid, entry };
+    if (ok) {
+        m_app->GetAssetManager()->LoadAssetAsync(entry.get(), p_on_success, p_userdata);
+    }
+    return ok;
 }
 
 AssetHandle AssetRegistry::Request(const std::string& p_path) {

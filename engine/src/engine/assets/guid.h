@@ -4,7 +4,7 @@ namespace my {
 
 class Guid {
 public:
-    explicit Guid();
+    Guid();
 
     explicit Guid(const uint8_t* p_buffer);
 

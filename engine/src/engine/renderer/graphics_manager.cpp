@@ -1,6 +1,6 @@
 #include "graphics_manager.h"
 
-#include "engine/assets/asset.h"
+#include "engine/assets/assets.h"
 #include "engine/core/base/random.h"
 #include "engine/core/debugger/profiler.h"
 #include "engine/math/frustum.h"
